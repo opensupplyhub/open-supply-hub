@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -e
+
+function usage() {
+    echo -e \
+	"Usage: $(basename "$0")" \
+    "\nThis script runs the shellcheck linter for files in the ./scripts" \
+    "folder."
+}
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    if [ "${1:-}" = "--help" ]; then
+        usage
+    else
+        # Lint Bash scripts.
+        echo "Run shellcheck scripts/*"
+        shellcheck scripts/*
+    fi
+fi

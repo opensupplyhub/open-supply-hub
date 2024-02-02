@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>
+            Your contribution to Open Supply Hub was rejected
+        </title>
+    </head>
+    <body>
+        <p>
+            Hi there,
+        </p>
+        <p>
+            We’re writing to let you know that your request to upload a data list to Open Supply Hub was rejected.
+            The details of your list are as follows:
+        </p>
+        <ul>
+            <li>
+                Facility list: {{ facility_list_name }} created on {{ facility_list_created_at }}
+            </li>
+            <li>
+                Facility list description: {{ facility_list_description }}
+            </li>
+            <li>
+                Facility list URL: <a href="{{ facility_list_url }}">{{ facility_list_url }}</a>
+            </li>
+        </ul>
+        {% if rejection_reason|length %}
+        <p>
+            Not to worry! Below are details on the reason for rejection, as well as guidance on next steps:
+        </p>
+        <p>
+            {{ rejection_reason }}
+        </p>
+        {% endif %}
+        <p>
+            For any questions, feel free to reach out to the OS Hub Data Team:
+            <a href="data@opensupplyhub.org">data@opensupplyhub.org</a>.
+            We appreciate your support as we work to maintain a high quality dataset that is open and beneficial to all who need it.
+            </p>
+            <p>
+                All the best,
+        </p>
+        {% include "mail/data_team_signature_block.html" %}
+    </body>
+</html>

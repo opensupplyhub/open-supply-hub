@@ -1,0 +1,23 @@
+name: '[Release] Init'
+
+on:
+  workflow_dispatch:
+    inputs:
+      release-version:
+        description: 'Release version (e.g. 1.8)'
+        required: true
+        type: string
+jobs:
+  create-release-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Create release branch
+        uses: peterjgrainger/action-create-branch@v2.2.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+        with:
+          branch: releases/v.${{ inputs.release-version }}
+          sha: '${{ github.event.pull_request.head.sha }}'

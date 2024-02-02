@@ -1,0 +1,332 @@
+from api.models import (
+    Contributor,
+    Facility,
+    FacilityClaim,
+    FacilityList,
+    FacilityListItem,
+    FacilityMatch,
+    Source,
+    User,
+)
+from api.models.facility.facility_index import FacilityIndex
+from api.serializers import (
+    FacilityIndexDetailsSerializer,
+    get_contributor_name,
+)
+
+from django.contrib.gis.geos import Point
+from django.test import TestCase
+
+
+class FacilityIndexDetailsSerializerTest(TestCase):
+    def setUp(self):
+        self.name_one = "name_one"
+        self.name_two = "name_two"
+        self.address_one = "address_one"
+        self.address_two = "address_two"
+        self.email_one = "one@example.com"
+        self.email_two = "two@example.com"
+        self.contrib_one_name = "contributor one"
+        self.contrib_two_name = "contributor two"
+        self.country_code = "US"
+        self.list_one_name = "one"
+        self.list_two_name = "two"
+        self.user_one = User.objects.create(email=self.email_one)
+        self.user_two = User.objects.create(email=self.email_two)
+
+        self.contrib_one = Contributor.objects.create(
+            admin=self.user_one,
+            name=self.contrib_one_name,
+            contrib_type=Contributor.CONTRIB_TYPE_CHOICES[0][0],
+        )
+
+        self.contrib_two = Contributor.objects.create(
+            admin=self.user_two,
+            name=self.contrib_two_name,
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+
+        self.list_one = FacilityList.objects.create(
+            header="header", file_name="one", name=self.list_one_name
+        )
+
+        self.source_one = Source.objects.create(
+            facility_list=self.list_one,
+            source_type=Source.LIST,
+            is_active=True,
+            is_public=True,
+            contributor=self.contrib_one,
+        )
+
+        self.list_item_one = FacilityListItem.objects.create(
+            name=self.name_one,
+            address=self.address_one,
+            country_code=self.country_code,
+            sector=["Apparel"],
+            row_index=1,
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=self.source_one,
+        )
+
+        self.list_two = FacilityList.objects.create(
+            header="header", file_name="two", name=self.list_two_name
+        )
+
+        self.source_two = Source.objects.create(
+            facility_list=self.list_two,
+            source_type=Source.LIST,
+            is_active=True,
+            is_public=True,
+            contributor=self.contrib_two,
+        )
+
+        self.list_item_two = FacilityListItem.objects.create(
+            name=self.name_two,
+            address=self.address_two,
+            country_code=self.country_code,
+            sector=["Mining", "Metals"],
+            row_index="2",
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=self.source_two,
+        )
+
+        self.facility = Facility.objects.create(
+            name=self.name_one,
+            address=self.address_one,
+            country_code=self.country_code,
+            location=Point(0, 0),
+            created_from=self.list_item_one,
+        )
+
+        self.facility_match_one = FacilityMatch.objects.create(
+            status=FacilityMatch.CONFIRMED,
+            facility=self.facility,
+            results="",
+            facility_list_item=self.list_item_one,
+        )
+
+        self.facility_match_two = FacilityMatch.objects.create(
+            status=FacilityMatch.CONFIRMED,
+            facility=self.facility,
+            results="",
+            facility_list_item=self.list_item_two,
+        )
+
+        self.list_item_one.facility = self.facility
+        self.list_item_one.save()
+
+        self.list_item_two.facility = self.facility
+        self.list_item_two.save()
+
+        self.facility_claim = FacilityClaim.objects.create(
+            contributor=self.contrib_one,
+            facility=self.facility,
+            contact_person=self.contrib_one_name,
+            email=self.email_one,
+            phone_number=12345,
+            company_name="Test",
+            website="http://example.com",
+            facility_description="description",
+            preferred_contact_method=FacilityClaim.EMAIL,
+            status=FacilityClaim.APPROVED,
+        )
+
+    def test_has_sector_data(self):
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        data = FacilityIndexDetailsSerializer(facility_index).data
+
+        self.assertIn("sector", data["properties"])
+        self.assertIsNotNone(data["properties"]["sector"])
+        self.assertNotEqual([], data["properties"]["sector"])
+        self.assertIn("contributor_id", data["properties"]["sector"][0])
+        self.assertIn("contributor_name", data["properties"]["sector"][0])
+        self.assertIn("values", data["properties"]["sector"][0])
+        self.assertIn("updated_at", data["properties"]["sector"][0])
+
+    def test_sector_includes_approved_claim(self):
+        FacilityClaim.objects.create(
+            contributor=self.contrib_one,
+            facility=self.facility,
+            contact_person="test",
+            email="test@test.com",
+            phone_number="1234567890",
+            sector=["Beauty"],
+            status=FacilityClaim.APPROVED,
+        )
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        data = FacilityIndexDetailsSerializer(facility_index).data
+
+        self.assertEqual(["Beauty"], data["properties"]["sector"][0]["values"])
+
+    def test_sector_excludes_unapproved_claim(self):
+        FacilityClaim.objects.create(
+            contributor=self.contrib_one,
+            facility=self.facility,
+            contact_person="test",
+            email="test@test.com",
+            phone_number="1234567890",
+            sector=["Beauty"],
+            status=FacilityClaim.DENIED,
+        )
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        data = FacilityIndexDetailsSerializer(facility_index).data
+
+        self.assertNotEqual(
+            ["Beauty"], data["properties"]["sector"][0]["values"]
+        )
+
+    def test_sector_data_ordered_by_updated_desc(self):
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        data = FacilityIndexDetailsSerializer(facility_index).data
+
+        self.assertNotEqual([], data["properties"]["sector"])
+        self.assertGreater(
+            data["properties"]["sector"][0]["updated_at"],
+            data["properties"]["sector"][1]["updated_at"],
+        )
+        self.assertEqual(
+            self.contrib_two_name,
+            data["properties"]["sector"][0]["contributor_name"],
+        )
+        self.assertEqual(
+            self.contrib_one_name,
+            data["properties"]["sector"][1]["contributor_name"],
+        )
+        self.assertEqual(
+            self.list_item_two.sector,
+            data["properties"]["sector"][0]["values"],
+        )
+        self.assertEqual(
+            self.list_item_one.sector,
+            data["properties"]["sector"][1]["values"],
+        )
+
+    def test_only_queries_latest_update_per_contributor(self):
+        list_three = FacilityList.objects.create(
+            header="header", file_name="one", name="Three"
+        )
+
+        source_three = Source.objects.create(
+            facility_list=list_three,
+            source_type=Source.LIST,
+            is_active=True,
+            is_public=True,
+            contributor=self.contrib_one,
+        )
+
+        list_item_three = FacilityListItem.objects.create(
+            name="Three",
+            address="Address",
+            country_code="US",
+            sector=["Agriculture"],
+            row_index=1,
+            status=FacilityListItem.CONFIRMED_MATCH,
+            facility=self.facility,
+            source=source_three,
+        )
+
+        FacilityMatch.objects.create(
+            status=FacilityMatch.CONFIRMED,
+            facility=self.facility,
+            results="",
+            facility_list_item=list_item_three,
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        data = FacilityIndexDetailsSerializer(facility_index).data
+
+        # Should be at top of list since most recently updated
+        self.assertEqual(
+            list_item_three.sector, data["properties"]["sector"][0]["values"]
+        )
+        self.assertEqual(
+            self.contrib_one_name,
+            data["properties"]["sector"][0]["contributor_name"],
+        )
+        # Only 1 other sector element, for the other contributor
+        self.assertEqual(2, len(data["properties"]["sector"]))
+        self.assertEqual(
+            self.contrib_two_name,
+            data["properties"]["sector"][1]["contributor_name"],
+        )
+
+    def test_excludes_null_sectors_from_approved_claim(self):
+        self.source_two.is_active = False
+        self.source_two.save()
+
+        FacilityClaim.objects.create(
+            contributor=self.contrib_two,
+            facility=self.facility,
+            status=FacilityClaim.APPROVED,
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        data = FacilityIndexDetailsSerializer(facility_index).data
+
+        self.assertEqual(2, len(data["properties"]["sector"]))
+        self.assertEqual(
+            get_contributor_name(self.contrib_two, False),
+            data["properties"]["sector"][0]["contributor_name"],
+        )
+        self.assertEqual(
+            self.contrib_one_name,
+            data["properties"]["sector"][1]["contributor_name"],
+        )
+
+    def test_inactive_and_private_sources_serializes_anonymized_sectors(self):
+        self.source_one.is_active = False
+        self.source_one.save()
+
+        self.source_two.is_public = False
+        self.source_two.save()
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        data = FacilityIndexDetailsSerializer(facility_index).data
+
+        self.assertEqual(2, len(data["properties"]["sector"]))
+        self.assertEqual(
+            get_contributor_name(self.contrib_two, False),
+            data["properties"]["sector"][0]["contributor_name"],
+        )
+        self.assertIsNone(data["properties"]["sector"][0]["contributor_id"])
+        self.assertEqual(
+            get_contributor_name(self.contrib_one, False),
+            data["properties"]["sector"][1]["contributor_name"],
+        )
+        self.assertIsNone(data["properties"]["sector"][1]["contributor_id"])
+
+    def test_inactive_match_serializes_anonymized_sectors(self):
+        self.facility_match_one.is_active = False
+        self.facility_match_one.save()
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        data = FacilityIndexDetailsSerializer(facility_index).data
+
+        self.assertEqual(2, len(data["properties"]["sector"]))
+        self.assertEqual(
+            self.contrib_two_name,
+            data["properties"]["sector"][0]["contributor_name"],
+        )
+        self.assertIsNotNone(data["properties"]["sector"][0]["contributor_id"])
+        self.assertEqual(
+            get_contributor_name(self.contrib_one, False),
+            data["properties"]["sector"][1]["contributor_name"],
+        )
+        self.assertIsNone(data["properties"]["sector"][1]["contributor_id"])
+
+    def test_prioritizes_claim_address(self):
+        self.facility_claim.facility_address = "134 Claim St"
+        self.facility_claim.facility_location = Point(44, 55)
+        self.facility_claim.save()
+
+        self.facility.location = self.facility_claim.facility_location
+        self.facility.save()
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        data = FacilityIndexDetailsSerializer(facility_index).data
+        self.assertEqual(
+            data["properties"]["address"], self.facility_claim.facility_address
+        )
+        other_addresses = data["properties"]["other_addresses"]
+        self.assertEqual(len(other_addresses), 2)
+        self.assertIn(self.facility.address, other_addresses)

@@ -1,0 +1,2 @@
+class NoCanonicalRecordsError(Exception):
+    pass

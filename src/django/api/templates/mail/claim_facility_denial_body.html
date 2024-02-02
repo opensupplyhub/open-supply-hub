@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>
+            Your request to claim an Open Supply Hub facility was denied
+        </title>
+    </head>
+    <body>
+        <p>
+            Hi,
+        </p>
+        <p>
+            You're receiving this email because we denied your request to claim this
+            Open Supply Hub facility:
+        </p>
+        <ul>
+            <li>
+                Facility: {{ facility_name }}, {{ facility_address }}, {{ facility_country }}
+            </li>
+            <li>
+                Facility URL: <a href="{{ facility_url }}">{{ facility_url }}</a>
+            </li>
+        </ul>
+        {% if denial_reason|length %}
+        <p>
+            Here's the reason for the denial:
+        </p>
+        <p>
+            {{ denial_reason }}
+        </p>
+        {% endif %}
+        <p>
+            The claim information is inaccurate. If you believe this denial to be inaccurate,
+            you can reach out to the OS Hub team to provide additional, clarifying information at:
+            <a href="mailto:data@opensupplyhub.org">data@opensupplyhub.org</a> The team will review
+            your claim and get back to you.
+        </p>
+        <p>
+            Best wishes,
+        </p>
+        {% include "mail/data_team_signature_block.html" %}
+    </body>
+</html>

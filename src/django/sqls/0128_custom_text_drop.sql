@@ -1,0 +1,1 @@
+DROP FUNCTION custom_text(text)

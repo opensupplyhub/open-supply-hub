@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>
+            Your request to claim an Open Supply Hub facility was revoked
+        </title>
+    </head>
+    <body>
+        <p>
+            Hi,
+        </p>
+        <p>
+            You're receiving this email because we revoked your request to claim this
+            Open Supply Hub facility:
+        </p>
+        <ul>
+            <li>
+                Facility: {{ facility_name }}, {{ facility_address }}, {{ facility_country }}
+            </li>
+            <li>
+                Facility URL: <a href="{{ facility_url }}">{{ facility_url }}</a>
+            </li>
+        </ul>
+        {% if revocation_reason|length %}
+        <p>
+            Here's the reason for it was revoked:
+        </p>
+        <p>
+            {{ revocation_reason }}
+        </p>
+        {% endif %}
+        <p>
+            We have discovered your claim is actually inaccurate. If you believe your claim
+            should not have been revoked, you can reach out to the OS Hub team to provide additional,
+            clarifying information at: <a href="mailto:data@opensupplyhub.org">data@opensupplyhub.org</a>.
+            The team will review your claim and get back to you.
+        </p>
+        <p>
+            Best wishes,
+        </p>
+        {% include "mail/data_team_signature_block.html" %}
+    </body>
+</html>

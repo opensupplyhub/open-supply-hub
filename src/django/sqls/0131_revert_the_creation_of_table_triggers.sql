@@ -1,0 +1,60 @@
+DROP TRIGGER contributor_post_delete_indexing_trigger ON
+api_contributor;
+DROP TRIGGER contributor_post_insert_update_indexing_trigger ON
+api_contributor;
+DROP FUNCTION handle_contributor_post_delete_indexing_trigger(),
+handle_contributor_post_update_insert_indexing_trigger();
+DROP PROCEDURE perform_contributor_indexing(integer);
+
+DROP TRIGGER extended_field_post_delete_indexing_trigger ON
+api_extendedfield;
+DROP TRIGGER extended_field_post_update_insert_indexing_trigger ON
+api_extendedfield;
+DROP FUNCTION handle_extended_field_post_delete_indexing_trigger(),
+handle_extended_field_post_update_insert_indexing_trigger();
+DROP PROCEDURE perform_extended_field_indexing(TEXT);
+
+DROP TRIGGER facility_post_delete_indexing_trigger ON
+api_facility;
+DROP TRIGGER facility_post_update_insert_indexing_trigger ON
+api_facility;
+DROP FUNCTION handle_facility_post_delete_indexing_trigger(),
+handle_facility_post_update_insert_indexing_trigger();
+
+DROP TRIGGER facility_claim_post_delete_indexing_trigger ON
+api_facilityclaim;
+DROP TRIGGER facility_claim_post_update_insert_indexing_trigger ON
+api_facilityclaim;
+DROP FUNCTION handle_facility_claim_post_delete_indexing_trigger(),
+handle_facility_claim_post_update_insert_indexing_trigger();
+DROP PROCEDURE perform_facility_claim_indexing(TEXT);
+
+DROP TRIGGER facility_list_item_post_delete_indexing_trigger ON
+api_facilitylistitem;
+DROP TRIGGER update_fli_2 ON
+api_facilitylistitem;
+ALTER TRIGGER update_fli_1 ON
+api_facilitylistitem RENAME TO update_fli;
+DROP FUNCTION handle_facility_list_item_post_delete_indexing_trigger(),
+handle_facility_list_item_post_update_insert_indexing_trigger();
+DROP PROCEDURE perform_facility_list_item_indexing(TEXT, TEXT);
+
+DROP TRIGGER facility_match_post_delete_indexing_trigger ON
+api_facilitymatch;
+DROP TRIGGER facility_match_post_update_insert_indexing_trigger ON
+api_facilitymatch;
+DROP FUNCTION handle_facility_match_post_delete_indexing_trigger(),
+handle_facility_match_post_update_insert_indexing_trigger();
+DROP PROCEDURE perform_facility_match_indexing(TEXT);
+
+DROP TRIGGER source_post_delete_indexing_trigger ON
+api_source;
+DROP TRIGGER source_post_update_insert_indexing_trigger ON
+api_source;
+DROP FUNCTION handle_source_post_delete_indexing_trigger(),
+handle_source_post_update_insert_indexing_trigger();
+DROP PROCEDURE perform_source_indexing(integer);
+
+DROP TRIGGER manual_list_reject_revert_trigger ON
+api_facilitylist;
+DROP FUNCTION handle_manual_list_reject_revert_trigger();

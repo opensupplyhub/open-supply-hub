@@ -1,0 +1,31 @@
+name: '[Release] Deploy'
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy-tag-version:
+        description: 'Release/Tag version (e.g. 0.1.0)'
+        required: true
+        type: string
+      deploy-env:
+        description: 'Environment to deploy'     
+        required: true
+        type: choice
+        options:
+        - sandbox
+        - production
+        default: sandbox
+jobs:
+  create-release-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Create Release Tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          custom_tag: ${{ github.event.inputs.deploy-env }}-${{ github.event.inputs.deploy-tag-version }}
+          tag_prefix: ''
+          github_token: ${{ secrets.PAT }}

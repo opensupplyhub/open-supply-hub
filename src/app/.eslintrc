@@ -1,0 +1,66 @@
+{
+  "extends": ["airbnb", "prettier"],
+  "parser": "@babel/eslint-parser",
+  "parserOptions": {
+    "requireConfigFile": false,
+    "babelOptions": {
+      "presets": ["@babel/preset-react"]
+    }
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "es6": true,
+    "mocha": true,
+    "jest/globals": true
+  },
+  "plugins": [
+      "jest",
+      "react-hooks"
+  ],
+  "rules": {
+    "max-statements": [0, 10],
+    "jsx-a11y/label-has-for": [2, {
+      "required": {
+         "every": ["id"]
+      }
+    }],
+    "implicit-arrow-linebreak": "off",
+    "object-curly-newline": "off",
+    "operator-linebreak": "off",
+    "import/extensions": "off",
+    "import/no-unresolved": "off",
+    "import/no-useless-path-segments": "off",
+    "jsx-a11y/label-has-associated-control": "off",
+    "react/destructuring-assignment": "off",
+    "react/jsx-one-expression-per-line": "off",
+    "react/jsx-wrap-multilines": "off",
+    "react/prop-types": "off",
+    "react/sort-comp": "off",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+    "prefer-object-spread": "off",
+    "react/jsx-props-no-spreading": "off",
+    "react/state-in-constructor": "off",
+    "react/jsx-fragments": "off",
+    "import/no-cycle": "off",
+    "react/forbid-prop-types": "off",
+    "import/no-named-as-default": "off",
+    "import/no-named-as-default-member": "off",
+    "func-names": "off"
+  },
+  "overrides": [
+    {
+      "files": ["./src/__tests__/components/*.test.js"],
+      "rules": {
+        "react/jsx-filename-extension": "off"
+      }
+    },
+    {
+      "files": ["./src/setupTests.js"],
+      "rules": {
+        "import/no-extraneous-dependencies": "off"
+      }
+    }
+  ]
+}

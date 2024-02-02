@@ -1,0 +1,20 @@
+{% block content %}
+Hi,
+
+You're receiving this email because we approved your request to claim this Open Supply Hub facility:
+
+- Facility: {{ facility_name }}, {{ facility_address }}, {{ facility_country }}
+- Facility URL: {{ facility_url }}
+
+{% if approval_reason|length %}
+Here's the reason for the approval:
+
+{{ approval_reason }}
+{% endif %}
+
+You are approved! You can now complete your profile, adding business information including production capabilities, certifications, MOQs and more. Visit opensupplyhub.org/claimed to view your approved facility and complete your profile.
+
+Best wishes,
+
+{% include "mail/data_team_signature_block.txt" %}
+{% endblock content %}

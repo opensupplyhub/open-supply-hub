@@ -1,0 +1,152 @@
+#sidebar-container {
+  background: #F9F7F7;
+  box-shadow: 2px 0 4px rgba(0,0,0,.15);
+  z-index: 1;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  max-width: 100%;
+  overflow: auto;
+}
+
+@media (min-width: 600px) {
+  #sidebar-container {
+    max-width: 50%;
+    flex: none;
+  }
+
+  .map-container {
+    flex: 1 !important;
+    max-width: initial !important;
+  }
+}
+
+.map-sidebar-container {
+  height: 100%;
+  overflow: hidden;
+}
+
+.panel-header {
+  color: white;
+  background-color: #8428FA; 
+  padding: 20px 16px;
+}
+
+.panel-header__title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+
+.panel-header__subheading {
+  font-size: 12px;
+  font-weight: 400;
+  margin: 0;
+}
+
+.factory-header {
+  padding: 10px 10px 10px 0px;
+}
+
+#map {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+.gm-style-iw-c {
+    border-radius: 0 !important;
+}
+
+.popup-container {
+  max-height: 235px;
+  max-width: 235px;
+  overflow: auto;
+}
+
+.popup-item {
+  cursor: pointer;
+  padding: 7px 15px;
+}
+
+.popup-item:hover {
+  background: #ddd;
+}
+
+.popup-text {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.mapboxgl-popup-content {
+  padding-left: 0px;
+  padding-right: 0px;
+  padding-top: 14px;
+}
+
+.mapboxgl-ctrl-bottom-right {
+    margin: 30px 0 !important;
+}
+
+.circle {
+  border-radius: 50%;
+  background: #3d2f8c;
+  margin-right: 5px;
+}
+
+.circle-size-12 {
+  width: 12px;
+  height: 12px;
+  max-height: 12px;
+  min-width: 12px;
+}
+
+.circle-size-18 {
+  width: 18px;
+  height: 18px;
+}
+
+.circle-white-radius {
+  border: 2px white solid;
+}
+
+.centered-circle {
+  position: fixed;
+  margin-top: 79px;
+  margin-left: 149px;
+}
+
+.stripe {
+  height: 18px;
+}
+
+.shadow {
+  box-shadow: 3px 2px 8px rgba(0,0,0,0.3);
+}
+
+.tab-minwidth {
+  min-width: 107px !important;
+}
+
+.search-tab {
+  min-width: 0 !important;
+  font-size: 0.8rem !important;
+}
+
+.search-tab span, .inherit-font {
+  color: #0D1128;
+  font-family: inherit !important;
+}
+
+.tabs {
+  background: white;
+  color: #12085D;
+}
+
+.tabs-indicator-color {
+  background-color: #12085D !important;
+}

@@ -1,0 +1,45 @@
+#!/bin/bash
+
+set -e
+
+function usage() {
+    echo -e \
+	"Usage: $(basename "$0")" \
+    "\nThis script performs linting and formatting checks, runs tests, and" \
+    "also generates the Jest code coverage report for the React app. The" \
+    "script performs the same code quality checks for the front-end" \
+    "as those conducted during the CI pipeline, excluding code" \
+    "coverage comparison."
+}
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    if [ "${1:-}" = "--help" ]; then
+        usage
+    else
+        # Install frontend NPM modules.
+        echo "Run docker-compose run --rm --no-deps app yarn install"
+        docker-compose run --rm --no-deps app yarn install
+
+        # Run the ESLint linter check.
+        echo -e \
+        "\nRun docker-compose run --rm --entrypoint ./node_modules/.bin/eslint" \
+        "app src/ --ext .js --ext .jsx"
+        docker-compose \
+            run --rm --entrypoint ./node_modules/.bin/eslint \
+            app src/ --ext .js --ext .jsx
+
+        # Run the Prettier formatting check.
+        echo -e \
+        "\nRun docker-compose run --rm --no-deps app yarn prettier" \
+        "--config .prettierrc --check 'src/**/*.js' 'src/**/*.jsx'"
+        docker-compose \
+            run --rm --no-deps app yarn prettier \
+                --config .prettierrc \
+                --check 'src/**/*.js' 'src/**/*.jsx'
+        
+        # Run the Jest tests and generate code coverage report.
+        echo -e \
+        "\nRun docker-compose run --rm --no-deps app yarn test"
+        docker-compose run --rm --no-deps app yarn test
+    fi
+fi

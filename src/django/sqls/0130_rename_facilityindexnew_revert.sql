@@ -1,0 +1,1 @@
+ALTER TABLE IF EXISTS api_facilityindex RENAME TO api_facilityindexnew;

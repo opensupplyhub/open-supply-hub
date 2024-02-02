@@ -1,0 +1,606 @@
+[
+    {
+        "model": "api.facilityindex",
+        "fields": {
+            "id": "1",
+            "name": "First Facility",
+            "address": "First Facility Address",
+            "country_code": "US",
+            "location": "POINT (0.0 0.0)",
+            "contributors_count": 3,
+            "contributors_id": [1, 2, 3],
+            "approved_claim_ids": [],
+            "is_closed": false,
+            "has_inexact_coordinates": false,
+            "contrib_types": [
+                "Service Provider",
+                "Factory / Facility",
+                "Brand/Retailer"
+            ],
+            "contributors": [
+                {
+                    "id": 1,
+                    "name": "Service Provider A",
+                    "is_verified": false,
+                    "contrib_type": "Service Provider",
+                    "should_display_associations": false
+                },
+                {
+                    "id": 2,
+                    "name": "Factory A",
+                    "is_verified": false,
+                    "contrib_type": "Factory / Facility",
+                    "should_display_associations": false
+                },
+                {
+                    "id": 3,
+                    "name": "Brand A",
+                    "is_verified": false,
+                    "contrib_type": "Brand/Retailer",
+                    "should_display_associations": true
+                }
+            ],
+            "sector": ["Test sector"],
+            "lists": [],
+            "custom_text": [],
+            "number_of_workers": ["Less than 1000"],
+            "facility_type": ["First Facility Type"],
+            "processing_type": ["Processing Type"],
+            "product_type": ["Product Type"],
+            "parent_company_name": ["Parent Company Name"],
+            "native_language_name": [],
+            "parent_company_id": [],
+            "facility_names": ["Test Facility"],
+            "facility_list_items": [],
+            "facility_locations": [],
+            "approved_claim": null,
+            "facility_addresses": ["First Facility Address"],
+            "claim_info": [],
+            "custom_field_info": [
+                {
+                    "raw_data": "\"Extra 1 custom field data\",\"Extra 2 custom field data\",\"Parent Company Service Provider A in custom field\"",
+                    "list_header": "extra_1,extra_2,parent_company,",
+                    "source_type": "LIST",
+                    "contributor_id": 1
+                }
+            ],
+            "extended_fields": [
+                {
+                    "id": 101,
+                    "value": {
+                        "raw_values": ["Product Type Service Provider A"]
+                    },
+                    "field_name": "product_type",
+                    "contributor": {
+                        "id": 1,
+                        "name": "Service Provider A"
+                    }
+                },
+                {
+                    "id": 102,
+                    "value": {
+                        "raw_values": "Raw Data",
+                        "matched_values": [
+                            [
+                                null,
+                                null,
+                                "Matched facility type value one Service Provider A",
+                                "Matched processing type value one Service Provider A"
+                            ],
+                            [
+                                null,
+                                null,
+                                "Matched facility type value two Service Provider A",
+                                "Matched processing type value two Service Provider A"
+                            ]
+                        ]
+                    },
+                    "field_name": "facility_type",
+                    "contributor": {
+                        "id": 1,
+                        "name": "Service Provider A"
+                    }
+                },
+                {
+                    "id": 103,
+                    "value": {
+                        "raw_values": "Raw Data",
+                        "matched_values": [
+                            [
+                                null,
+                                null,
+                                "Matched facility type value one Service Provider A",
+                                "Matched processing type value one Service Provider A"
+                            ],
+                            [
+                                null,
+                                null,
+                                "Matched facility type value two Service Provider A",
+                                "Matched processing type value two Service Provider A"
+                            ]
+                        ]
+                    },
+                    "field_name": "processing_type",
+                    "contributor": {
+                        "id": 1,
+                        "name": "Service Provider A"
+                    }
+                },
+                {
+                    "id": 104,
+                    "value": { "max": 1, "min": 1 },
+                    "field_name": "number_of_workers",
+                    "contributor": {
+                        "id": 1,
+                        "name": "Service Provider A"
+                    }
+                },
+                {
+                    "id": 105,
+                    "value": {
+                        "name": "Parent Company Service Provider A",
+                        "raw_value": "Parent Company Service Provider A raw value"
+                    },
+                    "field_name": "parent_company",
+                    "contributor": {
+                        "id": 1,
+                        "name": "Service Provider A"
+                    }
+                },
+                {
+                    "id": 106,
+                    "value": { "raw_values": ["Product Type Factory A"] },
+                    "field_name": "product_type",
+                    "contributor": {
+                        "id": 2,
+                        "name": "Factory A"
+                    }
+                },
+                {
+                    "id": 107,
+                    "value": {
+                        "raw_values": "Raw Data",
+                        "matched_values": [
+                            [
+                                null,
+                                null,
+                                "Matched facility type value one Factory A",
+                                "Matched processing type value one Factory A"
+                            ]
+                        ]
+                    },
+                    "field_name": "facility_type",
+                    "contributor": {
+                        "id": 2,
+                        "name": "Factory A"
+                    }
+                },
+                {
+                    "id": 108,
+                    "value": {
+                        "raw_values": "Raw Data",
+                        "matched_values": [
+                            [
+                                null,
+                                null,
+                                "Matched facility type value one Factory A",
+                                "Matched processing type value one Factory A"
+                            ]
+                        ]
+                    },
+                    "field_name": "processing_type",
+                    "contributor": {
+                        "id": 2,
+                        "name": "Factory A"
+                    }
+                },
+                {
+                    "id": 109,
+                    "value": { "max": 500, "min": 101 },
+                    "field_name": "number_of_workers",
+                    "contributor": {
+                        "id": 2,
+                        "name": "Factory A"
+                    }
+                },
+                {
+                    "id": 110,
+                    "value": {
+                        "name": "Parent Company Factory A",
+                        "raw_value": "Parent Company Factory A raw value"
+                    },
+                    "field_name": "parent_company",
+                    "contributor": {
+                        "id": 2,
+                        "name": "Factory A"
+                    }
+                }
+            ],
+            "created_from_info": {
+                
+                "created_at": "2022-05-18T07:45:25+00:00"
+            },
+            "activity_reports_info": [],
+            "item_sectors": [],
+            "claim_sectors": [],
+            "created_at": "2023-07-25T11:23:57.019Z",
+            "updated_at": "2023-11-04T16:07:57.887Z",
+            "custom_text_search": ""
+        }
+    },
+    {
+        "model": "api.facilityindex",
+        "fields": {
+            "id": "2",
+            "name": "Second Facility",
+            "address": "Second Facility Address",
+            "country_code": "IN",
+            "location": "POINT (0.0 0.0)",
+            "contributors_count": 2,
+            "contributors_id": [1, 2, 3],
+            "approved_claim_ids": [11],
+            "is_closed": false,
+            "has_inexact_coordinates": false,
+            "contrib_types": [
+                "Service Provider",
+                "Factory / Facility",
+                "Brand/Retailer"
+            ],
+            "contributors": [
+                {
+                    "id": 1,
+                    "name": "Service Provider A",
+                    "is_verified": false,
+                    "contrib_type": "Service Provider",
+                    "should_display_associations": false
+                },
+                {
+                    "id": 2,
+                    "name": "Factory A",
+                    "is_verified": false,
+                    "contrib_type": "Factory / Facility",
+                    "should_display_associations": false
+                },
+                {
+                    "id": 3,
+                    "name": "Brand A",
+                    "is_verified": false,
+                    "contrib_type": "Brand/Retailer",
+                    "should_display_associations": true
+                }
+            ],
+            "sector": ["Test sector"],
+            "lists": [],
+            "custom_text": [],
+            "number_of_workers": ["Less than 1000"],
+            "facility_type": ["Second Facility Type"],
+            "processing_type": ["Processing Type"],
+            "product_type": ["Product Type"],
+            "parent_company_name": ["Parent Company Name"],
+            "native_language_name": [],
+            "parent_company_id": [],
+            "facility_names": ["Test Facility"],
+            "facility_list_items": [],
+            "facility_locations": [],
+            "approved_claim": {
+                "id": 11,
+                "contributor_id": 2,
+                "contributor": { "name": "Factory A" },
+                "facility_name_english": "Second Facility Name English",
+                "facility_id": "2"
+            },
+            "facility_addresses": ["Second Facility Address"],
+            "claim_info": [],
+            "custom_field_info": [],
+            "extended_fields": [
+                {
+                    "id": 111,
+                    "value": {
+                        "raw_values": ["Product Type Service Provider A"]
+                    },
+                    "field_name": "product_type",
+                    "contributor": {
+                        "id": 1,
+                        "name": "Service Provider A"
+                    }
+                },
+                {
+                    "id": 112,
+                    "value": {
+                        "raw_values": "Raw Data",
+                        "matched_values": [
+                            [
+                                null,
+                                null,
+                                "Matched facility type value one Service Provider A",
+                                "Matched processing type value one Service Provider A"
+                            ],
+                            [
+                                null,
+                                null,
+                                "Matched facility type value two Service Provider A",
+                                "Matched processing type value two Service Provider A"
+                            ]
+                        ]
+                    },
+                    "field_name": "facility_type",
+                    "contributor": {
+                        "id": 1,
+                        "name": "Service Provider A"
+                    }
+                },
+                {
+                    "id": 113,
+                    "value": {
+                        "raw_values": "Raw Data",
+                        "matched_values": [
+                            [
+                                null,
+                                null,
+                                "Matched facility type value one Service Provider A",
+                                "Matched processing type value one Service Provider A"
+                            ],
+                            [
+                                null,
+                                null,
+                                "Matched facility type value two Service Provider A",
+                                "Matched processing type value two Service Provider A"
+                            ]
+                        ]
+                    },
+                    "field_name": "processing_type",
+                    "contributor": {
+                        "id": 1,
+                        "name": "Service Provider A"
+                    }
+                },
+                {
+                    "id": 114,
+                    "value": { "max": 1, "min": 1 },
+                    "field_name": "number_of_workers",
+                    "contributor": {
+                        "id": 1,
+                        "name": "Service Provider A"
+                    }
+                },
+                {
+                    "id": 115,
+                    "value": {
+                        "name": "Parent Company Service Provider A",
+                        "raw_value": "Parent Company Service Provider A raw value"
+                    },
+                    "field_name": "parent_company",
+                    "contributor": {
+                        "id": 1,
+                        "name": "Service Provider A"
+                    }
+                },
+                {
+                    "id": 116,
+                    "value": { "raw_values": ["Product Type Factory A"] },
+                    "field_name": "product_type",
+                    "contributor": {
+                        "id": 2,
+                        "name": "Factory A"
+                    }
+                },
+                {
+                    "id": 117,
+                    "value": {
+                        "raw_values": "Raw Data",
+                        "matched_values": [
+                            [
+                                null,
+                                null,
+                                "Matched facility type value one Factory A",
+                                "Matched processing type value one Factory A"
+                            ]
+                        ]
+                    },
+                    "field_name": "facility_type",
+                    "contributor": {
+                        "id": 2,
+                        "name": "Factory A"
+                    }
+                },
+                {
+                    "id": 118,
+                    "value": {
+                        "raw_values": "Raw Data",
+                        "matched_values": [
+                            [
+                                null,
+                                null,
+                                "Matched facility type value one Factory A",
+                                "Matched processing type value one Factory A"
+                            ]
+                        ]
+                    },
+                    "field_name": "processing_type",
+                    "contributor": {
+                        "id": 2,
+                        "name": "Factory A"
+                    }
+                },
+                {
+                    "id": 119,
+                    "value": { "max": 500, "min": 101 },
+                    "field_name": "number_of_workers",
+                    "contributor": {
+                        "id": 2,
+                        "name": "Factory A"
+                    }
+                },
+                {
+                    "id": 120,
+                    "value": {
+                        "name": "Parent Company Factory A",
+                        "raw_value": "Parent Company Factory A raw value"
+                    },
+                    "field_name": "parent_company",
+                    "contributor": {
+                        "id": 2,
+                        "name": "Factory A"
+                    }
+                }
+            ],
+            "created_from_info": {
+                "created_at": "2020-02-22T14:39:26.485995+00:00"
+            },
+            "activity_reports_info": [],
+            "item_sectors": [],
+            "claim_sectors": [],
+            "created_at": "2023-07-25T11:23:57.019Z",
+            "updated_at": "2023-11-04T16:07:57.887Z",
+            "custom_text_search": ""
+        }
+    },
+    {
+        "model": "api.facilityindex",
+        "fields": {
+            "id": "3",
+            "name": "Third Facility",
+            "address": "Third Facility Address",
+            "country_code": "CN",
+            "location": "POINT (0.0 0.0)",
+            "contributors_count": 2,
+            "contributors_id": [1, 2],
+            "approved_claim_ids": [12],
+            "is_closed": false,
+            "has_inexact_coordinates": false,
+            "contrib_types": ["Service Provider", "Factory / Facility"],
+            "contributors": [
+                {
+                    "id": 1,
+                    "name": "Service Provider A",
+                    "is_verified": false,
+                    "contrib_type": "Service Provider",
+                    "should_display_associations": false
+                },
+                {
+                    "id": 2,
+                    "name": "Factory A",
+                    "is_verified": false,
+                    "contrib_type": "Factory / Facility",
+                    "should_display_associations": false
+                }
+            ],
+            "sector": ["Test sector"],
+            "lists": [],
+            "custom_text": [],
+            "number_of_workers": ["Less than 1000"],
+            "facility_type": ["Third Facility Type"],
+            "processing_type": ["Processing Type"],
+            "product_type": ["Product Type"],
+            "parent_company_name": ["Parent Company Name"],
+            "native_language_name": [],
+            "parent_company_id": [],
+            "facility_names": ["Third Facility"],
+            "facility_list_items": [],
+            "facility_locations": [],
+            "approved_claim": {
+                "id": 12,
+                "contributor_id": 2,
+                "contributor": { "name": "Factory A" },
+                "facility_name_english": null,
+                "facility_id": "2"
+            },
+            "facility_addresses": ["Third Facility Address"],
+            "claim_info": [],
+            "custom_field_info": [],
+            "extended_fields": [
+                {
+                    "id": 121,
+                    "value": {
+                        "raw_values": ["Product Type Service Provider A"]
+                    },
+                    "field_name": "product_type",
+                    "contributor": {
+                        "id": 1,
+                        "name": "Service Provider A"
+                    }
+                },
+                {
+                    "id": 122,
+                    "value": {
+                        "raw_values": "Raw Data",
+                        "matched_values": [
+                            [
+                                null,
+                                null,
+                                "Matched facility type value one Service Provider A",
+                                "Matched processing type value one Service Provider A"
+                            ],
+                            [
+                                null,
+                                null,
+                                "Matched facility type value two Service Provider A",
+                                "Matched processing type value two Service Provider A"
+                            ]
+                        ]
+                    },
+                    "field_name": "facility_type",
+                    "contributor": {
+                        "id": 1,
+                        "name": "Service Provider A"
+                    }
+                },
+                {
+                    "id": 123,
+                    "value": {
+                        "raw_values": "Raw Data",
+                        "matched_values": [
+                            [
+                                null,
+                                null,
+                                "Matched facility type value one Service Provider A",
+                                "Matched processing type value one Service Provider A"
+                            ],
+                            [
+                                null,
+                                null,
+                                "Matched facility type value two Service Provider A",
+                                "Matched processing type value two Service Provider A"
+                            ]
+                        ]
+                    },
+                    "field_name": "processing_type",
+                    "contributor": {
+                        "id": 1,
+                        "name": "Service Provider A"
+                    }
+                },
+                {
+                    "id": 124,
+                    "value": { "max": 1, "min": 1 },
+                    "field_name": "number_of_workers",
+                    "contributor": {
+                        "id": 1,
+                        "name": "Service Provider A"
+                    }
+                },
+                {
+                    "id": 125,
+                    "value": {
+                        "name": "Parent Company Service Provider A",
+                        "raw_value": "Parent Company Service Provider A raw value"
+                    },
+                    "field_name": "parent_company",
+                    "contributor": {
+                        "id": 1,
+                        "name": "Service Provider A"
+                    }
+                }
+            ],
+            "created_from_info": {
+                "created_at": "2020-02-22T14:39:26.485995+00:00"
+            },
+            "activity_reports_info": [],
+            "item_sectors": [],
+            "claim_sectors": [],
+            "created_at": "2023-07-25T11:23:57.019Z",
+            "updated_at": "2023-11-04T16:07:57.887Z",
+            "custom_text_search": ""
+        }
+    }
+]

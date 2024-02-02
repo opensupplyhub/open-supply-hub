@@ -1,0 +1,91 @@
+version: "2.4"
+services:
+  database:
+    image: quay.io/azavea/postgis:3-postgres12.4-slim
+    shm_size: '2gb'
+    environment:
+      - POSTGRES_USER=openapparelregistry
+      - POSTGRES_PASSWORD=openapparelregistry
+      - POSTGRES_DB=openapparelregistry
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "openapparelregistry"]
+      interval: 3s
+      timeout: 3s
+      retries: 3
+    volumes:
+      - ./dumps:/dumps
+    ports:
+      - "5432:5432"
+
+  memcached:
+    image: memcached:1.6-alpine
+    command: -v -I 8m -m 256
+
+  django:
+    image: opensupplyhub
+    env_file: .env
+    environment:
+      - POSTGRES_HOST=database
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=openapparelregistry
+      - POSTGRES_PASSWORD=openapparelregistry
+      - POSTGRES_DB=openapparelregistry
+      - CACHE_HOST=memcached
+      - CACHE_PORT=11211
+      - DJANGO_ENV=Development
+      - DJANGO_SECRET_KEY=secret
+      - DJANGO_LOG_LEVEL=INFO
+      - AWS_PROFILE
+      - OAR_CLIENT_KEY=
+      - NOTIFICATION_EMAIL_TO=notification@example.com
+      # NOTE the AWS_S3* variables are only used for testing s3 in development.
+      # The deployed application uses a policy attached to the ECS task instead
+      # of using keys.
+      - AWS_S3_ACCESS_KEY_ID
+      - AWS_S3_SECRET_ACCESS_KEY
+      - AWS_STORAGE_BUCKET_NAME
+    build:
+      context: ./src/django
+      dockerfile: Dockerfile
+    volumes:
+      - ./src/django:/usr/local/src
+      - $HOME/.aws:/root/.aws:ro
+    working_dir: /usr/local/src
+    depends_on:
+      database:
+        condition: service_healthy
+      memcached:
+        condition: service_started
+    command:
+      - "-b :8081"
+      - "--reload"
+      - "--timeout=9000"
+      - "--workers=4"
+      - "--access-logfile=-"
+      - "--error-logfile=-"
+      - "--log-level=debug"
+      - "oar.wsgi"
+    ports:
+      - "8081:8081"
+    cpus: 2
+
+  app:
+    image: node:14-slim
+    working_dir: /usr/local/src
+    volumes:
+      - ./src/app:/usr/local/src
+      # Use a Docker volume to cache node_modules
+      - node_modules:/usr/local/src/node_modules
+      - ./src/django/static:/usr/local/src/build
+      - $HOME/.aws:/root/.aws:ro
+    environment:
+      - REACT_APP_GIT_COMMIT=${REACT_APP_GIT_COMMIT:-latest}
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=100
+      - PORT=6543
+    ports:
+      - 6543:6543
+    command: yarn run start
+
+volumes:
+  node_modules:

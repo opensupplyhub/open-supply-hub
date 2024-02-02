@@ -1,0 +1,2 @@
+class GazetteerCacheTimeoutError(Exception):
+    pass
