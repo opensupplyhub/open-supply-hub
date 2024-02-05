@@ -93,7 +93,7 @@ from api.geocoding import (
     format_geocoded_address_data,
     geocode_address,
 )
-from api.test_data import parsed_city_hall_data
+from api.tests.test_data import parsed_city_hall_data
 from api.permissions import referring_host_is_allowed, referring_host
 from api.serializers import (
     ApprovedFacilityClaimSerializer,
