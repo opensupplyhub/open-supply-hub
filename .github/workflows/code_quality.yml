@@ -9,6 +9,7 @@ on:
 jobs:
   get-base-branch-fe-cov:
     runs-on: ubuntu-latest
+    environment: Quality
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,6 +28,7 @@ jobs:
           name: base-branch-fe-jest-code-cov
           path: ./src/app/coverage/lcov.info
   run-fe-code-quality:
+    environment: Quality
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -55,6 +57,7 @@ jobs:
           name: feature-branch-fe-jest-code-cov
           path: ./src/app/coverage/lcov.info
   check-fe-code-cov:
+    environment: Quality
     needs:
       - get-base-branch-fe-cov
       - run-fe-code-quality
@@ -76,6 +79,7 @@ jobs:
           app-name: React App | Jest test suite
 
   get-base-branch-be-cov:
+    environment: Quality
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -100,6 +104,7 @@ jobs:
           name: base-branch-be-unittest-code-cov
           path: ./src/django/coverage/coverage.lcov
   run-be-code-quality:
+    environment: Quality
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -127,6 +132,7 @@ jobs:
           name: feature-branch-be-unittest-code-cov
           path: ./src/django/coverage/coverage.lcov
   check-be-code-cov:
+    environment: Quality
     needs:
       - get-base-branch-be-cov
       - run-be-code-quality
@@ -148,6 +154,7 @@ jobs:
           app-name: Django App | Unittest test suite
 
   run-bash-script-linter:
+    environment: Quality
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
