@@ -1,9 +1,9 @@
+from django.test import TestCase
+
 from api.models.facility.facility_index import FacilityIndex
 from api.serializers.facility.facility_download_serializer import (
     FacilityDownloadSerializer,
 )
-
-from django.test import TestCase
 
 
 class FacilityDownloadSerializerTest(TestCase):

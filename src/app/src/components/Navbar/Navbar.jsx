@@ -87,7 +87,12 @@ export default function Navbar() {
         mobileMode ? ' mobile-nav-is-active' : ''
     }`;
 
-    const isStaging = window.ENVIRONMENT.ENVIRONMENT === 'staging';
+    // TODO: The local development error has been temporarily suppressed
+    //       with the ternary operator. The proper fix will be
+    //       implemented within the OSDEV-756 bug ticket.
+    const isStaging = window.ENVIRONMENT
+        ? window.ENVIRONMENT.ENVIRONMENT === 'staging'
+        : false;
 
     const Header = (
         <header className={headerClassName} id="header">

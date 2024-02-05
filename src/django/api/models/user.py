@@ -191,3 +191,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def has_contributor(self):
         return hasattr(self, 'contributor')
+
+    @property
+    def has_groups(self):
+        return self.groups.count() > 0
