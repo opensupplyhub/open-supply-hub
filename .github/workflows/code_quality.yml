@@ -79,7 +79,7 @@ jobs:
           app-name: React App | Jest test suite
 
   get-base-branch-be-cov:
-    environment: Quality
+    environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -104,7 +104,7 @@ jobs:
           name: base-branch-be-unittest-code-cov
           path: ./src/django/coverage/coverage.lcov
   run-be-code-quality:
-    environment: Quality
+    environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
