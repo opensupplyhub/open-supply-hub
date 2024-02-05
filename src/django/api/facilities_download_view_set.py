@@ -45,7 +45,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         queryset = FacilityIndex \
             .objects \
             .filter_by_query_params(request.query_params) \
-            .order_by('name')
+            .order_by('name', 'address', 'id')
 
         page_queryset = self.paginate_queryset(queryset)
 

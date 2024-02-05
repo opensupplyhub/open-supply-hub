@@ -1,10 +1,12 @@
-from api.models import Contributor, EmbedConfig, EmbedField
+from django.test import TestCase
+
+from api.models.contributor.contributor import Contributor
+from api.models.embed_config import EmbedConfig
+from api.models.embed_field import EmbedField
 from api.models.facility.facility_index import FacilityIndex
 from api.serializers.facility.facility_download_serializer_embed_mode import (
     FacilityDownloadSerializerEmbedMode,
 )
-
-from django.test import TestCase
 
 
 class FacilityDownloadSerializerEmbedModeTest(TestCase):

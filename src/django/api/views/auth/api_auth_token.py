@@ -11,6 +11,9 @@ class APIAuthToken(ObtainAuthToken):
     permission_classes = (IsRegisteredAndConfirmed,)
 
     def get(self, request, *args, **kwargs):
+        if not request.user.has_groups:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
         try:
             token = Token.objects.get(user=request.user)
 
@@ -24,6 +27,9 @@ class APIAuthToken(ObtainAuthToken):
             raise NotFound() from exc
 
     def post(self, request, *args, **kwargs):
+        if not request.user.has_groups:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
         token, _ = Token.objects.get_or_create(user=request.user)
 
         token_data = {
@@ -34,6 +40,9 @@ class APIAuthToken(ObtainAuthToken):
         return Response(token_data)
 
     def delete(self, request, *args, **kwargs):
+        if not request.user.has_groups:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
         try:
             token = Token.objects.get(user=request.user)
             token.delete()
