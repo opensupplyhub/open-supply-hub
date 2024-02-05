@@ -265,9 +265,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTH_USER_MODEL = 'api.User'
 
-# Api Limits
-API_FREE_REQUEST_LIMIT = 50
-
 # Caching
 # https://docs.djangoproject.com/en/3.2/topics/cache/
 

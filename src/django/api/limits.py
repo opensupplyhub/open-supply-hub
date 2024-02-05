@@ -5,7 +5,6 @@ from django.utils import timezone
 from django.db.models import F
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
-from django.conf import settings
 from django.contrib.postgres.aggregates.general import ArrayAgg
 
 from api.models import (Contributor, RequestLog, ContributorNotifications,
@@ -32,6 +31,39 @@ def get_start_date(period_start_date):
     return start_date
 
 
+def create_api_block(contributor, limit, actual, start_date):
+    until = start_date + relativedelta(years=1)
+    ApiBlock.objects.create(contributor=contributor,
+                            until=until, active=True,
+                            limit=limit, actual=actual)
+
+
+def update_api_block(apiBlock: ApiBlock, request_count, is_active):
+    with transaction.atomic():
+        apiBlock.actual = request_count
+        apiBlock.active = is_active
+        apiBlock.save()
+
+
+def block_free_api_contributor(contributor,
+                               request_count,
+                               start_date,
+                               at_datetime):
+    apiBlock = get_api_block(contributor)
+    # If there is no current API block
+    if apiBlock is None or apiBlock.until < at_datetime:
+        create_api_block(contributor,
+                         request_count,
+                         request_count,
+                         start_date)
+    else:
+        if apiBlock.active:
+            return
+        if (apiBlock.grace_limit is None or
+                request_count > apiBlock.grace_limit):
+            update_api_block(apiBlock, request_count, is_active=True)
+
+
 @transaction.atomic
 def check_contributor_api_limit(at_datetime, c):
     try:
@@ -50,12 +82,25 @@ def check_contributor_api_limit(at_datetime, c):
         limit = apiLimit.yearly_limit
         start_date = get_start_date(apiLimit.period_start_date)
     except ObjectDoesNotExist:
-        limit = settings.API_FREE_REQUEST_LIMIT
+        limit = None
         start_date = get_start_date(min(log_dates))
-    if limit == 0:
-        return
+
     logs_for_period = [x for x in log_dates if x >= start_date]
     request_count = len(logs_for_period)
+    if limit is None:
+        block_free_api_contributor(contributor,
+                                   request_count,
+                                   start_date,
+                                   at_datetime)
+        return
+
+    apiBlock = get_api_block(contributor)
+    if limit == 0:
+        if (apiBlock is not None and
+            apiBlock.active and
+                apiBlock.until > at_datetime):
+            update_api_block(apiBlock, request_count, is_active=False)
+        return
     if request_count > (limit * .9) and request_count <= limit:
         warning_sent = notification.api_limit_warning_sent_on
         # If no warning was sent in this period
@@ -65,13 +110,9 @@ def check_contributor_api_limit(at_datetime, c):
             notification.api_limit_warning_sent_on = at_datetime
             notification.save()
     if request_count > limit:
-        apiBlock = get_api_block(contributor)
         # If there is no current API block
         if apiBlock is None or apiBlock.until < at_datetime:
-            until = start_date + relativedelta(years=1)
-            ApiBlock.objects.create(contributor=contributor,
-                                    until=until, active=True,
-                                    limit=limit, actual=request_count)
+            create_api_block(contributor, limit, request_count, start_date)
             exceeded_sent = notification.api_limit_exceeded_sent_on
             if (exceeded_sent is None or
                     exceeded_sent.month < at_datetime.month):
@@ -81,19 +122,22 @@ def check_contributor_api_limit(at_datetime, c):
                     at_datetime)
                 notification.save()
         else:
-            if apiBlock.active or apiBlock.grace_limit is None:
+            if apiBlock.active:
+                return
+            if apiBlock.active is False and apiBlock.grace_limit is None:
+                update_api_block(apiBlock, request_count, is_active=True)
                 return
             grace_limit = apiBlock.grace_limit
             if request_count > grace_limit:
-                with transaction.atomic():
-                    apiBlock.actual = request_count
-                    apiBlock.active = True
-                    apiBlock.save()
+                update_api_block(apiBlock, request_count, is_active=True)
                 send_api_notice(contributor, limit, grace_limit)
                 send_admin_api_notice(contributor.name, limit, grace_limit)
                 notification.api_grace_limit_exceeded_sent_on = (
                     at_datetime)
                 notification.save()
+    else:
+        if apiBlock is not None and apiBlock.active:
+            update_api_block(apiBlock, request_count, is_active=False)
 
 
 def check_api_limits(at_datetime):
