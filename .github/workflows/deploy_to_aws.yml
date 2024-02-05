@@ -434,14 +434,3 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ env.aws_secret_key }}
           AWS_DEFAULT_REGION: "eu-west-1"
       
-      # - name: Create or update kafka topics
-      #   uses: ./.github/actions/aws-cli
-      #   with:
-      #     args: aws ecs run-task --cluster ${{ env.aws_cluster }} --task-definition ${{ env.task_defenition }} --launch-type="FARGATE"  --network-configuration "awsvpcConfiguration={ assignPublicIp="DISABLED", securityGroups=["${{ env.SECURITY_GROUP}}"], subnets=["${{ env.SUBNET }}"]}"
-      #   env:
-      #     AWS_ACCESS_KEY_ID: ${{ env.aws_id_key }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ env.aws_secret_key }}
-      #     AWS_DEFAULT_REGION: "eu-west-1"
-      #     SECURITY_GROUP: sg-0553aac4725c7bdaf
-      #     task_defenition: OpenSupplyHubStagingAppKafka:2
-      #     SUBNET: subnet-05049aa71dfeec363
