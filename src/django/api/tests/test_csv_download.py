@@ -1,4 +1,4 @@
-from api.helpers import parse_download_date
+from api.helpers.helpers import parse_download_date
 from rest_framework.test import APITestCase
 
 
