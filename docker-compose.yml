@@ -152,7 +152,6 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
-        restart: true
     ports:
       - "84:84"
     environment:
