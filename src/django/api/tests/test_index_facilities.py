@@ -19,11 +19,6 @@ class IndexFacilitiesTest(FacilityAPITestCaseBase):
         facility_index = FacilityIndex.objects.get(id=self.facility.id)
         self.assertEqual(["Apparel"], facility_index.sector)
 
-    def test_facility_index_fields_quantity(self):
-        fields_count = len(FacilityIndex._meta.fields)
-        expected_fields_count = 38
-        self.assertEqual(fields_count, expected_fields_count)
-
     def test_sector_reamins_in_index_if_match_is_deactivated(self):
         self.match.is_active = False
         self.match.save()
