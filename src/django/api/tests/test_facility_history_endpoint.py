@@ -13,6 +13,7 @@ from api.models import (
     FacilityMatch,
     Source,
 )
+from api.facility_history import describe_change_value
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 from waffle.testutils import override_flag, override_switch
 
@@ -1136,3 +1137,13 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
             history_response.status_code,
             200,
         )
+
+
+class DescribeChangeValueTests(FacilityAPITestCaseBase):
+    def check_describe_change_value(self, **kwargs):
+        with self.assertRaises(TypeError):
+            json.loads(['Socks'])
+
+    def check_describe_change_value_with_json_dump(self, **kwargs):
+        self.assertEqual(['Socks'],
+                         describe_change_value('ppe_product_types', ['Socks']))

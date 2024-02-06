@@ -23,7 +23,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe architecture/environment changes here.*
 
 ### Bugfix
-* *Describe bugfix here.*
+* [OSDEV-673](https://opensupplyhub.atlassian.net/browse/OSDEV-673) found and fixed “TypeError: the JSON object must be str, bytes or bytearray, not list“
 
 ### What's new
 * Make login non-case sensitive. [OSDEV-628](https://opensupplyhub.atlassian.net/browse/OSDEV-628). When the user creates an account email saving in lowercase. User  could login with any variations of casing as long as the characters are the same.
