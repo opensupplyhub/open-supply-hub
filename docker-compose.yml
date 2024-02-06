@@ -16,10 +16,14 @@ services:
       - ./dumps:/dumps
     ports:
       - "5432:5432"
+    networks:
+      - my-app
 
   memcached:
     image: memcached:1.6-alpine
     command: -v -I 8m -m 256
+    networks:
+      - my-app
 
   django:
     image: opensupplyhub
@@ -35,9 +39,11 @@ services:
       - DJANGO_ENV=Development
       - DJANGO_SECRET_KEY=secret
       - DJANGO_LOG_LEVEL=INFO
-      - AWS_PROFILE
+      - AWS_PROFILE=${AWS_PROFILE:-open-apparel-registry}
       - OAR_CLIENT_KEY=
       - NOTIFICATION_EMAIL_TO=notification@example.com
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_TOPIC_DEDUPE_BASIC_NAME=dedupe.hub.topic
       # NOTE the AWS_S3* variables are only used for testing s3 in development.
       # The deployed application uses a policy attached to the ECS task instead
       # of using keys.
@@ -56,17 +62,20 @@ services:
         condition: service_healthy
       memcached:
         condition: service_started
+      kafka:
+        condition: service_healthy
     command:
       - "-b :8081"
       - "--reload"
-      - "--timeout=9000"
-      - "--workers=4"
+      - "--timeout=90"
       - "--access-logfile=-"
       - "--error-logfile=-"
       - "--log-level=debug"
       - "oar.wsgi"
     ports:
       - "8081:8081"
+    networks:
+      - my-app
     cpus: 2
 
   app:
@@ -86,6 +95,92 @@ services:
     ports:
       - 6543:6543
     command: yarn run start
+    networks:
+      - my-app
+
+  zookeeper:
+    image: "bitnami/zookeeper:latest"
+    container_name: "zookeeper"
+    ports:
+      - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    networks:
+      - my-app
+
+  kafka:
+    image: "bitnami/kafka:latest"
+    container_name: "kafka"
+    ports:
+      - "9092:9092"
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    depends_on:
+      - zookeeper
+    healthcheck:
+      test: [ "CMD-SHELL", "kafka-topics.sh --bootstrap-server kafka:9092 --list" ]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    networks:
+      - my-app
+  
+  init-kafka:
+    image: confluentinc/cp-kafka:6.1.1
+    depends_on:
+      - kafka
+    entrypoint: [ '/bin/sh', '-c' ]
+    command: |
+      "
+      # blocks until kafka is reachable
+      kafka-topics --bootstrap-server kafka:9092 --list
+      echo -e 'Creating kafka topics'
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic dedupe.hub.topic --replication-factor 1 --partitions 1
+
+      echo -e 'Successfully created the following topics:'
+      kafka-topics --bootstrap-server kafka:9092 --list
+      "
+    networks:
+      - my-app
+
+  api-app:
+    image: api-app
+    build:
+      context: ./src/dedupe-hub/api
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "84:84"
+    environment:
+      - DEDUPE_HUB_LIVE=True
+      - DEDUPE_HUB_NAME=Dedupe_Hub_Origin
+      - DEDUPE_HUB_VERSION=Origin
+      - BOOTSTRAP_SERVERS=kafka:9092
+      - SECURITY_PROTOCOL=PLAINTEXT
+      - CONSUMER_GROUP_ID=dedupe.hub.grp-0
+      - CONSUMER_CLIENT_ID=dedupe.hub
+      - TOPIC_DEDUPE_BASIC_NAME=dedupe.hub.topic
+      - ENV="Development"
+      - ROLLBAR_SERVER_SIDE_ACCESS_TOKEN=""
+      - POSTGRES_HOST=database
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=openapparelregistry
+      - POSTGRES_PASSWORD=openapparelregistry
+      - POSTGRES_DB=openapparelregistry
+      - GIT_COMMIT=Unknown
+    command: uvicorn app.main:app --host 0.0.0.0 --port 84 --reload --workers 8
+    networks:
+      - my-app
 
 volumes:
   node_modules:
+
+networks:
+  my-app:
+    driver: bridge
+    name: db_network
