@@ -36,15 +36,6 @@ cp .env.sample .env
 ```
 docker compose -f docker-compose.dd.yml up --build -d
 ```
-- Clone the Dedupe Hub [repo](https://github.com/opensupplyhub/dedupe-hub)
-- Open docker-compose.yml file on Dedupe Hub and change context path to your own
-```
-api-app:
-    image: api-app
-    build:
-      context: {root_dedupe_hub}/api
-      dockerfile: Dockerfile
-```
 
 ### Google Maps Platform
 
@@ -75,11 +66,11 @@ then reset database and repopulate with fixture data that including parse & geoc
 ```
 scripts/reset_database
 ```
-Re-run & build docker container
+Re-run & build Docker containers
 ```
 docker compose -f docker-compose.dd.yml up --build -d
 ```
-Run docker containers on Dedupe Hub before “match” process
+Run Docker containers on Dedupe Hub before “match” process
 ```
 docker compose up -d
 ```
