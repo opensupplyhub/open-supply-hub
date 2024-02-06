@@ -60,7 +60,7 @@ The following list of environments could support [Requirements and key results](
 1. Feature Environment:
     - The virtual environment that runs code quality checks with the help of GitHub runners on each change in the GitHub pull request. It doesn't utilize any AWS resources.
 2. [Development Environment](http://dev.os-hub.net):
-    - The environment intended for quick and preliminary tests of new features and fixed bugs on seeded data by software developers immediately after merging into the `ogr/develop` branch. This environment uses minimal AWS resources.
+    - The environment intended for quick and preliminary tests of new features and fixed bugs on seeded data by software developers immediately after merging into the `main` branch. This environment uses minimal AWS resources.
 3. [Test Environment](http://test.os-hub.net):
     - The environment designed for testing new features and fixed bugs by QA and software engineers on real datasets twice a week. This environment utilizes average AWS resources and is automatically deployed twice a week.
 4. [Pre-Prod Environment](https://preprod.os-hub.net/):
@@ -85,17 +85,17 @@ We follow semantic versioning (SemVer) for our releases. The version number is s
 
 #### Feature branches
 
-Each new feature should reside in its own branch, which can be pushed to the central repository for backup and collaboration. Feature branches should use `ogr/develop` as their parent branch. When a feature is complete, it gets merged back into `ogr/develop`. Features should never interact directly with release branches or release tags.
+Each new feature should reside in its own branch, which can be pushed to the central repository for backup and collaboration. Feature branches should use `main` as their parent branch. When a feature is complete, it gets merged back into `main`. Features should never interact directly with release branches or release tags.
 
 #### Release branches and tags
 
-Once `ogr/develop` has acquired enough features for a release (or a predetermined release date is approaching), you run the Release [Init] GitHub workflow that creates a new release branch with a version number for the release. The release version number for release branches includes only the major and minor versions.
+Once `main` has acquired enough features for a release (or a predetermined release date is approaching), you run the Release [Init] GitHub workflow that creates a new release branch with a version number for the release. The release version number for release branches includes only the major and minor versions.
 
 When the release branch is ready for release, the Release [Deploy] workflow should be run for each environment, such as sandbox and production. This workflow will create two Git tags, each with a version number.
 
 #### Hotfix branches
 
-Hotfix branches are utilized to quickly patch production and sandbox releases. They resemble release branches and feature branches, except they are based on a release branch instead of `ogr/develop`. This is the only branch that should fork directly from a release branch. As soon as the fix is complete, it should be merged into the release branch and, if the fix isn't dirty, into `ogr/develop` as well. After manually running the Release [Deploy] workflow, two new tags with increased patch versions will be created, and the new version will be shipped to sandbox and production environments.
+Hotfix branches are utilized to quickly patch production and sandbox releases. They resemble release branches and feature branches, except they are based on a release branch instead of `main`. This is the only branch that should fork directly from a release branch. As soon as the fix is complete, it should be merged into the release branch and, if the fix isn't dirty, into `main` as well. After manually running the Release [Deploy] workflow, two new tags with increased patch versions will be created, and the new version will be shipped to sandbox and production environments.
 
 
 ## Development and release of the new release version
@@ -118,7 +118,7 @@ Make sure that:
 
 1. Code freeze occurs every Monday in the fourth week of new release version development. To enhance communication within the team, all stakeholders must be notified about the code freeze two working days before the code freeze by the responsible person for the release.
 2.  On the day of the code freeze, the responsible person has to verify that the pre-prod environment is up and running. The responsible person needs to change the database name of the existing `opensupplyhub-enc-pp` database to `opensupplyhub-enc-pp-current` via Amazon RDS in the Databases section.
-3. Once the renaming is completed, they need to run the Release [Init] workflow from the ogr/develop branch, specifying the major and minor versions of the release. Subsequently, the `releases/vX.Y` branch will be created and automatically deployed to the running pre-prod environment via the Deploy to AWS workflow.
+3. Once the renaming is completed, they need to run the Release [Init] workflow from the main branch, specifying the major and minor versions of the release. Subsequently, the `releases/vX.Y` branch will be created and automatically deployed to the running pre-prod environment via the Deploy to AWS workflow.
 4. The reposnsible person should go to the Databases section of Amazon RDS again and delete the newly created `opensupplyhub-enc-pp` database. After successful deletion, rename `opensupplyhub-enc-pp-current` to `opensupplyhub-enc-pp`.
 5. The final step is to follow the instructions outlined in the Release section of the [RELEASE-NOTES.md](./RELEASE-NOTES.md) file for the deployed version. In case there is a need to run a command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Migration+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5DHow-to-correctly-run-migrations-for-our-four-environments%3F---Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
 

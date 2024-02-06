@@ -1,8 +1,8 @@
 # OS Hub environments
 | ### | Feature | Dev | Test | Pre-prod (staging) | Staging (sandbox) | Production |
 | --- | --- | --- | --- | --- | --- | --- |
-| Trigger | Push to feature branch | Merging to ogr/develop | Schedule | Merging to releases/vX.Y | Manual | Manual |
-| Branch | OSHUB-\* | ogr/develop | ogr/develop | releases/vX.Y | releases/vX.Y | releases/vX.Y |
+| Trigger | Push to feature branch | Merging to main | Schedule | Merging to releases/vX.Y | Manual | Manual |
+| Branch | OSHUB-\* | main | main | releases/vX.Y | releases/vX.Y | releases/vX.Y |
 | Database | Seeded | Seeded | \- Anonymized copy from production | \- Anonymized copy from production | \- staging-db | \- production-db |
 | DB Backup | \- None | \- None | \- None | \- None | \- Create | \- Create |
 | DB Migration | \- Reset DB | \- Migrate to the latest(preferable)<br>\- Reset DB | \- Migrate to the latest | \- Migrate to the latest | \- Migrate to the latest | \- Migrate to latest |
