@@ -330,3 +330,10 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         other_addresses = data["properties"]["other_addresses"]
         self.assertEqual(len(other_addresses), 2)
         self.assertIn(self.facility.address, other_addresses)
+
+    def test_get_other_names(self):
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        serializer = FacilityIndexDetailsSerializer()
+        expected_other_names = {self.name_two}
+        actual_other_names = serializer.get_other_names(facility_index)
+        self.assertEqual(expected_other_names, actual_other_names)
