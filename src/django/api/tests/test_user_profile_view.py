@@ -22,7 +22,10 @@ class UserProfileViewTest(BaseFacilityListTest):
 
     def test_user_profile_with_approved_list(self):
         approved_list = FacilityList.objects.create(
-            header="header", file_name="one", name="Approved List", status=FacilityList.APPROVED
+            header="header",
+            file_name="one",
+            name="Approved List",
+            status=FacilityList.APPROVED
         )
 
         Source.objects.create(
@@ -46,7 +49,10 @@ class UserProfileViewTest(BaseFacilityListTest):
 
     def test_user_profile_with_rejected_list(self):
         rejected_list = FacilityList.objects.create(
-            header="header", file_name="one", name="Rejected List", status=FacilityList.REJECTED
+            header="header",
+            file_name="one",
+            name="Rejected List",
+            status=FacilityList.REJECTED
         )
 
         Source.objects.create(
