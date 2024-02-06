@@ -62,6 +62,8 @@ services:
         condition: service_healthy
       memcached:
         condition: service_started
+      kafka:
+        condition: service_healthy
     command:
       - "-b :8081"
       - "--reload"
