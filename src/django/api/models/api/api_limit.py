@@ -5,8 +5,16 @@ from django.utils import timezone
 
 class ApiLimit(models.Model):
     """
-    Stores the number of requests a Contributor can make monthly.
+    Stores the number of requests a Contributor can make monthly/yearly.
     """
+    MONTHLY = 'MONTHLY'
+    YEARLY = 'YEARLY'
+
+    RENEWAL_PERIOD_CHOICES = (
+        (MONTHLY, MONTHLY),
+        (YEARLY, YEARLY)
+    )
+
     contributor = models.OneToOneField(
         'Contributor',
         null=False,
@@ -21,6 +29,13 @@ class ApiLimit(models.Model):
         null=False,
         default=timezone.now,
         help_text='The date when the contract began.')
+    renewal_period = models.CharField(
+        max_length=200,
+        null=False,
+        blank=True,
+        choices=RENEWAL_PERIOD_CHOICES,
+        help_text=('Any limit set up on the 29th, 30th, or 31st '
+                   'will renew on the 1st of the following month.'))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
