@@ -1138,8 +1138,6 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
             200,
         )
 
-
-class DescribeChangeValueTests(FacilityAPITestCaseBase):
     def test_describe_change_value(self, **kwargs):
         with self.assertRaises(TypeError):
             json.loads(['Socks'])
