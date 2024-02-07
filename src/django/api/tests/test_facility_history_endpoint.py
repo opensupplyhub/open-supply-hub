@@ -1140,10 +1140,10 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
 
 
 class DescribeChangeValueTests(FacilityAPITestCaseBase):
-    def check_describe_change_value(self, **kwargs):
+    def test_describe_change_value(self, **kwargs):
         with self.assertRaises(TypeError):
             json.loads(['Socks'])
 
-    def check_describe_change_value_with_json_dump(self, **kwargs):
+    def test_describe_change_value_with_json_dump(self, **kwargs):
         self.assertEqual(['Socks'],
                          describe_change_value('ppe_product_types', ['Socks']))
