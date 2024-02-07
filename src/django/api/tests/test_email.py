@@ -31,7 +31,7 @@ class UserEmailLowerTestCase(APITestCase):
         Contributor.objects.create(name=self.name_for_accented_email,
                                    admin=self.user_with_accented_email)
 
-    def check_email_case(self, **kwargs):
+    def test_email_case(self, **kwargs):
         token = Token.objects.create(user=self.user)
         path = reverse('facility-list-list')
         response = self.client.get(
@@ -44,10 +44,10 @@ class UserEmailLowerTestCase(APITestCase):
         user = User.objects.get(email__iexact=self.email)
         self.assertEqual(self.lower_email, user.email)
 
-    def check_lower_email_with_accented_characters(self, **kwargs):
+    def test_lower_email_with_accented_characters(self, **kwargs):
         user = User.objects.get(email__iexact=self.accented_email)
         self.assertEqual(self.lower_accented_email, user.email)
 
-    def check_django_not_allow_create_duplicates(self, **kwargs):
+    def test_django_not_allow_create_duplicates(self, **kwargs):
         with self.assertRaises(IntegrityError):
             User.objects.create(email=self.lower_accented_email)
