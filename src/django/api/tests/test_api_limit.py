@@ -17,8 +17,10 @@ class ApiLimitTest(TestCase):
     def setUp(self):
         self.email_one = "one@example.com"
         self.email_two = "two@example.com"
+        self.email_three_free = "three.free@example.com"
         self.user_one = User.objects.create(email=self.email_one)
         self.user_two = User.objects.create(email=self.email_two)
+        self.user_three_free = User.objects.create(email=self.email_three_free)
 
         self.contrib_one = Contributor.objects.create(
             admin=self.user_one,
@@ -29,6 +31,11 @@ class ApiLimitTest(TestCase):
         self.contrib_two = Contributor.objects.create(
             admin=self.user_two,
             name="contributor two",
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+        self.contrib_three_free = Contributor.objects.create(
+            admin=self.user_three_free,
+            name="contributor three free",
             contrib_type=Contributor.OTHER_CONTRIB_TYPE,
         )
         now = timezone.now()
@@ -136,4 +143,130 @@ class ApiLimitTest(TestCase):
         )
         self.assertEqual(
             notice_two.api_limit_exceeded_sent_on, self.notification_time
+        )
+
+    def test_free_user_block_create(self):
+        RequestLog.objects.create(user=self.user_three_free, response_code=200)
+
+        check_api_limits(timezone.now())
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).count(), 1
+        )
+
+    def test_free_user_block_activate(self):
+        ApiBlock.objects.create(
+            contributor=self.contrib_three_free,
+            until=get_end_of_year(self.notification_time),
+            active=False,
+            limit=1,
+            actual=1,
+        )
+
+        RequestLog.objects.create(user=self.user_three_free, response_code=200)
+
+        check_api_limits(timezone.now())
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).count(), 1
+        )
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).first().active, True
+        )
+
+    def test_free_user_become_unlimited(self):
+        ApiBlock.objects.create(
+            contributor=self.contrib_three_free,
+            until=get_end_of_year(self.notification_time),
+            active=False,
+            limit=1,
+            actual=1,
+        )
+
+        RequestLog.objects.create(user=self.user_three_free, response_code=200)
+
+        check_api_limits(timezone.now())
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).count(), 1
+        )
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).first().active, True
+        )
+
+        ApiLimit.objects.create(
+            contributor=self.contrib_three_free,
+            yearly_limit=0,
+            period_start_date=timezone.now(),
+        )
+
+        check_api_limits(timezone.now())
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).count(), 1
+        )
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).first().active, False
+        )
+
+    def test_free_user_become_paid(self):
+        ApiBlock.objects.create(
+            contributor=self.contrib_three_free,
+            until=get_end_of_year(self.notification_time),
+            active=False,
+            limit=1,
+            actual=1,
+        )
+
+        RequestLog.objects.create(user=self.user_three_free, response_code=200)
+
+        check_api_limits(timezone.now())
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).count(), 1
+        )
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).first().active, True
+        )
+
+        ApiLimit.objects.create(
+            contributor=self.contrib_three_free,
+            yearly_limit=500,
+            period_start_date=timezone.now(),
+        )
+
+        check_api_limits(timezone.now())
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).count(), 1
+        )
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).first().active, False
         )
