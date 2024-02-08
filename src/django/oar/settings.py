@@ -16,7 +16,9 @@ import json
 
 from django.core.exceptions import ImproperlyConfigured
 from corsheaders.defaults import default_headers
+from contricleaner.api.facility_list_item_validator import FacilityListItemValidator
 
+CONTRI_CLENAR = FacilityListItemValidator()
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
