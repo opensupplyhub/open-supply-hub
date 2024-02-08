@@ -23,11 +23,19 @@ def get_api_block(contributor):
                 contributor=contributor).order_by('-until').first()
 
 
-def get_start_date(period_start_date):
+def get_start_date(period_start_date, renewal_period):
     start_date = period_start_date
-    one_year_in_past = datetime.now(tz=timezone.utc) - relativedelta(years=1)
-    while (start_date < one_year_in_past):
-        start_date = start_date + relativedelta(years=1)
+    if renewal_period == 'MONTHLY':
+        one_month_in_past = datetime.now(tz=timezone.utc) - relativedelta(months=1)
+        while (start_date < one_month_in_past):
+            start_date = start_date + relativedelta(months=1)
+        return start_date
+    if renewal_period == 'YEARLY':
+        one_year_in_past = datetime.now(tz=timezone.utc) - relativedelta(years=1)
+        while (start_date < one_year_in_past):
+            start_date = start_date + relativedelta(years=1)
+        return start_date
+
     return start_date
 
 
@@ -80,10 +88,11 @@ def check_contributor_api_limit(at_datetime, c):
     try:
         apiLimit = ApiLimit.objects.get(contributor=contributor)
         limit = apiLimit.period_limit
-        start_date = get_start_date(apiLimit.period_start_date)
+        renewal_period = apiLimit.renewal_period
+        start_date = get_start_date(apiLimit.period_start_date, renewal_period)
     except ObjectDoesNotExist:
         limit = None
-        start_date = get_start_date(min(log_dates))
+        start_date = get_start_date(min(log_dates), None)
 
     logs_for_period = [x for x in log_dates if x >= start_date]
     request_count = len(logs_for_period)
