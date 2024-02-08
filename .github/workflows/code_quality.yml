@@ -66,17 +66,17 @@ jobs:
       - name: Download Jest code cov reports
         uses: actions/download-artifact@v4
         with:
-          pattern: '*-jest-code-cov'
+          pattern: "*-jest-code-cov"
       - name: Verify Jest code cov
         uses: barecheck/code-coverage-action@v1
         with:
           barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
-          lcov-file: './feature-branch-fe-jest-code-cov/lcov.info'
-          base-lcov-file: './base-branch-fe-jest-code-cov/lcov.info'
+          lcov-file: "./feature-branch-fe-jest-code-cov/lcov.info"
+          base-lcov-file: "./base-branch-fe-jest-code-cov/lcov.info"
           minimum-ratio: 0
-          maximum-diff: -0.05         
+          maximum-diff: -0.05
           send-summary-comment: true
-          show-annotations: 'warning'
+          show-annotations: "warning"
           app-name: React App | Jest test suite
 
   get-base-branch-be-cov:
@@ -142,17 +142,17 @@ jobs:
       - name: Download unittest code cov reports
         uses: actions/download-artifact@v4
         with:
-          pattern: '*-unittest-code-cov'
+          pattern: "*-unittest-code-cov"
       - name: Verify unittest code cov
         uses: barecheck/code-coverage-action@v1
         with:
           barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
-          lcov-file: './feature-branch-be-unittest-code-cov/coverage.lcov'
-          base-lcov-file: './base-branch-be-unittest-code-cov/coverage.lcov'
+          lcov-file: "./feature-branch-be-unittest-code-cov/coverage.lcov"
+          base-lcov-file: "./base-branch-be-unittest-code-cov/coverage.lcov"
           minimum-ratio: 0
-          maximum-diff: -0.05          
+          maximum-diff: -0.05
           send-summary-comment: true
-          show-annotations: 'warning'
+          show-annotations: "warning"
           app-name: Django App | Unittest test suite
 
   run-bash-script-linter:
