@@ -1,3 +1,5 @@
+from unittest.mock import Mock, patch
+
 from api.models import (
     Contributor,
     Facility,
@@ -335,5 +337,21 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         facility_index = FacilityIndex.objects.get(id=self.facility.id)
         serializer = FacilityIndexDetailsSerializer()
         expected_other_names = {self.name_two}
+        actual_other_names = serializer.get_other_names(facility_index)
+        self.assertEqual(expected_other_names, actual_other_names)
+
+    def mocked_is_embed_mode_active(serializer):
+        return True
+
+    @patch(
+        'api.serializers.utils.is_embed_mode_active',
+        mocked_is_embed_mode_active,
+    )
+    def test_get_other_names_embed_mode_active(self):
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        serializer = FacilityIndexDetailsSerializer(
+            context={'request': Mock(query_params={'embed': '1'})}
+        )
+        expected_other_names = []
         actual_other_names = serializer.get_other_names(facility_index)
         self.assertEqual(expected_other_names, actual_other_names)
