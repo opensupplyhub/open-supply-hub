@@ -161,4 +161,3 @@ jobs:
         uses: actions/checkout@v4
       - name: Run the shellcheck linter check
         run: shellcheck scripts/*
-        
