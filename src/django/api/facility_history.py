@@ -139,7 +139,8 @@ def create_geojson_diff_for_location_change(entry):
 def describe_change_value(field_name, value):
     if field_name == 'ppe_product_types' and value:
         import json
-        return json.loads(value)
+        str_JSON = json.dumps(value)
+        return json.loads(str_JSON)
     return value
 
 
