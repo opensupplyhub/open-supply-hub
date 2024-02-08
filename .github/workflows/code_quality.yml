@@ -73,7 +73,8 @@ jobs:
           barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
           lcov-file: './feature-branch-fe-jest-code-cov/lcov.info'
           base-lcov-file: './base-branch-fe-jest-code-cov/lcov.info'
-          minimum-ratio: 0.05
+          minimum-ratio: 0
+          maximum-diff: -0.05         
           send-summary-comment: true
           show-annotations: 'warning'
           app-name: React App | Jest test suite
@@ -148,7 +149,8 @@ jobs:
           barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
           lcov-file: './feature-branch-be-unittest-code-cov/coverage.lcov'
           base-lcov-file: './base-branch-be-unittest-code-cov/coverage.lcov'
-          minimum-ratio: 0.05
+          minimum-ratio: 0
+          maximum-diff: -0.05          
           send-summary-comment: true
           show-annotations: 'warning'
           app-name: Django App | Unittest test suite
