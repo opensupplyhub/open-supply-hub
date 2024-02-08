@@ -19,5 +19,15 @@ class Migration(migrations.Migration):
             model_name='historicalapilimit',
             name='renewal_period',
             field=models.CharField(blank=True, choices=[('MONTHLY', 'MONTHLY'), ('YEARLY', 'YEARLY')], help_text='Any limit set up on the 29th, 30th, or 31st will renew on the 1st of the following month.', max_length=200),
-        )
+        ),
+        migrations.RenameField(
+            model_name='apilimit',
+            old_name='yearly_limit',
+            new_name='period_limit',
+        ),
+        migrations.RenameField(
+            model_name='historicalapilimit',
+            old_name='yearly_limit',
+            new_name='period_limit',
+        ),
     ]

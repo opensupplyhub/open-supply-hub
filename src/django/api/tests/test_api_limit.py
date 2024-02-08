@@ -41,13 +41,13 @@ class ApiLimitTest(TestCase):
         now = timezone.now()
         self.limit_one = ApiLimit.objects.create(
             contributor=self.contrib_one,
-            yearly_limit=10,
+            period_limit=10,
             period_start_date=now,
         )
 
         self.limit_two = ApiLimit.objects.create(
             contributor=self.contrib_two,
-            yearly_limit=10,
+            period_limit=10,
             period_start_date=now,
         )
 
@@ -208,7 +208,7 @@ class ApiLimitTest(TestCase):
 
         ApiLimit.objects.create(
             contributor=self.contrib_three_free,
-            yearly_limit=0,
+            period_limit=0,
             period_start_date=timezone.now(),
         )
 
@@ -253,7 +253,7 @@ class ApiLimitTest(TestCase):
 
         ApiLimit.objects.create(
             contributor=self.contrib_three_free,
-            yearly_limit=500,
+            period_limit=500,
             period_start_date=timezone.now(),
         )
 

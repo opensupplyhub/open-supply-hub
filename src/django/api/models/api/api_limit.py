@@ -21,10 +21,10 @@ class ApiLimit(models.Model):
         on_delete=models.CASCADE,
         help_text='The contributor to whom the limit applies.'
     )
-    yearly_limit = models.PositiveIntegerField(
+    period_limit = models.PositiveIntegerField(
         null=False,
         blank=False,
-        help_text='The number of requests a contributor can make per year.')
+        help_text='The number of requests a contributor can make per month/year.')
     period_start_date = models.DateTimeField(
         null=False,
         default=timezone.now,
@@ -46,5 +46,5 @@ class ApiLimit(models.Model):
         return (
             f'ApiLimit {self.id} - {self.contributor.name}'
             f'({self.contributor.id})'
-            f' - limit {self.yearly_limit}'
+            f' - limit {self.period_limit}'
         )

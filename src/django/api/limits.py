@@ -79,7 +79,7 @@ def check_contributor_api_limit(at_datetime, c):
         .get_or_create(contributor=contributor)
     try:
         apiLimit = ApiLimit.objects.get(contributor=contributor)
-        limit = apiLimit.yearly_limit
+        limit = apiLimit.period_limit
         start_date = get_start_date(apiLimit.period_start_date)
     except ObjectDoesNotExist:
         limit = None
