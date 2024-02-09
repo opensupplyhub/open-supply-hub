@@ -53,11 +53,7 @@ See [Getting Started with Google Maps Platform](https://developers.google.com/ma
  _Note: Google Maps Platfom requires creation of a billing account, but [they offer](https://cloud.google.com/maps-platform/pricing/) $200 of free monthly usage, which is enough to support development._
 
 
-### Kick-off & start development
-- Build docker container 
-```
-docker compose up --build
-```
+### Kick-off & start local development
 - Install node and create database structure
 ```
 scripts/update
@@ -66,19 +62,19 @@ scripts/update
 ```
 scripts/reset_database
 ```
-- Re-run & build Docker containers
-```
-docker compose up --build
-```
-- Run Docker containers
-```
-docker compose up -d
-```
 - Start deduplication of seeded lists to create new facilities
 ```
 ./scripts/manage matchfixtures
 ```
+- Start Docker containers
+```
+docker compose up
+```
+
 Now you are ready for quick start the app.
+```
+open http://localhost:6543
+```
 
 ### Restore the DB dump in the local Docker DB container
 
