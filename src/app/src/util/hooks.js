@@ -12,7 +12,9 @@ import {
     maxVectorTileFacilitiesGridZoom,
 } from './constants.facilitiesMap';
 
-export default function useUpdateLeafletMapImperatively(
+import { CONFIRM_ACTION, MERGE_ACTION, REJECT_ACTION } from './constants';
+
+export function useUpdateLeafletMapImperatively(
     resetButtonClickCount,
     {
         osID,
@@ -141,4 +143,105 @@ export default function useUpdateLeafletMapImperatively(
     }, [data, shouldPanMapToFacilityDetails, isVectorTileMap]);
 
     return mapRef;
+}
+
+export function useCheckboxManager() {
+    const [action, setAction] = useState(CONFIRM_ACTION);
+    const [activeCheckboxes, setActiveCheckboxes] = useState([]);
+    const [activeSubmitButton, setActiveSubmitButton] = useState(false);
+
+    const handleConfirmSelection = item => {
+        setActiveCheckboxes(
+            activeCheckboxes.some(activeItem => activeItem.id === item.id)
+                ? []
+                : [item],
+        );
+    };
+
+    const resetCheckboxes = () => {
+        setActiveCheckboxes([]);
+    };
+
+    const handleRejectSelection = item => {
+        const currentIndex = activeCheckboxes.findIndex(
+            activeItem => activeItem.id === item.id,
+        );
+        const newActiveCheckboxes = [...activeCheckboxes];
+
+        if (currentIndex === -1) {
+            newActiveCheckboxes.push(item);
+        } else {
+            newActiveCheckboxes.splice(currentIndex, 1);
+        }
+        setActiveCheckboxes(newActiveCheckboxes);
+    };
+
+    const handleMergeSelection = item => {
+        const currentIndex = activeCheckboxes.findIndex(
+            activeItem => activeItem.id === item.id,
+        );
+        const newActiveCheckboxes = [...activeCheckboxes];
+
+        if (currentIndex === -1 && newActiveCheckboxes.length < 2) {
+            newActiveCheckboxes.push(item);
+        } else if (currentIndex !== -1) {
+            newActiveCheckboxes.splice(currentIndex, 1);
+        }
+        setActiveCheckboxes(newActiveCheckboxes);
+    };
+
+    const toggleCheckbox = item => {
+        switch (action) {
+            case CONFIRM_ACTION:
+                handleConfirmSelection(item);
+                break;
+            case REJECT_ACTION:
+                handleRejectSelection(item);
+                break;
+            case MERGE_ACTION:
+                handleMergeSelection(item);
+                break;
+            default:
+                throw new Error('Unknown action type!');
+        }
+    };
+
+    const handleSelectChange = value => {
+        setAction(value);
+        resetCheckboxes();
+        setActiveSubmitButton(false);
+    };
+
+    const isCheckboxDisabled = id => {
+        switch (action) {
+            case CONFIRM_ACTION:
+                return (
+                    activeCheckboxes.length > 0 && activeCheckboxes[0].id !== id
+                );
+            case MERGE_ACTION:
+                return (
+                    activeCheckboxes.length >= 2 &&
+                    !activeCheckboxes.some(activeItem => activeItem.id === id)
+                );
+            default:
+                return false;
+        }
+    };
+
+    useEffect(() => {
+        const shouldSetActive =
+            (action === MERGE_ACTION && activeCheckboxes.length === 2) ||
+            (action === CONFIRM_ACTION && activeCheckboxes.length === 1) ||
+            (action === REJECT_ACTION && activeCheckboxes.length > 0);
+        setActiveSubmitButton(shouldSetActive);
+    }, [activeCheckboxes, action]);
+
+    return {
+        action,
+        activeCheckboxes,
+        activeSubmitButton,
+        handleSelectChange,
+        toggleCheckbox,
+        isCheckboxDisabled,
+    };
 }
