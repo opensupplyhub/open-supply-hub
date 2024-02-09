@@ -71,7 +71,7 @@ scripts/reset_database
 docker compose up
 ```
 
-Now you are ready for quick start the app.
+Now you are ready for quick start the app
 ```
 open http://localhost:6543
 ```
