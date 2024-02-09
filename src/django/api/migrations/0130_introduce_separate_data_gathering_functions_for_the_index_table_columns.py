@@ -11,7 +11,6 @@ helper = MigrationHelper(connection)
 def introduce_separate_data_gathering_functions(apps, schema_editor):
     helper.run_sql_files([
         '0130_rename_facilityindexnew_forward.sql',
-        '0130_remove_ppe_fields_from_facilityindex.sql',
         '0130_index_activity_reports_info.sql',
         '0130_index_approved_claim_ids.sql',
         '0130_index_approved_claim.sql',
