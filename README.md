@@ -24,18 +24,15 @@ Open Supply Hub (OS Hub) is a tool to identify every goods production facility w
 ## Setup
 - Clone repo
 ```
-git clone git@github.com:opensupplyhub/opensupplyhub.git
-cd opensupplyhub
+git clone git@github.com:opensupplyhub/open-supply-hub.git
+cd open-supply-hub
 ```
-- You will need to create an .env file from the provided .env.sample file
+- You will need to create an .env file from the provided .env.sample file.
 ```
 cp .env.sample .env
 ```
 - Edit that file and add the google maps API key to GOOGLE_SERVER_SIDE_API_KEY=
-- Build & Run docker containers (`docker-compose.dd.yml` used for specific network configuration of Dedupe Hub & Kafka services)
-```
-docker compose -f docker-compose.dd.yml up --build -d
-```
+Reach team member for actual values.
 
 ### Google Maps Platform
 
@@ -56,45 +53,37 @@ See [Getting Started with Google Maps Platform](https://developers.google.com/ma
  _Note: Google Maps Platfom requires creation of a billing account, but [they offer](https://cloud.google.com/maps-platform/pricing/) $200 of free monthly usage, which is enough to support development._
 
 
-### Development & Fill the Database
-
-You will need to execute migration process, run
+### Kick-off & start development
+- Build docker container 
+```
+docker compose up --build
+```
+- Install node and create database structure
 ```
 scripts/update
 ```
-then reset database and repopulate with fixture data that including parse & geocode processing, run
+- Polulate database with seeded data
 ```
 scripts/reset_database
 ```
-Re-run & build Docker containers
+- Re-run & build Docker containers
 ```
-docker compose -f docker-compose.dd.yml up --build -d
+docker compose up --build
 ```
-Run Docker containers on Dedupe Hub before “match” process
+- Run Docker containers
 ```
 docker compose up -d
 ```
-then get inside the Django container by executing
-```
-docker exec -it opensupplyhub-django-1 /bin/bash
-```
-and execute a command to match or create facilities
-```
-./manage.py matchfixtures
-```
-then run two commands to index & fill facilities data
-```
-./manage.py index_facilities_new
-./manage.py fill_raw_json
+- Start deduplication of  
+./scripts/manage matchfixtures
 ```
 Now you are ready for quick start the app.
 
 ### Restore the DB dump in the local Docker DB container
 
 1. The project containers must be running locally.
-2. Increase Django timeout to have enough time for rebuilding Gazeteer. (docker-compose.yml -> django -> command -> - "--timeout=90" or /django/-> Dockerfile -> CMD -> "--timeout=60", \)
-3. Download prod dump file
-4. Then run in the terminal of your machine
+2. Download prod dump file
+3. Then run in the terminal of your machine
 ```
 docker exec -i opensupplyhub-database-1 pg_restore --verbose --clean --no-acl --no-owner -d openapparelregistry -U openapparelregistry < /path/on/your/machine/latest_prod.dump
 ```
