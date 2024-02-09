@@ -19,11 +19,16 @@ af.location, -- location
 coalesce((select count(contributor) from index_contributors_count(af.id)), 0), -- contributors_count
 coalesce((select array_agg(distinct(contributor_id)) from index_contributors_id(af.id)), '{}'), -- contributors_id
 coalesce((select array_agg(approved_claim_id) from index_approved_claim_ids(af.id)),'{}'), -- approved_claim_ids
+af.ppe_product_types, -- ppe_product_types
+af.ppe_contact_email, -- ppe_contact_email
+af.ppe_contact_phone, -- ppe_contact_phone
+af.ppe_website, -- ppe_website
 af.is_closed, -- is_closed
 af.new_os_id, -- new_os_id
 af.has_inexact_coordinates, -- has_inexact_coordinates
 coalesce((select array_agg(contrib_type) from index_contrib_types(af.id)), '{}'), -- contrib_types
 coalesce((select array_agg(contributor) from index_contributors(af.id)), '{}'), -- contributors
+concat(af.ppe_product_types,af.ppe_contact_phone,af.ppe_contact_email,af.ppe_website), -- ppe
 coalesce((select array_agg(distinct(sector)) from index_sector(af.id)), '{}'), -- sector
 coalesce((select array_agg(distinct(list)) from index_lists(af.id)), '{}'), -- lists
 coalesce((select array_agg(distinct(custom_text)) from custom_text(af.id)), '{}'), -- custom_text
@@ -69,6 +74,11 @@ native_language_name=excluded.native_language_name,
 number_of_workers=excluded.number_of_workers,
 parent_company_id=excluded.parent_company_id,
 parent_company_name=excluded.parent_company_name,
+ppe=excluded.ppe,
+ppe_contact_email=excluded.ppe_contact_email,
+ppe_contact_phone=excluded.ppe_contact_phone,
+ppe_product_types=excluded.ppe_product_types,
+ppe_website=excluded.ppe_website,
 processing_type=excluded.processing_type,
 product_type=excluded.product_type,
 sector=excluded.sector,
