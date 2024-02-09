@@ -62,7 +62,7 @@ docker compose up --build
 ```
 scripts/update
 ```
-- Polulate database with seeded data
+- Polulate database with seeded facility lists
 ```
 scripts/reset_database
 ```
@@ -74,7 +74,8 @@ docker compose up --build
 ```
 docker compose up -d
 ```
-- Start deduplication of  
+- Start deduplication of seeded lists to create new facilities
+```
 ./scripts/manage matchfixtures
 ```
 Now you are ready for quick start the app.
