@@ -56,11 +56,11 @@ See [Getting Started with Google Maps Platform](https://developers.google.com/ma
 ### Kick-off & start local development
 - Install node and create database structure
 ```
-scripts/update
+./scripts/update
 ```
 - Polulate database with seeded facility lists
 ```
-scripts/reset_database
+./scripts/reset_database
 ```
 - Start deduplication of seeded lists to create new facilities
 ```
@@ -70,8 +70,7 @@ scripts/reset_database
 ```
 docker compose up
 ```
-
-Now you are ready for quick start the app
+- Now you are ready for quick start the app
 ```
 open http://localhost:6543
 ```
