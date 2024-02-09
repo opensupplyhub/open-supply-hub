@@ -79,21 +79,18 @@ open http://localhost:6543
 
 1. The project containers must be running locally.
 2. Download prod dump file
-3. Then run in the terminal of your machine
+3. Place it in `[path-to-project]/dumps/` folder
+4. Then run in the terminal of your machine
 ```
-docker exec -i opensupplyhub-database-1 pg_restore --verbose --clean --no-acl --no-owner -d openapparelregistry -U openapparelregistry < /path/on/your/machine/latest_prod.dump
+docker compose run database --rm --entrypoint pg_restore -d openapparelregistry ./dumps/db.dump -c -U openapparelregistry
 ```
 
 ### Creation of Superusers
 
 For local development we could create a superuser by Django Shell:
-- Get inside the Django container by executing
-```
-docker exec -it opensupplyhub-django-1 /bin/bash
-```
 - Then, inside the container, execute
 ```
-./manage.py createsuperuser
+./scripts/manage createsuperuser
 ```
 And add username (email) and a password.
 
@@ -116,19 +113,16 @@ WHERE email ilike '{the user's email address}';
 
 ### Upload a list and process it
 
-With no AWS batch service being available unless configured, list processing must be triggered manually. Again, connect to the command line of the Django process
-```
-docker exec -it opensupplyhub-django-1 /bin/bash
-```
+With no AWS batch service being available unless configured, list processing must be triggered manually.
 This requires a list to be uploaded, in this example, the list number was 16. You can get the list number by navigating, via the dashboard (http://localhost/dashboard), selecting “View Contributor Lists”, then choosing the one you uploaded, then checking the address bar field (possibly clicking on it to reveal the details), which should read http://localhost/lists/16 for a fresh installation.
 ```
-./manage.py batch_process -a parse -l 16
+./scripts/manage batch_process -a parse -l 16
 ```
 Then the list needs to be approved (in the web browser).
 Continue by accepting the list in the web browser dashboard. Then, in the django container command line, execute geocoding and matching.
 ```
-./manage.py batch_process -a geocode -l 16
-./manage.py batch_process -a match -l 16
+./scripts/manage batch_process -a geocode -l 16
+./scripts/manage batch_process -a match -l 16
 ```
 
 
