@@ -62,13 +62,13 @@ See [Getting Started with Google Maps Platform](https://developers.google.com/ma
 ```
 ./scripts/reset_database
 ```
-- Start deduplication of seeded lists to create new facilities
+- Start Docker containers in the background (needed to process facitiles via Kafka)
+```
+docker compose up -d
+```
+- Launch deduplication process of seeded lists to create new facilities (please note that all containers and services must be up, see step before)
 ```
 ./scripts/manage matchfixtures
-```
-- Start Docker containers
-```
-docker compose up
 ```
 - Now you are ready for quick start the app
 ```
