@@ -79,10 +79,10 @@ open http://localhost:6543
 
 1. The project containers must be running locally.
 2. Download prod dump file
-3. Place it in `[path-to-project]/dumps/` folder
+3. Place it in `./dumps/` folder
 4. Then run in the terminal of your machine
 ```
-docker compose run database --rm --entrypoint pg_restore -d openapparelregistry ./dumps/db.dump -c -U openapparelregistry
+docker compose exec -T database pg_restore --verbose --clean --no-acl --no-owner -d openapparelregistry -U openapparelregistry < ./dumps/[dump_name].dump
 ```
 
 ### Creation of Superusers
