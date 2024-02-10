@@ -27,21 +27,22 @@ def round_start_date(date: datetime):
     else:
         start_date = start_date.replace(day=1,
                                         month=start_date.month + 1)
-    
+
     return start_date
 
 
 def get_start_date(period_start_date: datetime, renewal_period):
+    utc = timezone.utc
     start_date = period_start_date
     if start_date.day > 28:
         start_date = round_start_date(start_date)
     if renewal_period == 'MONTHLY':
-        one_month_in_past = datetime.now(tz=timezone.utc) - relativedelta(months=1)
+        one_month_in_past = datetime.now(tz=utc) - relativedelta(months=1)
         while (start_date < one_month_in_past):
             start_date = start_date + relativedelta(months=1)
         return start_date
     if renewal_period == 'YEARLY':
-        one_year_in_past = datetime.now(tz=timezone.utc) - relativedelta(years=1)
+        one_year_in_past = datetime.now(tz=utc) - relativedelta(years=1)
         while (start_date < one_year_in_past):
             start_date = start_date + relativedelta(years=1)
         return start_date
@@ -54,8 +55,12 @@ def get_api_block(contributor):
                 contributor=contributor).order_by('-until').first()
 
 
-def create_api_block(contributor, limit, actual, start_date):
-    until = start_date + relativedelta(years=1)
+def create_api_block(contributor, limit, actual, start_date, renewal_period):
+    if renewal_period is None or renewal_period == 'YEARLY':
+        until = start_date + relativedelta(years=1)
+    else:
+        until = start_date + relativedelta(months=1)
+
     ApiBlock.objects.create(contributor=contributor,
                             until=until, active=True,
                             limit=limit, actual=actual)
@@ -78,7 +83,8 @@ def block_free_api_contributor(contributor,
         create_api_block(contributor,
                          request_count,
                          request_count,
-                         start_date)
+                         start_date,
+                         None)
     else:
         if apiBlock.active:
             return
@@ -136,7 +142,11 @@ def check_contributor_api_limit(at_datetime, c):
     if request_count > limit:
         # If there is no current API block
         if apiBlock is None or apiBlock.until < at_datetime:
-            create_api_block(contributor, limit, request_count, start_date)
+            create_api_block(contributor,
+                             limit,
+                             request_count,
+                             start_date,
+                             renewal_period)
             exceeded_sent = notification.api_limit_exceeded_sent_on
             if (exceeded_sent is None or
                     exceeded_sent.month < at_datetime.month):

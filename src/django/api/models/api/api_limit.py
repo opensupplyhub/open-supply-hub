@@ -24,7 +24,8 @@ class ApiLimit(models.Model):
     period_limit = models.PositiveIntegerField(
         null=False,
         blank=False,
-        help_text='The number of requests a contributor can make per month/year.')
+        help_text=('The number of requests a contributor '
+                   'can make per month/year.'))
     period_start_date = models.DateTimeField(
         null=False,
         default=timezone.now,
