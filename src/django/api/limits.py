@@ -17,14 +17,19 @@ def get_end_of_year(at_datetime):
     return datetime.combine(at_datetime.replace(month=12, day=31), time.max,
                             at_datetime.tzinfo)
 
+def round_start_date(date: datetime):
+    start_date = date
+    if start_date.month == 12:
+        start_date = start_date.replace(day=1, month=1, year=start_date.year + 1)
+    else:
+        start_date = start_date.replace(day=1, month=start_date.month + 1)
+    
+    return start_date
 
-def get_api_block(contributor):
-    return ApiBlock.objects.filter(
-                contributor=contributor).order_by('-until').first()
-
-
-def get_start_date(period_start_date, renewal_period):
+def get_start_date(period_start_date: datetime, renewal_period):
     start_date = period_start_date
+    if start_date.day > 28:
+        start_date = round_start_date(start_date)
     if renewal_period == 'MONTHLY':
         one_month_in_past = datetime.now(tz=timezone.utc) - relativedelta(months=1)
         while (start_date < one_month_in_past):
@@ -38,6 +43,9 @@ def get_start_date(period_start_date, renewal_period):
 
     return start_date
 
+def get_api_block(contributor):
+    return ApiBlock.objects.filter(
+                contributor=contributor).order_by('-until').first()
 
 def create_api_block(contributor, limit, actual, start_date):
     until = start_date + relativedelta(years=1)
