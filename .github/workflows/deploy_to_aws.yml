@@ -308,8 +308,8 @@ jobs:
       - name: Build and push DD Docker image to ECR for ${{ vars.ENV_NAME }}
         uses: docker/build-push-action@v2
         with:
-          context: src/dd-hub/api
-          file: src/dd-hub/api/Dockerfile
+          context: src/dedupe-hub/api
+          file: src/dedupe-hub/api/Dockerfile
           push: true
           tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-deduplicate-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
           build-args: |
