@@ -109,17 +109,23 @@ jobs:
           AWS_DEFAULT_REGION: "eu-west-1"
         
       - name: Terraform Apply for ${{ vars.ENV_NAME }}
-        run: ./scripts/infra apply
+        run: ./deployment/infra apply
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
 
 
-  # build_and_push_docker_image:
-  #   needs: apply
-  #   runs-on: ubuntu-latest
-  #   steps:
+  build_and_push_docker_image:
+    needs: apply
+    runs-on: ubuntu-latest
+    environment: Development
+    steps:
+      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+        id: get_env_name
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
+        with:
+          string: ${{ vars.ENV_NAME }}
   #     - name: Checkout repo
   #       uses: actions/checkout@v2
   #       with:
@@ -141,7 +147,7 @@ jobs:
   #         echo "react_route=${{ env.route }}" >> $GITHUB_ENV
   #         echo "docker_image=${{ env.docker_image }}" >> $GITHUB_ENV
   #         echo "ENVIRONMENT=development" >> $GITHUB_ENV
-  #         echo "DEPLOYMENT=development" >> $GITHUB_ENV
+
   #       env:
   #         aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_DV }}
   #         aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_DV }}
@@ -240,54 +246,54 @@ jobs:
   #           route: "true"
   #           docker_image: ${{ vars.DOCKER_IMAGE_TS }}
 
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v2
-  #       with:
-  #         node-version: '14'
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
 
-  #     - name: Cache dependencies
-  #       uses: actions/cache@v2
-  #       with:
-  #         path: |
-  #           src/app/node_modules
-  #         key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            src/app/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
 
-  #     - name: Install dependencies
-  #       working-directory: src/app
-  #       run: yarn install
+      - name: Install dependencies
+        working-directory: src/app
+        run: yarn install
 
-  #     - name: Build static assets
-  #       working-directory: src/app
-  #       run: yarn run build
-  #       env:
-  #         REACT_APP_ROUTE: ${{ env.react_route }}
+      - name: Build static assets
+        working-directory: src/app
+        run: yarn run build
+        env:
+          REACT_APP_ROUTE: ${{ true }}
       
-  #     - name: Move static
-  #       run: mv src/app/build src/django/static
+      - name: Move static
+        run: mv src/app/build src/django/static
 
-  #     - name: Configure AWS credentials
-  #       uses: aws-actions/configure-aws-credentials@v1
-  #       with:
-  #         aws-access-key-id: ${{ env.aws_id_key }}
-  #         aws-secret-access-key: ${{ env.aws_secret_key }}
-  #         aws-region: "eu-west-1"
+      - name: Configure AWS credentials for ${{ vars.ENV_NAME }}
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: "eu-west-1"
 
-  #     - name: Get GIT_COMMIT
-  #       run: |
-  #             export SHORT_SHA="$(git rev-parse --short HEAD)"
-  #             export GIT_COMMIT_CI="${SHORT_SHA:0:7}"
-  #             echo "GIT_COMMIT=$GIT_COMMIT_CI" >> $GITHUB_ENV
+      - name: Get GIT_COMMIT
+        run: |
+              export SHORT_SHA="$(git rev-parse --short HEAD)"
+              export GIT_COMMIT_CI="${SHORT_SHA:0:7}"
+              echo "GIT_COMMIT=$GIT_COMMIT_CI" >> $GITHUB_ENV
 
-  #     - name: Login to Amazon ECR
-  #       uses: aws-actions/amazon-ecr-login@v1
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
 
-  #     - name: Build and push APP Docker image to ECR
-  #       uses: docker/build-push-action@v2
-  #       with:
-  #         context: src/django
-  #         file: src/django/Dockerfile
-  #         push: true
-  #         tags: ${{ env.aws_ecr }}/${{ vars.IMAGE_NAME }}-${{ env.ENVIRONMENT }}:${{ env.GIT_COMMIT }}
+      - name: Build and push Django Docker image to ECR for ${{ vars.ENV_NAME }}
+        uses: docker/build-push-action@v2
+        with:
+          context: src/django
+          file: src/django/Dockerfile
+          push: true
+          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
 
   #     - name: Build and push Batch Docker image to ECR
   #       uses: docker/build-push-action@v2
