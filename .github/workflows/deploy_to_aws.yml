@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: Development
     steps:
-      - name: Get Environment Name
+      - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
         uses: Entepotenz/change-string-case-action-min-dependencies@v1
         with:
@@ -73,90 +73,46 @@ jobs:
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           AWS_DEFAULT_REGION: "eu-west-1"
 
-  # apply:
-  #   needs: init-and-plan
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Sets dev vars
-  #       if: (github.ref == 'refs/heads/main')
-  #       run: |
-  #         echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-  #         echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-  #         echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-  #       env:
-  #         aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_DV }}
-  #         aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_DV }}
-  #         bucket: ${{ vars.OAR_SETTINGS_BUCKET_DV }}
+  apply:
+    needs: init-and-plan
+    runs-on: ubuntu-latest
+    environment: Development
+    steps:
+      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+        id: get_env_name
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
+        with:
+          string: ${{ vars.ENV_NAME }}
+    
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.4.0
+          terraform_wrapper: false
 
-  #     - name: Sets sandbox vars
-  #       if: (startsWith(github.ref, 'refs/tags/sandbox-'))
-  #       run: |
-  #         echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-  #         echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-  #         echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-  #       env:
-  #         aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_ST }}
-  #         aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_ST }}
-  #         bucket: ${{ vars.OAR_SETTINGS_BUCKET_ST }}
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Checkout terraform
+        uses: actions/checkout@v4
+        with:
+          repository: 'opensupplyhub/ci-deployment'
+          path: 'deployment'
+          token: ${{ secrets.PAT }}
+          ref: 'main'
 
-  #     - name: Sets production vars
-  #       if: (startsWith(github.ref, 'refs/tags/production-'))
-  #       run: |
-  #         echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-  #         echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-  #         echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-  #       env:
-  #         aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_PR }}
-  #         aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_PR }}
-  #         bucket: ${{ vars.OAR_SETTINGS_BUCKET_PR }}
-
-  #     - name: Sets pre-prod vars
-  #       if: (startsWith(github.ref, 'refs/heads/releases/v.'))
-  #       run: |
-  #         echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-  #         echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-  #         echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-  #         echo "OAR_DEPLOYMENT_ENVIRONMENT=staging" >> $GITHUB_ENV
-  #       env:
-  #         aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_DV }}
-  #         aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_DV }}
-  #         bucket: ${{ vars.OAR_SETTINGS_BUCKET_PP }}
-
-  #     - name: Sets test vars
-  #       if: inputs.deploy-env == 'test'
-  #       run: |
-  #         echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-  #         echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-  #         echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-  #         echo "OAR_DEPLOYMENT_ENVIRONMENT=staging" >> $GITHUB_ENV
-  #       env:
-  #         aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_TS }}
-  #         aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_TS }}
-  #         bucket: ${{ vars.OAR_SETTINGS_BUCKET_TS }}
-
-  #     - name: Setup Terraform
-  #       uses: hashicorp/setup-terraform@v2
-  #       with:
-  #         terraform_version: 1.4.0
-  #         terraform_wrapper: false
-
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
-
-  #     - name: Get planfile from S3 bucket
-  #       run: aws s3 cp "s3://${{ env.OAR_SETTINGS_BUCKET }}/terraform/${{ env.OAR_SETTINGS_BUCKET }}.tfplan" "deployment/terraform/${{ env.OAR_SETTINGS_BUCKET }}.tfplan"
-  #       env:
-  #         AWS_ACCESS_KEY_ID: ${{ env.aws_id_key }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ env.aws_secret_key }}
-  #         OAR_SETTINGS_BUCKET: ${{ env.aws_bucket }}
-  #         AWS_DEFAULT_REGION: "eu-west-1"
-
-  #     - name: Terraform Apply
-  #       run: ./scripts/infra apply
-  #       env:
-  #         AWS_ACCESS_KEY_ID: ${{ env.aws_id_key }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ env.aws_secret_key }}
-  #         OAR_SETTINGS_BUCKET: ${{ env.aws_bucket }}
+      - name: Get planfile from S3 bucket
+        run: aws s3 cp "s3://${{ env.SETTINGS_BUCKET }}/terraform/${{ env.SETTINGS_BUCKET }}.tfplan" "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfplan"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
+        
+      - name: Terraform Apply
+        run: ./scripts/infra apply
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
 
 
   # build_and_push_docker_image:
