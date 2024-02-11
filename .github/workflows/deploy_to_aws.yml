@@ -38,7 +38,7 @@ jobs:
         env: 
           aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_DV }}
           aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_DV }}
-          SETTINGS_BUCKET: oshub-setting-${{ vars.ENV_NAME.lowercased }}
+          SETTINGS_BUCKET: oshub-setting-${{ vars.ENV_NAME.lowercase }}
 
   #     - name: Sets sandbox vars
   #       if: (startsWith(github.ref, 'refs/tags/sandbox-'))
