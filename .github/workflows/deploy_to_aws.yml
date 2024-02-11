@@ -106,6 +106,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
+          AWS_DEFAULT_REGION: "eu-west-1"
         
       - name: Terraform Apply for ${{ vars.ENV_NAME }}
         run: ./scripts/infra apply
