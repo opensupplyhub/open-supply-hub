@@ -31,7 +31,13 @@ jobs:
         with:
           string: ${{ vars.ENV_NAME }}
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+      - name: Checkout terraform
+        uses: actions/checkout@v4
+        with:
+          repository: 'opensupplyhub/ci-deployment'
+          path: 'deployment'
+          ref: 'main'
       
       # - name: Sets vars on ${{ vars.ENV_NAME }}
       #   run: |
@@ -47,7 +53,7 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          SETTINGS_BUCKET: oshub-setting-${{ steps.get_env_name.outputs.lowercase }}
+          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           AWS_DEFAULT_REGION: "eu-west-1"
 
   #     - name: Setup Terraform
