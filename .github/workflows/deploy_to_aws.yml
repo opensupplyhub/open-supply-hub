@@ -126,11 +126,9 @@ jobs:
         uses: Entepotenz/change-string-case-action-min-dependencies@v1
         with:
           string: ${{ vars.ENV_NAME }}
-  #     - name: Checkout repo
-  #       uses: actions/checkout@v2
-  #       with:
-  #         submodules: recursive
-  #         token: ${{ secrets.ACCESS_TOKEN }}
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
 
   #     - name: Pull & update submodules recursively
   #       run:  git submodule update --recursive --remote
