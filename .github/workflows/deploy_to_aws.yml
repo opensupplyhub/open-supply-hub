@@ -28,16 +28,17 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
       
-      - name: Sets vars on environment ${{ vars.ENV_NAME }}
+      - name: Sets vars on ${{ vars.ENV_NAME }}
         run: |
-          echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-          echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-          echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-          echo "OAR_DEPLOYMENT_ENVIRONMENT=prestaging" >> $GITHUB_ENV
+          echo "vars.SETTINGS_BUCKET ${{ env.SETTINGS_BUCKET }}" 
+          # echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
+          # echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
+          # echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
+          # echo "OAR_DEPLOYMENT_ENVIRONMENT=prestaging" >> $GITHUB_ENV
         env: 
           aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_DV }}
           aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_DV }}
-          bucket: ${{ vars.OAR_SETTINGS_BUCKET_DV }}
+          SETTINGS_BUCKET: oshub-setting-${{ vars.ENV_NAME.lowercased }}
 
   #     - name: Sets sandbox vars
   #       if: (startsWith(github.ref, 'refs/tags/sandbox-'))
