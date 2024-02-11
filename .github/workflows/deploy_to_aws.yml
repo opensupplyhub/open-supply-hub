@@ -23,12 +23,12 @@ on:
 jobs:
   init-and-plan:
     runs-on: ubuntu-latest
+    environment: Development
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
       
-      - name: Sets dev vars
-        if: (github.ref == 'refs/heads/main')
+      - name: Sets vars on environment ${{ vars.ENV_NAME }}
         run: |
           echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
           echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
