@@ -33,11 +33,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
       
-      - name: Sets vars on ${{ vars.ENV_NAME }}
-        run: |
-          echo "SETTINGS_BUCKET ${{ env.SETTINGS_BUCKET }}" >> $GITHUB_ENV
-        env: 
-          SETTINGS_BUCKET: oshub-setting-${{ steps.get_env_name.outputs.lowercase }}
+      # - name: Sets vars on ${{ vars.ENV_NAME }}
+      #   run: |
+      #     echo "SETTINGS_BUCKET=${{ env.setting_bucket }}" >> $GITHUB_ENV
+      #   env: 
+      #     setting_bucket: oshub-setting-${{ steps.get_env_name.outputs.lowercase }}
 
 
       - name: Copy tfvars from S3 bucket
@@ -47,7 +47,7 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          # SETTINGS_BUCKET: oshub-setting-${{ env.SETTINGS_BUCKET}}
+          SETTINGS_BUCKET: oshub-setting-${{ steps.get_env_name.outputs.lowercase }}
           AWS_DEFAULT_REGION: "eu-west-1"
 
   #     - name: Setup Terraform
