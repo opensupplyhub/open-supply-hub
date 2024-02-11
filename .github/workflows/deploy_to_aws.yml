@@ -293,64 +293,47 @@ jobs:
           push: true
           tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
 
-  #     - name: Build and push Batch Docker image to ECR
-  #       uses: docker/build-push-action@v2
-  #       with:
-  #         context: src/batch
-  #         file: src/batch/Dockerfile
-  #         push: true
-  #         tags: ${{ env.aws_ecr }}/${{ vars.IMAGE_NAME }}-batch-${{ env.ENVIRONMENT }}:${{ env.GIT_COMMIT }}
-  #         build-args: |
-  #           GIT_COMMIT=${{ env.GIT_COMMIT }}
-  #           DOCKER_IMAGE=${{ env.docker_image }}
-  #           ENVIRONMENT=${{ env.ENVIRONMENT }}
+      - name: Build and push Batch Docker image to ECR for ${{ vars.ENV_NAME }}
+        uses: docker/build-push-action@v2
+        with:
+          context: src/batch
+          file: src/batch/Dockerfile
+          push: true
+          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-batch-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
+          build-args: |
+            GIT_COMMIT=${{ env.GIT_COMMIT }}
+            DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}
+            ENVIRONMENT=${{ steps.get_env_name.outputs.lowercase }}
 
-  #     - name: Build and push DD Docker image to ECR
-  #       uses: docker/build-push-action@v2
-  #       with:
-  #         context: src/dd-hub/api
-  #         file: src/dd-hub/api/Dockerfile
-  #         push: true
-  #         tags: ${{ env.aws_ecr }}/${{ vars.IMAGE_NAME }}-deduplicate-${{ env.ENVIRONMENT }}:${{ env.GIT_COMMIT }}
-  #         build-args: |
-  #           GIT_COMMIT=${{ env.GIT_COMMIT }}
-  #           DOCKER_IMAGE=${{ env.docker_image }}
-  #           ENVIRONMENT=${{ env.ENVIRONMENT }}
+      - name: Build and push DD Docker image to ECR for ${{ vars.ENV_NAME }}
+        uses: docker/build-push-action@v2
+        with:
+          context: src/dd-hub/api
+          file: src/dd-hub/api/Dockerfile
+          push: true
+          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-deduplicate-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
+          build-args: |
+            GIT_COMMIT=${{ env.GIT_COMMIT }}
+            DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}
+            ENVIRONMENT=${{ steps.get_env_name.outputs.lowercase }}
 
-  #     - name: Build and push kafka-topics image to ECR
-  #       uses: docker/build-push-action@v2
-  #       with:
-  #         context: src/kafka-tools/
-  #         file: src/kafka-tools/Dockerfile
-  #         push: true
-  #         tags: ${{ env.aws_ecr }}/${{ vars.IMAGE_NAME }}-kafka-${{ env.ENVIRONMENT }}:latest
-  #         build-args: |
-  #           DOCKER_IMAGE=${{ env.docker_image }}
-  #           ENVIRONMENT=${{ env.ENVIRONMENT }}
+      - name: Build and push kafka-topics image to ECR for ${{ vars.ENV_NAME }}
+        uses: docker/build-push-action@v2
+        with:
+          context: src/kafka-tools/
+          file: src/kafka-tools/Dockerfile
+          push: true
+          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-kafka-${{  steps.get_env_name.outputs.lowercase }}:latest
+          build-args: |
+            DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}
+            ENVIRONMENT=${{ steps.get_env_name.outputs.lowercase }}
 
-  #     - name: Update ECS Service with new Image
-  #       uses: ./.github/actions/aws-cli
-  #       with:
-  #         args: aws ecs update-service --cluster ${{ env.aws_cluster }} --service ${{ env.aws_service }} --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}}
-  #       env:
-  #         AWS_ACCESS_KEY_ID: ${{ env.aws_id_key }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ env.aws_secret_key }}
-  #         AWS_DEFAULT_REGION: "eu-west-1"
-
-  #     - name: Build and push СС Docker image to ECR
-  #       uses: docker/build-push-action@v2
-  #       with:
-  #         context: src/contricleaner/
-  #         file: src/contricleaner/Dockerfile
-  #         push: true
-  #         tags: ${{ env.aws_ecr }}/${{ vars.IMAGE_NAME }}-contricleaner-${{ env.ENVIRONMENT }}:${{ env.GIT_COMMIT }}
-
-  #     - name: Update ECS СС Service with new Image
-  #       uses: ./.github/actions/aws-cli
-  #       with:
-  #         args: aws ecs update-service --cluster ${{ env.aws_cluster }} --service ${{ env.aws_service }}CC --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}}
-  #       env:
-  #         AWS_ACCESS_KEY_ID: ${{ env.aws_id_key }}
-  #         AWS_SECRET_ACCESS_KEY: ${{ env.aws_secret_key }}
-  #         AWS_DEFAULT_REGION: "eu-west-1"
-      
+      - name: Update ECS Service with new Image
+        uses: ./.github/actions/aws-cli
+        with:
+          args: aws ecs update-service --cluster ${{ vars.CLUSTER }} --service ${{ vars.SERVICE_NAME }} --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
+    
