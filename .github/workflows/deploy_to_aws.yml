@@ -37,6 +37,7 @@ jobs:
         with:
           repository: 'opensupplyhub/ci-deployment'
           path: 'deployment'
+          token: ${{ secrets.PAT }}
           ref: 'main'
       
       # - name: Sets vars on ${{ vars.ENV_NAME }}
