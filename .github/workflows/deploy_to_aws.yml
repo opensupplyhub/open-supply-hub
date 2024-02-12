@@ -328,10 +328,10 @@ jobs:
             DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}
             ENVIRONMENT=${{ steps.get_env_name.outputs.lowercase }}
 
-      - name: Update ECS Service with new Image
-        uses: ./.github/actions/aws-cli
-        with:
-          args: aws ecs update-service --cluster ${{ vars.CLUSTER }} --service ${{ vars.SERVICE_NAME }} --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}}
+      - name: Update ECS Django Service with new Image
+        #uses: ./.github/actions/aws-cli
+        run: |
+          aws ecs update-service --cluster ${{ vars.CLUSTER }} --service ${{ vars.SERVICE_NAME }} --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
