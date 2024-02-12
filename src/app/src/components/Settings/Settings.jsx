@@ -7,6 +7,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import UserNotifications from '../UserNotifications';
 import UserProfile from '../UserProfile';
 import UserAPITokens from '../UserAPITokens';
+import UserAPICallInfo from '../UserAPICallInfo';
 import AppOverflow from '../AppOverflow';
 import AppGrid from '../AppGrid';
 import SettingTabs from './SettingTabs';
@@ -79,6 +80,7 @@ function Settings({
                 {tabs[activeTabIndex] === API_TAB && (
                     <AppGrid>
                         <UserAPITokens />
+                        <UserAPICallInfo />
                     </AppGrid>
                 )}
                 {!user.isAnon && tabs[activeTabIndex] === NOTIFICATIONS_TAB && (

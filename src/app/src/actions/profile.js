@@ -5,6 +5,7 @@ import apiRequest from '../util/apiRequest';
 
 import {
     makeAPITokenURL,
+    makeAPICallInfoURL,
     makeUserProfileURL,
     logErrorAndDispatchFailure,
     createProfileUpdateErrorMessages,
@@ -40,6 +41,51 @@ export const failUpdateUserProfile = createAction('FAIL_UPDATE_USER_PROFILE');
 export const completeUpdateUserProfile = createAction(
     'COMPLETE_UPDATE_USER_PROFILE',
 );
+
+export const startCreateAPICallInfo = createAction(
+    'START_CREATE_API_CALL_INFO',
+);
+export const failCreateAPICallInfo = createAction('FAIL_CREATE_API_CALL_INFO');
+export const completeCreateAPICallInfo = createAction(
+    'COMPLETE_CREATE_API_CALL_INFO',
+);
+
+export const startFetchAPICallInfo = createAction('START_FETCH_API_CALL_INFO');
+export const failFetchAPICallInfo = createAction('FAIL_FETCH_API_CALL_INFO');
+export const completeFetchAPICallInfo = createAction(
+    'COMPLETE_FETCH_API_CALL_INFO',
+);
+
+export const startDeleteAPICallInfo = createAction(
+    'START_DELETE_API_CALL_INFO',
+);
+export const failDeleteAPICallInfo = createAction('FAIL_DELETE_API_CALL_INFO');
+export const completeDeleteAPICallInfo = createAction(
+    'COMPLETE_DELETE_API_CALL_INFO',
+);
+
+export function fetchAPICallInfo() {
+    console.log('!!!');
+    return dispatch => {
+        dispatch(startFetchAPICallInfo());
+
+        return (
+            apiRequest
+                .get(makeAPICallInfoURL())
+                // Return API call information
+                .then(({ data }) => dispatch(completeCreateAPICallInfo([data])))
+                .catch(err =>
+                    dispatch(
+                        logErrorAndDispatchFailure(
+                            err,
+                            'An error prevented fetching the API call information',
+                            failCreateAPICallInfo,
+                        ),
+                    ),
+                )
+        );
+    };
+}
 
 export function fetchAPIToken() {
     return dispatch => {

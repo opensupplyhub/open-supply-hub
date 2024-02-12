@@ -122,6 +122,8 @@ internal_apis = [
          name='get_and_update_user_profile'),
     path('api-token-auth/', views.APIAuthToken.as_view(),
          name='api_token_auth'),
+    path('api-call-info/', views.APICallInfo.as_view(),
+         name='api_call_info'),
     path('api-feature-flags/', views.api_feature_flags,
          name='api_feature_flags'),
     path('tile/<layer>/<cachekey>/<int:z>/<int:x>/<int:y>.<ext>',

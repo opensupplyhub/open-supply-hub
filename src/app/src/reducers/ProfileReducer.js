@@ -20,6 +20,15 @@ import {
     startUpdateUserProfile,
     failUpdateUserProfile,
     completeUpdateUserProfile,
+    startFetchAPICallInfo,
+    failCreateAPICallInfo,
+    completeCreateAPICallInfo,
+    startDeleteAPICallInfo,
+    startCreateAPICallInfo,
+    failFetchAPICallInfo,
+    failDeleteAPICallInfo,
+    completeDeleteAPICallInfo,
+    completeFetchAPICallInfo,
 } from '../actions/profile';
 
 import {
@@ -58,9 +67,43 @@ const initialState = Object.freeze({
         fetching: false,
         error: null,
     }),
+    apiCallInfo: Object.freeze({
+        apiCallInfo: Object.freeze({
+            apiCallAllowance: '',
+            currentCallCount: '',
+            renewalPeriod: '',
+        }),
+        fetching: false,
+        error: null,
+    }),
     fetching: false,
     error: null,
 });
+
+const startFetchingAPICallInfo = state =>
+    update(state, {
+        apiCallInfo: {
+            fetching: { $set: true },
+            error: { $set: null },
+        },
+    });
+
+const failCreatingAPICallInfo = (state, payload) =>
+    update(state, {
+        apiCallInfo: {
+            fetching: { $set: false },
+            error: { $set: payload },
+        },
+    });
+
+const completeCreatingAPICallInfo = (state, payload) =>
+    update(state, {
+        apiCallInfo: {
+            apiCallInfo: { $set: payload },
+            fetching: { $set: false },
+            error: { $set: null },
+        },
+    });
 
 const startFetchingToken = state =>
     update(state, {
@@ -104,15 +147,27 @@ export default createReducer(
         [startFetchAPIToken]: startFetchingToken,
         [startDeleteAPIToken]: startFetchingToken,
         [startCreateAPIToken]: startFetchingToken,
+        [startFetchAPICallInfo]: startFetchingAPICallInfo,
+        [startDeleteAPICallInfo]: startFetchingAPICallInfo,
+        [startCreateAPICallInfo]: startFetchingAPICallInfo,
         [failFetchAPIToken]: failFetchingToken,
         [failDeleteAPIToken]: failFetchingToken,
         [failCreateAPIToken]: failFetchingToken,
+        [failFetchAPICallInfo]: failCreatingAPICallInfo,
+        [failDeleteAPICallInfo]: failCreatingAPICallInfo,
+        [failCreateAPICallInfo]: failCreatingAPICallInfo,
         [completeDeleteAPIToken]: state =>
             update(state, {
                 tokens: { $set: initialState.tokens },
             }),
         [completeCreateAPIToken]: completeGettingAPIToken,
         [completeFetchAPIToken]: completeGettingAPIToken,
+        [completeDeleteAPICallInfo]: state =>
+            update(state, {
+                apiCallInfo: { $set: initialState.apiCallInfo },
+            }),
+        [completeCreateAPICallInfo]: completeCreatingAPICallInfo,
+        [completeFetchAPICallInfo]: completeCreatingAPICallInfo,
         [updateProfileFormInput]: (state, { value, field }) =>
             update(state, {
                 profile: {
