@@ -43,7 +43,6 @@ function FacilityListItemsConfirmationTableRowItem({
             <TableCell padding="default" variant="head" colSpan={2} />
             <TableCell
                 padding="default"
-                colSpan={2}
                 style={listTableCellStyles.nameCellStyles}
             >
                 <CellElement
@@ -54,14 +53,13 @@ function FacilityListItemsConfirmationTableRowItem({
             <TableCell
                 padding="default"
                 style={listTableCellStyles.addressCellStyles}
-                colSpan={2}
             >
                 <CellElement item={address} />
             </TableCell>
             <TableCell
                 padding="default"
-                variant="head"
                 colSpan={2}
+                variant="head"
                 style={{
                     ...listTableCellStyles.headerCellStyles,
                     textAlign: 'left',
@@ -112,7 +110,6 @@ function FacilityListItemsConfirmationTableRowItem({
             <TableCell
                 padding="default"
                 variant="head"
-                colSpan={4}
                 style={{
                     ...listTableCellStyles.headerCellStyles,
                     textAlign: 'right',

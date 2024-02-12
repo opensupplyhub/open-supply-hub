@@ -47,6 +47,11 @@ const selectStyles = Object.freeze({
             ...provided,
             zIndex: '2',
         }),
+    control: provided =>
+        Object.freeze({
+            ...provided,
+            width: '250px',
+        }),
 });
 
 function FacilityListItemsConfirmationTableRow({
@@ -145,7 +150,6 @@ function FacilityListItemsConfirmationTableRow({
                 <TableCell
                     padding="default"
                     style={listTableCellStyles.statusCellStyles}
-                    colSpan={6}
                 >
                     <FacilityListItemsDetailedTableRowCell
                         title={item.status}
@@ -170,7 +174,6 @@ function FacilityListItemsConfirmationTableRow({
                 <TableCell
                     padding="default"
                     variant="head"
-                    colSpan={2}
                     style={listTableCellStyles.headerCellStyles}
                 >
                     <b>Facility Match Name</b>
@@ -179,60 +182,59 @@ function FacilityListItemsConfirmationTableRow({
                     padding="default"
                     variant="head"
                     style={listTableCellStyles.headerCellStyles}
-                    colSpan={2}
                 >
                     <b>Facility Match Address</b>
                 </TableCell>
                 <TableCell
-                    colSpan={1}
+                    colSpan={2}
                     style={{
                         padding: 0,
                     }}
                 >
-                    <Select
-                        placeholder={actionOptions[0].label}
-                        defaultValue={actionOptions[0].value}
-                        onChange={option => handleSelectChange(option.value)}
-                        options={actionOptions}
-                        styles={selectStyles}
-                        isSearchable={false}
-                    />
-                </TableCell>
-                <TableCell
-                    colSpan={2}
-                    style={{
-                        paddingTop: 0,
-                        paddingLeft: '8px',
-                    }}
-                >
-                    <ConfirmActionButton
-                        listItem={item}
-                        confirmMatch={makeConfirmMatchFunction(
-                            activeCheckboxes[0]?.id,
-                        )}
-                        rejectMatch={makeRejectMatchFunction(
-                            activeCheckboxes.map(
-                                facilityMatchToReject =>
-                                    facilityMatchToReject?.id,
-                            ),
-                        )}
-                        buttonName="OK"
-                        fetching={fetching}
-                        hasActions
-                        action={action}
-                        activeSubmitButton={activeSubmitButton}
-                        activeCheckboxes={activeCheckboxes}
-                        openMergeModal={openMergeModal}
-                        updateTargetOSID={updateTargetOSID}
-                        updateToMergeOSID={updateToMergeOSID}
-                        fetchToMergeFacility={fetchToMergeFacility}
-                        fetchTargetFacility={fetchToMergeFacility}
-                    />
+                    <div
+                        style={{
+                            display: 'flex',
+                            paddingLeft: '25px',
+                        }}
+                    >
+                        <Select
+                            placeholder={actionOptions[0].label}
+                            defaultValue={actionOptions[0].value}
+                            onChange={option =>
+                                handleSelectChange(option.value)
+                            }
+                            options={actionOptions}
+                            styles={selectStyles}
+                            isSearchable={false}
+                        />
+                        <ConfirmActionButton
+                            listItem={item}
+                            confirmMatch={makeConfirmMatchFunction(
+                                activeCheckboxes[0]?.id,
+                            )}
+                            rejectMatch={makeRejectMatchFunction(
+                                activeCheckboxes.map(
+                                    facilityMatchToReject =>
+                                        facilityMatchToReject?.id,
+                                ),
+                            )}
+                            buttonName="OK"
+                            fetching={fetching}
+                            hasActions
+                            action={action}
+                            activeSubmitButton={activeSubmitButton}
+                            activeCheckboxes={activeCheckboxes}
+                            openMergeModal={openMergeModal}
+                            updateTargetOSID={updateTargetOSID}
+                            updateToMergeOSID={updateToMergeOSID}
+                            fetchToMergeFacility={fetchToMergeFacility}
+                            fetchTargetFacility={fetchToMergeFacility}
+                        />
+                    </div>
                 </TableCell>
                 <TableCell
                     padding="default"
                     variant="head"
-                    colSpan={3}
                     style={{
                         ...listTableCellStyles.headerCellStyles,
                         textAlign: 'right',
