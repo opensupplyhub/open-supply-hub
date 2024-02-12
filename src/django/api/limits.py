@@ -66,22 +66,28 @@ def create_api_block(contributor, limit, actual, start_date, renewal_period):
                             limit=limit, actual=actual)
 
 
-def update_api_block(apiBlock: ApiBlock, request_count, is_active):
+def update_api_block(apiBlock: ApiBlock,
+                     limit,
+                     request_count,
+                     is_active):
     with transaction.atomic():
+        apiBlock.limit = limit
         apiBlock.actual = request_count
         apiBlock.active = is_active
         apiBlock.save()
 
 
 def block_free_api_contributor(contributor,
+                               limit,
                                request_count,
                                start_date,
                                at_datetime):
     apiBlock = get_api_block(contributor)
+    actual_limit = request_count if limit is None else limit
     # If there is no current API block
     if apiBlock is None or apiBlock.until < at_datetime:
         create_api_block(contributor,
-                         request_count,
+                         actual_limit,
                          request_count,
                          start_date,
                          None)
@@ -90,7 +96,10 @@ def block_free_api_contributor(contributor,
             return
         if (apiBlock.grace_limit is None or
                 request_count > apiBlock.grace_limit):
-            update_api_block(apiBlock, request_count, is_active=True)
+            update_api_block(apiBlock,
+                             actual_limit,
+                             request_count,
+                             is_active=True)
 
 
 @transaction.atomic
@@ -117,8 +126,10 @@ def check_contributor_api_limit(at_datetime, c):
 
     logs_for_period = [x for x in log_dates if x >= start_date]
     request_count = len(logs_for_period)
-    if limit is None:
+    if (limit is None or
+        renewal_period is ''):
         block_free_api_contributor(contributor,
+                                   limit,
                                    request_count,
                                    start_date,
                                    at_datetime)
