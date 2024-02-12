@@ -32,8 +32,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-219](https://opensupplyhub.atlassian.net/browse/OSDEV-219). Data moderator can merge potential match facilities from Confirm / Reject screen.
 
 ### Release instructions:
-* Update code
-* Run migration up to 0135
+* Update code.
+* Apply DB migrations up to the latest one.
+* Run the index_facilities_new management command.
 
 
 ## Release 1.8.0
