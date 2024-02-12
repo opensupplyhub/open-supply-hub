@@ -24,18 +24,15 @@ Open Supply Hub (OS Hub) is a tool to identify every goods production facility w
 ## Setup
 - Clone repo
 ```
-git clone git@github.com:opensupplyhub/opensupplyhub.git
-cd opensupplyhub
+git clone git@github.com:opensupplyhub/open-supply-hub.git
+cd open-supply-hub
 ```
-- You will need to create an .env file from the provided .env.sample file
+- You will need to create an .env file from the provided .env.sample file.
 ```
 cp .env.sample .env
 ```
 - Edit that file and add the google maps API key to GOOGLE_SERVER_SIDE_API_KEY=
-- Build & Run docker containers (`docker-compose.dd.yml` used for specific network configuration of Dedupe Hub & Kafka services)
-```
-docker compose -f docker-compose.dd.yml up --build -d
-```
+Reach team member for actual values.
 
 ### Google Maps Platform
 
@@ -56,59 +53,44 @@ See [Getting Started with Google Maps Platform](https://developers.google.com/ma
  _Note: Google Maps Platfom requires creation of a billing account, but [they offer](https://cloud.google.com/maps-platform/pricing/) $200 of free monthly usage, which is enough to support development._
 
 
-### Development & Fill the Database
-
-You will need to execute migration process, run
+### Kick-off & start local development
+- Install node and create database structure
 ```
-scripts/update
+./scripts/update
 ```
-then reset database and repopulate with fixture data that including parse & geocode processing, run
+- Polulate database with seeded facility lists
 ```
-scripts/reset_database
+./scripts/reset_database
 ```
-Re-run & build Docker containers
-```
-docker compose -f docker-compose.dd.yml up --build -d
-```
-Run Docker containers on Dedupe Hub before “match” process
+- Start Docker containers in the background (needed to process facitiles via Kafka)
 ```
 docker compose up -d
 ```
-then get inside the Django container by executing
+- Launch deduplication process of seeded lists to create new facilities (please note that all containers and services must be up, see step before)
 ```
-docker exec -it opensupplyhub-django-1 /bin/bash
+./scripts/manage matchfixtures
 ```
-and execute a command to match or create facilities
+- Now you are ready for quick start the app
 ```
-./manage.py matchfixtures
+open http://localhost:6543
 ```
-then run two commands to index & fill facilities data
-```
-./manage.py index_facilities_new
-./manage.py fill_raw_json
-```
-Now you are ready for quick start the app.
 
 ### Restore the DB dump in the local Docker DB container
 
 1. The project containers must be running locally.
-2. Increase Django timeout to have enough time for rebuilding Gazeteer. (docker-compose.yml -> django -> command -> - "--timeout=90" or /django/-> Dockerfile -> CMD -> "--timeout=60", \)
-3. Download prod dump file
+2. Download prod dump file
+3. Place it in `./dumps/` folder
 4. Then run in the terminal of your machine
 ```
-docker exec -i opensupplyhub-database-1 pg_restore --verbose --clean --no-acl --no-owner -d openapparelregistry -U openapparelregistry < /path/on/your/machine/latest_prod.dump
+docker compose exec -T database pg_restore --verbose --clean --no-acl --no-owner -d openapparelregistry -U openapparelregistry < ./dumps/[dump_name].dump
 ```
 
 ### Creation of Superusers
 
 For local development we could create a superuser by Django Shell:
-- Get inside the Django container by executing
-```
-docker exec -it opensupplyhub-django-1 /bin/bash
-```
 - Then, inside the container, execute
 ```
-./manage.py createsuperuser
+./scripts/manage createsuperuser
 ```
 And add username (email) and a password.
 
@@ -131,19 +113,16 @@ WHERE email ilike '{the user's email address}';
 
 ### Upload a list and process it
 
-With no AWS batch service being available unless configured, list processing must be triggered manually. Again, connect to the command line of the Django process
-```
-docker exec -it opensupplyhub-django-1 /bin/bash
-```
+With no AWS batch service being available unless configured, list processing must be triggered manually.
 This requires a list to be uploaded, in this example, the list number was 16. You can get the list number by navigating, via the dashboard (http://localhost/dashboard), selecting “View Contributor Lists”, then choosing the one you uploaded, then checking the address bar field (possibly clicking on it to reveal the details), which should read http://localhost/lists/16 for a fresh installation.
 ```
-./manage.py batch_process -a parse -l 16
+./scripts/manage batch_process -a parse -l 16
 ```
 Then the list needs to be approved (in the web browser).
 Continue by accepting the list in the web browser dashboard. Then, in the django container command line, execute geocoding and matching.
 ```
-./manage.py batch_process -a geocode -l 16
-./manage.py batch_process -a match -l 16
+./scripts/manage batch_process -a geocode -l 16
+./scripts/manage batch_process -a match -l 16
 ```
 
 

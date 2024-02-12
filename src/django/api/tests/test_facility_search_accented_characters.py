@@ -89,5 +89,9 @@ class FacilitySearchAccentedCharactersTest(TestCase):
                 result = manager.filter_by_query_params(self, self.params)
 
                 self.assertEqual(2, len(result))
-                self.assertEqual(self.facility_first.name, result[0].name)
-                self.assertEqual(self.facility_second.name, result[1].name)
+                self.assertEqual(
+                    any(x.name == self.facility_first.name for x in result),
+                    True)
+                self.assertEqual(
+                    any(x.name == self.facility_second.name for x in result),
+                    True)

@@ -7,7 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: *Provide release date*
+* Release date: February 24, 2024
 
 ### Database changes
 #### Migrations:
@@ -20,23 +20,25 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe code/API changes here.*
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* [OSDEV-829](https://opensupplyhub.atlassian.net/browse/OSDEV-673) Makes `minimum-ratio: 1` It allows to push code whith less than 1% diff from main. 
 
 ### Bugfix
-* *Describe bugfix here.*
+* [OSDEV-673](https://opensupplyhub.atlassian.net/browse/OSDEV-673) When a user calls the endpoint `facility/id/history`, instead of a response, receives the error "TypeError: the JSON object must be str, bytes or bytearray, not list", in particular, this happened with the PK20190913BBJ2Y facility. A list with one element (a dictionary) was passed to the function, so an error occurred when trying to index the list with a string. Fixed.
 
 ### What's new
 * Make login non-case sensitive. [OSDEV-628](https://opensupplyhub.atlassian.net/browse/OSDEV-628). When the user creates an account email saving in lowercase. User  could login with any variations of casing as long as the characters are the same.
+* API. Enable token generation based on API permissions in Django. [OSDEV-729](https://opensupplyhub.atlassian.net/browse/OSDEV-729). Updated Settings page to show/hide token tab by user groups. Forbid access to generate token for API if user didn't have permission groups.
 
 ### Release instructions:
 * Update code
 * Run migration up to 0135
 
+
 ## Release 1.8.0
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: *Provide release date*
+* Release date: January 27, 2024
 
 ### Code/API changes
 * [OSDEV-690](https://opensupplyhub.atlassian.net/browse/OSDEV-690) - Correct all existing lint errors to ensure that code quality checks pass successfully via GitHub Actions and can detect new linting errors but not the old ones.
@@ -57,13 +59,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### What's new
 * [OSDEV-241](https://opensupplyhub.atlassian.net/browse/OSDEV-241) - Searches with accented characters return results for accented and non accented characters.
 
+### Database changes
+#### Migrations:
+* 0134_remove_sources_without_contributor -  Remove records from the Source table where the contributor is null and remove all data related to these records
+
 ### Release instructions:
 * Update code
 * Run migration up to 0134
 
-### Database changes
-#### Migrations:
-* 0134_remove_sources_without_contributor -  Remove records from the Source table where the contributor is null and remove all data related to these records
 
 ## Release 1.7.3
 
