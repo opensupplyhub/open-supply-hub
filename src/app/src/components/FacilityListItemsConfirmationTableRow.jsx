@@ -65,6 +65,7 @@ function FacilityListItemsConfirmationTableRow({
     updateToMergeOSID,
     updateTargetOSID,
     fetchToMergeFacility,
+    fetchTargetFacility,
 }) {
     const {
         action,
@@ -220,7 +221,6 @@ function FacilityListItemsConfirmationTableRow({
                             )}
                             buttonName="OK"
                             fetching={fetching}
-                            hasActions
                             action={action}
                             activeSubmitButton={activeSubmitButton}
                             activeCheckboxes={activeCheckboxes}
@@ -228,7 +228,7 @@ function FacilityListItemsConfirmationTableRow({
                             updateTargetOSID={updateTargetOSID}
                             updateToMergeOSID={updateToMergeOSID}
                             fetchToMergeFacility={fetchToMergeFacility}
-                            fetchTargetFacility={fetchToMergeFacility}
+                            fetchTargetFacility={fetchTargetFacility}
                         />
                     </div>
                 </TableCell>

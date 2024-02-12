@@ -1,13 +1,10 @@
-import React, { Component } from 'react';
-
+import React, { useState, useCallback } from 'react';
 import { arrayOf, bool, func, shape, string } from 'prop-types';
-
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
-
 import { CONFIRM_ACTION, MERGE_ACTION, REJECT_ACTION } from '../util/constants';
 
 const actionDialogStates = Object.freeze({
@@ -17,199 +14,178 @@ const actionDialogStates = Object.freeze({
     reject: REJECT_ACTION,
 });
 
-export default class ConfirmActionButton extends Component {
-    state = {
-        currentDialog: actionDialogStates.none,
-    };
+const ConfirmActionButton = ({
+    action,
+    activeCheckboxes,
+    listItem,
+    fetching,
+    activeSubmitButton,
+    buttonName,
+    confirmMatch,
+    rejectMatch,
+    openMergeModal,
+    updateTargetOSID,
+    updateToMergeOSID,
+    fetchToMergeFacility,
+    fetchTargetFacility,
+}) => {
+    const [currentDialog, setCurrentDialog] = useState(actionDialogStates.none);
 
-    openActionDialog = action => {
+    const openActionDialog = useCallback(() => {
         switch (action) {
             case CONFIRM_ACTION:
-                this.setState(state =>
-                    Object.assign({}, state, {
-                        currentDialog: actionDialogStates.confirm,
-                    }),
-                );
+                setCurrentDialog(actionDialogStates.confirm);
                 break;
             case MERGE_ACTION:
-                this.props.updateTargetOSID(
-                    this.props.activeCheckboxes[0]?.os_id,
-                );
-                this.props.updateToMergeOSID(
-                    this.props.activeCheckboxes[1]?.os_id,
-                );
-                this.props.fetchToMergeFacility();
-                this.props.fetchTargetFacility();
-
-                this.props.openMergeModal();
+                updateTargetOSID(activeCheckboxes[0]?.os_id);
+                updateToMergeOSID(activeCheckboxes[1]?.os_id);
+                fetchToMergeFacility();
+                fetchTargetFacility();
+                openMergeModal();
                 break;
             case REJECT_ACTION:
-                this.setState(state =>
-                    Object.assign({}, state, {
-                        currentDialog: actionDialogStates.reject,
-                    }),
-                );
+                setCurrentDialog(actionDialogStates.reject);
                 break;
             default:
                 break;
         }
-    };
+    }, [
+        action,
+        activeCheckboxes,
+        updateTargetOSID,
+        updateToMergeOSID,
+        fetchToMergeFacility,
+        fetchTargetFacility,
+        openMergeModal,
+    ]);
 
-    closeDialog = () =>
-        this.setState(state =>
-            Object.assign({}, state, {
-                currentDialog: actionDialogStates.none,
-            }),
-        );
+    const closeDialog = useCallback(() => {
+        setCurrentDialog(actionDialogStates.none);
+    }, []);
 
-    confirmFacilityMatch = () => {
-        this.props.confirmMatch();
-        return this.closeDialog();
-    };
+    const confirmFacilityMatch = useCallback(() => {
+        confirmMatch();
+        closeDialog();
+    }, [confirmMatch, closeDialog]);
 
-    rejectFacilityMatch = () => {
-        this.props.rejectMatch();
-        return this.closeDialog();
-    };
+    const rejectFacilityMatch = useCallback(() => {
+        rejectMatch();
+        closeDialog();
+    }, [rejectMatch, closeDialog]);
 
-    render() {
-        const {
-            action,
-            listItem,
-            fetching,
-            activeSubmitButton,
-            activeCheckboxes,
-            buttonName,
-        } = this.props;
-
-        const confirmDialog = (
-            <Dialog
-                open={this.state.currentDialog === actionDialogStates.confirm}
-                aria-labelledby="alert-dialog-title"
-                aria-describedby="alert-dialog-description"
-            >
-                <DialogTitle id="alert-dialog-title">
-                    Confirm this potential facility match?
-                </DialogTitle>
-                <DialogContent id="alert-dialog-description">
-                    <h3>
-                        This action will confirm this facility as a match for
-                        the list item.
-                    </h3>
-                    <p>
-                        <strong>Potential match:</strong>
-                    </p>
-                    <ul>
-                        <li>name: {activeCheckboxes[0]?.name}</li>
-                        <li>address: {activeCheckboxes[0]?.address}</li>
-                    </ul>
-                    <p>
-                        <strong>List item:</strong>
-                    </p>
-                    <ul>
-                        <li>name: {listItem?.name}</li>
-                        <li>address: {listItem?.address}</li>
-                    </ul>
-                </DialogContent>
-                <DialogActions>
-                    <Button
-                        variant="outlined"
-                        color="primary"
-                        onClick={this.closeDialog}
-                    >
-                        No, do not confirm
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={this.confirmFacilityMatch}
-                    >
-                        Yes, confirm
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        );
-
-        const rejectDialog = (
-            <Dialog
-                open={this.state.currentDialog === actionDialogStates.reject}
-                aria-labelledby="alert-dialog-title"
-                aria-describedby="alert-dialog-description"
-            >
-                <DialogTitle id="alert-dialog-title">
-                    Reject this potential facility match?
-                </DialogTitle>
-                <DialogContent id="alert-dialog-description">
-                    <h3>
-                        This action will reject the facility as a potential
-                        match.
-                    </h3>
-                    <p>
-                        <strong>Potential matches to reject:</strong>
-                    </p>
-                    <ul>
-                        {activeCheckboxes.map(facilityMatchToReject => (
-                            <div key={facilityMatchToReject.id}>
-                                <li>name: {facilityMatchToReject?.name}</li>
-                                <li>
-                                    address: {facilityMatchToReject?.address}
-                                </li>
-                                <hr color="#E7E8EA" />
-                            </div>
-                        ))}
-                    </ul>
-                    <p>
-                        <strong>List item:</strong>
-                    </p>
-                    <ul>
-                        <li>name: {listItem?.name}</li>
-                        <li>address: {listItem?.address}</li>
-                    </ul>
-                    <p>
-                        If no other potential matches remain, this will create a
-                        new facility.
-                    </p>
-                </DialogContent>
-                <DialogActions>
-                    <Button
-                        variant="outlined"
-                        color="secondary"
-                        onClick={this.closeDialog}
-                    >
-                        No, do not reject
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="secondary"
-                        onClick={this.rejectFacilityMatch}
-                    >
-                        Yes, reject
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        );
-
-        return (
-            <>
-                <Button
-                    disabled={fetching || !activeSubmitButton}
-                    type="button"
-                    color="secondary"
-                    variant="contained"
-                    onClick={() => this.openActionDialog(action)}
-                >
-                    {buttonName}
+    const confirmDialog = (
+        <Dialog
+            open={currentDialog === actionDialogStates.confirm}
+            aria-labelledby="alert-dialog-title"
+            aria-describedby="alert-dialog-description"
+        >
+            <DialogTitle id="alert-dialog-title">
+                Confirm this potential facility match?
+            </DialogTitle>
+            <DialogContent>
+                <h3>
+                    This action will confirm this facility as a match for the
+                    list item.
+                </h3>
+                <p>
+                    <strong>Potential match:</strong>
+                </p>
+                <ul>
+                    <li>name: {activeCheckboxes[0]?.name}</li>
+                    <li>address: {activeCheckboxes[0]?.address}</li>
+                </ul>
+                <p>
+                    <strong>List item:</strong>
+                </p>
+                <ul>
+                    <li>name: {listItem?.name}</li>
+                    <li>address: {listItem?.address}</li>
+                </ul>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={closeDialog} color="primary">
+                    No, do not confirm
                 </Button>
-                {confirmDialog}
-                {rejectDialog}
-            </>
-        );
-    }
-}
+                <Button
+                    onClick={confirmFacilityMatch}
+                    color="primary"
+                    autoFocus
+                >
+                    Yes, confirm
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+
+    const rejectDialog = (
+        <Dialog
+            open={currentDialog === actionDialogStates.reject}
+            aria-labelledby="alert-dialog-title"
+            aria-describedby="alert-dialog-description"
+        >
+            <DialogTitle id="alert-dialog-title">
+                Reject this potential facility match?
+            </DialogTitle>
+            <DialogContent>
+                <h3>
+                    This action will reject the facility as a potential match.
+                </h3>
+                <p>
+                    <strong>Potential matches to reject:</strong>
+                </p>
+                <ul>
+                    {activeCheckboxes.map(facilityMatchToReject => (
+                        <div key={facilityMatchToReject.id}>
+                            <li>name: {facilityMatchToReject?.name}</li>
+                            <li>address: {facilityMatchToReject?.address}</li>
+                            <hr color="#E7E8EA" />
+                        </div>
+                    ))}
+                </ul>
+                <p>
+                    <strong>List item:</strong>
+                </p>
+                <ul>
+                    <li>name: {listItem?.name}</li>
+                    <li>address: {listItem?.address}</li>
+                </ul>
+                <p>
+                    If no other potential matches remain, this will create a new
+                    facility.
+                </p>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={closeDialog} color="primary">
+                    No, do not reject
+                </Button>
+                <Button onClick={rejectFacilityMatch} color="primary" autoFocus>
+                    Yes, reject
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+
+    return (
+        <>
+            <Button
+                disabled={fetching || !activeSubmitButton}
+                type="button"
+                color="secondary"
+                variant="contained"
+                onClick={() => openActionDialog(action)}
+            >
+                {buttonName}
+            </Button>
+            {confirmDialog}
+            {rejectDialog}
+        </>
+    );
+};
 
 ConfirmActionButton.defaultProps = {
     fetching: false,
     activeSubmitButton: false,
+    action: CONFIRM_ACTION,
 };
 
 ConfirmActionButton.propTypes = {
@@ -223,9 +199,17 @@ ConfirmActionButton.propTypes = {
         name: string.isRequired,
         address: string.isRequired,
     }).isRequired,
+    action: string,
     fetching: bool,
     activeSubmitButton: bool,
+    buttonName: string.isRequired,
     confirmMatch: func.isRequired,
     rejectMatch: func.isRequired,
     openMergeModal: func.isRequired,
+    updateTargetOSID: func.isRequired,
+    updateToMergeOSID: func.isRequired,
+    fetchToMergeFacility: func.isRequired,
+    fetchTargetFacility: func.isRequired,
 };
+
+export default ConfirmActionButton;
