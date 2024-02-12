@@ -127,7 +127,7 @@ def check_contributor_api_limit(at_datetime, c):
     logs_for_period = [x for x in log_dates if x >= start_date]
     request_count = len(logs_for_period)
     if (limit is None or
-        renewal_period is ''):
+            renewal_period == ''):
         block_free_api_contributor(contributor,
                                    limit,
                                    request_count,
@@ -170,11 +170,17 @@ def check_contributor_api_limit(at_datetime, c):
             if apiBlock.active:
                 return
             if apiBlock.active is False and apiBlock.grace_limit is None:
-                update_api_block(apiBlock, limit, request_count, is_active=True)
+                update_api_block(apiBlock,
+                                 limit,
+                                 request_count,
+                                 is_active=True)
                 return
             grace_limit = apiBlock.grace_limit
             if request_count > grace_limit:
-                update_api_block(apiBlock, limit, request_count, is_active=True)
+                update_api_block(apiBlock,
+                                 limit,
+                                 request_count,
+                                 is_active=True)
                 send_api_notice(contributor, limit, grace_limit)
                 send_admin_api_notice(contributor.name, limit, grace_limit)
                 notification.api_grace_limit_exceeded_sent_on = (
