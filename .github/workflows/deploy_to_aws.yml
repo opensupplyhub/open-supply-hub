@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - deploy-*
       - 'releases/**'
     tags:
       - 'sandbox-*'
@@ -15,82 +16,40 @@ on:
         required: true
         type: choice
         options:
+        - development
         - test
-        default: test
+        default: development
 
 jobs:
   init-and-plan:
     runs-on: ubuntu-latest
+    environment: Development
     steps:
+      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+        id: get_env_name
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
+        with:
+          string: ${{ vars.ENV_NAME }}
+      
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       
-      - name: Sets dev vars
-        if: (github.ref == 'refs/heads/main')
-        run: |
-          echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-          echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-          echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-          echo "OAR_DEPLOYMENT_ENVIRONMENT=prestaging" >> $GITHUB_ENV
-        env: 
-          aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_DV }}
-          aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_DV }}
-          bucket: ${{ vars.OAR_SETTINGS_BUCKET_DV }}
+      - name: Checkout terraform
+        uses: actions/checkout@v4
+        with:
+          repository: 'opensupplyhub/ci-deployment'
+          path: 'deployment'
+          token: ${{ secrets.PAT }}
+          ref: 'main'
 
-      - name: Sets sandbox vars
-        if: (startsWith(github.ref, 'refs/tags/sandbox-'))
+      - name: Copy tfvars from S3 bucket for ${{ vars.ENV_NAME }}
         run: |
-          echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-          echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-          echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-          echo "OAR_DEPLOYMENT_ENVIRONMENT=staging" >> $GITHUB_ENV
+          aws s3 cp "s3://${{ env.SETTINGS_BUCKET }}/terraform/terraform.tfvars" "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
+          ls -la
         env:
-          aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_st }}
-          aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_st }}
-          bucket: ${{ vars.OAR_SETTINGS_BUCKET_st }}
-
-      - name: Sets production vars
-        if: (startsWith(github.ref, 'refs/tags/production-'))
-        run: |
-          echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-          echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-          echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-          echo "OAR_DEPLOYMENT_ENVIRONMENT=production" >> $GITHUB_ENV
-        env:
-          aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_PR }}
-          aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_PR }}
-          bucket: ${{ vars.OAR_SETTINGS_BUCKET_PR }}
-      
-      - name: Sets pre-prod vars
-        if: (startsWith(github.ref, 'refs/heads/releases/v.'))
-        run: |
-          echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-          echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-          echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-          echo "OAR_DEPLOYMENT_ENVIRONMENT=staging" >> $GITHUB_ENV
-        env:
-          aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_DV }}
-          aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_DV }}
-          bucket: ${{ vars.OAR_SETTINGS_BUCKET_PP }}
-
-      - name: Sets test vars
-        if: inputs.deploy-env == 'test'
-        run: |
-          echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-          echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-          echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-          echo "OAR_DEPLOYMENT_ENVIRONMENT=staging" >> $GITHUB_ENV
-        env:
-          aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_TS }}
-          aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_TS }}
-          bucket: ${{ vars.OAR_SETTINGS_BUCKET_TS }}
-
-      - name: Copy tfvars from S3 bucket
-        run: aws s3 cp "s3://${{ env.OAR_SETTINGS_BUCKET }}/terraform/terraform.tfvars" "deployment/terraform/${{ env.OAR_SETTINGS_BUCKET }}.tfvars"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ env.aws_id_key }}
-          AWS_SECRET_ACCESS_KEY: ${{ env.aws_secret_key }}
-          OAR_SETTINGS_BUCKET: ${{ env.aws_bucket }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           AWS_DEFAULT_REGION: "eu-west-1"
 
       - name: Setup Terraform
@@ -99,82 +58,32 @@ jobs:
           terraform_version: 1.4.0
           terraform_wrapper: false
 
-      - name: Terraform Plan
-        run: ./scripts/infra plan
+      - name: Terraform Plan for ${{ vars.ENV_NAME }}
+        run: ./deployment/infra plan
         env:
-          AWS_ACCESS_KEY_ID: ${{ env.aws_id_key }}
-          AWS_SECRET_ACCESS_KEY: ${{ env.aws_secret_key }}
-          OAR_SETTINGS_BUCKET: ${{ env.aws_bucket }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
 
-      - name: Copy planfile to S3 bucket
-        run: aws s3 cp "deployment/terraform/${{ env.OAR_SETTINGS_BUCKET }}.tfplan" "s3://${{ env.OAR_SETTINGS_BUCKET }}/terraform/${{ env.OAR_SETTINGS_BUCKET }}.tfplan" 
+      - name: Copy planfile to S3 bucket for ${{ vars.ENV_NAME }}
+        run: aws s3 cp "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfplan" "s3://${{ env.SETTINGS_BUCKET }}/terraform/${{ env.SETTINGS_BUCKET }}.tfplan" 
         env:
-          AWS_ACCESS_KEY_ID: ${{ env.aws_id_key }}
-          AWS_SECRET_ACCESS_KEY: ${{ env.aws_secret_key }}
-          OAR_SETTINGS_BUCKET: ${{ env.aws_bucket }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           AWS_DEFAULT_REGION: "eu-west-1"
 
   apply:
     needs: init-and-plan
     runs-on: ubuntu-latest
+    environment: Development
     steps:
-      - name: Sets dev vars
-        if: (github.ref == 'refs/heads/main')
-        run: |
-          echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-          echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-          echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-        env:
-          aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_DV }}
-          aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_DV }}
-          bucket: ${{ vars.OAR_SETTINGS_BUCKET_DV }}
-
-      - name: Sets sandbox vars
-        if: (startsWith(github.ref, 'refs/tags/sandbox-'))
-        run: |
-          echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-          echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-          echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-        env:
-          aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_ST }}
-          aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_ST }}
-          bucket: ${{ vars.OAR_SETTINGS_BUCKET_ST }}
-
-      - name: Sets production vars
-        if: (startsWith(github.ref, 'refs/tags/production-'))
-        run: |
-          echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-          echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-          echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-        env:
-          aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_PR }}
-          aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_PR }}
-          bucket: ${{ vars.OAR_SETTINGS_BUCKET_PR }}
-
-      - name: Sets pre-prod vars
-        if: (startsWith(github.ref, 'refs/heads/releases/v.'))
-        run: |
-          echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-          echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-          echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-          echo "OAR_DEPLOYMENT_ENVIRONMENT=staging" >> $GITHUB_ENV
-        env:
-          aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_DV }}
-          aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_DV }}
-          bucket: ${{ vars.OAR_SETTINGS_BUCKET_PP }}
-
-      - name: Sets test vars
-        if: inputs.deploy-env == 'test'
-        run: |
-          echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-          echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-          echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-          echo "OAR_DEPLOYMENT_ENVIRONMENT=staging" >> $GITHUB_ENV
-        env:
-          aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_TS }}
-          aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_TS }}
-          bucket: ${{ vars.OAR_SETTINGS_BUCKET_TS }}
-
+      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+        id: get_env_name
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
+        with:
+          string: ${{ vars.ENV_NAME }}
+    
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
@@ -182,147 +91,158 @@ jobs:
           terraform_wrapper: false
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+      - name: Checkout terraform
+        uses: actions/checkout@v4
+        with:
+          repository: 'opensupplyhub/ci-deployment'
+          path: 'deployment'
+          token: ${{ secrets.PAT }}
+          ref: 'main'
 
-      - name: Get planfile from S3 bucket
-        run: aws s3 cp "s3://${{ env.OAR_SETTINGS_BUCKET }}/terraform/${{ env.OAR_SETTINGS_BUCKET }}.tfplan" "deployment/terraform/${{ env.OAR_SETTINGS_BUCKET }}.tfplan"
+      - name: Get planfile from S3 bucket for ${{ vars.ENV_NAME }}
+        run: aws s3 cp "s3://${{ env.SETTINGS_BUCKET }}/terraform/${{ env.SETTINGS_BUCKET }}.tfplan" "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfplan"
         env:
-          AWS_ACCESS_KEY_ID: ${{ env.aws_id_key }}
-          AWS_SECRET_ACCESS_KEY: ${{ env.aws_secret_key }}
-          OAR_SETTINGS_BUCKET: ${{ env.aws_bucket }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           AWS_DEFAULT_REGION: "eu-west-1"
-
-      - name: Terraform Apply
-        run: ./scripts/infra apply
+        
+      - name: Terraform Apply for ${{ vars.ENV_NAME }}
+        run: ./deployment/infra apply
         env:
-          AWS_ACCESS_KEY_ID: ${{ env.aws_id_key }}
-          AWS_SECRET_ACCESS_KEY: ${{ env.aws_secret_key }}
-          OAR_SETTINGS_BUCKET: ${{ env.aws_bucket }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
 
 
   build_and_push_docker_image:
     needs: apply
     runs-on: ubuntu-latest
+    environment: Development
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v2
+      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+        id: get_env_name
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
         with:
-          submodules: recursive
-          token: ${{ secrets.ACCESS_TOKEN }}
+          string: ${{ vars.ENV_NAME }}
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - name: Pull & update submodules recursively
-        run:  git submodule update --recursive --remote
 
-      - name: Sets dev vars
-        if: (github.ref == 'refs/heads/main')
-        run: |
-          echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-          echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-          echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-          echo "aws_cluster=${{ env.cluster}}" >> $GITHUB_ENV
-          echo "aws_service=${{ env.service}}" >> $GITHUB_ENV
-          echo "aws_ecr=${{ env.ecr}}" >> $GITHUB_ENV
-          echo "react_route=${{ env.route }}" >> $GITHUB_ENV
-          echo "docker_image=${{ env.docker_image }}" >> $GITHUB_ENV
-          echo "ENVIRONMENT=development" >> $GITHUB_ENV
-          echo "DEPLOYMENT=development" >> $GITHUB_ENV
-        env:
-          aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_DV }}
-          aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_DV }}
-          bucket: ${{ vars.OAR_SETTINGS_BUCKET_DV }}
-          cluster: ${{ vars.CLUSTER_DV }}
-          service: ${{ vars.SERVICE_NAME_DV }}
-          ecr: ${{ vars.ECR_REGISTRY_DV }}
-          route: "true"
-          docker_image: ${{ vars.DOCKER_IMAGE_DV }}
+  #     - name: Pull & update submodules recursively
+  #       run:  git submodule update --recursive --remote
 
-      - name: Sets sandbox vars
-        if: (startsWith(github.ref, 'refs/tags/sandbox-'))
-        run: |
-          echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-          echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-          echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-          echo "aws_cluster=${{ env.cluster}}" >> $GITHUB_ENV
-          echo "aws_service=${{ env.service}}" >> $GITHUB_ENV
-          echo "aws_ecr=${{ env.ecr}}" >> $GITHUB_ENV
-          echo "react_route=${{ env.route }}" >> $GITHUB_ENV
-          echo "docker_image=${{ env.docker_image }}" >> $GITHUB_ENV
-          echo "ENVIRONMENT=staging" >> $GITHUB_ENV
-        env:
-          aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_ST }}
-          aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_ST }}
-          bucket: ${{ vars.OAR_SETTINGS_BUCKET_ST }}
-          cluster: ${{ vars.CLUSTER_ST }}
-          service: ${{ vars.SERVICE_NAME_ST }}
-          ecr: ${{ vars.ECR_REGISTRY_ST }} 
-          route: "false"     
-          docker_image: ${{ vars.DOCKER_IMAGE_ST }}
+  #     - name: Sets dev vars
+  #       if: (github.ref == 'refs/heads/main')
+  #       run: |
+  #         echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
+  #         echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
+  #         echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
+  #         echo "aws_cluster=${{ env.cluster}}" >> $GITHUB_ENV
+  #         echo "aws_service=${{ env.service}}" >> $GITHUB_ENV
+  #         echo "aws_ecr=${{ env.ecr}}" >> $GITHUB_ENV
+  #         echo "react_route=${{ env.route }}" >> $GITHUB_ENV
+  #         echo "docker_image=${{ env.docker_image }}" >> $GITHUB_ENV
+  #         echo "ENVIRONMENT=development" >> $GITHUB_ENV
 
-      - name: Sets production vars
-        if: (startsWith(github.ref, 'refs/tags/production-'))
-        run: |
-          echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-          echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-          echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-          echo "aws_cluster=${{ env.cluster}}" >> $GITHUB_ENV
-          echo "aws_service=${{ env.service}}" >> $GITHUB_ENV
-          echo "aws_ecr=${{ env.ecr}}" >> $GITHUB_ENV
-          echo "react_route=${{ env.route }}" >> $GITHUB_ENV
-          echo "docker_image=${{ env.docker_image }}" >> $GITHUB_ENV
-          echo "ENVIRONMENT=production" >> $GITHUB_ENV
-        env:
-          aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_PR }}
-          aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_PR }}
-          bucket: ${{ vars.OAR_SETTINGS_BUCKET_PR }}
-          cluster: ${{ vars.CLUSTER_PR }}
-          service: ${{ vars.SERVICE_NAME_PR }}
-          ecr: ${{ vars.ECR_REGISTRY_PR }}
-          route: "flase"
-          docker_image: ${{ vars.DOCKER_IMAGE_PR }}
+  #       env:
+  #         aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_DV }}
+  #         aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_DV }}
+  #         bucket: ${{ vars.OAR_SETTINGS_BUCKET_DV }}
+  #         cluster: ${{ vars.CLUSTER_DV }}
+  #         service: ${{ vars.SERVICE_NAME_DV }}
+  #         ecr: ${{ vars.ECR_REGISTRY_DV }}
+  #         route: "true"
+  #         docker_image: ${{ vars.DOCKER_IMAGE_DV }}
 
-      - name: Sets pre-prod vars
-        if: (startsWith(github.ref, 'refs/heads/releases/v.'))
-        run: |
-          echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-          echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-          echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-          echo "aws_cluster=${{ env.cluster}}" >> $GITHUB_ENV
-          echo "aws_service=${{ env.service}}" >> $GITHUB_ENV
-          echo "aws_ecr=${{ env.ecr}}" >> $GITHUB_ENV
-          echo "react_route=${{ env.route }}" >> $GITHUB_ENV
-          echo "docker_image=${{ env.docker_image }}" >> $GITHUB_ENV
-          echo "ENVIRONMENT=preprod" >> $GITHUB_ENV
-        env:
-          aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_DV }}
-          aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_DV }}
-          bucket: ${{ vars.OAR_SETTINGS_BUCKET_PP }}
-          cluster: ${{ vars.CLUSTER_PP }}
-          service: ${{ vars.SERVICE_NAME_PP }}
-          ecr: ${{ vars.ECR_REGISTRY_PP }}
-          route: "flase"
-          docker_image: ${{ vars.DOCKER_IMAGE_PP }}
+  #     - name: Sets sandbox vars
+  #       if: (startsWith(github.ref, 'refs/tags/sandbox-'))
+  #       run: |
+  #         echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
+  #         echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
+  #         echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
+  #         echo "aws_cluster=${{ env.cluster}}" >> $GITHUB_ENV
+  #         echo "aws_service=${{ env.service}}" >> $GITHUB_ENV
+  #         echo "aws_ecr=${{ env.ecr}}" >> $GITHUB_ENV
+  #         echo "react_route=${{ env.route }}" >> $GITHUB_ENV
+  #         echo "docker_image=${{ env.docker_image }}" >> $GITHUB_ENV
+  #         echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+  #       env:
+  #         aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_ST }}
+  #         aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_ST }}
+  #         bucket: ${{ vars.OAR_SETTINGS_BUCKET_ST }}
+  #         cluster: ${{ vars.CLUSTER_ST }}
+  #         service: ${{ vars.SERVICE_NAME_ST }}
+  #         ecr: ${{ vars.ECR_REGISTRY_ST }} 
+  #         route: "false"     
+  #         docker_image: ${{ vars.DOCKER_IMAGE_ST }}
 
-      - name: Sets test vars
-        if: inputs.deploy-env == 'test'
-        run: |
-          echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-          echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-          echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-          echo "aws_cluster=${{ env.cluster}}" >> $GITHUB_ENV
-          echo "aws_service=${{ env.service}}" >> $GITHUB_ENV
-          echo "aws_ecr=${{ env.ecr}}" >> $GITHUB_ENV
-          echo "react_route=${{ env.route }}" >> $GITHUB_ENV
-          echo "docker_image=${{ env.docker_image }}" >> $GITHUB_ENV
-          echo "ENVIRONMENT=development" >> $GITHUB_ENV
-        env:
-            aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_TS }}
-            aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_TS }}
-            bucket: ${{ vars.OAR_SETTINGS_BUCKET_TS }}
-            cluster: ${{ vars.CLUSTER_TS }}
-            service: ${{ vars.SERVICE_NAME_TS }}
-            ecr: ${{ vars.ECR_REGISTRY_TS }}
-            route: "true"
-            docker_image: ${{ vars.DOCKER_IMAGE_TS }}
+  #     - name: Sets production vars
+  #       if: (startsWith(github.ref, 'refs/tags/production-'))
+  #       run: |
+  #         echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
+  #         echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
+  #         echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
+  #         echo "aws_cluster=${{ env.cluster}}" >> $GITHUB_ENV
+  #         echo "aws_service=${{ env.service}}" >> $GITHUB_ENV
+  #         echo "aws_ecr=${{ env.ecr}}" >> $GITHUB_ENV
+  #         echo "react_route=${{ env.route }}" >> $GITHUB_ENV
+  #         echo "docker_image=${{ env.docker_image }}" >> $GITHUB_ENV
+  #         echo "ENVIRONMENT=production" >> $GITHUB_ENV
+  #       env:
+  #         aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_PR }}
+  #         aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_PR }}
+  #         bucket: ${{ vars.OAR_SETTINGS_BUCKET_PR }}
+  #         cluster: ${{ vars.CLUSTER_PR }}
+  #         service: ${{ vars.SERVICE_NAME_PR }}
+  #         ecr: ${{ vars.ECR_REGISTRY_PR }}
+  #         route: "flase"
+  #         docker_image: ${{ vars.DOCKER_IMAGE_PR }}
+
+  #     - name: Sets pre-prod vars
+  #       if: (startsWith(github.ref, 'refs/heads/releases/v.'))
+  #       run: |
+  #         echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
+  #         echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
+  #         echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
+  #         echo "aws_cluster=${{ env.cluster}}" >> $GITHUB_ENV
+  #         echo "aws_service=${{ env.service}}" >> $GITHUB_ENV
+  #         echo "aws_ecr=${{ env.ecr}}" >> $GITHUB_ENV
+  #         echo "react_route=${{ env.route }}" >> $GITHUB_ENV
+  #         echo "docker_image=${{ env.docker_image }}" >> $GITHUB_ENV
+  #         echo "ENVIRONMENT=preprod" >> $GITHUB_ENV
+  #       env:
+  #         aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_DV }}
+  #         aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_DV }}
+  #         bucket: ${{ vars.OAR_SETTINGS_BUCKET_PP }}
+  #         cluster: ${{ vars.CLUSTER_PP }}
+  #         service: ${{ vars.SERVICE_NAME_PP }}
+  #         ecr: ${{ vars.ECR_REGISTRY_PP }}
+  #         route: "flase"
+  #         docker_image: ${{ vars.DOCKER_IMAGE_PP }}
+
+  #     - name: Sets test vars
+  #       if: inputs.deploy-env == 'test'
+  #       run: |
+  #         echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
+  #         echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
+  #         echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
+  #         echo "aws_cluster=${{ env.cluster}}" >> $GITHUB_ENV
+  #         echo "aws_service=${{ env.service}}" >> $GITHUB_ENV
+  #         echo "aws_ecr=${{ env.ecr}}" >> $GITHUB_ENV
+  #         echo "react_route=${{ env.route }}" >> $GITHUB_ENV
+  #         echo "docker_image=${{ env.docker_image }}" >> $GITHUB_ENV
+  #         echo "ENVIRONMENT=development" >> $GITHUB_ENV
+  #       env:
+  #           aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_TS }}
+  #           aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_TS }}
+  #           bucket: ${{ vars.OAR_SETTINGS_BUCKET_TS }}
+  #           cluster: ${{ vars.CLUSTER_TS }}
+  #           service: ${{ vars.SERVICE_NAME_TS }}
+  #           ecr: ${{ vars.ECR_REGISTRY_TS }}
+  #           route: "true"
+  #           docker_image: ${{ vars.DOCKER_IMAGE_TS }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v2
@@ -344,16 +264,16 @@ jobs:
         working-directory: src/app
         run: yarn run build
         env:
-          REACT_APP_ROUTE: ${{ env.react_route }}
+          REACT_APP_ROUTE: ${{ true }}
       
       - name: Move static
         run: mv src/app/build src/django/static
 
-      - name: Configure AWS credentials
+      - name: Configure AWS credentials for ${{ vars.ENV_NAME }}
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ env.aws_id_key }}
-          aws-secret-access-key: ${{ env.aws_secret_key }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: "eu-west-1"
 
       - name: Get GIT_COMMIT
@@ -365,72 +285,54 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build and push APP Docker image to ECR
+      - name: Build and push Django Docker image to ECR for ${{ vars.ENV_NAME }}
         uses: docker/build-push-action@v2
         with:
           context: src/django
           file: src/django/Dockerfile
           push: true
-          tags: ${{ env.aws_ecr }}/${{ vars.IMAGE_NAME }}-${{ env.ENVIRONMENT }}:${{ env.GIT_COMMIT }}
+          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
 
-      - name: Build and push Batch Docker image to ECR
+      - name: Build and push Batch Docker image to ECR for ${{ vars.ENV_NAME }}
         uses: docker/build-push-action@v2
         with:
           context: src/batch
           file: src/batch/Dockerfile
           push: true
-          tags: ${{ env.aws_ecr }}/${{ vars.IMAGE_NAME }}-batch-${{ env.ENVIRONMENT }}:${{ env.GIT_COMMIT }}
+          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-batch-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
           build-args: |
             GIT_COMMIT=${{ env.GIT_COMMIT }}
-            DOCKER_IMAGE=${{ env.docker_image }}
-            ENVIRONMENT=${{ env.ENVIRONMENT }}
+            DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}
+            ENVIRONMENT=${{ steps.get_env_name.outputs.lowercase }}
 
-      - name: Build and push DD Docker image to ECR
+      - name: Build and push DD Docker image to ECR for ${{ vars.ENV_NAME }}
         uses: docker/build-push-action@v2
         with:
-          context: src/dd-hub/api
-          file: src/dd-hub/api/Dockerfile
+          context: src/dedupe-hub/api
+          file: src/dedupe-hub/api/Dockerfile
           push: true
-          tags: ${{ env.aws_ecr }}/${{ vars.IMAGE_NAME }}-deduplicate-${{ env.ENVIRONMENT }}:${{ env.GIT_COMMIT }}
+          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-deduplicate-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
           build-args: |
             GIT_COMMIT=${{ env.GIT_COMMIT }}
-            DOCKER_IMAGE=${{ env.docker_image }}
-            ENVIRONMENT=${{ env.ENVIRONMENT }}
+            DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}
+            ENVIRONMENT=${{ steps.get_env_name.outputs.lowercase }}
 
-      - name: Build and push kafka-topics image to ECR
+      - name: Build and push kafka-topics image to ECR for ${{ vars.ENV_NAME }}
         uses: docker/build-push-action@v2
         with:
           context: src/kafka-tools/
           file: src/kafka-tools/Dockerfile
           push: true
-          tags: ${{ env.aws_ecr }}/${{ vars.IMAGE_NAME }}-kafka-${{ env.ENVIRONMENT }}:latest
+          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-kafka-${{  steps.get_env_name.outputs.lowercase }}:latest
           build-args: |
-            DOCKER_IMAGE=${{ env.docker_image }}
-            ENVIRONMENT=${{ env.ENVIRONMENT }}
+            DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}
+            ENVIRONMENT=${{ steps.get_env_name.outputs.lowercase }}
 
-      - name: Update ECS Service with new Image
-        uses: ./.github/actions/aws-cli
-        with:
-          args: aws ecs update-service --cluster ${{ env.aws_cluster }} --service ${{ env.aws_service }} --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}}
+      - name: Update ECS Django Service with new Image
+        run: |
+          aws ecs update-service --cluster ${{ vars.CLUSTER }} --service ${{ vars.SERVICE_NAME }} --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}}
         env:
-          AWS_ACCESS_KEY_ID: ${{ env.aws_id_key }}
-          AWS_SECRET_ACCESS_KEY: ${{ env.aws_secret_key }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: "eu-west-1"
-
-      - name: Build and push СС Docker image to ECR
-        uses: docker/build-push-action@v2
-        with:
-          context: src/contricleaner/
-          file: src/contricleaner/Dockerfile
-          push: true
-          tags: ${{ env.aws_ecr }}/${{ vars.IMAGE_NAME }}-contricleaner-${{ env.ENVIRONMENT }}:${{ env.GIT_COMMIT }}
-
-      - name: Update ECS СС Service with new Image
-        uses: ./.github/actions/aws-cli
-        with:
-          args: aws ecs update-service --cluster ${{ env.aws_cluster }} --service ${{ env.aws_service }}CC --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}}
-        env:
-          AWS_ACCESS_KEY_ID: ${{ env.aws_id_key }}
-          AWS_SECRET_ACCESS_KEY: ${{ env.aws_secret_key }}
-          AWS_DEFAULT_REGION: "eu-west-1"
-      
+    
