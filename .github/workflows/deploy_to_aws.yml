@@ -329,7 +329,6 @@ jobs:
             ENVIRONMENT=${{ steps.get_env_name.outputs.lowercase }}
 
       - name: Update ECS Django Service with new Image
-        #uses: ./.github/actions/aws-cli
         run: |
           aws ecs update-service --cluster ${{ vars.CLUSTER }} --service ${{ vars.SERVICE_NAME }} --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}}
         env:
