@@ -14,7 +14,7 @@ import {
 
 import { CONFIRM_ACTION, MERGE_ACTION, REJECT_ACTION } from './constants';
 
-export function useUpdateLeafletMapImperatively(
+export const useUpdateLeafletMapImperatively = (
     resetButtonClickCount,
     {
         osID,
@@ -25,7 +25,7 @@ export function useUpdateLeafletMapImperatively(
         zoomToSearch,
         boundary,
     } = {},
-) {
+) => {
     const mapRef = useRef(null);
 
     const [currentExtent, setCurrentExtent] = useState(extent);
@@ -143,9 +143,9 @@ export function useUpdateLeafletMapImperatively(
     }, [data, shouldPanMapToFacilityDetails, isVectorTileMap]);
 
     return mapRef;
-}
+};
 
-export function useCheckboxManager() {
+export const useCheckboxManager = () => {
     const [action, setAction] = useState(CONFIRM_ACTION);
     const [activeCheckboxes, setActiveCheckboxes] = useState([]);
     const [activeSubmitButton, setActiveSubmitButton] = useState(false);
@@ -244,4 +244,4 @@ export function useCheckboxManager() {
         toggleCheckbox,
         isCheckboxDisabled,
     };
-}
+};

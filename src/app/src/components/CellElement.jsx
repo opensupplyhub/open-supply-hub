@@ -15,6 +15,7 @@ import { facilityMatchStatusChoicesEnum } from '../util/constants';
 import { confirmRejectMatchRowStyles } from '../util/styles';
 
 export default class CellElement extends Component {
+    // TODO split the logic of this component so it won't have multiple render outputs
     render() {
         const {
             item,
