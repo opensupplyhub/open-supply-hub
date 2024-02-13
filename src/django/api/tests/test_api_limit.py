@@ -1,4 +1,8 @@
-from api.limits import check_api_limits, get_end_of_year
+from api.limits import (
+    check_api_limits,
+    get_end_of_year,
+    round_start_date
+)
 from api.models import (
     ApiBlock,
     ApiLimit,
@@ -8,6 +12,7 @@ from api.models import (
     User,
 )
 from dateutil.relativedelta import relativedelta
+from datetime import datetime
 
 from django.test import TestCase
 from django.utils import timezone
@@ -395,4 +400,21 @@ class ApiLimitTest(TestCase):
             ApiBlock.objects.filter(
                 contributor=self.contrib_three_free
             ).first().active, False
+        )
+
+    def test_round_start_date(self):
+        date_one = datetime(day=30, month=10, year=2024)
+        result_date_one = round_start_date(date_one)
+
+        self.assertEqual(
+            result_date_one,
+            datetime(day=1, month=11, year=2024)
+        )
+
+        date_two = datetime(day=29, month=12, year=2024)
+        result_date_two = round_start_date(date_two)
+
+        self.assertEqual(
+            result_date_two,
+            datetime(day=1, month=1, year=2025)
         )
