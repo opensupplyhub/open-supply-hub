@@ -59,7 +59,7 @@ const FacilityListItemsTableRow = ({
         <TableCell
             padding="default"
             style={listTableCellStyles.nameCellStyles}
-            colSpan={2}
+            colSpan={1}
         >
             {newFacility && osID ? (
                 <Link
@@ -75,7 +75,7 @@ const FacilityListItemsTableRow = ({
         <TableCell
             padding="default"
             style={listTableCellStyles.addressCellStyles}
-            colSpan={2}
+            colSpan={3}
         >
             {address}
         </TableCell>

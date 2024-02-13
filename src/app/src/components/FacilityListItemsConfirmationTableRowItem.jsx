@@ -1,4 +1,5 @@
 import { React } from 'react';
+import { bool, number, func, string, shape, arrayOf } from 'prop-types';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 import Checkbox from '@material-ui/core/Checkbox';
@@ -102,12 +103,33 @@ const FacilityListItemsConfirmationTableRowItem = ({
             variant="head"
             style={{
                 ...listTableCellStyles.headerCellStyles,
-                textAlign: 'right',
+                textAlign: 'left',
+                paddingLeft: '65px',
             }}
         >
             <b>{confidence}</b>
         </TableCell>
     </TableRow>
 );
+
+FacilityListItemsConfirmationTableRowItem.propTypes = {
+    id: number.isRequired,
+    os_id: number.isRequired, // eslint-disable-line camelcase
+    name: string.isRequired,
+    status: string.isRequired,
+    className: string.isRequired,
+    activeCheckboxes: arrayOf(
+        shape({
+            name: string,
+            address: string,
+        }),
+    ).isRequired,
+    address: number.isRequired,
+    isCheckboxDisabled: bool.isRequired,
+    confidence: string.isRequired,
+    readOnly: bool.isRequired,
+    toggleCheckbox: func.isRequired,
+    action: string.isRequired,
+};
 
 export default FacilityListItemsConfirmationTableRowItem;

@@ -9,6 +9,7 @@ import CellElement from './CellElement';
 import ConfirmActionButton from './ConfirmActionButton';
 import FacilityListItemsDetailedTableRowCell from './FacilityListItemsDetailedTableRowCell';
 import FacilityListItemsConfirmationTableRowItem from './FacilityListItemsConfirmationTableRowItem';
+import FacilityListItemsConfirmationTableRowNoMerge from './FacilityListItemsConfirmationTableRowNoMerge';
 import { useCheckboxManager } from '../util/hooks';
 
 import { toggleMergeModal } from '../actions/ui';
@@ -50,7 +51,7 @@ const selectStyles = Object.freeze({
     control: provided =>
         Object.freeze({
             ...provided,
-            width: '250px',
+            width: '140px',
         }),
 });
 
@@ -137,14 +138,14 @@ function FacilityListItemsConfirmationTableRow({
                 <TableCell
                     padding="default"
                     style={listTableCellStyles.nameCellStyles}
-                    colSpan={2}
+                    colSpan={1}
                 >
                     <CellElement item={item.name || ' '} />
                 </TableCell>
                 <TableCell
                     padding="default"
                     style={listTableCellStyles.addressCellStyles}
-                    colSpan={2}
+                    colSpan={3}
                 >
                     <CellElement item={item.address || ' '} />
                 </TableCell>
@@ -237,31 +238,37 @@ function FacilityListItemsConfirmationTableRow({
                     variant="head"
                     style={{
                         ...listTableCellStyles.headerCellStyles,
-                        textAlign: 'right',
+                        textAlign: 'left',
                     }}
                 >
                     <b>Confidence Score</b>
                 </TableCell>
             </TableRow>
-            {matches.map((
-                { id, status, address, os_id, name, confidence }, // eslint-disable-line camelcase
-            ) => (
-                <FacilityListItemsConfirmationTableRowItem
-                    key={id}
-                    id={id}
-                    os_id={os_id} // eslint-disable-line camelcase
-                    name={name}
-                    status={status}
+            {matches.length === 0 && action === MERGE_ACTION ? (
+                <FacilityListItemsConfirmationTableRowNoMerge
                     className={className}
-                    activeCheckboxes={activeCheckboxes}
-                    address={address}
-                    isCheckboxDisabled={isCheckboxDisabled}
-                    confidence={confidence}
-                    readOnly={readOnly}
-                    toggleCheckbox={toggleCheckbox}
-                    action={action}
                 />
-            ))}
+            ) : (
+                matches.map((
+                    { id, status, address, os_id, name, confidence }, // eslint-disable-line camelcase
+                ) => (
+                    <FacilityListItemsConfirmationTableRowItem
+                        key={id}
+                        id={id}
+                        os_id={os_id} // eslint-disable-line camelcase
+                        name={name}
+                        status={status}
+                        className={className}
+                        activeCheckboxes={activeCheckboxes}
+                        address={address}
+                        isCheckboxDisabled={isCheckboxDisabled}
+                        confidence={confidence}
+                        readOnly={readOnly}
+                        toggleCheckbox={toggleCheckbox}
+                        action={action}
+                    />
+                ))
+            )}
         </>
     );
 }
