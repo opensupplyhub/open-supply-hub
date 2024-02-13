@@ -27,6 +27,7 @@ import FacilityListItemsTableRow from './FacilityListItemsTableRow';
 import FacilityListItemsConfirmationTableRow from './FacilityListItemsConfirmationTableRow';
 import FacilityListItemsErrorTableRow from './FacilityListItemsErrorTableRow';
 import FacilityListItemsMatchTableRow from './FacilityListItemsMatchTableRow';
+import MergeModal from './MergeModal';
 
 import { facilityListItemPropType } from '../util/propTypes';
 
@@ -712,6 +713,7 @@ class FacilityListItemsTable extends Component {
                         <div style={{ display: 'none' }} />
                     )}
                 </Dialog>
+                <MergeModal />
             </Paper>
         );
     }
