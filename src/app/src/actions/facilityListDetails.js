@@ -187,11 +187,11 @@ export function confirmFacilityListItemMatch(facilityMatchID) {
     };
 }
 
-export function rejectFacilityListItemMatch(facilityMatchID) {
+export function rejectFacilityListItemMatch(facilityMatchIDs) {
     return dispatch => {
         dispatch(startRejectFacilityListItemPotentialMatch());
 
-        if (!facilityMatchID) {
+        if (!facilityMatchIDs) {
             return dispatch(
                 logErrorAndDispatchFailure(
                     null,
@@ -201,20 +201,40 @@ export function rejectFacilityListItemMatch(facilityMatchID) {
             );
         }
 
-        return apiRequest
-            .post(createRejectFacilityListItemMatchURL(facilityMatchID))
-            .then(({ data }) =>
-                dispatch(completeRejectFacilityListItemPotentialMatch(data)),
-            )
-            .catch(err =>
-                dispatch(
-                    logErrorAndDispatchFailure(
-                        err,
-                        'An error prevented rejecting that match',
-                        failRejectFacilityListItemPotentialMatch,
-                    ),
+        let chain = Promise.resolve();
+
+        facilityMatchIDs.forEach(facilityMatchID => {
+            chain = chain.then(() =>
+                apiRequest
+                    .post(createRejectFacilityListItemMatchURL(facilityMatchID))
+                    .then(({ data }) => {
+                        dispatch(
+                            completeRejectFacilityListItemPotentialMatch(data),
+                        );
+                    })
+                    .catch(error => {
+                        dispatch(
+                            logErrorAndDispatchFailure(
+                                error,
+                                `Failed to reject facility match with id ${facilityMatchID}`,
+                                failRejectFacilityListItemPotentialMatch,
+                            ),
+                        );
+                    }),
+            );
+        });
+
+        chain.catch(error => {
+            dispatch(
+                logErrorAndDispatchFailure(
+                    error,
+                    'An unexpected error occurred while rejecting potential matches',
+                    failRejectFacilityListItemPotentialMatch,
                 ),
             );
+        });
+
+        return chain;
     };
 }
 

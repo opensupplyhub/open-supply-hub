@@ -8,6 +8,10 @@ export const FACILITIES_DOWNLOAD_REQUEST_PAGE_SIZE = 100;
 export const WEB_HEADER_HEIGHT = '160px';
 export const MOBILE_HEADER_HEIGHT = '140px';
 
+export const CONFIRM_ACTION = 'confirm';
+export const MERGE_ACTION = 'merge';
+export const REJECT_ACTION = 'reject';
+
 export const InfoLink = 'https://info.opensupplyhub.org';
 
 export const InfoPaths = {
