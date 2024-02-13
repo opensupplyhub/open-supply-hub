@@ -24,6 +24,8 @@ const ConfirmActionButton = ({
     confirmMatch,
     rejectMatch,
     openMergeModal,
+    targetFacilityOSID,
+    facilityToMergeOSID,
     updateTargetOSID,
     updateToMergeOSID,
     fetchToMergeFacility,
@@ -37,10 +39,23 @@ const ConfirmActionButton = ({
                 setCurrentDialog(actionDialogStates.confirm);
                 break;
             case MERGE_ACTION:
-                updateTargetOSID(activeCheckboxes[0]?.os_id);
-                updateToMergeOSID(activeCheckboxes[1]?.os_id);
-                fetchToMergeFacility();
-                fetchTargetFacility();
+                if (
+                    targetFacilityOSID !== activeCheckboxes[0]?.os_id &&
+                    facilityToMergeOSID !== activeCheckboxes[1]?.os_id
+                ) {
+                    updateToMergeOSID(activeCheckboxes[1]?.os_id);
+                    updateTargetOSID(activeCheckboxes[0]?.os_id);
+                    fetchToMergeFacility();
+                    fetchTargetFacility();
+                }
+                if (targetFacilityOSID !== activeCheckboxes[0]?.os_id) {
+                    updateTargetOSID(activeCheckboxes[0]?.os_id);
+                    fetchTargetFacility();
+                }
+                if (facilityToMergeOSID !== activeCheckboxes[1]?.os_id) {
+                    updateToMergeOSID(activeCheckboxes[1]?.os_id);
+                    fetchToMergeFacility();
+                }
                 openMergeModal();
                 break;
             case REJECT_ACTION:
@@ -206,6 +221,8 @@ ConfirmActionButton.propTypes = {
     confirmMatch: func.isRequired,
     rejectMatch: func.isRequired,
     openMergeModal: func.isRequired,
+    targetFacilityOSID: string.isRequired,
+    facilityToMergeOSID: string.isRequired,
     updateTargetOSID: func.isRequired,
     updateToMergeOSID: func.isRequired,
     fetchToMergeFacility: func.isRequired,

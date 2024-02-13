@@ -1,5 +1,5 @@
 import { React, useState, useEffect } from 'react';
-import { bool, func } from 'prop-types';
+import { bool, func, string } from 'prop-types';
 import { cloneDeep } from 'lodash';
 import { connect } from 'react-redux';
 import TableRow from '@material-ui/core/TableRow';
@@ -63,6 +63,8 @@ function FacilityListItemsConfirmationTableRow({
     readOnly,
     className,
     openMergeModal,
+    targetFacilityOSID,
+    facilityToMergeOSID,
     updateToMergeOSID,
     updateTargetOSID,
     fetchToMergeFacility,
@@ -226,6 +228,8 @@ function FacilityListItemsConfirmationTableRow({
                             activeSubmitButton={activeSubmitButton}
                             activeCheckboxes={activeCheckboxes}
                             openMergeModal={openMergeModal}
+                            targetFacilityOSID={targetFacilityOSID}
+                            facilityToMergeOSID={facilityToMergeOSID}
                             updateTargetOSID={updateTargetOSID}
                             updateToMergeOSID={updateToMergeOSID}
                             fetchToMergeFacility={fetchToMergeFacility}
@@ -275,6 +279,8 @@ function FacilityListItemsConfirmationTableRow({
 
 FacilityListItemsConfirmationTableRow.defaultProps = {
     readOnly: true,
+    targetFacilityOSID: '',
+    facilityToMergeOSID: '',
 };
 
 FacilityListItemsConfirmationTableRow.propTypes = {
@@ -283,15 +289,23 @@ FacilityListItemsConfirmationTableRow.propTypes = {
     makeRejectMatchFunction: func.isRequired,
     fetching: bool.isRequired,
     readOnly: bool,
+    targetFacilityOSID: string,
+    facilityToMergeOSID: string,
 };
 
 function mapStateToProps({
     facilityListDetails: {
         confirmOrRejectMatchOrRemoveItem: { fetching },
     },
+    mergeFacilities: {
+        targetFacility: { osID: targetFacilityOSID },
+        facilityToMerge: { osID: facilityToMergeOSID },
+    },
 }) {
     return {
         fetching,
+        targetFacilityOSID,
+        facilityToMergeOSID,
     };
 }
 
