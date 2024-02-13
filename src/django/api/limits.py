@@ -15,6 +15,7 @@ from api.mail import (send_api_notice, send_admin_api_notice, send_api_warning,
 LAST_MONTH_OF_THE_YEAR = 12
 MINIMUM_DAY_TO_ROUND = 28
 
+
 def get_end_of_year(at_datetime):
     return datetime.combine(at_datetime.replace(month=12, day=31), time.max,
                             at_datetime.tzinfo)
