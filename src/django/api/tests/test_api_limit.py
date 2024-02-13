@@ -43,12 +43,14 @@ class ApiLimitTest(TestCase):
             contributor=self.contrib_one,
             period_limit=10,
             period_start_date=now,
+            renewal_period=ApiLimit.YEARLY,
         )
 
         self.limit_two = ApiLimit.objects.create(
             contributor=self.contrib_two,
             period_limit=10,
             period_start_date=now,
+            renewal_period=ApiLimit.YEARLY,
         )
 
         self.notification_time = timezone.now()
@@ -210,6 +212,7 @@ class ApiLimitTest(TestCase):
             contributor=self.contrib_three_free,
             period_limit=0,
             period_start_date=timezone.now(),
+            renewal_period=ApiLimit.YEARLY,
         )
 
         check_api_limits(timezone.now())
@@ -255,6 +258,7 @@ class ApiLimitTest(TestCase):
             contributor=self.contrib_three_free,
             period_limit=500,
             period_start_date=timezone.now(),
+            renewal_period=ApiLimit.YEARLY,
         )
 
         check_api_limits(timezone.now())
