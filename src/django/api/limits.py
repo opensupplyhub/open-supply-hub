@@ -12,6 +12,8 @@ from api.models import (Contributor, RequestLog, ContributorNotifications,
 from api.mail import (send_api_notice, send_admin_api_notice, send_api_warning,
                       send_admin_api_warning)
 
+LAST_MONTH_OF_THE_YEAR = 12
+MINIMUM_DAY_TO_ROUND = 28
 
 def get_end_of_year(at_datetime):
     return datetime.combine(at_datetime.replace(month=12, day=31), time.max,
@@ -20,7 +22,7 @@ def get_end_of_year(at_datetime):
 
 def round_start_date(date: datetime):
     start_date = date
-    if start_date.month == 12:
+    if start_date.month == LAST_MONTH_OF_THE_YEAR:
         start_date = start_date.replace(day=1,
                                         month=1,
                                         year=start_date.year + 1)
@@ -34,7 +36,7 @@ def round_start_date(date: datetime):
 def get_start_date(period_start_date: datetime, renewal_period):
     utc = timezone.utc
     start_date = period_start_date
-    if start_date.day > 28:
+    if start_date.day > MINIMUM_DAY_TO_ROUND:
         start_date = round_start_date(start_date)
     if renewal_period == 'MONTHLY':
         one_month_in_past = datetime.now(tz=utc) - relativedelta(months=1)
