@@ -5,7 +5,7 @@ import apiRequest from '../util/apiRequest';
 
 import {
     makeAPITokenURL,
-    makeAPICallInfoURL,
+    makeUserAPIInfoURL,
     makeUserProfileURL,
     logErrorAndDispatchFailure,
     createProfileUpdateErrorMessages,
@@ -42,44 +42,44 @@ export const completeUpdateUserProfile = createAction(
     'COMPLETE_UPDATE_USER_PROFILE',
 );
 
-export const startCreateAPICallInfo = createAction(
+export const startCreateUserApiInfo = createAction(
     'START_CREATE_API_CALL_INFO',
 );
-export const failCreateAPICallInfo = createAction('FAIL_CREATE_API_CALL_INFO');
-export const completeCreateAPICallInfo = createAction(
+export const failCreateUserApiInfo = createAction('FAIL_CREATE_API_CALL_INFO');
+export const completeCreateUserApiInfo = createAction(
     'COMPLETE_CREATE_API_CALL_INFO',
 );
 
-export const startFetchAPICallInfo = createAction('START_FETCH_API_CALL_INFO');
-export const failFetchAPICallInfo = createAction('FAIL_FETCH_API_CALL_INFO');
-export const completeFetchAPICallInfo = createAction(
+export const startFetchUserApiInfo = createAction('START_FETCH_API_CALL_INFO');
+export const failFetchUserApiInfo = createAction('FAIL_FETCH_API_CALL_INFO');
+export const completeFetchUserApiInfo = createAction(
     'COMPLETE_FETCH_API_CALL_INFO',
 );
 
-export const startDeleteAPICallInfo = createAction(
+export const startDeleteUserApiInfo = createAction(
     'START_DELETE_API_CALL_INFO',
 );
-export const failDeleteAPICallInfo = createAction('FAIL_DELETE_API_CALL_INFO');
-export const completeDeleteAPICallInfo = createAction(
+export const failDeleteUserApiInfo = createAction('FAIL_DELETE_API_CALL_INFO');
+export const completeDeleteUserApiInfo = createAction(
     'COMPLETE_DELETE_API_CALL_INFO',
 );
 
-export function fetchAPICallInfo() {
+export function fetchUserApiInfo(id) {
     console.log('!!!');
     return dispatch => {
-        dispatch(startFetchAPICallInfo());
+        dispatch(startFetchUserApiInfo());
 
         return (
             apiRequest
-                .get(makeAPICallInfoURL())
+                .get(makeUserAPIInfoURL(id))
                 // Return API call information
-                .then(({ data }) => dispatch(completeCreateAPICallInfo([data])))
+                .then(({ data }) => dispatch(completeCreateUserApiInfo([data])))
                 .catch(err =>
                     dispatch(
                         logErrorAndDispatchFailure(
                             err,
                             'An error prevented fetching the API call information',
-                            failCreateAPICallInfo,
+                            failCreateUserApiInfo,
                         ),
                     ),
                 )

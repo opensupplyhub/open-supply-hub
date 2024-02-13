@@ -10,7 +10,7 @@ const {
     makeFacilityListsURL,
     makeSingleFacilityListURL,
     makeAPITokenURL,
-    makeAPICallInfoURL,
+    makeUserAPIInfoURL,
     makeGetContributorsURL,
     makeGetContributorTypesURL,
     makeGetCountriesURL,
@@ -123,9 +123,9 @@ it('creates an API URL for generating an API token', () => {
 });
 
 it('creates an API URL for getting contributor call information', () => {
-    const uid = 123;
-    const expectedMatch = '/api-call-info/';
-    expect(makeAPICallInfoURL(uid)).toEqual(expectedMatch);
+    const id = 123;
+    const expectedMatch = '/user-api-info/';
+    expect(makeUserAPIInfoURL(id)).toEqual(expectedMatch);
 });
 
 it('creates API URLs for getting contributor, contributor type, country, and sector options', () => {

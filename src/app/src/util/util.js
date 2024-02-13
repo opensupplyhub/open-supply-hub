@@ -165,7 +165,7 @@ export const makeCreateDashboardActivityReportURL = osId =>
 
 export const makeAPITokenURL = () => '/api-token-auth/';
 
-export const makeAPICallInfoURL = () => '/api-call-info/';
+export const makeUserAPIInfoURL = id => `/user-api-info/${id}/`;
 
 export const makeGetContributorsURL = () => '/api/contributors/';
 export const makeGetListsURL = () => '/api/contributor-lists/';

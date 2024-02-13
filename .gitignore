@@ -1,6 +1,8 @@
 # Compiled files
 *.pyc
 __pycache__/
+.csv
+.xlsx
 
 # Terraform
 .terraform

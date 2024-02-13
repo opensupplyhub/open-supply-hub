@@ -4,7 +4,7 @@ from .api.api_block_view_set import ApiBlockViewSet
 from .api.api_feature_flags import api_feature_flags
 
 from .auth.api_auth_token import APIAuthToken
-from .auth.api_call_info import APICallInfo
+from .auth.api_call_info import UserApiInfo
 from .auth.login_to_oar_client import LoginToOARClient
 from .auth.logout_to_oar_client import LogoutOfOARClient
 

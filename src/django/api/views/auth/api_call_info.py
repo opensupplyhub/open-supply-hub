@@ -3,38 +3,47 @@
 # from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_auth.views import LoginView
+# from api.limits import check_contributor_api_limit
+# from django.utils import timezone
+from api.models import (RequestLog, ApiLimit)
+from ...models import Contributor
 
 
-class APICallInfo(LoginView):
-    def get(self, request, *args, **kwargs):
-        print("!!!!")
-        return Response({
-            "apiCallAllowance": '0',
-            "currentCallCount": '0',
-            "renewalPeriod": '0',
-        })
-    #         contributor_logs = RequestLog.objects.filter(
-    #         response_code__gte=200,
-    #         response_code__lte=299).annotate(
-    #             contributor=F('user__contributor__id')
-    #         ).values('contributor').annotate(
-    #             log_dates=ArrayAgg('created_at')
-    #         )
-    # for c in contributor_logs:
-    #     check_contributor_api_limit(at_datetime, c)
+def getApiCallLimit(contributor_id):
+    try:
+        limit = ApiLimit.objects.get(
+            contributor_id=contributor_id).yearly_limit
+        return limit
+    except ApiLimit.DoesNotExist:
+        return -1
 
-        # if not request.user.has_groups:
-        #     return Response(status=status.HTTP_403_FORBIDDEN)
 
-        # try:
-        #     token = Token.objects.get(user=request.user)
+def getCurrentUsage(u_id):
+    try:
+        successful_calls = RequestLog.objects.filter(
+            response_code__gte=200,
+            response_code__lte=299,
+            user_id=u_id).count()
+        return successful_calls
+    except RequestLog.DoesNotExist:
+        return -1
 
-        #     token_data = {
-        #         'token': token.key,
-        #         'created': token.created.isoformat(),
-        #     }
 
-        #     return Response(token_data)
-        # except Token.DoesNotExist as exc:
-        #     raise NotFound() from exc
+class UserApiInfo(LoginView):
+    def get(self, request, pk):
+        try:
+            contributor = Contributor.objects.get(admin_id=pk)
+        except Contributor.DoesNotExist:
+            print("!!!! contributor", contributor)
+        # u_id = 222
+        # contributor_id = 221
+        # check_contributor_api_limit(timezone.now(), contributor_id)
+# via annotate get contributor!!!! limits.py
+        # print("!!!! contributor_logs", successful_calls, apiLimit, limit,)
+        api_call_info_data = {
+            "apiCallAllowance": '5000',  # limit
+            "currentCallCount": '4200',  # successful_calls
+            "renewalPeriod": 'Monthly',  # todo
+        }
 
+        return Response(api_call_info_data)
