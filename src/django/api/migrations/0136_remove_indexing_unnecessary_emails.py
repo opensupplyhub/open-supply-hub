@@ -9,6 +9,12 @@ helper = MigrationHelper(connection)
 
 
 def update_indexing_functions(apps, schema_editor):
+    '''
+    This function replaces the old index_activity_reports_info and
+    index_approved_claim functions with similar ones that do not
+    index emails.
+    '''
+
     helper.run_sql_files([
         '0136_index_activity_reports_info.sql',
         '0136_index_approved_claim.sql'
