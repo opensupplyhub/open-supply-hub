@@ -1,8 +1,9 @@
 from app.database.sqlalchemy import Base
-from sqlalchemy import TIMESTAMP, Column, String, Integer, ForeignKey
-from sqlalchemy.sql import func
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from geoalchemy2 import Geometry
+from sqlalchemy import TIMESTAMP, Column, ForeignKey, Integer, String
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.sql import func
+
 
 class FacilityListItem(Base):
     UPLOADED = 'UPLOADED'
@@ -27,10 +28,12 @@ class FacilityListItem(Base):
     row_index = Column(Integer, nullable=False)
     raw_data = Column(String, nullable=True)
     status = Column(String, nullable=False, default='UPLOADED')
-    processing_started_at = Column(TIMESTAMP(timezone=True),
-                                nullable=False)
-    processing_completed_at = Column(TIMESTAMP(timezone=True),
-                                nullable=False)
+    processing_started_at = Column(
+        TIMESTAMP(timezone=True), nullable=False
+    )
+    processing_completed_at = Column(
+        TIMESTAMP(timezone=True), nullable=False
+    )
     processing_results = Column(JSONB)
     name = Column(String, nullable=False)
     address = Column(String, nullable=False)
@@ -41,11 +44,9 @@ class FacilityListItem(Base):
     facility_id = Column(String, ForeignKey('api_facility.id'), nullable=True)
     clean_name = Column(String, nullable=False)
     clean_address = Column(String, nullable=False)
-    ppe_product_types = Column(ARRAY(String), nullable=True)
-    ppe_contact_email = Column(String, nullable=True)
-    ppe_contact_phone = Column(String, nullable=True)
-    ppe_website = Column(String, nullable=True)
-    created_at = Column(TIMESTAMP(timezone=True),
-                       nullable=False, server_default=func.now())
-    updated_at = Column(TIMESTAMP(timezone=True),
-                       default=None, onupdate=func.now())
+    created_at = Column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at = Column(
+        TIMESTAMP(timezone=True), default=None, onupdate=func.now()
+    )
