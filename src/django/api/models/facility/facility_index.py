@@ -54,40 +54,6 @@ class FacilityIndex(models.Model):
         db_index=True,
         default=list,
         help_text='The related approved claim facilities.'))
-    ppe_product_types = postgres.ArrayField(
-        models.CharField(
-            null=False,
-            blank=False,
-            max_length=100,
-            help_text=('A type of personal protective equipment produced at '
-                       'the facility'),
-            verbose_name='ppe product type',
-        ),
-        null=True,
-        blank=True,
-        db_index=True,
-        help_text=('The types of personal protective equipment produced at '
-                   'the facility'),
-        verbose_name='ppe product types')
-    ppe_contact_email = models.EmailField(
-        null=True,
-        blank=True,
-        db_index=True,
-        verbose_name='ppe contact email',
-        help_text='The contact email for PPE-related discussion')
-    ppe_contact_phone = models.CharField(
-        max_length=100,
-        null=True,
-        blank=True,
-        db_index=True,
-        verbose_name='ppe contact phone',
-        help_text='The contact phone number for PPE-related discussion')
-    ppe_website = models.URLField(
-        null=True,
-        blank=True,
-        db_index=True,
-        verbose_name='ppe website',
-        help_text='The website for PPE information')
     is_closed = models.BooleanField(
         null=True,
         db_index=True,
@@ -114,12 +80,6 @@ class FacilityIndex(models.Model):
         help_text='The categories to which the contributors belong.'))
     contributors = postgres.ArrayField(models.JSONField(
         help_text='The contributor who submitted the facility data.'))
-    ppe = models.TextField(
-        null=True,
-        db_index=True,
-        help_text=('A type of personal protective equipment produced at '
-                   'the facility'),
-        verbose_name='ppe product type')
     sector = postgres.ArrayField(models.CharField(
         max_length=50,
         null=False,
