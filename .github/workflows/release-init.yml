@@ -13,10 +13,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: print release version
-        run: |
-          echo "sha v1: ${{ github.event.pull_request.head.sha }}"
-          echo "sha v2: ${{ github.sha }}"
       
       - name: Create release branch
         uses: peterjgrainger/action-create-branch@v2.2.0
@@ -24,4 +20,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PAT }}
         with:
           branch: releases/v.${{ inputs.release-version }}
-          sha: '${{ github.event.pull_request.head.sha }}'
+          sha: '${{ github.sha }}'
