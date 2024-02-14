@@ -1,6 +1,7 @@
 from allauth.account.utils import setup_user_email
 from rest_framework.serializers import (
     CharField,
+    EmailField,
     ModelSerializer,
     SerializerMethodField,
     ValidationError,
@@ -15,6 +16,7 @@ from ..embed_config import EmbedConfigSerializer
 
 class UserSerializer(ModelSerializer):
     password = CharField(write_only=True)
+    email = EmailField()
     name = SerializerMethodField()
     description = SerializerMethodField()
     website = SerializerMethodField()
@@ -38,6 +40,13 @@ class UserSerializer(ModelSerializer):
             return super(UserSerializer, self).validate(data)
         except exceptions.ValidationError as exc:
             raise ValidationError({"password": list(exc.messages)}) from exc
+
+    def validate_email(self, email):
+        users = User.objects.filter(email__iexact=email)
+        if users:
+            raise ValidationError("A user with that email already exists.")
+
+        return email.lower()
 
     def create(self, validated_data):
         user = super(UserSerializer, self).create(validated_data)

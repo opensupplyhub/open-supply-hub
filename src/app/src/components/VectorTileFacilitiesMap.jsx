@@ -36,7 +36,7 @@ import {
     GOOGLE_CLIENT_SIDE_API_KEY,
 } from '../util/constants.facilitiesMap';
 
-import useUpdateLeafletMapImperatively from '../util/hooks';
+import { useUpdateLeafletMapImperatively } from '../util/hooks';
 
 const mapComponentStyles = Object.freeze({
     mapContainerStyles: Object.freeze({
