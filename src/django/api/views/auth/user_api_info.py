@@ -9,16 +9,25 @@ from api.models import (RequestLog, ApiLimit)
 from ...models import Contributor
 
 
-def getApiCallLimit(contributor_id):
+def get_api_call_limit(contributor_id):
     try:
-        limit = ApiLimit.objects.get(
-            contributor_id=contributor_id).yearly_limit
-        return limit
+        period_limit = ApiLimit.objects.get(
+            contributor_id=contributor_id).period_limit
+        return period_limit
     except ApiLimit.DoesNotExist:
         return -1
 
 
-def getCurrentUsage(u_id):
+def get_renewal_period(contributor_id):
+    try:
+        renewal_period = ApiLimit.objects.get(
+            contributor_id=contributor_id).renewal_period
+        return renewal_period
+    except ApiLimit.DoesNotExist:
+        return -1
+
+
+def get_current_usage(u_id):
     try:
         successful_calls = RequestLog.objects.filter(
             response_code__gte=200,
@@ -35,15 +44,14 @@ class UserApiInfo(LoginView):
             contributor = Contributor.objects.get(admin_id=pk)
         except Contributor.DoesNotExist:
             print("!!!! contributor", contributor)
-        # u_id = 222
-        # contributor_id = 221
-        # check_contributor_api_limit(timezone.now(), contributor_id)
-# via annotate get contributor!!!! limits.py
-        # print("!!!! contributor_logs", successful_calls, apiLimit, limit,)
+
+        period_limit = get_api_call_limit(contributor.id)
+        renewal_period = get_renewal_period(contributor.id)
+        successful_calls = get_current_usage(pk)
         api_call_info_data = {
-            "apiCallAllowance": '5000',  # limit
-            "currentCallCount": '4200',  # successful_calls
-            "renewalPeriod": 'Monthly',  # todo
+            "apiCallAllowance": period_limit,
+            "currentCallCount": successful_calls,
+            "renewalPeriod": renewal_period,
         }
 
         return Response(api_call_info_data)
