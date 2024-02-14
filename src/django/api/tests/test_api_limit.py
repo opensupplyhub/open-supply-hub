@@ -1,4 +1,8 @@
-from api.limits import check_api_limits, get_end_of_year
+from api.limits import (
+    check_api_limits,
+    get_end_of_year,
+    round_start_date
+)
 from api.models import (
     ApiBlock,
     ApiLimit,
@@ -8,6 +12,7 @@ from api.models import (
     User,
 )
 from dateutil.relativedelta import relativedelta
+from datetime import datetime
 
 from django.test import TestCase
 from django.utils import timezone
@@ -41,14 +46,16 @@ class ApiLimitTest(TestCase):
         now = timezone.now()
         self.limit_one = ApiLimit.objects.create(
             contributor=self.contrib_one,
-            yearly_limit=10,
+            period_limit=10,
             period_start_date=now,
+            renewal_period=ApiLimit.YEARLY,
         )
 
         self.limit_two = ApiLimit.objects.create(
             contributor=self.contrib_two,
-            yearly_limit=10,
+            period_limit=10,
             period_start_date=now,
+            renewal_period=ApiLimit.YEARLY,
         )
 
         self.notification_time = timezone.now()
@@ -208,8 +215,9 @@ class ApiLimitTest(TestCase):
 
         ApiLimit.objects.create(
             contributor=self.contrib_three_free,
-            yearly_limit=0,
+            period_limit=0,
             period_start_date=timezone.now(),
+            renewal_period=ApiLimit.YEARLY,
         )
 
         check_api_limits(timezone.now())
@@ -253,8 +261,9 @@ class ApiLimitTest(TestCase):
 
         ApiLimit.objects.create(
             contributor=self.contrib_three_free,
-            yearly_limit=500,
+            period_limit=500,
             period_start_date=timezone.now(),
+            renewal_period=ApiLimit.YEARLY,
         )
 
         check_api_limits(timezone.now())
@@ -269,4 +278,143 @@ class ApiLimitTest(TestCase):
             ApiBlock.objects.filter(
                 contributor=self.contrib_three_free
             ).first().active, False
+        )
+
+    def test_api_limit_blank_renewal_period(self):
+        RequestLog.objects.create(user=self.user_three_free,
+                                  response_code=200)
+
+        ApiLimit.objects.create(
+            contributor=self.contrib_three_free,
+            period_limit=500,
+            period_start_date=timezone.now(),
+        )
+
+        check_api_limits(timezone.now())
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).count(), 1
+        )
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).first().active, True
+        )
+
+    def test_api_limit_monthly_renewal_period(self):
+        now = timezone.now()
+
+        r_log_one = RequestLog.objects.create(user=self.user_three_free,
+                                              response_code=200)
+        r_log_two = RequestLog.objects.create(user=self.user_three_free,
+                                              response_code=200)
+
+        ApiLimit.objects.create(
+            contributor=self.contrib_three_free,
+            period_limit=1,
+            period_start_date=now,
+            renewal_period=ApiLimit.MONTHLY,
+        )
+
+        check_api_limits(now)
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).count(), 1
+        )
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).first().active, True
+        )
+
+        r_log_one.created_at = now - relativedelta(months=1)
+        r_log_one.save()
+
+        r_log_two.created_at = now - relativedelta(months=1)
+        r_log_two.save()
+
+        check_api_limits(now)
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).count(), 1
+        )
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).first().active, False
+        )
+
+    def test_api_limit_yearly_renewal_period(self):
+        now = timezone.now()
+
+        r_log_one = RequestLog.objects.create(user=self.user_three_free,
+                                              response_code=200)
+        r_log_two = RequestLog.objects.create(user=self.user_three_free,
+                                              response_code=200)
+
+        ApiLimit.objects.create(
+            contributor=self.contrib_three_free,
+            period_limit=1,
+            period_start_date=now,
+            renewal_period=ApiLimit.YEARLY,
+        )
+
+        check_api_limits(now)
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).count(), 1
+        )
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).first().active, True
+        )
+
+        r_log_one.created_at = now - relativedelta(years=1)
+        r_log_one.save()
+
+        r_log_two.created_at = now - relativedelta(years=1)
+        r_log_two.save()
+
+        check_api_limits(now)
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).count(), 1
+        )
+
+        self.assertEqual(
+            ApiBlock.objects.filter(
+                contributor=self.contrib_three_free
+            ).first().active, False
+        )
+
+    def test_round_start_date(self):
+        date_one = datetime(day=30, month=10, year=2024)
+        result_date_one = round_start_date(date_one)
+
+        self.assertEqual(
+            result_date_one,
+            datetime(day=1, month=11, year=2024)
+        )
+
+        date_two = datetime(day=29, month=12, year=2024)
+        result_date_two = round_start_date(date_two)
+
+        self.assertEqual(
+            result_date_two,
+            datetime(day=1, month=1, year=2025)
         )

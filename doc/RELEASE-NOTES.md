@@ -12,6 +12,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 #### Migrations:
 * 0135_disable_duplicates_and_lowercase_all_emails.py - implementing all emails to lowercase and disables duplicates
+* 0136_add_renewal_period_field.py - add new field to api_apilimit table & rename existing one.
+Updated existing users api_apilimit records renewal_period value.
 
 #### Scheme changes
 * *Describe scheme changes here.*
@@ -20,14 +22,17 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe code/API changes here.*
 
 ### Architecture/Environment changes
-* [OSDEV-829](https://opensupplyhub.atlassian.net/browse/OSDEV-673) Makes `minimum-ratio: 1` It allows to push code whith less than 1% diff from main. 
+* [OSDEV-829](https://opensupplyhub.atlassian.net/browse/OSDEV-673) Makes `minimum-ratio: 1` It allows to push code with less than 1% diff from main.
 
 ### Bugfix
+* [OSDEV-848](https://opensupplyhub.atlassian.net/browse/OSDEV-848) When a user tries to create an account with an email that exists in the DB but with a different case of letters, the system returns "An error prevented signing up". Has been fixed to "A user with that email already exists."
 * [OSDEV-673](https://opensupplyhub.atlassian.net/browse/OSDEV-673) When a user calls the endpoint `facility/id/history`, instead of a response, receives the error "TypeError: the JSON object must be str, bytes or bytearray, not list", in particular, this happened with the PK20190913BBJ2Y facility. A list with one element (a dictionary) was passed to the function, so an error occurred when trying to index the list with a string. Fixed.
 
 ### What's new
 * Make login non-case sensitive. [OSDEV-628](https://opensupplyhub.atlassian.net/browse/OSDEV-628). When the user creates an account email saving in lowercase. User  could login with any variations of casing as long as the characters are the same.
 * API. Enable token generation based on API permissions in Django. [OSDEV-729](https://opensupplyhub.atlassian.net/browse/OSDEV-729). Updated Settings page to show/hide token tab by user groups. Forbid access to generate token for API if user didn't have permission groups.
+* API. Add a flag on API Limit page to indicate if package renews monthly or yearly. [OSDEV-781](https://opensupplyhub.atlassian.net/browse/OSDEV-781) Updated logic to support montly & yearly limitation count reset for API calls.
+
 
 ### Release instructions:
 * Update code
