@@ -268,7 +268,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -304,7 +303,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: 'AND',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
           label: "# Contributors",
           value: "",
@@ -341,7 +339,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -377,7 +374,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -413,7 +409,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -445,7 +440,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -455,33 +449,6 @@ it('creates a set of filters from a querystring', () => {
     expect(
         createFiltersFromQueryString(stringWithCountriesMissing),
     ).toEqual(expectedMissingCountriesMatch);
-
-    const ppeString = '?ppe=true';
-    const expectedPPEMatch = {
-        facilityFreeTextQuery: '',
-        contributors: [],
-        contributorTypes: [],
-        countries: [],
-        sectors: [],
-        lists: [],
-        parentCompany: [],
-        facilityType: [],
-        processingType: [],
-        productType: [],
-        numberOfWorkers: [],
-        nativeLanguageName: '',
-        combineContributors: '',
-        boundary: null,
-        ppe: 'true',
-        sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
-    };
-
-    expect(
-        createFiltersFromQueryString(ppeString),
-    ).toEqual(expectedPPEMatch);
 
     const parentCompanyString = '?parent_company=1&parent_company=Test Company'
     const expectedParentCompanyMatch = {
@@ -506,7 +473,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -540,7 +506,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -574,7 +539,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -608,7 +572,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -642,7 +605,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -669,7 +631,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '杭州',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
