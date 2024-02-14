@@ -57,8 +57,15 @@ const FacilityDetailsLocation = ({ data, embed }) => {
     return (
         <>
             <FacilityDetailsItem
-                label="GPS"
-                primary={`${facilityLng}, ${facilityLat}`}
+                label="Coordinates"
+                primary={`${facilityLat}, ${facilityLng}`}
+                locationLabeled={
+                    <>
+                        {`Latitude: ${facilityLat}`}
+                        <br />
+                        {`Longitude: ${facilityLng}`}
+                    </>
+                }
                 secondary={detailsText}
                 embed={embed}
                 isFromClaim={canonicalLocationData?.is_from_claim}

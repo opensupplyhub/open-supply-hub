@@ -34,6 +34,7 @@ const FacilityDetailsItem = ({
     additionalContent,
     label,
     primary,
+    locationLabeled,
     secondary,
     classes,
     embed,
@@ -52,7 +53,7 @@ const FacilityDetailsItem = ({
                 <Typography className={classes.label}>{label}</Typography>
             </div>
             <FacilityDetailsDetail
-                primary={primary}
+                locationLabeled={locationLabeled}
                 secondary={!embed ? secondary : null}
                 isVerified={isVerified}
                 isFromClaim={isFromClaim}

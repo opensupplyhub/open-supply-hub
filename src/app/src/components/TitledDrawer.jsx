@@ -50,7 +50,11 @@ const TitledDrawer = ({
             </div>
             <Typography className={classes.drawerTitle}>{title}</Typography>
             <Typography className={classes.drawerSubtitle}>
-                {subtitle}
+                <>
+                    {subtitle}
+                    <br />
+                    Latitude Longitude
+                </>
             </Typography>
             {children}
         </div>
