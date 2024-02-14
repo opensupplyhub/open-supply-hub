@@ -337,9 +337,8 @@ jobs:
 
 
       - name: Create or update kafka topics for ${{ vars.ENV_NAME }}
-        uses: ./.github/actions/aws-cli
-        with:
-          args: aws ecs run-task --cluster ${{ vars.CLUSTER }} --task-definition ${{ vars.CREATE_KAFKA_TOPIC_TD }} --launch-type="FARGATE"  --network-configuration "awsvpcConfiguration={ assignPublicIp="DISABLED", securityGroups=["${{ vars.SECURITY_GROUP}}"], subnets=["${{ vars.SUBNET }}"]}"
+        run: |
+           aws ecs run-task --cluster ${{ vars.CLUSTER }} --task-definition ${{ vars.CREATE_KAFKA_TOPIC_TD }} --launch-type="FARGATE"  --network-configuration "awsvpcConfiguration={ assignPublicIp="DISABLED", securityGroups=["${{ vars.SECURITY_GROUP}}"], subnets=["${{ vars.SUBNET }}"]}"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
