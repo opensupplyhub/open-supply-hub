@@ -13,7 +13,7 @@ def get_api_call_limit(contributor_id):
     try:
         period_limit = ApiLimit.objects.get(
             contributor_id=contributor_id).period_limit
-        return period_limit
+        return str(period_limit)
     except ApiLimit.DoesNotExist:
         return -1
 
@@ -33,7 +33,7 @@ def get_current_usage(u_id):
             response_code__gte=200,
             response_code__lte=299,
             user_id=u_id).count()
-        return successful_calls
+        return str(successful_calls)
     except RequestLog.DoesNotExist:
         return -1
 
