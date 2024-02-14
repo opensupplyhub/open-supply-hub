@@ -33,6 +33,7 @@ jobs:
       - name: Print
         run: |
           echo ${{ github.ref_name }}
+          echo ${{ inputs.deploy_env || (github.ref_name == 'main' && 'Development' || 'Throw away') }}
           echo ${{ inputs.deploy_env && true || false }}
       
   #     - name: Checkout repo
