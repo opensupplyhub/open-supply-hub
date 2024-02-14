@@ -33,8 +33,7 @@ jobs:
       - name: Print
         run: |
           echo ${{ github.ref_name }}
-          echo ${{ github.ref }}
-          echo ${{ inputs.deploy_env }}
+          echo ${{ inputs.deploy_env && true || false }}
       
   #     - name: Checkout repo
   #       uses: actions/checkout@v4
