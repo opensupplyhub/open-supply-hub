@@ -1,8 +1,4 @@
-from api.limits import (
-    check_api_limits,
-    get_end_of_year,
-    round_start_date
-)
+from api.limits import check_api_limits
 from api.models import (
     ApiBlock,
     ApiLimit,
@@ -11,8 +7,9 @@ from api.models import (
     RequestLog,
     User,
 )
+from api.limitation.dateLimitation.date_limitation_context import DateLimitationContext
 from dateutil.relativedelta import relativedelta
-from datetime import datetime
+from datetime import datetime, time
 
 from django.test import TestCase
 from django.utils import timezone
@@ -65,6 +62,11 @@ class ApiLimitTest(TestCase):
             api_limit_exceeded_sent_on=self.notification_time,
             api_grace_limit_exceeded_sent_on=self.notification_time,
         )
+    
+    def get_end_of_year(self, at_datetime: datetime):
+        return datetime.combine(at_datetime.replace(month=12, day=31), time.max,
+                            at_datetime.tzinfo)
+
 
     def test_under_limit_does_nothing(self):
         check_api_limits(timezone.now())
@@ -121,7 +123,7 @@ class ApiLimitTest(TestCase):
     def test_over_limit_block_set_once(self):
         ApiBlock.objects.create(
             contributor=self.contrib_two,
-            until=get_end_of_year(self.notification_time),
+            until=self.get_end_of_year(self.notification_time),
             active=False,
             limit=10,
             actual=11,
@@ -166,7 +168,7 @@ class ApiLimitTest(TestCase):
     def test_free_user_block_activate(self):
         ApiBlock.objects.create(
             contributor=self.contrib_three_free,
-            until=get_end_of_year(self.notification_time),
+            until=self.get_end_of_year(self.notification_time),
             active=False,
             limit=1,
             actual=1,
@@ -191,7 +193,7 @@ class ApiLimitTest(TestCase):
     def test_free_user_become_unlimited(self):
         ApiBlock.objects.create(
             contributor=self.contrib_three_free,
-            until=get_end_of_year(self.notification_time),
+            until=self.get_end_of_year(self.notification_time),
             active=False,
             limit=1,
             actual=1,
@@ -237,7 +239,7 @@ class ApiLimitTest(TestCase):
     def test_free_user_become_paid(self):
         ApiBlock.objects.create(
             contributor=self.contrib_three_free,
-            until=get_end_of_year(self.notification_time),
+            until=self.get_end_of_year(self.notification_time),
             active=False,
             limit=1,
             actual=1,
@@ -402,9 +404,10 @@ class ApiLimitTest(TestCase):
             ).first().active, False
         )
 
-    def test_round_start_date(self):
+    def test_prepare_start_date(self):
         date_one = datetime(day=30, month=10, year=2024)
-        result_date_one = round_start_date(date_one)
+        dateLimitation_one = DateLimitationContext(None, date_one).execute()
+        result_date_one = dateLimitation_one.get_start_date()
 
         self.assertEqual(
             result_date_one,
@@ -412,7 +415,8 @@ class ApiLimitTest(TestCase):
         )
 
         date_two = datetime(day=29, month=12, year=2024)
-        result_date_two = round_start_date(date_two)
+        dateLimitation_two = DateLimitationContext(None, date_two).execute()
+        result_date_two = dateLimitation_two.get_start_date()
 
         self.assertEqual(
             result_date_two,
