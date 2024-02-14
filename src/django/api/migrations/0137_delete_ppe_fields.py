@@ -4,7 +4,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0135_disable_duplicates_and_lowercase_all_emails'),
+        ('api', '0136_remove_indexing_unnecessary_emails'),
     ]
 
     operations = [
