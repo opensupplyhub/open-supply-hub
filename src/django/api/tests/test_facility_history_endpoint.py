@@ -1,10 +1,6 @@
 import json
 
-from api.constants import (
-    FeatureGroups,
-    MatchResponsibility,
-    UpdateLocationParams,
-)
+from api.constants import FeatureGroups, MatchResponsibility, UpdateLocationParams
 from api.models import (
     Facility,
     FacilityClaim,
@@ -13,7 +9,6 @@ from api.models import (
     FacilityMatch,
     Source,
 )
-from api.facility_history import describe_change_value
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 from waffle.testutils import override_flag, override_switch
 
