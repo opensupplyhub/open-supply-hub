@@ -197,9 +197,6 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         return [
             {
                 'facility': item['facility'] or None,
-                'reported_by_user': (
-                    item['reported_by_user'] or None
-                ),
                 'reported_by_contributor': (
                     item['reported_by_contributor'] or None
                 ),

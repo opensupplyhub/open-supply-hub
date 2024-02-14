@@ -293,19 +293,3 @@ class Facility(models.Model):
             tile_version = 0
 
         return f'{timestamp}-{tile_version}'
-
-    def activity_reports(self):
-        from .facility_activity_report import FacilityActivityReport
-
-        return (
-            FacilityActivityReport
-            .objects
-            .filter(
-                facility=self.id,
-                status__in=[
-                    FacilityActivityReport.PENDING,
-                    FacilityActivityReport.CONFIRMED
-                ]
-            )
-            .order_by('-created_at')
-        )
