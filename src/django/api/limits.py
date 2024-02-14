@@ -7,7 +7,10 @@ from api.models import (Contributor, RequestLog, ContributorNotifications,
                         ApiLimit, ApiBlock)
 from api.mail import (send_api_notice, send_admin_api_notice, send_api_warning,
                       send_admin_api_warning)
-from api.limitation.dateLimitation.date_limitation_context import DateLimitationContext
+from .limitation.dateLimitation.date_limitation_context import (
+    DateLimitationContext
+)
+
 
 def get_api_block(contributor):
     return ApiBlock.objects.filter(
@@ -72,10 +75,12 @@ def check_contributor_api_limit(at_datetime, c):
         apiLimit = ApiLimit.objects.get(contributor=contributor)
         limit = apiLimit.period_limit
         renewal_period = apiLimit.renewal_period
-        context = DateLimitationContext(renewal_period, apiLimit.period_start_date)
+        context = DateLimitationContext(renewal_period,
+                                        apiLimit.period_start_date)
     except ObjectDoesNotExist:
         limit = None
-        context = DateLimitationContext(None, min(log_dates))
+        context = DateLimitationContext(None,
+                                        min(log_dates))
 
     dateLimitation = context.execute()
     start_date = dateLimitation.get_start_date()

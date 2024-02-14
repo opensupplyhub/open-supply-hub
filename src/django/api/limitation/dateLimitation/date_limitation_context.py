@@ -1,9 +1,16 @@
 from datetime import datetime
 
 from api.limitation.dateLimitation.date_limitation import DateLimitation
-from api.limitation.dateLimitation.blank_date_limitation import BlankDateLimitation
-from api.limitation.dateLimitation.month_date_limitation import MonthlyDateLimitation
-from api.limitation.dateLimitation.yearly_date_limitation import YearlyDateLimitation
+from dateLimitation.blank_date_limitation import (
+    BlankDateLimitation
+)
+from dateLimitation.month_date_limitation import (
+    MonthlyDateLimitation
+)
+from dateLimitation.yearly_date_limitation import (
+    YearlyDateLimitation
+)
+
 
 class DateLimitationContext:
     __dateLimitation: DateLimitation
@@ -16,11 +23,10 @@ class DateLimitationContext:
             self.__dateLimitation = MonthlyDateLimitation(date)
         if renewal_period == 'YEARLY':
             self.__dateLimitation = YearlyDateLimitation(date)
-        
 
     def execute(self) -> DateLimitation:
         return self.__dateLimitation
-    
+
     def __prepare_start_date(self, date: datetime):
         MINIMUM_DAY_TO_ROUND = 28
         END_OF_THE_YEAR = 12

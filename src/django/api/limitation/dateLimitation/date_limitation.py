@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
 
+
 class DateLimitation(ABC):
     start_date: datetime
 
