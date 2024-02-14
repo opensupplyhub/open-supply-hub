@@ -1,6 +1,10 @@
 import json
 
-from api.constants import FeatureGroups, MatchResponsibility, UpdateLocationParams
+from api.constants import (
+    FeatureGroups,
+    MatchResponsibility,
+    UpdateLocationParams,
+)
 from api.models import (
     Facility,
     FacilityClaim,
@@ -1136,4 +1140,3 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
     def test_describe_change_value(self, **kwargs):
         with self.assertRaises(TypeError):
             json.loads(['Socks'])
-
