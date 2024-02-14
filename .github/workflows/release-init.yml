@@ -23,5 +23,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
         with:
-          branch: releases/v.${{ inputs.release-version }}
+          branch: refs/heads/releases/v.${{ inputs.release-version }}
           sha: '${{ github.sha }}'
