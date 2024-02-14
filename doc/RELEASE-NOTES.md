@@ -16,15 +16,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Migrations:
 
 -   0135_disable_duplicates_and_lowercase_all_emails.py - implementing all emails to lowercase and disables duplicates
--   0130_introduce_separate_data_gathering_functions_for - Add additional SQL function 0130_remove_ppe_fields_from_facilityindex to the gather of functions that drops ppe columns (ppe_product_types, ppe_contact_email, ppe_contact_phone, ppe_website, ppe) from `api_facilityindex` table. Modify the existing SQL functions 0130_index_facilities and 0130_index_facilities_by to prevent inserting ppe fields data (ppe_product_types, ppe_contact_email, ppe_contact_phone, ppe_website, ppe) from `api_facility` into `api_facilityindex`.
 
 #### Scheme changes
 
--   [OSDEV 562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) Remove ppe fields (ppe_product_types, ppe_contact_email, ppe_contact_phone, ppe_website, ppe) from the `api_facilityindex`. Remove this fields from indexing processes.
+-   _Describe scheme changes here._
 
 ### Code/API changes
 
--   [OSDEV 562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) Remove ppe fields (ppe_product_types, ppe_contact_email, ppe_contact_phone, ppe_website, ppe) from FacilityIndexSerializer and FacilityIndexDetailsSerializer serializers.
+-   _Describe code/API changes here._
 
 ### Architecture/Environment changes
 
@@ -39,7 +38,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 -   Make login non-case sensitive. [OSDEV-628](https://opensupplyhub.atlassian.net/browse/OSDEV-628). When the user creates an account email saving in lowercase. User could login with any variations of casing as long as the characters are the same.
 -   API. Enable token generation based on API permissions in Django. [OSDEV-729](https://opensupplyhub.atlassian.net/browse/OSDEV-729). Updated Settings page to show/hide token tab by user groups. Forbid access to generate token for API if user didn't have permission groups.
--   Remove ppe fields. [OSDEV 562](https://opensupplyhub.atlassian.net/browse/OSDEV-562). The ppe were removed from indexing processes and from API responses.
 -   [OSDEV-219](https://opensupplyhub.atlassian.net/browse/OSDEV-219). Data moderator can merge potential match facilities from Confirm / Reject screen.
 
 ### Release instructions:
