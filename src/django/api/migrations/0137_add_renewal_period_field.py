@@ -13,7 +13,7 @@ def update_existing_apilimit_renewal_period(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0135_disable_duplicates_and_lowercase_all_emails'),
+        ('api', '0136_remove_indexing_unnecessary_emails'),
     ]
 
     operations = [
