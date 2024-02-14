@@ -14,7 +14,12 @@ from api.extended_fields import (
 from api.geocoding import geocode_address
 from api.helpers.helpers import clean, cleanup_data, replace_invalid_data
 from api.matching import normalize_extended_facility_id
-from api.models import Facility, FacilityListItem, FacilityMatch, FacilityMatchTemp
+from api.models import (
+    Facility,
+    FacilityListItem,
+    FacilityMatch,
+    FacilityMatchTemp
+)
 from api.models.facility.facility_index import FacilityIndex
 from api.sector_product_type_parser import CsvRowSectorProductTypeParser
 from openpyxl import load_workbook

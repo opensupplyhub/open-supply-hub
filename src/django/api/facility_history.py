@@ -1,7 +1,11 @@
 from api.constants import FacilityHistoryActions, ProcessingAction
 from api.helpers.helpers import prefix_a_an
-from api.models import FacilityClaim, FacilityList, FacilityListItem, FacilityMatch
-
+from api.models import (
+    FacilityClaim,
+    FacilityList,
+    FacilityListItem,
+    FacilityMatch
+)
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import F
 

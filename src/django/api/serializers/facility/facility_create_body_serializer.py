@@ -1,10 +1,4 @@
-from rest_framework.serializers import (
-    CharField,
-    ListField,
-    Serializer,
-    URLField,
-    ValidationError,
-)
+from rest_framework.serializers import CharField, Serializer, ValidationError
 
 from ...processing import get_country_code
 from ..pipe_separated_field import PipeSeparatedField
