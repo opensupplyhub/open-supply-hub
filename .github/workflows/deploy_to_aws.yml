@@ -75,7 +75,7 @@ jobs:
   apply:
     needs: init-and-plan
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy_env || (github.ref_name == 'main' && 'Development' || 'Throw away') }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development' || 'Throw away') }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -118,7 +118,7 @@ jobs:
   build_and_push_docker_image:
     needs: apply
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy_env || (github.ref_name == 'main' && 'Development' || 'Throw away') }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development' || 'Throw away') }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
