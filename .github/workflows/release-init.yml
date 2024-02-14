@@ -10,7 +10,6 @@ on:
 jobs:
   create-release-branch:
     runs-on: ubuntu-latest
-    environment: Pre-prod
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
