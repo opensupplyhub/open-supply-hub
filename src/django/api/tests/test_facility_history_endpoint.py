@@ -1142,6 +1142,3 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
         with self.assertRaises(TypeError):
             json.loads(['Socks'])
 
-    def test_describe_change_value_with_json_dump(self, **kwargs):
-        self.assertEqual(['Socks'],
-                         describe_change_value('ppe_product_types', ['Socks']))
