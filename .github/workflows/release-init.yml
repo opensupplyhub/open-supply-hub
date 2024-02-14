@@ -13,10 +13,8 @@ jobs:
     steps:
       - name: print ref
         run: echo ${{ github.ref }}
-      # - name: Checkout repo
-      #   uses: actions/checkout@v4
-      #   with:
-      #     ref: ${{ github.ref }}
+      - name: Checkout repo
+        uses: actions/checkout@v4
       
       - name: Create release branch
         uses: peterjgrainger/action-create-branch@v2.2.0
