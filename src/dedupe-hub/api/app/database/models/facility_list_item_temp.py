@@ -1,10 +1,11 @@
 from app.database.sqlalchemy import Base
-from sqlalchemy import TIMESTAMP, Column, String, Integer, ForeignKey
-from sqlalchemy.sql import func
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from geoalchemy2 import Geometry
+from sqlalchemy import TIMESTAMP, Column, ForeignKey, Integer, String
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.sql import func
 
-class FacilityListItemTemp(Base):
+
+class FacilityListItem(Base):
     UPLOADED = 'UPLOADED'
     PARSED = 'PARSED'
     DUPLICATE = 'DUPLICATE'
@@ -20,17 +21,19 @@ class FacilityListItemTemp(Base):
     DELETED = 'DELETED'
     ITEM_REMOVED = 'ITEM_REMOVED'
 
-    __tablename__ = 'api_facilitylistitemtemp'
+    __tablename__ = 'api_facilitylistitem'
 
     id = Column(Integer, primary_key=True)
     source_id = Column(Integer, nullable=False)
     row_index = Column(Integer, nullable=False)
     raw_data = Column(String, nullable=True)
     status = Column(String, nullable=False, default='UPLOADED')
-    processing_started_at = Column(TIMESTAMP(timezone=True),
-                                nullable=False)
-    processing_completed_at = Column(TIMESTAMP(timezone=True),
-                                nullable=False)
+    processing_started_at = Column(
+        TIMESTAMP(timezone=True), nullable=False
+    )
+    processing_completed_at = Column(
+        TIMESTAMP(timezone=True), nullable=False
+    )
     processing_results = Column(JSONB)
     name = Column(String, nullable=False)
     address = Column(String, nullable=False)
@@ -38,15 +41,12 @@ class FacilityListItemTemp(Base):
     geocoded_point = Column(Geometry('POINT'))
     sector = Column(ARRAY(Integer), nullable=False)
     geocoded_address = Column(String, nullable=False)
-    facility_id = Column(String, nullable=True)
+    facility_id = Column(String, ForeignKey('api_facility.id'), nullable=True)
     clean_name = Column(String, nullable=False)
     clean_address = Column(String, nullable=False)
-    ppe_product_types = Column(ARRAY(String), nullable=True)
-    ppe_contact_email = Column(String, nullable=True)
-    ppe_contact_phone = Column(String, nullable=True)
-    ppe_website = Column(String, nullable=True)
-    version = Column(String, nullable=True)
-    created_at = Column(TIMESTAMP(timezone=True),
-                       nullable=False, server_default=func.now())
-    updated_at = Column(TIMESTAMP(timezone=True),
-                       default=None, onupdate=func.now())
+    created_at = Column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at = Column(
+        TIMESTAMP(timezone=True), default=None, onupdate=func.now()
+    )

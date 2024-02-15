@@ -1,18 +1,17 @@
 from typing import Any, Dict, List
 
-from app.utils.clean import clean
-from app.database.sqlalchemy import get_session
 from app.database.models.facility import Facility
-from app.database.models.facility_list_item import FacilityListItem
 from app.database.models.facility_list_item_temp import FacilityListItemTemp
-from app.database.models.facility_match import FacilityMatch
 from app.database.models.facility_match_temp import FacilityMatchTemp
 from app.database.models.source import Source
-from app.matching.DTOs.results_dto import ResultsDTO
+from app.database.sqlalchemy import get_session
 from app.matching.DTOs.facility_match_dto import FacilityMatchDTO
+from app.matching.DTOs.results_dto import ResultsDTO
 from app.matching.matcher.base_item_match import BaseItemMatch
-from app.matching.matcher.gazeteer.gazetteer_helper import normalize_extended_facility_id
-from app.config import settings
+from app.matching.matcher.gazeteer.gazetteer_helper import (
+    normalize_extended_facility_id,
+)
+from app.utils.clean import clean
 
 
 class GazetteerItemMatch(BaseItemMatch):
@@ -90,7 +89,6 @@ class GazetteerItemMatch(BaseItemMatch):
 
         with get_session() as session:
             if session.query(Source.create).filter(Source.id==self.item.source_id).scalar():
-                self.create_sources()
                 return self.matches
 
         return []
@@ -165,48 +163,6 @@ class GazetteerItemMatch(BaseItemMatch):
             self.make_match_object(match)
             for match in self.matches
         ]
-
-    def create_sources(self):
-        for match in self.matches:
-            if match["status"] != FacilityMatchTemp.AUTOMATIC:
-                continue
-
-            self.create_source(match)
-
-    def create_source(self, match):
-        facility = self.get_facility(match["facility_id"])
-
-        should_update_ppe_product_types = (
-            self.item.ppe_product_types is not None and self.item.ppe_product_types != []
-            and (facility.ppe_product_types is None or facility.ppe_product_types == []))
-
-        should_update_ppe_contact_phone = (
-            self.item.ppe_contact_phone is not None and self.item.ppe_contact_phone != ''
-            and (facility.ppe_contact_phone is None or facility.ppe_contact_phone == ''))
-
-        should_update_ppe_contact_email = (
-            self.item.ppe_contact_email is not None and self.item.ppe_contact_email != ''
-            and (facility.ppe_contact_email is None or facility.ppe_contact_email == ''))
-        
-        should_update_ppe_website = (
-            self.item.ppe_website is not None and self.item.ppe_website != ''
-            and (facility.ppe_website is None or facility.ppe_website == ''))
-
-        should_save_facility = (
-            should_update_ppe_product_types
-            or should_update_ppe_contact_phone
-            or should_update_ppe_contact_email
-            or should_update_ppe_website)
-
-        if should_save_facility and settings.dedupe_hub_live:
-            with get_session() as session:
-                facility_to_update = session.query(Facility).filter(Facility.id==facility.id).one()
-                facility_to_update.ppe_product_types = self.item.ppe_product_types
-                facility_to_update.ppe_contact_phone = self.item.ppe_contact_phone
-                facility_to_update.ppe_contact_email = self.item.ppe_contact_email
-                facility_to_update.ppe_website = self.item.ppe_website
-                session.commit()
-                session.close()
 
     def good_confidence(self, match: FacilityMatchDTO) -> bool:
         return match['confidence'] > self.automatic_threshold

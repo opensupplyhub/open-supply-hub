@@ -5,9 +5,9 @@ from app.database.models.facility_list_item_temp import FacilityListItemTemp
 from app.database.models.facility_match import FacilityMatch
 from app.database.models.facility_match_temp import FacilityMatchTemp
 from app.database.models.source import Source
+from app.database.sqlalchemy import get_session
 from app.matching.DTOs.results_dto import ResultsDTO
 from app.matching.matcher.base_item_match import BaseItemMatch
-from app.database.sqlalchemy import get_session
 
 facility_match_data = Dict[str, str or int or Any]
 
@@ -59,7 +59,6 @@ class ExactItemMatch(BaseItemMatch):
                 return matches
             # for match in matches:
             #   m.save()
-            #   TODO: handle PPE if needed
 
         return []
 

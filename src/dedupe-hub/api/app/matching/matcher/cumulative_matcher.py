@@ -1,21 +1,22 @@
-from typing import List, Dict
 from datetime import datetime
+from typing import Dict, List
 
-from app.utils.os_id import make_os_id
-from app.utils.constants import ProcessingAction
-from app.database.sqlalchemy import get_session
+from app.config import settings
 from app.database.models.facility import Facility
 from app.database.models.facility_list_item import FacilityListItem
 from app.database.models.facility_list_item_temp import FacilityListItemTemp
 from app.database.models.facility_match_temp import FacilityMatchTemp
 from app.database.models.source import Source
+from app.database.sqlalchemy import get_session
 from app.matching.DTOs.facility_list_item_dto import FacilityListItemDict
 from app.matching.DTOs.facility_match_dto import FacilityMatchDTO
 from app.matching.DTOs.match_dto import MatchDTO
 from app.matching.matcher.base_matcher import BaseMatcher
 from app.matching.matcher.exact.exact_matcher import ExactMatcher
 from app.matching.matcher.gazeteer.gazetteer_matcher import GazetteerMatcher
-from app.config import settings
+from app.utils.constants import ProcessingAction
+from app.utils.os_id import make_os_id
+
 
 class CumulativeMatcher(BaseMatcher):
     matchers = (ExactMatcher, GazetteerMatcher)
@@ -110,10 +111,6 @@ class CumulativeMatcher(BaseMatcher):
                         facility.country_code = unmatched_list_item.country_code
                         facility.location = unmatched_list_item.geocoded_point
                         facility.created_from_id = unmatched_list_item.id
-                        facility.ppe_product_types = unmatched_list_item.ppe_product_types
-                        facility.ppe_contact_email = unmatched_list_item.ppe_contact_email
-                        facility.ppe_contact_phone = unmatched_list_item.ppe_contact_phone
-                        facility.ppe_website = unmatched_list_item.ppe_website
                         facility.created_at = datetime.now()
                         facility.updated_at = datetime.now()
 
@@ -170,5 +167,3 @@ class CumulativeMatcher(BaseMatcher):
             session.close()
 
             return results
-
-
