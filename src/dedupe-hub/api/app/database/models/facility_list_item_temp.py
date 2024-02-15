@@ -1,11 +1,11 @@
 from app.database.sqlalchemy import Base
 from geoalchemy2 import Geometry
-from sqlalchemy import TIMESTAMP, Column, ForeignKey, Integer, String
+from sqlalchemy import TIMESTAMP, Column, Integer, String
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.sql import func
 
 
-class FacilityListItem(Base):
+class FacilityListItemTemp(Base):
     UPLOADED = 'UPLOADED'
     PARSED = 'PARSED'
     DUPLICATE = 'DUPLICATE'
@@ -21,7 +21,7 @@ class FacilityListItem(Base):
     DELETED = 'DELETED'
     ITEM_REMOVED = 'ITEM_REMOVED'
 
-    __tablename__ = 'api_facilitylistitem'
+    __tablename__ = 'api_facilitylistitemtemp'
 
     id = Column(Integer, primary_key=True)
     source_id = Column(Integer, nullable=False)
@@ -41,9 +41,10 @@ class FacilityListItem(Base):
     geocoded_point = Column(Geometry('POINT'))
     sector = Column(ARRAY(Integer), nullable=False)
     geocoded_address = Column(String, nullable=False)
-    facility_id = Column(String, ForeignKey('api_facility.id'), nullable=True)
+    facility_id = Column(String, nullable=True)
     clean_name = Column(String, nullable=False)
     clean_address = Column(String, nullable=False)
+    version = Column(String, nullable=True)
     created_at = Column(
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
