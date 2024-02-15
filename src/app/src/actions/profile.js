@@ -49,7 +49,6 @@ export const completeFetchUserApiInfo = createAction(
 );
 
 export function fetchUserApiInfo(uid) {
-    console.log('!!! fetchUserApiInfo', uid);
     return dispatch => {
         dispatch(startFetchUserApiInfo());
 

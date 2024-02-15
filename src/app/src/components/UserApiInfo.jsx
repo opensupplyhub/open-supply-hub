@@ -31,16 +31,17 @@ class UserAPIInfo extends Component {
 
     render() {
         const { error, userApiInfo, fetching } = this.props;
-        console.log('!!! userApiInfo props', userApiInfo);
 
         if (error) {
             window.console.warn(error);
         }
+
         const {
             apiCallAllowance,
             currentCallCount,
             renewalPeriod,
         } = userApiInfo[0];
+
         return apiCallAllowance === FORBIDDEN ? (
             <div style={styles.errorMessagesStyles}>{FORBIDDEN}</div>
         ) : (
