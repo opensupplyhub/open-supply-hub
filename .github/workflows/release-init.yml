@@ -11,15 +11,13 @@ jobs:
   create-release-branch:
     runs-on: ubuntu-latest
     steps:
-      - name: print ref
-        run: echo ${{ github.ref }}
       - name: Checkout repo
-        uses: actions/checkout@v4
-      
+        uses: actions/checkout@v3
+
       - name: Create release branch
         uses: peterjgrainger/action-create-branch@v2.2.0
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
         with:
-          branch: refs/heads/releases/v.${{ inputs.release-version }}
-          sha: '${{ github.sha }}'
+          branch: releases/v.${{ inputs.release-version }}
+          sha: '${{ github.event.pull_request.head.sha }}'
