@@ -40,6 +40,7 @@ def get_current_usage(u_id):
 
 class UserApiInfo(LoginView):
     def get(self, request, pk):
+        print("!!!! UserApiInfo", pk)
         try:
             contributor = Contributor.objects.get(admin_id=pk)
         except Contributor.DoesNotExist:
@@ -53,5 +54,6 @@ class UserApiInfo(LoginView):
             "currentCallCount": successful_calls,
             "renewalPeriod": renewal_period,
         }
+        print("!!!! api_call_info_data", api_call_info_data)
 
         return Response(api_call_info_data)

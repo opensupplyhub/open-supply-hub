@@ -19,8 +19,8 @@ class UserApiInfo extends Component {
     }
 
     render() {
-        const { error, userApiInfo, fetching, id } = this.props;
-        console.log('!!! id, user', id);
+        const { error, userApiInfo, fetching } = this.props;
+        console.log('!!! userApiInfo props', userApiInfo);
 
         if (error) {
             window.console.warn(error);
@@ -29,7 +29,7 @@ class UserApiInfo extends Component {
             apiCallAllowance,
             currentCallCount,
             renewalPeriod,
-        } = userApiInfo;
+        } = userApiInfo[0];
         return (
             <List disabled={fetching}>
                 <ListItem>
@@ -84,17 +84,11 @@ class UserApiInfo extends Component {
 
 UserApiInfo.defaultProps = {
     error: null,
-    // apiCallAllowance: '0',
-    // currentCallCount: '0',
-    // renewalPeriod: '',
 };
 
 UserApiInfo.propTypes = {
     error: arrayOf(string),
     userApiInfo: arrayOf(userApiInfoPropType).isRequired,
-    // apiCallAllowance: string,
-    // currentCallCount: string,
-    // renewalPeriod: string,
     getUserApiInfo: func.isRequired,
     fetching: bool.isRequired,
 };
@@ -111,9 +105,9 @@ function mapStateToProps({
     };
 }
 
-function mapDispatchToProps(dispatch, { id }) {
+function mapDispatchToProps(dispatch, { uid }) {
     return {
-        getUserApiInfo: () => dispatch(fetchUserApiInfo(id)),
+        getUserApiInfo: () => dispatch(fetchUserApiInfo(uid)),
     };
 }
 

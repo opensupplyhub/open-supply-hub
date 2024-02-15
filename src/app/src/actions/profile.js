@@ -42,44 +42,31 @@ export const completeUpdateUserProfile = createAction(
     'COMPLETE_UPDATE_USER_PROFILE',
 );
 
-export const startCreateUserApiInfo = createAction(
-    'START_CREATE_API_CALL_INFO',
-);
-export const failCreateUserApiInfo = createAction('FAIL_CREATE_API_CALL_INFO');
-export const completeCreateUserApiInfo = createAction(
-    'COMPLETE_CREATE_API_CALL_INFO',
-);
-
-export const startFetchUserApiInfo = createAction('START_FETCH_API_CALL_INFO');
-export const failFetchUserApiInfo = createAction('FAIL_FETCH_API_CALL_INFO');
+export const startFetchUserApiInfo = createAction('START_FETCH_USER_API_INFO');
+export const failFetchUserApiInfo = createAction('FAIL_FETCH_USER_API_INFO');
 export const completeFetchUserApiInfo = createAction(
-    'COMPLETE_FETCH_API_CALL_INFO',
+    'COMPLETE_FETCH_USER_API_INFO',
 );
 
-export const startDeleteUserApiInfo = createAction(
-    'START_DELETE_API_CALL_INFO',
-);
-export const failDeleteUserApiInfo = createAction('FAIL_DELETE_API_CALL_INFO');
-export const completeDeleteUserApiInfo = createAction(
-    'COMPLETE_DELETE_API_CALL_INFO',
-);
-
-export function fetchUserApiInfo(id) {
-    console.log('!!!');
+export function fetchUserApiInfo(uid) {
+    console.log('!!! fetchUserApiInfo', uid);
     return dispatch => {
         dispatch(startFetchUserApiInfo());
 
         return (
             apiRequest
-                .get(makeUserAPIInfoURL(id))
-                // Return API call information
-                .then(({ data }) => dispatch(completeCreateUserApiInfo([data])))
+                .get(makeUserAPIInfoURL(uid))
+                // Return user API information
+                .then(({ data }) => {
+                    console.log('@@@@@@', data);
+                    dispatch(completeFetchUserApiInfo([data]));
+                })
                 .catch(err =>
                     dispatch(
                         logErrorAndDispatchFailure(
                             err,
                             'An error prevented fetching the API call information',
-                            failCreateUserApiInfo,
+                            failFetchUserApiInfo,
                         ),
                     ),
                 )

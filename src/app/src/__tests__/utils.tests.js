@@ -122,10 +122,10 @@ it('creates an API URL for generating an API token', () => {
     expect(makeAPITokenURL(uid)).toEqual(expectedMatch);
 });
 
-it('creates an API URL for getting contributor call information', () => {
-    const id = 123;
-    const expectedMatch = '/user-api-info/';
-    expect(makeUserAPIInfoURL(id)).toEqual(expectedMatch);
+it('creates an API URL for getting contributor API information', () => {
+    const uid = 123;
+    const expectedMatch = `/user-api-info/${uid}/`;
+    expect(makeUserAPIInfoURL(uid)).toEqual(expectedMatch);
 });
 
 it('creates API URLs for getting contributor, contributor type, country, and sector options', () => {

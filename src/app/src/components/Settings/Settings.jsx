@@ -80,7 +80,7 @@ function Settings({
                 {tabs[activeTabIndex] === API_TAB && (
                     <AppGrid>
                         <UserAPITokens />
-                        <UserApiInfo id={user.id.toString()} />
+                        <UserApiInfo uid={user.id} />
                     </AppGrid>
                 )}
                 {!user.isAnon && tabs[activeTabIndex] === NOTIFICATIONS_TAB && (
