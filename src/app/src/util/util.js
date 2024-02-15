@@ -261,7 +261,6 @@ export const createQueryStringFromSearchFilters = (
         lists = [],
         combineContributors = '',
         boundary = {},
-        ppe = '',
         sortAlgorithm = {},
     },
     withEmbed,
@@ -290,7 +289,6 @@ export const createQueryStringFromSearchFilters = (
         native_language_name: nativeLanguageName,
         combine_contributors: combineContributors,
         boundary: isEmpty(boundary) ? '' : JSON.stringify(boundary),
-        ppe,
         sort_by: isEmpty(sortAlgorithm) ? '' : sortAlgorithm.value,
         embed: !withEmbed ? '' : '1',
         detail: detail ? 'true' : undefined,
@@ -344,7 +342,6 @@ export const createFiltersFromQueryString = qs => {
         native_language_name: nativeLanguageName = '',
         combine_contributors: combineContributors = '',
         boundary = '',
-        ppe = '',
         sort_by: sortBy = '',
     } = querystring.parse(qsToParse);
 
@@ -363,7 +360,6 @@ export const createFiltersFromQueryString = qs => {
         nativeLanguageName,
         combineContributors,
         boundary: isEmpty(boundary) ? null : JSON.parse(boundary),
-        ppe,
         sortAlgorithm:
             sortBy === 'name'
                 ? optionsForSortingResults[0]
@@ -892,9 +888,8 @@ export const addProtocolToWebsiteURLIfMissing = url => {
     return `http://${url}`;
 };
 
-// OAR requested that the PPE features be disabled when in embedded mode
 export const filterFlagsIfAppIsEmbeded = (flags, isEmbeded) =>
-    filter(flags, f => !isEmbeded || (f !== 'ppe' && f !== 'claim_a_facility'));
+    filter(flags, f => !isEmbeded || f !== 'claim_a_facility');
 
 export const convertFeatureFlagsObjectToListOfActiveFlags = featureFlags =>
     keys(pickBy(featureFlags, identity));
