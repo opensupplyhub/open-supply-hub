@@ -1,10 +1,10 @@
 from datetime import datetime
 
-from api.limitation.dateLimitation.date_limitation import DateLimitation
+from dateLimitation.date_limitation import DateLimitation
 from dateLimitation.blank_date_limitation import (
     BlankDateLimitation
 )
-from django.api.limitation.dateLimitation.monthly_date_limitation import (
+from dateLimitation.monthly_date_limitation import (
     MonthlyDateLimitation
 )
 from dateLimitation.yearly_date_limitation import (
