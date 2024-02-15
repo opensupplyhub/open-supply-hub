@@ -170,3 +170,5 @@ class CumulativeMatcher(BaseMatcher):
             session.close()
 
             return results
+        
+        
