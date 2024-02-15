@@ -5,6 +5,7 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
+import { useMergeButtonClickHandler } from './../util/hooks';
 import { CONFIRM_ACTION, MERGE_ACTION, REJECT_ACTION } from '../util/constants';
 
 const actionDialogStates = Object.freeze({
@@ -33,30 +34,24 @@ const ConfirmActionButton = ({
 }) => {
     const [currentDialog, setCurrentDialog] = useState(actionDialogStates.none);
 
+    const handleMergeButtonClick = useMergeButtonClickHandler({
+        targetFacilityOSID,
+        facilityToMergeOSID,
+        facilitiesToMergeData: activeCheckboxes,
+        updateToMergeOSID,
+        updateTargetOSID,
+        fetchToMergeFacility,
+        fetchTargetFacility,
+        openMergeModal,
+    });
+
     const openActionDialog = useCallback(() => {
         switch (action) {
             case CONFIRM_ACTION:
                 setCurrentDialog(actionDialogStates.confirm);
                 break;
             case MERGE_ACTION:
-                if (
-                    targetFacilityOSID !== activeCheckboxes[0]?.os_id &&
-                    facilityToMergeOSID !== activeCheckboxes[1]?.os_id
-                ) {
-                    updateToMergeOSID(activeCheckboxes[1]?.os_id);
-                    updateTargetOSID(activeCheckboxes[0]?.os_id);
-                    fetchToMergeFacility();
-                    fetchTargetFacility();
-                }
-                if (targetFacilityOSID !== activeCheckboxes[0]?.os_id) {
-                    updateTargetOSID(activeCheckboxes[0]?.os_id);
-                    fetchTargetFacility();
-                }
-                if (facilityToMergeOSID !== activeCheckboxes[1]?.os_id) {
-                    updateToMergeOSID(activeCheckboxes[1]?.os_id);
-                    fetchToMergeFacility();
-                }
-                openMergeModal();
+                handleMergeButtonClick();
                 break;
             case REJECT_ACTION:
                 setCurrentDialog(actionDialogStates.reject);

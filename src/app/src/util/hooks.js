@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import get from 'lodash/get';
 import head from 'lodash/head';
 import last from 'lodash/last';
@@ -244,4 +244,55 @@ export const useCheckboxManager = () => {
         toggleCheckbox,
         isCheckboxDisabled,
     };
+};
+
+export const useMergeButtonClickHandler = ({
+    targetFacilityOSID,
+    facilityToMergeOSID,
+    facilitiesToMergeData,
+    updateToMergeOSID,
+    updateTargetOSID,
+    fetchToMergeFacility,
+    fetchTargetFacility,
+    openMergeModal,
+}) => {
+    const handleMergeButtonClick = useCallback(() => {
+        const facilitiesToMergeDataArr =
+            typeof facilitiesToMergeData[0] === 'object' &&
+            'os_id' in facilitiesToMergeData[0]
+                ? facilitiesToMergeData.map(
+                      facilityToMerge => facilityToMerge.os_id,
+                  )
+                : facilitiesToMergeData;
+
+        if (
+            targetFacilityOSID !== facilitiesToMergeDataArr[0] &&
+            facilityToMergeOSID !== facilitiesToMergeDataArr[1]
+        ) {
+            updateToMergeOSID(facilitiesToMergeDataArr[1]);
+            updateTargetOSID(facilitiesToMergeDataArr[0]);
+            fetchToMergeFacility();
+            fetchTargetFacility();
+        }
+        if (targetFacilityOSID !== facilitiesToMergeDataArr[0]) {
+            updateTargetOSID(facilitiesToMergeDataArr[0]);
+            fetchTargetFacility();
+        }
+        if (facilityToMergeOSID !== facilitiesToMergeDataArr[1]) {
+            updateToMergeOSID(facilitiesToMergeDataArr[1]);
+            fetchToMergeFacility();
+        }
+        openMergeModal();
+    }, [
+        targetFacilityOSID,
+        facilityToMergeOSID,
+        facilitiesToMergeData,
+        updateToMergeOSID,
+        updateTargetOSID,
+        fetchToMergeFacility,
+        fetchTargetFacility,
+        openMergeModal,
+    ]);
+
+    return handleMergeButtonClick;
 };

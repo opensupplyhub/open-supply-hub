@@ -25,6 +25,10 @@ export const updateMergeTargetFacilityOSID = createAction(
     'UPDATE_MERGE_TARGET_FACILITY_OS_ID',
 );
 
+export const clearMergeFacilitiesError = createAction(
+    'CLEAR_MERGE_MERGE_FACILITIES_ERROR',
+);
+
 export function fetchMergeTargetFacility() {
     return (dispatch, getState) => {
         const {
@@ -172,5 +176,11 @@ export function mergeFacilities() {
             );
     };
 }
+
+/*
+export function clearMergeFacilitiesError() {
+    dispatch(logErrorAndDispatchFailure(null, '', failMergeFacilities));
+}
+*/
 
 export const flipFacilitiesToMerge = createAction('FLIP_FACILITIES_TO_MERGE');
