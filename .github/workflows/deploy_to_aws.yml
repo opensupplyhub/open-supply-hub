@@ -284,7 +284,8 @@ jobs:
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
-
+      - name: Print Django Docker image to ECR for ${{ vars.ENV_NAME }}
+        run: echo ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}  
       - name: Build and push Django Docker image to ECR for ${{ vars.ENV_NAME }}
         uses: docker/build-push-action@v2
         with:
