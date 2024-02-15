@@ -1141,7 +1141,7 @@ it('creates a URL for confirming a password reset', () => {
 
 it('creates a URL for retrieving a user profile', () => {
     const userID = 'userID';
-    const expectedURL = `/user-profile/userID/`;
+    const expectedURL = '/user-profile/userID/';
     expect(makeUserProfileURL(userID)).toBe(expectedURL);
 });
 
