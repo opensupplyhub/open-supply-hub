@@ -1,5 +1,5 @@
 from rest_framework.response import Response
-from rest_auth.views import LoginView
+from rest_framework.views import APIView
 from api.models import (RequestLog, ApiLimit)
 from ...models import Contributor
 
@@ -33,8 +33,8 @@ def get_current_usage(u_id):
         return -1
 
 
-class UserAPIInfo(LoginView):
-    def get(self, request, uid=None, *args, **kwargs):
+class UserAPIInfo(APIView):
+    def get(self, request, uid=None, *args, **kwaurlsrgs):
         print("!!!! uid", uid)
         try:
             contributor = Contributor.objects.get(admin_id=uid)

@@ -11,6 +11,7 @@ const pathsToProxy = Object.freeze([
     '/user-signup',
     '/user-profile',
     '/api-token-auth',
+    '/user-api-info',
     '/api-feature-flags',
     '/tile',
 ]);

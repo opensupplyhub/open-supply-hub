@@ -124,7 +124,7 @@ internal_apis = [
          name='api_token_auth'),
     path('user-api-info/<int:uid>/',
          views.UserAPIInfo.as_view(),
-         name='user_api_info'),
+         name='user-api-info'),
     path('api-feature-flags/', views.api_feature_flags,
          name='api_feature_flags'),
     path('tile/<layer>/<cachekey>/<int:z>/<int:x>/<int:y>.<ext>',
