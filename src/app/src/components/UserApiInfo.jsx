@@ -8,11 +8,22 @@ import ListItemText from '@material-ui/core/ListItemText';
 import IconButton from '@material-ui/core/IconButton';
 import InfoIcon from '@material-ui/icons/Info';
 import Tooltip from '@material-ui/core/Tooltip';
-import { userApiInfoTooltipTitles } from '../util/constants';
+import Typography from '@material-ui/core/Typography';
+import {
+    userApiInfoTooltipTitles,
+    IS_NOT_SET,
+    FORBIDDEN,
+} from '../util/constants';
 
 import { fetchUserApiInfo } from '../actions/profile';
 import { userApiInfoPropType } from '../util/propTypes';
 
+const styles = Object.freeze({
+    errorMessagesStyles: Object.freeze({
+        color: 'red',
+        padding: '1rem',
+    }),
+});
 class UserAPIInfo extends Component {
     componentDidMount() {
         return this.props.getUserApiInfo();
@@ -30,7 +41,9 @@ class UserAPIInfo extends Component {
             currentCallCount,
             renewalPeriod,
         } = userApiInfo[0];
-        return (
+        return apiCallAllowance === FORBIDDEN ? (
+            <div style={styles.errorMessagesStyles}>{FORBIDDEN}</div>
+        ) : (
             <List disabled={fetching}>
                 <ListItem>
                     <Tooltip
@@ -73,8 +86,21 @@ class UserAPIInfo extends Component {
                     </Tooltip>
 
                     <ListItemText
+                        disableTypography
                         primary="Renewal Period:"
-                        secondary={renewalPeriod}
+                        secondary={
+                            renewalPeriod === IS_NOT_SET ? (
+                                <Typography
+                                    variant="body2"
+                                    style={{ color: 'red' }}
+                                >
+                                    {renewalPeriod}
+                                </Typography>
+                            ) : (
+                                renewalPeriod
+                            )
+                        }
+                        // const element = <h1 style={{ color: 'red' }}>Hello world</h1>
                     />
                 </ListItem>
             </List>

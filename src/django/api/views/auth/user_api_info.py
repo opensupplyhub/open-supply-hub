@@ -10,7 +10,7 @@ def get_api_call_limit(contributor_id):
             contributor_id=contributor_id).period_limit
         return str(period_limit)
     except ApiLimit.DoesNotExist:
-        return -1
+        return '403 Forbidden'
 
 
 def get_renewal_period(contributor_id):
@@ -19,7 +19,7 @@ def get_renewal_period(contributor_id):
             contributor_id=contributor_id).renewal_period
         return renewal_period
     except ApiLimit.DoesNotExist:
-        return -1
+        return 'Is not set'
 
 
 def get_current_usage(u_id):
