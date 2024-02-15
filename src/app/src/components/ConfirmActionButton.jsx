@@ -31,6 +31,7 @@ const ConfirmActionButton = ({
     updateToMergeOSID,
     fetchToMergeFacility,
     fetchTargetFacility,
+    resetCheckboxes,
 }) => {
     const [currentDialog, setCurrentDialog] = useState(actionDialogStates.none);
 
@@ -75,11 +76,13 @@ const ConfirmActionButton = ({
 
     const confirmFacilityMatch = useCallback(() => {
         confirmMatch();
+        resetCheckboxes();
         closeDialog();
     }, [confirmMatch, closeDialog]);
 
     const rejectFacilityMatch = useCallback(() => {
         rejectMatch();
+        resetCheckboxes();
         closeDialog();
     }, [rejectMatch, closeDialog]);
 
@@ -222,6 +225,7 @@ ConfirmActionButton.propTypes = {
     updateToMergeOSID: func.isRequired,
     fetchToMergeFacility: func.isRequired,
     fetchTargetFacility: func.isRequired,
+    resetCheckboxes: func.isRequired,
 };
 
 export default ConfirmActionButton;

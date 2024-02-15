@@ -75,6 +75,7 @@ function FacilityListItemsConfirmationTableRow({
         activeCheckboxes,
         activeSubmitButton,
         toggleCheckbox,
+        resetCheckboxes,
         handleSelectChange,
         isCheckboxDisabled,
     } = useCheckboxManager();
@@ -225,6 +226,7 @@ function FacilityListItemsConfirmationTableRow({
                             buttonName="OK"
                             fetching={fetching}
                             action={action}
+                            resetCheckboxes={resetCheckboxes}
                             activeSubmitButton={activeSubmitButton}
                             activeCheckboxes={activeCheckboxes}
                             openMergeModal={openMergeModal}

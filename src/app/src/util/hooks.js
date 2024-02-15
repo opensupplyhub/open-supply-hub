@@ -240,6 +240,7 @@ export const useCheckboxManager = () => {
         action,
         activeCheckboxes,
         activeSubmitButton,
+        resetCheckboxes,
         handleSelectChange,
         toggleCheckbox,
         isCheckboxDisabled,
