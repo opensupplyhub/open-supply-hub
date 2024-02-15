@@ -13,7 +13,7 @@ import { userApiInfoTooltipTitles } from '../util/constants';
 import { fetchUserApiInfo } from '../actions/profile';
 import { userApiInfoPropType } from '../util/propTypes';
 
-class UserApiInfo extends Component {
+class UserAPIInfo extends Component {
     componentDidMount() {
         return this.props.getUserApiInfo();
     }
@@ -82,11 +82,11 @@ class UserApiInfo extends Component {
     }
 }
 
-UserApiInfo.defaultProps = {
+UserAPIInfo.defaultProps = {
     error: null,
 };
 
-UserApiInfo.propTypes = {
+UserAPIInfo.propTypes = {
     error: arrayOf(string),
     userApiInfo: arrayOf(userApiInfoPropType).isRequired,
     getUserApiInfo: func.isRequired,
@@ -111,4 +111,4 @@ function mapDispatchToProps(dispatch, { uid }) {
     };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(UserApiInfo);
+export default connect(mapStateToProps, mapDispatchToProps)(UserAPIInfo);

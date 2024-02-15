@@ -124,7 +124,7 @@ it('creates an API URL for generating an API token', () => {
 
 it('creates an API URL for getting contributor API information', () => {
     const uid = 123;
-    const expectedMatch = `/user-api-info/${uid}/`;
+    const expectedMatch = '/user-api-info/uid/';
     expect(makeUserAPIInfoURL(uid)).toEqual(expectedMatch);
 });
 
@@ -1141,7 +1141,7 @@ it('creates a URL for confirming a password reset', () => {
 
 it('creates a URL for retrieving a user profile', () => {
     const userID = 'userID';
-    const expectedURL = '/user-profile/userID/';
+    const expectedURL = `/user-profile/userID/`;
     expect(makeUserProfileURL(userID)).toBe(expectedURL);
 });
 

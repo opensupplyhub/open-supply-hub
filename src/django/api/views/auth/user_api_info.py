@@ -1,10 +1,5 @@
-# from rest_framework import status
-# from rest_framework.authtoken.models import Token
-# from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_auth.views import LoginView
-# from api.limits import check_contributor_api_limit
-# from django.utils import timezone
 from api.models import (RequestLog, ApiLimit)
 from ...models import Contributor
 
@@ -38,17 +33,17 @@ def get_current_usage(u_id):
         return -1
 
 
-class UserApiInfo(LoginView):
-    def get(self, request, pk):
-        print("!!!! UserApiInfo", pk)
+class UserAPIInfo(LoginView):
+    def get(self, request, uid=None, *args, **kwargs):
+        print("!!!! uid", uid)
         try:
-            contributor = Contributor.objects.get(admin_id=pk)
+            contributor = Contributor.objects.get(admin_id=uid)
         except Contributor.DoesNotExist:
             print("!!!! contributor", contributor)
 
         period_limit = get_api_call_limit(contributor.id)
         renewal_period = get_renewal_period(contributor.id)
-        successful_calls = get_current_usage(pk)
+        successful_calls = get_current_usage(uid)
         api_call_info_data = {
             "apiCallAllowance": period_limit,
             "currentCallCount": successful_calls,
