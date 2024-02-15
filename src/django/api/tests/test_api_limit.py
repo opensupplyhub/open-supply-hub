@@ -7,7 +7,9 @@ from api.models import (
     RequestLog,
     User,
 )
-from api.limitation.dateLimitation.date_limitation_context import DateLimitationContext
+from api.limitation.dateLimitation.date_limitation_context import (
+    DateLimitationContext
+)
 from dateutil.relativedelta import relativedelta
 from datetime import datetime, time
 
@@ -62,11 +64,11 @@ class ApiLimitTest(TestCase):
             api_limit_exceeded_sent_on=self.notification_time,
             api_grace_limit_exceeded_sent_on=self.notification_time,
         )
-    
-    def get_end_of_year(self, at_datetime: datetime):
-        return datetime.combine(at_datetime.replace(month=12, day=31), time.max,
-                            at_datetime.tzinfo)
 
+    def get_end_of_year(self, at_datetime: datetime):
+        return datetime.combine(at_datetime.replace(month=12, day=31),
+                                time.max,
+                                at_datetime.tzinfo)
 
     def test_under_limit_does_nothing(self):
         check_api_limits(timezone.now())

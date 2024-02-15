@@ -4,7 +4,7 @@ from api.limitation.dateLimitation.date_limitation import DateLimitation
 from dateLimitation.blank_date_limitation import (
     BlankDateLimitation
 )
-from dateLimitation.month_date_limitation import (
+from django.api.limitation.dateLimitation.monthly_date_limitation import (
     MonthlyDateLimitation
 )
 from dateLimitation.yearly_date_limitation import (
@@ -39,5 +39,5 @@ class DateLimitationContext:
 
             return date.replace(day=1,
                                 month=date.month + 1)
-        
+
         return date

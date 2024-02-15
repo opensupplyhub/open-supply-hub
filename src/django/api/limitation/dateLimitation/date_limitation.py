@@ -16,7 +16,7 @@ class DateLimitation(ABC):
     @abstractmethod
     def get_api_block_until(self):
         pass
-    
+
     @abstractmethod
     def modify_start_date(self):
         pass

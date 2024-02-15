@@ -21,4 +21,4 @@ class YearlyDateLimitation(DateLimitation):
         return self.start_date
 
     def get_api_block_until(self):
-        return  self.start_date + relativedelta(years=1)
+        return self.start_date + relativedelta(years=1)
