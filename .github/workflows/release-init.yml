@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Print
         run: echo '${{ github.event.pull_request.head.sha }}'
 
@@ -22,4 +22,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PAT }}
         with:
           branch: releases/v.${{ inputs.release-version }}
-          sha: '${{ github.event.pull_request.head.sha }}'
+          # sha: '${{ github.event.pull_request.head.sha }}'
