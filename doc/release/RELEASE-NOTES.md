@@ -19,6 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) - Remove code related to PPE field from `/src/app`
+* [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) - Remove code related to PPE field from `/src/dedupe-hub`
 
 ### Architecture/Environment changes
 * [OSDEV-829](https://opensupplyhub.atlassian.net/browse/OSDEV-673) Makes `minimum-ratio: 1` It allows to push code with less than 1% diff from main.
@@ -33,6 +34,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-219](https://opensupplyhub.atlassian.net/browse/OSDEV-219). Data moderator can merge potential match facilities from Confirm / Reject screen.
 * [OSDEV-835](https://opensupplyhub.atlassian.net/browse/OSDEV-835) - Remove the display of emails in the `activity_reports` section of the `facilities/{id}` API endpoint, as email information is private.
 * [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) - Remove code related to PPE field from `/src/app`  
+* [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) - Remove code related to PPE field from `/src/dedupe-hub`  
 
 ### Release instructions:
 * Update code.
