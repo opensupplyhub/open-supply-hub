@@ -110,6 +110,10 @@ class CumulativeMatcher(BaseMatcher):
                         facility.country_code = unmatched_list_item.country_code
                         facility.location = unmatched_list_item.geocoded_point
                         facility.created_from_id = unmatched_list_item.id
+                        facility.ppe_product_types = unmatched_list_item.ppe_product_types
+                        facility.ppe_contact_email = unmatched_list_item.ppe_contact_email
+                        facility.ppe_contact_phone = unmatched_list_item.ppe_contact_phone
+                        facility.ppe_website = unmatched_list_item.ppe_website
                         facility.created_at = datetime.now()
                         facility.updated_at = datetime.now()
 
@@ -166,5 +170,3 @@ class CumulativeMatcher(BaseMatcher):
             session.close()
 
             return results
-
-
