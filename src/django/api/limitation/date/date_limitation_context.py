@@ -1,13 +1,15 @@
 from datetime import datetime
 
-from dateLimitation.date_limitation import DateLimitation
-from dateLimitation.blank_date_limitation import (
+from api.limitation.date.date_limitation import (
+    DateLimitation
+)
+from api.limitation.date.blank_date_limitation import (
     BlankDateLimitation
 )
-from dateLimitation.monthly_date_limitation import (
+from api.limitation.date.monthly_date_limitation import (
     MonthlyDateLimitation
 )
-from dateLimitation.yearly_date_limitation import (
+from api.limitation.date.yearly_date_limitation import (
     YearlyDateLimitation
 )
 

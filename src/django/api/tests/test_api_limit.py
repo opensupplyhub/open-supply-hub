@@ -7,7 +7,7 @@ from api.models import (
     RequestLog,
     User,
 )
-from api.limitation.dateLimitation.date_limitation_context import (
+from api.limitation.date.date_limitation_context import (
     DateLimitationContext
 )
 from dateutil.relativedelta import relativedelta

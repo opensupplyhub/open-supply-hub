@@ -7,7 +7,7 @@ from api.models import (Contributor, RequestLog, ContributorNotifications,
                         ApiLimit, ApiBlock)
 from api.mail import (send_api_notice, send_admin_api_notice, send_api_warning,
                       send_admin_api_warning)
-from .limitation.dateLimitation.date_limitation_context import (
+from api.limitation.date.date_limitation_context import (
     DateLimitationContext
 )
 

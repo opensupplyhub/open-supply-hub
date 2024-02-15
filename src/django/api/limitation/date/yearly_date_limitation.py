@@ -2,7 +2,9 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 
-from api.limitation.dateLimitation.date_limitation import DateLimitation
+from api.limitation.date.date_limitation import (
+    DateLimitation
+)
 
 
 class YearlyDateLimitation(DateLimitation):
