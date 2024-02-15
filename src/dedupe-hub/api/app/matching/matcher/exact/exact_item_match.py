@@ -59,6 +59,7 @@ class ExactItemMatch(BaseItemMatch):
                 return matches
             # for match in matches:
             #   m.save()
+            #   TODO: handle PPE if needed
 
         return []
 
