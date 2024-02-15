@@ -22,4 +22,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PAT }}
         with:
           branch: releases/v.${{ inputs.release-version }}
-          sha: 'e1811b722b7d8d07ef06885ff52c3542672b84ea'
+          sha: '108bfab5b298941110f560a7a4391a0cf83ec1bb'
