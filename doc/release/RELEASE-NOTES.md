@@ -15,13 +15,17 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * 0136_remove_indexing_unnecessary_emails.py - This migration replaces the old `index_activity_reports_info` and `index_approved_claim` functions with similar ones that do not index emails.
 * 0137_remove_ppe_fields.py - This migration removes the PPE fields from the Facility, FacilityIndex, FacilityListItem, FacilityListItemTemp, HistoricalFacility models.
 * 0138_remove_indexing_ppe_fields.py - This migration updates indexing functions to not index PPE fields.
+* 0137_add_renewal_period_field.py - add new field to api_apilimit table & rename existing one.
+Updated existing users api_apilimit records renewal_period value.
 
 #### Scheme changes
 * [OSDEV-835](https://opensupplyhub.atlassian.net/browse/OSDEV-835) - Since the FacilityIndex model is primarily used to store cached facility data and display it publicly via the `/facilities/{id}` API endpoint, only public data can be shown. Therefore, caching emails to the FacilityIndex model was removed from the PostgreSQL indexing functions. All instances where emails are publicly displayed have been removed. The only remaining field is `ppe_contact_email`, but all functionality and code related to PPE will be deleted in this [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) ticket.
 * [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) - Remove PPE fields (ppe_product_types, ppe_contact_email, ppe_contact_phone, ppe_website, ppe) from the `api_facility`, `api_facilityindex`, `api_facilitylistitem`, `api_facilitylistitemtemp`, `api_historicalfacility`. Remove this fields from indexing processes.
 
 ### Code/API changes
-* [OSDEV 562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) Remove all code related to PPE (ppe_product_types, ppe_contact_email, ppe_contact_phone, ppe_website, ppe). 
+* [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) - Remove code related to PPE (ppe_product_types, ppe_contact_email, ppe_contact_phone, ppe_website, ppe) field from `/src/app`
+* [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) - Remove code related to PPE (ppe_product_types, ppe_contact_email, ppe_contact_phone, ppe_website, ppe) field from `/src/dedupe-hub`
+* [OSDEV 562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) Remove code related to PPE (ppe_product_types, ppe_contact_email, ppe_contact_phone, ppe_website, ppe) from `/src/django`
 
 ### Architecture/Environment changes
 * [OSDEV-829](https://opensupplyhub.atlassian.net/browse/OSDEV-673) Makes `minimum-ratio: 1` It allows to push code with less than 1% diff from main.
@@ -35,7 +39,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * API. Enable token generation based on API permissions in Django. [OSDEV-729](https://opensupplyhub.atlassian.net/browse/OSDEV-729). Updated Settings page to show/hide token tab by user groups. Forbid access to generate token for API if user didn't have permission groups.
 * [OSDEV-219](https://opensupplyhub.atlassian.net/browse/OSDEV-219). Data moderator can merge potential match facilities from Confirm / Reject screen.
 * [OSDEV-835](https://opensupplyhub.atlassian.net/browse/OSDEV-835) - Remove the display of emails in the `activity_reports` section of the `facilities/{id}` API endpoint, as email information is private.
-* [OSDEV 562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) - PPE fields are no longer used. So all data related to PPE fields were removed from the code and database.
+* API. Add a flag on API Limit page to indicate if package renews monthly or yearly. [OSDEV-781](https://opensupplyhub.atlassian.net/browse/OSDEV-781) Updated logic to support montly & yearly limitation count reset for API calls.
 
 ### Release instructions:
 * Update code.
