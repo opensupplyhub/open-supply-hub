@@ -68,7 +68,14 @@ export default function DashboardMergeFacilityControls({
         setMergingFacilities,
     ]);
 
-    useEffect(() => () => handleClearFacilityToMerge(), []);
+    useEffect(
+        () => () => {
+            if (error) {
+                handleClearFacilityToMerge();
+            }
+        },
+        [],
+    );
 
     const targetName = get(targetData, 'properties.name', '');
     const targetID = get(targetData, 'id', '');

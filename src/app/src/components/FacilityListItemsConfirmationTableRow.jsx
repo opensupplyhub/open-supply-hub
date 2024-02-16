@@ -87,24 +87,34 @@ function FacilityListItemsConfirmationTableRow({
     ];
 
     const [matches, setMatches] = useState([]);
+
+    const filterUniqueMatches = matchList => {
+        const uniqueOsIdItems = matchList.reduce((acc, matchItem) => {
+            const currentConfidence = parseFloat(matchItem.confidence);
+            if (
+                !acc[matchItem.os_id] ||
+                currentConfidence > parseFloat(acc[matchItem.os_id].confidence)
+            ) {
+                acc[matchItem.os_id] = matchItem;
+            }
+            return acc;
+        }, {});
+
+        return Object.values(uniqueOsIdItems);
+    };
+
     useEffect(() => {
         setMatches(cloneDeep(item.matches));
+        if (action === MERGE_ACTION) {
+            const noDuplicateMatches = filterUniqueMatches(item.matches);
+            setMatches(noDuplicateMatches.length > 1 ? noDuplicateMatches : []);
+            handleSelectChange(actionOptions[1].value);
+        }
     }, [item.matches]);
 
     useEffect(() => {
         if (action === MERGE_ACTION) {
-            const uniqueOsIdItems = matches.reduce((acc, match) => {
-                const currentConfidence = parseFloat(match.confidence);
-                if (
-                    !acc[match.os_id] ||
-                    currentConfidence > parseFloat(acc[match.os_id].confidence)
-                ) {
-                    acc[match.os_id] = match;
-                }
-                return acc;
-            }, {});
-
-            const noDuplicateMatches = Object.values(uniqueOsIdItems);
+            const noDuplicateMatches = filterUniqueMatches(matches);
             setMatches(noDuplicateMatches.length > 1 ? noDuplicateMatches : []);
         } else {
             setMatches(cloneDeep(item.matches));

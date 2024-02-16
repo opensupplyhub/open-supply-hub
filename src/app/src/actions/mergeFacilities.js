@@ -177,10 +177,4 @@ export function mergeFacilities() {
     };
 }
 
-/*
-export function clearMergeFacilitiesError() {
-    dispatch(logErrorAndDispatchFailure(null, '', failMergeFacilities));
-}
-*/
-
 export const flipFacilitiesToMerge = createAction('FLIP_FACILITIES_TO_MERGE');
