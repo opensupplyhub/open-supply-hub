@@ -53,6 +53,7 @@ import {
 } from '../util/constants';
 
 import { makeFacilityDetailLink } from '../util/util';
+import { useMergeButtonClickHandler } from '../util/hooks';
 
 import COLOURS from '../util/COLOURS';
 
@@ -244,26 +245,16 @@ function FilterSidebarFacilitiesTab({
         }
     };
 
-    const handleMergeButtonClick = () => {
-        if (
-            targetFacilityOSID !== facilitiesToMerge[0] &&
-            facilityToMergeOSID !== facilitiesToMerge[1]
-        ) {
-            updateToMergeOSID(facilitiesToMerge[1]);
-            updateTargetOSID(facilitiesToMerge[0]);
-            fetchToMergeFacility();
-            fetchTargetFacility();
-        }
-        if (targetFacilityOSID !== facilitiesToMerge[0]) {
-            updateTargetOSID(facilitiesToMerge[0]);
-            fetchTargetFacility();
-        }
-        if (facilityToMergeOSID !== facilitiesToMerge[1]) {
-            updateToMergeOSID(facilitiesToMerge[1]);
-            fetchToMergeFacility();
-        }
-        openMergeModal();
-    };
+    const handleMergeButtonClick = useMergeButtonClickHandler({
+        targetFacilityOSID,
+        facilityToMergeOSID,
+        facilitiesToMergeData: facilitiesToMerge,
+        updateToMergeOSID,
+        updateTargetOSID,
+        fetchToMergeFacility,
+        fetchTargetFacility,
+        openMergeModal,
+    });
 
     if (fetching) {
         return (

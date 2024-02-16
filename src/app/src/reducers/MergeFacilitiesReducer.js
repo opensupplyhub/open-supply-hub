@@ -17,6 +17,7 @@ import {
     completeMergeFacilities,
     resetMergeFacilitiesState,
     flipFacilitiesToMerge,
+    clearMergeFacilitiesError,
 } from '../actions/mergeFacilities';
 
 const initialState = Object.freeze({
@@ -146,6 +147,12 @@ export default createReducer(
                 },
             }),
         [resetMergeFacilitiesState]: () => initialState,
+        [clearMergeFacilitiesError]: state =>
+            update(state, {
+                merge: {
+                    error: { $set: null },
+                },
+            }),
     },
     initialState,
 );
