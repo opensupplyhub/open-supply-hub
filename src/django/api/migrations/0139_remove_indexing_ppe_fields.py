@@ -33,7 +33,7 @@ def revert_updating_indexing_functions(apps, schema_editor):
 class Migration(Migration):
 
     dependencies = [
-        ('api', '0137_remove_ppe_fields'),
+        ('api', '0138_remove_ppe_switch'),
     ]
 
     operations = [
