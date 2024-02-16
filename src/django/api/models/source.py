@@ -1,15 +1,6 @@
 from django.db import models
 
 
-class ArrayLength(models.Func):
-    """
-    A Func subclass that can be used in a QuerySet.annotate() call to invoke
-    the Postgres cardinality function on an array field, which returns the
-    length of the array.
-    """
-    function = 'CARDINALITY'
-
-
 class Source(models.Model):
     LIST = 'LIST'
     SINGLE = 'SINGLE'
@@ -57,28 +48,6 @@ class Source(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    def __init__(self, *args, **kwargs):
-        super(Source, self).__init__(*args, **kwargs)
-        self.__original_is_active = self.is_active
-
-    def save(self, force_insert=False, force_update=False, *args, **kwargs):
-        super(Source, self).save(force_insert, force_update, *args, **kwargs)
-
-        if self.__original_is_active and not self.is_active:
-            from .ppemixin import PPEMixin
-            from .facility.facility_match import FacilityMatch
-
-            for item in self.facilitylistitem_set.annotate(
-                ppe_product_types_len=ArrayLength('ppe_product_types')
-            ).filter(PPEMixin.PPE_FILTER):
-                for match in (item.facilitymatch_set
-                              .filter(is_active=True)
-                              .exclude(status=FacilityMatch.REJECTED)
-                              .exclude(status=FacilityMatch.PENDING)):
-                    if match.facility.revert_ppe(item):
-                        match.facility.save()
-        self.__original_is_active = self.is_active
 
     @property
     def display_name(self):
