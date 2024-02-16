@@ -43,6 +43,6 @@ class FacilityListItem(Base):
     clean_name = Column(String, nullable=False)
     clean_address = Column(String, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True),
-                        nullable=False, server_default=func.now())
+                       nullable=False, server_default=func.now())
     updated_at = Column(TIMESTAMP(timezone=True),
-                        default=None, onupdate=func.now())
+                       default=None, onupdate=func.now())

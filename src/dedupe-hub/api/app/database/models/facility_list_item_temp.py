@@ -44,6 +44,6 @@ class FacilityListItemTemp(Base):
     clean_address = Column(String, nullable=False)
     version = Column(String, nullable=True)
     created_at = Column(TIMESTAMP(timezone=True),
-                        nullable=False, server_default=func.now())
+                       nullable=False, server_default=func.now())
     updated_at = Column(TIMESTAMP(timezone=True),
-                        default=None, onupdate=func.now())
+                       default=None, onupdate=func.now())
