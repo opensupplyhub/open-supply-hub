@@ -12,7 +12,7 @@ def remove_ppe_switch(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0137_remove_ppe_fields'),
+        ('api', '0138_remove_ppe_fields'),
     ]
 
     operations = [

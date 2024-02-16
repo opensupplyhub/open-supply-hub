@@ -4,7 +4,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0136_remove_indexing_unnecessary_emails'),
+        ('api', '0137_add_renewal_period_field'),
     ]
 
     operations = [

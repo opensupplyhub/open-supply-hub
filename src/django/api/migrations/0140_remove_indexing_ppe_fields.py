@@ -14,8 +14,8 @@ def update_indexing_functions(apps, schema_editor):
     '''
 
     helper.run_sql_files([
-        '0139_index_facilities.sql',
-        '0139_index_facilities_by.sql'
+        '0140_index_facilities.sql',
+        '0140_index_facilities_by.sql'
         ])
 
 
@@ -33,7 +33,7 @@ def revert_updating_indexing_functions(apps, schema_editor):
 class Migration(Migration):
 
     dependencies = [
-        ('api', '0138_remove_ppe_switch'),
+        ('api', '0139_remove_ppe_switch'),
     ]
 
     operations = [
