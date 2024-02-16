@@ -19,7 +19,7 @@ import {
 import { fetchUserApiInfo } from '../actions/profile';
 import { userApiInfoPropType } from '../util/propTypes';
 
-const StyledTooltip = withStyles({
+const BlueOnGreenTooltip = withStyles({
     tooltip: {
         color: 'rgba(0, 0, 0, 0.8)',
         fontSize: '0.875rem',
@@ -27,6 +27,7 @@ const StyledTooltip = withStyles({
         border: 'solid rgba(0, 0, 0, 0.25)',
         borderRadius: '10px',
         padding: '10px',
+        opacity: '0.1',
         lineHeight: '1',
     },
 })(Tooltip);
@@ -52,14 +53,14 @@ class UserAPIInfo extends Component {
         return (
             <List disabled={fetching}>
                 <ListItem>
-                    <StyledTooltip
+                    <BlueOnGreenTooltip
                         title={userApiInfoTooltipTitles.apiCallAllowance}
                         placement="right"
                     >
                         <IconButton aria-label="Call Limit">
                             <InfoIcon />
                         </IconButton>
-                    </StyledTooltip>
+                    </BlueOnGreenTooltip>
 
                     <ListItemText
                         primary="Call Limit:"
@@ -78,14 +79,14 @@ class UserAPIInfo extends Component {
                     />
                 </ListItem>
                 <ListItem>
-                    <StyledTooltip
+                    <Tooltip
                         title={userApiInfoTooltipTitles.currentCallCount}
                         placement="right"
                     >
                         <IconButton aria-label="Current Usage">
                             <InfoIcon />
                         </IconButton>
-                    </StyledTooltip>
+                    </Tooltip>
 
                     <ListItemText
                         primary="Current Usage:"
@@ -93,14 +94,14 @@ class UserAPIInfo extends Component {
                     />
                 </ListItem>
                 <ListItem>
-                    <StyledTooltip
+                    <Tooltip
                         title={userApiInfoTooltipTitles.renewalPeriod}
                         placement="right"
                     >
                         <IconButton aria-label="Renewal Period">
                             <InfoIcon />
                         </IconButton>
-                    </StyledTooltip>
+                    </Tooltip>
 
                     <ListItemText
                         disableTypography
