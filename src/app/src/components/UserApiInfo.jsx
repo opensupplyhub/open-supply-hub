@@ -18,12 +18,6 @@ import {
 import { fetchUserApiInfo } from '../actions/profile';
 import { userApiInfoPropType } from '../util/propTypes';
 
-const styles = Object.freeze({
-    errorMessagesStyles: Object.freeze({
-        color: 'red',
-        padding: '1rem',
-    }),
-});
 class UserAPIInfo extends Component {
     componentDidMount() {
         return this.props.getUserApiInfo();
@@ -42,9 +36,7 @@ class UserAPIInfo extends Component {
             renewalPeriod,
         } = userApiInfo[0];
 
-        return apiCallAllowance === FORBIDDEN ? (
-            <div style={styles.errorMessagesStyles}>{FORBIDDEN}</div>
-        ) : (
+        return (
             <List disabled={fetching}>
                 <ListItem>
                     <Tooltip
@@ -58,7 +50,18 @@ class UserAPIInfo extends Component {
 
                     <ListItemText
                         primary="Call Limit:"
-                        secondary={apiCallAllowance}
+                        secondary={
+                            apiCallAllowance === FORBIDDEN ? (
+                                <Typography
+                                    variant="body2"
+                                    style={{ color: 'red' }}
+                                >
+                                    {apiCallAllowance}
+                                </Typography>
+                            ) : (
+                                apiCallAllowance
+                            )
+                        }
                     />
                 </ListItem>
                 <ListItem>
@@ -101,7 +104,6 @@ class UserAPIInfo extends Component {
                                 renewalPeriod
                             )
                         }
-                        // const element = <h1 style={{ color: 'red' }}>Hello world</h1>
                     />
                 </ListItem>
             </List>
