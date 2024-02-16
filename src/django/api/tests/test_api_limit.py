@@ -412,7 +412,7 @@ class ApiLimitTest(TestCase):
     def test_prepare_start_date(self):
         date_one = datetime(day=30, month=10, year=2024)
         context_one = DateLimitationContext()
-        context_one.setStrategy(BlankDateLimitation())
+        context_one.set_strategy(BlankDateLimitation())
         dateLimitation_one = context_one.execute(date_one)
         result_date_one = dateLimitation_one.get_start_date()
 
@@ -423,7 +423,7 @@ class ApiLimitTest(TestCase):
 
         date_two = datetime(day=29, month=12, year=2024)
         context_two = DateLimitationContext()
-        context_two.setStrategy(BlankDateLimitation())
+        context_two.set_strategy(BlankDateLimitation())
         dateLimitation_two = context_two.execute(date_two)
         result_date_two = dateLimitation_two.get_start_date()
 

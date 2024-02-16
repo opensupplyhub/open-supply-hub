@@ -12,7 +12,7 @@ class DateLimitationContext:
 
     utils = DateLimitationUtils()
 
-    def setStrategy(self, strategy: DateLimitation):
+    def set_strategy(self, strategy: DateLimitation):
         self.__date_limitation = strategy
 
     def execute(self, start_date) -> DateLimitation:

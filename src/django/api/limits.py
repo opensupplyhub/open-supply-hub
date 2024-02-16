@@ -93,11 +93,11 @@ def check_contributor_api_limit(at_datetime, c):
     context = DateLimitationContext()
 
     if renewal_period == '':
-        context.setStrategy(BlankDateLimitation())
+        context.set_strategy(BlankDateLimitation())
     if renewal_period == 'MONTHLY':
-        context.setStrategy(MonthlyDateLimitation())
+        context.set_strategy(MonthlyDateLimitation())
     if renewal_period == 'YEARLY':
-        context.setStrategy(YearlyDateLimitation())
+        context.set_strategy(YearlyDateLimitation())
 
     date_limitation = context.execute(date)
     start_date = date_limitation.get_start_date()
