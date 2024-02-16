@@ -92,7 +92,7 @@ def check_contributor_api_limit(at_datetime, c):
 
     context = DateLimitationContext()
 
-    if renewal_period is '':
+    if renewal_period == '':
         context.setStrategy(BlankDateLimitation())
     if renewal_period == 'MONTHLY':
         context.setStrategy(MonthlyDateLimitation())
