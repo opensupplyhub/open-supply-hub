@@ -1,6 +1,7 @@
-from simple_history.models import HistoricalRecords
-from django.db import models
 from api.models.transactions.index_facilities_new import index_facilities_new
+from simple_history.models import HistoricalRecords
+
+from django.db import models
 
 
 def hooked_index_facilities(**kwargs):
@@ -80,20 +81,6 @@ class FacilityMatchTemp(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     history = HistoricalRecords()
-
-    def __init__(self, *args, **kwargs):
-        super(FacilityMatchTemp, self).__init__(*args, **kwargs)
-        self.__original_is_active = self.is_active
-
-    def save(self, force_insert=False, force_update=False, *args, **kwargs):
-        super(FacilityMatchTemp, self).save(
-            force_insert, force_update, *args, **kwargs)
-
-        if self.__original_is_active and not self.is_active:
-            if self.facility.revert_ppe(self.facility_list_item):
-                self.facility.save()
-
-        self.__original_is_active = self.is_active
 
     @property
     def source(self):
