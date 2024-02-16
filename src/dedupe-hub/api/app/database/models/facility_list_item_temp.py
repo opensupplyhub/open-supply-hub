@@ -28,12 +28,10 @@ class FacilityListItemTemp(Base):
     row_index = Column(Integer, nullable=False)
     raw_data = Column(String, nullable=True)
     status = Column(String, nullable=False, default='UPLOADED')
-    processing_started_at = Column(
-        TIMESTAMP(timezone=True), nullable=False
-    )
-    processing_completed_at = Column(
-        TIMESTAMP(timezone=True), nullable=False
-    )
+    processing_started_at = Column(TIMESTAMP(timezone=True),
+                                nullable=False)
+    processing_completed_at = Column(TIMESTAMP(timezone=True),
+                                nullable=False)
     processing_results = Column(JSONB)
     name = Column(String, nullable=False)
     address = Column(String, nullable=False)
@@ -45,9 +43,7 @@ class FacilityListItemTemp(Base):
     clean_name = Column(String, nullable=False)
     clean_address = Column(String, nullable=False)
     version = Column(String, nullable=True)
-    created_at = Column(
-        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
-    )
-    updated_at = Column(
-        TIMESTAMP(timezone=True), default=None, onupdate=func.now()
-    )
+    created_at = Column(TIMESTAMP(timezone=True),
+                        nullable=False, server_default=func.now())
+    updated_at = Column(TIMESTAMP(timezone=True),
+                        default=None, onupdate=func.now())

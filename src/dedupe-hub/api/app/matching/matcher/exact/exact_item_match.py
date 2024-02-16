@@ -1,8 +1,6 @@
 from typing import Any, Dict
 
-from app.database.models.facility_list_item import FacilityListItem
 from app.database.models.facility_list_item_temp import FacilityListItemTemp
-from app.database.models.facility_match import FacilityMatch
 from app.database.models.facility_match_temp import FacilityMatchTemp
 from app.database.models.source import Source
 from app.database.sqlalchemy import get_session
