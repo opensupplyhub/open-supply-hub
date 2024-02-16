@@ -43,7 +43,6 @@ export const updateCombineContributorsFilterOption = createAction(
     'UPDATE_COMBINE_CONTRIBUTORS_FILTER_OPTION',
 );
 export const updateBoundaryFilter = createAction('UPDATE_BOUNDARY_FILTER');
-export const updatePPEFilter = createAction('UPDATE_PPE_FILTER');
 export const updateSortAlgorithm = createAction('UPDATE_SORT_ALGORITHM');
 export const resetAllFilters = createAction('RESET_ALL_FILTERS');
 export const updateAllFilters = createAction('UPDATE_ALL_FILTERS');
