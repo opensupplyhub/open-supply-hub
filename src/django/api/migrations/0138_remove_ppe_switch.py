@@ -6,7 +6,7 @@ def remove_ppe_switch(apps, schema_editor):
     This function removes the ppe switch.
     '''
     Switch = apps.get_model('waffle', 'Switch')
-    Switch.objects.remove(name='ppe')
+    Switch.objects.filter(name='ppe').delete()
 
 
 class Migration(migrations.Migration):
