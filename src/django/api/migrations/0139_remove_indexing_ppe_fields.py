@@ -14,8 +14,8 @@ def update_indexing_functions(apps, schema_editor):
     '''
 
     helper.run_sql_files([
-        '0138_index_facilities.sql',
-        '0138_index_facilities_by.sql'
+        '0139_index_facilities.sql',
+        '0139_index_facilities_by.sql'
         ])
 
 
