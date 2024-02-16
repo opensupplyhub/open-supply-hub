@@ -1714,7 +1714,6 @@ it('should return an array with claimed facility link if active feature flag is 
     const logoutAction = jest.fn();
     const activeFeatureFlags = [CLAIM_A_FACILITY];
 
-
     const result = createUserDropdownLinks(user, logoutAction, activeFeatureFlags);
 
     expect(result).toContainEqual({
