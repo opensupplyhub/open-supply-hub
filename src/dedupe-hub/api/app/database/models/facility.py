@@ -12,11 +12,15 @@ class Facility(Base):
     address = Column(String, nullable=False)
     country_code = Column(String, nullable=False)
     location = Column(Geometry('POINT'))
-    created_from_id = Column(Integer, ForeignKey('api_facilitylistitem.id'), nullable=False)
+    created_from_id = Column(
+        Integer, ForeignKey('api_facilitylistitem.id'), nullable=False
+    )
     is_closed = Column(Boolean, nullable=True)
     new_os_id = Column(String, nullable=True)
     has_inexact_coordinates = Column(Boolean, nullable=False, default=False)
-    created_at = Column(TIMESTAMP(timezone=True), nullable=False,
-                        server_default=func.now())
-    updated_at = Column(TIMESTAMP(timezone=True), default=None,
-                        onupdate=func.now())
+    created_at = Column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at = Column(
+        TIMESTAMP(timezone=True), default=None, onupdate=func.now()
+    )
