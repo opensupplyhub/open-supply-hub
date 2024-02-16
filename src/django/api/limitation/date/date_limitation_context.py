@@ -3,31 +3,17 @@ from datetime import datetime
 from api.limitation.date.date_limitation import (
     DateLimitation
 )
-from api.limitation.date.blank_date_limitation import (
-    BlankDateLimitation
-)
-from api.limitation.date.monthly_date_limitation import (
-    MonthlyDateLimitation
-)
-from api.limitation.date.yearly_date_limitation import (
-    YearlyDateLimitation
-)
 
 
 class DateLimitationContext:
-    __dateLimitation: DateLimitation
+    __date_limitation: DateLimitation
 
-    def __init__(self, renewal_period, start_date):
+    def setStrategy(self, strategy: DateLimitation):
+        self.__date_limitation = strategy
+
+    def execute(self, start_date) -> DateLimitation:
         date = self.__prepare_start_date(start_date)
-        self.__dateLimitation = BlankDateLimitation(date)
-
-        if renewal_period == 'MONTHLY':
-            self.__dateLimitation = MonthlyDateLimitation(date)
-        if renewal_period == 'YEARLY':
-            self.__dateLimitation = YearlyDateLimitation(date)
-
-    def execute(self) -> DateLimitation:
-        return self.__dateLimitation
+        return self.__date_limitation.execute(date)
 
     def __prepare_start_date(self, date: datetime):
         MINIMUM_DAY_TO_ROUND = 28

@@ -9,15 +9,15 @@ from api.limitation.date.date_limitation import (
 
 class YearlyDateLimitation(DateLimitation):
 
-    def __init__(self, period_start_date: datetime):
-        self.start_date = period_start_date
-        self.modify_start_date()
-
-    def modify_start_date(self):
+    def execute(self, period_start_date: datetime):
         utc = timezone.utc
+        self.start_date = period_start_date
+
         one_year_in_past = datetime.now(tz=utc) - relativedelta(years=1)
         while (self.start_date < one_year_in_past):
             self.start_date = self.start_date + relativedelta(years=1)
+
+        return self
 
     def get_start_date(self):
         return self.start_date

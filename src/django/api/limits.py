@@ -10,6 +10,15 @@ from api.mail import (send_api_notice, send_admin_api_notice, send_api_warning,
 from api.limitation.date.date_limitation_context import (
     DateLimitationContext
 )
+from api.limitation.date.blank_date_limitation import (
+    BlankDateLimitation
+)
+from api.limitation.date.monthly_date_limitation import (
+    MonthlyDateLimitation
+)
+from api.limitation.date.yearly_date_limitation import (
+    YearlyDateLimitation
+)
 
 
 def get_api_block(contributor):
@@ -75,16 +84,24 @@ def check_contributor_api_limit(at_datetime, c):
         apiLimit = ApiLimit.objects.get(contributor=contributor)
         limit = apiLimit.period_limit
         renewal_period = apiLimit.renewal_period
-        context = DateLimitationContext(renewal_period,
-                                        apiLimit.period_start_date)
+        date = apiLimit.period_start_date
     except ObjectDoesNotExist:
         limit = None
-        context = DateLimitationContext(None,
-                                        min(log_dates))
+        renewal_period = ''
+        date = min(log_dates)
 
-    dateLimitation = context.execute()
-    start_date = dateLimitation.get_start_date()
-    until = dateLimitation.get_api_block_until()
+    context = DateLimitationContext()
+
+    if renewal_period is '':
+        context.setStrategy(BlankDateLimitation())
+    if renewal_period == 'MONTHLY':
+        context.setStrategy(MonthlyDateLimitation())
+    if renewal_period == 'YEARLY':
+        context.setStrategy(YearlyDateLimitation())
+
+    date_limitation = context.execute(date)
+    start_date = date_limitation.get_start_date()
+    until = date_limitation.get_api_block_until()
 
     logs_for_period = [x for x in log_dates if x >= start_date]
     request_count = len(logs_for_period)

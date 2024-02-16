@@ -10,6 +10,9 @@ from api.models import (
 from api.limitation.date.date_limitation_context import (
     DateLimitationContext
 )
+from api.limitation.date.blank_date_limitation import (
+    BlankDateLimitation
+)
 from dateutil.relativedelta import relativedelta
 from datetime import datetime, time
 
@@ -408,7 +411,9 @@ class ApiLimitTest(TestCase):
 
     def test_prepare_start_date(self):
         date_one = datetime(day=30, month=10, year=2024)
-        dateLimitation_one = DateLimitationContext(None, date_one).execute()
+        context_one = DateLimitationContext()
+        context_one.setStrategy(BlankDateLimitation())
+        dateLimitation_one = context_one.execute(date_one)
         result_date_one = dateLimitation_one.get_start_date()
 
         self.assertEqual(
@@ -417,7 +422,9 @@ class ApiLimitTest(TestCase):
         )
 
         date_two = datetime(day=29, month=12, year=2024)
-        dateLimitation_two = DateLimitationContext(None, date_two).execute()
+        context_two = DateLimitationContext()
+        context_two.setStrategy(BlankDateLimitation())
+        dateLimitation_two = context_two.execute(date_two)
         result_date_two = dateLimitation_two.get_start_date()
 
         self.assertEqual(

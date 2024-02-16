@@ -8,12 +8,10 @@ from api.limitation.date.date_limitation import (
 
 class BlankDateLimitation(DateLimitation):
 
-    def __init__(self, period_start_date: datetime):
+    def execute(self, period_start_date: datetime):
         self.start_date = period_start_date
-        self.modify_start_date()
 
-    def modify_start_date(self):
-        pass
+        return self
 
     def get_start_date(self):
         return self.start_date
