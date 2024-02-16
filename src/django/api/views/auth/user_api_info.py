@@ -30,16 +30,15 @@ def get_current_usage(u_id):
             user_id=u_id).count()
         return str(successful_calls)
     except RequestLog.DoesNotExist:
-        return -1
+        return 0
 
 
 class UserAPIInfo(APIView):
-    def get(self, request, uid=None, *args, **kwaurlsrgs):
-        print("!!!! uid", uid)
+    def get(self, request, uid=None):
         try:
             contributor = Contributor.objects.get(admin_id=uid)
         except Contributor.DoesNotExist:
-            print("!!!! contributor", contributor)
+            return None
 
         period_limit = get_api_call_limit(contributor.id)
         renewal_period = get_renewal_period(contributor.id)
@@ -49,6 +48,5 @@ class UserAPIInfo(APIView):
             "currentCallCount": successful_calls,
             "renewalPeriod": renewal_period,
         }
-        print("!!!! api_call_info_data", api_call_info_data)
 
         return Response(api_call_info_data)

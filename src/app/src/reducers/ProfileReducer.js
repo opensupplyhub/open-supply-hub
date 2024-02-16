@@ -64,9 +64,9 @@ const initialState = Object.freeze({
     userApiInfo: Object.freeze({
         userApiInfo: [
             Object.freeze({
-                apiCallAllowance: '5000',
-                currentCallCount: '4200',
-                renewalPeriod: 'DEFAULT',
+                apiCallAllowance: '0',
+                currentCallCount: '0',
+                renewalPeriod: '-',
             }),
         ],
         fetching: false,

@@ -161,7 +161,7 @@ class RequestLogAdmin(admin.ModelAdmin):
 
 class ApiLimitAdmin(admin.ModelAdmin):
     autocomplete_fields = ('contributor', )
-    history_list_display = ('contributor', 'period_limit', 'created_at',
+    history_list_display = ('contributor', 'yearly_limit', 'created_at',
                             'updated_at', 'period_start_date')
 
     def get_readonly_fields(self, request, obj=None):
