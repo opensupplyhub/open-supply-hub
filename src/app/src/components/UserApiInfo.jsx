@@ -9,6 +9,7 @@ import IconButton from '@material-ui/core/IconButton';
 import InfoIcon from '@material-ui/icons/Info';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
+import { withStyles } from '@material-ui/core/styles';
 import {
     userApiInfoTooltipTitles,
     IS_NOT_SET,
@@ -17,6 +18,19 @@ import {
 
 import { fetchUserApiInfo } from '../actions/profile';
 import { userApiInfoPropType } from '../util/propTypes';
+
+const BlueOnGreenTooltip = withStyles({
+    tooltip: {
+        color: 'rgba(0, 0, 0, 0.8)',
+        fontSize: '0.875rem',
+        backgroundColor: 'white',
+        border: 'solid rgba(0, 0, 0, 0.25)',
+        borderRadius: '10px',
+        padding: '10px',
+        opacity: '0.1',
+        lineHeight: '1',
+    },
+})(Tooltip);
 
 class UserAPIInfo extends Component {
     componentDidMount() {
@@ -39,14 +53,14 @@ class UserAPIInfo extends Component {
         return (
             <List disabled={fetching}>
                 <ListItem>
-                    <Tooltip
+                    <BlueOnGreenTooltip
                         title={userApiInfoTooltipTitles.apiCallAllowance}
                         placement="right"
                     >
                         <IconButton aria-label="Call Limit">
                             <InfoIcon />
                         </IconButton>
-                    </Tooltip>
+                    </BlueOnGreenTooltip>
 
                     <ListItemText
                         primary="Call Limit:"
