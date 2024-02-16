@@ -59,11 +59,6 @@ class FacilityMatchPromoteTest(APITestCase):
         self.location_one = Point(1, 1)
         self.location_two = Point(2, 2)
 
-        self.ppe_product_types_two = ["Masks", "Gloves"]
-        self.ppe_contact_phone_two = "123-456-7890"
-        self.ppe_contact_email_two = "ppe@example.com"
-        self.ppe_website_two = "https://example.com/ppe"
-
         self.list_item_one = FacilityListItem.objects.create(
             name=self.name_one,
             address=self.name_one,
@@ -119,10 +114,6 @@ class FacilityMatchPromoteTest(APITestCase):
             sector=["Apparel"],
             row_index=1,
             geocoded_point=self.location_two,
-            ppe_product_types=self.ppe_product_types_two,
-            ppe_contact_phone=self.ppe_contact_phone_two,
-            ppe_contact_email=self.ppe_contact_email_two,
-            ppe_website=self.ppe_website_two,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_two,
         )
@@ -251,26 +242,6 @@ class FacilityMatchPromoteTest(APITestCase):
         self.assertEqual(
             Facility.history.first().history_change_reason,
             reason,
-        )
-
-        self.assertEqual(
-            self.facility_one.ppe_product_types,
-            self.list_item_two.ppe_product_types,
-        )
-
-        self.assertEqual(
-            self.facility_one.ppe_contact_phone,
-            self.list_item_two.ppe_contact_phone,
-        )
-
-        self.assertEqual(
-            self.facility_one.ppe_contact_email,
-            self.list_item_two.ppe_contact_email,
-        )
-
-        self.assertEqual(
-            self.facility_one.ppe_website,
-            self.list_item_two.ppe_website,
         )
 
     def test_can_promote_single_item_over_list_item(self):

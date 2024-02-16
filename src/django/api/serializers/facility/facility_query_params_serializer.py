@@ -27,7 +27,6 @@ class FacilityQueryParamsSerializer(Serializer):
         required=False,
     )
     boundary = CharField(required=False)
-    ppe = BooleanField(default=False, required=False)
     detail = BooleanField(default=False, required=False)
     number_of_public_contributors = BooleanField(default=False, required=False)
     sort_by = CharField(default=None, required=False)
