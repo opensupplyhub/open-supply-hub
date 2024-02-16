@@ -12,14 +12,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 #### Migrations:
 * 0135_disable_duplicates_and_lowercase_all_emails.py - implementing all emails to lowercase and disables duplicates
-* 0136_add_renewal_period_field.py - add new field to api_apilimit table & rename existing one.
-Updated existing users api_apilimit records renewal_period value.
+* 0136_remove_indexing_unnecessary_emails.py - This migration replaces the old `index_activity_reports_info` and `index_approved_claim` functions with similar ones that do not index emails.
 
 #### Scheme changes
-* *Describe scheme changes here.*
+* [OSDEV-835](https://opensupplyhub.atlassian.net/browse/OSDEV-835) - Since the FacilityIndex model is primarily used to store cached facility data and display it publicly via the `/facilities/{id}` API endpoint, only public data can be shown. Therefore, caching emails to the FacilityIndex model was removed from the PostgreSQL indexing functions. All instances where emails are publicly displayed have been removed. The only remaining field is `ppe_contact_email`, but all functionality and code related to PPE will be deleted in this [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) ticket.
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) - Remove code related to PPE field from `/src/app`
 
 ### Architecture/Environment changes
 * [OSDEV-829](https://opensupplyhub.atlassian.net/browse/OSDEV-673) Makes `minimum-ratio: 1` It allows to push code with less than 1% diff from main.
@@ -32,12 +31,19 @@ Updated existing users api_apilimit records renewal_period value.
 * API. Include token and call info on API settings tab.[OSDEV-752](https://opensupplyhub.atlassian.net/browse/OSDEV-752). Users can access a tab called `API` in account settings.From this tab, they can generate/retrieve their token and see their `API call allowance`, `current call count` and their `renewal period`.
 * Make login non-case sensitive. [OSDEV-628](https://opensupplyhub.atlassian.net/browse/OSDEV-628). When the user creates an account email saving in lowercase. User  could login with any variations of casing as long as the characters are the same.
 * API. Enable token generation based on API permissions in Django. [OSDEV-729](https://opensupplyhub.atlassian.net/browse/OSDEV-729). Updated Settings page to show/hide token tab by user groups. Forbid access to generate token for API if user didn't have permission groups.
+<<<<<<< HEAD:doc/RELEASE-NOTES.md
 * API. Add a flag on API Limit page to indicate if package renews monthly or yearly. [OSDEV-781](https://opensupplyhub.atlassian.net/browse/OSDEV-781) Updated logic to support montly & yearly limitation count reset for API calls.
 
+=======
+* [OSDEV-219](https://opensupplyhub.atlassian.net/browse/OSDEV-219). Data moderator can merge potential match facilities from Confirm / Reject screen.
+* [OSDEV-835](https://opensupplyhub.atlassian.net/browse/OSDEV-835) - Remove the display of emails in the `activity_reports` section of the `facilities/{id}` API endpoint, as email information is private.
+* [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) - Remove code related to PPE field from `/src/app`
+>>>>>>> main:doc/release/RELEASE-NOTES.md
 
 ### Release instructions:
-* Update code
-* Run migration up to 0135
+* Update code.
+* Apply DB migrations up to the latest one.
+* Run the index_facilities_new management command.
 
 
 ## Release 1.8.0
