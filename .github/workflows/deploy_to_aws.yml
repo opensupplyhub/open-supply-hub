@@ -194,7 +194,7 @@ jobs:
             DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}
             ENVIRONMENT=${{ steps.get_env_name.outputs.lowercase }}
 
-      - name: Build and push DD Docker image to ECR for ${{ vars.ENV_NAME }}
+      - name: Build and push Dedupe Hub Docker image to ECR for ${{ vars.ENV_NAME }}
         uses: docker/build-push-action@v2
         with:
           context: src/dedupe-hub/api
