@@ -173,9 +173,6 @@ class FacilityMatchViewSet(RetrieveModelMixin, GenericViewSet):
 
         facility_match.save()
 
-        if facility_match.facility.conditionally_set_ppe(facility_list_item):
-            facility_match.facility.save()
-
         matches_to_reject = FacilityMatch \
             .objects \
             .filter(facility_list_item=facility_list_item) \
@@ -323,10 +320,6 @@ class FacilityMatchViewSet(RetrieveModelMixin, GenericViewSet):
                         address=facility_list_item.address,
                         country_code=facility_list_item.country_code,
                         location=facility_list_item.geocoded_point,
-                        ppe_product_types=facility_list_item.ppe_product_types,
-                        ppe_contact_phone=facility_list_item.ppe_contact_phone,
-                        ppe_contact_email=facility_list_item.ppe_contact_email,
-                        ppe_website=facility_list_item.ppe_website,
                         created_from=facility_list_item)
                 )
                 # also create a new facility match
