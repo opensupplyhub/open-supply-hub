@@ -1,8 +1,9 @@
 from app.database.sqlalchemy import Base
-from sqlalchemy import TIMESTAMP, Column, String, Integer, ForeignKey
-from sqlalchemy.sql import func
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from geoalchemy2 import Geometry
+from sqlalchemy import TIMESTAMP, Column, Integer, String
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.sql import func
+
 
 class FacilityListItemTemp(Base):
     UPLOADED = 'UPLOADED'
@@ -41,10 +42,6 @@ class FacilityListItemTemp(Base):
     facility_id = Column(String, nullable=True)
     clean_name = Column(String, nullable=False)
     clean_address = Column(String, nullable=False)
-    ppe_product_types = Column(ARRAY(String), nullable=True)
-    ppe_contact_email = Column(String, nullable=True)
-    ppe_contact_phone = Column(String, nullable=True)
-    ppe_website = Column(String, nullable=True)
     version = Column(String, nullable=True)
     created_at = Column(TIMESTAMP(timezone=True),
                        nullable=False, server_default=func.now())
