@@ -23,9 +23,11 @@ class UserApiInfoTest(TestCase):
         self.email_one = "one@example.com"
         self.email_two = "two@example.com"
         self.email_three = "three@example.com"
+        self.email_four = "four@example.com"
         self.user_one = User.objects.create(email=self.email_one, id=1)
         self.user_two = User.objects.create(email=self.email_two, id=2)
         self.user_three = User.objects.create(email=self.email_three, id=3)
+        self.user_four = User.objects.create(email=self.email_four, id=4)
         self.yearly_renewal_period = 'YEARLY'
         self.monthly_renewal_period = 'MONTHLY'
 
@@ -49,9 +51,17 @@ class UserApiInfoTest(TestCase):
         self.contrib_three = Contributor.objects.create(
             id=3,
             admin=self.user_three,
-            name="contributor three free",
+            name="contributor three",
             contrib_type=Contributor.OTHER_CONTRIB_TYPE,
         )
+
+        self.contrib_four = Contributor.objects.create(
+            id=4,
+            admin=self.user_four,
+            name="contributor four",
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+
         now = timezone.now()
         self.limit_one = ApiLimit.objects.create(
             contributor=self.contrib_one,
@@ -67,6 +77,13 @@ class UserApiInfoTest(TestCase):
             renewal_period=ApiLimit.MONTHLY,
         )
 
+        self.limit_three = ApiLimit.objects.create(
+            contributor=self.contrib_three,
+            period_limit=0,
+            period_start_date=now,
+            renewal_period='',
+        )
+
         self.current_usage_one = 10
         self.current_usage_two = 2
         self.current_usage_three = -1
@@ -80,7 +97,7 @@ class UserApiInfoTest(TestCase):
     def test_get_api_call_limit(self):
         period_limit_one = get_api_call_limit(self.contrib_one.id)
         period_limit_two = get_api_call_limit(self.contrib_two.id)
-        period_limit_three = get_api_call_limit(self.contrib_three.id)
+        period_limit_four = get_api_call_limit(self.contrib_four.id)
 
         self.assertEqual(
            str(self.limit_one.period_limit), period_limit_one
@@ -89,7 +106,7 @@ class UserApiInfoTest(TestCase):
                 str(self.limit_two.period_limit), period_limit_two
         )
         self.assertEqual(
-                self.FORBIDDEN, period_limit_three
+                self.FORBIDDEN, period_limit_four
         )
 
     def test_get_renewal_period(self):

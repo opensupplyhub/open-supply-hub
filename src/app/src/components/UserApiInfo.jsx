@@ -19,6 +19,13 @@ import {
 import { fetchUserApiInfo } from '../actions/profile';
 import { userApiInfoPropType } from '../util/propTypes';
 
+const componentStyles = Object.freeze({
+    withoutMargin: Object.freeze({
+        marginBlockStart: '0',
+        marginBlockEnd: '0',
+    }),
+});
+
 const StyledTooltip = withStyles({
     tooltip: {
         color: 'rgba(0, 0, 0, 0.8)',
@@ -114,7 +121,9 @@ class UserAPIInfo extends Component {
                                     {renewalPeriod}
                                 </Typography>
                             ) : (
-                                renewalPeriod
+                                <p style={componentStyles.withoutMargin}>
+                                    {renewalPeriod}
+                                </p>
                             )
                         }
                     />

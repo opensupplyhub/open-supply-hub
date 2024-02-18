@@ -17,7 +17,10 @@ def get_renewal_period(contributor_id):
     try:
         renewal_period = ApiLimit.objects.get(
             contributor_id=contributor_id).renewal_period
-        return renewal_period
+        if renewal_period == '':
+            return 'Is not set'
+        else:
+            return renewal_period
     except ApiLimit.DoesNotExist:
         return 'Is not set'
 
