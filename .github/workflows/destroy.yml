@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       deploy-env:
-        description: 'Environment to deploy'     
+        description: 'Environment to destroy'     
         required: true
         type: choice
         options:
