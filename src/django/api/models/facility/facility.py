@@ -1,17 +1,17 @@
 from itertools import groupby
-from api.models.facility.facility_manager import FacilityManager
 
+from api.models.facility.facility_manager import FacilityManager
 from simple_history.models import HistoricalRecords
+
 from django.contrib.gis.db import models as gis_models
 from django.db import models
 from django.db.models import ExpressionWrapper, Q
 
 from ...countries import COUNTRY_CHOICES
 from ...os_id import make_os_id
-from ..ppemixin import PPEMixin
 
 
-class Facility(PPEMixin):
+class Facility(models.Model):
     """
     An official OS Hub facility. Search results are returned from this table.
     """
@@ -275,67 +275,6 @@ class Facility(PPEMixin):
             .first()
         )
 
-    def conditionally_set_ppe(self, item):
-        """
-        Copy PPE fields from the specified item if they are empty. `item` can
-        be either a `Facility` or a `FacilityListItem` because they both
-        inherit from `PPEMixin`. Returns True if any update to the model was
-        made.
-        """
-        should_update_ppe_product_types = \
-            item.has_ppe_product_types and not self.has_ppe_product_types
-        if (should_update_ppe_product_types):
-            self.ppe_product_types = item.ppe_product_types
-
-        should_update_ppe_contact_phone = \
-            item.has_ppe_contact_phone and not self.has_ppe_contact_phone
-        if (should_update_ppe_contact_phone):
-            self.ppe_contact_phone = item.ppe_contact_phone
-
-        should_update_ppe_contact_email = \
-            item.has_ppe_contact_email and not self.has_ppe_contact_email
-        if (should_update_ppe_contact_email):
-            self.ppe_contact_email = item.ppe_contact_email
-
-        should_update_ppe_website = \
-            item.has_ppe_website and not self.has_ppe_website
-        if (should_update_ppe_website):
-            self.ppe_website = item.ppe_website
-
-        return (
-            should_update_ppe_website
-            or should_update_ppe_contact_phone
-            or should_update_ppe_contact_email
-            or should_update_ppe_website)
-
-    def revert_ppe(self, item):
-        """
-        If the specified item has PPE data either:
-        - Restore the PPE data on the Facility to the values copied from the
-          original line item that created the facility.
-        - If the facility created the item, clear the PPE fields.
-        Return True if any update to the model was made.
-        """
-        if item == self.created_from:
-            self.ppe_product_types = []
-            self.ppe_contact_phone = ''
-            self.ppe_contact_email = ''
-            self.ppe_website = ''
-        else:
-            if item.has_ppe_product_types:
-                self.ppe_product_types = self.created_from.ppe_product_types
-            if item.has_ppe_contact_phone:
-                self.ppe_contact_phone = self.created_from.ppe_contact_phone
-            if item.has_ppe_contact_email:
-                self.ppe_contact_email = self.created_from.ppe_contact_email
-            if item.has_ppe_website:
-                self.ppe_website = self.created_from.ppe_website
-
-        return (item.has_ppe_website
-                or item.has_ppe_contact_phone
-                or item.has_ppe_contact_email
-                or item.has_ppe_website)
-
     @staticmethod
     def current_tile_cache_key():
         timestamp = format(
@@ -354,19 +293,3 @@ class Facility(PPEMixin):
             tile_version = 0
 
         return f'{timestamp}-{tile_version}'
-
-    def activity_reports(self):
-        from .facility_activity_report import FacilityActivityReport
-
-        return (
-            FacilityActivityReport
-            .objects
-            .filter(
-                facility=self.id,
-                status__in=[
-                    FacilityActivityReport.PENDING,
-                    FacilityActivityReport.CONFIRMED
-                ]
-            )
-            .order_by('-created_at')
-        )

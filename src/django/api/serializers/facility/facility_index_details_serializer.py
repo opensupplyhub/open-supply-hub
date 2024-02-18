@@ -44,14 +44,28 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
 
     class Meta:
         model = FacilityIndex
-        fields = ('id', 'name', 'address', 'country_code', 'location',
-                  'os_id', 'other_names', 'other_addresses', 'contributors',
-                  'country_name', 'claim_info', 'other_locations',
-                  'ppe_product_types', 'ppe_contact_phone',
-                  'ppe_contact_email', 'ppe_website',  'is_closed',
-                  'activity_reports', 'contributor_fields', 'new_os_id',
-                  'has_inexact_coordinates', 'extended_fields', 'created_from',
-                  'sector')
+        fields = (
+            'id',
+            'name',
+            'address',
+            'country_code',
+            'location',
+            'os_id',
+            'other_names',
+            'other_addresses',
+            'contributors',
+            'country_name',
+            'claim_info',
+            'other_locations',
+            'is_closed',
+            'activity_reports',
+            'contributor_fields',
+            'new_os_id',
+            'has_inexact_coordinates',
+            'extended_fields',
+            'created_from',
+            'sector',
+        )
         geo_field = 'location'
 
     def get_other_names(self, facility):
@@ -183,9 +197,6 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         return [
             {
                 'facility': item['facility'] or None,
-                'reported_by_user': (
-                    item['reported_by_user'] or None
-                ),
                 'reported_by_contributor': (
                     item['reported_by_contributor'] or None
                 ),

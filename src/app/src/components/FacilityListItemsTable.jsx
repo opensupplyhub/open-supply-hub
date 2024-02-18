@@ -27,6 +27,7 @@ import FacilityListItemsTableRow from './FacilityListItemsTableRow';
 import FacilityListItemsConfirmationTableRow from './FacilityListItemsConfirmationTableRow';
 import FacilityListItemsErrorTableRow from './FacilityListItemsErrorTableRow';
 import FacilityListItemsMatchTableRow from './FacilityListItemsMatchTableRow';
+import MergeModal from './MergeModal';
 
 import { facilityListItemPropType } from '../util/propTypes';
 
@@ -103,9 +104,10 @@ const createSelectedStatusChoicesFromParams = params => {
 class FacilityListItemsTable extends Component {
     state = {
         listItemToRemove: null,
+        mergingFacilities: false,
     };
 
-    componentDidUpdate(prevProps) {
+    componentDidUpdate(prevProps, prevState) {
         const {
             items,
             fetchListItems,
@@ -117,6 +119,8 @@ class FacilityListItemsTable extends Component {
             },
             isRemovingItem,
             errorRemovingItem,
+            merging,
+            mergeError,
         } = this.props;
 
         if (!isRemovingItem && prevProps.isRemovingItem && !errorRemovingItem) {
@@ -149,6 +153,25 @@ class FacilityListItemsTable extends Component {
                 } = createPaginationOptionsFromQueryString(search);
                 fetchListItems(listID, page, rowsPerPage, params, true);
             }
+        }
+
+        const { mergingFacilities } = this.state;
+
+        if (merging !== prevProps.merging) {
+            // eslint-disable-next-line react/no-did-update-set-state
+            this.setState({ mergingFacilities: merging });
+        }
+
+        if (
+            !merging &&
+            mergingFacilities !== prevState.mergingFacilities &&
+            !mergeError
+        ) {
+            const {
+                page,
+                rowsPerPage,
+            } = createPaginationOptionsFromQueryString(search);
+            fetchListItems(listID, page, rowsPerPage, params, true);
         }
     }
 
@@ -712,6 +735,7 @@ class FacilityListItemsTable extends Component {
                         <div style={{ display: 'none' }} />
                     )}
                 </Dialog>
+                <MergeModal />
             </Paper>
         );
     }
@@ -720,6 +744,7 @@ class FacilityListItemsTable extends Component {
 FacilityListItemsTable.defaultProps = {
     items: null,
     errorRemovingItem: null,
+    mergeError: null,
 };
 
 FacilityListItemsTable.propTypes = {
@@ -739,6 +764,8 @@ FacilityListItemsTable.propTypes = {
     isRemovingItem: bool.isRequired,
     errorRemovingItem: arrayOf(string),
     readOnly: bool.isRequired,
+    merging: bool.isRequired,
+    mergeError: arrayOf(string),
 };
 
 function mapStateToProps({
@@ -754,6 +781,9 @@ function mapStateToProps({
     },
     auth: {
         user: { user },
+    },
+    mergeFacilities: {
+        merge: { fetching: merging, error: mergeError },
     },
 }) {
     const isAdminUser =
@@ -777,10 +807,12 @@ function mapStateToProps({
         errorRemovingItem,
         selectedFacilityListItemsRowIndex,
         readOnly,
+        merging,
+        mergeError,
     };
 }
 
-function mapDispatchToProps(dispatch) {
+function mapDispatchToProps(dispatch, { history: { push } }) {
     return {
         makeSelectListItemTableRowFunction: rowIndex => e => {
             // Quirkily, Material UI button clicks can happen on the label
@@ -796,7 +828,10 @@ function mapDispatchToProps(dispatch) {
                 return noop();
             }
 
-            return dispatch(setSelectedFacilityListItemsRowIndex(rowIndex));
+            return dispatch(
+                setSelectedFacilityListItemsRowIndex(rowIndex),
+                push,
+            );
         },
         fetchListItems: (listID, page, rowsPerPage, params, preventRefresh) =>
             dispatch(
