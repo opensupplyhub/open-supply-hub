@@ -114,7 +114,7 @@ const FacilityListItemsConfirmationTableRowItem = ({
 
 FacilityListItemsConfirmationTableRowItem.propTypes = {
     id: number.isRequired,
-    os_id: number.isRequired, // eslint-disable-line camelcase
+    os_id: string.isRequired, // eslint-disable-line camelcase
     name: string.isRequired,
     status: string.isRequired,
     className: string.isRequired,
@@ -124,8 +124,8 @@ FacilityListItemsConfirmationTableRowItem.propTypes = {
             address: string,
         }),
     ).isRequired,
-    address: number.isRequired,
-    isCheckboxDisabled: bool.isRequired,
+    address: string.isRequired,
+    isCheckboxDisabled: func.isRequired,
     confidence: string.isRequired,
     readOnly: bool.isRequired,
     toggleCheckbox: func.isRequired,

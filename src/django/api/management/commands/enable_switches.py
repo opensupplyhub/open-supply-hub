@@ -9,7 +9,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         call_command('waffle_switch', 'vector_tile', 'on')
         call_command('waffle_switch', 'claim_a_facility', 'on')
-        call_command('waffle_switch', 'ppe', 'on')
         call_command('waffle_switch', 'report_a_facility', 'on')
         call_command('waffle_switch', 'embedded_map', 'on')
         call_command('waffle_switch', 'extended_profile', 'on')

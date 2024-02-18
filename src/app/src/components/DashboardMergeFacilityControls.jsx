@@ -42,6 +42,7 @@ export default function DashboardMergeFacilityControls({
     disabled,
     toMergeData,
     targetData,
+    handleClearFacilityToMerge,
 }) {
     const [dialogIsOpen, setDialogIsOpen] = useState(false);
     const [mergingFacilities, setMergingFacilities] = useState(false);
@@ -66,6 +67,15 @@ export default function DashboardMergeFacilityControls({
         setDialogIsOpen,
         setMergingFacilities,
     ]);
+
+    useEffect(
+        () => () => {
+            if (error) {
+                handleClearFacilityToMerge();
+            }
+        },
+        [],
+    );
 
     const targetName = get(targetData, 'properties.name', '');
     const targetID = get(targetData, 'id', '');

@@ -47,12 +47,21 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
 
     class Meta:
         model = FacilityIndex
-        fields = ('id', 'name', 'address', 'country_code', 'location',
-                  'os_id', 'country_name', 'contributors',
-                  'number_of_public_contributors', 'has_approved_claim',
-                  'ppe_product_types', 'ppe_contact_phone',
-                  'ppe_contact_email', 'ppe_website', 'is_closed',
-                  'contributor_fields', 'extended_fields')
+        fields = (
+            'id',
+            'name',
+            'address',
+            'country_code',
+            'location',
+            'os_id',
+            'country_name',
+            'contributors',
+            'number_of_public_contributors',
+            'has_approved_claim',
+            'is_closed',
+            'contributor_fields',
+            'extended_fields',
+        )
         geo_field = 'location'
 
     def __init__(self, *args, **kwargs):

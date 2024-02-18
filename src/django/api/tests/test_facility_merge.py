@@ -123,10 +123,6 @@ class FacilityMergeTest(APITestCase):
             address="Address",
             country_code="US",
             sector=["Apparel"],
-            ppe_product_types=["two_a", "two_b"],
-            ppe_contact_phone="222-222-2222",
-            ppe_contact_email="ppe_two@example.com",
-            ppe_website="https://example.com/ppe_two",
             row_index=1,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_2,
@@ -136,10 +132,6 @@ class FacilityMergeTest(APITestCase):
             name="Name",
             address="Address",
             country_code="US",
-            ppe_product_types=self.list_item_2.ppe_product_types,
-            ppe_contact_phone=self.list_item_2.ppe_contact_phone,
-            ppe_contact_email=self.list_item_2.ppe_contact_email,
-            ppe_website=self.list_item_2.ppe_website,
             location=Point(0, 0),
             created_from=self.list_item_2,
         )
@@ -272,23 +264,6 @@ class FacilityMergeTest(APITestCase):
                 alias.os_id, (self.facility_2.id, self.existing_alias.os_id)
             )
             self.assertEqual(FacilityAlias.MERGE, alias.reason)
-
-        # The PPE fields should have been copied
-        self.assertEqual(
-            self.list_item_2.ppe_product_types,
-            self.facility_1.ppe_product_types,
-        )
-        self.assertEqual(
-            self.list_item_2.ppe_contact_phone,
-            self.facility_1.ppe_contact_phone,
-        )
-        self.assertEqual(
-            self.list_item_2.ppe_contact_email,
-            self.facility_1.ppe_contact_email,
-        )
-        self.assertEqual(
-            self.list_item_2.ppe_website, self.facility_1.ppe_website
-        )
 
         self.facility_2_claim.refresh_from_db()
         # The pending claim on the merge facility should have been updated
