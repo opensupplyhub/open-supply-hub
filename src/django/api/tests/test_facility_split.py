@@ -70,10 +70,6 @@ class FacilitySplitTest(APITestCase):
             address="Address",
             country_code="US",
             location=Point(0, 0),
-            ppe_product_types=["two_a", "two_b"],
-            ppe_contact_phone="222-222-2222",
-            ppe_contact_email="ppe_two@example.com",
-            ppe_website="https://example.com/ppe_two",
             created_from=self.list_item_one,
         )
 
@@ -111,10 +107,6 @@ class FacilitySplitTest(APITestCase):
             sector=["Apparel"],
             row_index=1,
             geocoded_point=Point(0, 0),
-            ppe_product_types=["two_a", "two_b"],
-            ppe_contact_phone="222-222-2222",
-            ppe_contact_email="ppe_two@example.com",
-            ppe_website="https://example.com/ppe_two",
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_two,
         )
@@ -199,10 +191,6 @@ class FacilitySplitTest(APITestCase):
             address="Address",
             country_code="US",
             location=Point(0, 0),
-            ppe_product_types=["two_a", "two_b"],
-            ppe_contact_phone="222-222-2222",
-            ppe_contact_email="ppe_two@example.com",
-            ppe_website="https://example.com/ppe_two",
             created_from=self.list_item_two,
         )
 
@@ -283,33 +271,6 @@ class FacilitySplitTest(APITestCase):
         self.assertEqual(
             self.match_two.facility.id,
             data["new_os_id"],
-        )
-
-    def test_post_reverts_ppe_data(self):
-        self.client.login(
-            email=self.superuser_email, password=self.superuser_password
-        )
-        post_response = self.client.post(
-            self.split_url, {"match_id": self.match_two.id}
-        )
-        self.assertEqual(post_response.status_code, 200)
-
-        self.facility_one.refresh_from_db()
-        self.assertEqual(
-            self.facility_one.created_from.ppe_product_types,
-            self.facility_one.ppe_product_types,
-        )
-        self.assertEqual(
-            self.facility_one.created_from.ppe_contact_phone,
-            self.facility_one.ppe_contact_phone,
-        )
-        self.assertEqual(
-            self.facility_one.created_from.ppe_contact_email,
-            self.facility_one.ppe_contact_email,
-        )
-        self.assertEqual(
-            self.facility_one.created_from.ppe_website,
-            self.facility_one.ppe_website,
         )
 
     def test_post_updates_extended_fields(self):

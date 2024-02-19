@@ -1,10 +1,10 @@
+from api.models.transactions.index_facilities_new import index_facilities_new
+
 from django.contrib.gis.db import models as gis_models
 from django.contrib.postgres import fields as postgres
 from django.db import models
 
 from ...countries import COUNTRY_CHOICES
-from ..ppemixin import PPEMixin
-from api.models.transactions.index_facilities_new import index_facilities_new
 
 
 def hooked_index_facilities(**kwargs):
@@ -18,7 +18,7 @@ def hooked_index_facilities(**kwargs):
             index_facilities_new([instance.facility_id])
 
 
-class FacilityListItemTemp(PPEMixin):
+class FacilityListItemTemp(models.Model):
     """
     [A/B Test model] Data, metadata, and workflow status and results for
     a single line from a facility list file.
@@ -213,10 +213,6 @@ class FacilityListItemTemp(PPEMixin):
             clean_address=item.clean_address,
             country_code=item.country_code,
             sector=item.sector,
-            ppe_product_types=item.ppe_product_types,
-            ppe_contact_phone=item.ppe_contact_phone,
-            ppe_contact_email=item.ppe_contact_email,
-            ppe_website=item.ppe_website,
             processing_results=item.processing_results,
             processing_started_at=item.processing_started_at,
             processing_completed_at=item.processing_completed_at
