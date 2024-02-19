@@ -1,11 +1,6 @@
+from api.serializers.user_api_info_serializer import UserApiInfoSerializer
 from rest_framework import status
 import json
-
-from api.views.auth.user_api_info import (
-    get_api_call_limit,
-    get_renewal_period,
-    get_current_usage
-)
 
 from api.models import (
     ApiLimit,
@@ -94,10 +89,17 @@ class UserApiInfoTest(TestCase):
             'renewalPeriod': 'YEARLY',
         }
 
+        self.serializer_one = UserApiInfoSerializer(self.user_one.id)
+        self.serializer_two = UserApiInfoSerializer(self.user_two.id)
+        self.serializer_three = UserApiInfoSerializer(
+            self.user_three.id)
+        self.serializer_four = UserApiInfoSerializer(
+            self.user_four.id)
+
     def test_get_api_call_limit(self):
-        period_limit_one = get_api_call_limit(self.contrib_one.id)
-        period_limit_two = get_api_call_limit(self.contrib_two.id)
-        period_limit_four = get_api_call_limit(self.contrib_four.id)
+        period_limit_one = self.serializer_one.get_api_call_limit()
+        period_limit_two = self.serializer_two.get_api_call_limit()
+        period_limit_four = self.serializer_four.get_api_call_limit()
 
         self.assertEqual(
            str(self.limit_one.period_limit), period_limit_one
@@ -110,9 +112,9 @@ class UserApiInfoTest(TestCase):
         )
 
     def test_get_renewal_period(self):
-        renewal_period_one = get_renewal_period(self.contrib_one.id)
-        renewal_period_two = get_renewal_period(self.contrib_two.id)
-        renewal_period_three = get_renewal_period(self.contrib_three.id)
+        renewal_period_one = self.serializer_one.get_renewal_period()
+        renewal_period_two = self.serializer_two.get_renewal_period()
+        renewal_period_three = self.serializer_three.get_renewal_period()
         self.assertEqual(
             self.yearly_renewal_period, renewal_period_one
         )
@@ -144,9 +146,9 @@ class UserApiInfoTest(TestCase):
             )
             r.created_at = now
             r.save()
-        current_usage_one = get_current_usage(self.user_one.id)
-        current_usage_two = get_current_usage(self.user_two.id)
-        current_usage_three = get_current_usage(self.user_three.id)
+        current_usage_one = self.serializer_one.get_current_usage()
+        current_usage_two = self.serializer_two.get_current_usage()
+        current_usage_three = self.serializer_three.get_current_usage()
 
         self.assertEqual(
             current_usage_one, str(self.current_usage_one)
