@@ -10,5 +10,5 @@ class RowDTO(NamedTuple):
     country_code: str
     sector: str
 
-    fields: dict[str, object]
+    fields: dict
     error: dict

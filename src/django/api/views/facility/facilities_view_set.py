@@ -535,9 +535,9 @@ class FacilitiesViewSet(ListModelMixin,
             raise PermissionDenied('Cannot submit a private facility')
 
         parse_started = str(timezone.now())
-        print("query_params", request.query_params)
+        print(">>>> query_params {}".format(request.query_params))
         contri_cleaner = SourceHandler(SourceParserJSON(request.query_params))
-        header = contri_cleaner.get_validated_headers()
+        header = contri_cleaner.get_validated_header()
 
         if header.error:
             raise ValidationError(header.error.message)

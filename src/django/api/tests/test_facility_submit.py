@@ -158,6 +158,7 @@ class FacilitySubmitTest(FacilityAPITestCaseBase):
 
     def test_creates_nonstandard_fields(self):
         self.join_group_and_login()
+        print(">>>> Valid facility ${}".format(self.valid_facility))
         self.client.post(self.url, self.valid_facility)
         fields = NonstandardField.objects.filter(
             contributor=self.user.contributor
