@@ -56,7 +56,7 @@ export function fetchUserApiInfo(uid) {
             apiRequest
                 .get(makeUserAPIInfoURL(uid))
                 // Return user API information
-                .then(({ data }) => dispatch(completeFetchUserApiInfo([data])))
+                .then(({ data }) => dispatch(completeFetchUserApiInfo(data)))
                 .catch(err =>
                     dispatch(
                         logErrorAndDispatchFailure(
