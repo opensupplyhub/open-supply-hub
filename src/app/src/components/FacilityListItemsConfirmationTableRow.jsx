@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 import Select from 'react-select';
+import ShowOnly from './ShowOnly';
 import CellElement from './CellElement';
 import ConfirmActionButton from './ConfirmActionButton';
 import FacilityListItemsDetailedTableRowCell from './FacilityListItemsDetailedTableRowCell';
@@ -206,48 +207,50 @@ function FacilityListItemsConfirmationTableRow({
                         padding: 0,
                     }}
                 >
-                    <div
-                        style={{
-                            display: 'flex',
-                            paddingLeft: '25px',
-                        }}
-                    >
-                        <Select
-                            placeholder={actionOptions[0].label}
-                            defaultValue={actionOptions[0].value}
-                            onChange={option =>
-                                handleSelectChange(option.value)
-                            }
-                            options={actionOptions}
-                            styles={selectStyles}
-                            isSearchable={false}
-                        />
-                        <ConfirmActionButton
-                            listItem={item}
-                            confirmMatch={makeConfirmMatchFunction(
-                                activeCheckboxes[0]?.id,
-                            )}
-                            rejectMatch={makeRejectMatchFunction(
-                                activeCheckboxes.map(
-                                    facilityMatchToReject =>
-                                        facilityMatchToReject?.id,
-                                ),
-                            )}
-                            buttonName="OK"
-                            fetching={fetching}
-                            action={action}
-                            resetCheckboxes={resetCheckboxes}
-                            activeSubmitButton={activeSubmitButton}
-                            activeCheckboxes={activeCheckboxes}
-                            openMergeModal={openMergeModal}
-                            targetFacilityOSID={targetFacilityOSID}
-                            facilityToMergeOSID={facilityToMergeOSID}
-                            updateTargetOSID={updateTargetOSID}
-                            updateToMergeOSID={updateToMergeOSID}
-                            fetchToMergeFacility={fetchToMergeFacility}
-                            fetchTargetFacility={fetchTargetFacility}
-                        />
-                    </div>
+                    <ShowOnly when={!readOnly}>
+                        <div
+                            style={{
+                                display: 'flex',
+                                paddingLeft: '25px',
+                            }}
+                        >
+                            <Select
+                                placeholder={actionOptions[0].label}
+                                defaultValue={actionOptions[0].value}
+                                onChange={option =>
+                                    handleSelectChange(option.value)
+                                }
+                                options={actionOptions}
+                                styles={selectStyles}
+                                isSearchable={false}
+                            />
+                            <ConfirmActionButton
+                                listItem={item}
+                                confirmMatch={makeConfirmMatchFunction(
+                                    activeCheckboxes[0]?.id,
+                                )}
+                                rejectMatch={makeRejectMatchFunction(
+                                    activeCheckboxes.map(
+                                        facilityMatchToReject =>
+                                            facilityMatchToReject?.id,
+                                    ),
+                                )}
+                                buttonName="OK"
+                                fetching={fetching}
+                                action={action}
+                                resetCheckboxes={resetCheckboxes}
+                                activeSubmitButton={activeSubmitButton}
+                                activeCheckboxes={activeCheckboxes}
+                                openMergeModal={openMergeModal}
+                                targetFacilityOSID={targetFacilityOSID}
+                                facilityToMergeOSID={facilityToMergeOSID}
+                                updateTargetOSID={updateTargetOSID}
+                                updateToMergeOSID={updateToMergeOSID}
+                                fetchToMergeFacility={fetchToMergeFacility}
+                                fetchTargetFacility={fetchTargetFacility}
+                            />
+                        </div>
+                    </ShowOnly>
                 </TableCell>
                 <TableCell
                     padding="default"

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       deploy-env:
-        description: 'Environment to deploy'     
+        description: 'Environment to destroy'     
         required: true
         type: choice
         options:
@@ -14,7 +14,7 @@ on:
 jobs:
   destroy:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (github.ref_name == 'releases/**' && 'Pre-prod') }}
+    environment: ${{ inputs.deploy-env }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -55,4 +55,3 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           AWS_DEFAULT_REGION: "eu-west-1"
-
