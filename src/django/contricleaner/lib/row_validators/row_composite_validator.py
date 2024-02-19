@@ -31,7 +31,6 @@ class RowCleanFieldValidator:
     def validate(self, row: dict) -> dict:
         return {self.new_field: clean(row.get(self.test_field, ""))}
 
-        
 
 class RowEmptyValidator:
     def validate(self, row: dict) -> dict:
@@ -69,7 +68,7 @@ class RowCompositeValidator:
                 elif key in standard_fields:
                     dict_res[key] = res[key]
                 else:
-                    dict_res["fields"].update(res[key])
+                    dict_res["fields"].update({key: res[key]})
 
                 if key in row:
                     del row[key]
@@ -83,5 +82,5 @@ class RowCompositeValidator:
             country_code=dict_res.get("country_code", ""),
             sector=dict_res.get("sector", ""),
             fields=dict_res.get("fields", {}),
-            errors=dict_res.get("errors", [])
+            errors=dict_res.get("errors", []),
         )

@@ -551,19 +551,20 @@ class FacilitiesViewSet(ListModelMixin,
         create_nonstandard_fields(header.non_standard_fields, request.user.contributor)
         
         vaildated_rows = contri_cleaner.get_validated_rows()
-        items = [FacilityListItem.objects.create(
+        vaildated_row = vaildated_rows[0]
+        items = FacilityListItem.objects.create(
                 source=source,
-                row_index=index,
+                row_index=0,
                 raw_data=json.dumps(request.data),
-                raw_json=row.raw_json,
+                raw_json=vaildated_row.raw_json,
                 raw_header=header.raw_header,
                 status=FacilityListItem.PARSED,
-                name=row.name,
-                clean_name=row.clean_name,
-                address=row.address,
-                clean_address=row.clean_address,
-                country_code=row.country_code,
-                sector=row.sector,
+                name=vaildated_row.name,
+                clean_name=vaildated_row.clean_name,
+                address=vaildated_row.address,
+                clean_address=vaildated_row.clean_address,
+                country_code=vaildated_row.country_code,
+                sector=[vaildated_row.sector],
                 processing_results=[{
                     'action': ProcessingAction.PARSE,
                     'started_at': parse_started,
@@ -571,7 +572,7 @@ class FacilitiesViewSet(ListModelMixin,
                     'finished_at': str(timezone.now()),
                     'is_geocoded': False,
                 }]
-            ) for index, row in enumerate(vaildated_rows)]
+            );
 
         item = items[0]
         result = {
@@ -582,79 +583,79 @@ class FacilitiesViewSet(ListModelMixin,
             'status': item.status,
         }
 
-        # try:
-        #     create_extendedfields_for_single_item(item, cleaned_user_data)
-        # except (core_exceptions.ValidationError, ValueError) as exc:
-        #     error_message = ''
+        try:
+            create_extendedfields_for_single_item(item, cleaned_user_data)
+        except (core_exceptions.ValidationError, ValueError) as exc:
+            error_message = ''
 
-        #     if isinstance(exc, ValueError):
-        #         error_message = str(exc)
-        #     else:
-        #         error_message = exc.message
+            if isinstance(exc, ValueError):
+                error_message = str(exc)
+            else:
+                error_message = exc.message
 
-        #     item.status = FacilityListItem.ERROR_PARSING
-        #     item.processing_results.append({
-        #         'action': ProcessingAction.PARSE,
-        #         'started_at': parse_started,
-        #         'error': True,
-        #         'message': error_message,
-        #         'trace': traceback.format_exc(),
-        #         'finished_at': str(timezone.now()),
-        #     })
-        #     item.save()
-        #     result['status'] = item.status
-        #     result['message'] = error_message
-        #     return Response(result,
-        #                     status=status.HTTP_400_BAD_REQUEST)
+            item.status = FacilityListItem.ERROR_PARSING
+            item.processing_results.append({
+                'action': ProcessingAction.PARSE,
+                'started_at': parse_started,
+                'error': True,
+                'message': error_message,
+                'trace': traceback.format_exc(),
+                'finished_at': str(timezone.now()),
+            })
+            item.save()
+            result['status'] = item.status
+            result['message'] = error_message
+            return Response(result,
+                            status=status.HTTP_400_BAD_REQUEST)
 
-        # geocode_started = str(timezone.now())
-        # try:
-        #     geocode_result = geocode_address(address, country_code)
-        #     if geocode_result['result_count'] > 0:
-        #         item.status = FacilityListItem.GEOCODED
-        #         item.geocoded_point = Point(
-        #             geocode_result["geocoded_point"]["lng"],
-        #             geocode_result["geocoded_point"]["lat"]
-        #         )
-        #         item.geocoded_address = geocode_result["geocoded_address"]
+        geocode_started = str(timezone.now())
+        try:
+            geocode_result = geocode_address(item.address, item.country_code)
+            if geocode_result['result_count'] > 0:
+                item.status = FacilityListItem.GEOCODED
+                item.geocoded_point = Point(
+                    geocode_result["geocoded_point"]["lng"],
+                    geocode_result["geocoded_point"]["lat"]
+                )
+                item.geocoded_address = geocode_result["geocoded_address"]
 
-        #         result['geocoded_geometry'] = {
-        #             'type': 'Point',
-        #             'coordinates': [
-        #                 geocode_result["geocoded_point"]["lng"],
-        #                 geocode_result["geocoded_point"]["lat"],
-        #             ]
-        #         }
-        #         result['geocoded_address'] = item.geocoded_address
-        #     else:
-        #         item.status = FacilityListItem.GEOCODED_NO_RESULTS
+                result['geocoded_geometry'] = {
+                    'type': 'Point',
+                    'coordinates': [
+                        geocode_result["geocoded_point"]["lng"],
+                        geocode_result["geocoded_point"]["lat"],
+                    ]
+                }
+                result['geocoded_address'] = item.geocoded_address
+            else:
+                item.status = FacilityListItem.GEOCODED_NO_RESULTS
 
-        #     item.processing_results.append({
-        #         'action': ProcessingAction.GEOCODE,
-        #         'started_at': geocode_started,
-        #         'error': False,
-        #         'skipped_geocoder': False,
-        #         'data': geocode_result['full_response'],
-        #         'finished_at': str(timezone.now()),
-        #     })
+            item.processing_results.append({
+                'action': ProcessingAction.GEOCODE,
+                'started_at': geocode_started,
+                'error': False,
+                'skipped_geocoder': False,
+                'data': geocode_result['full_response'],
+                'finished_at': str(timezone.now()),
+            })
 
-        #     item.save()
-        #     # [A/B Test] OSHUB-507
-        #     FacilityListItemTemp.copy(item)
-        # except Exception as exc:
-        #     item.status = FacilityListItem.ERROR_GEOCODING
-        #     item.processing_results.append({
-        #         'action': ProcessingAction.GEOCODE,
-        #         'started_at': geocode_started,
-        #         'error': True,
-        #         'message': str(exc),
-        #         'trace': traceback.format_exc(),
-        #         'finished_at': str(timezone.now()),
-        #     })
-        #     item.save()
-        #     result['status'] = item.status
-        #     return Response(result,
-        #                     status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            item.save()
+            # [A/B Test] OSHUB-507
+            FacilityListItemTemp.copy(item)
+        except Exception as exc:
+            item.status = FacilityListItem.ERROR_GEOCODING
+            item.processing_results.append({
+                'action': ProcessingAction.GEOCODE,
+                'started_at': geocode_started,
+                'error': True,
+                'message': str(exc),
+                'trace': traceback.format_exc(),
+                'finished_at': str(timezone.now()),
+            })
+            item.save()
+            result['status'] = item.status
+            return Response(result,
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # # Handle and produce message to Kafka with source_id data
         timer = 0
