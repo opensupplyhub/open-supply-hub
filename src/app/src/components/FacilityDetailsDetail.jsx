@@ -44,12 +44,13 @@ const CLAIM_EXPLANATORY_TEXT =
 
 const FacilityDetailsDetail = ({
     primary,
+    locationLabeled,
     secondary,
     isVerified,
     isFromClaim,
     classes,
 }) => (
-    <div className={classes.root}>
+    <div className={classes.root} data-testid="facility-details-detail">
         <ShowOnly when={isVerified || isFromClaim}>
             <div className={classes.badgeWrapper}>
                 <ShowOnly when={isVerified && !isFromClaim}>
@@ -65,7 +66,9 @@ const FacilityDetailsDetail = ({
             </div>
         </ShowOnly>
         <div>
-            <Typography className={classes.primaryText}>{primary}</Typography>
+            <Typography className={classes.primaryText}>
+                {primary || locationLabeled}
+            </Typography>
             {secondary ? (
                 <Typography className={classes.secondaryText}>
                     {secondary}
