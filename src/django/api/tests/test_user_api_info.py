@@ -19,7 +19,7 @@ class UserApiInfoTest(TestCase):
         self.email_two = "two@example.com"
         self.email_three = "three@example.com"
         self.email_four = "four@example.com"
-        self.password = "password"
+        self.password = "Password555!"
         self.user_one = User.objects.create(email=self.email_one, id=1)
         self.user_one.set_password(self.password)
         self.user_one.save()
@@ -33,12 +33,17 @@ class UserApiInfoTest(TestCase):
         self.user_four.set_password(self.password)
         self.user_four.save()
 
-        for u in [self.email_one,self.email_two,self.email_three]
-            self.client.post(
-                "/user-login/",
-                {"email": self.email_one, "password": self.password},
-                format="json",
-            )
+        # user_emails = (self.email_one,
+        #                self.email_two,
+        #                self.email_three,
+        #                self.email_four)
+
+        # for user_email in user_emails:
+        #     self.client.post(
+        #         "/user-login/",
+        #         {"email": user_email, "password": self.password},
+        #         format="json",
+        #     )
 
         self.yearly_renewal_period = 'YEARLY'
         self.monthly_renewal_period = 'MONTHLY'
@@ -104,19 +109,17 @@ class UserApiInfoTest(TestCase):
             'renewalPeriod': 'YEARLY',
         }
 
-        self.serializer_one = UserApiInfoSerializer(self.user_one.id,
-                                                    self.contrib_one.id)
-        self.serializer_two = UserApiInfoSerializer(self.user_two.id,
-                                                    self.contrib_two.id)
-        self.serializer_three = UserApiInfoSerializer(
-            self.user_three.id, self.contrib_three.id)
-        self.serializer_four = UserApiInfoSerializer(
+    def test_get_api_call_limit(self):
+        serializer_one = UserApiInfoSerializer(self.user_one.id,
+                                               self.contrib_one.id)
+        serializer_two = UserApiInfoSerializer(self.user_two.id,
+                                               self.contrib_two.id)
+        serializer_four = UserApiInfoSerializer(
             self.user_four.id, self.contrib_four.id)
 
-    def test_get_api_call_limit(self):
-        period_limit_one = self.serializer_one.data['api_call_limit']
-        period_limit_two = self.serializer_two.data['api_call_limit']
-        period_limit_four = self.serializer_four.data['api_call_limit']
+        period_limit_one = serializer_one.data['api_call_limit']
+        period_limit_two = serializer_two.data['api_call_limit']
+        period_limit_four = serializer_four.data['api_call_limit']
 
         self.assertEqual(
            str(self.limit_one.period_limit), period_limit_one
@@ -129,9 +132,16 @@ class UserApiInfoTest(TestCase):
         )
 
     def test_get_renewal_period(self):
-        renewal_period_one = self.serializer_one.data['renewal_period']
-        renewal_period_two = self.serializer_two.data['renewal_period']
-        renewal_period_three = self.serializer_three.data['renewal_period']
+        serializer_one = UserApiInfoSerializer(self.user_one.id,
+                                               self.contrib_one.id)
+        serializer_two = UserApiInfoSerializer(self.user_two.id,
+                                               self.contrib_two.id)
+        serializer_three = UserApiInfoSerializer(
+            self.user_three.id, self.contrib_three.id)
+
+        renewal_period_one = serializer_one.data['renewal_period']
+        renewal_period_two = serializer_two.data['renewal_period']
+        renewal_period_three = serializer_three.data['renewal_period']
         self.assertEqual(
             self.yearly_renewal_period, renewal_period_one
         )
@@ -163,9 +173,15 @@ class UserApiInfoTest(TestCase):
             )
             r.created_at = now
             r.save()
-        current_usage_one = self.serializer_one.data['current_usage']
-        current_usage_two = self.serializer_two.data['current_usage']
-        current_usage_three = self.serializer_three.data['current_usage']
+        serializer_one = UserApiInfoSerializer(self.user_one.id,
+                                               self.contrib_one.id)
+        serializer_two = UserApiInfoSerializer(self.user_two.id,
+                                               self.contrib_two.id)
+        serializer_three = UserApiInfoSerializer(
+            self.user_three.id, self.contrib_three.id)
+        current_usage_one = serializer_one.data['current_usage']
+        current_usage_two = serializer_two.data['current_usage']
+        current_usage_three = serializer_three.data['current_usage']
 
         self.assertEqual(
             current_usage_one, self.current_usage_one
@@ -178,6 +194,7 @@ class UserApiInfoTest(TestCase):
         )
 
     def test_user_api_endpoint(self):
+        self.client.login(email=self.email_one, password=self.password)
         response = self.client.get(
             self.url
             + str(self.user_one.id) + '/'
