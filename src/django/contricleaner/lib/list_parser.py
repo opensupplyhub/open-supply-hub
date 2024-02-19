@@ -9,5 +9,3 @@ class ListParser:
             value = item[1]
             my_dict[key] = value
         return my_dict
-
-   

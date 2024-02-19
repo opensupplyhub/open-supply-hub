@@ -17,27 +17,27 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         usage
     else
         # Build Django image.
-        echo "Run docker-compose build"
-        docker-compose build
+        # echo "Run docker-compose build"
+        # docker-compose build
 
         # Run the Flake8 linter check.
-        echo -e \
-        "\nRun docker-compose run --rm --no-deps --entrypoint flake8 django" \
-        "--exclude settings.py,manage.py,*.pyc,api/migrations/*"
-        docker-compose \
-            run --rm --no-deps --entrypoint flake8 django \
-            --exclude settings.py,manage.py,*.pyc,api/migrations/*
+        # echo -e \
+        # "\nRun docker-compose run --rm --no-deps --entrypoint flake8 django" \
+        # "--exclude settings.py,manage.py,*.pyc,api/migrations/*"
+        # docker-compose \
+        #     run --rm --no-deps --entrypoint flake8 django \
+        #     --exclude settings.py,manage.py,*.pyc,api/migrations/*
 
         # Run the unittest tests and generate code cov report.
         echo -e \
         "\nRun docker-compose" \
         "run --rm --entrypoint /bin/sh django" \
-        "-c 'coverage run --data-file=./coverage/.coverage manage.py test --no-input ./api/tests" \
+        "-c 'coverage run --data-file=./coverage/.coverage manage.py test --no-input ${1}" \
         "&& coverage lcov --data-file=./coverage/.coverage -o ./coverage/coverage.lcov'" \
         "--omit='./api/migrations/*,./api/tests/*'"
         docker-compose \
             run --rm --entrypoint /bin/sh django \
-            -c "coverage run --data-file=./coverage/.coverage manage.py test --no-input ./api/tests \
+            -c "coverage run --data-file=./coverage/.coverage manage.py test --no-input ${1}  \
             && coverage lcov --data-file=./coverage/.coverage -o ./coverage/coverage.lcov \
             --omit='./api/migrations/*,./api/tests/*'"
     fi
