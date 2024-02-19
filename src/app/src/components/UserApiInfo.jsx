@@ -12,11 +12,7 @@ import Typography from '@material-ui/core/Typography';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { withStyles } from '@material-ui/core/styles';
 
-import {
-    userApiInfoTooltipTitles,
-    IS_NOT_SET,
-    FORBIDDEN,
-} from '../util/constants';
+import { userApiInfoTooltipTitles, IS_NOT_SET } from '../util/constants';
 
 import { fetchUserApiInfo } from '../actions/profile';
 import { userApiInfoPropType } from '../util/propTypes';
@@ -39,7 +35,7 @@ const StyledTooltip = withStyles({
         lineHeight: '1',
     },
 })(Tooltip);
-function UserAPIInfo({ error, userApiInfo, fetching, getUserApiInfo }) {
+const UserAPIInfo = ({ error, data, fetching, getUserApiInfo }) => {
     useEffect(() => {
         getUserApiInfo();
     }, []);
@@ -71,15 +67,15 @@ function UserAPIInfo({ error, userApiInfo, fetching, getUserApiInfo }) {
                 <ListItemText
                     primary="Call Limit:"
                     secondary={
-                        userApiInfo.apiCallAllowance === FORBIDDEN ? (
+                        data.apiCallAllowance === IS_NOT_SET ? (
                             <Typography
                                 variant="body2"
                                 style={{ color: 'red' }}
                             >
-                                {userApiInfo.apiCallAllowance}
+                                {data.apiCallAllowance}
                             </Typography>
                         ) : (
-                            userApiInfo.apiCallAllowance
+                            data.apiCallAllowance
                         )
                     }
                 />
@@ -96,7 +92,7 @@ function UserAPIInfo({ error, userApiInfo, fetching, getUserApiInfo }) {
 
                 <ListItemText
                     primary="Current Usage:"
-                    secondary={userApiInfo.currentCallCount}
+                    secondary={data.currentCallCount}
                 />
             </ListItem>
             <ListItem>
@@ -113,16 +109,16 @@ function UserAPIInfo({ error, userApiInfo, fetching, getUserApiInfo }) {
                     disableTypography
                     primary="Renewal Period:"
                     secondary={
-                        userApiInfo.renewalPeriod === IS_NOT_SET ? (
+                        data.renewalPeriod === IS_NOT_SET ? (
                             <Typography
                                 variant="body2"
                                 style={{ color: 'red' }}
                             >
-                                {userApiInfo.renewalPeriod}
+                                {data.renewalPeriod}
                             </Typography>
                         ) : (
                             <p style={componentStyles.withoutMargin}>
-                                {userApiInfo.renewalPeriod}
+                                {data.renewalPeriod}
                             </p>
                         )
                     }
@@ -130,7 +126,7 @@ function UserAPIInfo({ error, userApiInfo, fetching, getUserApiInfo }) {
             </ListItem>
         </List>
     );
-}
+};
 
 UserAPIInfo.defaultProps = {
     error: null,
@@ -138,18 +134,18 @@ UserAPIInfo.defaultProps = {
 
 UserAPIInfo.propTypes = {
     error: arrayOf(string),
-    userApiInfo: userApiInfoPropType.isRequired,
+    data: userApiInfoPropType.isRequired,
     getUserApiInfo: func.isRequired,
     fetching: bool.isRequired,
 };
 
 function mapStateToProps({
     profile: {
-        userApiInfo: { userApiInfo, error, fetching },
+        userApiInfo: { data, error, fetching },
     },
 }) {
     return {
-        userApiInfo,
+        data,
         error,
         fetching,
     };

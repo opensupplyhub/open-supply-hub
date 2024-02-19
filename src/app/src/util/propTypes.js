@@ -89,7 +89,7 @@ export const tokenPropType = shape({
 
 export const userApiInfoPropType = shape({
     apiCallAllowance: string.isRequired,
-    currentCallCount: string.isRequired,
+    currentCallCount: number.isRequired,
     renewalPeriod: string.isRequired,
 });
 

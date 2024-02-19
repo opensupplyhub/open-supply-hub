@@ -62,13 +62,11 @@ const initialState = Object.freeze({
         error: null,
     }),
     userApiInfo: Object.freeze({
-        userApiInfo: [
-            Object.freeze({
-                apiCallAllowance: '0',
-                currentCallCount: '0',
-                renewalPeriod: '-',
-            }),
-        ],
+        data: Object.freeze({
+            apiCallAllowance: 'Is not set',
+            currentCallCount: 0,
+            renewalPeriod: 'Is not set',
+        }),
         fetching: false,
         error: null,
     }),
@@ -95,7 +93,11 @@ const failFetchingUserApiInfo = (state, payload) =>
 const completeFetchingUserApiInfo = (state, payload) =>
     update(state, {
         userApiInfo: {
-            userApiInfo: { $set: payload },
+            data: {
+                apiCallAllowance: { $set: payload.api_call_limit },
+                renewalPeriod: { $set: payload.renewal_period },
+                currentCallCount: { $set: payload.current_usage },
+            },
             fetching: { $set: false },
             error: { $set: null },
         },

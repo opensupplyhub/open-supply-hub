@@ -531,7 +531,6 @@ export const userApiInfoTooltipTitles = Object.freeze({
         'Renewal Period indicates how often your package renews. This can either be monthly or annually.',
 });
 
-export const FORBIDDEN = '403 Forbidden';
 export const IS_NOT_SET = 'Is not set';
 export const ALLOW_LARGE_DOWNLOADS = 'allow_large_downloads';
 export const CLAIM_A_FACILITY = 'claim_a_facility';
