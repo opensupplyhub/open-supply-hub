@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - deploy-*
+      # - deploy-*
       - 'releases/**'
     tags:
       - 'sandbox-*'
@@ -16,21 +16,24 @@ on:
         required: true
         type: choice
         options:
-        - development
-        - test
-        default: development
+        - Development
+        - Test
+        - Pre-prod
+        default: Development
+
+env:
+  GITHUB_ENV_NAME: ${{ inputs.deploy-env || (github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-') && 'Development' || (startsWith(github.ref_name, 'releases/') && 'Pre-prod' || 'None')) }}
 
 jobs:
   init-and-plan:
     runs-on: ubuntu-latest
-    environment: Development
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-') && 'Development' || (startsWith(github.ref_name, 'releases/') && 'Pre-prod' || 'None')) }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
         uses: Entepotenz/change-string-case-action-min-dependencies@v1
         with:
           string: ${{ vars.ENV_NAME }}
-      
       - name: Checkout repo
         uses: actions/checkout@v4
       
@@ -76,7 +79,7 @@ jobs:
   apply:
     needs: init-and-plan
     runs-on: ubuntu-latest
-    environment: Development
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-') && 'Development' || (startsWith(github.ref_name, 'releases/') && 'Pre-prod' || 'None')) }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -119,7 +122,7 @@ jobs:
   build_and_push_docker_image:
     needs: apply
     runs-on: ubuntu-latest
-    environment: Development
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-') && 'Development' || (startsWith(github.ref_name, 'releases/') && 'Pre-prod' || 'None')) }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -128,121 +131,6 @@ jobs:
           string: ${{ vars.ENV_NAME }}
       - name: Checkout repo
         uses: actions/checkout@v4
-
-
-  #     - name: Pull & update submodules recursively
-  #       run:  git submodule update --recursive --remote
-
-  #     - name: Sets dev vars
-  #       if: (github.ref == 'refs/heads/main')
-  #       run: |
-  #         echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-  #         echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-  #         echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-  #         echo "aws_cluster=${{ env.cluster}}" >> $GITHUB_ENV
-  #         echo "aws_service=${{ env.service}}" >> $GITHUB_ENV
-  #         echo "aws_ecr=${{ env.ecr}}" >> $GITHUB_ENV
-  #         echo "react_route=${{ env.route }}" >> $GITHUB_ENV
-  #         echo "docker_image=${{ env.docker_image }}" >> $GITHUB_ENV
-  #         echo "ENVIRONMENT=development" >> $GITHUB_ENV
-
-  #       env:
-  #         aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_DV }}
-  #         aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_DV }}
-  #         bucket: ${{ vars.OAR_SETTINGS_BUCKET_DV }}
-  #         cluster: ${{ vars.CLUSTER_DV }}
-  #         service: ${{ vars.SERVICE_NAME_DV }}
-  #         ecr: ${{ vars.ECR_REGISTRY_DV }}
-  #         route: "true"
-  #         docker_image: ${{ vars.DOCKER_IMAGE_DV }}
-
-  #     - name: Sets sandbox vars
-  #       if: (startsWith(github.ref, 'refs/tags/sandbox-'))
-  #       run: |
-  #         echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-  #         echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-  #         echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-  #         echo "aws_cluster=${{ env.cluster}}" >> $GITHUB_ENV
-  #         echo "aws_service=${{ env.service}}" >> $GITHUB_ENV
-  #         echo "aws_ecr=${{ env.ecr}}" >> $GITHUB_ENV
-  #         echo "react_route=${{ env.route }}" >> $GITHUB_ENV
-  #         echo "docker_image=${{ env.docker_image }}" >> $GITHUB_ENV
-  #         echo "ENVIRONMENT=staging" >> $GITHUB_ENV
-  #       env:
-  #         aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_ST }}
-  #         aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_ST }}
-  #         bucket: ${{ vars.OAR_SETTINGS_BUCKET_ST }}
-  #         cluster: ${{ vars.CLUSTER_ST }}
-  #         service: ${{ vars.SERVICE_NAME_ST }}
-  #         ecr: ${{ vars.ECR_REGISTRY_ST }} 
-  #         route: "false"     
-  #         docker_image: ${{ vars.DOCKER_IMAGE_ST }}
-
-  #     - name: Sets production vars
-  #       if: (startsWith(github.ref, 'refs/tags/production-'))
-  #       run: |
-  #         echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-  #         echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-  #         echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-  #         echo "aws_cluster=${{ env.cluster}}" >> $GITHUB_ENV
-  #         echo "aws_service=${{ env.service}}" >> $GITHUB_ENV
-  #         echo "aws_ecr=${{ env.ecr}}" >> $GITHUB_ENV
-  #         echo "react_route=${{ env.route }}" >> $GITHUB_ENV
-  #         echo "docker_image=${{ env.docker_image }}" >> $GITHUB_ENV
-  #         echo "ENVIRONMENT=production" >> $GITHUB_ENV
-  #       env:
-  #         aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_PR }}
-  #         aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_PR }}
-  #         bucket: ${{ vars.OAR_SETTINGS_BUCKET_PR }}
-  #         cluster: ${{ vars.CLUSTER_PR }}
-  #         service: ${{ vars.SERVICE_NAME_PR }}
-  #         ecr: ${{ vars.ECR_REGISTRY_PR }}
-  #         route: "flase"
-  #         docker_image: ${{ vars.DOCKER_IMAGE_PR }}
-
-  #     - name: Sets pre-prod vars
-  #       if: (startsWith(github.ref, 'refs/heads/releases/v.'))
-  #       run: |
-  #         echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-  #         echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-  #         echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-  #         echo "aws_cluster=${{ env.cluster}}" >> $GITHUB_ENV
-  #         echo "aws_service=${{ env.service}}" >> $GITHUB_ENV
-  #         echo "aws_ecr=${{ env.ecr}}" >> $GITHUB_ENV
-  #         echo "react_route=${{ env.route }}" >> $GITHUB_ENV
-  #         echo "docker_image=${{ env.docker_image }}" >> $GITHUB_ENV
-  #         echo "ENVIRONMENT=preprod" >> $GITHUB_ENV
-  #       env:
-  #         aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_DV }}
-  #         aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_DV }}
-  #         bucket: ${{ vars.OAR_SETTINGS_BUCKET_PP }}
-  #         cluster: ${{ vars.CLUSTER_PP }}
-  #         service: ${{ vars.SERVICE_NAME_PP }}
-  #         ecr: ${{ vars.ECR_REGISTRY_PP }}
-  #         route: "flase"
-  #         docker_image: ${{ vars.DOCKER_IMAGE_PP }}
-
-  #     - name: Sets test vars
-  #       if: inputs.deploy-env == 'test'
-  #       run: |
-  #         echo "aws_id_key=${{ env.aws_key}}" >> $GITHUB_ENV
-  #         echo "aws_secret_key=${{ env.aws_secret}}" >> $GITHUB_ENV
-  #         echo "aws_bucket=${{ env.bucket}}" >> $GITHUB_ENV
-  #         echo "aws_cluster=${{ env.cluster}}" >> $GITHUB_ENV
-  #         echo "aws_service=${{ env.service}}" >> $GITHUB_ENV
-  #         echo "aws_ecr=${{ env.ecr}}" >> $GITHUB_ENV
-  #         echo "react_route=${{ env.route }}" >> $GITHUB_ENV
-  #         echo "docker_image=${{ env.docker_image }}" >> $GITHUB_ENV
-  #         echo "ENVIRONMENT=development" >> $GITHUB_ENV
-  #       env:
-  #           aws_key: ${{ secrets.AWS_ACCESS_KEY_ID_TS }}
-  #           aws_secret: ${{ secrets.AWS_SECRET_ACCESS_KEY_TS }}
-  #           bucket: ${{ vars.OAR_SETTINGS_BUCKET_TS }}
-  #           cluster: ${{ vars.CLUSTER_TS }}
-  #           service: ${{ vars.SERVICE_NAME_TS }}
-  #           ecr: ${{ vars.ECR_REGISTRY_TS }}
-  #           route: "true"
-  #           docker_image: ${{ vars.DOCKER_IMAGE_TS }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v2
@@ -284,7 +172,8 @@ jobs:
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
-
+      - name: Print Django Docker image to ECR for ${{ vars.ENV_NAME }}
+        run: echo ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}  
       - name: Build and push Django Docker image to ECR for ${{ vars.ENV_NAME }}
         uses: docker/build-push-action@v2
         with:
@@ -305,7 +194,7 @@ jobs:
             DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}
             ENVIRONMENT=${{ steps.get_env_name.outputs.lowercase }}
 
-      - name: Build and push DD Docker image to ECR for ${{ vars.ENV_NAME }}
+      - name: Build and push Dedupe Hub Docker image to ECR for ${{ vars.ENV_NAME }}
         uses: docker/build-push-action@v2
         with:
           context: src/dedupe-hub/api
@@ -335,4 +224,12 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: "eu-west-1"
-    
+
+
+      # - name: Create or update kafka topics for ${{ vars.ENV_NAME }}
+      #   run: |
+      #      aws ecs run-task --cluster ${{ vars.CLUSTER }} --task-definition ${{ vars.CREATE_KAFKA_TOPIC_TD }} --launch-type="FARGATE"  --network-configuration "awsvpcConfiguration={ assignPublicIp="DISABLED", securityGroups=["${{ vars.SECURITY_GROUP}}"], subnets=["${{ vars.SUBNET }}"]}"
+      #   env:
+      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     AWS_DEFAULT_REGION: "eu-west-1"
