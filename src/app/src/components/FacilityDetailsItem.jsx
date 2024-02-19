@@ -34,6 +34,9 @@ const FacilityDetailsItem = ({
     additionalContent,
     label,
     primary,
+    lat,
+    lng,
+    locationLabeled,
     secondary,
     classes,
     embed,
@@ -53,6 +56,9 @@ const FacilityDetailsItem = ({
             </div>
             <FacilityDetailsDetail
                 primary={primary}
+                lat={lat}
+                lng={lng}
+                locationLabeled={locationLabeled}
                 secondary={!embed ? secondary : null}
                 isVerified={isVerified}
                 isFromClaim={isFromClaim}
@@ -77,6 +83,7 @@ const FacilityDetailsItem = ({
                 anchor="right"
                 onClose={() => setIsOpen(false)}
                 title={label}
+                locationLabeled={locationLabeled}
                 subtitle={`${
                     additionalContentCount + 1
                 } ${additionalContentTextPlural}`}
@@ -84,7 +91,7 @@ const FacilityDetailsItem = ({
                 <div className={classes.drawer}>
                     <div className={classes.itemWrapper}>
                         <FacilityDetailsDetail
-                            primary={primary}
+                            primary={primary || `${lat}, ${lng}` || null}
                             secondary={!embed ? secondary : null}
                             isVerified={isVerified}
                             isFromClaim={isFromClaim}

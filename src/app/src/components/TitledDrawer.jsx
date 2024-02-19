@@ -36,6 +36,7 @@ const TitledDrawer = ({
     subtitle,
     children,
     classes,
+    locationLabeled,
 }) => (
     <Drawer anchor="right" open={open} onClose={onClose}>
         <div className={classes.drawer}>
@@ -50,7 +51,15 @@ const TitledDrawer = ({
             </div>
             <Typography className={classes.drawerTitle}>{title}</Typography>
             <Typography className={classes.drawerSubtitle}>
-                {subtitle}
+                {locationLabeled ? (
+                    <>
+                        {subtitle}
+                        <br />
+                        Latitude, Longitude
+                    </>
+                ) : (
+                    subtitle
+                )}
             </Typography>
             {children}
         </div>
