@@ -539,8 +539,8 @@ class FacilitiesViewSet(ListModelMixin,
         contri_cleaner = SourceHandler(SourceParserJSON(request.data))
         header = contri_cleaner.get_validated_header()
 
-        if header.error:
-            raise ValidationError(header.error['message'])
+        if header.errors:
+            raise ValidationError(header.errors)
         
         source = Source.objects.create(
             contributor=request.user.contributor,

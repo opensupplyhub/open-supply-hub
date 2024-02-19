@@ -2,7 +2,7 @@ from typing import List, NamedTuple
 
 
 class RowDTO(NamedTuple):
-    raw_fields: dict
+    raw_json: dict
     name: str
     clean_name: str
     address: str

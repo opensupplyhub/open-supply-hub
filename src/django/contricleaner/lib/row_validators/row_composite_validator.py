@@ -63,6 +63,7 @@ class RowCompositeValidator:
         for validator in self.validators:
             res = validator.validate(row)
             for key in res:
+                print("<<<< {}".format(key))
                 if key == "errors":
                     dict_res["errors"].extend(res["errors"])
                 elif key in standard_fields:
@@ -74,7 +75,7 @@ class RowCompositeValidator:
                     del row[key]
 
         return RowDTO(
-            raw_fields=raw_row,
+            raw_json=raw_row,
             name=dict_res.get("name", ""),
             clean_name=dict_res.get("clean_name", ""),
             address=dict_res.get("address", ""),
