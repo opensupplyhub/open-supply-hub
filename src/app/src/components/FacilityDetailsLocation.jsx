@@ -65,6 +65,8 @@ const FacilityDetailsLocation = ({ data, embed }) => {
                         {`Longitude: ${facilityLng}`}
                     </>
                 }
+                lat={facilityLat}
+                lng={facilityLng}
                 secondary={detailsText}
                 embed={embed}
                 isFromClaim={canonicalLocationData?.is_from_claim}

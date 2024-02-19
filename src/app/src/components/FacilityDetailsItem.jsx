@@ -34,6 +34,8 @@ const FacilityDetailsItem = ({
     additionalContent,
     label,
     primary,
+    lat,
+    lng,
     locationLabeled,
     secondary,
     classes,
@@ -54,6 +56,8 @@ const FacilityDetailsItem = ({
             </div>
             <FacilityDetailsDetail
                 primary={primary}
+                lat={lat}
+                lng={lng}
                 locationLabeled={locationLabeled}
                 secondary={!embed ? secondary : null}
                 isVerified={isVerified}
@@ -87,7 +91,7 @@ const FacilityDetailsItem = ({
                 <div className={classes.drawer}>
                     <div className={classes.itemWrapper}>
                         <FacilityDetailsDetail
-                            primary={primary}
+                            primary={primary || `${lat}, ${lng}` || null}
                             secondary={!embed ? secondary : null}
                             isVerified={isVerified}
                             isFromClaim={isFromClaim}
