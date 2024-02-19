@@ -53,6 +53,7 @@ const FacilityDetailsItem = ({
                 <Typography className={classes.label}>{label}</Typography>
             </div>
             <FacilityDetailsDetail
+                primary={primary}
                 locationLabeled={locationLabeled}
                 secondary={!embed ? secondary : null}
                 isVerified={isVerified}
@@ -78,6 +79,7 @@ const FacilityDetailsItem = ({
                 anchor="right"
                 onClose={() => setIsOpen(false)}
                 title={label}
+                locationLabeled={locationLabeled}
                 subtitle={`${
                     additionalContentCount + 1
                 } ${additionalContentTextPlural}`}

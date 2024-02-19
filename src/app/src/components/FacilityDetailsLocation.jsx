@@ -58,7 +58,6 @@ const FacilityDetailsLocation = ({ data, embed }) => {
         <>
             <FacilityDetailsItem
                 label="Coordinates"
-                primary={`${facilityLat}, ${facilityLng}`}
                 locationLabeled={
                     <>
                         {`Latitude: ${facilityLat}`}
@@ -72,7 +71,7 @@ const FacilityDetailsLocation = ({ data, embed }) => {
                 additionalContent={otherLocationsData
                     .filter(item => !item.has_invalid_location)
                     .map((item, i) => ({
-                        primary: `${item.lng}, ${item.lat}`,
+                        primary: `${item.lat}, ${item.lng}`,
                         secondary: item.contributor_name,
                         key: `${item.lng}, ${item.lat} - ${i}`,
                         isFromClaim: item.is_from_claim,
