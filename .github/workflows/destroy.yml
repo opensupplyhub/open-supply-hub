@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       deploy-env:
-        description: 'Environment to deploy'     
+        description: 'Environment to destroy'     
         required: true
         type: choice
         options:
@@ -55,4 +55,3 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           AWS_DEFAULT_REGION: "eu-west-1"
-
