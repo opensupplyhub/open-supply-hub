@@ -57,15 +57,23 @@ const FacilityDetailsLocation = ({ data, embed }) => {
     return (
         <>
             <FacilityDetailsItem
-                label="GPS"
-                primary={`${facilityLng}, ${facilityLat}`}
+                label="Coordinates"
+                locationLabeled={
+                    <>
+                        {`Latitude: ${facilityLat}`}
+                        <br />
+                        {`Longitude: ${facilityLng}`}
+                    </>
+                }
+                lat={facilityLat}
+                lng={facilityLng}
                 secondary={detailsText}
                 embed={embed}
                 isFromClaim={canonicalLocationData?.is_from_claim}
                 additionalContent={otherLocationsData
                     .filter(item => !item.has_invalid_location)
                     .map((item, i) => ({
-                        primary: `${item.lng}, ${item.lat}`,
+                        primary: `${item.lat}, ${item.lng}`,
                         secondary: item.contributor_name,
                         key: `${item.lng}, ${item.lat} - ${i}`,
                         isFromClaim: item.is_from_claim,
