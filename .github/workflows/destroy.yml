@@ -14,7 +14,7 @@ on:
 jobs:
   destroy:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (github.ref_name == 'releases/**' && 'Pre-prod') }}
+    environment: ${{ inputs.deploy-env }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
