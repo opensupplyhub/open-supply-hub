@@ -18,9 +18,9 @@ class HeaderRequredValidator:
     required_fields = {"name", "address"}
 
     def validate(self, raw_header: List[str]) -> dict:
-        if set(raw_header).intersection(HeaderRequredValidator.required_fields) != set(
+        if set(raw_header).intersection(
             HeaderRequredValidator.required_fields
-        ):
+        ) != HeaderRequredValidator.required_fields:
             return {
                 "error": {
                     "message": "'name' or 'address' are missing",
@@ -82,7 +82,9 @@ class HeaderCompositeValidator:
                 header_dict["fields"].update(res["fields"])
 
             if "non_standard_fields" in res:
-                header_dict["non_standard_fields"].update(res["non_standard_fields"])
+                header_dict["non_standard_fields"].update(
+                    res["non_standard_fields"]
+                )
 
         return HeaderDTO(
             raw_header=raw_header,

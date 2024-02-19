@@ -11,8 +11,8 @@ class HeaderCompositeValidatorTest(unittest.TestCase):
         pass
 
     def test_get_validated_header(self):
-        validaor = HeaderCompositeValidator()
-        res = validaor.get_validated_header(["Name", 'name', "Age", "Email"])
+        validator = HeaderCompositeValidator()
+        res = validator.get_validated_header(["Name", 'name', "Age", "Email"])
         self.assertEqual(res.errors, [
             {
                 "message": "'name' or 'address' are missing",
