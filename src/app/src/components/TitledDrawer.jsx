@@ -53,7 +53,7 @@ const TitledDrawer = ({
                 <>
                     {subtitle}
                     <br />
-                    Latitude Longitude
+                    Latitude, Longitude
                 </>
             </Typography>
             {children}
