@@ -1,8 +1,8 @@
-from typing import NamedTuple
+from typing import List, NamedTuple
 
 
 class RowDTO(NamedTuple):
-    raw_json: any
+    raw_fields: dict
     name: str
     clean_name: str
     address: str
@@ -11,4 +11,4 @@ class RowDTO(NamedTuple):
     sector: str
 
     fields: dict
-    error: dict
+    errors: List[dict]

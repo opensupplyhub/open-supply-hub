@@ -502,25 +502,25 @@ class FacilitiesViewSet(ListModelMixin,
                               FeatureGroups.CAN_SUBMIT_FACILITY):
             raise PermissionDenied()
 
-        body_serializer = FacilityCreateBodySerializer(data=request.data)
-        body_serializer.is_valid(raise_exception=True)
+        # body_serializer = FacilityCreateBodySerializer(data=request.data)
+        # body_serializer.is_valid(raise_exception=True)
 
-        clean_name = clean(body_serializer.validated_data.get('name'))
-        if clean_name is None:
-            clean_name = ''
-            raise ValidationError({
-                "clean_name": [
-                    "This field may not be blank."
-                ]
-            })
-        clean_address = clean(body_serializer.validated_data.get('address'))
-        if clean_address is None:
-            clean_address = ''
-            raise ValidationError({
-                "clean_address": [
-                    "This field may not be blank."
-                ]
-            })
+        # clean_name = clean(body_serializer.validated_data.get('name'))
+        # if clean_name is None:
+        #     clean_name = ''
+        #     raise ValidationError({
+        #         "clean_name": [
+        #             "This field may not be blank."
+        #         ]
+        #     })
+        # clean_address = clean(body_serializer.validated_data.get('address'))
+        # if clean_address is None:
+        #     clean_address = ''
+        #     raise ValidationError({
+        #         "clean_address": [
+        #             "This field may not be blank."
+        #         ]
+        #     })
 
         params_serializer = FacilityCreateQueryParamsSerializer(
             data=request.query_params)
@@ -535,12 +535,12 @@ class FacilitiesViewSet(ListModelMixin,
             raise PermissionDenied('Cannot submit a private facility')
 
         parse_started = str(timezone.now())
-        print(">>>> query_params {}".format(request.query_params))
-        contri_cleaner = SourceHandler(SourceParserJSON(request.query_params))
+        print(">>>> request.body {}".format(request.data))
+        contri_cleaner = SourceHandler(SourceParserJSON(request.data))
         header = contri_cleaner.get_validated_header()
 
         if header.error:
-            raise ValidationError(header.error.message)
+            raise ValidationError(header.error['message'])
         
         source = Source.objects.create(
             contributor=request.user.contributor,
@@ -551,20 +551,19 @@ class FacilitiesViewSet(ListModelMixin,
         create_nonstandard_fields(header.non_standard_fields, request.user.contributor)
         
         vaildated_rows = contri_cleaner.get_validated_rows()
-        for index, row in enumerate(vaildated_rows):
-            item = FacilityListItem.objects.create(
+        items = [FacilityListItem.objects.create(
                 source=source,
                 row_index=index,
                 raw_data=json.dumps(request.data),
-                raw_json=header.raw_json,
+                raw_json=row.raw_json,
                 raw_header=header.raw_header,
                 status=FacilityListItem.PARSED,
-                name=name,
-                clean_name=clean_name,
-                address=address,
-                clean_address=clean_address,
-                country_code=country_code,
-                sector=sector,
+                name=row.name,
+                clean_name=row.clean_name,
+                address=row.address,
+                clean_address=row.clean_address,
+                country_code=row.country_code,
+                sector=row.sector,
                 processing_results=[{
                     'action': ProcessingAction.PARSE,
                     'started_at': parse_started,
@@ -572,8 +571,9 @@ class FacilitiesViewSet(ListModelMixin,
                     'finished_at': str(timezone.now()),
                     'is_geocoded': False,
                 }]
-            )
+            ) for index, row in enumerate(vaildated_rows)]
 
+        item = items[0]
         result = {
             'matches': [],
             'item_id': item.id,
