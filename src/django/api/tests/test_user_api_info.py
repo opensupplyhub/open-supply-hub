@@ -8,9 +8,11 @@ from api.models import (
     User,
     RequestLog,
 )
+from api.constants import FeatureGroups
 
 from django.test import TestCase
 from django.utils import timezone
+from django.contrib.auth.models import Group
 
 
 class UserApiInfoTest(TestCase):
@@ -22,28 +24,28 @@ class UserApiInfoTest(TestCase):
         self.password = "Password555!"
         self.user_one = User.objects.create(email=self.email_one, id=1)
         self.user_one.set_password(self.password)
+        self.user_one.groups.add(
+            Group.objects.get(name=FeatureGroups.CAN_SUBMIT_PRIVATE_FACILITY)
+        )
         self.user_one.save()
         self.user_two = User.objects.create(email=self.email_two, id=2)
+        self.user_two.groups.add(
+            Group.objects.get(name=FeatureGroups.CAN_SUBMIT_PRIVATE_FACILITY)
+        )
         self.user_two.set_password(self.password)
         self.user_two.save()
         self.user_three = User.objects.create(email=self.email_three, id=3)
+        self.user_three.groups.add(
+            Group.objects.get(name=FeatureGroups.CAN_SUBMIT_PRIVATE_FACILITY)
+        )
         self.user_three.set_password(self.password)
         self.user_three.save()
         self.user_four = User.objects.create(email=self.email_four, id=4)
+        self.user_four.groups.add(
+            Group.objects.get(name=FeatureGroups.CAN_SUBMIT_PRIVATE_FACILITY)
+        )
         self.user_four.set_password(self.password)
         self.user_four.save()
-
-        # user_emails = (self.email_one,
-        #                self.email_two,
-        #                self.email_three,
-        #                self.email_four)
-
-        # for user_email in user_emails:
-        #     self.client.post(
-        #         "/user-login/",
-        #         {"email": user_email, "password": self.password},
-        #         format="json",
-        #     )
 
         self.yearly_renewal_period = 'YEARLY'
         self.monthly_renewal_period = 'MONTHLY'
@@ -104,9 +106,9 @@ class UserApiInfoTest(TestCase):
         self.current_usage_two = 2
 
         self.expected_content = {
-            'apiCallAllowance': '10',
-            'currentCallCount': 0,
-            'renewalPeriod': 'YEARLY',
+            'api_call_limit': '10',
+            'current_usage': 0,
+            'renewal_period': 'YEARLY',
         }
 
     def test_get_api_call_limit(self):
