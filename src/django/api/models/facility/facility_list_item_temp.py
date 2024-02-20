@@ -4,7 +4,7 @@ from django.contrib.gis.db import models as gis_models
 from django.contrib.postgres import fields as postgres
 from django.db import models
 
-from ...countries import COUNTRY_CHOICES
+from countries.countries import COUNTRY_CHOICES
 
 
 def hooked_index_facilities(**kwargs):

@@ -3,7 +3,7 @@ from api.models.facility.facility_index import FacilityIndex
 from api.models.facility.facility_manager_index_new import (
     FacilityIndexNewManager,
 )
-from api.countries import COUNTRY_NAMES
+from countries.countries import COUNTRY_NAMES
 from api.csv_download import format_download_extended_fields
 from api.helpers.helpers import parse_download_date
 from rest_framework.serializers import Serializer, SerializerMethodField

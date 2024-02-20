@@ -6,7 +6,7 @@ import time
 import traceback
 
 from api.constants import CsvHeaderField, ProcessingAction
-from api.countries import COUNTRY_CODES, COUNTRY_NAMES
+from countries.countries import COUNTRY_CODES, COUNTRY_NAMES
 from api.extended_fields import (
     create_extendedfields_for_listitem,
     update_extendedfields_for_list_item,
@@ -163,23 +163,6 @@ def clean_row(row):
 
 def parse_csv_line(line):
     return list(csv.reader([line]))[0]
-
-
-def get_country_code(country):
-    # TODO: Handle minor spelling errors in country names
-    remove_new_lines_pattern = re.compile(r'[\n\r]+')
-
-    country = str(country).strip()
-    country = remove_new_lines_pattern.sub(' ', country)
-
-    if country.upper() in COUNTRY_NAMES:
-        return country.upper()
-    elif country.lower() in COUNTRY_CODES:
-        return COUNTRY_CODES[country.lower()]
-    else:
-        raise ValueError(
-            'Could not find a country code for "{0}".'.format(country))
-
 
 class ItemRemovedException(Exception):
     pass

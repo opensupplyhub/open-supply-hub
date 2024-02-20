@@ -2,7 +2,7 @@ from rest_framework.serializers import (
     ModelSerializer,
     SerializerMethodField,
 )
-from ...countries import COUNTRY_NAMES
+from countries.countries import COUNTRY_NAMES
 from ...models import FacilityListItem
 from .facility_match_serializer import FacilityMatchSerializer
 

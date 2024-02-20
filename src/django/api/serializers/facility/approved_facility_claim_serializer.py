@@ -4,7 +4,7 @@ from rest_framework.serializers import (
   SerializerMethodField,
 )
 
-from ...countries import COUNTRY_CHOICES
+from countries.countries import COUNTRY_CHOICES
 from ...facility_type_processing_type import (
     ALL_FACILITY_TYPE_CHOICES,
     ALL_PROCESSING_TYPE_CHOICES

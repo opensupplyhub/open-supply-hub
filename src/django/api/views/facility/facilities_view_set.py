@@ -67,20 +67,17 @@ from ...facility_history import (
 from ...geocoding import geocode_address
 from ...mail import send_claim_facility_confirmation_email
 
-from ...helpers.helpers import clean
+
 from ...pagination import FacilitiesGeoJSONPagination
 from ...permissions import IsRegisteredAndConfirmed, IsSuperuser
 from ...processing import (
-    get_country_code,
     handle_external_match_process_result,
 )
-from ...sector_product_type_parser import RequestBodySectorProductTypeParser
 from ...serializers import (
     FacilityIndexSerializer,
     FacilityIndexDetailsSerializer,
     FacilityActivityReportSerializer,
     FacilityClaimSerializer,
-    FacilityCreateBodySerializer,
     FacilityCreateQueryParamsSerializer,
     FacilityMergeQueryParamsSerializer,
     FacilityQueryParamsSerializer,

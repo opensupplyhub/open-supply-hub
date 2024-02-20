@@ -3,7 +3,7 @@ from django.contrib.postgres import fields as postgres
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 
-from ...countries import COUNTRY_CHOICES
+from countries.countries import COUNTRY_CHOICES
 from ..contributor.contributor import Contributor
 from .facility_manager_index_new import FacilityIndexNewManager
 

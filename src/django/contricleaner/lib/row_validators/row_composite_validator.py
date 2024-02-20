@@ -2,6 +2,8 @@ from contricleaner.lib.dto.row_dto import RowDTO
 import re
 from unidecode import unidecode
 
+from countries.get_country_code import get_country_code
+
 
 def clean(column):
     """
@@ -56,8 +58,11 @@ class RowEmptyValidator:
 
 class RowCountryValidator:
     def validate(self, key: str, value, row: dict) -> dict:
-        
-        return {"county_code": value}
+        try:
+            return {"country_code": get_country_code(value)}
+        except ValueError as exc:
+            return {"error": {"message": str(exc), "type": "Error"}}
+
 
 class RowCompositeValidator:
     def __init__(self):
@@ -73,11 +78,14 @@ class RowCompositeValidator:
             "sector": [
                 RowSectorValidator(),
             ],
+            "country": [
+                RowCountryValidator(),
+            ],
         }
 
         self.__any__ = RowEmptyValidator()
         self.__all__ = RowCleanedUserDataValidator()
-       
+
     def get_validated_row(self, raw_row: dict):
         dict_res = {
             "errors": [],
@@ -94,7 +102,7 @@ class RowCompositeValidator:
         row = raw_row.copy()
         for key, value in row.items():
             validators = self.validators.get(key, [self.__any__]).copy()
-            
+
             for validator in validators:
                 res = validator.validate(key, value, row)
                 for res_key, res_value in res.items():
@@ -104,7 +112,7 @@ class RowCompositeValidator:
                         dict_res.update({res_key: res_value})
                     else:
                         dict_res["fields"].update({res_key: res_value})
-        
+
         res = self.__all__.validate("", "", row)
         for res_key, res_value in res.items():
             if res_key == "errors":
@@ -113,7 +121,7 @@ class RowCompositeValidator:
                 dict_res.update({res_key: res_value})
             else:
                 dict_res["fields"].update({res_key: res_value})
-            
+
         return RowDTO(
             raw_json=raw_row,
             name=dict_res.get("name", ""),
