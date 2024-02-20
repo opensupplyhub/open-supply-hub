@@ -522,6 +522,16 @@ export const facilitiesListTableTooltipTitles = Object.freeze({
     status: 'Processing status of this list.',
 });
 
+export const userApiInfoTooltipTitles = Object.freeze({
+    apiCallAllowance:
+        'Call Limit is the number of calls your account can make per renewal period.',
+    currentCallCount:
+        'Current Usage is the number of calls your account has made within the current renewal period.',
+    renewalPeriod:
+        'Renewal Period indicates how often your package renews. This can either be monthly or annually.',
+});
+
+export const IS_NOT_SET = 'Is not set';
 export const ALLOW_LARGE_DOWNLOADS = 'allow_large_downloads';
 export const CLAIM_A_FACILITY = 'claim_a_facility';
 export const VECTOR_TILE = 'vector_tile';

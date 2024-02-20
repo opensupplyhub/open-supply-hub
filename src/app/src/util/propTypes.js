@@ -87,6 +87,12 @@ export const tokenPropType = shape({
     created: string.isRequired,
 });
 
+export const userApiInfoPropType = shape({
+    apiCallAllowance: string.isRequired,
+    currentCallCount: number.isRequired,
+    renewalPeriod: string.isRequired,
+});
+
 export const facilityMatchPropType = shape({
     id: number.isRequired,
     status: oneOf(Object.values(facilityMatchStatusChoicesEnum)).isRquired,

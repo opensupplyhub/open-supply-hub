@@ -28,6 +28,9 @@ const componentStyles = Object.freeze({
         padding: '2rem 1rem',
         display: 'flex',
     }),
+    listWrapper: Object.freeze({
+        marginLeft: '4rem',
+    }),
 });
 
 class UserAPITokens extends Component {
@@ -67,15 +70,17 @@ class UserAPITokens extends Component {
         }
 
         const insetComponent = tokens.length ? (
-            <List>
-                {tokens.map(token => (
-                    <UserAPITokenListItem
-                        key={token.token}
-                        token={token}
-                        handleDelete={this.openDialog}
-                    />
-                ))}
-            </List>
+            <div style={componentStyles.listWrapper}>
+                <List>
+                    {tokens.map(token => (
+                        <UserAPITokenListItem
+                            key={token.token}
+                            token={token}
+                            handleDelete={this.openDialog}
+                        />
+                    ))}
+                </List>
+            </div>
         ) : (
             <div style={componentStyles.generateTokenButton}>
                 <Button

@@ -20,6 +20,9 @@ import {
     startUpdateUserProfile,
     failUpdateUserProfile,
     completeUpdateUserProfile,
+    startFetchUserApiInfo,
+    failFetchUserApiInfo,
+    completeFetchUserApiInfo,
 } from '../actions/profile';
 
 import {
@@ -58,9 +61,47 @@ const initialState = Object.freeze({
         fetching: false,
         error: null,
     }),
+    userApiInfo: Object.freeze({
+        data: Object.freeze({
+            apiCallAllowance: 'Is not set',
+            currentCallCount: 0,
+            renewalPeriod: 'Is not set',
+        }),
+        fetching: false,
+        error: null,
+    }),
     fetching: false,
     error: null,
 });
+
+const startFetchingUserApiInfo = state =>
+    update(state, {
+        userApiInfo: {
+            fetching: { $set: true },
+            error: { $set: null },
+        },
+    });
+
+const failFetchingUserApiInfo = (state, payload) =>
+    update(state, {
+        userApiInfo: {
+            fetching: { $set: false },
+            error: { $set: payload },
+        },
+    });
+
+const completeFetchingUserApiInfo = (state, payload) =>
+    update(state, {
+        userApiInfo: {
+            data: {
+                apiCallAllowance: { $set: payload.api_call_limit },
+                renewalPeriod: { $set: payload.renewal_period },
+                currentCallCount: { $set: payload.current_usage },
+            },
+            fetching: { $set: false },
+            error: { $set: null },
+        },
+    });
 
 const startFetchingToken = state =>
     update(state, {
@@ -107,12 +148,15 @@ export default createReducer(
         [failFetchAPIToken]: failFetchingToken,
         [failDeleteAPIToken]: failFetchingToken,
         [failCreateAPIToken]: failFetchingToken,
+        [startFetchUserApiInfo]: startFetchingUserApiInfo,
+        [failFetchUserApiInfo]: failFetchingUserApiInfo,
         [completeDeleteAPIToken]: state =>
             update(state, {
                 tokens: { $set: initialState.tokens },
             }),
         [completeCreateAPIToken]: completeGettingAPIToken,
         [completeFetchAPIToken]: completeGettingAPIToken,
+        [completeFetchUserApiInfo]: completeFetchingUserApiInfo,
         [updateProfileFormInput]: (state, { value, field }) =>
             update(state, {
                 profile: {
