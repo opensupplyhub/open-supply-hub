@@ -9,5 +9,5 @@ class HeaderDTO(NamedTuple):
     non_standard_fields: Set[str]
 
 
-def header_errors(header: HeaderDTO)-> List[dict]:
+def header_errors(header: HeaderDTO) -> List[dict]:
     return [error for error in header.errors if error.get("type") == "Error"]

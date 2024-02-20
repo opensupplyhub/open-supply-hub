@@ -105,6 +105,7 @@ class FacilitySubmitTest(FacilityAPITestCaseBase):
             },
         )
         data = json.loads(response.content)
+        print(">>>> Data ${}".format(data))
         list_item = FacilityListItem.objects.get(id=data["item_id"])
         self.assertTrue(is_json(list_item.raw_data))
 

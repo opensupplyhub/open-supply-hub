@@ -15,15 +15,15 @@ class HeaderNoDuplicationsValidator:
 
 
 class HeaderRequredValidator:
-    required_fields = {"name", "address"}
-
+    required_fields = {"name", "address", ""}
+    
     def validate(self, raw_header: List[str]) -> dict:
-        if set(raw_header).intersection(
-            HeaderRequredValidator.required_fields
-        ) != HeaderRequredValidator.required_fields:
+        diff = self.required_fields.difference(raw_header)
+
+        if len(diff) > 0:
             return {
                 "error": {
-                    "message": "'name' or 'address' are missing",
+                    "message": "{} are missing".format(', '.join(diff)),
                     "type": "Error",
                 },
             }

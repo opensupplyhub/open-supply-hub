@@ -17,7 +17,8 @@ class SourceHandler:
         self.row_validator = RowCompositeValidator()
 
     def get_validated_header(self) -> HeaderDTO:
-        return self.header_handler.get_validated_header(self.source.parsed_header())
+        return self.header_handler \
+            .get_validated_header(self.source.parsed_header())
 
     def get_validated_rows(self) -> List[RowDTO]:
         rows = self.source.parsed_rows()

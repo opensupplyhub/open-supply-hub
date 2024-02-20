@@ -566,7 +566,7 @@ class FacilitiesViewSet(ListModelMixin,
             address=vaildated_row.address,
             clean_address=vaildated_row.clean_address,
             country_code=vaildated_row.country_code,
-            sector=[vaildated_row.sector],
+            sector=vaildated_row.sector,
             processing_results=[{
                 'action': ProcessingAction.PARSE,
                 'started_at': parse_started,

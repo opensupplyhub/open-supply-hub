@@ -8,7 +8,7 @@ class RowDTO(NamedTuple):
     address: str
     clean_address: str
     country_code: str
-    sector: str
+    sector: List[str]
 
     fields: dict
     errors: List[dict]

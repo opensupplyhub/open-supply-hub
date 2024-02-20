@@ -23,58 +23,97 @@ def clean(column):
     return column
 
 
+class RowSectorValidator:
+    def validate(self, str, value, row: dict) -> dict:
+        return {"sector": [value]}
+
+
 class RowCleanFieldValidator:
-    def __init__(self, test_field, new_field) -> None:
-        self.test_field = test_field
+    def __init__(self, new_field) -> None:
         self.new_field = new_field
 
-    def validate(self, row: dict) -> dict:
-        return {self.new_field: clean(row.get(self.test_field, ""))}
+    def validate(self, key: str, value, row: dict) -> dict:
+        clean_value = clean(value)
+        if len(clean_value) == 0:
+            return {
+                "error": {
+                    "message": "{} cannot be empty".format(self.new_field),
+                    "type": "Error",
+                }
+            }
+        return {self.new_field: clean_value}
 
 
 class RowCleanedUserDataValidator:
-    def validate(self, row: dict) -> dict:
+    def validate(self, key: str, value, row: dict) -> dict:
         return {"cleaned_user_data": row.copy()}
 
 
 class RowEmptyValidator:
-    def validate(self, row: dict) -> dict:
-        return row.copy()
+    def validate(self, key: str, value, row: dict) -> dict:
+        return {key: value}
 
+
+class RowCountryValidator:
+    def validate(self, key: str, value, row: dict) -> dict:
+        
+        return {"county_code": value}
 
 class RowCompositeValidator:
     def __init__(self):
-        self.validators = [
-            RowCleanFieldValidator("name", "clean_name"),
-            RowCleanFieldValidator("address", "clean_address"),
-            RowCleanedUserDataValidator(),
-            RowEmptyValidator(),
-        ]
+        self.validators = {
+            "name": [
+                RowCleanFieldValidator("clean_name"),
+                RowEmptyValidator(),
+            ],
+            "address": [
+                RowCleanFieldValidator("clean_address"),
+                RowEmptyValidator(),
+            ],
+            "sector": [
+                RowSectorValidator(),
+            ],
+        }
 
+        self.__any__ = RowEmptyValidator()
+        self.__all__ = RowCleanedUserDataValidator()
+       
     def get_validated_row(self, raw_row: dict):
         dict_res = {
             "errors": [],
             "fields": {},
         }
-        standard_fields = [
+        standard_fields = {
             "name",
             "clean_name",
             "address",
             "clean_address",
             "country_code",
             "sector",
-        ]
+        }
         row = raw_row.copy()
-        for validator in self.validators:
-            res = validator.validate(row)
-            for key in res:
-                if key == "errors":
-                    dict_res["errors"].extend(res["errors"])
-                elif key in standard_fields:
-                    dict_res[key] = res[key]
-                else:
-                    dict_res["fields"].update({key: res[key]})
-
+        for key, value in row.items():
+            validators = self.validators.get(key, [self.__any__]).copy()
+            
+            for validator in validators:
+                res = validator.validate(key, value, row)
+                for res_key, res_value in res.items():
+                    if res_key == "errors":
+                        dict_res["errors"].extend(res_value)
+                    elif res_key in standard_fields:
+                        dict_res.update({res_key: res_value})
+                    else:
+                        dict_res["fields"].update({res_key: res_value})
+        
+        res = self.__all__.validate("", "", row)
+        for res_key, res_value in res.items():
+            if res_key == "errors":
+                dict_res["errors"].extend(res_value)
+            elif res_key in standard_fields:
+                dict_res.update({res_key: res_value})
+            else:
+                dict_res["fields"].update({res_key: res_value})
+            
         return RowDTO(
             raw_json=raw_row,
             name=dict_res.get("name", ""),
