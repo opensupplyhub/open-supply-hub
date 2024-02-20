@@ -32,6 +32,11 @@ class RowCleanFieldValidator:
         return {self.new_field: clean(row.get(self.test_field, ""))}
 
 
+class RowCleanedUserDataValidator:
+    def validate(self, row: dict) -> dict:
+        return {"cleaned_user_data": row.copy()}
+
+
 class RowEmptyValidator:
     def validate(self, row: dict) -> dict:
         return row.copy()
@@ -42,6 +47,7 @@ class RowCompositeValidator:
         self.validators = [
             RowCleanFieldValidator("name", "clean_name"),
             RowCleanFieldValidator("address", "clean_address"),
+            RowCleanedUserDataValidator(),
             RowEmptyValidator(),
         ]
 
@@ -62,16 +68,12 @@ class RowCompositeValidator:
         for validator in self.validators:
             res = validator.validate(row)
             for key in res:
-                print("<<<< {}".format(key))
                 if key == "errors":
                     dict_res["errors"].extend(res["errors"])
                 elif key in standard_fields:
                     dict_res[key] = res[key]
                 else:
                     dict_res["fields"].update({key: res[key]})
-
-                if key in row:
-                    del row[key]
 
         return RowDTO(
             raw_json=raw_row,

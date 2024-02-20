@@ -5,6 +5,7 @@ from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
 from contricleaner.lib.source_handler import SourceHandler
 from contricleaner.lib.source_parser_json import SourceParserJSON
+from contricleaner.lib.dto.header_dto import header_errors
 
 from rest_framework.mixins import (
     ListModelMixin,
@@ -539,7 +540,8 @@ class FacilitiesViewSet(ListModelMixin,
         contri_cleaner = SourceHandler(SourceParserJSON(request.data))
         header = contri_cleaner.get_validated_header()
 
-        if header.errors:
+        errors = header_errors(header)
+        if len(errors) > 0:
             raise ValidationError(header.errors)
         
         source = Source.objects.create(
@@ -552,29 +554,28 @@ class FacilitiesViewSet(ListModelMixin,
         
         vaildated_rows = contri_cleaner.get_validated_rows()
         vaildated_row = vaildated_rows[0]
-        items = FacilityListItem.objects.create(
-                source=source,
-                row_index=0,
-                raw_data=json.dumps(request.data),
-                raw_json=vaildated_row.raw_json,
-                raw_header=header.raw_header,
-                status=FacilityListItem.PARSED,
-                name=vaildated_row.name,
-                clean_name=vaildated_row.clean_name,
-                address=vaildated_row.address,
-                clean_address=vaildated_row.clean_address,
-                country_code=vaildated_row.country_code,
-                sector=[vaildated_row.sector],
-                processing_results=[{
-                    'action': ProcessingAction.PARSE,
-                    'started_at': parse_started,
-                    'error': False,
-                    'finished_at': str(timezone.now()),
-                    'is_geocoded': False,
-                }]
-            );
+        item = FacilityListItem.objects.create(
+            source=source,
+            row_index=0,
+            raw_data=json.dumps(request.data),
+            raw_json=vaildated_row.raw_json,
+            raw_header=header.raw_header,
+            status=FacilityListItem.PARSED,
+            name=vaildated_row.name,
+            clean_name=vaildated_row.clean_name,
+            address=vaildated_row.address,
+            clean_address=vaildated_row.clean_address,
+            country_code=vaildated_row.country_code,
+            sector=[vaildated_row.sector],
+            processing_results=[{
+                'action': ProcessingAction.PARSE,
+                'started_at': parse_started,
+                'error': False,
+                'finished_at': str(timezone.now()),
+                'is_geocoded': False,
+            }]
+        )
 
-        item = items[0]
         result = {
             'matches': [],
             'item_id': item.id,
@@ -582,9 +583,17 @@ class FacilitiesViewSet(ListModelMixin,
             'geocoded_address': None,
             'status': item.status,
         }
+        
+        # cleaned_user_data = request.data.copy()
+        # cleaned_user_data['sector'] = sector
+        # if len(row.product_types) > 0:
+        #     cleaned_user_data['product_type'] = product_types
+        # if 'sector_product_type' in cleaned_user_data:
+        #     del cleaned_user_data['sector_product_type']
 
         try:
-            create_extendedfields_for_single_item(item, cleaned_user_data)
+            create_extendedfields_for_single_item(
+                item, vaildated_row.fields["cleaned_user_data"])
         except (core_exceptions.ValidationError, ValueError) as exc:
             error_message = ''
 

@@ -58,6 +58,7 @@ class FacilitySubmitTest(FacilityAPITestCaseBase):
             },
         )
         self.assertEqual(response.status_code, 400)
+        print(">>>> Response content ${}".format(response.json()))
 
         response = self.client.post(
             self.url,
