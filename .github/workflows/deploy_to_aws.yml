@@ -152,7 +152,7 @@ jobs:
         working-directory: src/app
         run: yarn run build
         env:
-          REACT_APP_ROUTE: ${{ true }}
+          REACT_APP_ROUTE: ${{ vars.ENV_NAME == 'Development' }}
       
       - name: Move static
         run: mv src/app/build src/django/static
