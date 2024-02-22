@@ -84,7 +84,7 @@ class RowCompositeValidator:
         }
 
         self.__any__ = RowEmptyValidator()
-        self.__all__ = RowCleanedUserDataValidator()
+        self.__all__ = [RowCleanedUserDataValidator()]
 
     def get_validated_row(self, raw_row: dict):
         dict_res = {
@@ -112,15 +112,17 @@ class RowCompositeValidator:
                         dict_res.update({res_key: res_value})
                     else:
                         dict_res["fields"].update({res_key: res_value})
+        
+        for validator in self.__all__:
+            res = validator.validate("", "", row)
+            for res_key, res_value in res.items():
+                if res_key == "errors":
+                    dict_res["errors"].extend(res_value)
+                elif res_key in standard_fields:
+                    dict_res.update({res_key: res_value})
+                else:
+                    dict_res["fields"].update({res_key: res_value})
 
-        res = self.__all__.validate("", "", row)
-        for res_key, res_value in res.items():
-            if res_key == "errors":
-                dict_res["errors"].extend(res_value)
-            elif res_key in standard_fields:
-                dict_res.update({res_key: res_value})
-            else:
-                dict_res["fields"].update({res_key: res_value})
 
         return RowDTO(
             raw_json=raw_row,
