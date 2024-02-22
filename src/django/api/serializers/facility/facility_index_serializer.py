@@ -299,9 +299,6 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
 
             grouped_data[field_name] = data
 
-        sectors = self.get_sector(facility)
-        grouped_data["sector"] = sectors
-
         return grouped_data
     
     def get_sector(self, facility):
