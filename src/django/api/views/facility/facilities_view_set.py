@@ -189,7 +189,7 @@ class FacilitiesViewSet(ListModelMixin,
 
             if not should_serialize_details:
                 exclude_fields.extend([
-                    'contributor_fields', 'extended_fields', 'contributors'])
+                    'contributor_fields', 'extended_fields', 'contributors', 'sector'])
             if not should_serialize_number_of_public_contributors:
                 exclude_fields.extend(['number_of_public_contributors'])
 
