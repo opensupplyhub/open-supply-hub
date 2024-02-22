@@ -26,7 +26,7 @@ from openpyxl.utils import get_column_letter
 from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.core.exceptions import ValidationError
-from countries.get_country_code import get_country_code
+from countries.lib.get_country_code import get_country_code
 from django.urls import reverse
 from django.utils import timezone
 

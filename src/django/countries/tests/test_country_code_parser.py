@@ -1,4 +1,4 @@
-from countries.get_country_code import get_country_code
+from countries.lib.get_country_code import get_country_code
 
 from django.test import TestCase
 

@@ -4,7 +4,7 @@ import re
 
 from django.utils import timezone
 
-from countries.countries import COUNTRY_NAMES
+from countries.lib.countries import COUNTRY_NAMES
 
 
 def checksum(short_id):
