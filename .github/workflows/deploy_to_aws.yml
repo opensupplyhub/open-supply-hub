@@ -19,6 +19,8 @@ on:
         - Development
         - Test
         - Pre-prod
+        - Sandbox
+        - Production
         default: Development
 
 env:
