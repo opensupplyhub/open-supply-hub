@@ -450,3 +450,56 @@ def depromote_unspecified_items(items: list):
         k['values'][0] == 'Unspecified' and
         len(k['values']) == 1),
         reverse=False)
+
+def format_sectors(items,
+                   claims,
+                   date_field_to_sort,
+                   use_main_created_at,
+                   user_can_see_detail):
+    item_sectors = [
+        {
+            **({'created_at': format_date(i['created_at'])}
+                if use_main_created_at else
+                {}),
+            'updated_at': format_date(i['updated_at']),
+            'contributor_id': get_contributor_id_from_facilityindexnew(
+                i['contributor'],
+                (user_can_see_detail
+                    and i['source']['is_active']
+                    and i['source']['is_public']
+                    and i['has_active_complete_match'])),
+            'contributor_name': get_contributor_name_from_facilityindexnew(
+                i['contributor'],
+                (user_can_see_detail
+                    and i['source']['is_active']
+                    and i['source']['is_public']
+                    and i['has_active_complete_match'])),
+            'values': i['sector'],
+            'is_from_claim': False
+        }
+        for i in items
+    ]
+
+    claim_sectors = [
+        {
+            **({'created_at': format_date(c['created_at'])}
+                if use_main_created_at else
+                {}),
+            'updated_at': format_date(c['updated_at']),
+            'contributor_id': get_contributor_id_from_facilityindexnew(
+                c['contributor'], user_can_see_detail),
+            'contributor_name': get_contributor_name_from_facilityindexnew(
+                c['contributor'], user_can_see_detail),
+            'values': c['sector'],
+            'is_from_claim': True
+        }
+        for c in claims
+    ]
+
+    item_sectors = sorted(
+        item_sectors,
+        key=lambda i: i[date_field_to_sort],
+        reverse=True
+    )
+
+    return claim_sectors + depromote_unspecified_items(item_sectors)

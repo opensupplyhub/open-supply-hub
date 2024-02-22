@@ -24,12 +24,15 @@ from .utils import (
     can_user_see_detail,
     format_field,
     format_numeric,
+    format_sectors,
     is_created_at_main_date,
     get_facility_name_index_new,
     get_embed_contributor_id,
     get_efs_associated_with_contributor,
     create_name_field_from_facility_name,
-    create_address_field_from_facility_address
+    create_address_field_from_facility_address,
+    regroup_items_for_sector_field,
+    regroup_claims_for_sector_field
 )
 
 
@@ -44,6 +47,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
     location = GeometrySerializerMethodField()
     address = SerializerMethodField()
     has_approved_claim = SerializerMethodField()
+    sector = SerializerMethodField()
 
     class Meta:
         model = FacilityIndex
@@ -61,6 +65,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             'is_closed',
             'contributor_fields',
             'extended_fields',
+            'sector',
         )
         geo_field = 'location'
 
@@ -294,7 +299,43 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
 
             grouped_data[field_name] = data
 
+        sectors = self.get_sector(facility)
+        grouped_data["sector"] = sectors
+
         return grouped_data
+    
+    def get_sector(self, facility):
+        user_can_see_detail = can_user_see_detail(self)
+
+        use_main_created_at = is_created_at_main_date(self)
+        date_field_to_sort = (
+            'created_at' if use_main_created_at else 'updated_at'
+        )
+
+        items = regroup_items_for_sector_field(
+            facility.item_sectors, date_field_to_sort)
+
+        claims = regroup_claims_for_sector_field(
+            facility.claim_sectors, date_field_to_sort
+        )
+
+        contributor_id = get_embed_contributor_id(self)
+        if is_embed_mode_active(self) and contributor_id is not None:
+            contributor_id_int = int(contributor_id)
+            items = list(filter(
+                lambda item: item['contributor']['id'] == contributor_id_int,
+                items
+                ))
+            claims = list(filter(
+                lambda claim: claim['contributor']['id'] == contributor_id_int,
+                claims
+                ))
+
+        return format_sectors(items,
+                              claims,
+                              date_field_to_sort,
+                              use_main_created_at,
+                              user_can_see_detail)
 
     def get_has_approved_claim(self, facility):
         return len(facility.approved_claim_ids) > 0
