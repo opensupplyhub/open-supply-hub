@@ -19,7 +19,7 @@ on:
         - Development
         - Test
         - Pre-prod
-        - Sandbox
+        - Staging
         - Production
         default: Development
 
