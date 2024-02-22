@@ -1,12 +1,10 @@
 import copy
 import csv
-import re
 import sys
 import time
 import traceback
 
 from api.constants import CsvHeaderField, ProcessingAction
-from api.countries import COUNTRY_CODES, COUNTRY_NAMES
 from api.extended_fields import (
     create_extendedfields_for_listitem,
     update_extendedfields_for_list_item,

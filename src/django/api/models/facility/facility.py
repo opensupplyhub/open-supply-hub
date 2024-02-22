@@ -7,7 +7,7 @@ from django.contrib.gis.db import models as gis_models
 from django.db import models
 from django.db.models import ExpressionWrapper, Q
 
-from ...countries import COUNTRY_CHOICES
+from countries.countries import COUNTRY_CHOICES
 from ...os_id import make_os_id
 
 
