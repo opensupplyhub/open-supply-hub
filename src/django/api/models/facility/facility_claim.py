@@ -5,7 +5,7 @@ from django.contrib.gis.db import models as gis_models
 from django.contrib.postgres import fields as postgres
 from django.db import models
 
-from ...countries import COUNTRY_CHOICES
+from countries.lib.countries import COUNTRY_CHOICES
 from ...constants import Affiliations, Certifications
 from ...facility_type_processing_type import ALL_FACILITY_TYPE_CHOICES
 
