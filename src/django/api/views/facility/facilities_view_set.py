@@ -155,7 +155,7 @@ class FacilitiesViewSet(ListModelMixin,
                     }
                 ]
             }
-        
+
         ### Sample Response - parameter 'detail' equal 'true'
             {
                 "type": "FeatureCollection",
@@ -192,13 +192,13 @@ class FacilitiesViewSet(ListModelMixin,
                                         "field_name": "field_name",
                                         "contributor_id": 1,
                                         "contributor_name": "contributor_name",
-                                        "updated_at": "0000-00-00T00:00:00.000000Z"
+                                        "updated_at": "0000-00-00T00:00:00"
                                     }
                                 ]
                             }
                             "sector": [
                                 {
-                                    "updated_at": "0000-00-00T00:00:00.000000Z",
+                                    "updated_at": "0000-00-00T00:00:00",
                                     "contributor_id": 1,
                                     "contributor_name": "contributor_name",
                                     "values": [
@@ -245,7 +245,10 @@ class FacilitiesViewSet(ListModelMixin,
 
             if not should_serialize_details:
                 exclude_fields.extend([
-                    'contributor_fields', 'extended_fields', 'contributors', 'sector'])
+                    'contributor_fields',
+                    'extended_fields',
+                    'contributors',
+                    'sector'])
             if not should_serialize_number_of_public_contributors:
                 exclude_fields.extend(['number_of_public_contributors'])
 

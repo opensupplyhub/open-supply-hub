@@ -300,7 +300,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             grouped_data[field_name] = data
 
         return grouped_data
-    
+
     def get_sector(self, facility):
         user_can_see_detail = can_user_see_detail(self)
 

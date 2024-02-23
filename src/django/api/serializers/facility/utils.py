@@ -451,6 +451,7 @@ def depromote_unspecified_items(items: list):
         len(k['values']) == 1),
         reverse=False)
 
+
 def format_sectors(items,
                    claims,
                    date_field_to_sort,
