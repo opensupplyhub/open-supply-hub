@@ -1,6 +1,6 @@
 from rest_framework.serializers import CharField, Serializer, ValidationError
 
-from countries.get_country_code import get_country_code
+from countries.lib.get_country_code import get_country_code
 from ..pipe_separated_field import PipeSeparatedField
 
 

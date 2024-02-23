@@ -1,12 +1,10 @@
 import copy
 import csv
-import re
 import sys
 import time
 import traceback
 
 from api.constants import CsvHeaderField, ProcessingAction
-from countries.countries import COUNTRY_CODES, COUNTRY_NAMES
 from api.extended_fields import (
     create_extendedfields_for_listitem,
     update_extendedfields_for_list_item,
@@ -28,6 +26,7 @@ from openpyxl.utils import get_column_letter
 from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.core.exceptions import ValidationError
+from countries.lib.get_country_code import get_country_code
 from django.urls import reverse
 from django.utils import timezone
 

@@ -4,7 +4,7 @@ set -e
 
 function usage() {
     echo -e \
-	"Usage: $(basename "$0")" \
+	"Usage: $(basename "$z")" \
     "\nThis script runs a linting check, tests, and also generates" \
     "the unittest code coverage report for the Django app. The" \
     "script performs the same code quality checks for the backend" \
@@ -34,11 +34,11 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         "run --rm --entrypoint /bin/sh django" \
         "-c 'coverage run --data-file=./coverage/.coverage manage.py test --no-input ${1}" \
         "&& coverage lcov --data-file=./coverage/.coverage -o ./coverage/coverage.lcov'" \
-        "--omit='./api/migrations/*,./api/tests/*'"
+        "--omit='./api/migrations/*,./api/tests/*,./countries/tests/*'"
         docker-compose \
             run --rm --entrypoint /bin/sh django \
             -c "coverage run --data-file=./coverage/.coverage manage.py test --no-input ${1}  \
             && coverage lcov --data-file=./coverage/.coverage -o ./coverage/coverage.lcov \
-            --omit='./api/migrations/*,./api/tests/*'"
+            --omit='./api/migrations/*,./api/tests/*,./countries/tests/*'"
     fi
 fi

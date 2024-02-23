@@ -5,6 +5,7 @@ import apiRequest from '../util/apiRequest';
 
 import {
     makeAPITokenURL,
+    makeUserAPIInfoURL,
     makeUserProfileURL,
     logErrorAndDispatchFailure,
     createProfileUpdateErrorMessages,
@@ -40,6 +41,34 @@ export const failUpdateUserProfile = createAction('FAIL_UPDATE_USER_PROFILE');
 export const completeUpdateUserProfile = createAction(
     'COMPLETE_UPDATE_USER_PROFILE',
 );
+
+export const startFetchUserApiInfo = createAction('START_FETCH_USER_API_INFO');
+export const failFetchUserApiInfo = createAction('FAIL_FETCH_USER_API_INFO');
+export const completeFetchUserApiInfo = createAction(
+    'COMPLETE_FETCH_USER_API_INFO',
+);
+
+export function fetchUserApiInfo(uid) {
+    return dispatch => {
+        dispatch(startFetchUserApiInfo());
+
+        return (
+            apiRequest
+                .get(makeUserAPIInfoURL(uid))
+                // Return user API information
+                .then(({ data }) => dispatch(completeFetchUserApiInfo(data)))
+                .catch(err =>
+                    dispatch(
+                        logErrorAndDispatchFailure(
+                            err,
+                            'An error prevented fetching the API call information',
+                            failFetchUserApiInfo,
+                        ),
+                    ),
+                )
+        );
+    };
+}
 
 export function fetchAPIToken() {
     return dispatch => {

@@ -4,11 +4,13 @@ from api.models import ApiLimit
 from django.db.migrations import RunPython
 from django.db import migrations, models
 
+
 def update_existing_apilimit_renewal_period(apps, schema_editor):
     api_limits = ApiLimit.objects.filter(renewal_period='')
     for api_limit in api_limits:
         api_limit.renewal_period = ApiLimit.YEARLY
         api_limit.save()
+
 
 class Migration(migrations.Migration):
 

@@ -2,7 +2,7 @@ from contricleaner.lib.dto.row_dto import RowDTO
 import re
 from unidecode import unidecode
 
-from countries.get_country_code import get_country_code
+from countries.lib.get_country_code import get_country_code
 
 
 def clean(column):

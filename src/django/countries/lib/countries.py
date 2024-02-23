@@ -1153,4 +1153,3 @@ COUNTRY_CODES = {
     '\u00e5l& isl&s': 'AX',
     '\u00e5land islands': 'AX'
 }
-

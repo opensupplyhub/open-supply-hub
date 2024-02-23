@@ -1,5 +1,6 @@
 import re
-from countries.countries import COUNTRY_CODES, COUNTRY_NAMES
+
+from countries.lib.countries import COUNTRY_CODES, COUNTRY_NAMES
 
 
 def get_country_code(country):

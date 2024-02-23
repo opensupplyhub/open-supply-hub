@@ -8,7 +8,7 @@ from rest_framework.serializers import (
     SerializerMethodField,
 )
 
-from countries.countries import COUNTRY_NAMES
+from countries.lib.countries import COUNTRY_NAMES
 from ...models import Contributor
 from ...models.facility.facility_index import FacilityIndex
 from ...models.embed_config import EmbedConfig
