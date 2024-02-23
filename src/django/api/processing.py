@@ -163,6 +163,7 @@ def clean_row(row):
 def parse_csv_line(line):
     return list(csv.reader([line]))[0]
 
+
 class ItemRemovedException(Exception):
     pass
 
