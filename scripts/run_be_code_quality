@@ -4,7 +4,7 @@ set -e
 
 function usage() {
     echo -e \
-	"Usage: $(basename "$z")" \
+	"Usage: $(basename "$0")" \
     "\nThis script runs a linting check, tests, and also generates" \
     "the unittest code coverage report for the Django app. The" \
     "script performs the same code quality checks for the backend" \
