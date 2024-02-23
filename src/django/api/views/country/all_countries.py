@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view, throttle_classes
 from rest_framework.response import Response
 
-from ...countries import COUNTRY_CHOICES
+from countries.lib.countries import COUNTRY_CHOICES
 
 
 @api_view(['GET'])
