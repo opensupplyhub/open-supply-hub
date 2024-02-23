@@ -22,6 +22,11 @@ on:
         - Staging
         - Production
         default: Development
+      deploy-plan-only:
+        description: 'Plan only'     
+        required: false
+        type: boolean
+        default: false
 
 env:
   GITHUB_ENV_NAME: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
@@ -82,6 +87,7 @@ jobs:
     needs: init-and-plan
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -125,6 +131,7 @@ jobs:
     needs: apply
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
