@@ -1,12 +1,10 @@
 import copy
 import csv
-import re
 import sys
 import time
 import traceback
 
 from api.constants import CsvHeaderField, ProcessingAction
-from api.countries import COUNTRY_CODES, COUNTRY_NAMES
 from api.extended_fields import (
     create_extendedfields_for_listitem,
     update_extendedfields_for_list_item,
@@ -28,6 +26,7 @@ from openpyxl.utils import get_column_letter
 from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.core.exceptions import ValidationError
+from countries.lib.get_country_code import get_country_code
 from django.urls import reverse
 from django.utils import timezone
 
@@ -163,22 +162,6 @@ def clean_row(row):
 
 def parse_csv_line(line):
     return list(csv.reader([line]))[0]
-
-
-def get_country_code(country):
-    # TODO: Handle minor spelling errors in country names
-    remove_new_lines_pattern = re.compile(r'[\n\r]+')
-
-    country = str(country).strip()
-    country = remove_new_lines_pattern.sub(' ', country)
-
-    if country.upper() in COUNTRY_NAMES:
-        return country.upper()
-    elif country.lower() in COUNTRY_CODES:
-        return COUNTRY_CODES[country.lower()]
-    else:
-        raise ValueError(
-            'Could not find a country code for "{0}".'.format(country))
 
 
 class ItemRemovedException(Exception):

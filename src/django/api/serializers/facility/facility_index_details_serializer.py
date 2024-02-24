@@ -3,7 +3,7 @@ from rest_framework.serializers import (
 )
 from waffle import switch_is_active
 
-from ...countries import COUNTRY_NAMES
+from countries.lib.countries import COUNTRY_NAMES
 from ...models.contributor.contributor import Contributor
 from ...models.facility.facility_index import FacilityIndex
 from ...models.embed_field import EmbedField
