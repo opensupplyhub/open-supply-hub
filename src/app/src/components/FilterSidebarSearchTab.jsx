@@ -97,7 +97,6 @@ const filterSidebarSearchTabStyles = theme =>
             minWidth: '36px',
             minHeight: '36px',
         }),
-
         actionButton: {
             backgroundColor: theme.palette.action.main,
             '&:hover': {
@@ -166,7 +165,6 @@ function FilterSidebarSearchTab({
             disabled={fetchingOptions}
         >
             Search
-            <i className={`${classes.icon} fas fa-fw fa-undo`} />
         </Button>
     );
 
