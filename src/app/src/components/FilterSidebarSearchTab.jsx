@@ -3,6 +3,7 @@ import { bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router';
 import Button from '@material-ui/core/Button';
+import ReplayIcon from '@material-ui/icons/Replay';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Tooltip from '@material-ui/core/Tooltip';
 import { withStyles } from '@material-ui/core/styles';
@@ -96,6 +97,7 @@ const filterSidebarSearchTabStyles = theme =>
             minWidth: '36px',
             minHeight: '36px',
         }),
+
         actionButton: {
             backgroundColor: theme.palette.action.main,
             '&:hover': {
@@ -164,6 +166,7 @@ function FilterSidebarSearchTab({
             disabled={fetchingOptions}
         >
             Search
+            <i className={`${classes.icon} fas fa-fw fa-undo`} />
         </Button>
     );
 
@@ -174,10 +177,10 @@ function FilterSidebarSearchTab({
             onClick={() => resetFilters(embed)}
             disableRipple
             className={classes.reset}
-            color="secondary"
+            color="primary"
             disabled={fetchingOptions}
         >
-            <i className={`${classes.icon} fas fa-fw fa-undo`} />
+            <ReplayIcon />
         </Button>
     );
 
