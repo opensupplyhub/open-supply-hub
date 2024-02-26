@@ -20,7 +20,7 @@ class RowCompositeValidatorTest(unittest.TestCase):
             "extra_1": "Extra data",
         }
         res = validator.get_validated_row(faciliry_source)
-        
+
         expected = RowDTO(
             errors=[],
             name="Pants Hut",
@@ -35,7 +35,7 @@ class RowCompositeValidatorTest(unittest.TestCase):
         self.assertRowEqual(res, expected)
 
     def assertRowEqual(self, res, expected):
-        
+
         print(">>>> res: {}".format(res))
         print(">>>> expected: {}".format(expected))
 
@@ -48,7 +48,6 @@ class RowCompositeValidatorTest(unittest.TestCase):
         self.assertEqual(res.raw_json, expected.raw_json)
         self.assertEqual(res.country_code, expected.country_code)
         # self.assertEqual(res.fields, expected.fields)
-
 
     def test_get_missing_reuired_fields(self):
         validator = RowCompositeValidator()
