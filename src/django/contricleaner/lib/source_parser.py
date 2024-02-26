@@ -1,4 +1,3 @@
-
 from typing import List
 
 
@@ -8,6 +7,6 @@ class SourceParser:
 
     def parsed_header(self) -> List[str]:
         pass
-    
+
     def parsed_rows(self) -> List[dict]:
         pass

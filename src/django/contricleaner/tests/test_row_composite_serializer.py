@@ -54,7 +54,6 @@ class RowCompositeValidatorTest(unittest.TestCase):
         res = validator.get_validated_row(
             {
                 "country": "United States",
-                # "name": "Pants Hut",
                 "address": "123 Main St, Anywhereville, PA",
                 "sector": "Apparel",
                 "extra_1": "Extra data",
