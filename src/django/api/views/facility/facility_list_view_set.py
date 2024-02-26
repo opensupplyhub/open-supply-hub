@@ -184,35 +184,26 @@ class FacilityListViewSet(ModelViewSet):
                     f'FacilityList {replaces.pk} has already been replaced.'
                 )
 
-        # header, rows = self._extract_header_rows(csv_file, request)
-
-        contri_cleaner = SourceHandler(SourceParserCSV(request.data))
-        header = contri_cleaner.get_validated_header()
-
-        errors = header_errors(header)
-        if len(errors) > 0:
-            raise ValidationError(header.errors)
+        header, rows = self._extract_header_rows(csv_file, request)
 
         new_list = FacilityList(
             name=name,
             description=description,
             file_name=csv_file.name,
             file=csv_file,
-            header=header.raw_json,
+            header=header,
             replaces=replaces,
             match_responsibility=contributor.match_responsibility)
         new_list.save()
 
-        # csvreader = csv.reader(header.split('\n'), delimiter=',')
-        # for row in csvreader:
-        #     create_nonstandard_fields(row, contributor)
-
+        csvreader = csv.reader(header.split('\n'), delimiter=',')
+        for row in csvreader:
+            create_nonstandard_fields(row, contributor)
 
         source = Source.objects.create(
             contributor=contributor,
             source_type=Source.LIST,
             facility_list=new_list)
-
 
         items = [FacilityListItem(row_index=idx,
                                   raw_data=row,
