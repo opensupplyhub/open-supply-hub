@@ -1,7 +1,6 @@
-from countries.lib.get_country_code import get_country_code
-
 from contricleaner.lib.dto.row_dto import RowDTO
 from contricleaner.lib.helpers.clean import clean
+from countries.lib.get_country_code import get_country_code
 
 
 class RowSectorSerializer:

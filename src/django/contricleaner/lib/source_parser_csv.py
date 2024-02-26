@@ -1,5 +1,5 @@
-
 from typing import List
+
 from contricleaner.lib.source_parser import SourceParser
 
 
