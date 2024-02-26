@@ -1,10 +1,9 @@
 from typing import List
 
 from contricleaner.lib.dto.row_dto import RowDTO
-from contricleaner.lib.row_serializers.row_composite_serializer import (
-    RowCompositeSerializer,
-)
 from contricleaner.lib.source_parser import SourceParser
+
+from .row_serializers.row_composite_serializer import RowCompositeSerializer
 
 
 class ContriCleanerSerializer:
