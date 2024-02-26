@@ -3,6 +3,9 @@ import traceback
 import asyncio
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
+from django.contricleaner.lib.contri_cleaner_serializer import SourceHandler
+from contricleaner.lib.source_parser_json import SourceParserJSON
+from contricleaner.lib.dto.header_dto import header_errors
 
 from rest_framework.mixins import (
     ListModelMixin,
@@ -64,20 +67,17 @@ from ...facility_history import (
 from ...geocoding import geocode_address
 from ...mail import send_claim_facility_confirmation_email
 
-from ...helpers.helpers import clean
+
 from ...pagination import FacilitiesGeoJSONPagination
 from ...permissions import IsRegisteredAndConfirmed, IsSuperuser
 from ...processing import (
-    get_country_code,
     handle_external_match_process_result,
 )
-from ...sector_product_type_parser import RequestBodySectorProductTypeParser
 from ...serializers import (
     FacilityIndexSerializer,
     FacilityIndexDetailsSerializer,
     FacilityActivityReportSerializer,
     FacilityClaimSerializer,
-    FacilityCreateBodySerializer,
     FacilityCreateQueryParamsSerializer,
     FacilityMergeQueryParamsSerializer,
     FacilityQueryParamsSerializer,
@@ -500,25 +500,25 @@ class FacilitiesViewSet(ListModelMixin,
                               FeatureGroups.CAN_SUBMIT_FACILITY):
             raise PermissionDenied()
 
-        body_serializer = FacilityCreateBodySerializer(data=request.data)
-        body_serializer.is_valid(raise_exception=True)
+        # body_serializer = FacilityCreateBodySerializer(data=request.data)
+        # body_serializer.is_valid(raise_exception=True)
 
-        clean_name = clean(body_serializer.validated_data.get('name'))
-        if clean_name is None:
-            clean_name = ''
-            raise ValidationError({
-                "clean_name": [
-                    "This field may not be blank."
-                ]
-            })
-        clean_address = clean(body_serializer.validated_data.get('address'))
-        if clean_address is None:
-            clean_address = ''
-            raise ValidationError({
-                "clean_address": [
-                    "This field may not be blank."
-                ]
-            })
+        # clean_name = clean(body_serializer.validated_data.get('name'))
+        # if clean_name is None:
+        #     clean_name = ''
+        #     raise ValidationError({
+        #         "clean_name": [
+        #             "This field may not be blank."
+        #         ]
+        #     })
+        # clean_address = clean(body_serializer.validated_data.get('address'))
+        # if clean_address is None:
+        #     clean_address = ''
+        #     raise ValidationError({
+        #         "clean_address": [
+        #             "This field may not be blank."
+        #         ]
+        #     })
 
         params_serializer = FacilityCreateQueryParamsSerializer(
             data=request.query_params)
@@ -533,47 +533,37 @@ class FacilitiesViewSet(ListModelMixin,
             raise PermissionDenied('Cannot submit a private facility')
 
         parse_started = str(timezone.now())
+        print(">>>> request.body {}".format(request.data))
+        contri_cleaner = SourceHandler(SourceParserJSON(request.data))
+        header = contri_cleaner.get_validated_header()
 
+        errors = header_errors(header)
+        if len(errors) > 0:
+            raise ValidationError(header.errors)
+        
         source = Source.objects.create(
             contributor=request.user.contributor,
             source_type=Source.SINGLE,
             is_public=public_submission,
             create=should_create
         )
-
-        parser = RequestBodySectorProductTypeParser(
-            body_serializer.validated_data)
-        sector = parser.sectors
-        product_types = parser.product_types
-
-        cleaned_user_data = request.data.copy()
-        cleaned_user_data['sector'] = sector
-        if len(product_types) > 0:
-            cleaned_user_data['product_type'] = product_types
-        if 'sector_product_type' in cleaned_user_data:
-            del cleaned_user_data['sector_product_type']
-
-        country_code = get_country_code(
-            body_serializer.validated_data.get('country'))
-        name = body_serializer.validated_data.get('name')
-        address = body_serializer.validated_data.get('address')
-
-        fields = list(cleaned_user_data.keys())
-        create_nonstandard_fields(fields, request.user.contributor)
-
+        create_nonstandard_fields(header.non_standard_fields, request.user.contributor)
+        
+        vaildated_rows = contri_cleaner.get_validated_rows()
+        vaildated_row = vaildated_rows[0]
         item = FacilityListItem.objects.create(
             source=source,
             row_index=0,
             raw_data=json.dumps(request.data),
-            raw_json=request.data,
-            raw_header='',
+            raw_json=vaildated_row.raw_json,
+            raw_header=header.raw_header,
             status=FacilityListItem.PARSED,
-            name=name,
-            clean_name=clean_name,
-            address=address,
-            clean_address=clean_address,
-            country_code=country_code,
-            sector=sector,
+            name=vaildated_row.name,
+            clean_name=vaildated_row.clean_name,
+            address=vaildated_row.address,
+            clean_address=vaildated_row.clean_address,
+            country_code=vaildated_row.country_code,
+            sector=vaildated_row.sector,
             processing_results=[{
                 'action': ProcessingAction.PARSE,
                 'started_at': parse_started,
@@ -590,9 +580,17 @@ class FacilitiesViewSet(ListModelMixin,
             'geocoded_address': None,
             'status': item.status,
         }
+        
+        # cleaned_user_data = request.data.copy()
+        # cleaned_user_data['sector'] = sector
+        # if len(row.product_types) > 0:
+        #     cleaned_user_data['product_type'] = product_types
+        # if 'sector_product_type' in cleaned_user_data:
+        #     del cleaned_user_data['sector_product_type']
 
         try:
-            create_extendedfields_for_single_item(item, cleaned_user_data)
+            create_extendedfields_for_single_item(
+                item, vaildated_row.fields["cleaned_user_data"])
         except (core_exceptions.ValidationError, ValueError) as exc:
             error_message = ''
 
@@ -618,7 +616,7 @@ class FacilitiesViewSet(ListModelMixin,
 
         geocode_started = str(timezone.now())
         try:
-            geocode_result = geocode_address(address, country_code)
+            geocode_result = geocode_address(item.address, item.country_code)
             if geocode_result['result_count'] > 0:
                 item.status = FacilityListItem.GEOCODED
                 item.geocoded_point = Point(
@@ -665,7 +663,7 @@ class FacilitiesViewSet(ListModelMixin,
             return Response(result,
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Handle and produce message to Kafka with source_id data
+        # # Handle and produce message to Kafka with source_id data
         timer = 0
         timeout = 30
         facility_list_item_temp = None
@@ -681,7 +679,7 @@ class FacilitiesViewSet(ListModelMixin,
             asyncio.sleep(1)
             timer = timer + 1
 
-        # Handle results of "match" process from Dedupe Hub
+        # # Handle results of "match" process from Dedupe Hub
         result = handle_external_match_process_result(
             facility_list_item_temp.id,
             result,
