@@ -1,17 +1,9 @@
 from contricleaner.lib.dto.row_dto import RowDTO
 
-from django.contricleaner.lib.row_serializers.row_clean_field_serializer import (
-    RowCleanFieldSerializer,
-)
-from django.contricleaner.lib.row_serializers.row_country_serializer import (
-    RowCountrySerializer,
-)
-from django.contricleaner.lib.row_serializers.row_empty_serializer import (
-    RowEmptySerializer,
-)
-from django.contricleaner.lib.row_serializers.row_sector_serializer import (
-    RowSectorSerializer,
-)
+from .row_clean_field_serializer import RowCleanFieldSerializer
+from .row_composite_serializer import RowSectorSerializer
+from .row_country_serializer import RowCountrySerializer
+from .row_empty_serializer import RowEmptySerializer
 
 
 class RowCompositeSerializer:
