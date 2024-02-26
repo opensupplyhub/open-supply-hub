@@ -175,7 +175,7 @@ function FilterSidebarSearchTab({
             onClick={() => resetFilters(embed)}
             disableRipple
             className={classes.reset}
-            color="primary"
+            color="secondary"
             disabled={fetchingOptions}
         >
             <ReplayIcon />
