@@ -7,7 +7,7 @@ from django.test import TestCase
 class RowCleanedUserDataSerializerTest(TestCase):
     def setUp(self):
         self.serializer = RowCleanedUserDataSerializer()
-        self.row = {"name": "Company Name", "address": "1234 Main St",}
+        self.row = {"name": "Company Name", "address": "1234 Main St"}
         self.current = {"errors": []}
 
     def test_validate(self):
