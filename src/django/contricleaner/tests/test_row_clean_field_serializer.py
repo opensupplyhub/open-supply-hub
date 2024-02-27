@@ -1,6 +1,5 @@
-from contricleaner.lib.serializers.row_serializers.row_clean_field_serializer import (
-    RowCleanFieldSerializer,
-)
+from contricleaner.lib.serializers.row_serializers.row_clean_field_serializer \
+    import RowCleanFieldSerializer
 
 from django.test import TestCase
 

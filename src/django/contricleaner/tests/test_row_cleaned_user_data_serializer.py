@@ -1,6 +1,5 @@
-from contricleaner.lib.serializers.row_serializers.row_cleaned_user_data_serializer import (
-    RowCleanedUserDataSerializer,
-)
+from contricleaner.lib.serializers.row_serializers.\
+    row_cleaned_user_data_serializer import RowCleanedUserDataSerializer
 
 from django.test import TestCase
 

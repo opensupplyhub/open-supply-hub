@@ -2,10 +2,6 @@ from contricleaner.lib.helpers.clean import clean
 
 
 class RowCleanFieldSerializer:
-    '''
-    This class is responsible for cleaning a field and adding it to the row
-    '''
-
     def __init__(self, field: str, new_field: str) -> None:
         self.field = field
         self.new_field = new_field

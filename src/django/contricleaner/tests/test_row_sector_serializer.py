@@ -1,6 +1,5 @@
-from contricleaner.lib.serializers.row_serializers.row_sector_serializer import (
-    RowSectorSerializer,
-)
+from contricleaner.lib.serializers.row_serializers.row_sector_serializer \
+    import RowSectorSerializer
 
 from django.test import TestCase
 

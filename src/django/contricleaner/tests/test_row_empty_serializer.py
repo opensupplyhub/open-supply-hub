@@ -1,6 +1,5 @@
-from contricleaner.lib.serializers.row_serializers.row_empty_serializer import (
-    RowEmptySerializer,
-)
+from contricleaner.lib.serializers.row_serializers.row_empty_serializer \
+    import RowEmptySerializer
 
 from django.test import TestCase
 

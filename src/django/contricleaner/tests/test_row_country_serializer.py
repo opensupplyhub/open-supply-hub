@@ -1,6 +1,5 @@
-from contricleaner.lib.serializers.row_serializers.row_country_serializer import (
-    RowCountrySerializer,
-)
+from contricleaner.lib.serializers.row_serializers.row_country_serializer \
+    import RowCountrySerializer
 
 from django.test import TestCase
 
