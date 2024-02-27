@@ -19,7 +19,7 @@ from .utils import (
     format_numeric,
     can_user_see_detail,
     should_show_pending_claim_info,
-    get_contributor_name_from_facilityindexnew,
+    get_contributor_name_from_facilityindex,
     format_date
 )
 
@@ -171,7 +171,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         if approved_claim_info:
             claim_info = approved_claim_info
             claim_info['contributor'] = \
-                get_contributor_name_from_facilityindexnew(
+                get_contributor_name_from_facilityindex(
                     claim_info['contributor'],
                     user_can_see_detail)
             return claim_info
