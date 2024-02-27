@@ -1,5 +1,10 @@
+/* eslint no-unused-vars: 0 */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { connect } from 'react-redux';
+import { userPropType } from '../util/propTypes';
+import { logErrorToRollbar } from './../util/util';
+import { USER_DEFAULT_STATE } from '../util/constants';
 
 const styles = {
     hash: {
@@ -24,11 +29,8 @@ class ErrorBoundary extends Component {
 
     componentDidCatch(error) {
         this.setState({ error });
-
-        // Report error to Rollbar
-        if (window.Rollbar) {
-            window.Rollbar.error(error);
-        }
+        const { user } = this.props;
+        logErrorToRollbar(window, error, user);
     }
 
     // To decode this later, just run "atob(hashedStringHere)"
@@ -58,6 +60,19 @@ class ErrorBoundary extends Component {
 
 ErrorBoundary.propTypes = {
     children: PropTypes.node.isRequired,
+    user: userPropType,
 };
 
-export default ErrorBoundary;
+ErrorBoundary.defaultProps = {
+    user: USER_DEFAULT_STATE,
+};
+
+function mapStateToProps({
+    auth: {
+        user: { user },
+    },
+}) {
+    return { user };
+}
+
+export default connect(mapStateToProps)(ErrorBoundary);
