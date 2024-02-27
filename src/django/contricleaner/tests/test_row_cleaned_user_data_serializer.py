@@ -5,10 +5,10 @@ from contricleaner.lib.serializers.row_serializers.row_cleaned_user_data_seriali
 from django.test import TestCase
 
 
-class TestRowCleanedUserDataSerializer(TestCase):
+class RowCleanedUserDataSerializerTest(TestCase):
     def setUp(self):
         self.serializer = RowCleanedUserDataSerializer()
-        self.row = {"name": "John Doe", "email": "john@example.com"}
+        self.row = {"name": "Company Name", "email": "company@example.com"}
         self.current = {"errors": []}
 
     def test_validate(self):
