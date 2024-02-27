@@ -2,13 +2,18 @@ from contricleaner.lib.helpers.clean import clean
 
 
 class RowCleanFieldSerializer:
+    '''
+    This class is responsible for cleaning a field and adding it to the row
+    '''
+
     def __init__(self, field: str, new_field: str) -> None:
         self.field = field
         self.new_field = new_field
 
     def validate(self, row: dict, current: dict) -> dict:
         clean_value = clean(row[self.field])
-        if len(clean_value) == 0:
+
+        if not clean_value:
             current["errors"].append(
                 {
                     "message": "{} cannot be empty".format(self.new_field),
