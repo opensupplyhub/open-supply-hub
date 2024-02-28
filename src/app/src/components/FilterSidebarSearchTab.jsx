@@ -3,6 +3,7 @@ import { bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router';
 import Button from '@material-ui/core/Button';
+import ReplayIcon from '@material-ui/icons/Replay';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Tooltip from '@material-ui/core/Tooltip';
 import { withStyles } from '@material-ui/core/styles';
@@ -177,7 +178,7 @@ function FilterSidebarSearchTab({
             color="secondary"
             disabled={fetchingOptions}
         >
-            <i className={`${classes.icon} fas fa-fw fa-undo`} />
+            <ReplayIcon />
         </Button>
     );
 
