@@ -32,13 +32,13 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         echo -e \
         "\nRun docker-compose" \
         "run --rm --entrypoint /bin/sh django" \
-        "-c 'coverage run --data-file=./coverage/.coverage manage.py test --no-input ./api/tests ./countries/tests" \
+        "-c 'coverage run --data-file=./coverage/.coverage manage.py test --no-input ./api/tests ./countries/tests ./contricleaner/tests" \
         "&& coverage lcov --data-file=./coverage/.coverage -o ./coverage/coverage.lcov'" \
-        "--omit='./api/migrations/*,./api/tests/*,./countries/tests/*'"
+        "--omit='./api/migrations/*,./api/tests/*,./countries/tests/*, ./contricleaner/tests/*'"
         docker-compose \
             run --rm --entrypoint /bin/sh django \
-            -c "coverage run --data-file=./coverage/.coverage manage.py test --no-input ./api/tests ./countries/tests \
+            -c "coverage run --data-file=./coverage/.coverage manage.py test --no-input ./api/tests ./countries/tests ./contricleaner/tests \
             && coverage lcov --data-file=./coverage/.coverage -o ./coverage/coverage.lcov \
-            --omit='./api/migrations/*,./api/tests/*,./countries/tests/*'"
+            --omit='./api/migrations/*,./api/tests/*,./countries/tests/*,./contricleaner/tests/*'"
     fi
 fi
