@@ -198,11 +198,13 @@ class FacilitiesViewSet(ListModelMixin,
                                                  exclude_fields=exclude_fields)
             response = self.get_paginated_response(serializer.data)
             response.data['extent'] = extent
+            response.data['foobar'] = 'foobar 1'
             return response
 
         response_data = FacilityIndexSerializer(queryset, many=True,
                                                 context=context).data
         response_data['extent'] = extent
+        response_data['foobar'] = 'foobar 2'
         return Response(response_data)
 
     @swagger_auto_schema(manual_parameters=facility_parameters)

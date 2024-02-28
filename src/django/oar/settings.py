@@ -436,15 +436,17 @@ if GOOGLE_SERVER_SIDE_API_KEY is None:
     raise ImproperlyConfigured(
         'Invalid GOOGLE_SERVER_SIDE_API_KEY provided, must be set')
 
-if not DEBUG:
-    ROLLBAR = {
-        'access_token': os.getenv('ROLLBAR_SERVER_SIDE_ACCESS_TOKEN'),
-        'environment': ENVIRONMENT.lower(),
-        'root': BASE_DIR,
-        'suppress_reinit_warning': True,
-    }
-    import rollbar
-    rollbar.init(**ROLLBAR)
+#if not DEBUG:
+ROLLBAR_TOKEN = os.getenv('ROLLBAR_SERVER_SIDE_ACCESS_TOKEN')
+
+ROLLBAR = {
+    'access_token': os.getenv('ROLLBAR_SERVER_SIDE_ACCESS_TOKEN'),
+    'environment': ENVIRONMENT.lower(),
+    'root': BASE_DIR,
+    'suppress_reinit_warning': True,
+}
+import rollbar
+rollbar.init(**ROLLBAR)
 
 OAR_CLIENT_KEY = os.getenv('OAR_CLIENT_KEY')
 

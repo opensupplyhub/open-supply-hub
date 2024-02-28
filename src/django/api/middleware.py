@@ -1,6 +1,7 @@
 import sys
 import datetime
 import json
+import logging
 
 from django.utils import timezone
 from django.conf import settings
@@ -14,15 +15,37 @@ from django.http import HttpResponse
 from api.models import RequestLog
 from api.limits import get_api_block
 
+logger = logging.getLogger(__name__)
 
 def _report_error_to_rollbar(request, auth):
+
+    '''
+    user_agent = request.META.get('HTTP_USER_AGENT') | 'no-user-agent'
+    user_token = request.META.get('Authorization') | 'no-authentication-token'
+
+    logger.info(f'User agent: {user_agent}')
+    logger.info(f'User token: {user_token}')
+    '''
+    for header, value in request.headers.items():
+        logger.info(f'{header}: {value}')
+
     ROLLBAR = getattr(settings, 'ROLLBAR', {})
+    logger.info(f'ROLLBAR object is: {ROLLBAR}')
+    logger.info(f'ROLLBAR token is: {settings.ROLLBAR_TOKEN}')
+    # Enable Rollbar in settings.py file
+    logger.info(f'GOOGLE_SERVER_SIDE_API_KEY object is: {settings.GOOGLE_SERVER_SIDE_API_KEY}')
+    logger.info(f'Auth is: {auth}')
+    logger.info(f'Request is: {request}')
     if ROLLBAR:
+        logger.info('Reporting error to the Rollbar')
         import rollbar
         rollbar.report_exc_info(
             sys.exc_info(),
             extra_data={'auth': auth})
 
+def function_that_raises_error():
+    logger.info('Init error throwing')
+    raise Exception("This is a mocked error")
 
 class RequestLogMiddleware:
     def __init__(self, get_response):
@@ -31,8 +54,11 @@ class RequestLogMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
 
+        logger.info('Get response from middleware')
         auth = None
         try:
+            function_that_raises_error()
+            '''
             if request.user and request.user.is_authenticated:
                 auth = get_authorization_header(request)
                 if auth and auth.split()[0].lower() == 'token'.encode():
@@ -44,8 +70,10 @@ class RequestLogMiddleware:
                         path=request.get_full_path(),
                         response_code=response.status_code,
                     )
+            '''
         except Exception:
             try:
+                logger.info('Pass error to the Rollbar')
                 _report_error_to_rollbar(request, auth)
             except Exception:
                 pass  # We don't want this logging middleware to fail a request
