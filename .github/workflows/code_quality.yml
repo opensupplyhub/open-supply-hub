@@ -143,6 +143,7 @@ jobs:
         with:
           pattern: "*-unittest-code-cov"
       - name: Django-api - Generate code cov report
+        id: code-coverage-django-api
         uses: barecheck/code-coverage-action@v1
         with:
           barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
@@ -154,6 +155,7 @@ jobs:
           app-name: Django-api
           workspace-path: "./src/django/api"
       - name: Contricleaner - Generate code cov report
+        id: code-coverage-contricleaner
         uses: barecheck/code-coverage-action@v1
         with:
           barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
@@ -165,6 +167,7 @@ jobs:
           app-name: Contricleaner
           workspace-path: "./src/django/contricleaner"
       - name: Countries - Generate code cov report
+        id: code-coverage-countries
         uses: barecheck/code-coverage-action@v1
         with:
           barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
