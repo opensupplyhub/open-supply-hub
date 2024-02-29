@@ -4,6 +4,10 @@ from abc import ABC, abstractmethod
 
 class DataParser(ABC):
     @abstractmethod
+    def __init__(self):
+        pass
+
+    @abstractmethod
     def parse(self, entity, request):
         pass
 
