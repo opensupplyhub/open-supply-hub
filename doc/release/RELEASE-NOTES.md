@@ -19,7 +19,7 @@ Use the format below to document information about the new release.
 * *Describe scheme changes here.*
 
 ### Code/API changes
-* [OSDEV-832](https://opensupplyhub.atlassian.net/browse/OSDEV-832) API. Provide admins with a way to retrieve a user's call count in real time. Admin can see the report `API requests by user` with the number of successful requests a user has made up to the current date.
+* [OSDEV-832](https://opensupplyhub.atlassian.net/browse/OSDEV-832) API. Provide admins with a way to retrieve a user's call count in real time. Admin can see the report `API requests by user` with the number of successful and unsuccessful requests a user has made up to the current date.
 
 ### Architecture/Environment changes
 * *Describe architecture/environment changes here.*
