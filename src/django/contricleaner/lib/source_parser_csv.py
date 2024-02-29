@@ -12,3 +12,16 @@ class SourceParserCsv(SourceParser):
 
     def parsed_rows(self) -> List[dict]:
         pass
+
+
+# # List[dict] CSV and XLSX
+# [
+#     {
+#         address: 'value',
+#         name: 'name'
+#     }, # facility list item
+#     {
+#         address: 'value',
+#         name: 'name'
+#     } # facility list item
+# ]

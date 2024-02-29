@@ -13,3 +13,12 @@ class SourceParserJSON(SourceParser):
 
     def parsed_rows(self) -> List[dict]:
         return [self.data]
+
+
+# # List[dict] JSON = array with one object
+# [
+#     {
+#         address: 'value',
+#         name: 'name'
+#     } # facility list item
+# ]
