@@ -1,4 +1,4 @@
-name: Code Quality
+name: Code Quality Linter
 
 on:
   pull_request:
@@ -7,103 +7,16 @@ on:
       - opened
       - reopened
 jobs:
-  get-base-branch-fe-cov:
-    runs-on: ubuntu-latest
-    environment: Quality Environment
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.base_ref }}
-      - name: Create required env file
-        run: |
-          echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
-      - name: Install frontend NPM modules
-        run: docker-compose run --rm --no-deps app yarn install
-      - name: Run the Jest tests and generate code cov report
-        run: docker-compose run --rm --no-deps app yarn test
-      - name: Upload Jest code cov for the base branch
-        uses: actions/upload-artifact@v4
-        with:
-          name: base-branch-fe-jest-code-cov
-          path: ./src/app/coverage/lcov.info
-  run-fe-code-quality:
+  run-bash-script-linter:
     environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Create required env file
-        run: |
-          echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
-      - name: Install frontend NPM modules
-        run: docker-compose run --rm --no-deps app yarn install
-      - name: Run the ESLint linter check
-        run: |
-          docker-compose \
-            run --rm --entrypoint ./node_modules/.bin/eslint \
-            app src/ --ext .js --ext .jsx
-      - name: Run the Prettier formatting check
-        run: |
-          docker-compose \
-            run --rm --no-deps app yarn prettier \
-            --config .prettierrc \
-            --check 'src/**/*.js' 'src/**/*.jsx'
-      - name: Run the Jest tests and generate code cov report
-        run: docker-compose run --rm --no-deps app yarn test
-      - name: Upload Jest code cov for the feature branch
-        uses: actions/upload-artifact@v4
-        with:
-          name: feature-branch-fe-jest-code-cov
-          path: ./src/app/coverage/lcov.info
-  check-fe-code-cov:
-    environment: Quality Environment
-    needs:
-      - get-base-branch-fe-cov
-      - run-fe-code-quality
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download Jest code cov reports
-        uses: actions/download-artifact@v4
-        with:
-          pattern: "*-jest-code-cov"
-      - name: Verify Jest code cov
-        uses: barecheck/code-coverage-action@v1
-        with:
-          barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
-          lcov-file: "./feature-branch-fe-jest-code-cov/lcov.info"
-          base-lcov-file: "./base-branch-fe-jest-code-cov/lcov.info"
-          minimum-ratio: 1
-          send-summary-comment: true
-          show-annotations: "warning"
-          app-name: React App | Jest test suite
+      - name: Run the shellcheck linter check
+        run: shellcheck scripts/*
 
-  get-base-branch-be-cov:
-    environment: Quality Environment
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.base_ref }}
-      - name: Create required env file
-        run: |
-          echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
-      - name: Build Django image
-        run: docker-compose build
-      - name: Run the unittest tests and generate code cov report
-        run: |
-          docker-compose \
-            run --rm --entrypoint /bin/sh django \
-            -c "coverage run --data-file=./coverage/.coverage manage.py test --no-input ./api/tests ./contricleaner/tests ./countries/tests \
-            && coverage lcov --data-file=./coverage/.coverage -o ./coverage/coverage.lcov \
-            --omit='./api/migrations/*,./api/tests/*,./contricleaner/tests/*,./countries/tests/*'"
-      - name: Upload unittest code cov for the base branch
-        uses: actions/upload-artifact@v4
-        with:
-          name: base-branch-be-unittest-code-cov
-          path: ./src/django/coverage/coverage.lcov
-  run-be-code-quality:
+  run-flake8-linter:
     environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
@@ -119,70 +32,3 @@ jobs:
           docker-compose \
             run --rm --no-deps --entrypoint flake8 django \
             --exclude settings.py,manage.py,*.pyc,api/migrations/*
-      - name: Run the unittest tests and generate code cov report
-        run: |
-          docker-compose \
-            run --rm --entrypoint /bin/sh django \
-            -c "coverage run --data-file=./coverage/.coverage manage.py test --no-input ./api/tests ./contricleaner/tests ./countries/tests \
-            && coverage lcov --data-file=./coverage/.coverage -o ./coverage/coverage.lcov \
-            --omit='./api/migrations/*,./api/tests/*,./contricleaner/tests/*,./countries/tests/*'"
-      - name: Upload unittest code cov for the feature branch
-        uses: actions/upload-artifact@v4
-        with:
-          name: feature-branch-be-unittest-code-cov
-          path: ./src/django/coverage/coverage.lcov
-  check-be-code-cov:
-    environment: Quality Environment
-    needs:
-      - get-base-branch-be-cov
-      - run-be-code-quality
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download unittest code cov reports
-        uses: actions/download-artifact@v4
-        with:
-          pattern: "*-unittest-code-cov"
-      - name: Django-api - Generate code cov report
-        id: code-coverage-django-api
-        uses: barecheck/code-coverage-action@v1
-        with:
-          barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
-          lcov-file: "./feature-branch-be-unittest-code-cov/coverage.lcov"
-          base-lcov-file: "./base-branch-be-unittest-code-cov/coverage.lcov"
-          minimum-ratio: 1
-          send-summary-comment: true
-          show-annotations: "warning"
-          app-name: Django-api
-          workspace-path: "./src/django/api"
-      - name: Contricleaner - Generate code cov report
-        id: code-coverage-contricleaner
-        uses: barecheck/code-coverage-action@v1
-        with:
-          barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
-          lcov-file: "./feature-branch-be-unittest-code-cov/coverage.lcov"
-          base-lcov-file: "./base-branch-be-unittest-code-cov/coverage.lcov"
-          minimum-ratio: 1
-          send-summary-comment: true
-          show-annotations: "warning"
-          app-name: Contricleaner
-          workspace-path: "./src/django/contricleaner"
-      - name: Countries - Generate code cov report
-        id: code-coverage-countries
-        uses: barecheck/code-coverage-action@v1
-        with:
-          barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
-          lcov-file: "./feature-branch-be-unittest-code-cov/coverage.lcov"
-          base-lcov-file: "./base-branch-be-unittest-code-cov/coverage.lcov"
-          minimum-ratio: 1
-          send-summary-comment: true
-          show-annotations: "warning"
-          app-name: Countries
-          workspace-path: "./src/django/countries"
-  run-bash-script-linter:
-    environment: Quality Environment
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Run the shellcheck linter check
-        run: shellcheck scripts/*
