@@ -108,9 +108,9 @@ class ApiLimitTest(TestCase):
     def test_limit_warning_sent_once(self):
         for x in range(10):
             r_log_one = RequestLog.objects.create(user=self.user_one,
-                                                response_code=200)
+                                                  response_code=200)
             r_log_two = RequestLog.objects.create(user=self.user_two,
-                                                response_code=200)
+                                                  response_code=200)
 
             r_log_one.created_at = self.now
             r_log_one.save()
@@ -149,9 +149,9 @@ class ApiLimitTest(TestCase):
 
         for x in range(11):
             r_log_one = RequestLog.objects.create(user=self.user_one,
-                                                response_code=200)
+                                                  response_code=200)
             r_log_two = RequestLog.objects.create(user=self.user_two,
-                                                response_code=200)
+                                                  response_code=200)
 
             r_log_one.created_at = self.now
             r_log_one.save()
