@@ -1,0 +1,44 @@
+[
+  {
+    "name": "dd",
+    "image": "${image}",
+    "cpu": 0,
+    "command": [
+      "uvicorn",
+      "app.main:app",
+      "--host",
+      "0.0.0.0",
+      "--port",
+      "80",
+      "--workers",
+      "8",
+      "--reload"
+    ],
+    "environment": [
+        { "name": "ENV", "value": "${env}" },
+        { "name": "POSTGRES_HOST", "value": "${postgres_host}" },
+        { "name": "POSTGRES_PORT", "value": "${postgres_port}" },
+        { "name": "POSTGRES_USER", "value": "${postgres_user}" },
+        { "name": "POSTGRES_PASSWORD", "value": "${postgres_password}" },
+        { "name": "POSTGRES_DB", "value": "${postgres_db}" },
+        { "name": "ROLLBAR_SERVER_SIDE_ACCESS_TOKEN", "value": "${rollbar_server_side_access_token}" },
+        { "name": "GIT_COMMIT", "value": "${git_commit}" },
+        { "name": "BOOTSTRAP_SERVERS", "value": "${bootstrap_servers}" },
+        { "name": "CONSUMER_GROUP_ID", "value": "${consumer_group_id}" },
+        { "name": "CONSUMER_CLIENT_ID", "value": "${consumer_client_id}" },
+        { "name": "TOPIC_DEDUPE_BASIC_NAME", "value": "${topic_dedup_basic_name}" },
+        { "name": "SECURITY_PROTOCOL", "value": "${security_protocol}" },
+        { "name": "DEDUPE_HUB_LIVE", "value": "${dedupe_hub_live}" },
+        { "name": "DEDUPE_HUB_NAME", "value": "${dedupe_hub_name}" },
+        { "name": "DEDUPE_HUB_VERSION", "value": "${dedupe_hub_version}" }
+    ],
+    "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+            "awslogs-group": "${log_group_name}",
+            "awslogs-region": "${aws_region}",
+            "awslogs-stream-prefix": "dd"
+        }
+    }
+  }
+]
