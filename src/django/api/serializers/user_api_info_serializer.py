@@ -1,6 +1,5 @@
 from django.utils import timezone
 from api.models import (RequestLog, ApiLimit)
-from api.limitation.date.date_limitation_context import DateLimitationContext
 from api.limitation.date.monthly_date_limitation import MonthlyDateLimitation
 from api.limitation.date.yearly_date_limitation import YearlyDateLimitation
 from django.core.exceptions import ObjectDoesNotExist
@@ -26,16 +25,14 @@ class UserApiInfoSerializer:
             apiLimit = None
             renewal_period = ''
 
-        context = DateLimitationContext()
-
         if renewal_period == '':
             return {}
         if renewal_period == 'MONTHLY':
-            context.set_strategy(MonthlyDateLimitation())
+            date_limitation = MonthlyDateLimitation()
         if renewal_period == 'YEARLY':
-            context.set_strategy(YearlyDateLimitation())
+            date_limitation = YearlyDateLimitation()
 
-        date_limitation = context.execute(date)
+        date_limitation.execute(date)
 
         return {
                 "start_date": date_limitation.get_start_date(),
