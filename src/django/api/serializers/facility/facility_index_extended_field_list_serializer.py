@@ -1,8 +1,8 @@
 from typing import Union
 
 from .utils import (
-    get_contributor_name_from_facilityindexnew,
-    get_contributor_id_from_facilityindexnew,
+    get_contributor_name_from_facilityindex,
+    get_contributor_id_from_facilityindex,
     format_date
 )
 
@@ -67,7 +67,7 @@ class FacilityIndexExtendedFieldListSerializer:
         embed_mode_active = self.context.get('embed_mode_active')
         if embed_mode_active:
             return None
-        return get_contributor_name_from_facilityindexnew(
+        return get_contributor_name_from_facilityindex(
             extended_field.get('contributor'),
             self._should_display_contributor(extended_field))
 
@@ -75,7 +75,7 @@ class FacilityIndexExtendedFieldListSerializer:
         embed_mode_active = self.context.get('embed_mode_active')
         if embed_mode_active:
             return None
-        return get_contributor_id_from_facilityindexnew(
+        return get_contributor_id_from_facilityindex(
             extended_field.get('contributor'),
             self._should_display_contributor(extended_field)
         )
