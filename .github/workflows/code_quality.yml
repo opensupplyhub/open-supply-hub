@@ -32,3 +32,24 @@ jobs:
           docker-compose \
             run --rm --no-deps --entrypoint flake8 django \
             --exclude settings.py,manage.py,*.pyc,api/migrations/*
+
+  run-eslint-linter:
+    environment: Quality Environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run the ESLint linter check
+        run: |
+          docker-compose \
+            run --rm --entrypoint ./node_modules/.bin/eslint \
+            app src/ --ext .js --ext .jsx
+
+  run-prettier-formatter:
+    environment: Quality Environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run the Prettier formatting check
+        run: |
+          docker-compose \
+            run --rm --no-deps app yarn prettier \
+            --config .prettierrc \
+            --check 'src/**/*.js' 'src/**/*.jsx'
