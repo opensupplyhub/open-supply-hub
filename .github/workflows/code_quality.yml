@@ -1,4 +1,4 @@
-name: Code Quality Linter
+name: Code Quality Formatting
 
 on:
   pull_request:
@@ -37,6 +37,13 @@ jobs:
     environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Create required env file
+        run: |
+          echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
+      - name: Install frontend NPM modules
+        run: docker-compose run --rm --no-deps app yarn install
       - name: Run the ESLint linter check
         run: |
           docker-compose \
@@ -47,6 +54,13 @@ jobs:
     environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Create required env file
+        run: |
+          echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
+      - name: Install frontend NPM modules
+        run: docker-compose run --rm --no-deps app yarn install
       - name: Run the Prettier formatting check
         run: |
           docker-compose \
