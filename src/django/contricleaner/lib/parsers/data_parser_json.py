@@ -1,9 +1,9 @@
 from typing import List
 
-from contricleaner.lib.source_parser import SourceParser
+from django.contricleaner.lib.parsers.data_parser import DataParser
 
 
-class SourceParserJSON(SourceParser):
+class DataParserJSON(DataParser):
 
     def __init__(self, data: dict):
         self.data = data
@@ -13,4 +13,3 @@ class SourceParserJSON(SourceParser):
 
     def parsed_rows(self) -> List[dict]:
         return [self.data]
-
