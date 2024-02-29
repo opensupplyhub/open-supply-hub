@@ -1,7 +1,8 @@
 from contricleaner.lib.helpers.clean import clean
+from .row_serializer import RowSerializer
 
 
-class RowCleanFieldSerializer:
+class RowCleanFieldSerializer(RowSerializer):
     def __init__(self, field: str, new_field: str) -> None:
         self.field = field
         self.new_field = new_field
