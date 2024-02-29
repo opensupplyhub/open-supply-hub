@@ -14,16 +14,9 @@ from django.db import connection
 from django.db.models import Func, F, Q
 from api.models import HistoricalFacility, FacilityListItem, ExtendedField
 from api.constants import ProcessingAction, DateFormats
+from oar.rollbar import report_error_to_rollbar
 
 _root = os.path.abspath(os.path.dirname(__file__))
-
-
-def _report_error_to_rollbar(message, extra_data=None):
-    ROLLBAR = getattr(settings, 'ROLLBAR', {})
-    if ROLLBAR:
-        import rollbar
-        rollbar.report_message(message, level='error', extra_data=extra_data)
-
 
 def sort_by_first_column(array, reverse=False):
     return sorted(array, key=lambda x: x[0], reverse=reverse)
@@ -184,13 +177,17 @@ def processing_type_facility_type_matched():
                     temp_data[matched_values[i][3]].add(raw_value.strip())
                     temp_data[matched_values[i][2]].add(raw_value.strip())
         else:
-            _report_error_to_rollbar((
+            report_error_to_rollbar(
+                message=(
                     'processing_type_facility_type_matched encountered '
                     'mismatched processing type value count'
-                ), extra_data={
+                ), 
+                level='error', 
+                extra_data={
                     'deduped_values': json.dumps(values),
                     'matched_values': json.dumps(matched_values),
-                })
+                }
+            )
 
     data = dict()
     for (raw_value, match_values) in temp_data.items():
@@ -215,13 +212,17 @@ def processing_type_facility_type_unmatched():
                 if matched_values[i][3] is None:
                     data[raw_value.strip()] = data[raw_value.strip()] + 1
         else:
-            _report_error_to_rollbar((
+            report_error_to_rollbar(
+                message=(
                     'processing_type_facility_type_unmatched encountered '
                     'mismatched processing type value count'
-                ), extra_data={
+                ), 
+                level='error', 
+                extra_data={
                     'deduped_values': json.dumps(values),
                     'matched_values': json.dumps(matched_values),
-                })
+                }
+            )
 
     rows = sort_by_first_column(data.items())
     return [['processing_type_facility_type', 'times_submitted'], rows]
