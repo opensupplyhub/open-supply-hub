@@ -33,7 +33,7 @@ jobs:
             run --rm --no-deps --entrypoint flake8 django \
             --exclude settings.py,manage.py,*.pyc,api/migrations/*
 
-  run-eslint-linter:
+  run-eslint-linter-and-prettier-formatter:
     environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
@@ -49,18 +49,6 @@ jobs:
           docker-compose \
             run --rm --entrypoint ./node_modules/.bin/eslint \
             app src/ --ext .js --ext .jsx
-
-  run-prettier-formatter:
-    environment: Quality Environment
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Create required env file
-        run: |
-          echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
-      - name: Install frontend NPM modules
-        run: docker-compose run --rm --no-deps app yarn install
       - name: Run the Prettier formatting check
         run: |
           docker-compose \
