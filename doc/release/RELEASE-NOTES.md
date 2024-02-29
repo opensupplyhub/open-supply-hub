@@ -20,7 +20,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe code/API changes here.*
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* [OSDEV-910](https://opensupplyhub.atlassian.net/browse/OSDEV-910) Add separated code quality pipelines for contricleaner, countries, django-api and frontend. After checking, it creates a code coverage report showing each particular app's code coverage. Add separated code quality jobs for code formatters.
 
 ### Bugfix
 * [OSDEV-716](https://opensupplyhub.atlassian.net/browse/OSDEV-716) Search. Lost refresh icon. The refresh icon has been made visible.
