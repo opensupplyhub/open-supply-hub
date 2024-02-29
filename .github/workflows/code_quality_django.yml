@@ -41,11 +41,6 @@ jobs:
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Build Django image
         run: docker-compose build
-      # - name: Run the Flake8 linter check
-      #   run: |
-      #     docker-compose \
-      #       run --rm --no-deps --entrypoint flake8 django \
-      #       --exclude settings.py,manage.py,*.pyc,api/migrations/*
       - name: Run the unittest tests and generate code cov report
         run: |
           docker-compose \
