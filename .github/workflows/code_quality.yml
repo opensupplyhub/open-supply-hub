@@ -142,7 +142,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: "*-unittest-code-cov"
-
       - name: Django-api - Generate code cov report
         id: code-coverage
         uses: barecheck/code-coverage-action@v1
@@ -155,7 +154,6 @@ jobs:
           show-annotations: "warning"
           app-name: Django-api
           workspace-path: "./src/django/api"
-
       - name: Contricleaner - Generate code cov report
         id: code-coverage
         uses: barecheck/code-coverage-action@v1
@@ -168,7 +166,6 @@ jobs:
           show-annotations: "warning"
           app-name: Contricleaner
           workspace-path: "./src/django/contricleaner"
-
       - name: Countries - Generate code cov report
         id: code-coverage
         uses: barecheck/code-coverage-action@v1
