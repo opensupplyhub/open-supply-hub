@@ -155,6 +155,62 @@ class FacilitiesViewSet(ListModelMixin,
                     }
                 ]
             }
+
+        ### Sample Response - parameter 'detail' equal 'true'
+            {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "id": "OS_ID_1",
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [1, 1]
+                        },
+                        "properties": {
+                            "name": "facility_name_1",
+                            "address" "facility address_1",
+                            "country_code": "US",
+                            "country_name": "United States",
+                            "os_id": "OS_ID_1",
+                            "contributors": [
+                                {
+                                    "id": 1,
+                                    "name": "contributor_list_name",
+                                    "is_verified": false,
+                                    "contributor_name": "contributor_name",
+                                    "list_name": "list_name"
+                                }
+                            ],
+                            "has_approved_claim": false,
+                            "is_closed": null,
+                            "contributor_fields": [],
+                            "extended_fields": {
+                                "field_name": [
+                                    {
+                                        "value": "field_value",
+                                        "field_name": "field_name",
+                                        "contributor_id": 1,
+                                        "contributor_name": "contributor_name",
+                                        "updated_at": "0000-00-00T00:00:00"
+                                    }
+                                ]
+                            }
+                            "sector": [
+                                {
+                                    "updated_at": "0000-00-00T00:00:00",
+                                    "contributor_id": 1,
+                                    "contributor_name": "contributor_name",
+                                    "values": [
+                                        "sector_value"
+                                    ],
+                                    "is_from_claim": false
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
         """
         params = FacilityQueryParamsSerializer(data=request.query_params)
 
@@ -189,7 +245,10 @@ class FacilitiesViewSet(ListModelMixin,
 
             if not should_serialize_details:
                 exclude_fields.extend([
-                    'contributor_fields', 'extended_fields', 'contributors'])
+                    'contributor_fields',
+                    'extended_fields',
+                    'contributors',
+                    'sector'])
             if not should_serialize_number_of_public_contributors:
                 exclude_fields.extend(['number_of_public_contributors'])
 

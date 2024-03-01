@@ -22,6 +22,11 @@ on:
         - Staging
         - Production
         default: Development
+      deploy-plan-only:
+        description: 'Plan only'     
+        required: false
+        type: boolean
+        default: false
 
 env:
   GITHUB_ENV_NAME: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
@@ -38,14 +43,6 @@ jobs:
           string: ${{ vars.ENV_NAME }}
       - name: Checkout repo
         uses: actions/checkout@v4
-      
-      - name: Checkout terraform
-        uses: actions/checkout@v4
-        with:
-          repository: 'opensupplyhub/ci-deployment'
-          path: 'deployment'
-          token: ${{ secrets.PAT }}
-          ref: 'main'
 
       - name: Copy tfvars from S3 bucket for ${{ vars.ENV_NAME }}
         run: |
@@ -82,6 +79,7 @@ jobs:
     needs: init-and-plan
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -97,13 +95,6 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Checkout terraform
-        uses: actions/checkout@v4
-        with:
-          repository: 'opensupplyhub/ci-deployment'
-          path: 'deployment'
-          token: ${{ secrets.PAT }}
-          ref: 'main'
 
       - name: Get planfile from S3 bucket for ${{ vars.ENV_NAME }}
         run: aws s3 cp "s3://${{ env.SETTINGS_BUCKET }}/terraform/${{ env.SETTINGS_BUCKET }}.tfplan" "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfplan"
@@ -125,6 +116,7 @@ jobs:
     needs: apply
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
