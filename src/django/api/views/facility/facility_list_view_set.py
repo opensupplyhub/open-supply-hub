@@ -229,6 +229,7 @@ class FacilityListViewSet(ModelViewSet):
         serializer = self.get_serializer(new_list)
         return Response(serializer.data)
 
+    # TODO: revert this change. For testing purposes.
     @transaction.atomic
     @action(detail=False, methods=['POST'])
     def createlist(self, request):
