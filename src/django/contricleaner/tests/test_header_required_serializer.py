@@ -18,7 +18,7 @@ class HeaderRequiredSerializerTest(unittest.TestCase):
 
         res_one = self.serializer.validate(headers_one, self.current)
 
-        self.assertCountEqual(len(res_one["errors"]), 0)
+        self.assertEqual(len(res_one["errors"]), 0)
 
         headers_two = ["name",
                        "country",
@@ -26,4 +26,4 @@ class HeaderRequiredSerializerTest(unittest.TestCase):
 
         res_two = self.serializer.validate(headers_two, self.current)
 
-        self.assertCountEqual(len(res_two["errors"]), 1)
+        self.assertEqual(len(res_two["errors"]), 1)
