@@ -6,7 +6,7 @@ import re
 from django.core.exceptions import ValidationError
 from openpyxl.utils import get_column_letter
 
-from contricleaner.lib.parsers.data_parser import DataParser
+from django.contricleaner.lib.parsers.source_parser import DataParser
 
 
 def try_parse_int_from_float(value):
@@ -136,7 +136,7 @@ def parse_xlsx(file, request):
         raise ValidationError('Error parsing Excel (.xlsx) file')
 
 
-class DataParserCSV(DataParser):
+class SourceParserCSV(DataParser):
     def __init__(self, file):
         self.__file = file
 
@@ -158,7 +158,7 @@ class DataParserCSV(DataParser):
                 except UnicodeDecodeError:
                     # _report_error_to_rollbar(file, request)
                     raise ValidationError('Unsupported file encoding. Please '
-                                        'submit a UTF-8 CSV.')
+                                          'submit a UTF-8 CSV.')
 
         return header, rows
 

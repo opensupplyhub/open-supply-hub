@@ -6,7 +6,7 @@ from contricleaner.lib.serializers.row_serializers.row_composite_serializer \
 from contricleaner.lib.parsers.data_parser import DataParser
 
 
-class ContriCleanerContext:
+class ContriCleanerSerializer:
     def __init__(self, source_parser: DataParser) -> None:
         self.__source_parser = source_parser
         self.row_serializer = RowCompositeSerializer()

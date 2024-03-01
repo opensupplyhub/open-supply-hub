@@ -2,7 +2,7 @@ from typing import List
 from abc import ABC, abstractmethod
 
 
-class DataParser(ABC):
+class SourceParser(ABC):
     @abstractmethod
     def __init__(self):
         pass

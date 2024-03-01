@@ -5,11 +5,11 @@ from functools import reduce
 from api.helpers.helpers import (
     get_raw_json,
 )
-from contricleaner.lib.context.contri_cleaner_context import (
-    ContriCleanerContext
+from contricleaner.lib.serializers.contri_cleaner_serializer import (
+    ContriCleanerSerializer
 )
-from contricleaner.lib.parsers.data_parser_csv import DataParserCSV
-from contricleaner.lib.parsers.data_parser_xlsx import DataParserXLSX
+from django.contricleaner.lib.parsers.source_parser_csv import SourceParserCSV
+from django.contricleaner.lib.parsers.source_parser_xlsx import SourceParserXLSX
 
 from oar.settings import (
     MAX_UPLOADED_FILE_SIZE_IN_BYTES,
@@ -191,12 +191,12 @@ class FacilityListViewSet(ModelViewSet):
 
         ext = uploaded_file.name[-4:]
         if ext == 'xlsx':
-            contri_cleaner = ContriCleanerContext(
-                DataParserXLSX(uploaded_file, request)
+            contri_cleaner = ContriCleanerSerializer(
+                SourceParserXLSX(uploaded_file, request)
             )
         elif ext == '.csv':
-            contri_cleaner = ContriCleanerContext(
-                DataParserCSV(uploaded_file, request)
+            contri_cleaner = ContriCleanerSerializer(
+                SourceParserCSV(uploaded_file, request)
             )
         else:
             raise ValidationError(
