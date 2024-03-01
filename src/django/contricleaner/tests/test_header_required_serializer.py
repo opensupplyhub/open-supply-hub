@@ -1,7 +1,8 @@
 import unittest
 
-from lib.serializers.header_serializers.header_required_serializer \
-    import HeaderRequiredSerializer
+from contricleaner.lib.serializers.header_serializers \
+    .header_required_serializer \
+        import HeaderRequiredSerializer
 
 
 class HeaderRequiredSerializerTest(unittest.TestCase):
