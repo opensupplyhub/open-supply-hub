@@ -19,22 +19,9 @@ from api.models import (Facility,
                         HistoricalFacility,
                         HistoricalFacilityMatch)
 from api.helpers.helpers import clean
+from oar.rollbar import report_error_to_rollbar
 
 logger = logging.getLogger(__name__)
-
-
-def _try_reporting_error_to_rollbar(extra_data=dict):
-    try:
-        ROLLBAR = getattr(settings, 'ROLLBAR', {})
-        if ROLLBAR:
-            import rollbar
-            rollbar.report_exc_info(
-                sys.exc_info(),
-                extra_data=extra_data)
-    except Exception:
-        logger.error('Failed to post exception to Rollbar: {} {}'.format(
-            str(extra_data), traceback.format_exc()))
-
 
 def match_detail_to_extended_facility_id(facility_id, match_id):
     return '{}_MATCH-{}'.format(facility_id, match_id)
@@ -738,11 +725,11 @@ class GazetteerCache:
                             cls._gazetter.index(record)
                     cls._match_version = item['history_id']
 
-        except Exception:
-            extra_info = {
+        except Exception as e:
+            extra_data = {
                 'last_successful_facility_version': cls._facility_version,
                 'last_successful_match_version': cls._match_version}
-            _try_reporting_error_to_rollbar(extra_info)
+            report_error_to_rollbar(extra_data=extra_data, exception=e)
             raise
 
         return cls._gazetter
