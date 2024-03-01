@@ -90,25 +90,143 @@ class FacilityListViewSet(ModelViewSet):
                     f'{CsvHeaderField.ADDRESS} fields.'
                 ))
 
-    # def _extract_header_rows(self, file, request):
-    #     ext = file.name[-4:]
+    def _extract_header_rows(self, file, request):
+        ext = file.name[-4:]
 
-    #     if ext == 'xlsx':
-    #         header, rows = parse_xlsx(file, request)
-    #     elif ext == '.csv':
-    #         header, rows = parse_csv(file, request)
-    #     else:
-    #         raise ValidationError(
-    #             'Unsupported file type. Please '
-    #             'submit Excel or UTF-8 CSV.'
-    #         )
+        if ext == 'xlsx':
+            header, rows = parse_xlsx(file, request)
+        elif ext == '.csv':
+            header, rows = parse_csv(file, request)
+        else:
+            raise ValidationError(
+                'Unsupported file type. Please '
+                'submit Excel or UTF-8 CSV.'
+            )
 
-    #     self._validate_header(header)
-    #     rows = map(clean_row, rows)
-    #     return header, rows
+        self._validate_header(header)
+        rows = map(clean_row, rows)
+        return header, rows
 
     @transaction.atomic
     def create(self, request):
+        """
+        Upload a new Facility List.
+
+        ## Request Body
+
+        *Required*
+
+        `file` (`file`): CSV file to upload.
+
+        *Optional*
+
+        `name` (`string`): Name of the uploaded file.
+
+        `description` (`string`): Description of the uploaded file.
+
+        `replaces` (`number`): An optional ID for an existing list to replace
+                   with the new list
+
+        ### Sample Response
+
+            {
+                "id": 1,
+                "name": "list name",
+                "description": "list description",
+                "file_name": "list-1.csv",
+                "is_active": true,
+                "is_public": true
+            }
+        """
+        if 'file' not in request.data:
+            raise ValidationError('No file specified.')
+        csv_file = request.data['file']
+        if type(csv_file) not in (InMemoryUploadedFile, TemporaryUploadedFile):
+            raise ValidationError('File not submitted properly.')
+        if csv_file.size > MAX_UPLOADED_FILE_SIZE_IN_BYTES:
+            mb = MAX_UPLOADED_FILE_SIZE_IN_BYTES / (1024*1024)
+            raise ValidationError(
+                'Uploaded file exceeds the maximum size of {:.1f}MB.'.format(
+                    mb))
+
+        try:
+            contributor = request.user.contributor
+        except Contributor.DoesNotExist as exc:
+            raise ValidationError(
+                'User contributor cannot be None'
+            ) from exc
+
+        if 'name' in request.data:
+            name = request.data['name']
+        else:
+            name = os.path.splitext(csv_file.name)[0]
+
+        if '|' in name:
+            raise ValidationError('Name cannot contain the "|" character.')
+
+        if 'description' in request.data:
+            description = request.data['description']
+        else:
+            description = None
+
+        replaces = None
+        if 'replaces' in request.data:
+            try:
+                replaces = int(request.data['replaces'])
+            except ValueError as exc:
+                raise ValidationError(
+                    '"replaces" must be an integer ID.'
+                ) from exc
+            old_list_qs = FacilityList.objects.filter(
+                source__contributor=contributor, pk=replaces)
+            if old_list_qs.count() == 0:
+                raise ValidationError(
+                    f'{replaces} is not a valid FacilityList ID.'
+                )
+            replaces = old_list_qs[0]
+            if FacilityList.objects.filter(replaces=replaces).count() > 0:
+                raise ValidationError(
+                    f'FacilityList {replaces.pk} has already been replaced.'
+                )
+
+        header, rows = self._extract_header_rows(csv_file, request)
+
+        new_list = FacilityList(
+            name=name,
+            description=description,
+            file_name=csv_file.name,
+            file=csv_file,
+            header=header,
+            replaces=replaces,
+            match_responsibility=contributor.match_responsibility)
+        new_list.save()
+
+        csvreader = csv.reader(header.split('\n'), delimiter=',')
+        for row in csvreader:
+            create_nonstandard_fields(row, contributor)
+
+        source = Source.objects.create(
+            contributor=contributor,
+            source_type=Source.LIST,
+            facility_list=new_list)
+
+        items = [FacilityListItem(row_index=idx,
+                                  raw_data=row,
+                                  raw_json=get_raw_json(row, header),
+                                  raw_header=header,
+                                  sector=[],
+                                  source=source)
+                 for idx, row in enumerate(rows)]
+        FacilityListItem.objects.bulk_create(items)
+
+        if ENVIRONMENT in ('Prestaging', 'Staging', 'Production', 'Preprod'):
+            submit_parse_job(new_list)
+
+        serializer = self.get_serializer(new_list)
+        return Response(serializer.data)
+
+    @transaction.atomic
+    def create_list(self, request):
         """
         Upload a new Facility List.
 
