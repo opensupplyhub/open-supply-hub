@@ -16,7 +16,8 @@ class HeaderRequiredSerializer(HeaderSerializer):
             else:
                 current["errors"].append(
                     {
-                        "message": "Missed required field '{}'".format(required_field),
+                        "message": "Missed required field '{}'"
+                            .format(required_field),
                         "type": "Error",
                     }
                 )

@@ -1,7 +1,6 @@
 import unittest
 
-from contricleaner.lib.dto.header_dto import HeaderDTO
-from contricleaner.lib.serializers.header_serializers.header_required_serializer \
+from lib.serializers.header_serializers.header_required_serializer \
     import HeaderRequiredSerializer
 
 

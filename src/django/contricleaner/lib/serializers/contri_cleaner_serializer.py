@@ -4,7 +4,7 @@ from contricleaner.lib.dto.row_dto import RowDTO
 from contricleaner.lib.dto.header_dto import HeaderDTO
 from contricleaner.lib.serializers.row_serializers.row_composite_serializer \
     import RowCompositeSerializer
-from contricleaner.lib.serializers.header_serializers.header_composite_serializer \
+from .header_serializers.header_composite_serializer \
     import HeaderCompositeSerializer
 from contricleaner.lib.source_parser import SourceParser
 
