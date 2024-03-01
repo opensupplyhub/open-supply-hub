@@ -7,10 +7,10 @@ from contricleaner.lib.serializers.row_serializers \
 
 class RowRequiredFieldsSerializerTest(unittest.TestCase):
     def setUp(self):
-        self.serializer = HeaderRequiredSerializer()
+        self.serializer = RowRequiredFieldsSerializer()
         self.current = {"errors": []}
 
-    def test_validate_required_headers(self):
+    def test_validate_required_fields(self):
         headers_one = ["name",
                        "address",
                        "country",
