@@ -6,7 +6,7 @@ import re
 from django.core.exceptions import ValidationError
 from openpyxl.utils import get_column_letter
 
-from django.contricleaner.lib.parsers.source_parser import DataParser
+from contricleaner.lib.parsers.source_parser import SourceParser
 
 
 def try_parse_int_from_float(value):
@@ -136,7 +136,7 @@ def parse_xlsx(file, request):
         raise ValidationError('Error parsing Excel (.xlsx) file')
 
 
-class SourceParserCSV(DataParser):
+class SourceParserCSV(SourceParser):
     def __init__(self, file):
         self.__file = file
 

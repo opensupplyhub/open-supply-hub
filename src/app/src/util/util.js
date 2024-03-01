@@ -128,7 +128,7 @@ export const makeUploadFacilityListsURL = () => {
     const uploadListURL =
         env('REACT_APP_ROUTE') && env('REACT_APP_ROUTE') === 'true'
             ? '/cc/api/upload-list'
-            : '/api/facility-lists/';
+            : '/api/facility-lists/createlist/';
     return uploadListURL;
 };
 

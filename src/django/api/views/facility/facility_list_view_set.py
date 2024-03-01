@@ -8,8 +8,11 @@ from api.helpers.helpers import (
 from contricleaner.lib.serializers.contri_cleaner_serializer import (
     ContriCleanerSerializer
 )
-from django.contricleaner.lib.parsers.source_parser_csv import SourceParserCSV
-from django.contricleaner.lib.parsers.source_parser_xlsx import SourceParserXLSX
+from contricleaner.lib.parsers.source_parser_csv import SourceParserCSV
+from contricleaner.lib.parsers.source_parser_xlsx import SourceParserXLSX
+from contricleaner.lib.exceptions.validation_error import (
+    ValidationError as ContriCleanerValidationError
+)
 
 from oar.settings import (
     MAX_UPLOADED_FILE_SIZE_IN_BYTES,
@@ -48,11 +51,12 @@ from ...permissions import (
     IsRegisteredAndConfirmed,
     IsSuperuser
 )
-from ...processing import (
+from api.processing import (
     clean_row,
     parse_csv,
     parse_csv_line,
     parse_xlsx,
+    report_error_to_rollbar
 )
 from ...serializers import (
     FacilityListSerializer,
@@ -226,7 +230,8 @@ class FacilityListViewSet(ModelViewSet):
         return Response(serializer.data)
 
     @transaction.atomic
-    def create_list(self, request):
+    @action(detail=False, methods=['POST'])
+    def createlist(self, request):
         """
         Upload a new Facility List.
 
@@ -310,11 +315,11 @@ class FacilityListViewSet(ModelViewSet):
         ext = uploaded_file.name[-4:]
         if ext == 'xlsx':
             contri_cleaner = ContriCleanerSerializer(
-                SourceParserXLSX(uploaded_file, request)
+                SourceParserXLSX(uploaded_file)
             )
         elif ext == '.csv':
             contri_cleaner = ContriCleanerSerializer(
-                SourceParserCSV(uploaded_file, request)
+                SourceParserCSV(uploaded_file)
             )
         else:
             raise ValidationError(
@@ -322,9 +327,11 @@ class FacilityListViewSet(ModelViewSet):
                 'submit Excel or UTF-8 CSV.'
             )
 
-        # header, rows = self._extract_header_rows(csv_file, request)
-
-        rows = contri_cleaner.get_validated_rows()
+        try:
+            rows = contri_cleaner.get_validated_rows()
+        except ContriCleanerValidationError as e:
+            report_error_to_rollbar(uploaded_file, request)
+            raise ValidationError(e)
 
         new_list = None
         source = None
@@ -332,7 +339,7 @@ class FacilityListViewSet(ModelViewSet):
         for index, row in enumerate(rows):
             # TODO: create better implementation
             row_has_errors = len(row.errors) > 0
-            
+
             if row_has_errors:
                 raise ValidationError(
                     "Row has errors. Please fix them and try again."
