@@ -9,9 +9,7 @@ class RowRequiredFieldsSerializer(RowSerializer):
                            "country"]
 
         for required_field in required_fields:
-            if required_field in row.keys():
-                pass
-            else:
+            if required_field not in row.keys():
                 current["errors"].append(
                     {
                         "message": "Missed field {}".format(required_field),
