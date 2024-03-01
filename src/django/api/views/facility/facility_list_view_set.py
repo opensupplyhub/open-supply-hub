@@ -5,11 +5,6 @@ from functools import reduce
 from api.helpers.helpers import (
     get_raw_json,
 )
-from contricleaner.lib.context.contri_cleaner_context import (
-    ContriCleanerContext
-)
-from contricleaner.lib.parsers.data_parser_csv import DataParserCSV
-from contricleaner.lib.parsers.data_parser_xlsx import DataParserXLSX
 
 from oar.settings import (
     MAX_UPLOADED_FILE_SIZE_IN_BYTES,
@@ -90,22 +85,22 @@ class FacilityListViewSet(ModelViewSet):
                     f'{CsvHeaderField.ADDRESS} fields.'
                 ))
 
-    # def _extract_header_rows(self, file, request):
-    #     ext = file.name[-4:]
+    def _extract_header_rows(self, file, request):
+        ext = file.name[-4:]
 
-    #     if ext == 'xlsx':
-    #         header, rows = parse_xlsx(file, request)
-    #     elif ext == '.csv':
-    #         header, rows = parse_csv(file, request)
-    #     else:
-    #         raise ValidationError(
-    #             'Unsupported file type. Please '
-    #             'submit Excel or UTF-8 CSV.'
-    #         )
+        if ext == 'xlsx':
+            header, rows = parse_xlsx(file, request)
+        elif ext == '.csv':
+            header, rows = parse_csv(file, request)
+        else:
+            raise ValidationError(
+                'Unsupported file type. Please '
+                'submit Excel or UTF-8 CSV.'
+            )
 
-    #     self._validate_header(header)
-    #     rows = map(clean_row, rows)
-    #     return header, rows
+        self._validate_header(header)
+        rows = map(clean_row, rows)
+        return header, rows
 
     @transaction.atomic
     def create(self, request):
@@ -140,10 +135,10 @@ class FacilityListViewSet(ModelViewSet):
         """
         if 'file' not in request.data:
             raise ValidationError('No file specified.')
-        uploaded_file = request.data['file']
-        if type(uploaded_file) not in (InMemoryUploadedFile, TemporaryUploadedFile):
+        csv_file = request.data['file']
+        if type(csv_file) not in (InMemoryUploadedFile, TemporaryUploadedFile):
             raise ValidationError('File not submitted properly.')
-        if uploaded_file.size > MAX_UPLOADED_FILE_SIZE_IN_BYTES:
+        if csv_file.size > MAX_UPLOADED_FILE_SIZE_IN_BYTES:
             mb = MAX_UPLOADED_FILE_SIZE_IN_BYTES / (1024*1024)
             raise ValidationError(
                 'Uploaded file exceeds the maximum size of {:.1f}MB.'.format(
@@ -159,7 +154,7 @@ class FacilityListViewSet(ModelViewSet):
         if 'name' in request.data:
             name = request.data['name']
         else:
-            name = os.path.splitext(uploaded_file.name)[0]
+            name = os.path.splitext(csv_file.name)[0]
 
         if '|' in name:
             raise ValidationError('Name cannot contain the "|" character.')
@@ -189,59 +184,34 @@ class FacilityListViewSet(ModelViewSet):
                     f'FacilityList {replaces.pk} has already been replaced.'
                 )
 
-        ext = uploaded_file.name[-4:]
-        if ext == 'xlsx':
-            contri_cleaner = ContriCleanerContext(
-                DataParserXLSX(uploaded_file, request)
-            )
-        elif ext == '.csv':
-            contri_cleaner = ContriCleanerContext(
-                DataParserCSV(uploaded_file, request)
-            )
-        else:
-            raise ValidationError(
-                'Unsupported file type. Please '
-                'submit Excel or UTF-8 CSV.'
-            )
+        header, rows = self._extract_header_rows(csv_file, request)
 
-        # header, rows = self._extract_header_rows(csv_file, request)
+        new_list = FacilityList(
+            name=name,
+            description=description,
+            file_name=csv_file.name,
+            file=csv_file,
+            header=header,
+            replaces=replaces,
+            match_responsibility=contributor.match_responsibility)
+        new_list.save()
 
-        rows = contri_cleaner.get_validated_rows()
+        csvreader = csv.reader(header.split('\n'), delimiter=',')
+        for row in csvreader:
+            create_nonstandard_fields(row, contributor)
 
-        new_list = None
-        source = None
-        items = []
-        for index, row in enumerate(rows):
-            # TODO: create better implementation
-            row_has_errors = len(row.errors) > 0
-            
-            if row_has_errors:
-                raise ValidationError(
-                    "Row has errors. Please fix them and try again."
-                )
-            if (index == 0):  #if 
-                # TODO: move this to a helper function
-                new_list = FacilityList.objects.create(
-                    name=name,
-                    description=description,
-                    file_name=uploaded_file.name,
-                    file=uploaded_file,
-                    header=header,
-                    replaces=replaces,
-                    match_responsibility=contributor.match_responsibility)
+        source = Source.objects.create(
+            contributor=contributor,
+            source_type=Source.LIST,
+            facility_list=new_list)
 
-                source = Source.objects.create(
-                    contributor=contributor,
-                    source_type=Source.LIST,
-                    facility_list=new_list)
-
-            create_nonstandard_fields(row.fields.keys(), contributor)
-            items.append(FacilityListItem(
-                row_index=index,
-                clean_name=row.clean_name,
-                source=source,
-                status=FacilityListItem.PARSED,
-                ))                      
+        items = [FacilityListItem(row_index=idx,
+                                  raw_data=row,
+                                  raw_json=get_raw_json(row, header),
+                                  raw_header=header,
+                                  sector=[],
+                                  source=source)
+                 for idx, row in enumerate(rows)]
         FacilityListItem.objects.bulk_create(items)
 
         if ENVIRONMENT in ('Prestaging', 'Staging', 'Production', 'Preprod'):

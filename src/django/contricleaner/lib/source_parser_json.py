@@ -1,9 +1,9 @@
 from typing import List
 
-from django.contricleaner.lib.parsers.data_parser import DataParser
+from contricleaner.lib.source_parser import SourceParser
 
 
-class DataParserJSON(DataParser):
+class SourceParserJSON(SourceParser):
 
     def __init__(self, data: dict):
         self.data = data
