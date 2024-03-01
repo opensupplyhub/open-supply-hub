@@ -1,11 +1,11 @@
 import unittest
 
-from contricleaner.lib.serializers.header_serializers \
-    .header_required_serializer \
-    import HeaderRequiredSerializer
+from contricleaner.lib.serializers.row_serializers \
+    .row_required_fields_serializer \
+    import RowRequiredFieldsSerializer
 
 
-class HeaderRequiredSerializerTest(unittest.TestCase):
+class RowRequiredFieldsSerializerTest(unittest.TestCase):
     def setUp(self):
         self.serializer = HeaderRequiredSerializer()
         self.current = {"errors": []}

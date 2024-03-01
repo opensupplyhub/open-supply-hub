@@ -1,17 +1,15 @@
-from typing import List
-
-from .header_serializer import HeaderSerializer
+from .row_serializer import RowSerializer
 
 
-class HeaderRequiredSerializer(HeaderSerializer):
+class RowRequiredFieldsSerializer(RowSerializer):
 
-    def validate(self, headers: List[str], current: dict) -> dict:
+    def validate(self, row: dict, current: dict) -> dict:
         required_fields = ["name",
                            "address",
                            "country"]
 
         for required_field in required_fields:
-            if required_field in headers:
+            if required_field in row.keys():
                 pass
             else:
                 current["errors"].append(

@@ -7,6 +7,9 @@ from contricleaner.lib.serializers.row_serializers.row_empty_serializer \
     import RowEmptySerializer
 from contricleaner.lib.serializers.row_serializers.row_sector_serializer \
     import RowSectorSerializer
+from contricleaner.lib.serializers.row_serializers \
+    .row_required_fields_serializer \
+    import RowRequiredFieldsSerializer
 
 
 class RowCompositeSerializer:
@@ -17,6 +20,7 @@ class RowCompositeSerializer:
             RowSectorSerializer(),
             RowCountrySerializer(),
             RowEmptySerializer(),
+            RowRequiredFieldsSerializer(),
         ]
 
     def get_validated_row(self, raw_row: dict):
