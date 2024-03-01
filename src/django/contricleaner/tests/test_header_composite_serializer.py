@@ -3,7 +3,7 @@ import unittest
 from contricleaner.lib.dto.header_dto import HeaderDTO
 from contricleaner.lib.serializers.header_serializers \
     .header_composite_serializer \
-        import HeaderCompositeSerializer
+    import HeaderCompositeSerializer
 
 
 class HeaderCompositeValidatorTest(unittest.TestCase):
