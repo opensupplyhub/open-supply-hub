@@ -19,8 +19,8 @@ class RowCompositeSerializer:
             RowCleanFieldSerializer("address", "clean_address"),
             RowSectorSerializer(),
             RowCountrySerializer(),
-            RowEmptySerializer(),
             RowRequiredFieldsSerializer(),
+            RowEmptySerializer(),
         ]
 
     def get_validated_row(self, raw_row: dict):
