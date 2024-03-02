@@ -1,0 +1,21 @@
+version: "2.4"
+services:
+  database:
+    image: quay.io/azavea/postgis:3-postgres12.4-slim
+    shm_size: "2gb"
+    environment:
+      - POSTGRES_USER=anondb
+      - POSTGRES_PASSWORD=anondb
+      - POSTGRES_DB=anon
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "anondb"]
+      interval: 3s
+      timeout: 3s
+      retries: 3
+    volumes:
+      - ./scripts:/scripts
+      - ./db_before:/db_before
+      - ./db_after:/db_after
+    ports:
+      - "5432:5432"
+    command: ["sh", "./scripts/run_commands.sh"]
