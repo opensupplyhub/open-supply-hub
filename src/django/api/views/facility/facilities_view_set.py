@@ -613,33 +613,33 @@ class FacilitiesViewSet(ListModelMixin,
             create=should_create
         )
 
-        parser = RequestBodySectorProductTypeParser(
-            body_serializer.validated_data)
-        print('parser', parser)
-        sector = parser.sectors
-        print('sector', sector)
-        product_types = parser.product_types
-        print('product_types', product_types)
+        # parser = RequestBodySectorProductTypeParser(
+        #     body_serializer.validated_data)
+        # print('parser', parser)
+        # sector = parser.sectors
+        # print('sector', sector)
+        # product_types = parser.product_types
+        # print('product_types', product_types)
 
-        cleaned_user_data = request.data.copy()
-        cleaned_user_data['sector'] = sector
-        if len(product_types) > 0:
-            cleaned_user_data['product_type'] = product_types
-        if 'sector_product_type' in cleaned_user_data:
-            del cleaned_user_data['sector_product_type']
+        # cleaned_user_data = request.data.copy()
+        # cleaned_user_data['sector'] = sector
+        # if len(product_types) > 0:
+        #     cleaned_user_data['product_type'] = product_types
+        # if 'sector_product_type' in cleaned_user_data:
+        #     del cleaned_user_data['sector_product_type']
 
         country_code = get_country_code(
             body_serializer.validated_data.get('country'))
         # name = body_serializer.validated_data.get('name')
-        address = row.address
+        # address = row.address
 
-        fields = list(cleaned_user_data.keys())
-        create_nonstandard_fields(fields, request.user.contributor)
+        # fields = list(cleaned_user_data.keys())
+        create_nonstandard_fields(row.fields.keys(), request.user.contributor)
 
         item = FacilityListItem.objects.create(
             source=source,
             row_index=0,
-            raw_data=json.dumps(request.data),
+            raw_data=json.dumps(row.raw_json),
             raw_json=row.raw_json,
             raw_header='',
             status=FacilityListItem.PARSED,
@@ -668,7 +668,7 @@ class FacilitiesViewSet(ListModelMixin,
         }
 
         try:
-            create_extendedfields_for_single_item(item, cleaned_user_data)
+            create_extendedfields_for_single_item(item, row.fields)
         except (core_exceptions.ValidationError, ValueError) as exc:
             error_message = ''
 
