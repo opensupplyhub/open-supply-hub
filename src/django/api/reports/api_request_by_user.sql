@@ -9,7 +9,7 @@ SELECT
   COUNT(l.response_code) filter (where l.response_code::text NOT LIKE '2%') as unsuccessful_api_request_count
 FROM api_requestlog l
 JOIN api_user u ON l.user_id = u.id
-WHERE to_char(l.created_at, 'YYYY-MM-dd') < to_char(now(), 'YYYY-MM-dd')
+WHERE to_char(l.created_at, 'YYYY-MM-dd') <= to_char(now(), 'YYYY-MM-dd')
 AND NOT u.email LIKE '%openapparel.org%'
 AND NOT u.email LIKE '%opensupplyhub.org%'
 AND NOT u.email LIKE '%azavea.com%'
