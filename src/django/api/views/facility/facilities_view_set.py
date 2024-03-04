@@ -67,14 +67,13 @@ from ...facility_history import (
 from ...geocoding import geocode_address
 from ...mail import send_claim_facility_confirmation_email
 
-from ...helpers.helpers import clean
 from ...pagination import FacilitiesGeoJSONPagination
 from ...permissions import IsRegisteredAndConfirmed, IsSuperuser
 from ...processing import (
-    get_country_code,
     handle_external_match_process_result,
 )
-from ...sector_product_type_parser import RequestBodySectorProductTypeParser
+from ...sector_product_type_parser import RequestBodySectorProductTypeParser, \
+    SectorCache
 from ...serializers import (
     FacilityIndexSerializer,
     FacilityIndexDetailsSerializer,
@@ -566,12 +565,14 @@ class FacilitiesViewSet(ListModelMixin,
         body_serializer.is_valid(raise_exception=True)
 
         contri_cleaner = ContriCleanerSerializer(
-            SourceParserJSON(request.data)
+            SourceParserJSON(request.data), SectorCache()
         )
-        print('contri_cleaner', contri_cleaner)
+        # print('contri_cleaner', contri_cleaner)
         rows = contri_cleaner.get_validated_rows()
-        print('rows', rows)
+        # print('rows', rows)
         row = rows[0]
+        print('row in viewset', row)
+        print('row.sector in viewset', row.sector)  
 
         # print('body_serializer', body_serializer)
         # print('body_serializer.validated_data', body_serializer.validated_data)
@@ -613,13 +614,13 @@ class FacilitiesViewSet(ListModelMixin,
             create=should_create
         )
 
-        # parser = RequestBodySectorProductTypeParser(
-        #     body_serializer.validated_data)
+        parser = RequestBodySectorProductTypeParser(
+            body_serializer.validated_data)
         # print('parser', parser)
-        # sector = parser.sectors
-        # print('sector', sector)
-        # product_types = parser.product_types
-        # print('product_types', product_types)
+        sector = parser.sectors
+        print('sector in view_set', sector)
+        product_types = parser.product_types
+        print('product_types in view_set', product_types)
 
         # cleaned_user_data = request.data.copy()
         # cleaned_user_data['sector'] = sector
@@ -628,8 +629,8 @@ class FacilitiesViewSet(ListModelMixin,
         # if 'sector_product_type' in cleaned_user_data:
         #     del cleaned_user_data['sector_product_type']
 
-        country_code = get_country_code(
-            body_serializer.validated_data.get('country'))
+        # country_code = get_country_code(
+        #     body_serializer.validated_data.get('country'))
         # name = body_serializer.validated_data.get('name')
         # address = row.address
 
@@ -648,7 +649,7 @@ class FacilitiesViewSet(ListModelMixin,
             address=row.address,
             clean_address=row.clean_address,
             country_code=row.country_code,
-            sector=row.sector,
+            sector=row.fields.get('sectors'),
             processing_results=[{
                 'action': ProcessingAction.PARSE,
                 'started_at': parse_started,
@@ -694,7 +695,7 @@ class FacilitiesViewSet(ListModelMixin,
 
         geocode_started = str(timezone.now())
         try:
-            geocode_result = geocode_address(address, country_code)
+            geocode_result = geocode_address(row.address, row.country_code)
             if geocode_result['result_count'] > 0:
                 item.status = FacilityListItem.GEOCODED
                 item.geocoded_point = Point(

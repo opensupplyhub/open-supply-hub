@@ -6,15 +6,15 @@ from contricleaner.lib.serializers.row_serializers.row_country_serializer \
 from contricleaner.lib.serializers.row_serializers.row_empty_serializer \
     import RowEmptySerializer
 from contricleaner.lib.serializers.row_serializers.row_sector_serializer \
-    import RowSectorSerializer
+    import (RowSectorSerializer, SectorCacheInterface)
 
 
 class RowCompositeSerializer:
-    def __init__(self):
+    def __init__(self, sector_cache: SectorCacheInterface):
         self.validators = [
             RowCleanFieldSerializer("name", "clean_name"),
             RowCleanFieldSerializer("address", "clean_address"),
-            RowSectorSerializer(),
+            RowSectorSerializer(sector_cache),
             RowCountrySerializer(),
             RowEmptySerializer(),
         ]

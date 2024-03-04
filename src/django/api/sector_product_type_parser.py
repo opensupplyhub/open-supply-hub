@@ -38,7 +38,6 @@ class SectorProductTypeParser:
         self.product_types = []
 
     def parse_all_values(self, all_values):
-        print('all_values', all_values)
         sector_map = SectorProductTypeParser.sector_cache.sector_map
         for value in all_values:
             clean_value = self.clean_value(value)
@@ -61,7 +60,6 @@ class SectorProductTypeParser:
 class RequestBodySectorProductTypeParser(SectorProductTypeParser):
     def __init__(self, body):
         super().__init__()
-        print('body', body)
         self.parse_all_values(
             set([
                 *body.get('sector', []),
