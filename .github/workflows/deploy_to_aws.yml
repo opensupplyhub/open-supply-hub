@@ -247,7 +247,7 @@ jobs:
 
       - name: Run migrations for ${{ vars.ENV_NAME }}
         run: |
-          echo "" > .env
+          echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
           ./scripts/manage ecsmanage -e ${{steps.get_env_name.outputs.lowercase}} migrate api
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
