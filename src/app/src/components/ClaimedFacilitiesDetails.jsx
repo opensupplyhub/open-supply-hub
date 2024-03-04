@@ -80,9 +80,13 @@ import {
     mapDjangoChoiceTuplesToSelectOptions,
     isValidFacilityURL,
     makeClaimGeocoderURL,
+    logErrorToRollbar,
 } from '../util/util';
 
-import { claimAFacilityFormFields } from '../util/constants';
+import {
+    claimAFacilityFormFields,
+    USER_DEFAULT_STATE,
+} from '../util/constants';
 
 const {
     parentCompany: { aside: parentCompanyAside },
@@ -283,6 +287,7 @@ const createCountrySelectOptions = memoize(
 );
 
 function ClaimedFacilitiesDetails({
+    user,
     match: {
         params: { claimID },
     },
@@ -407,13 +412,11 @@ function ClaimedFacilitiesDetails({
                 submitUpdate();
                 setIsSavingForm(true);
             })
-            .catch(err => {
+            .catch(error => {
                 toast.error(
                     'There was a problem finding a location for the specified address',
                 );
-                if (window.Rollbar) {
-                    window.Rollbar.error(err);
-                }
+                logErrorToRollbar(window, error, user);
             });
     };
 
@@ -733,6 +736,7 @@ function ClaimedFacilitiesDetails({
 }
 
 ClaimedFacilitiesDetails.defaultProps = {
+    user: USER_DEFAULT_STATE,
     error: null,
     data: null,
     errorUpdating: null,
@@ -741,6 +745,7 @@ ClaimedFacilitiesDetails.defaultProps = {
 };
 
 ClaimedFacilitiesDetails.propTypes = {
+    user: userPropType,
     fetching: bool.isRequired,
     error: arrayOf(string),
     data: approvedFacilityClaimPropType,
@@ -775,6 +780,9 @@ ClaimedFacilitiesDetails.propTypes = {
 };
 
 function mapStateToProps({
+    auth: {
+        user: { user },
+    },
     claimedFacilityDetails: {
         retrieveData: { fetching: fetchingData, error },
         updateData: { fetching: updating, error: errorUpdating },
@@ -789,6 +797,7 @@ function mapStateToProps({
     },
 }) {
     return {
+        user,
         fetching: fetchingData || fetchingSectors || fetchingParentCompanies,
         data,
         error,
