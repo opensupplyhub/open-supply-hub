@@ -27,7 +27,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'secret')
 
 # Set environment
 ENVIRONMENT = os.getenv('DJANGO_ENV', 'Development')
-VALID_ENVIRONMENTS = ('Production', 'Staging', 'Development', 'Prestaging', 'Preprod')
+VALID_ENVIRONMENTS = ('Production', 'Staging', 'Development', 'Test', 'Preprod')
 if ENVIRONMENT not in VALID_ENVIRONMENTS:
     raise ImproperlyConfigured(
         'Invalid ENVIRONMENT provided, must be one of {}'
@@ -71,7 +71,7 @@ if ENVIRONMENT == 'Development':
     ALLOWED_HOSTS.append('app')
     ALLOWED_HOSTS.append('contricleaner')
 
-if ENVIRONMENT in ['Production', 'Staging', "Prestaging"] and BATCH_MODE == '':
+if ENVIRONMENT in ['Production', 'Staging', "Test"] and BATCH_MODE == '':
     # Within EC2, the Elastic Load Balancer HTTP health check will use the
     # target instance's private IP address for the Host header.
     #
