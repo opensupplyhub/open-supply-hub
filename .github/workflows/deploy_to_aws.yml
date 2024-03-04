@@ -213,7 +213,7 @@ jobs:
           string: ${{ vars.ENV_NAME }}
 
 
-      - name: Update ECS Django Service with new Image
+      - name: Update ECS Django Service with new Image for ${{ vars.ENV_NAME }}
         run: |
           aws ecs update-service --cluster ${{ vars.CLUSTER }} --service ${{ vars.SERVICE_NAME }} --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}}
         env:
@@ -233,6 +233,8 @@ jobs:
         uses: Entepotenz/change-string-case-action-min-dependencies@v1
         with:
           string: ${{ vars.ENV_NAME }}
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
 
       # - name: Create or update kafka topics for ${{ vars.ENV_NAME }}
