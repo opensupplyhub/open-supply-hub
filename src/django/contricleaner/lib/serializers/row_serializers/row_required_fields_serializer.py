@@ -2,19 +2,19 @@ from .row_serializer import RowSerializer
 
 
 class RowRequiredFieldsSerializer(RowSerializer):
+    required_fields = {"name",
+                       "address",
+                       "country"}
 
     def validate(self, row: dict, current: dict) -> dict:
-        required_fields = ["name",
-                           "address",
-                           "country"]
+        diff = self.required_fields.difference(row.keys())
 
-        for required_field in required_fields:
-            if required_field not in row.keys():
-                current["errors"].append(
-                    {
-                        "message": "Missed field {}".format(required_field),
-                        "type": "Error",
-                    }
-                )
+        if len(diff) > 0:
+            current["errors"].append(
+                {
+                    "message": "{} are missing".format(', '.join(diff)),
+                    "type": "Error",
+                }
+            )
 
         return current
