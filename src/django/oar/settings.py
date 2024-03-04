@@ -443,6 +443,8 @@ if not DEBUG:
         'root': BASE_DIR,
         'suppress_reinit_warning': True,
     }
+    import rollbar
+    rollbar.init(**ROLLBAR)
 
 OAR_CLIENT_KEY = os.getenv('OAR_CLIENT_KEY')
 

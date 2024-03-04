@@ -70,6 +70,7 @@ import {
     approvedFacilityClaimPropType,
     parentCompanyOptionsPropType,
     sectorOptionsPropType,
+    userPropType,
 } from '../util/propTypes';
 
 import apiRequest from '../util/apiRequest';
@@ -412,11 +413,11 @@ function ClaimedFacilitiesDetails({
                 submitUpdate();
                 setIsSavingForm(true);
             })
-            .catch(error => {
+            .catch(err => {
                 toast.error(
                     'There was a problem finding a location for the specified address',
                 );
-                logErrorToRollbar(window, error, user);
+                logErrorToRollbar(window, err, user);
             });
     };
 
