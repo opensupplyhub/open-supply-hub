@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 
 import os
 import requests
-import json
 
 from django.core.exceptions import ImproperlyConfigured
 from corsheaders.defaults import default_headers
@@ -371,24 +370,6 @@ WATCHMAN_CHECKS = (
 # https://github.com/azavea/django-ecsmanage
 
 ECSMANAGE_ENVIRONMENTS = {
-    'prestaging': {
-        'TASK_DEFINITION_NAME': 'OpenSupplyHubPrestagingAppCLI',
-        'CONTAINER_NAME': 'django',
-        'CLUSTER_NAME': 'ecsOpenSupplyHubPrestagingCluster',
-        'LAUNCH_TYPE': 'FARGATE',
-        'PLATFORM_VERSION': '1.4.0',
-        'SECURITY_GROUP_TAGS': {
-            'Name': 'sgAppEcsService',
-            'Environment': 'Staging',
-            'Project': 'OpenSupplyHub'
-        },
-        'SUBNET_TAGS': {
-            'Name': 'PrivateSubnet',
-            'Environment': 'Staging',
-            'Project': 'OpenSupplyHub'
-        },
-        'AWS_REGION': 'eu-west-1',
-    },
     'staging': {
         'TASK_DEFINITION_NAME': 'OpenSupplyHubStagingAppCLI',
         'CONTAINER_NAME': 'django',
@@ -433,13 +414,13 @@ ECSMANAGE_ENVIRONMENTS = {
         'PLATFORM_VERSION': '1.4.0',
         'SECURITY_GROUP_TAGS': {
             'Name': 'sgAppEcsService',
-            'Environment': 'Staging',
+            'Environment': 'Test',
             'Project': 'OpenSupplyHub'
         },
         'SUBNET_TAGS': {
             'Name': 'PrivateSubnet',
-            'Environment': 'Staging',
-            'Project': 'OpenSupplyHub'
+            'Environment': 'Test',
+            'Project': 'OpenSupplyHub',
         },
         'AWS_REGION': 'eu-west-1',
     }
