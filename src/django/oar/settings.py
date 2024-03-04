@@ -95,7 +95,7 @@ if ENVIRONMENT in ['Production', 'Staging', "Prestaging"] and BATCH_MODE == '':
     else:
         raise ImproperlyConfigured('Unable to fetch instance metadata')
 
-    # Ensure Django knows to determine whether an inbound request was   
+    # Ensure Django knows to determine whether an inbound request was
     # made over HTTPS by the ALBs HTTP_X_FORWARDED_PROTO header.
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
@@ -421,6 +421,24 @@ ECSMANAGE_ENVIRONMENTS = {
         'SUBNET_TAGS': {
             'Name': 'PrivateSubnet',
             'Environment': 'Production',
+            'Project': 'OpenSupplyHub'
+        },
+        'AWS_REGION': 'eu-west-1',
+    },
+    'test': {
+        'TASK_DEFINITION_NAME': 'OpenSupplyHubTestAppCLI',
+        'CONTAINER_NAME': 'django',
+        'CLUSTER_NAME': 'ecsOpenSupplyHubTestCluster',
+        'LAUNCH_TYPE': 'FARGATE',
+        'PLATFORM_VERSION': '1.4.0',
+        'SECURITY_GROUP_TAGS': {
+            'Name': 'sgAppEcsService',
+            'Environment': 'Staging',
+            'Project': 'OpenSupplyHub'
+        },
+        'SUBNET_TAGS': {
+            'Name': 'PrivateSubnet',
+            'Environment': 'Staging',
             'Project': 'OpenSupplyHub'
         },
         'AWS_REGION': 'eu-west-1',
