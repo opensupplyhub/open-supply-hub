@@ -21,6 +21,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [OSDEV-910](https://opensupplyhub.atlassian.net/browse/OSDEV-910) Add separated code quality pipelines for contricleaner, countries, django-api and frontend. After checking, it creates a code coverage report showing each particular app's code coverage. Add separated code quality jobs for code formatters.
+* [OSDEV-702](https://opensupplyhub.atlassian.net/browse/OSDEV-702) Add `contricleaner` as a separate module that parses and validates data passed to him from any source (json/csv/xls). Move `countries` to a separate module so that it becomes possible to use both Django and ContriCleaner.
 
 ### Bugfix
 * [OSDEV-716](https://opensupplyhub.atlassian.net/browse/OSDEV-716) Search. Lost refresh icon. The refresh icon has been made visible.
