@@ -32,7 +32,7 @@ VALID_ENVIRONMENTS = (
 )
 if ENVIRONMENT not in VALID_ENVIRONMENTS:
     raise ImproperlyConfigured(
-        "Invalid ENVIRONMENT provided, must be one of {}" \
+        "Invalid ENVIRONMENT provided, must be one of {}"
         .format(VALID_ENVIRONMENTS)
     )
 
