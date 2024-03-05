@@ -391,6 +391,7 @@ class FacilityListItemsTable extends Component {
         );
 
         const listIsEmpty = !fetchingItems && items && items.length === 0;
+        const isSideBarSearch = false;
 
         const getIsRemoved = item =>
             item.status === facilityListItemStatusChoicesEnum.ITEM_REMOVED ||
@@ -589,6 +590,7 @@ class FacilityListItemsTable extends Component {
                                     primary: '#00319D',
                                 },
                             })}
+                            isSideBarSearch={isSideBarSearch}
                         />
                     </div>
                     <ShowOnly

@@ -19,6 +19,7 @@ function SectorFilter({
     fetchingSectors,
     fetchingOptions,
     hideSectorData,
+    isSideBarSearch,
 }) {
     if (hideSectorData) {
         return null;
@@ -38,6 +39,7 @@ function SectorFilter({
                     fetchingSectors ? 'Loading..' : 'No options'
                 }
                 disabled={fetchingOptions || fetchingSectors}
+                isSideBarSearch={isSideBarSearch}
             />
         </div>
     );

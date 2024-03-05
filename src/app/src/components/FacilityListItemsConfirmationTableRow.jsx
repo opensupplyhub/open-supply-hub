@@ -223,6 +223,7 @@ function FacilityListItemsConfirmationTableRow({
                                 options={actionOptions}
                                 styles={selectStyles}
                                 isSearchable={false}
+                                menuPortalTarget={document.body}
                             />
                             <ConfirmActionButton
                                 listItem={item}
