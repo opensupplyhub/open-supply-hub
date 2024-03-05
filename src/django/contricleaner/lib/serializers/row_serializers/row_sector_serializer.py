@@ -1,11 +1,6 @@
-from .row_serializer import RowSerializer
 from typing import Union, Set
-
-
-class SectorCacheInterface:
-    @property
-    def sector_map(self) -> dict:
-        pass
+from contricleaner.lib.sector_cache_interface import SectorCacheInterface
+from .row_serializer import RowSerializer
 
 
 class RowSectorSerializer(RowSerializer):
