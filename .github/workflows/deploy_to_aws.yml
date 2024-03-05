@@ -239,8 +239,8 @@ jobs:
         run: |
           echo "[default]
           aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key = ${{ secrets.AWS_SECRET_KEY_ID }}
-          region = ${AWS_DEFAULT_REGION} > ~/.aws/credentials
+          aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region = ${AWS_DEFAULT_REGION}" > ~/.aws/credentials
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
