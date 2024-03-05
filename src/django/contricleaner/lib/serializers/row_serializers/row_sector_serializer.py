@@ -22,10 +22,10 @@ class RowSectorSerializer(RowSerializer):
         return current
 
     @staticmethod
-    def split_values(value: Union[str, list], split: str) -> Set[str]:
+    def split_values(value: Union[str, list, set], split: str) -> Set[str]:
         if isinstance(value, str):
             return set(value.split(split))
-        elif isinstance(value, list) or isinstance(value, set):
+        elif isinstance(value, (list, set)):
             res = set()
             for v in value:
                 res = res.union(RowSectorSerializer.split_values(v, split))
