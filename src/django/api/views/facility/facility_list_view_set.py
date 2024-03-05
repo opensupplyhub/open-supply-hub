@@ -352,7 +352,7 @@ class FacilityListViewSet(ModelViewSet):
                     description=description,
                     file_name=uploaded_file.name,
                     file=uploaded_file,
-                    header=header,
+                    header=row.fields.keys(),
                     replaces=replaces,
                     match_responsibility=contributor.match_responsibility)
 

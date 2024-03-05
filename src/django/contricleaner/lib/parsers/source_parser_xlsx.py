@@ -35,23 +35,22 @@ class SourceParserXLSX(SourceParser):
             # Using `next` will consome the row so that iteration of the data
             # rows will skipt the header row
             first_row = next(ws_rows)
-            header = ','.join(
-                [SourceParserXLSX.__format_cell_value(cell.value)
-                 for cell in first_row])
+            header = [
+                SourceParserXLSX.__format_cell_value(cell.value)
+                for cell in first_row
+            ]
 
             def format_row(row):
-                return '"{}"'.format(
-                    '","'.join([
-                        SourceParserXLSX.__format_cell_value(cell.value)
-                        for cell in row
-                        ])
-                    )
+                return [
+                    SourceParserXLSX.__format_cell_value(cell.value)
+                    for cell in row
+                ]
 
-            rows = [format_row(row)
+            rows = [dict(zip(header, format_row(row)))
                     for row in ws_rows
                     if any(cell.value is not None for cell in row)]
 
-            return header, rows
+            return rows
         except Exception:
             raise ValidationError('Error parsing Excel (.xlsx) file')
 
