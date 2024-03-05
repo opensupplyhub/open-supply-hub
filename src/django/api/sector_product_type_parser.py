@@ -38,7 +38,7 @@ class SectorProductTypeParser:
 
     def parse_all_values(self, all_values):
         sector_map = SectorProductTypeParser.sector_cache.sector_map
-        print('sector_map:', sector_map)
+
         for value in all_values:
             clean_value = self.clean_value(value)
             if (clean_value in sector_map):
