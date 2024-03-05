@@ -31,6 +31,7 @@ Move `countries` to a separate module so that it becomes possible to use both `d
 
 ### What's new
 * [OSDEV-728](https://opensupplyhub.atlassian.net/browse/OSDEV-728) - Include `sector` data in the response of the `api/facilities/` API endpoint for the GET request, similar to what is provided in the `api/facilities/{id}` API endpoint.
+* [OSDEV-918](https://opensupplyhub.atlassian.net/browse/OSDEV-918) - ContriBot. New lists are not populating in Monday board and are not sent to slack. Added validation to throw an error for users who upload a facility list with `|` in the description field.
 
 ### Release instructions:
 * *Provide release instructions here.*
