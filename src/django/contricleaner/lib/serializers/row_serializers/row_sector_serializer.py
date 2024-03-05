@@ -46,12 +46,12 @@ class RowSectorSerializer(RowSerializer):
         product_types = []
         for value in all_values:
             clean_value = self.clean_value(value)
-            if (clean_value in sector_map):
+            if clean_value in sector_map:
                 sectors.append(sector_map[clean_value])
             else:
                 product_types.append(value)
 
-        if len(sectors) == 0:
+        if not sectors:
             sectors.append(DEFAULT_SECTOR_NAME)
 
         sectors.sort()
