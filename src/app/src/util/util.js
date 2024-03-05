@@ -1084,7 +1084,7 @@ export const createUserDropdownLinks = (
     return Object.freeze(links);
 };
 
-const isApiUser = user => !user.isAnon && user?.groups.length !== 0;
+export const isApiUser = user => !user.isAnon && user?.groups.length !== 0;
 
 export const logErrorToRollbar = (window, error, user) => {
     if (window.Rollbar) {
