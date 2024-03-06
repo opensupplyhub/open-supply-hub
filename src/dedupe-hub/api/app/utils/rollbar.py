@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 def init_rollbar():
     if not DEBUG:
         rollbar.init(**ROLLBAR)
-            
+
 def try_reporting_error_to_rollbar(extra_data=dict):
     if not DEBUG:
         try:
