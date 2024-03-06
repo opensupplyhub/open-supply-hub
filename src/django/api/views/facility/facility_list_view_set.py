@@ -5,11 +5,6 @@ from functools import reduce
 from api.helpers.helpers import (
     get_raw_json,
 )
-from contricleaner.lib.serializers.contri_cleaner_serializer import (
-    ContriCleanerSerializer
-)
-from contricleaner.lib.parsers.source_parser_csv import SourceParserCSV
-from contricleaner.lib.parsers.source_parser_xlsx import SourceParserXLSX
 
 from oar.settings import (
     MAX_UPLOADED_FILE_SIZE_IN_BYTES,
@@ -48,12 +43,11 @@ from ...permissions import (
     IsRegisteredAndConfirmed,
     IsSuperuser
 )
-from api.processing import (
+from ...processing import (
     clean_row,
     parse_csv,
     parse_csv_line,
     parse_xlsx,
-    _report_error_to_rollbar
 )
 from ...serializers import (
     FacilityListSerializer,
