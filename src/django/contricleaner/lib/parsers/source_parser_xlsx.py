@@ -1,21 +1,26 @@
-from typing import List
+from typing import List, Union
 
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.worksheet import Worksheet
+from rest_framework.exceptions import ValidationError
+from django.core.files.uploadedfile import (
+    InMemoryUploadedFile,
+    TemporaryUploadedFile
+)
 
 from contricleaner.lib.parsers.source_parser import SourceParser
-from contricleaner.lib.exceptions.validation_error import ValidationError
+from contricleaner.lib.parsers.file_parser import FileParser
 
 
-class SourceParserXLSX(SourceParser):
-    def __init__(self, file):
-        self.__file = file
-
+class SourceParserXLSX(SourceParser, FileParser):
     def get_parsed_rows(self) -> List[dict]:
-        return self.__parse(self.__file)
+        return self._parse(self._file)
 
     @staticmethod
-    def __parse(file):
+    def _parse(
+            file: Union[InMemoryUploadedFile, TemporaryUploadedFile]
+            ) -> List[dict]:
         try:
             ws = SourceParserXLSX.__get_xlsx_sheet(file)
 
@@ -40,13 +45,7 @@ class SourceParserXLSX(SourceParser):
                 for cell in first_row
             ]
 
-            def format_row(row):
-                return [
-                    SourceParserXLSX.__format_cell_value(cell.value)
-                    for cell in row
-                ]
-
-            rows = [dict(zip(header, format_row(row)))
+            rows = [dict(zip(header, SourceParserXLSX.__tidy_row(row)))
                     for row in ws_rows
                     if any(cell.value is not None for cell in row)]
 
@@ -55,7 +54,22 @@ class SourceParserXLSX(SourceParser):
             raise ValidationError('Error parsing Excel (.xlsx) file')
 
     @staticmethod
-    def __get_xlsx_sheet(file):
+    def __tidy_row(row: tuple) -> list:
+        formatted_row = []
+
+        for cell in row:
+            formatted_cell_value = \
+                SourceParserXLSX.__format_cell_value(cell.value)
+            cleaned_cell_value = \
+                FileParser._clean_row(formatted_cell_value)
+            formatted_row.append(cleaned_cell_value)
+
+        return formatted_row
+
+    @staticmethod
+    def __get_xlsx_sheet(
+            file: Union[InMemoryUploadedFile, TemporaryUploadedFile]
+            ) -> Worksheet:
         import defusedxml
         from defusedxml.common import EntitiesForbidden
 
@@ -72,7 +86,7 @@ class SourceParserXLSX(SourceParser):
                                   'cannot be processed safely')
 
     @staticmethod
-    def __format_percent(value):
+    def __format_percent(value: Union[float, int, str]) -> str:
         if value is None or isinstance(value, str):
             return value
         if value <= 1.0:
@@ -84,7 +98,7 @@ class SourceParserXLSX(SourceParser):
         return str_value + '%'
 
     @staticmethod
-    def __format_cell_value(value):
+    def __format_cell_value(value) -> str:
         if value is None:
             return ''
         return str(value)

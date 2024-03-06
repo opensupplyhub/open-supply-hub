@@ -10,9 +10,6 @@ from contricleaner.lib.serializers.contri_cleaner_serializer import (
 )
 from contricleaner.lib.parsers.source_parser_csv import SourceParserCSV
 from contricleaner.lib.parsers.source_parser_xlsx import SourceParserXLSX
-from contricleaner.lib.exceptions.validation_error import (
-    ValidationError as ContriCleanerValidationError
-)
 
 from oar.settings import (
     MAX_UPLOADED_FILE_SIZE_IN_BYTES,
@@ -330,9 +327,8 @@ class FacilityListViewSet(ModelViewSet):
 
         try:
             rows = contri_cleaner.get_validated_rows()
-        except ContriCleanerValidationError as e:
+        except ValidationError:
             report_error_to_rollbar(uploaded_file, request)
-            raise ValidationError(e)
 
         new_list = None
         source = None
