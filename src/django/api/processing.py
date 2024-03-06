@@ -31,7 +31,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 
-def report_error_to_rollbar(file, request):
+def _report_error_to_rollbar(file, request):
     ROLLBAR = getattr(settings, 'ROLLBAR', {})
     if ROLLBAR:
         import rollbar
@@ -56,7 +56,7 @@ def get_xlsx_sheet(file, request):
         return ws
 
     except EntitiesForbidden:
-        report_error_to_rollbar(file, request)
+        _report_error_to_rollbar(file, request)
         raise ValidationError('This file may be damaged and '
                               'cannot be processed safely')
 
@@ -128,7 +128,7 @@ def parse_xlsx(file, request):
 
         return header, rows
     except Exception:
-        report_error_to_rollbar(file, request)
+        _report_error_to_rollbar(file, request)
         raise ValidationError('Error parsing Excel (.xlsx) file')
 
 
@@ -138,7 +138,7 @@ def parse_csv(file, request):
     try:
         header = file.readline().decode(encoding='utf-8-sig').rstrip()
     except UnicodeDecodeError:
-        report_error_to_rollbar(file, request)
+        _report_error_to_rollbar(file, request)
         raise ValidationError('Unsupported file encoding. Please '
                               'submit a UTF-8 CSV.')
 
@@ -147,7 +147,7 @@ def parse_csv(file, request):
             try:
                 rows.append(line.decode(encoding='utf-8-sig').rstrip())
             except UnicodeDecodeError:
-                report_error_to_rollbar(file, request)
+                _report_error_to_rollbar(file, request)
                 raise ValidationError('Unsupported file encoding. Please '
                                       'submit a UTF-8 CSV.')
 
