@@ -5,7 +5,6 @@ from collections import defaultdict
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from django.conf import settings
 from django.utils import timezone
 from glob import glob
 from urllib.parse import quote
@@ -17,6 +16,7 @@ from api.constants import ProcessingAction, DateFormats
 from oar.rollbar import report_error_to_rollbar
 
 _root = os.path.abspath(os.path.dirname(__file__))
+
 
 def sort_by_first_column(array, reverse=False):
     return sorted(array, key=lambda x: x[0], reverse=reverse)
@@ -181,8 +181,8 @@ def processing_type_facility_type_matched():
                 message=(
                     'processing_type_facility_type_matched encountered '
                     'mismatched processing type value count'
-                ), 
-                level='error', 
+                ),
+                level='error',
                 extra_data={
                     'deduped_values': json.dumps(values),
                     'matched_values': json.dumps(matched_values),
@@ -216,8 +216,8 @@ def processing_type_facility_type_unmatched():
                 message=(
                     'processing_type_facility_type_unmatched encountered '
                     'mismatched processing type value count'
-                ), 
-                level='error', 
+                ),
+                level='error',
                 extra_data={
                     'deduped_values': json.dumps(values),
                     'matched_values': json.dumps(matched_values),

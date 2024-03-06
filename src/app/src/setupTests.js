@@ -9,8 +9,8 @@ const customJestEnvironment = async () => {
     global.window = jsdom.window;
     global.document = jsdom.window.document;
     global.navigator = jsdom.window.navigator;
-    global.btoa = (str) => Buffer.from(str, 'binary').toString('base64');
-    global.atob = (str) => Buffer.from(str, 'base64').toString('binary');
+    global.btoa = str => Buffer.from(str, 'binary').toString('base64');
+    global.atob = str => Buffer.from(str, 'base64').toString('binary');
 };
 
 customJestEnvironment();

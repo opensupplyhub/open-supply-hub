@@ -1,6 +1,5 @@
 import copy
 import csv
-import sys
 import time
 import traceback
 
@@ -23,13 +22,13 @@ from api.sector_product_type_parser import CsvRowSectorProductTypeParser
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 
-from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.core.exceptions import ValidationError
 from countries.lib.get_country_code import get_country_code
 from django.urls import reverse
 from django.utils import timezone
 from oar.rollbar import report_error_to_rollbar
+
 
 def get_xlsx_sheet(file, request):
     import defusedxml

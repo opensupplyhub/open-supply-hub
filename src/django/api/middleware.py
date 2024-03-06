@@ -1,10 +1,8 @@
-import sys
 import datetime
 import json
 import logging
 
 from django.utils import timezone
-from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework.authentication import get_authorization_header
@@ -18,7 +16,9 @@ from oar.rollbar import report_error_to_rollbar
 
 logger = logging.getLogger(__name__)
 
+
 class RequestLogMiddleware:
+
     def __init__(self, get_response):
         self.get_response = get_response
 
@@ -39,7 +39,11 @@ class RequestLogMiddleware:
                     )
         except Exception as e:
             try:
-                report_error_to_rollbar(request=request, auth=auth, exception=e)
+                report_error_to_rollbar(
+                    request=request,
+                    auth=auth,
+                    exception=e
+                )
             except Exception:
                 pass  # We don't want this logging middleware to fail a request
 

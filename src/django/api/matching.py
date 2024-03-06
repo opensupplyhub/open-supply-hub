@@ -1,8 +1,6 @@
 import dedupe
 import logging
 import os
-import sys
-import traceback
 
 from collections import defaultdict
 from datetime import datetime
@@ -22,6 +20,7 @@ from api.helpers.helpers import clean
 from oar.rollbar import report_error_to_rollbar
 
 logger = logging.getLogger(__name__)
+
 
 def match_detail_to_extended_facility_id(facility_id, match_id):
     return '{}_MATCH-{}'.format(facility_id, match_id)
