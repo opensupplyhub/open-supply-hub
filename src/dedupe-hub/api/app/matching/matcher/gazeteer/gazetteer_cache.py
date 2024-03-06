@@ -269,11 +269,11 @@ class GazetteerCache:
                             cls._gazetter.index(record)
                     cls._match_version = item['history_id']
 
-        except Exception as e:
-            try_reporting_error_to_rollbar(extra_data={
+        except Exception:
+            try_reporting_error_to_rollbar({
                 'last_successful_facility_version': cls._facility_version,
                 'last_successful_match_version': cls._match_version
-            }, exception=e)
+            })
             raise
 
         return cls._gazetter

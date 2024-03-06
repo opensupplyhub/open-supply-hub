@@ -1,5 +1,6 @@
 import copy
 import csv
+import sys
 import time
 import traceback
 
@@ -22,12 +23,24 @@ from api.sector_product_type_parser import CsvRowSectorProductTypeParser
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 
+from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.core.exceptions import ValidationError
 from countries.lib.get_country_code import get_country_code
 from django.urls import reverse
 from django.utils import timezone
-from oar.rollbar import report_error_to_rollbar
+
+
+def _report_error_to_rollbar(file, request):
+    ROLLBAR = getattr(settings, 'ROLLBAR', {})
+    if ROLLBAR:
+        import rollbar
+        rollbar.report_exc_info(
+            sys.exc_info(),
+            extra_data={
+                'user_id': request.user.id,
+                'contributor_id': request.user.contributor.id,
+                'file_name': file.name})
 
 
 def get_xlsx_sheet(file, request):
@@ -43,7 +56,7 @@ def get_xlsx_sheet(file, request):
         return ws
 
     except EntitiesForbidden:
-        report_error_to_rollbar(request=request, file=file)
+        _report_error_to_rollbar(file, request)
         raise ValidationError('This file may be damaged and '
                               'cannot be processed safely')
 
@@ -115,7 +128,7 @@ def parse_xlsx(file, request):
 
         return header, rows
     except Exception:
-        report_error_to_rollbar(request=request, file=file)
+        _report_error_to_rollbar(file, request)
         raise ValidationError('Error parsing Excel (.xlsx) file')
 
 
@@ -125,7 +138,7 @@ def parse_csv(file, request):
     try:
         header = file.readline().decode(encoding='utf-8-sig').rstrip()
     except UnicodeDecodeError:
-        report_error_to_rollbar(request=request, file=file)
+        _report_error_to_rollbar(file, request)
         raise ValidationError('Unsupported file encoding. Please '
                               'submit a UTF-8 CSV.')
 
@@ -134,7 +147,7 @@ def parse_csv(file, request):
             try:
                 rows.append(line.decode(encoding='utf-8-sig').rstrip())
             except UnicodeDecodeError:
-                report_error_to_rollbar(request=request, file=file)
+                _report_error_to_rollbar(file, request)
                 raise ValidationError('Unsupported file encoding. Please '
                                       'submit a UTF-8 CSV.')
 
