@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
 from api.models import Sector
 from api.constants import CsvHeaderField
+from contricleaner.lib.sector_cache_interface import SectorCacheInterface
 
 
-class SectorCache:
+class SectorCache(SectorCacheInterface):
     REFRESH_INTERVAL = timedelta(seconds=300)
 
     def __init__(self) -> None:
