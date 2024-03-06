@@ -437,7 +437,7 @@ ECSMANAGE_ENVIRONMENTS = {
         },
         'SUBNET_TAGS': {
             'Name': 'PrivateSubnet',
-            'Environment': 'Developmentt',
+            'Environment': 'Development',
             'Project': 'OpenSupplyHub',
         },
         'AWS_REGION': 'eu-west-1',
