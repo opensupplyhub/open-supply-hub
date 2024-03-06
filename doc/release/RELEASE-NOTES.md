@@ -11,7 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Database changes
 #### Migrations:
-* *Describe migrations here.*
+* 0141_delete_contributor_webhooks.py - deletes `ContributorWebhook` model
 
 #### Scheme changes
 * *Describe scheme changes here.*
@@ -30,6 +30,7 @@ Move `countries` to a separate module so that it becomes possible to use both `d
 * [OSDEV-716](https://opensupplyhub.atlassian.net/browse/OSDEV-716) Search. Lost refresh icon. The refresh icon has been made visible.
 
 ### What's new
+*  [OSDEV-861](https://opensupplyhub.atlassian.net/browse/OSDEV-861) API. The `API Notifications` tab has been removed so that users do not get confused about what it is, since the functionality does not exist for them. `Token:` as a header has been added above the API key on the `API` tab.
 * [OSDEV-728](https://opensupplyhub.atlassian.net/browse/OSDEV-728) - Include `sector` data in the response of the `api/facilities/` API endpoint for the GET request, similar to what is provided in the `api/facilities/{id}` API endpoint.
 
 ### Release instructions:
