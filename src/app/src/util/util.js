@@ -1044,20 +1044,7 @@ export const createUserDropdownLinks = (
     logoutAction,
     activeFeatureFlags,
 ) => {
-    const links = [
-        Object.freeze({
-            label: 'My Lists',
-            href: '/lists',
-        }),
-        Object.freeze({
-            label: 'Settings',
-            href: '/settings',
-        }),
-        Object.freeze({
-            label: 'Log Out',
-            action: logoutAction,
-        }),
-    ];
+    const links = [];
 
     if (checkWhetherUserHasDashboardAccess(user)) {
         links.push(
@@ -1076,6 +1063,21 @@ export const createUserDropdownLinks = (
             }),
         );
     }
+
+    links.push(
+        Object.freeze({
+            label: 'My Lists',
+            href: '/lists',
+        }),
+        Object.freeze({
+            label: 'Settings',
+            href: '/settings',
+        }),
+        Object.freeze({
+            label: 'Log Out',
+            action: logoutAction,
+        }),
+    );
 
     return Object.freeze(links);
 };

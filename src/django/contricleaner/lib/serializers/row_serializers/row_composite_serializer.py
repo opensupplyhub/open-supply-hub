@@ -1,4 +1,5 @@
 from contricleaner.lib.dto.row_dto import RowDTO
+from contricleaner.lib.sector_cache_interface import SectorCacheInterface
 from contricleaner.lib.serializers.row_serializers.row_clean_field_serializer \
     import RowCleanFieldSerializer
 from contricleaner.lib.serializers.row_serializers.row_country_serializer \
@@ -13,11 +14,11 @@ from contricleaner.lib.serializers.row_serializers \
 
 
 class RowCompositeSerializer:
-    def __init__(self):
+    def __init__(self, sector_cache: SectorCacheInterface):
         self.validators = [
             RowCleanFieldSerializer("name", "clean_name"),
             RowCleanFieldSerializer("address", "clean_address"),
-            RowSectorSerializer(),
+            RowSectorSerializer(sector_cache),
             RowCountrySerializer(),
             RowRequiredFieldsSerializer(),
             RowEmptySerializer(),
