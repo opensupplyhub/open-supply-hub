@@ -26,16 +26,10 @@ class RowFacilityTypeSerializer(RowSerializer):
         # submitted a processing_type
         elif processing_type and not facility_type:
             facility_type = processing_type
-        # elif (row.get('processing_type') and
-        #         row.get('facility_type') is None):
-        #     current['facility_type'] = row['processing_type']
         # Add a processing_type extended field if the user only
         # submitted a facility_type
         elif facility_type and not processing_type:
             processing_type = facility_type
-        # elif (row.get('facility_type') and
-        #         row.get('processing_type') is None):
-        #     current['processing_type'] = row['facility_type']
 
         current['facility_type'] = self.split_values(facility_type)
         current['processing_type'] = self.split_values(processing_type)
