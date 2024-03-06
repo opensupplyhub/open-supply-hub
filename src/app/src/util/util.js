@@ -1085,31 +1085,3 @@ export const createUserDropdownLinks = (
 
     return Object.freeze(links);
 };
-
-export const isApiUser = user => !user.isAnon && user?.groups.length !== 0;
-
-export const logErrorToRollbar = (window, error, user) => {
-    if (window.Rollbar) {
-        if (user) {
-            const contributorIdMsg = user.contributor_id
-                ? ` (contributor id ${user.contributor_id})`
-                : '';
-
-            const userType = isApiUser(user) ? 'API user' : 'User';
-            const rollbarErrMsg = `${userType}${contributorIdMsg}`;
-            window.Rollbar.configure({
-                payload: {
-                    user: {
-                        contributor_id: user.contributor_id,
-                    },
-                },
-            });
-            const rollbarError = new Error(`${rollbarErrMsg} ${error.message}`);
-            Object.assign(rollbarError, error);
-
-            window.Rollbar.error(rollbarError);
-        } else {
-            window.Rollbar.error(error);
-        }
-    }
-};

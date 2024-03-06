@@ -1,9 +1,7 @@
 import React, { Component, Fragment } from 'react';
 import { Route } from 'react-router-dom';
-import { connect } from 'react-redux';
 import Grid from '@material-ui/core/Grid';
 import { withStyles } from '@material-ui/core';
-import { userPropType } from '../util/propTypes';
 
 import SidebarWithErrorBoundary from './SidebarWithErrorBoundary';
 import FacilitiesMap from './FacilitiesMap';
@@ -15,8 +13,7 @@ import '../styles/css/Map.css';
 
 import withQueryStringSync from '../util/withQueryStringSync';
 
-import { logErrorToRollbar } from './../util/util';
-import { VECTOR_TILE, USER_DEFAULT_STATE } from '../util/constants';
+import { VECTOR_TILE } from '../util/constants';
 
 const homepageStyles = theme =>
     Object.freeze({
@@ -35,8 +32,9 @@ class Homepage extends Component {
     }
 
     componentDidCatch(error) {
-        const { user } = this.props;
-        logErrorToRollbar(window, error, user);
+        if (window.Rollbar) {
+            window.Rollbar.error(error);
+        }
     }
 
     render() {
@@ -77,22 +75,4 @@ class Homepage extends Component {
     }
 }
 
-Homepage.propTypes = {
-    user: userPropType,
-};
-
-Homepage.defaultProps = {
-    user: USER_DEFAULT_STATE,
-};
-
-function mapStateToProps({
-    auth: {
-        user: { user },
-    },
-}) {
-    return { user };
-}
-
-export default connect(mapStateToProps)(
-    withStyles(homepageStyles)(withQueryStringSync(Homepage)),
-);
+export default withStyles(homepageStyles)(withQueryStringSync(Homepage));
