@@ -165,6 +165,8 @@ export const makeCreateDashboardActivityReportURL = osId =>
 
 export const makeAPITokenURL = () => '/api-token-auth/';
 
+export const makeUserAPIInfoURL = uid => `/user-api-info/${uid}/`;
+
 export const makeGetContributorsURL = () => '/api/contributors/';
 export const makeGetListsURL = () => '/api/contributor-lists/';
 export const makeGetSortedListsURL = () => '/api/contributor-lists-sorted/';
@@ -261,7 +263,6 @@ export const createQueryStringFromSearchFilters = (
         lists = [],
         combineContributors = '',
         boundary = {},
-        ppe = '',
         sortAlgorithm = {},
     },
     withEmbed,
@@ -290,7 +291,6 @@ export const createQueryStringFromSearchFilters = (
         native_language_name: nativeLanguageName,
         combine_contributors: combineContributors,
         boundary: isEmpty(boundary) ? '' : JSON.stringify(boundary),
-        ppe,
         sort_by: isEmpty(sortAlgorithm) ? '' : sortAlgorithm.value,
         embed: !withEmbed ? '' : '1',
         detail: detail ? 'true' : undefined,
@@ -344,7 +344,6 @@ export const createFiltersFromQueryString = qs => {
         native_language_name: nativeLanguageName = '',
         combine_contributors: combineContributors = '',
         boundary = '',
-        ppe = '',
         sort_by: sortBy = '',
     } = querystring.parse(qsToParse);
 
@@ -363,7 +362,6 @@ export const createFiltersFromQueryString = qs => {
         nativeLanguageName,
         combineContributors,
         boundary: isEmpty(boundary) ? null : JSON.parse(boundary),
-        ppe,
         sortAlgorithm:
             sortBy === 'name'
                 ? optionsForSortingResults[0]
@@ -892,9 +890,8 @@ export const addProtocolToWebsiteURLIfMissing = url => {
     return `http://${url}`;
 };
 
-// OAR requested that the PPE features be disabled when in embedded mode
 export const filterFlagsIfAppIsEmbeded = (flags, isEmbeded) =>
-    filter(flags, f => !isEmbeded || (f !== 'ppe' && f !== 'claim_a_facility'));
+    filter(flags, f => !isEmbeded || f !== 'claim_a_facility');
 
 export const convertFeatureFlagsObjectToListOfActiveFlags = featureFlags =>
     keys(pickBy(featureFlags, identity));
@@ -1051,20 +1048,7 @@ export const createUserDropdownLinks = (
     logoutAction,
     activeFeatureFlags,
 ) => {
-    const links = [
-        Object.freeze({
-            label: 'My Lists',
-            href: '/lists',
-        }),
-        Object.freeze({
-            label: 'Settings',
-            href: '/settings',
-        }),
-        Object.freeze({
-            label: 'Log Out',
-            action: logoutAction,
-        }),
-    ];
+    const links = [];
 
     if (checkWhetherUserHasDashboardAccess(user)) {
         links.push(
@@ -1083,6 +1067,21 @@ export const createUserDropdownLinks = (
             }),
         );
     }
+
+    links.push(
+        Object.freeze({
+            label: 'My Lists',
+            href: '/lists',
+        }),
+        Object.freeze({
+            label: 'Settings',
+            href: '/settings',
+        }),
+        Object.freeze({
+            label: 'Log Out',
+            action: logoutAction,
+        }),
+    );
 
     return Object.freeze(links);
 };

@@ -15,7 +15,6 @@ import {
     updateProductTypeFilter,
     updateNumberofWorkersFilter,
     updateNativeLanguageNameFilter,
-    updatePPEFilter,
     updateSortAlgorithm,
     updateCombineContributorsFilterOption,
     updateBoundaryFilter,
@@ -51,7 +50,6 @@ const initialState = Object.freeze({
     nativeLanguageName: '',
     combineContributors: '',
     boundary: null,
-    ppe: '',
     lists: Object.freeze([]),
 });
 
@@ -123,10 +121,6 @@ export default createReducer(
         [updateBoundaryFilter]: (state, payload) =>
             update(state, {
                 boundary: { $set: payload },
-            }),
-        [updatePPEFilter]: (state, payload) =>
-            update(state, {
-                ppe: { $set: payload },
             }),
         [updateSortAlgorithm]: (state, payload) =>
             update(state, {

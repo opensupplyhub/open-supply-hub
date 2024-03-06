@@ -1,12 +1,11 @@
+from countries.lib.countries import COUNTRY_CHOICES
+
 from django.contrib.gis.db import models as gis_models
 from django.contrib.postgres import fields as postgres
 from django.db import models
 
-from api.countries import COUNTRY_CHOICES
-from api.models.ppemixin import PPEMixin
 
-
-class FacilityListItem(PPEMixin):
+class FacilityListItem(models.Model):
     """
     Data, metadata, and workflow status and results for a single line from a
     facility list file.

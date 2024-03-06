@@ -3,7 +3,7 @@ from django.conf import settings
 from django.template.loader import get_template
 from api.models import FacilityList
 
-from api.countries import COUNTRY_NAMES
+from countries.lib.countries import COUNTRY_NAMES
 
 
 def make_oar_url(request):

@@ -1,33 +1,34 @@
 import copy
 import csv
-import traceback
 import sys
-import re
 import time
+import traceback
 
+from api.constants import CsvHeaderField, ProcessingAction
+from api.extended_fields import (
+    create_extendedfields_for_listitem,
+    update_extendedfields_for_list_item,
+)
+from api.geocoding import geocode_address
+from api.helpers.helpers import clean, cleanup_data, replace_invalid_data
+from api.matching import normalize_extended_facility_id
+from api.models import (
+    Facility,
+    FacilityListItem,
+    FacilityMatch,
+    FacilityMatchTemp
+)
+from api.models.facility.facility_index import FacilityIndex
+from api.sector_product_type_parser import CsvRowSectorProductTypeParser
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 
 from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.core.exceptions import ValidationError
-from django.utils import timezone
+from countries.lib.get_country_code import get_country_code
 from django.urls import reverse
-
-from api.constants import CsvHeaderField, ProcessingAction
-from api.models import (
-    Facility, FacilityMatch, FacilityMatchTemp, FacilityListItem
-)
-from api.models.facility.facility_index import FacilityIndex
-from api.countries import COUNTRY_CODES, COUNTRY_NAMES
-from api.geocoding import geocode_address
-from api.matching import normalize_extended_facility_id
-from api.helpers.helpers import (
-    clean, replace_invalid_data, cleanup_data
-)
-from api.extended_fields import (create_extendedfields_for_listitem,
-                                 update_extendedfields_for_list_item)
-from api.sector_product_type_parser import CsvRowSectorProductTypeParser
+from django.utils import timezone
 
 
 def _report_error_to_rollbar(file, request):
@@ -163,22 +164,6 @@ def parse_csv_line(line):
     return list(csv.reader([line]))[0]
 
 
-def get_country_code(country):
-    # TODO: Handle minor spelling errors in country names
-    remove_new_lines_pattern = re.compile(r'[\n\r]+')
-
-    country = str(country).strip()
-    country = remove_new_lines_pattern.sub(' ', country)
-
-    if country.upper() in COUNTRY_NAMES:
-        return country.upper()
-    elif country.lower() in COUNTRY_CODES:
-        return COUNTRY_CODES[country.lower()]
-    else:
-        raise ValueError(
-            'Could not find a country code for "{0}".'.format(country))
-
-
 class ItemRemovedException(Exception):
     pass
 
@@ -244,19 +229,6 @@ def parse_facility_list_item(item):
             item.geocoded_point = Point(lng, lat)
             is_geocoded = True
 
-        if CsvHeaderField.PPE_PRODUCT_TYPES in fields:
-            item.ppe_product_types = parse_array_values(values[
-                fields.index(CsvHeaderField.PPE_PRODUCT_TYPES)].split("|"))
-        if CsvHeaderField.PPE_CONTACT_PHONE in fields:
-            item.ppe_contact_phone = values[
-                fields.index(CsvHeaderField.PPE_CONTACT_PHONE)]
-        if CsvHeaderField.PPE_CONTACT_EMAIL in fields:
-            item.ppe_contact_email = values[
-                fields.index(CsvHeaderField.PPE_CONTACT_EMAIL)]
-        if CsvHeaderField.PPE_WEBSITE in fields:
-            item.ppe_website = values[
-                fields.index(CsvHeaderField.PPE_WEBSITE)]
-
         create_extendedfields_for_listitem(item, fields, values)
 
         try:
@@ -286,7 +258,7 @@ def parse_facility_list_item(item):
             # If there is a validation error on an array field, `full_clean`
             # appears to set it to an empty string which then causes `save`
             # to raise an exception.
-            for field in {'ppe_product_types', 'sector'}:
+            for field in {'sector'}:
                 field_is_valid = (
                     getattr(item, field) is None
                     or isinstance(getattr(item, field), list))
@@ -502,38 +474,6 @@ def save_match_details(match_results, text_only_matches=None):
         if item.source.create:
             for m in matches:
                 m.save()
-                if m.status == FacilityMatch.AUTOMATIC:
-                    should_update_ppe_product_types = (
-                        item.has_ppe_product_types
-                        and not m.facility.has_ppe_product_types)
-                    if should_update_ppe_product_types:
-                        m.facility.ppe_product_types = item.ppe_product_types
-
-                    should_update_ppe_contact_phone = (
-                        item.has_ppe_contact_phone
-                        and not m.facility.has_ppe_contact_phone)
-                    if should_update_ppe_contact_phone:
-                        m.facility.ppe_contact_phone = item.ppe_contact_phone
-
-                    should_update_ppe_contact_email = (
-                        item.has_ppe_contact_email
-                        and not m.facility.has_ppe_contact_email)
-                    if should_update_ppe_contact_email:
-                        m.facility.ppe_contact_email = item.ppe_contact_email
-
-                    should_update_ppe_website = (
-                        item.has_ppe_website
-                        and not m.facility.has_ppe_website)
-                    if should_update_ppe_website:
-                        m.facility.ppe_website = item.ppe_website
-
-                    should_save_facility = (
-                        should_update_ppe_product_types
-                        or should_update_ppe_contact_phone
-                        or should_update_ppe_contact_email
-                        or should_update_ppe_website)
-                    if should_save_facility:
-                        m.facility.save()
 
         all_matches.extend(matches)
 
@@ -584,11 +524,7 @@ def save_match_details(match_results, text_only_matches=None):
                                     address=item.address,
                                     country_code=item.country_code,
                                     location=item.geocoded_point,
-                                    created_from=item,
-                                    ppe_product_types=item.ppe_product_types,
-                                    ppe_contact_phone=item.ppe_contact_phone,
-                                    ppe_contact_email=item.ppe_contact_email,
-                                    ppe_website=item.ppe_website)
+                                    created_from=item)
                 facility.save()
 
                 match = make_pending_match(item.id, facility.id, 1.0)
@@ -671,7 +607,6 @@ def save_exact_match_details(exact_results):
         if item.source.create:
             for m in matches:
                 m.save()
-                # TODO: handle PPE if needed
 
         all_matches.extend(matches)
 

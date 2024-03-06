@@ -5,7 +5,7 @@ from django.db import transaction
 
 from django.contrib.gis.geos import GEOSGeometry
 from api.geocoding import geocode_address
-from api.countries import COUNTRY_CODES
+from countries.lib.countries import COUNTRY_CODES
 from api.models import FacilityClaim
 
 

@@ -1136,3 +1136,7 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
             history_response.status_code,
             200,
         )
+
+    def test_describe_change_value(self, **kwargs):
+        with self.assertRaises(TypeError):
+            json.loads(['Socks'])

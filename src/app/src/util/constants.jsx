@@ -8,6 +8,10 @@ export const FACILITIES_DOWNLOAD_REQUEST_PAGE_SIZE = 100;
 export const WEB_HEADER_HEIGHT = '160px';
 export const MOBILE_HEADER_HEIGHT = '140px';
 
+export const CONFIRM_ACTION = 'confirm';
+export const MERGE_ACTION = 'merge';
+export const REJECT_ACTION = 'reject';
+
 export const InfoLink = 'https://info.opensupplyhub.org';
 
 export const InfoPaths = {
@@ -518,10 +522,19 @@ export const facilitiesListTableTooltipTitles = Object.freeze({
     status: 'Processing status of this list.',
 });
 
+export const userApiInfoTooltipTitles = Object.freeze({
+    apiCallAllowance:
+        'Call Limit is the number of calls your account can make per renewal period.',
+    currentCallCount:
+        'Current Usage is the number of calls your account has made within the current renewal period.',
+    renewalPeriod:
+        'Renewal Period indicates how often your package renews. This can either be monthly or annually.',
+});
+
+export const IS_NOT_SET = 'Is not set';
 export const ALLOW_LARGE_DOWNLOADS = 'allow_large_downloads';
 export const CLAIM_A_FACILITY = 'claim_a_facility';
 export const VECTOR_TILE = 'vector_tile';
-export const PPE = 'ppe';
 export const REPORT_A_FACILITY = 'report_a_facility';
 export const EMBEDDED_MAP_FLAG = 'embedded_map';
 export const EXTENDED_PROFILE_FLAG = 'extended_profile';
@@ -594,13 +607,6 @@ export const GRID_COLOR_RAMP = Object.freeze([
     [10, '#81D690'],
     [40, '#4A9957'],
     [160, '#19331D'],
-]);
-
-export const PPE_FIELD_NAMES = Object.freeze([
-    'ppe_product_types',
-    'ppe_contact_phone',
-    'ppe_contact_email',
-    'ppe_website',
 ]);
 
 export const OARFont = "'Darker Grotesque',sans-serif";

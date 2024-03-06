@@ -3,7 +3,7 @@ from rest_framework.serializers import (
 )
 from waffle import switch_is_active
 
-from ...countries import COUNTRY_NAMES
+from countries.lib.countries import COUNTRY_NAMES
 from ...models.contributor.contributor import Contributor
 from ...models.facility.facility_index import FacilityIndex
 from ...models.embed_field import EmbedField
@@ -18,15 +18,9 @@ from .facility_index_serializer import FacilityIndexSerializer
 from .utils import (
     format_numeric,
     can_user_see_detail,
-    get_embed_contributor_id,
-    is_created_at_main_date,
     should_show_pending_claim_info,
-    get_contributor_name_from_facilityindexnew,
-    get_contributor_id_from_facilityindexnew,
-    regroup_items_for_sector_field,
-    regroup_claims_for_sector_field,
-    format_date,
-    depromote_unspecified_items,
+    get_contributor_name_from_facilityindex,
+    format_date
 )
 
 
@@ -44,14 +38,28 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
 
     class Meta:
         model = FacilityIndex
-        fields = ('id', 'name', 'address', 'country_code', 'location',
-                  'os_id', 'other_names', 'other_addresses', 'contributors',
-                  'country_name', 'claim_info', 'other_locations',
-                  'ppe_product_types', 'ppe_contact_phone',
-                  'ppe_contact_email', 'ppe_website',  'is_closed',
-                  'activity_reports', 'contributor_fields', 'new_os_id',
-                  'has_inexact_coordinates', 'extended_fields', 'created_from',
-                  'sector')
+        fields = (
+            'id',
+            'name',
+            'address',
+            'country_code',
+            'location',
+            'os_id',
+            'other_names',
+            'other_addresses',
+            'contributors',
+            'country_name',
+            'claim_info',
+            'other_locations',
+            'is_closed',
+            'activity_reports',
+            'contributor_fields',
+            'new_os_id',
+            'has_inexact_coordinates',
+            'extended_fields',
+            'created_from',
+            'sector',
+        )
         geo_field = 'location'
 
     def get_other_names(self, facility):
@@ -163,7 +171,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         if approved_claim_info:
             claim_info = approved_claim_info
             claim_info['contributor'] = \
-                get_contributor_name_from_facilityindexnew(
+                get_contributor_name_from_facilityindex(
                     claim_info['contributor'],
                     user_can_see_detail)
             return claim_info
@@ -183,9 +191,6 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         return [
             {
                 'facility': item['facility'] or None,
-                'reported_by_user': (
-                    item['reported_by_user'] or None
-                ),
                 'reported_by_contributor': (
                     item['reported_by_contributor'] or None
                 ),
@@ -333,78 +338,3 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
 
     def get_has_inexact_coordinates(self, facility):
         return False
-
-    def get_sector(self, facility):
-        user_can_see_detail = can_user_see_detail(self)
-
-        use_main_created_at = is_created_at_main_date(self)
-        date_field_to_sort = (
-            'created_at' if use_main_created_at else 'updated_at'
-        )
-
-        items = regroup_items_for_sector_field(
-            facility.item_sectors, date_field_to_sort)
-
-        claims = regroup_claims_for_sector_field(
-            facility.claim_sectors, date_field_to_sort
-        )
-
-        contributor_id = get_embed_contributor_id(self)
-        if is_embed_mode_active(self) and contributor_id is not None:
-            contributor_id_int = int(contributor_id)
-            items = list(filter(
-                lambda item: item['contributor']['id'] == contributor_id_int,
-                items
-                ))
-            claims = list(filter(
-                lambda claim: claim['contributor']['id'] == contributor_id_int,
-                claims
-                ))
-
-        item_sectors = [
-            {
-                **({'created_at': format_date(i['created_at'])}
-                    if use_main_created_at else
-                    {}),
-                'updated_at': format_date(i['updated_at']),
-                'contributor_id': get_contributor_id_from_facilityindexnew(
-                    i['contributor'],
-                    (user_can_see_detail
-                     and i['source']['is_active']
-                     and i['source']['is_public']
-                     and i['has_active_complete_match'])),
-                'contributor_name': get_contributor_name_from_facilityindexnew(
-                    i['contributor'],
-                    (user_can_see_detail
-                     and i['source']['is_active']
-                     and i['source']['is_public']
-                     and i['has_active_complete_match'])),
-                'values': i['sector'],
-                'is_from_claim': False
-            }
-            for i in items
-        ]
-
-        claim_sectors = [
-            {
-                **({'created_at': format_date(c['created_at'])}
-                    if use_main_created_at else
-                    {}),
-                'updated_at': format_date(c['updated_at']),
-                'contributor_id': get_contributor_id_from_facilityindexnew(
-                    c['contributor'], user_can_see_detail),
-                'contributor_name': get_contributor_name_from_facilityindexnew(
-                    c['contributor'], user_can_see_detail),
-                'values': c['sector'],
-                'is_from_claim': True
-            }
-            for c in claims
-        ]
-
-        item_sectors = sorted(
-            item_sectors,
-            key=lambda i: i[date_field_to_sort],
-            reverse=True
-        )
-
-        return claim_sectors + depromote_unspecified_items(item_sectors)

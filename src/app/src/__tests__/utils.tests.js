@@ -10,6 +10,7 @@ const {
     makeFacilityListsURL,
     makeSingleFacilityListURL,
     makeAPITokenURL,
+    makeUserAPIInfoURL,
     makeGetContributorsURL,
     makeGetContributorTypesURL,
     makeGetCountriesURL,
@@ -119,6 +120,12 @@ it('creates an API URL for generating an API token', () => {
     const uid = 123;
     const expectedMatch = '/api-token-auth/';
     expect(makeAPITokenURL(uid)).toEqual(expectedMatch);
+});
+
+it('creates an API URL for getting contributor API information', () => {
+    const uid = 123;
+    const expectedMatch = `/user-api-info/${uid}/`;
+    expect(makeUserAPIInfoURL(uid)).toEqual(expectedMatch);
 });
 
 it('creates API URLs for getting contributor, contributor type, country, and sector options', () => {
@@ -268,7 +275,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -304,7 +310,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: 'AND',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
           label: "# Contributors",
           value: "",
@@ -341,7 +346,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -377,7 +381,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -413,7 +416,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -445,7 +447,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -455,33 +456,6 @@ it('creates a set of filters from a querystring', () => {
     expect(
         createFiltersFromQueryString(stringWithCountriesMissing),
     ).toEqual(expectedMissingCountriesMatch);
-
-    const ppeString = '?ppe=true';
-    const expectedPPEMatch = {
-        facilityFreeTextQuery: '',
-        contributors: [],
-        contributorTypes: [],
-        countries: [],
-        sectors: [],
-        lists: [],
-        parentCompany: [],
-        facilityType: [],
-        processingType: [],
-        productType: [],
-        numberOfWorkers: [],
-        nativeLanguageName: '',
-        combineContributors: '',
-        boundary: null,
-        ppe: 'true',
-        sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
-    };
-
-    expect(
-        createFiltersFromQueryString(ppeString),
-    ).toEqual(expectedPPEMatch);
 
     const parentCompanyString = '?parent_company=1&parent_company=Test Company'
     const expectedParentCompanyMatch = {
@@ -506,7 +480,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -540,7 +513,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -574,7 +546,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -608,7 +579,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -642,7 +612,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -669,7 +638,6 @@ it('creates a set of filters from a querystring', () => {
         nativeLanguageName: '杭州',
         combineContributors: '',
         boundary: null,
-        ppe: '',
         sortAlgorithm: {
             label: "# Contributors",
             value: "",
@@ -1746,9 +1714,8 @@ it('should return an array with claimed facility link if active feature flag is 
     const logoutAction = jest.fn();
     const activeFeatureFlags = [CLAIM_A_FACILITY];
 
-    
     const result = createUserDropdownLinks(user, logoutAction, activeFeatureFlags);
-    
+
     expect(result).toContainEqual({
         label: 'My Facilities',
         href: '/claimed',

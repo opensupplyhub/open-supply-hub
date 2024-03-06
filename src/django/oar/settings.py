@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 
 import os
 import requests
-import json
 
 from django.core.exceptions import ImproperlyConfigured
 from corsheaders.defaults import default_headers
@@ -28,7 +27,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'secret')
 
 # Set environment
 ENVIRONMENT = os.getenv('DJANGO_ENV', 'Development')
-VALID_ENVIRONMENTS = ('Production', 'Staging', 'Development', 'Prestaging', 'Preprod')
+VALID_ENVIRONMENTS = ('Production', 'Staging', 'Development', 'Test', 'Preprod')
 if ENVIRONMENT not in VALID_ENVIRONMENTS:
     raise ImproperlyConfigured(
         'Invalid ENVIRONMENT provided, must be one of {}'
@@ -72,7 +71,7 @@ if ENVIRONMENT == 'Development':
     ALLOWED_HOSTS.append('app')
     ALLOWED_HOSTS.append('contricleaner')
 
-if ENVIRONMENT in ['Production', 'Staging', "Prestaging"] and BATCH_MODE == '':
+if ENVIRONMENT in ['Production', 'Staging', 'Test'] and BATCH_MODE == '':
     # Within EC2, the Elastic Load Balancer HTTP health check will use the
     # target instance's private IP address for the Host header.
     #
@@ -95,7 +94,7 @@ if ENVIRONMENT in ['Production', 'Staging', "Prestaging"] and BATCH_MODE == '':
     else:
         raise ImproperlyConfigured('Unable to fetch instance metadata')
 
-    # Ensure Django knows to determine whether an inbound request was   
+    # Ensure Django knows to determine whether an inbound request was
     # made over HTTPS by the ALBs HTTP_X_FORWARDED_PROTO header.
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
@@ -265,9 +264,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTH_USER_MODEL = 'api.User'
 
-# Api Limits
-API_FREE_REQUEST_LIMIT = 50
-
 # Caching
 # https://docs.djangoproject.com/en/3.2/topics/cache/
 
@@ -374,24 +370,6 @@ WATCHMAN_CHECKS = (
 # https://github.com/azavea/django-ecsmanage
 
 ECSMANAGE_ENVIRONMENTS = {
-    'prestaging': {
-        'TASK_DEFINITION_NAME': 'OpenSupplyHubPrestagingAppCLI',
-        'CONTAINER_NAME': 'django',
-        'CLUSTER_NAME': 'ecsOpenSupplyHubPrestagingCluster',
-        'LAUNCH_TYPE': 'FARGATE',
-        'PLATFORM_VERSION': '1.4.0',
-        'SECURITY_GROUP_TAGS': {
-            'Name': 'sgAppEcsService',
-            'Environment': 'Staging',
-            'Project': 'OpenSupplyHub'
-        },
-        'SUBNET_TAGS': {
-            'Name': 'PrivateSubnet',
-            'Environment': 'Staging',
-            'Project': 'OpenSupplyHub'
-        },
-        'AWS_REGION': 'eu-west-1',
-    },
     'staging': {
         'TASK_DEFINITION_NAME': 'OpenSupplyHubStagingAppCLI',
         'CONTAINER_NAME': 'django',
@@ -427,7 +405,25 @@ ECSMANAGE_ENVIRONMENTS = {
             'Project': 'OpenSupplyHub'
         },
         'AWS_REGION': 'eu-west-1',
-    }
+    },
+    'test': {
+        'TASK_DEFINITION_NAME': 'OpenSupplyHubTestAppCLI',
+        'CONTAINER_NAME': 'django',
+        'CLUSTER_NAME': 'ecsOpenSupplyHubTestCluster',
+        'LAUNCH_TYPE': 'FARGATE',
+        'PLATFORM_VERSION': '1.4.0',
+        'SECURITY_GROUP_TAGS': {
+            'Name': 'sgAppEcsService',
+            'Environment': 'Test',
+            'Project': 'OpenSupplyHub',
+        },
+        'SUBNET_TAGS': {
+            'Name': 'PrivateSubnet',
+            'Environment': 'Test',
+            'Project': 'OpenSupplyHub',
+        },
+        'AWS_REGION': 'eu-west-1',
+    },
 }
 
 # Application settings

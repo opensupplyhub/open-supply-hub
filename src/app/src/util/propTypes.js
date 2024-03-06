@@ -24,7 +24,6 @@ import {
     facilityMatchStatusChoicesEnum,
     CLAIM_A_FACILITY,
     VECTOR_TILE,
-    PPE,
     REPORT_A_FACILITY,
     EMBEDDED_MAP_FLAG,
     EXTENDED_PROFILE_FLAG,
@@ -86,6 +85,12 @@ export const profileFormInputHandlersPropType = shape(
 export const tokenPropType = shape({
     token: string.isRequired,
     created: string.isRequired,
+});
+
+export const userApiInfoPropType = shape({
+    apiCallAllowance: string.isRequired,
+    currentCallCount: number.isRequired,
+    renewalPeriod: string.isRequired,
 });
 
 export const facilityMatchPropType = shape({
@@ -309,7 +314,6 @@ export const facilityListItemStatusPropType = oneOf(
 export const featureFlagPropType = oneOf([
     CLAIM_A_FACILITY,
     VECTOR_TILE,
-    PPE,
     REPORT_A_FACILITY,
     EMBEDDED_MAP_FLAG,
     EXTENDED_PROFILE_FLAG,

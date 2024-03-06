@@ -13,6 +13,7 @@ import {
     resetMergeFacilitiesState,
     mergeFacilities,
     flipFacilitiesToMerge,
+    clearMergeFacilitiesError,
 } from '../actions/mergeFacilities';
 
 import {
@@ -58,6 +59,7 @@ function DashboardMergeFacilities({
     errorMerging,
     flipSelectedFacilities,
     classes,
+    handleClearMergeFacilitiesError,
 }) {
     useEffect(() => (!isModalMode ? resetMergeState : undefined), [
         isModalMode,
@@ -79,6 +81,7 @@ function DashboardMergeFacilities({
                 }
                 toMergeData={toMergeData}
                 targetData={targetData}
+                handleClearFacilityToMerge={handleClearMergeFacilitiesError}
             />
             <div className={classes.dashboardFacilityCardsContainer}>
                 <DashboardFacilityCard
@@ -192,6 +195,8 @@ function mapDispatchToProps(dispatch) {
         resetMergeState: () => dispatch(resetMergeFacilitiesState()),
         mergeSelectedFacilities: () => dispatch(mergeFacilities()),
         flipSelectedFacilities: () => dispatch(flipFacilitiesToMerge()),
+        handleClearMergeFacilitiesError: () =>
+            dispatch(clearMergeFacilitiesError()),
     };
 }
 

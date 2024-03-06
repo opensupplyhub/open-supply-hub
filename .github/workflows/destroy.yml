@@ -1,0 +1,49 @@
+name: 'Destroy Environment'
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy-env:
+        description: 'Environment to destroy'     
+        required: true
+        type: choice
+        options:
+        - Pre-prod
+        default: Pre-prod
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.deploy-env }}
+    steps:
+      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+        id: get_env_name
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
+        with:
+          string: ${{ vars.ENV_NAME }}
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      
+      - name: Copy tfvars from S3 bucket for ${{ vars.ENV_NAME }}
+        run: |
+          aws s3 cp "s3://${{ env.SETTINGS_BUCKET }}/terraform/terraform.tfvars" "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
+          ls -la
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
+          AWS_DEFAULT_REGION: "eu-west-1"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.4.0
+          terraform_wrapper: false
+
+      - name: Terraform destroy for ${{ vars.ENV_NAME }}
+        run: ./deployment/infra destroy
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
+          AWS_DEFAULT_REGION: "eu-west-1"

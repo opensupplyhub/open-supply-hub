@@ -15,8 +15,6 @@ def create_nonstandard_fields(fields, contributor):
     )
     standard_fields = [
         'sector', 'country', 'name', 'address', 'lat', 'lng',
-        'ppe_contact_phone', 'ppe_website',
-        'ppe_contact_email', 'ppe_product_types'
     ]
     nonstandard_fields = filter(
         lambda f: f.lower() not in standard_fields, new_fields
