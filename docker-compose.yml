@@ -39,7 +39,7 @@ services:
       - DJANGO_ENV=Development
       - DJANGO_SECRET_KEY=secret
       - DJANGO_LOG_LEVEL=INFO
-      - AWS_PROFILE=${AWS_PROFILE:-open-apparel-registry}
+      - AWS_PROFILE=${AWS_PROFILE:-default}
       - OAR_CLIENT_KEY=
       - NOTIFICATION_EMAIL_TO=notification@example.com
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
