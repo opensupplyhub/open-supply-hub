@@ -26,6 +26,7 @@ class RowFacilityTypeSerializer(RowSerializer):
         # submitted a processing_type
         elif processing_type and not facility_type:
             facility_type = processing_type
+
         # Add a processing_type extended field if the user only
         # submitted a facility_type
         elif facility_type and not processing_type:
