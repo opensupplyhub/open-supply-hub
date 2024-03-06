@@ -170,6 +170,11 @@ class FacilityListViewSet(ModelViewSet):
         else:
             description = None
 
+        if description is not None and '|' in description:
+            raise ValidationError(
+                'Description cannot contain the "|" character.'
+            )
+
         replaces = None
         if 'replaces' in request.data:
             try:
