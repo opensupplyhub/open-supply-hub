@@ -1,3 +1,17 @@
+locals {
+ database_anonymizer_image = "${module.ecr_repository_database_anonymizer.repository_url}:${var.image_tag}"
+}
+variable "anonymized_db_s3_storage" {
+  type        = string
+  description = "Storage bucket for anonymized database dump"
+  default     = "oshub-dumps-anonymized"
+}
+
+resource "aws_cloudwatch_log_group" "database_anonymizer" {
+  name              = "log${local.short}DatabaseAnonymizer"
+  retention_in_days = 30
+}
+
 data "aws_iam_policy_document" "database_anonymizer_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -54,16 +68,68 @@ module "database_anonymizer_cluster" {
 module "database_anonymizer_task_definition" {
   source                 = "git@github.com:cn-terraform/terraform-aws-ecs-fargate-task-definition.git?ref=1.0.36"
   name_prefix            = "database-anonymizer"
-  container_image        = "343975343274.dkr.ecr.eu-west-1.amazonaws.com/opensupplyhubtest-database-anonymizer:latest"
+  container_image        = local.database_anonymizer_image
   container_name         = "database-anonymizer"
   #ephemeral_storage_size = 25
 
-  secrets = [
+  environment = [
     {
-       valueFrom: "arn:aws:ssm:eu-west-1:343975343274:parameter/test",
-       name: "TEST"
+      name: "POSTGRES_USER",
+      value: "anondb"
     },
+    {
+      name: "POSTGRES_PASSWORD",
+      value: "anondb"
+    },
+    {
+      name: "POSTGRES_DB",
+      value: "anon"
+    },
+    {
+      name: "SOURCE_POSTGRES_HOST",
+      value: aws_route53_record.database.name
+    },
+    {
+      name: "SOURCE_POSTGRES_PORT",
+      value: module.database_enc.port
+    },
+    {
+      name: "SOURCE_POSTGRES_USER",
+      value: var.rds_database_username
+    },
+    {
+      name: "SOURCE_POSTGRES_PASSWORD",
+      value: var.rds_database_password
+    },
+    {
+      name: "SOURCE_POSTGRES_DB",
+      value: var.rds_database_name
+    },
+    {
+      name: "AWS_DEFAULT_REGION",
+      value: var.aws_region
+    },
+    {
+      name: "AWS_STORAGE_BUCKET_NAME",
+      value: var.anonymized_db_s3_storage
+    }
   ]
+
+#  secrets = [
+#    {
+#       valueFrom: "arn:aws:ssm:eu-west-1:343975343274:parameter/test",
+#       name: "TEST"
+#    },
+#  ]
+
+  log_configuration = {
+    logDriver: "awslogs",
+    options: {
+      "awslogs-group": aws_cloudwatch_log_group.database_anonymizer.name,
+      "awslogs-region": var.aws_region,
+      "awslogs-stream-prefix": "database-anonymizer"
+    }
+  }
 }
 
 # AWS ECS Fargate Schedule Task Terraform Module
@@ -83,7 +149,9 @@ module "database_anonymizer_task" {
 module "ecr_repository_database_anonymizer" {
   source = "github.com/azavea/terraform-aws-ecr-repository?ref=1.0.0"
 
-  repository_name = lower(join("-", [local.short, "database-anonymizer"]))
+  repository_name =  "${lower(replace(var.project, " ", ""))}-database-anonymizer-${lower(var.environment)}"
 
   attach_lifecycle_policy = true
 }
+
+
