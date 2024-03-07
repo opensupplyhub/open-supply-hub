@@ -16,18 +16,19 @@ class RowFacilityTypeSerializerTest(TestCase):
         self.assertEqual(validated, {})
 
     def test_validate_with_facility_type_processing_type(self):
-        row = {'facility_type_processing_type': 'Blending|Knitting'}
+        row = {'facility_type_processing_type':
+               ['Blending|Knitting|Blending', 'Blending']}
         current = {}
         validated = self.serializer.validate(row, current)
         self.assertEqual(
             validated,
             {
                 'facility_type': {
-                    'raw_values': 'Blending|Knitting',
+                    'raw_values': ['Blending|Knitting|Blending', 'Blending'],
                     'processed_values': {'Blending', 'Knitting'},
                 },
                 'processing_type': {
-                    'raw_values': 'Blending|Knitting',
+                    'raw_values': ['Blending|Knitting|Blending', 'Blending'],
                     'processed_values': {'Blending', 'Knitting'},
                 },
             },
