@@ -1,4 +1,4 @@
-from typing import Union, List
+from contricleaner.lib.helpers.split_values import split_values
 from contricleaner.lib.serializers.row_serializers.row_serializer import (
     RowSerializer,
 )
@@ -32,16 +32,7 @@ class RowFacilityTypeSerializer(RowSerializer):
         elif facility_type and not processing_type:
             processing_type = facility_type
 
-        current['facility_type'] = self.split_values(facility_type)
-        current['processing_type'] = self.split_values(processing_type)
+        current['facility_type'] = split_values(facility_type, '|')
+        current['processing_type'] = split_values(processing_type, '|')
 
         return current
-
-    @staticmethod
-    def split_values(value: Union[str, list]) -> List[str]:
-        if isinstance(value, str):
-            return value.split('|')
-        elif isinstance(value, list):
-            return value
-        else:
-            raise ValueError("Unsupported value type: {}".format(type(value)))
