@@ -13,8 +13,11 @@ class RowFacilityTypeSerializer(RowSerializer):
             'facility_type_processing_type'
         )
 
-        # facility_type_processing_type is a special "meta" field that
-        # attempts to simplify the submission process for contributors.
+        if not any(
+            (facility_type, processing_type, facility_type_processing_type)
+        ):
+            return current
+
         if facility_type_processing_type:
             if facility_type is None:
                 facility_type = facility_type_processing_type
@@ -22,13 +25,9 @@ class RowFacilityTypeSerializer(RowSerializer):
             if processing_type is None:
                 processing_type = facility_type_processing_type
 
-        # Add a facility_type extended field if the user only
-        # submitted a processing_type
         elif processing_type and not facility_type:
             facility_type = processing_type
 
-        # Add a processing_type extended field if the user only
-        # submitted a facility_type
         elif facility_type and not processing_type:
             processing_type = facility_type
 

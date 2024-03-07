@@ -10,6 +10,12 @@ class RowFacilityTypeSerializerTest(TestCase):
     def setUp(self):
         self.serializer = RowFacilityTypeSerializer()
 
+    def test_validate_with_no_values(self):
+        row = {}
+        current = {}
+        validated = self.serializer.validate(row, current)
+        self.assertEqual(validated, {})
+
     def test_validate_with_facility_type_processing_type(self):
         row = {'facility_type_processing_type': 'Blending|Knitting'}
         current = {}
