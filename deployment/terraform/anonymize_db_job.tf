@@ -1,6 +1,7 @@
 locals {
  database_anonymizer_image = "${module.ecr_repository_database_anonymizer.repository_url}:${var.image_tag}"
 }
+
 variable "anonymized_db_s3_storage" {
   type        = string
   description = "Storage bucket for anonymized database dump"
@@ -150,8 +151,5 @@ module "ecr_repository_database_anonymizer" {
   source = "github.com/azavea/terraform-aws-ecr-repository?ref=1.0.0"
 
   repository_name =  "${lower(replace(var.project, " ", ""))}-database-anonymizer-${lower(var.environment)}"
-
   attach_lifecycle_policy = true
 }
-
-
