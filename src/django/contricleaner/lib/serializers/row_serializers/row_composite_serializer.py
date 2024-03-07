@@ -23,8 +23,8 @@ class RowCompositeSerializer:
             RowSectorSerializer(sector_cache),
             RowCountrySerializer(),
             RowRequiredFieldsSerializer(),
-            RowEmptySerializer(),
             RowFacilityTypeSerializer(),
+            RowEmptySerializer(),
         ]
 
     def get_validated_row(self, raw_row: dict):
