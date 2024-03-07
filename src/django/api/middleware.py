@@ -1,6 +1,5 @@
 import datetime
 import json
-import logging
 
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
@@ -13,8 +12,6 @@ from django.http import HttpResponse
 from api.models import RequestLog
 from api.limits import get_api_block
 from oar.rollbar import report_error_to_rollbar
-
-logger = logging.getLogger(__name__)
 
 
 class RequestLogMiddleware:
