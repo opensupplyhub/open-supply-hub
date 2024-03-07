@@ -164,6 +164,11 @@ class FacilityListViewSet(ModelViewSet):
         else:
             description = None
 
+        if description is not None and '|' in description:
+            raise ValidationError(
+                'Description cannot contain the "|" character.'
+            )
+
         replaces = None
         if 'replaces' in request.data:
             try:
@@ -214,7 +219,7 @@ class FacilityListViewSet(ModelViewSet):
                  for idx, row in enumerate(rows)]
         FacilityListItem.objects.bulk_create(items)
 
-        if ENVIRONMENT in ('Prestaging', 'Staging', 'Production', 'Preprod'):
+        if ENVIRONMENT in ('Test', 'Staging', 'Production', 'Preprod'):
             submit_parse_job(new_list)
 
         serializer = self.get_serializer(new_list)
@@ -314,7 +319,7 @@ class FacilityListViewSet(ModelViewSet):
         facility_list.status = FacilityList.APPROVED
         facility_list.save()
 
-        if ENVIRONMENT in ('Prestaging', 'Staging', 'Production', 'Preprod'):
+        if ENVIRONMENT in ('Test', 'Staging', 'Production', 'Preprod'):
             submit_jobs(facility_list)
 
         return Response(

@@ -1,4 +1,5 @@
 from contricleaner.lib.dto.row_dto import RowDTO
+from contricleaner.lib.sector_cache_interface import SectorCacheInterface
 from contricleaner.lib.serializers.row_serializers.row_clean_field_serializer \
     import RowCleanFieldSerializer
 from contricleaner.lib.serializers.row_serializers.row_country_serializer \
@@ -6,7 +7,10 @@ from contricleaner.lib.serializers.row_serializers.row_country_serializer \
 from contricleaner.lib.serializers.row_serializers.row_empty_serializer \
     import RowEmptySerializer
 from contricleaner.lib.serializers.row_serializers.row_sector_serializer \
-    import (RowSectorSerializer, SectorCacheInterface)
+    import RowSectorSerializer
+from contricleaner.lib.serializers.row_serializers \
+    .row_required_fields_serializer \
+    import RowRequiredFieldsSerializer
 
 
 class RowCompositeSerializer:
@@ -16,6 +20,7 @@ class RowCompositeSerializer:
             RowCleanFieldSerializer("address", "clean_address"),
             RowSectorSerializer(sector_cache),
             RowCountrySerializer(),
+            RowRequiredFieldsSerializer(),
             RowEmptySerializer(),
         ]
 

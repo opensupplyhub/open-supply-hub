@@ -1,8 +1,7 @@
 from datetime import datetime, timedelta
 from api.models import Sector
 from api.constants import CsvHeaderField
-from contricleaner.lib.serializers.row_serializers.row_sector_serializer \
-    import SectorCacheInterface
+from contricleaner.lib.sector_cache_interface import SectorCacheInterface
 
 
 class SectorCache(SectorCacheInterface):
