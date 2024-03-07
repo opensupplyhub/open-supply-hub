@@ -31,7 +31,13 @@ class RowFacilityTypeSerializer(RowSerializer):
         elif facility_type and not processing_type:
             processing_type = facility_type
 
-        current['facility_type'] = split_values(facility_type, '|')
-        current['processing_type'] = split_values(processing_type, '|')
+        current['facility_type'] = {
+            'raw_values': facility_type,
+            'processed_values': split_values(facility_type, '|'),
+        }
+        current['processing_type'] = {
+            'raw_values': processing_type,
+            'processed_values': split_values(processing_type, '|'),
+        }
 
         return current

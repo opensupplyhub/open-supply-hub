@@ -1,6 +1,5 @@
-from contricleaner.lib.serializers.row_serializers.row_facility_type_serializer import (
-    RowFacilityTypeSerializer,
-)
+from contricleaner.lib.serializers.row_serializers.\
+    row_facility_type_serializer import RowFacilityTypeSerializer
 
 from django.test import TestCase
 
@@ -23,8 +22,14 @@ class RowFacilityTypeSerializerTest(TestCase):
         self.assertEqual(
             validated,
             {
-                'facility_type': {'Blending', 'Knitting'},
-                'processing_type': {'Blending', 'Knitting'},
+                'facility_type': {
+                    'raw_values': 'Blending|Knitting',
+                    'processed_values': {'Blending', 'Knitting'},
+                },
+                'processing_type': {
+                    'raw_values': 'Blending|Knitting',
+                    'processed_values': {'Blending', 'Knitting'},
+                },
             },
         )
 
@@ -34,7 +39,16 @@ class RowFacilityTypeSerializerTest(TestCase):
         validated = self.serializer.validate(row, current)
         self.assertEqual(
             validated,
-            {'facility_type': {'Knitting'}, 'processing_type': {'Knitting'}},
+            {
+                'facility_type': {
+                    'raw_values': 'Knitting',
+                    'processed_values': {'Knitting'},
+                },
+                'processing_type': {
+                    'raw_values': 'Knitting',
+                    'processed_values': {'Knitting'},
+                },
+            },
         )
 
     def test_validate_with_facility_type_only(self):
@@ -43,7 +57,16 @@ class RowFacilityTypeSerializerTest(TestCase):
         validated = self.serializer.validate(row, current)
         self.assertEqual(
             validated,
-            {'facility_type': {'Blending'}, 'processing_type': {'Blending'}},
+            {
+                'facility_type': {
+                    'raw_values': 'Blending',
+                    'processed_values': {'Blending'},
+                },
+                'processing_type': {
+                    'raw_values': 'Blending',
+                    'processed_values': {'Blending'},
+                },
+            },
         )
 
     def test_validate_with_both_types_already_filled(self):
@@ -52,5 +75,14 @@ class RowFacilityTypeSerializerTest(TestCase):
         validated = self.serializer.validate(row, current)
         self.assertEqual(
             validated,
-            {'facility_type': {'Blending'}, 'processing_type': {'Knitting'}},
+            {
+                'facility_type': {
+                    'raw_values': 'Blending',
+                    'processed_values': {'Blending'},
+                },
+                'processing_type': {
+                    'raw_values': 'Knitting',
+                    'processed_values': {'Knitting'},
+                },
+            },
         )
