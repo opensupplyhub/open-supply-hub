@@ -42,11 +42,15 @@ resource "aws_iam_role_policy_attachment" "database_anonymizer" {
   policy_arn = aws_iam_policy.database_anonymizer.arn
 }
 
+# AWS ECS Cluster Terraform Module
+# https://registry.terraform.io/modules/cn-terraform/ecs-cluster/aws/latest
 module "database_anonymizer_cluster" {
   source  = "git::git@github.com:cn-terraform/terraform-aws-ecs-cluster.git?ref=1.0.11"
   name    = join("-", [local.short, "DatabaseAnonymizer"])
 }
 
+# AWS ECS Fargate Task Definition Terraform Module
+# https://registry.terraform.io/modules/cn-terraform/ecs-fargate-task-definition/aws/latest
 module "database_anonymizer_task_definition" {
   source                 = "git@github.com:cn-terraform/terraform-aws-ecs-fargate-task-definition.git?ref=1.0.36"
   name_prefix            = "database-anonymizer"
@@ -62,6 +66,8 @@ module "database_anonymizer_task_definition" {
   ]
 }
 
+# AWS ECS Fargate Schedule Task Terraform Module
+# https://registry.terraform.io/modules/cn-terraform/ecs-fargate-scheduled-task/aws/latest
 module "database_anonymizer_task" {
   source                                      = "git::git@github.com:cn-terraform/terraform-aws-ecs-fargate-scheduled-task.git?ref=1.0.25"
   name_prefix                                 = "anonymize_database-task"
