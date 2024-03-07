@@ -424,6 +424,24 @@ ECSMANAGE_ENVIRONMENTS = {
         },
         'AWS_REGION': 'eu-west-1',
     },
+    'development': {
+        'TASK_DEFINITION_NAME': 'OpenSupplyHubDevelopmentAppCLI',
+        'CONTAINER_NAME': 'django',
+        'CLUSTER_NAME': 'ecsOpenSupplyHubDevelopmentCluster',
+        'LAUNCH_TYPE': 'FARGATE',
+        'PLATFORM_VERSION': '1.4.0',
+        'SECURITY_GROUP_TAGS': {
+            'Name': 'sgAppEcsService',
+            'Environment': 'Development',
+            'Project': 'OpenSupplyHub',
+        },
+        'SUBNET_TAGS': {
+            'Name': 'PrivateSubnet',
+            'Environment': 'Development',
+            'Project': 'OpenSupplyHub',
+        },
+        'AWS_REGION': 'eu-west-1',
+    },
 }
 
 # Application settings
