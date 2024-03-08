@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import { Route, Switch } from 'react-router-dom';
 import Grid from '@material-ui/core/Grid';
+import { userPropType } from '../util/propTypes';
 
 import FacilitiesMap from './FacilitiesMap';
 import FacilitiesMapErrorMessage from './FacilitiesMapErrorMessage';
@@ -9,10 +11,12 @@ import VectorTileFacilitiesMap from './VectorTileFacilitiesMap';
 
 import '../styles/css/Map.css';
 
+import { logErrorToRollbar } from './../util/util';
 import {
     facilitiesRoute,
     facilityDetailsRoute,
     VECTOR_TILE,
+    USER_DEFAULT_STATE,
 } from '../util/constants';
 
 class Map extends Component {
@@ -23,9 +27,8 @@ class Map extends Component {
     }
 
     componentDidCatch(error) {
-        if (window.Rollbar) {
-            window.Rollbar.error(error);
-        }
+        const { user } = this.props;
+        logErrorToRollbar(window, error, user);
     }
 
     render() {
@@ -93,4 +96,20 @@ class Map extends Component {
     }
 }
 
-export default Map;
+Map.propTypes = {
+    user: userPropType,
+};
+
+Map.defaultProps = {
+    user: USER_DEFAULT_STATE,
+};
+
+function mapStateToProps({
+    auth: {
+        user: { user },
+    },
+}) {
+    return { user };
+}
+
+export default connect(mapStateToProps)(Map);
