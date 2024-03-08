@@ -4,8 +4,8 @@ import asyncio
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
 from contricleaner.lib.parsers.source_parser_json import SourceParserJSON
-from contricleaner.lib.serializers.contri_cleaner_serializer \
-    import ContriCleanerSerializer
+from contricleaner.lib.serializers.contri_cleaner_serializer import \
+    ContriCleanerSerializer
 
 from rest_framework.mixins import (
     ListModelMixin,
@@ -69,11 +69,8 @@ from ...mail import send_claim_facility_confirmation_email
 
 from ...pagination import FacilitiesGeoJSONPagination
 from ...permissions import IsRegisteredAndConfirmed, IsSuperuser
-from ...processing import (
-    handle_external_match_process_result,
-)
-from ...sector_product_type_parser import RequestBodySectorProductTypeParser, \
-    SectorCache
+from ...processing import handle_external_match_process_result
+from ...sector_product_type_parser import SectorCache
 from ...serializers import (
     FacilityIndexSerializer,
     FacilityIndexDetailsSerializer,
@@ -560,10 +557,11 @@ class FacilitiesViewSet(ListModelMixin,
         if not flag_is_active(request._request,
                               FeatureGroups.CAN_SUBMIT_FACILITY):
             raise PermissionDenied()
-        # print('request.data', request.data)
+
         body_serializer = FacilityCreateBodySerializer(data=request.data)
         body_serializer.is_valid(raise_exception=True)
 
+        # Implementing the contri_cleaner
         contri_cleaner = ContriCleanerSerializer(
             SourceParserJSON(request.data), SectorCache()
         )
@@ -572,9 +570,8 @@ class FacilitiesViewSet(ListModelMixin,
         # print('rows', rows)
         row = rows[0]
         print('row in viewset', row)
-        print('row.sector in viewset', row.sector)  
+        # print('row.sector in viewset', row.sector)
 
-        # print('body_serializer', body_serializer)
         # print('body_serializer.validated_data', body_serializer.validated_data)
         # clean_name = clean(body_serializer.validated_data.get('name'))
         # if clean_name is None:
@@ -584,6 +581,7 @@ class FacilitiesViewSet(ListModelMixin,
         #             "This field may not be blank."
         #         ]
         #     })
+        
         # clean_address = clean(body_serializer.validated_data.get('address'))
         # if clean_address is None:
         #     clean_address = ''
@@ -614,16 +612,20 @@ class FacilitiesViewSet(ListModelMixin,
             create=should_create
         )
 
-        parser = RequestBodySectorProductTypeParser(
-            body_serializer.validated_data)
-        # print('parser', parser)
-        sector = parser.sectors
-        print('sector in view_set', sector)
-        product_types = parser.product_types
-        print('product_types in view_set', product_types)
+        # parser = RequestBodySectorProductTypeParser(
+        #     body_serializer.validated_data)
+
+        # sector = parser.sectors
+        # print('sector', sector)
+        # print('row.sector', row.sector)
+        # product_types = parser.product_types
+        # print('product_types', product_types)
+        # print('row.product_types', row.fields.get('product_types'))
 
         # cleaned_user_data = request.data.copy()
+        # print('cleaned_user_data', cleaned_user_data)
         # cleaned_user_data['sector'] = sector
+
         # if len(product_types) > 0:
         #     cleaned_user_data['product_type'] = product_types
         # if 'sector_product_type' in cleaned_user_data:
@@ -632,15 +634,22 @@ class FacilitiesViewSet(ListModelMixin,
         # country_code = get_country_code(
         #     body_serializer.validated_data.get('country'))
         # name = body_serializer.validated_data.get('name')
-        # address = row.address
+        # address = body_serializer.validated_data.get('address')
+        # print('country_code', country_code)
+        # print('row.country_code', row.country_code)
+        # print('cleaned_user_data', cleaned_user_data)
 
         # fields = list(cleaned_user_data.keys())
-        create_nonstandard_fields(row.fields.keys(), request.user.contributor)
+        # print('fields', fields)
+        create_nonstandard_fields(
+            list(row.fields.keys()),
+            request.user.contributor
+        )
 
         item = FacilityListItem.objects.create(
             source=source,
             row_index=0,
-            raw_data=json.dumps(row.raw_json),
+            raw_data=json.dumps(request.data),  # needs to be explored
             raw_json=row.raw_json,
             raw_header='',
             status=FacilityListItem.PARSED,
@@ -649,7 +658,7 @@ class FacilitiesViewSet(ListModelMixin,
             address=row.address,
             clean_address=row.clean_address,
             country_code=row.country_code,
-            sector=row.fields.get('sectors'),
+            sector=row.sector,
             processing_results=[{
                 'action': ProcessingAction.PARSE,
                 'started_at': parse_started,
@@ -658,7 +667,6 @@ class FacilitiesViewSet(ListModelMixin,
                 'is_geocoded': False,
             }]
         )
-        print('item', item)
 
         result = {
             'matches': [],
