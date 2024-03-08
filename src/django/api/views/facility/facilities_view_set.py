@@ -790,7 +790,8 @@ class FacilitiesViewSet(ListModelMixin,
             item.save()
 
         def delete_facility_claim_review_notes(claim):
-            for claim_review_note in FacilityClaimReviewNote.objects.filter(claim=claim):
+            notes = FacilityClaimReviewNote.objects.filter(claim=claim)
+            for claim_review_note in notes:
                 claim_review_note._change_reason = f'Deleted {facility.id}'
                 claim_review_note.delete()
 

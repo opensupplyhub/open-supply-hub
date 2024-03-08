@@ -626,7 +626,7 @@ class FacilityDeleteTest(APITestCase):
         self.assertEqual(
             0, FacilityMatch.objects.filter(facility=self.facility).count()
         )
-    
+
     def test_can_delete_with_claim_notes(self):
         claim = FacilityClaim.objects.create(
             contributor=self.contributor,
@@ -640,7 +640,7 @@ class FacilityDeleteTest(APITestCase):
         FacilityClaimReviewNote.objects.create(
             claim=claim,
             author=self.user,
-            note=( f'Test' ),
+            note='Test',
         )
 
         self.client.login(
@@ -655,4 +655,3 @@ class FacilityDeleteTest(APITestCase):
         self.assertEqual(
             0, FacilityClaimReviewNote.objects.filter(claim=claim).count()
         )
-
