@@ -131,7 +131,10 @@ function StyledSelect({
                         classNamePrefix="select"
                         styles={selectFilterStyles}
                         placeholder="Select"
+                        menuPosition="fixed"
                         menuPortalTarget={document.body}
+                        menuShouldBlockScroll={!isSideBarSearch}
+                        menuShouldScrollIntoView={!isSideBarSearch}
                         {...rest}
                     />
                 );
