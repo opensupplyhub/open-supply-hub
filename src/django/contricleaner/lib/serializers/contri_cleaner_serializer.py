@@ -6,8 +6,6 @@ from contricleaner.lib.sector_cache_interface import SectorCacheInterface
 from contricleaner.lib.serializers.row_serializers.row_composite_serializer \
     import RowCompositeSerializer
 from contricleaner.lib.parsers.source_parser import SourceParser
-from contricleaner.lib.serializers.row_serializers.row_sector_serializer \
-    import SectorCacheInterface
 
 
 class ContriCleanerSerializer:
@@ -20,6 +18,6 @@ class ContriCleanerSerializer:
         self.row_serializer = RowCompositeSerializer(sector_cache)
 
     def get_validated_rows(self) -> List[RowDTO]:
-        rows = self.__source_parser.parsed_rows()
+        rows = self.__source_parser.get_parsed_rows()
 
         return [self.row_serializer.get_validated_row(row) for row in rows]
