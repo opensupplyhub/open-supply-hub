@@ -51,9 +51,9 @@ class RowCompositeSerializer:
         }
 
         for res_key, res_value in res.items():
-            if res_key in standard_fields:
+            if res_key in standard_fields or res_key == "errors":
                 dict_res[res_key] = res_value
-            elif res_key != "errors":
+            else:
                 dict_res["fields"][res_key] = res_value
 
         return RowDTO(
