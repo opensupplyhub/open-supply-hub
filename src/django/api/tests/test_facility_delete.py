@@ -4,6 +4,7 @@ from api.models import (
     Facility,
     FacilityAlias,
     FacilityClaim,
+    FacilityClaimReviewNote,
     FacilityList,
     FacilityListItem,
     FacilityMatch,
@@ -625,3 +626,33 @@ class FacilityDeleteTest(APITestCase):
         self.assertEqual(
             0, FacilityMatch.objects.filter(facility=self.facility).count()
         )
+    
+    def test_can_delete_with_claim_notes(self):
+        claim = FacilityClaim.objects.create(
+            contributor=self.contributor,
+            facility=self.facility,
+            contact_person="test",
+            email="test@test.com",
+            phone_number="1234567890",
+            status=FacilityClaim.DENIED,
+        )
+
+        FacilityClaimReviewNote.objects.create(
+            claim=claim,
+            author=self.user,
+            note=( f'Test' ),
+        )
+
+        self.client.login(
+            email=self.superuser_email,
+            password=self.superuser_password
+        )
+        response = self.client.delete(self.facility_url)
+        self.assertEqual(204, response.status_code)
+        self.assertEqual(
+            0, FacilityClaim.objects.filter(facility=self.facility).count()
+        )
+        self.assertEqual(
+            0, FacilityClaimReviewNote.objects.filter(claim=claim).count()
+        )
+
