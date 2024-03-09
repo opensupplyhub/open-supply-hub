@@ -55,10 +55,7 @@ jobs:
         run: |
           cp "terraform-config/terraform-${{steps.get_env_name.outputs.lowercase}}.tfvars" "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
-          AWS_DEFAULT_REGION: "eu-west-1"
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
