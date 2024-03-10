@@ -1,27 +1,13 @@
-#!/bin/bash
+# pg_dump --clean --no-owner --no-privileges -Fc -h host.docker.internal -U opensupplyhub -p 5433 -f /dumps/osh_prod_large.dump -w --verbose
+## echo "Running anonymize script" > /dumps/dump.dump
 
-# -- Check if the dump file path and first path are provided as arguments
-# -- if [ "$#" -ne 2 ]; then
-# --    echo "Usage: $0 <first_path> <dump_file_path>"
-# --    exit 1
-# -- fi
 
-# -- Assign the provided paths to variables
-# -- RESET_FILE_PATH="$1"
-# -- DUMP_FILE_PATH="$2"
+docker-entrypoint.sh -c 'shared_buffers=2048MB' -c 'max_connections=10' &
 
-echo "Running anonymize script"
-# Drop anondb database
-docker exec -i anonymizer-database-1 dropdb -U anondb anondb
 
-# Drop anondb database
-docker exec -i anonymizer-database-1 createdb -U anondb anondb
+sleep 5s
+pg_isready -d anondb -U anondb -h localhost -p 5432
 
-# Restore anondb database from the restore file
-# -- docker exec -i anonymize_database-1 pg_restore -U anondb -d anondb < "$RESET_FILE_PATH"
-docker exec -i anonymizer-database-1 pg_restore -U anondb -d anondb < ../db_before/dump.dump
-
-# SQL script for updating email fields
 SQL_SCRIPT="DO \$\$
 DECLARE
     current_table text;
@@ -60,6 +46,8 @@ BEGIN
 END \$\$;"
 
 
-# Execute SQL script and create a dump file
-# -- docker exec -it anonymize_database-1 psql -U anondb -d anondb -c "$SQL_SCRIPT" && sudo docker exec -it anonymize_database-1 pg_dump -U anondb -d anondb -f "$DUMP_FILE_PATH"
-docker exec -it anonymize_database-1 psql -U anondb -d anondb -c "$SQL_SCRIPT" && sudo docker exec -it anonymize_database-1 pg_dump -U anondb -d anondb -f ../db_after/anonymized_dump.dump
+pg_restore --verbose --clean --no-acl --no-owner -d anondb -U anondb -h localhost -p 5432 < /dumps/osh_prod_large.dump
+psql -U anondb -d anondb -h localhost -p 5432 -c "$SQL_SCRIPT"
+pg_dump --clean --no-owner --no-privileges -Fc -d anondb -U anondb  -f /dumps/osh_prod_large_res.dump -w --verbose
+
+echo "Finshed anonymization"
