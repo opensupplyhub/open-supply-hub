@@ -1,4 +1,4 @@
-from typing import Union, Set
+from contricleaner.lib.helpers.split_values import split_values
 from contricleaner.lib.sector_cache_interface import SectorCacheInterface
 from .row_serializer import RowSerializer
 
@@ -8,7 +8,7 @@ class RowSectorSerializer(RowSerializer):
         self.sector_cache = sector_cache
 
     def validate(self, row: dict, current: dict) -> dict:
-        values = RowSectorSerializer.split_values([
+        values = split_values([
                 row.get('sector', []),
                 row.get('product_type', []),
                 row.get('sector_product_type', []),
@@ -20,18 +20,6 @@ class RowSectorSerializer(RowSerializer):
         current['sectors'] = sectors
 
         return current
-
-    @staticmethod
-    def split_values(value: Union[str, list, set], split: str) -> Set[str]:
-        if isinstance(value, str):
-            return set(value.split(split))
-        elif isinstance(value, (list, set)):
-            res = set()
-            for v in value:
-                res = res.union(RowSectorSerializer.split_values(v, split))
-            return res
-        else:
-            raise ValueError("Unsupported value type: {}".format(type(value)))
 
     def parse_all_values(self, all_values):
         DEFAULT_SECTOR_NAME = 'Unspecified'
