@@ -794,7 +794,7 @@ class FacilitiesViewSet(ListModelMixin,
                 objects. \
                 filter(claim=claim)
             for note in notes:
-                note._change_reason=f'Deleted {facility.id}'
+                note._change_reason = f'Deleted {facility.id}'
                 note.delete()
 
         now = str(timezone.now())
