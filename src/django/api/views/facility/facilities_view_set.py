@@ -726,7 +726,7 @@ class FacilitiesViewSet(ListModelMixin,
 
         # Handle and produce message to Kafka with source_id data
         timer = 0
-        timeout = 30
+        timeout = 25
         facility_list_item_temp = None
         while True:
             if timer > timeout:
