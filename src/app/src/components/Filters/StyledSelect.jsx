@@ -133,8 +133,10 @@ function StyledSelect({
                         placeholder="Select"
                         menuPosition="fixed"
                         menuPortalTarget={document.body}
-                        menuShouldBlockScroll={!isSideBarSearch}
-                        menuShouldScrollIntoView={!isSideBarSearch}
+                        closeMenuOnScroll={e =>
+                            e.target.classList === undefined ||
+                            !e.target.classList.contains('css-4ljt47-MenuList')
+                        }
                         {...rest}
                     />
                 );
