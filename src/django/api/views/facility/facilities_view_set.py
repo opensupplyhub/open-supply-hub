@@ -790,10 +790,8 @@ class FacilitiesViewSet(ListModelMixin,
             item.save()
 
         def delete_facility_claim_review_notes(claim):
-            notes = FacilityClaimReviewNote.objects.filter(claim=claim)
-            for claim_review_note in notes:
-                claim_review_note._change_reason = f'Deleted {facility.id}'
-                claim_review_note.delete()
+            FacilityClaimReviewNote.objects.filter(claim=claim).update(_change_reason=f'Deleted {facility.id}')
+            FacilityClaimReviewNote.objects.filter(claim=claim).delete()
 
         now = str(timezone.now())
         created_by_contributor = facility.created_from.source.contributor
@@ -917,10 +915,9 @@ class FacilitiesViewSet(ListModelMixin,
                     delete_facility_list_item(other_match.facility_list_item)
 
         claims = FacilityClaim.objects.filter(facility=facility)
-        for claim in claims:
-            delete_facility_claim_review_notes(claim)
 
         for claim in claims:
+            delete_facility_claim_review_notes(claim)
             claim._change_reason = f'Deleted {facility.id}'
             claim.delete()
 
