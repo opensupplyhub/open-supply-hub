@@ -790,13 +790,12 @@ class FacilitiesViewSet(ListModelMixin,
             item.save()
 
         def delete_facility_claim_review_notes(claim):
-            FacilityClaimReviewNote. \
+            notes = FacilityClaimReviewNote. \
                 objects. \
-                filter(claim=claim). \
-                update(_change_reason=f'Deleted {facility.id}')
-            FacilityClaimReviewNote. \
-                objects. \
-                filter(claim=claim).delete()
+                filter(claim=claim)
+            for note in notes:
+                note._change_reason=f'Deleted {facility.id}'
+                note.delete()
 
         now = str(timezone.now())
         created_by_contributor = facility.created_from.source.contributor
