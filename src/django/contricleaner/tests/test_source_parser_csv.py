@@ -23,31 +23,31 @@ class SourceParserCSVTest(TestCase):
     def test_valid_csv_file_parsing(self):
         expected_parsed_rows = [
             {
-                "country": "United States",
-                "name": "Fashion Plus",
-                "address": "123 Avenue Street, Cityville",
-                "sector_product_type": "Apparel|Jeans",
-                "facility_type_processing_type": "Embellishment",
-                "number_of_workers": "1002",
-                "parent_company": "",
+                'country': 'United States',
+                'name': 'Fashion Plus',
+                'address': '123 Avenue Street, Cityville',
+                'sector_product_type': 'Apparel|Jeans',
+                'facility_type_processing_type': 'Embellishment',
+                'number_of_workers': '1002',
+                'parent_company': '',
             },
             {
-                "country": "Canada",
-                "name": "Style Haven",
-                "address": "456 Fashion Road, Trendy Town",
-                "sector_product_type": "Apparel|Jacket",
-                "facility_type_processing_type": "",
-                "number_of_workers": "70%",
-                "parent_company": "Style Super",
+                'country': 'Canada',
+                'name': 'Style Haven',
+                'address': '456 Fashion Road, Trendy Town',
+                'sector_product_type': 'Apparel|Jacket',
+                'facility_type_processing_type': '',
+                'number_of_workers': '70%',
+                'parent_company': 'Style Super',
             },
             {
-                "country": "Italy",
-                "name": "Chic Boutique",
-                "address": "789 Glamour Avenue, Moda City",
-                "sector_product_type": "Apparel",
-                "facility_type_processing_type": "Embossing",
-                "number_of_workers": "3002",
-                "parent_company": "",
+                'country': 'Italy',
+                'name': 'Chic Boutique',
+                'address': '789 Glamour Avenue, Moda City',
+                'sector_product_type': 'Apparel',
+                'facility_type_processing_type': 'Embossing',
+                'number_of_workers': '3002',
+                'parent_company': '',
             },
         ]
 
@@ -87,8 +87,8 @@ class SourceParserCSVTest(TestCase):
 
         parser = SourceParserCSV(uploaded_file)
         with self.assertRaisesRegex(ValidationError,
-                                    ('Unsupported file encoding. '
-                                     'Please submit a UTF-8 CSV.')):
+                                    (r'Unsupported file encoding\. '
+                                     r'Please submit a UTF-8 CSV\.')):
             parser.get_parsed_rows()
 
         os.remove('test.csv')
@@ -103,8 +103,8 @@ class SourceParserCSVTest(TestCase):
 
         parser = SourceParserCSV(uploaded_file)
         with self.assertRaisesRegex(ValidationError,
-                                    ('Unsupported file encoding. '
-                                     'Please submit a UTF-8 CSV.')):
+                                    (r'Unsupported file encoding\. '
+                                     r'Please submit a UTF-8 CSV\.')):
             parser.get_parsed_rows()
 
         os.remove('test.csv')

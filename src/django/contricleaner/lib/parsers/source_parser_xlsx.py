@@ -86,7 +86,7 @@ class SourceParserXLSX(SourceParser, FileParser):
                                   'cannot be processed safely')
 
     @staticmethod
-    def __format_percent(value: Union[float, int, str]) -> str:
+    def __format_percent(value: Union[float, int, str, None]) -> str:
         if value is None or isinstance(value, str):
             return value
         if value <= 1.0:
