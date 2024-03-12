@@ -18,6 +18,7 @@ class RowCompositeValidatorTest(TestCase):
             "sector": "Apparel",
             "product_type": "product one",
             "extra_1": "Extra data",
+            "facility_type": "Blending|Knitting"
         }
         validated_row = self.serializer.get_validated_row(facility_source)
 
@@ -35,7 +36,15 @@ class RowCompositeValidatorTest(TestCase):
                 'sectors': ['Apparel'],
                 'country': 'United States',
                 'product_type': 'product one',
-                'extra_1': 'Extra data'
+                'extra_1': 'Extra data',
+                'facility_type': {
+                    'raw_values': 'Blending|Knitting',
+                    'processed_values': {'Blending', 'Knitting'}
+                },
+                'processing_type': {
+                    'raw_values': 'Blending|Knitting',
+                    'processed_values': {'Blending', 'Knitting'}
+                }
             },
             errors=[]
         )
