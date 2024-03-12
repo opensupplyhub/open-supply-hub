@@ -1,3 +1,6 @@
+from contricleaner.lib.helpers.is_invalid_type import (
+    is_invalid_type,
+)
 from contricleaner.lib.helpers.split_values import split_values
 from contricleaner.lib.serializers.row_serializers.row_serializer import (
     RowSerializer,
@@ -16,6 +19,30 @@ class RowFacilityTypeSerializer(RowSerializer):
         if not any(
             (facility_type, processing_type, facility_type_processing_type)
         ):
+            return current
+
+        facility_type_errors = []
+
+        fields = [
+            'facility_type',
+            'processing_type',
+            'facility_type_processing_type',
+        ]
+        for field, value in zip(
+            fields,
+            [facility_type, processing_type, facility_type_processing_type],
+        ):
+            if value and is_invalid_type(value):
+                facility_type_errors.append(
+                    {
+                        "message": "Expected value for {} to be a string "
+                        "or a list of strings but got {}".format(field, value),
+                        "type": "ValueError",
+                    }
+                )
+
+        if facility_type_errors:
+            current["errors"].extend(facility_type_errors)
             return current
 
         if facility_type_processing_type:

@@ -26,18 +26,18 @@ class RowSectorSerializerTest(TestCase):
         result = self.serializer.validate(self.row_one, self.current.copy())
 
         self.assertEqual(
-            result['product_types'],
+            result['product_type'],
             ['product one', 'product three', 'product two']
         )
         self.assertEqual(
-            result['sectors'], ['Agriculture', 'Apparel', 'Finance']
+            result['sector'], ['Agriculture', 'Apparel', 'Finance']
         )
 
     def test_validate_with_single_sector(self):
         result = self.serializer.validate(self.row_two, self.current.copy())
 
-        self.assertEqual(result['product_types'], ['product one'])
-        self.assertEqual(result['sectors'], ['Apparel'])
+        self.assertEqual(result['product_type'], ['product one'])
+        self.assertEqual(result['sector'], ['Apparel'])
 
     def test_parse_all_values(self):
         all_values = ['technology', 'product one', 'finance']
