@@ -752,8 +752,11 @@ class FacilitiesViewSet(ListModelMixin,
                 should_create
             )
 
+        errors_status = [FacilityListItem.ERROR_MATCHING,
+                         FacilityListItem.GEOCODED_NO_RESULTS]
+
         if (should_create
-                and result['status'] != FacilityListItem.ERROR_MATCHING):
+                and result['status'] not in errors_status):
             return Response(result, status=status.HTTP_201_CREATED)
         else:
             return Response(result, status=status.HTTP_200_OK)

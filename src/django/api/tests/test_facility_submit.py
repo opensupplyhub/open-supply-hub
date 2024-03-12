@@ -1,6 +1,7 @@
 import json
 
 from api.models import FacilityListItem, NonstandardField
+from api.constants import ErrorMessages
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 
 from django.http import QueryDict
@@ -196,3 +197,21 @@ class FacilitySubmitTest(FacilityAPITestCaseBase):
             },
         )
         self.assertEqual(response_two.status_code, 400)
+
+    def test_geocoding_no_results(self):
+        self.join_group_and_login()
+        url_with_query = "{}?public=true".format(self.url)
+        response = self.client.post(
+            url_with_query,
+            {
+                "country": "CN",
+                "name": "Tongxiang Oriental Silk Printing and Dyeing Co., Ltd.",
+                "address": "No.98, Nanshengbang, Dongbangtou Village, HeshanTown, Tongxiang city., 314599 JIAXING, Zhejiang Sheng"
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+
+        data = json.loads(response.content)
+        self.assertEqual(data["status"], FacilityListItem.GEOCODED_NO_RESULTS)
+        self.assertEqual(data["message"], ErrorMessages.GEOCODING_NO_RESULTS)
+
