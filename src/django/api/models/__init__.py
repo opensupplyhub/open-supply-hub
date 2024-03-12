@@ -19,7 +19,6 @@ from .contributor.contributor_notifications import (
   ContributorNotifications,
   HistoricalContributorNotifications
 )
-from .contributor.contributor_webhook import ContributorWebhook
 from .facility.facility import (
   Facility,
   HistoricalFacility,
