@@ -207,7 +207,8 @@ class FacilitySubmitTest(FacilityAPITestCaseBase):
                 "country": 'CN',
                 "name": ('Tongxiang Oriental Silk '
                          'Printing and Dyeing Co., Ltd.'),
-                "address": ('No.98, Nanshengbang, Dongbangtou Village, HeshanTown, '
+                "address": ('No.98, Nanshengbang, Dongbangtou Village, '
+                            'HeshanTown, '
                             'Tongxiang city., 314599 JIAXING, '
                             'Zhejiang Sheng')
             },
