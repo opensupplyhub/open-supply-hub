@@ -723,11 +723,10 @@ class FacilitiesViewSet(ListModelMixin,
             result['status'] = item.status
             return Response(result,
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        result['status'] = item.status
 
-        failed_geocoding_status = [FacilityListItem.GEOCODED_NO_RESULTS,
-                                   FacilityListItem.ERROR_GEOCODING]
-
-        if item.status not in failed_geocoding_status:
+        if item.status == FacilityListItem.GEOCODED:
             # Handle and produce message to Kafka with source_id data
             timer = 0
             timeout = 25
