@@ -23,8 +23,6 @@ from .contributor.contributor_facility_list_view_ordered import (
     ContributorFacilityListSortedViewSet
 )
 from .contributor.get_contributor import get_contributor
-# from .contributor.contributor_webhook_view_set import ContributorWebhookViewSet
-
 from .country.active_countries_count import active_countries_count
 from .country.all_countries import all_countries
 

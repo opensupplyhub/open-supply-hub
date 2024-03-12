@@ -19,7 +19,6 @@ from .contributor.contributor_notifications import (
   ContributorNotifications,
   HistoricalContributorNotifications
 )
-
 from .facility.facility import (
   Facility,
   HistoricalFacility,

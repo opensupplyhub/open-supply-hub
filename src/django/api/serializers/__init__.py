@@ -3,7 +3,6 @@
 from .contributor.contributor_list_query_params_serializer import (
     ContributorListQueryParamsSerializer
 )
-# from .contributor.contributor_webhook_serializer import ContributorWebhookSerializer
 
 from .facility.approved_facility_claim_serializer import ApprovedFacilityClaimSerializer
 from .facility.facility_activity_report_serializer import FacilityActivityReportSerializer
