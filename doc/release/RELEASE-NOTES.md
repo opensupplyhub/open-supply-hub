@@ -41,7 +41,7 @@ Move `countries` to a separate module so that it becomes possible to use both `d
 * [OSDEV-802](https://opensupplyhub.atlassian.net/browse/OSDEV-802) - Distinguish API user and contributor id in the error message that pass to the Rollbar.
 
 ### Release instructions:
-* *Provide release instructions here.*
+* 0141_delete_contributor_webhooks.py - deletes `ContributorWebhook` model
 
 
 ## Release 1.9.0

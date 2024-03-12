@@ -23,7 +23,7 @@ export default function UserAPITokenListItem({
 
     return (
         <>
-            <ListItemText primary="Token:" style={{ paddingLeft: '1.5rem' }} />
+            <ListItemText primary="Token:" style={{ paddingLeft: '23px' }} />
             <ListItem style={{ paddingTop: '0' }}>
                 <ListItemText primary={token} secondary={secondaryText} />
                 <ListItemSecondaryAction>
