@@ -22,31 +22,32 @@ class SourceParserXLSX(SourceParser, FileParser):
             file: Union[InMemoryUploadedFile, TemporaryUploadedFile]
             ) -> List[dict]:
         try:
-            ws = SourceParserXLSX.__get_xlsx_sheet(file)
+            worksheet = SourceParserXLSX.__get_xlsx_sheet(file)
 
             # openpyxl package is 1-indexed
             percent_col = [get_column_letter(cell.column)
-                           for cell in ws[2] if '%' in cell.number_format]
+                           for cell in worksheet[2]
+                           if '%' in cell.number_format]
 
             if percent_col:
                 for col in percent_col:
-                    for cell in ws[col]:
+                    for cell in worksheet[col]:
                         if cell.row != 1:
                             cell.value = SourceParserXLSX.__format_percent(
                                 cell.value
                             )
 
-            ws_rows = ws.rows
-            # Using `next` will consome the row so that iteration of the data
-            # rows will skipt the header row
-            first_row = next(ws_rows)
+            worksheet_rows = worksheet.rows
+            # Using `next` extracts the header row, causing the iteration of
+            # the data rows to skip the header row.
+            first_row = next(worksheet_rows)
             header = [
                 SourceParserXLSX.__format_cell_value(cell.value)
                 for cell in first_row
             ]
 
             rows = [dict(zip(header, SourceParserXLSX.__tidy_row(row)))
-                    for row in ws_rows
+                    for row in worksheet_rows
                     if any(cell.value is not None for cell in row)]
 
             return rows
@@ -76,10 +77,10 @@ class SourceParserXLSX(SourceParser, FileParser):
         defusedxml.defuse_stdlib()
 
         try:
-            wb = load_workbook(filename=file)
-            ws = wb[wb.sheetnames[0]]
+            workbook = load_workbook(filename=file)
+            worksheet = workbook[workbook.sheetnames[0]]
 
-            return ws
+            return worksheet
 
         except EntitiesForbidden:
             raise ValidationError('This file may be damaged and '

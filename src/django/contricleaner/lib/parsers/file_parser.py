@@ -37,16 +37,16 @@ class FileParser(ABC):
     def __replace_invalid_data(value: str, invalid_keywords: List[str]) -> str:
         result_value = value
         for keyword in invalid_keywords:
-            # Remove invalid keywords if exist
+            # Remove invalid keywords if exist.
             result_value = result_value.replace(keyword, '')
         return result_value
 
     @staticmethod
     def __cleanup_data(value: str) -> str:
         dup_pattern = ',' + '{2,}'
-        # Remove duplicates commas if exist
+        # Remove duplicates commas if exist.
         result_value = re.sub(dup_pattern, ',', value)
-        # Remove comma in the end of the string if exist
+        # Remove comma in the end of the string if exist.
         result_value = result_value.rstrip(',')
-        # Remove extra spaces if exist
+        # Remove extra spaces if exist.
         return result_value.strip()
