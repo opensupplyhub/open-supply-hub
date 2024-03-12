@@ -6,6 +6,8 @@ from contricleaner.lib.serializers.row_serializers.row_country_serializer \
     import RowCountrySerializer
 from contricleaner.lib.serializers.row_serializers.row_empty_serializer \
     import RowEmptySerializer
+from contricleaner.lib.serializers.row_serializers.\
+    row_facility_type_serializer import RowFacilityTypeSerializer
 from contricleaner.lib.serializers.row_serializers.row_sector_serializer \
     import RowSectorSerializer
 from contricleaner.lib.serializers.row_serializers \
@@ -21,6 +23,7 @@ class RowCompositeSerializer:
             RowSectorSerializer(sector_cache),
             RowCountrySerializer(),
             RowRequiredFieldsSerializer(),
+            RowFacilityTypeSerializer(),
             RowEmptySerializer(),
         ]
 

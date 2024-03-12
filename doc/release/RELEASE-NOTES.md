@@ -25,12 +25,15 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-910](https://opensupplyhub.atlassian.net/browse/OSDEV-910) Add separated code quality pipelines for contricleaner, countries, django-api and frontend. After checking, it creates a code coverage report showing each particular app's code coverage. Add separated code quality jobs for code formatters.
 * [OSDEV-702](https://opensupplyhub.atlassian.net/browse/OSDEV-702) Integrate a new module named `contricleaner` separately, designed to parse and validate data from various sources such as json, csv, and xls.
 Move `countries` to a separate module so that it becomes possible to use both `django` and `contricleaner`.
+* [OSDEV-893](https://opensupplyhub.atlassian.net/browse/OSDEV-893) - Implement CSV and XLSX file parser strategies in the ContriCleaner library, and incorporate preliminary cleanup during parsing.
 * [OSDEV-915](https://opensupplyhub.atlassian.net/browse/OSDEV-915) Upgrade Kafka tools to version 3.5.2
 * [OSDEV-877](https://opensupplyhub.atlassian.net/browse/OSDEV-877) Make migration run as part of "Deploy to AWS" workflow
+* [OSDEV-851](https://opensupplyhub.atlassian.net/browse/OSDEV-851) Place 'terraform.tfvar' files to repository and move sensitive info to private repository opensupplyhub/ci-deployment/
 
 ### Bugfix
 * [OSDEV-716](https://opensupplyhub.atlassian.net/browse/OSDEV-716) Search. Lost refresh icon. The refresh icon has been made visible.
 * [OSDEV-918](https://opensupplyhub.atlassian.net/browse/OSDEV-918) - ContriBot. New lists are not populating in Monday board and are not sent to slack. Added validation to throw an error for users who upload a facility list with `|` in the description field.
+* [OSDEV-644](https://opensupplyhub.atlassian.net/browse/OSDEV-644) Error when trying to delete a facility with only one contributor in case that logic to clear FacilityClaimReviewNote table records missed.
 
 ### What's new
 * [OSDEV-917](https://opensupplyhub.atlassian.net/browse/OSDEV-917) My Account Menu. Update order of the settings tabs. `NON-admin` user sees: My Facility / My Lists / Settings / Logout and `Admin` user sees: Dashboard / My Facility / My Lists / Settings / Logout
