@@ -7,7 +7,6 @@ import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import includes from 'lodash/includes';
 
-import UserNotifications from './UserNotifications';
 import UserProfile from './UserProfile';
 import UserAPITokens from './UserAPITokens';
 import AppOverflow from './AppOverflow';
@@ -25,14 +24,13 @@ import { convertFeatureFlagsObjectToListOfActiveFlags } from '../util/util';
 const PROFILE_TAB = 'Profile';
 const EMBED_TAB = 'Embed';
 const TOKEN_TAB = 'Tokens';
-const NOTIFICATIONS_TAB = 'API Notifications';
 
 const getTabs = ({ fetchingFlags, activeFeatureFlags }) => {
     if (fetchingFlags || !includes(activeFeatureFlags, EMBEDDED_MAP_FLAG)) {
         return [PROFILE_TAB, TOKEN_TAB];
     }
 
-    return [PROFILE_TAB, EMBED_TAB, TOKEN_TAB, NOTIFICATIONS_TAB];
+    return [PROFILE_TAB, EMBED_TAB, TOKEN_TAB];
 };
 
 function Settings({
@@ -106,9 +104,6 @@ function Settings({
                     <AppGrid>
                         <UserAPITokens />
                     </AppGrid>
-                )}
-                {!user.isAnon && tabs[activeTabIndex] === NOTIFICATIONS_TAB && (
-                    <UserNotifications />
                 )}
             </AppOverflow>
         </React.Fragment>

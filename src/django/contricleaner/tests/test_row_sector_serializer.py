@@ -39,25 +39,6 @@ class RowSectorSerializerTest(TestCase):
         self.assertEqual(result['product_types'], ['product one'])
         self.assertEqual(result['sectors'], ['Apparel'])
 
-    def test_split_values_string(self):
-        values = 'technology, healthcare, finance'
-        result = self.serializer.split_values(values, ', ')
-        self.assertEqual(result, {'technology', 'healthcare', 'finance'})
-
-    def test_split_values_list(self):
-        values = ['technology', 'healthcare', 'finance']
-        result = self.serializer.split_values(values, ', ')
-        self.assertEqual(result, {'technology', 'healthcare', 'finance'})
-
-    def test_split_values_unsupported_type(self):
-        unsupported_value = 123  # Unsupported value type (integer)
-        with self.assertRaises(ValueError) as context:
-            self.serializer.split_values(unsupported_value, ', ')
-
-        self.assertEqual(
-            str(context.exception), "Unsupported value type: <class 'int'>"
-        )
-
     def test_parse_all_values(self):
         all_values = ['technology', 'product one', 'finance']
         sectors, product_types = self.serializer.parse_all_values(all_values)

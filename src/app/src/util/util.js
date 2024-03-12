@@ -120,10 +120,6 @@ export const makeUserSignupURL = () => '/user-signup/';
 export const makeUserConfirmEmailURL = () =>
     '/rest-auth/registration/verify-email/';
 
-export const makeContributorWebhooksURL = () => '/api/contributor-webhooks/';
-export const makeContributorWebhookURL = id =>
-    `/api/contributor-webhooks/${id}/`;
-
 export const makeUploadFacilityListsURL = () => {
     const uploadListURL =
         env('REACT_APP_ROUTE') && env('REACT_APP_ROUTE') === 'true'
