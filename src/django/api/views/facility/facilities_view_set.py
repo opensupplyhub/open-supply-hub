@@ -52,6 +52,7 @@ from ...constants import (
     FacilityMergeQueryParams,
     ProcessingAction,
     UpdateLocationParams,
+    ErrorMessages
 )
 from ...exceptions import BadRequestException
 from ...extended_fields import (
@@ -696,6 +697,8 @@ class FacilitiesViewSet(ListModelMixin,
                 result['geocoded_address'] = item.geocoded_address
             else:
                 item.status = FacilityListItem.GEOCODED_NO_RESULTS
+                result['status'] = item.status
+                result['message'] = ErrorMessages.GEOCODING_NO_RESULTS
 
             item.processing_results.append({
                 'action': ProcessingAction.GEOCODE,
@@ -723,8 +726,6 @@ class FacilitiesViewSet(ListModelMixin,
             result['status'] = item.status
             return Response(result,
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        result['status'] = item.status
 
         if item.status == FacilityListItem.GEOCODED:
             # Handle and produce message to Kafka with source_id data
