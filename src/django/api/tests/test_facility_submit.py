@@ -204,9 +204,11 @@ class FacilitySubmitTest(FacilityAPITestCaseBase):
         response = self.client.post(
             url_with_query,
             {
-                "country": "CN",
-                "name": "Tongxiang Oriental Silk Printing and Dyeing Co., Ltd.",
-                "address": "No.98, Nanshengbang, Dongbangtou Village, HeshanTown, Tongxiang city., 314599 JIAXING, Zhejiang Sheng"
+                "country": 'CN',
+                "name": ('Tongxiang Oriental Silk '
+                         'Printing and Dyeing Co., Ltd.'),
+                "address": ('No.98, Nanshengbang, Dongbangtou Village, HeshanTown,'
+                            'Tongxiang city., 314599 JIAXING, Zhejiang Sheng')
             },
         )
         self.assertEqual(response.status_code, 200)

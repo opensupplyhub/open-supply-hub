@@ -187,5 +187,6 @@ class NumberOfWorkersRanges:
         'label': 'More than 10000'
     }]
 
+
 class ErrorMessages:
     GEOCODING_NO_RESULTS = "The address you submitted can not be geocoded."

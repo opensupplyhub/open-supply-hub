@@ -732,14 +732,14 @@ class FacilitiesViewSet(ListModelMixin,
             # Handle and produce message to Kafka with source_id data
             timer = 0
             timeout = 25
-            facility_list_item_temp = None
+            fli_temp = None
             while True:
                 if timer > timeout:
                     break
-                facility_list_item_temp = FacilityListItemTemp.objects.get(
+                fli_temp = FacilityListItemTemp.objects.get(
                     source=source.id
                 )
-                if facility_list_item_temp.status == FacilityListItemTemp.GEOCODED:
+                if fli_temp.status == FacilityListItemTemp.GEOCODED:
                     asyncio.run(produce_message_match_process(source.id))
                     break
                 asyncio.sleep(1)
@@ -747,7 +747,7 @@ class FacilitiesViewSet(ListModelMixin,
 
             # Handle results of "match" process from Dedupe Hub
             result = handle_external_match_process_result(
-                facility_list_item_temp.id,
+                fli_temp.id,
                 result,
                 request,
                 should_create
