@@ -43,7 +43,6 @@ Move `countries` to a separate module so that it becomes possible to use both `d
 ### Release instructions:
 * Update code.
 * Apply DB migrations up to the latest one.
-* Run the index_facilities_new management command.
 
 ## Release 1.9.0
 
