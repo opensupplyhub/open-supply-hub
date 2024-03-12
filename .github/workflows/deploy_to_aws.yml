@@ -44,15 +44,19 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Copy tfvars from S3 bucket for ${{ vars.ENV_NAME }}
+      - name: Checkout config repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'opensupplyhub/ci-deployment'
+          path: 'terraform-config'
+          token: ${{ secrets.PAT }}
+
+      - name: Copy tfvars for ${{ vars.ENV_NAME }}
         run: |
-          aws s3 cp "s3://${{ env.SETTINGS_BUCKET }}/terraform/terraform.tfvars" "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
-          ls -la
+          cat "terraform-config/environments/${{ env.TFVAR_NAME }}"  "deployment/environments/${{env.TFVAR_NAME}}"  > "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
-          AWS_DEFAULT_REGION: "eu-west-1"
+          TFVAR_NAME: terraform-${{steps.get_env_name.outputs.lowercase}}.tfvars
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -200,20 +204,49 @@ jobs:
             DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}
             ENVIRONMENT=${{ steps.get_env_name.outputs.lowercase }}
 
-      - name: Build and push kafka-topics image to ECR for ${{ vars.ENV_NAME }}
-        uses: docker/build-push-action@v2
+  update_services:
+    needs: build_and_push_docker_image
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    if: ${{ inputs.deploy-plan-only == false }}
+    steps:
+      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+        id: get_env_name
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
         with:
-          context: src/kafka-tools/
-          file: src/kafka-tools/Dockerfile
-          push: true
-          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-kafka-${{  steps.get_env_name.outputs.lowercase }}:latest
-          build-args: |
-            DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}
-            ENVIRONMENT=${{ steps.get_env_name.outputs.lowercase }}
+          string: ${{ vars.ENV_NAME }}
 
-      - name: Update ECS Django Service with new Image
+
+      - name: Update ECS Django Service with new Image for ${{ vars.ENV_NAME }}
         run: |
           aws ecs update-service --cluster ${{ vars.CLUSTER }} --service ${{ vars.SERVICE_NAME }} --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
+
+
+  post_deploy:
+    needs: update_services
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    if: ${{ inputs.deploy-plan-only == false }}
+    steps:
+      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+        id: get_env_name
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
+        with:
+          string: ${{ vars.ENV_NAME }}
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Configure AWS credentials for ${{ vars.ENV_NAME }}
+        run: |
+          mkdir -p ~/.aws
+          touch ~/.aws/credentials
+          echo "[default]
+          aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region = ${AWS_DEFAULT_REGION}" > ~/.aws/credentials
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -227,3 +260,15 @@ jobs:
       #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       #     AWS_DEFAULT_REGION: "eu-west-1"
+
+      - name: Run migrations for ${{ vars.ENV_NAME }}
+        run: |
+          echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
+          ./scripts/manage ecsmanage -e ${{steps.get_env_name.outputs.lowercase}} migrate api
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
+          AWS_PROFILE: "default"
+
+        

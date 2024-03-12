@@ -38,6 +38,7 @@ from ...models import (
     FacilityActivityReport,
     FacilityAlias,
     FacilityClaim,
+    FacilityClaimReviewNote,
     FacilityListItem,
     FacilityListItemTemp,
     FacilityLocation,
@@ -788,6 +789,14 @@ class FacilitiesViewSet(ListModelMixin,
             item.facility = None
             item.save()
 
+        def delete_facility_claim_review_notes(claim):
+            notes = FacilityClaimReviewNote. \
+                objects. \
+                filter(claim=claim)
+            for note in notes:
+                note._change_reason = f'Deleted {facility.id}'
+                note.delete()
+
         now = str(timezone.now())
         created_by_contributor = facility.created_from.source.contributor
 
@@ -909,7 +918,10 @@ class FacilitiesViewSet(ListModelMixin,
                     delete_facility_match(other_match)
                     delete_facility_list_item(other_match.facility_list_item)
 
-        for claim in FacilityClaim.objects.filter(facility=facility):
+        claims = FacilityClaim.objects.filter(facility=facility)
+
+        for claim in claims:
+            delete_facility_claim_review_notes(claim)
             claim._change_reason = f'Deleted {facility.id}'
             claim.delete()
 

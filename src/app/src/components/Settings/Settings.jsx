@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
-import UserNotifications from '../UserNotifications';
 import UserProfile from '../UserProfile';
 import UserAPITokens from '../UserAPITokens';
 import UserAPIInfo from '../UserApiInfo';
@@ -17,12 +16,7 @@ import { userPropType } from '../../util/propTypes';
 import { authLoginFormRoute, USER_DEFAULT_STATE } from '../../util/constants';
 import { convertFeatureFlagsObjectToListOfActiveFlags } from '../../util/util';
 import { getTabs } from './utils';
-import {
-    PROFILE_TAB,
-    EMBED_TAB,
-    API_TAB,
-    NOTIFICATIONS_TAB,
-} from './constants';
+import { PROFILE_TAB, EMBED_TAB, API_TAB } from './constants';
 
 function Settings({
     user,
@@ -82,9 +76,6 @@ function Settings({
                         <UserAPITokens />
                         <UserAPIInfo uid={user.id} />
                     </AppGrid>
-                )}
-                {!user.isAnon && tabs[activeTabIndex] === NOTIFICATIONS_TAB && (
-                    <UserNotifications />
                 )}
             </AppOverflow>
         </>
