@@ -11,7 +11,7 @@ class ContriCleanerSerializerXls(ContriCleanerSerializer):
     def _clean_row(row: str) -> str:
         replaced_value = super(ContriCleanerSerializerXls,
                                ContriCleanerSerializerXls)\
-            .__replace_invalid_data(row)
+            ._replace_invalid_data(row)
         return ContriCleanerSerializerXls.__cleanup_data_xls(replaced_value)
 
     # TODO refactor xls cleanup according to OSDEV-660

@@ -8,6 +8,8 @@ from contricleaner.lib.parsers.source_parser import SourceParser
 
 
 class ContriCleanerSerializer(ABC):
+    INVALID_KEYWORDS = ['N/A', 'n/a']
+
     def __init__(
             self,
             source_parser: SourceParser,
@@ -21,9 +23,10 @@ class ContriCleanerSerializer(ABC):
     def clean_row(row: str) -> str:
         pass
 
-    def replace_invalid_data(value: str, self) -> str:
+    @staticmethod
+    def _replace_invalid_data(value: str) -> str:
         return ''.join([
-            char for char in value if char not in self.INVALID_KEYWORDS
+            char for char in value if char not in ContriCleanerSerializer.INVALID_KEYWORDS
         ])
 
     def get_validated_rows(self) -> List[RowDTO]:
