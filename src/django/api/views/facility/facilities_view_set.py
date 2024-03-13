@@ -543,7 +543,7 @@ class FacilitiesViewSet(ListModelMixin,
               "status": "NEW_FACILITY"
             }
 
-        ### No Match and Geocoder Returned No Results
+        ### No Match
 
             {
               "matches": [],
@@ -551,6 +551,17 @@ class FacilitiesViewSet(ListModelMixin,
               "geocoded_geometry": null,
               "geocoded_address": null,
               "status": "ERROR_MATCHING"
+            }
+
+        ### Geocoder Returned No Results
+
+            {
+              "matches": [],
+              "item_id": 965,
+              "geocoded_geometry": null,
+              "geocoded_address": null,
+              "status": "GEOCODED_NO_RESULTS",
+              "message": "The address you submitted can not be geocoded."
             }
         """  # noqa
         # Adding the @permission_classes decorator was not working so we
