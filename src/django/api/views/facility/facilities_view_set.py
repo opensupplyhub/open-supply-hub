@@ -699,7 +699,7 @@ class FacilitiesViewSet(ListModelMixin,
             else:
                 item.status = FacilityListItem.GEOCODED_NO_RESULTS
                 result['status'] = item.status
-                result['message'] = ErrorMessages.GEOCODING_NO_RESULTS
+                result['message'] = ErrorMessages.GEOCODED_NO_RESULTS
 
             item.processing_results.append({
                 'action': ProcessingAction.GEOCODE,

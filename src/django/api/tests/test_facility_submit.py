@@ -217,4 +217,4 @@ class FacilitySubmitTest(FacilityAPITestCaseBase):
 
         data = json.loads(response.content)
         self.assertEqual(data["status"], FacilityListItem.GEOCODED_NO_RESULTS)
-        self.assertEqual(data["message"], ErrorMessages.GEOCODING_NO_RESULTS)
+        self.assertEqual(data["message"], ErrorMessages.GEOCODED_NO_RESULTS)

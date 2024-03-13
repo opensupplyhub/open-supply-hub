@@ -189,4 +189,4 @@ class NumberOfWorkersRanges:
 
 
 class ErrorMessages:
-    GEOCODING_NO_RESULTS = "The address you submitted can not be geocoded."
+    GEOCODED_NO_RESULTS = "The address you submitted can not be geocoded."
