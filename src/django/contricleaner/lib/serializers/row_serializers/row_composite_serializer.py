@@ -36,6 +36,7 @@ class RowCompositeSerializer:
             "clean_address",
             "country_code",
             "sector",
+            "errors"
         }
 
         res = {
@@ -51,7 +52,7 @@ class RowCompositeSerializer:
         }
 
         for res_key, res_value in res.items():
-            if res_key in standard_fields or res_key == "errors":
+            if res_key in standard_fields:
                 dict_res[res_key] = res_value
             else:
                 dict_res["fields"][res_key] = res_value
