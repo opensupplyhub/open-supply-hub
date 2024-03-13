@@ -1,5 +1,5 @@
-from contricleaner.lib.helpers.is_invalid_type import (
-    is_invalid_type,
+from contricleaner.lib.helpers.is_valid_type import (
+    is_valid_type,
 )
 from contricleaner.lib.helpers.split_values import split_values
 from contricleaner.lib.serializers.row_serializers.row_serializer import (
@@ -32,7 +32,7 @@ class RowFacilityTypeSerializer(RowSerializer):
             fields,
             [facility_type, processing_type, facility_type_processing_type],
         ):
-            if value and is_invalid_type(value):
+            if value and not is_valid_type(value):
                 facility_type_errors.append(
                     {
                         "message": "Expected value for {} to be a string "

@@ -1,12 +1,12 @@
-from contricleaner.lib.helpers.is_invalid_type import is_invalid_type
+from contricleaner.lib.helpers.is_valid_type import is_valid_type
 
 from django.test import TestCase
 
 
-class IsInvalidTypeFunctionTest(TestCase):
-    def test_is_invalid_type(self):
-        # Test cases for is_invalid_type function
-        self.assertFalse(is_invalid_type("valid_string"))
-        self.assertFalse(is_invalid_type(["valid", "list"]))
-        self.assertTrue(is_invalid_type(123))
-        self.assertTrue(is_invalid_type(["valid", 123]))
+class IsValidTypeFunctionTest(TestCase):
+    def test_is_valid_type(self):
+        # Test cases for is_valid_type function
+        self.assertTrue(is_valid_type("valid_string"))
+        self.assertTrue(is_valid_type(["valid", "list"]))
+        self.assertFalse(is_valid_type(123))
+        self.assertFalse(is_valid_type(["valid", 123]))

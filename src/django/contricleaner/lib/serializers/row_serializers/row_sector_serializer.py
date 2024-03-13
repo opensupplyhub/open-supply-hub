@@ -1,7 +1,7 @@
 from contricleaner.constants import DEFAULT_SECTOR_NAME, MAX_PRODUCT_TYPE_COUNT
 
-from contricleaner.lib.helpers.is_invalid_type import (
-    is_invalid_type,
+from contricleaner.lib.helpers.is_valid_type import (
+    is_valid_type,
 )
 from contricleaner.lib.helpers.split_values import split_values
 
@@ -31,7 +31,7 @@ class RowSectorSerializer(RowSerializer):
                         }
                     )
 
-                elif is_invalid_type(value):
+                elif not is_valid_type(value):
                     sector_errors.append(
                         {
                             "message": "Expected value for {} to be a string "

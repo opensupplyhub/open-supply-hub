@@ -1,8 +1,8 @@
-def is_invalid_type(value):
-    """Check if the value is not a string or list of strings."""
+def is_valid_type(value):
+    """Check if the value is a string or list of strings."""
     if isinstance(value, str):
-        return False
-    elif isinstance(value, list):
-        return any(is_invalid_type(v) for v in value)
-    else:
         return True
+    elif isinstance(value, list):
+        return all(is_valid_type(v) for v in value)
+    else:
+        return False
