@@ -20,24 +20,30 @@ class RowSectorSerializerTest(TestCase):
                 ]
             }
         self.row_two = {"sector": ['Apparel', 'product one']}
+        self.row_three = {"sector": [], "product_type": ''}
+        self.row_four = {
+            "sector": 1,
+            "product_type": 2,
+            "sector_product_type": 3
+            }
         self.current = {"errors": []}
 
     def test_validate_with_multiple_values(self):
         result = self.serializer.validate(self.row_one, self.current.copy())
 
         self.assertEqual(
-            result['product_types'],
+            result['product_type'],
             ['product one', 'product three', 'product two']
         )
         self.assertEqual(
-            result['sectors'], ['Agriculture', 'Apparel', 'Finance']
+            result['sector'], ['Agriculture', 'Apparel', 'Finance']
         )
 
     def test_validate_with_single_sector(self):
         result = self.serializer.validate(self.row_two, self.current.copy())
 
-        self.assertEqual(result['product_types'], ['product one'])
-        self.assertEqual(result['sectors'], ['Apparel'])
+        self.assertEqual(result['product_type'], ['product one'])
+        self.assertEqual(result['sector'], ['Apparel'])
 
     def test_parse_all_values(self):
         all_values = ['technology', 'product one', 'finance']
@@ -55,3 +61,62 @@ class RowSectorSerializerTest(TestCase):
         value = '   Technology  '
         cleaned_value = self.serializer.clean_value(value)
         self.assertEqual(cleaned_value, 'technology')
+
+    def test_validate_with_empty_values(self):
+        result = self.serializer.validate(self.row_three, self.current.copy())
+        self.assertEqual(result['errors'],
+                         [
+                             {
+                                 'message': 'sector must not be empty.',
+                                 'type': 'ValidationError'
+                             },
+                             {
+                                 'message': 'product_type must not be empty.',
+                                 'type': 'ValidationError'
+                             }
+                         ])
+
+    def test_validate_with_invalid_type(self):
+        result = self.serializer.validate(self.row_four, self.current.copy())
+        self.assertEqual(
+            result['errors'],
+            [
+                {
+                    'message': 'Expected value for sector to be a string or a '
+                    'list of strings but got 1',
+                    'type': 'ValueError'
+                },
+                {
+                    'message': 'Expected value for product_type to be a '
+                    'string or a list of strings but got 2',
+                    'type': 'ValueError'
+                },
+                {
+                    'message': 'Expected value for sector_product_type to be '
+                    'a string or a list of strings but got 3',
+                    'type': 'ValueError'
+                }
+            ]
+        )
+
+    def test_validate_max_product_types(self):
+        product_type_count = 60
+        product_type_list = [
+            'p{}'.format(i) for i in range(1, product_type_count + 1)
+        ]
+        row = {
+            "sector": ['Apparel'],
+            "product_type": product_type_list,
+        }
+
+        result = self.serializer.validate(row, self.current.copy())
+        self.assertEqual(
+            result['errors'],
+            [
+                {
+                    'message': 'You may submit a maximum of 50 product types, '
+                    'not 60',
+                    'type': 'ValidationError'
+                }
+            ]
+        )

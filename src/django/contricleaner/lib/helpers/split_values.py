@@ -14,5 +14,3 @@ def split_values(value: Union[str, list, set], split: str) -> Set[str]:
         for v in value:
             res = res.union(split_values(v, split))
         return res
-    else:
-        raise ValueError("Unsupported value type: {}".format(type(value)))
