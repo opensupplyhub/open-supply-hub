@@ -559,8 +559,8 @@ class FacilitiesViewSet(ListModelMixin,
                               FeatureGroups.CAN_SUBMIT_FACILITY):
             raise PermissionDenied()
 
-        body_serializer = FacilityCreateBodySerializer(data=request.data)
-        body_serializer.is_valid(raise_exception=True)
+        # body_serializer = FacilityCreateBodySerializer(data=request.data)
+        # body_serializer.is_valid(raise_exception=True)
 
         # Implementing the contri_cleaner
         contri_cleaner = ContriCleanerSerializer(
@@ -570,6 +570,12 @@ class FacilitiesViewSet(ListModelMixin,
         rows = contri_cleaner.get_validated_rows()
         # print('rows', rows)
         row = rows[0]
+        if row.errors:
+            return Response({
+                "message": "The provided data could not be parsed",
+                "errors": row.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         print('row in viewset', row)
         # print('row.sector in viewset', row.sector)
 
