@@ -21,7 +21,6 @@ class RowCompositeValidatorTest(TestCase):
             "facility_type": "Blending|Knitting"
         }
         validated_row = self.serializer.get_validated_row(facility_source)
-
         expected_row = RowDTO(
             raw_json=facility_source,
             name='Pants Hut',
@@ -29,13 +28,10 @@ class RowCompositeValidatorTest(TestCase):
             address='123 Main St, Anywhereville, PA',
             clean_address='123 main st anywhereville pa',
             country_code='US',
-            sector='Apparel',
+            sector=['Apparel'],
             fields={
-                'errors': [],
-                'product_types': ['product one'],
-                'sectors': ['Apparel'],
+                'product_type': ['product one'],
                 'country': 'United States',
-                'product_type': 'product one',
                 'extra_1': 'Extra data',
                 'facility_type': {
                     'raw_values': 'Blending|Knitting',

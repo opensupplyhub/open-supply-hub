@@ -36,6 +36,7 @@ class RowCompositeSerializer:
             "clean_address",
             "country_code",
             "sector",
+            "errors"
         }
 
         res = {
@@ -63,7 +64,7 @@ class RowCompositeSerializer:
             address=dict_res.get("address", ""),
             clean_address=dict_res.get("clean_address", ""),
             country_code=dict_res.get("country_code", ""),
-            sector=dict_res.get("sector", ""),
+            sector=dict_res.get("sector", []),
             fields=dict_res.get("fields", {}),
             errors=dict_res.get("errors", []),
         )
