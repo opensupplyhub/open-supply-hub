@@ -124,7 +124,7 @@ export const makeUploadFacilityListsURL = () => {
     const uploadListURL =
         env('REACT_APP_ROUTE') && env('REACT_APP_ROUTE') === 'true'
             ? '/cc/api/upload-list'
-            : '/api/facility-lists/';
+            : '/api/facility-lists/createlist/'; // TODO: Rename this to `/api/facility-lists/` when the backend API endpoint is fully switched to the ContriCleaner.
     return uploadListURL;
 };
 

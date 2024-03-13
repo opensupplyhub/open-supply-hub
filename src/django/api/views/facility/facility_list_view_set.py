@@ -55,6 +55,15 @@ from ...serializers import (
     FacilityListItemsQueryParamsSerializer,
 )
 from ..fields.create_nonstandard_fields import create_nonstandard_fields
+from contricleaner.lib.serializers.contri_cleaner_serializer import (
+    ContriCleanerSerializer
+)
+from contricleaner.lib.parsers.source_parser_xlsx import (
+    SourceParserXLSX
+)
+from contricleaner.lib.parsers.source_parser_csv import (
+    SourceParserCSV
+)
 
 
 class FacilityListViewSet(ModelViewSet):
@@ -196,6 +205,152 @@ class FacilityListViewSet(ModelViewSet):
             description=description,
             file_name=csv_file.name,
             file=csv_file,
+            header=header,
+            replaces=replaces,
+            match_responsibility=contributor.match_responsibility)
+        new_list.save()
+
+        csvreader = csv.reader(header.split('\n'), delimiter=',')
+        for row in csvreader:
+            create_nonstandard_fields(row, contributor)
+
+        source = Source.objects.create(
+            contributor=contributor,
+            source_type=Source.LIST,
+            facility_list=new_list)
+
+        items = [FacilityListItem(row_index=idx,
+                                  raw_data=row,
+                                  raw_json=get_raw_json(row, header),
+                                  raw_header=header,
+                                  sector=[],
+                                  source=source)
+                 for idx, row in enumerate(rows)]
+        FacilityListItem.objects.bulk_create(items)
+
+        if ENVIRONMENT in ('Test', 'Staging', 'Production', 'Preprod'):
+            submit_parse_job(new_list)
+
+        serializer = self.get_serializer(new_list)
+        return Response(serializer.data)
+
+    # TODO: Rename this method to `create`. For testing purposes, a duplicate
+    #       was created.
+    @action(detail=False, methods=['POST'],
+            url_path='createlist')
+    @transaction.atomic
+    def createlist(self, request):
+        """
+        Upload a new Facility List.
+
+        ## Request Body
+
+        *Required*
+
+        `file` (`file`): CSV file to upload.
+
+        *Optional*
+
+        `name` (`string`): Name of the uploaded file.
+
+        `description` (`string`): Description of the uploaded file.
+
+        `replaces` (`number`): An optional ID for an existing list to replace
+                   with the new list
+
+        ### Sample Response
+
+            {
+                "id": 1,
+                "name": "list name",
+                "description": "list description",
+                "file_name": "list-1.csv",
+                "is_active": true,
+                "is_public": true
+            }
+        """
+        if 'file' not in request.data:
+            raise ValidationError('No file specified.')
+        uploaded_file = request.data['file']
+        if type(uploaded_file) not in (
+                InMemoryUploadedFile, TemporaryUploadedFile):
+            raise ValidationError('File not submitted properly.')
+        if uploaded_file.size > MAX_UPLOADED_FILE_SIZE_IN_BYTES:
+            mb = MAX_UPLOADED_FILE_SIZE_IN_BYTES / (1024*1024)
+            raise ValidationError(
+                'Uploaded file exceeds the maximum size of {:.1f}MB.'.format(
+                    mb))
+
+        try:
+            contributor = request.user.contributor
+        except Contributor.DoesNotExist as exc:
+            raise ValidationError(
+                'User contributor cannot be None'
+            ) from exc
+
+        if 'name' in request.data:
+            name = request.data['name']
+        else:
+            name = os.path.splitext(uploaded_file.name)[0]
+
+        if '|' in name:
+            raise ValidationError('Name cannot contain the "|" character.')
+
+        if 'description' in request.data:
+            description = request.data['description']
+        else:
+            description = None
+
+        if description is not None and '|' in description:
+            raise ValidationError(
+                'Description cannot contain the "|" character.'
+            )
+
+        replaces = None
+        if 'replaces' in request.data:
+            try:
+                replaces = int(request.data['replaces'])
+            except ValueError as exc:
+                raise ValidationError(
+                    '"replaces" must be an integer ID.'
+                ) from exc
+            old_list_qs = FacilityList.objects.filter(
+                source__contributor=contributor, pk=replaces)
+            if old_list_qs.count() == 0:
+                raise ValidationError(
+                    f'{replaces} is not a valid FacilityList ID.'
+                )
+            replaces = old_list_qs[0]
+            if FacilityList.objects.filter(replaces=replaces).count() > 0:
+                raise ValidationError(
+                    f'FacilityList {replaces.pk} has already been replaced.'
+                )
+
+        # header, rows = self._extract_header_rows(csv_file, request)
+        ext = uploaded_file.name[-4:]
+        if ext == 'xlsx':
+            serializer = ContriCleanerSerializer(
+                SourceParserXLSX(uploaded_file),
+                SectorCache()
+            )
+        elif ext == '.csv':
+            serializer = ContriCleanerSerializer(
+                SourceParserCSV(uploaded_file),
+                SectorCache()
+            )
+        else:
+            raise ValidationError(
+                'Unsupported file type. Please '
+                'submit Excel or UTF-8 CSV.'
+            )
+
+        rows = serializer.get_validated_rows()
+
+        new_list = FacilityList(
+            name=name,
+            description=description,
+            file_name=uploaded_file.name,
+            file=uploaded_file,
             header=header,
             replaces=replaces,
             match_responsibility=contributor.match_responsibility)
