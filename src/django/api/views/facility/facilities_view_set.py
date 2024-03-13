@@ -77,7 +77,6 @@ from ...serializers import (
     FacilityIndexDetailsSerializer,
     FacilityActivityReportSerializer,
     FacilityClaimSerializer,
-    FacilityCreateBodySerializer,
     FacilityCreateQueryParamsSerializer,
     FacilityMergeQueryParamsSerializer,
     FacilityQueryParamsSerializer,
@@ -559,44 +558,16 @@ class FacilitiesViewSet(ListModelMixin,
                               FeatureGroups.CAN_SUBMIT_FACILITY):
             raise PermissionDenied()
 
-        # body_serializer = FacilityCreateBodySerializer(data=request.data)
-        # body_serializer.is_valid(raise_exception=True)
-
-        # Implementing the contri_cleaner
         contri_cleaner = ContriCleanerSerializer(
             SourceParserJSON(request.data), SectorCache()
         )
-        # print('contri_cleaner', contri_cleaner)
         rows = contri_cleaner.get_validated_rows()
-        # print('rows', rows)
         row = rows[0]
         if row.errors:
             return Response({
                 "message": "The provided data could not be parsed",
                 "errors": row.errors
             }, status=status.HTTP_400_BAD_REQUEST)
-
-        print('row in viewset', row)
-        # print('row.sector in viewset', row.sector)
-
-        # print('body_serializer.validated_data', body_serializer.validated_data)
-        # clean_name = clean(body_serializer.validated_data.get('name'))
-        # if clean_name is None:
-        #     clean_name = ''
-        #     raise ValidationError({
-        #         "clean_name": [
-        #             "This field may not be blank."
-        #         ]
-        #     })
-        
-        # clean_address = clean(body_serializer.validated_data.get('address'))
-        # if clean_address is None:
-        #     clean_address = ''
-        #     raise ValidationError({
-        #         "clean_address": [
-        #             "This field may not be blank."
-        #         ]
-        #     })
 
         params_serializer = FacilityCreateQueryParamsSerializer(
             data=request.query_params)
@@ -619,35 +590,6 @@ class FacilitiesViewSet(ListModelMixin,
             create=should_create
         )
 
-        # parser = RequestBodySectorProductTypeParser(
-        #     body_serializer.validated_data)
-
-        # sector = parser.sectors
-        # print('sector', sector)
-        # print('row.sector', row.sector)
-        # product_types = parser.product_types
-        # print('product_types', product_types)
-        # print('row.product_types', row.fields.get('product_types'))
-
-        # cleaned_user_data = request.data.copy()
-        # print('cleaned_user_data', cleaned_user_data)
-        # cleaned_user_data['sector'] = sector
-
-        # if len(product_types) > 0:
-        #     cleaned_user_data['product_type'] = product_types
-        # if 'sector_product_type' in cleaned_user_data:
-        #     del cleaned_user_data['sector_product_type']
-
-        # country_code = get_country_code(
-        #     body_serializer.validated_data.get('country'))
-        # name = body_serializer.validated_data.get('name')
-        # address = body_serializer.validated_data.get('address')
-        # print('country_code', country_code)
-        # print('row.country_code', row.country_code)
-        # print('cleaned_user_data', cleaned_user_data)
-
-        # fields = list(cleaned_user_data.keys())
-        # print('fields', fields)
         create_nonstandard_fields(
             list(row.fields.keys()),
             request.user.contributor
