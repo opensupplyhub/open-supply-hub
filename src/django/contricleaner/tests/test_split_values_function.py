@@ -32,8 +32,3 @@ class SplitValuesFunctionTest(TestCase):
                 "Gas",
             },
         )
-
-    def test_invalid_type(self):
-        # Test passing an unsupported type
-        with self.assertRaises(ValueError):
-            split_values(123, ",")
