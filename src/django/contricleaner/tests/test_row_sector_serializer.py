@@ -1,5 +1,3 @@
-from contricleaner.constants import MAX_PRODUCT_TYPE_COUNT
-from django.core.exceptions import ValidationError
 from contricleaner.lib.serializers.row_serializers.row_sector_serializer \
     import RowSectorSerializer
 from contricleaner.tests.mockSectorCache import MockSectorCache
@@ -21,7 +19,13 @@ class RowSectorSerializerTest(TestCase):
             ],
         }
         self.row_two = {"sector": ['Apparel', 'product one']}
-        self.row_three = {"sector": 'Apparel'}
+        self.row_three = {"sector": [], "product_type": ''}
+        self.row_four = {
+            "sector": 1,
+            "product_type": 2,
+            "sector_product_type": 3
+            }
+        self.row_five = {"sector": 'Apparel'}
         self.current = {"errors": []}
 
     def test_validate_with_multiple_values(self):
@@ -29,7 +33,7 @@ class RowSectorSerializerTest(TestCase):
 
         self.assertEqual(
             result['product_type'],
-            ['product one', 'product three', 'product two'],
+            ['product one', 'product three', 'product two']
         )
         self.assertEqual(
             result['sector'], ['Agriculture', 'Apparel', 'Finance']
@@ -42,7 +46,7 @@ class RowSectorSerializerTest(TestCase):
         self.assertEqual(result['sector'], ['Apparel'])
 
     def test_validate_without_product_type_values(self):
-        result = self.serializer.validate(self.row_three, self.current.copy())
+        result = self.serializer.validate(self.row_five, self.current.copy())
 
         self.assertEqual(result['sector'], ['Apparel'])
         self.assertNotIn('product_type', result)
@@ -64,6 +68,43 @@ class RowSectorSerializerTest(TestCase):
         cleaned_value = self.serializer.clean_value(value)
         self.assertEqual(cleaned_value, 'technology')
 
+    def test_validate_with_empty_values(self):
+        result = self.serializer.validate(self.row_three, self.current.copy())
+        self.assertEqual(result['errors'],
+                         [
+                             {
+                                 'message': 'sector must not be empty.',
+                                 'type': 'ValidationError'
+                             },
+                             {
+                                 'message': 'product_type must not be empty.',
+                                 'type': 'ValidationError'
+                             }
+                         ])
+
+    def test_validate_with_invalid_type(self):
+        result = self.serializer.validate(self.row_four, self.current.copy())
+        self.assertEqual(
+            result['errors'],
+            [
+                {
+                    'message': 'Expected value for sector to be a string or a '
+                    'list of strings but got 1',
+                    'type': 'ValueError'
+                },
+                {
+                    'message': 'Expected value for product_type to be a '
+                    'string or a list of strings but got 2',
+                    'type': 'ValueError'
+                },
+                {
+                    'message': 'Expected value for sector_product_type to be '
+                    'a string or a list of strings but got 3',
+                    'type': 'ValueError'
+                }
+            ]
+        )
+
     def test_validate_max_product_types(self):
         product_type_count = 60
         product_type_list = [
@@ -74,12 +115,14 @@ class RowSectorSerializerTest(TestCase):
             "product_type": product_type_list,
         }
 
-        with self.assertRaises(ValidationError) as context:
-            self.serializer.validate(row, self.current.copy())
-
-        expected_error_message = (
-            f'You may submit a maximum of {MAX_PRODUCT_TYPE_COUNT} '
-            f'product types, not {product_type_count}'
+        result = self.serializer.validate(row, self.current.copy())
+        self.assertEqual(
+            result['errors'],
+            [
+                {
+                    'message': 'You may submit a maximum of 50 product types, '
+                    'not 60',
+                    'type': 'ValidationError'
+                }
+            ]
         )
-
-        self.assertEqual(context.exception.message, expected_error_message)

@@ -31,6 +31,7 @@ const claimFlagBaseStyles = theme =>
         itemPadding: {
             paddingLeft: theme.spacing.unit * 3,
             paddingTop: theme.spacing.unit,
+            paddingBottom: theme.spacing.unit / 4,
         },
     });
 

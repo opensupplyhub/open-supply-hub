@@ -36,6 +36,7 @@ class RowCompositeSerializer:
             "clean_address",
             "country_code",
             "sector",
+            "errors"
         }
 
         res = {

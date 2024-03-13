@@ -1,6 +1,10 @@
-from django.core.exceptions import ValidationError
 from contricleaner.constants import DEFAULT_SECTOR_NAME, MAX_PRODUCT_TYPE_COUNT
+
+from contricleaner.lib.helpers.is_valid_type import (
+    is_valid_type,
+)
 from contricleaner.lib.helpers.split_values import split_values
+
 from contricleaner.lib.sector_cache_interface import SectorCacheInterface
 from .row_serializer import RowSerializer
 
@@ -10,18 +14,56 @@ class RowSectorSerializer(RowSerializer):
         self.sector_cache = sector_cache
 
     def validate(self, row: dict, current: dict) -> dict:
-        values = split_values([
-                row.get('sector', []),
-                row.get('product_type', []),
-                row.get('sector_product_type', []),
-            ], ', ')
+        fields = ['sector', 'product_type', 'sector_product_type']
 
-        sectors, product_types = self.parse_all_values(values)
+        values = []
+        sector_errors = []
+
+        for field in fields:
+            if field in row:
+                value = row.get(field)
+
+                if not value:
+                    sector_errors.append(
+                        {
+                            "message": "{} must not be empty.".format(field),
+                            "type": "ValidationError",
+                        }
+                    )
+
+                elif not is_valid_type(value):
+                    sector_errors.append(
+                        {
+                            "message": "Expected value for {} to be a string "
+                            "or a list of strings but got {}".format(
+                                field, value
+                            ),
+                            "type": "ValueError",
+                        }
+                    )
+
+                else:
+                    values.append(value)
+
+        if sector_errors:
+            current["errors"].extend(sector_errors)
+            return current
+
+        splitted_values = split_values(values, ', ')
+
+        sectors, product_types = self.parse_all_values(splitted_values)
 
         if len(product_types) > MAX_PRODUCT_TYPE_COUNT:
-            raise ValidationError(
-                f'You may submit a maximum of {MAX_PRODUCT_TYPE_COUNT} '
-                f'product types, not {len(product_types)}')
+            current["errors"].append(
+                {
+                    "message": "You may submit a maximum of {} product types, "
+                    "not {}".format(
+                        MAX_PRODUCT_TYPE_COUNT, len(product_types)
+                    ),
+                    "type": "ValidationError",
+                }
+            )
+            return current
 
         if product_types:
             current['product_type'] = product_types
@@ -50,5 +92,5 @@ class RowSectorSerializer(RowSerializer):
         return sectors, product_types
 
     @staticmethod
-    def clean_value(value):
+    def clean_value(value: str) -> str:
         return value.lower().strip()

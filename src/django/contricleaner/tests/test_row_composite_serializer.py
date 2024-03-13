@@ -21,7 +21,6 @@ class RowCompositeValidatorTest(TestCase):
             "facility_type": "Blending|Knitting"
         }
         validated_row = self.serializer.get_validated_row(facility_source)
-
         expected_row = RowDTO(
             raw_json=facility_source,
             name='Pants Hut',
