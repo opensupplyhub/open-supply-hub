@@ -1,4 +1,4 @@
-def is_valid_type(value):
+def is_valid_type(value: any) -> bool:
     """Check if the value is a string or list of strings."""
     if isinstance(value, str):
         return True

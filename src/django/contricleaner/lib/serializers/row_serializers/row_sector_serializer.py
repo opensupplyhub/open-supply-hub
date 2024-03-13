@@ -92,5 +92,5 @@ class RowSectorSerializer(RowSerializer):
         return sectors, product_types
 
     @staticmethod
-    def clean_value(value):
+    def clean_value(value: str) -> str:
         return value.lower().strip()

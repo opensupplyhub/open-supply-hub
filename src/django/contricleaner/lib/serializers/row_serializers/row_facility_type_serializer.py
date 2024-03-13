@@ -1,3 +1,4 @@
+from typing import Union
 from contricleaner.lib.helpers.is_valid_type import (
     is_valid_type,
 )
@@ -64,7 +65,7 @@ class RowFacilityTypeSerializer(RowSerializer):
         return current
 
     @staticmethod
-    def create_values(value):
+    def create_values(value: Union[str, list, set]) -> dict:
         return {
             'raw_values': value,
             'processed_values': split_values(value, '|'),
