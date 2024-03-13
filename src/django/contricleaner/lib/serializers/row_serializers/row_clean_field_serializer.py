@@ -12,7 +12,7 @@ class RowCleanFieldSerializer(RowSerializer):
 
         if not field:
             return current
-        
+
         clean_value = clean(field)
 
         if not clean_value:
