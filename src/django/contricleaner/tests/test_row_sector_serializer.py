@@ -87,13 +87,13 @@ class RowSectorSerializerTest(TestCase):
                     'type': 'ValueError'
                 },
                 {
-                    'message': 'Expected value for product_type to be a string '
-                    'or a list of strings but got 2',
+                    'message': 'Expected value for product_type to be a '
+                    'string or a list of strings but got 2',
                     'type': 'ValueError'
                 },
                 {
-                    'message': 'Expected value for sector_product_type to be a '
-                    'string or a list of strings but got 3',
+                    'message': 'Expected value for sector_product_type to be '
+                    'a string or a list of strings but got 3',
                     'type': 'ValueError'
                 }
             ]
