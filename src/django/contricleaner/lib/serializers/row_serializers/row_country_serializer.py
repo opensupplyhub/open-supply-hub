@@ -4,8 +4,13 @@ from .row_serializer import RowSerializer
 
 class RowCountrySerializer(RowSerializer):
     def validate(self, row: dict, current: dict) -> dict:
+        country = row.get("country")
+
+        if not country:
+            return current
+
         try:
-            current["country_code"] = get_country_code(row["country"])
+            current["country_code"] = get_country_code(country)
             return current
         except ValueError as exc:
             current["errors"].append(
