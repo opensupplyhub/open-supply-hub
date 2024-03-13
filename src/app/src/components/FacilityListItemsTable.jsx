@@ -391,7 +391,6 @@ class FacilityListItemsTable extends Component {
         );
 
         const listIsEmpty = !fetchingItems && items && items.length === 0;
-        const isSideBarSearch = false;
 
         const getIsRemoved = item =>
             item.status === facilityListItemStatusChoicesEnum.ITEM_REMOVED ||
@@ -590,7 +589,14 @@ class FacilityListItemsTable extends Component {
                                     primary: '#00319D',
                                 },
                             })}
-                            isSideBarSearch={isSideBarSearch}
+                            menuPosition="fixed"
+                            menuPortalTarget={document.body}
+                            closeMenuOnScroll={e =>
+                                e.target.classList === undefined ||
+                                !e.target.classList.contains(
+                                    'css-4ljt47-MenuList',
+                                )
+                            }
                         />
                     </div>
                     <ShowOnly
