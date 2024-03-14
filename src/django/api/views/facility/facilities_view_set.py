@@ -598,7 +598,7 @@ class FacilitiesViewSet(ListModelMixin,
         item = FacilityListItem.objects.create(
             source=source,
             row_index=0,
-            raw_data=json.dumps(request.data),  # needs to be explored
+            raw_data=json.dumps(request.data),
             raw_json=row.raw_json,
             raw_header='',
             status=FacilityListItem.PARSED,
