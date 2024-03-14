@@ -13,6 +13,8 @@ from openpyxl.styles import NamedStyle
 from contricleaner.lib.parsers.source_parser_xlsx import SourceParserXLSX
 from contricleaner.lib.parsers.source_parser import SourceParser
 from contricleaner.lib.parsers.file_parser import FileParser
+from contricleaner.lib.serializers.row_serializers.row_composite_serializer \
+    import RowCompositeSerializer
 
 
 class SourceParserXLSXTest(TestCase):
@@ -109,6 +111,7 @@ class SourceParserXLSXTest(TestCase):
 
         parser = SourceParserXLSX(uploaded_file)
         parsed_rows = parser.get_parsed_rows()
+        parsed_rows = RowCompositeSerializer.clean_rows(parsed_rows)
 
         self.assertEqual(parsed_rows, expected_parsed_rows)
 

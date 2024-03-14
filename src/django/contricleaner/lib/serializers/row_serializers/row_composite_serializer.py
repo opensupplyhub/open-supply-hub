@@ -1,3 +1,5 @@
+import re
+from typing import List, Dict
 from contricleaner.lib.dto.row_dto import RowDTO
 from contricleaner.lib.sector_cache_interface import SectorCacheInterface
 from contricleaner.lib.serializers.row_serializers.row_clean_field_serializer \
@@ -27,8 +29,38 @@ class RowCompositeSerializer:
             RowEmptySerializer(),
         ]
 
-    def get_validated_row(self, raw_row: dict):
+    @staticmethod
+    def clean_rows(rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
+        invalid_keywords = ['N/A', 'n/a']
+        cleaned_rows = []
+        for row in rows:
+            replaced_row = {key: RowCompositeSerializer.
+                            __replace_invalid_data(value, invalid_keywords)
+                            for key, value in row.items()}
+            cleaned_row = {key: RowCompositeSerializer.__cleanup_data(value)
+                           for key, value in replaced_row.items()}
+            cleaned_rows.append(cleaned_row)
+        return cleaned_rows
 
+    @staticmethod
+    def __replace_invalid_data(value: str, invalid_keywords: List[str]) -> str:
+        result_value = value
+        for keyword in invalid_keywords:
+            # Remove invalid keywords if exist.
+            result_value = result_value.replace(keyword, '')
+        return result_value
+
+    @staticmethod
+    def __cleanup_data(value: str) -> str:
+        dup_pattern = ',' + '{2,}'
+        # Remove duplicates commas if exist.
+        result_value = re.sub(dup_pattern, ',', value)
+        # Remove comma in the end of the string if exist.
+        result_value = result_value.rstrip(',')
+        # Remove extra spaces if exist.
+        return result_value.strip()
+
+    def get_validated_row(self, raw_row: dict):
         standard_fields = {
             "name",
             "clean_name",
@@ -42,7 +74,9 @@ class RowCompositeSerializer:
         res = {
             "errors": [],
         }
+
         row = raw_row.copy()
+        row = RowCompositeSerializer.clean_rows(row)
 
         for validator in self.validators:
             res = validator.validate(row, res)
