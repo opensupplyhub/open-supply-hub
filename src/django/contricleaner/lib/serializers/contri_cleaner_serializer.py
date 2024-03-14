@@ -22,18 +22,6 @@ class ContriCleanerSerializer(ABC):
         self.__source_parser = source_parser
         self.row_serializer = RowCompositeSerializer(sector_cache)
 
-    @abstractmethod
-    def clean_row(row: str) -> str:
-        pass
-
-    @staticmethod
-    def _replace_invalid_data(value: str) -> str:
-        result_value = value
-        for keyword in ContriCleanerSerializer.INVALID_KEYWORDS:
-            # Remove invalid keywords if exist.
-            result_value = result_value.replace(keyword, '')
-        return result_value
-
     def get_validated_rows(self) -> List[RowDTO]:
         rows = self.__source_parser.get_parsed_rows()
         return [self.row_serializer.get_validated_row(row) for row in rows]
