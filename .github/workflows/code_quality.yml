@@ -338,7 +338,7 @@ jobs:
           name: feature-branch-dd-unittest-code-cov
           path: ./src/dedupe-hub/api/coverage/coverage.lcov
 
-  check-countries-code-cov:
+  check-dd-code-cov:
     environment: Quality Environment
     needs:
       - get-base-branch-dd-cov
