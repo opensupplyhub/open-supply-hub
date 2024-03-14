@@ -56,20 +56,6 @@ class SectorProductTypeParser:
         return value.lower().strip()
 
 
-class RequestBodySectorProductTypeParser(SectorProductTypeParser):
-    def __init__(self, body):
-        super().__init__()
-        self.parse_all_values(
-            set([
-                *body.get('sector', []),
-                *body.get('product_type', []),
-                *body.get('sector_product_type', [])
-            ])
-        )
-
-        self.sort_values()
-
-
 class CsvRowSectorProductTypeParser(SectorProductTypeParser):
     csv_fields = [
         CsvHeaderField.SECTOR,
