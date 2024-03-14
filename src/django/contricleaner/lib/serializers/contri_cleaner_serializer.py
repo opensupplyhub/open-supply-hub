@@ -8,6 +8,10 @@ from contricleaner.lib.parsers.source_parser import SourceParser
 
 
 class ContriCleanerSerializer(ABC):
+    '''
+    TODO handle ['N/A', 'n/a', '?'] in utils.format_field
+    that uses in FacilityIndexSerializer
+    '''
     INVALID_KEYWORDS = ['N/A', 'n/a']
 
     def __init__(
@@ -17,7 +21,6 @@ class ContriCleanerSerializer(ABC):
     ):
         self.__source_parser = source_parser
         self.row_serializer = RowCompositeSerializer(sector_cache)
-        self.INVALID_KEYWORDS = ['N/A', 'n/a']
 
     @abstractmethod
     def clean_row(row: str) -> str:
@@ -25,9 +28,11 @@ class ContriCleanerSerializer(ABC):
 
     @staticmethod
     def _replace_invalid_data(value: str) -> str:
-        return ''.join([
-            char for char in value if char not in ContriCleanerSerializer.INVALID_KEYWORDS
-        ])
+        result_value = value
+        for keyword in ContriCleanerSerializer.INVALID_KEYWORDS:
+            # Remove invalid keywords if exist.
+            result_value = result_value.replace(keyword, '')
+        return result_value
 
     def get_validated_rows(self) -> List[RowDTO]:
         rows = self.__source_parser.get_parsed_rows()

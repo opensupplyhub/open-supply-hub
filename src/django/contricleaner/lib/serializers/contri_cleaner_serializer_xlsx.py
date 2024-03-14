@@ -3,23 +3,24 @@ from contricleaner.lib.serializers.contri_cleaner_serializer \
     import ContriCleanerSerializer
 
 
-class ContriCleanerSerializerXls(ContriCleanerSerializer):
+class ContriCleanerSerializerXlsx(ContriCleanerSerializer):
     def __init__(self, row_serializer, INVALID_KEYWORDS):
         super().__init__(row_serializer, INVALID_KEYWORDS)
 
     @staticmethod
     def _clean_row(row: str) -> str:
-        replaced_value = super(ContriCleanerSerializerXls,
-                               ContriCleanerSerializerXls)\
+        replaced_value = super(ContriCleanerSerializerXlsx,
+                               ContriCleanerSerializerXlsx)\
             ._replace_invalid_data(row)
-        return ContriCleanerSerializerXls.__cleanup_data_xls(replaced_value)
+        return ContriCleanerSerializerXlsx.__cleanup_data_xls(replaced_value)
 
     # TODO refactor xls cleanup according to OSDEV-660
     @staticmethod
     def __cleanup_data_xls(value: str) -> str:
-        # Replace multiple commas with a single comma
-        result_value = re.sub(r',\s*,*', ',', value)
-        # Remove trailing comma
+        dup_pattern = ',' + '{2,}'
+        # Remove duplicates commas if exist.
+        result_value = re.sub(dup_pattern, ',', value)
+        # Remove comma in the end of the string if exist.
         result_value = result_value.rstrip(',')
-        # Remove leading and trailing spaces
+        # Remove extra spaces if exist.
         return result_value.strip()

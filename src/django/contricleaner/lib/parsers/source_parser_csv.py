@@ -39,7 +39,9 @@ class SourceParserCSV(SourceParser, FileParser):
                     raise ValidationError('Unsupported file encoding. Please '
                                           'submit a UTF-8 CSV.')
                 bare_row = SourceParserCSV.__parse_csv_line(decoded_row)
-                cleaned_row = map(ContriCleanerSerializerCsv._clean_row, bare_row)
+                cleaned_row = map(
+                    ContriCleanerSerializerCsv._clean_row,
+                    bare_row)
                 rows.append(dict(zip(header, cleaned_row)))
 
         return rows

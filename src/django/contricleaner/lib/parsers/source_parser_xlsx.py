@@ -11,8 +11,8 @@ from django.core.files.uploadedfile import (
 
 from contricleaner.lib.parsers.source_parser import SourceParser
 from contricleaner.lib.parsers.file_parser import FileParser
-from contricleaner.lib.serializers.contri_cleaner_serializer_xls \
-    import ContriCleanerSerializerXls
+from contricleaner.lib.serializers.contri_cleaner_serializer_xlsx \
+    import ContriCleanerSerializerXlsx
 
 
 class SourceParserXLSX(SourceParser, FileParser):
@@ -63,9 +63,8 @@ class SourceParserXLSX(SourceParser, FileParser):
         for cell in row:
             formatted_cell_value = \
                 SourceParserXLSX.__format_cell_value(cell.value)
-            # TODO serialize row per csv and xls file
             cleaned_cell_value = \
-                ContriCleanerSerializerXls._clean_row(formatted_cell_value)
+                ContriCleanerSerializerXlsx._clean_row(formatted_cell_value)
             formatted_row.append(cleaned_cell_value)
 
         return formatted_row
