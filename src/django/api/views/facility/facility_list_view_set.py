@@ -1,15 +1,18 @@
 import csv
 import operator
 import os
+import traceback
+import re
 from functools import reduce
+
 from api.helpers.helpers import (
     get_raw_json,
 )
-
 from oar.settings import (
     MAX_UPLOADED_FILE_SIZE_IN_BYTES,
     ENVIRONMENT,
 )
+from oar.rollbar import report_error_to_rollbar
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
     NotFound,
@@ -24,13 +27,16 @@ from django.core.files.uploadedfile import (
 from django.db import transaction
 from django.db.models import F, Q
 from django.utils import timezone
+from django.contrib.gis.geos import Point
 
 from ...aws_batch import submit_jobs, submit_parse_job
-from ...constants import (
+from api.constants import (
     CsvHeaderField,
     FacilityListItemsQueryParams,
     ProcessingAction,
+    FileHeaderField
 )
+from api.sector_product_type_parser import SectorCache
 from ...facility_history import create_dissociate_match_change_reason
 from ...mail import send_facility_list_rejection_email
 from ...models.contributor.contributor import Contributor
@@ -53,6 +59,9 @@ from ...serializers import (
     FacilityListSerializer,
     FacilityListItemSerializer,
     FacilityListItemsQueryParamsSerializer,
+)
+from api.extended_fields import (
+    create_extendedfields_for_listitem
 )
 from ..fields.create_nonstandard_fields import create_nonstandard_fields
 from contricleaner.lib.serializers.contri_cleaner_serializer import (
@@ -344,38 +353,104 @@ class FacilityListViewSet(ModelViewSet):
                 'submit Excel or UTF-8 CSV.'
             )
 
-        rows = serializer.get_validated_rows()
+        parsing_started = str(timezone.now())
+        try:
+            rows = serializer.get_validated_rows()
+        except ValidationError as e:
+            report_error_to_rollbar(request=request, file=uploaded_file)
+            raise ValidationError(e)  # TODO: test the error throwing.
 
+        if (len(rows) > 0 and len(rows[0].errors) > 0):
+            required_fields_pattern = (r"^(country|address|name)"
+                                       r"(,\s*(country|address|name))"
+                                       r"*(\s+are\s+missing)$")
+            error_message = rows[0].errors[0]['message']
+            if re.match(required_fields_pattern, error_message):
+                raise ValidationError((
+                        f'Header must contain {FileHeaderField.COUNTRY}, '
+                        f'{FileHeaderField.NAME}, and '
+                        f'{FileHeaderField.ADDRESS} fields.'
+                    ))
+
+        header_row_keys = rows[0].raw_json.keys()
+        header_str = ','.join(header_row_keys)
         new_list = FacilityList(
-            name=name,
-            description=description,
-            file_name=uploaded_file.name,
-            file=uploaded_file,
-            header=header,
-            replaces=replaces,
-            match_responsibility=contributor.match_responsibility)
+                    name=name,
+                    description=description,
+                    file_name=uploaded_file.name,
+                    file=uploaded_file,
+                    header=header_str,
+                    replaces=replaces,
+                    match_responsibility=contributor.match_responsibility)
         new_list.save()
 
-        csvreader = csv.reader(header.split('\n'), delimiter=',')
-        for row in csvreader:
-            create_nonstandard_fields(row, contributor)
+        create_nonstandard_fields(header_row_keys, contributor)
 
         source = Source.objects.create(
             contributor=contributor,
             source_type=Source.LIST,
             facility_list=new_list)
 
-        items = [FacilityListItem(row_index=idx,
-                                  raw_data=row,
-                                  raw_json=get_raw_json(row, header),
-                                  raw_header=header,
-                                  sector=[],
-                                  source=source)
-                 for idx, row in enumerate(rows)]
-        FacilityListItem.objects.bulk_create(items)
+        is_geocoded = False
+        parsed_items = set()
+        items = []
+        for idx, row in enumerate(rows):
+            item = FacilityListItem(
+                    row_index=idx,
+                    raw_data=','.join(row.raw_json.values()),
+                    raw_json=row.raw_json,
+                    raw_header=header_str,
+                    sector=row.sector,
+                    source=source,
+                    country_code=row.country_code,
+                    name=row.name,
+                    clean_name=row.clean_name,
+                    address=row.address,
+                    clean_address=row.clean_address
+                )
+            try:
+                if (FileHeaderField.LAT in row.fields.keys()
+                        and FileHeaderField.LNG in row.fields.keys()):
+                    lat = float(row.fields[FileHeaderField.LAT])
+                    lng = float(row.fields[FileHeaderField.LNG])
+                    item.geocoded_point = Point(lng, lat)
+                    is_geocoded = True
 
-        if ENVIRONMENT in ('Test', 'Staging', 'Production', 'Preprod'):
-            submit_parse_job(new_list)
+                create_extendedfields_for_listitem(
+                    item,
+                    list(row.fields.keys()),
+                    list(row.fields.values())
+                )
+                item.status = FacilityListItem.PARSED
+                item.processing_results.append({
+                    'action': ProcessingAction.PARSE,
+                    'started_at': parsing_started,
+                    'error': False,
+                    'finished_at': str(timezone.now()),
+                    'is_geocoded': is_geocoded,
+                })
+            except Exception as e:
+                item.status = FacilityListItem.ERROR_PARSING
+                item.processing_results.append({
+                    'action': ProcessingAction.PARSE,
+                    'started_at': parsing_started,
+                    'error': True,
+                    'message': str(e),
+                    'trace': traceback.format_exc(),
+                    'finished_at': str(timezone.now()),
+                })
+
+            if item.status != FacilityListItem.ERROR_PARSING:
+                core_fields = '{}-{}-{}'.format(item.country_code,
+                                                item.clean_name,
+                                                item.clean_address)
+                if core_fields in parsed_items:
+                    item.status = FacilityListItem.DUPLICATE
+                else:
+                    parsed_items.add(core_fields)
+
+            items.append(item)
+        FacilityListItem.objects.bulk_create(items)
 
         serializer = self.get_serializer(new_list)
         return Response(serializer.data)
