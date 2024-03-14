@@ -8,9 +8,7 @@ class RowCleanFieldSerializer(RowSerializer):
         self.new_field = new_field
 
     def validate(self, row: dict, current: dict) -> dict:
-        field = row.get(self.field, '')
-
-        clean_value = clean(field)
+        clean_value = clean(row.get(self.field, ''))
 
         if not clean_value:
             current["errors"].append(
