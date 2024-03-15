@@ -35,6 +35,9 @@ yarn-error.log
 src/django/static
 src/django/coverage
 
+# Dedupe Hub
+src/dedupe-hub/api/coverage
+
 ## Test artifacts
 src/django/*.csv
 src/django/*.xlsx

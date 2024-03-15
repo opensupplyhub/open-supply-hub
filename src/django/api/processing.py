@@ -612,7 +612,7 @@ def handle_external_match_process_result(id, result, request, should_create):
                                 FacilityListItem.ERROR_MATCHING]
     f_l_item = None
     timer = 0
-    timeout = 30
+    timeout = 25
     while True:
         if timer > timeout:
             break
