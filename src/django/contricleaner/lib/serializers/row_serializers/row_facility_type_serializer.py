@@ -68,5 +68,5 @@ class RowFacilityTypeSerializer(RowSerializer):
     def create_values(value: Union[str, list, set]) -> dict:
         return {
             'raw_values': value,
-            'processed_values': split_values(value, '|'),
+            'processed_values': split_values(value, r'\|'),
         }

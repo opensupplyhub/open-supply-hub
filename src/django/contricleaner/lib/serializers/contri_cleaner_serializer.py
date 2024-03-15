@@ -8,12 +8,15 @@ from contricleaner.lib.parsers.source_parser import SourceParser
 
 class ContriCleanerSerializer():
     def __init__(
-            self,
-            source_parser: SourceParser,
-            sector_cache: SectorCacheInterface
+        self,
+        source_parser: SourceParser,
+        sector_cache: SectorCacheInterface,
+        sector_split_pattern: str,
     ):
         self.__source_parser = source_parser
-        self.row_serializer = RowCompositeSerializer(sector_cache)
+        self.row_serializer = RowCompositeSerializer(
+            sector_cache, sector_split_pattern
+        )
 
     def get_validated_rows(self) -> List[RowDTO]:
         rows = self.__source_parser.get_parsed_rows()
