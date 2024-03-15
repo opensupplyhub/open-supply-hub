@@ -335,7 +335,6 @@ class FacilityListViewSet(ModelViewSet):
                     f'FacilityList {replaces.pk} has already been replaced.'
                 )
 
-        # header, rows = self._extract_header_rows(csv_file, request)
         ext = uploaded_file.name[-4:]
         if ext == 'xlsx':
             serializer = ContriCleanerSerializer(
@@ -409,6 +408,7 @@ class FacilityListViewSet(ModelViewSet):
                     clean_address=row.clean_address
                 )
             try:
+                # TODO: move it to the ContriCleaner lib
                 if (FileHeaderField.LAT in row.fields.keys()
                         and FileHeaderField.LNG in row.fields.keys()):
                     lat = float(row.fields[FileHeaderField.LAT])
@@ -421,14 +421,6 @@ class FacilityListViewSet(ModelViewSet):
                     list(row.fields.keys()),
                     list(row.fields.values())
                 )
-                item.status = FacilityListItem.PARSED
-                item.processing_results.append({
-                    'action': ProcessingAction.PARSE,
-                    'started_at': parsing_started,
-                    'error': False,
-                    'finished_at': str(timezone.now()),
-                    'is_geocoded': is_geocoded,
-                })
             except Exception as e:
                 item.status = FacilityListItem.ERROR_PARSING
                 item.processing_results.append({
@@ -438,6 +430,33 @@ class FacilityListViewSet(ModelViewSet):
                     'message': str(e),
                     'trace': traceback.format_exc(),
                     'finished_at': str(timezone.now()),
+                    'is_geocoded': is_geocoded,
+                })
+
+            row_errors = row.errors
+            if len(row_errors) > 0:
+                stringified_message = '\n'.join(
+                    [f"{error['message']}" for error in row_errors]
+                )
+
+                item.status = FacilityListItem.ERROR_PARSING
+                item.processing_results.append({
+                    'action': ProcessingAction.PARSE,
+                    'started_at': parsing_started,
+                    'error': True,
+                    'message': stringified_message,
+                    'trace': traceback.format_exc(),
+                    'finished_at': str(timezone.now()),
+                    'is_geocoded': is_geocoded,
+                })
+            else:
+                item.status = FacilityListItem.PARSED
+                item.processing_results.append({
+                    'action': ProcessingAction.PARSE,
+                    'started_at': parsing_started,
+                    'error': False,
+                    'finished_at': str(timezone.now()),
+                    'is_geocoded': is_geocoded,
                 })
 
             if item.status != FacilityListItem.ERROR_PARSING:

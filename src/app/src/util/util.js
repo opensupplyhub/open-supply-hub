@@ -34,8 +34,6 @@ import hash from 'object-hash';
 import * as XLSX from 'xlsx';
 import moment from 'moment';
 
-import env from './env';
-
 import {
     OTHER,
     FEATURE_COLLECTION,
@@ -120,14 +118,10 @@ export const makeUserSignupURL = () => '/user-signup/';
 export const makeUserConfirmEmailURL = () =>
     '/rest-auth/registration/verify-email/';
 
-export const makeUploadFacilityListsURL = () => {
-    const uploadListURL =
-        env('REACT_APP_ROUTE') && env('REACT_APP_ROUTE') === 'true'
-            ? '/cc/api/upload-list'
-            : '/api/facility-lists/createlist/'; // TODO: Rename this to `/api/facility-lists/` when the backend API endpoint is fully switched to the ContriCleaner.
-    return uploadListURL;
-};
-
+export const makeUploadFacilityListsURL = useOldUploadListEndpoint =>
+    useOldUploadListEndpoint
+        ? '/api/facility-lists/'
+        : '/api/facility-lists/createlist/';
 export const makeFacilityListsURL = () => '/api/facility-lists/';
 export const makeSingleFacilityListURL = id => `/api/facility-lists/${id}/`;
 export const makeSingleFacilityListItemsURL = id =>

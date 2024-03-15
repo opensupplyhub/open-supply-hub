@@ -30,7 +30,6 @@ class RowSectorSerializer(RowSerializer):
                             "type": "ValidationError",
                         }
                     )
-
                 elif not is_valid_type(value):
                     sector_errors.append(
                         {
@@ -41,7 +40,6 @@ class RowSectorSerializer(RowSerializer):
                             "type": "ValueError",
                         }
                     )
-
                 else:
                     values.append(value)
 
