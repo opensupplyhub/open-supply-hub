@@ -1157,7 +1157,7 @@ export const optionsForSortingResults = [
                 <ArrowDownwardIcon
                     style={{ fontSize: 20, paddingRight: '3px' }}
                 />
-                <span>Contributors</span>
+                <span># Contributors</span>
             </div>
         ),
     },
