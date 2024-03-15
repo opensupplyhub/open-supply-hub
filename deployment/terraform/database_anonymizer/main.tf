@@ -31,6 +31,15 @@ module "database_anonymizer" {
   attach_policy = true
   policy        = "arn:aws:iam::aws:policy/AmazonRDSFullAccess"
 
+  environment_variables = {
+    SOURCE_DATABASE_IDENTIFIER     = var.rds_database_identifier
+    SOURCE_DATABASE_PASSWORD       = var.rds_database_password
+    SOURCE_DATABASE_USER           = var.rds_database_username
+    SOURCE_DATABASE_NAME           = var.rds_database_name
+    DESTINATION_AWS_ACCOUNT        = var.destination_aws_account
+    ANONYMIZER_DATABASE_IDENTIFIER = var.anonymizer_db_identifier
+  }
+    
   timeouts = {
     create = "20m"
     update = "20m"
