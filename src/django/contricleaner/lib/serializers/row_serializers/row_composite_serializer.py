@@ -16,11 +16,13 @@ from contricleaner.lib.serializers.row_serializers \
 
 
 class RowCompositeSerializer:
-    def __init__(self, sector_cache: SectorCacheInterface):
+    def __init__(
+        self, sector_cache: SectorCacheInterface, sector_split_pattern: str
+    ):
         self.validators = [
             RowCleanFieldSerializer("name", "clean_name"),
             RowCleanFieldSerializer("address", "clean_address"),
-            RowSectorSerializer(sector_cache),
+            RowSectorSerializer(sector_cache, sector_split_pattern),
             RowCountrySerializer(),
             RowRequiredFieldsSerializer(),
             RowFacilityTypeSerializer(),
