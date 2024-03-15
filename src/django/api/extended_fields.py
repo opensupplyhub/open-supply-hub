@@ -1,5 +1,4 @@
 import re
-from django.core import exceptions as core_exceptions
 from api.models import Contributor, ExtendedField, ProductType
 from api.facility_type_processing_type import (
     get_facility_and_processing_type,
@@ -22,21 +21,17 @@ MAX_PRODUCT_TYPE_COUNT = 50
 
 def get_facility_and_processing_type_extendfield_value(field,
                                                        field_value, sector):
-    values = field_value
+    processed_values = field_value.get('processed_values')
+    raw_values = field_value.get('raw_values')
 
-    if isinstance(field_value, str):
-        values = (field_value.split('|') if '|' in field_value
-                  else [field_value])
-
-    deduped_values = list(dict.fromkeys(values))
     results = []
 
-    for value in deduped_values:
+    for value in processed_values:
         result = get_facility_and_processing_type(value, sector)
         results.append(result)
 
     return {
-        'raw_values': field_value,
+        'raw_values': raw_values,
         'matched_values': results,
     }
 
@@ -58,16 +53,6 @@ def get_parent_company_extendedfield_value(field_value):
 
 
 def get_product_type_extendedfield_value(field_value):
-    if isinstance(field_value, str):
-        field_value = field_value.split('|')
-    if not isinstance(field_value, list):
-        raise core_exceptions.ValidationError(
-            'Expected product_type to be a list or string '
-            f'but got {field_value}')
-    if len(field_value) > MAX_PRODUCT_TYPE_COUNT:
-        raise core_exceptions.ValidationError(
-            f'You may submit a maximum of {MAX_PRODUCT_TYPE_COUNT} '
-            f'product types, not {len(field_value)}')
 
     return {
         'raw_values':  field_value,
@@ -116,26 +101,6 @@ def create_extendedfields_for_single_item(item, raw_data):
     if item.id is None:
         return False
     contributor = item.source.contributor
-
-    # facility_type_processing_type is a special "meta" field that attempts to
-    # simplify the submission process for contributors.
-    if (raw_data.get('facility_type_processing_type')):
-        if raw_data.get('facility_type') is None:
-            raw_data['facility_type'] = \
-                raw_data['facility_type_processing_type']
-        if raw_data.get('processing_type') is None:
-            raw_data['processing_type'] = \
-                raw_data['facility_type_processing_type']
-    # Add a facility_type extended field if the user only
-    # submitted a processing_type
-    elif (raw_data.get('processing_type') and
-          raw_data.get('facility_type') is None):
-        raw_data['facility_type'] = raw_data['processing_type']
-    # Add a processing_type extended field if the user only
-    # submitted a facility_type
-    elif (raw_data.get('facility_type') and
-          raw_data.get('processing_type') is None):
-        raw_data['processing_type'] = raw_data['facility_type']
 
     for field in RAW_DATA_FIELDS:
         field_value = raw_data.get(field)
