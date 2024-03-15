@@ -49,7 +49,7 @@ class RowSectorSerializer(RowSerializer):
             current["errors"].extend(sector_errors)
             return current
 
-        splitted_values = split_values(values)
+        splitted_values = split_values(values, ', ')
 
         sectors, product_types = self.parse_all_values(splitted_values)
 
