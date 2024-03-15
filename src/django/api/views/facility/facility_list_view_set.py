@@ -411,9 +411,8 @@ class FacilityListViewSet(ModelViewSet):
 
         is_geocoded = False
         parsed_items = set()
-        items = []
         for idx, row in enumerate(rows):
-            item = FacilityListItem(
+            item = FacilityListItem.objects.create(
                     row_index=idx,
                     raw_data=','.join(row.raw_json.values()),
                     raw_json=row.raw_json,
@@ -487,8 +486,7 @@ class FacilityListViewSet(ModelViewSet):
                 else:
                     parsed_items.add(core_fields)
 
-            items.append(item)
-        FacilityListItem.objects.bulk_create(items)
+            item.save()
 
         serializer = self.get_serializer(new_list)
         return Response(serializer.data)
