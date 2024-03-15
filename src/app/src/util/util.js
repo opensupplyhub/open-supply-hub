@@ -287,8 +287,7 @@ export const createQueryStringFromSearchFilters = (
         native_language_name: nativeLanguageName,
         combine_contributors: combineContributors,
         boundary: isEmpty(boundary) ? '' : JSON.stringify(boundary),
-        sort_by: isEmpty(sortAlgorithm) ? '' : sortAlgorithm.value,
-        // default?
+        sort_by: sortAlgorithm.value,
         embed: !withEmbed ? '' : '1',
         detail: detail ? 'true' : undefined,
     });
@@ -341,7 +340,7 @@ export const createFiltersFromQueryString = qs => {
         native_language_name: nativeLanguageName = '',
         combine_contributors: combineContributors = '',
         boundary = '',
-        sort_by: sortBy = '',
+        sort_by: sortBy = 'contributors_desc',
     } = querystring.parse(qsToParse);
 
     return Object.freeze({

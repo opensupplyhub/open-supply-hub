@@ -177,12 +177,13 @@ facilities_list_parameters = [
         'sort_by',
         IN_QUERY,
         type=TYPE_STRING,
-        required=False,
+        required=True,
         description=(
             'The sort_by parameter submits type of sorting order for '
-            'facilities. Parameter value must be equal to name. If you skip '
-            'this parameter, default sorting will be primary by public '
-            'contributors count and secondary by name.'
+            'facilities. Parameter value must be equal to name. Default '
+            'sorting will be primary by public '
+            'desc contributors count and secondary by name asc, name desc, '
+            'asc contributors count.'
             )
     )
 ]
