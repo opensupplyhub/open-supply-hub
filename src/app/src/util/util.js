@@ -288,6 +288,7 @@ export const createQueryStringFromSearchFilters = (
         combine_contributors: combineContributors,
         boundary: isEmpty(boundary) ? '' : JSON.stringify(boundary),
         sort_by: isEmpty(sortAlgorithm) ? '' : sortAlgorithm.value,
+        // default?
         embed: !withEmbed ? '' : '1',
         detail: detail ? 'true' : undefined,
     });
@@ -358,10 +359,9 @@ export const createFiltersFromQueryString = qs => {
         nativeLanguageName,
         combineContributors,
         boundary: isEmpty(boundary) ? null : JSON.parse(boundary),
-        sortAlgorithm:
-            sortBy === 'name'
-                ? optionsForSortingResults[0]
-                : optionsForSortingResults[1],
+        sortAlgorithm: optionsForSortingResults.filter(
+            el => el.value === sortBy,
+        ),
     });
 };
 

@@ -1,4 +1,6 @@
 import React from 'react';
+import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
+import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
 
 export const OTHER = 'Other';
 export const FACILITIES_REQUEST_PAGE_SIZE = 50;
@@ -1139,8 +1141,42 @@ export const EXTENDED_FIELDS_EXPLANATORY_TEXT =
     'These fields were added to OS Hub in March 2022. As more data is contributed, more results will become available.';
 
 export const optionsForSortingResults = [
-    { value: 'name', label: 'A to Z' },
-    { value: '', label: '# Contributors' },
+    { value: 'name_asc', label: 'A to Z' },
+    { value: 'name_desc', label: 'Z to A' },
+    {
+        value: 'contributors_desc',
+        label: (
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'start',
+                    alignItems: 'center',
+                }}
+            >
+                <ArrowDownwardIcon
+                    style={{ fontSize: 20, paddingRight: '3px' }}
+                />
+                <span>Contributors</span>
+            </div>
+        ),
+    },
+    {
+        value: 'contributors_asc',
+        label: (
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'start',
+                    alignItems: 'center',
+                }}
+            >
+                <span style={{ paddingRight: '3px' }}># Contributors</span>
+                <ArrowUpwardIcon style={{ fontSize: 20 }} />
+            </div>
+        ),
+    },
 ];
 
 // This offset is necessary to match row indices in the uploaded files.
