@@ -24,7 +24,8 @@ class RowSectorSerializerTest(TestCase):
             "sector": 1,
             "product_type": 2,
             "sector_product_type": 3,
-        }
+            }
+        self.row_five = {"sector": 'Apparel'}
         self.current = {"errors": []}
 
     def test_validate_with_multiple_values(self):
@@ -43,6 +44,12 @@ class RowSectorSerializerTest(TestCase):
 
         self.assertEqual(result['product_type'], ['product one'])
         self.assertEqual(result['sector'], ['Apparel'])
+
+    def test_validate_without_product_type_values(self):
+        result = self.serializer.validate(self.row_five, self.current.copy())
+
+        self.assertEqual(result['sector'], ['Apparel'])
+        self.assertNotIn('product_type', result)
 
     def test_parse_all_values(self):
         all_values = ['technology', 'product one', 'finance']
