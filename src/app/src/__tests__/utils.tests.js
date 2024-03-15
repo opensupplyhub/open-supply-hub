@@ -5,6 +5,7 @@ const mapValues = require('lodash/mapValues');
 const isEqual = require('lodash/isEqual');
 const includes = require('lodash/includes');
 const turf = require('@turf/turf');
+import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
 
 const {
     makeFacilityListsURL,
@@ -276,8 +277,22 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
+            value: 'contributors_desc',
+            label: (
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'start',
+                        alignItems: 'center',
+                    }}
+                >
+                    <ArrowDownwardIcon
+                        style={{ fontSize: 20, paddingRight: '3px' }}
+                    />
+                    <span>Contributors</span>
+                </div>
+            ),
         },
     };
 
@@ -311,8 +326,22 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: 'AND',
         boundary: null,
         sortAlgorithm: {
-          label: "# Contributors",
-          value: "",
+            value: 'contributors_desc',
+            label: (
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'start',
+                        alignItems: 'center',
+                    }}
+                >
+                    <ArrowDownwardIcon
+                        style={{ fontSize: 20, paddingRight: '3px' }}
+                    />
+                    <span>Contributors</span>
+                </div>
+            ),
         },
     };
 
@@ -347,8 +376,22 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
+            value: 'contributors_desc',
+            label: (
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'start',
+                        alignItems: 'center',
+                    }}
+                >
+                    <ArrowDownwardIcon
+                        style={{ fontSize: 20, paddingRight: '3px' }}
+                    />
+                    <span>Contributors</span>
+                </div>
+            ),
         },
     };
 
@@ -382,8 +425,22 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
+            value: 'contributors_desc',
+            label: (
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'start',
+                        alignItems: 'center',
+                    }}
+                >
+                    <ArrowDownwardIcon
+                        style={{ fontSize: 20, paddingRight: '3px' }}
+                    />
+                    <span>Contributors</span>
+                </div>
+            ),
         },
     };
 
@@ -417,8 +474,22 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
+            value: 'contributors_desc',
+            label: (
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'start',
+                        alignItems: 'center',
+                    }}
+                >
+                    <ArrowDownwardIcon
+                        style={{ fontSize: 20, paddingRight: '3px' }}
+                    />
+                    <span>Contributors</span>
+                </div>
+            ),
         },
     };
 
@@ -448,8 +519,22 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
+            value: 'contributors_desc',
+            label: (
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'start',
+                        alignItems: 'center',
+                    }}
+                >
+                    <ArrowDownwardIcon
+                        style={{ fontSize: 20, paddingRight: '3px' }}
+                    />
+                    <span>Contributors</span>
+                </div>
+            ),
         },
     };
 
@@ -481,8 +566,22 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
+            value: 'contributors_desc',
+            label: (
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'start',
+                        alignItems: 'center',
+                    }}
+                >
+                    <ArrowDownwardIcon
+                        style={{ fontSize: 20, paddingRight: '3px' }}
+                    />
+                    <span>Contributors</span>
+                </div>
+            ),
         },
     };
 
@@ -514,8 +613,22 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
+            value: 'contributors_desc',
+            label: (
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'start',
+                        alignItems: 'center',
+                    }}
+                >
+                    <ArrowDownwardIcon
+                        style={{ fontSize: 20, paddingRight: '3px' }}
+                    />
+                    <span>Contributors</span>
+                </div>
+            ),
         },
     };
 
@@ -547,8 +660,22 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
+            value: 'contributors_desc',
+            label: (
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'start',
+                        alignItems: 'center',
+                    }}
+                >
+                    <ArrowDownwardIcon
+                        style={{ fontSize: 20, paddingRight: '3px' }}
+                    />
+                    <span>Contributors</span>
+                </div>
+            ),
         },
     };
 
@@ -580,8 +707,22 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
+            value: 'contributors_desc',
+            label: (
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'start',
+                        alignItems: 'center',
+                    }}
+                >
+                    <ArrowDownwardIcon
+                        style={{ fontSize: 20, paddingRight: '3px' }}
+                    />
+                    <span>Contributors</span>
+                </div>
+            ),
         },
     };
 
@@ -613,8 +754,22 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
+            value: 'contributors_desc',
+            label: (
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'start',
+                        alignItems: 'center',
+                    }}
+                >
+                    <ArrowDownwardIcon
+                        style={{ fontSize: 20, paddingRight: '3px' }}
+                    />
+                    <span>Contributors</span>
+                </div>
+            ),
         },
     };
 
@@ -639,8 +794,22 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
+            value: 'contributors_desc',
+            label: (
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        justifyContent: 'start',
+                        alignItems: 'center',
+                    }}
+                >
+                    <ArrowDownwardIcon
+                        style={{ fontSize: 20, paddingRight: '3px' }}
+                    />
+                    <span>Contributors</span>
+                </div>
+            ),
         },
     };
 

@@ -224,14 +224,16 @@ class FacilitiesViewSet(ListModelMixin,
             )
         sort_by = params.validated_data['sort_by']
         order_list = []
-        if (sort_by is None) or (sort_by == 'contributors_asc'):
-            order_list = ['contributors_count', 'name']
+        if (sort_by is None) or (sort_by == 'contributors_desc'):
+            order_list = ['-contributors_count', 'name']
         elif (sort_by == 'name_asc'):
             order_list = ['name']
         elif (sort_by == 'name_desc'):
             order_list = ['-name']
         elif (sort_by == 'contributors_desc'):
             order_list = ['-contributors_count', 'name']
+        elif (sort_by == 'contributors_asc'):
+            order_list = ['contributors_count', 'name']
 
         queryset = queryset.extra(order_by=order_list)
 
