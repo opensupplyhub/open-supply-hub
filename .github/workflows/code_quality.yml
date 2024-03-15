@@ -312,7 +312,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: base-branch-dd-unittest-code-cov
-          path: ./src/dedupe-hub/api/coverage/coverage.lcov
+          path: ./src/coverage/coverage.lcov
 
   run-dd-code-quality:
     environment: Quality Environment
@@ -336,7 +336,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: feature-branch-dd-unittest-code-cov
-          path: ./src/dedupe-hub/api/coverage/coverage.lcov
+          path: ./src/coverage/coverage.lcov
 
   check-dd-code-cov:
     environment: Quality Environment
