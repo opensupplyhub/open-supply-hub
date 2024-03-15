@@ -28,7 +28,7 @@ Move `countries` to a separate module so that it becomes possible to use both `d
 * [OSDEV-893](https://opensupplyhub.atlassian.net/browse/OSDEV-893) - Implement CSV and XLSX file parser strategies in the ContriCleaner library, and incorporate preliminary cleanup during parsing.
 * [OSDEV-915](https://opensupplyhub.atlassian.net/browse/OSDEV-915) Upgrade Kafka tools to version 3.5.2
 * [OSDEV-877](https://opensupplyhub.atlassian.net/browse/OSDEV-877) Make migration run as part of "Deploy to AWS" workflow
-* [OSDEV-851](https://opensupplyhub.atlassian.net/browse/OSDEV-851) Place 'terraform.tfvar' files to repository and move sensitive info to private repository opensupplyhub/ci-deployment/
+* [OSDEV-851](https://opensupplyhub.atlassian.net/browse/OSDEV-851) Place 'terraform.tfvar' files to repository and move sensitive info to private repository opensupplyhub/ci-deployment
 * [OSDEV-894](https://opensupplyhub.atlassian.net/browse/OSDEV-894) Implement Contricleaner library into create facility API endpoint (`facilities_view_set.py`)
 * [OSDEV-536](https://opensupplyhub.atlassian.net/browse/OSDEV-536) In the Contricleaner library, implement parsing of fields `sector_product_type`, `sector`, and `product_type` based on commas and vertical bars. 
 
