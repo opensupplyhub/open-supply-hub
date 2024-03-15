@@ -7,9 +7,9 @@ from django.test import TestCase
 
 class RowSectorSerializerTest(TestCase):
     def setUp(self):
-        self.sector_split_pattern = r', |,|\|'
+        self.split_pattern = r', |,|\|'
         self.serializer = RowSectorSerializer(
-            MockSectorCache(), self.sector_split_pattern
+            MockSectorCache(), self.split_pattern
         )
 
         self.row_one = {

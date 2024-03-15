@@ -12,11 +12,11 @@ class ContriCleanerSerializer:
         self,
         source_parser: SourceParser,
         sector_cache: SectorCacheInterface,
-        sector_split_pattern: str,
+        split_pattern: str,
     ):
         self.__source_parser = source_parser
         self.row_serializer = RowCompositeSerializer(
-            sector_cache, sector_split_pattern
+            sector_cache, split_pattern
         )
 
     def get_validated_rows(self) -> List[RowDTO]:
