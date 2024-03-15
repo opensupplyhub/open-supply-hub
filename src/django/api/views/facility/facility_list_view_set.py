@@ -4,6 +4,7 @@ import os
 import traceback
 import re
 from functools import reduce
+from typing import Union, List
 
 from api.helpers.helpers import (
     get_raw_json,
@@ -119,6 +120,38 @@ class FacilityListViewSet(ModelViewSet):
         self._validate_header(header)
         rows = map(clean_row, rows)
         return header, rows
+
+    @staticmethod
+    def __get_serializer(
+            file: Union[InMemoryUploadedFile, TemporaryUploadedFile]
+            ) -> ContriCleanerSerializer:
+        ext = file.name[-4:]
+        if ext == 'xlsx':
+            serializer = ContriCleanerSerializer(
+                SourceParserXLSX(file),
+                SectorCache()
+            )
+        elif ext == '.csv':
+            serializer = ContriCleanerSerializer(
+                SourceParserCSV(file),
+                SectorCache()
+            )
+        else:
+            raise ValidationError(
+                'Unsupported file type. Please '
+                'submit Excel or UTF-8 CSV.'
+            )
+        return serializer
+
+    @staticmethod
+    def __is_required_fields_present(rows: List[dict]) -> bool:
+        if (len(rows) > 0 and len(rows[0].errors) > 0):
+            required_fields_pattern = (r"^(country|address|name)"
+                                       r"(,\s*(country|address|name))"
+                                       r"*(\s+are\s+missing)$")
+            error_message = rows[0].errors[0]['message']
+            return bool(re.match(required_fields_pattern, error_message))
+        return False
 
     @transaction.atomic
     def create(self, request):
@@ -243,8 +276,8 @@ class FacilityListViewSet(ModelViewSet):
         serializer = self.get_serializer(new_list)
         return Response(serializer.data)
 
-    # TODO: Rename this method to `create`. For testing purposes, a duplicate
-    #       was created.
+    # TODO: Rename this method to `create`. A temporary duplicate was created
+    #       for testing purposes of the ContriCleaner parsing.
     @action(detail=False, methods=['POST'],
             url_path='createlist')
     @transaction.atomic
@@ -335,41 +368,21 @@ class FacilityListViewSet(ModelViewSet):
                     f'FacilityList {replaces.pk} has already been replaced.'
                 )
 
-        ext = uploaded_file.name[-4:]
-        if ext == 'xlsx':
-            serializer = ContriCleanerSerializer(
-                SourceParserXLSX(uploaded_file),
-                SectorCache()
-            )
-        elif ext == '.csv':
-            serializer = ContriCleanerSerializer(
-                SourceParserCSV(uploaded_file),
-                SectorCache()
-            )
-        else:
-            raise ValidationError(
-                'Unsupported file type. Please '
-                'submit Excel or UTF-8 CSV.'
-            )
-
         parsing_started = str(timezone.now())
+
+        serializer = self.__get_serializer(uploaded_file)
         try:
             rows = serializer.get_validated_rows()
-        except ValidationError as e:
+        except ValidationError as err:
             report_error_to_rollbar(request=request, file=uploaded_file)
-            raise ValidationError(e)  # TODO: test the error throwing.
+            raise ValidationError(str(err.detail[0]))
 
-        if (len(rows) > 0 and len(rows[0].errors) > 0):
-            required_fields_pattern = (r"^(country|address|name)"
-                                       r"(,\s*(country|address|name))"
-                                       r"*(\s+are\s+missing)$")
-            error_message = rows[0].errors[0]['message']
-            if re.match(required_fields_pattern, error_message):
-                raise ValidationError((
-                        f'Header must contain {FileHeaderField.COUNTRY}, '
-                        f'{FileHeaderField.NAME}, and '
-                        f'{FileHeaderField.ADDRESS} fields.'
-                    ))
+        if not self.__is_required_fields_present(rows):
+            raise ValidationError((
+                    f'Header must contain {FileHeaderField.COUNTRY}, '
+                    f'{FileHeaderField.NAME}, and '
+                    f'{FileHeaderField.ADDRESS} fields.'
+                ))
 
         header_row_keys = rows[0].raw_json.keys()
         header_str = ','.join(header_row_keys)
@@ -408,9 +421,9 @@ class FacilityListViewSet(ModelViewSet):
                     clean_address=row.clean_address
                 )
             try:
-                # TODO: move it to the ContriCleaner lib
                 if (FileHeaderField.LAT in row.fields.keys()
                         and FileHeaderField.LNG in row.fields.keys()):
+                    # TODO: Move floating to the ContriCleaner library.
                     lat = float(row.fields[FileHeaderField.LAT])
                     lng = float(row.fields[FileHeaderField.LNG])
                     item.geocoded_point = Point(lng, lat)

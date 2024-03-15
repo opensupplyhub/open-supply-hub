@@ -121,7 +121,7 @@ export const makeUserConfirmEmailURL = () =>
 export const makeUploadFacilityListsURL = useOldUploadListEndpoint =>
     useOldUploadListEndpoint
         ? '/api/facility-lists/'
-        : '/api/facility-lists/createlist/';
+        : '/api/facility-lists/createlist/'; // TODO: Remove this once testing of the parsing via ContriCleaner is complete.
 export const makeFacilityListsURL = () => '/api/facility-lists/';
 export const makeSingleFacilityListURL = id => `/api/facility-lists/${id}/`;
 export const makeSingleFacilityListItemsURL = id =>
