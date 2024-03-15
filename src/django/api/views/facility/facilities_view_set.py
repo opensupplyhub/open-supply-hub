@@ -56,6 +56,7 @@ from ...constants import (
     FacilityMergeQueryParams,
     ProcessingAction,
     UpdateLocationParams,
+    ErrorMessages
 )
 from ...exceptions import BadRequestException
 from ...extended_fields import (
@@ -540,7 +541,7 @@ class FacilitiesViewSet(ListModelMixin,
               "status": "NEW_FACILITY"
             }
 
-        ### No Match and Geocoder Returned No Results
+        ### No Match
 
             {
               "matches": [],
@@ -548,6 +549,17 @@ class FacilitiesViewSet(ListModelMixin,
               "geocoded_geometry": null,
               "geocoded_address": null,
               "status": "ERROR_MATCHING"
+            }
+
+        ### Geocoder Returned No Results
+
+            {
+              "matches": [],
+              "item_id": 965,
+              "geocoded_geometry": null,
+              "geocoded_address": null,
+              "status": "GEOCODED_NO_RESULTS",
+              "message": "The address you submitted can not be geocoded."
             }
         """  # noqa
         # Adding the @permission_classes decorator was not working so we
@@ -671,6 +683,8 @@ class FacilitiesViewSet(ListModelMixin,
                 result['geocoded_address'] = item.geocoded_address
             else:
                 item.status = FacilityListItem.GEOCODED_NO_RESULTS
+                result['status'] = item.status
+                result['message'] = ErrorMessages.GEOCODED_NO_RESULTS
 
             item.processing_results.append({
                 'action': ProcessingAction.GEOCODE,
@@ -699,32 +713,36 @@ class FacilitiesViewSet(ListModelMixin,
             return Response(result,
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Handle and produce message to Kafka with source_id data
-        timer = 0
-        timeout = 30
-        facility_list_item_temp = None
-        while True:
-            if timer > timeout:
-                break
-            facility_list_item_temp = FacilityListItemTemp.objects.get(
-                source=source.id
-            )
-            if facility_list_item_temp.status == FacilityListItemTemp.GEOCODED:
-                asyncio.run(produce_message_match_process(source.id))
-                break
-            asyncio.sleep(1)
-            timer = timer + 1
+        if item.status == FacilityListItem.GEOCODED:
+            # Handle and produce message to Kafka with source_id data
+            timer = 0
+            timeout = 25
+            fli_temp = None
+            while True:
+                if timer > timeout:
+                    break
+                fli_temp = FacilityListItemTemp.objects.get(
+                    source=source.id
+                )
+                if fli_temp.status == FacilityListItemTemp.GEOCODED:
+                    asyncio.run(produce_message_match_process(source.id))
+                    break
+                asyncio.sleep(1)
+                timer = timer + 1
 
-        # Handle results of "match" process from Dedupe Hub
-        result = handle_external_match_process_result(
-            facility_list_item_temp.id,
-            result,
-            request,
-            should_create
-        )
+            # Handle results of "match" process from Dedupe Hub
+            result = handle_external_match_process_result(
+                fli_temp.id,
+                result,
+                request,
+                should_create
+            )
+
+        errors_status = [FacilityListItem.ERROR_MATCHING,
+                         FacilityListItem.GEOCODED_NO_RESULTS]
 
         if (should_create
-                and result['status'] != FacilityListItem.ERROR_MATCHING):
+                and result['status'] not in errors_status):
             return Response(result, status=status.HTTP_201_CREATED)
         else:
             return Response(result, status=status.HTTP_200_OK)
