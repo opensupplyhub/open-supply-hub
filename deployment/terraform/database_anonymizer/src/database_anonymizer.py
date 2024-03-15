@@ -1,14 +1,15 @@
 import boto3
 from botocore.exceptions import ClientError
-import psycopg
+import pg8000.native
+import os
 
 def lambda_handler(event, context):
-    db_instance_identifier = 'opensupplyhub-enc-tst'
-    temporary_db_identifier = 'database-anonymizer'
-    database_name = "db_name"
-    database_user = "db_user"
-    database_password = "db_pass"
-    destination_aws_account="343975343274"
+    db_instance_identifier = os.environ['SOURCE_DATABASE_IDENTIFIER']
+    temporary_db_identifier = os.environ['ANONYMIZER_DATABASE_IDENTIFIER']
+    database_name = os.environ['SOURCE_DATABASE_NAME']
+    database_user = os.environ['SOURCE_DATABASE_USER']
+    database_password = os.environ['SOURCE_DATABASE_PASSWORD']
+    destination_aws_account=os.environ['DESTINATION_AWS_ACCOUNT']
 
     source_session = boto3.Session()
     source = source_session.client('rds')
@@ -52,11 +53,19 @@ def lambda_handler(event, context):
     database_host = response['DBInstances'][0]['Endpoint']['Address']
     database_port = response['DBInstances'][0]['Endpoint']['Port']
 
-    db = psycopg.connect('%s %s %s %s %s' % (database_host, database_port, database_name, database_user, database_password), serialize=0)
-    cur = db.cursor()
-    cur.execute(open("anonymize_script.sql", "r").read())
-    cur.commit()
+    connection_information = dict(
+        user=database_user,
+        host=database_host,
+        port=database_port,
+        password=database_password,
+        database=database_name,
+    )
 
+    db = pg8000.native.Connection(**connection_information)
+    # cur = db.cursor()
+    # cur.execute(open("anonymize_script.sql", "r").read())
+    # cur.commit()
+    db.run(open("anonymize_script.sql", "r").read())
     anonymized_snapshot_identifier = snapshot_identifier + '-anonymized'
 
     source.delete_db_instance(
