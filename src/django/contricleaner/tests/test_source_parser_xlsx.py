@@ -111,7 +111,8 @@ class SourceParserXLSXTest(TestCase):
 
         parser = SourceParserXLSX(uploaded_file)
         parsed_rows = parser.get_parsed_rows()
-        parsed_rows = RowCompositeSerializer.clean_rows(parsed_rows)
+        parsed_rows = [RowCompositeSerializer.
+                       clean_row(row) for row in parsed_rows]
 
         self.assertEqual(parsed_rows, expected_parsed_rows)
 

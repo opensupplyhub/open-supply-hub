@@ -1,5 +1,4 @@
 from typing import List
-from abc import ABC, abstractmethod
 from contricleaner.lib.dto.row_dto import RowDTO
 from contricleaner.lib.sector_cache_interface import SectorCacheInterface
 from contricleaner.lib.serializers.row_serializers.row_composite_serializer \
@@ -7,13 +6,7 @@ from contricleaner.lib.serializers.row_serializers.row_composite_serializer \
 from contricleaner.lib.parsers.source_parser import SourceParser
 
 
-class ContriCleanerSerializer(ABC):
-    '''
-    TODO handle ['N/A', 'n/a', '?'] in utils.format_field
-    that uses in FacilityIndexSerializer
-    '''
-    INVALID_KEYWORDS = ['N/A', 'n/a']
-
+class ContriCleanerSerializer():
     def __init__(
             self,
             source_parser: SourceParser,

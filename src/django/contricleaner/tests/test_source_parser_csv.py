@@ -75,7 +75,7 @@ class SourceParserCSVTest(TestCase):
 
         parser = SourceParserCSV(uploaded_file)
         rows = parser.get_parsed_rows()
-        rows = RowCompositeSerializer.clean_rows(rows)
+        rows = [RowCompositeSerializer.clean_row(row) for row in rows]
 
         self.assertEqual(rows, expected_parsed_rows)
 
