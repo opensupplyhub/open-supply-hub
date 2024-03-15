@@ -17,3 +17,14 @@ class CountryCodeParserTest(TestCase):
         names = ("Türkiye", "Turkiye", "TÜRKİYE", "TURKİYE", "Turkey")
         for name in names:
             self.assertEqual(get_country_code(name), "TR")
+
+    def test_valid_country_code(self):
+        self.assertEqual(get_country_code("US"), "US")
+
+    def test_invalid_country_name(self):
+        with self.assertRaises(ValueError) as context:
+            get_country_code("Invalid Country")
+        self.assertEqual(
+            str(context.exception),
+            'Could not find a country code for "Invalid Country".'
+        )
