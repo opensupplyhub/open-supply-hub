@@ -8,7 +8,10 @@ from django.test import TestCase
 
 class RowCompositeValidatorTest(TestCase):
     def setUp(self):
-        self.serializer = RowCompositeSerializer(MockSectorCache())
+        self.sector_split_pattern = r', |,|\|'
+        self.serializer = RowCompositeSerializer(
+            MockSectorCache(), self.sector_split_pattern
+        )
 
     def test_get_validated_row(self):
         facility_source = {
