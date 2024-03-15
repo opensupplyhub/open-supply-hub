@@ -125,16 +125,19 @@ class FacilityListViewSet(ModelViewSet):
     def __get_serializer(
             file: Union[InMemoryUploadedFile, TemporaryUploadedFile]
             ) -> ContriCleanerSerializer:
+        sector_split_pattern = r', |,|\|'
         ext = file.name[-4:]
         if ext == 'xlsx':
             serializer = ContriCleanerSerializer(
                 SourceParserXLSX(file),
-                SectorCache()
+                SectorCache(),
+                sector_split_pattern
             )
         elif ext == '.csv':
             serializer = ContriCleanerSerializer(
                 SourceParserCSV(file),
-                SectorCache()
+                SectorCache(),
+                sector_split_pattern
             )
         else:
             raise ValidationError(
@@ -145,12 +148,15 @@ class FacilityListViewSet(ModelViewSet):
 
     @staticmethod
     def __is_required_fields_present(rows: List[dict]) -> bool:
-        if (len(rows) > 0 and len(rows[0].errors) > 0):
+        if (len(rows) > 0):
             required_fields_pattern = (r"^(country|address|name)"
                                        r"(,\s*(country|address|name))"
                                        r"*(\s+are\s+missing)$")
-            error_message = rows[0].errors[0]['message']
-            return bool(re.match(required_fields_pattern, error_message))
+            if len(rows[0].errors) > 0:
+                error_message = rows[0].errors[0]['message']
+                return not bool(
+                    re.match(required_fields_pattern, error_message))
+            return True
         return False
 
     @transaction.atomic
