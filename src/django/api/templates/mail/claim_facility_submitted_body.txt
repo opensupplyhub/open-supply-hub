@@ -1,7 +1,12 @@
 {% block content %}
 Hi,
 
-You're receiving this email because we received your request to claim an Open Supply Hub facility. We'll review the request and be in touch soon.
+You're receiving this email because we received your request to claim an Open Supply Hub facility. We'll review the request and be in touch soon. The expected processing time for the initial review of a claim is 10 - 14 days. To approve your claim, we will need verification of the name and address details of the location you are claiming. 
+
+To complete a claim request, you'll need to submit the following documentation:
+
+- A document or website with the address of your site (e.g. compaany website, LinkedIn profile, business registration document)
+- A document of website that shows your relationship to the site as an owner or senior manager (e.g. Your LinkedIn profile, business card, or letter of employment on company letterhead)
 
 Here is the information submitted with your request:
 
