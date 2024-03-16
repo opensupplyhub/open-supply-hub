@@ -12,7 +12,7 @@ Here's the reason for the approval:
 {{ approval_reason }}
 {% endif %}
 
-You are approved! You can now complete your profile, adding business information including production capabilities, certifications, MOQs and more. The "Facility name (English language)" & "Address" fields cannot be edited. Doing so will result in the claim being revoked.Visit opensupplyhub.org/claimed to view your approved facility and complete your profile.
+You are approved! You can now complete your profile, adding business information including production capabilities, certifications, MOQs and more. The "Facility name (English language)" & "Address" fields cannot be edited. Doing so will result in the claim being revoked. Visit opensupplyhub.org/claimed to view your approved facility and complete your profile.
 
 Best wishes,
 
