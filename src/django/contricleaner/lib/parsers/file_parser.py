@@ -9,7 +9,7 @@ from django.core.files.uploadedfile import (
 
 class FileParser(ABC):
     '''
-    Interface FileParser for parsers related to file parsing.
+    Abstract FileParser class for parsers related to file parsing.
     '''
 
     def __init__(self,
