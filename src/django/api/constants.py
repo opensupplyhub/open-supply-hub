@@ -9,6 +9,14 @@ class CsvHeaderField:
     LNG = 'lng'
 
 
+class FileHeaderField:
+    COUNTRY = 'country'
+    NAME = 'name'
+    ADDRESS = 'address'
+    LAT = 'lat'
+    LNG = 'lng'
+
+
 class ProcessingAction:
     PARSE = 'parse'
     GEOCODE = 'geocode'
