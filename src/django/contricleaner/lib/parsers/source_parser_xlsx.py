@@ -61,9 +61,7 @@ class SourceParserXLSX(SourceParser, FileParser):
         for cell in row:
             formatted_cell_value = \
                 SourceParserXLSX.__format_cell_value(cell.value)
-            cleaned_cell_value = \
-                FileParser._clean_row(formatted_cell_value)
-            formatted_row.append(cleaned_cell_value)
+            formatted_row.append(formatted_cell_value)
 
         return formatted_row
 

@@ -11,6 +11,8 @@ from rest_framework.exceptions import ValidationError
 from contricleaner.lib.parsers.source_parser_csv import SourceParserCSV
 from contricleaner.lib.parsers.source_parser import SourceParser
 from contricleaner.lib.parsers.file_parser import FileParser
+from contricleaner.lib.serializers.row_serializers.row_composite_serializer \
+    import RowCompositeSerializer
 
 
 class SourceParserCSVTest(TestCase):
@@ -73,6 +75,7 @@ class SourceParserCSVTest(TestCase):
 
         parser = SourceParserCSV(uploaded_file)
         rows = parser.get_parsed_rows()
+        rows = [RowCompositeSerializer.clean_row(row) for row in rows]
 
         self.assertEqual(rows, expected_parsed_rows)
 
