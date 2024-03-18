@@ -1,4 +1,3 @@
-import json
 import traceback
 import asyncio
 from api.models.transactions.index_facilities_new import index_facilities_new
@@ -611,9 +610,9 @@ class FacilitiesViewSet(ListModelMixin,
         item = FacilityListItem.objects.create(
             source=source,
             row_index=0,
-            raw_data=json.dumps(request.data),
+            raw_data=','.join(row.raw_json.values()),
             raw_json=row.raw_json,
-            raw_header='',
+            raw_header=','.join(row.raw_json.keys()),
             status=FacilityListItem.PARSED,
             name=row.name,
             clean_name=row.clean_name,
