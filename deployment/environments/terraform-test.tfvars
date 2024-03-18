@@ -30,7 +30,7 @@ app_fargate_cpu = "2048"
 app_fargate_memory = "8192"
 
 app_dd_fargate_cpu = "2048"
-app_dd_fargate_memory = "4096"
+app_dd_fargate_memory = "8192"
 app_dd_ecs_desired_count = "1"
 
 cli_fargate_cpu = "2048"
