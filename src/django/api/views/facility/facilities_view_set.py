@@ -570,8 +570,9 @@ class FacilitiesViewSet(ListModelMixin,
                               FeatureGroups.CAN_SUBMIT_FACILITY):
             raise PermissionDenied()
 
+        split_pattern = r', |,|\|'
         contri_cleaner = ContriCleanerSerializer(
-            SourceParserJSON(request.data), SectorCache()
+            SourceParserJSON(request.data), SectorCache(), split_pattern
         )
         rows = contri_cleaner.get_validated_rows()
         row = rows[0]

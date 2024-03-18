@@ -10,8 +10,11 @@ from .row_serializer import RowSerializer
 
 
 class RowSectorSerializer(RowSerializer):
-    def __init__(self, sector_cache: SectorCacheInterface) -> None:
+    def __init__(
+        self, sector_cache: SectorCacheInterface, split_pattern: str
+    ) -> None:
         self.sector_cache = sector_cache
+        self.split_pattern = split_pattern
 
     def validate(self, row: dict, current: dict) -> dict:
         fields = ['sector', 'product_type', 'sector_product_type']
@@ -30,7 +33,6 @@ class RowSectorSerializer(RowSerializer):
                             "type": "ValidationError",
                         }
                     )
-
                 elif not is_valid_type(value):
                     sector_errors.append(
                         {
@@ -41,7 +43,6 @@ class RowSectorSerializer(RowSerializer):
                             "type": "ValueError",
                         }
                     )
-
                 else:
                     values.append(value)
 
@@ -49,7 +50,7 @@ class RowSectorSerializer(RowSerializer):
             current["errors"].extend(sector_errors)
             return current
 
-        splitted_values = split_values(values, ', ')
+        splitted_values = split_values(values, self.split_pattern)
 
         sectors, product_types = self.parse_all_values(splitted_values)
 

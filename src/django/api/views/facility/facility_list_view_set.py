@@ -1,15 +1,19 @@
 import csv
 import operator
 import os
+import traceback
+import re
 from functools import reduce
+from typing import Union, List
+
 from api.helpers.helpers import (
     get_raw_json,
 )
-
 from oar.settings import (
     MAX_UPLOADED_FILE_SIZE_IN_BYTES,
     ENVIRONMENT,
 )
+from oar.rollbar import report_error_to_rollbar
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
     NotFound,
@@ -24,13 +28,16 @@ from django.core.files.uploadedfile import (
 from django.db import transaction
 from django.db.models import F, Q
 from django.utils import timezone
+from django.contrib.gis.geos import Point
 
 from ...aws_batch import submit_jobs, submit_parse_job
-from ...constants import (
+from api.constants import (
     CsvHeaderField,
     FacilityListItemsQueryParams,
     ProcessingAction,
+    FileHeaderField
 )
+from api.sector_product_type_parser import SectorCache
 from ...facility_history import create_dissociate_match_change_reason
 from ...mail import send_facility_list_rejection_email
 from ...models.contributor.contributor import Contributor
@@ -54,7 +61,19 @@ from ...serializers import (
     FacilityListItemSerializer,
     FacilityListItemsQueryParamsSerializer,
 )
+from api.extended_fields import (
+    create_extendedfields_for_listitem
+)
 from ..fields.create_nonstandard_fields import create_nonstandard_fields
+from contricleaner.lib.serializers.contri_cleaner_serializer import (
+    ContriCleanerSerializer
+)
+from contricleaner.lib.parsers.source_parser_xlsx import (
+    SourceParserXLSX
+)
+from contricleaner.lib.parsers.source_parser_csv import (
+    SourceParserCSV
+)
 
 
 class FacilityListViewSet(ModelViewSet):
@@ -101,6 +120,44 @@ class FacilityListViewSet(ModelViewSet):
         self._validate_header(header)
         rows = map(clean_row, rows)
         return header, rows
+
+    @staticmethod
+    def __get_serializer(
+            file: Union[InMemoryUploadedFile, TemporaryUploadedFile]
+            ) -> ContriCleanerSerializer:
+        split_pattern = r', |,|\|'
+        ext = os.path.splitext(file.name)[1].lower()
+        if ext == '.xlsx':
+            serializer = ContriCleanerSerializer(
+                SourceParserXLSX(file),
+                SectorCache(),
+                split_pattern
+            )
+        elif ext == '.csv':
+            serializer = ContriCleanerSerializer(
+                SourceParserCSV(file),
+                SectorCache(),
+                split_pattern
+            )
+        else:
+            raise ValidationError(
+                'Unsupported file type. Please '
+                'submit Excel or UTF-8 CSV.'
+            )
+        return serializer
+
+    @staticmethod
+    def __is_required_fields_present(rows: List[dict]) -> bool:
+        if (len(rows) > 0):
+            required_fields_pattern = (r"^(country|address|name)"
+                                       r"(,\s*(country|address|name))"
+                                       r"*(\s+are\s+missing)$")
+            if len(rows[0].errors) > 0:
+                error_message = rows[0].errors[0]['message']
+                return not bool(
+                    re.match(required_fields_pattern, error_message))
+            return True
+        return False
 
     @transaction.atomic
     def create(self, request):
@@ -221,6 +278,215 @@ class FacilityListViewSet(ModelViewSet):
 
         if ENVIRONMENT in ('Test', 'Staging', 'Production', 'Preprod'):
             submit_parse_job(new_list)
+
+        serializer = self.get_serializer(new_list)
+        return Response(serializer.data)
+
+    # TODO: Rename this method to `create`. A temporary duplicate was created
+    #       for testing purposes of the ContriCleaner parsing.
+    @action(detail=False, methods=['POST'],
+            url_path='createlist')
+    @transaction.atomic
+    def createlist(self, request):
+        """
+        Upload a new Facility List.
+
+        ## Request Body
+
+        *Required*
+
+        `file` (`file`): CSV file to upload.
+
+        *Optional*
+
+        `name` (`string`): Name of the uploaded file.
+
+        `description` (`string`): Description of the uploaded file.
+
+        `replaces` (`number`): An optional ID for an existing list to replace
+                   with the new list
+
+        ### Sample Response
+
+            {
+                "id": 1,
+                "name": "list name",
+                "description": "list description",
+                "file_name": "list-1.csv",
+                "is_active": true,
+                "is_public": true
+            }
+        """
+        if 'file' not in request.data:
+            raise ValidationError('No file specified.')
+        uploaded_file = request.data['file']
+        if type(uploaded_file) not in (
+                InMemoryUploadedFile, TemporaryUploadedFile):
+            raise ValidationError('File not submitted properly.')
+        if uploaded_file.size > MAX_UPLOADED_FILE_SIZE_IN_BYTES:
+            mb = MAX_UPLOADED_FILE_SIZE_IN_BYTES / (1024*1024)
+            raise ValidationError(
+                'Uploaded file exceeds the maximum size of {:.1f}MB.'.format(
+                    mb))
+
+        try:
+            contributor = request.user.contributor
+        except Contributor.DoesNotExist as exc:
+            raise ValidationError(
+                'User contributor cannot be None'
+            ) from exc
+
+        if 'name' in request.data:
+            name = request.data['name']
+        else:
+            name = os.path.splitext(uploaded_file.name)[0]
+
+        if '|' in name:
+            raise ValidationError('Name cannot contain the "|" character.')
+
+        if 'description' in request.data:
+            description = request.data['description']
+        else:
+            description = None
+
+        if description is not None and '|' in description:
+            raise ValidationError(
+                'Description cannot contain the "|" character.'
+            )
+
+        replaces = None
+        if 'replaces' in request.data:
+            try:
+                replaces = int(request.data['replaces'])
+            except ValueError as exc:
+                raise ValidationError(
+                    '"replaces" must be an integer ID.'
+                ) from exc
+            old_list_qs = FacilityList.objects.filter(
+                source__contributor=contributor, pk=replaces)
+            if old_list_qs.count() == 0:
+                raise ValidationError(
+                    f'{replaces} is not a valid FacilityList ID.'
+                )
+            replaces = old_list_qs[0]
+            if FacilityList.objects.filter(replaces=replaces).count() > 0:
+                raise ValidationError(
+                    f'FacilityList {replaces.pk} has already been replaced.'
+                )
+
+        parsing_started = str(timezone.now())
+
+        serializer = self.__get_serializer(uploaded_file)
+        try:
+            rows = serializer.get_validated_rows()
+        except ValidationError as err:
+            report_error_to_rollbar(request=request, file=uploaded_file)
+            raise ValidationError(str(err.detail[0]))
+
+        if not self.__is_required_fields_present(rows):
+            raise ValidationError((
+                    f'Header must contain {FileHeaderField.COUNTRY}, '
+                    f'{FileHeaderField.NAME}, and '
+                    f'{FileHeaderField.ADDRESS} fields.'
+                ))
+
+        header_row_keys = rows[0].raw_json.keys()
+        header_str = ','.join(header_row_keys)
+        new_list = FacilityList(
+                    name=name,
+                    description=description,
+                    file_name=uploaded_file.name,
+                    file=uploaded_file,
+                    header=header_str,
+                    replaces=replaces,
+                    match_responsibility=contributor.match_responsibility)
+        new_list.save()
+
+        create_nonstandard_fields(header_row_keys, contributor)
+
+        source = Source.objects.create(
+            contributor=contributor,
+            source_type=Source.LIST,
+            facility_list=new_list)
+
+        is_geocoded = False
+        parsed_items = set()
+        for idx, row in enumerate(rows):
+            item = FacilityListItem.objects.create(
+                    row_index=idx,
+                    raw_data=','.join(row.raw_json.values()),
+                    raw_json=row.raw_json,
+                    raw_header=header_str,
+                    sector=row.sector,
+                    source=source,
+                    country_code=row.country_code,
+                    name=row.name,
+                    clean_name=row.clean_name,
+                    address=row.address,
+                    clean_address=row.clean_address
+                )
+            try:
+                if (FileHeaderField.LAT in row.fields.keys()
+                        and FileHeaderField.LNG in row.fields.keys()):
+                    # TODO: Move floating to the ContriCleaner library.
+                    lat = float(row.fields[FileHeaderField.LAT])
+                    lng = float(row.fields[FileHeaderField.LNG])
+                    item.geocoded_point = Point(lng, lat)
+                    is_geocoded = True
+
+                create_extendedfields_for_listitem(
+                    item,
+                    list(row.fields.keys()),
+                    list(row.fields.values())
+                )
+            except Exception as e:
+                item.status = FacilityListItem.ERROR_PARSING
+                item.processing_results.append({
+                    'action': ProcessingAction.PARSE,
+                    'started_at': parsing_started,
+                    'error': True,
+                    'message': str(e),
+                    'trace': traceback.format_exc(),
+                    'finished_at': str(timezone.now()),
+                    'is_geocoded': is_geocoded,
+                })
+
+            row_errors = row.errors
+            if len(row_errors) > 0:
+                stringified_message = '\n'.join(
+                    [f"{error['message']}" for error in row_errors]
+                )
+
+                item.status = FacilityListItem.ERROR_PARSING
+                item.processing_results.append({
+                    'action': ProcessingAction.PARSE,
+                    'started_at': parsing_started,
+                    'error': True,
+                    'message': stringified_message,
+                    'trace': traceback.format_exc(),
+                    'finished_at': str(timezone.now()),
+                    'is_geocoded': is_geocoded,
+                })
+            else:
+                item.status = FacilityListItem.PARSED
+                item.processing_results.append({
+                    'action': ProcessingAction.PARSE,
+                    'started_at': parsing_started,
+                    'error': False,
+                    'finished_at': str(timezone.now()),
+                    'is_geocoded': is_geocoded,
+                })
+
+            if item.status != FacilityListItem.ERROR_PARSING:
+                core_fields = '{}-{}-{}'.format(item.country_code,
+                                                item.clean_name,
+                                                item.clean_address)
+                if core_fields in parsed_items:
+                    item.status = FacilityListItem.DUPLICATE
+                else:
+                    parsed_items.add(core_fields)
+
+            item.save()
 
         serializer = self.get_serializer(new_list)
         return Response(serializer.data)

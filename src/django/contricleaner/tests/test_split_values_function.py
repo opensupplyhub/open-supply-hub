@@ -21,13 +21,18 @@ class SplitValuesFunctionTest(TestCase):
 
     def test_mixed_type_split(self):
         # Test splitting a mix of string, list, and set
-        result = split_values(["Apparel", "Toys,Coal", {"Food,Gas"}], ",")
+        result = split_values(
+            ["Apparel", "Toys,Coal", ["Books, Energy"], {"Food|Gas"}],
+            r", |,|\|",
+        )
         self.assertEqual(
             result,
             {
                 "Apparel",
                 "Toys",
                 "Coal",
+                "Books",
+                "Energy",
                 "Food",
                 "Gas",
             },

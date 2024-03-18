@@ -15,11 +15,14 @@ class TestContriCleanerSerializer(TestCase):
             "name": "Name of the company",
             "address": "1234 Main St",
         }
+        self.split_pattern = r', |,|\|'
 
     def test_get_validated_rows_json_parser(self):
         # Test when a single valid row is returned
         serializer = ContriCleanerSerializer(
-            SourceParserJSON(self.json_data), MockSectorCache()
+            SourceParserJSON(self.json_data),
+            MockSectorCache(),
+            self.split_pattern,
         )
         result = serializer.get_validated_rows()
         expected_result = [
