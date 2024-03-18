@@ -276,8 +276,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'contributors_desc',
             label: "# Contributors",
+            value: "",
         },
     };
 
@@ -311,14 +311,40 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: 'AND',
         boundary: null,
         sortAlgorithm: {
-            value: 'contributors_desc',
             label: "# Contributors",
+            value: "",
         },
     };
 
     expect(
         createFiltersFromQueryString(combinedContributorsString),
     ).toEqual(expectedCombinedContributorsMatch);
+
+    const defaultSortingString = '?sort_by=contributors_desc';
+    const expectedSortingMatch = {
+        facilityFreeTextQuery: '',
+        contributors: [],
+        contributorTypes: [],
+        countries: [],
+        sectors: [],
+        lists: [],
+        parentCompany: [],
+        facilityType: [],
+        processingType: [],
+        productType: [],
+        numberOfWorkers: [],
+        nativeLanguageName: '',
+        combineContributors: '',
+        boundary: null,
+        sortAlgorithm: {
+            label: "# Contributors",
+            value: "contributors_desc",
+        },
+    };
+
+    expect(
+        createFiltersFromQueryString(defaultSortingString),
+    ).toEqual(expectedSortingMatch);
 
     const listsString = '?contributors=1&lists=2';
     const expectedListsMatch = {
@@ -347,8 +373,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'contributors_desc',
             label: "# Contributors",
+            value: "",
         },
     };
 
@@ -382,8 +408,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'contributors_desc',
             label: "# Contributors",
+            value: "",
         },
     };
 
@@ -417,8 +443,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'contributors_desc',
             label: "# Contributors",
+            value: "",
         },
     };
 
@@ -448,8 +474,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'contributors_desc',
             label: "# Contributors",
+            value: "",
         },
     };
 
@@ -481,8 +507,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'contributors_desc',
             label: "# Contributors",
+            value: "",
         },
     };
 
@@ -514,8 +540,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'contributors_desc',
             label: "# Contributors",
+            value: "",
         },
     };
 
@@ -547,8 +573,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'contributors_desc',
             label: "# Contributors",
+            value: "",
         },
     };
 
@@ -580,8 +606,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'contributors_desc',
             label: "# Contributors",
+            value: "",
         },
     };
 
@@ -613,8 +639,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'contributors_desc',
             label: "# Contributors",
+            value: "",
         },
     };
 
@@ -639,8 +665,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'contributors_desc',
             label: "# Contributors",
+            value: "",
         },
     };
 
