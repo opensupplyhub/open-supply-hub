@@ -132,4 +132,7 @@ resource "aws_service_discovery_service" "app" {
     when    = destroy
     command = "${path.module}/servicediscovery-drain.sh ${self.id}"
   }
+   provisioner "local-exec" {
+    command = "${path.module}/servicediscovery-drain.sh ${self.id}"
+  }
 }
