@@ -33,7 +33,7 @@ app_dd_fargate_cpu = "2048"
 app_dd_fargate_memory = "8192"
 app_dd_ecs_desired_count = "1"
 
-cli_fargate_cpu = "2048"
+cli_fargate_cpu = "4096"
 cli_fargate_memory = "8192"
 
 gunicorn_worker_timeout = "240"
