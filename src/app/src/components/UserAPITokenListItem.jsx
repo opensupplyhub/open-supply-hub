@@ -22,19 +22,22 @@ export default function UserAPITokenListItem({
     const displayToast = () => toast('Copied Token to clipboard');
 
     return (
-        <ListItem>
-            <ListItemText primary={token} secondary={secondaryText} />
-            <ListItemSecondaryAction>
-                <CopyToClipboard text={token} onCopy={displayToast}>
-                    <IconButton aria-label="Copy Token to clipboard">
-                        <FileCopyIcon />
+        <>
+            <ListItemText primary="Token:" style={{ paddingLeft: '23px' }} />
+            <ListItem style={{ paddingTop: '0' }}>
+                <ListItemText primary={token} secondary={secondaryText} />
+                <ListItemSecondaryAction>
+                    <CopyToClipboard text={token} onCopy={displayToast}>
+                        <IconButton aria-label="Copy Token to clipboard">
+                            <FileCopyIcon />
+                        </IconButton>
+                    </CopyToClipboard>
+                    <IconButton aria-label="Delete" onClick={handleDelete}>
+                        <DeleteIcon />
                     </IconButton>
-                </CopyToClipboard>
-                <IconButton aria-label="Delete" onClick={handleDelete}>
-                    <DeleteIcon />
-                </IconButton>
-            </ListItemSecondaryAction>
-        </ListItem>
+                </ListItemSecondaryAction>
+            </ListItem>
+        </>
     );
 }
 

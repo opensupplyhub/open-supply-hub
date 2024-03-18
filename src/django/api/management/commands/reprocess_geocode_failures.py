@@ -48,7 +48,7 @@ class Command(BaseCommand):
 
         self.stdout.write('Reprocessing {} lists'.format(str(lists.count())))
         for facility_list in lists:
-            if ENVIRONMENT in ('Prestaging', 'Staging',
+            if ENVIRONMENT in ('Test', 'Staging',
                                'Production', 'Preprod'):
                 job_ids = submit_jobs(facility_list)
                 self.stdout.write('{} {}'.format(facility_list.id, job_ids))

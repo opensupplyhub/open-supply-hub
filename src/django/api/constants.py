@@ -9,6 +9,14 @@ class CsvHeaderField:
     LNG = 'lng'
 
 
+class FileHeaderField:
+    COUNTRY = 'country'
+    NAME = 'name'
+    ADDRESS = 'address'
+    LAT = 'lat'
+    LNG = 'lng'
+
+
 class ProcessingAction:
     PARSE = 'parse'
     GEOCODE = 'geocode'
@@ -186,3 +194,7 @@ class NumberOfWorkersRanges:
         'min': 10001,
         'label': 'More than 10000'
     }]
+
+
+class ErrorMessages:
+    GEOCODED_NO_RESULTS = "The address you submitted can not be geocoded."

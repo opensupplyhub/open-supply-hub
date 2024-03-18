@@ -589,6 +589,14 @@ class FacilityListItemsTable extends Component {
                                     primary: '#00319D',
                                 },
                             })}
+                            menuPosition="fixed"
+                            menuPortalTarget={document.body}
+                            closeMenuOnScroll={e =>
+                                e.target.classList === undefined ||
+                                !e.target.classList.contains(
+                                    'css-4ljt47-MenuList',
+                                )
+                            }
                         />
                     </div>
                     <ShowOnly

@@ -18,6 +18,7 @@ import {
     profileFieldsEnum,
     facilityListItemStatusChoicesEnum,
     ALLOW_LARGE_DOWNLOADS,
+    USE_OLD_UPLOAD_LIST_ENDPOINT,
     FEATURE,
     FEATURE_COLLECTION,
     POINT,
@@ -318,6 +319,7 @@ export const featureFlagPropType = oneOf([
     EMBEDDED_MAP_FLAG,
     EXTENDED_PROFILE_FLAG,
     ALLOW_LARGE_DOWNLOADS,
+    USE_OLD_UPLOAD_LIST_ENDPOINT,
 ]);
 
 export const facilityClaimsListPropType = arrayOf(
@@ -420,11 +422,4 @@ export const activityReportPropType = shape({
     status_change_date: string,
     status_change_reason: string,
     updated_at: string.isRequired,
-});
-
-export const contributorWebhookPropType = shape({
-    id: number,
-    url: string.isRequired,
-    notification_type: string,
-    filter_query_string: string.isRequired,
 });

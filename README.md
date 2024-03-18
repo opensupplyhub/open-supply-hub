@@ -132,12 +132,12 @@ The frontend uses [Create React App](https://github.com/facebook/create-react-ap
 
 The [Django](https://www.djangoproject.com) app runs inside a [Gunicorn](https://www.gunicorn.org) worker. The worker will [restart](https://docs.gunicorn.org/en/stable/settings.html#reload) if you make changes to the code.
 
-### Debugging Django with Dedupe Hub
+### Debugging Django
 
-Breakpoint debugging of the Python back-end is available via Visual Studio Code. To get started, run the Django development server by passing the `--dedupe --debug` flag to the `server` script. Note that you have to run the command below directly and not inside Docker container.
+Breakpoint debugging of the Python back-end is available via Visual Studio Code. To get started, run the Django development server and other services as well by passing the `--debug` flag to the `server` script. Note that you have to run the command below directly and not inside Docker container.
 
 ```
-./scripts/server --dedupe --debug
+./scripts/server --debug
 ```
 
 In Visual Studio Code, add this config to the `.vscode/launch.json` file:

@@ -275,7 +275,7 @@ def get_facility_addresses(facility):
     return facility_list_item_matches
 
 
-def get_contributor_name_from_facilityindexnew(
+def get_contributor_name_from_facilityindex(
         contributor_data: dict,
         user_can_see_detail: bool) -> Union[None, str]:
     if contributor_data.get('id') is None:
@@ -286,7 +286,7 @@ def get_contributor_name_from_facilityindexnew(
     return name[0].lower() + name[1:]
 
 
-def get_contributor_id_from_facilityindexnew(
+def get_contributor_id_from_facilityindex(
         contributor: dict,
         user_can_see_detail: bool) -> Union[None, int]:
     if contributor.get('id') is not None and user_can_see_detail:
@@ -313,9 +313,9 @@ def create_name_field_from_facility_name(name: str,
     field_data = {
         'value': name,
         'field_name': ExtendedField.NAME,
-        'contributor_id': get_contributor_id_from_facilityindexnew(
+        'contributor_id': get_contributor_id_from_facilityindex(
             contributor, user_can_see_detail),
-        'contributor_name': get_contributor_name_from_facilityindexnew(
+        'contributor_name': get_contributor_name_from_facilityindex(
             contributor, user_can_see_detail),
         'updated_at': format_date(updated_at),
     }
@@ -339,9 +339,9 @@ def create_address_field_from_facility_address(address: str,
     field_data = {
         'value': address,
         'field_name': ExtendedField.ADDRESS,
-        'contributor_id': get_contributor_id_from_facilityindexnew(
+        'contributor_id': get_contributor_id_from_facilityindex(
             contributor, user_can_see_detail),
-        'contributor_name': get_contributor_name_from_facilityindexnew(
+        'contributor_name': get_contributor_name_from_facilityindex(
             contributor, user_can_see_detail),
         'updated_at': format_date(updated_at),
         'is_from_claim': is_from_claim,
@@ -450,3 +450,43 @@ def depromote_unspecified_items(items: list):
         k['values'][0] == 'Unspecified' and
         len(k['values']) == 1),
         reverse=False)
+
+
+def format_sectors(items,
+                   claims,
+                   date_field_to_sort,
+                   use_main_created_at,
+                   user_can_see_detail):
+    def is_contributor_visible(entity, is_claim):
+        if is_claim:
+            return user_can_see_detail
+        return (user_can_see_detail and entity['source']['is_active']
+                and entity['source']['is_public']
+                and entity['has_active_complete_match'])
+
+    def format_sector_data(entity, is_claim):
+        formatted_data = {
+            'updated_at': format_date(entity['updated_at']),
+            'contributor_id': get_contributor_id_from_facilityindex(
+                entity['contributor'],
+                is_contributor_visible(entity, is_claim)),
+            'contributor_name': get_contributor_name_from_facilityindex(
+                entity['contributor'],
+                is_contributor_visible(entity, is_claim)),
+            'values': entity['sector'],
+            'is_from_claim': is_claim
+        }
+
+        if use_main_created_at:
+            formatted_data['created_at'] = format_date(entity['created_at'])
+
+        return formatted_data
+
+    item_sectors = [format_sector_data(item, False) for item in items]
+    claim_sectors = [format_sector_data(claim, True) for claim in claims]
+
+    sorted_item_sectors = sorted(item_sectors,
+                                 key=lambda i: i[date_field_to_sort],
+                                 reverse=True)
+
+    return claim_sectors + depromote_unspecified_items(sorted_item_sectors)

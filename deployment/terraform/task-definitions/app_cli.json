@@ -1,0 +1,43 @@
+[
+  {
+    "name": "django",
+    "image": "${image}",
+    "entryPoint": ["./manage.py"],
+    "environment": [
+        { "name": "PYTHONUNBUFFERED", "value": "1" },
+        { "name": "AWS_DEFAULT_REGION", "value": "${aws_region}" },
+        { "name": "POSTGRES_HOST", "value": "${postgres_host}" },
+        { "name": "POSTGRES_PORT", "value": "${postgres_port}" },
+        { "name": "POSTGRES_USER", "value": "${postgres_user}" },
+        { "name": "POSTGRES_PASSWORD", "value": "${postgres_password}" },
+        { "name": "POSTGRES_DB", "value": "${postgres_db}" },
+        { "name": "DJANGO_ENV", "value": "${environment}" },
+        { "name": "BATCH_JOB_QUEUE_NAME", "value": "${batch_job_queue_name}" },
+        { "name": "BATCH_JOB_DEF_NAME", "value": "${batch_job_def_name}" },
+        { "name": "DJANGO_SECRET_KEY", "value": "${django_secret_key}" },
+        { "name": "DEFAULT_FROM_EMAIL", "value": "${default_from_email}" },
+        { "name": "DATA_FROM_EMAIL", "value": "${data_from_email}" },
+        { "name": "NOTIFICATION_EMAIL_TO", "value": "${notification_email_to}" },
+        { "name": "HUBSPOT_API_KEY", "value": "${hubspot_api_key}" },
+        { "name": "HUBSPOT_SUBSCRIPTION_ID", "value": "${hubspot_subscription_id}" },
+        { "name": "GOOGLE_SERVER_SIDE_API_KEY", "value": "${google_server_side_api_key}" },
+        { "name": "REACT_APP_GOOGLE_CLIENT_SIDE_API_KEY", "value": "${google_client_side_api_key}" },
+        { "name": "REACT_APP_GOOGLE_ANALYTICS_KEY", "value": "${google_analytics_key}" },
+        { "name": "ROLLBAR_SERVER_SIDE_ACCESS_TOKEN", "value": "${rollbar_server_side_access_token}" },
+        { "name": "REACT_APP_ROLLBAR_CLIENT_SIDE_ACCESS_TOKEN", "value": "${rollbar_client_side_access_token}" },
+        { "name": "OAR_CLIENT_KEY", "value": "" },
+        { "name": "EXTERNAL_DOMAIN", "value": "${external_domain}" },
+        { "name": "CACHE_HOST", "value": "${cache_host}" },
+        { "name": "CACHE_PORT", "value": "${cache_port}" },
+        { "name": "AWS_STORAGE_BUCKET_NAME", "value": "${aws_storage_bucket_name}" }
+    ],
+    "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+            "awslogs-group": "${log_group_name}",
+            "awslogs-region": "${aws_region}",
+            "awslogs-stream-prefix": "management"
+        }
+    }
+  }
+]

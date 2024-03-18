@@ -1,12 +1,19 @@
 import React, { Component } from 'react';
 import { Switch, Route } from 'react-router-dom';
+import { connect } from 'react-redux';
+import { userPropType } from '../util/propTypes';
+import { logErrorToRollbar } from './../util/util';
 
-import { facilitiesRoute, mainRoute } from '../util/constants';
+import {
+    facilitiesRoute,
+    mainRoute,
+    USER_DEFAULT_STATE,
+} from '../util/constants';
 
 import FilterSidebar from './FilterSidebar';
 import HomepageSidebar from './HomepageSidebar';
 
-export default class SidebarWithErrorBoundary extends Component {
+class SidebarWithErrorBoundary extends Component {
     state = { hasError: false };
 
     static getDerivedStateFromError() {
@@ -14,9 +21,8 @@ export default class SidebarWithErrorBoundary extends Component {
     }
 
     componentDidCatch(error) {
-        if (window.Rollbar) {
-            window.Rollbar.error(error);
-        }
+        const { user } = this.props;
+        logErrorToRollbar(window, error, user);
     }
 
     render() {
@@ -38,3 +44,21 @@ export default class SidebarWithErrorBoundary extends Component {
         );
     }
 }
+
+SidebarWithErrorBoundary.propTypes = {
+    user: userPropType,
+};
+
+SidebarWithErrorBoundary.defaultProps = {
+    user: USER_DEFAULT_STATE,
+};
+
+function mapStateToProps({
+    auth: {
+        user: { user },
+    },
+}) {
+    return { user };
+}
+
+export default connect(mapStateToProps)(SidebarWithErrorBoundary);

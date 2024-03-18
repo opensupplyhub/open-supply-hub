@@ -1,3 +1,5 @@
+import csv
+
 from unittest.mock import patch
 
 from api.models import FacilityList, Source
@@ -8,6 +10,42 @@ from django.test import override_settings
 
 
 class FacilityListViewTest(BaseFacilityListTest):
+
+    def generate_test_file(self):
+        try:
+            myfile = open('test.csv', 'w')
+            wr = csv.writer(myfile)
+            wr.writerow(('name', 'address', 'country'))
+            wr.writerow(('Test LTD', 'str Test 17 Test', 'Test'))
+            wr.writerow(('Test LTD', 'str Test 78 Test', 'Test'))
+        finally:
+            myfile.close()
+
+        return myfile
+
+    def test_description_field_list_upload(self):
+        self.client.login(
+            email=self.superuser_email, password=self.superuser_password
+        )
+
+        myfile = self.generate_test_file()
+        file_path = myfile.name
+        f = open(file_path, "r")
+
+        response_one = self.client.post("/api/facility-lists/",
+                                        {'file': f,
+                                         'name': 'Test',
+                                         'description': 'Test'})
+        self.assertEqual(200, response_one.status_code)
+
+        response_two = self.client.post("/api/facility-lists/",
+                                        {'file': f,
+                                         'name': 'Test',
+                                         'description': 'Test | Test'})
+        self.assertEqual(response_two.json()[0],
+                         'Description cannot contain the "|" character.')
+        self.assertEqual(400, response_two.status_code)
+
     def test_superuser_can_list_own_lists(self):
         self.client.login(
             email=self.superuser_email, password=self.superuser_password

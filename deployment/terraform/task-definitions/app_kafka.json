@@ -1,0 +1,19 @@
+[
+  {
+    "name": "kafka-topics",
+    "image": "${image}",
+    "entryPoint": ["./kafka.sh"],
+    "environment": [
+      { "name": "BOOTSTRAP_SERVERS", "value": "${bootstrap_servers}" },
+      { "name": "TOPIC_DEDUPE_BASIC_NAME", "value": "${topic_dedup_basic_name}" }
+    ],
+    "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+            "awslogs-group": "${log_group_name}",
+            "awslogs-region": "${aws_region}",
+            "awslogs-stream-prefix": "management"
+        }
+    }
+  }
+]

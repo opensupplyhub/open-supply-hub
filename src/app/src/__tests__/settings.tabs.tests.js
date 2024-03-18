@@ -1,6 +1,6 @@
 /* eslint-env jest */
 const {getTabs} = require('../components/Settings/utils');
-const { PROFILE_TAB, EMBED_TAB, API_TAB, NOTIFICATIONS_TAB } = require('../components/Settings/constants');
+const { PROFILE_TAB, EMBED_TAB, API_TAB } = require('../components/Settings/constants');
 const { EMBEDDED_MAP_FLAG } = require('../util/constants');
 
 it('get tabs when anon user', () => {
@@ -40,7 +40,7 @@ it('get tabs when user has groups', () => {
 
     const tabs = getTabs({fetchingFlags, activeFeatureFlags, user});
 
-    expect(tabs).toStrictEqual([PROFILE_TAB, EMBED_TAB, API_TAB, NOTIFICATIONS_TAB]);
+    expect(tabs).toStrictEqual([PROFILE_TAB, EMBED_TAB, API_TAB]);
 });
 
 it('get tabs when feature flags exist and user has groups', () => {

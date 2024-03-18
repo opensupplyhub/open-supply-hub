@@ -8,7 +8,6 @@ import {
     PROFILE_TAB,
     EMBED_TAB,
     API_TAB,
-    NOTIFICATIONS_TAB,
 } from '../../components/Settings/constants';
 
 test('SettingsTabs component', () => {
@@ -16,7 +15,7 @@ test('SettingsTabs component', () => {
         // Check index of clicked tab
         expect(tab).toBe(2);
     };
-    const tabs = [PROFILE_TAB, EMBED_TAB, API_TAB, NOTIFICATIONS_TAB];
+    const tabs = [PROFILE_TAB, EMBED_TAB, API_TAB];
 
     render (
             <Router>
@@ -31,7 +30,7 @@ test('SettingsTabs component', () => {
     // Check component presence on the page
     const settingsTabsElem = screen.getByTestId('settings-tabs');
     expect(settingsTabsElem).toBeInTheDocument();
-    
+
     // Click on 'Token' tab
     const itemClickable = screen.getByText(API_TAB);
     UserEvent.click(itemClickable);

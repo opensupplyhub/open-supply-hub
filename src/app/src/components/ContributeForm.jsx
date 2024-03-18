@@ -107,6 +107,7 @@ class ContributeForm extends Component {
             updateListToReplace,
             fetchingFacilityLists,
             facilityLists,
+            fetchingFeatureFlags,
         } = this.props;
 
         const errorMessages =
@@ -196,7 +197,7 @@ class ContributeForm extends Component {
                 {replacesSection}
                 <div className="form__field">
                     {errorMessages}
-                    {fetching ? (
+                    {fetching || fetchingFeatureFlags ? (
                         <CircularProgress size={30} />
                     ) : (
                         <Button
@@ -235,6 +236,7 @@ ContributeForm.propTypes = {
     fetchingFacilityLists: bool.isRequired,
     fetchLists: func.isRequired,
     resetForm: func.isRequired,
+    fetchingFeatureFlags: bool.isRequired,
 };
 
 function mapStateToProps({
@@ -244,6 +246,7 @@ function mapStateToProps({
         error,
     },
     facilityLists: { facilityLists, fetching: fetchingFacilityLists },
+    featureFlags: { fetching: fetchingFeatureFlags },
 }) {
     return {
         name,
@@ -254,6 +257,7 @@ function mapStateToProps({
         error,
         facilityLists,
         fetchingFacilityLists,
+        fetchingFeatureFlags,
     };
 }
 
