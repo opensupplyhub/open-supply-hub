@@ -182,8 +182,8 @@ facilities_list_parameters = [
             'The sort_by parameter submits type of sorting order for '
             'facilities. Parameter value must be equal to name. Default '
             'sorting will be primary by public '
-            'desc contributors count and secondary by name asc, name desc, '
-            'asc contributors count.'
+            'contributors count descending and secondary by name '
+            'ascending/descending and contributors count ascending. '
             )
     )
 ]

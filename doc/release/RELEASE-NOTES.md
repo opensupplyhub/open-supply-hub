@@ -17,6 +17,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe scheme changes here.*
 
 ### Code/API changes
+* [OSDEV-606](https://opensupplyhub.atlassian.net/browse/OSDEV-606) Contributor Sort: Allow for ascending sort of contributors on the Map page. The sort_by parameter submits type of sorting order for facilities. Default sorting will be primary by public contributors count descending and secondary by name ascending/descending and contributors count ascending.
 * [OSDEV-832](https://opensupplyhub.atlassian.net/browse/OSDEV-832) API. Provide admins with a way to retrieve a user's call count in real time. Admin can see the report `API requests by user` with the number of successful and unsuccessful requests a user has made up to the current date.
 * [OSDEV-831](https://opensupplyhub.atlassian.net/browse/OSDEV-831) - API. Handle Geocode errors w/ system error code when upload facility using endpoint.
 
@@ -30,7 +31,7 @@ Move `countries` to a separate module so that it becomes possible to use both `d
 * [OSDEV-877](https://opensupplyhub.atlassian.net/browse/OSDEV-877) Make migration run as part of "Deploy to AWS" workflow
 * [OSDEV-851](https://opensupplyhub.atlassian.net/browse/OSDEV-851) Place 'terraform.tfvar' files to repository and move sensitive info to private repository opensupplyhub/ci-deployment
 * [OSDEV-894](https://opensupplyhub.atlassian.net/browse/OSDEV-894) Implement Contricleaner library into create facility API endpoint (`facilities_view_set.py`)
-* [OSDEV-536](https://opensupplyhub.atlassian.net/browse/OSDEV-536) In the Contricleaner library, implement parsing of fields `sector_product_type`, `sector`, and `product_type` based on commas and vertical bars. 
+* [OSDEV-536](https://opensupplyhub.atlassian.net/browse/OSDEV-536) In the Contricleaner library, implement parsing of fields `sector_product_type`, `sector`, and `product_type` based on commas and vertical bars.
 
 ### Bugfix
 * [OSDEV-549](https://opensupplyhub.atlassian.net/browse/OSDEV-549) Facility Search. Search button overlaps dropdown items. Dropdown items in search were made not to overlapping with button and containers in `Potential matches table` and `Find facility` search. The `isSideBarSearch` flag has been added to all search components to render properly regarding the place where the select is rendering.
