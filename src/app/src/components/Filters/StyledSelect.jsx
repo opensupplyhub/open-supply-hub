@@ -56,6 +56,7 @@ function StyledSelect({
     classes,
     renderIcon,
     windowWidth,
+    isSideBarSearch,
     ...rest
 }) {
     const selectFilterStyles = makeSelectFilterStyles(color, windowWidth);
@@ -68,42 +69,78 @@ function StyledSelect({
             >
                 {label} {renderIcon()}
             </InputLabel>
-            {creatable ? (
-                <CreatableInputOnly
-                    isMulti
-                    id={name}
-                    name={name}
-                    className={`basic-multi-select ${classes.selectStyle}`}
-                    classNamePrefix="select"
-                    styles={selectFilterStyles}
-                    placeholder="Select"
-                    {...rest}
-                />
-            ) : (
-                <ReactSelect
-                    isMulti
-                    id={name}
-                    components={{
-                        DropdownIndicator: () => (
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    marginRight: '0.5em',
-                                }}
-                            >
-                                <ArrowDropDownIcon />
-                            </div>
-                        ),
-                        IndicatorSeparator: null,
-                    }}
-                    name={name}
-                    className={`basic-multi-select notranslate ${classes.selectStyle}`}
-                    classNamePrefix="select"
-                    styles={selectFilterStyles}
-                    placeholder="Select"
-                    {...rest}
-                />
-            )}
+            {(() => {
+                if (creatable)
+                    return (
+                        <CreatableInputOnly
+                            isMulti
+                            id={name}
+                            name={name}
+                            className={`basic-multi-select ${classes.selectStyle}`}
+                            classNamePrefix="select"
+                            styles={selectFilterStyles}
+                            placeholder="Select"
+                            {...rest}
+                        />
+                    );
+                if (isSideBarSearch)
+                    return (
+                        <ReactSelect
+                            isMulti
+                            id={name}
+                            components={{
+                                DropdownIndicator: () => (
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            marginRight: '0.5em',
+                                        }}
+                                    >
+                                        <ArrowDropDownIcon />
+                                    </div>
+                                ),
+                                IndicatorSeparator: null,
+                            }}
+                            name={name}
+                            className={`basic-multi-select notranslate ${classes.selectStyle}`}
+                            classNamePrefix="select"
+                            styles={selectFilterStyles}
+                            placeholder="Select"
+                            {...rest}
+                        />
+                    );
+                return (
+                    <ReactSelect
+                        isMulti
+                        id={name}
+                        components={{
+                            DropdownIndicator: () => (
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        marginRight: '0.5em',
+                                    }}
+                                >
+                                    <ArrowDropDownIcon />
+                                </div>
+                            ),
+                            IndicatorSeparator: null,
+                        }}
+                        name={name}
+                        className={`basic-multi-select notranslate ${classes.selectStyle}`}
+                        classNamePrefix="select"
+                        styles={selectFilterStyles}
+                        placeholder="Select"
+                        menuPosition="fixed"
+                        menuPortalTarget={document.body}
+                        closeMenuOnScroll={e =>
+                            e.target.classList === undefined ||
+                            !e.target.classList.contains('css-4ljt47-MenuList')
+                        }
+                        {...rest}
+                    />
+                );
+            })()}
         </>
     );
 }

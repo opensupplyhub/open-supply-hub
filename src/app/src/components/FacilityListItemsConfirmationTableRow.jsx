@@ -86,6 +86,7 @@ function FacilityListItemsConfirmationTableRow({
         { value: MERGE_ACTION, label: 'Action: Merge' },
         { value: REJECT_ACTION, label: 'Action: Reject' },
     ];
+    const isSideBarSearch = false;
 
     const [matches, setMatches] = useState([]);
 
@@ -223,6 +224,10 @@ function FacilityListItemsConfirmationTableRow({
                                 options={actionOptions}
                                 styles={selectStyles}
                                 isSearchable={false}
+                                menuPosition="fixed"
+                                menuPortalTarget={document.body}
+                                menuShouldBlockScroll={!isSideBarSearch}
+                                menuShouldScrollIntoView={!isSideBarSearch}
                             />
                             <ConfirmActionButton
                                 listItem={item}
