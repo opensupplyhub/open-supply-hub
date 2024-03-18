@@ -125,19 +125,19 @@ class FacilityListViewSet(ModelViewSet):
     def __get_serializer(
             file: Union[InMemoryUploadedFile, TemporaryUploadedFile]
             ) -> ContriCleanerSerializer:
-        sector_split_pattern = r', |,|\|'
-        ext = file.name[-4:]
-        if ext == 'xlsx':
+        split_pattern = r', |,|\|'
+        ext = os.path.splitext(file.name)[1].lower()
+        if ext == '.xlsx':
             serializer = ContriCleanerSerializer(
                 SourceParserXLSX(file),
                 SectorCache(),
-                sector_split_pattern
+                split_pattern
             )
         elif ext == '.csv':
             serializer = ContriCleanerSerializer(
                 SourceParserCSV(file),
                 SectorCache(),
-                sector_split_pattern
+                split_pattern
             )
         else:
             raise ValidationError(
