@@ -11,8 +11,9 @@ for id in $ids; do
     echo "Deregistering $1 / $id ..."
     aws servicediscovery deregister-instance $serviceId --instance-id "$id"
     found=1
+    sleep 5
   fi
 done
 
 # Yes, I'm being lazy here...
-[ -n "$found" ] && sleep 5 || true
+[ -n "$found" ] && sleep 120 || true
