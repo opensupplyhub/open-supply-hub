@@ -14,7 +14,7 @@ class RowCompositeValidatorTest(TestCase):
         )
 
     def test_get_validated_row(self):
-        facility_source = {
+        facility_source = [{
             "country": "United States",
             "name": "Pants Hut",
             "address": "123 Main St, Anywhereville, PA",
@@ -22,10 +22,13 @@ class RowCompositeValidatorTest(TestCase):
             "product_type": "product one",
             "extra_1": "Extra data",
             "facility_type": "Blending|Knitting"
-        }
-        validated_row = self.serializer.get_validated_row(facility_source)
+        }]
+
+        validated_rows = [self.serializer
+                          .get_validated_row(row) for row in facility_source]
+
         expected_row = RowDTO(
-            raw_json=facility_source,
+            raw_json=facility_source[0],
             name='Pants Hut',
             clean_name='pants hut',
             address='123 Main St, Anywhereville, PA',
@@ -48,7 +51,7 @@ class RowCompositeValidatorTest(TestCase):
             errors=[]
         )
 
-        self.assertRowEqual(validated_row, expected_row)
+        self.assertRowEqual(validated_rows[0], expected_row)
 
     def assertRowEqual(self, validated_row, expected):
         self.assertEqual(validated_row.errors, expected.errors)
