@@ -28,7 +28,7 @@ variable "environment" {
 
 variable "database_anonymizer_image_tag" {
     type = string
-    default = "v0.0.1"
+    default = "latest"
 }
 
 variable "aws_region" {
@@ -42,4 +42,8 @@ variable "subnet_ids" {
 
 variable "security_group_ids" {
     type = list(string)
+}
+
+variable "schedule_expression" {
+    type = string
 }

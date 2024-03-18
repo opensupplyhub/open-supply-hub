@@ -4,3 +4,4 @@ COPY . .
 
 RUN pip install -r requirements.txt
 
+CMD ["python",  "/database_anonymizer.py"]

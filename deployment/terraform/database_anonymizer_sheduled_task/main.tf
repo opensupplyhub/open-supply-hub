@@ -16,17 +16,20 @@ data "aws_iam_policy_document" "database_anonymizer_assume_role" {
       identifiers = ["ecs-tasks.amazonaws.com"]
     }
   }
+
 }
 
 data "aws_iam_policy_document" "database_anonymizer_worker" {
   statement {
     actions = [
       "rds:*",
-      "logs:CreateLogStream",
+      "ecr:GetAuthorizationToken",
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:BatchGetImage",
       "logs:CreateLogStream",
       "logs:DescribeLogGroups",
       "logs:DescribeLogStreams",
-      "logs:PutLogEvents",
       "logs:PutLogEvents"
     ]
     resources = ["*"]
@@ -34,12 +37,12 @@ data "aws_iam_policy_document" "database_anonymizer_worker" {
 }
 
 resource "aws_iam_role" "database_anonymizer" {
-  name_prefix        = join("-", [local.short, "DatabaseAnonymizer"])
+  name       = join("-", [local.short, "DatabaseAnonymizer"])
   assume_role_policy = data.aws_iam_policy_document.database_anonymizer_assume_role.json
 }
 
 resource "aws_iam_policy" "database_anonymizer" {
-  name_prefix = join("-", [local.short, "DatabaseAnonymizer"])
+  name = join("-", [local.short, "DatabaseAnonymizer"])
   path        = "/"
   policy      = data.aws_iam_policy_document.database_anonymizer_worker.json
 }
@@ -63,7 +66,8 @@ module "database_anonymizer_task_definition" {
   name_prefix            = "database-anonymizer"
   container_image        = local.database_anonymizer_image
   container_name         = "database-anonymizer"
-  #ephemeral_storage_size = 25
+  execution_role_arn     = aws_iam_role.database_anonymizer.arn
+  task_role_arn          = aws_iam_role.database_anonymizer.arn
 
   environment = [
       {
@@ -107,6 +111,10 @@ module "database_anonymizer_task_definition" {
       "awslogs-stream-prefix": "database-anonymizer"
     }
   }
+
+  depends_on = [
+    aws_iam_role.database_anonymizer
+  ]
 }
 
 # AWS ECS Fargate Schedule Task Terraform Module
@@ -115,7 +123,7 @@ module "database_anonymizer_task" {
   source                                      = "git::git@github.com:cn-terraform/terraform-aws-ecs-fargate-scheduled-task.git?ref=1.0.25"
   name_prefix                                 = "anonymize_database-task"
   event_rule_name                             = "anonymize_database-rule"
-  event_rule_schedule_expression              = "cron(50 15 * * ? *)"
+  event_rule_schedule_expression              = var.schedule_expression
   ecs_cluster_arn                             = module.database_anonymizer_cluster.aws_ecs_cluster_cluster_arn
   event_target_ecs_target_subnets             = var.subnet_ids
   event_target_ecs_target_security_groups     = var.security_group_ids

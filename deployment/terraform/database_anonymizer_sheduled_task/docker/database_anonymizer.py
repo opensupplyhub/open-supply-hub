@@ -67,10 +67,12 @@ db = pg8000.native.Connection(**connection_information)
 # cur.execute(open("anonymize_script.sql", "r").read())
 # cur.commit()
 db.run(open("anonymize_script.sql", "r").read())
-anonymized_snapshot_identifier = snapshot_identifier + '-anonymized'
 print('Database anonymized successfully!')
 
-print('Delete temporary database')
+anonymized_snapshot_identifier = snapshot_identifier.replace('rds:', '') + '-anonymized'
+
+
+print('Delete temporary database and create final snapshot: ' + anonymized_snapshot_identifier)
 source.delete_db_instance(
     DBInstanceIdentifier=temporary_db_identifier,
     SkipFinalSnapshot=False,
