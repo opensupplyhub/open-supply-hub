@@ -29,5 +29,5 @@ class FacilityQueryParamsSerializer(Serializer):
     boundary = CharField(required=False)
     detail = BooleanField(default=False, required=False)
     number_of_public_contributors = BooleanField(default=False, required=False)
-    sort_by = CharField(required=True)
+    sort_by = CharField(required=False)
     embed = IntegerField(default=0, required=False)

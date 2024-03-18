@@ -1154,10 +1154,8 @@ export const optionsForSortingResults = [
                     alignItems: 'center',
                 }}
             >
-                <ArrowDownwardIcon
-                    style={{ fontSize: 20, paddingRight: '3px' }}
-                />
-                <span># Contributors</span>
+                <span style={{ paddingRight: '3px' }}># Contributors</span>
+                <ArrowDownwardIcon style={{ fontSize: 20 }} />
             </div>
         ),
     },

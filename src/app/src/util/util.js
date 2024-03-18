@@ -287,7 +287,7 @@ export const createQueryStringFromSearchFilters = (
         native_language_name: nativeLanguageName,
         combine_contributors: combineContributors,
         boundary: isEmpty(boundary) ? '' : JSON.stringify(boundary),
-        sort_by: sortAlgorithm.value,
+        sort_by: isEmpty(sortAlgorithm) ? '' : sortAlgorithm.value,
         embed: !withEmbed ? '' : '1',
         detail: detail ? 'true' : undefined,
     });
@@ -321,6 +321,9 @@ export const createSelectOptionsFromParams = params => {
         Object.freeze(paramsInArray.map(mapParamToReactSelectOption)),
     );
 };
+
+export const getAlgorithm = sortBy =>
+    optionsForSortingResults.filter(el => el.value === sortBy)[0];
 
 export const createFiltersFromQueryString = qs => {
     const qsToParse = startsWith(qs, '?') ? qs.slice(1) : qs;
@@ -358,9 +361,7 @@ export const createFiltersFromQueryString = qs => {
         nativeLanguageName,
         combineContributors,
         boundary: isEmpty(boundary) ? null : JSON.parse(boundary),
-        sortAlgorithm: optionsForSortingResults.filter(
-            el => el.value === sortBy,
-        ),
+        sortAlgorithm: getAlgorithm(sortBy),
     });
 };
 

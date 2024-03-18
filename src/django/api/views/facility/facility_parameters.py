@@ -177,7 +177,7 @@ facilities_list_parameters = [
         'sort_by',
         IN_QUERY,
         type=TYPE_STRING,
-        required=True,
+        required=False,
         description=(
             'The sort_by parameter submits type of sorting order for '
             'facilities. Parameter value must be equal to name. Default '

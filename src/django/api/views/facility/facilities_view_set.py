@@ -224,6 +224,7 @@ class FacilitiesViewSet(ListModelMixin,
             )
         sort_by = params.validated_data['sort_by']
         order_list = []
+
         if (sort_by is None) or (sort_by == 'contributors_desc'):
             order_list = ['-contributors_count', 'name']
         elif (sort_by == 'name_asc'):
