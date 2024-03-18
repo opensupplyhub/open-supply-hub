@@ -126,4 +126,10 @@ resource "aws_service_discovery_service" "app" {
   health_check_custom_config {
     failure_threshold = 5
   }
+
+  # Remove after https://github.com/terraform-providers/terraform-provider-aws/issues/4853 is resolved
+  provisioner "local-exec" {
+    when    = destroy
+    command = "${path.module}/servicediscovery-drain.sh ${self.id}"
+  }
 }
