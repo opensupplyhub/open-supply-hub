@@ -1097,9 +1097,7 @@ export const logErrorToRollbar = (window, error, user) => {
             const rollbarError = new Error(`${rollbarErrMsg} ${error.message}`);
             Object.assign(rollbarError, error);
 
-            window.Rollbar.error(rollbarError, {
-                fingerprint: user.id,
-            });
+            window.Rollbar.error(rollbarError);
         } else {
             window.Rollbar.error(error);
         }
