@@ -135,7 +135,7 @@ function StyledSelect({
                         menuPortalTarget={document.body}
                         closeMenuOnScroll={e =>
                             e.target.classList === undefined ||
-                            !e.target.classList.contains('select__menu-portal')
+                            !e.target.classList.contains('select__menu-list')
                         }
                         {...rest}
                     />

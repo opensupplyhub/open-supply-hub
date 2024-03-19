@@ -594,7 +594,7 @@ class FacilityListItemsTable extends Component {
                             closeMenuOnScroll={e =>
                                 e.target.classList === undefined ||
                                 !e.target.classList.contains(
-                                    'select__menu-portal',
+                                    'select__menu-list',
                                 )
                             }
                         />
