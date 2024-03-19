@@ -1,0 +1,16 @@
+#!/bin/bash
+
+vpc_id="$(aws ec2 describe-vpcs --profile=development --region=eu-west-1 --filters=Name=tag:Name,Values=vpcOpenSupplyHub$1 --query 'Vpcs[].VpcId' --output text)"
+echo "VPC ID: $vpc_id"
+
+
+security_group="$(aws ec2 describe-security-groups --profile=development --region=eu-west-1 --filters "Name=vpc-id,Values=$vpc_id" "Name=tag:Name,Values=sgMSKCluster" --query 'SecurityGroups[].GroupId' --output text)"
+
+echo "Security Group: $security_group"
+
+subnet_id="$(aws ec2 describe-subnets --profile=development --region=eu-west-1 --filters=Name=vpc-id,Values=$vpc_id --query 'Subnets[].SubnetId' --output text | awk '{print $1}')"
+echo "Subnet ID: $subnet_id"
+
+revision="$(aws ecs describe-task-definition --profile=development --region=eu-west-1 --task-definition OpenSupplyHub${1}AppKafka --query 'taskDefinition.revision' --output text)"
+
+aws ecs run-task --profile=development --region=eu-west-1 --cluster ecsOpenSupplyHub${1}Cluster --task-definition OpenSupplyHub${1}AppKafka:${revision} --launch-type="FARGATE"  --network-configuration "awsvpcConfiguration={ assignPublicIp="DISABLED", securityGroups=["$security_group"], subnets=["$subnet_id"]}"

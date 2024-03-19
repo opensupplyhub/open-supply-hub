@@ -1,0 +1,62 @@
+VPC ID: vpc-095a9ef7a8f0a460e
+Security Group: sg-0f827070c6eb20793
+Subnet ID: subnet-0352b683a71bb2826
+{
+    "tasks": [
+        {
+            "attachments": [
+                {
+                    "id": "ec4d91b9-14a1-40e0-816f-9bf6f74ccef1",
+                    "type": "ElasticNetworkInterface",
+                    "status": "PRECREATED",
+                    "details": [
+                        {
+                            "name": "subnetId",
+                            "value": "subnet-0352b683a71bb2826"
+                        }
+                    ]
+                }
+            ],
+            "attributes": [
+                {
+                    "name": "ecs.cpu-architecture",
+                    "value": "x86_64"
+                }
+            ],
+            "availabilityZone": "eu-west-1a",
+            "clusterArn": "arn:aws:ecs:eu-west-1:343975343274:cluster/ecsOpenSupplyHubPreprodCluster",
+            "containers": [
+                {
+                    "containerArn": "arn:aws:ecs:eu-west-1:343975343274:container/ecsOpenSupplyHubPreprodCluster/fd0bc6dfda464690a1765943a91e86bb/31d0e598-9906-4caf-b5f4-4883383523bf",
+                    "taskArn": "arn:aws:ecs:eu-west-1:343975343274:task/ecsOpenSupplyHubPreprodCluster/fd0bc6dfda464690a1765943a91e86bb",
+                    "name": "kafka-topics",
+                    "image": "343975343274.dkr.ecr.eu-west-1.amazonaws.com/opensupplyhub-kafka-preprod:latest",
+                    "lastStatus": "PENDING",
+                    "networkInterfaces": [],
+                    "cpu": "0"
+                }
+            ],
+            "cpu": "2048",
+            "createdAt": "2024-03-19T12:52:15.327000+01:00",
+            "desiredStatus": "RUNNING",
+            "group": "family:OpenSupplyHubPreprodAppKafka",
+            "lastStatus": "PROVISIONING",
+            "launchType": "FARGATE",
+            "memory": "8192",
+            "overrides": {
+                "containerOverrides": [
+                    {
+                        "name": "kafka-topics"
+                    }
+                ],
+                "inferenceAcceleratorOverrides": []
+            },
+            "platformVersion": "1.4.0",
+            "tags": [],
+            "taskArn": "arn:aws:ecs:eu-west-1:343975343274:task/ecsOpenSupplyHubPreprodCluster/fd0bc6dfda464690a1765943a91e86bb",
+            "taskDefinitionArn": "arn:aws:ecs:eu-west-1:343975343274:task-definition/OpenSupplyHubPreprodAppKafka:11",
+            "version": 1
+        }
+    ],
+    "failures": []
+}

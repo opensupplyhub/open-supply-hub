@@ -1,0 +1,1346 @@
+VPC ID: vpc-095a9ef7a8f0a460e
+{
+    "SecurityGroups": [
+        {
+            "Description": "default VPC security group",
+            "GroupName": "default",
+            "IpPermissions": [
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0d779e52f8c69c731",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                }
+            ],
+            "OwnerId": "343975343274",
+            "GroupId": "sg-0d779e52f8c69c731",
+            "IpPermissionsEgress": [
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "VpcId": "vpc-095a9ef7a8f0a460e"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "terraform-20240318192428258600000017",
+            "IpPermissions": [
+                {
+                    "FromPort": 5432,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 5432,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0e9479696e758af8d",
+                            "UserId": "343975343274"
+                        },
+                        {
+                            "GroupId": "sg-0b0387acd6fe4fa09",
+                            "UserId": "343975343274"
+                        },
+                        {
+                            "GroupId": "sg-093e2c9337856b1be",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                }
+            ],
+            "OwnerId": "343975343274",
+            "GroupId": "sg-0471889fce36a2ba4",
+            "IpPermissionsEgress": [],
+            "Tags": [
+                {
+                    "Key": "Environment",
+                    "Value": "Preprod"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "sgDatabaseServer"
+                },
+                {
+                    "Key": "Project",
+                    "Value": "OpenSupplyHub"
+                }
+            ],
+            "VpcId": "vpc-095a9ef7a8f0a460e"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "terraform-2024031819234954910000000a",
+            "IpPermissions": [
+                {
+                    "FromPort": 22,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 22,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "OwnerId": "343975343274",
+            "GroupId": "sg-093e2c9337856b1be",
+            "IpPermissionsEgress": [
+                {
+                    "FromPort": 80,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [
+                        {
+                            "CidrIpv6": "::/0"
+                        }
+                    ],
+                    "PrefixListIds": [],
+                    "ToPort": 80,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0b0387acd6fe4fa09",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                },
+                {
+                    "FromPort": 5432,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 5432,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0471889fce36a2ba4",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                },
+                {
+                    "FromPort": 8080,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 8080,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0b0387acd6fe4fa09",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                },
+                {
+                    "FromPort": 22,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "10.0.0.0/16"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 22,
+                    "UserIdGroupPairs": []
+                },
+                {
+                    "FromPort": 11211,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 11211,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0906f332af437e5d2",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                },
+                {
+                    "FromPort": 443,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [
+                        {
+                            "CidrIpv6": "::/0"
+                        }
+                    ],
+                    "PrefixListIds": [],
+                    "ToPort": 443,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "Environment",
+                    "Value": "Preprod"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "sgBastion"
+                },
+                {
+                    "Key": "Project",
+                    "Value": "OpenSupplyHub"
+                }
+            ],
+            "VpcId": "vpc-095a9ef7a8f0a460e"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "terraform-20240318192418299900000012",
+            "IpPermissions": [
+                {
+                    "FromPort": 11211,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 11211,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-093e2c9337856b1be",
+                            "UserId": "343975343274"
+                        },
+                        {
+                            "GroupId": "sg-0b0387acd6fe4fa09",
+                            "UserId": "343975343274"
+                        },
+                        {
+                            "GroupId": "sg-0e9479696e758af8d",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                }
+            ],
+            "OwnerId": "343975343274",
+            "GroupId": "sg-0906f332af437e5d2",
+            "IpPermissionsEgress": [],
+            "Tags": [
+                {
+                    "Key": "Project",
+                    "Value": "OpenSupplyHub"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "sgCacheCluster"
+                },
+                {
+                    "Key": "Environment",
+                    "Value": "Preprod"
+                }
+            ],
+            "VpcId": "vpc-095a9ef7a8f0a460e"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "terraform-2024031819240289640000000c",
+            "IpPermissions": [
+                {
+                    "FromPort": 22,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 22,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-093e2c9337856b1be",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                }
+            ],
+            "OwnerId": "343975343274",
+            "GroupId": "sg-0e9479696e758af8d",
+            "IpPermissionsEgress": [
+                {
+                    "FromPort": 5432,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 5432,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0471889fce36a2ba4",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                },
+                {
+                    "FromPort": 11211,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 11211,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0906f332af437e5d2",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                },
+                {
+                    "FromPort": 443,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 443,
+                    "UserIdGroupPairs": []
+                },
+                {
+                    "FromPort": 9092,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 9092,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0f827070c6eb20793",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "Project",
+                    "Value": "OpenSupplyHub"
+                },
+                {
+                    "Key": "Environment",
+                    "Value": "Preprod"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "sgBatchContainerInstance"
+                }
+            ],
+            "VpcId": "vpc-095a9ef7a8f0a460e"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "terraform-20240318192415771300000011",
+            "IpPermissions": [
+                {
+                    "FromPort": 0,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 65535,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "OwnerId": "343975343274",
+            "GroupId": "sg-0f827070c6eb20793",
+            "IpPermissionsEgress": [
+                {
+                    "FromPort": 0,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 65535,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "Environment",
+                    "Value": "Preprod"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "sgMSKCluster"
+                },
+                {
+                    "Key": "Project",
+                    "Value": "OpenSupplyHub"
+                }
+            ],
+            "VpcId": "vpc-095a9ef7a8f0a460e"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "terraform-20240318192413535800000010",
+            "IpPermissions": [
+                {
+                    "FromPort": 80,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 80,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-093e2c9337856b1be",
+                            "UserId": "343975343274"
+                        },
+                        {
+                            "GroupId": "sg-0f0d609736cf819dc",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                }
+            ],
+            "OwnerId": "343975343274",
+            "GroupId": "sg-0f522fad0678562d9",
+            "IpPermissionsEgress": [
+                {
+                    "FromPort": 80,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "10.0.0.0/16"
+                        }
+                    ],
+                    "Ipv6Ranges": [
+                        {
+                            "CidrIpv6": "::/0"
+                        }
+                    ],
+                    "PrefixListIds": [],
+                    "ToPort": 80,
+                    "UserIdGroupPairs": []
+                },
+                {
+                    "FromPort": 0,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "10.0.0.0/16"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 65535,
+                    "UserIdGroupPairs": []
+                },
+                {
+                    "FromPort": 443,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [
+                        {
+                            "CidrIpv6": "::/0"
+                        }
+                    ],
+                    "PrefixListIds": [],
+                    "ToPort": 443,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "Environment",
+                    "Value": "Preprod"
+                },
+                {
+                    "Key": "Project",
+                    "Value": "OpenSupplyHub"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "sgAppEcsService"
+                }
+            ],
+            "VpcId": "vpc-095a9ef7a8f0a460e"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "terraform-2024031819240542590000000d",
+            "IpPermissions": [
+                {
+                    "FromPort": 8080,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 8080,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-093e2c9337856b1be",
+                            "UserId": "343975343274"
+                        },
+                        {
+                            "GroupId": "sg-0f522fad0678562d9",
+                            "UserId": "343975343274"
+                        },
+                        {
+                            "GroupId": "sg-0f0d609736cf819dc",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                }
+            ],
+            "OwnerId": "343975343274",
+            "GroupId": "sg-0b0387acd6fe4fa09",
+            "IpPermissionsEgress": [
+                {
+                    "FromPort": 0,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "10.0.0.0/16"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 65535,
+                    "UserIdGroupPairs": []
+                },
+                {
+                    "FromPort": 5432,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 5432,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0471889fce36a2ba4",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                },
+                {
+                    "FromPort": 11211,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 11211,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0906f332af437e5d2",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                },
+                {
+                    "FromPort": 443,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [
+                        {
+                            "CidrIpv6": "::/0"
+                        }
+                    ],
+                    "PrefixListIds": [],
+                    "ToPort": 443,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "Project",
+                    "Value": "OpenSupplyHub"
+                },
+                {
+                    "Key": "Environment",
+                    "Value": "Preprod"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "sgAppEcsService"
+                }
+            ],
+            "VpcId": "vpc-095a9ef7a8f0a460e"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "terraform-20240318192418662800000013",
+            "IpPermissions": [
+                {
+                    "FromPort": 443,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [
+                        {
+                            "CidrIpv6": "::/0"
+                        }
+                    ],
+                    "PrefixListIds": [],
+                    "ToPort": 443,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "OwnerId": "343975343274",
+            "GroupId": "sg-0f0d609736cf819dc",
+            "IpPermissionsEgress": [
+                {
+                    "FromPort": 80,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 80,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0f522fad0678562d9",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                },
+                {
+                    "FromPort": 8080,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 8080,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0b0387acd6fe4fa09",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "Environment",
+                    "Value": "Preprod"
+                },
+                {
+                    "Key": "Project",
+                    "Value": "OpenSupplyHub"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "sgAppLoadBalancer"
+                }
+            ],
+            "VpcId": "vpc-095a9ef7a8f0a460e"
+        }
+    ]
+}
+VPC ID: vpc-095a9ef7a8f0a460e
+{
+    "SecurityGroups": [
+        {
+            "Description": "default VPC security group",
+            "GroupName": "default",
+            "IpPermissions": [
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0d779e52f8c69c731",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                }
+            ],
+            "OwnerId": "343975343274",
+            "GroupId": "sg-0d779e52f8c69c731",
+            "IpPermissionsEgress": [
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "VpcId": "vpc-095a9ef7a8f0a460e"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "terraform-20240318192428258600000017",
+            "IpPermissions": [
+                {
+                    "FromPort": 5432,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 5432,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0e9479696e758af8d",
+                            "UserId": "343975343274"
+                        },
+                        {
+                            "GroupId": "sg-0b0387acd6fe4fa09",
+                            "UserId": "343975343274"
+                        },
+                        {
+                            "GroupId": "sg-093e2c9337856b1be",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                }
+            ],
+            "OwnerId": "343975343274",
+            "GroupId": "sg-0471889fce36a2ba4",
+            "IpPermissionsEgress": [],
+            "Tags": [
+                {
+                    "Key": "Environment",
+                    "Value": "Preprod"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "sgDatabaseServer"
+                },
+                {
+                    "Key": "Project",
+                    "Value": "OpenSupplyHub"
+                }
+            ],
+            "VpcId": "vpc-095a9ef7a8f0a460e"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "terraform-2024031819234954910000000a",
+            "IpPermissions": [
+                {
+                    "FromPort": 22,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 22,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "OwnerId": "343975343274",
+            "GroupId": "sg-093e2c9337856b1be",
+            "IpPermissionsEgress": [
+                {
+                    "FromPort": 80,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [
+                        {
+                            "CidrIpv6": "::/0"
+                        }
+                    ],
+                    "PrefixListIds": [],
+                    "ToPort": 80,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0b0387acd6fe4fa09",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                },
+                {
+                    "FromPort": 5432,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 5432,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0471889fce36a2ba4",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                },
+                {
+                    "FromPort": 8080,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 8080,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0b0387acd6fe4fa09",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                },
+                {
+                    "FromPort": 22,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "10.0.0.0/16"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 22,
+                    "UserIdGroupPairs": []
+                },
+                {
+                    "FromPort": 11211,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 11211,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0906f332af437e5d2",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                },
+                {
+                    "FromPort": 443,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [
+                        {
+                            "CidrIpv6": "::/0"
+                        }
+                    ],
+                    "PrefixListIds": [],
+                    "ToPort": 443,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "Environment",
+                    "Value": "Preprod"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "sgBastion"
+                },
+                {
+                    "Key": "Project",
+                    "Value": "OpenSupplyHub"
+                }
+            ],
+            "VpcId": "vpc-095a9ef7a8f0a460e"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "terraform-20240318192418299900000012",
+            "IpPermissions": [
+                {
+                    "FromPort": 11211,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 11211,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-093e2c9337856b1be",
+                            "UserId": "343975343274"
+                        },
+                        {
+                            "GroupId": "sg-0b0387acd6fe4fa09",
+                            "UserId": "343975343274"
+                        },
+                        {
+                            "GroupId": "sg-0e9479696e758af8d",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                }
+            ],
+            "OwnerId": "343975343274",
+            "GroupId": "sg-0906f332af437e5d2",
+            "IpPermissionsEgress": [],
+            "Tags": [
+                {
+                    "Key": "Project",
+                    "Value": "OpenSupplyHub"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "sgCacheCluster"
+                },
+                {
+                    "Key": "Environment",
+                    "Value": "Preprod"
+                }
+            ],
+            "VpcId": "vpc-095a9ef7a8f0a460e"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "terraform-2024031819240289640000000c",
+            "IpPermissions": [
+                {
+                    "FromPort": 22,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 22,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-093e2c9337856b1be",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                }
+            ],
+            "OwnerId": "343975343274",
+            "GroupId": "sg-0e9479696e758af8d",
+            "IpPermissionsEgress": [
+                {
+                    "FromPort": 5432,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 5432,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0471889fce36a2ba4",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                },
+                {
+                    "FromPort": 11211,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 11211,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0906f332af437e5d2",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                },
+                {
+                    "FromPort": 443,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 443,
+                    "UserIdGroupPairs": []
+                },
+                {
+                    "FromPort": 9092,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 9092,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0f827070c6eb20793",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "Project",
+                    "Value": "OpenSupplyHub"
+                },
+                {
+                    "Key": "Environment",
+                    "Value": "Preprod"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "sgBatchContainerInstance"
+                }
+            ],
+            "VpcId": "vpc-095a9ef7a8f0a460e"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "terraform-20240318192415771300000011",
+            "IpPermissions": [
+                {
+                    "FromPort": 0,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 65535,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "OwnerId": "343975343274",
+            "GroupId": "sg-0f827070c6eb20793",
+            "IpPermissionsEgress": [
+                {
+                    "FromPort": 0,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 65535,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "Environment",
+                    "Value": "Preprod"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "sgMSKCluster"
+                },
+                {
+                    "Key": "Project",
+                    "Value": "OpenSupplyHub"
+                }
+            ],
+            "VpcId": "vpc-095a9ef7a8f0a460e"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "terraform-20240318192413535800000010",
+            "IpPermissions": [
+                {
+                    "FromPort": 80,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 80,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-093e2c9337856b1be",
+                            "UserId": "343975343274"
+                        },
+                        {
+                            "GroupId": "sg-0f0d609736cf819dc",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                }
+            ],
+            "OwnerId": "343975343274",
+            "GroupId": "sg-0f522fad0678562d9",
+            "IpPermissionsEgress": [
+                {
+                    "FromPort": 80,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "10.0.0.0/16"
+                        }
+                    ],
+                    "Ipv6Ranges": [
+                        {
+                            "CidrIpv6": "::/0"
+                        }
+                    ],
+                    "PrefixListIds": [],
+                    "ToPort": 80,
+                    "UserIdGroupPairs": []
+                },
+                {
+                    "FromPort": 0,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "10.0.0.0/16"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 65535,
+                    "UserIdGroupPairs": []
+                },
+                {
+                    "FromPort": 443,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [
+                        {
+                            "CidrIpv6": "::/0"
+                        }
+                    ],
+                    "PrefixListIds": [],
+                    "ToPort": 443,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "Environment",
+                    "Value": "Preprod"
+                },
+                {
+                    "Key": "Project",
+                    "Value": "OpenSupplyHub"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "sgAppEcsService"
+                }
+            ],
+            "VpcId": "vpc-095a9ef7a8f0a460e"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "terraform-2024031819240542590000000d",
+            "IpPermissions": [
+                {
+                    "FromPort": 8080,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 8080,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-093e2c9337856b1be",
+                            "UserId": "343975343274"
+                        },
+                        {
+                            "GroupId": "sg-0f522fad0678562d9",
+                            "UserId": "343975343274"
+                        },
+                        {
+                            "GroupId": "sg-0f0d609736cf819dc",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                }
+            ],
+            "OwnerId": "343975343274",
+            "GroupId": "sg-0b0387acd6fe4fa09",
+            "IpPermissionsEgress": [
+                {
+                    "FromPort": 0,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "10.0.0.0/16"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 65535,
+                    "UserIdGroupPairs": []
+                },
+                {
+                    "FromPort": 5432,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 5432,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0471889fce36a2ba4",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                },
+                {
+                    "FromPort": 11211,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 11211,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0906f332af437e5d2",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                },
+                {
+                    "FromPort": 443,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [
+                        {
+                            "CidrIpv6": "::/0"
+                        }
+                    ],
+                    "PrefixListIds": [],
+                    "ToPort": 443,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "Project",
+                    "Value": "OpenSupplyHub"
+                },
+                {
+                    "Key": "Environment",
+                    "Value": "Preprod"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "sgAppEcsService"
+                }
+            ],
+            "VpcId": "vpc-095a9ef7a8f0a460e"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "terraform-20240318192418662800000013",
+            "IpPermissions": [
+                {
+                    "FromPort": 443,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [
+                        {
+                            "CidrIpv6": "::/0"
+                        }
+                    ],
+                    "PrefixListIds": [],
+                    "ToPort": 443,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "OwnerId": "343975343274",
+            "GroupId": "sg-0f0d609736cf819dc",
+            "IpPermissionsEgress": [
+                {
+                    "FromPort": 80,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 80,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0f522fad0678562d9",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                },
+                {
+                    "FromPort": 8080,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 8080,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0b0387acd6fe4fa09",
+                            "UserId": "343975343274"
+                        }
+                    ]
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "Environment",
+                    "Value": "Preprod"
+                },
+                {
+                    "Key": "Project",
+                    "Value": "OpenSupplyHub"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "sgAppLoadBalancer"
+                }
+            ],
+            "VpcId": "vpc-095a9ef7a8f0a460e"
+        }
+    ]
+}
