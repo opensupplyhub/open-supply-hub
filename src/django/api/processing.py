@@ -124,8 +124,8 @@ def parse_csv(file, request):
 
     try:
         header = file.readline().decode(encoding='utf-8-sig').rstrip()
-    except UnicodeDecodeError as err:
-        report_error_to_rollbar(request=request, file=file, exception=err)
+    except UnicodeDecodeError:
+        report_error_to_rollbar(request=request, file=file)
         raise ValidationError('Unsupported file encoding. Please '
                               'submit a UTF-8 CSV.')
 
