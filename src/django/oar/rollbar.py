@@ -37,6 +37,9 @@ def report_error_to_rollbar(
             modified_message = (
                 f"{is_api_user_msg}User error{contributor_id_msg}: {exception}"
             )
+            data['fingerprint'] = (
+                str(data['fingerprint']) + '-' + str(modified_message)
+            )
             new_exception = Exception(modified_message)
             rollbar.report_exc_info(
                 (type(new_exception), new_exception, sys.exc_info()[2]),
