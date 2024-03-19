@@ -380,9 +380,7 @@ class FacilityListViewSet(ModelViewSet):
         try:
             rows = serializer.get_validated_rows()
         except ValidationError as err:
-            report_error_to_rollbar(request=request,
-                                    file=uploaded_file,
-                                    exception=err)
+            report_error_to_rollbar(request=request, file=uploaded_file)
             raise ValidationError(str(err.detail[0]))
 
         if not self.__is_required_fields_present(rows):

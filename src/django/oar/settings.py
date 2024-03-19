@@ -438,24 +438,6 @@ ECSMANAGE_ENVIRONMENTS = {
         },
         'AWS_REGION': 'eu-west-1',
     },
-    'preprod': {
-        'TASK_DEFINITION_NAME': 'OpenSupplyHubPreprodAppCLI',
-        'CONTAINER_NAME': 'django',
-        'CLUSTER_NAME': 'ecsOpenSupplyHubPreprodCluster',
-        'LAUNCH_TYPE': 'FARGATE',
-        'PLATFORM_VERSION': '1.4.0',
-        'SECURITY_GROUP_TAGS': {
-            'Name': 'sgAppEcsService',
-            'Environment': 'Preprod',
-            'Project': 'OpenSupplyHub',
-        },
-        'SUBNET_TAGS': {
-            'Name': 'PrivateSubnet',
-            'Environment': 'Preprod',
-            'Project': 'OpenSupplyHub',
-        },
-        'AWS_REGION': 'eu-west-1',
-    },
 }
 
 # Application settings

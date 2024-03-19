@@ -42,8 +42,8 @@ def get_xlsx_sheet(file, request):
 
         return ws
 
-    except EntitiesForbidden as err:
-        report_error_to_rollbar(request=request, file=file, exception=err)
+    except EntitiesForbidden:
+        report_error_to_rollbar(request=request, file=file)
         raise ValidationError('This file may be damaged and '
                               'cannot be processed safely')
 
@@ -114,8 +114,8 @@ def parse_xlsx(file, request):
                 if any(cell.value is not None for cell in row)]
 
         return header, rows
-    except Exception as err:
-        report_error_to_rollbar(request=request, file=file, exception=err)
+    except Exception:
+        report_error_to_rollbar(request=request, file=file)
         raise ValidationError('Error parsing Excel (.xlsx) file')
 
 
@@ -133,10 +133,8 @@ def parse_csv(file, request):
         if idx > 0:
             try:
                 rows.append(line.decode(encoding='utf-8-sig').rstrip())
-            except UnicodeDecodeError as err:
-                report_error_to_rollbar(request=request,
-                                        file=file,
-                                        exception=err)
+            except UnicodeDecodeError:
+                report_error_to_rollbar(request=request, file=file)
                 raise ValidationError('Unsupported file encoding. Please '
                                       'submit a UTF-8 CSV.')
 

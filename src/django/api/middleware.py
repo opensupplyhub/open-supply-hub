@@ -34,12 +34,12 @@ class RequestLogMiddleware:
                         path=request.get_full_path(),
                         response_code=response.status_code,
                     )
-        except Exception as err:
+        except Exception as e:
             try:
                 report_error_to_rollbar(
                     request=request,
                     auth=auth,
-                    exception=err
+                    exception=e
                 )
             except Exception:
                 pass  # We don't want this logging middleware to fail a request
