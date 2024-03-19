@@ -1,5 +1,16 @@
-# pg_dump --clean --no-owner --no-privileges -Fc -h host.docker.internal -U opensupplyhub -p 5433 -f /dumps/osh_prod_large.dump -w --verbose
-## echo "Running anonymize script" > /dumps/dump.dump
+ls -la /keys
+chmod 600 /keys/id_rsa
+
+echo "localhost:5433:opensupplyhub:opensupplyhub:" > ~/.pgpass
+chmod 600 ~/.pgpass
+ssh-keyscan ec2-54-154-210-219.eu-west-1.compute.amazonaws.com >> ~/.ssh/known_hosts
+
+ssh -f -i /keys/id_rsa -L 5433:database.service.osh.internal:5432 -N ec2-user@ec2-54-154-210-219.eu-west-1.compute.amazonaws.com
+
+
+pg_dump --clean --no-owner --no-privileges -Fc -h localhost -U opensupplyhub -p 5433 -f /dumps/osh_prod_large.dump -w --verbose
+
+echo "Running anonymize script"
 
 
 docker-entrypoint.sh -c 'shared_buffers=2048MB' -c 'max_connections=10' &
