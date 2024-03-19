@@ -11,7 +11,7 @@
       "--port",
       "80",
       "--workers",
-      "8",
+      "12",
       "--reload"
     ],
     "environment": [
