@@ -2,7 +2,7 @@ locals {
   app_image            = "${module.ecr_repository_app.repository_url}:${var.image_tag}"
   app_cc_image         = "${module.ecr_repository_app_cc.repository_url}:${var.image_tag}"
   app_dd_image         = "${module.ecr_repository_app_dd.repository_url}:${var.image_tag}"
-  app_kafka_image      = "${module.ecr_repository_kafka.repository_url}:latest"
+  app_kafka_image      = "${module.ecr_repository_kafka.repository_url}:${var.image_tag}"
   batch_job_queue_name = "queue${local.short}Default"
   batch_job_def_name   = "job${local.short}Default"
 
