@@ -3,15 +3,19 @@ from botocore.exceptions import ClientError
 import pg8000.native
 import os
 
-db_instance_identifier = os.environ['SOURCE_DATABASE_IDENTIFIER']
-temporary_db_identifier = os.environ['ANONYMIZER_DATABASE_IDENTIFIER']
-database_name = os.environ['SOURCE_DATABASE_NAME']
-database_user = os.environ['SOURCE_DATABASE_USER']
-database_password = os.environ['SOURCE_DATABASE_PASSWORD']
-destination_aws_account=os.environ['DESTINATION_AWS_ACCOUNT']
-temporary_db_instance_size=os.environ['ANONYMIZER_DATABASE_INSTANCE_TYPE']
-temporary_db_subnet_group_name=os.environ['DATABASE_SUBNET_GROUP_NAME']
-temporary_db_security_group_ids=os.environ['DATABASE_SECURITY_GROUP_IDS']
+try:
+    db_instance_identifier = os.environ['SOURCE_DATABASE_IDENTIFIER']
+    temporary_db_identifier = os.environ['ANONYMIZER_DATABASE_IDENTIFIER']
+    database_name = os.environ['SOURCE_DATABASE_NAME']
+    database_user = os.environ['SOURCE_DATABASE_USER']
+    database_password = os.environ['SOURCE_DATABASE_PASSWORD']
+    destination_aws_account = os.environ['DESTINATION_AWS_ACCOUNT']
+    temporary_db_instance_size = os.environ['ANONYMIZER_DATABASE_INSTANCE_TYPE']
+    temporary_db_subnet_group_name = os.environ['DATABASE_SUBNET_GROUP_NAME']
+    temporary_db_security_group_ids = os.environ['DATABASE_SECURITY_GROUP_IDS']
+except:
+    print("An exception occurred")
+    exit(1)
 
 source_session = boto3.Session()
 source = source_session.client('rds')
@@ -25,7 +29,6 @@ if not snapshots['DBSnapshots']:
 
 latest_snapshot = sorted(snapshots['DBSnapshots'], key=lambda x: x['SnapshotCreateTime'], reverse=True)[0]
 snapshot_identifier = latest_snapshot['DBSnapshotIdentifier']
-
 
 print("Create temporary database from " + snapshot_identifier)
 try:
@@ -72,7 +75,6 @@ print('Database anonymized successfully!')
 
 anonymized_snapshot_identifier = snapshot_identifier.replace('rds:', '') + '-anonymized'
 
-
 print('Delete temporary database and create final snapshot: ' + anonymized_snapshot_identifier)
 source.delete_db_instance(
     DBInstanceIdentifier=temporary_db_identifier,
@@ -83,7 +85,6 @@ source.delete_db_instance(
 waiters = source.get_waiter('db_snapshot_completed')
 waiters.wait(DBSnapshotIdentifier=anonymized_snapshot_identifier)
 print('Database deleted successfully!')
-
 
 print("Share snapshot " + anonymized_snapshot_identifier + " with " + destination_aws_account + " AWS account")
 source.modify_db_snapshot_attribute(
