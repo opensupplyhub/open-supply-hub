@@ -9,6 +9,8 @@ from contricleaner.lib.serializers.row_serializers.row_serializer import (
 
 
 class RowFacilityTypeSerializer(RowSerializer):
+    def __init__(self, split_pattern: str) -> None:
+        self.split_pattern = split_pattern
 
     def validate(self, row: dict, current: dict) -> dict:
         facility_type = row.get('facility_type')
@@ -64,9 +66,8 @@ class RowFacilityTypeSerializer(RowSerializer):
 
         return current
 
-    @staticmethod
-    def create_values(value: Union[str, list, set]) -> dict:
+    def create_values(self, value: Union[str, list, set]) -> dict:
         return {
             'raw_values': value,
-            'processed_values': split_values(value, '|'),
+            'processed_values': split_values(value, self.split_pattern),
         }

@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       deploy-env:
-        description: 'Environment to deploy'     
+        description: 'Environment to deploy'
         required: true
         type: choice
         options:
@@ -23,7 +23,7 @@ on:
         - Production
         default: Development
       deploy-plan-only:
-        description: 'Plan only'     
+        description: 'Plan only'
         required: false
         type: boolean
         default: false
@@ -72,7 +72,7 @@ jobs:
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
 
       - name: Copy planfile to S3 bucket for ${{ vars.ENV_NAME }}
-        run: aws s3 cp "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfplan" "s3://${{ env.SETTINGS_BUCKET }}/terraform/${{ env.SETTINGS_BUCKET }}.tfplan" 
+        run: aws s3 cp "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfplan" "s3://${{ env.SETTINGS_BUCKET }}/terraform/${{ env.SETTINGS_BUCKET }}.tfplan"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -90,7 +90,7 @@ jobs:
         uses: Entepotenz/change-string-case-action-min-dependencies@v1
         with:
           string: ${{ vars.ENV_NAME }}
-    
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
@@ -107,13 +107,15 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           AWS_DEFAULT_REGION: "eu-west-1"
-        
+
       - name: Terraform Apply for ${{ vars.ENV_NAME }}
-        run: ./deployment/infra apply
+        run: |
+          ./deployment/infra apply
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
+          AWS_DEFAULT_REGION: "eu-west-1"
 
 
   build_and_push_docker_image:
@@ -149,9 +151,7 @@ jobs:
       - name: Build static assets
         working-directory: src/app
         run: yarn run build
-        env:
-          REACT_APP_ROUTE: ${{ false }}
-      
+
       - name: Move static
         run: mv src/app/build src/django/static
 
@@ -170,8 +170,20 @@ jobs:
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
-      - name: Print Django Docker image to ECR for ${{ vars.ENV_NAME }}
-        run: echo ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}  
+
+
+      - name: Build and push Kafka Tools Docker image to ECR for ${{ vars.ENV_NAME }}
+        uses: docker/build-push-action@v2
+        with:
+          context: src/kafka-tools/
+          file: src/kafka-tools/Dockerfile
+          push: true
+          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-kafka-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
+          build-args: |
+            GIT_COMMIT=${{ env.GIT_COMMIT }}
+            DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}
+            ENVIRONMENT=${{ steps.get_env_name.outputs.lowercase }}
+
       - name: Build and push Django Docker image to ECR for ${{ vars.ENV_NAME }}
         uses: docker/build-push-action@v2
         with:
@@ -224,6 +236,13 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: "eu-west-1"
+      - name: Update ECS Dedupe Hub Service with new Image for ${{ vars.ENV_NAME }}
+        run: |
+          aws ecs update-service --cluster ${{ vars.CLUSTER }} --service ${{ vars.SERVICE_NAME }}DD --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
 
 
   post_deploy:
@@ -253,13 +272,13 @@ jobs:
           AWS_DEFAULT_REGION: "eu-west-1"
 
 
-      # - name: Create or update kafka topics for ${{ vars.ENV_NAME }}
-      #   run: |
-      #      aws ecs run-task --cluster ${{ vars.CLUSTER }} --task-definition ${{ vars.CREATE_KAFKA_TOPIC_TD }} --launch-type="FARGATE"  --network-configuration "awsvpcConfiguration={ assignPublicIp="DISABLED", securityGroups=["${{ vars.SECURITY_GROUP}}"], subnets=["${{ vars.SUBNET }}"]}"
-      #   env:
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     AWS_DEFAULT_REGION: "eu-west-1"
+      - name: Create or update kafka topics for ${{ vars.ENV_NAME }}
+        run: |
+          ./deployment/run_kafka_task ${{ vars.ENV_NAME }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
 
       - name: Run migrations for ${{ vars.ENV_NAME }}
         run: |
@@ -271,4 +290,3 @@ jobs:
           AWS_DEFAULT_REGION: "eu-west-1"
           AWS_PROFILE: "default"
 
-        

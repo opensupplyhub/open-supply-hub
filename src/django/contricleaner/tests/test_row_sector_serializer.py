@@ -7,25 +7,28 @@ from django.test import TestCase
 
 class RowSectorSerializerTest(TestCase):
     def setUp(self):
-        self.serializer = RowSectorSerializer(MockSectorCache())
+        self.split_pattern = r', |,|\|'
+        self.serializer = RowSectorSerializer(
+            MockSectorCache(), self.split_pattern
+        )
 
         self.row_one = {
             "sector": ['Apparel', 'Finance'],
             "product_type": 'product one',
-            "sector_product_type":
-                [
-                    "Apparel, Finance",
-                    "Agriculture, product one, product two, product three",
-                    "Agriculture"
-                ]
-            }
+            "sector_product_type": [
+                "Apparel, Finance",
+                "Agriculture|product one|product two|product three",
+                "Agriculture",
+            ],
+        }
         self.row_two = {"sector": ['Apparel', 'product one']}
         self.row_three = {"sector": [], "product_type": ''}
         self.row_four = {
             "sector": 1,
             "product_type": 2,
-            "sector_product_type": 3
-            }
+            "sector_product_type": 3,
+        }
+        self.row_five = {"sector": 'Apparel'}
         self.current = {"errors": []}
 
     def test_validate_with_multiple_values(self):
@@ -33,7 +36,7 @@ class RowSectorSerializerTest(TestCase):
 
         self.assertEqual(
             result['product_type'],
-            ['product one', 'product three', 'product two']
+            ['product one', 'product three', 'product two'],
         )
         self.assertEqual(
             result['sector'], ['Agriculture', 'Apparel', 'Finance']
@@ -44,6 +47,12 @@ class RowSectorSerializerTest(TestCase):
 
         self.assertEqual(result['product_type'], ['product one'])
         self.assertEqual(result['sector'], ['Apparel'])
+
+    def test_validate_without_product_type_values(self):
+        result = self.serializer.validate(self.row_five, self.current.copy())
+
+        self.assertEqual(result['sector'], ['Apparel'])
+        self.assertNotIn('product_type', result)
 
     def test_parse_all_values(self):
         all_values = ['technology', 'product one', 'finance']
@@ -64,17 +73,19 @@ class RowSectorSerializerTest(TestCase):
 
     def test_validate_with_empty_values(self):
         result = self.serializer.validate(self.row_three, self.current.copy())
-        self.assertEqual(result['errors'],
-                         [
-                             {
-                                 'message': 'sector must not be empty.',
-                                 'type': 'ValidationError'
-                             },
-                             {
-                                 'message': 'product_type must not be empty.',
-                                 'type': 'ValidationError'
-                             }
-                         ])
+        self.assertEqual(
+            result['errors'],
+            [
+                {
+                    'message': 'sector must not be empty.',
+                    'type': 'ValidationError',
+                },
+                {
+                    'message': 'product_type must not be empty.',
+                    'type': 'ValidationError',
+                },
+            ],
+        )
 
     def test_validate_with_invalid_type(self):
         result = self.serializer.validate(self.row_four, self.current.copy())
@@ -84,19 +95,19 @@ class RowSectorSerializerTest(TestCase):
                 {
                     'message': 'Expected value for sector to be a string or a '
                     'list of strings but got 1',
-                    'type': 'ValueError'
+                    'type': 'ValueError',
                 },
                 {
                     'message': 'Expected value for product_type to be a '
                     'string or a list of strings but got 2',
-                    'type': 'ValueError'
+                    'type': 'ValueError',
                 },
                 {
                     'message': 'Expected value for sector_product_type to be '
                     'a string or a list of strings but got 3',
-                    'type': 'ValueError'
-                }
-            ]
+                    'type': 'ValueError',
+                },
+            ],
         )
 
     def test_validate_max_product_types(self):
@@ -116,7 +127,7 @@ class RowSectorSerializerTest(TestCase):
                 {
                     'message': 'You may submit a maximum of 50 product types, '
                     'not 60',
-                    'type': 'ValidationError'
+                    'type': 'ValidationError',
                 }
-            ]
+            ],
         )

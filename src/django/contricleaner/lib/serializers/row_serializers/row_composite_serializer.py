@@ -1,3 +1,5 @@
+import re
+from typing import Dict
 from contricleaner.lib.dto.row_dto import RowDTO
 from contricleaner.lib.sector_cache_interface import SectorCacheInterface
 from contricleaner.lib.serializers.row_serializers.row_clean_field_serializer \
@@ -16,19 +18,43 @@ from contricleaner.lib.serializers.row_serializers \
 
 
 class RowCompositeSerializer:
-    def __init__(self, sector_cache: SectorCacheInterface):
+    def __init__(
+        self, sector_cache: SectorCacheInterface, split_pattern: str
+    ):
         self.validators = [
             RowCleanFieldSerializer("name", "clean_name"),
             RowCleanFieldSerializer("address", "clean_address"),
-            RowSectorSerializer(sector_cache),
+            RowSectorSerializer(sector_cache, split_pattern),
             RowCountrySerializer(),
             RowRequiredFieldsSerializer(),
-            RowFacilityTypeSerializer(),
+            RowFacilityTypeSerializer(split_pattern),
             RowEmptySerializer(),
         ]
 
-    def get_validated_row(self, raw_row: dict):
+    @staticmethod
+    def clean_row(row: str) -> str:
+        return RowCompositeSerializer.__clean_and_replace_data(row)
 
+    @staticmethod
+    def __clean_and_replace_data(data: Dict[str, str]) -> Dict[str, str]:
+        invalid_keywords = ['N/A', 'n/a']
+        dup_pattern = ',' + '{2,}'
+        result_data = {}
+        for key, value in data.items():
+            if isinstance(value, str):
+                # Remove invalid keywords.
+                for keyword in invalid_keywords:
+                    value = value.replace(keyword, '')
+                # Remove duplicates commas if exist.
+                value = re.sub(dup_pattern, ',', value)
+                # Remove comma in the end of the string if exist.
+                value = value.rstrip(',')
+                # Remove extra spaces if exist.
+                value = value.strip()
+            result_data[key] = value
+        return result_data
+
+    def get_validated_row(self, raw_row: dict):
         standard_fields = {
             "name",
             "clean_name",
@@ -42,7 +68,9 @@ class RowCompositeSerializer:
         res = {
             "errors": [],
         }
+
         row = raw_row.copy()
+        row = RowCompositeSerializer.clean_row(row)
 
         for validator in self.validators:
             res = validator.validate(row, res)
