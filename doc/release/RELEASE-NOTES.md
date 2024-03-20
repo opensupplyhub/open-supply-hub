@@ -11,29 +11,25 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Database changes
 #### Migrations:
-*
+* *Describe migrations here.*
 
 #### Scheme changes
-*
+* *Describe scheme changes here.*
 
 ### Code/API changes
-*
+* *Describe code/API changes here.*
 
 ### Architecture/Environment changes
-*
-
-### Architecture/Environment changes
-*
+* *Describe architecture/environment changes here.*
 
 ### Bugfix
-*
+* *Describe bugfix here.*
 
 ### What's new
-*
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
 
 ### Release instructions:
-* Update code.
-* Apply DB migrations up to the latest one.
+* *Provide release instructions here.*
 
 ## Release 1.10.0
 
