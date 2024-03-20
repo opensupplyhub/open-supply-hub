@@ -1,3 +1,5 @@
+#!/bin/bash
+
 [ $# -ne 1 ] && echo "Usage: $0 <service-id>" && exit 1
 
 serviceId="--service-id=$1"
