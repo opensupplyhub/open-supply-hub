@@ -17,3 +17,5 @@ task_arn="$(aws ecs run-task  --cluster ecsOpenSupplyHub${1}Cluster --task-defin
 echo "Task ARN: $task_arn"
 
 aws ecs wait tasks-stopped --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn}
+
+aws ecs describe-tasks --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn}
