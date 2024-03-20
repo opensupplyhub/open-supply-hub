@@ -13,5 +13,5 @@ echo "Subnet ID: $subnet_id"
 revision="$(aws ecs describe-task-definition --task-definition OpenSupplyHub${1}AppKafka --query 'taskDefinition.revision' --output text)"
 echo "Revision: $revision"
 
-task_arn="$($aws ecs run-task  --cluster ecsOpenSupplyHub${1}Cluster --task-definition OpenSupplyHub${1}AppKafka:${revision} --launch-type="FARGATE"  --network-configuration "awsvpcConfiguration={ assignPublicIp="DISABLED", securityGroups=["$security_group"], subnets=["$subnet_id"]}" | jq -r '.tasks[0].taskArn')"
+task_arn="$(aws ecs run-task  --cluster ecsOpenSupplyHub${1}Cluster --task-definition OpenSupplyHub${1}AppKafka:${revision} --launch-type="FARGATE"  --network-configuration "awsvpcConfiguration={ assignPublicIp="DISABLED", securityGroups=["$security_group"], subnets=["$subnet_id"]}" | jq -r '.tasks[0].taskArn')"
 echo "Task ARN: $task_arn"
