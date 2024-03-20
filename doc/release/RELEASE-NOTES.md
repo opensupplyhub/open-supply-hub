@@ -3,6 +3,38 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.11.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 20, 2024
+
+### Database changes
+#### Migrations:
+*
+
+#### Scheme changes
+*
+
+### Code/API changes
+*
+
+### Architecture/Environment changes
+*
+
+### Architecture/Environment changes
+*
+
+### Bugfix
+*
+
+### What's new
+*
+
+### Release instructions:
+* Update code.
+* Apply DB migrations up to the latest one.
+
 ## Release 1.10.0
 
 ## Introduction
