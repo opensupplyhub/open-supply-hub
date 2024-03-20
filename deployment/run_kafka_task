@@ -15,3 +15,5 @@ echo "Revision: $revision"
 
 task_arn="$(aws ecs run-task  --cluster ecsOpenSupplyHub${1}Cluster --task-definition OpenSupplyHub${1}AppKafka:${revision} --launch-type="FARGATE"  --network-configuration "awsvpcConfiguration={ assignPublicIp="DISABLED", securityGroups=["$security_group"], subnets=["$subnet_id"]}" | jq -r '.tasks[0].taskArn')"
 echo "Task ARN: $task_arn"
+
+aws ecs wait tasks-stopped --cluster ecsOpenSupplyHub${1}Cluster --tasks ${$task_arn}
