@@ -343,10 +343,6 @@ CLAIM_FROM_EMAIL = os.getenv(
 NOTIFICATION_EMAIL_TO = os.getenv(
     'NOTIFICATION_EMAIL_TO', 'notification@example.com')
 
-# Notifications
-
-NOTIFICATION_WEBHOOK_TIMEOUT = 10
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
@@ -438,6 +434,24 @@ ECSMANAGE_ENVIRONMENTS = {
         'SUBNET_TAGS': {
             'Name': 'PrivateSubnet',
             'Environment': 'Development',
+            'Project': 'OpenSupplyHub',
+        },
+        'AWS_REGION': 'eu-west-1',
+    },
+    'preprod': {
+        'TASK_DEFINITION_NAME': 'OpenSupplyHubPreprodAppCLI',
+        'CONTAINER_NAME': 'django',
+        'CLUSTER_NAME': 'ecsOpenSupplyHubPreprodCluster',
+        'LAUNCH_TYPE': 'FARGATE',
+        'PLATFORM_VERSION': '1.4.0',
+        'SECURITY_GROUP_TAGS': {
+            'Name': 'sgAppEcsService',
+            'Environment': 'Preprod',
+            'Project': 'OpenSupplyHub',
+        },
+        'SUBNET_TAGS': {
+            'Name': 'PrivateSubnet',
+            'Environment': 'Preprod',
             'Project': 'OpenSupplyHub',
         },
         'AWS_REGION': 'eu-west-1',

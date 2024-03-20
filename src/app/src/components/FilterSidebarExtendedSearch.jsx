@@ -111,6 +111,7 @@ function FilterSidebarExtendedSearch({
     fetchParentCompanies,
     fetchFacilityProcessingType,
     fetchNumberOfWorkers,
+    isSideBarSearch,
 }) {
     useEffect(() => {
         if (!contributorTypeOptions) {
@@ -158,6 +159,7 @@ function FilterSidebarExtendedSearch({
                         value={contributorTypes}
                         onChange={updateContributorType}
                         disabled={fetchingExtendedOptions || fetchingFacilities}
+                        isSideBarSearch={isSideBarSearch}
                     />
                 </div>
             </ShowOnly>
@@ -180,6 +182,7 @@ function FilterSidebarExtendedSearch({
                         onChange={updateParentCompany}
                         disabled={fetchingExtendedOptions || fetchingFacilities}
                         placeholder="e.g. ABC Textiles Limited"
+                        isSideBarSearch={isSideBarSearch}
                     />
                 </div>
             </ShowOnly>
@@ -203,6 +206,7 @@ function FilterSidebarExtendedSearch({
                         value={facilityType}
                         onChange={updateFacilityType}
                         disabled={fetchingExtendedOptions || fetchingFacilities}
+                        isSideBarSearch={isSideBarSearch}
                     />
                 </div>
             </ShowOnly>
@@ -226,6 +230,7 @@ function FilterSidebarExtendedSearch({
                         value={processingType}
                         onChange={updateProcessingType}
                         disabled={fetchingExtendedOptions || fetchingFacilities}
+                        isSideBarSearch={isSideBarSearch}
                     />
                 </div>
             </ShowOnly>
@@ -247,6 +252,7 @@ function FilterSidebarExtendedSearch({
                         onChange={updateProductType}
                         disabled={fetchingFacilities}
                         placeholder="e.g. Jackets"
+                        isSideBarSearch={isSideBarSearch}
                     />
                 </div>
             </ShowOnly>
@@ -267,6 +273,7 @@ function FilterSidebarExtendedSearch({
                         value={numberOfWorkers}
                         onChange={updateNumberOfWorkers}
                         disabled={fetchingExtendedOptions || fetchingFacilities}
+                        isSideBarSearch={isSideBarSearch}
                     />
                 </div>
             </ShowOnly>

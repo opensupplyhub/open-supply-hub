@@ -11,7 +11,6 @@ __pycache__/
 *.tfplan
 *.tfstate
 *.tfstate.backup
-*.tfvars
 .terraform.lock*
 
 
@@ -35,6 +34,9 @@ yarn-error.log
 # Django App
 src/django/static
 src/django/coverage
+
+# Dedupe Hub
+src/dedupe-hub/api/coverage
 
 ## Test artifacts
 src/django/*.csv

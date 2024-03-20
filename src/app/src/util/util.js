@@ -34,8 +34,6 @@ import hash from 'object-hash';
 import * as XLSX from 'xlsx';
 import moment from 'moment';
 
-import env from './env';
-
 import {
     OTHER,
     FEATURE_COLLECTION,
@@ -120,18 +118,10 @@ export const makeUserSignupURL = () => '/user-signup/';
 export const makeUserConfirmEmailURL = () =>
     '/rest-auth/registration/verify-email/';
 
-export const makeContributorWebhooksURL = () => '/api/contributor-webhooks/';
-export const makeContributorWebhookURL = id =>
-    `/api/contributor-webhooks/${id}/`;
-
-export const makeUploadFacilityListsURL = () => {
-    const uploadListURL =
-        env('REACT_APP_ROUTE') && env('REACT_APP_ROUTE') === 'true'
-            ? '/cc/api/upload-list'
-            : '/api/facility-lists/';
-    return uploadListURL;
-};
-
+export const makeUploadFacilityListsURL = useOldUploadListEndpoint =>
+    useOldUploadListEndpoint
+        ? '/api/facility-lists/'
+        : '/api/facility-lists/createlist/'; // TODO: Remove this once testing of the parsing via ContriCleaner is complete.
 export const makeFacilityListsURL = () => '/api/facility-lists/';
 export const makeSingleFacilityListURL = id => `/api/facility-lists/${id}/`;
 export const makeSingleFacilityListItemsURL = id =>
@@ -1084,4 +1074,34 @@ export const createUserDropdownLinks = (
     );
 
     return Object.freeze(links);
+};
+
+export const isApiUser = user => !user.isAnon && user?.groups.length !== 0;
+
+export const logErrorToRollbar = (window, error, user) => {
+    if (window.Rollbar) {
+        if (user) {
+            const contributorIdMsg = user.contributor_id
+                ? ` (contributor id ${user.contributor_id})`
+                : '';
+
+            const userType = isApiUser(user) ? 'API user' : 'User';
+            const rollbarErrMsg = `${userType}${contributorIdMsg}`;
+            window.Rollbar.configure({
+                payload: {
+                    user: {
+                        contributor_id: user.contributor_id,
+                    },
+                },
+            });
+            const rollbarError = new Error(`${rollbarErrMsg} ${error.message}`);
+            Object.assign(rollbarError, error);
+
+            window.Rollbar.error(rollbarError, {
+                fingerprint: `${user.id}-${rollbarError.message}`,
+            });
+        } else {
+            window.Rollbar.error(error);
+        }
+    }
 };

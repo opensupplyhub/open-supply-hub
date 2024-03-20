@@ -121,6 +121,7 @@ function FilterSidebarSearchTab({
     embedExtendedFields,
     resetHiddenFilters,
 }) {
+    const isSideBarSearch = true;
     const hiddenFields = [
         contributorTypes,
         parentCompany,
@@ -296,9 +297,11 @@ function FilterSidebarSearchTab({
                 title="Find facilities"
                 subtitle="Browse facilities using the criteria below."
             >
-                <SectorFilter />
+                <SectorFilter isSideBarSearch={isSideBarSearch} />
                 <FeatureFlag flag={EXTENDED_PROFILE_FLAG}>
-                    <FilterSidebarExtendedSearch />
+                    <FilterSidebarExtendedSearch
+                        isSideBarSearch={isSideBarSearch}
+                    />
                 </FeatureFlag>
                 {getHiddenFieldsButtonGroup()}
             </TitledDrawer>

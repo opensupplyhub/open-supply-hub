@@ -104,13 +104,6 @@ export const matchResponsibilityChoices = [
     { value: 'contributor', label: 'The contributor' },
 ];
 
-// These choices must be kept in sync with the identical list
-// kept in the Django API's models.py file
-export const contributorWebhookNotificationChoices = [
-    { value: 'ALL_FACILITIES', label: 'All events' },
-    { value: 'ASSOCIATED', label: 'Events for associated facilities' },
-];
-
 export const inputTypesEnum = Object.freeze({
     text: 'text',
     password: 'password',
@@ -533,6 +526,7 @@ export const userApiInfoTooltipTitles = Object.freeze({
 
 export const IS_NOT_SET = 'Is not set';
 export const ALLOW_LARGE_DOWNLOADS = 'allow_large_downloads';
+export const USE_OLD_UPLOAD_LIST_ENDPOINT = 'use_old_upload_list_endpoint';
 export const CLAIM_A_FACILITY = 'claim_a_facility';
 export const VECTOR_TILE = 'vector_tile';
 export const REPORT_A_FACILITY = 'report_a_facility';

@@ -1,0 +1,15 @@
+name: "DB - Apply Anonymized db"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  save-anonymized-db:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Save Anonymized DB
+        run: |
+          echo "Apply Anonymized DB"
+          echo "DB applied!"

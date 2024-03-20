@@ -37,10 +37,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     if [[ -n "${SETTINGS_BUCKET}" ]]; then
         pushd "${TERRAFORM_DIR}"
         git config --global --add safe.directory /usr/local/src
-        echo
-        echo "Copy tfvars file from bucket"
-        # aws s3 cp "s3://${SETTINGS_BUCKET}/terraform/terraform.tfvars" "${SETTINGS_BUCKET}.tfvars"
-
+    
         case "${1}" in
             plan)
                 echo "DEFAULT_BATCH_CE_DESIRED_CPU"
