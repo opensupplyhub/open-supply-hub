@@ -22,6 +22,7 @@ jobs:
       - name: Restore database for ${{ vars.ENV_NAME }}
         run: |
           cd ./src/anon-tools
+          mkdir -p ./keys
           echo ${{ secrets.KEY_FILE }} >> ./keys/key
           docker build -t restore -f Dockerfile.restore .
           docker run -v ./keys/key:/keys/key --shm-size=2gb --rm \
