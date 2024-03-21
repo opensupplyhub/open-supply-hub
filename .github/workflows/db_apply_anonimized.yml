@@ -23,4 +23,6 @@ jobs:
         run: |
           ls -la
           cd ./src/anon-tools
-          ls -la
+          mkdir -p ./keys
+          echo ${{ secrets.KEY_FILE }} >> ./keys/key
+          ls -la ./keys
