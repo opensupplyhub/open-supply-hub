@@ -12,7 +12,7 @@ RUN set -ex && apk update && apk add openssh-client
 RUN mkdir -p /dumps/
 RUN mkdir -p /keys/
 RUN mkdir ~/.ssh
-VOLUME /dumps
+VOLUME /dumps/
 VOLUME /keys
 # ENTRYPOINT [ "docker-entrypoint.sh" ]
 CMD ["sh", "do_work.sh"]

@@ -11,13 +11,14 @@ ENV POSTGRES_DB=anondb
 ARG AWS_ACCESS_KEY_ID
 ARG AWS_SECRET_ACCESS_KEY
 ARG AWS_DEFAULT_REGION
+ARG ENVIRONMENT
 
 RUN mkdir -p /dumps/
 RUN mkdir -p /keys/
 
 COPY ./do_restore.sh ./
 
-VOLUME /keys
+VOLUME /keys/key
 
 CMD ["sh", "do_restore.sh"]
 
