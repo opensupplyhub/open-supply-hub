@@ -25,5 +25,5 @@ jobs:
           cd ./src/anon-tools
           mkdir -p ./keys
           touch ./keys/key
-          echo "${{ secrets.KEY_FILE }}"" >> ./keys/key
+          echo "${{ secrets.KEY_FILE }}" >> ./keys/key
          
