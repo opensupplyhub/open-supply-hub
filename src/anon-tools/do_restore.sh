@@ -11,8 +11,8 @@ chmod 600 /keys/key
 
 echo "localhost:5433:$DATABASE_NAME:$DATABASE_USERNAME:$DATABASE_PASSWORD" > ~/.pgpass
 chmod 600 ~/.pgpass
-ssh-keyscan $bastion >> ~/.ssh/known_hosts
+ssh-keyscan $bastion > ~/.ssh/known_hosts
 
-ssh -f -i /keys/key -L 5433:database.service.osh.internal:5432 -N ec2-user@$bastion
+# ssh -f -i /keys/key -L 5433:database.service.osh.internal:5432 -N ec2-user@$bastion
 
 pg_restore --verbose --clean --no-acl --no-owner -d $DATABASE_NAME -U $DATABASE_USERNAME -h localhost -p 5433 < /dumps/osh_prod_large.dump
