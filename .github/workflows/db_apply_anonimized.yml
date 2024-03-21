@@ -24,7 +24,7 @@ jobs:
           ls -la
           cd ./src/anon-tools
           mkdir -p ./keys
-          echo "${{ secrets.KEY_FILE }}" >> ./keys/key
+          echo "${{ secrets.KEY_FILE }}" > ./keys/key
           docker build -t restore -f Dockerfile.restore .
           docker run -v ./keys/key:/keys/key --shm-size=2gb --rm \
               -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
