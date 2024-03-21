@@ -19,6 +19,7 @@ ARG DATABASE_PASSWORD
 
 RUN mkdir -p /dumps/
 RUN mkdir -p /keys/
+RUN mkdir ~/.ssh
 
 COPY ./do_restore.sh ./
 
