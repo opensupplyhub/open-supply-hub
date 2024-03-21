@@ -258,13 +258,12 @@ jobs:
       - name: Restore database for ${{ vars.ENV_NAME }}
         if: ${{ vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME != 'Development' && inputs.restore-db == true}}
         run: |
-          cd ./src/anon-tools
-          docker build -t restore -f Dockerfile.restore .
-          docker run -v ./keys/:/keys --shm-size=2gb --rm \
-              -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-              -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-              -e AWS_DEFAULT_REGION=eu-west-1 \
-              restore
+          echo "restore prod database"
+      - name: Reset database for ${{ vars.ENV_NAME }}
+        if: ${{ vars.ENV_NAME != 'Development' && inputs.restore-db == true}}
+        run: |
+          echo "restore prod database"
+         
   
   update_services:
     needs: restore_database

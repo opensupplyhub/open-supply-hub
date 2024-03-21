@@ -21,7 +21,6 @@ jobs:
         uses: actions/checkout@v4
       - name: Restore database for ${{ vars.ENV_NAME }}
         run: |
-          ls -la
           cd ./src/anon-tools
           mkdir -p ./keys
           echo "${{ secrets.KEY_FILE }}" > ./keys/key
