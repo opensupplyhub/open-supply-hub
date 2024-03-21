@@ -27,6 +27,11 @@ on:
         required: false
         type: boolean
         default: false
+      restore-db:
+        description: 'Restore database'
+        required: false
+        type: boolean
+        default: false
 
 env:
   GITHUB_ENV_NAME: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
@@ -241,7 +246,7 @@ jobs:
     needs: create_kafka_topic
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
-    if: ${{ inputs.deploy-plan-only == false }}
+    if:  ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -251,6 +256,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
       - name: Restore database for ${{ vars.ENV_NAME }}
+        if: ${{ vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME != 'Development' && inputs.restore-db == true}}
         run: |
           cd ./src/anon-tools
           docker build -t restore -f Dockerfile.restore .
