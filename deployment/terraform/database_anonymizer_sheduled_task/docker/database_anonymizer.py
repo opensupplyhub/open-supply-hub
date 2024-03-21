@@ -9,9 +9,6 @@ database_name = os.environ['SOURCE_DATABASE_NAME']
 database_user = os.environ['SOURCE_DATABASE_USER']
 database_password = os.environ['SOURCE_DATABASE_PASSWORD']
 destination_aws_account=os.environ['DESTINATION_AWS_ACCOUNT']
-temporary_db_instance_size=os.environ['ANONYMIZER_DATABASE_INSTANCE_TYPE']
-temporary_db_subnet_group_name=os.environ['DATABASE_SUBNET_GROUP_NAME']
-temporary_db_security_group_ids=os.environ['DATABASE_SECURITY_GROUP_IDS']
 
 source_session = boto3.Session()
 source = source_session.client('rds')
@@ -32,12 +29,14 @@ try:
     source.restore_db_instance_from_db_snapshot(
         DBInstanceIdentifier=temporary_db_identifier,
         DBSnapshotIdentifier=snapshot_identifier,
-        DBInstanceClass=temporary_db_instance_size,
-        DBSubnetGroupName=temporary_db_subnet_group_name,
+        DBInstanceClass='db.t3.micro',
+        DBSubnetGroupName='opensupplyhub-tst',
         MultiAZ=False,
         PubliclyAccessible=False,
         AutoMinorVersionUpgrade=False,
-        VpcSecurityGroupIds=[temporary_db_security_group_ids],
+        VpcSecurityGroupIds=[
+            'sg-0c865246b5a64b3ca',
+        ],
         DeletionProtection=False
     )
 except ClientError as e:
