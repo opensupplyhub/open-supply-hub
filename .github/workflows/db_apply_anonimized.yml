@@ -1,9 +1,6 @@
 name: "DB - Apply Anonymized db"
 
 on:
-  push:
-    branches:
-      - OSDEV-862-create-script-for-anonymizing-dump
   workflow_dispatch:
 
 jobs:
