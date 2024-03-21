@@ -47,3 +47,15 @@ variable "security_group_ids" {
 variable "schedule_expression" {
     type = string
 }
+
+variable "rds_instance_type" {
+  type = string
+}
+
+variable "database_subnet_group_name" {
+  type = string
+}
+
+variable "database_security_group_ids" {
+  type = string
+}

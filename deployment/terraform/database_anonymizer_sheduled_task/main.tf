@@ -7,67 +7,29 @@ resource "aws_cloudwatch_log_group" "database_anonymizer" {
   retention_in_days = 30
 }
 
-data "aws_iam_policy_document" "database_anonymizer_assume_role" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["ecs-tasks.amazonaws.com"]
-    }
-  }
-
-}
-
 data "aws_iam_policy_document" "database_anonymizer_worker" {
   statement {
     actions = [
       "rds:*",
-      "ecr:GetAuthorizationToken",
-      "ecr:BatchCheckLayerAvailability",
-      "ecr:GetDownloadUrlForLayer",
-      "ecr:BatchGetImage",
-      "logs:CreateLogStream",
-      "logs:DescribeLogGroups",
-      "logs:DescribeLogStreams",
-      "logs:PutLogEvents"
     ]
     resources = ["*"]
   }
 }
 
-resource "aws_iam_role" "database_anonymizer" {
-  name       = join("-", [local.short, "DatabaseAnonymizer"])
-  assume_role_policy = data.aws_iam_policy_document.database_anonymizer_assume_role.json
-}
-
-resource "aws_iam_policy" "database_anonymizer" {
-  name = join("-", [local.short, "DatabaseAnonymizer"])
-  path        = "/"
-  policy      = data.aws_iam_policy_document.database_anonymizer_worker.json
-}
-
-resource "aws_iam_role_policy_attachment" "database_anonymizer" {
-  role       = aws_iam_role.database_anonymizer.name
-  policy_arn = aws_iam_policy.database_anonymizer.arn
-}
-
-# AWS ECS Cluster Terraform Module
-# https://registry.terraform.io/modules/cn-terraform/ecs-cluster/aws/latest
 module "database_anonymizer_cluster" {
   source  = "git::git@github.com:cn-terraform/terraform-aws-ecs-cluster.git?ref=1.0.11"
   name    = join("-", [local.short, "DatabaseAnonymizer"])
 }
 
-# AWS ECS Fargate Task Definition Terraform Module
-# https://registry.terraform.io/modules/cn-terraform/ecs-fargate-task-definition/aws/latest
 module "database_anonymizer_task_definition" {
   source                 = "git@github.com:cn-terraform/terraform-aws-ecs-fargate-task-definition.git?ref=1.0.36"
   name_prefix            = "database-anonymizer"
   container_image        = local.database_anonymizer_image
   container_name         = "database-anonymizer"
-  execution_role_arn     = aws_iam_role.database_anonymizer.arn
-  task_role_arn          = aws_iam_role.database_anonymizer.arn
+
+  ecs_task_execution_role_custom_policies = [
+    data.aws_iam_policy_document.database_anonymizer_worker.json
+  ]
 
   environment = [
       {
@@ -93,6 +55,18 @@ module "database_anonymizer_task_definition" {
       {
           name: "ANONYMIZER_DATABASE_IDENTIFIER"
           value: var.anonymizer_db_identifier
+      },
+      {
+          name : "ANONYMIZER_DATABASE_INSTANCE_TYPE"
+          value : var.rds_instance_type
+      },
+      {
+          name : "DATABASE_SUBNET_GROUP_NAME"
+          value : var.database_subnet_group_name
+      },
+      {
+          name : "DATABASE_SECURITY_GROUP_IDS"
+          value : var.database_security_group_ids
       }
   ]
 
@@ -111,14 +85,8 @@ module "database_anonymizer_task_definition" {
       "awslogs-stream-prefix": "database-anonymizer"
     }
   }
-
-  depends_on = [
-    aws_iam_role.database_anonymizer
-  ]
 }
 
-# AWS ECS Fargate Schedule Task Terraform Module
-# https://registry.terraform.io/modules/cn-terraform/ecs-fargate-scheduled-task/aws/latest
 module "database_anonymizer_task" {
   source                                      = "git::git@github.com:cn-terraform/terraform-aws-ecs-fargate-scheduled-task.git?ref=1.0.25"
   name_prefix                                 = "anonymize_database-task"
@@ -128,8 +96,8 @@ module "database_anonymizer_task" {
   event_target_ecs_target_subnets             = var.subnet_ids
   event_target_ecs_target_security_groups     = var.security_group_ids
   event_target_ecs_target_task_definition_arn = module.database_anonymizer_task_definition.aws_ecs_task_definition_td_arn
-  ecs_execution_task_role_arn                 = aws_iam_role.database_anonymizer.arn
-  ecs_task_role_arn                           = aws_iam_role.database_anonymizer.arn
+  ecs_execution_task_role_arn                 = module.database_anonymizer_task_definition.aws_iam_role_ecs_task_execution_role_arn
+  ecs_task_role_arn                           = module.database_anonymizer_task_definition.aws_iam_role_ecs_task_execution_role_arn
 }
 
 module "ecr_repository_database_anonymizer" {
