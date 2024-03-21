@@ -117,7 +117,6 @@ jobs:
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           AWS_DEFAULT_REGION: "eu-west-1"
 
-
   build_and_push_docker_image:
     needs: apply
     runs-on: ubuntu-latest
@@ -216,7 +215,7 @@ jobs:
             DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}
             ENVIRONMENT=${{ steps.get_env_name.outputs.lowercase }}
 
-  update_services:
+  create_kafka_topic:
     needs: build_and_push_docker_image
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
@@ -227,8 +226,51 @@ jobs:
         uses: Entepotenz/change-string-case-action-min-dependencies@v1
         with:
           string: ${{ vars.ENV_NAME }}
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-
+      - name: Create or update kafka topics for ${{ vars.ENV_NAME }}
+        run: |
+          ./deployment/run_kafka_task ${{ vars.ENV_NAME }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
+  
+  restore_database:
+    needs: create_kafka_topic
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    if: ${{ inputs.deploy-plan-only == false }}
+    steps:
+      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+        id: get_env_name
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
+        with:
+          string: ${{ vars.ENV_NAME }}
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Restore database for ${{ vars.ENV_NAME }}
+        run: |
+          cd ./src/anon-tools
+          docker build -t restore -f Dockerfile.restore .
+          docker run -v ./keys/:/keys --shm-size=2gb --rm \
+              -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+              -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+              -e AWS_DEFAULT_REGION=eu-west-1 \
+              restore
+  
+  update_services:
+    needs: restore_database
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    if: ${{ inputs.deploy-plan-only == false }}
+    steps:
+      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+        id: get_env_name
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
+        with:
+          string: ${{ vars.ENV_NAME }}
       - name: Update ECS Django Service with new Image for ${{ vars.ENV_NAME }}
         run: |
           aws ecs update-service --cluster ${{ vars.CLUSTER }} --service ${{ vars.SERVICE_NAME }} --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}}
@@ -243,7 +285,6 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: "eu-west-1"
-
 
   post_deploy:
     needs: update_services
@@ -266,15 +307,6 @@ jobs:
           aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region = ${AWS_DEFAULT_REGION}" > ~/.aws/credentials
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "eu-west-1"
-
-
-      - name: Create or update kafka topics for ${{ vars.ENV_NAME }}
-        run: |
-          ./deployment/run_kafka_task ${{ vars.ENV_NAME }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

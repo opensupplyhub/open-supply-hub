@@ -8,7 +8,6 @@ COPY ./initdb.sql /docker-entrypoint-initdb.d
 ENV POSTGRES_PASSWORD=anondb
 ENV POSTGRES_USER=anondb
 ENV POSTGRES_DB=anondb
-# RUN apt install ca-certificates
 RUN set -ex && apk update && apk add openssh-client
 RUN mkdir -p /dumps/
 RUN mkdir -p /keys/
