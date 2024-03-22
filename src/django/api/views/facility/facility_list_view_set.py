@@ -501,8 +501,8 @@ class FacilityListViewSet(ModelViewSet):
                     'finished_at': str(timezone.now()),
                 })
 
-            row_errors = row.errors
             if item.status != FacilityListItem.ERROR_PARSING:
+                row_errors = row.errors
                 if len(row_errors) > 0:
                     stringified_message = '\n'.join(
                         [f"{error['message']}" for error in row_errors]
