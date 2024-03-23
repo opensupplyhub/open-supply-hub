@@ -8,7 +8,7 @@ ssh-keyscan ec2-54-154-210-219.eu-west-1.compute.amazonaws.com >> ~/.ssh/known_h
 ssh -f -i /keys/id_rsa -L 5433:database.service.osh.internal:5432 -N ec2-user@ec2-54-154-210-219.eu-west-1.compute.amazonaws.com
 
 
-# pg_dump --clean --no-owner --no-privileges -Fc -h localhost -U opensupplyhub -p 5433 -f /dumps/osh_prod_large.dump -w --verbose
+pg_dump --clean --no-owner --no-privileges -Fc -h localhost -U opensupplyhub -p 5433 -f /dumps/osh_prod_large.dump -w --verbose
 
 echo "Running anonymize script"
 
@@ -59,6 +59,6 @@ END \$\$;"
 
 pg_restore --verbose --clean --no-acl --no-owner -d anondb -U anondb -h localhost -p 5432 < /dumps/osh_prod_large.dump
 psql -U anondb -d anondb -h localhost -p 5432 -c "$SQL_SCRIPT"
-pg_dump --clean --no-owner --no-privileges -Fc -d anondb -U anondb  -f /dumps/osh_prod_large_res.dump -w --verbose
+pg_dump --clean --no-owner --no-privileges -Fc -d anondb -U anondb  -f /dumps/osh_prod_large_anonimized.dump -w --verbose
 
 echo "Finshed anonymization"
