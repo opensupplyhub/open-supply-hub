@@ -193,12 +193,18 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
                 'facility': item.get('facility'),
                 'reported_by_contributor': item.get('reported_by_contributor'),
                 'closure_state': item.get('closure_state'),
-                'approved_at': format_date(item.get('approved_at')),
+                'approved_at': (
+                    format_date(item.get('approved_at'))
+                    if item.get('approved_at')
+                    else None
+                ),
                 'status_change_reason': item.get('status_change_reason'),
                 'status': item.get('status'),
                 'status_change_by': item.get('status_change_by'),
-                'status_change_date': format_date(
-                    item.get('status_change_date')
+                'status_change_date': (
+                    format_date(item.get('status_change_date'))
+                    if item.get('status_change_date')
+                    else None
                 ),
                 'created_at': format_date(item.get('created_at')),
                 'updated_at': format_date(item.get('updated_at')),
