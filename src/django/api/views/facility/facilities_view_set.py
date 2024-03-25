@@ -576,7 +576,7 @@ class FacilitiesViewSet(ListModelMixin,
                               FeatureGroups.CAN_SUBMIT_FACILITY):
             raise PermissionDenied()
 
-        log.info('[API Upload] Uploading data: {}', request.data)
+        log.info(f'[API Upload] Uploading data: {request.data}')
         log.info('[API Upload] Started Parse process!')
         split_pattern = r', |,|\|'
         contri_cleaner = ContriCleanerSerializer(
@@ -585,7 +585,7 @@ class FacilitiesViewSet(ListModelMixin,
         rows = contri_cleaner.get_validated_rows()
         row = rows[0]
         if row.errors:
-            log.info('[API Upload] Parsing Errors: {}', row.errors)
+            log.info(f'[API Upload] Parsing Errors: {row.errors}')
             return Response({
                 "message": "The provided data could not be parsed",
                 "errors": row.errors
@@ -639,10 +639,10 @@ class FacilitiesViewSet(ListModelMixin,
             }]
         )
 
-        log.info('[API Upload] Created Source Id: {}', source.id)
-        log.info('[API Upload] Created Source Is Public: {}', source.is_public)
-        log.info('[API Upload] Created Source Should Create: {}', source.create)
-        log.info('[API Upload] Created FacilityListItem Id: {}', item.id)
+        log.info(f'[API Upload] Created Source Id: {source.id}')
+        log.info(f'[API Upload] Created Source Is Public: {source.is_public}')
+        log.info(f'[API Upload] Created Source Should Create: {source.create}')
+        log.info(f'[API Upload] Created FacilityListItem Id: {item.id}')
 
         result = {
             'matches': [],
@@ -674,7 +674,7 @@ class FacilitiesViewSet(ListModelMixin,
             item.save()
             result['status'] = item.status
             result['message'] = error_message
-            log.info('[API Upload] Creation of EF error: {}', error_message)
+            log.info(f'[API Upload] Creation of EF error: {error_message}')
             return Response(result,
                             status=status.HTTP_400_BAD_REQUEST)
 
@@ -727,7 +727,7 @@ class FacilitiesViewSet(ListModelMixin,
             })
             item.save()
             result['status'] = item.status
-            log.info('[API Upload] Geocode Error: {}', str(exc))
+            log.info(f'[API Upload] Geocode Error: {str(exc)}')
             return Response(result,
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -761,7 +761,7 @@ class FacilitiesViewSet(ListModelMixin,
         errors_status = [FacilityListItem.ERROR_MATCHING,
                          FacilityListItem.GEOCODED_NO_RESULTS]
         
-        log.info('[API Upload] Result data: {}', result)
+        log.info(f'[API Upload] Result data: {result}')
 
         if (should_create
                 and result['status'] not in errors_status):
