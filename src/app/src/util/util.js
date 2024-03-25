@@ -317,7 +317,8 @@ export const createSelectOptionsFromParams = params => {
 };
 
 export const getAlgorithm = sortBy =>
-    optionsForSortingResults.filter(el => el.value === sortBy)[0];
+    optionsForSortingResults.filter(el => el.value === sortBy)[0] ??
+    optionsForSortingResults[0];
 
 export const createFiltersFromQueryString = qs => {
     const qsToParse = startsWith(qs, '?') ? qs.slice(1) : qs;
@@ -337,7 +338,7 @@ export const createFiltersFromQueryString = qs => {
         native_language_name: nativeLanguageName = '',
         combine_contributors: combineContributors = '',
         boundary = '',
-        sort_by: sortBy = 'contributors_desc',
+        sort_by: sortBy = '',
     } = querystring.parse(qsToParse);
 
     return Object.freeze({

@@ -276,9 +276,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+        }
     };
 
     expect(
@@ -311,16 +310,15 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: 'AND',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
         createFiltersFromQueryString(combinedContributorsString),
     ).toEqual(expectedCombinedContributorsMatch);
 
-    const defaultSortingString = '?sort_by=contributors_desc';
+    const defaultSortingString = '?sort_by=name_asc';
     const expectedSortingMatch = {
         facilityFreeTextQuery: '',
         contributors: [],
@@ -337,9 +335,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "contributors_desc",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
@@ -373,9 +370,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
@@ -408,9 +404,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
@@ -443,9 +438,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
@@ -474,9 +468,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
@@ -507,9 +500,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
@@ -540,9 +532,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
@@ -573,9 +564,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
@@ -606,9 +596,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
@@ -639,9 +628,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
@@ -665,15 +653,14 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
         createFiltersFromQueryString(nativeLanguageNameString),
     ).toEqual(expectedNativeLanguageNameMatch);
-});
+    });
 
 it('creates a facility detail link', () => {
     const expectedMatch = '/facilities/hello';
