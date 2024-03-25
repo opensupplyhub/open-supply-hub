@@ -1,6 +1,7 @@
 import json
 import traceback
 import asyncio
+import logging
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
 from contricleaner.lib.parsers.source_parser_json import SourceParserJSON
@@ -94,6 +95,11 @@ from .facility_parameters import (
     facilities_list_parameters,
     facilities_create_parameters,
 )
+
+# initialize logger
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
+log = logging.getLogger(__name__)
 
 
 class FacilitiesViewSet(ListModelMixin,
@@ -570,6 +576,8 @@ class FacilitiesViewSet(ListModelMixin,
                               FeatureGroups.CAN_SUBMIT_FACILITY):
             raise PermissionDenied()
 
+        log.info('[API Upload] Uploading data: {}', request.data)
+        log.info('[API Upload] Started Parse process!')
         split_pattern = r', |,|\|'
         contri_cleaner = ContriCleanerSerializer(
             SourceParserJSON(request.data), SectorCache(), split_pattern
@@ -577,6 +585,7 @@ class FacilitiesViewSet(ListModelMixin,
         rows = contri_cleaner.get_validated_rows()
         row = rows[0]
         if row.errors:
+            log.info('[API Upload] Parsing Errors: {}', row.errors)
             return Response({
                 "message": "The provided data could not be parsed",
                 "errors": row.errors
@@ -630,6 +639,11 @@ class FacilitiesViewSet(ListModelMixin,
             }]
         )
 
+        log.info('[API Upload] Created Source Id: {}', source.id)
+        log.info('[API Upload] Created Source Is Public: {}', source.is_public)
+        log.info('[API Upload] Created Source Should Create: {}', source.create)
+        log.info('[API Upload] Created FacilityListItem Id: {}', item.id)
+
         result = {
             'matches': [],
             'item_id': item.id,
@@ -660,10 +674,12 @@ class FacilitiesViewSet(ListModelMixin,
             item.save()
             result['status'] = item.status
             result['message'] = error_message
+            log.info('[API Upload] Creation of EF error: {}', error_message)
             return Response(result,
                             status=status.HTTP_400_BAD_REQUEST)
 
         geocode_started = str(timezone.now())
+        log.info('[API Upload] Started Geocode process!')
         try:
             geocode_result = geocode_address(row.address, row.country_code)
             if geocode_result['result_count'] > 0:
@@ -711,10 +727,12 @@ class FacilitiesViewSet(ListModelMixin,
             })
             item.save()
             result['status'] = item.status
+            log.info('[API Upload] Geocode Error: {}', str(exc))
             return Response(result,
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if item.status == FacilityListItem.GEOCODED:
+            log.info('[API Upload] Trying to start Match process!')
             # Handle and produce message to Kafka with source_id data
             timer = 0
             timeout = 25
@@ -726,6 +744,7 @@ class FacilitiesViewSet(ListModelMixin,
                     source=source.id
                 )
                 if fli_temp.status == FacilityListItemTemp.GEOCODED:
+                    log.info('[API Upload] Started Match process!')
                     asyncio.run(produce_message_match_process(source.id))
                     break
                 asyncio.sleep(1)
@@ -741,6 +760,8 @@ class FacilitiesViewSet(ListModelMixin,
 
         errors_status = [FacilityListItem.ERROR_MATCHING,
                          FacilityListItem.GEOCODED_NO_RESULTS]
+        
+        log.info('[API Upload] Result data: {}', result)
 
         if (should_create
                 and result['status'] not in errors_status):
