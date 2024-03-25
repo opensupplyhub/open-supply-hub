@@ -1,4 +1,0 @@
-#!/bin/bash
-
-cd anonymizer || exit
-docker compose up
