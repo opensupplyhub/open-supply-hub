@@ -31,14 +31,12 @@ class SourceParserCSVTest(TestCase):
                 'sector_product_type': 'Apparel|Jeans',
                 'facility_type_processing_type': 'Embellishment',
                 'number_of_workers': '1002',
-                'parent_company': '',
             },
             {
                 'country': 'Canada',
                 'name': 'Style Haven',
                 'address': '456 Fashion Road, Trendy Town',
                 'sector_product_type': 'Apparel|Jacket',
-                'facility_type_processing_type': '',
                 'number_of_workers': '70%',
                 'parent_company': 'Style Super',
             },
@@ -49,7 +47,6 @@ class SourceParserCSVTest(TestCase):
                 'sector_product_type': 'Apparel',
                 'facility_type_processing_type': 'Embossing',
                 'number_of_workers': '3002',
-                'parent_company': '',
             },
         ]
 
