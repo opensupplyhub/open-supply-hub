@@ -674,12 +674,12 @@ class FacilitiesViewSet(ListModelMixin,
             item.save()
             result['status'] = item.status
             result['message'] = error_message
-            log.info(f'[API Upload] Creation of EF error: {error_message}')
+            log.info(f'[API Upload] Creation of EF error: {error_message}, FLI Id: {item.id}')
             return Response(result,
                             status=status.HTTP_400_BAD_REQUEST)
 
         geocode_started = str(timezone.now())
-        log.info('[API Upload] Started Geocode process!')
+        log.info(f'[API Upload] Started Geocode process, FLI Id {item.id}!')
         try:
             geocode_result = geocode_address(row.address, row.country_code)
             if geocode_result['result_count'] > 0:
@@ -727,12 +727,12 @@ class FacilitiesViewSet(ListModelMixin,
             })
             item.save()
             result['status'] = item.status
-            log.info(f'[API Upload] Geocode Error: {str(exc)}')
+            log.info(f'[API Upload] Geocode Error: {str(exc)}, FLI Id {item.id}')
             return Response(result,
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if item.status == FacilityListItem.GEOCODED:
-            log.info('[API Upload] Trying to start Match process!')
+            log.info(f'[API Upload] Trying to start Match process! FLI Id: {item.id}')
             # Handle and produce message to Kafka with source_id data
             timer = 0
             timeout = 25
@@ -744,7 +744,7 @@ class FacilitiesViewSet(ListModelMixin,
                     source=source.id
                 )
                 if fli_temp.status == FacilityListItemTemp.GEOCODED:
-                    log.info('[API Upload] Started Match process!')
+                    log.info(f'[API Upload] Started Match process! FLI Id" {item.id}, Source Id: {source.id}')
                     asyncio.run(produce_message_match_process(source.id))
                     break
                 asyncio.sleep(1)
@@ -761,7 +761,7 @@ class FacilitiesViewSet(ListModelMixin,
         errors_status = [FacilityListItem.ERROR_MATCHING,
                          FacilityListItem.GEOCODED_NO_RESULTS]
         
-        log.info(f'[API Upload] Result data: {result}')
+        log.info(f'[API Upload] Result data: {result} for FLI Id: {item.id}')
 
         if (should_create
                 and result['status'] not in errors_status):
