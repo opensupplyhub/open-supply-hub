@@ -2,6 +2,7 @@ import copy
 import csv
 import time
 import traceback
+import logging
 
 from api.constants import CsvHeaderField, ProcessingAction
 from api.extended_fields import (
@@ -28,6 +29,8 @@ from countries.lib.get_country_code import get_country_code
 from django.urls import reverse
 from django.utils import timezone
 from oar.rollbar import report_error_to_rollbar
+
+logger = logging.getLogger(__name__)
 
 
 def get_xlsx_sheet(file, request):
@@ -263,6 +266,7 @@ def parse_facility_list_item(item):
                 'trace': traceback.format_exc(),
                 'finished_at': str(timezone.now()),
             })
+            logger.info(f'[List Upload] Parsing Error: {str(ve)}, FLI Id {item.id}')
     except Exception as e:
         item.status = FacilityListItem.ERROR_PARSING
         item.processing_results.append({
@@ -273,6 +277,7 @@ def parse_facility_list_item(item):
             'trace': traceback.format_exc(),
             'finished_at': str(timezone.now()),
         })
+        logger.info(f'[List Upload] Parsing Error: {str(e)}, FLI Id {item.id}')
 
 
 def geocode_facility_list_item(item):
@@ -324,6 +329,7 @@ def geocode_facility_list_item(item):
             'trace': traceback.format_exc(),
             'finished_at': str(timezone.now()),
         })
+        logger.info(f'[List Upload] Geocoding Error: {str(e)}, FLI Id {item.id}')
 
 
 def reduce_matches(matches):
