@@ -419,7 +419,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Create required env file
         run: |
-          echo '${{ secrets.INTEGRATION_ENV_FILE }}' > .env
+          echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Build Django image
         run: docker-compose build
       - name: Run the integration tests
