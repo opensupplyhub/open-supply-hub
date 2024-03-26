@@ -180,9 +180,10 @@ facilities_list_parameters = [
         required=False,
         description=(
             'The sort_by parameter submits type of sorting order for '
-            'facilities. Parameter value must be equal to name. If you skip '
-            'this parameter, default sorting will be primary by public '
-            'contributors count and secondary by name.'
+            'facilities. Parameter value must be equal to name. Default '
+            'sorting will be primary by public '
+            'contributors count descending and secondary by name '
+            'ascending/descending and contributors count ascending. '
             )
     )
 ]

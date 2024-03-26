@@ -43,7 +43,7 @@ const resultsSortDropdownStyles = theme =>
             color: '#000000',
         },
         selectWrapper: {
-            width: '137px',
+            width: '150px',
         },
         select: {
             fontFamily: theme.typography.fontFamily,

@@ -316,6 +316,10 @@ export const createSelectOptionsFromParams = params => {
     );
 };
 
+export const getAlgorithm = sortBy =>
+    optionsForSortingResults.filter(el => el.value === sortBy)[0] ??
+    optionsForSortingResults[0];
+
 export const createFiltersFromQueryString = qs => {
     const qsToParse = startsWith(qs, '?') ? qs.slice(1) : qs;
 
@@ -352,10 +356,7 @@ export const createFiltersFromQueryString = qs => {
         nativeLanguageName,
         combineContributors,
         boundary: isEmpty(boundary) ? null : JSON.parse(boundary),
-        sortAlgorithm:
-            sortBy === 'name'
-                ? optionsForSortingResults[0]
-                : optionsForSortingResults[1],
+        sortAlgorithm: getAlgorithm(sortBy),
     });
 };
 
