@@ -409,3 +409,20 @@ jobs:
             run --rm --no-deps app yarn prettier \
             --config .prettierrc \
             --check 'src/**/*.js' 'src/**/*.jsx'
+
+# Integration workflow
+  run-integration-workflow:
+    environment: Integration Environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Create required env file
+        run: |
+          echo '${{ secrets.INTEGRATION_ENV_FILE }}' > .env
+      - name: Build Django image
+        run: docker-compose build
+      - name: Run the integration tests
+        run: |
+          ./scripts/update
+          ./scripts/reset_database
