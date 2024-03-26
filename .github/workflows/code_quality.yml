@@ -412,7 +412,7 @@ jobs:
 
 # Integration workflow
   run-integration-workflow:
-    environment: Integration Environment
+    environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
