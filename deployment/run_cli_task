@@ -1,0 +1,27 @@
+#!/bin/bash
+
+vpc_id="$(aws ec2 describe-vpcs --filters=Name=tag:Name,Values=vpcOpenSupplyHub$1 --query 'Vpcs[].VpcId' --output text)"
+echo "VPC ID: $vpc_id"
+
+security_group="$(aws ec2 describe-security-groups --filters "Name=vpc-id,Values=$vpc_id" "Name=tag:Name,Values=sgAppEcsService" --query 'SecurityGroups[0].GroupId' --output text)"
+
+echo "Security Group: $security_group"
+
+subnet_id="$(aws ec2 describe-subnets --filters=Name=vpc-id,Values=$vpc_id --query 'Subnets[].SubnetId' --output text | awk '{print $1}')"
+echo "Subnet ID: $subnet_id"
+
+revision="$(aws ecs describe-task-definition  --task-definition OpenSupplyHub${1}AppCLI --query 'taskDefinition.revision' --output text)"
+echo "Revision: $revision"
+
+echo "Running task with command: $2"
+
+task_arn="$(aws ecs run-task --cluster ecsOpenSupplyHub${1}Cluster --task-definition=OpenSupplyHub${1}AppCLI:${revision} --launch-type "FARGATE" --network-configuration "awsvpcConfiguration={ assignPublicIp="ENABLED", securityGroups=["$security_group"], subnets=["$subnet_id"]}" --overrides "containerOverrides=[{name='django', command=["$2"]}]" --query 'tasks[0].taskArn' --output text)"
+
+echo "Task ARN: $task_arn"
+
+aws ecs wait tasks-stopped --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn}
+
+aws ecs describe-tasks --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn} --query 'tasks[0].[taskArn,stoppedReason]' --output text
+
+aws logs get-log-events --log-group-name "/ecs/OpenSupplyHub${1}AppCLI" --log-stream-name "$task_arn" --query 'events[*].[message]' --output text
+
