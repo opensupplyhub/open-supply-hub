@@ -333,7 +333,8 @@ def geocode_facility_list_item(item):
         })
         logger.error(f'[List Upload] Geocoding Error: {str(e)}')
         logger.info(f'[List Upload] FacilityListItem Id: {item.id}')
-        logger.info(f'[List Upload] Address: {item.address}, Country_Code: {item.country_code}')
+        logger.info(f'[List Upload] Address: {item.address}, '
+                    f'Country_Code: {item.country_code}')
 
 
 def reduce_matches(matches):
