@@ -675,7 +675,8 @@ class FacilitiesViewSet(ListModelMixin,
             result['status'] = item.status
             result['message'] = error_message
             log.error(
-                f'[API Upload] Creation of ExtendedField error: {error_message}'
+                '[API Upload] Creation of ExtendedField error: '
+                f'{error_message}'
             )
             log.info(f'[API Upload] FacilityListItem Id: {item.id}')
             return Response(result,
@@ -683,10 +684,12 @@ class FacilitiesViewSet(ListModelMixin,
 
         geocode_started = str(timezone.now())
         log.info(
-            f'[API Upload] Started Geocode process. FacilityListItem Id: {item.id}.'
+            '[API Upload] Started Geocode process. '
+            f'FacilityListItem Id: {item.id}.'
         )
         log.info(
-            f'[API Upload] Address: {row.address}, Country Code: {row.country_code}'
+            f'[API Upload] Address: {row.address}, '
+            f'Country Code: {row.country_code}'
         )
         try:
             geocode_result = geocode_address(row.address, row.country_code)
@@ -737,7 +740,8 @@ class FacilitiesViewSet(ListModelMixin,
             result['status'] = item.status
             log.error(f'[API Upload] Geocode Error: {str(exc)}')
             log.info(f'[API Upload] FacilityListItem Id: {item.id}')
-            log.info(f'[API Upload] Address: {row.address}, Country Code: {row.country_code}')
+            log.info(f'[API Upload] Address: {row.address}, '
+                     f'Country Code: {row.country_code}')
             return Response(result,
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
