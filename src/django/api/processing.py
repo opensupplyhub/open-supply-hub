@@ -266,7 +266,8 @@ def parse_facility_list_item(item):
                 'trace': traceback.format_exc(),
                 'finished_at': str(timezone.now()),
             })
-            logger.info(f'[List Upload] Parsing Error: {str(ve)}, FLI Id {item.id}')
+            logger.info(f'[List Upload] Parsing Error: {str(ve)}')
+            logger.info(f'[List Upload] FacilityListItem Id: {item.id}')
     except Exception as e:
         item.status = FacilityListItem.ERROR_PARSING
         item.processing_results.append({
@@ -277,7 +278,8 @@ def parse_facility_list_item(item):
             'trace': traceback.format_exc(),
             'finished_at': str(timezone.now()),
         })
-        logger.info(f'[List Upload] Parsing Error: {str(e)}, FLI Id {item.id}')
+        logger.info(f'[List Upload] Parsing Error: {str(e)}')
+        logger.info(f'[List Upload] FacilityListItem Id: {item.id}')
 
 
 def geocode_facility_list_item(item):
@@ -329,7 +331,9 @@ def geocode_facility_list_item(item):
             'trace': traceback.format_exc(),
             'finished_at': str(timezone.now()),
         })
-        logger.info(f'[List Upload] Geocoding Error: {str(e)}, FLI Id {item.id}')
+        logger.info(f'[List Upload] Geocoding Error: {str(e)}')
+        logger.info(f'[List Upload] FacilityListItem Id: {item.id}')
+        logger.info(f'[List Upload] Address: {item.address}, Country_Code: {item.country_code}')
 
 
 def reduce_matches(matches):

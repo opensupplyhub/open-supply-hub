@@ -76,10 +76,13 @@ class Command(BaseCommand):
                 'Try to produce kafka message '
                 'to match process with source_id {}'
                 ).format(source.id))
-            logger.info(f'[List Upload] Started Match process Source Id: {source.id}, FLI Id {list_id}!')
+            logger.info(f'[List Upload] Started Match process!')
+            logger.info(f'[List Upload] FacilityList Id: {list_id}')
+            logger.info(f'[List Upload] Source Id: {source.id}')
             asyncio.run(produce_message_match_process(source.id))
         elif action == ProcessingAction.NOTIFY_COMPLETE:
-            logger.info(f'[List Upload] Notify Complete List Id: {list_id}!')
+            logger.info(f'[List Upload] Notify Complete!')
+            logger.info(f'[List Upload] FacilityList Id: {list_id}')
             notify_facility_list_complete(list_id)
 
     def process_items(self, facility_list, action, process):
@@ -118,7 +121,8 @@ class Command(BaseCommand):
                                 item.facility = match.facility
                                 item.save()
                     elif action == ProcessingAction.PARSE:
-                        logger.info(f'[List Upload] Started Parse process FLI Id: {item.id}!')
+                        logger.info(f'[List Upload] Started Parse process!')
+                        logger.info(f'[List Upload] FacilityListItem Id: {item.id}')
                         process(item)
                         if item.status != FacilityListItem.ERROR_PARSING:
                             core_fields = '{}-{}-{}'.format(item.country_code,
@@ -130,7 +134,8 @@ class Command(BaseCommand):
                                 parsed_items.add(core_fields)
                         item.save()
                     else:
-                        logger.info(f'[List Upload] Started Geocode process FLI Id: {item.id}!')
+                        logger.info(f'[List Upload] Started Geocode process!')
+                        logger.info(f'[List Upload] FacilityListItem Id: {item.id}')
                         process(item)
                         item.save()
                         # [A/B Test] OSHUB-507

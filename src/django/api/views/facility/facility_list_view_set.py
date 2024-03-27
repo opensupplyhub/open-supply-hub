@@ -379,7 +379,7 @@ class FacilityListViewSet(ModelViewSet):
                 )
 
         parsing_started = str(timezone.now())
-        log.info('[List Upload] Started Parse process!')
+        log.info('[List Upload] Started CC Parse process!')
         serializer = self.__get_serializer(uploaded_file)
         try:
             rows = serializer.get_validated_rows()
@@ -409,7 +409,7 @@ class FacilityListViewSet(ModelViewSet):
                     replaces=replaces,
                     match_responsibility=contributor.match_responsibility)
         new_list.save()
-        log.info(f'[List Upload] Facility List created Id {new_list.id}!')
+        log.info(f'[List Upload] FacilityList created. Id {new_list.id}!')
 
         create_nonstandard_fields(header_row_keys, contributor)
 
@@ -418,7 +418,7 @@ class FacilityListViewSet(ModelViewSet):
             source_type=Source.LIST,
             facility_list=new_list)
 
-        log.info(f'[List Upload] Source created Id {source.id}!')
+        log.info(f'[List Upload] Source created. Id {source.id}!')
         is_geocoded = False
         parsed_items = set()
         for idx, row in enumerate(rows):
@@ -435,7 +435,7 @@ class FacilityListViewSet(ModelViewSet):
                     address=row.address,
                     clean_address=row.clean_address
                 )
-            log.info(f'[List Upload] FLI created Id {item.id}!')
+            log.info(f'[List Upload] FacilityListItem created. Id {item.id}!')
             try:
                 if (FileHeaderField.LAT in row.fields.keys()
                         and FileHeaderField.LNG in row.fields.keys()):
@@ -451,7 +451,8 @@ class FacilityListViewSet(ModelViewSet):
                     list(row.fields.values())
                 )
             except Exception as e:
-                log.info(f'[List Upload] Creation of EF error: {e}, FLI Id {item.id}')
+                log.info(f'[List Upload] Creation of ExtendedField error: {e}')
+                log.info(f'[List Upload] FacilityListItem Id: {item.id}')
                 item.status = FacilityListItem.ERROR_PARSING
                 item.processing_results.append({
                     'action': ProcessingAction.PARSE,
@@ -468,7 +469,8 @@ class FacilityListViewSet(ModelViewSet):
                 stringified_message = '\n'.join(
                     [f"{error['message']}" for error in row_errors]
                 )
-                log.info(f'[List Upload] Parsing Error: {stringified_message}, FLI Id {item.id}')
+                log.info(f'[List Upload] CC Parsing Error: {stringified_message}')
+                log.info(f'[List Upload] FacilityListItem Id: {item.id}')
                 item.status = FacilityListItem.ERROR_PARSING
                 item.processing_results.append({
                     'action': ProcessingAction.PARSE,
