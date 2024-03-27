@@ -23,3 +23,13 @@ class FileParser(ABC):
             file: Union[InMemoryUploadedFile, TemporaryUploadedFile]
             ) -> List[dict]:
         pass
+
+    @staticmethod
+    def remove_empty_values_from_row_dict(row_dict: dict) -> dict:
+        '''
+        Remove key-value pairs with empty string values from a row dictionary
+        to prevent errors when cells are left empty, which is acceptable for
+        list uploads where not all cells need to be filled with data under
+        one column.
+        '''
+        return {key: value for key, value in row_dict.items() if value != ''}

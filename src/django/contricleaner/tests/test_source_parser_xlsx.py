@@ -48,7 +48,6 @@ class SourceParserXLSXTest(TestCase):
                 'sector_product_type': 'Apparel|Jeans',
                 'facility_type_processing_type': 'Embellishment',
                 'number_of_workers': '1002',
-                'parent_company': '',
                 'percentage_of_male_workers': '2%',
             },
             {
@@ -58,7 +57,6 @@ class SourceParserXLSXTest(TestCase):
                 'sector_product_type': '',
                 'facility_type_processing_type': 'Embossing',
                 'number_of_workers': '1005',
-                'parent_company': '',
                 'percentage_of_male_workers': '3.5%'
             },
             {
@@ -66,7 +64,6 @@ class SourceParserXLSXTest(TestCase):
                 'name': 'Style Haven',
                 'address': '456 Fashion Road, Trendy Town',
                 'sector_product_type': 'Apparel|Jacket',
-                'facility_type_processing_type': '',
                 'number_of_workers': '500',
                 'parent_company': 'Style Super',
                 'percentage_of_male_workers': '100%'
@@ -78,7 +75,6 @@ class SourceParserXLSXTest(TestCase):
                 'sector_product_type': 'Apparel',
                 'facility_type_processing_type': 'Embossing',
                 'number_of_workers': '3002',
-                'parent_company': '',
                 'percentage_of_male_workers': '20%'
             },
         ]

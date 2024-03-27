@@ -1,10 +1,14 @@
-from contricleaner.constants import DEFAULT_SECTOR_NAME, MAX_PRODUCT_TYPE_COUNT
+from typing import List
 
+from contricleaner.constants import (
+    DEFAULT_SECTOR_NAME,
+    MAX_PRODUCT_TYPE_COUNT,
+    VALID_FIELD_VALUE_LENGTHS
+)
 from contricleaner.lib.helpers.is_valid_type import (
     is_valid_type,
 )
 from contricleaner.lib.helpers.split_values import split_values
-
 from contricleaner.lib.sector_cache_interface import SectorCacheInterface
 from .row_serializer import RowSerializer
 
@@ -69,6 +73,17 @@ class RowSectorSerializer(RowSerializer):
         if product_types:
             current['product_type'] = product_types
 
+        if not self.__are_sector_values_valid_length(sectors):
+            current["errors"].append(
+                {
+                    "message": ("There is a problem with the sector values: "
+                                "Ensure that each value has at most 50 "
+                                "characters."),
+                    "type": "ValidationError",
+                }
+            )
+            return current
+
         current['sector'] = sectors
 
         return current
@@ -91,6 +106,12 @@ class RowSectorSerializer(RowSerializer):
         product_types.sort()
 
         return sectors, product_types
+
+    def __are_sector_values_valid_length(self, sectors: List) -> bool:
+        return not any(
+            len(sector) > VALID_FIELD_VALUE_LENGTHS['sector_value']
+            for sector in sectors
+        )
 
     @staticmethod
     def clean_value(value: str) -> str:

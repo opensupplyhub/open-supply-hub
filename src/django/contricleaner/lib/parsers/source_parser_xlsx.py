@@ -46,9 +46,15 @@ class SourceParserXLSX(SourceParser, FileParser):
                 for cell in first_row
             ]
 
-            rows = [dict(zip(header, SourceParserXLSX.__tidy_row(row)))
-                    for row in worksheet_rows
-                    if any(cell.value is not None for cell in row)]
+            rows = []
+            for row in worksheet_rows:
+                if any(cell.value is not None for cell in row):
+                    row_dict = dict(zip(
+                        header, SourceParserXLSX.__tidy_row(row)
+                        ))
+                    rows.append(
+                        FileParser.remove_empty_values_from_row_dict(row_dict)
+                    )
 
             return rows
         except Exception:
