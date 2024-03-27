@@ -1,3 +1,5 @@
+import logging
+
 from typing import List, Tuple, Dict
 from typing_extensions import DefaultDict
 
@@ -19,6 +21,11 @@ from app.matching.matcher.gazeteer.gazetteer_item_match import GazetteerItemMatc
 from app.matching.matcher.gazeteer.gazetteer_match_defaults import GazetteerMatchDefaults
 from app.matching.matcher.gazeteer.gazetteer_helper import normalize_extended_facility_id
 from app.database.sqlalchemy import get_session
+
+# initialize logger
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
+log = logging.getLogger(__name__)
 
 
 class GazetteerMatcher(BaseMatcher):
@@ -46,6 +53,10 @@ class GazetteerMatcher(BaseMatcher):
 
     def process(self, messy: FacilityListItemDict) -> Dict[str, List[MatchDTO]]:
         self.set_start()
+
+        log.info(f'[Matching] Gazetteer match processing started!')
+        log.info(f'[Matching] Messy data: {messy}')
+
         gazetter_matches = self.gazetter_match(messy)
         if isinstance(gazetter_matches, list) and len(gazetter_matches) == 0:
             return gazetter_matches
@@ -72,9 +83,11 @@ class GazetteerMatcher(BaseMatcher):
                 generator=True
             )
         except NoCanonicalRecordsError:
+            log.error('[Matching] Error: No canonical records')
             self.no_gazetteer_matches = True
             return []
         except core.BlockingError as error:
+            log.error(f'[Matching] Blocking Error: {error}')
             self.no_gazetteer_matches = True
             return []
 
@@ -98,6 +111,9 @@ class GazetteerMatcher(BaseMatcher):
                         'facility_id': canon_id, 
                         'score': float(score)
                         })
+
+        log.info(f'[Matching] Gazetteer match processing finished!')
+        log.info(f'[Matching] Gazetteer matches result: {item_matches}')
 
         return item_matches
 

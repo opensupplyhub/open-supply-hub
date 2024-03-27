@@ -1,3 +1,5 @@
+import logging
+
 from typing import Any, Dict, List
 
 from app.database.models.facility_list_item import FacilityListItem
@@ -7,6 +9,11 @@ from app.matching.DTOs.facility_match_dto import FacilityMatchDTO
 from app.matching.matcher.base_matcher import BaseMatcher
 from app.matching.matcher.exact.exact_item_match import ExactItemMatch
 from app.database.sqlalchemy import get_session
+
+# initialize logger
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
+log = logging.getLogger(__name__)
 
 
 class ExactMatcher(BaseMatcher):
@@ -24,11 +31,17 @@ class ExactMatcher(BaseMatcher):
     ) -> Dict[str, List[MatchDTO]]:
         self.set_start()
 
+        log.info(f'[Matching] Exact match processing started!')
+        log.info(f'[Matching] Messy data: {messy}')
+
         matches = {
             messy_id: self.identify_exact_matches(item)
             for messy_id, item in messy.items()
         }
         self.set_finish()
+
+        log.info(f'[Matching] Exact match processing finished!')
+        log.info(f'[Matching] Exact matches result: {matches}')
 
         return matches
 
