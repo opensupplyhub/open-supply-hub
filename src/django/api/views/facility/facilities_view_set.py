@@ -585,7 +585,7 @@ class FacilitiesViewSet(ListModelMixin,
         rows = contri_cleaner.get_validated_rows()
         row = rows[0]
         if row.errors:
-            log.info(f'[API Upload] CC Parsing Errors: {row.errors}')
+            log.error(f'[API Upload] CC Parsing Errors: {row.errors}')
             return Response({
                 "message": "The provided data could not be parsed",
                 "errors": row.errors
@@ -674,7 +674,7 @@ class FacilitiesViewSet(ListModelMixin,
             item.save()
             result['status'] = item.status
             result['message'] = error_message
-            log.info(f'[API Upload] Creation of ExtendedField error: {error_message}')
+            log.error(f'[API Upload] Creation of ExtendedField error: {error_message}')
             log.info(f'[API Upload] FacilityListItem Id: {item.id}')
             return Response(result,
                             status=status.HTTP_400_BAD_REQUEST)
@@ -729,7 +729,7 @@ class FacilitiesViewSet(ListModelMixin,
             })
             item.save()
             result['status'] = item.status
-            log.info(f'[API Upload] Geocode Error: {str(exc)}')
+            log.error(f'[API Upload] Geocode Error: {str(exc)}')
             log.info(f'[API Upload] FacilityListItem Id: {item.id}')
             log.info(f'[API Upload] Address: {row.address}, Country Code: {row.country_code}')
             return Response(result,
