@@ -427,97 +427,55 @@ class FacilityListViewSet(ModelViewSet):
                     source=source,
                 )
 
-            try:
+            row_errors = row.errors
+            if len(row_errors) > 0:
+                stringified_message = '\n'.join(
+                    [f"{error['message']}" for error in row_errors]
+                )
+
+                item.status = FacilityListItem.ERROR_PARSING
+                item.processing_results.append({
+                    'action': ProcessingAction.PARSE,
+                    'started_at': parsing_started,
+                    'error': True,
+                    'message': stringified_message,
+                    'trace': traceback.format_exc(),
+                    'finished_at': str(timezone.now()),
+                })
+
+            if item.status != FacilityListItem.ERROR_PARSING:
                 item.sector = row.sector
                 item.country_code = row.country_code
                 item.name = row.name
                 item.clean_name = row.clean_name
                 item.address = row.address
                 item.clean_address = row.clean_address
-
-                if (FileHeaderField.LAT in row.fields.keys()
-                        and FileHeaderField.LNG in row.fields.keys()):
-                    # TODO: Move floating to the ContriCleaner library.
-                    lat = float(row.fields[FileHeaderField.LAT])
-                    lng = float(row.fields[FileHeaderField.LNG])
-                    item.geocoded_point = Point(lng, lat)
-                    is_geocoded = True
-
-                create_extendedfields_for_listitem(
-                    item,
-                    list(row.fields.keys()),
-                    list(row.fields.values())
-                )
-
                 try:
-                    # TODO: Make this validation inside the ContriCleaner lib.
-                    item.full_clean(exclude=(
-                        'processing_started_at',
-                        'processing_completed_at',
-                        'processing_results',
-                        'geocoded_point',
-                        'facility'))
-                except DjangoCoreValidationError as ve:
-                    messages = []
-                    for name, errors in ve.error_dict.items():
-                        # We need to clear the invalid value so we can save
-                        # the row.
-                        setattr(item, name, '')
-                        error_str = ''.join(
-                            ''.join(e.messages) for e in errors)
-                        messages.append(
-                            'There is a problem with the {0}: {1}'.format(
-                                name,
-                                error_str)
-                        )
+                    if (FileHeaderField.LAT in row.fields.keys()
+                            and FileHeaderField.LNG in row.fields.keys()):
+                        # TODO: Move floating to the ContriCleaner library.
+                        lat = float(row.fields[FileHeaderField.LAT])
+                        lng = float(row.fields[FileHeaderField.LNG])
+                        item.geocoded_point = Point(lng, lat)
+                        is_geocoded = True
 
-                    # If there is a validation error on an array field,
-                    # `full_clean` appears to set it to an empty string
-                    # which then causes `save` to raise an exception.
-                    for field in {'sector'}:
-                        field_is_valid = (
-                            getattr(item, field) is None
-                            or isinstance(getattr(item, field), list))
-                        if not field_is_valid:
-                            setattr(item, field, [])
-
-                    item.status = FacilityListItem.ERROR_PARSING
-                    item.processing_results.append({
-                        'action': ProcessingAction.PARSE,
-                        'started_at': parsing_started,
-                        'error': True,
-                        'message': '\n'.join(messages),
-                        'trace': traceback.format_exc(),
-                        'finished_at': str(timezone.now()),
-                    })
-            except Exception as e:
-                item.status = FacilityListItem.ERROR_PARSING
-                item.processing_results.append({
-                    'action': ProcessingAction.PARSE,
-                    'started_at': parsing_started,
-                    'error': True,
-                    'message': str(e),
-                    'trace': traceback.format_exc(),
-                    'finished_at': str(timezone.now()),
-                })
-
-            if item.status != FacilityListItem.ERROR_PARSING:
-                row_errors = row.errors
-                if len(row_errors) > 0:
-                    stringified_message = '\n'.join(
-                        [f"{error['message']}" for error in row_errors]
+                    create_extendedfields_for_listitem(
+                        item,
+                        list(row.fields.keys()),
+                        list(row.fields.values())
                     )
-
+                except Exception as e:
                     item.status = FacilityListItem.ERROR_PARSING
                     item.processing_results.append({
                         'action': ProcessingAction.PARSE,
                         'started_at': parsing_started,
                         'error': True,
-                        'message': stringified_message,
+                        'message': str(e),
                         'trace': traceback.format_exc(),
                         'finished_at': str(timezone.now()),
                     })
-                else:
+
+                if item.status != FacilityListItem.ERROR_PARSING:
                     item.status = FacilityListItem.PARSED
                     item.processing_results.append({
                         'action': ProcessingAction.PARSE,
@@ -527,14 +485,13 @@ class FacilityListViewSet(ModelViewSet):
                         'is_geocoded': is_geocoded,
                     })
 
-            if item.status != FacilityListItem.ERROR_PARSING:
-                core_fields = '{}-{}-{}'.format(item.country_code,
-                                                item.clean_name,
-                                                item.clean_address)
-                if core_fields in parsed_items:
-                    item.status = FacilityListItem.DUPLICATE
-                else:
-                    parsed_items.add(core_fields)
+                    core_fields = '{}-{}-{}'.format(item.country_code,
+                                                    item.clean_name,
+                                                    item.clean_address)
+                    if core_fields in parsed_items:
+                        item.status = FacilityListItem.DUPLICATE
+                    else:
+                        parsed_items.add(core_fields)
 
             item.save()
 

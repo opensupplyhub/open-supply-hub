@@ -119,7 +119,9 @@ const FacilityListItemsErrorTableRow = memo(
                         <>
                             <b>Errors</b>
                             <br />
-                            <div style={{ color: 'red' }}>{errors}</div>
+                            <div style={listTableCellStyles.errorTextStyles}>
+                                {errors}
+                            </div>
                         </>
                     ) : (
                         ''
