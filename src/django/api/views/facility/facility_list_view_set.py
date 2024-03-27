@@ -391,7 +391,7 @@ class FacilityListViewSet(ModelViewSet):
             raise ValidationError(str(err.detail[0]))
 
         if not self.__is_required_fields_present(rows):
-            log.error(f'[List Upload] Required Field Missing Error')
+            log.error('[List Upload] Required Field Missing Error')
             raise ValidationError((
                     f'Header must contain {FileHeaderField.COUNTRY}, '
                     f'{FileHeaderField.NAME}, and '
@@ -451,7 +451,9 @@ class FacilityListViewSet(ModelViewSet):
                     list(row.fields.values())
                 )
             except Exception as e:
-                log.error(f'[List Upload] Creation of ExtendedField error: {e}')
+                log.error(
+                    f'[List Upload] Creation of ExtendedField error: {e}'
+                )
                 log.info(f'[List Upload] FacilityListItem Id: {item.id}')
                 item.status = FacilityListItem.ERROR_PARSING
                 item.processing_results.append({
@@ -469,7 +471,9 @@ class FacilityListViewSet(ModelViewSet):
                 stringified_message = '\n'.join(
                     [f"{error['message']}" for error in row_errors]
                 )
-                log.error(f'[List Upload] CC Parsing Error: {stringified_message}')
+                log.error(
+                    f'[List Upload] CC Parsing Error: {stringified_message}'
+                )
                 log.info(f'[List Upload] FacilityListItem Id: {item.id}')
                 item.status = FacilityListItem.ERROR_PARSING
                 item.processing_results.append({

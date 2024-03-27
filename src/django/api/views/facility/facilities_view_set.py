@@ -674,14 +674,20 @@ class FacilitiesViewSet(ListModelMixin,
             item.save()
             result['status'] = item.status
             result['message'] = error_message
-            log.error(f'[API Upload] Creation of ExtendedField error: {error_message}')
+            log.error(
+                f'[API Upload] Creation of ExtendedField error: {error_message}'
+            )
             log.info(f'[API Upload] FacilityListItem Id: {item.id}')
             return Response(result,
                             status=status.HTTP_400_BAD_REQUEST)
 
         geocode_started = str(timezone.now())
-        log.info(f'[API Upload] Started Geocode process. FacilityListItem Id: {item.id}.')
-        log.info(f'[API Upload] Address: {row.address}, Country Code: {row.country_code}')
+        log.info(
+            f'[API Upload] Started Geocode process. FacilityListItem Id: {item.id}.'
+        )
+        log.info(
+            f'[API Upload] Address: {row.address}, Country Code: {row.country_code}'
+        )
         try:
             geocode_result = geocode_address(row.address, row.country_code)
             if geocode_result['result_count'] > 0:
@@ -736,7 +742,7 @@ class FacilitiesViewSet(ListModelMixin,
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if item.status == FacilityListItem.GEOCODED:
-            log.info(f'[API Upload] Trying to start Match process!')
+            log.info('[API Upload] Trying to start Match process!')
             log.info(f'[API Upload] FacilityListItem Id: {item.id}')
             log.info(f'[API Upload] Source Id: {item.id}')
             # Handle and produce message to Kafka with source_id data
@@ -750,9 +756,11 @@ class FacilitiesViewSet(ListModelMixin,
                     source=source.id
                 )
                 if fli_temp.status == FacilityListItemTemp.GEOCODED:
-                    log.info(f'[API Upload] Started Match process!')
+                    log.info('[API Upload] Started Match process!')
                     log.info(f'[API Upload] FacilityListItem Id: {item.id}')
-                    log.info(f'[API Upload] FacilityListItemTemp Id: {fli_temp.id}')
+                    log.info(
+                        f'[API Upload] FacilityListItemTemp Id: {fli_temp.id}'
+                    )
                     log.info(f'[API Upload] Source Id: {item.id}')
                     asyncio.run(produce_message_match_process(source.id))
                     break
@@ -769,7 +777,7 @@ class FacilitiesViewSet(ListModelMixin,
 
         errors_status = [FacilityListItem.ERROR_MATCHING,
                          FacilityListItem.GEOCODED_NO_RESULTS]
-        
+
         log.info(f'[API Upload] Result data: {result}')
         log.info(f'[API Upload] FacilityListItem Id: {item.id}')
         log.info(f'[API Upload] FacilityListItemTemp Id: {fli_temp.id}')
