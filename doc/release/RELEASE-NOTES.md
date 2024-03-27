@@ -26,7 +26,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe bugfix here.*
 
 ### What's new
-* [OSDEV-962](https://opensupplyhub.atlassian.net/browse/OSDEV-962) Update Release protocol. The Release protocol has been updated after automatization manual processes such as creating release branch, restore DB, deploy to AWS.
+* [OSDEV-962](https://opensupplyhub.atlassian.net/browse/OSDEV-962) Update Release protocol. The Release protocol has been updated after the automatization of manual processes such as creating a release branch, restoring DB, deploy to AWS.
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
 
 ### Release instructions:
