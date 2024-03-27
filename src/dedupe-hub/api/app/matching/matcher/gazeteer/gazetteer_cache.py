@@ -273,7 +273,7 @@ class GazetteerCache:
             try_reporting_error_to_rollbar(extra_data={
                 'last_successful_facility_version': cls._facility_version,
                 'last_successful_match_version': cls._match_version
-            }, exception=e)
-            raise
+            })
+            raise e
 
         return cls._gazetter
