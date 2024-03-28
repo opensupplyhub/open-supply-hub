@@ -131,9 +131,11 @@ async def send_consumer_message(consumer):
 
 async def handle(value):
     value = json.loads(value.decode("utf-8"))
+    log.info(f'[Matching] Source Id: {value}')
     try:
+        log.info(f'[Matching] Start processing!')
         result = matcher(value)
-        log.info(f'Matcher result: {result}')
+        log.info(f'[Matching] Result: {result}')
     except Exception as error:
-        print('ERROR: {}'.format(error))
+        log.error(f'[Matching] Error: {error}')
     return
