@@ -1,5 +1,5 @@
 locals {
- database_anonymizer_image = "${module.ecr_repository_database_anonymizer.repository_url}:${var.database_anonymizer_image_tag}"
+  database_anonymizer_image = "${module.ecr_repository_database_anonymizer.repository_url}:${var.database_anonymizer_image_tag}"
 }
 
 resource "aws_cloudwatch_log_group" "database_anonymizer" {
@@ -17,72 +17,80 @@ data "aws_iam_policy_document" "database_anonymizer_worker" {
 }
 
 module "database_anonymizer_cluster" {
-  source  = "git::git@github.com:cn-terraform/terraform-aws-ecs-cluster.git?ref=1.0.11"
-  name    = join("-", [local.short, "DatabaseAnonymizer"])
+  source = "git::git@github.com:cn-terraform/terraform-aws-ecs-cluster.git?ref=1.0.11"
+  name   = join("-", [local.short, "DatabaseAnonymizer"])
 }
 
 module "database_anonymizer_task_definition" {
-  source                 = "git@github.com:cn-terraform/terraform-aws-ecs-fargate-task-definition.git?ref=1.0.36"
-  name_prefix            = "database-anonymizer"
-  container_image        = local.database_anonymizer_image
-  container_name         = "database-anonymizer"
+  source          = "git@github.com:cn-terraform/terraform-aws-ecs-fargate-task-definition.git?ref=1.0.36"
+  name_prefix     = "database-anonymizer"
+  container_image = local.database_anonymizer_image
+  container_name  = "database-anonymizer"
 
   ecs_task_execution_role_custom_policies = [
     data.aws_iam_policy_document.database_anonymizer_worker.json
   ]
 
   environment = [
-      {
-          name: "SOURCE_DATABASE_IDENTIFIER"
-          value: var.rds_database_identifier
-      },
-      {
-          name: "SOURCE_DATABASE_PASSWORD"
-          value: var.rds_database_password
-      },
-      {
-          name: "SOURCE_DATABASE_USER"
-          value: var.rds_database_username
-      },
-      {
-          name: "SOURCE_DATABASE_NAME"
-          value: var.rds_database_name
-      },
-      {
-          name: "DESTINATION_AWS_ACCOUNT"
-          value: var.destination_aws_account
-      },
-      {
-          name: "ANONYMIZER_DATABASE_IDENTIFIER"
-          value: var.anonymizer_db_identifier
-      },
-      {
-          name : "ANONYMIZER_DATABASE_INSTANCE_TYPE"
-          value : var.rds_instance_type
-      },
-      {
-          name : "DATABASE_SUBNET_GROUP_NAME"
-          value : var.database_subnet_group_name
-      },
-      {
-          name : "DATABASE_SECURITY_GROUP_IDS"
-          value : var.database_security_group_ids
-      }
+    {
+      name : "SOURCE_DATABASE_IDENTIFIER"
+      value : var.rds_database_identifier
+    },
+    {
+      name : "SOURCE_DATABASE_PASSWORD"
+      value : var.rds_database_password
+    },
+    {
+      name : "SOURCE_DATABASE_USER"
+      value : var.rds_database_username
+    },
+    {
+      name : "SOURCE_DATABASE_NAME"
+      value : var.rds_database_name
+    },
+    {
+      name : "DESTINATION_AWS_ACCOUNT"
+      value : var.destination_aws_account
+    },
+    {
+      name : "ANONYMIZER_DATABASE_IDENTIFIER"
+      value : var.anonymizer_db_identifier
+    },
+    {
+      name : "ANONYMIZER_DATABASE_INSTANCE_TYPE"
+      value : var.rds_instance_type
+    },
+    {
+      name : "DATABASE_SUBNET_GROUP_NAME"
+      value : var.database_subnet_group_name
+    },
+    {
+      name : "DATABASE_SECURITY_GROUP_IDS"
+      value : var.database_security_group_ids
+    },
+    {
+      name : "KMS_KEY"
+      value : module.rds-kms.key_id
+    },
+    {
+      name : "AWS_REGION"
+      value : var.aws_region
+    }
   ]
 
-#  secrets = [
-#    {
-#       valueFrom: "arn:aws:ssm:eu-west-1:343975343274:parameter/test",
-#       name: "TEST"
-#    },
-#  ]
+  #  secrets = [
+  #    {
+  #       valueFrom: "arn:aws:ssm:eu-west-1:343975343274:parameter/test",
+  #       name: "TEST"
+  #    },
+  #  ]
 
   log_configuration = {
-    logDriver: "awslogs",
-    options: {
-      "awslogs-group": aws_cloudwatch_log_group.database_anonymizer.name,
-      "awslogs-region": var.aws_region,
-      "awslogs-stream-prefix": "database-anonymizer"
+    logDriver : "awslogs",
+    options : {
+      "awslogs-group" : aws_cloudwatch_log_group.database_anonymizer.name,
+      "awslogs-region" : var.aws_region,
+      "awslogs-stream-prefix" : "database-anonymizer"
     }
   }
 }
@@ -103,6 +111,6 @@ module "database_anonymizer_task" {
 module "ecr_repository_database_anonymizer" {
   source = "github.com/azavea/terraform-aws-ecr-repository?ref=1.0.0"
 
-  repository_name =  "${lower(replace(var.project, " ", ""))}-database-anonymizer-${lower(var.environment)}"
+  repository_name         = "${lower(replace(var.project, " ", ""))}-database-anonymizer-${lower(var.environment)}"
   attach_lifecycle_policy = true
 }

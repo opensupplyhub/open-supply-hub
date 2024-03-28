@@ -27,25 +27,25 @@ variable "environment" {
 }
 
 variable "database_anonymizer_image_tag" {
-    type = string
-    default = "latest"
+  type    = string
+  default = "latest"
 }
 
 variable "aws_region" {
-    type = string
-    default = "eu-west-1"
+  type    = string
+  default = "eu-west-1"
 }
 
 variable "subnet_ids" {
-    type = list(string)
+  type = list(string)
 }
 
 variable "security_group_ids" {
-    type = list(string)
+  type = list(string)
 }
 
 variable "schedule_expression" {
-    type = string
+  type = string
 }
 
 variable "rds_instance_type" {
@@ -58,4 +58,9 @@ variable "database_subnet_group_name" {
 
 variable "database_security_group_ids" {
   type = string
+}
+
+variable "kms_key_admin_users" {
+  type    = list(any)
+  default = []
 }

@@ -13,6 +13,8 @@ try:
     temporary_db_instance_size = os.environ['ANONYMIZER_DATABASE_INSTANCE_TYPE']
     temporary_db_subnet_group_name = os.environ['DATABASE_SUBNET_GROUP_NAME']
     temporary_db_security_group_ids = os.environ['DATABASE_SECURITY_GROUP_IDS']
+    kms_key = os.environ['KMS_KEY']
+    aws_region = os.environ['AWS_REGION']
 except:
     print("An exception occurred")
     exit(1)
@@ -93,9 +95,22 @@ waiters = source.get_waiter('db_snapshot_completed')
 waiters.wait(DBSnapshotIdentifier=anonymized_snapshot_identifier)
 print('Database deleted successfully!')
 
-print("Share snapshot " + anonymized_snapshot_identifier + " with " + destination_aws_account + " AWS account")
+shared_snapshot_identifier = anonymized_snapshot_identifier + "-shared"
+response = source.copy_db_snapshot(
+    SourceDBSnapshotIdentifier=anonymized_snapshot_identifier,
+    TargetDBSnapshotIdentifier=shared_snapshot_identifier,
+    KmsKeyId=kms_key,
+    CopyTags=True,
+    CopyOptionGroup=False,
+    SourceRegion=aws_region
+)
+
+waiters = source.get_waiter('db_snapshot_completed')
+waiters.wait(DBSnapshotIdentifier=shared_snapshot_identifier)
+
+print("Share snapshot " + shared_snapshot_identifier + " with " + destination_aws_account + " AWS account")
 source.modify_db_snapshot_attribute(
-    DBSnapshotIdentifier=anonymized_snapshot_identifier,
+    DBSnapshotIdentifier=shared_snapshot_identifier,
     AttributeName='restore',
     ValuesToAdd=[
         destination_aws_account
