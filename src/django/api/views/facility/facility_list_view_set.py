@@ -2,9 +2,8 @@ import csv
 import operator
 import os
 import traceback
-import re
 from functools import reduce
-from typing import Union, List
+from typing import Union
 
 from api.helpers.helpers import (
     get_raw_json,
@@ -146,31 +145,6 @@ class FacilityListViewSet(ModelViewSet):
                 'submit Excel or UTF-8 CSV.'
             )
         return serializer
-
-    @staticmethod
-    def __is_required_fields_present(rows: List[dict]) -> bool:
-        is_valid = True
-        if (len(rows) > 0):
-            required_fields_pattern = (r"^(country|address|name)"
-                                       r"(,\s*(country|address|name))"
-                                       r"*(\s+are\s+missing)$")
-
-            for row in rows:
-                error_messages = row.errors
-                if len(error_messages) > 0:
-                    for error_message in error_messages:
-                        is_valid = not bool(
-                            re.match(
-                                required_fields_pattern,
-                                error_message['message']
-                            ))
-                        if is_valid:
-                            return is_valid
-                else:
-                    return is_valid
-            return not is_valid
-        else:
-            return not is_valid
 
     @transaction.atomic
     def create(self, request):
@@ -398,30 +372,21 @@ class FacilityListViewSet(ModelViewSet):
                                     exception=err)
             raise ValidationError(str(err.detail[0]))
 
-        if not self.__is_required_fields_present(rows):
-            raise ValidationError((
-                    f'Header must contain {FileHeaderField.COUNTRY}, '
-                    f'{FileHeaderField.NAME}, and '
-                    f'{FileHeaderField.ADDRESS} fields.'
-                ))
+        header, _ = self._extract_header_rows(uploaded_file, request)
 
-        header_str = ''
-        for row in rows:
-            if row.raw_json:
-                header_row_keys = row.raw_json.keys()
-                header_str = ','.join(header_row_keys)
-                break
         new_list = FacilityList(
                     name=name,
                     description=description,
                     file_name=uploaded_file.name,
                     file=uploaded_file,
-                    header=header_str,
+                    header=header,
                     replaces=replaces,
                     match_responsibility=contributor.match_responsibility)
         new_list.save()
 
-        create_nonstandard_fields(header_row_keys, contributor)
+        csvreader = csv.reader(header.split('\n'), delimiter=',')
+        for row in csvreader:
+            create_nonstandard_fields(row, contributor)
 
         source = Source.objects.create(
             contributor=contributor,
@@ -438,7 +403,7 @@ class FacilityListViewSet(ModelViewSet):
                     row_index=idx,
                     raw_data=','.join(row.raw_json.values()),
                     raw_json=row.raw_json,
-                    raw_header=header_str,
+                    raw_header=','.join(row.raw_json.keys()),
                     sector=[],
                     source=source,
                 )
