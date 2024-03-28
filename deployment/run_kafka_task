@@ -19,3 +19,8 @@ echo "Task ARN: $task_arn"
 aws ecs wait tasks-stopped --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn}
 
 aws ecs describe-tasks --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn}
+
+id=$(echo $task_arn | awk -F'/' '{print $NF}')
+echo "Log Stream ID: $id"
+
+aws logs get-log-events --log-group-name "logOpenSupplyHub${1}AppKafka" --log-stream-name "management/kafka-topics/$id" --query 'events[*].[message]' --output text
