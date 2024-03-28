@@ -50,6 +50,8 @@ src/django/*.xlsx
 # VSCode
 .vscode
 
+# PyCharm
+.idea/
 
 # OS Hub
 .env
