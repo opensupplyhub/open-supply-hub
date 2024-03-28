@@ -54,7 +54,7 @@ class GazetteerMatcher(BaseMatcher):
     def process(self, messy: FacilityListItemDict) -> Dict[str, List[MatchDTO]]:
         self.set_start()
 
-        log.info(f'[Matching] Gazetteer match processing started!')
+        log.info('[Matching] Gazetteer match processing started!')
         log.info(f'[Matching] Messy data: {messy}')
 
         gazetter_matches = self.gazetter_match(messy)
@@ -112,7 +112,7 @@ class GazetteerMatcher(BaseMatcher):
                         'score': float(score)
                         })
 
-        log.info(f'[Matching] Gazetteer match processing finished!')
+        log.info('[Matching] Gazetteer match processing finished!')
         log.info(f'[Matching] Gazetteer matches result: {item_matches}')
 
         return item_matches

@@ -31,7 +31,7 @@ class ExactMatcher(BaseMatcher):
     ) -> Dict[str, List[MatchDTO]]:
         self.set_start()
 
-        log.info(f'[Matching] Exact match processing started!')
+        log.info('[Matching] Exact match processing started!')
         log.info(f'[Matching] Messy data: {messy}')
 
         matches = {
@@ -40,7 +40,7 @@ class ExactMatcher(BaseMatcher):
         }
         self.set_finish()
 
-        log.info(f'[Matching] Exact match processing finished!')
+        log.info('[Matching] Exact match processing finished!')
         log.info(f'[Matching] Exact matches result: {matches}')
 
         return matches
