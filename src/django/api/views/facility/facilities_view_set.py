@@ -784,7 +784,9 @@ class FacilitiesViewSet(ListModelMixin,
 
         log.info(f'[API Upload] Result data: {result}')
         log.info(f'[API Upload] FacilityListItem Id: {item.id}')
-        log.info(f'[API Upload] FacilityListItemTemp Id: {fli_temp.id or None}')
+        log.info(
+            f'[API Upload] FacilityListItemTemp Id: {fli_temp.id or None}'
+        )
         log.info(f'[API Upload] Source Id: {item.id}')
 
         if (should_create
