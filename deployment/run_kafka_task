@@ -3,9 +3,10 @@
 vpc_id="$(aws ec2 describe-vpcs  --filters=Name=tag:Name,Values=vpcOpenSupplyHub$1 --query 'Vpcs[].VpcId' --output text)"
 echo "VPC ID: $vpc_id"
 
-security_group="$(aws ec2 describe-security-groups --filters "Name=vpc-id,Values=$vpc_id" "Name=tag:Name,Values=sgMSKCluster" --query 'SecurityGroups[].GroupId' --output text)"
+security_groups="$(aws ec2 describe-security-groups --filters "Name=vpc-id,Values=$vpc_id" "Name=tag:Name,Values=sgAppEcsService" --query 'SecurityGroups[*].GroupId' --output text | sed 's/\t/,/g')"
 
-echo "Security Group: $security_group"
+echo "Security Group: $security_groups"
+
 
 subnet_id="$(aws ec2 describe-subnets --filters=Name=vpc-id,Values=$vpc_id --query 'Subnets[].SubnetId' --output text | awk '{print $1}')"
 echo "Subnet ID: $subnet_id"
@@ -13,15 +14,19 @@ echo "Subnet ID: $subnet_id"
 revision="$(aws ecs describe-task-definition --task-definition OpenSupplyHub${1}AppKafka --query 'taskDefinition.revision' --output text)"
 echo "Revision: $revision"
 
-task_arn="$(aws ecs run-task  --cluster ecsOpenSupplyHub${1}Cluster --task-definition OpenSupplyHub${1}AppKafka:${revision} --launch-type="FARGATE"  --network-configuration "awsvpcConfiguration={ assignPublicIp="ENABLED", securityGroups=["$security_group"], subnets=["$subnet_id"]}" | jq -r '.tasks[0].taskArn')"
+task_arn="$(aws ecs run-task  --cluster ecsOpenSupplyHub${1}Cluster --task-definition OpenSupplyHub${1}AppKafka:${revision} --launch-type="FARGATE"  --network-configuration "awsvpcConfiguration={ assignPublicIp="ENABLED", securityGroups=["$security_groups"], subnets=["$subnet_id"]}" --query 'tasks[0].taskArn' --output text)"
 echo "Task ARN: $task_arn"
+id=$(echo $task_arn | awk -F'/' '{print $NF}')
+echo "Log Stream ID: $id"
+
+
+echo "Task URL: https://eu-west-1.console.aws.amazon.com/ecs/v2/clusters/ecsOpenSupplyHub${1}Cluster/tasks/$id"
 
 aws ecs wait tasks-stopped --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn}
 
 echo "Task stopped reason:"
 aws ecs describe-tasks --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn} --query 'tasks[0].[stoppedReason]'
 
-id=$(echo $task_arn | awk -F'/' '{print $NF}')
 echo "Log Stream ID: $id"
 echo "----- Log Stream -----"
 echo ""
