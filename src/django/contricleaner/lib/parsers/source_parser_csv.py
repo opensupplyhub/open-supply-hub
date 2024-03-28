@@ -37,7 +37,10 @@ class SourceParserCSV(SourceParser, FileParser):
                     raise ValidationError('Unsupported file encoding. Please '
                                           'submit a UTF-8 CSV.')
                 bare_row = SourceParserCSV.__parse_csv_line(decoded_row)
-                rows.append(dict(zip(header, bare_row)))
+                row_dict = dict(zip(header, bare_row))
+                rows.append(
+                    FileParser.remove_empty_values_from_row_dict(row_dict)
+                )
 
         return rows
 

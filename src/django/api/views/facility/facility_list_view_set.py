@@ -29,6 +29,7 @@ from django.db import transaction
 from django.db.models import F, Q
 from django.utils import timezone
 from django.contrib.gis.geos import Point
+from django.core.exceptions import ValidationError as DjangoCoreValidationError
 
 from ...aws_batch import submit_jobs, submit_parse_job
 from api.constants import (
@@ -62,7 +63,7 @@ from ...serializers import (
     FacilityListItemsQueryParamsSerializer,
 )
 from api.extended_fields import (
-    create_extendedfields_for_listitem
+    create_extendedfields_for_single_item
 )
 from ..fields.create_nonstandard_fields import create_nonstandard_fields
 from contricleaner.lib.serializers.contri_cleaner_serializer import (
@@ -148,16 +149,28 @@ class FacilityListViewSet(ModelViewSet):
 
     @staticmethod
     def __is_required_fields_present(rows: List[dict]) -> bool:
+        is_valid = True
         if (len(rows) > 0):
             required_fields_pattern = (r"^(country|address|name)"
                                        r"(,\s*(country|address|name))"
                                        r"*(\s+are\s+missing)$")
-            if len(rows[0].errors) > 0:
-                error_message = rows[0].errors[0]['message']
-                return not bool(
-                    re.match(required_fields_pattern, error_message))
-            return True
-        return False
+
+            for row in rows:
+                error_messages = row.errors
+                if len(error_messages) > 0:
+                    for error_message in error_messages:
+                        is_valid = not bool(
+                            re.match(
+                                required_fields_pattern,
+                                error_message['message']
+                            ))
+                        if is_valid:
+                            return is_valid
+                else:
+                    return is_valid
+            return not is_valid
+        else:
+            return not is_valid
 
     @transaction.atomic
     def create(self, request):
@@ -392,8 +405,12 @@ class FacilityListViewSet(ModelViewSet):
                     f'{FileHeaderField.ADDRESS} fields.'
                 ))
 
-        header_row_keys = rows[0].raw_json.keys()
-        header_str = ','.join(header_row_keys)
+        header_str = ''
+        for row in rows:
+            if row.raw_json:
+                header_row_keys = row.raw_json.keys()
+                header_str = ','.join(header_row_keys)
+                break
         new_list = FacilityList(
                     name=name,
                     description=description,
@@ -414,62 +431,107 @@ class FacilityListViewSet(ModelViewSet):
         is_geocoded = False
         parsed_items = set()
         for idx, row in enumerate(rows):
+            # Created a partially filled FacilityListItem for the
+            # create_extendedfields_for_listitem method, as this method
+            # necessitates a row already saved in the database.
             item = FacilityListItem.objects.create(
                     row_index=idx,
                     raw_data=','.join(row.raw_json.values()),
                     raw_json=row.raw_json,
                     raw_header=header_str,
-                    sector=row.sector,
+                    sector=[],
                     source=source,
-                    country_code=row.country_code,
-                    name=row.name,
-                    clean_name=row.clean_name,
-                    address=row.address,
-                    clean_address=row.clean_address
                 )
-            try:
-                if (FileHeaderField.LAT in row.fields.keys()
-                        and FileHeaderField.LNG in row.fields.keys()):
-                    # TODO: Move floating to the ContriCleaner library.
-                    lat = float(row.fields[FileHeaderField.LAT])
-                    lng = float(row.fields[FileHeaderField.LNG])
-                    item.geocoded_point = Point(lng, lat)
-                    is_geocoded = True
-
-                create_extendedfields_for_listitem(
-                    item,
-                    list(row.fields.keys()),
-                    list(row.fields.values())
-                )
-            except Exception as e:
-                item.status = FacilityListItem.ERROR_PARSING
-                item.processing_results.append({
-                    'action': ProcessingAction.PARSE,
-                    'started_at': parsing_started,
-                    'error': True,
-                    'message': str(e),
-                    'trace': traceback.format_exc(),
-                    'finished_at': str(timezone.now()),
-                    'is_geocoded': is_geocoded,
-                })
 
             row_errors = row.errors
+            stringified_cc_err_messages = ''
             if len(row_errors) > 0:
-                stringified_message = '\n'.join(
+                stringified_cc_err_messages = '\n'.join(
                     [f"{error['message']}" for error in row_errors]
                 )
-
                 item.status = FacilityListItem.ERROR_PARSING
                 item.processing_results.append({
                     'action': ProcessingAction.PARSE,
                     'started_at': parsing_started,
                     'error': True,
-                    'message': stringified_message,
+                    'message': stringified_cc_err_messages,
                     'trace': traceback.format_exc(),
                     'finished_at': str(timezone.now()),
-                    'is_geocoded': is_geocoded,
                 })
-            else:
+
+            if item.status != FacilityListItem.ERROR_PARSING:
+                try:
+                    item.sector = row.sector
+                    item.country_code = row.country_code
+                    item.name = row.name
+                    item.clean_name = row.clean_name
+                    item.address = row.address
+                    item.clean_address = row.clean_address
+
+                    if (FileHeaderField.LAT in row.fields.keys()
+                            and FileHeaderField.LNG in row.fields.keys()):
+                        # TODO: Move floating to the ContriCleaner library.
+                        lat = float(row.fields[FileHeaderField.LAT])
+                        lng = float(row.fields[FileHeaderField.LNG])
+                        item.geocoded_point = Point(lng, lat)
+                        is_geocoded = True
+
+                    create_extendedfields_for_single_item(item, row.fields)
+
+                    try:
+                        # TODO: Make this validation inside the ContriCleaner
+                        #       lib.
+                        item.full_clean(exclude=(
+                            'processing_started_at',
+                            'processing_completed_at',
+                            'processing_results',
+                            'geocoded_point',
+                            'facility'))
+                    except DjangoCoreValidationError as ve:
+                        messages = []
+                        for name, errors in ve.error_dict.items():
+                            # We need to clear the invalid value so we can save
+                            # the row.
+                            setattr(item, name, '')
+                            error_str = ''.join(
+                                ''.join(e.messages) for e in errors)
+                            messages.append(
+                                'There is a problem with the {0}: {1}'.format(
+                                    name,
+                                    error_str)
+                            )
+
+                        # If there is a validation error on an array field,
+                        # `full_clean` appears to set it to an empty string
+                        # which then causes `save` to raise an exception.
+                        for field in {'sector'}:
+                            field_is_valid = (
+                                getattr(item, field) is None
+                                or isinstance(getattr(item, field), list))
+                            if not field_is_valid:
+                                setattr(item, field, [])
+
+                        item.status = FacilityListItem.ERROR_PARSING
+                        item.processing_results.append({
+                            'action': ProcessingAction.PARSE,
+                            'started_at': parsing_started,
+                            'error': True,
+                            'message': '\n'.join(messages),
+                            'trace': traceback.format_exc(),
+                            'finished_at': str(timezone.now()),
+                        })
+                except Exception as e:
+                    item.status = FacilityListItem.ERROR_PARSING
+                    item.processing_results.append({
+                        'action': ProcessingAction.PARSE,
+                        'started_at': parsing_started,
+                        'error': True,
+                        'message': str(e),
+                        'trace': traceback.format_exc(),
+                        'finished_at': str(timezone.now()),
+                    })
+
+            if item.status != FacilityListItem.ERROR_PARSING:
                 item.status = FacilityListItem.PARSED
                 item.processing_results.append({
                     'action': ProcessingAction.PARSE,
@@ -479,7 +541,6 @@ class FacilityListViewSet(ModelViewSet):
                     'is_geocoded': is_geocoded,
                 })
 
-            if item.status != FacilityListItem.ERROR_PARSING:
                 core_fields = '{}-{}-{}'.format(item.country_code,
                                                 item.clean_name,
                                                 item.clean_address)

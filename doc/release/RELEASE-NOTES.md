@@ -3,6 +3,21 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+
+## Release 1.10.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: March 29, 2024
+
+### Bugfix
+* [OSDEV-979](https://opensupplyhub.atlassian.net/browse/OSDEV-979) - Add handling of constraints for the FacilityListItem model while parsing the list with the enabled ContriCleaner library. Update the functionality that retrieves the table header and checks for required fields.
+* [OSDEV-976](https://opensupplyhub.atlassian.net/browse/OSDEV-976) - Remove passing exceptions to try_reporting_error_to_rollbar.
+
+### Release instructions:
+* Update code.
+
+
 ## Release 1.10.0
 
 ## Introduction
