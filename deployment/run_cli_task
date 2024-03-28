@@ -23,7 +23,7 @@ aws ecs wait tasks-stopped --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_
 
 aws ecs describe-tasks --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn} --query 'tasks[0].[taskArn,stoppedReason]'
 
-id=$(echo $task_arn | awk -F'/' '{print $2}')
+id=$(echo $arn | awk -F'/' '{print $NF}')
 echo "Log Stream ID: $id"
 
 aws logs get-log-events --log-group-name "logOpenSupplyHub${1}AppCLI" --log-stream-name "management/django/$id" --query 'events[*].[message]' --output text
