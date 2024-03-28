@@ -11,6 +11,10 @@ class MockSectorCache(SectorCacheInterface):
             'technology': 'Technology',
             'healthcare': 'Healthcare',
             'finance': 'Finance',
+            "professional, scientific and technical activities":
+                "Professional, Scientific and Technical Activities",
+            "environmental, social and corporate governance":
+                "Environmental, Social and Corporate Governance",
         }
 
     @property

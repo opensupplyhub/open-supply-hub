@@ -1,4 +1,5 @@
 from typing import Union
+from contricleaner.constants import FACILITY_TYPES_WITH_COMMA
 from contricleaner.lib.helpers.is_valid_type import (
     is_valid_type,
 )
@@ -69,5 +70,9 @@ class RowFacilityTypeSerializer(RowSerializer):
     def create_values(self, value: Union[str, list, set]) -> dict:
         return {
             'raw_values': value,
-            'processed_values': split_values(value, self.split_pattern),
+            'processed_values': split_values(
+                value,
+                self.split_pattern,
+                FACILITY_TYPES_WITH_COMMA
+            ),
         }

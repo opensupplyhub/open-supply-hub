@@ -50,7 +50,13 @@ class RowSectorSerializer(RowSerializer):
             current["errors"].extend(sector_errors)
             return current
 
-        splitted_values = split_values(values, self.split_pattern)
+        sectors_with_comma = self.get_sectors_with_comma()
+
+        splitted_values = split_values(
+            values,
+            self.split_pattern,
+            sectors_with_comma
+        )
 
         sectors, product_types = self.parse_all_values(splitted_values)
 
@@ -72,6 +78,13 @@ class RowSectorSerializer(RowSerializer):
         current['sector'] = sectors
 
         return current
+
+    def get_sectors_with_comma(self):
+        sectors = []
+        for sector in self.sector_cache.sector_map.values():
+            if ',' in sector:
+                sectors.append(sector)
+        return sectors
 
     def parse_all_values(self, all_values):
         sector_map = self.sector_cache.sector_map
