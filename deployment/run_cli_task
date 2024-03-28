@@ -23,5 +23,6 @@ aws ecs wait tasks-stopped --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_
 
 aws ecs describe-tasks --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn} --query 'tasks[0].[taskArn,stoppedReason]' --output text
 
-aws logs get-log-events --log-group-name "/ecs/OpenSupplyHub${1}AppCLI" --log-stream-name "$task_arn" --query 'events[*].[message]' --output text
+id=$(echo $task_arn | awk -F'/' '{print $2}')
+aws logs get-log-events --log-group-name "/ecs/OpenSupplyHub${1}AppCLI" --log-stream-name "tasks/$id" --query 'events[*].[message]' --output text
 
