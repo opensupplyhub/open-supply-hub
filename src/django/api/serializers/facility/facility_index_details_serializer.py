@@ -190,26 +190,29 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
     def get_activity_reports(self, facility):
         return [
             {
-                'facility': item['facility'] or None,
-                'reported_by_contributor': (
-                    item['reported_by_contributor'] or None
+                'facility': item.get('facility'),
+                'reported_by_contributor': item.get('reported_by_contributor'),
+                'closure_state': item.get('closure_state'),
+                'approved_at': (
+                    format_date(item.get('approved_at'))
+                    if item.get('approved_at')
+                    else None
                 ),
-                'closure_state': item['closure_state'] or None,
-                'approved_at': format_date(item['approved_at']) or None,
-                'status_change_reason': item['status_change_reason'] or None,
-                'status': item['status'] or None,
-                'status_change_by': item['status_change_by'] or None,
+                'status_change_reason': item.get('status_change_reason'),
+                'status': item.get('status'),
+                'status_change_by': item.get('status_change_by'),
                 'status_change_date': (
-                    format_date(item['status_change_date']) or None
+                    format_date(item.get('status_change_date'))
+                    if item.get('status_change_date')
+                    else None
                 ),
-                'created_at': format_date(item['created_at']) or None,
-                'updated_at': format_date(item['updated_at']) or None,
-                'id': item['id'] or None,
-                'reason_for_report': item['reason_for_report'] or None,
-                'facility_name': item['facility_name'] or None,
+                'created_at': format_date(item.get('created_at')),
+                'updated_at': format_date(item.get('updated_at')),
+                'id': item.get('id'),
+                'reason_for_report': item.get('reason_for_report'),
+                'facility_name': item.get('facility_name'),
             }
-            for item
-            in facility.activity_reports_info
+            for item in facility.activity_reports_info
         ]
 
     def get_contributor_fields(self, facility):
