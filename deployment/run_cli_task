@@ -26,6 +26,10 @@ aws ecs describe-tasks --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn}
 id=$(echo $task_arn | awk -F'/' '{print $NF}')
 echo "Log Stream ID: $id"
 
-echo "----- Log Stream -----\n\n\n"
+echo "----- Log Stream -----"
+echo ""
+echo ""
 aws logs get-log-events --log-group-name "logOpenSupplyHub${1}AppCLI" --log-stream-name "management/django/$id" --query 'events[*].[message]' --output text
-echo "\n\n\n----- Log Stream end -----"
+echo ""
+echo ""
+echo "----- Log Stream end -----"
