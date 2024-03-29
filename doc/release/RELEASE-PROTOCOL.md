@@ -147,3 +147,8 @@ In case workflow failed in the apply step responsible person have to run `Deploy
 
 - To deploy a hotfix to pre-prod, you should fork from the latest release branch, and after preparing the fix, merge it back. Merging will trigger the Deploy to AWS workflow that will deploy the hotfix to the **running** pre-prod environment. Before doing it, don't forget about the step involving switching databases, as mentioned in [the Code Freeze section]((#requirements-and-key-results)).
 - To release a hotfix to production and staging, you should fork from the latest release branch, and after preparing the fix, merge it back. The last step is to execute the Release [Deploy] workflow for each environment separately, which will deploy the fix to these two environments.
+
+### Shut down the pre-prod environment
+
+- To shut down the Pre-prod the responsible personhave to select `Destroy Environment` in the Actions menu. Press run worflow with `main` branch and select `Pre-prod` env.
+- DB Instance has to be destroyed manually via RDS -> Databases -> `opensupplyhub-enc-pp`. Press Modify -> Enable deletion protection=false. Then select Delete in Actions.
