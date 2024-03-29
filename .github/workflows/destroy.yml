@@ -16,15 +16,15 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env }}
     steps:
-      - name: Get Environment Name for ${{ inputs.deploy-env }}
+      - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
         uses: Entepotenz/change-string-case-action-min-dependencies@v1
         with:
-          string: ${{ inputs.deploy-env }}
+          string: ${{ vars.ENV_NAME }}
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Delete erc repostiroy for ${{ inputs.deploy-env }}
+      - name: Delete erc repostiroy for ${{ vars.ENV_NAME }}
         run: |
           ./deployment/delete_ecr opensupplyhub-batch-${{ steps.get_env_name.outputs.lowercase }}
         env:
