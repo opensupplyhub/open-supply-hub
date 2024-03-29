@@ -21,6 +21,9 @@ jobs:
         uses: Entepotenz/change-string-case-action-min-dependencies@v1
         with:
           string: ${{ inputs.deploy-env }}
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
       - name: Delete erc repostiroy for ${{ inputs.deploy-env }}
         run: |
           ./deployment/delete_ecr opensupplyhub-batch-${{ steps.get_env_name.outputs.lowercase }}
