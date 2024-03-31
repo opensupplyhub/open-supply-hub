@@ -9,4 +9,7 @@ COPY config/ /usr/share/logstash/config/
 # copy sql script to the root folder of logstash
 COPY sql/ /usr/share/logstash/sql/
 
+# copy sql script to the scripts folder of logstash
+COPY scripts/ /usr/share/logstash/scripts/
+
 CMD ["logstash", "-f", "/usr/share/logstash/config/sync_facilities.conf"]
