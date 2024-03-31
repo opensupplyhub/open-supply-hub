@@ -1,5 +1,5 @@
 def filter(event)
-  # Get the facility_type_value value (assuming it's a field in the event)
+  # Get the facility_type_value (assuming it's a field in the event)
   facility_type_value = event.get('facility_type_value')
 
   # Check if the value exists (avoids potential nil error)
