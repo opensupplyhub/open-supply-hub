@@ -1,0 +1,51 @@
+template: "facilities-template"
+index_patterns: ["facilities*"]
+mappings:
+  properties:
+    name:
+      type: text
+      fields:
+        keyword:
+          type: keyword
+    address:
+      type: text
+      fields:
+        keyword:
+          type: keyword
+    country_code:
+      type: keyword
+    location:
+      type: geo_point
+    is_closed:
+      type: boolean
+    created_at:
+      type: date_nanos
+    updated_at:
+      type: date_nanos
+    facility_type:
+      type: text
+      fields:
+        keyword:
+          type: keyword
+    product_type:
+      type: text
+      fields:
+        keyword:
+          type: keyword
+    processing_type:
+      type: text
+      fields:
+        keyword:
+          type: keyword
+    parent_company:
+      type: text
+      fields:
+        keyword:
+          type: keyword
+    number_of_workers:
+      type: nested
+      properties:
+        min:
+          type: integer
+        max:
+          type: integer
