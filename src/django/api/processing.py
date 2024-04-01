@@ -2,6 +2,7 @@ import copy
 import csv
 import time
 import traceback
+import logging
 
 from api.constants import CsvHeaderField, ProcessingAction
 from api.extended_fields import (
@@ -29,6 +30,8 @@ from django.urls import reverse
 from django.utils import timezone
 from oar.rollbar import report_error_to_rollbar
 
+logger = logging.getLogger(__name__)
+
 
 def get_xlsx_sheet(file, request):
     import defusedxml
@@ -42,8 +45,8 @@ def get_xlsx_sheet(file, request):
 
         return ws
 
-    except EntitiesForbidden:
-        report_error_to_rollbar(request=request, file=file)
+    except EntitiesForbidden as err:
+        report_error_to_rollbar(request=request, file=file, exception=err)
         raise ValidationError('This file may be damaged and '
                               'cannot be processed safely')
 
@@ -114,8 +117,8 @@ def parse_xlsx(file, request):
                 if any(cell.value is not None for cell in row)]
 
         return header, rows
-    except Exception:
-        report_error_to_rollbar(request=request, file=file)
+    except Exception as err:
+        report_error_to_rollbar(request=request, file=file, exception=err)
         raise ValidationError('Error parsing Excel (.xlsx) file')
 
 
@@ -124,8 +127,8 @@ def parse_csv(file, request):
 
     try:
         header = file.readline().decode(encoding='utf-8-sig').rstrip()
-    except UnicodeDecodeError:
-        report_error_to_rollbar(request=request, file=file)
+    except UnicodeDecodeError as err:
+        report_error_to_rollbar(request=request, file=file, exception=err)
         raise ValidationError('Unsupported file encoding. Please '
                               'submit a UTF-8 CSV.')
 
@@ -133,8 +136,10 @@ def parse_csv(file, request):
         if idx > 0:
             try:
                 rows.append(line.decode(encoding='utf-8-sig').rstrip())
-            except UnicodeDecodeError:
-                report_error_to_rollbar(request=request, file=file)
+            except UnicodeDecodeError as err:
+                report_error_to_rollbar(request=request,
+                                        file=file,
+                                        exception=err)
                 raise ValidationError('Unsupported file encoding. Please '
                                       'submit a UTF-8 CSV.')
 
@@ -261,6 +266,8 @@ def parse_facility_list_item(item):
                 'trace': traceback.format_exc(),
                 'finished_at': str(timezone.now()),
             })
+            logger.error(f'[List Upload] Parsing Error: {str(ve)}')
+            logger.info(f'[List Upload] FacilityListItem Id: {item.id}')
     except Exception as e:
         item.status = FacilityListItem.ERROR_PARSING
         item.processing_results.append({
@@ -271,6 +278,8 @@ def parse_facility_list_item(item):
             'trace': traceback.format_exc(),
             'finished_at': str(timezone.now()),
         })
+        logger.error(f'[List Upload] Parsing Error: {str(e)}')
+        logger.info(f'[List Upload] FacilityListItem Id: {item.id}')
 
 
 def geocode_facility_list_item(item):
@@ -322,6 +331,10 @@ def geocode_facility_list_item(item):
             'trace': traceback.format_exc(),
             'finished_at': str(timezone.now()),
         })
+        logger.error(f'[List Upload] Geocoding Error: {str(e)}')
+        logger.info(f'[List Upload] FacilityListItem Id: {item.id}')
+        logger.info(f'[List Upload] Address: {item.address}, '
+                    f'Country_Code: {item.country_code}')
 
 
 def reduce_matches(matches):
@@ -612,7 +625,7 @@ def handle_external_match_process_result(id, result, request, should_create):
                                 FacilityListItem.ERROR_MATCHING]
     f_l_item = None
     timer = 0
-    timeout = 30
+    timeout = 25
     while True:
         if timer > timeout:
             break

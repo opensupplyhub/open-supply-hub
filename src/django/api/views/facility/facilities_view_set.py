@@ -1,8 +1,12 @@
 import json
 import traceback
 import asyncio
+import logging
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
+from contricleaner.lib.parsers.source_parser_json import SourceParserJSON
+from contricleaner.lib.serializers.contri_cleaner_serializer import \
+    ContriCleanerSerializer
 
 from rest_framework.mixins import (
     ListModelMixin,
@@ -38,6 +42,7 @@ from ...models import (
     FacilityActivityReport,
     FacilityAlias,
     FacilityClaim,
+    FacilityClaimReviewNote,
     FacilityListItem,
     FacilityListItemTemp,
     FacilityLocation,
@@ -52,6 +57,7 @@ from ...constants import (
     FacilityMergeQueryParams,
     ProcessingAction,
     UpdateLocationParams,
+    ErrorMessages
 )
 from ...exceptions import BadRequestException
 from ...extended_fields import (
@@ -64,20 +70,15 @@ from ...facility_history import (
 from ...geocoding import geocode_address
 from ...mail import send_claim_facility_confirmation_email
 
-from ...helpers.helpers import clean
 from ...pagination import FacilitiesGeoJSONPagination
 from ...permissions import IsRegisteredAndConfirmed, IsSuperuser
-from ...processing import (
-    get_country_code,
-    handle_external_match_process_result,
-)
-from ...sector_product_type_parser import RequestBodySectorProductTypeParser
+from ...processing import handle_external_match_process_result
+from ...sector_product_type_parser import SectorCache
 from ...serializers import (
     FacilityIndexSerializer,
     FacilityIndexDetailsSerializer,
     FacilityActivityReportSerializer,
     FacilityClaimSerializer,
-    FacilityCreateBodySerializer,
     FacilityCreateQueryParamsSerializer,
     FacilityMergeQueryParamsSerializer,
     FacilityQueryParamsSerializer,
@@ -94,6 +95,11 @@ from .facility_parameters import (
     facilities_list_parameters,
     facilities_create_parameters,
 )
+
+# initialize logger
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
+log = logging.getLogger(__name__)
 
 
 class FacilitiesViewSet(ListModelMixin,
@@ -224,10 +230,15 @@ class FacilitiesViewSet(ListModelMixin,
             )
         sort_by = params.validated_data['sort_by']
         order_list = []
-        if (sort_by is not None) and (sort_by == 'name'):
-            order_list = ['name']
-        else:
+
+        if (sort_by is None) or (sort_by == 'contributors_desc'):
             order_list = ['-contributors_count', 'name']
+        elif (sort_by == 'name_asc'):
+            order_list = ['name']
+        elif (sort_by == 'name_desc'):
+            order_list = ['-name']
+        elif (sort_by == 'contributors_asc'):
+            order_list = ['contributors_count', 'name']
 
         queryset = queryset.extra(order_by=order_list)
 
@@ -541,7 +552,7 @@ class FacilitiesViewSet(ListModelMixin,
               "status": "NEW_FACILITY"
             }
 
-        ### No Match and Geocoder Returned No Results
+        ### No Match
 
             {
               "matches": [],
@@ -549,6 +560,17 @@ class FacilitiesViewSet(ListModelMixin,
               "geocoded_geometry": null,
               "geocoded_address": null,
               "status": "ERROR_MATCHING"
+            }
+
+        ### Geocoder Returned No Results
+
+            {
+              "matches": [],
+              "item_id": 965,
+              "geocoded_geometry": null,
+              "geocoded_address": null,
+              "status": "GEOCODED_NO_RESULTS",
+              "message": "The address you submitted can not be geocoded."
             }
         """  # noqa
         # Adding the @permission_classes decorator was not working so we
@@ -559,25 +581,20 @@ class FacilitiesViewSet(ListModelMixin,
                               FeatureGroups.CAN_SUBMIT_FACILITY):
             raise PermissionDenied()
 
-        body_serializer = FacilityCreateBodySerializer(data=request.data)
-        body_serializer.is_valid(raise_exception=True)
-
-        clean_name = clean(body_serializer.validated_data.get('name'))
-        if clean_name is None:
-            clean_name = ''
-            raise ValidationError({
-                "clean_name": [
-                    "This field may not be blank."
-                ]
-            })
-        clean_address = clean(body_serializer.validated_data.get('address'))
-        if clean_address is None:
-            clean_address = ''
-            raise ValidationError({
-                "clean_address": [
-                    "This field may not be blank."
-                ]
-            })
+        log.info(f'[API Upload] Uploading data: {request.data}')
+        log.info('[API Upload] Started CC Parse process!')
+        split_pattern = r', |,|\|'
+        contri_cleaner = ContriCleanerSerializer(
+            SourceParserJSON(request.data), SectorCache(), split_pattern
+        )
+        rows = contri_cleaner.get_validated_rows()
+        row = rows[0]
+        if row.errors:
+            log.error(f'[API Upload] CC Parsing Errors: {row.errors}')
+            return Response({
+                "message": "The provided data could not be parsed",
+                "errors": row.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         params_serializer = FacilityCreateQueryParamsSerializer(
             data=request.query_params)
@@ -600,39 +617,24 @@ class FacilitiesViewSet(ListModelMixin,
             create=should_create
         )
 
-        parser = RequestBodySectorProductTypeParser(
-            body_serializer.validated_data)
-        sector = parser.sectors
-        product_types = parser.product_types
-
-        cleaned_user_data = request.data.copy()
-        cleaned_user_data['sector'] = sector
-        if len(product_types) > 0:
-            cleaned_user_data['product_type'] = product_types
-        if 'sector_product_type' in cleaned_user_data:
-            del cleaned_user_data['sector_product_type']
-
-        country_code = get_country_code(
-            body_serializer.validated_data.get('country'))
-        name = body_serializer.validated_data.get('name')
-        address = body_serializer.validated_data.get('address')
-
-        fields = list(cleaned_user_data.keys())
-        create_nonstandard_fields(fields, request.user.contributor)
+        create_nonstandard_fields(
+            list(row.fields.keys()),
+            request.user.contributor
+        )
 
         item = FacilityListItem.objects.create(
             source=source,
             row_index=0,
             raw_data=json.dumps(request.data),
-            raw_json=request.data,
+            raw_json=row.raw_json,
             raw_header='',
             status=FacilityListItem.PARSED,
-            name=name,
-            clean_name=clean_name,
-            address=address,
-            clean_address=clean_address,
-            country_code=country_code,
-            sector=sector,
+            name=row.name,
+            clean_name=row.clean_name,
+            address=row.address,
+            clean_address=row.clean_address,
+            country_code=row.country_code,
+            sector=row.sector,
             processing_results=[{
                 'action': ProcessingAction.PARSE,
                 'started_at': parse_started,
@@ -641,6 +643,11 @@ class FacilitiesViewSet(ListModelMixin,
                 'is_geocoded': False,
             }]
         )
+
+        log.info(f'[API Upload] Source created. Id: {source.id}')
+        log.info(f'[API Upload] Source is public: {source.is_public}')
+        log.info(f'[API Upload] Source should create: {source.create}')
+        log.info(f'[API Upload] FacilityListItem created. Id: {item.id}')
 
         result = {
             'matches': [],
@@ -651,7 +658,7 @@ class FacilitiesViewSet(ListModelMixin,
         }
 
         try:
-            create_extendedfields_for_single_item(item, cleaned_user_data)
+            create_extendedfields_for_single_item(item, row.fields)
         except (core_exceptions.ValidationError, ValueError) as exc:
             error_message = ''
 
@@ -672,12 +679,25 @@ class FacilitiesViewSet(ListModelMixin,
             item.save()
             result['status'] = item.status
             result['message'] = error_message
+            log.error(
+                '[API Upload] Creation of ExtendedField error: '
+                f'{error_message}'
+            )
+            log.info(f'[API Upload] FacilityListItem Id: {item.id}')
             return Response(result,
                             status=status.HTTP_400_BAD_REQUEST)
 
         geocode_started = str(timezone.now())
+        log.info(
+            '[API Upload] Started Geocode process. '
+            f'FacilityListItem Id: {item.id}.'
+        )
+        log.info(
+            f'[API Upload] Address: {row.address}, '
+            f'Country Code: {row.country_code}'
+        )
         try:
-            geocode_result = geocode_address(address, country_code)
+            geocode_result = geocode_address(row.address, row.country_code)
             if geocode_result['result_count'] > 0:
                 item.status = FacilityListItem.GEOCODED
                 item.geocoded_point = Point(
@@ -696,6 +716,8 @@ class FacilitiesViewSet(ListModelMixin,
                 result['geocoded_address'] = item.geocoded_address
             else:
                 item.status = FacilityListItem.GEOCODED_NO_RESULTS
+                result['status'] = item.status
+                result['message'] = ErrorMessages.GEOCODED_NO_RESULTS
 
             item.processing_results.append({
                 'action': ProcessingAction.GEOCODE,
@@ -721,35 +743,56 @@ class FacilitiesViewSet(ListModelMixin,
             })
             item.save()
             result['status'] = item.status
+            log.error(f'[API Upload] Geocode Error: {str(exc)}')
+            log.info(f'[API Upload] FacilityListItem Id: {item.id}')
+            log.info(f'[API Upload] Address: {row.address}, '
+                     f'Country Code: {row.country_code}')
             return Response(result,
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Handle and produce message to Kafka with source_id data
-        timer = 0
-        timeout = 30
-        facility_list_item_temp = None
-        while True:
-            if timer > timeout:
-                break
-            facility_list_item_temp = FacilityListItemTemp.objects.get(
-                source=source.id
-            )
-            if facility_list_item_temp.status == FacilityListItemTemp.GEOCODED:
-                asyncio.run(produce_message_match_process(source.id))
-                break
-            asyncio.sleep(1)
-            timer = timer + 1
+        if item.status == FacilityListItem.GEOCODED:
+            log.info('[API Upload] Trying to start Match process!')
+            log.info(f'[API Upload] FacilityListItem Id: {item.id}')
+            log.info(f'[API Upload] Source Id: {item.id}')
+            # Handle and produce message to Kafka with source_id data
+            timer = 0
+            timeout = 25
+            fli_temp = None
+            while True:
+                if timer > timeout:
+                    break
+                fli_temp = FacilityListItemTemp.objects.get(
+                    source=source.id
+                )
+                if fli_temp.status == FacilityListItemTemp.GEOCODED:
+                    log.info('[API Upload] Started Match process!')
+                    log.info(f'[API Upload] FacilityListItem Id: {item.id}')
+                    log.info(
+                        f'[API Upload] FacilityListItemTemp Id: {fli_temp.id}'
+                    )
+                    log.info(f'[API Upload] Source Id: {item.id}')
+                    asyncio.run(produce_message_match_process(source.id))
+                    break
+                asyncio.sleep(1)
+                timer = timer + 1
 
-        # Handle results of "match" process from Dedupe Hub
-        result = handle_external_match_process_result(
-            facility_list_item_temp.id,
-            result,
-            request,
-            should_create
-        )
+            # Handle results of "match" process from Dedupe Hub
+            result = handle_external_match_process_result(
+                fli_temp.id,
+                result,
+                request,
+                should_create
+            )
+
+        errors_status = [FacilityListItem.ERROR_MATCHING,
+                         FacilityListItem.GEOCODED_NO_RESULTS]
+
+        log.info(f'[API Upload] Result data: {result}')
+        log.info(f'[API Upload] FacilityListItem Id: {item.id}')
+        log.info(f'[API Upload] Source Id: {item.id}')
 
         if (should_create
-                and result['status'] != FacilityListItem.ERROR_MATCHING):
+                and result['status'] not in errors_status):
             return Response(result, status=status.HTTP_201_CREATED)
         else:
             return Response(result, status=status.HTTP_200_OK)
@@ -787,6 +830,14 @@ class FacilitiesViewSet(ListModelMixin,
             })
             item.facility = None
             item.save()
+
+        def delete_facility_claim_review_notes(claim):
+            notes = FacilityClaimReviewNote. \
+                objects. \
+                filter(claim=claim)
+            for note in notes:
+                note._change_reason = f'Deleted {facility.id}'
+                note.delete()
 
         now = str(timezone.now())
         created_by_contributor = facility.created_from.source.contributor
@@ -909,7 +960,10 @@ class FacilitiesViewSet(ListModelMixin,
                     delete_facility_match(other_match)
                     delete_facility_list_item(other_match.facility_list_item)
 
-        for claim in FacilityClaim.objects.filter(facility=facility):
+        claims = FacilityClaim.objects.filter(facility=facility)
+
+        for claim in claims:
+            delete_facility_claim_review_notes(claim)
             claim._change_reason = f'Deleted {facility.id}'
             claim.delete()
 

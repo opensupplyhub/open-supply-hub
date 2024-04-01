@@ -1,3 +1,7 @@
+from typing import Union
+from contricleaner.lib.helpers.is_valid_type import (
+    is_valid_type,
+)
 from contricleaner.lib.helpers.split_values import split_values
 from contricleaner.lib.serializers.row_serializers.row_serializer import (
     RowSerializer,
@@ -5,6 +9,8 @@ from contricleaner.lib.serializers.row_serializers.row_serializer import (
 
 
 class RowFacilityTypeSerializer(RowSerializer):
+    def __init__(self, split_pattern: str) -> None:
+        self.split_pattern = split_pattern
 
     def validate(self, row: dict, current: dict) -> dict:
         facility_type = row.get('facility_type')
@@ -16,6 +22,30 @@ class RowFacilityTypeSerializer(RowSerializer):
         if not any(
             (facility_type, processing_type, facility_type_processing_type)
         ):
+            return current
+
+        facility_type_errors = []
+
+        fields = [
+            'facility_type',
+            'processing_type',
+            'facility_type_processing_type',
+        ]
+        for field, value in zip(
+            fields,
+            [facility_type, processing_type, facility_type_processing_type],
+        ):
+            if value and not is_valid_type(value):
+                facility_type_errors.append(
+                    {
+                        "message": "Expected value for {} to be a string "
+                        "or a list of strings but got {}".format(field, value),
+                        "type": "ValueError",
+                    }
+                )
+
+        if facility_type_errors:
+            current["errors"].extend(facility_type_errors)
             return current
 
         if facility_type_processing_type:
@@ -36,9 +66,8 @@ class RowFacilityTypeSerializer(RowSerializer):
 
         return current
 
-    @staticmethod
-    def create_values(value):
+    def create_values(self, value: Union[str, list, set]) -> dict:
         return {
             'raw_values': value,
-            'processed_values': split_values(value, '|'),
+            'processed_values': split_values(value, self.split_pattern),
         }

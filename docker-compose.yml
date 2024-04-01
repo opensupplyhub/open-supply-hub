@@ -151,6 +151,8 @@ services:
     image: api-app
     build:
       context: ./src/dedupe-hub/api
+    volumes:
+      - ./src/dedupe-hub/api:/usr/local/src
     depends_on:
       kafka:
         condition: service_healthy

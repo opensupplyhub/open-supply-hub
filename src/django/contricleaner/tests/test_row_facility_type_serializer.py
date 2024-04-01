@@ -7,7 +7,8 @@ from django.test import TestCase
 class RowFacilityTypeSerializerTest(TestCase):
 
     def setUp(self):
-        self.serializer = RowFacilityTypeSerializer()
+        self.split_pattern = r', |,|\|'
+        self.serializer = RowFacilityTypeSerializer(self.split_pattern)
 
     def test_validate_with_no_values(self):
         row = {}
@@ -17,19 +18,25 @@ class RowFacilityTypeSerializerTest(TestCase):
 
     def test_validate_with_facility_type_processing_type(self):
         row = {'facility_type_processing_type':
-               ['Blending|Knitting|Blending', 'Blending']}
+               ['Blending|Knitting|Blending', 'Coating, Knitting']}
         current = {}
         validated = self.serializer.validate(row, current)
         self.assertEqual(
             validated,
             {
                 'facility_type': {
-                    'raw_values': ['Blending|Knitting|Blending', 'Blending'],
-                    'processed_values': {'Blending', 'Knitting'},
+                    'raw_values': [
+                        'Blending|Knitting|Blending',
+                        'Coating, Knitting'
+                    ],
+                    'processed_values': {'Blending', 'Knitting', 'Coating'},
                 },
                 'processing_type': {
-                    'raw_values': ['Blending|Knitting|Blending', 'Blending'],
-                    'processed_values': {'Blending', 'Knitting'},
+                    'raw_values': [
+                        'Blending|Knitting|Blending',
+                        'Coating, Knitting'
+                    ],
+                    'processed_values': {'Blending', 'Knitting', 'Coating'},
                 },
             },
         )
@@ -85,5 +92,22 @@ class RowFacilityTypeSerializerTest(TestCase):
                     'raw_values': 'Knitting',
                     'processed_values': {'Knitting'},
                 },
+            },
+        )
+
+    def test_validate_with_invalid_facility_type(self):
+        row = {'facility_type': 123}
+        current = {'errors': []}
+        validated = self.serializer.validate(row, current)
+        self.assertEqual(
+            validated,
+            {
+                'errors': [
+                    {
+                        'message': 'Expected value for facility_type to be a '
+                        'string or a list of strings but got 123',
+                        'type': 'ValueError',
+                    },
+                ],
             },
         )
