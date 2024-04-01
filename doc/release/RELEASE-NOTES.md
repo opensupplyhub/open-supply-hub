@@ -16,6 +16,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-923](https://opensupplyhub.atlassian.net/browse/OSDEV-923) [Uptime] Added more logs around API/List uploads & Dedupe Hub match processing
+* [OSDEV-606](https://opensupplyhub.atlassian.net/browse/OSDEV-606) Contributor Sort: Allow for ascending sort of contributors on the Map page. The sort_by parameter submits type of sorting order for facilities. Default sorting will be primary by public contributors count descending and secondary by name ascending/descending and contributors count ascending.
 
 ### Architecture/Environment changes
 
