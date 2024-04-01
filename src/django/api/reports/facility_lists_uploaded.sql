@@ -18,19 +18,18 @@ WHERE to_char(l.created_at, 'YYYY-MM-DD') != to_char(now(), 'YYYY-MM-DD')
 GROUP BY to_char(l.created_at, 'YYYY-MM')
 ORDER BY to_char(l.created_at, 'YYYY-MM') DESC;
 
--- Count the number of facility list CSV rows uploaded each month.
-
--- SELECT
---   to_char(i.created_at, 'YYYY-MM') AS month,
---   CASE WHEN (u.email LIKE '%openapparel.org%'
---              OR u.email LIKE '%opensupplyhub.org%')
---        THEN 'y' ELSE 'n' END AS is_public_list,
---   COUNT(*) AS item_count
---   FROM api_facilitylistitem i
---          JOIN api_source s on i.source_id = s.id
---          JOIN api_contributor c ON s.contributor_id = c.id
---          JOIN api_user u ON u.id = c.admin_id
---  WHERE to_char(i.created_at, 'YYYY-MM') != to_char(now(), 'YYYY-MM')
---  AND s.create = true
---  GROUP BY to_char(i.created_at, 'YYYY-MM'), is_public_list
---  ORDER BY to_char(i.created_at, 'YYYY-MM'), is_public_list;
+--  SELECT
+  --  COUNT(*) AS total_facility_listitems_uploaded,
+  --  COUNT(u.email) filter (where u.email::text LIKE '%openapparel.org%'
+  --            OR u.email::text LIKE '%opensupplyhub.org%') as "Facilities From Public Lists",
+  --  COUNT(i.status) filter (where i.status::text ='PARSED') as "Total Facilities w/ status = new facility", -- UPLOADED
+  --  COUNT(i.status) filter (where i.status::text ='PARSED' and u.email::text LIKE '%openapparel.org%'
+  --            OR u.email::text LIKE '%opensupplyhub.org%') as "Public List Facilities w/ status = new facility" -- UPLOADED
+  --  FROM api_facilitylistitem i
+  --         JOIN api_source s on i.source_id = s.id
+  --         JOIN api_contributor c ON s.contributor_id = c.id
+  --         JOIN api_user u ON u.id = c.admin_id
+  -- WHERE to_char(i.created_at, 'YYYY-MM') != to_char(now(), 'YYYY-MM')
+  -- AND s.create = true
+  -- GROUP BY to_char(i.created_at, 'YYYY-MM')
+  -- ORDER BY to_char(i.created_at, 'YYYY-MM')
