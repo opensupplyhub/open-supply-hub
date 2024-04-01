@@ -36,21 +36,34 @@ class RowCompositeSerializer:
         return RowCompositeSerializer.__clean_and_replace_data(row)
 
     @staticmethod
+    def __add_space_after_comma(value: str) -> str:
+        return re.sub(r',', ', ', value)
+
+    @staticmethod
+    def __clean_commas(value: str) -> str:
+        # Remove spaces after commas
+        cleaned_value = re.sub(r',\s+', ',', value)
+        # Remove duplicates commas
+        cleaned_value = re.sub(r',+', ',', cleaned_value)
+        # Remove leading and trailing commas
+        cleaned_value = cleaned_value.strip(',')
+        return cleaned_value
+
+    @staticmethod
+    def __remove_double_quotes(value: str) -> str:
+        return value.replace('"', '')
+
+    @staticmethod
     def __clean_and_replace_data(data: Dict[str, str]) -> Dict[str, str]:
         invalid_keywords = ['N/A', 'n/a']
-        dup_pattern = ',' + '{2,}'
         result_data = {}
         for key, value in data.items():
-            if isinstance(value, str):
-                # Remove invalid keywords.
-                for keyword in invalid_keywords:
-                    value = value.replace(keyword, '')
-                # Remove duplicates commas if exist.
-                value = re.sub(dup_pattern, ',', value)
-                # Remove comma in the end of the string if exist.
-                value = value.rstrip(',')
-                # Remove extra spaces if exist.
-                value = value.strip()
+            # Remove invalid keywords.
+            for keyword in invalid_keywords:
+                value = value.replace(keyword, '')
+            value = RowCompositeSerializer.__clean_commas(value)
+            value = RowCompositeSerializer.__add_space_after_comma(value)
+            value = RowCompositeSerializer.__remove_double_quotes(value)
             result_data[key] = value
         return result_data
 

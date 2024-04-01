@@ -53,6 +53,44 @@ class RowCompositeValidatorTest(TestCase):
 
         self.assertRowEqual(validated_rows[0], expected_row)
 
+    def test_row_clean_up(self):
+        facility_source_uncleaned = [{
+            "country": "United \"States\"",
+            "name": "Simple, , , Pants,,,Hut",
+            "address": "123 \"Main\"\" St,,,Anywhereville, , ,PA",
+            "sector": "Apparel",
+            "product_type": "product one",
+            "extra": "extra one,, , extra two,   ,extra three,  \"extra four",
+            "facility_type": "Blending|Knitting"
+        }]
+        validated_rows = [self.serializer
+                          .get_validated_row(row) for row in
+                          facility_source_uncleaned]
+        expected_row = RowDTO(
+            raw_json=facility_source_uncleaned[0],
+            name='Simple, Pants, Hut',
+            clean_name='simple pants hut',
+            address='123 Main St, Anywhereville, PA',
+            clean_address='123 main st anywhereville pa',
+            country_code='US',
+            sector=['Apparel'],
+            fields={
+                'product_type': ['product one'],
+                'country': 'United States',
+                'extra': 'extra one, extra two, extra three, extra four',
+                'facility_type': {
+                    'raw_values': 'Blending|Knitting',
+                    'processed_values': {'Blending', 'Knitting'}
+                },
+                'processing_type': {
+                    'raw_values': 'Blending|Knitting',
+                    'processed_values': {'Blending', 'Knitting'}
+                }
+            },
+            errors=[]
+        )
+        self.assertRowEqual(validated_rows[0], expected_row)
+
     def assertRowEqual(self, validated_row, expected):
         self.assertEqual(validated_row.errors, expected.errors)
         self.assertEqual(validated_row.name, expected.name)
