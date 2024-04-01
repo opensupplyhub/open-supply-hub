@@ -231,8 +231,6 @@ class FacilitiesViewSet(ListModelMixin,
             order_list = ['name']
         elif (sort_by == 'name_desc'):
             order_list = ['-name']
-        elif (sort_by == 'contributors_desc'):
-            order_list = ['-contributors_count', 'name']
         elif (sort_by == 'contributors_asc'):
             order_list = ['contributors_count', 'name']
 
