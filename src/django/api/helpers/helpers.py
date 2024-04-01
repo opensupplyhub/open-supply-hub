@@ -132,11 +132,13 @@ def replace_invalid_data(value, invalid_keywords):
 
 
 def cleanup_data(value):
-    # Replace multiple commas and/or spaces with a single comma and space
-    result_value = re.sub(r'(\s*,\s*)+', ', ', value)
-    # Remove any trailing commas and spaces
-    result_value = result_value.rstrip(', ')
-    return result_value
+    dup_pattern = ',' + '{2,}'
+    # Remove duplicates commas if exist
+    result_value = re.sub(dup_pattern, ',', value)
+    # Remove comma in the end of the string if exist
+    result_value = result_value.rstrip(',')
+    # Remove extra spaces if exist
+    return result_value.strip()
 
 
 def get_raw_json(raw_data: str, raw_header: str) -> dict:

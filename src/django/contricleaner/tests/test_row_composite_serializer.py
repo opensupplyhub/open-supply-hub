@@ -29,23 +29,23 @@ class RowCompositeValidatorTest(TestCase):
 
         expected_row = RowDTO(
             raw_json=facility_source[0],
-            name='Pants Hut',
-            clean_name='pants hut',
-            address='123 Main St, Anywhereville, PA',
-            clean_address='123 main st anywhereville pa',
-            country_code='US',
-            sector=['Apparel'],
+            name="Pants Hut",
+            clean_name="pants hut",
+            address="123 Main St, Anywhereville, PA",
+            clean_address="123 main st anywhereville pa",
+            country_code="US",
+            sector=["Apparel"],
             fields={
-                'product_type': ['product one'],
-                'country': 'United States',
-                'extra_1': 'Extra data',
-                'facility_type': {
-                    'raw_values': 'Blending|Knitting',
-                    'processed_values': {'Blending', 'Knitting'}
+                "product_type": ["product one"],
+                "country": "United States",
+                "extra_1": "Extra data",
+                "facility_type": {
+                    "raw_values": "Blending|Knitting",
+                    "processed_values": {"Blending", "Knitting"}
                 },
-                'processing_type': {
-                    'raw_values': 'Blending|Knitting',
-                    'processed_values': {'Blending', 'Knitting'}
+                "processing_type": {
+                    "raw_values": "Blending|Knitting",
+                    "processed_values": {"Blending", "Knitting"}
                 }
             },
             errors=[]
@@ -60,7 +60,17 @@ class RowCompositeValidatorTest(TestCase):
             "address": "123 \"Main\"\" St,,,Anywhereville, , ,PA",
             "sector": "Apparel",
             "product_type": "product one",
-            "extra": "extra one,, , extra two,   ,extra three,  \"extra four",
+            "extra_1": (
+                "extra one,, , “extra two”,   ,extra three,  \"extra four"
+            ),
+            "extra_2": "Technology Co., ,Ltd.",
+            "extra_3": (
+                "Optimum Fashion Manufacturing Co Ltd. "
+                "(Former name “United Apparel (Cambodia) Inc. - Head Factory”)"
+            ),
+            "extra_4": "Mohib Shoes Pvt. Ltd., „B“ Unit",
+            "extra_5": "«Global» Manufactoring",
+            "extra_6": "‹NanoTech› Technologies",
             "facility_type": "Blending|Knitting"
         }]
         validated_rows = [self.serializer
@@ -68,23 +78,32 @@ class RowCompositeValidatorTest(TestCase):
                           facility_source_uncleaned]
         expected_row = RowDTO(
             raw_json=facility_source_uncleaned[0],
-            name='Simple, Pants, Hut',
-            clean_name='simple pants hut',
-            address='123 Main St, Anywhereville, PA',
-            clean_address='123 main st anywhereville pa',
-            country_code='US',
-            sector=['Apparel'],
+            name="Simple, Pants, Hut",
+            clean_name="simple pants hut",
+            address="123 Main St, Anywhereville, PA",
+            clean_address="123 main st anywhereville pa",
+            country_code="US",
+            sector=["Apparel"],
             fields={
-                'product_type': ['product one'],
-                'country': 'United States',
-                'extra': 'extra one, extra two, extra three, extra four',
-                'facility_type': {
-                    'raw_values': 'Blending|Knitting',
-                    'processed_values': {'Blending', 'Knitting'}
+                "product_type": ["product one"],
+                "country": "United States",
+                "extra_1": "extra one, extra two, extra three, extra four",
+                "extra_2": "Technology Co., Ltd.",
+                "extra_3": (
+                    "Optimum Fashion Manufacturing Co Ltd. "
+                    "(Former name United Apparel "
+                    "(Cambodia) Inc. - Head Factory)"
+                ),
+                "extra_4": "Mohib Shoes Pvt. Ltd., B Unit",
+                "extra_5": "Global Manufactoring",
+                "extra_6": "NanoTech Technologies",
+                "facility_type": {
+                    "raw_values": "Blending|Knitting",
+                    "processed_values": {"Blending", "Knitting"}
                 },
-                'processing_type': {
-                    'raw_values': 'Blending|Knitting',
-                    'processed_values': {'Blending', 'Knitting'}
+                "processing_type": {
+                    "raw_values": "Blending|Knitting",
+                    "processed_values": {"Blending", "Knitting"}
                 }
             },
             errors=[]

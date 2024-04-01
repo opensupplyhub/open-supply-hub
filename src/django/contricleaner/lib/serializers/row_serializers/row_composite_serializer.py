@@ -51,7 +51,10 @@ class RowCompositeSerializer:
 
     @staticmethod
     def __remove_double_quotes(value: str) -> str:
-        return value.replace('"', '')
+        quotes_to_remove = ['"', '“', '”', '‟', '„', '«', '»', '‹', '›']
+        for symbol in quotes_to_remove:
+            value = value.replace(symbol, '')
+        return value
 
     @staticmethod
     def __clean_and_replace_data(data: Dict[str, str]) -> Dict[str, str]:
