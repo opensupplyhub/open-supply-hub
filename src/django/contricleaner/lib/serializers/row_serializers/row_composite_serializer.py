@@ -61,13 +61,14 @@ class RowCompositeSerializer:
         invalid_keywords = ['N/A', 'n/a']
         result_data = {}
         for key, value in data.items():
-            # Remove invalid keywords.
-            for keyword in invalid_keywords:
-                value = value.replace(keyword, '')
-            value = RowCompositeSerializer.__clean_commas(value)
-            value = RowCompositeSerializer.__add_space_after_comma(value)
-            value = RowCompositeSerializer.__remove_double_quotes(value)
-            value = value.strip()
+            if isinstance(value, str):
+                # Remove invalid keywords.
+                for keyword in invalid_keywords:
+                    value = value.replace(keyword, '')
+                value = RowCompositeSerializer.__clean_commas(value)
+                value = RowCompositeSerializer.__add_space_after_comma(value)
+                value = RowCompositeSerializer.__remove_double_quotes(value)
+                value = value.strip()
             result_data[key] = value
         return result_data
 
