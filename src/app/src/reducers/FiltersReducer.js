@@ -41,7 +41,7 @@ const initialState = Object.freeze({
     contributorTypes: Object.freeze([]),
     countries: Object.freeze([]),
     sectors: Object.freeze([]),
-    sortAlgorithm: optionsForSortingResults[1],
+    sortAlgorithm: optionsForSortingResults[2],
     parentCompany: Object.freeze([]),
     facilityType: Object.freeze([]),
     processingType: Object.freeze([]),
