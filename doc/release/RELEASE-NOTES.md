@@ -7,29 +7,22 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: *Provide release date*
+* Release date: April 20, 2024
 
 ### Database changes
 #### Migrations:
-* *Describe migrations here.*
 
 #### Scheme changes
-* *Describe scheme changes here.*
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-923](https://opensupplyhub.atlassian.net/browse/OSDEV-923) [Uptime] Added more logs around API/List uploads & Dedupe Hub match processing
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
 
 ### Bugfix
 * [OSDEV-857](https://opensupplyhub.atlassian.net/browse/OSDEV-857) [Bug] Pre-prod isn't deleted by the 'terraform destroy' script. Command for destroying repositories on AWS pre-prod has been added.
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
-
-### Release instructions:
-* *Provide release instructions here.*
 
 ## Release 1.10.0
 
