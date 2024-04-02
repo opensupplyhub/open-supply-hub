@@ -1,0 +1,6 @@
+#!/bin/bash
+
+aws ecr batch-delete-image \
+    --repository-name $1 \
+    --image-ids "$(aws ecr list-images --repository-name $1 --query 'imageIds[*]' --output json
+)" || true

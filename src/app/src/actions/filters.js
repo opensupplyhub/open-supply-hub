@@ -104,7 +104,7 @@ export function setFiltersFromQueryString(qs = '') {
         payload = embed
             ? update(payload, {
                   sortAlgorithm: {
-                      $set: optionsForSortingResults[0],
+                      $set: optionsForSortingResults[2],
                   },
               })
             : payload;

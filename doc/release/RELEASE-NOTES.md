@@ -3,6 +3,31 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.11.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 20, 2024
+
+### Database changes
+#### Migrations:
+
+#### Scheme changes
+
+### Code/API changes
+* [OSDEV-923](https://opensupplyhub.atlassian.net/browse/OSDEV-923) [Uptime] Added more logs around API/List uploads & Dedupe Hub match processing
+* [OSDEV-606](https://opensupplyhub.atlassian.net/browse/OSDEV-606) Contributor Sort: Allow for ascending sort of contributors on the Map page. The sort_by parameter submits type of sorting order for facilities. Default sorting will be primary by public contributors count descending and secondary by name ascending/descending and contributors count ascending.
+
+### Architecture/Environment changes
+
+### Bugfix
+* [OSDEV-857](https://opensupplyhub.atlassian.net/browse/OSDEV-857) [Bug] Pre-prod isn't deleted by the 'terraform destroy' script. Command for destroying repositories on AWS pre-prod has been added.
+* [OSDEV-888](https://opensupplyhub.atlassian.net/browse/OSDEV-888) - Facility Profile. An error occurs when trying to open a facility from the Status Reports page. The error occurred due to activity reports with the status `pending` containing fields with `null` values and these values pass to the `format_date` function as an argument. Modified the `get_activity_reports` method in the `FacilityIndexDetailsSerializer` to prevent passing a falsy `date` argument into the `format_date` function.
+
+### What's new
+* [OSDEV-972](https://opensupplyhub.atlassian.net/browse/OSDEV-972) Reporting. Updating "Facility Uploads" report. Joined one table from two reports and added columns.New table with such columns:
+`month`, `Total # of list uploads` in a given month (these are uploads that come from external contributors, NOT OS Hub team members), `# of public list uploads` in a given month (these are uploads that come from OS Hub team members AND have “[Public List]” in the contributor name), `Total facility listItems` uploaded in a given month, `# of Facilities` from Public Lists, `Total Facilities w/ status = new facility`, `# Public List Facilities w/ status = new facility`. Data is ordered from most recent to oldest
+
 ## Release 1.10.0
 
 ## Introduction
@@ -33,8 +58,8 @@ Move `countries` to a separate module so that it becomes possible to use both `d
 * [OSDEV-938](https://opensupplyhub.atlassian.net/browse/OSDEV-938) Move cleanup helper functions to the serializer
 * [OSDEV-851](https://opensupplyhub.atlassian.net/browse/OSDEV-851) Place 'terraform.tfvar' files to repository and move sensitive info to private repository opensupplyhub/ci-deployment
 * [OSDEV-894](https://opensupplyhub.atlassian.net/browse/OSDEV-894) Implement Contricleaner library into create facility API endpoint (`facilities_view_set.py`)
-* [OSDEV-536](https://opensupplyhub.atlassian.net/browse/OSDEV-536) In the Contricleaner library, implement parsing of fields `sector_product_type`, `sector`, and `product_type` based on commas and vertical bars. 
-* [OSDEV-760](https://opensupplyhub.atlassian.net/browse/OSDEV-760) In the Contricleaner library, implement parsing of fields `facility_type_processing_type`, `facility_type`, and `processing_type` based on commas and vertical bars. 
+* [OSDEV-536](https://opensupplyhub.atlassian.net/browse/OSDEV-536) In the Contricleaner library, implement parsing of fields `sector_product_type`, `sector`, and `product_type` based on commas and vertical bars.
+* [OSDEV-760](https://opensupplyhub.atlassian.net/browse/OSDEV-760) In the Contricleaner library, implement parsing of fields `facility_type_processing_type`, `facility_type`, and `processing_type` based on commas and vertical bars.
 * [OSDEV-893](https://opensupplyhub.atlassian.net/browse/OSDEV-893) - Implement the ContriCleaner parser for parsing facility lists immediately after list upload.
 
 ### Bugfix
