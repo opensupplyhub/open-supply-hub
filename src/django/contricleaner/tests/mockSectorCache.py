@@ -1,4 +1,4 @@
-from contricleaner.lib.sector_cache_interface import SectorCacheInterface
+from django.contricleaner.lib.client_abstractions.sector_cache_interface import SectorCacheInterface
 
 
 class MockSectorCache(SectorCacheInterface):

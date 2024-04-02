@@ -67,8 +67,8 @@ from api.extended_fields import (
     create_extendedfields_for_listitem
 )
 from ..fields.create_nonstandard_fields import create_nonstandard_fields
-from contricleaner.lib.serializers.contri_cleaner_serializer import (
-    ContriCleanerSerializer
+from django.contricleaner.lib.parsers.parsing_executor import (
+    ParsingExecutor
 )
 from contricleaner.lib.parsers.source_parser_xlsx import (
     SourceParserXLSX
@@ -128,20 +128,17 @@ class FacilityListViewSet(ModelViewSet):
     @staticmethod
     def __get_serializer(
             file: Union[InMemoryUploadedFile, TemporaryUploadedFile]
-            ) -> ContriCleanerSerializer:
-        split_pattern = r', |,|\|'
+            ) -> ParsingExecutor:
         ext = os.path.splitext(file.name)[1].lower()
         if ext == '.xlsx':
-            serializer = ContriCleanerSerializer(
+            serializer = ParsingExecutor(
                 SourceParserXLSX(file),
-                SectorCache(),
-                split_pattern
+                SectorCache()
             )
         elif ext == '.csv':
-            serializer = ContriCleanerSerializer(
+            serializer = ParsingExecutor(
                 SourceParserCSV(file),
-                SectorCache(),
-                split_pattern
+                SectorCache()
             )
         else:
             raise ValidationError(

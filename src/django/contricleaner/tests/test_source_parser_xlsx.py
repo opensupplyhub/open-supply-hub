@@ -11,8 +11,8 @@ from openpyxl import Workbook
 from openpyxl.styles import NamedStyle
 
 from contricleaner.lib.parsers.source_parser_xlsx import SourceParserXLSX
-from contricleaner.lib.parsers.source_parser import SourceParser
-from contricleaner.lib.parsers.file_parser import FileParser
+from django.contricleaner.lib.parsers.abstractions.source_parser import SourceParser
+from django.contricleaner.lib.parsers.core_interfaces.file_parser import FileParser
 from contricleaner.lib.serializers.row_serializers.row_composite_serializer \
     import RowCompositeSerializer
 

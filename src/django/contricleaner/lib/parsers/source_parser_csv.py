@@ -7,8 +7,8 @@ from django.core.files.uploadedfile import (
     TemporaryUploadedFile
 )
 
-from contricleaner.lib.parsers.source_parser import SourceParser
-from contricleaner.lib.parsers.file_parser import FileParser
+from contricleaner.lib.parsers.abstractions.source_parser import SourceParser
+from contricleaner.lib.parsers.abstractions.file_parser import FileParser
 
 
 class SourceParserCSV(SourceParser, FileParser):

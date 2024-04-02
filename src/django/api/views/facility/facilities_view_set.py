@@ -5,8 +5,8 @@ import logging
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
 from contricleaner.lib.parsers.source_parser_json import SourceParserJSON
-from contricleaner.lib.serializers.contri_cleaner_serializer import \
-    ContriCleanerSerializer
+from django.contricleaner.lib.parsers.parsing_executor import \
+    ParsingExecutor
 
 from rest_framework.mixins import (
     ListModelMixin,
@@ -583,9 +583,8 @@ class FacilitiesViewSet(ListModelMixin,
 
         log.info(f'[API Upload] Uploading data: {request.data}')
         log.info('[API Upload] Started CC Parse process!')
-        split_pattern = r', |,|\|'
-        contri_cleaner = ContriCleanerSerializer(
-            SourceParserJSON(request.data), SectorCache(), split_pattern
+        contri_cleaner = ParsingExecutor(
+            SourceParserJSON(request.data), SectorCache()
         )
         rows = contri_cleaner.get_validated_rows()
         row = rows[0]

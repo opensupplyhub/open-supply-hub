@@ -1,7 +1,7 @@
 import re
 from typing import Dict
 from contricleaner.lib.dto.row_dto import RowDTO
-from contricleaner.lib.sector_cache_interface import SectorCacheInterface
+from django.contricleaner.lib.client_abstractions.sector_cache_interface import SectorCacheInterface
 from contricleaner.lib.serializers.row_serializers.row_clean_field_serializer \
     import RowCleanFieldSerializer
 from contricleaner.lib.serializers.row_serializers.row_country_serializer \
@@ -18,16 +18,18 @@ from contricleaner.lib.serializers.row_serializers \
 
 
 class RowCompositeSerializer:
+    __split_pattern = r', |,|\|'
+
     def __init__(
-        self, sector_cache: SectorCacheInterface, split_pattern: str
+        self, sector_cache: SectorCacheInterface
     ):
         self.validators = [
             RowCleanFieldSerializer("name", "clean_name"),
             RowCleanFieldSerializer("address", "clean_address"),
-            RowSectorSerializer(sector_cache, split_pattern),
+            RowSectorSerializer(sector_cache, self.__split_pattern),
             RowCountrySerializer(),
             RowRequiredFieldsSerializer(),
-            RowFacilityTypeSerializer(split_pattern),
+            RowFacilityTypeSerializer(self.__split_pattern),
             RowEmptySerializer(),
         ]
 
