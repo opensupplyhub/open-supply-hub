@@ -7,32 +7,25 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: *Provide release date*
+* Release date: April 20, 2024
 
 ### Database changes
 #### Migrations:
-* *Describe migrations here.*
 
 #### Scheme changes
-* *Describe scheme changes here.*
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-923](https://opensupplyhub.atlassian.net/browse/OSDEV-923) [Uptime] Added more logs around API/List uploads & Dedupe Hub match processing
+* [OSDEV-606](https://opensupplyhub.atlassian.net/browse/OSDEV-606) Contributor Sort: Allow for ascending sort of contributors on the Map page. The sort_by parameter submits type of sorting order for facilities. Default sorting will be primary by public contributors count descending and secondary by name ascending/descending and contributors count ascending.
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
 
 ### Bugfix
-* *Describe bugfix here.*
+* [OSDEV-857](https://opensupplyhub.atlassian.net/browse/OSDEV-857) [Bug] Pre-prod isn't deleted by the 'terraform destroy' script. Command for destroying repositories on AWS pre-prod has been added.
+* [OSDEV-888](https://opensupplyhub.atlassian.net/browse/OSDEV-888) - Facility Profile. An error occurs when trying to open a facility from the Status Reports page. The error occurred due to activity reports with the status `pending` containing fields with `null` values and these values pass to the `format_date` function as an argument. Modified the `get_activity_reports` method in the `FacilityIndexDetailsSerializer` to prevent passing a falsy `date` argument into the `format_date` function.
 
 ### What's new
 * [OSDEV-962](https://opensupplyhub.atlassian.net/browse/OSDEV-962) Update Release protocol. The Release protocol has been updated after the automatization of manual processes such as creating a release branch, restoring DB, deploy to AWS.
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
-
-### Release instructions:
-* Update code.
-* Apply DB migrations up to the latest one.
-
 
 ## Release 1.10.0
 
