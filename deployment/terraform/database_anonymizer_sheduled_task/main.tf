@@ -14,11 +14,34 @@ data "aws_iam_policy_document" "database_anonymizer_worker" {
     ]
     resources = ["*"]
   }
+
+  statement {
+    actions = [
+      "ssm:DescribeParameters"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "ssm:GetParameters"
+    ]
+    resources = [
+      aws_ssm_parameter.database_password.arn
+    ]
+  }
 }
 
 module "database_anonymizer_cluster" {
   source = "git::git@github.com:cn-terraform/terraform-aws-ecs-cluster.git?ref=1.0.11"
   name   = join("-", [local.short, "DatabaseAnonymizer"])
+}
+
+resource "aws_ssm_parameter" "database_password" {
+  name        = "/database/${var.rds_database_identifier}/password"
+  description = "The database ${var.rds_database_identifier} password"
+  type        = "String"
+  value       = var.rds_database_password
 }
 
 module "database_anonymizer_task_definition" {
@@ -35,10 +58,6 @@ module "database_anonymizer_task_definition" {
     {
       name : "SOURCE_DATABASE_IDENTIFIER"
       value : var.rds_database_identifier
-    },
-    {
-      name : "SOURCE_DATABASE_PASSWORD"
-      value : var.rds_database_password
     },
     {
       name : "SOURCE_DATABASE_USER"
@@ -78,12 +97,12 @@ module "database_anonymizer_task_definition" {
     }
   ]
 
-  #  secrets = [
-  #    {
-  #       valueFrom: "arn:aws:ssm:eu-west-1:343975343274:parameter/test",
-  #       name: "TEST"
-  #    },
-  #  ]
+  secrets = [
+    {
+       valueFrom: aws_ssm_parameter.database_password.arn
+       name: "SOURCE_DATABASE_PASSWORD"
+    },
+  ]
 
   log_configuration = {
     logDriver : "awslogs",
