@@ -92,7 +92,14 @@ source.delete_db_instance(
 )
 
 waiters = source.get_waiter('db_snapshot_completed')
-waiters.wait(DBSnapshotIdentifier=anonymized_snapshot_identifier)
+waiters.wait(
+    DBSnapshotIdentifier=anonymized_snapshot_identifier,
+    WaiterConfig={
+        'Delay': 15,
+        'MaxAttempts': 100
+    }
+)
+
 print('Database deleted successfully!')
 
 shared_snapshot_identifier = anonymized_snapshot_identifier + "-shared"
