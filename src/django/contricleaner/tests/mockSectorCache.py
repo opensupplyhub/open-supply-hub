@@ -1,4 +1,6 @@
-from contricleaner.lib.client_abstractions.sector_cache_interface import SectorCacheInterface
+from contricleaner.lib.client_abstractions.sector_cache_interface import (
+    SectorCacheInterface
+)
 
 
 class MockSectorCache(SectorCacheInterface):
