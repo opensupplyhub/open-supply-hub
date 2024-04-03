@@ -16,7 +16,6 @@ class EarlyHeaderValidator(EarlyValidator):
             if len(diff) == 0:
                 return {}
 
-
         return {
             "message": "Required Fields are missing: {}".format(', '.join(self.__required_fields)),
             "type": "Error",
