@@ -1,7 +1,6 @@
 import csv
 from typing import List, Union
 
-from rest_framework.exceptions import ValidationError
 from django.core.files.uploadedfile import (
     InMemoryUploadedFile,
     TemporaryUploadedFile
@@ -9,6 +8,7 @@ from django.core.files.uploadedfile import (
 
 from contricleaner.lib.parsers.abstractions.source_parser import SourceParser
 from contricleaner.lib.parsers.abstractions.file_parser import FileParser
+from contricleaner.lib.exceptions.parsing_error import ParsingError
 
 
 class SourceParserCSV(SourceParser, FileParser):
@@ -25,8 +25,8 @@ class SourceParserCSV(SourceParser, FileParser):
             decoded_header = file.readline().decode(encoding='utf-8-sig') \
                 .rstrip()
         except UnicodeDecodeError:
-            raise ValidationError('Unsupported file encoding. Please '
-                                  'submit a UTF-8 CSV.')
+            raise ParsingError('Unsupported file encoding. Please '
+                               'submit a UTF-8 CSV.')
         header = SourceParserCSV.__parse_csv_line(decoded_header)
 
         for idx, line in enumerate(file):
@@ -34,8 +34,8 @@ class SourceParserCSV(SourceParser, FileParser):
                 try:
                     decoded_row = line.decode(encoding='utf-8-sig').rstrip()
                 except UnicodeDecodeError:
-                    raise ValidationError('Unsupported file encoding. Please '
-                                          'submit a UTF-8 CSV.')
+                    raise ParsingError('Unsupported file encoding. Please '
+                                       'submit a UTF-8 CSV.')
                 bare_row = SourceParserCSV.__parse_csv_line(decoded_row)
                 rows.append(dict(zip(header, bare_row)))
 

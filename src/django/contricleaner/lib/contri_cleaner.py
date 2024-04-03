@@ -5,6 +5,7 @@ from django.core.files.uploadedfile import (
     InMemoryUploadedFile,
     TemporaryUploadedFile
 )
+
 from contricleaner.lib.client_abstractions.sector_cache_interface import (
     SectorCacheInterface
 )
@@ -18,6 +19,8 @@ from contricleaner.lib.parsers.source_parser_csv import (
     SourceParserCSV
 )
 from contricleaner.lib.parsers.source_parser_json import SourceParserJSON
+from contricleaner.lib.dto.list_dto import ListDTO
+from contricleaner.lib.exceptions.parsing_error import ParsingError
 
 
 class ContriCleaner:
@@ -43,9 +46,11 @@ class ContriCleaner:
         self.__data = data
         self.__sector_cache = sector_cache
 
-    def process_data(self):
+    def process_data(self) -> ListDTO:
         parsing_executor = self.__define_parsing_strategy()
-        pass
+        validated_rows = parsing_executor.execute_parsing()
+
+        return ListDTO(rows=validated_rows)
 
     def __define_parsing_strategy(self) -> ParsingExecutor:
         if isinstance(self.__data, dict):
@@ -65,7 +70,7 @@ class ContriCleaner:
                     self.__sector_cache
                 )
             else:
-                raise ValidationError(
+                raise ParsingError(
                     'Unsupported file type. Please '
                     'submit Excel or UTF-8 CSV.'
                 )

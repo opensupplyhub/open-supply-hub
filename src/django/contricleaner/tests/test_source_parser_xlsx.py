@@ -6,15 +6,19 @@ from django.test import TestCase
 from django.core.files.uploadedfile import (
     SimpleUploadedFile, TemporaryUploadedFile
 )
-from rest_framework.exceptions import ValidationError
 from openpyxl import Workbook
 from openpyxl.styles import NamedStyle
 
 from contricleaner.lib.parsers.source_parser_xlsx import SourceParserXLSX
-from django.contricleaner.lib.parsers.abstractions.source_parser import SourceParser
-from django.contricleaner.lib.parsers.core_interfaces.file_parser import FileParser
+from contricleaner.lib.parsers.abstractions.source_parser import (
+    SourceParser
+)
+from contricleaner.lib.parsers.abstractions.file_parser import (
+    FileParser
+)
 from contricleaner.lib.serializers.row_serializers.row_composite_serializer \
     import RowCompositeSerializer
+from contricleaner.lib.exceptions.parsing_error import ParsingError
 
 
 class SourceParserXLSXTest(TestCase):
@@ -127,7 +131,7 @@ class SourceParserXLSXTest(TestCase):
         parser = SourceParserXLSX(temp_uploaded_file_stub)
 
         with self.assertRaisesRegex(
-                ValidationError,
+                ParsingError,
                 (r'Error parsing Excel \(\.xlsx\) file')
                 ):
             parser.get_parsed_rows()

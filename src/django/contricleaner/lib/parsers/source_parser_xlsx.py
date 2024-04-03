@@ -3,7 +3,6 @@ from typing import List, Union
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
-from rest_framework.exceptions import ValidationError
 from django.core.files.uploadedfile import (
     InMemoryUploadedFile,
     TemporaryUploadedFile
@@ -11,6 +10,7 @@ from django.core.files.uploadedfile import (
 
 from contricleaner.lib.parsers.abstractions.source_parser import SourceParser
 from contricleaner.lib.parsers.abstractions.file_parser import FileParser
+from contricleaner.lib.exceptions.parsing_error import ParsingError
 
 
 class SourceParserXLSX(SourceParser, FileParser):
@@ -52,7 +52,7 @@ class SourceParserXLSX(SourceParser, FileParser):
 
             return rows
         except Exception:
-            raise ValidationError('Error parsing Excel (.xlsx) file')
+            raise ParsingError('Error parsing Excel (.xlsx) file')
 
     @staticmethod
     def __tidy_row(row: tuple) -> list:
@@ -81,8 +81,8 @@ class SourceParserXLSX(SourceParser, FileParser):
             return worksheet
 
         except EntitiesForbidden:
-            raise ValidationError('This file may be damaged and '
-                                  'cannot be processed safely')
+            raise ParsingError('This file may be damaged and '
+                               'cannot be processed safely')
 
     @staticmethod
     def __format_percent(value: Union[float, int, str, None]) -> str:

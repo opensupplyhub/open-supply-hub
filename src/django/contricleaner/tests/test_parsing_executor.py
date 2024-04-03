@@ -2,13 +2,13 @@ from django.test import TestCase
 
 from contricleaner.lib.dto.row_dto import RowDTO
 from contricleaner.lib.parsers.source_parser_json import SourceParserJSON
-from django.contricleaner.lib.parsers.parsing_executor import (
-    ContriCleanerSerializer,
+from contricleaner.lib.parsers.parsing_executor import (
+    ParsingExecutor,
 )
 from contricleaner.tests.mockSectorCache import MockSectorCache
 
 
-class TestContriCleanerSerializer(TestCase):
+class TestParsingExecutor(TestCase):
     def setUp(self):
         self.json_data = {
             "country": "USA",
@@ -18,11 +18,11 @@ class TestContriCleanerSerializer(TestCase):
 
     def test_get_validated_rows_json_parser(self):
         # Test when a single valid row is returned
-        serializer = ContriCleanerSerializer(
+        parsing_executor = ParsingExecutor(
             SourceParserJSON(self.json_data),
             MockSectorCache()
         )
-        result = serializer.get_validated_rows()
+        result = parsing_executor.execute_parsing()
         expected_result = [
             RowDTO(
                 raw_json={

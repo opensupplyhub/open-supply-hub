@@ -1,7 +1,7 @@
 import re
 from typing import Dict
 from contricleaner.lib.dto.row_dto import RowDTO
-from django.contricleaner.lib.client_abstractions.sector_cache_interface import SectorCacheInterface
+from contricleaner.lib.client_abstractions.sector_cache_interface import SectorCacheInterface
 from contricleaner.lib.serializers.row_serializers.row_clean_field_serializer \
     import RowCleanFieldSerializer
 from contricleaner.lib.serializers.row_serializers.row_country_serializer \

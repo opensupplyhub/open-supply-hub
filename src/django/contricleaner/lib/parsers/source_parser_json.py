@@ -1,6 +1,6 @@
 from typing import List
 
-from django.contricleaner.lib.parsers.abstractions.source_parser import SourceParser
+from contricleaner.lib.parsers.abstractions.source_parser import SourceParser
 
 
 class SourceParserJSON(SourceParser):

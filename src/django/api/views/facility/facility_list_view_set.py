@@ -67,15 +67,8 @@ from api.extended_fields import (
     create_extendedfields_for_listitem
 )
 from ..fields.create_nonstandard_fields import create_nonstandard_fields
-from django.contricleaner.lib.parsers.parsing_executor import (
-    ParsingExecutor
-)
-from contricleaner.lib.parsers.source_parser_xlsx import (
-    SourceParserXLSX
-)
-from contricleaner.lib.parsers.source_parser_csv import (
-    SourceParserCSV
-)
+from django.contricleaner.lib.contri_cleaner import ContriCleaner
+from django.contricleaner.lib.exceptions.parsing_error import ParsingError
 
 log = logging.getLogger(__name__)
 
@@ -124,28 +117,6 @@ class FacilityListViewSet(ModelViewSet):
         self._validate_header(header)
         rows = map(clean_row, rows)
         return header, rows
-
-    @staticmethod
-    def __get_serializer(
-            file: Union[InMemoryUploadedFile, TemporaryUploadedFile]
-            ) -> ParsingExecutor:
-        ext = os.path.splitext(file.name)[1].lower()
-        if ext == '.xlsx':
-            serializer = ParsingExecutor(
-                SourceParserXLSX(file),
-                SectorCache()
-            )
-        elif ext == '.csv':
-            serializer = ParsingExecutor(
-                SourceParserCSV(file),
-                SectorCache()
-            )
-        else:
-            raise ValidationError(
-                'Unsupported file type. Please '
-                'submit Excel or UTF-8 CSV.'
-            )
-        return serializer
 
     @staticmethod
     def __is_required_fields_present(rows: List[dict]) -> bool:
@@ -377,11 +348,12 @@ class FacilityListViewSet(ModelViewSet):
 
         parsing_started = str(timezone.now())
         log.info('[List Upload] Started CC Parse process!')
-        serializer = self.__get_serializer(uploaded_file)
+        contri_cleaner = ContriCleaner(uploaded_file, SectorCache())
         try:
-            rows = serializer.get_validated_rows()
-        except ValidationError as err:
-            log.error(f'[List Upload] Data Validation Error: {err}')
+            processed_data = contri_cleaner.process_data()
+            rows = processed_data.rows
+        except ParsingError as err:
+            log.error(f'[List Upload] Data Parsing Error: {err}')
             report_error_to_rollbar(request=request,
                                     file=uploaded_file,
                                     exception=err)

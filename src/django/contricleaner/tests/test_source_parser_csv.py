@@ -6,13 +6,17 @@ from django.test import TestCase
 from django.core.files.uploadedfile import (
     SimpleUploadedFile, TemporaryUploadedFile
 )
-from rest_framework.exceptions import ValidationError
 
 from contricleaner.lib.parsers.source_parser_csv import SourceParserCSV
-from django.contricleaner.lib.parsers.abstractions.source_parser import SourceParser
-from django.contricleaner.lib.parsers.core_interfaces.file_parser import FileParser
+from contricleaner.lib.parsers.abstractions.source_parser import (
+    SourceParser
+)
+from contricleaner.lib.parsers.abstractions.file_parser import (
+    FileParser
+)
 from contricleaner.lib.serializers.row_serializers.row_composite_serializer \
     import RowCompositeSerializer
+from contricleaner.lib.exceptions.parsing_error import ParsingError
 
 
 class SourceParserCSVTest(TestCase):
@@ -89,7 +93,7 @@ class SourceParserCSVTest(TestCase):
             uploaded_file = SimpleUploadedFile('test.csv', file_content)
 
         parser = SourceParserCSV(uploaded_file)
-        with self.assertRaisesRegex(ValidationError,
+        with self.assertRaisesRegex(ParsingError,
                                     (r'Unsupported file encoding\. '
                                      r'Please submit a UTF-8 CSV\.')):
             parser.get_parsed_rows()
@@ -105,7 +109,7 @@ class SourceParserCSVTest(TestCase):
             uploaded_file = SimpleUploadedFile('test.csv', file_content)
 
         parser = SourceParserCSV(uploaded_file)
-        with self.assertRaisesRegex(ValidationError,
+        with self.assertRaisesRegex(ParsingError,
                                     (r'Unsupported file encoding\. '
                                      r'Please submit a UTF-8 CSV\.')):
             parser.get_parsed_rows()

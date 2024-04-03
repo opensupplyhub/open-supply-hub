@@ -16,6 +16,6 @@ class ParsingExecutor:
         self.__source_parser = source_parser
         self.row_serializer = RowCompositeSerializer(sector_cache)
 
-    def get_validated_rows(self) -> List[RowDTO]:
+    def execute_parsing(self) -> List[RowDTO]:
         rows = self.__source_parser.get_parsed_rows()
         return [self.row_serializer.get_validated_row(row) for row in rows]
