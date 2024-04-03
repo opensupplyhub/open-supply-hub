@@ -5,7 +5,7 @@ from contricleaner.lib.parsers.source_parser_json import SourceParserJSON
 from contricleaner.lib.parsers.parsing_executor import (
     ParsingExecutor,
 )
-from contricleaner.tests.mockSectorCache import MockSectorCache
+from contricleaner.tests.sector_cache_mock import MockSectorCache
 
 
 class TestParsingExecutor(TestCase):

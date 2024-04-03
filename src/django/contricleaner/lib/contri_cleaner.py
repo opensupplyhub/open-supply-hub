@@ -24,6 +24,9 @@ from contricleaner.lib.exceptions.parsing_error import ParsingError
 
 
 class ContriCleaner:
+    '''
+    This is the facade for interacting with the ContriCleaner library.
+    '''
 
     def __init__(self,
                  data: Union[

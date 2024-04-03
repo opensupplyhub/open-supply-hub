@@ -1,7 +1,7 @@
 from contricleaner.lib.dto.row_dto import RowDTO
 from contricleaner.lib.serializers.row_serializers.row_composite_serializer \
     import RowCompositeSerializer
-from contricleaner.tests.mockSectorCache import MockSectorCache
+from contricleaner.tests.sector_cache_mock import MockSectorCache
 
 from django.test import TestCase
 
