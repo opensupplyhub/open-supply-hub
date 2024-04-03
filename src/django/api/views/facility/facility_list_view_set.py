@@ -67,8 +67,8 @@ from api.extended_fields import (
     create_extendedfields_for_listitem
 )
 from ..fields.create_nonstandard_fields import create_nonstandard_fields
-from django.contricleaner.lib.contri_cleaner import ContriCleaner
-from django.contricleaner.lib.exceptions.parsing_error import ParsingError
+from contricleaner.lib.contri_cleaner import ContriCleaner
+from contricleaner.lib.exceptions.parsing_error import ParsingError
 
 log = logging.getLogger(__name__)
 

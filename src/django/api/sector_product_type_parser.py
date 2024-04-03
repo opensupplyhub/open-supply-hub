@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 from api.models import Sector
 from api.constants import CsvHeaderField
-from django.contricleaner.lib.client_abstractions.sector_cache_interface \
-    import SectorCacheInterface
+from contricleaner.lib.client_abstractions.sector_cache_interface import (
+    SectorCacheInterface
+)
 
 
 class SectorCache(SectorCacheInterface):
