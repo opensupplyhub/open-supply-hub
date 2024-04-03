@@ -17,12 +17,12 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         usage
     else
         # Install frontend NPM modules.
-        echo "Run docker-compose run --rm --no-deps app yarn install"
+        echo "Run docker compose run --rm --no-deps app yarn install"
         docker compose run --rm --no-deps app yarn install
 
         # Run the ESLint linter check.
         echo -e \
-        "\nRun docker-compose run --rm --entrypoint ./node_modules/.bin/eslint" \
+        "\nRun docker compose run --rm --entrypoint ./node_modules/.bin/eslint" \
         "app src/ --ext .js --ext .jsx"
         docker compose \
             run --rm --entrypoint ./node_modules/.bin/eslint \
@@ -30,7 +30,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
         # Run the Prettier formatting check.
         echo -e \
-        "\nRun docker-compose run --rm --no-deps app yarn prettier" \
+        "\nRun docker compose run --rm --no-deps app yarn prettier" \
         "--config .prettierrc --check 'src/**/*.js' 'src/**/*.jsx'"
         docker compose \
             run --rm --no-deps app yarn prettier \
@@ -39,7 +39,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
         # Run the Jest tests and generate code coverage report.
         echo -e \
-        "\nRun docker-compose run --rm --no-deps app yarn test"
+        "\nRun docker compose run --rm --no-deps app yarn test"
         docker compose run --rm --no-deps app yarn test
     fi
 fi

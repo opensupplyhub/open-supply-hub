@@ -22,15 +22,15 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
         # Run the Flake8 linter check.
         echo -e \
-        "\nRun docker-compose run --rm --no-deps --entrypoint flake8 django" \
+        "\nRun docker compose run --rm --no-deps --entrypoint flake8 django" \
         "--exclude settings.py,manage.py,*.pyc,api/migrations/*"
-        docker-compose \
+        docker compose \
             run --rm --no-deps --entrypoint flake8 django \
             --exclude settings.py,manage.py,*.pyc,api/migrations/*
 
         # Run the unittest tests and generate code cov report.
         echo -e \
-        "\nRun docker-compose" \
+        "\nRun docker compose" \
         "run --rm --entrypoint /bin/sh django" \
         "-c 'coverage run --data-file=./coverage/.coverage manage.py test --no-input ./api/tests ./countries/tests ./contricleaner/tests" \
         "&& coverage lcov --data-file=./coverage/.coverage -o ./coverage/coverage.lcov'" \
