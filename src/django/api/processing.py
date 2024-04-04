@@ -644,15 +644,17 @@ def handle_external_match_process_result(id, result, request, should_create):
     if queryset_f_m.count() == 0:
         # No Match and Geocoder Returned No Results
         return get_error_match_result(f_l_item.id, result)
-    if (queryset_f_m.count() == 1
-            and queryset_f_m[0].status == FacilityMatchTemp.AUTOMATIC):
+
+    if queryset_f_m[0].status == FacilityMatchTemp.AUTOMATIC:
         # New Facility
-        if f_l_item.facility is None:
-            return get_new_facility_match_result(f_l_item.id, None, result)
-        if f_l_item.facility.created_from == f_l_item:
-            return get_new_facility_match_result(
-                f_l_item.id, f_l_item.facility.id, result
-            )
+        if queryset_f_m.count() == 1:
+            if f_l_item.facility is None:
+                return get_new_facility_match_result(f_l_item.id, None, result)
+            if f_l_item.facility.created_from == f_l_item:
+                return get_new_facility_match_result(
+                    f_l_item.id, f_l_item.facility.id, result
+                )
+
         # Automatic Match
         return get_automatic_match_result(f_l_item.id,
                                           f_l_item.facility.id,
