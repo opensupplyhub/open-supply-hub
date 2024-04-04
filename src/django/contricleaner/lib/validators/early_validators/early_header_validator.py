@@ -17,7 +17,7 @@ class EarlyHeaderValidator(EarlyValidator):
                 return {}
 
         return {
-            "message": "Required Fields are missing: {}".\
-                format(', '.join(self.__required_fields)),
+            "message": "Required Fields are missing: {}"
+                .format(', '.join(self.__required_fields)),
             "type": "Error",
         }
