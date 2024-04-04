@@ -34,7 +34,7 @@ class EarlyValidationHandlerTest(unittest.TestCase):
         list_dto = self.handler_one.handle(
             [facility_source_three, facility_source_two]
         )
-
+        print(list_dto.errors)
         self.assertEqual(len(list_dto.errors), 1)
 
         try:
