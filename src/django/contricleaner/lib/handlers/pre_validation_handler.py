@@ -8,10 +8,6 @@ from contricleaner.lib.validators.pre_validators \
 
 
 class PreValidationHandler(ListRowHandler):
-    __next: ListRowHandler
-
-    def setNext(self, next: ListRowHandler):
-        self.__next = next
 
     def handle(self, rows: List[dict]) -> ListDTO:
         composite_early_validator = CompositePreValidator()
@@ -23,6 +19,6 @@ class PreValidationHandler(ListRowHandler):
             return ListDTO([], result["errors"])
 
         try:
-            return self.__next.handle(rows)
+            return self._next.handle(rows)
         except Exception:
             raise Exception("Next Handler wasn't set")
