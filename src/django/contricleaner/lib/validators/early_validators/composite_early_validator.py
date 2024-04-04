@@ -4,7 +4,7 @@ from contricleaner.lib.validators.\
 
 
 class CompositeEarlyValidator(EarlyValidator):
-    __validators: List[EarlyValidator]
+    __validators: List[EarlyValidator] = []
 
     def add_validator(self, validator: EarlyValidator):
         self.__validators.append(validator)
@@ -15,6 +15,6 @@ class CompositeEarlyValidator(EarlyValidator):
         }
         for validator in self.__validators:
             result = validator.validate(rows)
-            if result.keys() > 0:
+            if len(result.keys()) > 0:
                 validation["errors"].append(result)
         return validation

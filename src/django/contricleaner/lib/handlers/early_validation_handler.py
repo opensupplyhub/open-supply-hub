@@ -8,6 +8,7 @@ from contricleaner.lib.validators.early_validators.\
 
 
 class EarlyValidationHandler(Handler):
+    __next: Handler
 
     def setNext(self, next: Handler):
         self.__next = next
@@ -21,4 +22,7 @@ class EarlyValidationHandler(Handler):
         if len(result["errors"]) > 0:
             return ListDTO([], result["errors"])
 
-        return self.__next.handle(rows)
+        try:
+            return self.__next.handle(rows)
+        except:
+            raise KeyError("Next Handler wasn't set")
