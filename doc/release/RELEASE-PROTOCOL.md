@@ -138,9 +138,8 @@ Make sure that:
 In case workflow failed in the apply step responsible person have to run `Deploy to AWS` workflow for the sandbox and production environments from the release branch.
 5. The responsible person also needs to check that DedupeHub is up and running. To do this, they should open CloudWatch via the AWS console, navigate to the Log groups section in the menu, open logOpenSupplyHubProductionAppDD and logOpenSupplyHubStagingAppDD, then open the latest log stream of each log group. Ensure that there is a recent message: `INFO: Application startup complete.`
 6. Once the aforementioned steps are successfully completed, the person responsible for the release should also follow the instructions outlined in the Release section of the [RELEASE-NOTES.md](./RELEASE-NOTES.md) file for the released version. In case there is a need to run a command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Migration+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5DHow-to-correctly-run-migrations-for-our-four-environments%3F---Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
-7. Notify the QA Engineer that the new version has been released, and they can commence testing the items listed under the *prod* column in [the QA Checklist sheet](https://docs.google.com/spreadsheets/d/
+7. Notify the QA Engineer that the new version has been released, and they can commence testing the items listed under the *prod* column in [the QA Checklist sheet](https://docs.google.com/spreadsheets/d/1uinHJOPpGfrUNkewBxPVsDeDXnNx4dJnnX94LoBA_zk/edit?usp=sharing).
 8. Upon completing the release, the responsible person must notify stakeholders in the *#data_x_product* Slack channel that the releases to sandbox and production have concluded. Additionally, update the *Unreleased* version's status in Jira.
-1uinHJOPpGfrUNkewBxPVsDeDXnNx4dJnnX94LoBA_zk/edit?usp=sharing).
 9. As the final step, shut down the pre-prod environment, as it is no longer required for the current version of the release.
 
 ### Hotfixes
@@ -150,5 +149,5 @@ In case workflow failed in the apply step responsible person have to run `Deploy
 
 ### Shut down the pre-prod environment
 
-- To shut down the Pre-prod the responsible personhave to select `Destroy Environment` in the Actions menu. Press run worflow with `main` branch and select `Pre-prod` env.
+- To shut down the Pre-prod the responsible person have to select `Destroy Environment` in the Actions menu. Press run workflow with `main` branch and select `Pre-prod` env.
 - DB Instance has to be destroyed manually via RDS -> Databases -> `opensupplyhub-enc-pp`. Press Modify -> Enable deletion protection=false. Then select Delete in Actions.
