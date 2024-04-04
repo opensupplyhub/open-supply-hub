@@ -9,7 +9,7 @@ class EarlyHeaderValidatorTest(unittest.TestCase):
 
     def setUp(self):
         self.validator = EarlyHeaderValidator()
-    
+
     def test_validate_header(self):
         facility_source_one = {
             "country": "United States",
@@ -32,10 +32,14 @@ class EarlyHeaderValidatorTest(unittest.TestCase):
             "extra_1": "Extra data",
         }
 
-        res_one = self.validator.validate([facility_source_two, facility_source_one])
+        res_one = self.validator.validate(
+            [facility_source_two, facility_source_one]
+        )
 
         self.assertEqual(res_one, {})
 
-        res_two = self.validator.validate([facility_source_three, facility_source_two])
+        res_two = self.validator.validate(
+            [facility_source_three, facility_source_two]
+        )
 
         self.assertEqual(res_two["type"], "Error")

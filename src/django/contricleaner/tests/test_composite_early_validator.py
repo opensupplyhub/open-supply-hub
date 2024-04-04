@@ -13,7 +13,7 @@ class CompositeEarlyValidatorTest(unittest.TestCase):
     def setUp(self):
         self.composite = CompositeEarlyValidator()
         self.composite.add_validator(EarlyHeaderValidator())
-    
+
     def test_composite_early_validator(self):
         facility_source_one = {
             "country": "United States",
@@ -36,10 +36,14 @@ class CompositeEarlyValidatorTest(unittest.TestCase):
             "extra_1": "Extra data",
         }
 
-        res_one = self.composite.validate([facility_source_two, facility_source_one])
+        res_one = self.composite.validate(
+            [facility_source_two, facility_source_one]
+        )
 
         self.assertEqual(len(res_one["errors"]), 0)
 
-        res_two = self.composite.validate([facility_source_three, facility_source_two])
+        res_two = self.composite.validate(
+            [facility_source_three, facility_source_two]
+        )
 
         self.assertEqual(len(res_two["errors"]), 1)

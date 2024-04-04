@@ -24,5 +24,5 @@ class EarlyValidationHandler(Handler):
 
         try:
             return self.__next.handle(rows)
-        except:
-            raise KeyError("Next Handler wasn't set")
+        except Exception:
+            raise Exception("Next Handler wasn't set")
