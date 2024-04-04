@@ -23,6 +23,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Bugfix
 * [OSDEV-857](https://opensupplyhub.atlassian.net/browse/OSDEV-857) [Bug] Pre-prod isn't deleted by the 'terraform destroy' script. Command for destroying repositories on AWS pre-prod has been added.
 * [OSDEV-888](https://opensupplyhub.atlassian.net/browse/OSDEV-888) - Facility Profile. An error occurs when trying to open a facility from the Status Reports page. The error occurred due to activity reports with the status `pending` containing fields with `null` values and these values pass to the `format_date` function as an argument. Modified the `get_activity_reports` method in the `FacilityIndexDetailsSerializer` to prevent passing a falsy `date` argument into the `format_date` function.
+* [OSDEV-660](https://opensupplyhub.atlassian.net/browse/OSDEV-660) - Remove punctuation issues with duplicated commas and double quotes while facility list uploading.
 
 ### What's new
 * [OSDEV-962](https://opensupplyhub.atlassian.net/browse/OSDEV-962) Update Release protocol. The Release protocol has been updated after the automatization of manual processes such as creating a release branch, restoring DB, deploy to AWS.
