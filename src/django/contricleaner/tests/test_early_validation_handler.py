@@ -6,7 +6,8 @@ from contricleaner.lib.handlers.early_validation_handler \
 
 class EarlyValidationHandlerTest(unittest.TestCase):
     def setUp(self):
-        self.handler = EarlyValidationHandler()
+        self.handler_one = EarlyValidationHandler()
+        self.handler_two = EarlyValidationHandler()
 
     def test_early_validation_handler(self):
         facility_source_one = {
@@ -30,13 +31,13 @@ class EarlyValidationHandlerTest(unittest.TestCase):
             "extra_1": "Extra data",
         }
 
-        list_dto = self.handler.handle(
+        list_dto = self.handler_one.handle(
             [facility_source_three, facility_source_two]
         )
 
         self.assertEqual(len(list_dto.errors), 1)
 
         try:
-            self.handler.handle([facility_source_one, facility_source_two])
+            self.handler_two.handle([facility_source_one, facility_source_two])
         except Exception as exc:
             self.assertEqual("Next Handler wasn't set", exc.args[0])
