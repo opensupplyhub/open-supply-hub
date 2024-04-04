@@ -1,18 +1,16 @@
 import unittest
 
-from contricleaner.lib.validators \
-    .early_validators.composite_early_validator \
-    import CompositeEarlyValidator
-from contricleaner.lib.validators \
-    .early_validators.early_header_validator \
-    import EarlyHeaderValidator
+from contricleaner.lib.validators.pre_validators.composite_pre_validator \
+    import CompositePreValidator
+from contricleaner.lib.validators.pre_validators.pre_header_validator \
+    import PreHeaderValidator
 
 
-class CompositeEarlyValidatorTest(unittest.TestCase):
+class CompositePreValidatorTest(unittest.TestCase):
 
     def setUp(self):
-        self.composite = CompositeEarlyValidator()
-        self.composite.add_validator(EarlyHeaderValidator())
+        self.composite = CompositePreValidator()
+        self.composite.add_validator(PreHeaderValidator())
 
     def test_composite_early_validator(self):
         facility_source_one = {

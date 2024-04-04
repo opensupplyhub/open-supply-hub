@@ -3,7 +3,7 @@ from typing import List
 from contricleaner.lib.dto.list_dto import ListDTO
 
 
-class Handler(ABC):
+class ListRowHandler(ABC):
 
     @abstractmethod
     def setNext(self, next):

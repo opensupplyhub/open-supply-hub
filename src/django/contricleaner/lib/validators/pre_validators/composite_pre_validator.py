@@ -1,12 +1,11 @@
 from typing import List
-from contricleaner.lib.validators.\
-    early_validators.early_validator import EarlyValidator
+from contricleaner.lib.validators.pre_validators.pre_validator import PreValidator
 
 
-class CompositeEarlyValidator(EarlyValidator):
-    __validators: List[EarlyValidator] = []
+class CompositePreValidator(PreValidator):
+    __validators: List[PreValidator] = []
 
-    def add_validator(self, validator: EarlyValidator):
+    def add_validator(self, validator: PreValidator):
         self.__validators.append(validator)
 
     def validate(self, rows: List[dict]) -> dict:

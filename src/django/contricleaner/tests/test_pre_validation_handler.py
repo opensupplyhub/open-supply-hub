@@ -1,13 +1,13 @@
 import unittest
 
-from contricleaner.lib.handlers.early_validation_handler \
-    import EarlyValidationHandler
+from contricleaner.lib.handlers.pre_validation_handler \
+    import PreValidationHandler
 
 
-class EarlyValidationHandlerTest(unittest.TestCase):
+class PreValidationHandlerTest(unittest.TestCase):
     def setUp(self):
-        self.handler_one = EarlyValidationHandler()
-        self.handler_two = EarlyValidationHandler()
+        self.handler_one = PreValidationHandler()
+        self.handler_two = PreValidationHandler()
 
     def test_early_validation_handler(self):
         facility_source_one = {

@@ -1,9 +1,8 @@
 from typing import List
-from contricleaner.lib.validators.\
-    early_validators.early_validator import EarlyValidator
+from contricleaner.lib.validators.pre_validators.pre_validator import PreValidator
 
 
-class EarlyHeaderValidator(EarlyValidator):
+class PreHeaderValidator(PreValidator):
     __required_fields = {"name",
                          "address",
                          "country"}

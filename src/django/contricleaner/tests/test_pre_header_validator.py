@@ -1,14 +1,13 @@
 import unittest
 
-from contricleaner.lib.validators \
-    .early_validators.early_header_validator \
-    import EarlyHeaderValidator
+from contricleaner.lib.validators.pre_validators.pre_header_validator \
+    import PreHeaderValidator
 
 
-class EarlyHeaderValidatorTest(unittest.TestCase):
+class PreHeaderValidatorTest(unittest.TestCase):
 
     def setUp(self):
-        self.validator = EarlyHeaderValidator()
+        self.validator = PreHeaderValidator()
 
     def test_validate_header(self):
         facility_source_one = {
