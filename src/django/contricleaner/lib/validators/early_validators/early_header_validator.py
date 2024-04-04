@@ -5,8 +5,8 @@ from contricleaner.lib.validators.\
 
 class EarlyHeaderValidator(EarlyValidator):
     __required_fields = {"name",
-                       "address",
-                       "country"}
+                         "address",
+                         "country"}
 
     def validate(self, rows: List[dict]) -> dict:
         for row in rows:
@@ -17,6 +17,7 @@ class EarlyHeaderValidator(EarlyValidator):
                 return {}
 
         return {
-            "message": "Required Fields are missing: {}".format(', '.join(self.__required_fields)),
+            "message": "Required Fields are missing: {}".\
+                format(', '.join(self.__required_fields)),
             "type": "Error",
         }
