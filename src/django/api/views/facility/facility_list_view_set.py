@@ -358,6 +358,7 @@ class FacilityListViewSet(ModelViewSet):
                                     file=uploaded_file,
                                     exception=err)
             raise ValidationError(str(err.detail[0]))
+        # TODO: handle  other types of errors (e.g., handler)
 
         if not self.__is_required_fields_present(rows):
             log.error('[List Upload] Required Field Missing Error')

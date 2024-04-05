@@ -581,6 +581,8 @@ class FacilitiesViewSet(ListModelMixin,
 
         log.info(f'[API Upload] Uploading data: {request.data}')
         log.info('[API Upload] Started CC Parse process!')
+
+        # TODO: handle  other types of errors from ContriCleaner (e.g., handler, parsing)
         contri_cleaner = ContriCleaner(request.data, SectorCache())
         processed_data = contri_cleaner.process_data()
         rows = processed_data.rows
