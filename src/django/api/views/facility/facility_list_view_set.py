@@ -6,7 +6,7 @@ import re
 import logging
 
 from functools import reduce
-from typing import Union, List
+from typing import List
 
 from api.helpers.helpers import (
     get_raw_json,
@@ -67,15 +67,8 @@ from api.extended_fields import (
     create_extendedfields_for_listitem
 )
 from ..fields.create_nonstandard_fields import create_nonstandard_fields
-from contricleaner.lib.serializers.contri_cleaner_serializer import (
-    ContriCleanerSerializer
-)
-from contricleaner.lib.parsers.source_parser_xlsx import (
-    SourceParserXLSX
-)
-from contricleaner.lib.parsers.source_parser_csv import (
-    SourceParserCSV
-)
+from contricleaner.lib.contri_cleaner import ContriCleaner
+from contricleaner.lib.exceptions.parsing_error import ParsingError
 
 log = logging.getLogger(__name__)
 
@@ -124,31 +117,6 @@ class FacilityListViewSet(ModelViewSet):
         self._validate_header(header)
         rows = map(clean_row, rows)
         return header, rows
-
-    @staticmethod
-    def __get_serializer(
-            file: Union[InMemoryUploadedFile, TemporaryUploadedFile]
-            ) -> ContriCleanerSerializer:
-        split_pattern = r', |,|\|'
-        ext = os.path.splitext(file.name)[1].lower()
-        if ext == '.xlsx':
-            serializer = ContriCleanerSerializer(
-                SourceParserXLSX(file),
-                SectorCache(),
-                split_pattern
-            )
-        elif ext == '.csv':
-            serializer = ContriCleanerSerializer(
-                SourceParserCSV(file),
-                SectorCache(),
-                split_pattern
-            )
-        else:
-            raise ValidationError(
-                'Unsupported file type. Please '
-                'submit Excel or UTF-8 CSV.'
-            )
-        return serializer
 
     @staticmethod
     def __is_required_fields_present(rows: List[dict]) -> bool:
@@ -380,11 +348,12 @@ class FacilityListViewSet(ModelViewSet):
 
         parsing_started = str(timezone.now())
         log.info('[List Upload] Started CC Parse process!')
-        serializer = self.__get_serializer(uploaded_file)
+        contri_cleaner = ContriCleaner(uploaded_file, SectorCache())
         try:
-            rows = serializer.get_validated_rows()
-        except ValidationError as err:
-            log.error(f'[List Upload] Data Validation Error: {err}')
+            processed_data = contri_cleaner.process_data()
+            rows = processed_data.rows
+        except ParsingError as err:
+            log.error(f'[List Upload] Data Parsing Error: {err}')
             report_error_to_rollbar(request=request,
                                     file=uploaded_file,
                                     exception=err)

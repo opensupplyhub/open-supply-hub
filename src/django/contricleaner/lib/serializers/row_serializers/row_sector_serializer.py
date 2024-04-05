@@ -5,7 +5,9 @@ from contricleaner.lib.helpers.is_valid_type import (
 )
 from contricleaner.lib.helpers.split_values import split_values
 
-from contricleaner.lib.sector_cache_interface import SectorCacheInterface
+from contricleaner.lib.client_abstractions.sector_cache_interface import (
+    SectorCacheInterface
+)
 from .row_serializer import RowSerializer
 
 

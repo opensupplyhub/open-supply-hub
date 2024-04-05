@@ -4,9 +4,7 @@ import asyncio
 import logging
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
-from contricleaner.lib.parsers.source_parser_json import SourceParserJSON
-from contricleaner.lib.serializers.contri_cleaner_serializer import \
-    ContriCleanerSerializer
+from contricleaner.lib.contri_cleaner import ContriCleaner
 
 from rest_framework.mixins import (
     ListModelMixin,
@@ -583,11 +581,9 @@ class FacilitiesViewSet(ListModelMixin,
 
         log.info(f'[API Upload] Uploading data: {request.data}')
         log.info('[API Upload] Started CC Parse process!')
-        split_pattern = r', |,|\|'
-        contri_cleaner = ContriCleanerSerializer(
-            SourceParserJSON(request.data), SectorCache(), split_pattern
-        )
-        rows = contri_cleaner.get_validated_rows()
+        contri_cleaner = ContriCleaner(request.data, SectorCache())
+        processed_data = contri_cleaner.process_data()
+        rows = processed_data.rows
         row = rows[0]
         if row.errors:
             log.error(f'[API Upload] CC Parsing Errors: {row.errors}')

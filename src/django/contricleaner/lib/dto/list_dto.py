@@ -1,4 +1,5 @@
 from typing import List, NamedTuple
+
 from contricleaner.lib.dto.row_dto import RowDTO
 
 

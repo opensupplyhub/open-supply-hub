@@ -1,6 +1,6 @@
 from contricleaner.lib.serializers.row_serializers.row_sector_serializer \
     import RowSectorSerializer
-from contricleaner.tests.mockSectorCache import MockSectorCache
+from contricleaner.tests.sector_cache_mock import SectorCacheMock
 
 from django.test import TestCase
 
@@ -9,7 +9,7 @@ class RowSectorSerializerTest(TestCase):
     def setUp(self):
         self.split_pattern = r', |,|\|'
         self.serializer = RowSectorSerializer(
-            MockSectorCache(), self.split_pattern
+            SectorCacheMock(), self.split_pattern
         )
 
         self.row_one = {

@@ -1,17 +1,14 @@
 from contricleaner.lib.dto.row_dto import RowDTO
 from contricleaner.lib.serializers.row_serializers.row_composite_serializer \
     import RowCompositeSerializer
-from contricleaner.tests.mockSectorCache import MockSectorCache
+from contricleaner.tests.sector_cache_mock import SectorCacheMock
 
 from django.test import TestCase
 
 
 class RowCompositeValidatorTest(TestCase):
     def setUp(self):
-        self.split_pattern = r', |,|\|'
-        self.serializer = RowCompositeSerializer(
-            MockSectorCache(), self.split_pattern
-        )
+        self.serializer = RowCompositeSerializer(SectorCacheMock())
 
     def test_get_validated_row(self):
         facility_source = [{
