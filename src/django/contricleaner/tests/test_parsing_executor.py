@@ -5,7 +5,7 @@ from contricleaner.lib.parsers.source_parser_json import SourceParserJSON
 from contricleaner.lib.parsers.parsing_executor import (
     ParsingExecutor,
 )
-from contricleaner.tests.sector_cache_mock import MockSectorCache
+from contricleaner.tests.sector_cache_mock import SectorCacheMock
 
 
 class TestParsingExecutor(TestCase):
@@ -20,7 +20,7 @@ class TestParsingExecutor(TestCase):
         # Test when a single valid row is returned
         parsing_executor = ParsingExecutor(
             SourceParserJSON(self.json_data),
-            MockSectorCache()
+            SectorCacheMock()
         )
         result = parsing_executor.execute_parsing()
         expected_result = [

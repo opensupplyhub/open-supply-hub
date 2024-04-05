@@ -11,7 +11,7 @@ from openpyxl import Workbook
 from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.dto.list_dto import ListDTO
 from contricleaner.lib.dto.row_dto import RowDTO
-from contricleaner.tests.sector_cache_mock import MockSectorCache
+from contricleaner.tests.sector_cache_mock import SectorCacheMock
 from contricleaner.lib.exceptions.parsing_error import ParsingError
 
 
@@ -83,7 +83,7 @@ class ContriCleanerTest(TestCase):
             file_content = xlsx_file.read()
             uploaded_file = SimpleUploadedFile('test.xlsx', file_content)
 
-        contri_cleaner = ContriCleaner(uploaded_file, MockSectorCache())
+        contri_cleaner = ContriCleaner(uploaded_file, SectorCacheMock())
         processed_data = contri_cleaner.process_data()
 
         self.assertEqual(len(processed_data.rows), len(expected_result.rows))
@@ -148,7 +148,7 @@ class ContriCleanerTest(TestCase):
             file_content = csv_file.read()
             uploaded_file = SimpleUploadedFile('test.csv', file_content)
 
-        contri_cleaner = ContriCleaner(uploaded_file, MockSectorCache())
+        contri_cleaner = ContriCleaner(uploaded_file, SectorCacheMock())
         processed_data = contri_cleaner.process_data()
 
         self.assertEqual(len(processed_data.rows), len(expected_result.rows))
@@ -161,7 +161,7 @@ class ContriCleanerTest(TestCase):
         temp_uploaded_file_stub.name = 'mocked_file_name.txt'
 
         contri_cleaner = ContriCleaner(temp_uploaded_file_stub,
-                                       MockSectorCache())
+                                       SectorCacheMock())
 
         with self.assertRaisesRegex(
                 ParsingError,
@@ -197,7 +197,7 @@ class ContriCleanerTest(TestCase):
             rows=expected_rows
         )
 
-        contri_cleaner = ContriCleaner(json_data, MockSectorCache())
+        contri_cleaner = ContriCleaner(json_data, SectorCacheMock())
         processed_data = contri_cleaner.process_data()
 
         self.assertEqual(len(processed_data.rows), len(expected_result.rows))

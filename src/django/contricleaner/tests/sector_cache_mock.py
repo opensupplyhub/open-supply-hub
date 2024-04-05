@@ -3,7 +3,7 @@ from contricleaner.lib.client_abstractions.sector_cache_interface import (
 )
 
 
-class MockSectorCache(SectorCacheInterface):
+class SectorCacheMock(SectorCacheInterface):
     def __init__(self):
         self._sector_map = {
             'unspecified': 'Unspecified',
