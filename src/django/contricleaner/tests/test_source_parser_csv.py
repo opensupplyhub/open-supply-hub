@@ -14,8 +14,8 @@ from contricleaner.lib.parsers.abstractions.source_parser import (
 from contricleaner.lib.parsers.abstractions.file_parser import (
     FileParser
 )
-from contricleaner.lib.serializers.row_serializers.row_composite_serializer \
-    import RowCompositeSerializer
+from contricleaner.lib.serializers.row_serializers.composite_row_serializer \
+    import CompositeRowSerializer
 from contricleaner.lib.exceptions.parsing_error import ParsingError
 
 
@@ -79,7 +79,7 @@ class SourceParserCSVTest(TestCase):
 
         parser = SourceParserCSV(uploaded_file)
         rows = parser.get_parsed_rows()
-        rows = [RowCompositeSerializer.clean_row(row) for row in rows]
+        rows = [CompositeRowSerializer.clean_row(row) for row in rows]
 
         self.assertEqual(rows, expected_parsed_rows)
 

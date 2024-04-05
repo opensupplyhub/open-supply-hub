@@ -17,9 +17,11 @@ from contricleaner.lib.serializers.row_serializers.row_sector_serializer \
 from contricleaner.lib.serializers.row_serializers \
     .row_required_fields_serializer \
     import RowRequiredFieldsSerializer
+from contricleaner.lib.serializers.row_serializers.row_serializer \
+    import RowSerializer
 
 
-class RowCompositeSerializer:
+class CompositeRowSerializer(RowSerializer):
     __split_pattern = r', |,|\|'
 
     def __init__(
@@ -37,7 +39,7 @@ class RowCompositeSerializer:
 
     @staticmethod
     def clean_row(row: str) -> str:
-        return RowCompositeSerializer.__clean_and_replace_data(row)
+        return CompositeRowSerializer.__clean_and_replace_data(row)
 
     @staticmethod
     def __clean_and_replace_data(data: Dict[str, str]) -> Dict[str, str]:
@@ -58,7 +60,7 @@ class RowCompositeSerializer:
             result_data[key] = value
         return result_data
 
-    def get_validated_row(self, raw_row: dict):
+    def validate(self, raw_row: dict):
         standard_fields = {
             "name",
             "clean_name",
@@ -74,7 +76,7 @@ class RowCompositeSerializer:
         }
 
         row = raw_row.copy()
-        row = RowCompositeSerializer.clean_row(row)
+        row = CompositeRowSerializer.clean_row(row)
 
         for validator in self.validators:
             res = validator.validate(row, res)

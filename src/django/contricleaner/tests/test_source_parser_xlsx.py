@@ -16,8 +16,8 @@ from contricleaner.lib.parsers.abstractions.source_parser import (
 from contricleaner.lib.parsers.abstractions.file_parser import (
     FileParser
 )
-from contricleaner.lib.serializers.row_serializers.row_composite_serializer \
-    import RowCompositeSerializer
+from contricleaner.lib.serializers.row_serializers.composite_row_serializer \
+    import CompositeRowSerializer
 from contricleaner.lib.exceptions.parsing_error import ParsingError
 
 
@@ -115,7 +115,7 @@ class SourceParserXLSXTest(TestCase):
 
         parser = SourceParserXLSX(uploaded_file)
         parsed_rows = parser.get_parsed_rows()
-        parsed_rows = [RowCompositeSerializer.
+        parsed_rows = [CompositeRowSerializer.
                        clean_row(row) for row in parsed_rows]
 
         self.assertEqual(parsed_rows, expected_parsed_rows)

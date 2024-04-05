@@ -1,4 +1,5 @@
 from typing import List
+
 from contricleaner.lib.validators.pre_validators \
     .pre_validator import PreValidator
 

@@ -2,8 +2,8 @@ from typing import List
 from contricleaner.lib.dto.row_dto import RowDTO
 from contricleaner.lib.client_abstractions.sector_cache_interface import (
     SectorCacheInterface)
-from contricleaner.lib.serializers.row_serializers.row_composite_serializer \
-    import RowCompositeSerializer
+from contricleaner.lib.serializers.row_serializers.composite_row_serializer \
+    import CompositeRowSerializer
 from contricleaner.lib.parsers.abstractions.source_parser import SourceParser
 
 
@@ -14,7 +14,7 @@ class ParsingExecutor:
         sector_cache: SectorCacheInterface,
     ):
         self.__source_parser = source_parser
-        self.row_serializer = RowCompositeSerializer(sector_cache)
+        self.row_serializer = CompositeRowSerializer(sector_cache)
 
     def execute_parsing(self) -> List[RowDTO]:
         rows = self.__source_parser.get_parsed_rows()
