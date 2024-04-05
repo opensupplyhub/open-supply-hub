@@ -1,14 +1,14 @@
 from contricleaner.lib.dto.row_dto import RowDTO
-from contricleaner.lib.serializers.row_serializers.composite_row_serializer \
-    import CompositeRowSerializer
-from contricleaner.tests.sector_cache_mock import MockSectorCache
+from contricleaner.lib.serializers.row_serializers.row_composite_serializer \
+    import RowCompositeSerializer
+from contricleaner.tests.sector_cache_mock import SectorCacheMock
 
 from django.test import TestCase
 
 
 class RowCompositeValidatorTest(TestCase):
     def setUp(self):
-        self.serializer = CompositeRowSerializer(MockSectorCache())
+        self.serializer = RowCompositeSerializer(SectorCacheMock())
 
     def test_get_validated_row(self):
         facility_source = [{
