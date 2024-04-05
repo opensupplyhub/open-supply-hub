@@ -1,155 +1,24 @@
-locals {
- database_anonymizer_image = "${module.ecr_repository_database_anonymizer.repository_url}:${var.image_tag}"
-}
+module "database_anonymizer" {
+  count = var.environment == "Production" ? 1 : 0
+  source = "./database_anonymizer_sheduled_task"
 
-variable "anonymized_db_s3_storage" {
-  type        = string
-  description = "Storage bucket for anonymized database dump"
-  default     = "oshub-dumps-anonymized"
-}
+  rds_database_identifier       = var.rds_database_identifier
+  rds_database_name             = var.rds_database_name
+  rds_database_username         = var.rds_database_username
+  rds_database_password         = var.rds_database_password
+  rds_instance_type             = var.rds_instance_type
+  aws_region                    = var.aws_region
+  destination_aws_account       = var.anonymizer_destination_aws_account
+  anonymizer_db_identifier      = var.anonymizer_db_identifier
+  database_anonymizer_image_tag = var.anonymizer_image_tag
+  schedule_expression           = var.anonymizer_schedule_expression
+  kms_key_admin_users           = var.anonymizer_kms_key_admin_users
+  subnet_ids                    = module.vpc.private_subnet_ids
+  database_subnet_group_name    = aws_db_subnet_group.default.name
+  database_security_group_ids   = module.database_enc.database_security_group_id
 
-resource "aws_cloudwatch_log_group" "database_anonymizer" {
-  name              = "log${local.short}DatabaseAnonymizer"
-  retention_in_days = 30
-}
-
-data "aws_iam_policy_document" "database_anonymizer_assume_role" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["ecs-tasks.amazonaws.com"]
-    }
-  }
-}
-
-data "aws_iam_policy_document" "database_anonymizer_worker" {
-  statement {
-    actions = [
-      "dynamodb:GetItem",
-      "dynamodb:PutItem",
-      "dynamodb:Scan",
-      "logs:CreateLogStream",
-      "logs:CreateLogStream",
-      "logs:DescribeLogGroups",
-      "logs:DescribeLogStreams",
-      "logs:PutLogEvents",
-      "logs:PutLogEvents"
-    ]
-    resources = ["*"]
-  }
-}
-
-resource "aws_iam_role" "database_anonymizer" {
-  name_prefix        = join("-", [local.short, "DatabaseAnonymizer"])
-  assume_role_policy = data.aws_iam_policy_document.database_anonymizer_assume_role.json
-}
-
-resource "aws_iam_policy" "database_anonymizer" {
-  name_prefix = join("-", [local.short, "DatabaseAnonymizer"])
-  path        = "/"
-  policy      = data.aws_iam_policy_document.database_anonymizer_worker.json
-}
-
-resource "aws_iam_role_policy_attachment" "database_anonymizer" {
-  role       = aws_iam_role.database_anonymizer.name
-  policy_arn = aws_iam_policy.database_anonymizer.arn
-}
-
-# AWS ECS Cluster Terraform Module
-# https://registry.terraform.io/modules/cn-terraform/ecs-cluster/aws/latest
-module "database_anonymizer_cluster" {
-  source  = "git::git@github.com:cn-terraform/terraform-aws-ecs-cluster.git?ref=1.0.11"
-  name    = join("-", [local.short, "DatabaseAnonymizer"])
-}
-
-# AWS ECS Fargate Task Definition Terraform Module
-# https://registry.terraform.io/modules/cn-terraform/ecs-fargate-task-definition/aws/latest
-module "database_anonymizer_task_definition" {
-  source                 = "git@github.com:cn-terraform/terraform-aws-ecs-fargate-task-definition.git?ref=1.0.36"
-  name_prefix            = "database-anonymizer"
-  container_image        = local.database_anonymizer_image
-  container_name         = "database-anonymizer"
-  #ephemeral_storage_size = 25
-
-  environment = [
-    {
-      name: "POSTGRES_USER",
-      value: "anondb"
-    },
-    {
-      name: "POSTGRES_PASSWORD",
-      value: "anondb"
-    },
-    {
-      name: "POSTGRES_DB",
-      value: "anon"
-    },
-    {
-      name: "SOURCE_POSTGRES_HOST",
-      value: aws_route53_record.database.name
-    },
-    {
-      name: "SOURCE_POSTGRES_PORT",
-      value: module.database_enc.port
-    },
-    {
-      name: "SOURCE_POSTGRES_USER",
-      value: var.rds_database_username
-    },
-    {
-      name: "SOURCE_POSTGRES_PASSWORD",
-      value: var.rds_database_password
-    },
-    {
-      name: "SOURCE_POSTGRES_DB",
-      value: var.rds_database_name
-    },
-    {
-      name: "AWS_DEFAULT_REGION",
-      value: var.aws_region
-    },
-    {
-      name: "AWS_STORAGE_BUCKET_NAME",
-      value: var.anonymized_db_s3_storage
-    }
+  security_group_ids = [
+    module.vpc.bastion_security_group_id,
+    module.vpc.default_security_group_id
   ]
-
-#  secrets = [
-#    {
-#       valueFrom: "arn:aws:ssm:eu-west-1:343975343274:parameter/test",
-#       name: "TEST"
-#    },
-#  ]
-
-  log_configuration = {
-    logDriver: "awslogs",
-    options: {
-      "awslogs-group": aws_cloudwatch_log_group.database_anonymizer.name,
-      "awslogs-region": var.aws_region,
-      "awslogs-stream-prefix": "database-anonymizer"
-    }
-  }
-}
-
-# AWS ECS Fargate Schedule Task Terraform Module
-# https://registry.terraform.io/modules/cn-terraform/ecs-fargate-scheduled-task/aws/latest
-module "database_anonymizer_task" {
-  source                                      = "git::git@github.com:cn-terraform/terraform-aws-ecs-fargate-scheduled-task.git?ref=1.0.25"
-  name_prefix                                 = "anonymize_database-task"
-  event_rule_name                             = "anonymize_database-rule"
-  event_rule_schedule_expression              = "cron(50 15 * * ? *)"
-  ecs_cluster_arn                             = module.database_anonymizer_cluster.aws_ecs_cluster_cluster_arn
-  event_target_ecs_target_subnets             = module.vpc.public_subnet_ids
-  event_target_ecs_target_task_definition_arn = module.database_anonymizer_task_definition.aws_ecs_task_definition_td_arn
-  ecs_execution_task_role_arn                 = aws_iam_role.database_anonymizer.arn
-  ecs_task_role_arn                           = aws_iam_role.database_anonymizer.arn
-}
-
-module "ecr_repository_database_anonymizer" {
-  source = "github.com/azavea/terraform-aws-ecr-repository?ref=1.0.0"
-
-  repository_name =  "${lower(replace(var.project, " ", ""))}-database-anonymizer-${lower(var.environment)}"
-  attach_lifecycle_policy = true
 }
