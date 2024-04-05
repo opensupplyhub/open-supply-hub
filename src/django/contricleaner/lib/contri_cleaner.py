@@ -56,8 +56,6 @@ class ContriCleaner:
 
     def process_data(self) -> ListDTO:
         parsed_rows = self.__parse_data()
-
-        # TODO: pass the sector_cache somehow.
         entry_handler = self.__setup_handlers()
 
         return entry_handler.handle(parsed_rows)
@@ -91,7 +89,7 @@ class ContriCleaner:
     def __setup_handlers(self) -> ListRowHandler:
         handlers = (
             PreValidationHandler(),
-            SerializationHandler()
+            SerializationHandler()  # TODO: pass the sector_cache via constructor.
         )
         for index in range(len(handlers) - 1):
             handlers[index].set_next(handlers[index + 1])
