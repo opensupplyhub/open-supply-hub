@@ -270,10 +270,12 @@ class GazetteerCache:
                     cls._match_version = item['history_id']
 
         except Exception as e:
+            logger.error(f'[Matching] Get latest Gazetteer Error: {e}')
+
             try_reporting_error_to_rollbar(extra_data={
                 'last_successful_facility_version': cls._facility_version,
                 'last_successful_match_version': cls._match_version
-            }, exception=e)
-            raise
+            })
+            raise e
 
         return cls._gazetter
