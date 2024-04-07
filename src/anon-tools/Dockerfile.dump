@@ -2,7 +2,6 @@ FROM postgis/postgis:12-3.4-alpine
 
 WORKDIR /opt/
 
-RUN echo "Hello, World!"
 COPY ./do_work.sh ./do_work.sh
 COPY ./initdb.sql /docker-entrypoint-initdb.d
 ENV POSTGRES_PASSWORD=anondb
@@ -15,5 +14,5 @@ RUN mkdir ~/.ssh
 VOLUME /dumps/
 VOLUME /keys
 # ENTRYPOINT [ "docker-entrypoint.sh" ]
-CMD ["sh", "do_work.sh"]
+CMD ["sh", "do_dump.sh"]
 

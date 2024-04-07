@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ls -la /keys
 chmod 600 /keys/id_rsa
 
