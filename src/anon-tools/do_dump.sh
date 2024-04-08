@@ -1,22 +1,27 @@
 #!/bin/bash
 
-ls -la /keys
-chmod 600 /keys/id_rsa
+echo "$AWS_DEFAULT_REGION_PROD"
 
-echo "localhost:5433:opensupplyhub:opensupplyhub:" > ~/.pgpass
+bastion="$(AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_PROD \
+           AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_PROD \
+           AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION_PROD \
+           aws ec2 describe-instances --filters "Name=tag:Environment,Values=Production" --query 'Reservations[0].Instances[0].PublicDnsName' --output text)"
+
+echo "Bastion: $bastion"
+ssh-keyscan $bastion > ~/.ssh/known_hosts
+
+echo "localhost:5433:$DATABASE_NAME:$DATABASE_USERNAME:$DATABASE_PASSWORD" > ~/.pgpass
 chmod 600 ~/.pgpass
-ssh-keyscan ec2-54-154-210-219.eu-west-1.compute.amazonaws.com >> ~/.ssh/known_hosts
-
-ssh -f -i /keys/id_rsa -L 5433:database.service.osh.internal:5432 -N ec2-user@ec2-54-154-210-219.eu-west-1.compute.amazonaws.com
 
 
-pg_dump --clean --no-owner --no-privileges -Fc -h localhost -U opensupplyhub -p 5433 -f /dumps/osh_prod_large.dump -w --verbose
+chmod 600 /keys/key
+ssh -f -i /keys/key -L 5433:database.service.osh.internal:5432 -N ec2-user@$bastion
 
-echo "Running anonymize script"
+pg_dump --clean --no-owner --no-privileges -Fc -h localhost  -d $DATABASE_NAME -U $DATABASE_USERNAME -p 5433 -f /dumps/osh_prod_large.dump -w --verbose
 
+echo "Start anonymization"
 
 docker-entrypoint.sh -c 'shared_buffers=2048MB' -c 'max_connections=10' &
-
 
 sleep 15s
 pg_isready -d anondb -U anondb -h localhost -p 5432
@@ -63,4 +68,11 @@ pg_restore --verbose --clean --no-acl --no-owner -d anondb -U anondb -h localhos
 psql -U anondb -d anondb -h localhost -p 5432 -c "$SQL_SCRIPT"
 pg_dump --clean --no-owner --no-privileges -Fc -d anondb -U anondb  -f /dumps/osh_prod_large_anonimized.dump -w --verbose
 
+ls -la /dumps
+
 echo "Finshed anonymization"
+
+AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_TEST \
+    AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_TEST \
+    AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION_TEST \
+    aws s3 cp /dumps/osh_prod_large_anonimized.dump s3://oshub-dumps-anonymized/osh_prod_large_anon.dump
