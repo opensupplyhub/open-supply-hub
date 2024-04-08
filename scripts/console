@@ -22,5 +22,5 @@ case $1 in
 esac
 
 if [ -n "$APP_CONTAINER" ] || [ -n "$DJANGO_CONTAINER" ]; then
-    docker-compose exec "${1}" /bin/bash
+    docker compose exec "${1}" /bin/bash
 fi

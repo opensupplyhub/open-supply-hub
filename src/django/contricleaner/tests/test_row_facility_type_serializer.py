@@ -7,7 +7,8 @@ from django.test import TestCase
 class RowFacilityTypeSerializerTest(TestCase):
 
     def setUp(self):
-        self.serializer = RowFacilityTypeSerializer()
+        self.split_pattern = r', |,|\|'
+        self.serializer = RowFacilityTypeSerializer(self.split_pattern)
 
     def test_validate_with_no_values(self):
         row = {}
@@ -17,19 +18,25 @@ class RowFacilityTypeSerializerTest(TestCase):
 
     def test_validate_with_facility_type_processing_type(self):
         row = {'facility_type_processing_type':
-               ['Blending|Knitting|Blending', 'Blending']}
+               ['Blending|Knitting|Blending', 'Coating, Knitting']}
         current = {}
         validated = self.serializer.validate(row, current)
         self.assertEqual(
             validated,
             {
                 'facility_type': {
-                    'raw_values': ['Blending|Knitting|Blending', 'Blending'],
-                    'processed_values': {'Blending', 'Knitting'},
+                    'raw_values': [
+                        'Blending|Knitting|Blending',
+                        'Coating, Knitting'
+                    ],
+                    'processed_values': {'Blending', 'Knitting', 'Coating'},
                 },
                 'processing_type': {
-                    'raw_values': ['Blending|Knitting|Blending', 'Blending'],
-                    'processed_values': {'Blending', 'Knitting'},
+                    'raw_values': [
+                        'Blending|Knitting|Blending',
+                        'Coating, Knitting'
+                    ],
+                    'processed_values': {'Blending', 'Knitting', 'Coating'},
                 },
             },
         )
