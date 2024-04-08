@@ -9,6 +9,7 @@ from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from kafka import TopicPartition
 
 from app.utils.rollbar import init_rollbar
+from app.matching.matcher.gazeteer.gazetteer_cache import GazetteerCache
 
 from app.config import settings
 
@@ -31,8 +32,9 @@ log = logging.getLogger(__name__)
 async def startup_event():
     log.info('Initializing API ...')
     init_rollbar()
-    await initialize()
-    await consume()
+    res = await initialize()
+    if res:
+        await consume()
 
 
 @app.on_event("shutdown")
@@ -67,6 +69,11 @@ async def trigger(source_id):
     }
 
 async def initialize():
+    try:
+        GazetteerCache.get_latest()
+    except Exception:
+        pass
+
     loop = asyncio.get_event_loop()
     global consumer
     group_id = f'{settings.consumer_group_id}-{randint(0, 10000)}'
@@ -102,7 +109,7 @@ async def initialize():
         # handle matching
         await handle(msg.value)
 
-        return
+        return True
 
 async def consume():
     global consumer_task
@@ -124,9 +131,11 @@ async def send_consumer_message(consumer):
 
 async def handle(value):
     value = json.loads(value.decode("utf-8"))
+    log.info(f'[Matching] Source Id: {value}')
     try:
+        log.info(f'[Matching] Start processing!')
         result = matcher(value)
-        log.info(f'Matcher result: {result}')
+        log.info(f'[Matching] Result: {result}')
     except Exception as error:
-        print('ERROR: {}'.format(error))
+        log.error(f'[Matching] Error: {error}')
     return
