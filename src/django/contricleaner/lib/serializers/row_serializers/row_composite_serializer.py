@@ -41,8 +41,8 @@ class RowCompositeSerializer:
 
     @staticmethod
     def __clean_commas(value: str) -> str:
-        # Remove spaces after commas
-        cleaned_value = re.sub(r',\s+', ',', value)
+        # Remove spaces after and before commas
+        cleaned_value = re.sub(r'\s*,\s*', ',', value)
         # Remove duplicates commas
         cleaned_value = re.sub(r',+', ',', cleaned_value)
         # Remove leading and trailing commas
@@ -57,6 +57,10 @@ class RowCompositeSerializer:
         return value
 
     @staticmethod
+    def __remove_duplicate_spaces(value: str):
+        return re.sub(' +', ' ', value)
+
+    @staticmethod
     def __clean_and_replace_data(data: Dict[str, str]) -> Dict[str, str]:
         invalid_keywords = ['N/A', 'n/a']
         result_data = {}
@@ -68,6 +72,7 @@ class RowCompositeSerializer:
                 value = RowCompositeSerializer.__clean_commas(value)
                 value = RowCompositeSerializer.__add_space_after_comma(value)
                 value = RowCompositeSerializer.__remove_double_quotes(value)
+                value = RowCompositeSerializer.__remove_duplicate_spaces(value)
                 value = value.strip()
             result_data[key] = value
         return result_data

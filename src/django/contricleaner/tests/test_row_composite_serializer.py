@@ -71,6 +71,8 @@ class RowCompositeValidatorTest(TestCase):
             "extra_4": "Mohib Shoes Pvt. Ltd., „B“ Unit",
             "extra_5": "«Global» Manufactoring",
             "extra_6": "‹NanoTech› Technologies",
+            'extra_7': "Nantong, Jackbeanie,, Headwear! & Garment Co. Ltd.",
+            "extra_8": "\"Baker Street 221B.   , this is a test\"",
             "facility_type": "Blending|Knitting"
         }]
         validated_rows = [self.serializer
@@ -97,6 +99,8 @@ class RowCompositeValidatorTest(TestCase):
                 "extra_4": "Mohib Shoes Pvt. Ltd., B Unit",
                 "extra_5": "Global Manufactoring",
                 "extra_6": "NanoTech Technologies",
+                'extra_7': "Nantong, Jackbeanie, Headwear! & Garment Co. Ltd.",
+                "extra_8": "Baker Street 221B., this is a test",
                 "facility_type": {
                     "raw_values": "Blending|Knitting",
                     "processed_values": {"Blending", "Knitting"}
