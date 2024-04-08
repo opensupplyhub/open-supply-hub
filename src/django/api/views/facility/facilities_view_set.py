@@ -1,6 +1,3 @@
-# import json
-# import traceback
-# import asyncio
 import logging
 from api.facility_actions.create_facility import CreateFacility
 from api.models.transactions.index_facilities_new import index_facilities_new
@@ -43,7 +40,6 @@ from ...models import (
     FacilityClaim,
     FacilityClaimReviewNote,
     FacilityListItem,
-    # FacilityListItemTemp,
     FacilityLocation,
     FacilityMatch,
     ExtendedField,
@@ -56,22 +52,16 @@ from ...constants import (
     FacilityMergeQueryParams,
     ProcessingAction,
     UpdateLocationParams,
-    # ErrorMessages
 )
 from ...exceptions import BadRequestException
-# from ...extended_fields import (
-#     create_extendedfields_for_single_item,
-# )
 from ...facility_history import (
     create_dissociate_match_change_reason,
     create_facility_history_list,
 )
-# from ...geocoding import geocode_address
 from ...mail import send_claim_facility_confirmation_email
 
 from ...pagination import FacilitiesGeoJSONPagination
 from ...permissions import IsRegisteredAndConfirmed, IsSuperuser
-# from ...processing import handle_external_match_process_result
 from ...sector_product_type_parser import SectorCache
 from ...serializers import (
     FacilityIndexSerializer,
@@ -85,9 +75,7 @@ from ...serializers import (
 )
 from ...throttles import DataUploadThrottle
 
-# from ..fields.create_nonstandard_fields import create_nonstandard_fields
 from ..disabled_pagination_inspector import DisabledPaginationInspector
-# from api.kafka_producer import produce_message_match_process
 
 from .facility_parameters import (
     facility_parameters,
