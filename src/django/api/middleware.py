@@ -1,9 +1,7 @@
-import sys
 import datetime
 import json
 
 from django.utils import timezone
-from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework.authentication import get_authorization_header
@@ -13,24 +11,16 @@ from django.http import HttpResponse
 
 from api.models import RequestLog
 from api.limits import get_api_block
-
-
-def _report_error_to_rollbar(request, auth):
-    ROLLBAR = getattr(settings, 'ROLLBAR', {})
-    if ROLLBAR:
-        import rollbar
-        rollbar.report_exc_info(
-            sys.exc_info(),
-            extra_data={'auth': auth})
+from oar.rollbar import report_error_to_rollbar
 
 
 class RequestLogMiddleware:
+
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
         response = self.get_response(request)
-
         auth = None
         try:
             if request.user and request.user.is_authenticated:
@@ -44,9 +34,13 @@ class RequestLogMiddleware:
                         path=request.get_full_path(),
                         response_code=response.status_code,
                     )
-        except Exception:
+        except Exception as err:
             try:
-                _report_error_to_rollbar(request, auth)
+                report_error_to_rollbar(
+                    request=request,
+                    auth=auth,
+                    exception=err
+                )
             except Exception:
                 pass  # We don't want this logging middleware to fail a request
 

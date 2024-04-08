@@ -9,7 +9,7 @@ fi
 function usage() {
     echo -n \
         "Usage: $(basename "$0")
-Starts servers using docker-compose.
+Starts servers using docker compose.
 "
 }
 
@@ -18,12 +18,9 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         usage
     else
         if [ "${1:-}" = "--debug" ]; then
-            # TODO: remove this condition if necessary 
-            docker-compose -f docker-compose.yml -f docker-compose.debug.yml up
-        elif [[ "${1:-}" = "--dedupe" && "${2:-}" = "--debug" ]]; then
-            docker-compose -f docker-compose.dd.yml -f docker-compose.debug.yml up
+            docker compose -f docker-compose.yml -f docker-compose.debug.yml up
         else
-            docker-compose up
+            docker compose up
         fi
     fi
 fi

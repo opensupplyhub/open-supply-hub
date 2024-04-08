@@ -38,7 +38,6 @@ class SectorProductTypeParser:
 
     def parse_all_values(self, all_values):
         sector_map = SectorProductTypeParser.sector_cache.sector_map
-
         for value in all_values:
             clean_value = self.clean_value(value)
             if (clean_value in sector_map):
@@ -55,21 +54,6 @@ class SectorProductTypeParser:
 
     def clean_value(self, value):
         return value.lower().strip()
-
-
-class RequestBodySectorProductTypeParser(SectorProductTypeParser):
-    def __init__(self, body):
-        super().__init__()
-
-        self.parse_all_values(
-            set([
-                *body.get('sector', []),
-                *body.get('product_type', []),
-                *body.get('sector_product_type', [])
-            ])
-        )
-
-        self.sort_values()
 
 
 class CsvRowSectorProductTypeParser(SectorProductTypeParser):

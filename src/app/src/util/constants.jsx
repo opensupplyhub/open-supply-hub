@@ -1,4 +1,6 @@
 import React from 'react';
+import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
+import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
 
 export const OTHER = 'Other';
 export const FACILITIES_REQUEST_PAGE_SIZE = 50;
@@ -102,13 +104,6 @@ export const matchResponsibilityEnum = Object.freeze({
 export const matchResponsibilityChoices = [
     { value: 'moderator', label: 'OS Hub Admins' },
     { value: 'contributor', label: 'The contributor' },
-];
-
-// These choices must be kept in sync with the identical list
-// kept in the Django API's models.py file
-export const contributorWebhookNotificationChoices = [
-    { value: 'ALL_FACILITIES', label: 'All events' },
-    { value: 'ASSOCIATED', label: 'Events for associated facilities' },
 ];
 
 export const inputTypesEnum = Object.freeze({
@@ -533,6 +528,7 @@ export const userApiInfoTooltipTitles = Object.freeze({
 
 export const IS_NOT_SET = 'Is not set';
 export const ALLOW_LARGE_DOWNLOADS = 'allow_large_downloads';
+export const USE_OLD_UPLOAD_LIST_ENDPOINT = 'use_old_upload_list_endpoint';
 export const CLAIM_A_FACILITY = 'claim_a_facility';
 export const VECTOR_TILE = 'vector_tile';
 export const REPORT_A_FACILITY = 'report_a_facility';
@@ -1146,8 +1142,40 @@ export const EXTENDED_FIELDS_EXPLANATORY_TEXT =
     'These fields were added to OS Hub in March 2022. As more data is contributed, more results will become available.';
 
 export const optionsForSortingResults = [
-    { value: 'name', label: 'A to Z' },
-    { value: '', label: '# Contributors' },
+    { value: 'name_asc', label: 'A to Z' },
+    { value: 'name_desc', label: 'Z to A' },
+    {
+        value: 'contributors_desc',
+        label: (
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'start',
+                    alignItems: 'center',
+                }}
+            >
+                <span style={{ paddingRight: '3px' }}># Contributors</span>
+                <ArrowDownwardIcon style={{ fontSize: 20 }} />
+            </div>
+        ),
+    },
+    {
+        value: 'contributors_asc',
+        label: (
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'start',
+                    alignItems: 'center',
+                }}
+            >
+                <span style={{ paddingRight: '3px' }}># Contributors</span>
+                <ArrowUpwardIcon style={{ fontSize: 20 }} />
+            </div>
+        ),
+    },
 ];
 
 // This offset is necessary to match row indices in the uploaded files.
