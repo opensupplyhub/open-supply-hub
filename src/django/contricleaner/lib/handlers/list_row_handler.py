@@ -1,5 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
+from typing import List, Dict
 
 from contricleaner.lib.dto.list_dto import ListDTO
 from contricleaner.lib.exceptions.handler_not_set_error \
@@ -13,7 +14,7 @@ class ListRowHandler(ABC):
         self._next = next
 
     @abstractmethod
-    def handle(self, rows: list[dict]) -> ListDTO:
+    def handle(self, rows: List[Dict]) -> ListDTO:
         if self._next:
             return self._next.handle(rows)
 

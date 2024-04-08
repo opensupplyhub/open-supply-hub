@@ -1,5 +1,5 @@
 import os
-from typing import Union
+from typing import Union, List, Dict
 
 from django.core.files.uploadedfile import (
     InMemoryUploadedFile,
@@ -35,7 +35,7 @@ class ContriCleaner:
 
     def __init__(self,
                  data: Union[
-                     InMemoryUploadedFile, TemporaryUploadedFile, dict],
+                     InMemoryUploadedFile, TemporaryUploadedFile, Dict],
                  sector_cache: SectorCacheInterface) -> None:
         unsupported_data_value_type_message = ('The data value type should be '
                                                'either dict, '
@@ -58,9 +58,11 @@ class ContriCleaner:
         parsed_rows = self.__parse_data()
         entry_handler = self.__setup_handlers()
 
-        return entry_handler.handle(parsed_rows)
+        processed_list = entry_handler.handle(parsed_rows)
 
-    def __parse_data(self) -> list[dict]:
+        return processed_list
+
+    def __parse_data(self) -> List[Dict]:
         parsing_executor = self.__define_parsing_strategy()
         parsed_rows = parsing_executor.execute_parsing()
 
@@ -89,7 +91,7 @@ class ContriCleaner:
     def __setup_handlers(self) -> ListRowHandler:
         handlers = (
             PreValidationHandler(),
-            SerializationHandler()  # TODO: pass the sector_cache via constructor.
+            SerializationHandler(self.__sector_cache)
         )
         for index in range(len(handlers) - 1):
             handlers[index].set_next(handlers[index + 1])

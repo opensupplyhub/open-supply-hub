@@ -1,3 +1,5 @@
+from typing import List, Dict
+
 from contricleaner.lib.dto.list_dto import ListDTO
 from contricleaner.lib.dto.row_dto import RowDTO
 from contricleaner.lib.handlers.list_row_handler import ListRowHandler
@@ -25,23 +27,28 @@ from contricleaner.lib.serializers.row_serializers \
 
 class SerializationHandler(ListRowHandler):
 
-    def handle(self, rows: list[dict]) -> ListDTO:
+    def __init__(self, sector_cache: SectorCacheInterface) -> None:
+        self.__sector_cache = sector_cache
+
+    def handle(self, rows: List[Dict]) -> ListDTO:
+        serialized_rows = []
         composite_row_serializer = self.__construct_serializers()
 
         for row in rows:
-            result = composite_row_serializer.validate(rows)
-            if len(result['errors']) > 0:
-                row =  RowDTO(
-                raw_json=raw_row,
-                name=dict_res.get("name", ""),
-                clean_name=dict_res.get("clean_name", ""),
-                address=dict_res.get("address", ""),
-                clean_address=dict_res.get("clean_address", ""),
-                country_code=dict_res.get("country_code", ""),
-                sector=dict_res.get("sector", []),
-                fields=dict_res.get("fields", {}),
-                errors=dict_res.get("errors", []),
+            serialized_row_dict = composite_row_serializer.validate(rows)
+            serialized_row = RowDTO(
+                raw_json=row,
+                name=serialized_row_dict.get('name', ''),
+                clean_name=serialized_row_dict.get('clean_name', ''),
+                address=serialized_row_dict.get('address', ''),
+                clean_address=serialized_row_dict.get('clean_address', ''),
+                country_code=serialized_row_dict.get('country_code', ''),
+                sector=serialized_row_dict.get('sector', []),
+                fields=serialized_row_dict.get('fields', {}),
+                errors=serialized_row_dict.get('errors', []),
             )
+            serialized_rows.append(serialized_row)
+
         return ListDTO(rows=serialized_rows)
 
     def __construct_serializers(self) -> RowSerializer:
@@ -49,9 +56,9 @@ class SerializationHandler(ListRowHandler):
 
         composite_row_serializer = CompositeRowSerializer()
         leaf_serializers = (
-            RowCleanFieldSerializer("name", "clean_name"),
-            RowCleanFieldSerializer("address", "clean_address"),
-            RowSectorSerializer(sector_cache, split_pattern),
+            RowCleanFieldSerializer('name', 'clean_name'),
+            RowCleanFieldSerializer('address', 'clean_address'),
+            RowSectorSerializer(self.__sector_cache, split_pattern),
             RowCountrySerializer(),
             RowRequiredFieldsSerializer(),
             RowFacilityTypeSerializer(split_pattern),

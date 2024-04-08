@@ -1,11 +1,12 @@
 import re
+from typing import List, Dict
 
 from contricleaner.lib.serializers.row_serializers.row_serializer \
     import RowSerializer
 
 
 class CompositeRowSerializer(RowSerializer):
-    __serializers: list[RowSerializer] = []
+    __serializers: List[RowSerializer] = []
 
     def add_serializer(self, serializer: RowSerializer):
         self.__serializers.append(serializer)
@@ -15,7 +16,7 @@ class CompositeRowSerializer(RowSerializer):
         return CompositeRowSerializer.__clean_and_replace_data(row)
 
     @staticmethod
-    def __clean_and_replace_data(data: dict[str, str]) -> dict[str, str]:
+    def __clean_and_replace_data(data: Dict[str, str]) -> Dict[str, str]:
         invalid_keywords = ['N/A', 'n/a']
         dup_pattern = ',' + '{2,}'
         result_data = {}
@@ -33,7 +34,7 @@ class CompositeRowSerializer(RowSerializer):
             result_data[key] = value
         return result_data
 
-    def validate(self, raw_row: dict) -> dict:
+    def validate(self, row: Dict) -> Dict:
         standard_fields = {
             "name",
             "clean_name",
@@ -48,8 +49,8 @@ class CompositeRowSerializer(RowSerializer):
             "errors": [],
         }
 
-        row = raw_row.copy()
-        cleaned_row = CompositeRowSerializer.clean_row(row)
+        copied_row = row.copy()
+        cleaned_row = CompositeRowSerializer.clean_row(copied_row)
 
         for validator in self.validators:
             res = validator.validate(cleaned_row, res)

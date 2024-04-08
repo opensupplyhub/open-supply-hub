@@ -5,6 +5,8 @@ import logging
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
 from contricleaner.lib.contri_cleaner import ContriCleaner
+from contricleaner.lib.exceptions.handler_not_set_error \
+    import HandlerNotSetError
 
 from rest_framework.mixins import (
     ListModelMixin,
@@ -20,7 +22,8 @@ from rest_framework.exceptions import (
     NotAuthenticated,
     NotFound,
     PermissionDenied,
-    ValidationError
+    ValidationError,
+    APIException
 )
 from waffle import switch_is_active, flag_is_active
 from django.contrib.gis.geos import Point
@@ -582,10 +585,15 @@ class FacilitiesViewSet(ListModelMixin,
         log.info(f'[API Upload] Uploading data: {request.data}')
         log.info('[API Upload] Started CC Parse process!')
 
-        # TODO: handle  other types of errors from ContriCleaner (e.g., handler, parsing)
         contri_cleaner = ContriCleaner(request.data, SectorCache())
-        processed_data = contri_cleaner.process_data()
-        rows = processed_data.rows
+        try:
+            processed_list = contri_cleaner.process_data()
+        except HandlerNotSetError as err:
+            log.error(f'[API Upload] Internal ContriCleaner Error: {err}')
+            raise APIException('Internal System Error. '
+                               'Please contact support.')
+
+        rows = processed_list.rows
         row = rows[0]
         if row.errors:
             log.error(f'[API Upload] CC Parsing Errors: {row.errors}')

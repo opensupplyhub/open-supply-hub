@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 from contricleaner.lib.dto.list_dto import ListDTO
 from contricleaner.lib.handlers.list_row_handler import ListRowHandler
@@ -10,7 +10,7 @@ from contricleaner.lib.validators.pre_validators \
 
 class PreValidationHandler(ListRowHandler):
 
-    def handle(self, rows: list[dict]) -> ListDTO:
+    def handle(self, rows: List[Dict]) -> ListDTO:
         composite_pre_validator = CompositePreValidator()
         composite_pre_validator.add_validator(PreHeaderValidator())
 
