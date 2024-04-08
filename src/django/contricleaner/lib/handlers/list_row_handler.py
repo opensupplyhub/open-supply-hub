@@ -8,7 +8,7 @@ from contricleaner.lib.exceptions.handler_not_set_error \
 
 
 class ListRowHandler(ABC):
-    _next: ListRowHandler
+    _next: ListRowHandler = None
 
     def set_next(self, next: ListRowHandler):
         self._next = next
@@ -18,4 +18,4 @@ class ListRowHandler(ABC):
         if self._next:
             return self._next.handle(rows)
 
-        raise HandlerNotSetError("Next Handler isn't set.")
+        raise HandlerNotSetError("Next Handler wasn't set.")

@@ -84,10 +84,10 @@ class ContriCleanerTest(TestCase):
             uploaded_file = SimpleUploadedFile('test.xlsx', file_content)
 
         contri_cleaner = ContriCleaner(uploaded_file, SectorCacheMock())
-        processed_data = contri_cleaner.process_data()
+        processed_list = contri_cleaner.process_data()
 
-        self.assertEqual(len(processed_data.rows), len(expected_result.rows))
-        self.assertEqual(processed_data, expected_result)
+        self.assertEqual(len(processed_list.rows), len(expected_result.rows))
+        self.assertEqual(processed_list, expected_result)
 
         os.remove('test.xlsx')
 
@@ -149,10 +149,10 @@ class ContriCleanerTest(TestCase):
             uploaded_file = SimpleUploadedFile('test.csv', file_content)
 
         contri_cleaner = ContriCleaner(uploaded_file, SectorCacheMock())
-        processed_data = contri_cleaner.process_data()
+        processed_list = contri_cleaner.process_data()
 
-        self.assertEqual(len(processed_data.rows), len(expected_result.rows))
-        self.assertEqual(processed_data, expected_result)
+        self.assertEqual(len(processed_list.rows), len(expected_result.rows))
+        self.assertEqual(processed_list, expected_result)
 
         os.remove('test.csv')
 
@@ -198,7 +198,7 @@ class ContriCleanerTest(TestCase):
         )
 
         contri_cleaner = ContriCleaner(json_data, SectorCacheMock())
-        processed_data = contri_cleaner.process_data()
+        processed_list = contri_cleaner.process_data()
 
-        self.assertEqual(len(processed_data.rows), len(expected_result.rows))
-        self.assertEqual(processed_data, expected_result)
+        self.assertEqual(len(processed_list.rows), len(expected_result.rows))
+        self.assertEqual(processed_list, expected_result)

@@ -12,7 +12,7 @@ class CompositePreValidatorTest(unittest.TestCase):
         self.composite = CompositePreValidator()
         self.composite.add_validator(PreHeaderValidator())
 
-    def test_composite_early_validator(self):
+    def test_composite_pre_validator(self):
         facility_source_one = {
             "country": "United States",
             "name": "Pants Hut",

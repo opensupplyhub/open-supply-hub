@@ -35,7 +35,7 @@ class SerializationHandler(ListRowHandler):
         composite_row_serializer = self.__construct_serializers()
 
         for row in rows:
-            serialized_row_dict = composite_row_serializer.validate(rows)
+            serialized_row_dict = composite_row_serializer.validate(row)
             serialized_row = RowDTO(
                 raw_json=row,
                 name=serialized_row_dict.get('name', ''),
@@ -66,6 +66,6 @@ class SerializationHandler(ListRowHandler):
         )
 
         for serializer in leaf_serializers:
-            composite_row_serializer.add_validator(serializer)
+            composite_row_serializer.add_serializer(serializer)
 
         return composite_row_serializer

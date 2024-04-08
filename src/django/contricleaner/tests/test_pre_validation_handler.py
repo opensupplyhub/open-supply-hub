@@ -2,6 +2,8 @@ import unittest
 
 from contricleaner.lib.handlers.pre_validation_handler \
     import PreValidationHandler
+from contricleaner.lib.exceptions.handler_not_set_error \
+    import HandlerNotSetError
 
 
 class PreValidationHandlerTest(unittest.TestCase):
@@ -9,7 +11,7 @@ class PreValidationHandlerTest(unittest.TestCase):
         self.handler_one = PreValidationHandler()
         self.handler_two = PreValidationHandler()
 
-    def test_early_validation_handler(self):
+    def test_pre_validation_handler(self):
         facility_source_one = {
             "country": "United States",
             "name": "Pants Hut",
@@ -39,5 +41,5 @@ class PreValidationHandlerTest(unittest.TestCase):
 
         try:
             self.handler_two.handle([facility_source_one, facility_source_two])
-        except Exception as exc:
-            self.assertEqual("Next Handler wasn't set", exc.args[0])
+        except HandlerNotSetError as exc:
+            self.assertEqual("Next Handler wasn't set.", exc.args[0])

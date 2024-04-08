@@ -16,9 +16,11 @@ from contricleaner.lib.parsers.abstractions.source_parser import (
 from contricleaner.lib.parsers.abstractions.file_parser import (
     FileParser
 )
-from contricleaner.lib.serializers.row_serializers.composite_row_serializer \
-    import CompositeRowSerializer
 from contricleaner.lib.exceptions.parsing_error import ParsingError
+from contricleaner.lib.contri_cleaner import ContriCleaner
+from contricleaner.lib.dto.list_dto import ListDTO
+from contricleaner.lib.dto.row_dto import RowDTO
+from contricleaner.tests.sector_cache_mock import SectorCacheMock
 
 
 class SourceParserXLSXTest(TestCase):
@@ -44,48 +46,149 @@ class SourceParserXLSXTest(TestCase):
              'Apparel', 'Embossing', 3002, '', '20%')
         )
 
-        expected_parsed_rows = [
-            {
-                'country': 'United States',
-                'name': 'Fashion Plus',
-                'address': '123 Avenue Street, Cityville',
-                'sector_product_type': 'Apparel|Jeans',
-                'facility_type_processing_type': 'Embellishment',
-                'number_of_workers': '1002',
-                'parent_company': '',
-                'percentage_of_male_workers': '2%',
-            },
-            {
-                'country': 'Canada',
-                'name': '',
-                'address': '456 Main Road, Townsville',
-                'sector_product_type': '',
-                'facility_type_processing_type': 'Embossing',
-                'number_of_workers': '1005',
-                'parent_company': '',
-                'percentage_of_male_workers': '3.5%'
-            },
-            {
-                'country': 'Canada',
-                'name': 'Style Haven',
-                'address': '456 Fashion Road, Trendy Town',
-                'sector_product_type': 'Apparel|Jacket',
-                'facility_type_processing_type': '',
-                'number_of_workers': '500',
-                'parent_company': 'Style Super',
-                'percentage_of_male_workers': '100%'
-            },
-            {
-                'country': 'Italy',
-                'name': 'Chic Boutique',
-                'address': '789 Glamour Avenue, Moda City',
-                'sector_product_type': 'Apparel',
-                'facility_type_processing_type': 'Embossing',
-                'number_of_workers': '3002',
-                'parent_company': '',
-                'percentage_of_male_workers': '20%'
-            },
+        expected_processed_rows = [
+            RowDTO(
+                raw_json={
+                    "country": "United States",
+                    "name": "Fashion Plus",
+                    "address": "123 Avenue Street,,,, Cityville,",
+                    "sector_product_type": "Apparel|Jeans",
+                    "facility_type_processing_type": "Embellishment",
+                    "number_of_workers": "1002",
+                    "parent_company": "",
+                    "percentage_of_male_workers": "2%",
+                },
+                name="Fashion Plus",
+                clean_name="fashion plus",
+                address="123 Avenue Street, Cityville",
+                clean_address="123 avenue street cityville",
+                country_code="US",
+                sector=["Apparel"],
+                fields={
+                    "product_type": ["Jeans"],
+                    "facility_type": {
+                        "raw_values": "Embellishment",
+                        "processed_values": {"Embellishment"},
+                    },
+                    "processing_type": {
+                        "raw_values": "Embellishment",
+                        "processed_values": {"Embellishment"},
+                    },
+                    "country": "United States",
+                    "facility_type_processing_type": "Embellishment",
+                    "number_of_workers": "1002",
+                    "sector_product_type": "Apparel|Jeans",
+                    "parent_company": "",
+                    "percentage_of_male_workers": "2%",
+                },
+                errors=[],
+            ),
+            RowDTO(
+                raw_json={
+                    "country": "Canada",
+                    "name": "N/A",
+                    "address": "456 Main Road,,,, Townsville,",
+                    "sector_product_type": "n/a",
+                    "facility_type_processing_type": "Embossing",
+                    "number_of_workers": "1005",
+                    "parent_company": "",
+                    "percentage_of_male_workers": "3.5%",
+                },
+                name="",
+                clean_name="",
+                address="456 Main Road, Townsville",
+                clean_address="456 main road townsville",
+                country_code="CA",
+                sector=[],
+                fields={
+                    "facility_type": {
+                        "raw_values": "Embossing",
+                        "processed_values": {"Embossing"},
+                    },
+                    "processing_type": {
+                        "raw_values": "Embossing",
+                        "processed_values": {"Embossing"},
+                    },
+                    "country": "Canada",
+                    "facility_type_processing_type": "Embossing",
+                    "number_of_workers": "1005",
+                    "sector_product_type": "",
+                    "parent_company": "",
+                    "percentage_of_male_workers": "3.5%",
+                },
+                errors=[
+                    {"message": "clean_name cannot be empty", "type": "Error"},
+                    {
+                        "message": "sector_product_type must not be empty.",
+                        "type": "ValidationError",
+                    },
+                ],
+            ),
+            RowDTO(
+                raw_json={
+                    "country": "Canada",
+                    "name": "Style Haven",
+                    "address": "456 Fashion Road, Trendy Town",
+                    "sector_product_type": "Apparel|Jacket",
+                    "facility_type_processing_type": "",
+                    "number_of_workers": "500",
+                    "parent_company": "Style Super  ",
+                    "percentage_of_male_workers": "100%",
+                },
+                name="Style Haven",
+                clean_name="style haven",
+                address="456 Fashion Road, Trendy Town",
+                clean_address="456 fashion road trendy town",
+                country_code="CA",
+                sector=["Apparel"],
+                fields={
+                    "product_type": ["Jacket"],
+                    "country": "Canada",
+                    "facility_type_processing_type": "",
+                    "number_of_workers": "500",
+                    "sector_product_type": "Apparel|Jacket",
+                    "parent_company": "Style Super",
+                    "percentage_of_male_workers": "100%",
+                },
+                errors=[],
+            ),
+            RowDTO(
+                raw_json={
+                    "country": "Italy",
+                    "name": "Chic Boutique",
+                    "address": "789 Glamour Avenue,,,, Moda City,",
+                    "sector_product_type": "Apparel",
+                    "facility_type_processing_type": "Embossing",
+                    "number_of_workers": "3002",
+                    "parent_company": "",
+                    "percentage_of_male_workers": "20%",
+                },
+                name="Chic Boutique",
+                clean_name="chic boutique",
+                address="789 Glamour Avenue, Moda City",
+                clean_address="789 glamour avenue moda city",
+                country_code="IT",
+                sector=["Apparel"],
+                fields={
+                    "facility_type": {
+                        "raw_values": "Embossing",
+                        "processed_values": {"Embossing"},
+                    },
+                    "processing_type": {
+                        "raw_values": "Embossing",
+                        "processed_values": {"Embossing"},
+                    },
+                    "country": "Italy",
+                    "facility_type_processing_type": "Embossing",
+                    "number_of_workers": "3002",
+                    "sector_product_type": "Apparel",
+                    "parent_company": "",
+                    "percentage_of_male_workers": "20%",
+                },
+                errors=[],
+            ),
         ]
+        expected_processed_list = ListDTO(rows=expected_processed_rows)
 
         workbook = Workbook()
         sheet = workbook.active
@@ -113,12 +216,10 @@ class SourceParserXLSXTest(TestCase):
             file_content = xlsx_file.read()
             uploaded_file = SimpleUploadedFile('test.xlsx', file_content)
 
-        parser = SourceParserXLSX(uploaded_file)
-        parsed_rows = parser.get_parsed_rows()
-        parsed_rows = [CompositeRowSerializer.
-                       clean_row(row) for row in parsed_rows]
+        contri_cleaner = ContriCleaner(uploaded_file, SectorCacheMock())
+        processed_list = contri_cleaner.process_data()
 
-        self.assertEqual(parsed_rows, expected_parsed_rows)
+        self.assertEqual(processed_list.rows, expected_processed_list.rows)
 
         os.remove('test.xlsx')
 
