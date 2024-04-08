@@ -218,7 +218,6 @@ class SourceParserXLSXTest(TestCase):
 
         contri_cleaner = ContriCleaner(uploaded_file, SectorCacheMock())
         processed_list = contri_cleaner.process_data()
-        print(processed_list.rows)
 
         self.assertEqual(processed_list.rows, expected_processed_list.rows)
 

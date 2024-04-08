@@ -6,7 +6,9 @@ from contricleaner.lib.serializers.row_serializers.row_serializer \
 
 
 class CompositeRowSerializer(RowSerializer):
-    __serializers: List[RowSerializer] = []
+
+    def __init__(self) -> None:
+        self.__serializers: List[RowSerializer] = []
 
     def add_serializer(self, serializer: RowSerializer):
         self.__serializers.append(serializer)

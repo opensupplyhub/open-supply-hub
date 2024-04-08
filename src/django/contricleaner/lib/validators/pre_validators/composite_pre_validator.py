@@ -5,7 +5,8 @@ from contricleaner.lib.validators.pre_validators \
 
 
 class CompositePreValidator(PreValidator):
-    __validators: List[PreValidator] = []
+    def __init__(self) -> None:
+        self.__validators: List[PreValidator] = []
 
     def add_validator(self, validator: PreValidator):
         self.__validators.append(validator)
