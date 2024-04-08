@@ -509,7 +509,7 @@ variable "anonymizer_destination_aws_account"{
 }
 
 variable "anonymizer_db_identifier" {
-  tupe = string
+  type = string
 }
 
 variable "anonymizer_image_tag" {
