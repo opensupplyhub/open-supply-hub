@@ -1,11 +1,11 @@
-import unittest
+from django.test import TestCase
 
 from contricleaner.lib.serializers.row_serializers \
     .row_required_fields_serializer \
     import RowRequiredFieldsSerializer
 
 
-class RowRequiredFieldsSerializerTest(unittest.TestCase):
+class RowRequiredFieldsSerializerTest(TestCase):
     def setUp(self):
         self.serializer = RowRequiredFieldsSerializer()
         self.current = {"errors": []}

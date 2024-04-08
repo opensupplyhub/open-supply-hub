@@ -1,4 +1,5 @@
-from contricleaner.lib.dto.row_dto import RowDTO
+from django.test import TestCase
+
 from contricleaner.lib.serializers.row_serializers.composite_row_serializer \
     import CompositeRowSerializer
 from contricleaner.tests.sector_cache_mock import SectorCacheMock
@@ -16,10 +17,8 @@ from contricleaner.lib.serializers.row_serializers \
     .row_required_fields_serializer \
     import RowRequiredFieldsSerializer
 
-from django.test import TestCase
 
-
-class RowCompositeValidatorTest(TestCase):
+class CompositeRowSerializerTest(TestCase):
     def setUp(self):
         self.composite_row_serializer = CompositeRowSerializer()
         split_pattern = r', |,|\|'
@@ -36,7 +35,7 @@ class RowCompositeValidatorTest(TestCase):
         for serializer in leaf_serializers:
             self.composite_row_serializer.add_serializer(serializer)
 
-    def test_get_validated_row(self):
+    def test_get_serialized_row(self):
         facility_source = {
             'country': 'United States',
             'name': 'Pants Hut',

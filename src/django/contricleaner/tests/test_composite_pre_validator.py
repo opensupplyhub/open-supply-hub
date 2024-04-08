@@ -1,4 +1,4 @@
-import unittest
+from django.test import TestCase
 
 from contricleaner.lib.validators.pre_validators.composite_pre_validator \
     import CompositePreValidator
@@ -6,7 +6,7 @@ from contricleaner.lib.validators.pre_validators.pre_header_validator \
     import PreHeaderValidator
 
 
-class CompositePreValidatorTest(unittest.TestCase):
+class CompositePreValidatorTest(TestCase):
 
     def setUp(self):
         self.composite = CompositePreValidator()

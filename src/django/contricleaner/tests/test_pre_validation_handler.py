@@ -1,4 +1,4 @@
-import unittest
+from django.test import TestCase
 
 from contricleaner.lib.handlers.pre_validation_handler \
     import PreValidationHandler
@@ -6,7 +6,7 @@ from contricleaner.lib.exceptions.handler_not_set_error \
     import HandlerNotSetError
 
 
-class PreValidationHandlerTest(unittest.TestCase):
+class PreValidationHandlerTest(TestCase):
     def setUp(self):
         self.handler_one = PreValidationHandler()
         self.handler_two = PreValidationHandler()
