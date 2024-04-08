@@ -593,6 +593,17 @@ class FacilitiesViewSet(ListModelMixin,
             raise APIException('Internal System Error. '
                                'Please contact support.')
 
+        # TODO: Error handling for the list will be improved as part of the
+        #       OSDEV-999 ticket. It was added to ensure that the tests pass.
+        if processed_list.errors:
+            log.error(
+                f'[API Upload] CC Parsing Errors: {processed_list.errors}'
+            )
+            return Response({
+                "message": "The provided data could not be parsed",
+                "errors": processed_list.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         rows = processed_list.rows
         row = rows[0]
         if row.errors:
