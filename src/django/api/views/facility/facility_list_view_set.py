@@ -7,7 +7,7 @@ import logging
 from functools import reduce
 from typing import List
 
-from api.facility_actions.create_facility import CreateFacility
+from api.facility_actions.processing_facility import ProcessingFacility
 from api.helpers.helpers import (
     get_raw_json,
 )
@@ -382,7 +382,7 @@ class FacilityListViewSet(ModelViewSet):
 
         serializer = self.get_serializer(new_list)
 
-        return CreateFacility.createList(
+        return ProcessingFacility.createList(
             rows, contributor, header_row_keys, header_str, source, serializer
         )
 

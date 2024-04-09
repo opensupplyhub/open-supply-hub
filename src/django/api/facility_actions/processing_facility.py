@@ -27,7 +27,7 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-class CreateFacility:
+class ProcessingFacility:
 
     def createApi(request, row, source, should_create):
 
