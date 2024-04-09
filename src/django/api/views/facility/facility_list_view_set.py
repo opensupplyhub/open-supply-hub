@@ -121,19 +121,6 @@ class FacilityListViewSet(ModelViewSet):
         rows = map(clean_row, rows)
         return header, rows
 
-    @staticmethod
-    def __is_required_fields_present(rows: List[dict]) -> bool:
-        if (len(rows) > 0):
-            required_fields_pattern = (r"^(country|address|name)"
-                                       r"(,\s*(country|address|name))"
-                                       r"*(\s+are\s+missing)$")
-            if len(rows[0].errors) > 0:
-                error_message = rows[0].errors[0]['message']
-                return not bool(
-                    re.match(required_fields_pattern, error_message))
-            return True
-        return False
-
     @transaction.atomic
     def create(self, request):
         """
