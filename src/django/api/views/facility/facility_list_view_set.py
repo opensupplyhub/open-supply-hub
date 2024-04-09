@@ -2,11 +2,9 @@ import csv
 import operator
 import os
 import traceback
-import re
 import logging
 
 from functools import reduce
-from typing import List
 
 from api.helpers.helpers import (
     get_raw_json,
