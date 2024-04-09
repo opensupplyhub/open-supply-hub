@@ -229,8 +229,8 @@ class CreateFacility:
             return Response(result, status=status.HTTP_200_OK)
 
     def createList(
-            rows, contributor, header_row_keys, header_str, source, serializer
-            ):
+        rows, contributor, header_row_keys, header_str, source, serializer
+    ):
 
         parsing_started = str(timezone.now())
 
@@ -241,22 +241,24 @@ class CreateFacility:
         parsed_items = set()
         for idx, row in enumerate(rows):
             item = FacilityListItem.objects.create(
-                    row_index=idx,
-                    raw_data=','.join(row.raw_json.values()),
-                    raw_json=row.raw_json,
-                    raw_header=header_str,
-                    sector=row.sector,
-                    source=source,
-                    country_code=row.country_code,
-                    name=row.name,
-                    clean_name=row.clean_name,
-                    address=row.address,
-                    clean_address=row.clean_address
-                )
+                row_index=idx,
+                raw_data=','.join(row.raw_json.values()),
+                raw_json=row.raw_json,
+                raw_header=header_str,
+                sector=row.sector,
+                source=source,
+                country_code=row.country_code,
+                name=row.name,
+                clean_name=row.clean_name,
+                address=row.address,
+                clean_address=row.clean_address,
+            )
             log.info(f'[List Upload] FacilityListItem created. Id {item.id}!')
             try:
-                if (FileHeaderField.LAT in row.fields.keys()
-                        and FileHeaderField.LNG in row.fields.keys()):
+                if (
+                    FileHeaderField.LAT in row.fields.keys()
+                    and FileHeaderField.LNG in row.fields.keys()
+                ):
                     # TODO: Move floating to the ContriCleaner library.
                     lat = float(row.fields[FileHeaderField.LAT])
                     lng = float(row.fields[FileHeaderField.LNG])
@@ -264,9 +266,7 @@ class CreateFacility:
                     is_geocoded = True
 
                 create_extendedfields_for_listitem(
-                    item,
-                    list(row.fields.keys()),
-                    list(row.fields.values())
+                    item, list(row.fields.keys()), list(row.fields.values())
                 )
             except Exception as e:
                 log.error(
@@ -274,15 +274,17 @@ class CreateFacility:
                 )
                 log.info(f'[List Upload] FacilityListItem Id: {item.id}')
                 item.status = FacilityListItem.ERROR_PARSING
-                item.processing_results.append({
-                    'action': ProcessingAction.PARSE,
-                    'started_at': parsing_started,
-                    'error': True,
-                    'message': str(e),
-                    'trace': traceback.format_exc(),
-                    'finished_at': str(timezone.now()),
-                    'is_geocoded': is_geocoded,
-                })
+                item.processing_results.append(
+                    {
+                        'action': ProcessingAction.PARSE,
+                        'started_at': parsing_started,
+                        'error': True,
+                        'message': str(e),
+                        'trace': traceback.format_exc(),
+                        'finished_at': str(timezone.now()),
+                        'is_geocoded': is_geocoded,
+                    }
+                )
 
             row_errors = row.errors
             if len(row_errors) > 0:
@@ -294,29 +296,33 @@ class CreateFacility:
                 )
                 log.info(f'[List Upload] FacilityListItem Id: {item.id}')
                 item.status = FacilityListItem.ERROR_PARSING
-                item.processing_results.append({
-                    'action': ProcessingAction.PARSE,
-                    'started_at': parsing_started,
-                    'error': True,
-                    'message': stringified_message,
-                    'trace': traceback.format_exc(),
-                    'finished_at': str(timezone.now()),
-                    'is_geocoded': is_geocoded,
-                })
+                item.processing_results.append(
+                    {
+                        'action': ProcessingAction.PARSE,
+                        'started_at': parsing_started,
+                        'error': True,
+                        'message': stringified_message,
+                        'trace': traceback.format_exc(),
+                        'finished_at': str(timezone.now()),
+                        'is_geocoded': is_geocoded,
+                    }
+                )
             else:
                 item.status = FacilityListItem.PARSED
-                item.processing_results.append({
-                    'action': ProcessingAction.PARSE,
-                    'started_at': parsing_started,
-                    'error': False,
-                    'finished_at': str(timezone.now()),
-                    'is_geocoded': is_geocoded,
-                })
+                item.processing_results.append(
+                    {
+                        'action': ProcessingAction.PARSE,
+                        'started_at': parsing_started,
+                        'error': False,
+                        'finished_at': str(timezone.now()),
+                        'is_geocoded': is_geocoded,
+                    }
+                )
 
             if item.status != FacilityListItem.ERROR_PARSING:
-                core_fields = '{}-{}-{}'.format(item.country_code,
-                                                item.clean_name,
-                                                item.clean_address)
+                core_fields = '{}-{}-{}'.format(
+                    item.country_code, item.clean_name, item.clean_address
+                )
                 if core_fields in parsed_items:
                     item.status = FacilityListItem.DUPLICATE
                 else:
