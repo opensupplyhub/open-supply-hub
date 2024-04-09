@@ -353,7 +353,7 @@ class FacilityListViewSet(ModelViewSet):
         log.info('[List Upload] Started CC Parse process!')
         contri_cleaner = ContriCleaner(uploaded_file, SectorCache())
         try:
-            processed_list = contri_cleaner.process_data()
+            processed_data = contri_cleaner.process_data()
         except ParsingError as err:
             log.error(f'[List Upload] Data Parsing Error: {err}')
             report_error_to_rollbar(request=request,
@@ -368,14 +368,15 @@ class FacilityListViewSet(ModelViewSet):
             raise APIException('Internal System Error. '
                                'Please contact support.')
 
-        rows = processed_list.rows
-        if not self.__is_required_fields_present(rows):
-            log.error('[List Upload] Required Field Missing Error')
-            raise ValidationError((
-                    f'Header must contain {FileHeaderField.COUNTRY}, '
-                    f'{FileHeaderField.NAME}, and '
-                    f'{FileHeaderField.ADDRESS} fields.'
-                ))
+        if processed_data.errors:
+            log.error(
+                f'[List Upload] CC Validation Errors: {processed_data.errors}'
+            )
+            errors_messages = [error['message'] for error in processed_data.errors]
+            validation_message = ','.join(map(str, errors_messages))
+            raise ValidationError(validation_message)
+
+        rows = processed_data.rows
 
         header_row_keys = rows[0].raw_json.keys()
         header_str = ','.join(header_row_keys)

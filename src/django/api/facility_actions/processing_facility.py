@@ -29,8 +29,22 @@ log = logging.getLogger(__name__)
 
 class ProcessingFacility:
 
-    def createApi(request, row, source, should_create):
+    def create_api(request, processed_data, source, should_create):
 
+        # handle processing errors
+        if processed_data.errors:
+            log.error(
+                f'[API Upload] CC Validation Errors: {processed_data.errors}'
+            )
+            return Response({
+                "message": "The provided data could not be processed",
+                "errors": processed_data.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        rows = processed_data.rows
+        row = rows[0]
+
+        # handle parsing errors
         if row.errors:
             log.error(f'[API Upload] CC Parsing Errors: {row.errors}')
             return Response(
