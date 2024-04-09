@@ -1,10 +1,10 @@
-import unittest
+from django.test import TestCase
 
 from contricleaner.lib.validators.pre_validators.pre_header_validator \
     import PreHeaderValidator
 
 
-class PreHeaderValidatorTest(unittest.TestCase):
+class PreHeaderValidatorTest(TestCase):
 
     def setUp(self):
         self.validator = PreHeaderValidator()
