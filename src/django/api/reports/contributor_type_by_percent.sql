@@ -34,14 +34,14 @@ FROM (
     min(to_char(s.created_at, 'YYYY-MM')) AS month,
     c.id,
     c.contrib_type
-  FROM api_source s
-  JOIN api_contributor c ON s.contributor_id = c.id
-  JOIN api_user u ON u.id = c.admin_id
-  WHERE to_char(s.created_at, 'YYYY-MM-DD') != to_char(now(), 'YYYY-MM-DD')
-  AND s.create = true
-  AND NOT u.email like '%openapparel.org%'
-  AND NOT u.email LIKE '%opensupplyhub.org%'
-  AND NOT u.email like '%azavea.com%'
+    FROM api_facilitymatch m
+        JOIN api_facilitylistitem i on m.facility_list_item_id = i.id
+        JOIN api_source s on i.source_id = s.id
+        JOIN api_contributor c ON s.contributor_id = c.id
+        JOIN api_user u ON u.id = c.admin_id
+    WHERE m.status NOT IN ('REJECTED', 'PENDING')
+    AND u.email NOT LIKE '%openapparel.org%'
+    AND u.email NOT LIKE '%opensupplyhub.org%'
   GROUP BY c.id, c.contrib_type
 ) q
 GROUP BY month
