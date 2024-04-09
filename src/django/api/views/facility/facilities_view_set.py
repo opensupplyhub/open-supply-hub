@@ -3,6 +3,8 @@ from api.facility_actions.processing_facility import ProcessingFacility
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
 from contricleaner.lib.contri_cleaner import ContriCleaner
+from contricleaner.lib.exceptions.handler_not_set_error \
+    import HandlerNotSetError
 
 from rest_framework.mixins import (
     ListModelMixin,
@@ -18,7 +20,8 @@ from rest_framework.exceptions import (
     NotAuthenticated,
     NotFound,
     PermissionDenied,
-    ValidationError
+    ValidationError,
+    APIException
 )
 from waffle import switch_is_active, flag_is_active
 from django.contrib.gis.geos import Point
@@ -591,8 +594,25 @@ class FacilitiesViewSet(ListModelMixin,
         )
 
         contri_cleaner = ContriCleaner(request.data, SectorCache())
-        processed_data = contri_cleaner.process_data()
-        rows = processed_data.rows
+        try:
+            processed_list = contri_cleaner.process_data()
+        except HandlerNotSetError as err:
+            log.error(f'[API Upload] Internal ContriCleaner Error: {err}')
+            raise APIException('Internal System Error. '
+                               'Please contact support.')
+
+        # TODO: Error handling for the list will be improved as part of the
+        #       OSDEV-999 ticket. It was added to ensure that the tests pass.
+        if processed_list.errors:
+            log.error(
+                f'[API Upload] CC Validation Errors: {processed_list.errors}'
+            )
+            return Response({
+                "message": "The provided data could not be processed",
+                "errors": processed_list.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        rows = processed_list.rows
         row = rows[0]
 
         return ProcessingFacility.createApi(

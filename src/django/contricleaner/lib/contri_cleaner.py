@@ -1,5 +1,5 @@
 import os
-from typing import Union
+from typing import Union, List, Dict
 
 from django.core.files.uploadedfile import (
     InMemoryUploadedFile,
@@ -21,6 +21,11 @@ from contricleaner.lib.parsers.source_parser_csv import (
 from contricleaner.lib.parsers.source_parser_json import SourceParserJSON
 from contricleaner.lib.dto.list_dto import ListDTO
 from contricleaner.lib.exceptions.parsing_error import ParsingError
+from contricleaner.lib.handlers.list_row_handler import ListRowHandler
+from contricleaner.lib.handlers.pre_validation_handler \
+    import PreValidationHandler
+from contricleaner.lib.handlers.serialization_handler \
+    import SerializationHandler
 
 
 class ContriCleaner:
@@ -30,7 +35,7 @@ class ContriCleaner:
 
     def __init__(self,
                  data: Union[
-                     InMemoryUploadedFile, TemporaryUploadedFile, dict],
+                     InMemoryUploadedFile, TemporaryUploadedFile, Dict],
                  sector_cache: SectorCacheInterface) -> None:
         unsupported_data_value_type_message = ('The data value type should be '
                                                'either dict, '
@@ -50,27 +55,31 @@ class ContriCleaner:
         self.__sector_cache = sector_cache
 
     def process_data(self) -> ListDTO:
-        parsing_executor = self.__define_parsing_strategy()
-        validated_rows = parsing_executor.execute_parsing()
+        parsed_rows = self.__parse_data()
+        entry_handler = self.__setup_handlers()
 
-        return ListDTO(rows=validated_rows)
+        processed_list = entry_handler.handle(parsed_rows)
+
+        return processed_list
+
+    def __parse_data(self) -> List[Dict]:
+        parsing_executor = self.__define_parsing_strategy()
+        parsed_rows = parsing_executor.execute_parsing()
+
+        return parsed_rows
 
     def __define_parsing_strategy(self) -> ParsingExecutor:
         if isinstance(self.__data, dict):
-            parsing_executor = ParsingExecutor(
-                SourceParserJSON(self.__data), self.__sector_cache
-            )
+            parsing_executor = ParsingExecutor(SourceParserJSON(self.__data))
         else:
             ext = os.path.splitext(self.__data.name)[1].lower()
             if ext == '.xlsx':
                 parsing_executor = ParsingExecutor(
-                    SourceParserXLSX(self.__data),
-                    self.__sector_cache
+                    SourceParserXLSX(self.__data)
                 )
             elif ext == '.csv':
                 parsing_executor = ParsingExecutor(
-                    SourceParserCSV(self.__data),
-                    self.__sector_cache
+                    SourceParserCSV(self.__data)
                 )
             else:
                 raise ParsingError(
@@ -78,3 +87,15 @@ class ContriCleaner:
                     'submit Excel or UTF-8 CSV.'
                 )
         return parsing_executor
+
+    def __setup_handlers(self) -> ListRowHandler:
+        handlers = (
+            PreValidationHandler(),
+            SerializationHandler(self.__sector_cache)
+        )
+        for index in range(len(handlers) - 1):
+            handlers[index].set_next(handlers[index + 1])
+
+        entry_handler = handlers[0]
+
+        return entry_handler

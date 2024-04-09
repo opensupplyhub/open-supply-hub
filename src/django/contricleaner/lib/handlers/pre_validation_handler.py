@@ -1,4 +1,5 @@
-from typing import List
+from typing import List, Dict
+
 from contricleaner.lib.dto.list_dto import ListDTO
 from contricleaner.lib.handlers.list_row_handler import ListRowHandler
 from contricleaner.lib.validators.pre_validators \
@@ -9,16 +10,13 @@ from contricleaner.lib.validators.pre_validators \
 
 class PreValidationHandler(ListRowHandler):
 
-    def handle(self, rows: List[dict]) -> ListDTO:
-        composite_early_validator = CompositePreValidator()
-        composite_early_validator.add_validator(PreHeaderValidator())
+    def handle(self, rows: List[Dict]) -> ListDTO:
+        composite_pre_validator = CompositePreValidator()
+        composite_pre_validator.add_validator(PreHeaderValidator())
 
-        result = composite_early_validator.validate(rows)
+        result = composite_pre_validator.validate(rows)
 
-        if len(result["errors"]) > 0:
-            return ListDTO([], result["errors"])
+        if len(result['errors']) > 0:
+            return ListDTO(errors=result['errors'])
 
-        try:
-            return self._next.handle(rows)
-        except Exception:
-            raise Exception("Next Handler wasn't set")
+        return super().handle(rows)

@@ -20,6 +20,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import (
     NotFound,
     ValidationError,
+    APIException
 )
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -69,6 +70,8 @@ from api.extended_fields import (
 from ..fields.create_nonstandard_fields import create_nonstandard_fields
 from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.exceptions.parsing_error import ParsingError
+from contricleaner.lib.exceptions.handler_not_set_error \
+    import HandlerNotSetError
 
 log = logging.getLogger(__name__)
 
@@ -350,15 +353,22 @@ class FacilityListViewSet(ModelViewSet):
         log.info('[List Upload] Started CC Parse process!')
         contri_cleaner = ContriCleaner(uploaded_file, SectorCache())
         try:
-            processed_data = contri_cleaner.process_data()
-            rows = processed_data.rows
+            processed_list = contri_cleaner.process_data()
         except ParsingError as err:
             log.error(f'[List Upload] Data Parsing Error: {err}')
             report_error_to_rollbar(request=request,
                                     file=uploaded_file,
                                     exception=err)
-            raise ValidationError(str(err.detail[0]))
+            raise ValidationError(str(err))
+        except HandlerNotSetError as err:
+            log.error(f'[List Upload] Internal ContriCleaner Error: {err}')
+            report_error_to_rollbar(request=request,
+                                    file=uploaded_file,
+                                    exception=err)
+            raise APIException('Internal System Error. '
+                               'Please contact support.')
 
+        rows = processed_list.rows
         if not self.__is_required_fields_present(rows):
             log.error('[List Upload] Required Field Missing Error')
             raise ValidationError((
