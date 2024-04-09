@@ -20,6 +20,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [OSDEV-990](https://opensupplyhub.atlassian.net/browse/OSDEV-990) - Implement a ContriCleaner facade class to simplify interaction with client code. With this change, the client code only needs to instantiate the ContriCleaner class, pass the input data, and then call the `process_data` method without the need to define strategies or other details. This abstraction helps streamline the process and encapsulate complexity.
+* [OSDEV-1000](https://opensupplyhub.atlassian.net/browse/OSDEV-990) - A new class `CreateFacility` was created that will be responsible for managing the creation of new facilities from both API requests and list uploads. The functionality of creating a new facility received from an API request, which was previously in `facilities_view_set.py`, has been moved to `create_facility.py`.
 
 ### Bugfix
 * [OSDEV-857](https://opensupplyhub.atlassian.net/browse/OSDEV-857) [Bug] Pre-prod isn't deleted by the 'terraform destroy' script. Command for destroying repositories on AWS pre-prod has been added.
