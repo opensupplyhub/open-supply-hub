@@ -372,11 +372,10 @@ class FacilityListViewSet(ModelViewSet):
             log.error(
                 f'[List Upload] CC Validation Errors: {processed_data.errors}'
             )
-            errors_messages = [
-                error['message'] for error in processed_data.errors
-            ]
-            validation_message = ','.join(map(str, errors_messages))
-            raise ValidationError(validation_message)
+            stringified_message = '\n'.join(
+                    [f"{error['message']}" for error in processed_data.errors]
+                )
+            raise ValidationError(stringified_message)
 
         rows = processed_data.rows
 
