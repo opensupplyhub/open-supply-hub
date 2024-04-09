@@ -241,17 +241,18 @@ class CreateFacility:
         parsed_items = set()
         for idx, row in enumerate(rows):
             item = FacilityListItem.objects.create(
+                source=source,
                 row_index=idx,
                 raw_data=','.join(row.raw_json.values()),
                 raw_json=row.raw_json,
                 raw_header=header_str,
-                sector=row.sector,
-                source=source,
-                country_code=row.country_code,
+                # status
                 name=row.name,
                 clean_name=row.clean_name,
                 address=row.address,
                 clean_address=row.clean_address,
+                country_code=row.country_code,
+                sector=row.sector,
             )
             log.info(f'[List Upload] FacilityListItem created. Id {item.id}!')
             try:
