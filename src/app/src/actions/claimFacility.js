@@ -78,6 +78,10 @@ export const updateClaimAFacilityLinkedinProfile = createAction(
     'UPDATE_CLAIM_A_FACILITY_LINKEDIN_PROFILE',
 );
 
+export const updateClaimAFacilityUploadFiles = createAction(
+    'UPDATE_CLAIM_A_FACILITY_UPLOAD_FILES',
+);
+
 export const startSubmitClaimAFacilityData = createAction(
     'START_SUBMIT_CLAIM_A_FACILITY_DATA',
 );

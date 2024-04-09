@@ -105,7 +105,8 @@ function ClaimFacilityStepper({
     setEmailFromContributorEmail,
     error,
 }) {
-    const [activeStep, setActiveStep] = useState(0);
+    // TODO: Set back to 0
+    const [activeStep, setActiveStep] = useState(3);
     const [submittingForm, setSubmittingForm] = useState(false);
 
     useEffect(() => {
