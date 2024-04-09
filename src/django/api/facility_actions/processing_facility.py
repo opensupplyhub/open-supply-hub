@@ -53,13 +53,13 @@ class ProcessingFacility:
             raw_data=json.dumps(request.data),
             raw_json=row.raw_json,
             raw_header='',
-            status=FacilityListItem.PARSED,
             name=row.name,
             clean_name=row.clean_name,
             address=row.address,
             clean_address=row.clean_address,
             country_code=row.country_code,
             sector=row.sector,
+            status=FacilityListItem.PARSED,
             processing_results=[
                 {
                     'action': ProcessingAction.PARSE,
@@ -246,13 +246,13 @@ class ProcessingFacility:
                 raw_data=','.join(row.raw_json.values()),
                 raw_json=row.raw_json,
                 raw_header=header_str,
-                # status
                 name=row.name,
                 clean_name=row.clean_name,
                 address=row.address,
                 clean_address=row.clean_address,
                 country_code=row.country_code,
                 sector=row.sector,
+                # status
             )
             log.info(f'[List Upload] FacilityListItem created. Id {item.id}!')
             try:
