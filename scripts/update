@@ -18,30 +18,30 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         usage
     else
         # Ensure container images are current
-        docker-compose build
+        docker compose build
 
         # Install frontend NPM modules
-        docker-compose \
+        docker compose \
             run --rm --no-deps app \
             yarn install
 
         # Build static asset bundle for React frontend
-        docker-compose \
+        docker compose \
             run --rm --no-deps app \
             yarn run build
 
         # Bring up PostgreSQL and Django in a way that respects
         # configured service health checks.
-        docker-compose up -d database django
+        docker compose up -d database django
 
         # Apply any outstanding Django migrations
-        docker-compose \
+        docker compose \
             run --rm --entrypoint python \
             django \
             manage.py migrate --no-input
 
         # Collect Django static files
-        docker-compose \
+        docker compose \
             run --rm --entrypoint python \
             django \
             manage.py collectstatic --noinput
