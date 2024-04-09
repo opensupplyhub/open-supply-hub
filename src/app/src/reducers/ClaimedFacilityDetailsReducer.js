@@ -106,15 +106,6 @@ export default createReducer(
                     },
                 },
             }),
-        // [updateClaimedFacilityNameEnglish]: (state, name) =>
-        //     update(state, {
-        //         updateData: {
-        //             error: { $set: initialState.updateData.error },
-        //         },
-        //         data: {
-        //             facility_name_english: { $set: name },
-        //         },
-        //     }),
         [updateClaimedFacilityNameNativeLanguage]: (state, name) =>
             update(state, {
                 updateData: {
@@ -188,15 +179,6 @@ export default createReducer(
                     },
                 },
             }),
-        // [updateClaimedFacilityAddress]: (state, address) =>
-        //     update(state, {
-        //         updateData: {
-        //             error: { $set: initialState.updateData.error },
-        //         },
-        //         data: {
-        //             facility_address: { $set: address },
-        //         },
-        //     }),
         [updateClaimedFacilityLocation]: (state, location) =>
             update(state, {
                 updateData: {

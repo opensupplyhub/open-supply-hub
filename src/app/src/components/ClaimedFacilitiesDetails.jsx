@@ -434,7 +434,6 @@ function ClaimedFacilitiesDetails({
     }
 
     const countryOptions = createCountrySelectOptions(data.countries);
-    // const disabled = true;
 
     return (
         <div style={claimedFacilitiesDetailsStyles.containerStyles}>
