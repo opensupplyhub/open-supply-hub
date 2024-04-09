@@ -20,6 +20,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [OSDEV-927](https://opensupplyhub.atlassian.net/browse/OSDEV-927) - Reduce resources allocated for bastions to t3.nano.
+* [OSDEV-805](https://opensupplyhub.atlassian.net/browse/OSDEV-805) - Make Environment and project tag to be applied to all resources by defaul.
 
 ### Bugfix
 * [OSDEV-996](https://opensupplyhub.atlassian.net/browse/OSDEV-996) The default sorting order for embedded maps was broken (changed to Descending by # Contributors). The default sorting order for embedded maps has been fixed (changed it back to Ascending by Name).
