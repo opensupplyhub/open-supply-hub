@@ -255,7 +255,6 @@ class ProcessingFacility:
                 clean_address=row.clean_address,
                 country_code=row.country_code,
                 sector=row.sector,
-                # status
             )
             log.info(f'[List Upload] FacilityListItem created. Id {item.id}!')
             try:
