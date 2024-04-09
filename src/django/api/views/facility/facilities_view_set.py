@@ -1,5 +1,5 @@
 import logging
-from api.facility_actions.create_facility import CreateFacility
+from api.facility_actions.processing_facility import ProcessingFacility
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
 from contricleaner.lib.contri_cleaner import ContriCleaner
@@ -595,7 +595,7 @@ class FacilitiesViewSet(ListModelMixin,
         rows = processed_data.rows
         row = rows[0]
 
-        return CreateFacility.createApi(request, row, source, should_create)
+        return ProcessingFacility.createApi(request, row, source, should_create)
 
     @swagger_auto_schema(auto_schema=None)
     @transaction.atomic
