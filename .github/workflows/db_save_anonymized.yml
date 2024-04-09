@@ -1,4 +1,4 @@
-name: "DB - Save Anonymized DB to S3"
+name: "DB - Save Anonymized DB"
 
 on:
   workflow_dispatch:

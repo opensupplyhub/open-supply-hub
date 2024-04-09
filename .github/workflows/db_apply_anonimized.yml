@@ -1,7 +1,16 @@
-name: "DB - Apply Anonymized db"
+name: "DB - Apply Anonymized DB"
 
 on:
   workflow_dispatch:
+    inputs:
+      deploy-env:
+        description: 'Environment to apply anonymized db'
+        required: true
+        type: choice
+        options:
+        - Test
+        - Pre-prod
+        default: Test
 
 jobs:
   save-anonymized-db:
