@@ -4,7 +4,10 @@ import logging
 import traceback
 
 from api.constants import ErrorMessages, FileHeaderField, ProcessingAction
-from api.extended_fields import create_extendedfields_for_listitem
+from api.extended_fields import (
+    create_extendedfields_for_single_item,
+    create_extendedfields_for_listitem
+)
 from api.geocoding import geocode_address
 from api.kafka_producer import produce_message_match_process
 from api.models.facility.facility_list_item import FacilityListItem
@@ -85,7 +88,7 @@ class ProcessingFacility:
         }
 
         try:
-            (item, row.fields)
+            create_extendedfields_for_single_item(item, row.fields)
         except (core_exceptions.ValidationError, ValueError) as exc:
             error_message = ''
 
