@@ -595,7 +595,9 @@ class FacilitiesViewSet(ListModelMixin,
         rows = processed_data.rows
         row = rows[0]
 
-        return ProcessingFacility.createApi(request, row, source, should_create)
+        return ProcessingFacility.createApi(
+            request, row, source, should_create
+        )
 
     @swagger_auto_schema(auto_schema=None)
     @transaction.atomic
