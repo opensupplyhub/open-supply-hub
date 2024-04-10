@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import traceback
+from typing import Any
 
 from api.constants import ErrorMessages, ProcessingAction
 from api.extended_fields import create_extendedfields_for_single_item
@@ -30,26 +31,26 @@ log = logging.getLogger(__name__)
 
 class ProcessingFacilityAPI(ProcessingFacility):
 
-    def __init__(
-        self, request, processed_data, public_submission, should_create: bool
-    ) -> None:
-        self.__request = request
-        self.__processed_data = processed_data
-        self.__public_submission = public_submission
-        self.__should_create = should_create
+    def __init__(self, processing_data: dict[str, Any]) -> None:
+        self.__processing_data = processing_data
 
     def process_facility(self):
+        request = self.__processing_data.get('request')
+        processed_data = self.__processing_data.get('processed_data')
+        public_submission = self.__processing_data.get('public_submission')
+        should_create = self.__processing_data.get('should_create')
+
         # handle processing errors
-        if self.__processed_data.errors:
+        if processed_data.errors:
             log.error(
-                f'[API Upload] CC Validation Errors: {self.__processed_data.errors}'
+                f'[API Upload] CC Validation Errors: {processed_data.errors}'
             )
             return Response({
                 "message": "The provided data could not be processed",
-                "errors": self.__processed_data.errors
+                "errors": processed_data.errors
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        rows = self.__processed_data.rows
+        rows = processed_data.rows
         row = rows[0]
 
         # handle parsing errors
@@ -66,16 +67,16 @@ class ProcessingFacilityAPI(ProcessingFacility):
         parse_started = str(timezone.now())
 
         source = Source.objects.create(
-            contributor=self.__request.user.contributor,
+            contributor=request.user.contributor,
             source_type=Source.SINGLE,
-            is_public=self.__public_submission,
-            create=self.__should_create
+            is_public=public_submission,
+            create=should_create
         )
 
         create_nonstandard_fields(
-            list(row.fields.keys()), self.__request.user.contributor
+            list(row.fields.keys()), request.user.contributor
         )
-        
+
         row_index = 0
         item = self._create_facility_list_item(
             source, row, row_index, ''
@@ -238,7 +239,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
 
             # Handle results of "match" process from Dedupe Hub
             result = handle_external_match_process_result(
-                fli_temp.id, result, self.__request, self.__should_create
+                fli_temp.id, result, request, should_create
             )
 
         errors_status = [
@@ -250,7 +251,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
         log.info(f'[API Upload] FacilityListItem Id: {item.id}')
         log.info(f'[API Upload] Source Id: {item.id}')
 
-        if self.__should_create and result['status'] not in errors_status:
+        if should_create and result['status'] not in errors_status:
             return Response(result, status=status.HTTP_201_CREATED)
         else:
             return Response(result, status=status.HTTP_200_OK)
