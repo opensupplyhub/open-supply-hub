@@ -2,11 +2,9 @@ import csv
 import operator
 import os
 import traceback
-import re
 import logging
 
 from functools import reduce
-from typing import List
 
 from api.helpers.helpers import (
     get_raw_json,
@@ -120,19 +118,6 @@ class FacilityListViewSet(ModelViewSet):
         self._validate_header(header)
         rows = map(clean_row, rows)
         return header, rows
-
-    @staticmethod
-    def __is_required_fields_present(rows: List[dict]) -> bool:
-        if (len(rows) > 0):
-            required_fields_pattern = (r"^(country|address|name)"
-                                       r"(,\s*(country|address|name))"
-                                       r"*(\s+are\s+missing)$")
-            if len(rows[0].errors) > 0:
-                error_message = rows[0].errors[0]['message']
-                return not bool(
-                    re.match(required_fields_pattern, error_message))
-            return True
-        return False
 
     @transaction.atomic
     def create(self, request):
@@ -353,7 +338,7 @@ class FacilityListViewSet(ModelViewSet):
         log.info('[List Upload] Started CC Parse process!')
         contri_cleaner = ContriCleaner(uploaded_file, SectorCache())
         try:
-            processed_list = contri_cleaner.process_data()
+            processed_data = contri_cleaner.process_data()
         except ParsingError as err:
             log.error(f'[List Upload] Data Parsing Error: {err}')
             report_error_to_rollbar(request=request,
@@ -368,14 +353,16 @@ class FacilityListViewSet(ModelViewSet):
             raise APIException('Internal System Error. '
                                'Please contact support.')
 
-        rows = processed_list.rows
-        if not self.__is_required_fields_present(rows):
-            log.error('[List Upload] Required Field Missing Error')
-            raise ValidationError((
-                    f'Header must contain {FileHeaderField.COUNTRY}, '
-                    f'{FileHeaderField.NAME}, and '
-                    f'{FileHeaderField.ADDRESS} fields.'
-                ))
+        if processed_data.errors:
+            log.error(
+                f'[List Upload] CC Validation Errors: {processed_data.errors}'
+            )
+            error_messages = [
+                str(error['message']) for error in processed_data.errors
+            ]
+            raise ValidationError(error_messages)
+
+        rows = processed_data.rows
 
         header_row_keys = rows[0].raw_json.keys()
         header_str = ','.join(header_row_keys)
