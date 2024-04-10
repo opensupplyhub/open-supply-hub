@@ -78,7 +78,7 @@ class SectorTest(FacilityAPITestCaseBase):
             content_type="application/json",
         )
         self.assertEqual(0, ExtendedField.objects.all().count())
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 400)
 
     # TODO: Replace to Dedupe Hub if possible (issue between test database
     #       & Dedupe Hub live database)
