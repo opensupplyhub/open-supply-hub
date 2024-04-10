@@ -31,11 +31,11 @@ log = logging.getLogger(__name__)
 class ProcessingFacilityAPI(ProcessingFacility):
 
     def __init__(
-        self, request, processed_data, source: Source, should_create: bool
+        self, request, processed_data, public_submission, should_create: bool
     ) -> None:
         self.__request = request
         self.__processed_data = processed_data
-        self.__source = source
+        self.__public_submission = public_submission
         self.__should_create = should_create
 
     def process_facility(self):
@@ -65,12 +65,20 @@ class ProcessingFacilityAPI(ProcessingFacility):
 
         parse_started = str(timezone.now())
 
+        source = Source.objects.create(
+            contributor=self.__request.user.contributor,
+            source_type=Source.SINGLE,
+            is_public=self.__public_submission,
+            create=self.__should_create
+        )
+
         create_nonstandard_fields(
             list(row.fields.keys()), self.__request.user.contributor
         )
-
+        
+        row_index = 0
         item = self._create_facility_list_item(
-            self.__source, row, 0, ''
+            source, row, row_index, ''
         )
 
         item.status = (FacilityListItem.PARSED,)
@@ -84,9 +92,9 @@ class ProcessingFacilityAPI(ProcessingFacility):
             }
         ]
 
-        log.info(f'[API Upload] Source created. Id: {self.__source.id}')
-        log.info(f'[API Upload] Source is public: {self.__source.is_public}')
-        log.info(f'[API Upload] Source should create: {self.__source.create}')
+        log.info(f'[API Upload] Source created. Id: {source.id}')
+        log.info(f'[API Upload] Source is public: {source.is_public}')
+        log.info(f'[API Upload] Source should create: {source.create}')
         log.info(f'[API Upload] FacilityListItem created. Id: {item.id}')
 
         result = {
@@ -212,7 +220,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
                 if timer > timeout:
                     break
                 fli_temp = FacilityListItemTemp.objects.get(
-                    source=self.__source.id
+                    source=source.id
                 )
                 if fli_temp.status == FacilityListItemTemp.GEOCODED:
                     log.info('[API Upload] Started Match process!')
@@ -222,7 +230,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
                     )
                     log.info(f'[API Upload] Source Id: {item.id}')
                     asyncio.run(
-                        produce_message_match_process(self.__source.id)
+                        produce_message_match_process(source.id)
                     )
                     break
                 asyncio.sleep(1)

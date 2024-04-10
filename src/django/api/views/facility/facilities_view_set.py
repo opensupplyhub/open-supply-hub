@@ -49,7 +49,6 @@ from ...models import (
     FacilityLocation,
     FacilityMatch,
     ExtendedField,
-    Source,
     Version
 )
 from ...constants import (
@@ -589,13 +588,6 @@ class FacilitiesViewSet(ListModelMixin,
         if not public_submission and not private_allowed:
             raise PermissionDenied('Cannot submit a private facility')
 
-        source = Source.objects.create(
-            contributor=request.user.contributor,
-            source_type=Source.SINGLE,
-            is_public=public_submission,
-            create=should_create
-        )
-
         contri_cleaner = ContriCleaner(request.data, SectorCache())
         try:
             processed_data = contri_cleaner.process_data()
@@ -606,7 +598,7 @@ class FacilitiesViewSet(ListModelMixin,
 
         context = ProcessingFacilityExecutor(
             ProcessingFacilityAPI(
-                request, processed_data, source, should_create
+                request, processed_data, public_submission, should_create
             )
         )
 
