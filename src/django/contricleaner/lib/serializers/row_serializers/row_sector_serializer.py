@@ -61,9 +61,7 @@ class RowSectorSerializer(RowSerializer):
             )
             return current
 
-        if product_types:
-            current['product_type'] = product_types
-
+        current['product_type'] = product_types
         current['sector'] = sectors
 
         return current
