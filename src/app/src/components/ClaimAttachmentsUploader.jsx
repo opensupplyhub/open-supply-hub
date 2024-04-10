@@ -2,6 +2,9 @@
 /* eslint no-unused-vars: 0 */
 import React, { useState, useRef } from 'react';
 import { connect } from 'react-redux';
+import { v4 as uuidv4 } from 'uuid';
+
+import Typography from '@material-ui/core/Typography';
 import SvgIcon from '@material-ui/core/SvgIcon';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
@@ -39,19 +42,53 @@ const claimAttachmentsUploaderStyles = Object.freeze({
         color: 'rgb(74, 153, 87)',
         marginRight: '5px',
     }),
+    validationMessageStyles: Object.freeze({
+        padding: '5px 0',
+    }),
 });
 
 const ClaimAttachmentsUploader = () => {
     const [files, setFiles] = useState([]);
+    const [errorMessage, setErrorMessage] = useState();
     const fileInputRef = useRef(null);
+
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.pdf'];
+    const allowedFileSize = 5 * 1024 * 1024; // 5 MB
+    const allowedFileAmount = 10;
 
     const handleDrop = e => {
         e.preventDefault();
+        setErrorMessage('');
         const newFiles = Array.from(e.dataTransfer.files);
-        setFiles([...files, ...newFiles]);
+        const validFiles = newFiles.filter(file => {
+            const extension = file.name.split('.').pop().toLowerCase();
+            if (!allowedExtensions.includes(`.${extension}`)) {
+                setErrorMessage(
+                    `${file.name} could not be uploaded because it is not in a supported format.`,
+                );
+                return null;
+            }
+            if (file.size > allowedFileSize) {
+                setErrorMessage(
+                    `${file.name} could not be uploaded because it exceeds the maximum file size of 5MB`,
+                );
+                return null;
+            }
+            if (files.length + newFiles.length > allowedFileAmount) {
+                setErrorMessage(
+                    `${file.name} could not be uploaded because there is a maximum of 10 attachments and you have already uploaded 10 attachments.`,
+                );
+                return null;
+            }
+            return allowedExtensions.includes(`.${extension}`);
+        });
+
+        const allValidFiles = [...files, ...validFiles];
+        setFiles(allValidFiles);
     };
 
     const handleFileChange = e => {
+        setErrorMessage('');
         const newFiles = Array.from(e.target.files);
         setFiles([...files, ...newFiles]);
     };
@@ -65,7 +102,7 @@ const ClaimAttachmentsUploader = () => {
         <>
             <ul style={claimAttachmentsUploaderStyles.fileListUploaded}>
                 {files.map((file, index) => (
-                    <li key={Math.floor(Math.random() * 1000 + Date.now())}>
+                    <li key={uuidv4()}>
                         <IconButton
                             key="remove"
                             aria-label="Remove"
@@ -79,6 +116,17 @@ const ClaimAttachmentsUploader = () => {
                         {file.name}{' '}
                     </li>
                 ))}
+                {errorMessage ? (
+                    <Typography
+                        variant="body2"
+                        style={
+                            claimAttachmentsUploaderStyles.validationMessageStyles
+                        }
+                        color="error"
+                    >
+                        {errorMessage}
+                    </Typography>
+                ) : null}
             </ul>
             <label
                 style={claimAttachmentsUploaderStyles.fileUploadArea}
@@ -89,7 +137,7 @@ const ClaimAttachmentsUploader = () => {
                 <input
                     id="fileInput"
                     type="file"
-                    accept=".jpg,.jpeg,.png,.pdf"
+                    accept={allowedExtensions.map(ext => ext).join(',')}
                     onChange={handleFileChange}
                     multiple
                     style={claimAttachmentsUploaderStyles.fileInputHidden}
