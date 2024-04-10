@@ -21,6 +21,7 @@ class ProcessingFacility(ABC):
     def process_facility(self):
         pass
 
+    @staticmethod
     def _create_facility_list_item(
         source: Source, row: RowDTO, idx: int, header_str: str
     ) -> FacilityListItem:

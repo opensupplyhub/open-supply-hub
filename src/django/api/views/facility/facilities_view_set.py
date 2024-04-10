@@ -623,7 +623,7 @@ class FacilitiesViewSet(ListModelMixin,
             )
         )
 
-        return context.do_some_business_logic()
+        return context.run_processing()
 
         # return ProcessingFacility.createApi(
         #     request, row, source, should_create

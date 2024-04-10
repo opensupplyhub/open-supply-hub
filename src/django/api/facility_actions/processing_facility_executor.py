@@ -10,12 +10,12 @@ class ProcessingFacilityExecutor:
 
         self._strategy = strategy
 
-    def do_some_business_logic(self) -> None:
+    def run_processing(self) -> None:
         """
         The Context delegates some work to the Strategy object instead of
         implementing multiple versions of the algorithm on its own.
         """
 
         result = self._strategy.process_facility()
-        
+
         return result
