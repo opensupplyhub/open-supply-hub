@@ -18,20 +18,43 @@ class CompositeRowSerializer(RowSerializer):
         return CompositeRowSerializer.__clean_and_replace_data(row)
 
     @staticmethod
+    def __add_space_after_comma(value: str) -> str:
+        return re.sub(r',', ', ', value)
+
+    @staticmethod
+    def __clean_commas(value: str) -> str:
+        # Remove spaces after and before commas
+        cleaned_value = re.sub(r'\s*,\s*', ',', value)
+        # Remove duplicates commas
+        cleaned_value = re.sub(r',+', ',', cleaned_value)
+        # Remove leading and trailing commas
+        cleaned_value = cleaned_value.strip(',')
+        return cleaned_value
+
+    @staticmethod
+    def __remove_double_quotes(value: str) -> str:
+        quotes_to_remove = ['"', '“', '”', '‟', '„', '«', '»', '‹', '›']
+        for symbol in quotes_to_remove:
+            value = value.replace(symbol, '')
+        return value
+
+    @staticmethod
+    def __remove_duplicate_spaces(value: str):
+        return re.sub(' +', ' ', value)
+
+    @staticmethod
     def __clean_and_replace_data(data: Dict[str, str]) -> Dict[str, str]:
         invalid_keywords = ['N/A', 'n/a']
-        dup_pattern = ',' + '{2,}'
         result_data = {}
         for key, value in data.items():
             if isinstance(value, str):
                 # Remove invalid keywords.
                 for keyword in invalid_keywords:
                     value = value.replace(keyword, '')
-                # Remove duplicates commas if exist.
-                value = re.sub(dup_pattern, ',', value)
-                # Remove comma in the end of the string if exist.
-                value = value.rstrip(',')
-                # Remove extra spaces if exist.
+                value = CompositeRowSerializer.__clean_commas(value)
+                value = CompositeRowSerializer.__add_space_after_comma(value)
+                value = CompositeRowSerializer.__remove_double_quotes(value)
+                value = CompositeRowSerializer.__remove_duplicate_spaces(value)
                 value = value.strip()
             result_data[key] = value
         return result_data

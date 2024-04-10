@@ -73,3 +73,62 @@ class CompositeRowSerializerTest(TestCase):
         }
 
         self.assertEqual(serialized_row, expected_row)
+
+    def test_row_clean_up(self):
+        facility_source_uncleaned = {
+            "country": "United \"States\"",
+            "name": "Simple, , , Pants,,,Hut",
+            "address": "123 \"Main\"\" St,,,Anywhereville, , ,PA",
+            "sector": "Apparel",
+            "product_type": "product one",
+            "extra_1": (
+                "extra one,, , “extra two”,   ,extra three,  \"extra four"
+            ),
+            "extra_2": "Technology Co., ,Ltd.",
+            "extra_3": (
+                "Optimum Fashion Manufacturing Co Ltd. "
+                "(Former name “United Apparel (Cambodia) Inc. - Head Factory”)"
+            ),
+            "extra_4": "Mohib Shoes Pvt. Ltd., „B“ Unit",
+            "extra_5": "«Global» Manufactoring",
+            "extra_6": "‹NanoTech› Technologies",
+            'extra_7': "Nantong, Jackbeanie,, Headwear! & Garment Co. Ltd.",
+            "extra_8": "\"Baker Street 221B.   , this is a test\"",
+            "facility_type": "Blending|Knitting"
+        }
+        serialized_row = self.composite_row_serializer \
+            .validate(facility_source_uncleaned)
+
+        expected_row = {
+            "fields": {
+                "product_type": ["product one"],
+                "facility_type": {
+                    "raw_values": "Blending|Knitting",
+                    "processed_values": {"Knitting", "Blending"},
+                },
+                "processing_type": {
+                    "raw_values": "Blending|Knitting",
+                    "processed_values": {"Knitting", "Blending"},
+                },
+                "extra_5": "Global Manufactoring",
+                "country": "United States",
+                "extra_6": "NanoTech Technologies",
+                "extra_3": ("Optimum Fashion Manufacturing Co Ltd. "
+                            "(Former name United Apparel (Cambodia) Inc. - "
+                            "Head Factory)"),
+                "extra_8": "Baker Street 221B., this is a test",
+                "extra_2": "Technology Co., Ltd.",
+                "extra_7": "Nantong, Jackbeanie, Headwear! & Garment Co. Ltd.",
+                "extra_1": "extra one, extra two, extra three, extra four",
+                "extra_4": "Mohib Shoes Pvt. Ltd., B Unit",
+            },
+            "errors": [],
+            "clean_name": "simple pants hut",
+            "clean_address": "123 main st anywhereville pa",
+            "sector": ["Apparel"],
+            "country_code": "US",
+            "address": "123 Main St, Anywhereville, PA",
+            "name": "Simple, Pants, Hut",
+        }
+
+        self.assertEqual(serialized_row, expected_row)

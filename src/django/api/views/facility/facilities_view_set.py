@@ -597,29 +597,19 @@ class FacilitiesViewSet(ListModelMixin,
 
         contri_cleaner = ContriCleaner(request.data, SectorCache())
         try:
-            processed_list = contri_cleaner.process_data()
+            processed_data = contri_cleaner.process_data()
         except HandlerNotSetError as err:
             log.error(f'[API Upload] Internal ContriCleaner Error: {err}')
             raise APIException('Internal System Error. '
                                'Please contact support.')
 
-        # TODO: Error handling for the list will be improved as part of the
-        #       OSDEV-999 ticket. It was added to ensure that the tests pass.
-        if processed_list.errors:
-            log.error(
-                f'[API Upload] CC Validation Errors: {processed_list.errors}'
-            )
-            return Response({
-                "message": "The provided data could not be processed",
-                "errors": processed_list.errors
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        rows = processed_list.rows
-        row = rows[0]
+        # return ProcessingFacility.create_api(
+        #     request, processed_data, source, should_create
+        # )
 
         context = ProcessingFacilityExecutor(
             ProcessingFacilityAPI(
-                request, row, source, should_create
+                request, processed_data, source, should_create
             )
         )
 

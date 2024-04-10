@@ -473,9 +473,8 @@ function ClaimedFacilitiesDetails({
                     disabled={updating}
                     isSelect
                     isMultiSelect
-                    isCreatable
                     selectOptions={sectorOptions || []}
-                    selectPlaceholder="e.g. Apparel - Use <Enter> or <Tab> to add multiple values"
+                    selectPlaceholder="Select..."
                 />
                 <InputSection label="Product Types" />
                 <InputSection

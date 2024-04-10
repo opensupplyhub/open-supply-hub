@@ -14,7 +14,6 @@ from api.processing import handle_external_match_process_result
 from api.views.fields.create_nonstandard_fields import (
     create_nonstandard_fields,
 )
-from contricleaner.lib.dto.row_dto import RowDTO
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -32,20 +31,34 @@ log = logging.getLogger(__name__)
 class ProcessingFacilityAPI(ProcessingFacility):
 
     def __init__(
-        self, request, row: RowDTO, source: Source, should_create: bool
+        self, request, processed_data, source: Source, should_create: bool
     ) -> None:
         self.__request = request
-        self.__row = row
+        self.__processed_data = processed_data
         self.__source = source
         self.__should_create = should_create
 
     def process_facility(self):
-        if self.__row.errors:
-            log.error(f'[API Upload] CC Parsing Errors: {self.__row.errors}')
+        # handle processing errors
+        if self.__processed_data.errors:
+            log.error(
+                f'[API Upload] CC Validation Errors: {self.__processed_data.errors}'
+            )
+            return Response({
+                "message": "The provided data could not be processed",
+                "errors": self.__processed_data.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        rows = self.__processed_data.rows
+        row = rows[0]
+
+        # handle parsing errors
+        if row.errors:
+            log.error(f'[API Upload] CC Parsing Errors: {row.errors}')
             return Response(
                 {
                     "message": "The provided data could not be parsed",
-                    "errors": self.__row.errors,
+                    "errors": row.errors,
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -53,11 +66,11 @@ class ProcessingFacilityAPI(ProcessingFacility):
         parse_started = str(timezone.now())
 
         create_nonstandard_fields(
-            list(self.__row.fields.keys()), self.__request.user.contributor
+            list(row.fields.keys()), self.__request.user.contributor
         )
 
         item = self._create_facility_list_item(
-            self.__source, self.__row, 0, ''
+            self.__source, row, 0, ''
         )
 
         item.status = (FacilityListItem.PARSED,)
@@ -85,7 +98,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
         }
 
         try:
-            create_extendedfields_for_single_item(item, self.__row.fields)
+            create_extendedfields_for_single_item(item, row.fields)
         except (core_exceptions.ValidationError, ValueError) as exc:
             error_message = ''
 
@@ -121,12 +134,12 @@ class ProcessingFacilityAPI(ProcessingFacility):
             f'FacilityListItem Id: {item.id}.'
         )
         log.info(
-            f'[API Upload] Address: {self.__row.address}, '
-            f'Country Code: {self.__row.country_code}'
+            f'[API Upload] Address: {row.address}, '
+            f'Country Code: {row.country_code}'
         )
         try:
             geocode_result = geocode_address(
-                self.__row.address, self.__row.country_code
+                row.address, row.country_code
             )
             if geocode_result['result_count'] > 0:
                 item.status = FacilityListItem.GEOCODED
@@ -180,8 +193,8 @@ class ProcessingFacilityAPI(ProcessingFacility):
             log.error(f'[API Upload] Geocode Error: {str(exc)}')
             log.info(f'[API Upload] FacilityListItem Id: {item.id}')
             log.info(
-                f'[API Upload] Address: {self.__row.address}, '
-                f'Country Code: {self.__row.country_code}'
+                f'[API Upload] Address: {row.address}, '
+                f'Country Code: {row.country_code}'
             )
             return Response(
                 result, status=status.HTTP_500_INTERNAL_SERVER_ERROR
