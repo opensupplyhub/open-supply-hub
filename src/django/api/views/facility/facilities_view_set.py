@@ -1,5 +1,7 @@
 import logging
 from api.facility_actions.processing_facility import ProcessingFacility
+from api.facility_actions.processing_facility_api import ProcessingFacilityAPI
+from api.facility_actions.processing_facility_executor import ProcessingFacilityExecutor
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
 from contricleaner.lib.contri_cleaner import ContriCleaner
@@ -615,9 +617,17 @@ class FacilitiesViewSet(ListModelMixin,
         rows = processed_list.rows
         row = rows[0]
 
-        return ProcessingFacility.createApi(
-            request, row, source, should_create
+        context = ProcessingFacilityExecutor(
+            ProcessingFacilityAPI(
+                request, row, source, should_create
+            )
         )
+
+        return context.do_some_business_logic()
+
+        # return ProcessingFacility.createApi(
+        #     request, row, source, should_create
+        # )
 
     @swagger_auto_schema(auto_schema=None)
     @transaction.atomic

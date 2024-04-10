@@ -1,5 +1,26 @@
+import asyncio
 import logging
+import traceback
+
+from api.constants import ErrorMessages, ProcessingAction
+from api.extended_fields import create_extendedfields_for_single_item
 from api.facility_actions.processing_facility import ProcessingFacility
+from api.geocoding import geocode_address
+from api.kafka_producer import produce_message_match_process
+from api.models.facility.facility_list_item import FacilityListItem
+from api.models.facility.facility_list_item_temp import FacilityListItemTemp
+from api.models.source import Source
+from api.processing import handle_external_match_process_result
+from api.views.fields.create_nonstandard_fields import (
+    create_nonstandard_fields,
+)
+from contricleaner.lib.dto.row_dto import RowDTO
+from rest_framework import status
+from rest_framework.response import Response
+
+from django.contrib.gis.geos import Point
+from django.core import exceptions as core_exceptions
+from django.utils import timezone
 
 # initialize logger
 logging.basicConfig(
@@ -10,16 +31,21 @@ log = logging.getLogger(__name__)
 
 class ProcessingFacilityAPI(ProcessingFacility):
 
-    def __init__(self, should_create: bool, ..., ..., ...) -> None:
+    def __init__(
+        self, request, row: RowDTO, source: Source, should_create: bool
+    ) -> None:
+        self.__request = request
+        self.__row = row
+        self.__source = source
         self.__should_create = should_create
 
-    def create_facility(self, request, row, source, should_create):
-        if row.errors:
-            log.error(f'[API Upload] CC Parsing Errors: {row.errors}')
+    def process_facility(self):
+        if self.__row.errors:
+            log.error(f'[API Upload] CC Parsing Errors: {self.__row.errors}')
             return Response(
                 {
                     "message": "The provided data could not be parsed",
-                    "errors": row.errors,
+                    "errors": self.__row.errors,
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -27,10 +53,12 @@ class ProcessingFacilityAPI(ProcessingFacility):
         parse_started = str(timezone.now())
 
         create_nonstandard_fields(
-            list(row.fields.keys()), request.user.contributor
+            list(self.__row.fields.keys()), self.__request.user.contributor
         )
 
-        item = self._create_facility_list_item(source, row, 0, '')
+        item = self._create_facility_list_item(
+            self.__source, self.__row, 0, ''
+        )
 
         item.status = (FacilityListItem.PARSED,)
         item.processing_results = [
@@ -43,9 +71,9 @@ class ProcessingFacilityAPI(ProcessingFacility):
             }
         ]
 
-        log.info(f'[API Upload] Source created. Id: {source.id}')
-        log.info(f'[API Upload] Source is public: {source.is_public}')
-        log.info(f'[API Upload] Source should create: {source.create}')
+        log.info(f'[API Upload] Source created. Id: {self.__source.id}')
+        log.info(f'[API Upload] Source is public: {self.__source.is_public}')
+        log.info(f'[API Upload] Source should create: {self.__source.create}')
         log.info(f'[API Upload] FacilityListItem created. Id: {item.id}')
 
         result = {
@@ -57,7 +85,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
         }
 
         try:
-            create_extendedfields_for_single_item(item, row.fields)
+            create_extendedfields_for_single_item(item, self.__row.fields)
         except (core_exceptions.ValidationError, ValueError) as exc:
             error_message = ''
 
@@ -93,11 +121,13 @@ class ProcessingFacilityAPI(ProcessingFacility):
             f'FacilityListItem Id: {item.id}.'
         )
         log.info(
-            f'[API Upload] Address: {row.address}, '
-            f'Country Code: {row.country_code}'
+            f'[API Upload] Address: {self.__row.address}, '
+            f'Country Code: {self.__row.country_code}'
         )
         try:
-            geocode_result = geocode_address(row.address, row.country_code)
+            geocode_result = geocode_address(
+                self.__row.address, self.__row.country_code
+            )
             if geocode_result['result_count'] > 0:
                 item.status = FacilityListItem.GEOCODED
                 item.geocoded_point = Point(
@@ -150,8 +180,8 @@ class ProcessingFacilityAPI(ProcessingFacility):
             log.error(f'[API Upload] Geocode Error: {str(exc)}')
             log.info(f'[API Upload] FacilityListItem Id: {item.id}')
             log.info(
-                f'[API Upload] Address: {row.address}, '
-                f'Country Code: {row.country_code}'
+                f'[API Upload] Address: {self.__row.address}, '
+                f'Country Code: {self.__row.country_code}'
             )
             return Response(
                 result, status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -168,7 +198,9 @@ class ProcessingFacilityAPI(ProcessingFacility):
             while True:
                 if timer > timeout:
                     break
-                fli_temp = FacilityListItemTemp.objects.get(source=source.id)
+                fli_temp = FacilityListItemTemp.objects.get(
+                    source=self.__source.id
+                )
                 if fli_temp.status == FacilityListItemTemp.GEOCODED:
                     log.info('[API Upload] Started Match process!')
                     log.info(f'[API Upload] FacilityListItem Id: {item.id}')
@@ -176,14 +208,16 @@ class ProcessingFacilityAPI(ProcessingFacility):
                         f'[API Upload] FacilityListItemTemp Id: {fli_temp.id}'
                     )
                     log.info(f'[API Upload] Source Id: {item.id}')
-                    asyncio.run(produce_message_match_process(source.id))
+                    asyncio.run(
+                        produce_message_match_process(self.__source.id)
+                    )
                     break
                 asyncio.sleep(1)
                 timer = timer + 1
 
             # Handle results of "match" process from Dedupe Hub
             result = handle_external_match_process_result(
-                fli_temp.id, result, request, should_create
+                fli_temp.id, result, self.__request, self.__should_create
             )
 
         errors_status = [
@@ -195,7 +229,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
         log.info(f'[API Upload] FacilityListItem Id: {item.id}')
         log.info(f'[API Upload] Source Id: {item.id}')
 
-        if should_create and result['status'] not in errors_status:
+        if self.__should_create and result['status'] not in errors_status:
             return Response(result, status=status.HTTP_201_CREATED)
         else:
             return Response(result, status=status.HTTP_200_OK)

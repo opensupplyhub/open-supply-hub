@@ -1,5 +1,20 @@
 import logging
+import traceback
+
+from api.constants import FileHeaderField, ProcessingAction
+from api.extended_fields import (
+    create_extendedfields_for_listitem,
+    create_extendedfields_for_single_item,
+)
 from api.facility_actions.processing_facility import ProcessingFacility
+from api.models.facility.facility_list_item import FacilityListItem
+from api.views.fields.create_nonstandard_fields import (
+    create_nonstandard_fields,
+)
+from rest_framework.response import Response
+
+from django.contrib.gis.geos import Point
+from django.utils import timezone
 
 # initialize logger
 logging.basicConfig(
@@ -9,7 +24,15 @@ log = logging.getLogger(__name__)
 
 
 class ProcessingFacilityList(ProcessingFacility):
-    def create_facility(request, row, source, should_create):
+    def process_facility(
+        request,
+        rows,
+        source,
+        header_str,
+        header_row_keys,
+        contributor,
+        serializer,
+    ):
         parsing_started = str(timezone.now())
 
         create_nonstandard_fields(header_row_keys, contributor)

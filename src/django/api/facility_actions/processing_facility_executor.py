@@ -1,6 +1,7 @@
 from api.facility_actions.processing_facility import ProcessingFacility
 
-class Context:
+
+class ProcessingFacilityExecutor:
     def __init__(self, strategy: ProcessingFacility) -> None:
         """
         Usually, the Context accepts a strategy through the constructor, but
@@ -15,4 +16,6 @@ class Context:
         implementing multiple versions of the algorithm on its own.
         """
 
-        result = self._strategy.create_facility()
+        result = self._strategy.process_facility()
+        
+        return result
