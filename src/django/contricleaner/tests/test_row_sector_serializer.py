@@ -52,7 +52,7 @@ class RowSectorSerializerTest(TestCase):
         result = self.serializer.validate(self.row_five, self.current.copy())
 
         self.assertEqual(result['sector'], ['Apparel'])
-        self.assertNotIn('product_type', result)
+        self.assertIn('product_type', result)
 
     def test_parse_all_values(self):
         all_values = ['technology', 'product one', 'finance']

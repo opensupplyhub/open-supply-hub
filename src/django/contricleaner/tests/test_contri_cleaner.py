@@ -189,7 +189,10 @@ class ContriCleanerTest(TestCase):
                 clean_address='1234 main st',
                 country_code='US',
                 sector=['Unspecified'],
-                fields={'country': 'USA'},
+                fields={
+                    'country': 'USA',
+                    'product_type': []
+                },
                 errors=[],
             )
         ]
