@@ -1,13 +1,14 @@
-// TODO: remove this eslint comment later
-/* eslint no-unused-vars: 0 */
 import React, { useState, useRef } from 'react';
 import { connect } from 'react-redux';
+import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 
 import Typography from '@material-ui/core/Typography';
 import SvgIcon from '@material-ui/core/SvgIcon';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
+
+import { updateClaimAFacilityUploadFiles } from '../actions/claimFacility';
 
 const claimAttachmentsUploaderStyles = Object.freeze({
     fileUploadArea: Object.freeze({
@@ -47,8 +48,7 @@ const claimAttachmentsUploaderStyles = Object.freeze({
     }),
 });
 
-const ClaimAttachmentsUploader = () => {
-    const [files, setFiles] = useState([]);
+const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
     const [errorMessage, setErrorMessage] = useState();
     const fileInputRef = useRef(null);
 
@@ -74,7 +74,7 @@ const ClaimAttachmentsUploader = () => {
                 );
                 return null;
             }
-            if (files.length + newFiles.length > allowedFileAmount) {
+            if (uploadFiles.length + newFiles.length > allowedFileAmount) {
                 setErrorMessage(
                     `${file.name} could not be uploaded because there is a maximum of 10 attachments and you have already uploaded 10 attachments.`,
                 );
@@ -83,25 +83,24 @@ const ClaimAttachmentsUploader = () => {
             return allowedExtensions.includes(`.${extension}`);
         });
 
-        const allValidFiles = [...files, ...validFiles];
-        setFiles(allValidFiles);
+        updateUploadFiles([...uploadFiles, ...validFiles]);
     };
 
     const handleFileChange = e => {
         setErrorMessage('');
         const newFiles = Array.from(e.target.files);
-        setFiles([...files, ...newFiles]);
+        updateUploadFiles([...uploadFiles, ...newFiles]);
     };
 
     const handleRemoveFile = index => {
-        const updatedFiles = files.filter((file, i) => i !== index);
-        setFiles(updatedFiles);
+        const updatedFiles = uploadFiles.filter((file, i) => i !== index);
+        updateUploadFiles(updatedFiles);
     };
 
     return (
         <>
             <ul style={claimAttachmentsUploaderStyles.fileListUploaded}>
-                {files.map((file, index) => (
+                {uploadFiles.map((file, index) => (
                     <li key={uuidv4()}>
                         <IconButton
                             key="remove"
@@ -160,14 +159,35 @@ const ClaimAttachmentsUploader = () => {
     );
 };
 
-// TODO: proceed with refactoring
-/*
-function mapDispatchToProps(dispatch) {
+ClaimAttachmentsUploader.defaultProps = {
+    uploadFiles: [],
+};
+
+ClaimAttachmentsUploader.propTypes = {
+    uploadFiles: PropTypes.arrayOf(PropTypes.instanceOf(Blob)),
+    updateUploadFiles: PropTypes.func.isRequired,
+};
+
+function mapStateToProps({
+    claimFacility: {
+        claimData: {
+            formData: { uploadFiles },
+        },
+    },
+}) {
     return {
-        updateUploadFiles: e =>
-            dispatch(updateClaimAFacilityUploadFiles(getValueFromEvent(e))),
+        uploadFiles,
     };
 }
-*/
 
-export default connect(null, null)(ClaimAttachmentsUploader);
+function mapDispatchToProps(dispatch) {
+    return {
+        updateUploadFiles: files =>
+            dispatch(updateClaimAFacilityUploadFiles(files)),
+    };
+}
+
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps,
+)(ClaimAttachmentsUploader);

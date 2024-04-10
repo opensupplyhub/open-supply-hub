@@ -42,6 +42,7 @@ const initialState = Object.freeze({
             preferredContactMethod: null,
             parentCompany: null,
             linkedinProfile: '',
+            uploadFiles: Object.freeze([]),
         }),
         fetching: false,
         error: null,
