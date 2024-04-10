@@ -25,8 +25,8 @@ class RowSectorSerializer(RowSerializer):
         sector_errors = []
 
         for field in fields:
-            value = row.get(field)
-            if field in row and value:
+            if field in row:
+                value = row.get(field)
 
                 if not is_valid_type(value):
                     sector_errors.append(
@@ -38,7 +38,7 @@ class RowSectorSerializer(RowSerializer):
                             "type": "ValueError",
                         }
                     )
-                else:
+                elif value:
                     values.append(value)
 
         if sector_errors:
