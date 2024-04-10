@@ -31,6 +31,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-974](https://opensupplyhub.atlassian.net/browse/OSDEV-974) Reporting. Contributor type by %. Admin see in the report data for the percent of data contributors on the platform by type (this should be in percent format with two decimal places shown), only accounts that have contributed data, the data should be ordered by most recent to oldest month and display mid-month values.
+* [OSDEV-912](https://opensupplyhub.atlassian.net/browse/OSDEV-912) Facility Claim. Disable editing of name and address. The Facility name (English language) & Address fields of the claim details page have been removed and cannot be edited by the claimant.
 * [OSDEV-571](https://opensupplyhub.atlassian.net/browse/OSDEV-571) Claimed Facility Details. Make the "Sector" field a dropdown instead of free text field. The `Sector` field became a dropdown that is pre-populated with the platform’s sector list from Django.
 * [OSDEV-962](https://opensupplyhub.atlassian.net/browse/OSDEV-962) Update Release protocol. The Release protocol has been updated after the automatization of manual processes such as creating a release branch, restoring DB, deploy to AWS.
 * [OSDEV-972](https://opensupplyhub.atlassian.net/browse/OSDEV-972) Reporting. Updating "Facility Uploads" report. Joined one table from two reports and added columns.New table with such columns:

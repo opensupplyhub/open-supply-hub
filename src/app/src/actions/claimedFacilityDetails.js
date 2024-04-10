@@ -130,14 +130,8 @@ export function submitClaimedFacilityDetailsUpdate(claimID) {
     };
 }
 
-export const updateClaimedFacilityNameEnglish = createAction(
-    'UPDATE_CLAIMED_FACILITY_NAME_ENGLISH',
-);
 export const updateClaimedFacilityNameNativeLanguage = createAction(
     'UPDATE_CLAIMED_FACILITY_NAME_NATIVE_LANGUAGE',
-);
-export const updateClaimedFacilityAddress = createAction(
-    'UPDATE_CLAIMED_FACILITY_ADDRESS',
 );
 export const updateClaimedSector = createAction('UPDATE_CLAIMED_SECTOR');
 export const updateClaimedFacilityPhone = createAction(
