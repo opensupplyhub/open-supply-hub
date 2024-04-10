@@ -378,7 +378,7 @@ class FacilityListViewSet(ModelViewSet):
 
         serializer = self.get_serializer(new_list)
 
-        return ProcessingFacility.createList(
+        return ProcessingFacility.create_list(
             rows, contributor, header_row_keys, header_str, source, serializer
         )
 

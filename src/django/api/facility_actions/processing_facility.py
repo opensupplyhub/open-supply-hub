@@ -245,7 +245,7 @@ class ProcessingFacility:
         else:
             return Response(result, status=status.HTTP_200_OK)
 
-    def createList(
+    def create_list(
         rows, contributor, header_row_keys, header_str, source, serializer
     ):
 
