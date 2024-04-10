@@ -7,11 +7,14 @@ from api.extended_fields import (
     create_extendedfields_for_single_item,
 )
 from api.facility_actions.processing_facility import ProcessingFacility
+from api.models.facility.facility_list import FacilityList
 from api.models.facility.facility_list_item import FacilityListItem
+from api.models.source import Source
 from api.views.fields.create_nonstandard_fields import (
     create_nonstandard_fields,
 )
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 
 from django.contrib.gis.geos import Point
 from django.utils import timezone
@@ -24,25 +27,62 @@ log = logging.getLogger(__name__)
 
 
 class ProcessingFacilityList(ProcessingFacility):
-    def process_facility(
-        request,
-        rows,
-        source,
-        header_str,
-        header_row_keys,
-        contributor,
-        serializer,
-    ):
+    def __init__(
+        self,
+        processing_data,
+
+    ) -> None:
+        self.__processing_data = processing_data
+
+    def process_facility(self):
+        name = self.__processing_data.get('name')
+        description = self.__processing_data.get('description')
+        uploaded_file = self.__processing_data.get('uploaded_file')
+        replaces = self.__processing_data.get('replaces')
+        processed_data = self.__processing_data.get('processed_data')
+        contributor = self.__processing_data.get('contributor')
+        serializer_method = self.__processing_data.get('serializer_method')
+
+        if processed_data.errors:
+            log.error(
+                f'[List Upload] CC Validation Errors: {processed_data.errors}'
+            )
+            error_messages = [
+                str(error['message']) for error in processed_data.errors
+            ]
+            raise ValidationError(error_messages)
+
+        rows = processed_data.rows
+        header_row_keys = rows[0].raw_json.keys()
+        header_str = ','.join(header_row_keys)
+        new_list = FacilityList(
+                    name=name,
+                    description=description,
+                    file_name=uploaded_file.name,
+                    file=uploaded_file,
+                    header=header_str,
+                    replaces=replaces,
+                    match_responsibility=contributor.match_responsibility)
+        new_list.save()
+        log.info(f'[List Upload] FacilityList created. Id {new_list.id}!')
+
         parsing_started = str(timezone.now())
 
-        create_nonstandard_fields(header_row_keys, contributor)
+        source = Source.objects.create(
+            contributor=contributor,
+            source_type=Source.LIST,
+            facility_list=new_list)
+
+        create_nonstandard_fields(
+            header_row_keys, contributor
+        )
 
         log.info(f'[List Upload] Source created. Id {source.id}!')
         is_geocoded = False
         parsed_items = set()
 
         for idx, row in enumerate(rows):
-            item = ProcessingFacility.create_facility_list_item(
+            item = ProcessingFacility._create_facility_list_item(
                 source, row, idx, header_str
             )
 
@@ -122,5 +162,7 @@ class ProcessingFacilityList(ProcessingFacility):
                     parsed_items.add(core_fields)
 
             item.save()
+
+            serializer = serializer_method(new_list)
 
         return Response(serializer.data)

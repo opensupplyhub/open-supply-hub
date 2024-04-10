@@ -5,7 +5,12 @@ import logging
 
 from functools import reduce
 
-from api.facility_actions.processing_facility import ProcessingFacility
+from api.facility_actions.processing_facility_executor import (
+    ProcessingFacilityExecutor
+)
+from api.facility_actions.processing_facility_list import (
+    ProcessingFacilityList
+)
 from api.helpers.helpers import (
     get_raw_json,
 )
@@ -347,40 +352,21 @@ class FacilityListViewSet(ModelViewSet):
             raise APIException('Internal System Error. '
                                'Please contact support.')
 
-        if processed_data.errors:
-            log.error(
-                f'[List Upload] CC Validation Errors: {processed_data.errors}'
-            )
-            error_messages = [
-                str(error['message']) for error in processed_data.errors
-            ]
-            raise ValidationError(error_messages)
+        processing_data = {
+            'name': name,
+            'description': description,
+            'uploaded_file': uploaded_file,
+            'replaces': replaces,
+            'processed_data': processed_data,
+            'contributor': contributor,
+            'serializer_method': self.get_serializer,
+        }
 
-        rows = processed_data.rows
-
-        header_row_keys = rows[0].raw_json.keys()
-        header_str = ','.join(header_row_keys)
-        new_list = FacilityList(
-                    name=name,
-                    description=description,
-                    file_name=uploaded_file.name,
-                    file=uploaded_file,
-                    header=header_str,
-                    replaces=replaces,
-                    match_responsibility=contributor.match_responsibility)
-        new_list.save()
-        log.info(f'[List Upload] FacilityList created. Id {new_list.id}!')
-
-        source = Source.objects.create(
-            contributor=contributor,
-            source_type=Source.LIST,
-            facility_list=new_list)
-
-        serializer = self.get_serializer(new_list)
-
-        return ProcessingFacility.createList(
-            rows, contributor, header_row_keys, header_str, source, serializer
+        context = ProcessingFacilityExecutor(
+            ProcessingFacilityList(processing_data)
         )
+
+        return context.run_processing()
 
     def list(self, request):
         """
