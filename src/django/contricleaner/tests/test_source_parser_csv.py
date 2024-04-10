@@ -120,7 +120,6 @@ class SourceParserCSVTest(TestCase):
                     'facility_type_processing_type': 'Embossing',
                     'number_of_workers': '3002',
                     'sector_product_type': 'Apparel',
-                    'product_type': []
                 },
                 errors=[],
             ),

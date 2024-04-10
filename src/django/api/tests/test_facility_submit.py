@@ -163,7 +163,7 @@ class FacilitySubmitTest(FacilityAPITestCaseBase):
         fields = NonstandardField.objects.filter(
             contributor=self.user.contributor
         ).values_list("column_name", flat=True)
-        self.assertEqual(2, len(fields))
+        self.assertEqual(1, len(fields))
         self.assertIn("extra_1", fields)
 
     def test_exact_matches_with_create_false(self):

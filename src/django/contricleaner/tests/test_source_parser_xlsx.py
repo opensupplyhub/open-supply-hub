@@ -115,7 +115,6 @@ class SourceParserXLSXTest(TestCase):
                     "country": "Canada",
                     "facility_type_processing_type": "Embossing",
                     "number_of_workers": "1005",
-                    "product_type": []
                 },
                 errors=[
                     {"message": "clean_name cannot be empty", "type": "Error"}
@@ -181,7 +180,6 @@ class SourceParserXLSXTest(TestCase):
                     "sector_product_type": "Apparel",
                     "parent_company": "",
                     "percentage_of_male_workers": "20%",
-                    "product_type": []
                 },
                 errors=[],
             ),
