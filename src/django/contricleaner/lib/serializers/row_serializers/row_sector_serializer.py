@@ -25,17 +25,10 @@ class RowSectorSerializer(RowSerializer):
         sector_errors = []
 
         for field in fields:
-            if field in row:
-                value = row.get(field)
+            value = row.get(field)
+            if field in row and value:
 
-                if not value:
-                    sector_errors.append(
-                        {
-                            "message": "{} must not be empty.".format(field),
-                            "type": "ValidationError",
-                        }
-                    )
-                elif not is_valid_type(value):
+                if not is_valid_type(value):
                     sector_errors.append(
                         {
                             "message": "Expected value for {} to be a string "
