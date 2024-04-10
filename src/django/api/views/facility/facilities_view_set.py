@@ -1,7 +1,8 @@
 import logging
-from api.facility_actions.processing_facility import ProcessingFacility
 from api.facility_actions.processing_facility_api import ProcessingFacilityAPI
-from api.facility_actions.processing_facility_executor import ProcessingFacilityExecutor
+from api.facility_actions.processing_facility_executor import (
+    ProcessingFacilityExecutor
+)
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
 from contricleaner.lib.contri_cleaner import ContriCleaner
@@ -603,10 +604,6 @@ class FacilitiesViewSet(ListModelMixin,
             raise APIException('Internal System Error. '
                                'Please contact support.')
 
-        # return ProcessingFacility.create_api(
-        #     request, processed_data, source, should_create
-        # )
-
         context = ProcessingFacilityExecutor(
             ProcessingFacilityAPI(
                 request, processed_data, source, should_create
@@ -614,10 +611,6 @@ class FacilitiesViewSet(ListModelMixin,
         )
 
         return context.run_processing()
-
-        # return ProcessingFacility.createApi(
-        #     request, row, source, should_create
-        # )
 
     @swagger_auto_schema(auto_schema=None)
     @transaction.atomic
