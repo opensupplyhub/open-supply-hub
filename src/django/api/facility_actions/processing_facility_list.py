@@ -29,11 +29,7 @@ class ProcessingFacilityList(ProcessingFacility):
         self.__processing_data = processing_data
 
     def process_facility(self) -> Response:
-        request = self.__processing_data.get('request')
-        name = self.__processing_data.get('name')
-        description = self.__processing_data.get('description')
         uploaded_file = self.__processing_data.get('uploaded_file')
-        replaces = self.__processing_data.get('replaces')
         processed_data = self.__processing_data.get('processed_data')
         contributor = self.__processing_data.get('contributor')
         parsing_started = self.__processing_data.get('parsing_started')
@@ -53,9 +49,7 @@ class ProcessingFacilityList(ProcessingFacility):
         header_row_keys = rows[0].raw_json.keys()
         header_str = ','.join(header_row_keys)
 
-        new_list = self._create_list(
-            name, description, uploaded_file, replaces, contributor, header_str
-        )
+        new_list = self._create_list(uploaded_file, contributor, header_str)
         log.info(f'[List Upload] FacilityList created. Id {new_list.id}!')
 
         self._create_nonstandard_fields(header_row_keys, contributor)
@@ -81,7 +75,6 @@ class ProcessingFacilityList(ProcessingFacility):
                     self._handle_processing_exception(
                         item,
                         e,
-                        request,
                         uploaded_file,
                         parsing_started,
                     )
@@ -93,10 +86,11 @@ class ProcessingFacilityList(ProcessingFacility):
         serializer = serializer_method(new_list)
         return Response(serializer.data)
 
-    @staticmethod
-    def _create_list(
-        name, description, uploaded_file, replaces, contributor, header_str
-    ):
+    def _create_list(self, uploaded_file, contributor, header_str):
+        name = self.__processing_data.get('name')
+        description = self.__processing_data.get('description')
+        replaces = self.__processing_data.get('replaces')
+
         return FacilityList.objects.create(
             name=name,
             description=description,
@@ -151,8 +145,10 @@ class ProcessingFacilityList(ProcessingFacility):
         create_extendedfields_for_single_item(item, row.fields)
 
     def _handle_processing_exception(
-        self, item, exception, request, uploaded_file, parsing_started
+        self, item, exception, uploaded_file, parsing_started
     ):
+        request = self.__processing_data.get('request')
+
         log.error(
             f'[List Upload] Creation of ExtendedField error: {exception}'
         )
