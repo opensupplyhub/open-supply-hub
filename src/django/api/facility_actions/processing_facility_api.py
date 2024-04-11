@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import traceback
-from typing import Any
+from typing import Any, Dict
 
 from api.constants import ErrorMessages, ProcessingAction
 from api.extended_fields import create_extendedfields_for_single_item
@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 
 class ProcessingFacilityAPI(ProcessingFacility):
 
-    def __init__(self, processing_data: dict[str, Any]) -> None:
+    def __init__(self, processing_data: Dict[str, Any]) -> None:
         self.__processing_data = processing_data
 
     def process_facility(self):
@@ -51,6 +51,8 @@ class ProcessingFacilityAPI(ProcessingFacility):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         rows = processed_data.rows
+        header_row_keys = rows[0].raw_json.keys()
+        header_str = ','.join(header_row_keys)
         row = rows[0]
 
         # handle parsing errors
@@ -74,12 +76,12 @@ class ProcessingFacilityAPI(ProcessingFacility):
         )
 
         create_nonstandard_fields(
-            list(row.fields.keys()), request.user.contributor
+            header_row_keys, request.user.contributor
         )
 
         row_index = 0
         item = self._create_facility_list_item(
-            source, row, row_index, ''
+            source, row, row_index, header_str
         )
 
         item.status = (FacilityListItem.PARSED,)
@@ -92,6 +94,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
                 'is_geocoded': False,
             }
         ]
+        item.save()
 
         log.info(f'[API Upload] Source created. Id: {source.id}')
         log.info(f'[API Upload] Source is public: {source.is_public}')
