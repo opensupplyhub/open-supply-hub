@@ -26,7 +26,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-805](https://opensupplyhub.atlassian.net/browse/OSDEV-805) - Make Environment and project tag to be applied to all resources by defaul.
 * [OSDEV-862](https://opensupplyhub.atlassian.net/browse/OSDEV-862) - Add `Save Anonymized DB` and `Apply Anonymized DB` actions that provde possibility to save anonymized dump to S3 bucket and then resotre Test or Pre-Prod environment from dump stored on S3.
 * [OSDEV-859](https://opensupplyhub.atlassian.net/browse/OSDEV-859) - Creates task-definitation for scheduled task that 
-  * creates temporary database instance from latest production snaphsot in the `test` AWS account
+  * creates temporary postgresdb instance from latest production snaphsot in the `test` AWS account
   * run anonymization query 
   * saves anonymized snapshot and removes the instance
 
