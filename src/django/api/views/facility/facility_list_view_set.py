@@ -220,6 +220,8 @@ class FacilityListViewSet(ModelViewSet):
 
         csvreader = csv.reader(header.split('\n'), delimiter=',')
         for row in csvreader:
+            # TODO: remove create_nonstandard_fields after removing
+            # the create endpoint
             create_nonstandard_fields(row, contributor)
 
         source = Source.objects.create(
@@ -334,7 +336,9 @@ class FacilityListViewSet(ModelViewSet):
                     f'FacilityList {replaces.pk} has already been replaced.'
                 )
 
+        parsing_started = str(timezone.now())
         log.info('[List Upload] Started CC Parse process!')
+
         contri_cleaner = ContriCleaner(uploaded_file, SectorCache())
         try:
             processed_data = contri_cleaner.process_data()
@@ -359,6 +363,7 @@ class FacilityListViewSet(ModelViewSet):
             'replaces': replaces,
             'processed_data': processed_data,
             'contributor': contributor,
+            'parsing_started': parsing_started,
             'serializer_method': self.get_serializer,
         }
 

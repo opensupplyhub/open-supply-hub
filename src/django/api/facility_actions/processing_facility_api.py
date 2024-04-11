@@ -37,6 +37,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
         processed_data = self.__processing_data.get('processed_data')
         public_submission = self.__processing_data.get('public_submission')
         should_create = self.__processing_data.get('should_create')
+        parse_started = self.__processing_data.get('parse_started')
 
         # handle processing errors
         if processed_data.errors:
@@ -64,17 +65,13 @@ class ProcessingFacilityAPI(ProcessingFacility):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        parse_started = str(timezone.now())
-
         source = Source.objects.create(
             contributor=request.user.contributor,
             source_type=Source.SINGLE,
             is_public=public_submission,
             create=should_create
         )
-        print('header_row_keys', header_row_keys)
-        print('type(header_row_keys)', type(header_row_keys))
-        print('request.user.contributor', request.user.contributor)
+
         self._create_nonstandard_fields(
             header_row_keys, request.user.contributor
         )

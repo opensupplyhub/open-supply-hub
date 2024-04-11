@@ -37,6 +37,7 @@ class ProcessingFacilityList(ProcessingFacility):
         replaces = self.__processing_data.get('replaces')
         processed_data = self.__processing_data.get('processed_data')
         contributor = self.__processing_data.get('contributor')
+        parsing_started = self.__processing_data.get('parsing_started')
         serializer_method = self.__processing_data.get('serializer_method')
 
         # handle processing errors
@@ -62,8 +63,6 @@ class ProcessingFacilityList(ProcessingFacility):
                     match_responsibility=contributor.match_responsibility)
         new_list.save()
         log.info(f'[List Upload] FacilityList created. Id {new_list.id}!')
-
-        parsing_started = str(timezone.now())
 
         source = Source.objects.create(
             contributor=contributor,
