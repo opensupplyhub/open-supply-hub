@@ -39,7 +39,7 @@ class RowRequiredFieldsSerializer(RowSerializer):
 
         for field, max_length in self.__valid_field_value_lengths.items():
             if (field not in missing_fields):
-                value_len = len(input_row[field])  # TODO: whether input_row[field] can be integer but not string
+                value_len = len(input_row[field])
 
                 if value_len > max_length:
                     errors.append(
