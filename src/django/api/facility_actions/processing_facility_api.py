@@ -12,9 +12,7 @@ from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_list_item_temp import FacilityListItemTemp
 from api.models.source import Source
 from api.processing import handle_external_match_process_result
-from api.views.fields.create_nonstandard_fields import (
-    create_nonstandard_fields,
-)
+
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -74,8 +72,10 @@ class ProcessingFacilityAPI(ProcessingFacility):
             is_public=public_submission,
             create=should_create
         )
-
-        create_nonstandard_fields(
+        print('header_row_keys', header_row_keys)
+        print('type(header_row_keys)', type(header_row_keys))
+        print('request.user.contributor', request.user.contributor)
+        self._create_nonstandard_fields(
             header_row_keys, request.user.contributor
         )
 

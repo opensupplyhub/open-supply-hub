@@ -3,16 +3,12 @@ import traceback
 
 from api.constants import FileHeaderField, ProcessingAction
 from api.extended_fields import (
-    create_extendedfields_for_listitem,
-    create_extendedfields_for_single_item,
+    create_extendedfields_for_single_item
 )
 from api.facility_actions.processing_facility import ProcessingFacility
 from api.models.facility.facility_list import FacilityList
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.source import Source
-from api.views.fields.create_nonstandard_fields import (
-    create_nonstandard_fields,
-)
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 
@@ -43,6 +39,7 @@ class ProcessingFacilityList(ProcessingFacility):
         contributor = self.__processing_data.get('contributor')
         serializer_method = self.__processing_data.get('serializer_method')
 
+        # handle processing errors
         if processed_data.errors:
             log.error(
                 f'[List Upload] CC Validation Errors: {processed_data.errors}'
@@ -73,7 +70,7 @@ class ProcessingFacilityList(ProcessingFacility):
             source_type=Source.LIST,
             facility_list=new_list)
 
-        create_nonstandard_fields(
+        self._create_nonstandard_fields(
             header_row_keys, contributor
         )
 
@@ -98,7 +95,7 @@ class ProcessingFacilityList(ProcessingFacility):
                     item.geocoded_point = Point(lng, lat)
                     is_geocoded = True
 
-                create_extendedfields_for_listitem(
+                create_extendedfields_for_single_item(
                     item, list(row.fields.keys()), list(row.fields.values())
                 )
             except Exception as e:
