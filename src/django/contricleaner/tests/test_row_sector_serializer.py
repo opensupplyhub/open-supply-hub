@@ -73,19 +73,7 @@ class RowSectorSerializerTest(TestCase):
 
     def test_validate_with_empty_values(self):
         result = self.serializer.validate(self.row_three, self.current.copy())
-        self.assertEqual(
-            result['errors'],
-            [
-                {
-                    'message': 'sector must not be empty.',
-                    'type': 'ValidationError',
-                },
-                {
-                    'message': 'product_type must not be empty.',
-                    'type': 'ValidationError',
-                },
-            ],
-        )
+        self.assertEqual(result['errors'], [])
 
     def test_validate_with_invalid_type(self):
         result = self.serializer.validate(self.row_four, self.current.copy())

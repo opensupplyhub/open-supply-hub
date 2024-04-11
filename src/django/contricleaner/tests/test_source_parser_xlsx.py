@@ -99,7 +99,7 @@ class SourceParserXLSXTest(TestCase):
                 address="456 Main Road, Townsville",
                 clean_address="456 main road townsville",
                 country_code="CA",
-                sector=[],
+                sector=["Unspecified"],
                 fields={
                     "facility_type": {
                         "raw_values": "Embossing",
@@ -109,19 +109,15 @@ class SourceParserXLSXTest(TestCase):
                         "raw_values": "Embossing",
                         "processed_values": {"Embossing"},
                     },
+                    "percentage_of_male_workers": "3.5%",
+                    "parent_company": "",
+                    "sector_product_type": "",
                     "country": "Canada",
                     "facility_type_processing_type": "Embossing",
                     "number_of_workers": "1005",
-                    "sector_product_type": "",
-                    "parent_company": "",
-                    "percentage_of_male_workers": "3.5%",
                 },
                 errors=[
-                    {"message": "clean_name cannot be empty", "type": "Error"},
-                    {
-                        "message": "sector_product_type must not be empty.",
-                        "type": "ValidationError",
-                    },
+                    {"message": "clean_name cannot be empty", "type": "Error"}
                 ],
             ),
             RowDTO(
