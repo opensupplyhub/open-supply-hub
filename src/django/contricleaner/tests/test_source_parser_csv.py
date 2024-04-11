@@ -6,13 +6,19 @@ from django.test import TestCase
 from django.core.files.uploadedfile import (
     SimpleUploadedFile, TemporaryUploadedFile
 )
-from rest_framework.exceptions import ValidationError
 
 from contricleaner.lib.parsers.source_parser_csv import SourceParserCSV
-from contricleaner.lib.parsers.source_parser import SourceParser
-from contricleaner.lib.parsers.file_parser import FileParser
-from contricleaner.lib.serializers.row_serializers.row_composite_serializer \
-    import RowCompositeSerializer
+from contricleaner.lib.parsers.abstractions.source_parser import (
+    SourceParser
+)
+from contricleaner.lib.parsers.abstractions.file_parser import (
+    FileParser
+)
+from contricleaner.lib.exceptions.parsing_error import ParsingError
+from contricleaner.lib.contri_cleaner import ContriCleaner
+from contricleaner.lib.dto.list_dto import ListDTO
+from contricleaner.lib.dto.row_dto import RowDTO
+from contricleaner.tests.sector_cache_mock import SectorCacheMock
 
 
 class SourceParserCSVTest(TestCase):
@@ -23,35 +29,102 @@ class SourceParserCSVTest(TestCase):
         self.assertIsInstance(source_parser_csv, FileParser)
 
     def test_valid_csv_file_parsing(self):
-        expected_parsed_rows = [
-            {
-                'country': 'United States',
-                'name': 'Fashion Plus',
-                'address': '123 Avenue Street, Cityville',
-                'sector_product_type': 'Apparel|Jeans',
-                'facility_type_processing_type': 'Embellishment',
-                'number_of_workers': '1002',
-                'parent_company': '',
-            },
-            {
-                'country': 'Canada',
-                'name': 'Style Haven',
-                'address': '456 Fashion Road, Trendy Town',
-                'sector_product_type': 'Apparel|Jacket',
-                'facility_type_processing_type': '',
-                'number_of_workers': '70%',
-                'parent_company': 'Style Super',
-            },
-            {
-                'country': 'Italy',
-                'name': 'Chic Boutique',
-                'address': '789 Glamour Avenue, Moda City',
-                'sector_product_type': 'Apparel',
-                'facility_type_processing_type': 'Embossing',
-                'number_of_workers': '3002',
-                'parent_company': '',
-            },
+        expected_processed_rows = [
+            RowDTO(
+                raw_json={
+                    'country': 'United States',
+                    'name': 'Fashion Plus',
+                    'address': '123 Avenue Street,,,, Cityville',
+                    'sector_product_type': 'Apparel|Jeans',
+                    'facility_type_processing_type': 'Embellishment',
+                    'number_of_workers': '1002',
+                    'parent_company': '',
+                },
+                name='Fashion Plus',
+                clean_name='fashion plus',
+                address='123 Avenue Street, Cityville',
+                clean_address='123 avenue street cityville',
+                country_code='US',
+                sector=['Apparel'],
+                fields={
+                    'product_type': ['Jeans'],
+                    'facility_type': {
+                        'raw_values': 'Embellishment',
+                        'processed_values': {'Embellishment'},
+                    },
+                    'processing_type': {
+                        'raw_values': 'Embellishment',
+                        'processed_values': {'Embellishment'},
+                    },
+                    'country': 'United States',
+                    'parent_company': '',
+                    'facility_type_processing_type': 'Embellishment',
+                    'number_of_workers': '1002',
+                    'sector_product_type': 'Apparel|Jeans',
+                },
+                errors=[],
+            ),
+            RowDTO(
+                raw_json={
+                    'country': 'Canada',
+                    'name': 'Style Haven',
+                    'address': '456 Fashion Road, Trendy Town',
+                    'sector_product_type': 'Apparel|Jacket',
+                    'facility_type_processing_type': '',
+                    'number_of_workers': '70%',
+                    'parent_company': 'Style Super',
+                },
+                name='Style Haven',
+                clean_name='style haven',
+                address='456 Fashion Road, Trendy Town',
+                clean_address='456 fashion road trendy town',
+                country_code='CA',
+                sector=['Apparel'],
+                fields={
+                    'product_type': ['Jacket'],
+                    'country': 'Canada',
+                    'parent_company': 'Style Super',
+                    'facility_type_processing_type': '',
+                    'number_of_workers': '70%',
+                    'sector_product_type': 'Apparel|Jacket',
+                },
+                errors=[],
+            ),
+            RowDTO(
+                raw_json={
+                    'country': 'Italy',
+                    'name': 'Chic Boutique',
+                    'address': '789 Glamour Avenue,,,, Moda City',
+                    'sector_product_type': 'Apparel',
+                    'facility_type_processing_type': 'Embossing',
+                    'number_of_workers': '3002',
+                    'parent_company': '',
+                },
+                name='Chic Boutique',
+                clean_name='chic boutique',
+                address='789 Glamour Avenue, Moda City',
+                clean_address='789 glamour avenue moda city',
+                country_code='IT',
+                sector=['Apparel'],
+                fields={
+                    'facility_type': {
+                        'raw_values': 'Embossing',
+                        'processed_values': {'Embossing'},
+                    },
+                    'processing_type': {
+                        'raw_values': 'Embossing',
+                        'processed_values': {'Embossing'},
+                    },
+                    'country': 'Italy',
+                    'parent_company': '',
+                    'facility_type_processing_type': 'Embossing',
+                    'number_of_workers': '3002',
+                    'sector_product_type': 'Apparel',
+                },
+                errors=[],
+            ),
         ]
+        expected_processed_list = ListDTO(rows=expected_processed_rows)
 
         with open('test.csv', 'w', newline='') as csv_file:
             writer = csv.writer(csv_file)
@@ -73,11 +146,10 @@ class SourceParserCSVTest(TestCase):
             file_content = csv_file.read()
             uploaded_file = SimpleUploadedFile('test.csv', file_content)
 
-        parser = SourceParserCSV(uploaded_file)
-        rows = parser.get_parsed_rows()
-        rows = [RowCompositeSerializer.clean_row(row) for row in rows]
+        contri_cleaner = ContriCleaner(uploaded_file, SectorCacheMock())
+        processed_list = contri_cleaner.process_data()
 
-        self.assertEqual(rows, expected_parsed_rows)
+        self.assertEqual(processed_list.rows, expected_processed_list.rows)
 
         os.remove('test.csv')
 
@@ -88,11 +160,11 @@ class SourceParserCSVTest(TestCase):
             file_content = csv_file.read()
             uploaded_file = SimpleUploadedFile('test.csv', file_content)
 
-        parser = SourceParserCSV(uploaded_file)
-        with self.assertRaisesRegex(ValidationError,
+        contri_cleaner = ContriCleaner(uploaded_file, SectorCacheMock())
+        with self.assertRaisesRegex(ParsingError,
                                     (r'Unsupported file encoding\. '
                                      r'Please submit a UTF-8 CSV\.')):
-            parser.get_parsed_rows()
+            contri_cleaner.process_data()
 
         os.remove('test.csv')
 
@@ -104,10 +176,10 @@ class SourceParserCSVTest(TestCase):
             file_content = csv_file.read()
             uploaded_file = SimpleUploadedFile('test.csv', file_content)
 
-        parser = SourceParserCSV(uploaded_file)
-        with self.assertRaisesRegex(ValidationError,
+        contri_cleaner = ContriCleaner(uploaded_file, SectorCacheMock())
+        with self.assertRaisesRegex(ParsingError,
                                     (r'Unsupported file encoding\. '
                                      r'Please submit a UTF-8 CSV\.')):
-            parser.get_parsed_rows()
+            contri_cleaner.process_data()
 
         os.remove('test.csv')
