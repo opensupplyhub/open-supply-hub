@@ -12,7 +12,6 @@ from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_list_item_temp import FacilityListItemTemp
 from api.models.source import Source
 from api.processing import handle_external_match_process_result
-
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -44,10 +43,13 @@ class ProcessingFacilityAPI(ProcessingFacility):
             log.error(
                 f'[API Upload] CC Validation Errors: {processed_data.errors}'
             )
-            return Response({
-                "message": "The provided data could not be processed",
-                "errors": processed_data.errors
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {
+                    "message": "The provided data could not be processed",
+                    "errors": processed_data.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         rows = processed_data.rows
         header_row_keys = rows[0].raw_json.keys()
@@ -69,7 +71,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
             contributor=request.user.contributor,
             source_type=Source.SINGLE,
             is_public=public_submission,
-            create=should_create
+            create=should_create,
         )
 
         self._create_nonstandard_fields(
@@ -147,9 +149,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
             f'Country Code: {row.country_code}'
         )
         try:
-            geocode_result = geocode_address(
-                row.address, row.country_code
-            )
+            geocode_result = geocode_address(row.address, row.country_code)
             if geocode_result['result_count'] > 0:
                 item.status = FacilityListItem.GEOCODED
                 item.geocoded_point = Point(
@@ -220,9 +220,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
             while True:
                 if timer > timeout:
                     break
-                fli_temp = FacilityListItemTemp.objects.get(
-                    source=source.id
-                )
+                fli_temp = FacilityListItemTemp.objects.get(source=source.id)
                 if fli_temp.status == FacilityListItemTemp.GEOCODED:
                     log.info('[API Upload] Started Match process!')
                     log.info(f'[API Upload] FacilityListItem Id: {item.id}')
@@ -230,9 +228,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
                         f'[API Upload] FacilityListItemTemp Id: {fli_temp.id}'
                     )
                     log.info(f'[API Upload] Source Id: {item.id}')
-                    asyncio.run(
-                        produce_message_match_process(source.id)
-                    )
+                    asyncio.run(produce_message_match_process(source.id))
                     break
                 asyncio.sleep(1)
                 timer = timer + 1

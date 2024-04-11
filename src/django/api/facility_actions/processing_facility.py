@@ -44,20 +44,22 @@ class ProcessingFacility(ABC):
         )
 
     @staticmethod
-    def _create_nonstandard_fields(fields: List[str], contributor: Contributor) -> None:
+    def _create_nonstandard_fields(
+        fields: List[str], contributor: Contributor
+    ) -> None:
         unique_fields = list(set(fields))
 
-        existing_fields = (
-            NonstandardField
-            .objects
-            .filter(contributor=contributor)
-            .values_list('column_name', flat=True)
-        )
-        new_fields = filter(
-            lambda f: f not in existing_fields, unique_fields
-        )
+        existing_fields = NonstandardField.objects.filter(
+            contributor=contributor
+        ).values_list('column_name', flat=True)
+        new_fields = filter(lambda f: f not in existing_fields, unique_fields)
         standard_fields = [
-            'sector', 'country', 'name', 'address', 'lat', 'lng',
+            'sector',
+            'country',
+            'name',
+            'address',
+            'lat',
+            'lng',
         ]
         nonstandard_fields = filter(
             lambda f: f.lower() not in standard_fields, new_fields
@@ -65,10 +67,7 @@ class ProcessingFacility(ABC):
 
         for field in nonstandard_fields:
             (
-                NonstandardField
-                .objects
-                .create(
-                    contributor=contributor,
-                    column_name=field
+                NonstandardField.objects.create(
+                    contributor=contributor, column_name=field
                 )
             )
