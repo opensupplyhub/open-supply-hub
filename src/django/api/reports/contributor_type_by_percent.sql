@@ -1,34 +1,25 @@
+CREATE OR REPLACE FUNCTION calc_value(total_count bigint, filtered_count bigint)
+RETURNS text AS $$
+DECLARE
+begin
+	IF total_count=0 then
+        RETURN '0%';
+    ELSE
+        RETURN round(100.0 * filtered_count /total_count,2) || '%';
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
 SELECT
   month,
   COUNT(*) AS total_contributors,
-  CASE
-     WHEN COUNT(*)=0  THEN 0 || '%'
-     ELSE round(100.0 * COUNT(*) filter (where contrib_type = 'Brand / Retailer') /COUNT(*),2) || '%'
-end as "Brand / Retailer",
-  CASE
-     WHEN COUNT(*)=0  THEN 0 || '%'
-     ELSE round(100.0 * COUNT(*) filter (where contrib_type = 'Civil Society Organization') /COUNT(*),2) || '%'
-end as "Civil Society Organization",
-  CASE
-     WHEN COUNT(*)=0  THEN 0 || '%'
-     ELSE round(100.0 * COUNT(*) filter (where contrib_type = 'Facility / Factory / Manufacturing Group / Supplier / Vendor') /COUNT(*),2) || '%'
-end as "Facility / Factory / Manufacturing Group / Supplier / Vendor",
-  CASE
-     WHEN COUNT(*)=0  THEN 0 || '%'
-     ELSE round(100.0 * COUNT(*) filter (where contrib_type = 'Multi-Stakeholder Initiative') /COUNT(*),2) || '%'
-end as "Multi-Stakeholder Initiative",
-  CASE
-     WHEN COUNT(*)=0  THEN 0 || '%'
-     ELSE round(100 * COUNT(*) filter (where contrib_type = 'Auditor / Certification Scheme / Service Provider') /COUNT(*),2) || '%'
-end as "Auditor / Certification Scheme / Service Provider",
-  CASE
-     WHEN COUNT(*)=0  THEN 0 || '%'
-     ELSE round(100 * COUNT(*) filter (where contrib_type = 'Academic / Researcher / Journalist / Student') /COUNT(*),2) || '%'
-end as "Academic / Researcher / Journalist / Student",
-  CASE
-     WHEN COUNT(*)=0  THEN 0 || '%'
-     ELSE round(100 * COUNT(*) filter (where contrib_type = 'Other') /COUNT(*),2) || '%'
-end as "Other"
+  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ="Brand / Retailer")) as "Brand / Retailer",
+  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ="Civil Society Organization")) as "Civil Society Organization",
+  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ="Facility / Factory / Manufacturing Group / Supplier / Vendor")) as "Facility / Factory / Manufacturing Group / Supplier / Vendor",
+  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ="Multi-Stakeholder Initiative")) as "Multi-Stakeholder Initiative",
+  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ="Auditor / Certification Scheme / Service Provider")) as "Auditor / Certification Scheme / Service Provider",
+  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ="Academic / Researcher / Journalist / Student")) as "Academic / Researcher / Journalist / Student",
+  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ="Other")) as "Other"
+
 FROM (
   SELECT distinct
     min(to_char(s.created_at, 'YYYY-MM')) AS month,
