@@ -388,19 +388,17 @@ class FacilityListViewSet(ModelViewSet):
         is_geocoded = False
         parsed_items = set()
         for idx, row in enumerate(rows):
+            # Created a partially filled FacilityListItem to save valid data
+            # and to provide an item for saving any errors that may exist
+            # below.
             item = FacilityListItem.objects.create(
                     row_index=idx,
                     raw_data=','.join(
                         f'"{value}"' for value in row.raw_json.values()),
                     raw_json=row.raw_json,
                     raw_header=header_str,
-                    sector=row.sector,
-                    source=source,
-                    country_code=row.country_code,
-                    name=row.name,
-                    clean_name=row.clean_name,
-                    address=row.address,
-                    clean_address=row.clean_address
+                    sector=[],
+                    source=source
                 )
             log.info(f'[List Upload] FacilityListItem created. Id {item.id}!')
 
@@ -425,6 +423,12 @@ class FacilityListViewSet(ModelViewSet):
                 })
 
             if item.status != FacilityListItem.ERROR_PARSING:
+                item.sector = row.sector
+                item.country_code = row.country_code
+                item.name = row.name
+                item.clean_name = row.clean_name
+                item.address = row.address
+                item.clean_address = row.clean_address
                 try:
                     if (FileHeaderField.LAT in row.fields.keys()
                             and FileHeaderField.LNG in row.fields.keys()):
