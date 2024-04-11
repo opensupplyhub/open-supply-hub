@@ -246,11 +246,14 @@ class ProcessingFacility:
             return Response(result, status=status.HTTP_200_OK)
 
     def create_list(
-        rows, contributor, header_row_keys, header_str, source, serializer
+        rows,
+        contributor,
+        header_row_keys,
+        header_str,
+        source,
+        serializer,
+        parsing_started
     ):
-
-        parsing_started = str(timezone.now())
-
         create_nonstandard_fields(header_row_keys, contributor)
 
         log.info(f'[List Upload] Source created. Id {source.id}!')
