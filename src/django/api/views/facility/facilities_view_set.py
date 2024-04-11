@@ -575,7 +575,7 @@ class FacilitiesViewSet(ListModelMixin,
 
         log.info(f'[API Upload] Uploading data: {request.data}')
 
-        parse_started = str(timezone.now())
+        parsing_started = str(timezone.now())
         log.info('[API Upload] Started CC Parse process!')
 
         params_serializer = FacilityCreateQueryParamsSerializer(
@@ -603,7 +603,7 @@ class FacilitiesViewSet(ListModelMixin,
             'processed_data': processed_data,
             'public_submission': public_submission,
             'should_create': should_create,
-            'parse_started': parse_started,
+            'parsing_started': parsing_started,
         }
 
         context = ProcessingFacilityExecutor(

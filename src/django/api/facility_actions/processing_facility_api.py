@@ -37,7 +37,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
         public_submission = self.__processing_data.get('public_submission')
         should_create = self.__processing_data.get('should_create')
         parse_started = self.__processing_data.get('parse_started')
-
+        contributor = request.user.contributor
         # handle processing errors
         if processed_data.errors:
             log.error(
@@ -67,16 +67,11 @@ class ProcessingFacilityAPI(ProcessingFacility):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        source = Source.objects.create(
-            contributor=request.user.contributor,
-            source_type=Source.SINGLE,
-            is_public=public_submission,
-            create=should_create,
+        source = self._create_source(
+            contributor, public_submission, should_create
         )
 
-        self._create_nonstandard_fields(
-            header_row_keys, request.user.contributor
-        )
+        self._create_nonstandard_fields(header_row_keys, contributor)
 
         row_index = 0
         item = self._create_facility_list_item(
@@ -251,3 +246,12 @@ class ProcessingFacilityAPI(ProcessingFacility):
             return Response(result, status=status.HTTP_201_CREATED)
         else:
             return Response(result, status=status.HTTP_200_OK)
+
+    @staticmethod
+    def _create_source(contributor, public_submission, should_create):
+        return Source.objects.create(
+            contributor=contributor,
+            source_type=Source.SINGLE,
+            is_public=public_submission,
+            create=should_create,
+        )
