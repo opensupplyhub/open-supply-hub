@@ -12,13 +12,13 @@ $$ LANGUAGE plpgsql;
 SELECT
   month,
   COUNT(*) AS total_contributors,
-  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ="Brand / Retailer")) as "Brand / Retailer",
-  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ="Civil Society Organization")) as "Civil Society Organization",
-  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ="Facility / Factory / Manufacturing Group / Supplier / Vendor")) as "Facility / Factory / Manufacturing Group / Supplier / Vendor",
-  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ="Multi-Stakeholder Initiative")) as "Multi-Stakeholder Initiative",
-  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ="Auditor / Certification Scheme / Service Provider")) as "Auditor / Certification Scheme / Service Provider",
-  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ="Academic / Researcher / Journalist / Student")) as "Academic / Researcher / Journalist / Student",
-  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ="Other")) as "Other"
+  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ='Brand / Retailer')) as "Brand / Retailer",
+  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ='Civil Society Organization')) as "Civil Society Organization",
+  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ='Facility / Factory / Manufacturing Group / Supplier / Vendor')) as "Facility / Factory / Manufacturing Group / Supplier / Vendor",
+  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ='Multi-Stakeholder Initiative')) as "Multi-Stakeholder Initiative",
+  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ='Auditor / Certification Scheme / Service Provider')) as "Auditor / Certification Scheme / Service Provider",
+  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ='Academic / Researcher / Journalist / Student')) as "Academic / Researcher / Journalist / Student",
+  calc_column(COUNT(*), COUNT(*) filter (where contrib_type ='Other')) as "Other"
 
 FROM (
   SELECT distinct
