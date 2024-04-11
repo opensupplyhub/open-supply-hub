@@ -127,9 +127,14 @@ class ProcessingFacilityList(ProcessingFacility):
             log.info(f'[List Upload] FacilityListItem Id: {item.id}')
             item.status = FacilityListItem.ERROR_PARSING
             item.processing_results.append(
-                self._get_processing_error_result(
-                    parsing_started, stringified_cc_err_messages
-                )
+                {
+                    'action': ProcessingAction.PARSE,
+                    'started_at': parsing_started,
+                    'error': True,
+                    'message': str(stringified_cc_err_messages),
+                    'trace': traceback.format_exc(),
+                    'finished_at': str(timezone.now()),
+                }
             )
 
     def _process_valid_item(self, item, row):
@@ -157,7 +162,14 @@ class ProcessingFacilityList(ProcessingFacility):
         log.info(f'[List Upload] FacilityListItem Id: {item.id}')
         item.status = FacilityListItem.ERROR_PARSING
         item.processing_results.append(
-            self._get_processing_error_result(parsing_started, exception)
+            {
+                'action': ProcessingAction.PARSE,
+                'started_at': parsing_started,
+                'error': True,
+                'message': str(exception),
+                'trace': traceback.format_exc(),
+                'finished_at': str(timezone.now()),
+            }
         )
 
     def _finalize_item_processing(
@@ -166,9 +178,13 @@ class ProcessingFacilityList(ProcessingFacility):
         if item.status != FacilityListItem.ERROR_PARSING:
             item.status = FacilityListItem.PARSED
             item.processing_results.append(
-                self._get_processing_success_result(
-                    parsing_started, is_geocoded
-                )
+                {
+                    'action': ProcessingAction.PARSE,
+                    'started_at': parsing_started,
+                    'error': False,
+                    'finished_at': str(timezone.now()),
+                    'is_geocoded': is_geocoded,
+                }
             )
 
             core_fields = '{}-{}-{}'.format(
@@ -180,24 +196,3 @@ class ProcessingFacilityList(ProcessingFacility):
                 parsed_items.add(core_fields)
 
         item.save()
-
-    @staticmethod
-    def _get_processing_error_result(parsing_started, error_messages):
-        return {
-            'action': ProcessingAction.PARSE,
-            'started_at': parsing_started,
-            'error': True,
-            'message': str(error_messages),
-            'trace': traceback.format_exc(),
-            'finished_at': str(timezone.now()),
-        }
-
-    @staticmethod
-    def _get_processing_success_result(parsing_started, is_geocoded):
-        return {
-            'action': ProcessingAction.PARSE,
-            'started_at': parsing_started,
-            'error': False,
-            'finished_at': str(timezone.now()),
-            'is_geocoded': is_geocoded,
-        }
