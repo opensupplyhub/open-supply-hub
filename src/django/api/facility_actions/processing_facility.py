@@ -6,7 +6,6 @@ import traceback
 from api.constants import ErrorMessages, FileHeaderField, ProcessingAction
 from api.extended_fields import (
     create_extendedfields_for_single_item,
-    create_extendedfields_for_listitem
 )
 from api.geocoding import geocode_address
 from api.kafka_producer import produce_message_match_process
