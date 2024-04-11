@@ -1,5 +1,6 @@
 module "database_anonymizer" {
-  count = var.environment == "Production" ? 1 : 0
+  count = var.database_anonymizer_enabled == true ? 1 : 0
+
   source = "./database_anonymizer_sheduled_task"
 
   rds_database_identifier       = var.rds_database_identifier

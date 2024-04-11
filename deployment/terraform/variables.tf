@@ -504,7 +504,7 @@ variable "dedupe_hub_name" {
 variable "dedupe_hub_version" {
 }
 
-variable "anonymizer_destination_aws_account"{
+variable "anonymizer_destination_aws_account" {
   type = string
 }
 
@@ -522,4 +522,9 @@ variable "anonymizer_schedule_expression" {
 
 variable "anonymizer_kms_key_admin_users" {
   type = list
+}
+
+variable "database_anonymizer_enabled" {
+  type    = bool
+  default = false
 }
