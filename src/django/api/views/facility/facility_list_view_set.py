@@ -328,7 +328,7 @@ class FacilityListViewSet(ModelViewSet):
                 raise ValidationError(
                     f'FacilityList {replaces.pk} has already been replaced.'
                 )
-        
+
         parsing_started = str(timezone.now())
         log.info('[List Upload] Started CC Parse process!')
         contri_cleaner = ContriCleaner(uploaded_file, SectorCache())
