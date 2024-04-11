@@ -357,6 +357,7 @@ class FacilityListViewSet(ModelViewSet):
                                'Please contact support.')
 
         processing_data = {
+            'request': request,
             'name': name,
             'description': description,
             'uploaded_file': uploaded_file,
