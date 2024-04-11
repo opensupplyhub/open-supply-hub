@@ -439,6 +439,11 @@ class FacilityListViewSet(ModelViewSet):
                     log.error(
                         f'[List Upload] Creation of ExtendedField error: {e}'
                     )
+                    report_error_to_rollbar(
+                        request=request,
+                        file=uploaded_file,
+                        exception=e
+                    )
                     log.info(f'[List Upload] FacilityListItem Id: {item.id}')
                     item.status = FacilityListItem.ERROR_PARSING
                     item.processing_results.append({
