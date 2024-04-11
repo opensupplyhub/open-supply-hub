@@ -17,7 +17,8 @@ log = logging.getLogger(__name__)
 
 class ProcessingFacility(ABC):
     '''
-    Abstract class for facility processing both via API and list uploads.
+    Abstract class for facility processing received from both
+    API requests and list uploads.
     '''
 
     @abstractmethod
@@ -31,7 +32,7 @@ class ProcessingFacility(ABC):
         return FacilityListItem.objects.create(
             source=source,
             row_index=idx,
-            raw_data=','.join(row.raw_json.values()),
+            raw_data=','.join(f'"{value}"' for value in row.raw_json.values()),
             raw_json=row.raw_json,
             raw_header=header_str,
             name=row.name,
