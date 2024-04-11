@@ -386,7 +386,9 @@ class FacilityListViewSet(ModelViewSet):
             header_str,
             source,
             serializer,
-            parsing_started
+            parsing_started,
+            request,
+            uploaded_file,
         )
 
     def list(self, request):

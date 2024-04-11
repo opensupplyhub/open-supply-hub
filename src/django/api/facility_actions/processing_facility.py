@@ -16,6 +16,7 @@ from api.processing import handle_external_match_process_result
 from api.views.fields.create_nonstandard_fields import (
     create_nonstandard_fields,
 )
+from oar.rollbar import report_error_to_rollbar
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -252,7 +253,9 @@ class ProcessingFacility:
         header_str,
         source,
         serializer,
-        parsing_started
+        parsing_started,
+        request,
+        uploaded_file,
     ):
         create_nonstandard_fields(header_row_keys, contributor)
 
@@ -261,88 +264,85 @@ class ProcessingFacility:
         parsed_items = set()
         for idx, row in enumerate(rows):
             item = FacilityListItem.objects.create(
-                source=source,
-                row_index=idx,
-                raw_data=','.join(row.raw_json.values()),
-                raw_json=row.raw_json,
-                raw_header=header_str,
-                name=row.name,
-                clean_name=row.clean_name,
-                address=row.address,
-                clean_address=row.clean_address,
-                country_code=row.country_code,
-                sector=row.sector,
-            )
-            log.info(f'[List Upload] FacilityListItem created. Id {item.id}!')
-            try:
-                if (
-                    FileHeaderField.LAT in row.fields.keys()
-                    and FileHeaderField.LNG in row.fields.keys()
-                ):
-                    # TODO: Move floating to the ContriCleaner library.
-                    lat = float(row.fields[FileHeaderField.LAT])
-                    lng = float(row.fields[FileHeaderField.LNG])
-                    item.geocoded_point = Point(lng, lat)
-                    is_geocoded = True
-
-                create_extendedfields_for_listitem(
-                    item, list(row.fields.keys()), list(row.fields.values())
+                    source=source,
+                    row_index=idx,
+                    raw_data=','.join(
+                        f'"{value}"' for value in row.raw_json.values()),
+                    raw_json=row.raw_json,
+                    raw_header=header_str,
+                    name=row.name,
+                    clean_name=row.clean_name,
+                    address=row.address,
+                    clean_address=row.clean_address
+                    country_code=row.country_code,
+                    sector=row.sector,
                 )
-            except Exception as e:
+            log.info(f'[List Upload] FacilityListItem created. Id {item.id}!')
+
+            row_errors = row.errors
+            if len(row_errors) > 0:
+                stringified_cc_err_messages = '\n'.join(
+                    [f"{error['message']}" for error in row_errors]
+                )
                 log.error(
-                    f'[List Upload] Creation of ExtendedField error: {e}'
+                    f'[List Upload] CC Parsing Error: '
+                    f'{stringified_cc_err_messages}'
                 )
                 log.info(f'[List Upload] FacilityListItem Id: {item.id}')
                 item.status = FacilityListItem.ERROR_PARSING
-                item.processing_results.append(
-                    {
+                item.processing_results.append({
+                    'action': ProcessingAction.PARSE,
+                    'started_at': parsing_started,
+                    'error': True,
+                    'message': stringified_cc_err_messages,
+                    'trace': traceback.format_exc(),
+                    'finished_at': str(timezone.now()),
+                })
+
+            if item.status != FacilityListItem.ERROR_PARSING:
+                try:
+                    if (FileHeaderField.LAT in row.fields.keys()
+                            and FileHeaderField.LNG in row.fields.keys()):
+                        # TODO: Move floating to the ContriCleaner library.
+                        lat = float(row.fields[FileHeaderField.LAT])
+                        lng = float(row.fields[FileHeaderField.LNG])
+                        item.geocoded_point = Point(lng, lat)
+                        is_geocoded = True
+
+                    create_extendedfields_for_single_item(item, row.fields)
+                except Exception as e:
+                    log.error(
+                        f'[List Upload] Creation of ExtendedField error: {e}'
+                    )
+                    report_error_to_rollbar(
+                        request=request,
+                        file=uploaded_file,
+                        exception=e
+                    )
+                    log.info(f'[List Upload] FacilityListItem Id: {item.id}')
+                    item.status = FacilityListItem.ERROR_PARSING
+                    item.processing_results.append({
                         'action': ProcessingAction.PARSE,
                         'started_at': parsing_started,
                         'error': True,
                         'message': str(e),
                         'trace': traceback.format_exc(),
                         'finished_at': str(timezone.now()),
-                        'is_geocoded': is_geocoded,
-                    }
-                )
-
-            row_errors = row.errors
-            if len(row_errors) > 0:
-                stringified_message = '\n'.join(
-                    [f"{error['message']}" for error in row_errors]
-                )
-                log.error(
-                    f'[List Upload] CC Parsing Error: {stringified_message}'
-                )
-                log.info(f'[List Upload] FacilityListItem Id: {item.id}')
-                item.status = FacilityListItem.ERROR_PARSING
-                item.processing_results.append(
-                    {
-                        'action': ProcessingAction.PARSE,
-                        'started_at': parsing_started,
-                        'error': True,
-                        'message': stringified_message,
-                        'trace': traceback.format_exc(),
-                        'finished_at': str(timezone.now()),
-                        'is_geocoded': is_geocoded,
-                    }
-                )
-            else:
-                item.status = FacilityListItem.PARSED
-                item.processing_results.append(
-                    {
-                        'action': ProcessingAction.PARSE,
-                        'started_at': parsing_started,
-                        'error': False,
-                        'finished_at': str(timezone.now()),
-                        'is_geocoded': is_geocoded,
-                    }
-                )
+                    })
 
             if item.status != FacilityListItem.ERROR_PARSING:
-                core_fields = '{}-{}-{}'.format(
-                    item.country_code, item.clean_name, item.clean_address
-                )
+                item.status = FacilityListItem.PARSED
+                item.processing_results.append({
+                    'action': ProcessingAction.PARSE,
+                    'started_at': parsing_started,
+                    'error': False,
+                    'finished_at': str(timezone.now()),
+                    'is_geocoded': is_geocoded,
+                })
+
+                core_fields = '{}-{}-{}'.format(item.country_code,
+                                                item.clean_name,
+                                                item.clean_address)
                 if core_fields in parsed_items:
                     item.status = FacilityListItem.DUPLICATE
                 else:
