@@ -28,7 +28,7 @@ class ProcessingFacilityList(ProcessingFacility):
     ) -> None:
         self.__processing_data = processing_data
 
-    def process_facility(self):
+    def process_facility(self) -> Response:
         request = self.__processing_data.get('request')
         name = self.__processing_data.get('name')
         description = self.__processing_data.get('description')
@@ -52,7 +52,52 @@ class ProcessingFacilityList(ProcessingFacility):
         rows = processed_data.rows
         header_row_keys = rows[0].raw_json.keys()
         header_str = ','.join(header_row_keys)
-        new_list = FacilityList(
+
+        new_list = self._create_list(
+            name, description, uploaded_file, replaces, contributor, header_str
+        )
+        log.info(f'[List Upload] FacilityList created. Id {new_list.id}!')
+
+        self._create_nonstandard_fields(header_row_keys, contributor)
+
+        source = self._create_source(contributor, new_list)
+        log.info(f'[List Upload] Source created. Id {source.id}!')
+
+        is_geocoded = False
+        parsed_items = set()
+
+        for idx, row in enumerate(rows):
+            item = self._create_facility_list_item(
+                source, row, idx, header_str
+            )
+            log.info(f'[List Upload] FacilityListItem created. Id {item.id}!')
+
+            self._handle_row_errors(item, row, parsing_started)
+
+            if item.status != FacilityListItem.ERROR_PARSING:
+                try:
+                    self._process_valid_item(item, row)
+                except Exception as e:
+                    self._handle_processing_exception(
+                        item,
+                        e,
+                        request,
+                        uploaded_file,
+                        parsing_started,
+                    )
+
+            self._finalize_item_processing(
+                item, parsing_started, is_geocoded, parsed_items
+            )
+
+        serializer = serializer_method(new_list)
+        return Response(serializer.data)
+
+    @staticmethod
+    def _create_list(
+        name, description, uploaded_file, replaces, contributor, header_str
+    ):
+        return FacilityList.objects.create(
             name=name,
             description=description,
             file_name=uploaded_file.name,
@@ -61,103 +106,98 @@ class ProcessingFacilityList(ProcessingFacility):
             replaces=replaces,
             match_responsibility=contributor.match_responsibility,
         )
-        new_list.save()
-        log.info(f'[List Upload] FacilityList created. Id {new_list.id}!')
 
-        self._create_nonstandard_fields(header_row_keys, contributor)
-
-        source = Source.objects.create(
+    @staticmethod
+    def _create_source(contributor, new_list):
+        return Source.objects.create(
             contributor=contributor,
             source_type=Source.LIST,
             facility_list=new_list,
         )
-        log.info(f'[List Upload] Source created. Id {source.id}!')
 
-        is_geocoded = False
-        parsed_items = set()
-        for idx, row in enumerate(rows):
-            item = self._create_facility_list_item(
-                source, row, idx, header_str
+    def _handle_row_errors(self, item, row, parsing_started):
+        if row.errors:
+            stringified_cc_err_messages = '\n'.join(
+                [f"{error['message']}" for error in row.errors]
             )
-            log.info(f'[List Upload] FacilityListItem created. Id {item.id}!')
-
-            row_errors = row.errors
-            if len(row_errors) > 0:
-                stringified_cc_err_messages = '\n'.join(
-                    [f"{error['message']}" for error in row_errors]
+            log.error(
+                f'[List Upload] CC Parsing Error: '
+                f'{stringified_cc_err_messages}'
+            )
+            log.info(f'[List Upload] FacilityListItem Id: {item.id}')
+            item.status = FacilityListItem.ERROR_PARSING
+            item.processing_results.append(
+                self._get_processing_error_result(
+                    parsing_started, stringified_cc_err_messages
                 )
-                log.error(
-                    f'[List Upload] CC Parsing Error: '
-                    f'{stringified_cc_err_messages}'
+            )
+
+    def _process_valid_item(self, item, row):
+        if (
+            FileHeaderField.LAT in row.fields.keys()
+            and FileHeaderField.LNG in row.fields.keys()
+        ):
+            # TODO: Move floating to the ContriCleaner library.
+            lat = float(row.fields[FileHeaderField.LAT])
+            lng = float(row.fields[FileHeaderField.LNG])
+            item.geocoded_point = Point(lng, lat)
+            self.is_geocoded = True
+
+        create_extendedfields_for_single_item(item, row.fields)
+
+    def _handle_processing_exception(
+        self, item, exception, request, uploaded_file, parsing_started
+    ):
+        log.error(
+            f'[List Upload] Creation of ExtendedField error: {exception}'
+        )
+        report_error_to_rollbar(
+            request=request, file=uploaded_file, exception=exception
+        )
+        log.info(f'[List Upload] FacilityListItem Id: {item.id}')
+        item.status = FacilityListItem.ERROR_PARSING
+        item.processing_results.append(
+            self._get_processing_error_result(parsing_started, exception)
+        )
+
+    def _finalize_item_processing(
+        self, item, parsing_started, is_geocoded, parsed_items
+    ):
+        if item.status != FacilityListItem.ERROR_PARSING:
+            item.status = FacilityListItem.PARSED
+            item.processing_results.append(
+                self._get_processing_success_result(
+                    parsing_started, is_geocoded
                 )
-                log.info(f'[List Upload] FacilityListItem Id: {item.id}')
-                item.status = FacilityListItem.ERROR_PARSING
-                item.processing_results.append(
-                    {
-                        'action': ProcessingAction.PARSE,
-                        'started_at': parsing_started,
-                        'error': True,
-                        'message': stringified_cc_err_messages,
-                        'trace': traceback.format_exc(),
-                        'finished_at': str(timezone.now()),
-                    }
-                )
+            )
 
-            if item.status != FacilityListItem.ERROR_PARSING:
-                try:
-                    if (
-                        FileHeaderField.LAT in row.fields.keys()
-                        and FileHeaderField.LNG in row.fields.keys()
-                    ):
-                        # TODO: Move floating to the ContriCleaner library.
-                        lat = float(row.fields[FileHeaderField.LAT])
-                        lng = float(row.fields[FileHeaderField.LNG])
-                        item.geocoded_point = Point(lng, lat)
-                        is_geocoded = True
+            core_fields = '{}-{}-{}'.format(
+                item.country_code, item.clean_name, item.clean_address
+            )
+            if core_fields in parsed_items:
+                item.status = FacilityListItem.DUPLICATE
+            else:
+                parsed_items.add(core_fields)
 
-                    create_extendedfields_for_single_item(item, row.fields)
-                except Exception as e:
-                    log.error(
-                        f'[List Upload] Creation of ExtendedField error: {e}'
-                    )
-                    report_error_to_rollbar(
-                        request=request, file=uploaded_file, exception=e
-                    )
-                    log.info(f'[List Upload] FacilityListItem Id: {item.id}')
-                    item.status = FacilityListItem.ERROR_PARSING
-                    item.processing_results.append(
-                        {
-                            'action': ProcessingAction.PARSE,
-                            'started_at': parsing_started,
-                            'error': True,
-                            'message': str(e),
-                            'trace': traceback.format_exc(),
-                            'finished_at': str(timezone.now()),
-                        }
-                    )
+        item.save()
 
-            if item.status != FacilityListItem.ERROR_PARSING:
-                item.status = FacilityListItem.PARSED
-                item.processing_results.append(
-                    {
-                        'action': ProcessingAction.PARSE,
-                        'started_at': parsing_started,
-                        'error': False,
-                        'finished_at': str(timezone.now()),
-                        'is_geocoded': is_geocoded,
-                    }
-                )
+    @staticmethod
+    def _get_processing_error_result(parsing_started, error_messages):
+        return {
+            'action': ProcessingAction.PARSE,
+            'started_at': parsing_started,
+            'error': True,
+            'message': str(error_messages),
+            'trace': traceback.format_exc(),
+            'finished_at': str(timezone.now()),
+        }
 
-                core_fields = '{}-{}-{}'.format(
-                    item.country_code, item.clean_name, item.clean_address
-                )
-                if core_fields in parsed_items:
-                    item.status = FacilityListItem.DUPLICATE
-                else:
-                    parsed_items.add(core_fields)
-
-            item.save()
-
-            serializer = serializer_method(new_list)
-
-        return Response(serializer.data)
+    @staticmethod
+    def _get_processing_success_result(parsing_started, is_geocoded):
+        return {
+            'action': ProcessingAction.PARSE,
+            'started_at': parsing_started,
+            'error': False,
+            'finished_at': str(timezone.now()),
+            'is_geocoded': is_geocoded,
+        }
