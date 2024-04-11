@@ -76,20 +76,8 @@ class ProcessingFacilityList(ProcessingFacility):
         is_geocoded = False
         parsed_items = set()
         for idx, row in enumerate(rows):
-            item = FacilityListItem.objects.create(
-                source=source,
-                row_index=idx,
-                raw_data=','.join(
-                    f'"{value}"' for value in row.raw_json.values()
-                ),
-                raw_json=row.raw_json,
-                raw_header=header_str,
-                name=row.name,
-                clean_name=row.clean_name,
-                address=row.address,
-                clean_address=row.clean_address,
-                country_code=row.country_code,
-                sector=row.sector,
+            item = self._create_facility_list_item(
+                source, row, idx, header_str
             )
             log.info(f'[List Upload] FacilityListItem created. Id {item.id}!')
 
