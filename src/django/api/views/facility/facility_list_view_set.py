@@ -328,7 +328,8 @@ class FacilityListViewSet(ModelViewSet):
                 raise ValidationError(
                     f'FacilityList {replaces.pk} has already been replaced.'
                 )
-
+        
+        parsing_started = str(timezone.now())
         log.info('[List Upload] Started CC Parse process!')
         contri_cleaner = ContriCleaner(uploaded_file, SectorCache())
         try:
@@ -379,7 +380,13 @@ class FacilityListViewSet(ModelViewSet):
         serializer = self.get_serializer(new_list)
 
         return ProcessingFacility.create_list(
-            rows, contributor, header_row_keys, header_str, source, serializer
+            rows,
+            contributor,
+            header_row_keys,
+            header_str,
+            source,
+            serializer,
+            parsing_started
         )
 
     def list(self, request):
