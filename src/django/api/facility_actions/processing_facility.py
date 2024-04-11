@@ -273,7 +273,7 @@ class ProcessingFacility:
                     name=row.name,
                     clean_name=row.clean_name,
                     address=row.address,
-                    clean_address=row.clean_address
+                    clean_address=row.clean_address,
                     country_code=row.country_code,
                     sector=row.sector,
                 )
