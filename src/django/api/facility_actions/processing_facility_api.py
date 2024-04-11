@@ -38,6 +38,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
         should_create = self.__processing_data.get('should_create')
         parse_started = self.__processing_data.get('parse_started')
         contributor = request.user.contributor
+
         # handle processing errors
         if processed_data.errors:
             log.error(
