@@ -30,18 +30,23 @@ const initialState = Object.freeze({
         error: null,
     }),
     claimData: Object.freeze({
+        // TODO: Reset to defaults later
         formData: Object.freeze({
-            contactPerson: '',
-            jobTitle: '',
-            email: '',
-            phoneNumber: '',
-            companyName: '',
-            website: '',
-            facilityDescription: '',
-            verificationMethod: '',
-            preferredContactMethod: null,
+            contactPerson: 'John Doe',
+            jobTitle: 'Manager',
+            email: 'mail@mail.com',
+            phoneNumber: '+123 456 789',
+            companyName: 'TestCompany',
+            website: 'www.test-site.com',
+            facilityDescription: 'Some facility description',
+            verificationMethod:
+                'Some additional details that act like verification method',
+            preferredContactMethod: {
+                value: 'email',
+                label: 'Email',
+            },
             parentCompany: null,
-            linkedinProfile: '',
+            linkedinProfile: 'www.linkedin.com',
             uploadFiles: Object.freeze([]),
         }),
         fetching: false,

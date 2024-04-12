@@ -41,6 +41,7 @@ from ...models import (
     FacilityActivityReport,
     FacilityAlias,
     FacilityClaim,
+    FacilityClaimAttachmentURLs,
     FacilityClaimReviewNote,
     FacilityListItem,
     FacilityLocation,
@@ -829,6 +830,7 @@ class FacilitiesViewSet(ListModelMixin,
                 .data \
                 .get('preferred_contact_method') or ''
             linkedin_profile = request.data.get('linkedin_profile', '')
+            upload_files = request.data.get('upload_files')
 
             try:
                 validate_email(email)
@@ -868,6 +870,12 @@ class FacilitiesViewSet(ListModelMixin,
                 raise BadRequestException(
                     'User already has a pending claim on this facility'
                 )
+            
+            # TODO: validate attachments here and upload to the S3
+            log.info(f'Get uploadFiles {upload_files}')
+            
+            # TODO: update mocked URL
+            claim_attachment_url='https://oshub-test-local.s3.amazonaws.com/Lorem-ipsum-jpg-aws-cli.jpg'
 
             facility_claim = (
                 FacilityClaim
@@ -886,10 +894,21 @@ class FacilitiesViewSet(ListModelMixin,
                     facility_description=facility_description,
                     verification_method=verification_method,
                     preferred_contact_method=preferred_contact_method,
-                    linkedin_profile=linkedin_profile
+                    linkedin_profile=linkedin_profile,
                 )
             )
-            send_claim_facility_confirmation_email(request, facility_claim)
+
+            # TODO: remove later
+            # Should receive "email": "email@example.com",
+            # Save URL to AWS S3
+            log.info(f'Request in claim: {request.data}')
+            # log.info(f"Request in claim email: {request.data.getlist('email')}")
+            log.info(f'facility_claim: {facility_claim}')
+            # send_claim_facility_confirmation_email(request, facility_claim)
+            FacilityClaimAttachmentURLs.objects.create(
+                claim=facility_claim,
+                claim_attachment_url=claim_attachment_url
+            )
 
             approved = (
                 FacilityClaim
