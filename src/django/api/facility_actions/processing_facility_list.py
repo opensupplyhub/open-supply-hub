@@ -28,7 +28,7 @@ class ProcessingFacilityList(ProcessingFacility):
     ) -> None:
         self.__processing_data = processing_data
 
-    def process_facility(self) -> Response:
+    def _process_facility(self) -> Response:
         uploaded_file = self.__processing_data.get('uploaded_file')
         processed_data = self.__processing_data.get('processed_data')
         contributor = self.__processing_data.get('contributor')
@@ -49,7 +49,7 @@ class ProcessingFacilityList(ProcessingFacility):
         header_row_keys = rows[0].raw_json.keys()
         header_str = ','.join(header_row_keys)
 
-        new_list = self._create_list(uploaded_file, contributor, header_str)
+        new_list = self.__create_list(uploaded_file, contributor, header_str)
         log.info(f'[List Upload] FacilityList created. Id {new_list.id}!')
 
         self._create_nonstandard_fields(header_row_keys, contributor)
@@ -69,7 +69,7 @@ class ProcessingFacilityList(ProcessingFacility):
             )
             log.info(f'[List Upload] FacilityListItem created. Id {item.id}!')
 
-            self._handle_row_errors(item, row, parsing_started)
+            self.__handle_row_errors(item, row, parsing_started)
 
             if item.status != FacilityListItem.ERROR_PARSING:
                 item.sector = row.sector
@@ -79,23 +79,23 @@ class ProcessingFacilityList(ProcessingFacility):
                 item.address = row.address
                 item.clean_address = row.clean_address
                 try:
-                    self._process_valid_item(item, row)
+                    self.__process_valid_item(item, row)
                 except Exception as e:
-                    self._handle_processing_exception(
+                    self.__handle_processing_exception(
                         item,
                         e,
                         uploaded_file,
                         parsing_started,
                     )
 
-            self._finalize_item_processing(
+            self.__finalize_item_processing(
                 item, parsing_started, is_geocoded, parsed_items
             )
 
         serializer = serializer_method(new_list)
         return Response(serializer.data)
 
-    def _create_list(self, uploaded_file, contributor, header_str):
+    def __create_list(self, uploaded_file, contributor, header_str):
         name = self.__processing_data.get('name')
         description = self.__processing_data.get('description')
         replaces = self.__processing_data.get('replaces')
@@ -131,7 +131,7 @@ class ProcessingFacilityList(ProcessingFacility):
                 source=source,
             )
 
-    def _handle_row_errors(self, item, row, parsing_started):
+    def __handle_row_errors(self, item, row, parsing_started):
         if row.errors:
             stringified_cc_err_messages = '\n'.join(
                 [f"{error['message']}" for error in row.errors]
@@ -153,7 +153,7 @@ class ProcessingFacilityList(ProcessingFacility):
                 }
             )
 
-    def _process_valid_item(self, item, row):
+    def __process_valid_item(self, item, row):
         if (
             FileHeaderField.LAT in row.fields.keys()
             and FileHeaderField.LNG in row.fields.keys()
@@ -166,7 +166,7 @@ class ProcessingFacilityList(ProcessingFacility):
 
         create_extendedfields_for_single_item(item, row.fields)
 
-    def _handle_processing_exception(
+    def __handle_processing_exception(
         self, item, exception, uploaded_file, parsing_started
     ):
         request = self.__processing_data.get('request')
@@ -190,7 +190,7 @@ class ProcessingFacilityList(ProcessingFacility):
             }
         )
 
-    def _finalize_item_processing(
+    def __finalize_item_processing(
         self, item, parsing_started, is_geocoded, parsed_items
     ):
         if item.status != FacilityListItem.ERROR_PARSING:

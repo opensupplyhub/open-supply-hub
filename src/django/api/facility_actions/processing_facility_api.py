@@ -32,7 +32,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
     def __init__(self, processing_data: Dict[str, Any]) -> None:
         self.__processing_data = processing_data
 
-    def process_facility(self):
+    def _process_facility(self):
         request = self.__processing_data.get('request')
         processed_data = self.__processing_data.get('processed_data')
         public_submission = self.__processing_data.get('public_submission')
