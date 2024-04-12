@@ -1,13 +1,11 @@
 import csv
 import operator
 import os
-import traceback
-import re
 import logging
 
 from functools import reduce
-from typing import Union, List
 
+from api.facility_actions.processing_facility import ProcessingFacility
 from api.helpers.helpers import (
     get_raw_json,
 )
@@ -20,6 +18,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import (
     NotFound,
     ValidationError,
+    APIException
 )
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -30,14 +29,12 @@ from django.core.files.uploadedfile import (
 from django.db import transaction
 from django.db.models import F, Q
 from django.utils import timezone
-from django.contrib.gis.geos import Point
 
 from ...aws_batch import submit_jobs, submit_parse_job
 from api.constants import (
     CsvHeaderField,
     FacilityListItemsQueryParams,
     ProcessingAction,
-    FileHeaderField
 )
 from api.sector_product_type_parser import SectorCache
 from ...facility_history import create_dissociate_match_change_reason
@@ -63,19 +60,11 @@ from ...serializers import (
     FacilityListItemSerializer,
     FacilityListItemsQueryParamsSerializer,
 )
-from api.extended_fields import (
-    create_extendedfields_for_listitem
-)
 from ..fields.create_nonstandard_fields import create_nonstandard_fields
-from contricleaner.lib.serializers.contri_cleaner_serializer import (
-    ContriCleanerSerializer
-)
-from contricleaner.lib.parsers.source_parser_xlsx import (
-    SourceParserXLSX
-)
-from contricleaner.lib.parsers.source_parser_csv import (
-    SourceParserCSV
-)
+from contricleaner.lib.contri_cleaner import ContriCleaner
+from contricleaner.lib.exceptions.parsing_error import ParsingError
+from contricleaner.lib.exceptions.handler_not_set_error \
+    import HandlerNotSetError
 
 log = logging.getLogger(__name__)
 
@@ -124,44 +113,6 @@ class FacilityListViewSet(ModelViewSet):
         self._validate_header(header)
         rows = map(clean_row, rows)
         return header, rows
-
-    @staticmethod
-    def __get_serializer(
-            file: Union[InMemoryUploadedFile, TemporaryUploadedFile]
-            ) -> ContriCleanerSerializer:
-        split_pattern = r', |,|\|'
-        ext = os.path.splitext(file.name)[1].lower()
-        if ext == '.xlsx':
-            serializer = ContriCleanerSerializer(
-                SourceParserXLSX(file),
-                SectorCache(),
-                split_pattern
-            )
-        elif ext == '.csv':
-            serializer = ContriCleanerSerializer(
-                SourceParserCSV(file),
-                SectorCache(),
-                split_pattern
-            )
-        else:
-            raise ValidationError(
-                'Unsupported file type. Please '
-                'submit Excel or UTF-8 CSV.'
-            )
-        return serializer
-
-    @staticmethod
-    def __is_required_fields_present(rows: List[dict]) -> bool:
-        if (len(rows) > 0):
-            required_fields_pattern = (r"^(country|address|name)"
-                                       r"(,\s*(country|address|name))"
-                                       r"*(\s+are\s+missing)$")
-            if len(rows[0].errors) > 0:
-                error_message = rows[0].errors[0]['message']
-                return not bool(
-                    re.match(required_fields_pattern, error_message))
-            return True
-        return False
 
     @transaction.atomic
     def create(self, request):
@@ -380,134 +331,35 @@ class FacilityListViewSet(ModelViewSet):
 
         parsing_started = str(timezone.now())
         log.info('[List Upload] Started CC Parse process!')
-        serializer = self.__get_serializer(uploaded_file)
+
+        contri_cleaner = ContriCleaner(uploaded_file, SectorCache())
         try:
-            rows = serializer.get_validated_rows()
-        except ValidationError as err:
-            log.error(f'[List Upload] Data Validation Error: {err}')
+            processed_data = contri_cleaner.process_data()
+        except ParsingError as err:
+            log.error(f'[List Upload] Data Parsing Error: {err}')
             report_error_to_rollbar(request=request,
                                     file=uploaded_file,
                                     exception=err)
-            raise ValidationError(str(err.detail[0]))
+            raise ValidationError(str(err))
+        except HandlerNotSetError as err:
+            log.error(f'[List Upload] Internal ContriCleaner Error: {err}')
+            report_error_to_rollbar(request=request,
+                                    file=uploaded_file,
+                                    exception=err)
+            raise APIException('Internal System Error. '
+                               'Please contact support.')
 
-        if not self.__is_required_fields_present(rows):
-            log.error('[List Upload] Required Field Missing Error')
-            raise ValidationError((
-                    f'Header must contain {FileHeaderField.COUNTRY}, '
-                    f'{FileHeaderField.NAME}, and '
-                    f'{FileHeaderField.ADDRESS} fields.'
-                ))
-
-        header_row_keys = rows[0].raw_json.keys()
-        header_str = ','.join(header_row_keys)
-        new_list = FacilityList(
-                    name=name,
-                    description=description,
-                    file_name=uploaded_file.name,
-                    file=uploaded_file,
-                    header=header_str,
-                    replaces=replaces,
-                    match_responsibility=contributor.match_responsibility)
-        new_list.save()
-        log.info(f'[List Upload] FacilityList created. Id {new_list.id}!')
-
-        create_nonstandard_fields(header_row_keys, contributor)
-
-        source = Source.objects.create(
-            contributor=contributor,
-            source_type=Source.LIST,
-            facility_list=new_list)
-
-        log.info(f'[List Upload] Source created. Id {source.id}!')
-        is_geocoded = False
-        parsed_items = set()
-        for idx, row in enumerate(rows):
-            item = FacilityListItem.objects.create(
-                    row_index=idx,
-                    raw_data=','.join(row.raw_json.values()),
-                    raw_json=row.raw_json,
-                    raw_header=header_str,
-                    sector=row.sector,
-                    source=source,
-                    country_code=row.country_code,
-                    name=row.name,
-                    clean_name=row.clean_name,
-                    address=row.address,
-                    clean_address=row.clean_address
-                )
-            log.info(f'[List Upload] FacilityListItem created. Id {item.id}!')
-            try:
-                if (FileHeaderField.LAT in row.fields.keys()
-                        and FileHeaderField.LNG in row.fields.keys()):
-                    # TODO: Move floating to the ContriCleaner library.
-                    lat = float(row.fields[FileHeaderField.LAT])
-                    lng = float(row.fields[FileHeaderField.LNG])
-                    item.geocoded_point = Point(lng, lat)
-                    is_geocoded = True
-
-                create_extendedfields_for_listitem(
-                    item,
-                    list(row.fields.keys()),
-                    list(row.fields.values())
-                )
-            except Exception as e:
-                log.error(
-                    f'[List Upload] Creation of ExtendedField error: {e}'
-                )
-                log.info(f'[List Upload] FacilityListItem Id: {item.id}')
-                item.status = FacilityListItem.ERROR_PARSING
-                item.processing_results.append({
-                    'action': ProcessingAction.PARSE,
-                    'started_at': parsing_started,
-                    'error': True,
-                    'message': str(e),
-                    'trace': traceback.format_exc(),
-                    'finished_at': str(timezone.now()),
-                    'is_geocoded': is_geocoded,
-                })
-
-            row_errors = row.errors
-            if len(row_errors) > 0:
-                stringified_message = '\n'.join(
-                    [f"{error['message']}" for error in row_errors]
-                )
-                log.error(
-                    f'[List Upload] CC Parsing Error: {stringified_message}'
-                )
-                log.info(f'[List Upload] FacilityListItem Id: {item.id}')
-                item.status = FacilityListItem.ERROR_PARSING
-                item.processing_results.append({
-                    'action': ProcessingAction.PARSE,
-                    'started_at': parsing_started,
-                    'error': True,
-                    'message': stringified_message,
-                    'trace': traceback.format_exc(),
-                    'finished_at': str(timezone.now()),
-                    'is_geocoded': is_geocoded,
-                })
-            else:
-                item.status = FacilityListItem.PARSED
-                item.processing_results.append({
-                    'action': ProcessingAction.PARSE,
-                    'started_at': parsing_started,
-                    'error': False,
-                    'finished_at': str(timezone.now()),
-                    'is_geocoded': is_geocoded,
-                })
-
-            if item.status != FacilityListItem.ERROR_PARSING:
-                core_fields = '{}-{}-{}'.format(item.country_code,
-                                                item.clean_name,
-                                                item.clean_address)
-                if core_fields in parsed_items:
-                    item.status = FacilityListItem.DUPLICATE
-                else:
-                    parsed_items.add(core_fields)
-
-            item.save()
-
-        serializer = self.get_serializer(new_list)
-        return Response(serializer.data)
+        return ProcessingFacility.create_list(
+            contributor,
+            self.get_serializer,
+            parsing_started,
+            request,
+            uploaded_file,
+            processed_data,
+            name,
+            description,
+            replaces,
+        )
 
     def list(self, request):
         """
