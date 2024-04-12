@@ -61,6 +61,9 @@ class ProcessingFacilityList(ProcessingFacility):
         parsed_items = set()
 
         for idx, row in enumerate(rows):
+            # Created a partially filled FacilityListItem to save valid data
+            # and to provide an item for saving any errors that may exist
+            # below.
             item = self._create_facility_list_item(
                 source, row, idx, header_str
             )
@@ -69,6 +72,12 @@ class ProcessingFacilityList(ProcessingFacility):
             self._handle_row_errors(item, row, parsing_started)
 
             if item.status != FacilityListItem.ERROR_PARSING:
+                item.sector = row.sector
+                item.country_code = row.country_code
+                item.name = row.name
+                item.clean_name = row.clean_name
+                item.address = row.address
+                item.clean_address = row.clean_address
                 try:
                     self._process_valid_item(item, row)
                 except Exception as e:
@@ -108,6 +117,19 @@ class ProcessingFacilityList(ProcessingFacility):
             source_type=Source.LIST,
             facility_list=new_list,
         )
+
+    @staticmethod
+    def _create_facility_list_item(source, row, idx, header_str):
+        return FacilityListItem.objects.create(
+                row_index=idx,
+                raw_data=','.join(
+                    f'"{value}"' for value in row.raw_json.values()
+                ),
+                raw_json=row.raw_json,
+                raw_header=header_str,
+                sector=[],
+                source=source,
+            )
 
     def _handle_row_errors(self, item, row, parsing_started):
         if row.errors:
@@ -190,5 +212,4 @@ class ProcessingFacilityList(ProcessingFacility):
                 item.status = FacilityListItem.DUPLICATE
             else:
                 parsed_items.add(core_fields)
-
         item.save()
