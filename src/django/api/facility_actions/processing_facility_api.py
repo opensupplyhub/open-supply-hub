@@ -40,7 +40,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
         processed_data = self.__processing_data.get('processed_data')
         public_submission = self.__processing_data.get('public_submission')
         should_create = self.__processing_data.get('should_create')
-        parse_started = self.__processing_data.get('parse_started')
+        parsing_started = self.__processing_data.get('parsing_started')
         contributor = request.user.contributor
 
         # handle processing errors
@@ -71,7 +71,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
         item.processing_results = [
             {
                 'action': ProcessingAction.PARSE,
-                'started_at': parse_started,
+                'started_at': parsing_started,
                 'error': False,
                 'finished_at': str(timezone.now()),
                 'is_geocoded': False,
@@ -96,7 +96,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
             create_extendedfields_for_single_item(item, row.fields)
         except (core_exceptions.ValidationError, ValueError) as exc:
             return self.__handle_extended_field_creation_error(
-                exc, item, parse_started, result
+                exc, item, parsing_started, result
             )
 
         geocode_started = str(timezone.now())
@@ -216,7 +216,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
     def __handle_extended_field_creation_error(
         exc: Exception,
         item: FacilityListItem,
-        parse_started: str,
+        parsing_started: str,
         result: dict,
     ) -> Response:
         error_message = ''
@@ -230,7 +230,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
         item.processing_results.append(
             {
                 'action': ProcessingAction.PARSE,
-                'started_at': parse_started,
+                'started_at': parsing_started,
                 'error': True,
                 'message': error_message,
                 'trace': traceback.format_exc(),
