@@ -45,16 +45,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
 
         # handle processing errors
         if processed_data.errors:
-            log.error(
-                f'[API Upload] CC Validation Errors: {processed_data.errors}'
-            )
-            return Response(
-                {
-                    "message": "The provided data could not be processed",
-                    "errors": processed_data.errors,
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return self.__handle_validation_errors(processed_data.errors)
 
         rows = processed_data.rows
         header_row_keys = rows[0].raw_json.keys()
@@ -63,14 +54,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
 
         # handle parsing errors
         if row.errors:
-            log.error(f'[API Upload] CC Parsing Errors: {row.errors}')
-            return Response(
-                {
-                    "message": "The provided data could not be parsed",
-                    "errors": row.errors,
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return self.__handle_parsing_errors(row.errors)
 
         source = self._create_source(
             contributor, public_submission, should_create
@@ -111,33 +95,9 @@ class ProcessingFacilityAPI(ProcessingFacility):
         try:
             create_extendedfields_for_single_item(item, row.fields)
         except (core_exceptions.ValidationError, ValueError) as exc:
-            error_message = ''
-
-            if isinstance(exc, ValueError):
-                error_message = str(exc)
-            else:
-                error_message = exc.message
-
-            item.status = FacilityListItem.ERROR_PARSING
-            item.processing_results.append(
-                {
-                    'action': ProcessingAction.PARSE,
-                    'started_at': parse_started,
-                    'error': True,
-                    'message': error_message,
-                    'trace': traceback.format_exc(),
-                    'finished_at': str(timezone.now()),
-                }
+            return self.__handle_extended_field_creation_error(
+                exc, item, parse_started, result
             )
-            item.save()
-            result['status'] = item.status
-            result['message'] = error_message
-            log.error(
-                '[API Upload] Creation of ExtendedField error: '
-                f'{error_message}'
-            )
-            log.info(f'[API Upload] FacilityListItem Id: {item.id}')
-            return Response(result, status=status.HTTP_400_BAD_REQUEST)
 
         geocode_started = str(timezone.now())
         log.info(
@@ -150,63 +110,14 @@ class ProcessingFacilityAPI(ProcessingFacility):
         )
         try:
             geocode_result = geocode_address(row.address, row.country_code)
-            if geocode_result['result_count'] > 0:
-                item.status = FacilityListItem.GEOCODED
-                item.geocoded_point = Point(
-                    geocode_result["geocoded_point"]["lng"],
-                    geocode_result["geocoded_point"]["lat"],
-                )
-                item.geocoded_address = geocode_result["geocoded_address"]
 
-                result['geocoded_geometry'] = {
-                    'type': 'Point',
-                    'coordinates': [
-                        geocode_result["geocoded_point"]["lng"],
-                        geocode_result["geocoded_point"]["lat"],
-                    ],
-                }
-                result['geocoded_address'] = item.geocoded_address
-            else:
-                item.status = FacilityListItem.GEOCODED_NO_RESULTS
-                result['status'] = item.status
-                result['message'] = ErrorMessages.GEOCODED_NO_RESULTS
-
-            item.processing_results.append(
-                {
-                    'action': ProcessingAction.GEOCODE,
-                    'started_at': geocode_started,
-                    'error': False,
-                    'skipped_geocoder': False,
-                    'data': geocode_result['full_response'],
-                    'finished_at': str(timezone.now()),
-                }
+            self.__handle_geocode_result(
+                geocode_result, item, result, geocode_started
             )
 
-            item.save()
-            # [A/B Test] OSHUB-507
-            FacilityListItemTemp.copy(item)
         except Exception as exc:
-            item.status = FacilityListItem.ERROR_GEOCODING
-            item.processing_results.append(
-                {
-                    'action': ProcessingAction.GEOCODE,
-                    'started_at': geocode_started,
-                    'error': True,
-                    'message': str(exc),
-                    'trace': traceback.format_exc(),
-                    'finished_at': str(timezone.now()),
-                }
-            )
-            item.save()
-            result['status'] = item.status
-            log.error(f'[API Upload] Geocode Error: {str(exc)}')
-            log.info(f'[API Upload] FacilityListItem Id: {item.id}')
-            log.info(
-                f'[API Upload] Address: {row.address}, '
-                f'Country Code: {row.country_code}'
-            )
-            return Response(
-                result, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            self.__handle_geocode_error(
+                item, row, geocode_started, result, exc
             )
 
         if item.status == FacilityListItem.GEOCODED:
@@ -278,3 +189,131 @@ class ProcessingFacilityAPI(ProcessingFacility):
             country_code=row.country_code,
             sector=row.sector,
         )
+
+    @staticmethod
+    def __handle_validation_errors(errors: Any) -> Response:
+        log.error(f'[API Upload] CC Validation Errors: {errors}')
+        return Response(
+            {
+                "message": "The provided data could not be processed",
+                "errors": errors,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    @staticmethod
+    def __handle_parsing_errors(errors: Any) -> Response:
+        log.error(f'[API Upload] CC Parsing Errors: {errors}')
+        return Response(
+            {
+                "message": "The provided data could not be parsed",
+                "errors": errors,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    @staticmethod
+    def __handle_extended_field_creation_error(
+        exc: Exception,
+        item: FacilityListItem,
+        parse_started: str,
+        result: dict,
+    ) -> Response:
+        error_message = ''
+
+        if isinstance(exc, ValueError):
+            error_message = str(exc)
+        else:
+            error_message = exc.message
+
+        item.status = FacilityListItem.ERROR_PARSING
+        item.processing_results.append(
+            {
+                'action': ProcessingAction.PARSE,
+                'started_at': parse_started,
+                'error': True,
+                'message': error_message,
+                'trace': traceback.format_exc(),
+                'finished_at': str(timezone.now()),
+            }
+        )
+        item.save()
+        result['status'] = item.status
+        result['message'] = error_message
+        log.error(
+            '[API Upload] Creation of ExtendedField error: ' f'{error_message}'
+        )
+        log.info(f'[API Upload] FacilityListItem Id: {item.id}')
+        return Response(result, status=status.HTTP_400_BAD_REQUEST)
+
+    @staticmethod
+    def __handle_geocode_result(
+        geocode_result: dict,
+        item: FacilityListItem,
+        result: dict,
+        geocode_started: str,
+    ):
+        if geocode_result['result_count'] > 0:
+            item.status = FacilityListItem.GEOCODED
+            item.geocoded_point = Point(
+                geocode_result["geocoded_point"]["lng"],
+                geocode_result["geocoded_point"]["lat"],
+            )
+            item.geocoded_address = geocode_result["geocoded_address"]
+
+            result['geocoded_geometry'] = {
+                'type': 'Point',
+                'coordinates': [
+                    geocode_result["geocoded_point"]["lng"],
+                    geocode_result["geocoded_point"]["lat"],
+                ],
+            }
+            result['geocoded_address'] = item.geocoded_address
+        else:
+            item.status = FacilityListItem.GEOCODED_NO_RESULTS
+            result['status'] = item.status
+            result['message'] = ErrorMessages.GEOCODED_NO_RESULTS
+
+        item.processing_results.append(
+            {
+                'action': ProcessingAction.GEOCODE,
+                'started_at': geocode_started,
+                'error': False,
+                'skipped_geocoder': False,
+                'data': geocode_result['full_response'],
+                'finished_at': str(timezone.now()),
+            }
+        )
+
+        item.save()
+        # [A/B Test] OSHUB-507
+        FacilityListItemTemp.copy(item)
+
+    @staticmethod
+    def __handle_geocode_error(
+        item: FacilityListItem,
+        row: RowDTO,
+        geocode_started: str,
+        result: dict,
+        exc: Any,
+    ) -> Response:
+        item.status = FacilityListItem.ERROR_GEOCODING
+        item.processing_results.append(
+            {
+                'action': ProcessingAction.GEOCODE,
+                'started_at': geocode_started,
+                'error': True,
+                'message': str(exc),
+                'trace': traceback.format_exc(),
+                'finished_at': str(timezone.now()),
+            }
+        )
+        item.save()
+        result['status'] = item.status
+        log.error(f'[API Upload] Geocode Error: {str(exc)}')
+        log.info(f'[API Upload] FacilityListItem Id: {item.id}')
+        log.info(
+            f'[API Upload] Address: {row.address}, '
+            f'Country Code: {row.country_code}'
+        )
+        return Response(result, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
