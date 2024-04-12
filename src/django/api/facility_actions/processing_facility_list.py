@@ -121,15 +121,13 @@ class ProcessingFacilityList(ProcessingFacility):
     @staticmethod
     def _create_facility_list_item(source, row, idx, header_str):
         return FacilityListItem.objects.create(
-                row_index=idx,
-                raw_data=','.join(
-                    f'"{value}"' for value in row.raw_json.values()
-                ),
-                raw_json=row.raw_json,
-                raw_header=header_str,
-                sector=[],
-                source=source,
-            )
+            row_index=idx,
+            raw_data=','.join(f'"{value}"' for value in row.raw_json.values()),
+            raw_json=row.raw_json,
+            raw_header=header_str,
+            sector=[],
+            source=source,
+        )
 
     def __handle_row_errors(self, item, row, parsing_started):
         if row.errors:
