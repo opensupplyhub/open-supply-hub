@@ -73,19 +73,7 @@ class RowSectorSerializerTest(TestCase):
 
     def test_validate_with_empty_values(self):
         result = self.serializer.validate(self.row_three, self.current.copy())
-        self.assertEqual(
-            result['errors'],
-            [
-                {
-                    'message': 'sector must not be empty.',
-                    'type': 'ValidationError',
-                },
-                {
-                    'message': 'product_type must not be empty.',
-                    'type': 'ValidationError',
-                },
-            ],
-        )
+        self.assertEqual(result['errors'], [])
 
     def test_validate_with_invalid_type(self):
         result = self.serializer.validate(self.row_four, self.current.copy())
@@ -127,6 +115,30 @@ class RowSectorSerializerTest(TestCase):
                 {
                     'message': 'You may submit a maximum of 50 product types, '
                     'not 60',
+                    'type': 'ValidationError',
+                }
+            ],
+        )
+
+    def test_validate_sector_value_lengths(self):
+        row = {
+            'sector': [
+                ('Agriculture AgricultureAgricultureAgricultureAgricultureAg'
+                 'ricultureAgricultureAgricultureAgricultureAgricultureAgric'
+                 'ultureAgricultureAgricultureAgricultureAgricultureAgricult'
+                 'ureAgricultureAgricultureAgricultureAgricultureAgriculture'
+                 )
+            ]
+        }
+
+        result = self.serializer.validate(row, self.current.copy())
+        self.assertEqual(
+            result['errors'],
+            [
+                {
+                    'message': ('There is a problem with the sector values: '
+                                'Ensure that each value has at most 50 '
+                                'characters.'),
                     'type': 'ValidationError',
                 }
             ],
