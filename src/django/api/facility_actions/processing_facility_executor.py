@@ -3,7 +3,7 @@ from api.facility_actions.processing_facility import ProcessingFacility
 
 class ProcessingFacilityExecutor:
     '''
-    Class to execute the processing of a facility.
+    Class defines which interface execute for the processing of a facility.
     It uses the strategy pattern to execute the processing.
     '''
 
