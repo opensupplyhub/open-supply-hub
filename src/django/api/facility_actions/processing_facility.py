@@ -4,9 +4,7 @@ import logging
 import traceback
 
 from api.constants import ErrorMessages, FileHeaderField, ProcessingAction
-from api.extended_fields import (
-    create_extendedfields_for_single_item,
-)
+from api.extended_fields import create_extendedfields_for_single_item
 from api.geocoding import geocode_address
 from api.kafka_producer import produce_message_match_process
 from api.models.facility.facility_list_item import FacilityListItem
@@ -262,19 +260,17 @@ class ProcessingFacility:
         is_geocoded = False
         parsed_items = set()
         for idx, row in enumerate(rows):
+            # Created a partially filled FacilityListItem to save valid data
+            # and to provide an item for saving any errors that may exist
+            # below.
             item = FacilityListItem.objects.create(
-                    source=source,
                     row_index=idx,
                     raw_data=','.join(
                         f'"{value}"' for value in row.raw_json.values()),
                     raw_json=row.raw_json,
                     raw_header=header_str,
-                    name=row.name,
-                    clean_name=row.clean_name,
-                    address=row.address,
-                    clean_address=row.clean_address,
-                    country_code=row.country_code,
-                    sector=row.sector,
+                    sector=[],
+                    source=source
                 )
             log.info(f'[List Upload] FacilityListItem created. Id {item.id}!')
 
@@ -299,6 +295,12 @@ class ProcessingFacility:
                 })
 
             if item.status != FacilityListItem.ERROR_PARSING:
+                item.sector = row.sector
+                item.country_code = row.country_code
+                item.name = row.name
+                item.clean_name = row.clean_name
+                item.address = row.address
+                item.clean_address = row.clean_address
                 try:
                     if (FileHeaderField.LAT in row.fields.keys()
                             and FileHeaderField.LNG in row.fields.keys()):

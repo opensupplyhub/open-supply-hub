@@ -1,17 +1,20 @@
-from contricleaner.constants import DEFAULT_SECTOR_NAME, MAX_PRODUCT_TYPE_COUNT
+from typing import List
 
+from contricleaner.constants import DEFAULT_SECTOR_NAME, MAX_PRODUCT_TYPE_COUNT
 from contricleaner.lib.helpers.is_valid_type import (
     is_valid_type,
 )
 from contricleaner.lib.helpers.split_values import split_values
-
 from contricleaner.lib.client_abstractions.sector_cache_interface import (
     SectorCacheInterface
 )
-from .row_serializer import RowSerializer
+from contricleaner.lib.serializers.row_serializers.row_serializer \
+    import RowSerializer
 
 
 class RowSectorSerializer(RowSerializer):
+    __valid_field_value_lengths = {'sector_value': 50}
+
     def __init__(
         self, sector_cache: SectorCacheInterface, split_pattern: str
     ) -> None:
@@ -64,6 +67,13 @@ class RowSectorSerializer(RowSerializer):
         if product_types:
             current['product_type'] = product_types
 
+        sector_value_length_errors = self.__validate_sector_value_lengths(
+            sectors
+        )
+        if sector_value_length_errors:
+            current['errors'].extend(sector_value_length_errors)
+            return current
+
         current['sector'] = sectors
 
         return current
@@ -86,6 +96,23 @@ class RowSectorSerializer(RowSerializer):
         product_types.sort()
 
         return sectors, product_types
+
+    def __validate_sector_value_lengths(self, sectors: List) -> List:
+        if not self.__are_sector_values_valid_length(sectors):
+            return [
+                {
+                    'message': ('There is a problem with the sector values: '
+                                'Ensure that each value has at most 50 '
+                                'characters.'),
+                    'type': 'ValidationError',
+                }
+            ]
+
+    def __are_sector_values_valid_length(self, sectors: List) -> bool:
+        return not any(
+            len(sector) > self.__valid_field_value_lengths['sector_value']
+            for sector in sectors
+        )
 
     @staticmethod
     def clean_value(value: str) -> str:

@@ -119,3 +119,27 @@ class RowSectorSerializerTest(TestCase):
                 }
             ],
         )
+
+    def test_validate_sector_value_lengths(self):
+        row = {
+            'sector': [
+                ('Agriculture AgricultureAgricultureAgricultureAgricultureAg'
+                 'ricultureAgricultureAgricultureAgricultureAgricultureAgric'
+                 'ultureAgricultureAgricultureAgricultureAgricultureAgricult'
+                 'ureAgricultureAgricultureAgricultureAgricultureAgriculture'
+                 )
+            ]
+        }
+
+        result = self.serializer.validate(row, self.current.copy())
+        self.assertEqual(
+            result['errors'],
+            [
+                {
+                    'message': ('There is a problem with the sector values: '
+                                'Ensure that each value has at most 50 '
+                                'characters.'),
+                    'type': 'ValidationError',
+                }
+            ],
+        )
