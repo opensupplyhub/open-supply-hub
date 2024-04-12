@@ -1,5 +1,6 @@
 import logging
 import traceback
+from typing import Any, Dict
 
 from api.constants import FileHeaderField, ProcessingAction
 from api.extended_fields import create_extendedfields_for_single_item
@@ -22,10 +23,11 @@ log = logging.getLogger(__name__)
 
 
 class ProcessingFacilityList(ProcessingFacility):
-    def __init__(
-        self,
-        processing_data,
-    ) -> None:
+    '''
+    Class to process a facility list.
+    '''
+
+    def __init__(self, processing_data: Dict[str, Any]) -> None:
         self.__processing_data = processing_data
 
     def _process_facility(self) -> Response:

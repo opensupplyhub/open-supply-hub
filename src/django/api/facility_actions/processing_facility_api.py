@@ -28,6 +28,10 @@ log = logging.getLogger(__name__)
 
 
 class ProcessingFacilityAPI(ProcessingFacility):
+    '''
+    Class to process a facility from an API request.
+    '''
+
     def __init__(self, processing_data: Dict[str, Any]) -> None:
         self.__processing_data = processing_data
 
