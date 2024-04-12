@@ -36,11 +36,11 @@ class ProcessingFacilityAPI(ProcessingFacility):
         self.__processing_data = processing_data
 
     def _process_facility(self):
-        request = self.__processing_data.get('request')
-        processed_data = self.__processing_data.get('processed_data')
-        public_submission = self.__processing_data.get('public_submission')
-        should_create = self.__processing_data.get('should_create')
-        parsing_started = self.__processing_data.get('parsing_started')
+        request = self.__processing_data['request']
+        processed_data = self.__processing_data['processed_data']
+        public_submission = self.__processing_data['public_submission']
+        should_create = self.__processing_data['should_create']
+        parsing_started = self.__processing_data['parsing_started']
         contributor = request.user.contributor
 
         # handle processing errors

@@ -31,11 +31,11 @@ class ProcessingFacilityList(ProcessingFacility):
         self.__processing_data = processing_data
 
     def _process_facility(self) -> Response:
-        uploaded_file = self.__processing_data.get('uploaded_file')
-        processed_data = self.__processing_data.get('processed_data')
-        contributor = self.__processing_data.get('contributor')
-        parsing_started = self.__processing_data.get('parsing_started')
-        serializer_method = self.__processing_data.get('serializer_method')
+        uploaded_file = self.__processing_data['uploaded_file']
+        processed_data = self.__processing_data['processed_data']
+        contributor = self.__processing_data['contributor']
+        parsing_started = self.__processing_data['parsing_started']
+        serializer_method = self.__processing_data['serializer_method']
 
         # handle processing errors
         if processed_data.errors:
@@ -98,9 +98,9 @@ class ProcessingFacilityList(ProcessingFacility):
         return Response(serializer.data)
 
     def __create_list(self, uploaded_file, contributor, header_str):
-        name = self.__processing_data.get('name')
-        description = self.__processing_data.get('description')
-        replaces = self.__processing_data.get('replaces')
+        name = self.__processing_data['name']
+        description = self.__processing_data['description']
+        replaces = self.__processing_data['replaces']
 
         return FacilityList.objects.create(
             name=name,
@@ -169,7 +169,7 @@ class ProcessingFacilityList(ProcessingFacility):
     def __handle_processing_exception(
         self, item, exception, uploaded_file, parsing_started
     ):
-        request = self.__processing_data.get('request')
+        request = self.__processing_data['request']
 
         log.error(
             f'[List Upload] Creation of ExtendedField error: {exception}'
