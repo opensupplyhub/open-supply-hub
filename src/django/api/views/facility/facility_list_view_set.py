@@ -331,6 +331,7 @@ class FacilityListViewSet(ModelViewSet):
 
         parsing_started = str(timezone.now())
         log.info('[List Upload] Started CC Parse process!')
+
         contri_cleaner = ContriCleaner(uploaded_file, SectorCache())
         try:
             processed_data = contri_cleaner.process_data()
@@ -348,47 +349,16 @@ class FacilityListViewSet(ModelViewSet):
             raise APIException('Internal System Error. '
                                'Please contact support.')
 
-        if processed_data.errors:
-            log.error(
-                f'[List Upload] CC Validation Errors: {processed_data.errors}'
-            )
-            error_messages = [
-                str(error['message']) for error in processed_data.errors
-            ]
-            raise ValidationError(error_messages)
-
-        rows = processed_data.rows
-
-        header_row_keys = rows[0].raw_json.keys()
-        header_str = ','.join(header_row_keys)
-        new_list = FacilityList(
-                    name=name,
-                    description=description,
-                    file_name=uploaded_file.name,
-                    file=uploaded_file,
-                    header=header_str,
-                    replaces=replaces,
-                    match_responsibility=contributor.match_responsibility)
-        new_list.save()
-        log.info(f'[List Upload] FacilityList created. Id {new_list.id}!')
-
-        source = Source.objects.create(
-            contributor=contributor,
-            source_type=Source.LIST,
-            facility_list=new_list)
-
-        serializer = self.get_serializer(new_list)
-
         return ProcessingFacility.create_list(
-            rows,
             contributor,
-            header_row_keys,
-            header_str,
-            source,
-            serializer,
+            self.get_serializer,
             parsing_started,
             request,
             uploaded_file,
+            processed_data,
+            name,
+            description,
+            replaces,
         )
 
     def list(self, request):
