@@ -33,7 +33,7 @@ data "aws_iam_policy_document" "database_anonymizer_worker" {
 }
 
 module "database_anonymizer_cluster" {
-  source = "git::git@github.com:cn-terraform/terraform-aws-ecs-cluster.git?ref=1.0.11"
+  source = "github.com/cn-terraform/terraform-aws-ecs-cluster?ref=1.0.11"
   name   = join("-", [local.short, "DatabaseAnonymizer"])
 }
 
@@ -45,7 +45,7 @@ resource "aws_ssm_parameter" "database_password" {
 }
 
 module "database_anonymizer_task_definition" {
-  source          = "git@github.com:cn-terraform/terraform-aws-ecs-fargate-task-definition.git?ref=1.0.36"
+  source          = "github.com/cn-terraform/terraform-aws-ecs-fargate-task-definition?ref=1.0.36"
   name_prefix     = "database-anonymizer"
   container_image = local.database_anonymizer_image
   container_name  = "database-anonymizer"
@@ -115,7 +115,7 @@ module "database_anonymizer_task_definition" {
 }
 
 module "database_anonymizer_task" {
-  source                                      = "git::git@github.com:cn-terraform/terraform-aws-ecs-fargate-scheduled-task.git?ref=1.0.25"
+  source                                      = "github.com/cn-terraform/terraform-aws-ecs-fargate-scheduled-task?ref=1.0.25"
   name_prefix                                 = "anonymize_database-task"
   event_rule_name                             = "anonymize_database-rule"
   event_rule_schedule_expression              = var.schedule_expression
