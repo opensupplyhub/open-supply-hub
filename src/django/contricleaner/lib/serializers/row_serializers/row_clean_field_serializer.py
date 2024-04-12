@@ -1,5 +1,6 @@
 from contricleaner.lib.helpers.clean import clean
-from .row_serializer import RowSerializer
+from contricleaner.lib.serializers.row_serializers.row_serializer \
+    import RowSerializer
 
 
 class RowCleanFieldSerializer(RowSerializer):
