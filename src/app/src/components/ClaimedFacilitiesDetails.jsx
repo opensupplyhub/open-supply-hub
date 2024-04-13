@@ -32,7 +32,6 @@ import COLOURS from '../util/COLOURS';
 import {
     fetchClaimedFacilityDetails,
     clearClaimedFacilityDetails,
-    updateClaimedFacilityNameEnglish,
     updateClaimedFacilityNameNativeLanguage,
     updateClaimedFacilityWorkersCount,
     updateClaimedFacilityFemaleWorkersPercentage,
@@ -40,7 +39,6 @@ import {
     updateClaimedFacilityCertifications,
     updateClaimedFacilityProductTypes,
     updateClaimedFacilityProductionTypes,
-    updateClaimedFacilityAddress,
     updateClaimedFacilityLocation,
     updateClaimedSector,
     updateClaimedFacilityPhone,
@@ -297,9 +295,7 @@ function ClaimedFacilitiesDetails({
     data,
     getDetails,
     clearDetails,
-    updateFacilityNameEnglish,
     updateFacilityNameNativeLanguage,
-    updateFacilityAddress,
     updateFacilityLocation,
     updateSector,
     updateFacilityPhone,
@@ -449,21 +445,9 @@ function ClaimedFacilitiesDetails({
                     Facility Details
                 </Typography>
                 <InputSection
-                    label="Facility name (English language)"
-                    value={data.facility_name_english}
-                    onChange={updateFacilityNameEnglish}
-                    disabled={updating}
-                />
-                <InputSection
                     label="Facility name (native language)"
                     value={data.facility_name_native_language}
                     onChange={updateFacilityNameNativeLanguage}
-                    disabled={updating}
-                />
-                <InputSection
-                    label="Address"
-                    value={data.facility_address}
-                    onChange={updateFacilityAddress}
                     disabled={updating}
                 />
                 <InputSection
@@ -473,9 +457,8 @@ function ClaimedFacilitiesDetails({
                     disabled={updating}
                     isSelect
                     isMultiSelect
-                    isCreatable
                     selectOptions={sectorOptions || []}
-                    selectPlaceholder="e.g. Apparel - Use <Enter> or <Tab> to add multiple values"
+                    selectPlaceholder="Select..."
                 />
                 <InputSection label="Product Types" />
                 <InputSection
@@ -752,11 +735,9 @@ ClaimedFacilitiesDetails.propTypes = {
     data: approvedFacilityClaimPropType,
     getDetails: func.isRequired,
     clearDetails: func.isRequired,
-    updateFacilityNameEnglish: func.isRequired,
     updateFacilityNameNativeLanguage: func.isRequired,
     updateFacilityWorkersCount: func.isRequired,
     updateFacilityFemaleWorkersPercentage: func.isRequired,
-    updateFacilityAddress: func.isRequired,
     updateFacilityPhone: func.isRequired,
     updateFacilityWebsite: func.isRequired,
     updateFacilityWebsiteVisibility: func.isRequired,
@@ -829,14 +810,8 @@ function mapDispatchToProps(
     return {
         getDetails: () => dispatch(fetchClaimedFacilityDetails(claimID)),
         clearDetails: () => dispatch(clearClaimedFacilityDetails()),
-        updateFacilityNameEnglish: makeDispatchValueFn(
-            updateClaimedFacilityNameEnglish,
-        ),
         updateFacilityNameNativeLanguage: makeDispatchValueFn(
             updateClaimedFacilityNameNativeLanguage,
-        ),
-        updateFacilityAddress: makeDispatchValueFn(
-            updateClaimedFacilityAddress,
         ),
         updateFacilityLocation: location =>
             dispatch(updateClaimedFacilityLocation(location)),

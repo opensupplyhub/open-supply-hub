@@ -1,12 +1,10 @@
-import json
-import traceback
-import asyncio
 import logging
+from api.facility_actions.processing_facility import ProcessingFacility
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
-from contricleaner.lib.parsers.source_parser_json import SourceParserJSON
-from contricleaner.lib.serializers.contri_cleaner_serializer import \
-    ContriCleanerSerializer
+from contricleaner.lib.contri_cleaner import ContriCleaner
+from contricleaner.lib.exceptions.handler_not_set_error \
+    import HandlerNotSetError
 
 from rest_framework.mixins import (
     ListModelMixin,
@@ -22,7 +20,8 @@ from rest_framework.exceptions import (
     NotAuthenticated,
     NotFound,
     PermissionDenied,
-    ValidationError
+    ValidationError,
+    APIException
 )
 from waffle import switch_is_active, flag_is_active
 from django.contrib.gis.geos import Point
@@ -44,7 +43,6 @@ from ...models import (
     FacilityClaim,
     FacilityClaimReviewNote,
     FacilityListItem,
-    FacilityListItemTemp,
     FacilityLocation,
     FacilityMatch,
     ExtendedField,
@@ -57,22 +55,16 @@ from ...constants import (
     FacilityMergeQueryParams,
     ProcessingAction,
     UpdateLocationParams,
-    ErrorMessages
 )
 from ...exceptions import BadRequestException
-from ...extended_fields import (
-    create_extendedfields_for_single_item,
-)
 from ...facility_history import (
     create_dissociate_match_change_reason,
     create_facility_history_list,
 )
-from ...geocoding import geocode_address
 from ...mail import send_claim_facility_confirmation_email
 
 from ...pagination import FacilitiesGeoJSONPagination
 from ...permissions import IsRegisteredAndConfirmed, IsSuperuser
-from ...processing import handle_external_match_process_result
 from ...sector_product_type_parser import SectorCache
 from ...serializers import (
     FacilityIndexSerializer,
@@ -86,9 +78,7 @@ from ...serializers import (
 )
 from ...throttles import DataUploadThrottle
 
-from ..fields.create_nonstandard_fields import create_nonstandard_fields
 from ..disabled_pagination_inspector import DisabledPaginationInspector
-from api.kafka_producer import produce_message_match_process
 
 from .facility_parameters import (
     facility_parameters,
@@ -230,10 +220,15 @@ class FacilitiesViewSet(ListModelMixin,
             )
         sort_by = params.validated_data['sort_by']
         order_list = []
-        if (sort_by is not None) and (sort_by == 'name'):
-            order_list = ['name']
-        else:
+
+        if (sort_by is None) or (sort_by == 'contributors_desc'):
             order_list = ['-contributors_count', 'name']
+        elif (sort_by == 'name_asc'):
+            order_list = ['name']
+        elif (sort_by == 'name_desc'):
+            order_list = ['-name']
+        elif (sort_by == 'contributors_asc'):
+            order_list = ['contributors_count', 'name']
 
         queryset = queryset.extra(order_by=order_list)
 
@@ -578,18 +573,6 @@ class FacilitiesViewSet(ListModelMixin,
 
         log.info(f'[API Upload] Uploading data: {request.data}')
         log.info('[API Upload] Started CC Parse process!')
-        split_pattern = r', |,|\|'
-        contri_cleaner = ContriCleanerSerializer(
-            SourceParserJSON(request.data), SectorCache(), split_pattern
-        )
-        rows = contri_cleaner.get_validated_rows()
-        row = rows[0]
-        if row.errors:
-            log.error(f'[API Upload] CC Parsing Errors: {row.errors}')
-            return Response({
-                "message": "The provided data could not be parsed",
-                "errors": row.errors
-            }, status=status.HTTP_400_BAD_REQUEST)
 
         params_serializer = FacilityCreateQueryParamsSerializer(
             data=request.query_params)
@@ -603,8 +586,6 @@ class FacilitiesViewSet(ListModelMixin,
         if not public_submission and not private_allowed:
             raise PermissionDenied('Cannot submit a private facility')
 
-        parse_started = str(timezone.now())
-
         source = Source.objects.create(
             contributor=request.user.contributor,
             source_type=Source.SINGLE,
@@ -612,185 +593,17 @@ class FacilitiesViewSet(ListModelMixin,
             create=should_create
         )
 
-        create_nonstandard_fields(
-            list(row.fields.keys()),
-            request.user.contributor
-        )
-
-        item = FacilityListItem.objects.create(
-            source=source,
-            row_index=0,
-            raw_data=json.dumps(request.data),
-            raw_json=row.raw_json,
-            raw_header='',
-            status=FacilityListItem.PARSED,
-            name=row.name,
-            clean_name=row.clean_name,
-            address=row.address,
-            clean_address=row.clean_address,
-            country_code=row.country_code,
-            sector=row.sector,
-            processing_results=[{
-                'action': ProcessingAction.PARSE,
-                'started_at': parse_started,
-                'error': False,
-                'finished_at': str(timezone.now()),
-                'is_geocoded': False,
-            }]
-        )
-
-        log.info(f'[API Upload] Source created. Id: {source.id}')
-        log.info(f'[API Upload] Source is public: {source.is_public}')
-        log.info(f'[API Upload] Source should create: {source.create}')
-        log.info(f'[API Upload] FacilityListItem created. Id: {item.id}')
-
-        result = {
-            'matches': [],
-            'item_id': item.id,
-            'geocoded_geometry': None,
-            'geocoded_address': None,
-            'status': item.status,
-        }
-
+        contri_cleaner = ContriCleaner(request.data, SectorCache())
         try:
-            create_extendedfields_for_single_item(item, row.fields)
-        except (core_exceptions.ValidationError, ValueError) as exc:
-            error_message = ''
+            processed_data = contri_cleaner.process_data()
+        except HandlerNotSetError as err:
+            log.error(f'[API Upload] Internal ContriCleaner Error: {err}')
+            raise APIException('Internal System Error. '
+                               'Please contact support.')
 
-            if isinstance(exc, ValueError):
-                error_message = str(exc)
-            else:
-                error_message = exc.message
-
-            item.status = FacilityListItem.ERROR_PARSING
-            item.processing_results.append({
-                'action': ProcessingAction.PARSE,
-                'started_at': parse_started,
-                'error': True,
-                'message': error_message,
-                'trace': traceback.format_exc(),
-                'finished_at': str(timezone.now()),
-            })
-            item.save()
-            result['status'] = item.status
-            result['message'] = error_message
-            log.error(
-                '[API Upload] Creation of ExtendedField error: '
-                f'{error_message}'
-            )
-            log.info(f'[API Upload] FacilityListItem Id: {item.id}')
-            return Response(result,
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        geocode_started = str(timezone.now())
-        log.info(
-            '[API Upload] Started Geocode process. '
-            f'FacilityListItem Id: {item.id}.'
+        return ProcessingFacility.create_api(
+            request, processed_data, source, should_create
         )
-        log.info(
-            f'[API Upload] Address: {row.address}, '
-            f'Country Code: {row.country_code}'
-        )
-        try:
-            geocode_result = geocode_address(row.address, row.country_code)
-            if geocode_result['result_count'] > 0:
-                item.status = FacilityListItem.GEOCODED
-                item.geocoded_point = Point(
-                    geocode_result["geocoded_point"]["lng"],
-                    geocode_result["geocoded_point"]["lat"]
-                )
-                item.geocoded_address = geocode_result["geocoded_address"]
-
-                result['geocoded_geometry'] = {
-                    'type': 'Point',
-                    'coordinates': [
-                        geocode_result["geocoded_point"]["lng"],
-                        geocode_result["geocoded_point"]["lat"],
-                    ]
-                }
-                result['geocoded_address'] = item.geocoded_address
-            else:
-                item.status = FacilityListItem.GEOCODED_NO_RESULTS
-                result['status'] = item.status
-                result['message'] = ErrorMessages.GEOCODED_NO_RESULTS
-
-            item.processing_results.append({
-                'action': ProcessingAction.GEOCODE,
-                'started_at': geocode_started,
-                'error': False,
-                'skipped_geocoder': False,
-                'data': geocode_result['full_response'],
-                'finished_at': str(timezone.now()),
-            })
-
-            item.save()
-            # [A/B Test] OSHUB-507
-            FacilityListItemTemp.copy(item)
-        except Exception as exc:
-            item.status = FacilityListItem.ERROR_GEOCODING
-            item.processing_results.append({
-                'action': ProcessingAction.GEOCODE,
-                'started_at': geocode_started,
-                'error': True,
-                'message': str(exc),
-                'trace': traceback.format_exc(),
-                'finished_at': str(timezone.now()),
-            })
-            item.save()
-            result['status'] = item.status
-            log.error(f'[API Upload] Geocode Error: {str(exc)}')
-            log.info(f'[API Upload] FacilityListItem Id: {item.id}')
-            log.info(f'[API Upload] Address: {row.address}, '
-                     f'Country Code: {row.country_code}')
-            return Response(result,
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        if item.status == FacilityListItem.GEOCODED:
-            log.info('[API Upload] Trying to start Match process!')
-            log.info(f'[API Upload] FacilityListItem Id: {item.id}')
-            log.info(f'[API Upload] Source Id: {item.id}')
-            # Handle and produce message to Kafka with source_id data
-            timer = 0
-            timeout = 25
-            fli_temp = None
-            while True:
-                if timer > timeout:
-                    break
-                fli_temp = FacilityListItemTemp.objects.get(
-                    source=source.id
-                )
-                if fli_temp.status == FacilityListItemTemp.GEOCODED:
-                    log.info('[API Upload] Started Match process!')
-                    log.info(f'[API Upload] FacilityListItem Id: {item.id}')
-                    log.info(
-                        f'[API Upload] FacilityListItemTemp Id: {fli_temp.id}'
-                    )
-                    log.info(f'[API Upload] Source Id: {item.id}')
-                    asyncio.run(produce_message_match_process(source.id))
-                    break
-                asyncio.sleep(1)
-                timer = timer + 1
-
-            # Handle results of "match" process from Dedupe Hub
-            result = handle_external_match_process_result(
-                fli_temp.id,
-                result,
-                request,
-                should_create
-            )
-
-        errors_status = [FacilityListItem.ERROR_MATCHING,
-                         FacilityListItem.GEOCODED_NO_RESULTS]
-
-        log.info(f'[API Upload] Result data: {result}')
-        log.info(f'[API Upload] FacilityListItem Id: {item.id}')
-        log.info(f'[API Upload] Source Id: {item.id}')
-
-        if (should_create
-                and result['status'] not in errors_status):
-            return Response(result, status=status.HTTP_201_CREATED)
-        else:
-            return Response(result, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(auto_schema=None)
     @transaction.atomic

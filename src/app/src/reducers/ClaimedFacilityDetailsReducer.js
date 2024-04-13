@@ -11,9 +11,7 @@ import {
     startUpdateClaimedFacilityDetails,
     failUpdateClaimedFacilityDetails,
     completeUpdateClaimedFacilityDetails,
-    updateClaimedFacilityNameEnglish,
     updateClaimedFacilityNameNativeLanguage,
-    updateClaimedFacilityAddress,
     updateClaimedFacilityLocation,
     updateClaimedSector,
     updateClaimedFacilityPhone,
@@ -108,15 +106,6 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimedFacilityNameEnglish]: (state, name) =>
-            update(state, {
-                updateData: {
-                    error: { $set: initialState.updateData.error },
-                },
-                data: {
-                    facility_name_english: { $set: name },
-                },
-            }),
         [updateClaimedFacilityNameNativeLanguage]: (state, name) =>
             update(state, {
                 updateData: {
@@ -188,15 +177,6 @@ export default createReducer(
                     facility_production_types: {
                         $set: orderBy(productionTypes, identity),
                     },
-                },
-            }),
-        [updateClaimedFacilityAddress]: (state, address) =>
-            update(state, {
-                updateData: {
-                    error: { $set: initialState.updateData.error },
-                },
-                data: {
-                    facility_address: { $set: address },
                 },
             }),
         [updateClaimedFacilityLocation]: (state, location) =>

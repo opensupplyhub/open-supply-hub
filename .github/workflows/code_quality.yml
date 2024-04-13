@@ -18,9 +18,9 @@ jobs:
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Install frontend NPM modules
-        run: docker-compose run --rm --no-deps app yarn install
+        run: docker compose run --rm --no-deps app yarn install
       - name: Run the Jest tests and generate code cov report
-        run: docker-compose run --rm --no-deps app yarn test
+        run: docker compose run --rm --no-deps app yarn test
       - name: Upload Jest code cov for the base branch
         uses: actions/upload-artifact@v4
         with:
@@ -37,9 +37,9 @@ jobs:
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Install frontend NPM modules
-        run: docker-compose run --rm --no-deps app yarn install
+        run: docker compose run --rm --no-deps app yarn install
       - name: Run the Jest tests and generate code cov report
-        run: docker-compose run --rm --no-deps app yarn test
+        run: docker compose run --rm --no-deps app yarn test
       - name: Upload Jest code cov for the feature branch
         uses: actions/upload-artifact@v4
         with:
@@ -81,10 +81,10 @@ jobs:
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Build Django image
-        run: docker-compose build
+        run: docker compose build
       - name: Run the unittest tests and generate code cov report
         run: |
-          docker-compose \
+          docker compose \
             run --rm --entrypoint /bin/sh django \
             -c "coverage run --data-file=./coverage/django/.coverage manage.py test --no-input ./api/tests \
             && coverage lcov --data-file=./coverage/django/.coverage -o ./coverage/django/coverage.lcov \
@@ -105,10 +105,10 @@ jobs:
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Build Django image
-        run: docker-compose build
+        run: docker compose build
       - name: Run the unittest tests and generate code cov report
         run: |
-          docker-compose \
+          docker compose \
             run --rm --entrypoint /bin/sh django \
             -c "coverage run --data-file=./coverage/django/.coverage manage.py test --no-input ./api/tests \
             && coverage lcov --data-file=./coverage/django/.coverage -o ./coverage/django/coverage.lcov \
@@ -154,10 +154,10 @@ jobs:
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Build Django image
-        run: docker-compose build
+        run: docker compose build
       - name: Run the unittest tests and generate code cov report
         run: |
-          docker-compose \
+          docker compose \
               run --rm --entrypoint /bin/sh django \
               -c "coverage run --data-file=./coverage/countries/.coverage manage.py test --no-input ./countries/tests \
               && coverage lcov --data-file=./coverage/countries/.coverage -o ./coverage/countries/coverage.lcov \
@@ -178,10 +178,10 @@ jobs:
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Build Django image
-        run: docker-compose build
+        run: docker compose build
       - name: Run the unittest tests and generate code cov report
         run: |
-          docker-compose \
+          docker compose \
               run --rm --entrypoint /bin/sh django \
               -c "coverage run --data-file=./coverage/countries/.coverage manage.py test --no-input ./countries/tests \
               && coverage lcov --data-file=./coverage/countries/.coverage -o ./coverage/countries/coverage.lcov \
@@ -227,10 +227,10 @@ jobs:
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Build Django image
-        run: docker-compose build
+        run: docker compose build
       - name: Run the unittest tests and generate code cov report
         run: |
-          docker-compose \
+          docker compose \
               run --rm --entrypoint /bin/sh django \
               -c "coverage run --data-file=./coverage/contricleaner/.coverage manage.py test --no-input ./contricleaner/tests \
               && coverage lcov --data-file=./coverage/contricleaner/.coverage -o ./coverage/contricleaner/coverage.lcov \
@@ -251,10 +251,10 @@ jobs:
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Build Django image
-        run: docker-compose build
+        run: docker compose build
       - name: Run the unittest tests and generate code cov report
         run: |
-          docker-compose \
+          docker compose \
               run --rm --entrypoint /bin/sh django \
               -c "coverage run --data-file=./coverage/contricleaner/.coverage manage.py test --no-input ./contricleaner/tests \
               && coverage lcov --data-file=./coverage/contricleaner/.coverage -o ./coverage/contricleaner/coverage.lcov \
@@ -286,7 +286,7 @@ jobs:
           send-summary-comment: true
           show-annotations: "warning"
           app-name: Contricleaner App | Unittest test suite
-  
+
   # code quality for the Dedupe Hub
   get-base-branch-dd-cov:
     environment: Quality Environment
@@ -300,10 +300,10 @@ jobs:
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Build Dedupe Hub image
-        run: docker-compose build
+        run: docker compose build
       - name: Run the unittest tests and generate code cov report
         run: |
-          docker-compose \
+          docker compose \
               run --rm --entrypoint /bin/sh api-app \
               -c "coverage run --data-file=./coverage/.coverage -m unittest \
               && coverage lcov --data-file=./coverage/.coverage -o ./coverage/coverage.lcov \
@@ -324,10 +324,10 @@ jobs:
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Build Dedupe Hub image
-        run: docker-compose build
+        run: docker compose build
       - name: Run the unittest tests and generate code cov report
         run: |
-          docker-compose \
+          docker compose \
               run --rm --entrypoint /bin/sh api-app \
               -c "coverage run --data-file=./coverage/.coverage -m unittest \
               && coverage lcov --data-file=./coverage/.coverage -o ./coverage/coverage.lcov \
@@ -380,10 +380,10 @@ jobs:
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Build Django image
-        run: docker-compose build
+        run: docker compose build
       - name: Run the Flake8 linter check
         run: |
-          docker-compose \
+          docker compose \
             run --rm --no-deps --entrypoint flake8 django \
             --exclude settings.py,manage.py,*.pyc,api/migrations/*
 
@@ -397,15 +397,15 @@ jobs:
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Install frontend NPM modules
-        run: docker-compose run --rm --no-deps app yarn install
+        run: docker compose run --rm --no-deps app yarn install
       - name: Run the ESLint linter check
         run: |
-          docker-compose \
+          docker compose \
             run --rm --entrypoint ./node_modules/.bin/eslint \
             app src/ --ext .js --ext .jsx
       - name: Run the Prettier formatting check
         run: |
-          docker-compose \
+          docker compose \
             run --rm --no-deps app yarn prettier \
             --config .prettierrc \
             --check 'src/**/*.js' 'src/**/*.jsx'
