@@ -20,7 +20,7 @@ jobs:
           cd ./src/anon-tools
           mkdir -p ./keys
           echo "${{ secrets.KEY_FILE_PROD }}" > ./keys/key
-          docker build -t restore -f Dockerfile.restore .
+          docker build -t dump_image -f Dockerfile.dump .
           docker run -v ./keys/key:/keys/key --shm-size=2gb --rm \
               -e AWS_ACCESS_KEY_ID_PROD=${{ secrets.AWS_ACCESS_KEY_ID_PROD }} \
               -e AWS_SECRET_ACCESS_KEY_PROD=${{ secrets.AWS_SECRET_ACCESS_KEY_RPOD }} \
@@ -31,4 +31,4 @@ jobs:
               -e DATABASE_NAME=opensupplyhub \
               -e DATABASE_USERNAME=opensupplyhub \
               -e DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
-              restore
+              dump_image
