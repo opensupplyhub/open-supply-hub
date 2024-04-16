@@ -40,6 +40,6 @@ jobs:
     - name: Create issue
       uses: peter-evans/create-issue-from-file@v5
       with:
-        title: Weekly issue metrics report
+        title: Weekly PR metrics report ${{ env.last_week }}
         token: ${{ secrets.GITHUB_TOKEN }}
         content-filepath: ./issue_metrics.md
