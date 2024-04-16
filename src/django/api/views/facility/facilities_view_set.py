@@ -606,11 +606,11 @@ class FacilitiesViewSet(ListModelMixin,
             'parsing_started': parsing_started,
         }
 
-        context = ProcessingFacilityExecutor(
+        processing_facility_executor = ProcessingFacilityExecutor(
             ProcessingFacilityAPI(processing_data)
         )
 
-        return context.run_processing()
+        return processing_facility_executor.run_processing()
 
     @swagger_auto_schema(auto_schema=None)
     @transaction.atomic

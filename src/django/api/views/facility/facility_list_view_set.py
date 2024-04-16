@@ -368,11 +368,11 @@ class FacilityListViewSet(ModelViewSet):
             'serializer_method': self.get_serializer,
         }
 
-        context = ProcessingFacilityExecutor(
+        processing_facility_executor = ProcessingFacilityExecutor(
             ProcessingFacilityList(processing_data)
         )
 
-        return context.run_processing()
+        return processing_facility_executor.run_processing()
 
     def list(self, request):
         """
