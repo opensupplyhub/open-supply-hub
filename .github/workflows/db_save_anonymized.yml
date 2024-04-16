@@ -15,7 +15,7 @@ jobs:
           string: ${{ vars.ENV_NAME }}
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: Restore database for ${{ vars.ENV_NAME }}
+      - name: Dump database for ${{ vars.ENV_NAME }}
         run: |
           cd ./src/anon-tools
           mkdir -p ./keys

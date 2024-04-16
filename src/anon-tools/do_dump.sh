@@ -16,6 +16,7 @@ chmod 600 /keys/key
 ssh -f -i /keys/key -L 5433:database.service.osh.internal:5432 -N ec2-user@$bastion
 
 pg_dump --clean --no-owner --no-privileges -Fc -h localhost  -d $DATABASE_NAME -U $DATABASE_USERNAME -p 5433 -f /dumps/osh_prod_large.dump -w --verbose
+ls -la /dumps
 
 echo "Start anonymization"
 
