@@ -34,5 +34,5 @@ jobs:
           CORE_HOURS_START: "00:00"
           CORE_HOURS_END: "23:59"
           TIMEZONE: "Europe/Berlin"
-          REPORT_DATE_START: ${{ env.start_date }}
-          REPORT_DATE_END: ${{ env.end_date }}
+          REPORT_PERIOD: "weeks:1"
+          PERIOD_SPLIT_UNIT: "none"
