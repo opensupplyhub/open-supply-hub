@@ -40,7 +40,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
         self.__parsing_started = processing_input['parsing_started']
         self.__contributor = self.__request.user.contributor
 
-    def _process_facility(self):
+    def process_facility(self):
         # handle processing errors
         if self.__processed_data.errors:
             return self.__handle_validation_errors()

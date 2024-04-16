@@ -11,6 +11,6 @@ class ProcessingFacilityExecutor:
         self._strategy = strategy
 
     def run_processing(self) -> None:
-        result = self._strategy._process_facility()
+        result = self._strategy.process_facility()
 
         return result

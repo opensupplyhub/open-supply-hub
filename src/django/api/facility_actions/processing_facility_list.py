@@ -37,7 +37,7 @@ class ProcessingFacilityList(ProcessingFacility):
         self.__description = processing_input['description']
         self.__replaces = processing_input['replaces']
 
-    def _process_facility(self) -> Response:
+    def process_facility(self) -> Response:
         # handle processing errors
         if self.__processed_data.errors:
             log.error(

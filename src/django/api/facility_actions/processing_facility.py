@@ -22,7 +22,7 @@ class ProcessingFacility(ABC):
     '''
 
     @abstractmethod
-    def _process_facility(self):
+    def process_facility(self):
         pass
 
     @staticmethod
