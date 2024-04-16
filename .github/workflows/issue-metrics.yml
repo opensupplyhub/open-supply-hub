@@ -35,7 +35,7 @@ jobs:
       uses: github/issue-metrics@v3
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        SEARCH_QUERY: 'repo:owner/repo is:pr created:${{ env.last_week }} -reason:"not planned"'
+        SEARCH_QUERY: 'repo:opensupplyhub/open-supply-hub is:pr created:${{ env.last_week }} -reason:"not planned"'
 
     - name: Create issue
       uses: peter-evans/create-issue-from-file@v5
