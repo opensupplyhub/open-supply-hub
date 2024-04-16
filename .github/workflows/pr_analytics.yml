@@ -35,4 +35,4 @@ jobs:
           PERIOD_SPLIT_UNIT: "none"
           EXECUTION_OUTCOME: "existing-issue"
           ISSUE_NUMBER: "172"
-          ISSUE_TITLE: "Weekly PR report (d/MM/yyyy)"
+          ISSUE_TITLE: "Weekly PR report (Updates every Monday on 00:00 UTC)"
