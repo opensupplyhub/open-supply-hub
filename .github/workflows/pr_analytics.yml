@@ -1,0 +1,39 @@
+name: "Weekly PR Analytics"
+on:
+  on:
+  push:
+      branches:
+        - issue-metrics-workflow
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 1'
+jobs:
+  create-report:
+    name: "Create report"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get dates for last week
+        shell: bash
+        run: |
+          # Calculate the end date, which is today
+          end_date=$(date +%Y-%m-%d)
+
+          # Calculate the start date, which is 7 days ago
+          start_date=$(date -d "$end_date -7 days" +%Y-%m-%d)
+
+          #Set an environment variable with the date range
+          echo "$start_date..$end_date"
+          echo "start_date=$start_date" >> "$GITHUB_ENV"
+          echo "end_date=$end_date" >> "$GITHUB_ENV"
+      - name: "Run script for analytics"
+        uses: AlexSim93/pull-request-analytics-action@v2
+        with:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          GITHUB_REPO_FOR_ISSUE: "open-supply-hub"
+          GITHUB_OWNER_FOR_ISSUE: "opensupplyhub"
+          GITHUB_OWNERS_REPOS: "opensupplyhub/open-supply-hub"
+          CORE_HOURS_START: "00:00"
+          CORE_HOURS_END: "23:59"
+          TIMEZONE: "Europe/Berlin"
+          REPORT_DATE_START: ${{ env.start_date }}
+          REPORT_DATE_END: ${{ env.end_date }}
