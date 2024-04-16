@@ -1,6 +1,5 @@
 name: "Weekly PR Analytics"
 on:
-  on:
   push:
       branches:
         - issue-metrics-workflow
