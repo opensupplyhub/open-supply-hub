@@ -220,8 +220,10 @@ class FacilityListViewSet(ModelViewSet):
 
         csvreader = csv.reader(header.split('\n'), delimiter=',')
         for row in csvreader:
-            # TODO: remove create_nonstandard_fields after removing
-            # the create endpoint
+            # TODO: remove create_nonstandard_fields function
+            # (api/views/fields/create_nonstandard_fields.py) after removing
+            # the create endpoint because this function is not used anywhere.
+            # It was moved to the ProcessingFacility class as a method.
             create_nonstandard_fields(row, contributor)
 
         source = Source.objects.create(
