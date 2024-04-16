@@ -15,15 +15,15 @@ jobs:
         shell: bash
         run: |
           # Calculate the end date, which is today
-          end_date=$(date +%d/%m/%Y)
+          end_date=$(date +%Y-%m-%d)
 
           # Calculate the start date, which is 7 days ago
-          start_date=$(date -d "$end_date -7 days" +%d/%m/%Y)
+          start_date=$(date -d "$end_date -7 days" +%Y-%m-%d)
 
           #Set an environment variable with the date range
           echo "$start_date..$end_date"
-          echo "start_date=$start_date" >> "$GITHUB_ENV"
-          echo "end_date=$end_date" >> "$GITHUB_ENV"
+          echo "start_date=$(start_date +%d/%m/%Y)" >> "$GITHUB_ENV"
+          echo "end_date=$(end_date +%d/%m/%Y)" >> "$GITHUB_ENV"
       - name: "Run script for analytics"
         uses: AlexSim93/pull-request-analytics-action@v2
         with:
