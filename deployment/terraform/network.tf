@@ -1,5 +1,5 @@
 module "vpc" {
-  source = "github.com/opensupplyhub/terraform-aws-vpc?ref=7.0.3"
+  source = "github.com/opensupplyhub/terraform-aws-vpc?ref=7.0.4"
 
   name                       = "vpc${local.short}"
   region                     = var.aws_region
