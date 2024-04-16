@@ -32,6 +32,7 @@ jobs:
         echo "last_week=$start_date..$end_date" >> "$GITHUB_ENV"
 
     - name: Run issue-metrics tool
+      id: issue-metrics
       uses: github/issue-metrics@v3
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
