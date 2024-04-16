@@ -27,7 +27,7 @@ jobs:
       - name: "Run script for analytics"
         uses: AlexSim93/pull-request-analytics-action@v2
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT }}
           GITHUB_REPO_FOR_ISSUE: "open-supply-hub"
           GITHUB_OWNER_FOR_ISSUE: "opensupplyhub"
           GITHUB_OWNERS_REPOS: "opensupplyhub/open-supply-hub"
