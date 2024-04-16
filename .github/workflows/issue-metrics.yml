@@ -1,5 +1,8 @@
 name: Weekly issue metrics
 on:
+  push:
+    branches:
+      - issue-metrics-workflow
   workflow_dispatch:
   schedule:
     - cron: '0 0 * * 1'
