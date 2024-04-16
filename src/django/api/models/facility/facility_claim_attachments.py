@@ -3,11 +3,12 @@ from django.db.models import (
     BigAutoField,
     ForeignKey,
     DateTimeField,
-    URLField,
+    FileField,
     PROTECT,
 )
 
-class FacilityClaimAttachmentURLs(Model):
+
+class FacilityClaimAttachments(Model):
     '''
     Attachments uploaded by claimant
     '''
@@ -22,9 +23,9 @@ class FacilityClaimAttachmentURLs(Model):
         on_delete=PROTECT,
         help_text='The facility claim for this attachment file.'
     )
-    claim_attachment_url = URLField(
+    claim_attachment = FileField(
         null=True,
         blank=True,
-        help_text='AWS S3 URL linking to a claimant attached file.'
+        help_text='The uploaded claimant attached file.'
     )
     uploaded_at = DateTimeField(auto_now_add=True)

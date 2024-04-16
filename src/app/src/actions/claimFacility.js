@@ -1,7 +1,5 @@
 import { createAction } from 'redux-act';
-import get from 'lodash/get';
 import snakeCase from 'lodash/snakeCase';
-import mapKeys from 'lodash/mapKeys';
 
 import apiRequest from '../util/apiRequest';
 
@@ -102,7 +100,7 @@ export function submitClaimAFacilityData(osID) {
             return null;
         }
 
-        const postData = mapKeys(
+        const formDataSerialized = mapKeys(
             Object.assign({}, formData, {
                 preferredContactMethod: get(
                     formData,
@@ -113,6 +111,19 @@ export function submitClaimAFacilityData(osID) {
             }),
             (_, k) => snakeCase(k),
         );
+
+        Object.keys(formDataSerialized).forEach(key => {
+            if (
+                key === 'upload_files' &&
+                Array.isArray(formDataSerialized[key])
+            ) {
+                formDataSerialized[key].forEach(file => {
+                    postData.append('file[]', file);
+                });
+            } else {
+                postData.append(key, formDataSerialized[key]);
+            }
+        });
 
         dispatch(startSubmitClaimAFacilityData());
 
