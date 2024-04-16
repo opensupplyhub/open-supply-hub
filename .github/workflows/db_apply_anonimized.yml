@@ -14,7 +14,7 @@ on:
 
 jobs:
   apply-anonymized-db:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     environment: ${{ inputs.deploy-env || 'Test' }}
     
     steps:
@@ -40,3 +40,22 @@ jobs:
               -e DATABASE_USERNAME=opensupplyhub \
               -e DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
               restore
+  post_deploy:
+    needs: apply-anonymized-db
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.deploy-env || 'Test' }}
+    steps:
+      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+        id: get_env_name
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
+        with:
+          string: ${{ vars.ENV_NAME }}
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Run migrations for ${{ vars.ENV_NAME }}
+        run: |
+          ./deployment/run_cli_task ${{ vars.ENV_NAME }} "migrate,api"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"

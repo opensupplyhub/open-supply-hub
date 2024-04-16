@@ -5,7 +5,7 @@ on:
 
 jobs:
   save-anonymized-db:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     environment: Test
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
