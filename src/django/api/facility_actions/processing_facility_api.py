@@ -33,21 +33,19 @@ class ProcessingFacilityAPI(ProcessingFacility):
     '''
 
     def __init__(self, processing_input: Dict[str, Any]) -> None:
-        self.__processing_input = processing_input
+        self.__request = processing_input['request']
+        self.__processed_data = processing_input['processed_data']
+        self.__public_submission = processing_input['public_submission']
+        self.__should_create = processing_input['should_create']
+        self.__parsing_started = processing_input['parsing_started']
+        self.__contributor = self.__request.user.contributor
 
     def _process_facility(self):
-        request = self.__processing_input['request']
-        processed_data = self.__processing_input['processed_data']
-        public_submission = self.__processing_input['public_submission']
-        should_create = self.__processing_input['should_create']
-        parsing_started = self.__processing_input['parsing_started']
-        contributor = request.user.contributor
-
         # handle processing errors
-        if processed_data.errors:
-            return self.__handle_validation_errors(processed_data.errors)
+        if self.__processed_data.errors:
+            return self.__handle_validation_errors()
 
-        rows = processed_data.rows
+        rows = self.__processed_data.rows
         header_row_keys = rows[0].raw_json.keys()
         header_str = ','.join(header_row_keys)
         row = rows[0]
@@ -56,11 +54,9 @@ class ProcessingFacilityAPI(ProcessingFacility):
         if row.errors:
             return self.__handle_parsing_errors(row.errors)
 
-        source = self._create_source(
-            contributor, public_submission, should_create
-        )
+        source = self._create_source()
 
-        self._create_nonstandard_fields(header_row_keys, contributor)
+        self._create_nonstandard_fields(header_row_keys, self.__contributor)
 
         row_index = 0
         item = self._create_facility_list_item(
@@ -71,7 +67,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
         item.processing_results = [
             {
                 'action': ProcessingAction.PARSE,
-                'started_at': parsing_started,
+                'started_at': self.__parsing_started,
                 'error': False,
                 'finished_at': str(timezone.now()),
                 'is_geocoded': False,
@@ -96,7 +92,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
             create_extendedfields_for_single_item(item, row.fields)
         except (core_exceptions.ValidationError, ValueError) as exc:
             return self.__handle_extended_field_creation_error(
-                exc, item, parsing_started, result
+                exc, item, result
             )
 
         geocode_started = str(timezone.now())
@@ -146,7 +142,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
 
             # Handle results of "match" process from Dedupe Hub
             result = handle_external_match_process_result(
-                fli_temp.id, result, request, should_create
+                fli_temp.id, result, self.__request, self.__should_create
             )
 
         errors_status = [
@@ -158,18 +154,17 @@ class ProcessingFacilityAPI(ProcessingFacility):
         log.info(f'[API Upload] FacilityListItem Id: {item.id}')
         log.info(f'[API Upload] Source Id: {item.id}')
 
-        if should_create and result['status'] not in errors_status:
+        if self.__should_create and result['status'] not in errors_status:
             return Response(result, status=status.HTTP_201_CREATED)
         else:
             return Response(result, status=status.HTTP_200_OK)
 
-    @staticmethod
-    def _create_source(contributor, public_submission, should_create):
+    def _create_source(self):
         return Source.objects.create(
-            contributor=contributor,
+            contributor=self.__contributor,
             source_type=Source.SINGLE,
-            is_public=public_submission,
-            create=should_create,
+            is_public=self.__public_submission,
+            create=self.__should_create,
         )
 
     @staticmethod
@@ -190,8 +185,8 @@ class ProcessingFacilityAPI(ProcessingFacility):
             sector=row.sector,
         )
 
-    @staticmethod
-    def __handle_validation_errors(errors: Any) -> Response:
+    def __handle_validation_errors(self) -> Response:
+        errors = self.__processed_data.errors
         log.error(f'[API Upload] CC Validation Errors: {errors}')
         return Response(
             {
@@ -212,11 +207,10 @@ class ProcessingFacilityAPI(ProcessingFacility):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    @staticmethod
     def __handle_extended_field_creation_error(
+        self,
         exc: Exception,
         item: FacilityListItem,
-        parsing_started: str,
         result: dict,
     ) -> Response:
         error_message = ''
@@ -230,7 +224,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
         item.processing_results.append(
             {
                 'action': ProcessingAction.PARSE,
-                'started_at': parsing_started,
+                'started_at': self.__parsing_started,
                 'error': True,
                 'message': error_message,
                 'trace': traceback.format_exc(),
