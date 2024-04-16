@@ -28,35 +28,37 @@ class ProcessingFacilityList(ProcessingFacility):
     '''
 
     def __init__(self, processing_input: Dict[str, Any]) -> None:
-        self.__processing_input = processing_input
+        self.__uploaded_file = processing_input['uploaded_file']
+        self.__processed_data = processing_input['processed_data']
+        self.__contributor = processing_input['contributor']
+        self.__parsing_started = processing_input['parsing_started']
+        self.__serializer_method = processing_input['serializer_method']
+        self.__name = processing_input['name']
+        self.__description = processing_input['description']
+        self.__replaces = processing_input['replaces']
 
     def _process_facility(self) -> Response:
-        uploaded_file = self.__processing_input['uploaded_file']
-        processed_data = self.__processing_input['processed_data']
-        contributor = self.__processing_input['contributor']
-        parsing_started = self.__processing_input['parsing_started']
-        serializer_method = self.__processing_input['serializer_method']
-
         # handle processing errors
-        if processed_data.errors:
+        if self.__processed_data.errors:
             log.error(
-                f'[List Upload] CC Validation Errors: {processed_data.errors}'
+                '[List Upload] CC Validation Errors: '
+                f'{self.__processed_data.errors}'
             )
             error_messages = [
-                str(error['message']) for error in processed_data.errors
+                str(error['message']) for error in self.__processed_data.errors
             ]
             raise ValidationError(error_messages)
 
-        rows = processed_data.rows
+        rows = self.__processed_data.rows
         header_row_keys = rows[0].raw_json.keys()
         header_str = ','.join(header_row_keys)
 
-        new_list = self.__create_list(uploaded_file, contributor, header_str)
+        new_list = self.__create_list(header_str)
         log.info(f'[List Upload] FacilityList created. Id {new_list.id}!')
 
-        self._create_nonstandard_fields(header_row_keys, contributor)
+        self._create_nonstandard_fields(header_row_keys, self.__contributor)
 
-        source = self._create_source(contributor, new_list)
+        source = self._create_source(new_list)
         log.info(f'[List Upload] Source created. Id {source.id}!')
 
         is_geocoded = False
@@ -71,7 +73,7 @@ class ProcessingFacilityList(ProcessingFacility):
             )
             log.info(f'[List Upload] FacilityListItem created. Id {item.id}!')
 
-            self.__handle_row_errors(item, row, parsing_started)
+            self.__handle_row_errors(item, row)
 
             if item.status != FacilityListItem.ERROR_PARSING:
                 item.sector = row.sector
@@ -83,39 +85,27 @@ class ProcessingFacilityList(ProcessingFacility):
                 try:
                     self.__process_valid_item(item, row)
                 except Exception as e:
-                    self.__handle_processing_exception(
-                        item,
-                        e,
-                        uploaded_file,
-                        parsing_started,
-                    )
+                    self.__handle_processing_exception(item, e)
 
-            self.__finalize_item_processing(
-                item, parsing_started, is_geocoded, parsed_items
-            )
+            self.__finalize_item_processing(item, is_geocoded, parsed_items)
 
-        serializer = serializer_method(new_list)
+        serializer = self.__serializer_method(new_list)
         return Response(serializer.data)
 
-    def __create_list(self, uploaded_file, contributor, header_str):
-        name = self.__processing_input['name']
-        description = self.__processing_input['description']
-        replaces = self.__processing_input['replaces']
-
+    def __create_list(self, header_str):
         return FacilityList.objects.create(
-            name=name,
-            description=description,
-            file_name=uploaded_file.name,
-            file=uploaded_file,
+            name=self.__name,
+            description=self.__description,
+            file_name=self.__uploaded_file.name,
+            file=self.__uploaded_file,
             header=header_str,
-            replaces=replaces,
-            match_responsibility=contributor.match_responsibility,
+            replaces=self.__replaces,
+            match_responsibility=self.__contributor.match_responsibility,
         )
 
-    @staticmethod
-    def _create_source(contributor, new_list):
+    def _create_source(self, new_list):
         return Source.objects.create(
-            contributor=contributor,
+            contributor=self.__contributor,
             source_type=Source.LIST,
             facility_list=new_list,
         )
@@ -131,7 +121,7 @@ class ProcessingFacilityList(ProcessingFacility):
             source=source,
         )
 
-    def __handle_row_errors(self, item, row, parsing_started):
+    def __handle_row_errors(self, item, row):
         if row.errors:
             stringified_cc_err_messages = '\n'.join(
                 [f"{error['message']}" for error in row.errors]
@@ -145,7 +135,7 @@ class ProcessingFacilityList(ProcessingFacility):
             item.processing_results.append(
                 {
                     'action': ProcessingAction.PARSE,
-                    'started_at': parsing_started,
+                    'started_at': self.__parsing_started,
                     'error': True,
                     'message': str(stringified_cc_err_messages),
                     'trace': traceback.format_exc(),
@@ -166,23 +156,21 @@ class ProcessingFacilityList(ProcessingFacility):
 
         create_extendedfields_for_single_item(item, row.fields)
 
-    def __handle_processing_exception(
-        self, item, exception, uploaded_file, parsing_started
-    ):
+    def __handle_processing_exception(self, item, exception):
         request = self.__processing_input['request']
 
         log.error(
             f'[List Upload] Creation of ExtendedField error: {exception}'
         )
         report_error_to_rollbar(
-            request=request, file=uploaded_file, exception=exception
+            request=request, file=self.__uploaded_file, exception=exception
         )
         log.info(f'[List Upload] FacilityListItem Id: {item.id}')
         item.status = FacilityListItem.ERROR_PARSING
         item.processing_results.append(
             {
                 'action': ProcessingAction.PARSE,
-                'started_at': parsing_started,
+                'started_at': self.__parsing_started,
                 'error': True,
                 'message': str(exception),
                 'trace': traceback.format_exc(),
@@ -190,15 +178,13 @@ class ProcessingFacilityList(ProcessingFacility):
             }
         )
 
-    def __finalize_item_processing(
-        self, item, parsing_started, is_geocoded, parsed_items
-    ):
+    def __finalize_item_processing(self, item, is_geocoded, parsed_items):
         if item.status != FacilityListItem.ERROR_PARSING:
             item.status = FacilityListItem.PARSED
             item.processing_results.append(
                 {
                     'action': ProcessingAction.PARSE,
-                    'started_at': parsing_started,
+                    'started_at': self.__parsing_started,
                     'error': False,
                     'finished_at': str(timezone.now()),
                     'is_geocoded': is_geocoded,
