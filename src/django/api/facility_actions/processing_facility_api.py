@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import traceback
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from api.constants import ErrorMessages, ProcessingAction
 from api.extended_fields import create_extendedfields_for_single_item
@@ -197,7 +197,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
         )
 
     @staticmethod
-    def __handle_parsing_errors(errors: Any) -> Response:
+    def __handle_parsing_errors(errors: List) -> Response:
         log.error(f'[API Upload] CC Parsing Errors: {errors}')
         return Response(
             {
