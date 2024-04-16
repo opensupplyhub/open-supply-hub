@@ -36,3 +36,4 @@ jobs:
           TIMEZONE: "Europe/Berlin"
           REPORT_PERIOD: "weeks:1"
           PERIOD_SPLIT_UNIT: "none"
+          EXECUTION_OUTCOME: "markdown"
