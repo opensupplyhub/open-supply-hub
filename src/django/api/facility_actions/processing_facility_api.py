@@ -32,15 +32,15 @@ class ProcessingFacilityAPI(ProcessingFacility):
     Class to process a facility from an API request.
     '''
 
-    def __init__(self, processing_data: Dict[str, Any]) -> None:
-        self.__processing_data = processing_data
+    def __init__(self, processing_input: Dict[str, Any]) -> None:
+        self.__processing_input = processing_input
 
     def _process_facility(self):
-        request = self.__processing_data['request']
-        processed_data = self.__processing_data['processed_data']
-        public_submission = self.__processing_data['public_submission']
-        should_create = self.__processing_data['should_create']
-        parsing_started = self.__processing_data['parsing_started']
+        request = self.__processing_input['request']
+        processed_data = self.__processing_input['processed_data']
+        public_submission = self.__processing_input['public_submission']
+        should_create = self.__processing_input['should_create']
+        parsing_started = self.__processing_input['parsing_started']
         contributor = request.user.contributor
 
         # handle processing errors

@@ -356,7 +356,7 @@ class FacilityListViewSet(ModelViewSet):
             raise APIException('Internal System Error. '
                                'Please contact support.')
 
-        processing_data = {
+        processing_input = {
             'request': request,
             'name': name,
             'description': description,
@@ -369,7 +369,7 @@ class FacilityListViewSet(ModelViewSet):
         }
 
         processing_facility_executor = ProcessingFacilityExecutor(
-            ProcessingFacilityList(processing_data)
+            ProcessingFacilityList(processing_input)
         )
 
         return processing_facility_executor.run_processing()

@@ -27,15 +27,15 @@ class ProcessingFacilityList(ProcessingFacility):
     Class to process a facility list.
     '''
 
-    def __init__(self, processing_data: Dict[str, Any]) -> None:
-        self.__processing_data = processing_data
+    def __init__(self, processing_input: Dict[str, Any]) -> None:
+        self.__processing_input = processing_input
 
     def _process_facility(self) -> Response:
-        uploaded_file = self.__processing_data['uploaded_file']
-        processed_data = self.__processing_data['processed_data']
-        contributor = self.__processing_data['contributor']
-        parsing_started = self.__processing_data['parsing_started']
-        serializer_method = self.__processing_data['serializer_method']
+        uploaded_file = self.__processing_input['uploaded_file']
+        processed_data = self.__processing_input['processed_data']
+        contributor = self.__processing_input['contributor']
+        parsing_started = self.__processing_input['parsing_started']
+        serializer_method = self.__processing_input['serializer_method']
 
         # handle processing errors
         if processed_data.errors:
@@ -98,9 +98,9 @@ class ProcessingFacilityList(ProcessingFacility):
         return Response(serializer.data)
 
     def __create_list(self, uploaded_file, contributor, header_str):
-        name = self.__processing_data['name']
-        description = self.__processing_data['description']
-        replaces = self.__processing_data['replaces']
+        name = self.__processing_input['name']
+        description = self.__processing_input['description']
+        replaces = self.__processing_input['replaces']
 
         return FacilityList.objects.create(
             name=name,
@@ -169,7 +169,7 @@ class ProcessingFacilityList(ProcessingFacility):
     def __handle_processing_exception(
         self, item, exception, uploaded_file, parsing_started
     ):
-        request = self.__processing_data['request']
+        request = self.__processing_input['request']
 
         log.error(
             f'[List Upload] Creation of ExtendedField error: {exception}'

@@ -598,7 +598,7 @@ class FacilitiesViewSet(ListModelMixin,
             raise APIException('Internal System Error. '
                                'Please contact support.')
 
-        processing_data = {
+        processing_input = {
             'request': request,
             'processed_data': processed_data,
             'public_submission': public_submission,
@@ -607,7 +607,7 @@ class FacilitiesViewSet(ListModelMixin,
         }
 
         processing_facility_executor = ProcessingFacilityExecutor(
-            ProcessingFacilityAPI(processing_data)
+            ProcessingFacilityAPI(processing_input)
         )
 
         return processing_facility_executor.run_processing()
