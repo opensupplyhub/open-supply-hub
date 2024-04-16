@@ -1,5 +1,8 @@
 name: Weekly issue metrics
 on:
+  push:
+      branches:
+        - issue-metrics-workflow
   workflow_dispatch:
   schedule:
     - cron: '0 0 * * 1'
@@ -34,9 +37,5 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SEARCH_QUERY: 'repo:opensupplyhub/open-supply-hub is:pr created:${{ env.last_week }} -reason:"not planned"'
 
-    - name: Create issue
-      uses: peter-evans/create-issue-from-file@v5
-      with:
-        title: Weekly PR metrics report ${{ env.last_week }}
-        token: ${{ secrets.GITHUB_TOKEN }}
-        content-filepath: ./issue_metrics.md
+    - name: Print output of issue metrics tool
+      run: echo "${{ steps.issue-metrics.outputs.metrics }}"
