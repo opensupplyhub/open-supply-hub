@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION calc_value(total_count bigint, filtered_count bigint)
+CREATE OR REPLACE FUNCTION calc_column(total_count bigint, filtered_count bigint)
 RETURNS text AS $$
 DECLARE
 begin
@@ -19,7 +19,6 @@ SELECT
   calc_column(COUNT(*), COUNT(*) filter (where contrib_type ='Auditor / Certification Scheme / Service Provider')) as "Auditor / Certification Scheme / Service Provider",
   calc_column(COUNT(*), COUNT(*) filter (where contrib_type ='Academic / Researcher / Journalist / Student')) as "Academic / Researcher / Journalist / Student",
   calc_column(COUNT(*), COUNT(*) filter (where contrib_type ='Other')) as "Other"
-
 FROM (
   SELECT distinct
     min(to_char(s.created_at, 'YYYY-MM')) AS month,
