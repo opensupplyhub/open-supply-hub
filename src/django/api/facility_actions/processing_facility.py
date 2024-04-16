@@ -32,9 +32,8 @@ class ProcessingFacility(ABC):
     ) -> FacilityListItem:
         pass
 
-    @staticmethod
     @abstractmethod
-    def _create_source():
+    def _create_source(self):
         pass
 
     @staticmethod
