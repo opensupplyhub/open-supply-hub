@@ -132,8 +132,6 @@ class ProcessingFacilityAPI(ProcessingFacility):
                 if timer > timeout:
                     break
                 fli_temp = FacilityListItemTemp.objects.get(source=source.id)
-                print('fli_temp', fli_temp)
-                print('fli_temp.id', fli_temp.id)
                 if fli_temp.status == FacilityListItemTemp.GEOCODED:
                     log.info('[API Upload] Started Match process!')
                     log.info(f'[API Upload] FacilityListItem Id: {item.id}')
