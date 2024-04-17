@@ -1,4 +1,3 @@
-import logging
 from abc import ABC, abstractmethod
 from typing import KeysView
 
@@ -9,12 +8,6 @@ from api.models.source import Source
 from contricleaner.lib.dto.row_dto import RowDTO
 
 from rest_framework.response import Response
-
-# initialize logger
-logging.basicConfig(
-    format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO
-)
-log = logging.getLogger(__name__)
 
 
 class ProcessingFacility(ABC):
