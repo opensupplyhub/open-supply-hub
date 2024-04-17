@@ -830,6 +830,7 @@ class FacilitiesViewSet(ListModelMixin,
                 .data \
                 .get('preferred_contact_method') or ''
             linkedin_profile = request.data.get('linkedin_profile', '')
+            files = request.FILES.getlist('files')
 
             try:
                 validate_email(email)
@@ -891,12 +892,10 @@ class FacilitiesViewSet(ListModelMixin,
                 )
             )
 
-            files = request.FILES.getlist('files')
             for file in files:
-                # Process each file as needed
-                print(f'Filename is {file.name}')
                 FacilityClaimAttachments.objects.create(
                     claim=facility_claim,
+                    file_name=file.name,
                     claim_attachment=file
                 )
 

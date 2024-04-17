@@ -1,9 +1,10 @@
 from django.db.models import (
     Model,
     BigAutoField,
-    ForeignKey,
+    CharField,
     DateTimeField,
     FileField,
+    ForeignKey,
     PROTECT,
 )
 
@@ -23,6 +24,12 @@ class FacilityClaimAttachments(Model):
         on_delete=PROTECT,
         help_text='The facility claim for this attachment file.'
     )
+    file_name = CharField(
+        max_length=200,
+        null=False,
+        blank=False,
+        editable=False,
+        help_text='The full name of the uploaded claimant attached file.')
     claim_attachment = FileField(
         null=True,
         blank=True,
