@@ -43,7 +43,9 @@ class ProcessingFacilityList(ProcessingFacility):
         self.__uploaded_file: Union[
             InMemoryUploadedFile, TemporaryUploadedFile, Dict
         ] = processing_input['uploaded_file']
-        self.__contri_cleaner_processed_data: ListDTO = processing_input['contri_cleaner_processed_data']
+        self.__contri_cleaner_processed_data: ListDTO = processing_input[
+            'contri_cleaner_processed_data'
+        ]
         self.__contributor: Contributor = processing_input['contributor']
         self.__parsing_started: str = processing_input['parsing_started']
         self.__serializer_method: MethodType = processing_input[
@@ -64,7 +66,8 @@ class ProcessingFacilityList(ProcessingFacility):
                 f'{self.__contri_cleaner_processed_data.errors}'
             )
             error_messages = [
-                str(error['message']) for error in self.__contri_cleaner_processed_data.errors
+                str(error['message'])
+                for error in self.__contri_cleaner_processed_data.errors
             ]
             raise ValidationError(error_messages)
 
