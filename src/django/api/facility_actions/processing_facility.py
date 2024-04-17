@@ -32,10 +32,6 @@ class ProcessingFacility(ABC):
     ) -> FacilityListItem:
         pass
 
-    @abstractmethod
-    def _create_source(self):
-        pass
-
     @staticmethod
     def _create_nonstandard_fields(
         fields: List[str], contributor: Contributor
