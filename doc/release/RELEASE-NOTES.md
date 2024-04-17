@@ -11,13 +11,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Database changes
 #### Migrations:
-* *Describe migrations here.*
 
 #### Scheme changes
-* *Describe scheme changes here.*
 
 ### Code/API changes
-* *Describe code/API changes here.*
 
 ### Architecture/Environment changes
 * [OSDEV-989](https://opensupplyhub.atlassian.net/browse/OSDEV-989) - Use Strategy pattern to consolidate processing of new facilities received from both API requests and list uploads. The code executed processing was refactored. Implemented new classes: 
@@ -27,13 +24,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * ProcessingFacilityExecutor - class defines which interface execute for the processing of a facility
 
 ### Bugfix
-* *Describe bugfix here.*
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
-
-### Release instructions:
-* *Provide release instructions here.*
+* [OSDEV-945](https://opensupplyhub.atlassian.net/browse/OSDEV-945) - Facility Claim. Update text of claim link on profile to "I want to claim this site"
 
 ## Release 1.11.0
 
