@@ -891,7 +891,7 @@ class FacilitiesViewSet(ListModelMixin,
                 )
             )
 
-            files = request.FILES.getlist('file[]')
+            files = request.FILES.getlist('files')
             for file in files:
                 # Process each file as needed
                 print(f'Filename is {file.name}')
