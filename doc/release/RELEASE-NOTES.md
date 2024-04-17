@@ -3,6 +3,38 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.12.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: May 18, 2024
+
+### Database changes
+#### Migrations:
+* *Describe migrations here.*
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* [OSDEV-989](https://opensupplyhub.atlassian.net/browse/OSDEV-989) - Use Strategy pattern to consolidate processing of new facilities received from both API requests and list uploads. The code executed processing was refactored. Implemented new classes: 
+    * ProcessingFacility - abstract class for facility processing
+    * ProcessingFacilityList - class to process a facility list
+    * ProcessingFacilityAPI - class to process a facility from an API request
+    * ProcessingFacilityExecutor - class defines which interface execute for the processing of a facility
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* *Provide release instructions here.*
+
 ## Release 1.11.0
 
 ## Introduction
@@ -26,11 +58,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-927](https://opensupplyhub.atlassian.net/browse/OSDEV-927) - Reduce resources allocated for bastions to t3.nano.
 * [OSDEV-805](https://opensupplyhub.atlassian.net/browse/OSDEV-805) - Make Environment and project tag to be applied to all resources by defaul.
 * [OSDEV-862](https://opensupplyhub.atlassian.net/browse/OSDEV-862) - Add `Save Anonymized DB` and `Apply Anonymized DB` actions that provde possibility to save anonymized dump to S3 bucket and then resotre Test or Pre-Prod environment from dump stored on S3.
-* [OSDEV-989](https://opensupplyhub.atlassian.net/browse/OSDEV-989) - Use Strategy pattern to consolidate processing of new facilities received from both API requests and list uploads. The code executed processing was refactored. Implemented new classes: 
-    * ProcessingFacility - abstract class for facility processing
-    * ProcessingFacilityList - class to process a facility list
-    * ProcessingFacilityAPI - class to process a facility from an API request
-    * ProcessingFacilityExecutor - class defines which interface execute for the processing of a facility
 * [OSDEV-859](https://opensupplyhub.atlassian.net/browse/OSDEV-859) - Creates task-definitation for scheduled task that 
   * creates temporary postgresdb instance from latest production snaphsot in the `test` AWS account
   * run anonymization query 
