@@ -1,24 +1,28 @@
 import asyncio
 import logging
 import traceback
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 from api.constants import ErrorMessages, ProcessingAction
 from api.extended_fields import create_extendedfields_for_single_item
 from api.facility_actions.processing_facility import ProcessingFacility
 from api.geocoding import geocode_address
 from api.kafka_producer import produce_message_match_process
+from api.models.contributor.contributor import Contributor
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_list_item_temp import FacilityListItemTemp
 from api.models.source import Source
 from api.processing import handle_external_match_process_result
+from contricleaner.lib.dto.list_dto import ListDTO
 from contricleaner.lib.dto.row_dto import RowDTO
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.request import Request
 
 from django.contrib.gis.geos import Point
 from django.core import exceptions as core_exceptions
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 # initialize logger
 logging.basicConfig(
@@ -33,14 +37,14 @@ class ProcessingFacilityAPI(ProcessingFacility):
     '''
 
     def __init__(self, processing_input: Dict[str, Any]) -> None:
-        self.__request = processing_input['request']
-        self.__processed_data = processing_input['processed_data']
-        self.__public_submission = processing_input['public_submission']
-        self.__should_create = processing_input['should_create']
-        self.__parsing_started = processing_input['parsing_started']
-        self.__contributor = self.__request.user.contributor
+        self.__request: Request = processing_input['request']
+        self.__processed_data: ListDTO = processing_input['processed_data']
+        self.__public_submission: bool = processing_input['public_submission']
+        self.__should_create: bool = processing_input['should_create']
+        self.__parsing_started: str = processing_input['parsing_started']
+        self.__contributor: Contributor = self.__request.user.contributor
 
-    def process_facility(self):
+    def process_facility(self) -> Response:
         # handle processing errors
         if self.__processed_data.errors:
             return self.__handle_validation_errors()
@@ -128,6 +132,8 @@ class ProcessingFacilityAPI(ProcessingFacility):
                 if timer > timeout:
                     break
                 fli_temp = FacilityListItemTemp.objects.get(source=source.id)
+                print('fli_temp', fli_temp)
+                print('fli_temp.id', fli_temp.id)
                 if fli_temp.status == FacilityListItemTemp.GEOCODED:
                     log.info('[API Upload] Started Match process!')
                     log.info(f'[API Upload] FacilityListItem Id: {item.id}')
@@ -159,7 +165,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
         else:
             return Response(result, status=status.HTTP_200_OK)
 
-    def _create_source(self):
+    def _create_source(self) -> Source:
         return Source.objects.create(
             contributor=self.__contributor,
             source_type=Source.SINGLE,
@@ -197,7 +203,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
         )
 
     @staticmethod
-    def __handle_parsing_errors(errors: List) -> Response:
+    def __handle_parsing_errors(errors: List[dict]) -> Response:
         log.error(f'[API Upload] CC Parsing Errors: {errors}')
         return Response(
             {
@@ -209,7 +215,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
 
     def __handle_extended_field_creation_error(
         self,
-        exc: Exception,
+        exc: Union[ValidationError, ValueError],
         item: FacilityListItem,
         result: dict,
     ) -> Response:
@@ -246,7 +252,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
         item: FacilityListItem,
         result: dict,
         geocode_started: str,
-    ):
+    ) -> None:
         if geocode_result['result_count'] > 0:
             item.status = FacilityListItem.GEOCODED
             item.geocoded_point = Point(
@@ -289,7 +295,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
         row: RowDTO,
         geocode_started: str,
         result: dict,
-        exc: Any,
+        exc: Exception,
     ) -> Response:
         item.status = FacilityListItem.ERROR_GEOCODING
         item.processing_results.append(
