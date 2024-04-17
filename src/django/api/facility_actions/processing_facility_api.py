@@ -38,7 +38,9 @@ class ProcessingFacilityAPI(ProcessingFacility):
 
     def __init__(self, processing_input: Dict[str, Any]) -> None:
         self.__request: Request = processing_input['request']
-        self.__contri_cleaner_processed_data: ListDTO = processing_input['contri_cleaner_processed_data']
+        self.__contri_cleaner_processed_data: ListDTO = processing_input[
+            'contri_cleaner_processed_data'
+        ]
         self.__public_submission: bool = processing_input['public_submission']
         self.__should_create: bool = processing_input['should_create']
         self.__parsing_started: str = processing_input['parsing_started']
@@ -121,33 +123,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
             )
 
         if item.status == FacilityListItem.GEOCODED:
-            log.info('[API Upload] Trying to start Match process!')
-            log.info(f'[API Upload] FacilityListItem Id: {item.id}')
-            log.info(f'[API Upload] Source Id: {item.id}')
-            # Handle and produce message to Kafka with source_id data
-            timer = 0
-            timeout = 25
-            fli_temp = None
-            while True:
-                if timer > timeout:
-                    break
-                fli_temp = FacilityListItemTemp.objects.get(source=source.id)
-                if fli_temp.status == FacilityListItemTemp.GEOCODED:
-                    log.info('[API Upload] Started Match process!')
-                    log.info(f'[API Upload] FacilityListItem Id: {item.id}')
-                    log.info(
-                        f'[API Upload] FacilityListItemTemp Id: {fli_temp.id}'
-                    )
-                    log.info(f'[API Upload] Source Id: {item.id}')
-                    asyncio.run(produce_message_match_process(source.id))
-                    break
-                asyncio.sleep(1)
-                timer = timer + 1
-
-            # Handle results of "match" process from Dedupe Hub
-            result = handle_external_match_process_result(
-                fli_temp.id, result, self.__request, self.__should_create
-            )
+            self.__handle_match_process(source, item, result)
 
         errors_status = [
             FacilityListItem.ERROR_MATCHING,
@@ -315,3 +291,34 @@ class ProcessingFacilityAPI(ProcessingFacility):
             f'Country Code: {row.country_code}'
         )
         return Response(result, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def __handle_match_process(
+        self, source: Source, item: FacilityListItem, result: Dict[str, Any]
+    ):
+        log.info('[API Upload] Trying to start Match process!')
+        log.info(f'[API Upload] FacilityListItem Id: {item.id}')
+        log.info(f'[API Upload] Source Id: {item.id}')
+        # Handle and produce message to Kafka with source_id data
+        timer = 0
+        timeout = 25
+        fli_temp = None
+        while True:
+            if timer > timeout:
+                break
+            fli_temp = FacilityListItemTemp.objects.get(source=source.id)
+            if fli_temp.status == FacilityListItemTemp.GEOCODED:
+                log.info('[API Upload] Started Match process!')
+                log.info(f'[API Upload] FacilityListItem Id: {item.id}')
+                log.info(
+                    f'[API Upload] FacilityListItemTemp Id: {fli_temp.id}'
+                )
+                log.info(f'[API Upload] Source Id: {item.id}')
+                asyncio.run(produce_message_match_process(source.id))
+                break
+            asyncio.sleep(1)
+            timer = timer + 1
+
+        # Handle results of "match" process from Dedupe Hub
+        result = handle_external_match_process_result(
+            fli_temp.id, result, self.__request, self.__should_create
+        )
