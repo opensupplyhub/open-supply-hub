@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import KeysView, List
+from typing import KeysView
 
 from api.models.contributor.contributor import Contributor
 from api.models.facility.facility_list_item import FacilityListItem
