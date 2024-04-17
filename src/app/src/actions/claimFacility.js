@@ -105,7 +105,6 @@ export function submitClaimAFacilityData(osID) {
             const formattedKey = snakeCase(key);
             return formattedKey === 'upload_files'
                 ? mapKeys(value, file => {
-                      console.log('file is ', file);
                       postData.append('files', file);
                   })
                 : postData.append(formattedKey, value);

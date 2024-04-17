@@ -6,6 +6,12 @@ from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.exceptions.handler_not_set_error \
     import HandlerNotSetError
 
+from oar.settings import (
+    MAX_ATTACHMENT_SIZE_IN_BYTES,
+    MAX_ATTACHMENT_AMOUNT,
+    ALLOWED_ATTACHMENT_EXTENSIONS
+)
+
 from rest_framework.mixins import (
     ListModelMixin,
     RetrieveModelMixin,
@@ -841,6 +847,28 @@ class FacilitiesViewSet(ListModelMixin,
 
             if not company_name:
                 raise ValidationError('Company name is required')
+
+            for file in files:
+                extension = file.name.split('.')[-1].lower()
+                if f".{extension}" not in ALLOWED_ATTACHMENT_EXTENSIONS:
+                    raise ValidationError(
+                        f'{file.name} could not be uploaded because \
+                        it is not in a supported format.',
+                    )
+
+                if file.size > MAX_ATTACHMENT_SIZE_IN_BYTES:
+                    mb = MAX_ATTACHMENT_SIZE_IN_BYTES / (1024*1024)
+                    raise ValidationError(
+                        '{} exceeds the maximum size of \
+                        {:.1f}MB.'.format(file.name, mb)
+                    )
+
+                if (len(files) > MAX_ATTACHMENT_AMOUNT):
+                    raise ValidationError(
+                        f'{file.name} could not be uploaded because there is a maximum of \
+                        {MAX_ATTACHMENT_AMOUNT} attachments and you have \
+                        already uploaded {MAX_ATTACHMENT_AMOUNT} attachments.'
+                    )
 
             if parent_company:
                 try:

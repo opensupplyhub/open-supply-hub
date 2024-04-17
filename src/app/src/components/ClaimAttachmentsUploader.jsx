@@ -76,7 +76,7 @@ const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
             }
             if (uploadFiles.length + newFiles.length > allowedFileAmount) {
                 setErrorMessage(
-                    `${file.name} could not be uploaded because there is a maximum of 10 attachments and you have already uploaded 10 attachments.`,
+                    `${file.name} could not be uploaded because there is a maximum of ${allowedFileAmount} attachments and you have already uploaded ${allowedFileAmount} attachments.`,
                 );
                 return null;
             }
