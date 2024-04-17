@@ -294,7 +294,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
 
     def __handle_match_process(
         self, source: Source, item: FacilityListItem, result: Dict[str, Any]
-    ):
+    ) -> None:
         log.info('[API Upload] Trying to start Match process!')
         log.info(f'[API Upload] FacilityListItem Id: {item.id}')
         log.info(f'[API Upload] Source Id: {item.id}')
