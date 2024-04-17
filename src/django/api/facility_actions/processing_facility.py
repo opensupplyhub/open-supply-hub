@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import List
+from typing import KeysView, List
 
 from api.models.contributor.contributor import Contributor
 from api.models.facility.facility_list_item import FacilityListItem
@@ -34,7 +34,7 @@ class ProcessingFacility(ABC):
 
     @staticmethod
     def _create_nonstandard_fields(
-        fields: List[str], contributor: Contributor
+        fields: KeysView[str], contributor: Contributor
     ) -> None:
         unique_fields = list(set(fields))
 
