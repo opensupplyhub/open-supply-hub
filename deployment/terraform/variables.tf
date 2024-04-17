@@ -503,3 +503,33 @@ variable "dedupe_hub_name" {
 }
 variable "dedupe_hub_version" {
 }
+
+variable "anonymizer_destination_aws_account" {
+  type    = string
+  default = ""
+}
+
+variable "anonymizer_db_identifier" {
+  type    = string
+  default = "database-anonymizer"
+}
+
+variable "anonymizer_image_tag" {
+  type    = string
+  default = "v0.0.1"
+}
+
+variable "anonymizer_schedule_expression" {
+  type    = string
+  default = "cron(0 10 ? * SAT *)"
+}
+
+variable "anonymizer_kms_key_admin_users" {
+  type    = list
+  default = []
+}
+
+variable "database_anonymizer_enabled" {
+  type    = bool
+  default = false
+}

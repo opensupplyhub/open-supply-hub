@@ -1,0 +1,39 @@
+FROM postgis/postgis:12-3.4-alpine
+
+WORKDIR /opt/
+
+
+ARG AWS_ACCESS_KEY_ID_PROD
+ARG AWS_SECRET_ACCESS_KEY_PROD
+ARG AWS_DEFAULT_REGION_PROD
+ARG AWS_ACCESS_KEY_ID_TEST
+ARG AWS_SECRET_ACCESS_KEY_TEST
+ARG AWS_DEFAULT_REGION_TEST
+
+ARG ENVIRONMENT
+ARG DATABASE_NAME
+ARG DATABASE_USERNAME
+ARG DATABASE_PASSWORD
+
+ENV POSTGRES_PASSWORD=anondb
+ENV POSTGRES_USER=anondb
+ENV POSTGRES_DB=anondb
+
+RUN set -ex && apk update && apk add --no-cache openssh-client
+RUN set -ex && apk update && apk add --no-cache aws-cli
+
+RUN mkdir -p /dumps/
+RUN mkdir -p /keys/
+RUN mkdir ~/.ssh
+RUN chmod 700 ~/.ssh
+RUN touch ~/.ssh/known_hosts
+RUN chmod 644 ~/.ssh/known_hosts
+
+
+COPY ./do_dump.sh ./do_dump.sh
+COPY ./initdb.sql /docker-entrypoint-initdb.d
+
+VOLUME /keys
+# ENTRYPOINT [ "docker-entrypoint.sh" ]
+CMD ["sh", "do_dump.sh"]
+
