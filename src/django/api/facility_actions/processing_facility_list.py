@@ -43,7 +43,7 @@ class ProcessingFacilityList(ProcessingFacility):
         self.__uploaded_file: Union[
             InMemoryUploadedFile, TemporaryUploadedFile, Dict
         ] = processing_input['uploaded_file']
-        self.__processed_data: ListDTO = processing_input['processed_data']
+        self.__contri_cleaner_processed_data: ListDTO = processing_input['contri_cleaner_processed_data']
         self.__contributor: Contributor = processing_input['contributor']
         self.__parsing_started: str = processing_input['parsing_started']
         self.__serializer_method: MethodType = processing_input[
@@ -58,17 +58,17 @@ class ProcessingFacilityList(ProcessingFacility):
 
     def process_facility(self) -> Response:
         # handle processing errors
-        if self.__processed_data.errors:
+        if self.__contri_cleaner_processed_data.errors:
             log.error(
                 '[List Upload] CC Validation Errors: '
-                f'{self.__processed_data.errors}'
+                f'{self.__contri_cleaner_processed_data.errors}'
             )
             error_messages = [
-                str(error['message']) for error in self.__processed_data.errors
+                str(error['message']) for error in self.__contri_cleaner_processed_data.errors
             ]
             raise ValidationError(error_messages)
 
-        rows = self.__processed_data.rows
+        rows = self.__contri_cleaner_processed_data.rows
         header_row_keys = rows[0].raw_json.keys()
         header_str = ','.join(header_row_keys)
 

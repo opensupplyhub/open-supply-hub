@@ -343,7 +343,7 @@ class FacilityListViewSet(ModelViewSet):
 
         contri_cleaner = ContriCleaner(uploaded_file, SectorCache())
         try:
-            processed_data = contri_cleaner.process_data()
+            contri_cleaner_processed_data = contri_cleaner.process_data()
         except ParsingError as err:
             log.error(f'[List Upload] Data Parsing Error: {err}')
             report_error_to_rollbar(request=request,
@@ -364,7 +364,7 @@ class FacilityListViewSet(ModelViewSet):
             'description': description,
             'uploaded_file': uploaded_file,
             'replaces': replaces,
-            'processed_data': processed_data,
+            'contri_cleaner_processed_data': contri_cleaner_processed_data,
             'contributor': contributor,
             'parsing_started': parsing_started,
             'serializer_method': self.get_serializer,

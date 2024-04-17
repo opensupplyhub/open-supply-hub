@@ -38,7 +38,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
 
     def __init__(self, processing_input: Dict[str, Any]) -> None:
         self.__request: Request = processing_input['request']
-        self.__processed_data: ListDTO = processing_input['processed_data']
+        self.__contri_cleaner_processed_data: ListDTO = processing_input['contri_cleaner_processed_data']
         self.__public_submission: bool = processing_input['public_submission']
         self.__should_create: bool = processing_input['should_create']
         self.__parsing_started: str = processing_input['parsing_started']
@@ -46,10 +46,10 @@ class ProcessingFacilityAPI(ProcessingFacility):
 
     def process_facility(self) -> Response:
         # handle processing errors
-        if self.__processed_data.errors:
+        if self.__contri_cleaner_processed_data.errors:
             return self.__handle_validation_errors()
 
-        rows = self.__processed_data.rows
+        rows = self.__contri_cleaner_processed_data.rows
         header_row_keys = rows[0].raw_json.keys()
         header_str = ','.join(header_row_keys)
         row = rows[0]
@@ -190,7 +190,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
         )
 
     def __handle_validation_errors(self) -> Response:
-        errors = self.__processed_data.errors
+        errors = self.__contri_cleaner_processed_data.errors
         log.error(f'[API Upload] CC Validation Errors: {errors}')
         return Response(
             {
