@@ -17,7 +17,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Code/API changes
 
 ### Architecture/Environment changes
-
+* [OSDEV-862](https://opensupplyhub.atlassian.net/browse/OSDEV-862) Make Save DB / Restore DB to run on self-hosted runners to eliminate `lack of storage` issue that hapopen on github's runners.
+  
 ### Bugfix
 
 ### What's new
