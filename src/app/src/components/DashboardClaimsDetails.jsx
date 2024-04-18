@@ -11,6 +11,7 @@ import get from 'lodash/get';
 import DashboardClaimDetailsControls from './DashboardClaimDetailsControls';
 import DashboardClaimsDetailsNote from './DashboardClaimsDetailsNote';
 import DashboardClaimsDetailsAddNote from './DashboardClaimsDetailsAddNote';
+import DashboardClaimsDetailsAttachments from './DashboardClaimsDetailsAttachments';
 
 import {
     fetchSingleFacilityClaim,
@@ -206,6 +207,7 @@ function DashboardClaimsDetails({
                     Facility Claim Review Notes
                 </Typography>
             </div>
+            <DashboardClaimsDetailsAttachments />
             {data.notes.map(note => (
                 <DashboardClaimsDetailsNote key={note.id} note={note} />
             ))}
