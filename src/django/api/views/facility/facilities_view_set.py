@@ -1,5 +1,8 @@
 import logging
-from api.facility_actions.processing_facility import ProcessingFacility
+from api.facility_actions.processing_facility_api import ProcessingFacilityAPI
+from api.facility_actions.processing_facility_executor import (
+    ProcessingFacilityExecutor
+)
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
 from contricleaner.lib.contri_cleaner import ContriCleaner
@@ -46,7 +49,6 @@ from ...models import (
     FacilityLocation,
     FacilityMatch,
     ExtendedField,
-    Source,
     Version
 )
 from ...constants import (
@@ -572,6 +574,8 @@ class FacilitiesViewSet(ListModelMixin,
             raise PermissionDenied()
 
         log.info(f'[API Upload] Uploading data: {request.data}')
+
+        parsing_started = str(timezone.now())
         log.info('[API Upload] Started CC Parse process!')
 
         params_serializer = FacilityCreateQueryParamsSerializer(
@@ -586,24 +590,27 @@ class FacilitiesViewSet(ListModelMixin,
         if not public_submission and not private_allowed:
             raise PermissionDenied('Cannot submit a private facility')
 
-        source = Source.objects.create(
-            contributor=request.user.contributor,
-            source_type=Source.SINGLE,
-            is_public=public_submission,
-            create=should_create
-        )
-
         contri_cleaner = ContriCleaner(request.data, SectorCache())
         try:
-            processed_data = contri_cleaner.process_data()
+            contri_cleaner_processed_data = contri_cleaner.process_data()
         except HandlerNotSetError as err:
             log.error(f'[API Upload] Internal ContriCleaner Error: {err}')
             raise APIException('Internal System Error. '
                                'Please contact support.')
 
-        return ProcessingFacility.create_api(
-            request, processed_data, source, should_create
+        processing_input = {
+            'request': request,
+            'contri_cleaner_processed_data': contri_cleaner_processed_data,
+            'public_submission': public_submission,
+            'should_create': should_create,
+            'parsing_started': parsing_started,
+        }
+
+        processing_facility_executor = ProcessingFacilityExecutor(
+            ProcessingFacilityAPI(processing_input)
         )
+
+        return processing_facility_executor.run_processing()
 
     @swagger_auto_schema(auto_schema=None)
     @transaction.atomic
