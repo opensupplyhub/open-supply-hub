@@ -1,4 +1,6 @@
 import logging
+import os
+from datetime import datetime
 from api.facility_actions.processing_facility import ProcessingFacility
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
@@ -921,6 +923,9 @@ class FacilitiesViewSet(ListModelMixin,
             )
 
             for file in files:
+                timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+                file_name, file_extension = os.path.splitext(file.name)
+                file.name = f'{file_name}-{contributor.name}-{timestamp}{file_extension}'
                 FacilityClaimAttachments.objects.create(
                     claim=facility_claim,
                     file_name=file.name,
