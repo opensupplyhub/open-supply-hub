@@ -85,14 +85,18 @@ class FacilitySubmitTest(FacilityAPITestCaseBase):
     #     response = self.client.post(self.url, self.valid_facility)
     #     self.assertEqual(response.status_code, 201)
 
-    def test_raw_data_json_formatted_with_singlequote(self):
+    def test_raw_data_with_singlequote(self):
         self.join_group_and_login()
         response = self.client.post(self.url, self.valid_facility)
         data = json.loads(response.content)
         list_item = FacilityListItem.objects.get(id=data["item_id"])
-        self.assertTrue(is_json(list_item.raw_data))
+        self.assertEqual(
+            list_item.raw_data,
+            '"United States","Pants Hut","123 Main St, Anywhereville, PA",'
+            '"Apparel","Extra data"',
+        )
 
-    def test_raw_data_json_formatted_with_doublequote(self):
+    def test_raw_data_with_doublequote(self):
         self.join_group_and_login()
         response = self.client.post(
             self.url,
@@ -106,18 +110,26 @@ class FacilitySubmitTest(FacilityAPITestCaseBase):
         )
         data = json.loads(response.content)
         list_item = FacilityListItem.objects.get(id=data["item_id"])
-        self.assertTrue(is_json(list_item.raw_data))
+        self.assertEqual(
+            list_item.raw_data,
+            '"United States","Pants Hut","123 Main St, Anywhereville, PA",'
+            '"Apparel","Extra data"',
+        )
 
-    def test_raw_data_json_formatted_with_querydict(self):
+    def test_raw_data_with_querydict(self):
         self.join_group_and_login()
         query_dict = QueryDict("", mutable=True)
         query_dict.update(self.valid_facility)
         response = self.client.post(self.url, query_dict)
         data = json.loads(response.content)
         list_item = FacilityListItem.objects.get(id=data["item_id"])
-        self.assertTrue(is_json(list_item.raw_data))
+        self.assertEqual(
+            list_item.raw_data,
+            '"United States","Pants Hut","123 Main St, Anywhereville, PA",'
+            '"Apparel","Extra data"',
+        )
 
-    def text_raw_data_with_internal_quotes(self):
+    def test_raw_data_with_internal_quotes(self):
         self.join_group_and_login()
         response = self.client.post(
             self.url,
@@ -130,7 +142,7 @@ class FacilitySubmitTest(FacilityAPITestCaseBase):
         )
         data = json.loads(response.content)
         list_item = FacilityListItem.objects.get(id=data["item_id"])
-        self.assertTrue(is_json(list_item.raw_data))
+        self.assertEqual(list_item.raw_data, '"US","Item","Address","d\'ataé"')
 
     # TODO: Replace to Dedupe Hub if possible (issue between test database
     #       & Dedupe Hub live database)
