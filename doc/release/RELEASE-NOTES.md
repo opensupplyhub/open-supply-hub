@@ -17,11 +17,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Code/API changes
 
 ### Architecture/Environment changes
-* [OSDEV-989](https://opensupplyhub.atlassian.net/browse/OSDEV-989) - The Strategy pattern was used to consolidate the processing of new facilities received from both API requests and list uploads. The code executed processing was refactored. Implemented new classes: 
+* [OSDEV-989](https://opensupplyhub.atlassian.net/browse/OSDEV-989) - The Strategy pattern was utilized to consolidate the processing of new facilities received from both API requests and list uploads. The code responsible for executing this processing was refactored, and new classes were implemented:
     * ProcessingFacility - abstract class for facility processing
     * ProcessingFacilityList - class to process a facility list
     * ProcessingFacilityAPI - class to process a facility from an API request
-    * ProcessingFacilityExecutor - class defines which interface execute for the processing of a facility
+    * ProcessingFacilityExecutor - class defines which interface to execute for the processing of a facility
 
 ### Bugfix
 
