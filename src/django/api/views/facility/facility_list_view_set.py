@@ -5,7 +5,12 @@ import logging
 
 from functools import reduce
 
-from api.facility_actions.processing_facility import ProcessingFacility
+from api.facility_actions.processing_facility_executor import (
+    ProcessingFacilityExecutor
+)
+from api.facility_actions.processing_facility_list import (
+    ProcessingFacilityList
+)
 from api.helpers.helpers import (
     get_raw_json,
 )
@@ -215,6 +220,10 @@ class FacilityListViewSet(ModelViewSet):
 
         csvreader = csv.reader(header.split('\n'), delimiter=',')
         for row in csvreader:
+            # TODO: remove create_nonstandard_fields function
+            # (api/views/fields/create_nonstandard_fields.py) after removing
+            # the create endpoint because this function is not used anywhere.
+            # It was moved to the ProcessingFacility class as a method.
             create_nonstandard_fields(row, contributor)
 
         source = Source.objects.create(
@@ -334,7 +343,7 @@ class FacilityListViewSet(ModelViewSet):
 
         contri_cleaner = ContriCleaner(uploaded_file, SectorCache())
         try:
-            processed_data = contri_cleaner.process_data()
+            contri_cleaner_processed_data = contri_cleaner.process_data()
         except ParsingError as err:
             log.error(f'[List Upload] Data Parsing Error: {err}')
             report_error_to_rollbar(request=request,
@@ -349,17 +358,23 @@ class FacilityListViewSet(ModelViewSet):
             raise APIException('Internal System Error. '
                                'Please contact support.')
 
-        return ProcessingFacility.create_list(
-            contributor,
-            self.get_serializer,
-            parsing_started,
-            request,
-            uploaded_file,
-            processed_data,
-            name,
-            description,
-            replaces,
+        processing_input = {
+            'request': request,
+            'name': name,
+            'description': description,
+            'uploaded_file': uploaded_file,
+            'replaces': replaces,
+            'contri_cleaner_processed_data': contri_cleaner_processed_data,
+            'contributor': contributor,
+            'parsing_started': parsing_started,
+            'serializer_method': self.get_serializer,
+        }
+
+        processing_facility_executor = ProcessingFacilityExecutor(
+            ProcessingFacilityList(processing_input)
         )
+
+        return processing_facility_executor.run_processing()
 
     def list(self, request):
         """

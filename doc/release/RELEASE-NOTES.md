@@ -3,6 +3,31 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.12.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: May 18, 2024
+
+### Database changes
+#### Migrations:
+
+#### Scheme changes
+
+### Code/API changes
+
+### Architecture/Environment changes
+* [OSDEV-989](https://opensupplyhub.atlassian.net/browse/OSDEV-989) - The Strategy pattern was utilized to consolidate the processing of new facilities received from both API requests and list uploads. The code responsible for executing this processing was refactored, and new classes were implemented:
+    * ProcessingFacility - abstract class for facility processing
+    * ProcessingFacilityList - class to process a facility list
+    * ProcessingFacilityAPI - class to process a facility from an API request
+    * ProcessingFacilityExecutor - class defines which interface to execute for the processing of a facility
+
+### Bugfix
+
+### What's new
+* [OSDEV-945](https://opensupplyhub.atlassian.net/browse/OSDEV-945) - Facility Claim. Update text of claim link on profile to "I want to claim this site"
+
 ## Release 1.11.0
 
 ## Introduction
