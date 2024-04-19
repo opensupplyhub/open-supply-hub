@@ -1,7 +1,6 @@
 import logging
 import os
 from datetime import datetime
-from api.facility_actions.processing_facility import ProcessingFacility
 from api.facility_actions.processing_facility_api import ProcessingFacilityAPI
 from api.facility_actions.processing_facility_executor import (
     ProcessingFacilityExecutor
