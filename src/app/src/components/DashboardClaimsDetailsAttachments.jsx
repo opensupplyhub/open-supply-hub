@@ -30,7 +30,11 @@ export default function DashboardClaimsDetailsAttachments({ attachments }) {
                     {attachments.map(attachment => (
                         <li key={uuidv4()}>
                             <Typography variant="body1">
-                                <a href={attachment.claim_attachment}>
+                                <a
+                                    href={attachment.claim_attachment}
+                                    rel="noreferrer"
+                                    target="_blank"
+                                >
                                     {attachment.file_name}
                                 </a>
                             </Typography>
