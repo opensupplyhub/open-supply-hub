@@ -644,7 +644,6 @@ def handle_external_match_process_result(id, result, request, should_create):
     if queryset_f_m.count() == 0:
         # No Match and Geocoder Returned No Results
         return get_error_match_result(f_l_item.id, result)
-
     if (queryset_f_m.count() == 1
             and queryset_f_m[0].status == FacilityMatchTemp.AUTOMATIC):
         # New Facility
