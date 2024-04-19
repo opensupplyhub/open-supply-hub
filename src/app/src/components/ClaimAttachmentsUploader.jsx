@@ -58,22 +58,23 @@ const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
 
     const getValidFiles = newFiles =>
         newFiles.filter(file => {
-            const extension = file.name.split('.').pop().toLowerCase();
+            const fileName = file.name;
+            const extension = fileName.split('.').pop().toLowerCase();
             if (!allowedExtensions.includes(`.${extension}`)) {
                 setErrorMessage(
-                    `${file.name} could not be uploaded because it is not in a supported format.`,
+                    `${fileName} could not be uploaded because it is not in a supported format.`,
                 );
                 return null;
             }
             if (file.size > allowedFileSize) {
                 setErrorMessage(
-                    `${file.name} could not be uploaded because it exceeds the maximum file size of 5MB`,
+                    `${fileName} could not be uploaded because it exceeds the maximum file size of 5MB`,
                 );
                 return null;
             }
             if (uploadFiles.length + newFiles.length > allowedFileAmount) {
                 setErrorMessage(
-                    `${file.name} could not be uploaded because there is a maximum of ${allowedFileAmount} attachments and you have already uploaded ${allowedFileAmount} attachments.`,
+                    `${fileName} could not be uploaded because there is a maximum of ${allowedFileAmount} attachments and you have already uploaded ${allowedFileAmount} attachments.`,
                 );
                 return null;
             }
@@ -99,7 +100,7 @@ const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
     };
 
     return (
-        <>
+        <div data-testid="claim-attachments-uploader">
             <ul style={claimAttachmentsUploaderStyles.fileListUploaded}>
                 {uploadFiles.map((file, index) => (
                     <li key={uuidv4()}>
@@ -148,6 +149,7 @@ const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
                     multiple
                     style={claimAttachmentsUploaderStyles.fileInputHidden}
                     ref={fileInputRef}
+                    data-testid="claim-attachments-uploader-input"
                 />
                 <SvgIcon style={claimAttachmentsUploaderStyles.uploadFileIcon}>
                     <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8zm4 18H6V4h7v5h5zM8 15.01l1.41 1.41L11 14.84V19h2v-4.16l1.59 1.59L16 15.01 12.01 11z" />
@@ -162,7 +164,7 @@ const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
                     File size must be 5 MB or less; 10 files maximum
                 </p>
             </label>
-        </>
+        </div>
     );
 };
 
@@ -171,7 +173,7 @@ ClaimAttachmentsUploader.defaultProps = {
 };
 
 ClaimAttachmentsUploader.propTypes = {
-    uploadFiles: PropTypes.arrayOf(PropTypes.instanceOf(Blob)),
+    uploadFiles: PropTypes.arrayOf(PropTypes.object),
     updateUploadFiles: PropTypes.func.isRequired,
 };
 
