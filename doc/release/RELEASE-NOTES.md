@@ -25,7 +25,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   * creates temporary postgresdb instance from latest production snaphsot in the `test` AWS account
   * run anonymization query 
   * saves anonymized snapshot and removes the instance
-* In response to recent stability observations, resource allocation has been optimized, reducing the number of containers in both production and pre-production environments from 16 to 12, maintaining system stability.
+* In response to recent stability observations, resource allocation has been optimized, reducing the number of ECS tasks in both production and pre-production environments from 16 to 12, maintaining system stability.
 
 ### Bugfix
 * [OSDEV-996](https://opensupplyhub.atlassian.net/browse/OSDEV-996) The default sorting order for embedded maps was broken (changed to Descending by # Contributors). The default sorting order for embedded maps has been fixed (changed it back to Ascending by Name).
