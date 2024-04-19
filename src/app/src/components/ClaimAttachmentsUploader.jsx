@@ -111,6 +111,7 @@ const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
                             style={
                                 claimAttachmentsUploaderStyles.removeFileIcon
                             }
+                            data-testid="claim-attachments-uploader-remove"
                         >
                             <CloseIcon />
                         </IconButton>

@@ -65,20 +65,28 @@ describe('ClaimAttachmentsUploader', () => {
         expect(updatedUploadFiles.length).toBe(2)
     });
 
-    /*
     it('removes files when clicked', async () => {
         const handleRemoveFile = jest.fn()
 
-        const { getByLabelText } = render(
+        const { getByTestId } = render(
             <Provider store={initialState}>
                 <ClaimAttachmentsUploader handleRemoveFile={handleRemoveFile} />
             </Provider>)
 
-        fireEvent.click(getByLabelText('Remove'));
+        const removeFileButton = getByTestId('claim-attachments-uploader-remove');
+        fireEvent.click(removeFileButton);
+
         const actions = initialState.getActions();
-        console.log('actions are ', actions)
+
+        store.dispatch({
+            type: actions[0].type,
+            payload: actions[0].payload,
+            error: false
+        })
+
+        const updatedUploadFiles = store.getState().claimFacility.claimData.formData.uploadFiles
+        expect(updatedUploadFiles.length).toBe(0)
     });
-    */
 
     /*
     it('displays error message for unsupported file format', () => {
