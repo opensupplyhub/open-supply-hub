@@ -69,9 +69,6 @@ export const updateClaimAFacilityDescription = createAction(
 export const updateClaimAFacilityVerificationMethod = createAction(
     'UPDATE_CLAIM_A_FACILITY_VERIFICATION_METHOD',
 );
-export const updateClaimAFacilityPreferredContactMethod = createAction(
-    'UPDATE_CLAIM_A_FACILITY_PREFERRED_CONTACT_METHOD',
-);
 export const updateClaimAFacilityLinkedinProfile = createAction(
     'UPDATE_CLAIM_A_FACILITY_LINKEDIN_PROFILE',
 );

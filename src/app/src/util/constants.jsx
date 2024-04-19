@@ -577,13 +577,9 @@ export const claimAFacilityFormFields = Object.freeze({
         id: 'verification-method',
         label: 'Any additional details?',
     }),
-    preferredContactMethod: Object.freeze({
-        id: 'preferred-contact',
-        label: 'Preferred method of contact',
-    }),
-    linkedinProfile: Object.freeze({
-        id: 'linkedin-profile',
-        label: 'LinkedIn profile URL',
+    facilityLinkedinProfile: Object.freeze({
+        id: 'facility-linkedin-profile',
+        label: 'Link to facility LinkedIn profile',
     }),
     claimAdditionalDocumentation: Object.freeze({
         id: 'claimant-additional-documentation',

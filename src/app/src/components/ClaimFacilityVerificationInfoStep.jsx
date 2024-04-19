@@ -1,17 +1,15 @@
 import React from 'react';
-import { bool, func, shape, string } from 'prop-types';
+import { bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import InputLabel from '@material-ui/core/InputLabel';
-import Select from 'react-select';
 import isEmpty from 'lodash/isEmpty';
 import { isURL } from 'validator';
 import ClaimAttachmentsUploader from './ClaimAttachmentsUploader';
 
 import {
     updateClaimAFacilityVerificationMethod,
-    updateClaimAFacilityPreferredContactMethod,
     updateClaimAFacilityLinkedinProfile,
 } from '../actions/claimFacility';
 
@@ -19,72 +17,38 @@ import { getValueFromEvent } from '../util/util';
 
 import { claimAFacilityFormStyles } from '../util/styles';
 
-import {
-    claimAFacilityPreferredContactOptions,
-    claimAFacilityFormFields,
-} from '../util/constants';
+import { claimAFacilityFormFields } from '../util/constants';
 
 const {
     verificationMethod: verificationMethodFormField,
-    preferredContactMethod: preferredContactMethodFormField,
-    linkedinProfile: linkedinProfileFormField,
+    facilityLinkedinProfile: facilityLinkedinProfileFormField,
     claimAdditionalDocumentation: claimAdditionalDocumentationFormField,
 } = claimAFacilityFormFields;
-
-const selectStyles = Object.freeze({
-    input: provided =>
-        Object.freeze({
-            ...provided,
-            padding: '10px',
-        }),
-    menu: provided =>
-        Object.freeze({
-            ...provided,
-            zIndex: '2',
-        }),
-});
 
 function ClaimFacilityVerificationInfoStep({
     verificationMethod,
     updateVerification,
-    preferredContactMethod,
-    updateContactPreference,
     fetching,
-    linkedinProfile,
+    facilityLinkedinProfile,
     updateLinkedinProfile,
 }) {
     return (
         <>
             <div style={claimAFacilityFormStyles.inputGroupStyles}>
-                <InputLabel htmlFor={preferredContactMethodFormField.id}>
+                <InputLabel htmlFor={facilityLinkedinProfileFormField.id}>
                     <Typography variant="title">
-                        {preferredContactMethodFormField.label}
-                    </Typography>
-                </InputLabel>
-                <div style={claimAFacilityFormStyles.textFieldStyles}>
-                    <Select
-                        autoFocus
-                        options={claimAFacilityPreferredContactOptions}
-                        id={preferredContactMethodFormField.id}
-                        value={preferredContactMethod}
-                        onChange={updateContactPreference}
-                        disabled={fetching}
-                        styles={selectStyles}
-                    />
-                </div>
-            </div>
-            <div style={claimAFacilityFormStyles.inputGroupStyles}>
-                <InputLabel htmlFor={linkedinProfileFormField.id}>
-                    <Typography variant="title">
-                        {linkedinProfileFormField.label}
+                        {facilityLinkedinProfileFormField.label}
                     </Typography>
                 </InputLabel>
                 <TextField
-                    id={linkedinProfileFormField.id}
-                    error={!isEmpty(linkedinProfile) && !isURL(linkedinProfile)}
+                    id={facilityLinkedinProfileFormField.id}
+                    error={
+                        !isEmpty(facilityLinkedinProfile) &&
+                        !isURL(facilityLinkedinProfile)
+                    }
                     variant="outlined"
                     style={claimAFacilityFormStyles.textFieldStyles}
-                    value={linkedinProfile}
+                    value={facilityLinkedinProfile}
                     onChange={updateLinkedinProfile}
                     disabled={fetching}
                 />
@@ -126,40 +90,26 @@ function ClaimFacilityVerificationInfoStep({
     );
 }
 
-ClaimFacilityVerificationInfoStep.defaultProps = {
-    preferredContactMethod: null,
-};
-
 ClaimFacilityVerificationInfoStep.propTypes = {
     verificationMethod: string.isRequired,
-    preferredContactMethod: shape({
-        value: string.isRequired,
-        label: string.isRequired,
-    }),
     fetching: bool.isRequired,
     updateVerification: func.isRequired,
-    updateContactPreference: func.isRequired,
-    linkedinProfile: string.isRequired,
+    facilityLinkedinProfile: string.isRequired,
     updateLinkedinProfile: func.isRequired,
 };
 
 function mapStateToProps({
     claimFacility: {
         claimData: {
-            formData: {
-                verificationMethod,
-                preferredContactMethod,
-                linkedinProfile,
-            },
+            formData: { verificationMethod, facilityLinkedinProfile },
             fetching,
         },
     },
 }) {
     return {
         verificationMethod,
-        preferredContactMethod,
         fetching,
-        linkedinProfile,
+        facilityLinkedinProfile,
     };
 }
 
@@ -169,8 +119,6 @@ function mapDispatchToProps(dispatch) {
             dispatch(
                 updateClaimAFacilityVerificationMethod(getValueFromEvent(e)),
             ),
-        updateContactPreference: v =>
-            dispatch(updateClaimAFacilityPreferredContactMethod(v)),
         updateLinkedinProfile: e =>
             dispatch(updateClaimAFacilityLinkedinProfile(getValueFromEvent(e))),
     };

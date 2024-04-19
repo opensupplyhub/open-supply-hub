@@ -14,7 +14,6 @@ import {
     updateClaimAFacilityWebsite,
     updateClaimAFacilityDescription,
     updateClaimAFacilityVerificationMethod,
-    updateClaimAFacilityPreferredContactMethod,
     startSubmitClaimAFacilityData,
     failSubmitClaimAFacilityData,
     completeSubmitClaimAFacilityData,
@@ -41,12 +40,8 @@ const initialState = Object.freeze({
             facilityDescription: 'Some facility description',
             verificationMethod:
                 'Some additional details that act like verification method',
-            preferredContactMethod: {
-                value: 'email',
-                label: 'Email',
-            },
             parentCompany: null,
-            linkedinProfile: 'www.linkedin.com',
+            facilityLinkedinProfile: 'www.linkedin.com',
             uploadFiles: Object.freeze([]),
         }),
         fetching: false,
@@ -149,14 +144,6 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAFacilityPreferredContactMethod]: (state, payload) =>
-            update(state, {
-                claimData: {
-                    formData: {
-                        preferredContactMethod: { $set: payload },
-                    },
-                },
-            }),
         [updateClaimAFacilityJobTitle]: (state, payload) =>
             update(state, {
                 claimData: {
@@ -169,7 +156,7 @@ export default createReducer(
             update(state, {
                 claimData: {
                     formData: {
-                        linkedinProfile: { $set: payload },
+                        facilityLinkedinProfile: { $set: payload },
                     },
                 },
             }),
