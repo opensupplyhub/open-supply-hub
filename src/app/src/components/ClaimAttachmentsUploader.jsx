@@ -112,7 +112,13 @@ const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
                         >
                             <CloseIcon />
                         </IconButton>
-                        {file.name}{' '}
+                        <a
+                            href={URL.createObjectURL(file)}
+                            rel="noreferrer"
+                            target="_blank"
+                        >
+                            {file.name}
+                        </a>
                     </li>
                 ))}
                 {errorMessage ? (
