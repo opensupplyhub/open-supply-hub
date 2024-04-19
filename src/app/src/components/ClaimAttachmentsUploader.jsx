@@ -56,11 +56,8 @@ const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
     const allowedFileSize = 5 * 1024 * 1024; // 5 MB
     const allowedFileAmount = 10;
 
-    const handleDrop = e => {
-        e.preventDefault();
-        setErrorMessage('');
-        const newFiles = Array.from(e.dataTransfer.files);
-        const validFiles = newFiles.filter(file => {
+    const getValidFiles = newFiles =>
+        newFiles.filter(file => {
             const extension = file.name.split('.').pop().toLowerCase();
             if (!allowedExtensions.includes(`.${extension}`)) {
                 setErrorMessage(
@@ -83,13 +80,17 @@ const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
             return allowedExtensions.includes(`.${extension}`);
         });
 
-        updateUploadFiles([...uploadFiles, ...validFiles]);
+    const handleDrop = e => {
+        e.preventDefault();
+        setErrorMessage('');
+        const newFiles = Array.from(e.dataTransfer.files);
+        updateUploadFiles([...uploadFiles, ...getValidFiles(newFiles)]);
     };
 
     const handleFileChange = e => {
         setErrorMessage('');
         const newFiles = Array.from(e.target.files);
-        updateUploadFiles([...uploadFiles, ...newFiles]);
+        updateUploadFiles([...uploadFiles, ...getValidFiles(newFiles)]);
     };
 
     const handleRemoveFile = index => {
