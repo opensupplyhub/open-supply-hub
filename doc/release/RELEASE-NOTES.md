@@ -20,11 +20,17 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-862](https://opensupplyhub.atlassian.net/browse/OSDEV-862) Fix `DB - Save Anonymized DB` / `DB - Apply Anonymized DB` workflows:
   - run actions on self-hosted runners to eliminate `lack of storage` issue that hapopen on github's runners.
   - use the `Test` environment for  `DB - Save Anonymized DB` action
+* [OSDEV-989](https://opensupplyhub.atlassian.net/browse/OSDEV-989) - The Strategy pattern was utilized to consolidate the processing of new facilities received from both API requests and list uploads. The code responsible for executing this processing was refactored, and new classes were implemented:
+    * ProcessingFacility - abstract class for facility processing
+    * ProcessingFacilityList - class to process a facility list
+    * ProcessingFacilityAPI - class to process a facility from an API request
+    * ProcessingFacilityExecutor - class defines which interface to execute for the processing of a facility
 
 ### Bugfix
 
 ### What's new
 * [OSDEV-945](https://opensupplyhub.atlassian.net/browse/OSDEV-945) - Facility Claim. Update text of claim link on profile to "I want to claim this site"
+* [OSDEV-745](https://opensupplyhub.atlassian.net/browse/OSDEV-745) - New "Portuguese" translated resources option added to international menu.
 
 ## Release 1.11.0
 
