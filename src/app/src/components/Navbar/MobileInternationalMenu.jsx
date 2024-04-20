@@ -68,6 +68,15 @@ export default function MobileInternationalMenu({
                 <div className="mobile-nav__item">
                     <a
                         className="mobile-nav-link "
+                        href="https://info.opensupplyhub.org/brasil"
+                        target=""
+                    >
+                        Portuguese
+                    </a>
+                </div>
+                <div className="mobile-nav__item">
+                    <a
+                        className="mobile-nav-link "
                         href="https://info.opensupplyhub.org/turkey"
                         target=""
                     >
