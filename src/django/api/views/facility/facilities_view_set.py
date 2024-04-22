@@ -30,7 +30,6 @@ from waffle import switch_is_active, flag_is_active
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models import Extent
 from django.core import exceptions as core_exceptions
-from django.core.validators import validate_email
 from django.db import transaction
 from django.db.models import F, Q
 from django.shortcuts import redirect
@@ -825,24 +824,13 @@ class FacilitiesViewSet(ListModelMixin,
 
             contact_person = request.data.get('contact_person')
             job_title = request.data.get('job_title')
-            email = request.data.get('email')
             phone_number = request.data.get('phone_number')
             company_name = request.data.get('company_name')
             parent_company = request.data.get('parent_company')
             website = request.data.get('website')
             facility_description = request.data.get('facility_description')
             verification_method = request.data.get('verification_method')
-            preferred_contact_method = request \
-                .data \
-                .get('preferred_contact_method') or ''
             linkedin_profile = request.data.get('linkedin_profile', '')
-
-            try:
-                validate_email(email)
-            except core_exceptions.ValidationError as exc:
-                raise ValidationError(
-                    'Valid email is required'
-                ) from exc
 
             if not company_name:
                 raise ValidationError('Company name is required')
@@ -884,7 +872,6 @@ class FacilitiesViewSet(ListModelMixin,
                     contributor=contributor,
                     contact_person=contact_person,
                     job_title=job_title,
-                    email=email,
                     phone_number=phone_number,
                     company_name=company_name,
                     parent_company=parent_company_contributor,
@@ -892,7 +879,6 @@ class FacilitiesViewSet(ListModelMixin,
                     website=website,
                     facility_description=facility_description,
                     verification_method=verification_method,
-                    preferred_contact_method=preferred_contact_method,
                     linkedin_profile=linkedin_profile
                 )
             )

@@ -48,20 +48,19 @@ def send_claim_facility_confirmation_email(request, facility_claim):
         'facility_country': facility_country,
         'facility_url': make_facility_url(request, facility_claim.facility),
         'contact_person': facility_claim.contact_person,
-        'email': facility_claim.email,
+        'email': request.user.email,
         'phone_number': facility_claim.phone_number,
         'company_name': facility_claim.company_name,
         'website': facility_claim.website,
         'facility_description': facility_claim.facility_description,
         'verification_method': facility_claim.verification_method,
-        'preferred_contact_method': facility_claim.preferred_contact_method,
     }
 
     send_mail(
         subj_template.render().rstrip(),
         text_template.render(claim_dictionary),
         settings.CLAIM_FROM_EMAIL,
-        [facility_claim.email],
+        [request.user.email],
         html_message=html_template.render(claim_dictionary)
     )
 

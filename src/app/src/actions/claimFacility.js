@@ -50,9 +50,6 @@ export const updateClaimAFacilityContactPerson = createAction(
 export const updateClaimAFacilityJobTitle = createAction(
     'UPDATE_CLAIM_A_FACILITY_JOB_TITLE',
 );
-export const updateClaimAFacilityEmail = createAction(
-    'UPDATE_CLAIM_A_FACILITY_EMAIL',
-);
 export const updateClaimAFacilityPhoneNumber = createAction(
     'UPDATE_CLAIM_A_FACILITY_PHONE_NUMBER',
 );
@@ -70,9 +67,6 @@ export const updateClaimAFacilityDescription = createAction(
 );
 export const updateClaimAFacilityVerificationMethod = createAction(
     'UPDATE_CLAIM_A_FACILITY_VERIFICATION_METHOD',
-);
-export const updateClaimAFacilityPreferredContactMethod = createAction(
-    'UPDATE_CLAIM_A_FACILITY_PREFERRED_CONTACT_METHOD',
 );
 export const updateClaimAFacilityLinkedinProfile = createAction(
     'UPDATE_CLAIM_A_FACILITY_LINKEDIN_PROFILE',
@@ -102,11 +96,6 @@ export function submitClaimAFacilityData(osID) {
 
         const postData = mapKeys(
             Object.assign({}, formData, {
-                preferredContactMethod: get(
-                    formData,
-                    'preferredContactMethod.value',
-                    null,
-                ),
                 parentCompany: get(formData, 'parentCompany.value', null),
             }),
             (_, k) => snakeCase(k),

@@ -173,10 +173,6 @@ function DashboardClaimsDetails({
                     })()}
                 />
                 <InfoSection
-                    label="Preferred Contact Method"
-                    value={data.preferred_contact_method}
-                />
-                <InfoSection
                     label="LinkedIn Profile"
                     value={
                         data.linkedin_profile && (

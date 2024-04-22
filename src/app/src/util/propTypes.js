@@ -354,7 +354,6 @@ export const facilityClaimPropType = shape({
     company_name: string.isRequired,
     website: string.isRequired,
     facility_description: string.isRequired,
-    preferred_contact_method: string.isRequired,
     linkedin_profile: string.isRequired,
     status: oneOf(Object.values(facilityClaimStatusChoicesEnum)).isRequired,
     contributor: shape({}).isRequired,

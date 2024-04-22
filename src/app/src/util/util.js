@@ -28,7 +28,7 @@ import every from 'lodash/every';
 import uniqWith from 'lodash/uniqWith';
 import filter from 'lodash/filter';
 import includes from 'lodash/includes';
-import { isEmail, isURL } from 'validator';
+import { isURL } from 'validator';
 import { featureCollection, bbox } from '@turf/turf';
 import hash from 'object-hash';
 import * as XLSX from 'xlsx';
@@ -891,33 +891,21 @@ export const checkWhetherUserHasDashboardAccess = user =>
     get(user, 'is_superuser', false);
 
 export const claimAFacilityFormIsValid = ({
-    email,
     companyName,
     contactPerson,
     phoneNumber,
 }) =>
     every(
-        [
-            isEmail(email),
-            !isEmpty(companyName),
-            !isEmpty(contactPerson),
-            !isEmpty(phoneNumber),
-        ],
+        [!isEmpty(companyName), !isEmpty(contactPerson), !isEmpty(phoneNumber)],
         identity,
     );
 
 export const claimFacilityContactInfoStepIsValid = ({
-    email,
     contactPerson,
     phoneNumber,
     jobTitle,
 }) =>
-    every([
-        isEmail(email),
-        !isEmpty(contactPerson),
-        !isEmpty(phoneNumber),
-        !isEmpty(jobTitle),
-    ]);
+    every([!isEmpty(contactPerson), !isEmpty(phoneNumber), !isEmpty(jobTitle)]);
 
 export const isValidFacilityURL = url =>
     isEmpty(url) || isURL(url, { protocols: ['http', 'https'] });
