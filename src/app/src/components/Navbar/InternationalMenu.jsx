@@ -57,6 +57,13 @@ function Submenu() {
                 </a>
                 <a
                     className="nav-submenu__link "
+                    href="https://info.opensupplyhub.org/brasil"
+                    target=""
+                >
+                    <span>Portuguese</span>
+                </a>
+                <a
+                    className="nav-submenu__link "
                     href="https://info.opensupplyhub.org/turkey"
                     target=""
                 >
