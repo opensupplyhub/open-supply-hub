@@ -11,6 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Database changes
 #### Migrations:
+* 0143_create_facility_claim_attachment_table.py - create api_facilityclaimattachments table to store claimant attachments per facility claim
 
 #### Scheme changes
 
@@ -31,6 +32,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### What's new
 * [OSDEV-945](https://opensupplyhub.atlassian.net/browse/OSDEV-945) - Facility Claim. Update text of claim link on profile to "I want to claim this site"
 * [OSDEV-745](https://opensupplyhub.atlassian.net/browse/OSDEV-745) - New "Portuguese" translated resources option added to international menu.
+* [OSDEV-944](https://opensupplyhub.atlassian.net/browse/OSDEV-944) - Facility claims. Short-term new screen for claim documentation.
 
 ## Release 1.11.0
 
