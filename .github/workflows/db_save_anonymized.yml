@@ -5,8 +5,8 @@ on:
 
 jobs:
   save-anonymized-db:
-    runs-on: ubuntu-latest
-    environment: Production
+    runs-on: self-hosted
+    environment: Test
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -15,20 +15,20 @@ jobs:
           string: ${{ vars.ENV_NAME }}
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: Restore database for ${{ vars.ENV_NAME }}
+      - name: Dump database for ${{ vars.ENV_NAME }}
         run: |
           cd ./src/anon-tools
           mkdir -p ./keys
-          echo "${{ secrets.KEY_FILE }}" > ./keys/key
-          docker build -t restore -f Dockerfile.restore .
+          echo "${{ secrets.KEY_FILE_PROD }}" > ./keys/key
+          docker build -t dump_image -f Dockerfile.dump .
           docker run -v ./keys/key:/keys/key --shm-size=2gb --rm \
-              -e AWS_ACCESS_KEY_ID_PROD=${{ secrets.AWS_ACCESS_KEY_ID }} \
-              -e AWS_SECRET_ACCESS_KEY_PROD=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+              -e AWS_ACCESS_KEY_ID_PROD=${{ secrets.AWS_ACCESS_KEY_ID_PROD }} \
+              -e AWS_SECRET_ACCESS_KEY_PROD=${{ secrets.AWS_SECRET_ACCESS_KEY_RPOD }} \
               -e AWS_DEFAULT_REGION_PROD=eu-west-1 \
-              -e AWS_ACCESS_KEY_ID_TEST=${{ secrets.AWS_ACCESS_KEY_ID_TEST }} \
-              -e AWS_SECRET_ACCESS_KEY_TEST=${{ secrets.AWS_SECRET_ACCESS_KEY_TEST }} \
+              -e AWS_ACCESS_KEY_ID_TEST=${{ secrets.AWS_ACCESS_KEY_ID }} \
+              -e AWS_SECRET_ACCESS_KEY_TEST=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
               -e AWS_DEFAULT_REGION_TEST=eu-west-1 \
               -e DATABASE_NAME=opensupplyhub \
               -e DATABASE_USERNAME=opensupplyhub \
               -e DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
-              restore
+              dump_image
