@@ -24,6 +24,13 @@ import {
     claimAFacilityFormFields,
 } from '../util/constants';
 
+const {
+    verificationMethod: verificationMethodFormField,
+    preferredContactMethod: preferredContactMethodFormField,
+    linkedinProfile: linkedinProfileFormField,
+    claimAdditionalDocumentation: claimAdditionalDocumentationFormField,
+} = claimAFacilityFormFields;
+
 const selectStyles = Object.freeze({
     input: provided =>
         Object.freeze({
@@ -36,13 +43,6 @@ const selectStyles = Object.freeze({
             zIndex: '2',
         }),
 });
-
-const {
-    verificationMethod: verificationMethodFormField,
-    preferredContactMethod: preferredContactMethodFormField,
-    linkedinProfile: linkedinProfileFormField,
-    claimAdditionalDocumentation: claimAdditionalDocumentationFormField,
-} = claimAFacilityFormFields;
 
 function ClaimFacilityVerificationInfoStep({
     verificationMethod,
