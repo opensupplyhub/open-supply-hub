@@ -43,6 +43,7 @@ from django.db import transaction
 from django.db.models import F, Q
 from django.shortcuts import redirect
 from django.utils import timezone
+from django.utils.text import slugify
 from drf_yasg.openapi import Schema, TYPE_OBJECT
 from drf_yasg.utils import no_body, swagger_auto_schema
 
@@ -932,8 +933,10 @@ class FacilitiesViewSet(ListModelMixin,
             for file in files:
                 timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
                 file_name, file_extension = os.path.splitext(file.name)
-                file.name = f'{file_name}-{contributor.name}-\
-                    {timestamp}{file_extension}'
+                file.name = (
+                    f'{slugify(file_name, allow_unicode=True)}-'
+                    f'{contributor.name}-{timestamp}{file_extension}'
+                )
                 FacilityClaimAttachments.objects.create(
                     claim=facility_claim,
                     file_name=file.name,
