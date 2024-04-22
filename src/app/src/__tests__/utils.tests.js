@@ -1450,6 +1450,10 @@ it('checks whether the claim a facility form is valid', () => {
         contactPerson: 'contactPerson',
         phoneNumber: 'phoneNumber',
         facilityDescription: 'facilityDescription',
+        preferredContactMethod: {
+            label: 'label',
+            value: 'value',
+        },
         jobTitle: 'computer programmer',
     };
 
@@ -1473,6 +1477,7 @@ it('checks whether the claim a facility form is valid', () => {
         companyName: '',
         contactPerson: '',
         phoneNumber: '',
+        preferredContactMethod: null,
     };
 
     expect(isEqual(

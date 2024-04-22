@@ -271,6 +271,10 @@ ClaimFacilityStepper.propTypes = {
         companyName: string.isRequired,
         contactPerson: string.isRequired,
         phoneNumber: string.isRequired,
+        preferredContactMethod: shape({
+            value: string.isRequired,
+            label: string.isRequired,
+        }),
     }).isRequired,
     contributorEmail: string.isRequired,
     setEmailFromContributorEmail: func.isRequired,

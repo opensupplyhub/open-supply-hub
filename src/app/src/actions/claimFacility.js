@@ -1,5 +1,5 @@
 import { createAction } from 'redux-act';
-import { toPairs, snakeCase, mapKeys } from 'lodash';
+import { get, toPairs, snakeCase, mapKeys } from 'lodash';
 
 import apiRequest from '../util/apiRequest';
 
@@ -69,6 +69,9 @@ export const updateClaimAFacilityDescription = createAction(
 export const updateClaimAFacilityVerificationMethod = createAction(
     'UPDATE_CLAIM_A_FACILITY_VERIFICATION_METHOD',
 );
+export const updateClaimAFacilityPreferredContactMethod = createAction(
+    'UPDATE_CLAIM_A_FACILITY_PREFERRED_CONTACT_METHOD',
+);
 export const updateClaimAFacilityLinkedinProfile = createAction(
     'UPDATE_CLAIM_A_FACILITY_LINKEDIN_PROFILE',
 );
@@ -100,11 +103,19 @@ export function submitClaimAFacilityData(osID) {
         const postData = new FormData();
         toPairs(formData).forEach(([key, value]) => {
             const formattedKey = snakeCase(key);
-            return formattedKey === 'upload_files'
-                ? mapKeys(value, file => {
-                      postData.append('files', file);
-                  })
-                : postData.append(formattedKey, value);
+            if (formattedKey === 'upload_files') {
+                mapKeys(value, file => {
+                    postData.append('files', file);
+                });
+            } else if (
+                formattedKey === 'preferred_contact_method' ||
+                formattedKey === 'parent_company'
+            ) {
+                const newValue = get(value, 'value', null);
+                postData.append(formattedKey, newValue);
+            } else {
+                postData.append(formattedKey, value);
+            }
         });
 
         dispatch(startSubmitClaimAFacilityData());
