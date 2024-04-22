@@ -10,6 +10,7 @@ class File {
         this.parts = parts;
         this.name = name;
         this.options = options;
+        this.size = options.size || 0;
     }
 }
 
@@ -88,28 +89,40 @@ describe('ClaimAttachmentsUploader', () => {
         expect(updatedUploadFiles.length).toBe(0)
     });
 
-    /*
     it('displays error message for unsupported file format', () => {
-        const { getByTestId } = render(<ClaimAttachmentsUploader uploadFiles={[]} updateUploadFiles={() => {}} store={initialState} />);
-        const fileInputField = getByTestId('claim-attachments-uploader');
-        fireEvent.drop(fileInputField, { dataTransfer: { files: [new File(['file contents'], 'file.txt', { type: 'text/plain' })] } });
-        expect(getByText('file.txt could not be uploaded because it is not in a supported format.')).toBeInTheDocument();
+        const { getByTestId, getByText } = render(<ClaimAttachmentsUploader store={initialState} />);
+        const fileInputField = getByTestId('claim-attachments-uploader-input');
+        fireEvent.drop(fileInputField, { dataTransfer: { files: [new File(['file contents'], 'attachment.txt', { type: 'text/plain' })] } });
+        expect(getByText('attachment.txt could not be uploaded because it is not in a supported format.')).toBeInTheDocument();
     });
 
     it('displays error message for files exceeding the maximum size', () => {
-        const { getByTestId } = render(<ClaimAttachmentsUploader uploadFiles={[]} updateUploadFiles={() => {}} store={initialState} />);
-        const fileInputField = getByTestId('claim-attachments-uploader');
-        const largeFile = new File(['file contents'], 'largefile.txt', { type: 'text/plain', size: 6 * 1024 * 1024 }); // 6MB file
+        const { getByTestId, getByText } = render(<ClaimAttachmentsUploader store={initialState} />);
+        const fileInputField = getByTestId('claim-attachments-uploader-input');
+        const largeFile = new File(['file contents'], 'attachment_large.jpg', { type: 'image/jpg', size: 6 * 1024 * 1024 }); // 6MB file
         fireEvent.drop(fileInputField, { dataTransfer: { files: [largeFile] } });
-        expect(getByText('largefile.txt could not be uploaded because it exceeds the maximum file size of 5MB.')).toBeInTheDocument();
+        expect(getByText('attachment_large.jpg could not be uploaded because it exceeds the maximum file size of 5MB.')).toBeInTheDocument();
     });
 
-    it('displays error message for exceeding the maximum number of files', () => {
-        const { getByTestId, getByText } = render(<ClaimAttachmentsUploader uploadFiles={[...Array(10).keys()].map(i => ({ name: `file${i}.txt` }))} updateUploadFiles={() => {}}  store={initialState} />);
-        const fileInputField = getByTestId('claim-attachments-uploader');
-        const newFile = new File(['file contents'], 'newfile.txt', { type: 'text/plain' });
-        fireEvent.drop(fileInputField, { dataTransfer: { files: [newFile] } });
-        expect(getByText('newfile.txt could not be uploaded because there is a maximum of 10 attachments and you have already uploaded 10 attachments.')).toBeInTheDocument();
+    it('displays error message for exceeding the maximum number of files', async () => {
+        initialState = mockStore({
+            claimFacility: {
+                claimData: {
+                    formData: {
+                        uploadFiles: [...Array(10).keys()].map(i => ({ name: `attachment_${i}.png` }))
+                    },
+                },
+            },
+        })
+
+        const { getByTestId, getByText } = render(
+            <Provider store={initialState}>
+                <ClaimAttachmentsUploader />
+            </Provider>
+        );
+        const fileInputField = getByTestId('claim-attachments-uploader-input');
+        fireEvent.drop(fileInputField, { dataTransfer: { files: [new File(['file contents'], 'attachment_11.jpg', { type: 'image/jpg' })] } });
+
+        expect(getByText('attachment_11.jpg could not be uploaded because there is a maximum of 10 attachments and you have already uploaded 10 attachments.')).toBeInTheDocument();
     });
-    */
 });

@@ -68,7 +68,7 @@ const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
             }
             if (file.size > allowedFileSize) {
                 setErrorMessage(
-                    `${fileName} could not be uploaded because it exceeds the maximum file size of 5MB`,
+                    `${fileName} could not be uploaded because it exceeds the maximum file size of 5MB.`,
                 );
                 return null;
             }
