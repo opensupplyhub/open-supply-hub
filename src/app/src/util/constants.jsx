@@ -583,7 +583,7 @@ export const claimAFacilityFormFields = Object.freeze({
     }),
     linkedinProfile: Object.freeze({
         id: 'linkedin-profile',
-        label: 'Link to facility LinkedIn profile',
+        label: 'Link to Facility LinkedIn Profile',
     }),
     claimAdditionalDocumentation: Object.freeze({
         id: 'claimant-additional-documentation',
