@@ -26,7 +26,7 @@ RUN chmod 644 ~/.ssh/known_hosts
 
 COPY ./do_restore.sh ./
 
-VOLUME /keys/key
+VOLUME /keys
 
 CMD ["sh", "do_restore.sh"]
 
