@@ -241,10 +241,10 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: "eu-west-1"
-       
+
   restore_database:
     needs: create_kafka_topic
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
     if:  ${{ inputs.deploy-plan-only == false }}
     steps:
