@@ -28,7 +28,7 @@ on:
         type: boolean
         default: false
       restore-db:
-        description: 'Restore database'
+        description: 'Restore database to original state (Reset database for Development and restore anon dump for Test and Pre-prod)'
         required: false
         type: boolean
         default: false
