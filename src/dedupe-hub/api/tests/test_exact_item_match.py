@@ -1,4 +1,6 @@
 import unittest
+from unittest.mock import MagicMock
+
 # from unittest.mock import MagicMock, patch
 
 # from app.database.models.facility_list_item_temp import FacilityListItemTemp
@@ -24,6 +26,11 @@ class TestExactItemMatch(unittest.TestCase):
         self.automatic_threshold = 1.0
 
     def test_process_with_no_matches(self):
+        session = MagicMock()
+        query = MagicMock()
+        query.filter().scalar.return_value = False
+        session.query.return_value = query
+
         exact_match = ExactItemMatch(
             self.item_id,
             self.matches_empty,
