@@ -49,11 +49,17 @@ class TestExactItemMatch(unittest.TestCase):
     def test_process_with_one_match(self, facility_mock, mock_get_session):
         facility_mock.query().filter().scalar.return_value = True
         # Mock the session and its query method
-        mock_session = MagicMock()
-        mock_query = MagicMock()
-        mock_session.query.return_value = mock_query
-        mock_get_session.return_value.__enter__.return_value = mock_session
+        # mock_session = MagicMock()
+        # mock_query = MagicMock()
+        # mock_session.query.return_value = mock_query
+        # mock_get_session.return_value.__enter__.return_value = mock_session
         
+        # Define a mock session object
+        mock_session = "mocked_session"
+        
+        # Set the return value of mock_get_session to the mock session
+        mock_get_session.return_value = mock_session
+
         exact_match = ExactItemMatch(
             self.item_id,
             self.matches_single,
