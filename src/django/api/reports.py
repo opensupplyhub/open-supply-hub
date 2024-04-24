@@ -259,6 +259,7 @@ def contributors_with_extended_fields_cumulative():
 
 
 def facilities_with_extended_fields_cumulative():
+    # need to be removed after rewriting with sql
     data = defaultdict(list)
     months = ExtendedField.objects.dates('created_at', 'month')
     for month in months:
