@@ -26,6 +26,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * ProcessingFacilityList - class to process a facility list
     * ProcessingFacilityAPI - class to process a facility from an API request
     * ProcessingFacilityExecutor - class defines which interface to execute for the processing of a facility
+* Resource allocation has been optimized for the Test environment. The number of ECS tasks in the Test environment has been reduced from 4 to 2, while maintaining system stability.
 
 ### Bugfix
 
@@ -38,11 +39,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: April 20, 2024
-
-### Database changes
-#### Migrations:
-
-#### Scheme changes
 
 ### Code/API changes
 * [OSDEV-923](https://opensupplyhub.atlassian.net/browse/OSDEV-923) [Uptime] Added more logs around API/List uploads & Dedupe Hub match processing
@@ -60,6 +56,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   * creates temporary postgresdb instance from latest production snaphsot in the `test` AWS account
   * run anonymization query
   * saves anonymized snapshot and removes the instance
+* In response to recent stability observations, resource allocation has been optimized, reducing the number of ECS tasks in both production and pre-production environments from 16 to 12, maintaining system stability.
 
 ### Bugfix
 * [OSDEV-996](https://opensupplyhub.atlassian.net/browse/OSDEV-996) The default sorting order for embedded maps was broken (changed to Descending by # Contributors). The default sorting order for embedded maps has been fixed (changed it back to Ascending by Name).
@@ -79,6 +76,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 `month`, `Total # of list uploads` in a given month (these are uploads that come from external contributors, NOT OS Hub team members), `# of public list uploads` in a given month (these are uploads that come from OS Hub team members AND have “[Public List]” in the contributor name), `Total facility listItems` uploaded in a given month, `# of Facilities` from Public Lists, `Total Facilities w/ status = new facility`, `# Public List Facilities w/ status = new facility`. Data is ordered from most recent to oldest
 * [OSDEV-913](https://opensupplyhub.atlassian.net/browse/OSDEV-913) Claim. Updated the submitted claim auto-reply message for email template.
 * [OSDEV-914](https://opensupplyhub.atlassian.net/browse/OSDEV-914) Claim. Updated the approved claim auto-reply message for email template
+
+### Release instructions:
+* Update code.
+
 
 ## Release 1.10.0
 
@@ -130,6 +131,7 @@ Move `countries` to a separate module so that it becomes possible to use both `d
 ### Release instructions:
 * Update code.
 * Apply DB migrations up to the latest one.
+
 
 ## Release 1.9.0
 
