@@ -53,7 +53,7 @@ class TestExactItemMatch(unittest.TestCase):
         mock_query = MagicMock()
         mock_session.query.return_value = mock_query
         mock_get_session.return_value.__enter__.return_value = mock_session
-
+        
         exact_match = ExactItemMatch(
             self.item_id,
             self.matches_single,
@@ -76,7 +76,7 @@ class TestExactItemMatch(unittest.TestCase):
 
         self.assertEqual(result, expected_result)
         self.assertEqual(exact_match.item.status, FacilityListItemTemp.MATCHED)
-
+        
     # @patch('app.database.models.facility.Facility')
     # def test_process_with_multiple_matches(self, facility_mock):
     #     facility_mock.query().filter().scalar.return_value = True
