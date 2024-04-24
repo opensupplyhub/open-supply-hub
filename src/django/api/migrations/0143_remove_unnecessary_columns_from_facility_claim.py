@@ -4,6 +4,11 @@ from django.db.migrations import RemoveField, Migration
 
 
 class Migration(Migration):
+    '''
+    Since email and preferred_contact_method are no longer necessary for the
+    claim form, they should be deleted from the FacilityClaim model and the
+    respective history table.
+    '''
 
     dependencies = [
         ('api', '0142_introduce_temporary_endpoint_switcher_for_list_uploads'),

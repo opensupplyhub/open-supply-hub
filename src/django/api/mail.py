@@ -48,7 +48,7 @@ def send_claim_facility_confirmation_email(request, facility_claim):
         'facility_country': facility_country,
         'facility_url': make_facility_url(request, facility_claim.facility),
         'contact_person': facility_claim.contact_person,
-        'email': request.user.email,
+        'email': facility_claim.contributor.admin.email,
         'phone_number': facility_claim.phone_number,
         'company_name': facility_claim.company_name,
         'website': facility_claim.website,
@@ -85,7 +85,7 @@ def send_claim_facility_approval_email(request, facility_claim):
         subj_template.render().rstrip(),
         text_template.render(approval_dictionary),
         settings.CLAIM_FROM_EMAIL,
-        [facility_claim.email],
+        [facility_claim.contributor.admin.email],
         html_message=html_template.render(approval_dictionary)
     )
 
@@ -109,7 +109,7 @@ def send_claim_facility_denial_email(request, facility_claim):
         subj_template.render().rstrip(),
         text_template.render(denial_dictionary),
         settings.CLAIM_FROM_EMAIL,
-        [facility_claim.email],
+        [facility_claim.contributor.admin.email],
         html_message=html_template.render(denial_dictionary)
     )
 
@@ -133,7 +133,7 @@ def send_claim_facility_revocation_email(request, facility_claim):
         subj_template.render().rstrip(),
         text_template.render(revocation_dictionary),
         settings.CLAIM_FROM_EMAIL,
-        [facility_claim.email],
+        [facility_claim.contributor.admin.email],
         html_message=html_template.render(revocation_dictionary)
     )
 
