@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from app.database.models.facility_list_item_temp import FacilityListItemTemp
 from app.matching.matcher.exact.exact_item_match import ExactItemMatch
@@ -46,8 +46,13 @@ class TestExactItemMatch(unittest.TestCase):
 
     @patch('app.database.sqlalchemy.get_session')
     @patch('app.database.models.facility.Facility')
-    def test_process_with_one_match(self, facility_mock):
+    def test_process_with_one_match(self, facility_mock, mock_get_session):
         facility_mock.query().filter().scalar.return_value = True
+        # Mock the session and its query method
+        mock_session = MagicMock()
+        mock_query = MagicMock()
+        mock_session.query.return_value = mock_query
+        mock_get_session.return_value.__enter__.return_value = mock_session
 
         exact_match = ExactItemMatch(
             self.item_id,
