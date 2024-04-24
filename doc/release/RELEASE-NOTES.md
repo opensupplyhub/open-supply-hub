@@ -32,6 +32,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### What's new
 * [OSDEV-945](https://opensupplyhub.atlassian.net/browse/OSDEV-945) - Facility Claim. Update text of claim link on profile to "I want to claim this site"
 * [OSDEV-745](https://opensupplyhub.atlassian.net/browse/OSDEV-745) - New "Portuguese" translated resources option added to international menu.
+* [OSDEV-931](https://opensupplyhub.atlassian.net/browse/OSDEV-931) - details-details-details
+
+### Release instructions:
+* Update code.
+* Apply DB migrations up to the latest one.
+* Run the index_facilities_new management command.
+
 
 ## Release 1.11.0
 
