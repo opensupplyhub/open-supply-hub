@@ -931,11 +931,13 @@ class FacilitiesViewSet(ListModelMixin,
             )
 
             for file in files:
-                timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+                timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+                milliseconds = datetime.now().strftime('%f')[:-3]
+                timestamp_ms = f'{timestamp}{milliseconds}'
                 file_name, file_extension = os.path.splitext(file.name)
                 file.name = (
                     f'{slugify(file_name, allow_unicode=True)}-'
-                    f'{contributor.name}-{timestamp}{file_extension}'
+                    f'{contributor.name}-{timestamp_ms}{file_extension}'
                 )
                 FacilityClaimAttachments.objects.create(
                     claim=facility_claim,
