@@ -46,8 +46,12 @@ class TestExactItemMatch(unittest.TestCase):
 
     @patch('app.database.sqlalchemy.get_session')
     @patch('app.database.models.facility.Facility')
-    def test_process_with_one_match(self, facility_mock, get_session_mock):
+    @patch('app.database.models.source.Source')
+    def test_process_with_one_match(
+        self, facility_mock, get_session_mock, source_mock
+    ):
         facility_mock.query().filter().scalar.return_value = True
+        source_mock.query().filter().scalar.return_value = True
         # Mocking session query to return False
         session_mock = MagicMock()
         session_mock.query().filter().scalar.return_value = False
