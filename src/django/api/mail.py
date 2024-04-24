@@ -60,7 +60,7 @@ def send_claim_facility_confirmation_email(request, facility_claim):
         subj_template.render().rstrip(),
         text_template.render(claim_dictionary),
         settings.CLAIM_FROM_EMAIL,
-        [request.user.email],
+        [facility_claim.contributor.admin.email],
         html_message=html_template.render(claim_dictionary)
     )
 
