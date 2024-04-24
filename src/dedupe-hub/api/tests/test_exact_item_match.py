@@ -23,7 +23,7 @@ class TestExactItemMatch(unittest.TestCase):
         self.results = {}
         self.automatic_threshold = 1.0
 
-    def test_process_no_matches(self):
+    def test_process_with_no_matches(self):
         exact_match = ExactItemMatch(
             self.item_id,
             self.matches_empty,
@@ -41,7 +41,7 @@ class TestExactItemMatch(unittest.TestCase):
 
     @patch('app.database.models.facility.Facility')
     def test_process_with_one_match(self, facility_mock):
-        facility_mock.query().filter().scalar.return_value = False
+        facility_mock.query().filter().scalar.return_value = True
 
         exact_match = ExactItemMatch(
             self.item_id,
@@ -68,7 +68,7 @@ class TestExactItemMatch(unittest.TestCase):
 
     @patch('app.database.models.facility.Facility')
     def test_process_with_multiple_matches(self, facility_mock):
-        facility_mock.query().filter().scalar.return_value = False
+        facility_mock.query().filter().scalar.return_value = True
 
         exact_match = ExactItemMatch(
             self.item_id,
