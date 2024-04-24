@@ -1,5 +1,6 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
 from app.database.models.facility_list_item_temp import FacilityListItemTemp
 from app.matching.matcher.exact.exact_item_match import ExactItemMatch
 
@@ -22,12 +23,7 @@ class TestExactItemMatch(unittest.TestCase):
         self.results = {}
         self.automatic_threshold = 1.0
 
-    @patch('app.database.sqlalchemy.get_session')
-    def test_process_no_matches(self, get_session_mock):
-        session_mock = MagicMock()
-        session_mock.query().filter().scalar.return_value = False
-        get_session_mock.return_value.__enter__.return_value = session_mock
-
+    def test_process_no_matches(self):
         exact_match = ExactItemMatch(
             self.item_id,
             self.matches_empty,
@@ -43,11 +39,9 @@ class TestExactItemMatch(unittest.TestCase):
         self.assertEqual(result, expected_result)
         self.assertEqual(exact_match.item.status, FacilityListItemTemp.MATCHED)
 
-    @patch('app.database.sqlalchemy.get_session')
-    def test_process_with_one_match(self, get_session_mock):
-        session_mock = MagicMock()
-        session_mock.query().filter().scalar.return_value = False
-        get_session_mock.return_value.__enter__.return_value = session_mock
+    @patch('app.database.models.facility.Facility')
+    def test_process_with_one_match(self, facility_mock):
+        facility_mock.query().filter().scalar.return_value = False
 
         exact_match = ExactItemMatch(
             self.item_id,
@@ -72,11 +66,9 @@ class TestExactItemMatch(unittest.TestCase):
         self.assertEqual(result, expected_result)
         self.assertEqual(exact_match.item.status, FacilityListItemTemp.MATCHED)
 
-    @patch('app.database.sqlalchemy.get_session')
-    def test_process_with_multiple_matches(self, get_session_mock):
-        session_mock = MagicMock()
-        session_mock.query().filter().scalar.return_value = False
-        get_session_mock.return_value.__enter__.return_value = session_mock
+    @patch('app.database.models.facility.Facility')
+    def test_process_with_multiple_matches(self, facility_mock):
+        facility_mock.query().filter().scalar.return_value = False
 
         exact_match = ExactItemMatch(
             self.item_id,
