@@ -8,21 +8,20 @@ import unittest
 class TestExactItemMatch(unittest.TestCase):
 
     def setUp(self):
-        pass
-        # self.item_id = 1
-        # self.matches_empty = []
-        # self.matches_single = [
-        #     {"id": 2072, "facility_id": "CN20241096SFEBA", "score": "1"},
-        # ]
-        # self.matches_multiple = [
-        #     {"id": 2072, "facility_id": "CN20241096SFEBA", "score": "1"},
-        #     {"id": 2073, "facility_id": "CN20241096SFEBA", "score": "1"},
-        #     {"id": 2074, "facility_id": "CN20241096SFEBA", "score": "1"},
-        # ]
-        # self.started = "2024-04-22 10:57:29.258354"
-        # self.finished = "2024-04-22 10:57:29.263924"
-        # self.results = {}
-        # self.automatic_threshold = 1.0
+        self.item_id = 1
+        self.matches_empty = []
+        self.matches_single = [
+            {"id": 2072, "facility_id": "CN20241096SFEBA", "score": "1"},
+        ]
+        self.matches_multiple = [
+            {"id": 2072, "facility_id": "CN20241096SFEBA", "score": "1"},
+            {"id": 2073, "facility_id": "CN20241096SFEBA", "score": "1"},
+            {"id": 2074, "facility_id": "CN20241096SFEBA", "score": "1"},
+        ]
+        self.started = "2024-04-22 10:57:29.258354"
+        self.finished = "2024-04-22 10:57:29.263924"
+        self.results = {}
+        self.automatic_threshold = 1.0
 
     # def test_process_with_no_matches(self):
     #     exact_match = ExactItemMatch(
