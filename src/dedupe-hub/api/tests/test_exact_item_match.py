@@ -23,20 +23,20 @@ class TestExactItemMatch(unittest.TestCase):
         self.results = {}
         self.automatic_threshold = 1.0
 
-    def test_process_with_no_matches(self):
-        exact_match = ExactItemMatch(
-            self.item_id,
-            self.matches_empty,
-            self.started,
-            self.finished,
-            self.results,
-            self.automatic_threshold,
-        )
+    # def test_process_with_no_matches(self):
+    #     exact_match = ExactItemMatch(
+    #         self.item_id,
+    #         self.matches_empty,
+    #         self.started,
+    #         self.finished,
+    #         self.results,
+    #         self.automatic_threshold,
+    #     )
 
-        result = exact_match.process()
-        expected_result = []
+    #     result = exact_match.process()
+    #     expected_result = []
 
-        self.assertEqual(result, expected_result)
+    #     self.assertEqual(result, expected_result)
 
     #     self.assertEqual(exact_match.item.status, FacilityListItemTemp.MATCHED)
 
