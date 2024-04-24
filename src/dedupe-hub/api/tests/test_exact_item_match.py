@@ -2,7 +2,7 @@ import unittest
 # from unittest.mock import MagicMock, patch
 
 # from app.database.models.facility_list_item_temp import FacilityListItemTemp
-# from app.matching.matcher.exact.exact_item_match import ExactItemMatch
+from app.matching.matcher.exact.exact_item_match import ExactItemMatch
 
 
 class TestExactItemMatch(unittest.TestCase):
@@ -23,22 +23,22 @@ class TestExactItemMatch(unittest.TestCase):
         self.results = {}
         self.automatic_threshold = 1.0
 
-    # def test_process_with_no_matches(self):
-    #     exact_match = ExactItemMatch(
-    #         self.item_id,
-    #         self.matches_empty,
-    #         self.started,
-    #         self.finished,
-    #         self.results,
-    #         self.automatic_threshold,
-    #     )
+    def test_process_with_no_matches(self):
+        exact_match = ExactItemMatch(
+            self.item_id,
+            self.matches_empty,
+            self.started,
+            self.finished,
+            self.results,
+            self.automatic_threshold,
+        )
 
-    #     result = exact_match.process()
-    #     expected_result = []
+        result = exact_match.process()
+        expected_result = []
 
-    #     self.assertEqual(result, expected_result)
+        self.assertEqual(result, expected_result)
 
-    #     self.assertEqual(exact_match.item.status, FacilityListItemTemp.MATCHED)
+        # self.assertEqual(exact_match.item.status, FacilityListItemTemp.MATCHED)
 
     # @patch('app.database.sqlalchemy.get_session')
     # @patch('app.database.models.facility.Facility')
