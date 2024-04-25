@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import MagicMock, patch
 from app.matching.matcher.exact.exact_item_match import ExactItemMatch
-from app.database.models.facility_list_item_temp import FacilityListItemTemp
 
 
 class TestExactItemMatch(unittest.TestCase):
@@ -13,24 +12,6 @@ class TestExactItemMatch(unittest.TestCase):
         self.results = {}
         self.automatic_threshold = 1.0
 
-        # Mock the FacilityListItemTemp that will be returned by the query
-        self.mock_item = MagicMock(spec=FacilityListItemTemp)
-
-        # Set up the session mock
-        self.mock_session = MagicMock()
-        self.mock_session.__enter__.return_value = self.mock_session
-        self.mock_query = MagicMock()
-        self.mock_session.query.return_value = self.mock_query
-        self.mock_query.get.return_value = self.mock_item
-
-        # Patch get_session to return the mock session
-        self.patcher = patch(
-            'app.matching.matcher.exact.exact_item_match.get_session',
-            return_value=self.mock_session,
-        )
-        self.mock_get_session = self.patcher.start()
-
-        # Initialize ExactItemMatch with the mocked get_session
         self.exact_item_match = ExactItemMatch(
             item_id=self.item_id,
             matches=self.matches,
@@ -40,10 +21,17 @@ class TestExactItemMatch(unittest.TestCase):
             automatic_threshold=self.automatic_threshold,
         )
 
-    def tearDown(self):
-        self.patcher.stop()
+    @patch("app.matching.matcher.base_item_match.get_session")
+    def test_process_no_matches(self, mock_get_session):
+        mock_session = MagicMock()
+        mock_get_session.return_value.__enter__.return_value = mock_session
 
-    def test_process_no_matches(self):
+        mock_session.query().get().return_value = {
+            'id': self.item_id,
+            'source_id': 1,
+            'status': "UNMATCHED",
+            'facility_id': None,
+        }
 
         result = self.exact_item_match.process()
         self.assertEqual(result, [])
