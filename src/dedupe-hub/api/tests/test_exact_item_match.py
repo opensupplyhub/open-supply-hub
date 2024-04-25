@@ -27,10 +27,16 @@ class TestExactItemMatch(unittest.TestCase):
         mock_session = MagicMock()
         mock_get_session.return_value.__enter__.return_value = mock_session
 
-        mock_item = FacilityListItemTemp(
-            id=self.item_id, source_id=1, status="UNMATCHED", facility_id=None
-        )
-        mock_session.query.return_value.get.return_value = mock_item
+        # mock_item = FacilityListItemTemp(
+        #     id=self.item_id, source_id=1, status="UNMATCHED", facility_id=None
+        # )
+        # mock_session.query.return_value.get.return_value = mock_item
+        mock_session.query.return_value.get.return_value = {
+            "id": self.item_id,
+            "source_id": 1,
+            "status": "UNMATCHED",
+            "facility_id": None,
+        }
 
         exact_item_match = ExactItemMatch(
             item_id=self.item_id,
