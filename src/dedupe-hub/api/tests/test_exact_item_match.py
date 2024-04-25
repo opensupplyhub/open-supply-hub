@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 from app.matching.matcher.exact.exact_item_match import ExactItemMatch
+from app.database.models.facility_list_item_temp import FacilityListItemTemp
 
 
 class TestExactItemMatch(unittest.TestCase):
@@ -12,7 +13,26 @@ class TestExactItemMatch(unittest.TestCase):
         self.results = {}
         self.automatic_threshold = 1.0
 
-        self.exact_item_match = ExactItemMatch(
+        # self.exact_item_match = ExactItemMatch(
+        #     item_id=self.item_id,
+        #     matches=self.matches,
+        #     started=self.started,
+        #     finished=self.finished,
+        #     results=self.results,
+        #     automatic_threshold=self.automatic_threshold,
+        # )
+
+    @patch("app.matching.matcher.base_item_match.get_session")
+    def test_process_no_matches(self, mock_get_session):
+        mock_session = MagicMock()
+        mock_get_session.return_value.__enter__.return_value = mock_session
+
+        mock_item = FacilityListItemTemp(
+            id=self.item_id, source_id=1, status="UNMATCHED", facility_id=None
+        )
+        mock_session.query.return_value.get.return_value = mock_item
+
+        exact_item_match = ExactItemMatch(
             item_id=self.item_id,
             matches=self.matches,
             started=self.started,
@@ -21,19 +41,7 @@ class TestExactItemMatch(unittest.TestCase):
             automatic_threshold=self.automatic_threshold,
         )
 
-    @patch("app.matching.matcher.base_item_match.get_session")
-    def test_process_no_matches(self, mock_get_session):
-        mock_session = MagicMock()
-        mock_get_session.return_value.__enter__.return_value = mock_session
-
-        mock_session.query().get().return_value = {
-            'id': self.item_id,
-            'source_id': 1,
-            'status': "UNMATCHED",
-            'facility_id': None,
-        }
-
-        result = self.exact_item_match.process()
+        result = exact_item_match.process()
         self.assertEqual(result, [])
 
     # def test_process_single_match(self):
