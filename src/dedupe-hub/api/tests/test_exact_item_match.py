@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 from app.matching.matcher.exact.exact_item_match import ExactItemMatch
+from app.database.models.facility_list_item_temp import FacilityListItemTemp
 
 
 class TestExactItemMatch(unittest.TestCase):
@@ -10,7 +11,26 @@ class TestExactItemMatch(unittest.TestCase):
         self.started = "2024-04-25 12:00:00"
         self.finished = "2024-04-25 12:10:00"
         self.results = {}
-        self.automatic_threshold = 0.5
+        self.automatic_threshold = 1.0
+
+        # Mock the FacilityListItemTemp that will be returned by the query
+        self.mock_item = MagicMock(spec=FacilityListItemTemp)
+
+        # Set up the session mock
+        self.mock_session = MagicMock()
+        self.mock_session.__enter__.return_value = self.mock_session
+        self.mock_query = MagicMock()
+        self.mock_session.query.return_value = self.mock_query
+        self.mock_query.get.return_value = self.mock_item
+
+        # Patch get_session to return the mock session
+        self.patcher = patch(
+            'app.matching.matcher.exact.exact_item_match.get_session',
+            return_value=self.mock_session,
+        )
+        self.mock_get_session = self.patcher.start()
+
+        # Initialize ExactItemMatch with the mocked get_session
         self.exact_item_match = ExactItemMatch(
             item_id=self.item_id,
             matches=self.matches,
@@ -20,14 +40,10 @@ class TestExactItemMatch(unittest.TestCase):
             automatic_threshold=self.automatic_threshold,
         )
 
-    def test_process_no_matches(self):
-        item_mock = MagicMock()
-        item_mock.id = self.item_id
-        item_mock.source_id = 1
-        item_mock.status = "UNMATCHED"
-        item_mock.facility_id = None
+    def tearDown(self):
+        self.patcher.stop()
 
-        self.exact_item_match.item = item_mock
+    def test_process_no_matches(self):
 
         result = self.exact_item_match.process()
         self.assertEqual(result, [])
