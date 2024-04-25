@@ -21,6 +21,14 @@ class TestExactItemMatch(unittest.TestCase):
         )
 
     def test_process_no_matches(self):
+        item_mock = MagicMock()
+        item_mock.id = self.item_id
+        item_mock.source_id = 1
+        item_mock.status = "UNMATCHED"
+        item_mock.facility_id = None
+
+        self.exact_item_match.item = item_mock
+
         result = self.exact_item_match.process()
         self.assertEqual(result, [])
 
