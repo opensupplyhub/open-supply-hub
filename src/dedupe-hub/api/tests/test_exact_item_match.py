@@ -1,115 +1,79 @@
 import unittest
-from unittest.mock import MagicMock
-
-# from unittest.mock import MagicMock, patch
-
-# from app.database.models.facility_list_item_temp import FacilityListItemTemp
+from unittest.mock import MagicMock, patch
 from app.matching.matcher.exact.exact_item_match import ExactItemMatch
 
 
 class TestExactItemMatch(unittest.TestCase):
-
     def setUp(self):
         self.item_id = 1
-        self.matches_empty = []
-        self.matches_single = [
+        self.matches = []
+        self.started = "2024-04-25 12:00:00"
+        self.finished = "2024-04-25 12:10:00"
+        self.results = {}
+        self.automatic_threshold = 0.5
+        self.exact_item_match = ExactItemMatch(
+            item_id=self.item_id,
+            matches=self.matches,
+            started=self.started,
+            finished=self.finished,
+            results=self.results,
+            automatic_threshold=self.automatic_threshold,
+        )
+
+    def test_process_no_matches(self):
+        self.exact_item_match.matches = []
+        with patch.object(ExactItemMatch, "item_save") as mock_item_save:
+            result = self.exact_item_match.process()
+            self.assertEqual(result, [])
+            mock_item_save.assert_not_called()
+
+    def test_process_single_match(self):
+        self.exact_item_match.matches = [
             {"id": 2072, "facility_id": "CN20241096SFEBA", "score": "1"},
         ]
-        self.matches_multiple = [
+
+        with patch.object(
+            ExactItemMatch, "item_save"
+        ) as mock_item_save, patch(
+            "app.matching.matcher.exact.exact_item_match.get_session"
+        ) as mock_get_session:
+            mock_session = MagicMock()
+            mock_get_session.return_value.__enter__.return_value = mock_session
+            mock_session.query().filter().scalar.return_value = True
+
+            result = self.exact_item_match.process()
+
+            self.assertEqual(len(result), 1)
+            self.assertEqual(result[0]["status"], "AUTOMATIC")
+            self.assertEqual(
+                result[0]["results"]["match_type"], "single_exact_match"
+            )
+            mock_item_save.assert_called_once_with(exact_match=True)
+
+    def test_process_multiple_matches(self):
+        self.exact_item_match.matches = [
             {"id": 2072, "facility_id": "CN20241096SFEBA", "score": "1"},
             {"id": 2073, "facility_id": "CN20241096SFEBA", "score": "1"},
             {"id": 2074, "facility_id": "CN20241096SFEBA", "score": "1"},
         ]
-        self.started = "2024-04-22 10:57:29.258354"
-        self.finished = "2024-04-22 10:57:29.263924"
-        self.results = {}
-        self.automatic_threshold = 1.0
+        with patch.object(
+            ExactItemMatch, "item_save"
+        ) as mock_item_save, patch(
+            "app.matching.matcher.exact.exact_item_match.get_session"
+        ) as mock_get_session:
+            mock_session = MagicMock()
+            mock_get_session.return_value.__enter__.return_value = mock_session
+            mock_session.query().filter().scalar.return_value = True
 
-    def test_process_with_no_matches(self):
-        session = MagicMock()
-        query = MagicMock()
-        query.filter().scalar.return_value = False
-        session.query.return_value = query
+            result = self.exact_item_match.process()
 
-        exact_match = ExactItemMatch(
-            self.item_id,
-            self.matches_empty,
-            self.started,
-            self.finished,
-            self.results,
-            self.automatic_threshold,
-        )
-
-        result = exact_match.process()
-        expected_result = []
-
-        self.assertEqual(result, expected_result)
-
-        # self.assertEqual(exact_match.item.status, FacilityListItemTemp.MATCHED)
-
-    # @patch('app.database.sqlalchemy.get_session')
-    # @patch('app.database.models.facility.Facility')
-    # @patch('app.database.models.source.Source')
-    # def test_process_with_one_match(
-    #     self, facility_mock, get_session_mock, source_mock
-    # ):
-    #     facility_mock.query().filter().scalar.return_value = True
-    #     source_mock.query().filter().scalar.return_value = True
-    #     # Mocking session query to return False
-    #     session_mock = MagicMock()
-    #     session_mock.query().filter().scalar.return_value = False
-    #     get_session_mock.return_value.__enter__.return_value = session_mock
-
-    #     exact_match = ExactItemMatch(
-    #         self.item_id,
-    #         self.matches_single,
-    #         self.started,
-    #         self.finished,
-    #         self.results,
-    #         self.automatic_threshold,
-    #     )
-
-    #     result = exact_match.process()
-    #     expected_result = [
-    #         {
-    #             'facility_list_item_id': 1,
-    #             'facility_id': 'CN20241096SFEBA',
-    #             'status': 'AUTOMATIC',
-    #             'results': {'match_type': 'single_exact_match'},
-    #             'confidence': 1,
-    #         }
-    #     ]
-
-    #     self.assertEqual(result, expected_result)
-    #     self.assertEqual(exact_match.item.status, FacilityListItemTemp.MATCHED)
-
-    # @patch('app.database.models.facility.Facility')
-    # def test_process_with_multiple_matches(self, facility_mock):
-    #     facility_mock.query().filter().scalar.return_value = True
-
-    #     exact_match = ExactItemMatch(
-    #         self.item_id,
-    #         self.matches_multiple,
-    #         self.started,
-    #         self.finished,
-    #         self.results,
-    #         self.automatic_threshold,
-    #     )
-
-    #     result = exact_match.process()
-    #     expected_result = [
-    #         {
-    #             'facility_list_item_id': 1,
-    #             'facility_id': 'CN20241096SFEBA',
-    #             'status': 'AUTOMATIC',
-    #             'results': {'match_type': 'multiple_exact_matches'},
-    #             'confidence': 1,
-    #         }
-    #     ]
-
-    #     self.assertEqual(result, expected_result)
-    #     self.assertEqual(exact_match.item.status, FacilityListItemTemp.MATCHED)
+            self.assertEqual(len(result), 1)
+            self.assertEqual(result[0]["status"], "AUTOMATIC")
+            self.assertEqual(
+                result[0]["results"]["match_type"], "multiple_exact_matches"
+            )
+            mock_item_save.assert_called_once_with(exact_match=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
