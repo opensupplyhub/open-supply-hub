@@ -81,7 +81,7 @@ const FacilityDetailsClaimFlag = ({
                             href={claimFacilityLink}
                             className={classes.link}
                         >
-                            I want to claim this site
+                            I want to claim this production location
                         </Link>
                     </Typography>
                 ) : null}
