@@ -229,12 +229,10 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "contact_person": "contact_person",
             "job_title": "job_title",
             "company_name": "company_name",
-            "email": "email@example.com",
             "phone_number": 1234567,
             "website": "https://example.com",
             "facility_description": "facility_description",
             "verification_method": "verification_method",
-            "preferred_contact_method": "email",
         }
 
         file_data = {

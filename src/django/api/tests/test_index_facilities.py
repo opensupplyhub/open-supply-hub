@@ -82,12 +82,10 @@ class IndexFacilitiesTest(FacilityAPITestCaseBase):
     def test_updating_claim_sector_updates_index(self):
         claim_data = dict(
             contact_person="Name",
-            email=self.user_email,
             phone_number=12345,
             company_name="Test",
             website="http://example.com",
             facility_description="description",
-            preferred_contact_method=FacilityClaim.EMAIL,
         )
         facility_claim = FacilityClaim.objects.create(
             contributor=self.contributor,

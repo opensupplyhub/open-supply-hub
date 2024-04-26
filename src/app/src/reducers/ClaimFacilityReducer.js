@@ -7,14 +7,12 @@ import {
     completeFetchClaimFacilityData,
     clearClaimFacilityDataAndForm,
     updateClaimAFacilityContactPerson,
-    updateClaimAFacilityEmail,
     updateClaimAFacilityPhoneNumber,
     updateClaimAFacilityCompany,
     updateClaimAFacilityParentCompany,
     updateClaimAFacilityWebsite,
     updateClaimAFacilityDescription,
     updateClaimAFacilityVerificationMethod,
-    updateClaimAFacilityPreferredContactMethod,
     startSubmitClaimAFacilityData,
     failSubmitClaimAFacilityData,
     completeSubmitClaimAFacilityData,
@@ -33,13 +31,11 @@ const initialState = Object.freeze({
         formData: Object.freeze({
             contactPerson: '',
             jobTitle: '',
-            email: '',
             phoneNumber: '',
             companyName: '',
             website: '',
             facilityDescription: '',
             verificationMethod: '',
-            preferredContactMethod: null,
             parentCompany: null,
             linkedinProfile: '',
         }),
@@ -83,14 +79,6 @@ export default createReducer(
                 claimData: {
                     formData: {
                         contactPerson: { $set: payload },
-                    },
-                },
-            }),
-        [updateClaimAFacilityEmail]: (state, payload) =>
-            update(state, {
-                claimData: {
-                    formData: {
-                        email: { $set: payload },
                     },
                 },
             }),
@@ -140,14 +128,6 @@ export default createReducer(
                 claimData: {
                     formData: {
                         verificationMethod: { $set: payload },
-                    },
-                },
-            }),
-        [updateClaimAFacilityPreferredContactMethod]: (state, payload) =>
-            update(state, {
-                claimData: {
-                    formData: {
-                        preferredContactMethod: { $set: payload },
                     },
                 },
             }),
