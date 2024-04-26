@@ -14,7 +14,7 @@ def update_indexing_function(apps, schema_editor):
     similar one that does not index preferred_contact_method field.
     '''
 
-    helper.run_sql_files(['0143_index_approved_claim.sql'])
+    helper.run_sql_files(['0144_index_approved_claim.sql'])
 
 
 class Migration(Migration):
@@ -25,7 +25,7 @@ class Migration(Migration):
     '''
 
     dependencies = [
-        ('api', '0142_introduce_temporary_endpoint_switcher_for_list_uploads'),
+        ('api', '0143_create_facility_claim_attachment_table'),
     ]
 
     operations = [
