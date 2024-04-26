@@ -70,11 +70,6 @@ async def trigger(source_id):
     }
 
 async def initialize():
-    try:
-        GazetteerCache.get_latest()
-    except Exception:
-        pass
-
     loop = asyncio.get_event_loop()
     global consumer
     group_id = f'{settings.consumer_group_id}-{randint(0, 10000)}'
