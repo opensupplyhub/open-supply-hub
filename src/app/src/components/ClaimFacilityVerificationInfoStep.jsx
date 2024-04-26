@@ -7,6 +7,7 @@ import InputLabel from '@material-ui/core/InputLabel';
 import Select from 'react-select';
 import isEmpty from 'lodash/isEmpty';
 import { isURL } from 'validator';
+import ClaimAttachmentsUploader from './ClaimAttachmentsUploader';
 
 import {
     updateClaimAFacilityVerificationMethod,
@@ -27,6 +28,7 @@ const {
     verificationMethod: verificationMethodFormField,
     preferredContactMethod: preferredContactMethodFormField,
     linkedinProfile: linkedinProfileFormField,
+    claimAdditionalDocumentation: claimAdditionalDocumentationFormField,
 } = claimAFacilityFormFields;
 
 const selectStyles = Object.freeze({
@@ -113,6 +115,12 @@ function ClaimFacilityVerificationInfoStep({
                     with documentation confirming the address of your facility,
                     to assist the OS Hub team in verifying your claim.
                 </Typography>
+            </div>
+            <div style={claimAFacilityFormStyles.inputGroupStyles}>
+                <Typography variant="title">
+                    {claimAdditionalDocumentationFormField.label}
+                </Typography>
+                <ClaimAttachmentsUploader />
             </div>
         </>
     );
