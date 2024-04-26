@@ -7,96 +7,122 @@ from app.database.models.facility_list_item_temp import FacilityListItemTemp
 class TestExactItemMatch(unittest.TestCase):
     def setUp(self):
         self.item_id = 1
-        self.matches = []
+        self.matches_empty = []
+        self.matches_single = [
+            {"id": 2072, "facility_id": "CN20241096SFEBA", "score": "1"},
+        ]
+        self.matches_multiple = [
+            {"id": 2072, "facility_id": "CN20241096SFEBA", "score": "1"},
+            {"id": 2073, "facility_id": "CN20241096SFEBA", "score": "1"},
+            {"id": 2074, "facility_id": "CN20241096SFEBA", "score": "1"},
+        ]
         self.started = "2024-04-25 12:00:00"
         self.finished = "2024-04-25 12:10:00"
         self.results = {}
         self.automatic_threshold = 1.0
 
-        # self.exact_item_match = ExactItemMatch(
-        #     item_id=self.item_id,
-        #     matches=self.matches,
-        #     started=self.started,
-        #     finished=self.finished,
-        #     results=self.results,
-        #     automatic_threshold=self.automatic_threshold,
-        # )
-
-    @patch("app.matching.matcher.base_item_match.get_session")
-    def test_process_no_matches(self, mock_get_session):
-        mock_session = MagicMock()
-        mock_get_session.return_value.__enter__.return_value = mock_session
-
-        # mock_item = FacilityListItemTemp(
-        #     id=self.item_id, source_id=1, status="UNMATCHED", facility_id=None
-        # )
-        # mock_session.query.return_value.get.return_value = mock_item
-        mock_session.query.return_value.get.return_value = {
-            "id": self.item_id,
-            "source_id": 1,
-            "status": "UNMATCHED",
-            "facility_id": None,
-        }
-
-        exact_item_match = ExactItemMatch(
-            item_id=self.item_id,
-            matches=self.matches,
-            started=self.started,
-            finished=self.finished,
-            results=self.results,
-            automatic_threshold=self.automatic_threshold,
+        self.session_patcher = patch(
+            'app.matching.matcher.base_item_match.get_session'
         )
+        self.mock_session = self.session_patcher.start()
+        self.mock_query = (
+            self.mock_session.return_value.__enter__.return_value.query
+        )
+        self.mock_item = MagicMock(spec=FacilityListItemTemp)
+        self.mock_item.id = 1
+        # Setup the return values for query
+        self.mock_query.return_value.get.return_value = self.mock_item
 
-        result = exact_item_match.process()
+    def tearDown(self):
+        self.session_patcher.stop()
+
+    def test_process_no_matches(self):
+        exact_match = ExactItemMatch(
+            self.item_id,
+            self.matches_empty,
+            self.started,
+            self.finished,
+            self.results,
+            self.automatic_threshold,
+        )
+        result = exact_match.process()
         self.assertEqual(result, [])
 
-    # def test_process_single_match(self):
-    #     self.exact_item_match.matches = [
-    #         {"id": 2072, "facility_id": "CN20241096SFEBA", "score": "1"},
-    #     ]
+    @patch('app.matching.matcher.exact.exact_item_match.get_session')
+    def test_process_with_single_match(self, get_session_mock):
+        session_mock = MagicMock()
+        session_mock.query().filter().scalar.return_value = True
+        get_session_mock.return_value.__enter__.return_value = session_mock
 
-    #     with patch.object(
-    #         ExactItemMatch, "item_save"
-    #     ) as mock_item_save, patch(
-    #         "app.matching.matcher.exact.exact_item_match.get_session"
-    #     ) as mock_get_session:
-    #         mock_session = MagicMock()
-    #         mock_get_session.return_value.__enter__.return_value = mock_session
-    #         mock_session.query().filter().scalar.return_value = True
+        exact_match = ExactItemMatch(
+            self.item_id,
+            self.matches_single,
+            self.started,
+            self.finished,
+            self.results,
+            self.automatic_threshold,
+        )
 
-    #         result = self.exact_item_match.process()
+        result = exact_match.process()
+        expected_result = [
+            {
+                'facility_list_item_id': 1,
+                'facility_id': 'CN20241096SFEBA',
+                'status': 'AUTOMATIC',
+                'results': {'match_type': 'single_exact_match'},
+                'confidence': 1,
+            }
+        ]
 
-    #         self.assertEqual(len(result), 1)
-    #         self.assertEqual(result[0]["status"], "AUTOMATIC")
-    #         self.assertEqual(
-    #             result[0]["results"]["match_type"], "single_exact_match"
-    #         )
-    #         mock_item_save.assert_called_once_with(exact_match=True)
+        self.assertEqual(result, expected_result)
+        self.assertEqual(exact_match.item.status, FacilityListItemTemp.MATCHED)
 
-    # @patch("app.matching.matcher.exact.exact_item_match.get_session")
-    # def test_process_multiple_matches(self, mock_get_session):
-    #     self.exact_item_match.matches = [
-    #         {"id": 2072, "facility_id": "CN20241096SFEBA", "score": "1"},
-    #         {"id": 2073, "facility_id": "CN20241096SFEBA", "score": "1"},
-    #         {"id": 2074, "facility_id": "CN20241096SFEBA", "score": "1"},
-    #     ]
-    #     with patch.object(
-    #         ExactItemMatch, "item_save"
-    #     ) as mock_item_save, patch(
-    #         "app.matching.matcher.exact.exact_item_match.get_session"
-    #     ) as mock_get_session:
-    #         mock_session = MagicMock()
-    #         mock_get_session.return_value.__enter__.return_value = mock_session
-    #         mock_session.query().filter().scalar.return_value = True
+    @patch('app.matching.matcher.exact.exact_item_match.get_session')
+    def test_process_with_multiple_matches(self, get_session_mock):
+        session_mock = MagicMock()
+        session_mock.query().filter().scalar.return_value = True
+        get_session_mock.return_value.__enter__.return_value = session_mock
 
-    #         result = self.exact_item_match.process()
+        exact_match = ExactItemMatch(
+            self.item_id,
+            self.matches_multiple,
+            self.started,
+            self.finished,
+            self.results,
+            self.automatic_threshold,
+        )
 
-    #         self.assertEqual(len(result), 1)
-    #         self.assertEqual(result[0]["status"], "AUTOMATIC")
-    #         self.assertEqual(
-    #             result[0]["results"]["match_type"], "multiple_exact_matches"
-    #         )
-    #         mock_item_save.assert_called_once_with(exact_match=True)
+        result = exact_match.process()
+        expected_result = [
+            {
+                'facility_list_item_id': 1,
+                'facility_id': 'CN20241096SFEBA',
+                'status': 'AUTOMATIC',
+                'results': {'match_type': 'multiple_exact_matches'},
+                'confidence': 1,
+            }
+        ]
+
+        self.assertEqual(result, expected_result)
+        self.assertEqual(exact_match.item.status, FacilityListItemTemp.MATCHED)
+
+    @patch('app.matching.matcher.exact.exact_item_match.get_session')
+    def test_process_without_session(self, get_session_mock):
+        session_mock = MagicMock()
+        session_mock.query().filter().scalar.return_value = False
+        get_session_mock.return_value.__enter__.return_value = session_mock
+
+        exact_match = ExactItemMatch(
+            self.item_id,
+            self.matches_multiple,
+            self.started,
+            self.finished,
+            self.results,
+            self.automatic_threshold,
+        )
+
+        result = exact_match.process()
+        self.assertEqual(result, [])
 
 
 if __name__ == "__main__":
