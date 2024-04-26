@@ -296,17 +296,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.base_ref }}
-
       - name: Create required env file
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
-
       - name: Build Dedupe Hub image
         run: docker compose build
-
-      - name: Start services
-        run: docker-compose up -d database
-
       - name: Run the unittest tests and generate code cov report
         run: |
           docker compose \
@@ -314,7 +308,6 @@ jobs:
               -c "coverage run --data-file=./coverage/.coverage -m unittest \
               && coverage lcov --data-file=./coverage/.coverage -o ./coverage/coverage.lcov \
               --include='./app/*' --omit='./tests/*, ./app/config.py'"
-
       - name: Upload unittest code cov for the base branch
         uses: actions/upload-artifact@v4
         with:
@@ -327,23 +320,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Cleanup Docker environment
-        run: docker system prune -af
-
-      - name: Remove existing Docker networks
-        run: docker network prune -f
-
       - name: Create required env file
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
-
       - name: Build Dedupe Hub image
         run: docker compose build
-
-      - name: Start services
-        run: docker-compose up -d database
-
       - name: Run the unittest tests and generate code cov report
         run: |
           docker compose \
@@ -351,7 +332,6 @@ jobs:
               -c "coverage run --data-file=./coverage/.coverage -m unittest \
               && coverage lcov --data-file=./coverage/.coverage -o ./coverage/coverage.lcov \
               --include='./app/*' --omit='./tests/*, ./app/config.py'"
-
       - name: Upload unittest code cov for the feature branch
         uses: actions/upload-artifact@v4
         with:
