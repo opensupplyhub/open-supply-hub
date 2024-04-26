@@ -328,6 +328,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Cleanup Docker environment
+        run: docker system prune -af
+
+      - name: Remove existing Docker networks
+        run: docker network prune -f
+
       - name: Create required env file
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
