@@ -132,6 +132,8 @@ services:
   init-kafka:
     image: confluentinc/cp-kafka:6.1.1
     depends_on:
+      database:
+        condition: service_healthy
       - kafka
     entrypoint: [ '/bin/sh', '-c' ]
     command: |
