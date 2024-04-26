@@ -47,6 +47,7 @@
         "sass": "^1.54.9",
         "typeface-darker-grotesque": "^1.1.13",
         "user-event": "2.0.1",
+        "uuid": "^9.0.1",
         "validator": "13.7.0",
         "xlsx": "0.18.5"
     },
