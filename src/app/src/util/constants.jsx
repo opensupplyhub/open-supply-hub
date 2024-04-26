@@ -579,7 +579,12 @@ export const claimAFacilityFormFields = Object.freeze({
     }),
     linkedinProfile: Object.freeze({
         id: 'linkedin-profile',
-        label: 'LinkedIn profile URL',
+        label: 'Link to Facility LinkedIn Profile',
+    }),
+    claimAdditionalDocumentation: Object.freeze({
+        id: 'claimant-additional-documentation',
+        label:
+            'Additional Documentation (e.g.: business card, employment verification letter on company letterhead, business registration documents)',
     }),
 });
 

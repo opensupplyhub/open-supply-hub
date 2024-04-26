@@ -7,9 +7,13 @@ from rest_framework.serializers import (
 from ...models import (
     FacilityClaim,
     FacilityClaimReviewNote,
+    FacilityClaimAttachments
 )
 from ..user.user_profile_serializer import UserProfileSerializer
 from .facility_index_serializer import FacilityIndexSerializer
+from .facility_claim_attachments_serializer import (
+    FacilityClaimAttachmentsSerializer
+)
 from .facility_claim_review_note_serializer import (
     FacilityClaimReviewNoteSerializer
 )
@@ -23,6 +27,7 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
     notes = SerializerMethodField()
     facility_parent_company = SerializerMethodField()
     email = SerializerMethodField()
+    attachments = SerializerMethodField()
 
     class Meta:
         model = FacilityClaim
@@ -31,7 +36,7 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
                   'facility_description', 'status',
                   'contributor', 'facility', 'verification_method',
                   'status_change', 'notes', 'facility_parent_company',
-                  'job_title', 'linkedin_profile')
+                  'job_title', 'linkedin_profile', 'attachments')
 
     def get_contributor(self, claim):
         return UserProfileSerializer(claim.contributor.admin).data
@@ -72,3 +77,8 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
 
     def get_email(self, claim):
         return claim.contributor.admin.email
+
+    def get_attachments(self, claim):
+        attachments = FacilityClaimAttachments.objects.filter(claim=claim)
+        serializer = FacilityClaimAttachmentsSerializer(attachments, many=True)
+        return serializer.data

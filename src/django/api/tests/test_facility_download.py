@@ -15,6 +15,7 @@ from api.models import (
     Source,
     User,
 )
+from django.core.files.uploadedfile import SimpleUploadedFile
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 from api.tests.test_data import geocoding_data
 from rest_framework import status
@@ -233,6 +234,33 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "facility_description": "facility_description",
             "verification_method": "verification_method",
         }
+
+        file_data = {
+            'test_attachment_1.jpg': (
+                b'claimant_attachment_content_jpg', 'image/jpg'
+            ),
+            'test_attachment_2.jpeg': (
+                b'claimant_attachment_content_jpeg', 'image/jpeg'
+            ),
+            'test_attachment_3.png': (
+                b'claimant_attachment_content_png', 'image/png'
+            ),
+            'test_attachment_4.pdf': (
+                b'claimant_attachment_content_pdf', 'application/pdf'
+            )
+        }
+
+        upload_files = []
+        for name, (content, content_type) in file_data.items():
+            upload_files.append(
+                SimpleUploadedFile(
+                    name=name,
+                    content=content,
+                    content_type=content_type
+                )
+            )
+
+        claim_facility_data["files"] = upload_files
 
         self.client.post(claim_facility_url, claim_facility_data)
 

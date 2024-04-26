@@ -6,6 +6,7 @@ import TextField from '@material-ui/core/TextField';
 import InputLabel from '@material-ui/core/InputLabel';
 import isEmpty from 'lodash/isEmpty';
 import { isURL } from 'validator';
+import ClaimAttachmentsUploader from './ClaimAttachmentsUploader';
 
 import {
     updateClaimAFacilityVerificationMethod,
@@ -21,6 +22,7 @@ import { claimAFacilityFormFields } from '../util/constants';
 const {
     verificationMethod: verificationMethodFormField,
     linkedinProfile: linkedinProfileFormField,
+    claimAdditionalDocumentation: claimAdditionalDocumentationFormField,
 } = claimAFacilityFormFields;
 
 const ClaimFacilityVerificationInfoStep = ({
@@ -73,6 +75,12 @@ const ClaimFacilityVerificationInfoStep = ({
                 with documentation confirming the address of your facility, to
                 assist the OS Hub team in verifying your claim.
             </Typography>
+        </div>
+        <div style={claimAFacilityFormStyles.inputGroupStyles}>
+            <Typography variant="title">
+                {claimAdditionalDocumentationFormField.label}
+            </Typography>
+            <ClaimAttachmentsUploader />
         </div>
     </>
 );
