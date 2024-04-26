@@ -32,6 +32,7 @@ log = logging.getLogger(__name__)
 async def startup_event():
     log.info('Initializing API ...')
     init_rollbar()
+    await build_gazetteer()
     res = await initialize()
     if res:
         await consume()
@@ -139,3 +140,9 @@ async def handle(value):
     except Exception as error:
         log.error(f'[Matching] Error: {error}')
     return
+
+async def build_gazetteer():
+    try:
+        GazetteerCache.get_latest()
+    except Exception as e:
+        log.error(f'[Matching] Initial Gazetter Build Error: {e}')
