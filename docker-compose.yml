@@ -2,7 +2,7 @@ version: "2.4"
 services:
   database:
     image: quay.io/azavea/postgis:3-postgres12.4-slim
-    shm_size: "2gb"
+    shm_size: '2gb'
     environment:
       - POSTGRES_USER=openapparelregistry
       - POSTGRES_PASSWORD=openapparelregistry
@@ -122,19 +122,18 @@ services:
     depends_on:
       - zookeeper
     healthcheck:
-      test:
-        ["CMD-SHELL", "kafka-topics.sh --bootstrap-server kafka:9092 --list"]
+      test: [ "CMD-SHELL", "kafka-topics.sh --bootstrap-server kafka:9092 --list" ]
       interval: 5s
       timeout: 10s
       retries: 5
     networks:
       - my-app
-
+  
   init-kafka:
     image: confluentinc/cp-kafka:6.1.1
     depends_on:
       - kafka
-    entrypoint: ["/bin/sh", "-c"]
+    entrypoint: [ '/bin/sh', '-c' ]
     command: |
       "
       # blocks until kafka is reachable
