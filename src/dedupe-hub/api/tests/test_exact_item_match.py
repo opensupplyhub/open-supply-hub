@@ -80,7 +80,7 @@ class TestExactItemMatch(unittest.TestCase):
         result = exact_match.process()
         expected_result = self.expected_result_dict('single_exact_match')
 
-        self.assertEqual(result, expected_result)
+        self.assertListEqual(result, expected_result)
         self.assertEqual(exact_match.item.status, FacilityListItemTemp.MATCHED)
 
     @patch('app.matching.matcher.exact.exact_item_match.get_session')
@@ -91,7 +91,7 @@ class TestExactItemMatch(unittest.TestCase):
         result = exact_match.process()
         expected_result = self.expected_result_dict('multiple_exact_matches')
 
-        self.assertEqual(result, expected_result)
+        self.assertListEqual(result, expected_result)
         self.assertEqual(exact_match.item.status, FacilityListItemTemp.MATCHED)
 
     @patch('app.matching.matcher.exact.exact_item_match.get_session')
