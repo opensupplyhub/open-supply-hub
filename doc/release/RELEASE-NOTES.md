@@ -11,33 +11,47 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Database changes
 #### Migrations:
+* 0143_create_facility_claim_attachment_table.py - create api_facilityclaimattachments table to store claimant attachments per facility claim
+* 0144_remove_unnecessary_columns_from_facility_claim.py - This migration replaces the old `index_approved_claim` function with a similar one that does not index the `preferred_contact_method` field. Additionally, the migration removes `email` and `preferred_contact_method` from the `FacilityClaim` model and the respective history table.
 
 #### Scheme changes
+* [OSDEV-931](https://opensupplyhub.atlassian.net/browse/OSDEV-931) - Since `email` and `preferred_contact_method` are no longer necessary for the claim form, they have been removed from the `FacilityClaim` model and the respective history table. Additionally, the old `index_approved_claim` function has been replaced with a similar one that does not index the `preferred_contact_method` field.
 
 ### Code/API changes
+* [OSDEV-1021](https://opensupplyhub.atlassian.net/browse/OSDEV-1021) Update the release protocol. The release protocol has been updated with the recent changes. Has been added the section about reloading DedupeHub and QA notification.
 
 ### Architecture/Environment changes
+* [OSDEV-862](https://opensupplyhub.atlassian.net/browse/OSDEV-862) Fix `DB - Save Anonymized DB` / `DB - Apply Anonymized DB` workflows:
+  - run actions on self-hosted runners to eliminate `lack of storage` issue that hapopen on github's runners.
+  - use the `Test` environment for  `DB - Save Anonymized DB` action
 * [OSDEV-989](https://opensupplyhub.atlassian.net/browse/OSDEV-989) - The Strategy pattern was utilized to consolidate the processing of new facilities received from both API requests and list uploads. The code responsible for executing this processing was refactored, and new classes were implemented:
     * ProcessingFacility - abstract class for facility processing
     * ProcessingFacilityList - class to process a facility list
     * ProcessingFacilityAPI - class to process a facility from an API request
     * ProcessingFacilityExecutor - class defines which interface to execute for the processing of a facility
+* Resource allocation has been optimized for the Test environment. The number of ECS tasks in the Test environment has been reduced from 4 to 2, while maintaining system stability.
 
 ### Bugfix
 
 ### What's new
-* [OSDEV-945](https://opensupplyhub.atlassian.net/browse/OSDEV-945) - Facility Claim. Update text of claim link on profile to "I want to claim this site"
+* [OSDEV-945](https://opensupplyhub.atlassian.net/browse/OSDEV-945) - Facility Claim. Update text of claim link on profile to "I want to claim this production location".
+* [OSDEV-745](https://opensupplyhub.atlassian.net/browse/OSDEV-745) - New "Portuguese" translated resources option added to international menu.
+* [OSDEV-944](https://opensupplyhub.atlassian.net/browse/OSDEV-944) - Facility claims. Short-term new screen for claim documentation.
+* [OSDEV-931](https://opensupplyhub.atlassian.net/browse/OSDEV-931) - The following features have been implemented:
+    * Made the Email field in the claim form uneditable, setting the claimer's email as the default value for this field.
+    * Removed the _Preferred method of contact_ field from both the claim form and the claim details page in the admin dashboard.
+
+### Release instructions:
+* Update code.
+* Apply DB migrations up to the latest one.
+* Run the index_facilities_new management command.
+
 
 ## Release 1.11.0
 
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: April 20, 2024
-
-### Database changes
-#### Migrations:
-
-#### Scheme changes
 
 ### Code/API changes
 * [OSDEV-923](https://opensupplyhub.atlassian.net/browse/OSDEV-923) [Uptime] Added more logs around API/List uploads & Dedupe Hub match processing
@@ -51,10 +65,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-927](https://opensupplyhub.atlassian.net/browse/OSDEV-927) - Reduce resources allocated for bastions to t3.nano.
 * [OSDEV-805](https://opensupplyhub.atlassian.net/browse/OSDEV-805) - Make Environment and project tag to be applied to all resources by defaul.
 * [OSDEV-862](https://opensupplyhub.atlassian.net/browse/OSDEV-862) - Add `Save Anonymized DB` and `Apply Anonymized DB` actions that provde possibility to save anonymized dump to S3 bucket and then resotre Test or Pre-Prod environment from dump stored on S3.
-* [OSDEV-859](https://opensupplyhub.atlassian.net/browse/OSDEV-859) - Creates task-definitation for scheduled task that 
+* [OSDEV-859](https://opensupplyhub.atlassian.net/browse/OSDEV-859) - Creates task-definitation for scheduled task that
   * creates temporary postgresdb instance from latest production snaphsot in the `test` AWS account
-  * run anonymization query 
+  * run anonymization query
   * saves anonymized snapshot and removes the instance
+* In response to recent stability observations, resource allocation has been optimized, reducing the number of ECS tasks in both production and pre-production environments from 16 to 12, maintaining system stability.
 
 ### Bugfix
 * [OSDEV-996](https://opensupplyhub.atlassian.net/browse/OSDEV-996) The default sorting order for embedded maps was broken (changed to Descending by # Contributors). The default sorting order for embedded maps has been fixed (changed it back to Ascending by Name).
@@ -74,6 +89,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 `month`, `Total # of list uploads` in a given month (these are uploads that come from external contributors, NOT OS Hub team members), `# of public list uploads` in a given month (these are uploads that come from OS Hub team members AND have “[Public List]” in the contributor name), `Total facility listItems` uploaded in a given month, `# of Facilities` from Public Lists, `Total Facilities w/ status = new facility`, `# Public List Facilities w/ status = new facility`. Data is ordered from most recent to oldest
 * [OSDEV-913](https://opensupplyhub.atlassian.net/browse/OSDEV-913) Claim. Updated the submitted claim auto-reply message for email template.
 * [OSDEV-914](https://opensupplyhub.atlassian.net/browse/OSDEV-914) Claim. Updated the approved claim auto-reply message for email template
+
+### Release instructions:
+* Update code.
+
 
 ## Release 1.10.0
 
@@ -125,6 +144,7 @@ Move `countries` to a separate module so that it becomes possible to use both `d
 ### Release instructions:
 * Update code.
 * Apply DB migrations up to the latest one.
+
 
 ## Release 1.9.0
 

@@ -1,4 +1,6 @@
 import logging
+import os
+from datetime import datetime
 from api.facility_actions.processing_facility_api import ProcessingFacilityAPI
 from api.facility_actions.processing_facility_executor import (
     ProcessingFacilityExecutor
@@ -8,6 +10,12 @@ from api.models.facility.facility_index import FacilityIndex
 from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.exceptions.handler_not_set_error \
     import HandlerNotSetError
+
+from oar.settings import (
+    MAX_ATTACHMENT_SIZE_IN_BYTES,
+    MAX_ATTACHMENT_AMOUNT,
+    ALLOWED_ATTACHMENT_EXTENSIONS
+)
 
 from rest_framework.mixins import (
     ListModelMixin,
@@ -30,11 +38,11 @@ from waffle import switch_is_active, flag_is_active
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models import Extent
 from django.core import exceptions as core_exceptions
-from django.core.validators import validate_email
 from django.db import transaction
 from django.db.models import F, Q
 from django.shortcuts import redirect
 from django.utils import timezone
+from django.utils.text import slugify
 from drf_yasg.openapi import Schema, TYPE_OBJECT
 from drf_yasg.utils import no_body, swagger_auto_schema
 
@@ -44,6 +52,7 @@ from ...models import (
     FacilityActivityReport,
     FacilityAlias,
     FacilityClaim,
+    FacilityClaimAttachments,
     FacilityClaimReviewNote,
     FacilityListItem,
     FacilityLocation,
@@ -825,27 +834,39 @@ class FacilitiesViewSet(ListModelMixin,
 
             contact_person = request.data.get('contact_person')
             job_title = request.data.get('job_title')
-            email = request.data.get('email')
             phone_number = request.data.get('phone_number')
             company_name = request.data.get('company_name')
             parent_company = request.data.get('parent_company')
             website = request.data.get('website')
             facility_description = request.data.get('facility_description')
             verification_method = request.data.get('verification_method')
-            preferred_contact_method = request \
-                .data \
-                .get('preferred_contact_method') or ''
             linkedin_profile = request.data.get('linkedin_profile', '')
-
-            try:
-                validate_email(email)
-            except core_exceptions.ValidationError as exc:
-                raise ValidationError(
-                    'Valid email is required'
-                ) from exc
+            files = request.FILES.getlist('files')
 
             if not company_name:
                 raise ValidationError('Company name is required')
+
+            for file in files:
+                extension = file.name.split('.')[-1].lower()
+                if f".{extension}" not in ALLOWED_ATTACHMENT_EXTENSIONS:
+                    raise ValidationError(
+                        f'{file.name} could not be uploaded because \
+                        it is not in a supported format.',
+                    )
+
+                if file.size > MAX_ATTACHMENT_SIZE_IN_BYTES:
+                    mb = MAX_ATTACHMENT_SIZE_IN_BYTES / (1024*1024)
+                    raise ValidationError(
+                        '{} exceeds the maximum size of \
+                        {:.1f}MB.'.format(file.name, mb)
+                    )
+
+                if (len(files) > MAX_ATTACHMENT_AMOUNT):
+                    raise ValidationError(
+                        f'{file.name} could not be uploaded because there is a maximum of \
+                        {MAX_ATTACHMENT_AMOUNT} attachments and you have \
+                        already uploaded {MAX_ATTACHMENT_AMOUNT} attachments.'
+                    )
 
             if parent_company:
                 try:
@@ -884,7 +905,6 @@ class FacilitiesViewSet(ListModelMixin,
                     contributor=contributor,
                     contact_person=contact_person,
                     job_title=job_title,
-                    email=email,
                     phone_number=phone_number,
                     company_name=company_name,
                     parent_company=parent_company_contributor,
@@ -892,10 +912,25 @@ class FacilitiesViewSet(ListModelMixin,
                     website=website,
                     facility_description=facility_description,
                     verification_method=verification_method,
-                    preferred_contact_method=preferred_contact_method,
-                    linkedin_profile=linkedin_profile
+                    linkedin_profile=linkedin_profile,
                 )
             )
+
+            for file in files:
+                timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+                milliseconds = datetime.now().strftime('%f')[:-3]
+                timestamp_ms = f'{timestamp}{milliseconds}'
+                file_name, file_extension = os.path.splitext(file.name)
+                file.name = (
+                    f'{slugify(file_name, allow_unicode=True)}-'
+                    f'{contributor.name}-{timestamp_ms}{file_extension}'
+                )
+                FacilityClaimAttachments.objects.create(
+                    claim=facility_claim,
+                    file_name=f'{slugify(file_name)}.{file_extension}',
+                    claim_attachment=file
+                )
+
             send_claim_facility_confirmation_email(request, facility_claim)
 
             approved = (
