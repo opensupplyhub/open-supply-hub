@@ -15,13 +15,6 @@ class FacilityClaim(models.Model):
     Data submitted from a user attempting to make a verified claim of a
     Facility to be evaluated by OS Hub moderators.
     """
-    EMAIL = 'EMAIL'
-    PHONE = 'PHONE'
-
-    PREFERRED_CONTACT_CHOICES = (
-        (EMAIL, EMAIL),
-        (PHONE, PHONE),
-    )
 
     PENDING = 'PENDING'
     APPROVED = 'APPROVED'
@@ -153,11 +146,6 @@ class FacilityClaim(models.Model):
         help_text='The contact person\'s job title',
         verbose_name='contact person\'s job title',
         default='')
-    email = models.EmailField(
-        null=False,
-        blank=False,
-        verbose_name='email',
-        help_text='The contact email for the facility claim')
     phone_number = models.CharField(
         max_length=200,
         null=False,
@@ -191,13 +179,6 @@ class FacilityClaim(models.Model):
         blank=True,
         verbose_name='verification method',
         help_text='An explanation of how the facility can be verified')
-    preferred_contact_method = models.CharField(
-        max_length=200,
-        null=False,
-        blank=False,
-        choices=PREFERRED_CONTACT_CHOICES,
-        verbose_name='preferred contact method',
-        help_text='The preferred contact method: email or phone')
     status = models.CharField(
         max_length=200,
         null=False,
