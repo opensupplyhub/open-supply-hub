@@ -54,7 +54,7 @@ class ExactItemMatch(BaseItemMatch):
         self.item_save(exact_match=True)
         with get_session() as session:
             if session.query(Source.create).filter(Source.id==self.item.source_id).scalar():
-                return matches
+                return matches[:1]
 
         return []
 
