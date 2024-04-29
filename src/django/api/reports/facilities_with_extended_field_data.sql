@@ -11,23 +11,24 @@ SELECT COALESCE(query1.month, query2.month) AS month,
        COALESCE(query2.name_claimed, 0) AS name_claimed
 FROM (
     SELECT
-        TO_CHAR(created_at, 'YYYY-MM') AS month,
-        SUM(COUNT(id) FILTER (WHERE (LENGTH(sector::text) > 2 AND sector::text != '{Unspecified}') OR LENGTH(extended_fields::text) > 2)) OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY TO_CHAR(created_at, 'YYYY-MM')) AS total,
-        SUM(COUNT(id) FILTER (WHERE LENGTH(sector::text) > 2 AND sector::text != '{Unspecified}')) OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY TO_CHAR(created_at, 'YYYY-MM')) AS sector
-    FROM api_facilityindex
-    GROUP BY TO_CHAR(created_at, 'YYYY-MM'), EXTRACT(YEAR FROM created_at)
+        TO_CHAR(af.created_at, 'YYYY-MM') AS month,
+        SUM(COUNT(af.id) FILTER (WHERE (LENGTH(coalesce((SELECT array_agg(distinct(sector)) FROM index_sector(af.id)), '{}')::text) > 2 AND coalesce((SELECT array_agg(distinct(sector)) FROM index_sector(af.id)), '{}')::text != '{Unspecified}') OR LENGTH(afi.extended_fields::text) > 2)) OVER (PARTITION BY EXTRACT(YEAR FROM af.created_at) ORDER BY TO_CHAR(af.created_at, 'YYYY-MM')) AS total,
+        SUM(COUNT(af.id) FILTER (WHERE LENGTH(coalesce((SELECT array_agg(distinct(sector)) FROM index_sector(af.id)), '{}')::text) > 2 AND coalesce((SELECT array_agg(distinct(sector)) FROM index_sector(af.id)), '{}')::text != '{Unspecified}')) OVER (PARTITION BY EXTRACT(YEAR FROM af.created_at) ORDER BY TO_CHAR(af.created_at, 'YYYY-MM')) AS sector
+    FROM api_facility af
+       JOIN api_facilityindex afi ON af.id=afi.id
+    GROUP BY TO_CHAR(af.created_at, 'YYYY-MM'), EXTRACT(YEAR FROM af.created_at)
 ) AS query1
 FULL OUTER JOIN (
     SELECT
         TO_CHAR(created_at, 'YYYY-MM') AS month,
-        SUM(COUNT(*) FILTER (WHERE field_name ='number_of_workers')) OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY TO_CHAR(created_at, 'YYYY-MM') ROWS UNBOUNDED PRECEDING) AS number_of_workers,
-        SUM(COUNT(*) FILTER (WHERE field_name ='facility_type')) OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY TO_CHAR(created_at, 'YYYY-MM') ROWS UNBOUNDED PRECEDING) AS facility_type,
-        SUM(COUNT(*) FILTER (WHERE field_name ='processing_type')) OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY TO_CHAR(created_at, 'YYYY-MM') ROWS UNBOUNDED PRECEDING) AS processing_type,
-        SUM(COUNT(*) FILTER (WHERE field_name ='product_type')) OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY TO_CHAR(created_at, 'YYYY-MM') ROWS UNBOUNDED PRECEDING) AS product_type,
-        SUM(COUNT(*) FILTER (WHERE field_name ='parent_company')) OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY TO_CHAR(created_at, 'YYYY-MM') ROWS UNBOUNDED PRECEDING) AS parent_company,
-        SUM(COUNT(*) FILTER (WHERE field_name ='native_language_name')) OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY TO_CHAR(created_at, 'YYYY-MM') ROWS UNBOUNDED PRECEDING) AS native_language_name,
-        SUM(COUNT(*) FILTER (WHERE field_name ='address')) OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY TO_CHAR(created_at, 'YYYY-MM') ROWS UNBOUNDED PRECEDING) AS address_claimed,
-        SUM(COUNT(*) FILTER (WHERE field_name ='name')) OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY TO_CHAR(created_at, 'YYYY-MM') ROWS UNBOUNDED PRECEDING) AS name_claimed
+        SUM(COUNT(DISTINCT CASE WHEN field_name = 'number_of_workers' THEN facility_id END)) OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY TO_CHAR(created_at, 'YYYY-MM') ROWS UNBOUNDED PRECEDING) AS number_of_workers,
+        SUM(COUNT(DISTINCT CASE WHEN field_name = 'facility_type' THEN facility_id END)) OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY TO_CHAR(created_at, 'YYYY-MM') ROWS UNBOUNDED PRECEDING) as facility_type,
+        SUM(COUNT(DISTINCT CASE WHEN field_name = 'processing_type' THEN facility_id END)) OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY TO_CHAR(created_at, 'YYYY-MM') ROWS UNBOUNDED PRECEDING) as processing_type,
+        SUM(COUNT(DISTINCT CASE WHEN field_name = 'product_type' THEN facility_id END)) OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY TO_CHAR(created_at, 'YYYY-MM') ROWS UNBOUNDED PRECEDING) as product_type,
+        SUM(COUNT(DISTINCT CASE WHEN field_name = 'parent_company' THEN facility_id END)) OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY TO_CHAR(created_at, 'YYYY-MM') ROWS UNBOUNDED PRECEDING) as parent_company,
+        SUM(COUNT(DISTINCT CASE WHEN field_name = 'native_language_name' THEN facility_id END)) OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY TO_CHAR(created_at, 'YYYY-MM') ROWS UNBOUNDED PRECEDING) as native_language_name,
+        SUM(COUNT(DISTINCT CASE WHEN field_name = 'address' THEN facility_id END)) OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY TO_CHAR(created_at, 'YYYY-MM') ROWS UNBOUNDED PRECEDING) as address_claimed,
+        SUM(COUNT(DISTINCT CASE WHEN field_name = 'name' THEN facility_id END)) OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY TO_CHAR(created_at, 'YYYY-MM') ROWS UNBOUNDED PRECEDING) as name_claimed
     FROM
         api_extendedfield
     GROUP BY TO_CHAR(created_at, 'YYYY-MM'), EXTRACT(YEAR FROM created_at)
