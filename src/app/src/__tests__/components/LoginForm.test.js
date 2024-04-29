@@ -3,7 +3,7 @@ import { Router, Route } from 'react-router-dom';
 import { screen, waitFor } from '@testing-library/react';
 
 import LoginForm from './../../components/LoginForm';
-import { renderWithProviders } from '../../util/testUtils/renderWithProviders';
+import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import history from '../../util/history';
 import { completeSubmitLoginForm } from '../../actions/auth';
 import { authLoginFormRoute } from '../../util/constants';

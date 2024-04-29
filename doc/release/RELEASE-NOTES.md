@@ -36,7 +36,6 @@ database:
     condition: service_healthy
 ```
 
-
 ### Bugfix
 * [OSDEV-870](https://opensupplyhub.atlassian.net/browse/OSDEV-870) - The returning confirm/reject URLs were fixed when a facility has been matched. Changes were made to the Dedupe-Hub to prevent adding rows with empty fields to the `api_facilitymatch` and `api_facilitymatchtemp` tables when the count of matches is more than one.
 
@@ -47,6 +46,7 @@ database:
 * [OSDEV-931](https://opensupplyhub.atlassian.net/browse/OSDEV-931) - The following features have been implemented:
     * Made the Email field in the claim form uneditable, setting the claimer's email as the default value for this field.
     * Removed the _Preferred method of contact_ field from both the claim form and the claim details page in the admin dashboard.
+    * Implemented redirecting a user to the claim page after navigating to the login page via the CTA link on the claim page for unauthorized users and successful login.
 
 ### Release instructions:
 * Update code.
