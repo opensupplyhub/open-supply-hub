@@ -154,6 +154,8 @@ services:
     volumes:
       - ./src/dedupe-hub/api:/usr/local/src
     depends_on:
+      database:
+        condition: service_healthy
       kafka:
         condition: service_healthy
     ports:
