@@ -71,12 +71,10 @@ class FacilityClaimAdminDashboardTest(APITestCase):
             contributor=self.contributor,
             facility=self.facility,
             contact_person="Name",
-            email=self.email,
             phone_number=12345,
             company_name="Test",
             website="http://example.com",
             facility_description="description",
-            preferred_contact_method=FacilityClaim.EMAIL,
         )
 
         self.superuser = User.objects.create_superuser(
@@ -94,13 +92,11 @@ class FacilityClaimAdminDashboardTest(APITestCase):
             "/api/facilities/{}/claim/".format(self.facility.id),
             {
                 "contact_person": "contact_person",
-                "email": "example@example.com",
                 "phone_number": "12345",
                 "company_name": "company_name",
                 "website": "http://example.com",
                 "facility_description": "facility_description",
                 "verification_method": "verification_method",
-                "preferred_contact_method": FacilityClaim.EMAIL,
             },
         )
 
@@ -175,12 +171,10 @@ class FacilityClaimAdminDashboardTest(APITestCase):
             contributor=new_contributor,
             facility=self.facility,
             contact_person="Name",
-            email="new_user@example.com",
             phone_number=12345,
             company_name="Test",
             website="http://example.com",
             facility_description="description",
-            preferred_contact_method=FacilityClaim.EMAIL,
         )
 
         error_response = self.client.post(

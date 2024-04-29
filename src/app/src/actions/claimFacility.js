@@ -48,9 +48,6 @@ export const updateClaimAFacilityContactPerson = createAction(
 export const updateClaimAFacilityJobTitle = createAction(
     'UPDATE_CLAIM_A_FACILITY_JOB_TITLE',
 );
-export const updateClaimAFacilityEmail = createAction(
-    'UPDATE_CLAIM_A_FACILITY_EMAIL',
-);
 export const updateClaimAFacilityPhoneNumber = createAction(
     'UPDATE_CLAIM_A_FACILITY_PHONE_NUMBER',
 );
@@ -68,9 +65,6 @@ export const updateClaimAFacilityDescription = createAction(
 );
 export const updateClaimAFacilityVerificationMethod = createAction(
     'UPDATE_CLAIM_A_FACILITY_VERIFICATION_METHOD',
-);
-export const updateClaimAFacilityPreferredContactMethod = createAction(
-    'UPDATE_CLAIM_A_FACILITY_PREFERRED_CONTACT_METHOD',
 );
 export const updateClaimAFacilityLinkedinProfile = createAction(
     'UPDATE_CLAIM_A_FACILITY_LINKEDIN_PROFILE',
@@ -107,10 +101,7 @@ export function submitClaimAFacilityData(osID) {
                 mapKeys(value, file => {
                     postData.append('files', file);
                 });
-            } else if (
-                formattedKey === 'preferred_contact_method' ||
-                formattedKey === 'parent_company'
-            ) {
+            } else if (formattedKey === 'parent_company') {
                 const newValue = get(value, 'value', null);
                 postData.append(formattedKey, newValue);
             } else {

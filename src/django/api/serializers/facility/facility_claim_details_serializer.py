@@ -26,13 +26,14 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
     status_change = SerializerMethodField()
     notes = SerializerMethodField()
     facility_parent_company = SerializerMethodField()
+    email = SerializerMethodField()
     attachments = SerializerMethodField()
 
     class Meta:
         model = FacilityClaim
         fields = ('id', 'created_at', 'updated_at', 'contact_person', 'email',
                   'phone_number', 'company_name', 'website',
-                  'facility_description', 'preferred_contact_method', 'status',
+                  'facility_description', 'status',
                   'contributor', 'facility', 'verification_method',
                   'status_change', 'notes', 'facility_parent_company',
                   'job_title', 'linkedin_profile', 'attachments')
@@ -73,6 +74,9 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
 
     def get_facility_parent_company(self, claim):
         return _get_parent_company(claim)
+
+    def get_email(self, claim):
+        return claim.contributor.admin.email
 
     def get_attachments(self, claim):
         attachments = FacilityClaimAttachments.objects.filter(claim=claim)

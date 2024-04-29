@@ -92,11 +92,9 @@ class FacilityMergeTest(APITestCase):
             facility=self.facility_1,
             contact_person="test 1",
             job_title="test 1",
-            email="test1@test.com",
             phone_number="1234567890",
             company_name="test 1",
             facility_description="test 1",
-            preferred_contact_method=FacilityClaim.EMAIL,
             status=FacilityClaim.APPROVED,
         )
 
@@ -152,11 +150,9 @@ class FacilityMergeTest(APITestCase):
             facility=self.facility_2,
             contact_person="test 2",
             job_title="test 2",
-            email="test2@test.com",
             phone_number="1234567890",
             company_name="test 2",
             facility_description="test 2",
-            preferred_contact_method=FacilityClaim.EMAIL,
         )
 
         self.contributor_3 = Contributor.objects.create(
