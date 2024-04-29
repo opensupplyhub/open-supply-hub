@@ -27,6 +27,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * ProcessingFacilityAPI - class to process a facility from an API request
     * ProcessingFacilityExecutor - class defines which interface to execute for the processing of a facility
 * Resource allocation has been optimized for the Test environment. The number of ECS tasks in the Test environment has been reduced from 4 to 2, while maintaining system stability.
+* [OSDEV-1024](https://opensupplyhub.atlassian.net/browse/OSDEV-1024) - Dedupe Hub. Revise service configurations and refine gazetteer retraining. Remove option --reload & decrease number of workers in Dedupe Hub service configuration. Refactor initial rebuilding of gazetteer.
 
 ### Bugfix
 
