@@ -39,6 +39,9 @@ from .facility.facility_claim_review_note import (
   FacilityClaimReviewNote,
   HistoricalFacilityClaimReviewNote,
 )
+from .facility.facility_claim_attachments import (
+    FacilityClaimAttachments
+)
 from .facility.facility_list import FacilityList
 from .facility.facility_list_item import FacilityListItem
 from .facility.facility_list_item_temp import FacilityListItemTemp
