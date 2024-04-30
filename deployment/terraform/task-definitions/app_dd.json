@@ -11,8 +11,7 @@
       "--port",
       "80",
       "--workers",
-      "8",
-      "--reload"
+      "1"
     ],
     "environment": [
         { "name": "ENV", "value": "${env}" },
