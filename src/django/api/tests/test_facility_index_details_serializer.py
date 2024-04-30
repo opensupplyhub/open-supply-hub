@@ -129,12 +129,10 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             contributor=self.contrib_one,
             facility=self.facility,
             contact_person=self.contrib_one_name,
-            email=self.email_one,
             phone_number=12345,
             company_name="Test",
             website="http://example.com",
             facility_description="description",
-            preferred_contact_method=FacilityClaim.EMAIL,
             status=FacilityClaim.APPROVED,
         )
 
@@ -155,7 +153,6 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             contributor=self.contrib_one,
             facility=self.facility,
             contact_person="test",
-            email="test@test.com",
             phone_number="1234567890",
             sector=["Beauty"],
             status=FacilityClaim.APPROVED,
@@ -170,7 +167,6 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             contributor=self.contrib_one,
             facility=self.facility,
             contact_person="test",
-            email="test@test.com",
             phone_number="1234567890",
             sector=["Beauty"],
             status=FacilityClaim.DENIED,

@@ -84,12 +84,10 @@ class ApprovedFacilityClaimTest(APITestCase):
             contributor=self.user_contributor,
             facility=self.facility,
             contact_person="Name",
-            email=self.email,
             phone_number=12345,
             company_name="Test",
             website="http://example.com",
             facility_description="description",
-            preferred_contact_method=FacilityClaim.EMAIL,
         )
 
         self.superuser_email = "superuser@example.com"

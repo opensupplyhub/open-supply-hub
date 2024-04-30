@@ -57,7 +57,7 @@
       }
     },
     {
-      "files": ["./src/setupTests.js"],
+      "files": ["./src/setupTests.js", "./src/util/testUtils/*"],
       "rules": {
         "import/no-extraneous-dependencies": "off"
       }
