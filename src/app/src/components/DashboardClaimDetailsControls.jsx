@@ -134,6 +134,14 @@ function DashboardClaimsDetailsControls({
                     <Button
                         onClick={openApproveDialog}
                         variant="contained"
+                        color="action"
+                        style={dashboardClaimsControlsStyles.buttonStyles}
+                    >
+                        Message Claimant
+                    </Button>
+                    <Button
+                        onClick={openApproveDialog}
+                        variant="contained"
                         color="primary"
                         style={dashboardClaimsControlsStyles.buttonStyles}
                     >
