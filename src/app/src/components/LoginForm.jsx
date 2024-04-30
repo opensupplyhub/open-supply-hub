@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect } from 'react';
 import { arrayOf, bool, func, shape, string } from 'prop-types';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
@@ -36,106 +36,106 @@ import { formValidationErrorMessageStyle } from '../util/styles';
 const LOGIN_EMAIL = 'LOGIN_EMAIL';
 const LOGIN_PASSWORD = 'LOGIN_PASSWORD';
 
-class LoginForm extends Component {
-    componentDidUpdate() {
-        const { user, history } = this.props;
-
-        return !user.isAnon ? history.push(facilitiesRoute) : null;
-    }
-
-    componentWillUnmount() {
-        return this.props.clearForm();
-    }
-
-    render() {
-        const {
-            email,
-            password,
-            fetching,
-            error,
-            updateEmail,
-            updatePassword,
-            submitForm,
-            submitFormOnEnterKeyPress,
-            sessionFetching,
-        } = this.props;
-
-        if (sessionFetching) {
-            return null;
+const LoginForm = ({
+    history,
+    user,
+    email,
+    password,
+    fetching,
+    sessionFetching,
+    error,
+    updateEmail,
+    updatePassword,
+    submitForm,
+    submitFormOnEnterKeyPress,
+    clearForm,
+}) => {
+    useEffect(() => {
+        if (!user.isAnon) {
+            if (history.location.state?.prevPath) {
+                history.push(history.location.state.prevPath);
+            } else {
+                history.push(facilitiesRoute);
+            }
         }
+    }, [user]);
 
-        return (
-            <AppOverflow>
-                <AppGrid title="Log In" style={{ marginBottom: '100px' }}>
-                    <Grid item xs={12} sm={7}>
-                        <p>
-                            You must be a registered user to contribute to Open
-                            Supply Hub.
-                            <br />
-                            Don&apos;t have an account?{' '}
-                            <Link
-                                to={authRegisterFormRoute}
-                                href={authRegisterFormRoute}
-                                className="link-underline"
-                            >
-                                Register
-                            </Link>
-                            .
-                        </p>
-                        <div className="form__field">
-                            <label
-                                className="form__label"
-                                htmlFor={LOGIN_EMAIL}
-                            >
-                                Email Address
-                            </label>
-                            <ControlledTextInput
-                                autoFocus
-                                id={LOGIN_EMAIL}
-                                type="email"
-                                value={email}
-                                onChange={updateEmail}
-                                submitFormOnEnterKeyPress={
-                                    submitFormOnEnterKeyPress
-                                }
-                            />
-                        </div>
-                        <div className="form__field">
-                            <label
-                                className="form__label"
-                                htmlFor={LOGIN_PASSWORD}
-                            >
-                                Password
-                            </label>
-                            <ControlledTextInput
-                                id={LOGIN_PASSWORD}
-                                type="password"
-                                value={password}
-                                onChange={updatePassword}
-                                submitFormOnEnterKeyPress={
-                                    submitFormOnEnterKeyPress
-                                }
-                            />
-                        </div>
-                        <SendResetPasswordEmailForm />
-                        <ShowOnly when={!!(error && error.length)}>
-                            <ul style={formValidationErrorMessageStyle}>
-                                {error && error.length
-                                    ? error.map(err => <li key={err}>{err}</li>)
-                                    : null}
-                            </ul>
-                        </ShowOnly>
-                        <Button
-                            text="Log In"
-                            onClick={submitForm}
-                            disabled={fetching}
-                        />
-                    </Grid>
-                </AppGrid>
-            </AppOverflow>
-        );
+    useEffect(
+        () => () => {
+            clearForm();
+        },
+        [],
+    );
+
+    if (sessionFetching) {
+        return null;
     }
-}
+
+    return (
+        <AppOverflow>
+            <AppGrid title="Log In" style={{ marginBottom: '100px' }}>
+                <Grid item xs={12} sm={7}>
+                    <p>
+                        You must be a registered user to contribute to Open
+                        Supply Hub.
+                        <br />
+                        Don&apos;t have an account?{' '}
+                        <Link
+                            to={authRegisterFormRoute}
+                            href={authRegisterFormRoute}
+                            className="link-underline"
+                        >
+                            Register
+                        </Link>
+                        .
+                    </p>
+                    <div className="form__field">
+                        <label className="form__label" htmlFor={LOGIN_EMAIL}>
+                            Email Address
+                        </label>
+                        <ControlledTextInput
+                            autoFocus
+                            id={LOGIN_EMAIL}
+                            type="email"
+                            value={email}
+                            onChange={updateEmail}
+                            submitFormOnEnterKeyPress={
+                                submitFormOnEnterKeyPress
+                            }
+                        />
+                    </div>
+                    <div className="form__field">
+                        <label className="form__label" htmlFor={LOGIN_PASSWORD}>
+                            Password
+                        </label>
+                        <ControlledTextInput
+                            id={LOGIN_PASSWORD}
+                            type="password"
+                            value={password}
+                            onChange={updatePassword}
+                            submitFormOnEnterKeyPress={
+                                submitFormOnEnterKeyPress
+                            }
+                        />
+                    </div>
+                    <SendResetPasswordEmailForm />
+                    <ShowOnly when={!!(error && error.length)}>
+                        <ul style={formValidationErrorMessageStyle}>
+                            {error && error.length
+                                ? error.map(err => <li key={err}>{err}</li>)
+                                : null}
+                        </ul>
+                    </ShowOnly>
+                    <Button
+                        text="Log In"
+                        onClick={submitForm}
+                        disabled={fetching}
+                    />
+                </Grid>
+            </AppGrid>
+        </AppOverflow>
+    );
+};
 
 LoginForm.defaultProps = {
     error: null,
@@ -159,7 +159,7 @@ LoginForm.propTypes = {
     sessionFetching: bool.isRequired,
 };
 
-function mapStateToProps({
+const mapStateToProps = ({
     auth: {
         login: {
             form: { email, password },
@@ -169,29 +169,25 @@ function mapStateToProps({
         fetching,
         error,
     },
-}) {
-    return {
-        email,
-        password,
-        fetching,
-        error,
-        user,
-        sessionFetching,
-    };
-}
+}) => ({
+    email,
+    password,
+    fetching,
+    error,
+    user,
+    sessionFetching,
+});
 
-function mapDispatchToProps(dispatch) {
-    return {
-        updateEmail: e =>
-            dispatch(updateLoginFormEmailAddress(getValueFromEvent(e))),
-        updatePassword: e =>
-            dispatch(updateLoginFormPassword(getValueFromEvent(e))),
-        submitForm: () => dispatch(submitLoginForm()),
-        clearForm: () => dispatch(resetAuthFormState()),
-        submitFormOnEnterKeyPress: makeSubmitFormOnEnterKeyPressFunction(() =>
-            dispatch(submitLoginForm()),
-        ),
-    };
-}
+const mapDispatchToProps = dispatch => ({
+    updateEmail: e =>
+        dispatch(updateLoginFormEmailAddress(getValueFromEvent(e))),
+    updatePassword: e =>
+        dispatch(updateLoginFormPassword(getValueFromEvent(e))),
+    submitForm: () => dispatch(submitLoginForm()),
+    clearForm: () => dispatch(resetAuthFormState()),
+    submitFormOnEnterKeyPress: makeSubmitFormOnEnterKeyPressFunction(() =>
+        dispatch(submitLoginForm()),
+    ),
+});
 
 export default connect(mapStateToProps, mapDispatchToProps)(LoginForm);
