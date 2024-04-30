@@ -95,7 +95,7 @@ async def initialize():
         if end_offset == 0:
             log.warning(f'Topic ({settings.topic_dedupe_basic_name}) has no messages (log_end_offset: '
                         f'{end_offset}), skipping initialization ...')
-            return
+            return True
 
         log.debug(f'Found log_end_offset: {end_offset} seeking to {end_offset-1}')
         consumer.seek(tp, end_offset-1)
