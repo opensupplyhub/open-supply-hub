@@ -35,7 +35,10 @@ const claimFacilityContainerStyles = Object.freeze({
     }),
 });
 
-function ClaimFacility({
+const ClaimFacility = ({
+    history: {
+        location: { pathname },
+    },
     data,
     fetching,
     error,
@@ -45,7 +48,7 @@ function ClaimFacility({
     match: {
         params: { osID },
     },
-}) {
+}) => {
     /* eslint-disable react-hooks/exhaustive-deps */
     useEffect(() => {
         getClaimData();
@@ -63,7 +66,13 @@ function ClaimFacility({
             <AppGrid title="Claim this facility">
                 <Grid container className="margin-bottom-64">
                     <Grid item xs={12}>
-                        <Link to={authLoginFormRoute} href={authLoginFormRoute}>
+                        <Link
+                            to={{
+                                pathname: authLoginFormRoute,
+                                state: { prevPath: pathname },
+                            }}
+                            href={authLoginFormRoute}
+                        >
                             Log in to claim a facility on Open Supply Hub
                         </Link>
                     </Grid>
@@ -105,7 +114,7 @@ function ClaimFacility({
             </AppGrid>
         </AppOverflow>
     );
-}
+};
 
 ClaimFacility.defaultProps = {
     data: null,
@@ -121,7 +130,7 @@ ClaimFacility.propTypes = {
     userHasSignedIn: bool.isRequired,
 };
 
-function mapStateToProps({
+const mapStateToProps = ({
     claimFacility: {
         facilityData: { data, fetching, error },
     },
@@ -132,30 +141,26 @@ function mapStateToProps({
         user: { user },
         session: { fetching: sessionFetching },
     },
-}) {
-    return {
-        data,
-        fetching: fetching || sessionFetching || fetchingParentCompanyOptions,
-        userHasSignedIn: !user.isAnon,
-        error,
-    };
-}
+}) => ({
+    data,
+    fetching: fetching || sessionFetching || fetchingParentCompanyOptions,
+    userHasSignedIn: !user.isAnon,
+    error,
+});
 
-function mapDispatchToProps(
+const mapDispatchToProps = (
     dispatch,
     {
         match: {
             params: { osID },
         },
     },
-) {
-    return {
-        getClaimData: () => {
-            dispatch(fetchParentCompanyOptions());
-            return dispatch(fetchClaimFacilityData(osID));
-        },
-        clearClaimData: () => dispatch(clearClaimFacilityDataAndForm()),
-    };
-}
+) => ({
+    getClaimData: () => {
+        dispatch(fetchParentCompanyOptions());
+        return dispatch(fetchClaimFacilityData(osID));
+    },
+    clearClaimData: () => dispatch(clearClaimFacilityDataAndForm()),
+});
 
 export default connect(mapStateToProps, mapDispatchToProps)(ClaimFacility);

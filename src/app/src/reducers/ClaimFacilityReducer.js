@@ -7,19 +7,18 @@ import {
     completeFetchClaimFacilityData,
     clearClaimFacilityDataAndForm,
     updateClaimAFacilityContactPerson,
-    updateClaimAFacilityEmail,
     updateClaimAFacilityPhoneNumber,
     updateClaimAFacilityCompany,
     updateClaimAFacilityParentCompany,
     updateClaimAFacilityWebsite,
     updateClaimAFacilityDescription,
     updateClaimAFacilityVerificationMethod,
-    updateClaimAFacilityPreferredContactMethod,
     startSubmitClaimAFacilityData,
     failSubmitClaimAFacilityData,
     completeSubmitClaimAFacilityData,
     updateClaimAFacilityJobTitle,
     updateClaimAFacilityLinkedinProfile,
+    updateClaimAFacilityUploadFiles,
 } from '../actions/claimFacility';
 
 const initialState = Object.freeze({
@@ -32,13 +31,11 @@ const initialState = Object.freeze({
         formData: Object.freeze({
             contactPerson: '',
             jobTitle: '',
-            email: '',
             phoneNumber: '',
             companyName: '',
             website: '',
             facilityDescription: '',
             verificationMethod: '',
-            preferredContactMethod: null,
             parentCompany: null,
             linkedinProfile: '',
         }),
@@ -82,14 +79,6 @@ export default createReducer(
                 claimData: {
                     formData: {
                         contactPerson: { $set: payload },
-                    },
-                },
-            }),
-        [updateClaimAFacilityEmail]: (state, payload) =>
-            update(state, {
-                claimData: {
-                    formData: {
-                        email: { $set: payload },
                     },
                 },
             }),
@@ -142,14 +131,6 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAFacilityPreferredContactMethod]: (state, payload) =>
-            update(state, {
-                claimData: {
-                    formData: {
-                        preferredContactMethod: { $set: payload },
-                    },
-                },
-            }),
         [updateClaimAFacilityJobTitle]: (state, payload) =>
             update(state, {
                 claimData: {
@@ -163,6 +144,14 @@ export default createReducer(
                 claimData: {
                     formData: {
                         linkedinProfile: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimAFacilityUploadFiles]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        uploadFiles: { $set: payload },
                     },
                 },
             }),

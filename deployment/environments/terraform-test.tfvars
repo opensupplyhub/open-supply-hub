@@ -23,7 +23,7 @@ rds_database_name = "opensupplyhub"
 rds_multi_az = false
 rds_storage_encrypted = true
 
-app_ecs_desired_count = "4"
+app_ecs_desired_count = "2"
 app_ecs_deployment_min_percent = "100"
 app_ecs_deployment_max_percent = "400"
 app_fargate_cpu = "2048"

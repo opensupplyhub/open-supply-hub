@@ -1,4 +1,5 @@
 import {
+    array,
     arrayOf,
     bool,
     func,
@@ -343,6 +344,16 @@ export const facilityClaimNotePropType = shape({
     note: string.isRequired,
 });
 
+const attachmentPropTypes = shape({
+    file_name: string.isRequired,
+    claim_attachment: string.isRequired,
+});
+
+export const facilityClaimAttachmentsPropType = oneOfType([
+    arrayOf(attachmentPropTypes),
+    array,
+]);
+
 export const facilityClaimPropType = shape({
     id: number.isRequired,
     created_at: string.isRequired,
@@ -354,7 +365,6 @@ export const facilityClaimPropType = shape({
     company_name: string.isRequired,
     website: string.isRequired,
     facility_description: string.isRequired,
-    preferred_contact_method: string.isRequired,
     linkedin_profile: string.isRequired,
     status: oneOf(Object.values(facilityClaimStatusChoicesEnum)).isRequired,
     contributor: shape({}).isRequired,
@@ -365,6 +375,7 @@ export const facilityClaimPropType = shape({
         status_change_reason: string,
     }).isRequired,
     notes: arrayOf(facilityClaimNotePropType).isRequired,
+    attachments: facilityClaimAttachmentsPropType.isRequired,
 });
 
 export const approvedFacilityClaimPropType = shape({
