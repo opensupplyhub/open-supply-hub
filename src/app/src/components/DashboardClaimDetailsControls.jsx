@@ -30,6 +30,7 @@ const dialogTypesEnum = Object.freeze({
     APPROVE: 'APPROVE',
     DENY: 'DENY',
     REVOKE: 'REVOKE',
+    MESSAGE_CLAIMANT: 'MESSAGE_CLAIMANT',
 });
 
 const dashboardClaimsControlsStyles = Object.freeze({
@@ -96,6 +97,8 @@ function DashboardClaimsDetailsControls({
     const [statusChangeText, setStatusChangeText] = useState('');
     const [displayedDialogType, setDisplayedDialogType] = useState(null);
 
+    const openMessageClaimantDialog = () =>
+        setDisplayedDialogType(dialogTypesEnum.MESSAGE_CLAIMANT);
     const openApproveDialog = () =>
         setDisplayedDialogType(dialogTypesEnum.APPROVE);
     const openDenyDialog = () => setDisplayedDialogType(dialogTypesEnum.DENY);
@@ -109,6 +112,11 @@ function DashboardClaimsDetailsControls({
 
     const handleUpdateStatusChangeText = e =>
         setStatusChangeText(getValueFromEvent(e));
+
+    const handleMessageClaimant = () => {
+        console.log('Message claimant:', statusChangeText);
+        closeDialog();
+    };
 
     const handleApproveClaim = () => {
         approveClaim(statusChangeText);
@@ -134,7 +142,7 @@ function DashboardClaimsDetailsControls({
             return (
                 <>
                     <Button
-                        onClick={openApproveDialog}
+                        onClick={openMessageClaimantDialog}
                         variant="contained"
                         style={{
                             ...dashboardClaimsControlsStyles.buttonStyles,
@@ -188,20 +196,37 @@ function DashboardClaimsDetailsControls({
         </Typography>
     );
 
+    const dialogInputLabelDefault =
+        'Enter a reason. (This will be emailed to the person who submitted the facility claim.)';
+    const dialogInputLabelMessageClaimant =
+        'Enter a message. (This will be emailed to the contact email associated with this claim.)';
+
     const dialogContentData = get(
         Object.freeze({
+            [dialogTypesEnum.MESSAGE_CLAIMANT]: Object.freeze({
+                title: 'Send a message to claimant?',
+                inputLabel: dialogInputLabelMessageClaimant,
+                action: handleMessageClaimant,
+                actionTerm: 'message',
+                actionButtonStyle: {
+                    backgroundColor: theme.palette.action.main,
+                },
+            }),
             [dialogTypesEnum.APPROVE]: Object.freeze({
                 title: 'Approve this facility claim?',
+                inputLabel: dialogInputLabelDefault,
                 action: handleApproveClaim,
                 actionTerm: 'approve',
             }),
             [dialogTypesEnum.DENY]: Object.freeze({
                 title: 'Deny this facility claim?',
+                inputLabel: dialogInputLabelDefault,
                 action: handleDenyClaim,
                 actionTerm: 'deny',
             }),
             [dialogTypesEnum.REVOKE]: Object.freeze({
                 title: 'Revoke this facility claim?',
+                inputLabel: dialogInputLabelDefault,
                 action: handleRevokeClaim,
                 actionTerm: 'revoke',
             }),
@@ -265,8 +290,7 @@ function DashboardClaimsDetailsControls({
                         <DialogContent>
                             <InputLabel htmlFor="dialog-text-field">
                                 <Typography variant="body2">
-                                    Enter a reason. (This will be emailed to the
-                                    person who submitted the facility claim.)
+                                    {dialogContentData.inputLabel}
                                 </Typography>
                             </InputLabel>
                             <TextField
@@ -298,6 +322,9 @@ function DashboardClaimsDetailsControls({
                                 variant="contained"
                                 color="secondary"
                                 onClick={dialogContentData.action}
+                                style={
+                                    dialogContentData.actionButtonStyle || {}
+                                }
                             >
                                 {dialogContentData.actionTerm}
                             </Button>
