@@ -207,7 +207,7 @@ export const makeGetFacilityClaimsURL = () => '/api/facility-claims/';
 export const makeGetFacilityClaimByClaimIDURL = claimID =>
     `/api/facility-claims/${claimID}/`;
 export const makeMessageFacilityClaimantByClaimIDURL = claimID =>
-    `/api/facility-claims/${claimID}/message/`;
+    `/api/facility-claims/${claimID}/message-claimant/`;
 export const makeApproveFacilityClaimByClaimIDURL = claimID =>
     `/api/facility-claims/${claimID}/approve/`;
 export const makeDenyFacilityClaimByClaimIDURL = claimID =>
