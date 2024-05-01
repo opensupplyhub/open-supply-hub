@@ -32,6 +32,7 @@ log = logging.getLogger(__name__)
 async def startup_event():
     log.info('Initializing API ...')
     init_rollbar()
+    await build_gazetteer()
     res = await initialize()
     if res:
         await consume()
@@ -69,11 +70,6 @@ async def trigger(source_id):
     }
 
 async def initialize():
-    try:
-        GazetteerCache.get_latest()
-    except Exception:
-        pass
-
     loop = asyncio.get_event_loop()
     global consumer
     group_id = f'{settings.consumer_group_id}-{randint(0, 10000)}'
@@ -99,7 +95,7 @@ async def initialize():
         if end_offset == 0:
             log.warning(f'Topic ({settings.topic_dedupe_basic_name}) has no messages (log_end_offset: '
                         f'{end_offset}), skipping initialization ...')
-            return
+            return True
 
         log.debug(f'Found log_end_offset: {end_offset} seeking to {end_offset-1}')
         consumer.seek(tp, end_offset-1)
@@ -139,3 +135,9 @@ async def handle(value):
     except Exception as error:
         log.error(f'[Matching] Error: {error}')
     return
+
+async def build_gazetteer():
+    try:
+        GazetteerCache.get_latest()
+    except Exception as e:
+        log.error(f'[Matching] Initial Gazetteer Build Error: {e}')
