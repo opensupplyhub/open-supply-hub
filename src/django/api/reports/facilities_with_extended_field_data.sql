@@ -16,6 +16,7 @@ FROM (
         SUM(COUNT(af.id) FILTER (WHERE LENGTH(coalesce((SELECT array_agg(distinct(sector)) FROM index_sector(af.id)), '{}')::text) > 2 AND coalesce((SELECT array_agg(distinct(sector)) FROM index_sector(af.id)), '{}')::text != '{Unspecified}')) OVER (PARTITION BY EXTRACT(YEAR FROM af.created_at) ORDER BY TO_CHAR(af.created_at, 'YYYY-MM')) AS sector
     FROM api_facility af
        JOIN api_facilityindex afi ON af.id=afi.id
+       WHERE af.created_at >= '2021-12-31 23:59:59.999999+00:00'
     GROUP BY TO_CHAR(af.created_at, 'YYYY-MM'), EXTRACT(YEAR FROM af.created_at)
 ) AS query1
 FULL OUTER JOIN (

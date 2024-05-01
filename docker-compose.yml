@@ -67,7 +67,7 @@ services:
     command:
       - "-b :8081"
       - "--reload"
-      - "--timeout=9000"
+      - "--timeout=90"
       - "--access-logfile=-"
       - "--error-logfile=-"
       - "--log-level=debug"
@@ -128,7 +128,6 @@ services:
       retries: 5
     networks:
       - my-app
-
   init-kafka:
     image: confluentinc/cp-kafka:6.1.1
     depends_on:
