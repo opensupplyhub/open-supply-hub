@@ -15,6 +15,7 @@ import get from 'lodash/get';
 import includes from 'lodash/includes';
 
 import {
+    messageFacilityClaimant,
     approveFacilityClaim,
     denyFacilityClaim,
     revokeFacilityClaim,
@@ -89,6 +90,7 @@ function DashboardClaimsDetailsControls({
     data: { id: claimID, status },
     fetching,
     error,
+    messageClaimant,
     approveClaim,
     denyClaim,
     revokeClaim,
@@ -114,7 +116,7 @@ function DashboardClaimsDetailsControls({
         setStatusChangeText(getValueFromEvent(e));
 
     const handleMessageClaimant = () => {
-        console.log('Message claimant:', statusChangeText);
+        messageClaimant(statusChangeText);
         closeDialog();
     };
 
@@ -367,6 +369,8 @@ function mapDispatchToProps(dispatch, { data: { id } }) {
         approveClaim: reason => dispatch(approveFacilityClaim(id, reason)),
         denyClaim: reason => dispatch(denyFacilityClaim(id, reason)),
         revokeClaim: reason => dispatch(revokeFacilityClaim(id, reason)),
+        messageClaimant: message =>
+            dispatch(messageFacilityClaimant(id, message)),
     };
 }
 

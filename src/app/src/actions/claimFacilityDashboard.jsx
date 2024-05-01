@@ -5,6 +5,7 @@ import apiRequest from '../util/apiRequest';
 import {
     makeGetFacilityClaimsURL,
     logErrorAndDispatchFailure,
+    makeMessageFacilityClaimantByClaimIDURL,
     makeGetFacilityClaimByClaimIDURL,
     makeApproveFacilityClaimByClaimIDURL,
     makeDenyFacilityClaimByClaimIDURL,
@@ -111,6 +112,9 @@ export function fetchSingleFacilityClaim(claimID) {
     };
 }
 
+export const startMessageFacilityClaimant = createAction(
+    'START_MESSAGE_FACILITY_CLAIMANT',
+);
 export const startApproveFacilityClaim = createAction(
     'START_APPROVE_FACILITY_CLAIM',
 );
@@ -118,12 +122,18 @@ export const startDenyFacilityClaim = createAction('START_DENY_FACILITY_CLAIM');
 export const startRevokeFacilityClaim = createAction(
     'START_REVOKE_FACILITY_CLAIM',
 );
+export const failMessageFacilityClaimant = createAction(
+    'FAIL_MESSAGE_FACILITY_CLAIMANT',
+);
 export const failApproveFacilityClaim = createAction(
     'FAIL_APPROVE_FACILITY_CLAIM',
 );
 export const failDenyFacilityClaim = createAction('FAIL_DENY_FACILITY_CLAIM');
 export const failRevokeFacilityClaim = createAction(
     'FAIL_REVOKE_FACILITY_CLAIM',
+);
+export const completeMessageFacilityClaimant = createAction(
+    'COMPLETE_MESSAGE_FACILITY_CLAIMANT',
 );
 export const completeApproveFacilityClaim = createAction(
     'COMPLETE_APPROVE_FACILITY_CLAIM',
@@ -137,6 +147,29 @@ export const completeRevokeFacilityClaim = createAction(
 export const resetFacilityClaimControls = createAction(
     'RESET_FACILITY_CLAIM_CONTROLS',
 );
+
+export function messageFacilityClaimant(claimID, message) {
+    return dispatch => {
+        if (!claimID) {
+            return null;
+        }
+
+        dispatch(startMessageFacilityClaimant());
+
+        return apiRequest
+            .post(makeMessageFacilityClaimantByClaimIDURL(claimID), { message })
+            .then(({ data }) => dispatch(completeMessageFacilityClaimant(data)))
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented messaging to facility claimant',
+                        failMessageFacilityClaimant,
+                    ),
+                ),
+            );
+    };
+}
 
 export function approveFacilityClaim(claimID, reason = '') {
     return dispatch => {
