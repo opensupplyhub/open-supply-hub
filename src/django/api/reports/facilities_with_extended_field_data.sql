@@ -1,5 +1,5 @@
 SELECT COALESCE(query1.month, query2.month) AS month,
-       COALESCE(query1.total, 0) AS total,
+       COALESCE(query1.total, 0) AS "With At Least 1 Extended Field",
        COALESCE(query1.sector, 0) AS sector,
        COALESCE(query2.number_of_workers, 0) AS number_of_workers,
        COALESCE(query2.facility_type, 0) AS facility_type,
