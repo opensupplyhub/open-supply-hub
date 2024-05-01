@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { arrayOf, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
+import { withTheme } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
@@ -90,6 +91,7 @@ function DashboardClaimsDetailsControls({
     approveClaim,
     denyClaim,
     revokeClaim,
+    theme,
 }) {
     const [statusChangeText, setStatusChangeText] = useState('');
     const [displayedDialogType, setDisplayedDialogType] = useState(null);
@@ -134,8 +136,10 @@ function DashboardClaimsDetailsControls({
                     <Button
                         onClick={openApproveDialog}
                         variant="contained"
-                        color="action"
-                        style={dashboardClaimsControlsStyles.buttonStyles}
+                        style={{
+                            ...dashboardClaimsControlsStyles.buttonStyles,
+                            backgroundColor: theme.palette.action.main,
+                        }}
                     >
                         Message Claimant
                     </Button>
@@ -339,7 +343,9 @@ function mapDispatchToProps(dispatch, { data: { id } }) {
     };
 }
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps,
-)(DashboardClaimsDetailsControls);
+export default withTheme()(
+    connect(
+        mapStateToProps,
+        mapDispatchToProps,
+    )(DashboardClaimsDetailsControls),
+);
