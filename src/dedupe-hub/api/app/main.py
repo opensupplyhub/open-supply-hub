@@ -9,6 +9,7 @@ from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from kafka import TopicPartition
 
 from app.utils.rollbar import init_rollbar
+from app.matching.matcher.gazeteer.gazetteer_cache import GazetteerCache
 
 from app.config import settings
 
@@ -31,8 +32,10 @@ log = logging.getLogger(__name__)
 async def startup_event():
     log.info('Initializing API ...')
     init_rollbar()
-    await initialize()
-    await consume()
+    await build_gazetteer()
+    res = await initialize()
+    if res:
+        await consume()
 
 
 @app.on_event("shutdown")
@@ -92,7 +95,7 @@ async def initialize():
         if end_offset == 0:
             log.warning(f'Topic ({settings.topic_dedupe_basic_name}) has no messages (log_end_offset: '
                         f'{end_offset}), skipping initialization ...')
-            return
+            return True
 
         log.debug(f'Found log_end_offset: {end_offset} seeking to {end_offset-1}')
         consumer.seek(tp, end_offset-1)
@@ -102,7 +105,7 @@ async def initialize():
         # handle matching
         await handle(msg.value)
 
-        return
+        return True
 
 async def consume():
     global consumer_task
@@ -124,9 +127,17 @@ async def send_consumer_message(consumer):
 
 async def handle(value):
     value = json.loads(value.decode("utf-8"))
+    log.info(f'[Matching] Source Id: {value}')
     try:
+        log.info(f'[Matching] Start processing!')
         result = matcher(value)
-        log.info(f'Matcher result: {result}')
+        log.info(f'[Matching] Result: {result}')
     except Exception as error:
-        print('ERROR: {}'.format(error))
+        log.error(f'[Matching] Error: {error}')
     return
+
+async def build_gazetteer():
+    try:
+        GazetteerCache.get_latest()
+    except Exception as e:
+        log.error(f'[Matching] Initial Gazetteer Build Error: {e}')

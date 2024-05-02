@@ -12,7 +12,7 @@ r53_public_hosted_zone = "os-hub.net" # secure
 cloudfront_price_class = "PriceClass_All" # secure
 
 bastion_ami = "ami-0bb3fad3c0286ebd5" # secure
-bastion_instance_type = "t3.medium" # secure
+bastion_instance_type = "t3.nano" # secure
 
 rds_allocated_storage = "128" # secure
 rds_engine_version = "12" # secure
@@ -23,7 +23,7 @@ rds_database_name = "opensupplyhub" # secure
 rds_multi_az = false # secure
 rds_storage_encrypted = true # secure
 
-app_ecs_desired_count = "16" # secure
+app_ecs_desired_count = "12" # secure
 app_ecs_deployment_min_percent = "100" # secure
 app_ecs_deployment_max_percent = "400" # secure
 app_fargate_cpu = "2048" # secure

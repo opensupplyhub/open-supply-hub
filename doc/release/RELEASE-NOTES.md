@@ -3,6 +3,105 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.12.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: May 18, 2024
+
+### Database changes
+#### Migrations:
+* 0143_create_facility_claim_attachment_table.py - create api_facilityclaimattachments table to store claimant attachments per facility claim
+* 0144_remove_unnecessary_columns_from_facility_claim.py - This migration replaces the old `index_approved_claim` function with a similar one that does not index the `preferred_contact_method` field. Additionally, the migration removes `email` and `preferred_contact_method` from the `FacilityClaim` model and the respective history table.
+
+#### Scheme changes
+* [OSDEV-931](https://opensupplyhub.atlassian.net/browse/OSDEV-931) - Since `email` and `preferred_contact_method` are no longer necessary for the claim form, they have been removed from the `FacilityClaim` model and the respective history table. Additionally, the old `index_approved_claim` function has been replaced with a similar one that does not index the `preferred_contact_method` field.
+
+### Code/API changes
+* [OSDEV-1021](https://opensupplyhub.atlassian.net/browse/OSDEV-1021) Update the release protocol. The release protocol has been updated with the recent changes. Has been added the section about reloading DedupeHub and QA notification.
+
+### Architecture/Environment changes
+* [OSDEV-862](https://opensupplyhub.atlassian.net/browse/OSDEV-862) Fix `DB - Save Anonymized DB` / `DB - Apply Anonymized DB` workflows:
+  - run actions on self-hosted runners to eliminate `lack of storage` issue that hapopen on github's runners.
+  - use the `Test` environment for  `DB - Save Anonymized DB` action
+* [OSDEV-989](https://opensupplyhub.atlassian.net/browse/OSDEV-989) - The Strategy pattern was utilized to consolidate the processing of new facilities received from both API requests and list uploads. The code responsible for executing this processing was refactored, and new classes were implemented:
+    * ProcessingFacility - abstract class for facility processing
+    * ProcessingFacilityList - class to process a facility list
+    * ProcessingFacilityAPI - class to process a facility from an API request
+    * ProcessingFacilityExecutor - class defines which interface to execute for the processing of a facility
+* Resource allocation has been optimized for the Test environment. The number of ECS tasks in the Test environment has been reduced from 4 to 2, while maintaining system stability.
+* [OSDEV-870](https://opensupplyhub.atlassian.net/browse/OSDEV-870) - In `docker-compose` for the `api-app`  added dependency that helps to fix connection with the database during tests pipelines for Dedupe-Hub: 
+```
+database: 
+    condition: service_healthy
+```
+* [OSDEV-1024](https://opensupplyhub.atlassian.net/browse/OSDEV-1024) - Dedupe Hub. Revise service configurations and refine gazetteer retraining. Remove option `--reload` & decrease number of workers in Dedupe Hub service configuration. Refactor initial rebuilding of gazetteer.
+
+### Bugfix
+* [OSDEV-870](https://opensupplyhub.atlassian.net/browse/OSDEV-870) - The returning confirm/reject URLs were fixed when a facility has been matched. Changes were made to the Dedupe-Hub to prevent adding rows with empty fields to the `api_facilitymatch` and `api_facilitymatchtemp` tables when the count of matches is more than one.
+
+### What's new
+* [OSDEV-945](https://opensupplyhub.atlassian.net/browse/OSDEV-945) - Facility Claim. Update text of claim link on profile to "I want to claim this production location".
+* [OSDEV-745](https://opensupplyhub.atlassian.net/browse/OSDEV-745) - New "Portuguese" translated resources option added to international menu.
+* [OSDEV-944](https://opensupplyhub.atlassian.net/browse/OSDEV-944) - Facility claims. Short-term new screen for claim documentation.
+* [OSDEV-931](https://opensupplyhub.atlassian.net/browse/OSDEV-931) - The following features have been implemented:
+    * Made the Email field in the claim form uneditable, setting the claimer's email as the default value for this field.
+    * Removed the _Preferred method of contact_ field from both the claim form and the claim details page in the admin dashboard.
+    * Implemented redirecting a user to the claim page after navigating to the login page via the CTA link on the claim page for unauthorized users and successful login.
+
+### Release instructions:
+* Update code.
+* Apply DB migrations up to the latest one.
+* Run the index_facilities_new management command.
+
+
+## Release 1.11.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 20, 2024
+
+### Code/API changes
+* [OSDEV-923](https://opensupplyhub.atlassian.net/browse/OSDEV-923) [Uptime] Added more logs around API/List uploads & Dedupe Hub match processing
+* [OSDEV-606](https://opensupplyhub.atlassian.net/browse/OSDEV-606) Contributor Sort: Allow for ascending sort of contributors on the Map page. The sort_by parameter submits type of sorting order for facilities. Default sorting will be primary by public contributors count descending and secondary by name ascending/descending and contributors count ascending.
+
+### Architecture/Environment changes
+* [OSDEV-990](https://opensupplyhub.atlassian.net/browse/OSDEV-990) - Implement a ContriCleaner facade class to simplify interaction with client code. With this change, the client code only needs to instantiate the ContriCleaner class, pass the input data, and then call the `process_data` method without the need to define strategies or other details. This abstraction helps streamline the process and encapsulate complexity.
+* [OSDEV-991](https://opensupplyhub.atlassian.net/browse/OSDEV-991) - Implement a chain of pre-validation and serialization handlers in the ContriCleaner to streamline data processing. Additionally, refactor the CompositeRowSerializer to set up leaf serializers using a specialized method, ensuring loose coupling between the CompositeRowSerializer and leaf serializers. Lastly, separate serialization and validation tasks from parsing in the ContriCleaner library for improved modularity and maintainability.
+* [OSDEV-1000](https://opensupplyhub.atlassian.net/browse/OSDEV-1000) - A new class `ProcessingFacility` was created that will be responsible for managing the processing of new facilities from both API requests and list uploads. The functionality of processing a new facility received from an API request, which was previously in `facilities_view_set.py`, has been moved to `processing_facility.py`.
+* [OSDEV-1007](https://opensupplyhub.atlassian.net/browse/OSDEV-1007) - The functionality of processing a new facility received from list uploads, which was previously in `facility_list_view_set.py`, has been moved to `create_facility.py`.
+* [OSDEV-927](https://opensupplyhub.atlassian.net/browse/OSDEV-927) - Reduce resources allocated for bastions to t3.nano.
+* [OSDEV-805](https://opensupplyhub.atlassian.net/browse/OSDEV-805) - Make Environment and project tag to be applied to all resources by defaul.
+* [OSDEV-862](https://opensupplyhub.atlassian.net/browse/OSDEV-862) - Add `Save Anonymized DB` and `Apply Anonymized DB` actions that provde possibility to save anonymized dump to S3 bucket and then resotre Test or Pre-Prod environment from dump stored on S3.
+* [OSDEV-859](https://opensupplyhub.atlassian.net/browse/OSDEV-859) - Creates task-definitation for scheduled task that
+  * creates temporary postgresdb instance from latest production snaphsot in the `test` AWS account
+  * run anonymization query
+  * saves anonymized snapshot and removes the instance
+* In response to recent stability observations, resource allocation has been optimized, reducing the number of ECS tasks in both production and pre-production environments from 16 to 12, maintaining system stability.
+
+### Bugfix
+* [OSDEV-996](https://opensupplyhub.atlassian.net/browse/OSDEV-996) The default sorting order for embedded maps was broken (changed to Descending by # Contributors). The default sorting order for embedded maps has been fixed (changed it back to Ascending by Name).
+* [OSDEV-857](https://opensupplyhub.atlassian.net/browse/OSDEV-857) [Bug] Pre-prod isn't deleted by the 'terraform destroy' script. Command for destroying repositories on AWS pre-prod has been added.
+* [OSDEV-888](https://opensupplyhub.atlassian.net/browse/OSDEV-888) - Facility Profile. An error occurs when trying to open a facility from the Status Reports page. The error occurred due to activity reports with the status `pending` containing fields with `null` values and these values pass to the `format_date` function as an argument. Modified the `get_activity_reports` method in the `FacilityIndexDetailsSerializer` to prevent passing a falsy `date` argument into the `format_date` function.
+* [OSDEV-984](https://opensupplyhub.atlassian.net/browse/OSDEV-984) - Facility list upload. Header validation is failing, even though all the required columns and data are filled. Prepared basic implementation for ContriCleaner to validate headers (required fields) on early stage.
+* [OSDEV-660](https://opensupplyhub.atlassian.net/browse/OSDEV-660) - Remove punctuation issues with duplicated commas and double quotes while facility list uploading.
+* [OSDEV-986](https://opensupplyhub.atlassian.net/browse/OSDEV-986) - Fix the population of the custom data points uploaded via lists. Ensure that the full list header is saved in the database, and that the raw data for each facility list item is saved as a string of strings, with each value separated by a comma. This way, it helps maintain backward compatibility with the functionality responsible for displaying custom data points on the embedded maps. Also, revert to the previous default logic, which saves the sector as `Unspecified` when sector, sector_product_type, or product_type have empty values.
+* [OSDEV-966](https://opensupplyhub.atlassian.net/browse/OSDEV-966) - Character limit validation has been implemented in the ContriCleaner library for name, address, and sector values. It enforces a maximum length of 200 characters for both the name and address values, and restricts sector values to 50 characters each. This fix addresses the issue where user uploads containing such invalid data caused requests to fail with unexpected errors.
+
+### What's new
+* [OSDEV-974](https://opensupplyhub.atlassian.net/browse/OSDEV-974) Reporting. Contributor type by %. Admin sees in the report data for the percent of data contributors on the platform by type (this should be in percent format with two decimal places shown), only accounts that have contributed data, the data should be ordered by most recent to oldest month and display mid-month values.
+* [OSDEV-912](https://opensupplyhub.atlassian.net/browse/OSDEV-912) Facility Claim. Disable editing of name and address. The Facility name (English language) & Address fields of the claim details page have been removed and cannot be edited by the claimant.
+* [OSDEV-571](https://opensupplyhub.atlassian.net/browse/OSDEV-571) Claimed Facility Details. Make the "Sector" field a dropdown instead of free text field. The `Sector` field became a dropdown that is pre-populated with the platform’s sector list from Django.
+* [OSDEV-962](https://opensupplyhub.atlassian.net/browse/OSDEV-962) Update Release protocol. The Release protocol has been updated after the automatization of manual processes such as creating a release branch, restoring DB, deploy to AWS.
+* [OSDEV-972](https://opensupplyhub.atlassian.net/browse/OSDEV-972) Reporting. Updating "Facility Uploads" report. Joined one table from two reports and added columns.New table with such columns:
+`month`, `Total # of list uploads` in a given month (these are uploads that come from external contributors, NOT OS Hub team members), `# of public list uploads` in a given month (these are uploads that come from OS Hub team members AND have “[Public List]” in the contributor name), `Total facility listItems` uploaded in a given month, `# of Facilities` from Public Lists, `Total Facilities w/ status = new facility`, `# Public List Facilities w/ status = new facility`. Data is ordered from most recent to oldest
+* [OSDEV-913](https://opensupplyhub.atlassian.net/browse/OSDEV-913) Claim. Updated the submitted claim auto-reply message for email template.
+* [OSDEV-914](https://opensupplyhub.atlassian.net/browse/OSDEV-914) Claim. Updated the approved claim auto-reply message for email template
+
+### Release instructions:
+* Update code.
+
+
 ## Release 1.10.0
 
 ## Introduction
@@ -33,8 +132,8 @@ Move `countries` to a separate module so that it becomes possible to use both `d
 * [OSDEV-938](https://opensupplyhub.atlassian.net/browse/OSDEV-938) Move cleanup helper functions to the serializer
 * [OSDEV-851](https://opensupplyhub.atlassian.net/browse/OSDEV-851) Place 'terraform.tfvar' files to repository and move sensitive info to private repository opensupplyhub/ci-deployment
 * [OSDEV-894](https://opensupplyhub.atlassian.net/browse/OSDEV-894) Implement Contricleaner library into create facility API endpoint (`facilities_view_set.py`)
-* [OSDEV-536](https://opensupplyhub.atlassian.net/browse/OSDEV-536) In the Contricleaner library, implement parsing of fields `sector_product_type`, `sector`, and `product_type` based on commas and vertical bars. 
-* [OSDEV-760](https://opensupplyhub.atlassian.net/browse/OSDEV-760) In the Contricleaner library, implement parsing of fields `facility_type_processing_type`, `facility_type`, and `processing_type` based on commas and vertical bars. 
+* [OSDEV-536](https://opensupplyhub.atlassian.net/browse/OSDEV-536) In the Contricleaner library, implement parsing of fields `sector_product_type`, `sector`, and `product_type` based on commas and vertical bars.
+* [OSDEV-760](https://opensupplyhub.atlassian.net/browse/OSDEV-760) In the Contricleaner library, implement parsing of fields `facility_type_processing_type`, `facility_type`, and `processing_type` based on commas and vertical bars.
 * [OSDEV-893](https://opensupplyhub.atlassian.net/browse/OSDEV-893) - Implement the ContriCleaner parser for parsing facility lists immediately after list upload.
 
 ### Bugfix
@@ -53,6 +152,7 @@ Move `countries` to a separate module so that it becomes possible to use both `d
 ### Release instructions:
 * Update code.
 * Apply DB migrations up to the latest one.
+
 
 ## Release 1.9.0
 

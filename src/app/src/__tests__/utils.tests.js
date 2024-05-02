@@ -276,9 +276,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+        }
     };
 
     expect(
@@ -311,14 +310,38 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: 'AND',
         boundary: null,
         sortAlgorithm: {
-          label: "# Contributors",
-          value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
         createFiltersFromQueryString(combinedContributorsString),
     ).toEqual(expectedCombinedContributorsMatch);
+
+    const defaultSortingString = '?sort_by=name_asc';
+    const expectedSortingMatch = {
+        facilityFreeTextQuery: '',
+        contributors: [],
+        contributorTypes: [],
+        countries: [],
+        sectors: [],
+        lists: [],
+        parentCompany: [],
+        facilityType: [],
+        processingType: [],
+        productType: [],
+        numberOfWorkers: [],
+        nativeLanguageName: '',
+        combineContributors: '',
+        boundary: null,
+        sortAlgorithm: {
+            value: 'name_asc', label: 'A to Z',
+          }
+    };
+
+    expect(
+        createFiltersFromQueryString(defaultSortingString),
+    ).toEqual(expectedSortingMatch);
 
     const listsString = '?contributors=1&lists=2';
     const expectedListsMatch = {
@@ -347,9 +370,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
@@ -382,9 +404,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
@@ -417,9 +438,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
@@ -448,9 +468,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
@@ -481,9 +500,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
@@ -514,9 +532,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
@@ -547,9 +564,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
@@ -580,9 +596,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
@@ -613,9 +628,8 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
@@ -639,15 +653,14 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            label: "# Contributors",
-            value: "",
-        },
+            value: 'name_asc', label: 'A to Z',
+          }
     };
 
     expect(
         createFiltersFromQueryString(nativeLanguageNameString),
     ).toEqual(expectedNativeLanguageNameMatch);
-});
+    });
 
 it('creates a facility detail link', () => {
     const expectedMatch = '/facilities/hello';
@@ -1432,15 +1445,10 @@ it('creates a URL for POSTing the claim a facility form', () => {
 
 it('checks whether the claim a facility form is valid', () => {
     const validForm = {
-        email: 'email@example.com',
         companyName: 'companyName',
         contactPerson: 'contactPerson',
         phoneNumber: 'phoneNumber',
         facilityDescription: 'facilityDescription',
-        preferredContactMethod: {
-            label: 'label',
-            value: 'value',
-        },
         jobTitle: 'computer programmer',
     };
 
@@ -1460,11 +1468,9 @@ it('checks whether the claim a facility form is valid', () => {
     )).toBe(true);
 
     const invalidForm = {
-        email: 'email@example.com',
         companyName: '',
         contactPerson: '',
         phoneNumber: '',
-        preferredContactMethod: null,
     };
 
     expect(isEqual(

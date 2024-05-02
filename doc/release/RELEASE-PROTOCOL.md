@@ -20,6 +20,8 @@ This document outlines the SDLC pillars of the opensupplyhub monorepo, as well a
   - [QA process](#qa-process)
   - [Release to production and sandbox](#release-to-production-and-sandbox)
   - [Hotfixes](#hotfixes)
+  - [Shut down the pre-prod environment](#shut-down-pre-prod)
+  - [Reloading the DedupeHub](#reload-dedupehub)
 
 
 ## Release Schedule
@@ -131,16 +133,28 @@ Make sure that:
 
 ### Release to production and sandbox
 
-1. To enhance communication within the team, the responsible person for the release must notify all stakeholders about the release two working days before its scheduled date.
-2. On the designated time and day, the responsible person runs the Release [Deploy] workflow for the sandbox and production environments from the release branch. They need to fill in the release tag version and choose the environment.
-3. After completing the triggered workflows, the responsible person must open the AWS console and verify that all tasks of the OpenSupplyHubStagingAppDD, OpenSupplyHubStagingApp, OpenSupplyHubProductionAppDD, and OpenSupplyHubProductionApp services in the ecsOpenSupplyHubStagingCluster and ecsOpenSupplyHubProductionCluster Amazon ECS clusters, respectively, have been restarted.
-4. The responsible person also needs to check that DedupeHub is up and running. To do this, they should open CloudWatch via the AWS console, navigate to the Log groups section in the menu, open logOpenSupplyHubProductionAppDD and logOpenSupplyHubStagingAppDD, then open the latest log stream of each log group. Ensure that there is a recent message: `INFO: Application startup complete.`
-5. Once the aforementioned steps are successfully completed, the person responsible for the release should also follow the instructions outlined in the Release section of the [RELEASE-NOTES.md](./RELEASE-NOTES.md) file for the released version. In case there is a need to run a command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Migration+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5DHow-to-correctly-run-migrations-for-our-four-environments%3F---Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
-6. Upon completing the release, the responsible person must notify stakeholders in the *#data_x_product* Slack channel that the releases to sandbox and production have concluded. Additionally, update the *Unreleased* version's status in Jira.
-7. Notify the QA Engineer that the new version has been released, and they can commence testing the items listed under the *prod* column in [the QA Checklist sheet](https://docs.google.com/spreadsheets/d/1uinHJOPpGfrUNkewBxPVsDeDXnNx4dJnnX94LoBA_zk/edit?usp=sharing).
-8. As the final step, shut down the pre-prod environment, as it is no longer required for the current version of the release.
+1. To enhance communication within the team, the responsible person for the release must notify all stakeholders about the release two working days before its scheduled date and in 1-2 hours to prevent any actions on the environment on which the deployment is carried out.
+2. The responsible person have to take db snapshot manually via Amazon RDS in the `Snapshots` tab with name `env-db-date`.
+3. On the designated time and day, the responsible person runs the Release [Deploy] workflow for the sandbox and production environments from the release branch. They need to fill in the full release tag version (`X.Y.Z`) and choose the environment.
+4. The next step is for the responsible person to run the `Deploy to AWS` workflow for the sandbox and production environments from the release branch and not select other checkboxes.
+5. After completing the triggered workflows, the responsible person must open the AWS console and verify that all tasks of the OpenSupplyHubStagingAppDD, OpenSupplyHubStagingApp, OpenSupplyHubProductionAppDD, and OpenSupplyHubProductionApp services in the ecsOpenSupplyHubStagingCluster and ecsOpenSupplyHubProductionCluster Amazon ECS clusters, respectively, have been restarted.
+6. The responsible person also needs to check that DedupeHub is up and running. To do this, they should open CloudWatch via the AWS console, navigate to the Log groups section in the menu, open logOpenSupplyHubProductionAppDD and logOpenSupplyHubStagingAppDD, then open the latest log stream of each log group. Ensure that there is a recent message: `INFO: Application startup complete.`
+If there is no such message and DedupeHub hangs, you need to reload it (perhaps several times), as mentioned in [Reloading the DedupeHub](#reload-dedupehub).
+7. Once the aforementioned steps are successfully completed, the person responsible for the release should also follow the instructions outlined in the Release section of the [RELEASE-NOTES.md](./RELEASE-NOTES.md) file for the released version. In case there is a need to run a command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Migration+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5DHow-to-correctly-run-migrations-for-our-four-environments%3F---Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
+8. Notify the QA Engineer that the new version has been released, and they can commence testing the items listed under the *prod* column in [the QA Checklist sheet](https://docs.google.com/spreadsheets/d/1uinHJOPpGfrUNkewBxPVsDeDXnNx4dJnnX94LoBA_zk/edit?usp=sharing).
+9. The QA Engineer must notify stakeholders in the *#data_x_product* Slack channel when testing is complete in the sandbox and in the production, as well as issues, if any encountered during testing.
+10. Upon completing the release, the responsible person must notify stakeholders in the *#data_x_product* Slack channel that the releases to sandbox and production have concluded. Additionally, update the *Unreleased* version's status in Jira.
+11. As the final step, shut down the pre-prod environment, as it is no longer required for the current version of the release.
 
 ### Hotfixes
 
 - To deploy a hotfix to pre-prod, you should fork from the latest release branch, and after preparing the fix, merge it back. Merging will trigger the Deploy to AWS workflow that will deploy the hotfix to the **running** pre-prod environment. Before doing it, don't forget about the step involving switching databases, as mentioned in [the Code Freeze section]((#requirements-and-key-results)).
 - To release a hotfix to production and staging, you should fork from the latest release branch, and after preparing the fix, merge it back. The last step is to execute the Release [Deploy] workflow for each environment separately, which will deploy the fix to these two environments.
+
+### Shut down the pre-prod environment
+
+- To shut down the Pre-prod the responsible person have to select `Destroy Environment` in the Actions menu. Press run workflow with `main` branch and select `Pre-prod` env.
+- DB Instance has to be destroyed manually via RDS -> Databases -> `opensupplyhub-enc-pp`. Press Modify -> Enable deletion protection=false. Then select Delete in Actions.
+
+### Reloading the DedupeHub
+- To restart DedupeHub the responsible person have to find ecsOpenSupplyHubProductionCluster in Amazon Elastic Container Service, select OpenSupplyHubProductionAppDD and press update. Then select `Force New Deployment` and press update button.

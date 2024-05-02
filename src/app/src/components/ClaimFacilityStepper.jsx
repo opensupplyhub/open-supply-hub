@@ -18,10 +18,7 @@ import ClaimFacilityFacilityInfoStep from './ClaimFacilityFacilityInfoStep';
 import ClaimFacilityVerificationInfoStep from './ClaimFacilityVerificationInfoStep';
 import ClaimFacilityConfirmationStep from './ClaimFacilityConfirmationStep';
 
-import {
-    submitClaimAFacilityData,
-    updateClaimAFacilityEmail,
-} from '../actions/claimFacility';
+import { submitClaimAFacilityData } from '../actions/claimFacility';
 
 import COLOURS from '../util/COLOURS';
 
@@ -97,20 +94,9 @@ const steps = Object.freeze([
     }),
 ]);
 
-function ClaimFacilityStepper({
-    fetching,
-    submitClaimForm,
-    formData,
-    contributorEmail,
-    setEmailFromContributorEmail,
-    error,
-}) {
+function ClaimFacilityStepper({ fetching, submitClaimForm, formData, error }) {
     const [activeStep, setActiveStep] = useState(0);
     const [submittingForm, setSubmittingForm] = useState(false);
-
-    useEffect(() => {
-        setEmailFromContributorEmail(contributorEmail);
-    }, [contributorEmail, setEmailFromContributorEmail]);
 
     const incrementActiveStep = () =>
         setActiveStep(clamp(activeStep + 1, 0, steps.length));
@@ -266,17 +252,10 @@ ClaimFacilityStepper.propTypes = {
     fetching: bool.isRequired,
     submitClaimForm: func.isRequired,
     formData: shape({
-        email: string.isRequired,
         companyName: string.isRequired,
         contactPerson: string.isRequired,
         phoneNumber: string.isRequired,
-        preferredContactMethod: shape({
-            value: string.isRequired,
-            label: string.isRequired,
-        }),
     }).isRequired,
-    contributorEmail: string.isRequired,
-    setEmailFromContributorEmail: func.isRequired,
     error: arrayOf(string),
 };
 
@@ -284,16 +263,10 @@ function mapStateToProps({
     claimFacility: {
         claimData: { fetching, formData, error },
     },
-    auth: {
-        user: {
-            user: { email: contributorEmail },
-        },
-    },
 }) {
     return {
         fetching,
         formData,
-        contributorEmail,
         error,
     };
 }
@@ -308,8 +281,6 @@ function mapDispatchToProps(
 ) {
     return {
         submitClaimForm: () => dispatch(submitClaimAFacilityData(osID)),
-        setEmailFromContributorEmail: email =>
-            dispatch(updateClaimAFacilityEmail(email)),
     };
 }
 

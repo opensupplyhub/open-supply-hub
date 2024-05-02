@@ -139,6 +139,8 @@ services:
     volumes:
       - ./src/dedupe-hub/api:/usr/local/src
     depends_on:
+      database:
+        condition: service_healthy
       kafka:
         condition: service_healthy
     ports:
@@ -160,7 +162,7 @@ services:
       - POSTGRES_PASSWORD=openapparelregistry
       - POSTGRES_DB=openapparelregistry
       - GIT_COMMIT=Unknown
-    command: uvicorn app.main:app --host 0.0.0.0 --port 84 --reload --workers 8
+    command: uvicorn app.main:app --host 0.0.0.0 --port 84 --reload --workers 1
 
   elasticsearch:
     image: elasticsearch:8.12.1

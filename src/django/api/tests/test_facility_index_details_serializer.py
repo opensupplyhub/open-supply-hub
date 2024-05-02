@@ -10,6 +10,7 @@ from api.models import (
     Source,
     User,
 )
+from api.models.facility.facility_activity_report import FacilityActivityReport
 from api.models.facility.facility_index import FacilityIndex
 from api.serializers import (
     FacilityIndexDetailsSerializer,
@@ -18,6 +19,10 @@ from api.serializers import (
 
 from django.contrib.gis.geos import Point
 from django.test import TestCase
+
+from api.serializers.facility.facility_activity_report_serializer import (
+    FacilityActivityReportSerializer
+)
 
 
 class FacilityIndexDetailsSerializerTest(TestCase):
@@ -124,12 +129,10 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             contributor=self.contrib_one,
             facility=self.facility,
             contact_person=self.contrib_one_name,
-            email=self.email_one,
             phone_number=12345,
             company_name="Test",
             website="http://example.com",
             facility_description="description",
-            preferred_contact_method=FacilityClaim.EMAIL,
             status=FacilityClaim.APPROVED,
         )
 
@@ -150,7 +153,6 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             contributor=self.contrib_one,
             facility=self.facility,
             contact_person="test",
-            email="test@test.com",
             phone_number="1234567890",
             sector=["Beauty"],
             status=FacilityClaim.APPROVED,
@@ -165,7 +167,6 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             contributor=self.contrib_one,
             facility=self.facility,
             contact_person="test",
-            email="test@test.com",
             phone_number="1234567890",
             sector=["Beauty"],
             status=FacilityClaim.DENIED,
@@ -348,3 +349,30 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         expected_other_names = []
         actual_other_names = serializer.get_other_names(facility_index)
         self.assertEqual(expected_other_names, actual_other_names)
+
+    def test_get_activity_reports(self):
+        FacilityActivityReport.objects.create(
+            id=1,
+            facility=self.facility,
+            reported_by_user=self.user_one,
+            reported_by_contributor=self.contrib_one,
+            reason_for_report="reason",
+            closure_state=FacilityActivityReport.CLOSED,
+            status=FacilityActivityReport.PENDING,
+        )
+
+        activity_reports_data = FacilityActivityReportSerializer(
+            FacilityActivityReport.objects.get(id=1)
+        ).data
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        facility_index.activity_reports_info.append(activity_reports_data)
+        facility_index.save()
+
+        serializer = FacilityIndexDetailsSerializer(facility_index)
+        actual_activity_reports = serializer.get_activity_reports(
+            facility_index
+        )
+
+        for key, value in actual_activity_reports[0].items():
+            self.assertEqual(activity_reports_data.get(key), value)

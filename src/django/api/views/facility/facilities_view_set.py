@@ -1,11 +1,21 @@
-import json
-import traceback
-import asyncio
+import logging
+import os
+from datetime import datetime
+from api.facility_actions.processing_facility_api import ProcessingFacilityAPI
+from api.facility_actions.processing_facility_executor import (
+    ProcessingFacilityExecutor
+)
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
-from contricleaner.lib.parsers.source_parser_json import SourceParserJSON
-from contricleaner.lib.serializers.contri_cleaner_serializer import \
-    ContriCleanerSerializer
+from contricleaner.lib.contri_cleaner import ContriCleaner
+from contricleaner.lib.exceptions.handler_not_set_error \
+    import HandlerNotSetError
+
+from oar.settings import (
+    MAX_ATTACHMENT_SIZE_IN_BYTES,
+    MAX_ATTACHMENT_AMOUNT,
+    ALLOWED_ATTACHMENT_EXTENSIONS
+)
 
 from rest_framework.mixins import (
     ListModelMixin,
@@ -21,17 +31,18 @@ from rest_framework.exceptions import (
     NotAuthenticated,
     NotFound,
     PermissionDenied,
-    ValidationError
+    ValidationError,
+    APIException
 )
 from waffle import switch_is_active, flag_is_active
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models import Extent
 from django.core import exceptions as core_exceptions
-from django.core.validators import validate_email
 from django.db import transaction
 from django.db.models import F, Q
 from django.shortcuts import redirect
 from django.utils import timezone
+from django.utils.text import slugify
 from drf_yasg.openapi import Schema, TYPE_OBJECT
 from drf_yasg.utils import no_body, swagger_auto_schema
 
@@ -41,13 +52,12 @@ from ...models import (
     FacilityActivityReport,
     FacilityAlias,
     FacilityClaim,
+    FacilityClaimAttachments,
     FacilityClaimReviewNote,
     FacilityListItem,
-    FacilityListItemTemp,
     FacilityLocation,
     FacilityMatch,
     ExtendedField,
-    Source,
     Version
 )
 from ...constants import (
@@ -56,22 +66,16 @@ from ...constants import (
     FacilityMergeQueryParams,
     ProcessingAction,
     UpdateLocationParams,
-    ErrorMessages
 )
 from ...exceptions import BadRequestException
-from ...extended_fields import (
-    create_extendedfields_for_single_item,
-)
 from ...facility_history import (
     create_dissociate_match_change_reason,
     create_facility_history_list,
 )
-from ...geocoding import geocode_address
 from ...mail import send_claim_facility_confirmation_email
 
 from ...pagination import FacilitiesGeoJSONPagination
 from ...permissions import IsRegisteredAndConfirmed, IsSuperuser
-from ...processing import handle_external_match_process_result
 from ...sector_product_type_parser import SectorCache
 from ...serializers import (
     FacilityIndexSerializer,
@@ -85,15 +89,18 @@ from ...serializers import (
 )
 from ...throttles import DataUploadThrottle
 
-from ..fields.create_nonstandard_fields import create_nonstandard_fields
 from ..disabled_pagination_inspector import DisabledPaginationInspector
-from api.kafka_producer import produce_message_match_process
 
 from .facility_parameters import (
     facility_parameters,
     facilities_list_parameters,
     facilities_create_parameters,
 )
+
+# initialize logger
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
+log = logging.getLogger(__name__)
 
 
 class FacilitiesViewSet(ListModelMixin,
@@ -224,10 +231,15 @@ class FacilitiesViewSet(ListModelMixin,
             )
         sort_by = params.validated_data['sort_by']
         order_list = []
-        if (sort_by is not None) and (sort_by == 'name'):
-            order_list = ['name']
-        else:
+
+        if (sort_by is None) or (sort_by == 'contributors_desc'):
             order_list = ['-contributors_count', 'name']
+        elif (sort_by == 'name_asc'):
+            order_list = ['name']
+        elif (sort_by == 'name_desc'):
+            order_list = ['-name']
+        elif (sort_by == 'contributors_asc'):
+            order_list = ['contributors_count', 'name']
 
         queryset = queryset.extra(order_by=order_list)
 
@@ -570,17 +582,10 @@ class FacilitiesViewSet(ListModelMixin,
                               FeatureGroups.CAN_SUBMIT_FACILITY):
             raise PermissionDenied()
 
-        split_pattern = r', |,|\|'
-        contri_cleaner = ContriCleanerSerializer(
-            SourceParserJSON(request.data), SectorCache(), split_pattern
-        )
-        rows = contri_cleaner.get_validated_rows()
-        row = rows[0]
-        if row.errors:
-            return Response({
-                "message": "The provided data could not be parsed",
-                "errors": row.errors
-            }, status=status.HTTP_400_BAD_REQUEST)
+        log.info(f'[API Upload] Uploading data: {request.data}')
+
+        parsing_started = str(timezone.now())
+        log.info('[API Upload] Started CC Parse process!')
 
         params_serializer = FacilityCreateQueryParamsSerializer(
             data=request.query_params)
@@ -594,159 +599,27 @@ class FacilitiesViewSet(ListModelMixin,
         if not public_submission and not private_allowed:
             raise PermissionDenied('Cannot submit a private facility')
 
-        parse_started = str(timezone.now())
+        contri_cleaner = ContriCleaner(request.data, SectorCache())
+        try:
+            contri_cleaner_processed_data = contri_cleaner.process_data()
+        except HandlerNotSetError as err:
+            log.error(f'[API Upload] Internal ContriCleaner Error: {err}')
+            raise APIException('Internal System Error. '
+                               'Please contact support.')
 
-        source = Source.objects.create(
-            contributor=request.user.contributor,
-            source_type=Source.SINGLE,
-            is_public=public_submission,
-            create=should_create
-        )
-
-        create_nonstandard_fields(
-            list(row.fields.keys()),
-            request.user.contributor
-        )
-
-        item = FacilityListItem.objects.create(
-            source=source,
-            row_index=0,
-            raw_data=json.dumps(request.data),
-            raw_json=row.raw_json,
-            raw_header='',
-            status=FacilityListItem.PARSED,
-            name=row.name,
-            clean_name=row.clean_name,
-            address=row.address,
-            clean_address=row.clean_address,
-            country_code=row.country_code,
-            sector=row.sector,
-            processing_results=[{
-                'action': ProcessingAction.PARSE,
-                'started_at': parse_started,
-                'error': False,
-                'finished_at': str(timezone.now()),
-                'is_geocoded': False,
-            }]
-        )
-
-        result = {
-            'matches': [],
-            'item_id': item.id,
-            'geocoded_geometry': None,
-            'geocoded_address': None,
-            'status': item.status,
+        processing_input = {
+            'request': request,
+            'contri_cleaner_processed_data': contri_cleaner_processed_data,
+            'public_submission': public_submission,
+            'should_create': should_create,
+            'parsing_started': parsing_started,
         }
 
-        try:
-            create_extendedfields_for_single_item(item, row.fields)
-        except (core_exceptions.ValidationError, ValueError) as exc:
-            error_message = ''
+        processing_facility_executor = ProcessingFacilityExecutor(
+            ProcessingFacilityAPI(processing_input)
+        )
 
-            if isinstance(exc, ValueError):
-                error_message = str(exc)
-            else:
-                error_message = exc.message
-
-            item.status = FacilityListItem.ERROR_PARSING
-            item.processing_results.append({
-                'action': ProcessingAction.PARSE,
-                'started_at': parse_started,
-                'error': True,
-                'message': error_message,
-                'trace': traceback.format_exc(),
-                'finished_at': str(timezone.now()),
-            })
-            item.save()
-            result['status'] = item.status
-            result['message'] = error_message
-            return Response(result,
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        geocode_started = str(timezone.now())
-        try:
-            geocode_result = geocode_address(row.address, row.country_code)
-            if geocode_result['result_count'] > 0:
-                item.status = FacilityListItem.GEOCODED
-                item.geocoded_point = Point(
-                    geocode_result["geocoded_point"]["lng"],
-                    geocode_result["geocoded_point"]["lat"]
-                )
-                item.geocoded_address = geocode_result["geocoded_address"]
-
-                result['geocoded_geometry'] = {
-                    'type': 'Point',
-                    'coordinates': [
-                        geocode_result["geocoded_point"]["lng"],
-                        geocode_result["geocoded_point"]["lat"],
-                    ]
-                }
-                result['geocoded_address'] = item.geocoded_address
-            else:
-                item.status = FacilityListItem.GEOCODED_NO_RESULTS
-                result['status'] = item.status
-                result['message'] = ErrorMessages.GEOCODED_NO_RESULTS
-
-            item.processing_results.append({
-                'action': ProcessingAction.GEOCODE,
-                'started_at': geocode_started,
-                'error': False,
-                'skipped_geocoder': False,
-                'data': geocode_result['full_response'],
-                'finished_at': str(timezone.now()),
-            })
-
-            item.save()
-            # [A/B Test] OSHUB-507
-            FacilityListItemTemp.copy(item)
-        except Exception as exc:
-            item.status = FacilityListItem.ERROR_GEOCODING
-            item.processing_results.append({
-                'action': ProcessingAction.GEOCODE,
-                'started_at': geocode_started,
-                'error': True,
-                'message': str(exc),
-                'trace': traceback.format_exc(),
-                'finished_at': str(timezone.now()),
-            })
-            item.save()
-            result['status'] = item.status
-            return Response(result,
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        if item.status == FacilityListItem.GEOCODED:
-            # Handle and produce message to Kafka with source_id data
-            timer = 0
-            timeout = 25
-            fli_temp = None
-            while True:
-                if timer > timeout:
-                    break
-                fli_temp = FacilityListItemTemp.objects.get(
-                    source=source.id
-                )
-                if fli_temp.status == FacilityListItemTemp.GEOCODED:
-                    asyncio.run(produce_message_match_process(source.id))
-                    break
-                asyncio.sleep(1)
-                timer = timer + 1
-
-            # Handle results of "match" process from Dedupe Hub
-            result = handle_external_match_process_result(
-                fli_temp.id,
-                result,
-                request,
-                should_create
-            )
-
-        errors_status = [FacilityListItem.ERROR_MATCHING,
-                         FacilityListItem.GEOCODED_NO_RESULTS]
-
-        if (should_create
-                and result['status'] not in errors_status):
-            return Response(result, status=status.HTTP_201_CREATED)
-        else:
-            return Response(result, status=status.HTTP_200_OK)
+        return processing_facility_executor.run_processing()
 
     @swagger_auto_schema(auto_schema=None)
     @transaction.atomic
@@ -961,27 +834,39 @@ class FacilitiesViewSet(ListModelMixin,
 
             contact_person = request.data.get('contact_person')
             job_title = request.data.get('job_title')
-            email = request.data.get('email')
             phone_number = request.data.get('phone_number')
             company_name = request.data.get('company_name')
             parent_company = request.data.get('parent_company')
             website = request.data.get('website')
             facility_description = request.data.get('facility_description')
             verification_method = request.data.get('verification_method')
-            preferred_contact_method = request \
-                .data \
-                .get('preferred_contact_method') or ''
             linkedin_profile = request.data.get('linkedin_profile', '')
-
-            try:
-                validate_email(email)
-            except core_exceptions.ValidationError as exc:
-                raise ValidationError(
-                    'Valid email is required'
-                ) from exc
+            files = request.FILES.getlist('files')
 
             if not company_name:
                 raise ValidationError('Company name is required')
+
+            for file in files:
+                extension = file.name.split('.')[-1].lower()
+                if f".{extension}" not in ALLOWED_ATTACHMENT_EXTENSIONS:
+                    raise ValidationError(
+                        f'{file.name} could not be uploaded because \
+                        it is not in a supported format.',
+                    )
+
+                if file.size > MAX_ATTACHMENT_SIZE_IN_BYTES:
+                    mb = MAX_ATTACHMENT_SIZE_IN_BYTES / (1024*1024)
+                    raise ValidationError(
+                        '{} exceeds the maximum size of \
+                        {:.1f}MB.'.format(file.name, mb)
+                    )
+
+                if (len(files) > MAX_ATTACHMENT_AMOUNT):
+                    raise ValidationError(
+                        f'{file.name} could not be uploaded because there is a maximum of \
+                        {MAX_ATTACHMENT_AMOUNT} attachments and you have \
+                        already uploaded {MAX_ATTACHMENT_AMOUNT} attachments.'
+                    )
 
             if parent_company:
                 try:
@@ -1020,7 +905,6 @@ class FacilitiesViewSet(ListModelMixin,
                     contributor=contributor,
                     contact_person=contact_person,
                     job_title=job_title,
-                    email=email,
                     phone_number=phone_number,
                     company_name=company_name,
                     parent_company=parent_company_contributor,
@@ -1028,10 +912,25 @@ class FacilitiesViewSet(ListModelMixin,
                     website=website,
                     facility_description=facility_description,
                     verification_method=verification_method,
-                    preferred_contact_method=preferred_contact_method,
-                    linkedin_profile=linkedin_profile
+                    linkedin_profile=linkedin_profile,
                 )
             )
+
+            for file in files:
+                timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+                milliseconds = datetime.now().strftime('%f')[:-3]
+                timestamp_ms = f'{timestamp}{milliseconds}'
+                file_name, file_extension = os.path.splitext(file.name)
+                file.name = (
+                    f'{slugify(file_name, allow_unicode=True)}-'
+                    f'{contributor.name}-{timestamp_ms}{file_extension}'
+                )
+                FacilityClaimAttachments.objects.create(
+                    claim=facility_claim,
+                    file_name=f'{slugify(file_name)}.{file_extension}',
+                    claim_attachment=file
+                )
+
             send_claim_facility_confirmation_email(request, facility_claim)
 
             approved = (
