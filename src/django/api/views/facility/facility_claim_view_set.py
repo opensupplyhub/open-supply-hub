@@ -22,6 +22,7 @@ from ...mail import (
     send_claim_facility_denial_email,
     send_claim_facility_revocation_email,
     send_claim_update_notice_to_list_contributors,
+    send_message_to_claimant_email,
 )
 from ...models.contributor.contributor import Contributor
 from ...models.extended_field import ExtendedField
@@ -76,6 +77,31 @@ class FacilityClaimViewSet(ModelViewSet):
             claim = FacilityClaim.objects.get(pk=pk)
             response_data = FacilityClaimDetailsSerializer(claim).data
 
+            return Response(response_data)
+        except FacilityClaim.DoesNotExist as exc:
+            raise NotFound() from exc
+
+    @transaction.atomic
+    @action(detail=True,
+            methods=['post'],
+            url_path='message-claimant')
+    def message_claimant(self, request, pk=None):
+        if not request.user.is_superuser:
+            raise PermissionDenied()
+
+        try:
+            claim = FacilityClaim.objects.get(pk=pk)
+            message = request.data.get('message', '')
+
+            FacilityClaimReviewNote.objects.create(
+                claim=claim,
+                author=request.user,
+                note=message,
+            )
+
+            send_message_to_claimant_email(request, claim, message)
+
+            response_data = FacilityClaimDetailsSerializer(claim).data
             return Response(response_data)
         except FacilityClaim.DoesNotExist as exc:
             raise NotFound() from exc
