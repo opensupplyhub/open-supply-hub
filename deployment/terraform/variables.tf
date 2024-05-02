@@ -254,6 +254,14 @@ variable "app_dd_fargate_memory" {
   default = "1024"
 }
 
+variable "app_logstash_fargate_cpu" {
+  default = "2048"
+}
+
+variable "app_logstash_fargate_memory" {
+  default = "4096"
+}
+
 variable "cli_fargate_cpu" {
   default = "256"
 }
