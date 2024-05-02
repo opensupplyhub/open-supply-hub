@@ -18,5 +18,5 @@ Please reply to this message with the requested items. From there, we can proces
 
 Best wishes,
 
-{% include "mail/claims_team_signature_block.html" %}
+{% include "mail/data_team_signature_block.html" %}
 {% endblock content %}
