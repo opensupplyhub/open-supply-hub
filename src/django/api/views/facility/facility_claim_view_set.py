@@ -93,6 +93,9 @@ class FacilityClaimViewSet(ModelViewSet):
             claim = FacilityClaim.objects.get(pk=pk)
             message = request.data.get('message', '')
 
+            if not message:
+                raise BadRequestException('Message is required.')
+
             FacilityClaimReviewNote.objects.create(
                 claim=claim,
                 author=request.user,
