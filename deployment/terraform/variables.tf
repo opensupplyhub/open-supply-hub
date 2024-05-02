@@ -255,11 +255,13 @@ variable "app_dd_fargate_memory" {
 }
 
 variable "app_logstash_fargate_cpu" {
-  default = "2048"
+  type    = number
+  default = 2048
 }
 
 variable "app_logstash_fargate_memory" {
-  default = "4096"
+  type    = number
+  default = 4096
 }
 
 variable "cli_fargate_cpu" {
@@ -510,6 +512,21 @@ variable "dedupe_hub_live" {
 variable "dedupe_hub_name" {
 }
 variable "dedupe_hub_version" {
+}
+
+variable "app_logstash_ecs_desired_count" {
+  type    = number
+  default = 1
+}
+
+variable "app_logstash_ecs_deployment_min_percent" {
+  type    = number
+  default = 100
+}
+
+variable "app_logstash_ecs_deployment_max_percent" {
+  type    = number
+  default = 200
 }
 
 variable "anonymizer_destination_aws_account" {

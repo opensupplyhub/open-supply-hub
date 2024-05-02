@@ -56,6 +56,3 @@ dedupe_hub_live = true
 dedupe_hub_name = "deduplicate"
 dedupe_hub_version = 1
 app_cc_ecs_desired_count = 0
-
-app_logstash_fargate_cpu = 2048
-app_logstash_fargate_memory = 4096
