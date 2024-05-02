@@ -3,9 +3,9 @@ locals {
   app_cc_image         = "${module.ecr_repository_app_cc.repository_url}:${var.image_tag}"
   app_dd_image         = "${module.ecr_repository_app_dd.repository_url}:${var.image_tag}"
   app_kafka_image      = "${module.ecr_repository_kafka.repository_url}:${var.image_tag}"
+  app_logstash_image   = "${module.ecr_repository_logstash.repository_url}:${var.image_tag}"
   batch_job_queue_name = "queue${local.short}Default"
   batch_job_def_name   = "job${local.short}Default"
-
 }
 
 #
@@ -309,6 +309,19 @@ data "template_file" "app_cc" {
   }
 }
 
+resource "aws_ecs_task_definition" "app_cc" {
+  family                   = "${local.short}AppCC"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = var.app_cc_fargate_cpu
+  memory                   = var.app_cc_fargate_memory
+
+  task_role_arn      = aws_iam_role.app_task_role.arn
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+
+  container_definitions = data.template_file.app_cc.rendered
+}
+
 data "template_file" "app_dd" {
   template = file("task-definitions/app_dd.json")
 
@@ -335,20 +348,6 @@ data "template_file" "app_dd" {
   }
 }
 
-
-resource "aws_ecs_task_definition" "app_cc" {
-  family                   = "${local.short}AppCC"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = var.app_cc_fargate_cpu
-  memory                   = var.app_cc_fargate_memory
-
-  task_role_arn      = aws_iam_role.app_task_role.arn
-  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
-
-  container_definitions = data.template_file.app_cc.rendered
-}
-
 resource "aws_ecs_task_definition" "app_dd" {
   family                   = "${local.short}AppDD"
   network_mode             = "awsvpc"
@@ -360,6 +359,29 @@ resource "aws_ecs_task_definition" "app_dd" {
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
 
   container_definitions = data.template_file.app_dd.rendered
+}
+
+data "template_file" "app_logstash" {
+  template = file("task-definitions/app_logstash.json")
+
+  vars = {
+    image                            = local.app_logstash_image
+    log_group_name                   = "log${local.short}AppLogstash"
+    aws_region                       = var.aws_region
+  }
+}
+
+resource "aws_ecs_task_definition" "app_logstash" {
+  family                   = "${local.short}AppLogstash"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = var.app_logstash_fargate_cpu
+  memory                   = var.app_logstash_fargate_memory
+
+  task_role_arn      = aws_iam_role.app_task_role.arn
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+
+  container_definitions = data.template_file.app_logstash.rendered
 }
 
 resource "aws_ecs_service" "app" {

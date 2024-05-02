@@ -178,7 +178,7 @@ services:
       context: ./src/logstash
       dockerfile: Dockerfile
     ports:
-      - "5000:5000"
+      - 5001:5000
     environment:
       - CONFIG_SUPPORT_ESCAPE=true
       - ELASTICSEARCH_URL=http://elasticsearch:9200

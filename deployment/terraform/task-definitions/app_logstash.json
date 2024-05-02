@@ -1,0 +1,18 @@
+[
+    {
+      "name": "logstash",
+      "image": "${image}",
+      "cpu": 0,
+      "command": [],
+      "environment": [],
+      "portMappings": [],
+      "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+              "awslogs-group": "${log_group_name}",
+              "awslogs-region": "${aws_region}",
+              "awslogs-stream-prefix": "logstash"
+          }
+      }
+    }
+  ]
