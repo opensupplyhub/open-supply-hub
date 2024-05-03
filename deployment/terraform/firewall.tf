@@ -153,7 +153,7 @@ resource "aws_security_group_rule" "rds_enc_bastion_ingress" {
   source_security_group_id = module.vpc.bastion_security_group_id
 }
 
-resource "aws_security_group_rule" "rds_enc_app_ingress" {
+resource "aws_security_group_rule" "rds_enc_app_logstash_ingress" {
   type      = "ingress"
   from_port = module.database_enc.port
   to_port   = module.database_enc.port
