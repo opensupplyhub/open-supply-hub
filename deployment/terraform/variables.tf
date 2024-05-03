@@ -256,12 +256,12 @@ variable "app_dd_fargate_memory" {
 
 variable "app_logstash_fargate_cpu" {
   type    = number
-  default = 2048
+  default = 256
 }
 
 variable "app_logstash_fargate_memory" {
   type    = number
-  default = 4096
+  default = 512
 }
 
 variable "cli_fargate_cpu" {

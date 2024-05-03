@@ -457,25 +457,6 @@ resource "aws_ecs_service" "app_dd" {
   }
 }
 
-resource "aws_ecs_service" "app_logstash" {
-  name            = "${local.short}AppLogstash"
-  cluster         = aws_ecs_cluster.app.id
-  task_definition = aws_ecs_task_definition.app_logstash.arn
-
-  desired_count                      = var.app_logstash_ecs_desired_count
-  deployment_minimum_healthy_percent = var.app_logstash_ecs_deployment_min_percent
-  deployment_maximum_percent         = var.app_logstash_ecs_deployment_max_percent
-
-  launch_type = "FARGATE"
-
-  # TODO: Configure network for the Logstash service if necessary.
-
-  # network_configuration {
-  #   security_groups = [aws_security_group.app.id]
-  #   subnets         = module.vpc.private_subnet_ids
-  # }
-}
-
 locals {
   broker_host_list = split(",",module.msk_cluster.bootstrap_brokers[0])
 }
@@ -503,6 +484,25 @@ resource "aws_ecs_task_definition" "app_kafka" {
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
 
   container_definitions = data.template_file.app_kafka.rendered
+}
+
+resource "aws_ecs_service" "app_logstash" {
+  name            = "${local.short}AppLogstash"
+  cluster         = aws_ecs_cluster.app.id
+  task_definition = aws_ecs_task_definition.app_logstash.arn
+
+  desired_count                      = var.app_logstash_ecs_desired_count
+  deployment_minimum_healthy_percent = var.app_logstash_ecs_deployment_min_percent
+  deployment_maximum_percent         = var.app_logstash_ecs_deployment_max_percent
+
+  launch_type = "FARGATE"
+
+  # TODO: Configure network for the Logstash service if necessary.
+
+  # network_configuration {
+  #   security_groups = [aws_security_group.app.id]
+  #   subnets         = module.vpc.private_subnet_ids
+  # }
 }
 
 #
