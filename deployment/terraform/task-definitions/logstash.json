@@ -5,7 +5,6 @@
       "cpu": 0,
       "command": [],
       "environment": [],
-      "portMappings": [],
       "logConfiguration": {
           "logDriver": "awslogs",
           "options": {

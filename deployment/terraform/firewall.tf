@@ -312,6 +312,16 @@ resource "aws_security_group_rule" "app_memcached_egress" {
   source_security_group_id = aws_security_group.memcached.id
 }
 
+resource "aws_security_group_rule" "logstash_egress" {
+  type      = "egress"
+  from_port = module.database_enc.port
+  to_port   = module.database_enc.port
+  protocol  = "tcp"
+
+  security_group_id        = aws_security_group.logstash.id
+  source_security_group_id = module.database_enc.database_security_group_id
+}
+
 #
 # Batch container instance security group resources
 #

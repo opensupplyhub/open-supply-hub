@@ -3,7 +3,7 @@ locals {
   app_cc_image         = "${module.ecr_repository_app_cc.repository_url}:${var.image_tag}"
   app_dd_image         = "${module.ecr_repository_app_dd.repository_url}:${var.image_tag}"
   app_kafka_image      = "${module.ecr_repository_kafka.repository_url}:${var.image_tag}"
-  app_logstash_image   = "${module.ecr_repository_logstash.repository_url}:${var.image_tag}"
+  logstash_image       = "${module.ecr_repository_logstash.repository_url}:${var.image_tag}"
   batch_job_queue_name = "queue${local.short}Default"
   batch_job_def_name   = "job${local.short}Default"
 }
@@ -46,6 +46,16 @@ resource "aws_security_group" "batch" {
 
   tags = {
     Name        = "sgBatchContainerInstance"
+    Project     = var.project
+    Environment = var.environment
+  }
+}
+
+resource "aws_security_group" "logstash" {
+  vpc_id = module.vpc.id
+
+  tags = {
+    Name        = "sgLogstashService"
     Project     = var.project
     Environment = var.environment
   }
@@ -361,27 +371,27 @@ resource "aws_ecs_task_definition" "app_dd" {
   container_definitions = data.template_file.app_dd.rendered
 }
 
-data "template_file" "app_logstash" {
-  template = file("task-definitions/app_logstash.json")
+data "template_file" "logstash" {
+  template = file("task-definitions/logstash.json")
 
   vars = {
-    image                            = local.app_logstash_image
-    log_group_name                   = "log${local.short}AppLogstash"
+    image                            = local.logstash_image
+    log_group_name                   = "log${local.short}Logstash"
     aws_region                       = var.aws_region
   }
 }
 
-resource "aws_ecs_task_definition" "app_logstash" {
-  family                   = "${local.short}AppLogstash"
+resource "aws_ecs_task_definition" "logstash" {
+  family                   = "${local.short}Logstash"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = var.app_logstash_fargate_cpu
-  memory                   = var.app_logstash_fargate_memory
+  cpu                      = var.logstash_fargate_cpu
+  memory                   = var.logstash_fargate_memory
 
   task_role_arn      = aws_iam_role.app_task_role.arn
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
 
-  container_definitions = data.template_file.app_logstash.rendered
+  container_definitions = data.template_file.logstash.rendered
 }
 
 resource "aws_ecs_service" "app" {
@@ -486,23 +496,21 @@ resource "aws_ecs_task_definition" "app_kafka" {
   container_definitions = data.template_file.app_kafka.rendered
 }
 
-resource "aws_ecs_service" "app_logstash" {
-  name            = "${local.short}AppLogstash"
+resource "aws_ecs_service" "logstash" {
+  name            = "${local.short}Logstash"
   cluster         = aws_ecs_cluster.app.id
-  task_definition = aws_ecs_task_definition.app_logstash.arn
+  task_definition = aws_ecs_task_definition.logstash.arn
 
-  desired_count                      = var.app_logstash_ecs_desired_count
-  deployment_minimum_healthy_percent = var.app_logstash_ecs_deployment_min_percent
-  deployment_maximum_percent         = var.app_logstash_ecs_deployment_max_percent
+  desired_count                      = var.logstash_ecs_desired_count
+  deployment_minimum_healthy_percent = var.logstash_ecs_deployment_min_percent
+  deployment_maximum_percent         = var.logstash_ecs_deployment_max_percent
 
   launch_type = "FARGATE"
 
-  # TODO: Configure network for the Logstash service if necessary.
-
-  # network_configuration {
-  #   security_groups = [aws_security_group.app.id]
-  #   subnets         = module.vpc.private_subnet_ids
-  # }
+  network_configuration {
+    security_groups = [aws_security_group.logstash.id]
+    subnets         = module.vpc.private_subnet_ids
+  }
 }
 
 #
@@ -534,6 +542,6 @@ resource "aws_cloudwatch_log_group" "kafka" {
 }
 
 resource "aws_cloudwatch_log_group" "logstash" {
-  name              = "log${local.short}AppLogstash"
+  name              = "log${local.short}Logstash"
   retention_in_days = 30
 }
