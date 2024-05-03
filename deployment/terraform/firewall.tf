@@ -153,6 +153,16 @@ resource "aws_security_group_rule" "rds_enc_bastion_ingress" {
   source_security_group_id = module.vpc.bastion_security_group_id
 }
 
+resource "aws_security_group_rule" "rds_enc_app_ingress" {
+  type      = "ingress"
+  from_port = module.database_enc.port
+  to_port   = module.database_enc.port
+  protocol  = "tcp"
+
+  security_group_id        = module.database_enc.database_security_group_id
+  source_security_group_id = aws_security_group.app_logstash.id
+}
+
 #
 # Memcached security group resources
 #
@@ -312,13 +322,13 @@ resource "aws_security_group_rule" "app_memcached_egress" {
   source_security_group_id = aws_security_group.memcached.id
 }
 
-resource "aws_security_group_rule" "logstash_egress" {
+resource "aws_security_group_rule" "app_logstash_egress" {
   type      = "egress"
   from_port = module.database_enc.port
   to_port   = module.database_enc.port
   protocol  = "tcp"
 
-  security_group_id        = aws_security_group.logstash.id
+  security_group_id        = aws_security_group.app_logstash.id
   source_security_group_id = module.database_enc.database_security_group_id
 }
 

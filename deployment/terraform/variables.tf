@@ -254,12 +254,12 @@ variable "app_dd_fargate_memory" {
   default = "1024"
 }
 
-variable "logstash_fargate_cpu" {
+variable "app_logstash_fargate_cpu" {
   type    = number
   default = 256
 }
 
-variable "logstash_fargate_memory" {
+variable "app_logstash_fargate_memory" {
   type    = number
   default = 512
 }
@@ -514,17 +514,17 @@ variable "dedupe_hub_name" {
 variable "dedupe_hub_version" {
 }
 
-variable "logstash_ecs_desired_count" {
+variable "app_logstash_ecs_desired_count" {
   type    = number
   default = 1
 }
 
-variable "logstash_ecs_deployment_min_percent" {
+variable "app_logstash_ecs_deployment_min_percent" {
   type    = number
   default = 100
 }
 
-variable "logstash_ecs_deployment_max_percent" {
+variable "app_logstash_ecs_deployment_max_percent" {
   type    = number
   default = 200
 }
