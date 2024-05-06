@@ -9,8 +9,6 @@ on:
         type: choice
         options:
         - Pre-prod
-        - Test
-        - Development
         default: Pre-prod
 
 jobs:
