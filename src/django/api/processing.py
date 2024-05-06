@@ -639,13 +639,17 @@ def handle_external_match_process_result(id, result, request, should_create):
     if f_l_item is None:
         # Timeout
         return get_error_match_result(id, result)
-    queryset_f_m = FacilityMatchTemp.objects.filter(
+    if should_create:
+        type = FacilityMatch
+    else:
+        type = FacilityMatchTemp
+    queryset_f_m = type.objects.filter(
         facility_list_item=f_l_item.id)
     if queryset_f_m.count() == 0:
         # No Match and Geocoder Returned No Results
         return get_error_match_result(f_l_item.id, result)
     if (queryset_f_m.count() == 1
-            and queryset_f_m[0].status == FacilityMatchTemp.AUTOMATIC):
+            and queryset_f_m[0].status == type.AUTOMATIC):
         # New Facility
         if f_l_item.facility is None:
             return get_new_facility_match_result(f_l_item.id, None, result)
@@ -661,7 +665,7 @@ def handle_external_match_process_result(id, result, request, should_create):
                                           result)
 
     for item in queryset_f_m:
-        if item.status == FacilityMatchTemp.PENDING:
+        if item.status == type.PENDING:
             # Potential Match
             return get_potential_match_result(f_l_item,
                                               item,
