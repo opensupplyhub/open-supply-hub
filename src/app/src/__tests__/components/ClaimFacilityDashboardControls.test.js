@@ -1,13 +1,16 @@
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react";
-import DashboardClaimsDetailsControls from "../../components/DashboardClaimDetailsControls";
 import { Provider } from "react-redux";
 import configureStore from "redux-mock-store";
 import thunk from "redux-thunk";
-import { post as mockPost } from "../../util/apiRequest";
+import DashboardClaimsDetailsControls from "../../components/DashboardClaimDetailsControls";
+import apiRequest from '../../util/apiRequest';
 
-jest.mock("../../util/apiRequest", () => ({
-  post: jest.fn(),
+jest.mock('../../util/apiRequest', () => ({
+  __esModule: true, 
+  default: {
+    post: jest.fn(),
+  }
 }));
 
 const middlewares = [thunk];
@@ -82,7 +85,8 @@ describe("DashboardClaimsDetailsControls", () => {
         },
       },
     });
-    mockPost.mockClear();
+
+    apiRequest.post.mockClear();
   });
 
   test("renders without crashing", () => {
@@ -149,7 +153,7 @@ describe("DashboardClaimsDetailsControls", () => {
       },
       type: "COMPLETE_MESSAGE_FACILITY_CLAIMANT",
     };
-    mockPost.mockResolvedValue({
+    apiRequest.post.mockResolvedValue({
       data: { notes: [{ id: 1, note: message }] },
     });
 
@@ -165,7 +169,7 @@ describe("DashboardClaimsDetailsControls", () => {
     fireEvent.click(getByText("message"));
 
     await waitFor(() => {
-      expect(mockPost).toHaveBeenCalledWith(expect.anything(), { message });
+      expect(apiRequest.post).toHaveBeenCalledWith(expect.anything(), { message });
       expect(store.getActions()).toContainEqual(expectedSuccessAction);
     });
   });
