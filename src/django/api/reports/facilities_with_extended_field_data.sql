@@ -30,8 +30,6 @@ FROM (
         api_facility af
     JOIN
         api_facilityindex afi ON af.id=afi.id
-    WHERE
-        af.created_at >= '2021-12-31 23:59:59.999999+00:00'
     GROUP BY
         TO_CHAR(af.created_at, 'YYYY-MM')
 ) AS query1
