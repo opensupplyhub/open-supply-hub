@@ -168,4 +168,30 @@ describe("DashboardClaimsDetailsControls", () => {
       expect(store.getActions()).toContainEqual(expectedSuccessAction);
     });
   });
+
+  test("handles message claimant action with failed response", async () => {
+    const message = "Message to claimant.";
+    const expectedFailureAction = {
+      error: false,
+      payload: ["An error prevented messaging to facility claimant"],
+      type: "FAIL_MESSAGE_FACILITY_CLAIMANT",
+    };
+    apiRequest.post.mockRejectedValue(new Error("Failed to message claimant."));
+
+    const { getByText, getByLabelText } = renderComponent(
+      store,
+      defaultProps,
+    );
+    fireEvent.click(getByText("Message Claimant"));
+    const input = getByLabelText(
+      "Enter a message. (This will be emailed to the contact email associated with this claim.)",
+    );
+    fireEvent.change(input, { target: { value: message } });
+    fireEvent.click(getByText("message"));
+
+    await waitFor(() => {
+      expect(apiRequest.post).toHaveBeenCalledWith(expect.anything(), { message });
+      expect(store.getActions()).toContainEqual(expectedFailureAction);
+    });
+  });
 });
