@@ -97,19 +97,30 @@ function DashboardClaimsDetailsControls({
     theme,
 }) {
     const [statusChangeText, setStatusChangeText] = useState('');
+    const [isOpenDialog, setIsOpenDialog] = useState(false);
     const [displayedDialogType, setDisplayedDialogType] = useState(null);
 
-    const openMessageClaimantDialog = () =>
+    const openMessageClaimantDialog = () => {
         setDisplayedDialogType(dialogTypesEnum.MESSAGE_CLAIMANT);
-    const openApproveDialog = () =>
+        setIsOpenDialog(true);
+    };
+    const openApproveDialog = () => {
         setDisplayedDialogType(dialogTypesEnum.APPROVE);
-    const openDenyDialog = () => setDisplayedDialogType(dialogTypesEnum.DENY);
-    const openRevokeDialog = () =>
+        setIsOpenDialog(true);
+    };
+    const openDenyDialog = () => {
+        setDisplayedDialogType(dialogTypesEnum.DENY);
+        setIsOpenDialog(true);
+    };
+    const openRevokeDialog = () => {
         setDisplayedDialogType(dialogTypesEnum.REVOKE);
+        setIsOpenDialog(true);
+    };
 
     const closeDialog = () => {
         setDisplayedDialogType(null);
         setStatusChangeText('');
+        setIsOpenDialog(false);
     };
 
     const handleUpdateStatusChangeText = e =>
@@ -281,7 +292,7 @@ function DashboardClaimsDetailsControls({
                 </div>
             )}
             <Dialog
-                open={displayedDialogType || false}
+                open={isOpenDialog}
                 aria-labelledby="alert-dialog-title"
                 aria-describedby="alert-dialog-description"
                 style={dashboardClaimsControlsStyles.dialogContainerStyles}
