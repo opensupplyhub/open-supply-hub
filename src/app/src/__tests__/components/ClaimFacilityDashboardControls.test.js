@@ -4,13 +4,13 @@ import { Provider } from "react-redux";
 import configureStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import DashboardClaimsDetailsControls from "../../components/DashboardClaimDetailsControls";
-import apiRequest from '../../util/apiRequest';
+import apiRequest from "../../util/apiRequest";
 
-jest.mock('../../util/apiRequest', () => ({
-  __esModule: true, 
+jest.mock("../../util/apiRequest", () => ({
+  __esModule: true,
   default: {
     post: jest.fn(),
-  }
+  },
 }));
 
 const middlewares = [thunk];
@@ -122,15 +122,14 @@ describe("DashboardClaimsDetailsControls", () => {
     ).toBeInTheDocument();
     fireEvent.click(getByText("Cancel"));
     await waitFor(() => {
-      expect(queryByText("Send a message to claimant?")).not.toBeInTheDocument();
+      expect(
+        queryByText("Send a message to claimant?"),
+      ).not.toBeInTheDocument();
     });
   });
 
   test("updates message to claimant text", async () => {
-    const { getByText, getByLabelText } = renderComponent(
-      store,
-      defaultProps,
-    );
+    const { getByText, getByLabelText } = renderComponent(store, defaultProps);
     fireEvent.click(getByText("Message Claimant"));
     const input = getByLabelText(
       "Enter a message. (This will be emailed to the contact email associated with this claim.)",
@@ -152,10 +151,7 @@ describe("DashboardClaimsDetailsControls", () => {
       data: { notes: [{ id: 1, note: message }] },
     });
 
-    const { getByText, getByLabelText } = renderComponent(
-      store,
-      defaultProps,
-    );
+    const { getByText, getByLabelText } = renderComponent(store, defaultProps);
     fireEvent.click(getByText("Message Claimant"));
     const input = getByLabelText(
       "Enter a message. (This will be emailed to the contact email associated with this claim.)",
@@ -164,7 +160,9 @@ describe("DashboardClaimsDetailsControls", () => {
     fireEvent.click(getByText("message"));
 
     await waitFor(() => {
-      expect(apiRequest.post).toHaveBeenCalledWith(expect.anything(), { message });
+      expect(apiRequest.post).toHaveBeenCalledWith(expect.anything(), {
+        message,
+      });
       expect(store.getActions()).toContainEqual(expectedSuccessAction);
     });
   });
@@ -178,10 +176,7 @@ describe("DashboardClaimsDetailsControls", () => {
     };
     apiRequest.post.mockRejectedValue(new Error("Failed to message claimant."));
 
-    const { getByText, getByLabelText } = renderComponent(
-      store,
-      defaultProps,
-    );
+    const { getByText, getByLabelText } = renderComponent(store, defaultProps);
     fireEvent.click(getByText("Message Claimant"));
     const input = getByLabelText(
       "Enter a message. (This will be emailed to the contact email associated with this claim.)",
@@ -190,7 +185,9 @@ describe("DashboardClaimsDetailsControls", () => {
     fireEvent.click(getByText("message"));
 
     await waitFor(() => {
-      expect(apiRequest.post).toHaveBeenCalledWith(expect.anything(), { message });
+      expect(apiRequest.post).toHaveBeenCalledWith(expect.anything(), {
+        message,
+      });
       expect(store.getActions()).toContainEqual(expectedFailureAction);
     });
   });
