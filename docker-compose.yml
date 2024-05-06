@@ -128,6 +128,7 @@ services:
       retries: 5
     networks:
       - my-app
+
   init-kafka:
     image: confluentinc/cp-kafka:6.1.1
     depends_on:
