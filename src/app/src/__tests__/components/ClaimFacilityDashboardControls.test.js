@@ -78,11 +78,6 @@ describe("DashboardClaimsDetailsControls", () => {
           fetching: false,
           error: null,
         },
-        note: {
-          note: "",
-          fetching: false,
-          error: null,
-        },
       },
     });
 
@@ -113,7 +108,7 @@ describe("DashboardClaimsDetailsControls", () => {
     expect(queryByText("Deny Claim")).not.toBeInTheDocument();
   });
 
-  test("opens and closes dialog", async () => {
+  test("toggles message dialog visibility", async () => {
     const { getByText, getByLabelText, queryByText } = renderComponent(
       store,
       defaultProps,
@@ -126,9 +121,9 @@ describe("DashboardClaimsDetailsControls", () => {
       ),
     ).toBeInTheDocument();
     fireEvent.click(getByText("Cancel"));
-    expect(
-      queryByText("Send a message to claimant?"),
-    ).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(queryByText("Send a message to claimant?")).not.toBeInTheDocument();
+    });
   });
 
   test("updates message to claimant text", async () => {
@@ -144,7 +139,7 @@ describe("DashboardClaimsDetailsControls", () => {
     expect(input.value).toBe("Message to claimant.");
   });
 
-  test("dispatches message claimant action and handles response", async () => {
+  test("handles message claimant action with successful response", async () => {
     const message = "Message to claimant.";
     const expectedSuccessAction = {
       error: false,
