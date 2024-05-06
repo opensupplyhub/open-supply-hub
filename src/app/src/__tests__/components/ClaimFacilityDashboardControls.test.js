@@ -122,11 +122,16 @@ describe("DashboardClaimsDetailsControls", () => {
       ),
     ).toBeInTheDocument();
     fireEvent.click(getByText("Cancel"));
-    expect(queryByText("Send a message to claimant?")).not.toBeInTheDocument();
+    expect(
+      queryByText("Send a message to claimant?"),
+    ).not.toBeInTheDocument();
   });
 
   test("updates message to claimant text", async () => {
-    const { getByText, getByLabelText } = renderComponent(store, defaultProps);
+    const { getByText, getByLabelText } = renderComponent(
+      store,
+      defaultProps,
+    );
     fireEvent.click(getByText("Message Claimant"));
     const input = getByLabelText(
       "Enter a message. (This will be emailed to the contact email associated with this claim.)",
@@ -148,7 +153,10 @@ describe("DashboardClaimsDetailsControls", () => {
       data: { notes: [{ id: 1, note: message }] },
     });
 
-    const { getByText, getByLabelText } = renderComponent(store, defaultProps);
+    const { getByText, getByLabelText } = renderComponent(
+      store,
+      defaultProps,
+    );
     fireEvent.click(getByText("Message Claimant"));
     const input = getByLabelText(
       "Enter a message. (This will be emailed to the contact email associated with this claim.)",
