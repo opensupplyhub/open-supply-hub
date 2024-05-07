@@ -648,8 +648,11 @@ def handle_external_match_process_result(id, result, request, should_create):
     if queryset_f_m.count() == 0:
         # No Match and Geocoder Returned No Results
         return get_error_match_result(f_l_item.id, result)
-    
-    automatic_matches = [match for match in queryset_f_m if match.status ==  match_object_type.AUTOMATIC]
+
+    automatic_matches = [
+        match for match in queryset_f_m
+        if match.status == match_object_type.AUTOMATIC
+    ]
     if (len(automatic_matches) == 1):
         # New Facility
         if f_l_item.facility is None:
@@ -665,7 +668,10 @@ def handle_external_match_process_result(id, result, request, should_create):
                                           context,
                                           result)
 
-    pending_matches = [match for match in queryset_f_m if match.status ==  match_object_type.PENDING]
+    pending_matches = [
+        match for match in queryset_f_m
+        if match.status ==  match_object_type.PENDING
+    ]
     for item in pending_matches:
             # Potential Match
             return get_potential_match_result(f_l_item,
