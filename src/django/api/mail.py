@@ -65,6 +65,30 @@ def send_claim_facility_confirmation_email(request, facility_claim):
     )
 
 
+def send_message_to_claimant_email(request, facility_claim, message):
+    subj_template = get_template('mail/message_claimant_subject.txt')
+    text_template = get_template('mail/message_claimant_body.txt')
+    html_template = get_template('mail/message_claimant_body.html')
+
+    facility_country = COUNTRY_NAMES[facility_claim.facility.country_code]
+
+    message_dictionary = {
+        'message_to_claimant': message,
+        'facility_name': facility_claim.facility.name,
+        'facility_address': facility_claim.facility.address,
+        'facility_country': facility_country,
+        'facility_url': make_facility_url(request, facility_claim.facility),
+    }
+
+    send_mail(
+        subj_template.render().rstrip(),
+        text_template.render(message_dictionary),
+        settings.CLAIM_FROM_EMAIL,
+        [facility_claim.contributor.admin.email],
+        html_message=html_template.render(message_dictionary)
+    )
+
+
 def send_claim_facility_approval_email(request, facility_claim):
     subj_template = get_template('mail/claim_facility_approval_subject.txt')
     text_template = get_template('mail/claim_facility_approval_body.txt')
