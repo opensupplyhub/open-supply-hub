@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { arrayOf, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
+import { withTheme } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
@@ -14,6 +15,7 @@ import get from 'lodash/get';
 import includes from 'lodash/includes';
 
 import {
+    messageFacilityClaimant,
     approveFacilityClaim,
     denyFacilityClaim,
     revokeFacilityClaim,
@@ -29,6 +31,7 @@ const dialogTypesEnum = Object.freeze({
     APPROVE: 'APPROVE',
     DENY: 'DENY',
     REVOKE: 'REVOKE',
+    MESSAGE_CLAIMANT: 'MESSAGE_CLAIMANT',
 });
 
 const dashboardClaimsControlsStyles = Object.freeze({
@@ -87,26 +90,46 @@ function DashboardClaimsDetailsControls({
     data: { id: claimID, status },
     fetching,
     error,
+    messageClaimant,
     approveClaim,
     denyClaim,
     revokeClaim,
+    theme,
 }) {
     const [statusChangeText, setStatusChangeText] = useState('');
+    const [isOpenDialog, setIsOpenDialog] = useState(false);
     const [displayedDialogType, setDisplayedDialogType] = useState(null);
 
-    const openApproveDialog = () =>
+    const openMessageClaimantDialog = () => {
+        setDisplayedDialogType(dialogTypesEnum.MESSAGE_CLAIMANT);
+        setIsOpenDialog(true);
+    };
+    const openApproveDialog = () => {
         setDisplayedDialogType(dialogTypesEnum.APPROVE);
-    const openDenyDialog = () => setDisplayedDialogType(dialogTypesEnum.DENY);
-    const openRevokeDialog = () =>
+        setIsOpenDialog(true);
+    };
+    const openDenyDialog = () => {
+        setDisplayedDialogType(dialogTypesEnum.DENY);
+        setIsOpenDialog(true);
+    };
+    const openRevokeDialog = () => {
         setDisplayedDialogType(dialogTypesEnum.REVOKE);
+        setIsOpenDialog(true);
+    };
 
     const closeDialog = () => {
         setDisplayedDialogType(null);
         setStatusChangeText('');
+        setIsOpenDialog(false);
     };
 
     const handleUpdateStatusChangeText = e =>
         setStatusChangeText(getValueFromEvent(e));
+
+    const handleMessageClaimant = () => {
+        messageClaimant(statusChangeText);
+        closeDialog();
+    };
 
     const handleApproveClaim = () => {
         approveClaim(statusChangeText);
@@ -131,6 +154,16 @@ function DashboardClaimsDetailsControls({
         if (status === facilityClaimStatusChoicesEnum.PENDING) {
             return (
                 <>
+                    <Button
+                        onClick={openMessageClaimantDialog}
+                        variant="contained"
+                        style={{
+                            ...dashboardClaimsControlsStyles.buttonStyles,
+                            backgroundColor: theme.palette.action.main,
+                        }}
+                    >
+                        Message Claimant
+                    </Button>
                     <Button
                         onClick={openApproveDialog}
                         variant="contained"
@@ -176,20 +209,37 @@ function DashboardClaimsDetailsControls({
         </Typography>
     );
 
+    const dialogInputLabelDefault =
+        'Enter a reason. (This will be emailed to the person who submitted the facility claim.)';
+    const dialogInputLabelMessageClaimant =
+        'Enter a message. (This will be emailed to the contact email associated with this claim.)';
+
     const dialogContentData = get(
         Object.freeze({
+            [dialogTypesEnum.MESSAGE_CLAIMANT]: Object.freeze({
+                title: 'Send a message to claimant?',
+                inputLabel: dialogInputLabelMessageClaimant,
+                action: handleMessageClaimant,
+                actionTerm: 'message',
+                actionButtonStyle: {
+                    backgroundColor: theme.palette.action.main,
+                },
+            }),
             [dialogTypesEnum.APPROVE]: Object.freeze({
                 title: 'Approve this facility claim?',
+                inputLabel: dialogInputLabelDefault,
                 action: handleApproveClaim,
                 actionTerm: 'approve',
             }),
             [dialogTypesEnum.DENY]: Object.freeze({
                 title: 'Deny this facility claim?',
+                inputLabel: dialogInputLabelDefault,
                 action: handleDenyClaim,
                 actionTerm: 'deny',
             }),
             [dialogTypesEnum.REVOKE]: Object.freeze({
                 title: 'Revoke this facility claim?',
+                inputLabel: dialogInputLabelDefault,
                 action: handleRevokeClaim,
                 actionTerm: 'revoke',
             }),
@@ -242,7 +292,7 @@ function DashboardClaimsDetailsControls({
                 </div>
             )}
             <Dialog
-                open={displayedDialogType || false}
+                open={isOpenDialog}
                 aria-labelledby="alert-dialog-title"
                 aria-describedby="alert-dialog-description"
                 style={dashboardClaimsControlsStyles.dialogContainerStyles}
@@ -253,8 +303,7 @@ function DashboardClaimsDetailsControls({
                         <DialogContent>
                             <InputLabel htmlFor="dialog-text-field">
                                 <Typography variant="body2">
-                                    Enter a reason. (This will be emailed to the
-                                    person who submitted the facility claim.)
+                                    {dialogContentData.inputLabel}
                                 </Typography>
                             </InputLabel>
                             <TextField
@@ -286,6 +335,9 @@ function DashboardClaimsDetailsControls({
                                 variant="contained"
                                 color="secondary"
                                 onClick={dialogContentData.action}
+                                style={
+                                    dialogContentData.actionButtonStyle || {}
+                                }
                             >
                                 {dialogContentData.actionTerm}
                             </Button>
@@ -328,10 +380,14 @@ function mapDispatchToProps(dispatch, { data: { id } }) {
         approveClaim: reason => dispatch(approveFacilityClaim(id, reason)),
         denyClaim: reason => dispatch(denyFacilityClaim(id, reason)),
         revokeClaim: reason => dispatch(revokeFacilityClaim(id, reason)),
+        messageClaimant: message =>
+            dispatch(messageFacilityClaimant(id, message)),
     };
 }
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps,
-)(DashboardClaimsDetailsControls);
+export default withTheme()(
+    connect(
+        mapStateToProps,
+        mapDispatchToProps,
+    )(DashboardClaimsDetailsControls),
+);

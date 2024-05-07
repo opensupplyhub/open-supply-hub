@@ -1,0 +1,22 @@
+{% block content %}
+Hi,
+
+You're receiving this email because you were listed as the contact for a facility claim request on Open Supply Hub.
+
+Facility Details:
+
+- Facility: {{ facility_name }}, {{ facility_address }}, {{ facility_country }}
+- Facility URL: {{ facility_url }}
+
+We have completed our review of the material(s) submitted with the request and require additional information to proceed with this claim. A Facility Claim request will only be approved when it is submitted by a facility owner and/or senior management staff at the facility location in question. Additional information about our claims process can be found here. (https://info.opensupplyhub.org/resources/claim-a-facility)
+
+Action Items:
+
+{{ message_to_claimant }}
+
+Please reply to this message with the requested items. From there, we can process this straight away. We'll review the materials and get in touch if we need any additional information.
+
+Best wishes,
+
+{% include "mail/claims_team_signature_block.html" %}
+{% endblock content %}
