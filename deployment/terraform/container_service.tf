@@ -545,3 +545,8 @@ resource "aws_cloudwatch_log_group" "app_logstash" {
   name              = "log${local.short}AppLogstash"
   retention_in_days = 30
 }
+
+resource "aws_cloudwatch_log_group" "opensearch" {
+  name              = "log${local.short}OpenSearch"
+  retention_in_days = 30
+}
