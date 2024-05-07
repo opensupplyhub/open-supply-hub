@@ -19,6 +19,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-1021](https://opensupplyhub.atlassian.net/browse/OSDEV-1021) Update the release protocol. The release protocol has been updated with the recent changes. Has been added the section about reloading DedupeHub and QA notification.
+* [OSDEV-997](https://opensupplyhub.atlassian.net/browse/OSDEV-997) - A new method, `message_claimant`, was added to the `FacilityClaimViewSet` for handling a POST request on the url-path `message-claimant` for messages to the claimant. 
+Mail templates for the message to the claimant and the claims team signature were also added.
 
 ### Architecture/Environment changes
 * [OSDEV-862](https://opensupplyhub.atlassian.net/browse/OSDEV-862) Fix `DB - Save Anonymized DB` / `DB - Apply Anonymized DB` workflows:
@@ -48,6 +50,7 @@ database:
     * Made the Email field in the claim form uneditable, setting the claimer's email as the default value for this field.
     * Removed the _Preferred method of contact_ field from both the claim form and the claim details page in the admin dashboard.
     * Implemented redirecting a user to the claim page after navigating to the login page via the CTA link on the claim page for unauthorized users and successful login.
+* [OSDEV-997](https://opensupplyhub.atlassian.net/browse/OSDEV-997) - Facility Claims. A new button, 'Message Claimant' has been added to the update status controls on the Facility Claim Details page. After successfully sending a message, the message text is recorded in the Claim Review Notes.
 
 ### Release instructions:
 * Update code.
