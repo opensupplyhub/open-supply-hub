@@ -22,6 +22,11 @@ class FacilityAPITestCaseBase(APITestCase):
         self.user.set_password(self.user_password)
         self.user.save()
 
+        self.user_email_two = "testtwo@example.com"
+        self.user_two = User.objects.create(email=self.user_email_two)
+        self.user_two.set_password(self.user_password)
+        self.user_two.save()
+
         self.superuser_email = "super@example.com"
         self.superuser_password = "example123"
         self.superuser = User.objects.create_superuser(
@@ -31,6 +36,12 @@ class FacilityAPITestCaseBase(APITestCase):
         self.contributor = Contributor.objects.create(
             admin=self.user,
             name="test contributor 1",
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+
+        self.contributor_two = Contributor.objects.create(
+            admin=self.user_two,
+            name="test contributor 2",
             contrib_type=Contributor.OTHER_CONTRIB_TYPE,
         )
 
@@ -77,7 +88,7 @@ class FacilityAPITestCaseBase(APITestCase):
             source_type=Source.SINGLE,
             is_active=True,
             is_public=True,
-            contributor=self.contributor,
+            contributor=self.contributor_two,
         )
 
         self.list_item_two = FacilityListItem.objects.create(
@@ -104,7 +115,7 @@ class FacilityAPITestCaseBase(APITestCase):
             source_type=Source.SINGLE,
             is_active=True,
             is_public=True,
-            contributor=self.contributor,
+            contributor=self.contributor_two,
         )
 
         self.list_item_three = FacilityListItem.objects.create(
@@ -130,7 +141,7 @@ class FacilityAPITestCaseBase(APITestCase):
             source_type=Source.SINGLE,
             is_active=True,
             is_public=True,
-            contributor=self.contributor,
+            contributor=self.contributor_two,
         )
 
         self.list_item_four = FacilityListItem.objects.create(
