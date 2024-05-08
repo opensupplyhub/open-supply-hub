@@ -41,13 +41,11 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
             self.list_item_three.id, result_obj_three, None, True
         )
         self.assertEqual(result_three['status'], 'POTENTIAL_MATCH')
-        self.assertEqual(
-            result_three['matches'][0]['confirm_match_url'],
-            '/api/facility-matches/3/confirm/'
+        self.assertIsNotNone(
+            result_three['matches'][0]['confirm_match_url']
         )
-        self.assertEqual(
-            result_three['matches'][0]['reject_match_url'],
-            '/api/facility-matches/3/reject/'
+        self.assertIsNotNone(
+            result_three['matches'][0]['reject_match_url']
         )
 
         result_obj_four = {

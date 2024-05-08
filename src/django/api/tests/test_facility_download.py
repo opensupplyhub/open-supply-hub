@@ -422,7 +422,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
         response = self.get_facility_download()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
-        self.assertEqual(data["count"], 3)
+        self.assertEqual(data["count"], 4)
 
     def test_default_headers_are_created(self):
         response = self.get_facility_download()

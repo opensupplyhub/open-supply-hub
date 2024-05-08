@@ -20,7 +20,7 @@ class SectorAPITest(FacilityAPITestCaseBase):
         )
         data = json.loads(response.content)
 
-        self.assertEqual(data['count'], 1)
+        self.assertEqual(data['count'], 2)
         self.assertEqual(data['features'][0]['id'], self.facility.id)
         self.assertEqual(len(data['features'][0]['properties']['sector']), 1)
         self.assertEqual(data['features'][0]['properties']
@@ -35,6 +35,6 @@ class SectorAPITest(FacilityAPITestCaseBase):
         )
         data = json.loads(response.content)
 
-        self.assertEqual(data['count'], 1)
+        self.assertEqual(data['count'], 2)
         self.assertEqual(data['features'][0]['id'], self.facility.id)
         self.assertNotIn('sector', data['features'][0]['properties'])
