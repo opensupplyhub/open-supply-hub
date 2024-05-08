@@ -84,6 +84,32 @@ class FacilityAPITestCaseBase(APITestCase):
             results="",
         )
 
+        self.source_initial = Source.objects.create(
+            source_type=Source.SINGLE,
+            is_active=True,
+            is_public=True,
+            contributor=self.contributor_two,
+        )
+
+        self.list_item_initial = FacilityListItem.objects.create(
+            name="Item",
+            address="Address",
+            country_code="US",
+            sector=["Apparel"],
+            row_index=1,
+            geocoded_point=Point(0, 0),
+            status=FacilityListItem.MATCHED,
+            source=self.source_initial,
+        )
+
+        self.facility_initial = Facility.objects.create(
+            name="Name",
+            address="Address",
+            country_code="US",
+            location=Point(0, 0),
+            created_from=self.list_item_initial,
+        )
+
         self.source_two = Source.objects.create(
             source_type=Source.SINGLE,
             is_active=True,
@@ -100,12 +126,12 @@ class FacilityAPITestCaseBase(APITestCase):
             geocoded_point=Point(0, 0),
             status=FacilityListItem.MATCHED,
             source=self.source_two,
-            facility=self.facility,
+            facility=self.facility_initial,
         )
 
         self.match_two = FacilityMatch.objects.create(
             status=FacilityMatch.AUTOMATIC,
-            facility=self.facility,
+            facility=self.facility_initial,
             facility_list_item=self.list_item_two,
             confidence=0.85,
             results="",
@@ -131,7 +157,7 @@ class FacilityAPITestCaseBase(APITestCase):
 
         self.match_three = FacilityMatch.objects.create(
             status=FacilityMatch.PENDING,
-            facility=self.facility,
+            facility=self.facility_initial,
             facility_list_item=self.list_item_three,
             confidence=0.75,
             results="",
@@ -157,7 +183,7 @@ class FacilityAPITestCaseBase(APITestCase):
 
         self.match_four = FacilityMatch.objects.create(
             status=FacilityMatch.AUTOMATIC,
-            facility=self.facility,
+            facility=self.facility_initial,
             facility_list_item=self.list_item_four,
             confidence=1,
             results="",
