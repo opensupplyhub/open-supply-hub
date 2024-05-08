@@ -1,0 +1,3 @@
+{% block content %}
+OS Hub Claims Team
+{% endblock content %}
