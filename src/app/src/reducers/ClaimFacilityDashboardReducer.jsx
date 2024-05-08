@@ -28,6 +28,9 @@ import {
     completeAddNewFacilityClaimReviewNote,
     clearFacilityClaimReviewNote,
     updateFacilityClaimReviewNote,
+    startMessageFacilityClaimant,
+    failMessageFacilityClaimant,
+    completeMessageFacilityClaimant,
 } from '../actions/claimFacilityDashboard';
 
 const initialState = Object.freeze({
@@ -172,6 +175,9 @@ export default createReducer(
             update(state, {
                 detail: { $set: initialState.detail },
             }),
+        [startMessageFacilityClaimant]: handleStartChangeStatus,
+        [failMessageFacilityClaimant]: handleFailChangeStatus,
+        [completeMessageFacilityClaimant]: handleCompleteChangeStatus,
         [startApproveFacilityClaim]: handleStartChangeStatus,
         [startDenyFacilityClaim]: handleStartChangeStatus,
         [startRevokeFacilityClaim]: handleStartChangeStatus,
