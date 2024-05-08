@@ -73,6 +73,85 @@ class FacilityAPITestCaseBase(APITestCase):
             results="",
         )
 
+        self.source_two = Source.objects.create(
+            source_type=Source.SINGLE,
+            is_active=True,
+            is_public=True,
+            contributor=self.contributor,
+        )
+
+        self.list_item_two = FacilityListItem.objects.create(
+            name="Item",
+            address="Address",
+            country_code="US",
+            sector=["Apparel"],
+            row_index=1,
+            geocoded_point=Point(0, 0),
+            status=FacilityListItem.MATCHED,
+            source=self.source_two,
+            facility=self.facility,
+        )
+
+        self.match_two = FacilityMatch.objects.create(
+            status=FacilityMatch.AUTOMATIC,
+            facility=self.facility,
+            facility_list_item=self.list_item_two,
+            confidence=0.85,
+            results="",
+        )
+
+        self.source_three = Source.objects.create(
+            source_type=Source.SINGLE,
+            is_active=True,
+            is_public=True,
+            contributor=self.contributor,
+        )
+
+        self.list_item_three = FacilityListItem.objects.create(
+            name="Item",
+            address="Address",
+            country_code="US",
+            sector=["Apparel"],
+            row_index=1,
+            geocoded_point=Point(0, 0),
+            status=FacilityListItem.POTENTIAL_MATCH,
+            source=self.source_three,
+        )
+
+        self.match_three = FacilityMatch.objects.create(
+            status=FacilityMatch.PENDING,
+            facility=self.facility,
+            facility_list_item=self.list_item_three,
+            confidence=0.75,
+            results="",
+        )
+
+        self.source_four = Source.objects.create(
+            source_type=Source.SINGLE,
+            is_active=True,
+            is_public=True,
+            contributor=self.contributor,
+        )
+
+        self.list_item_four = FacilityListItem.objects.create(
+            name="Item",
+            address="Address",
+            country_code="US",
+            sector=["Apparel"],
+            row_index=1,
+            geocoded_point=Point(0, 0),
+            status=FacilityListItem.MATCHED,
+            source=self.source_four,
+        )
+
+        self.match_four = FacilityMatch.objects.create(
+            status=FacilityMatch.AUTOMATIC,
+            facility=self.facility,
+            facility_list_item=self.list_item_four,
+            confidence=1,
+            results="",
+        )
+
         self.list_item.facility = self.facility
         self.list_item.save()
 

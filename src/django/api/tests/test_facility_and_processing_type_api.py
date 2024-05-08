@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 from api.tests.test_data import geocoding_data
 
+from api.processing import handle_external_match_process_result
 from django.urls import reverse
 
 
@@ -13,6 +14,42 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
     def setUp(self):
         super(FacilityAndProcessingTypeAPITest, self).setUp()
         self.url = reverse("facility-list")
+
+    def test_handle_match_process_result(self):
+        result_obj_two = {
+            'matches': [],
+            'item_id': self.list_item_two.id,
+            'geocoded_geometry': None,
+            'geocoded_address': None,
+            'status': self.list_item_two.status,
+        }
+
+        result_two = handle_external_match_process_result(self.list_item_two.id, result_obj_two, None, True)
+        self.assertEqual(result_two['status'], 'MATCHED')
+
+        result_obj_three = {
+            'matches': [],
+            'item_id': self.list_item_three.id,
+            'geocoded_geometry': None,
+            'geocoded_address': None,
+            'status': self.list_item_three.status,
+        }
+
+        result_three = handle_external_match_process_result(self.list_item_three.id, result_obj_three, None, True)
+        self.assertEqual(result_three['status'], 'POTENTIAL_MATCH')
+        self.assertEqual(result_three['matches'][0]['confirm_match_url'], '/api/facility-matches/3/confirm/')
+        self.assertEqual(result_three['matches'][0]['reject_match_url'], '/api/facility-matches/3/reject/')
+
+        result_obj_four = {
+            'matches': [],
+            'item_id': self.list_item_four.id,
+            'geocoded_geometry': None,
+            'geocoded_address': None,
+            'status': self.list_item_four.status,
+        }
+
+        result_four = handle_external_match_process_result(self.list_item_four.id, result_obj_four, None, True)
+        self.assertEqual(result_four['status'], 'NEW_FACILITY')
 
     # TODO: Replace to Dedupe Hub if possible (issue between test database
     #       & Dedupe Hub live database)
