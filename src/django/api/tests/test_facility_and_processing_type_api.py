@@ -24,7 +24,9 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
             'status': self.list_item_two.status,
         }
 
-        result_two = handle_external_match_process_result(self.list_item_two.id, result_obj_two, None, True)
+        result_two = handle_external_match_process_result(
+            self.list_item_two.id, result_obj_two, None, True
+        )
         self.assertEqual(result_two['status'], 'MATCHED')
 
         result_obj_three = {
@@ -35,10 +37,18 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
             'status': self.list_item_three.status,
         }
 
-        result_three = handle_external_match_process_result(self.list_item_three.id, result_obj_three, None, True)
+        result_three = handle_external_match_process_result(
+            self.list_item_three.id, result_obj_three, None, True
+        )
         self.assertEqual(result_three['status'], 'POTENTIAL_MATCH')
-        self.assertEqual(result_three['matches'][0]['confirm_match_url'], '/api/facility-matches/3/confirm/')
-        self.assertEqual(result_three['matches'][0]['reject_match_url'], '/api/facility-matches/3/reject/')
+        self.assertEqual(
+            result_three['matches'][0]['confirm_match_url'],
+            '/api/facility-matches/3/confirm/'
+        )
+        self.assertEqual(
+            result_three['matches'][0]['reject_match_url'],
+            '/api/facility-matches/3/reject/'
+        )
 
         result_obj_four = {
             'matches': [],
@@ -48,7 +58,9 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
             'status': self.list_item_four.status,
         }
 
-        result_four = handle_external_match_process_result(self.list_item_four.id, result_obj_four, None, True)
+        result_four = handle_external_match_process_result(
+            self.list_item_four.id, result_obj_four, None, True
+        )
         self.assertEqual(result_four['status'], 'NEW_FACILITY')
 
     # TODO: Replace to Dedupe Hub if possible (issue between test database
