@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      # - deploy-*
       - 'releases/**'
     tags:
       - 'sandbox-*'
@@ -32,9 +31,6 @@ on:
         required: false
         type: boolean
         default: false
-
-env:
-  GITHUB_ENV_NAME: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
 
 jobs:
   init-and-plan:
