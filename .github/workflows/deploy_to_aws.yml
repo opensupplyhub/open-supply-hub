@@ -87,7 +87,7 @@ jobs:
   apply:
     needs: init-and-plan
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -125,7 +125,7 @@ jobs:
   build_and_push_docker_image:
     needs: apply
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -223,7 +223,7 @@ jobs:
   create_kafka_topic:
     needs: build_and_push_docker_image
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -245,7 +245,7 @@ jobs:
   restore_database:
     needs: create_kafka_topic
     runs-on: self-hosted
-    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
     if:  ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -284,7 +284,7 @@ jobs:
   update_services:
     needs: restore_database
     runs-on: self-hosted
-    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -310,7 +310,7 @@ jobs:
   post_deploy:
     needs: update_services
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
