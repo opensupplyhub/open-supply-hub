@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      # - deploy-*
       - 'releases/**'
     tags:
       - 'sandbox-*'
@@ -39,13 +38,13 @@ env:
 jobs:
   init-and-plan:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
+    environment: ${{ env.GITHUB_ENV_NAME }}
     steps:
-      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+      - name: Get Environment Name for ${{ env.GITHUB_ENV_NAME }}
         id: get_env_name
         uses: Entepotenz/change-string-case-action-min-dependencies@v1
         with:
-          string: ${{ vars.ENV_NAME }}
+          string: $${{ env.GITHUB_ENV_NAME }}
       - name: Checkout repo
         uses: actions/checkout@v4
 
@@ -56,7 +55,7 @@ jobs:
           path: 'terraform-config'
           token: ${{ secrets.PAT }}
 
-      - name: Copy tfvars for ${{ vars.ENV_NAME }}
+      - name: Copy tfvars for ${{ env.GITHUB_ENV_NAME }}
         run: |
           cat "terraform-config/environments/${{ env.TFVAR_NAME }}"  "deployment/environments/${{env.TFVAR_NAME}}"  > "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
         env:
@@ -69,14 +68,14 @@ jobs:
           terraform_version: 1.4.0
           terraform_wrapper: false
 
-      - name: Terraform Plan for ${{ vars.ENV_NAME }}
+      - name: Terraform Plan for ${{ env.GITHUB_ENV_NAME }}
         run: ./deployment/infra plan
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
 
-      - name: Copy planfile to S3 bucket for ${{ vars.ENV_NAME }}
+      - name: Copy planfile to S3 bucket for ${{ env.GITHUB_ENV_NAME }}
         run: aws s3 cp "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfplan" "s3://${{ env.SETTINGS_BUCKET }}/terraform/${{ env.SETTINGS_BUCKET }}.tfplan"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -87,14 +86,14 @@ jobs:
   apply:
     needs: init-and-plan
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    environment: ${{ env.GITHUB_ENV_NAME }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
-      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+      - name: Get Environment Name for ${{ env.GITHUB_ENV_NAME }}
         id: get_env_name
         uses: Entepotenz/change-string-case-action-min-dependencies@v1
         with:
-          string: ${{ vars.ENV_NAME }}
+          string: ${{ env.GITHUB_ENV_NAME }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -105,7 +104,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Get planfile from S3 bucket for ${{ vars.ENV_NAME }}
+      - name: Get planfile from S3 bucket for ${{ env.GITHUB_ENV_NAME }}
         run: aws s3 cp "s3://${{ env.SETTINGS_BUCKET }}/terraform/${{ env.SETTINGS_BUCKET }}.tfplan" "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfplan"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -113,7 +112,7 @@ jobs:
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           AWS_DEFAULT_REGION: "eu-west-1"
 
-      - name: Terraform Apply for ${{ vars.ENV_NAME }}
+      - name: Terraform Apply for ${{ env.GITHUB_ENV_NAME }}
         run: |
           ./deployment/infra apply
         env:
@@ -125,14 +124,14 @@ jobs:
   build_and_push_docker_image:
     needs: apply
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    environment: ${{ env.GITHUB_ENV_NAME }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
-      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+      - name: Get Environment Name for ${{ env.GITHUB_ENV_NAME }}
         id: get_env_name
         uses: Entepotenz/change-string-case-action-min-dependencies@v1
         with:
-          string: ${{ vars.ENV_NAME }}
+          string: ${{ env.GITHUB_ENV_NAME }}
       - name: Checkout repo
         uses: actions/checkout@v4
 
@@ -159,7 +158,7 @@ jobs:
       - name: Move static
         run: mv src/app/build src/django/static
 
-      - name: Configure AWS credentials for ${{ vars.ENV_NAME }}
+      - name: Configure AWS credentials for ${{ env.GITHUB_ENV_NAME }}
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -176,7 +175,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
 
-      - name: Build and push Kafka Tools Docker image to ECR for ${{ vars.ENV_NAME }}
+      - name: Build and push Kafka Tools Docker image to ECR for ${{ env.GITHUB_ENV_NAME }}
         uses: docker/build-push-action@v2
         with:
           context: src/kafka-tools/
@@ -188,7 +187,7 @@ jobs:
             DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}
             ENVIRONMENT=${{ steps.get_env_name.outputs.lowercase }}
 
-      - name: Build and push Django Docker image to ECR for ${{ vars.ENV_NAME }}
+      - name: Build and push Django Docker image to ECR for ${{ env.GITHUB_ENV_NAME }}
         uses: docker/build-push-action@v2
         with:
           context: src/django
@@ -196,7 +195,7 @@ jobs:
           push: true
           tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
 
-      - name: Build and push Batch Docker image to ECR for ${{ vars.ENV_NAME }}
+      - name: Build and push Batch Docker image to ECR for ${{ env.GITHUB_ENV_NAME }}
         uses: docker/build-push-action@v2
         with:
           context: src/batch
@@ -208,7 +207,7 @@ jobs:
             DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}
             ENVIRONMENT=${{ steps.get_env_name.outputs.lowercase }}
 
-      - name: Build and push Dedupe Hub Docker image to ECR for ${{ vars.ENV_NAME }}
+      - name: Build and push Dedupe Hub Docker image to ECR for ${{ env.GITHUB_ENV_NAME }}
         uses: docker/build-push-action@v2
         with:
           context: src/dedupe-hub/api
@@ -223,20 +222,20 @@ jobs:
   create_kafka_topic:
     needs: build_and_push_docker_image
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    environment: ${{ env.GITHUB_ENV_NAME }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
-      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+      - name: Get Environment Name for ${{ env.GITHUB_ENV_NAME }}
         id: get_env_name
         uses: Entepotenz/change-string-case-action-min-dependencies@v1
         with:
-          string: ${{ vars.ENV_NAME }}
+          string: ${{ env.GITHUB_ENV_NAME }}
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Create or update kafka topics for ${{ vars.ENV_NAME }}
+      - name: Create or update kafka topics for ${{ env.GITHUB_ENV_NAME }}
         run: |
-          ./deployment/run_kafka_task ${{ vars.ENV_NAME }}
+          ./deployment/run_kafka_task ${{ env.GITHUB_ENV_NAME }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -245,18 +244,18 @@ jobs:
   restore_database:
     needs: create_kafka_topic
     runs-on: self-hosted
-    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    environment: ${{ env.GITHUB_ENV_NAME }}
     if:  ${{ inputs.deploy-plan-only == false }}
     steps:
-      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+      - name: Get Environment Name for ${{ env.GITHUB_ENV_NAME }}
         id: get_env_name
         uses: Entepotenz/change-string-case-action-min-dependencies@v1
         with:
-          string: ${{ vars.ENV_NAME }}
+          string: ${{ env.GITHUB_ENV_NAME }}
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: Restore database for ${{ vars.ENV_NAME }}
-        if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME != 'Development') && inputs.restore-db == true}}
+      - name: Restore database for ${{ env.GITHUB_ENV_NAME }}
+        if: ${{ (env.GITHUB_ENV_NAME != 'Production' && env.GITHUB_ENV_NAME != 'Staging' && env.GITHUB_ENV_NAME != 'Development') && inputs.restore-db == true}}
         run: |
           cd ./src/anon-tools
           mkdir -p ./keys
@@ -266,16 +265,16 @@ jobs:
               -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
               -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
               -e AWS_DEFAULT_REGION=eu-west-1 \
-              -e ENVIRONMENT=${{ vars.ENV_NAME }} \
+              -e ENVIRONMENT=${{ env.GITHUB_ENV_NAME }} \
               -e DATABASE_NAME=opensupplyhub \
               -e DATABASE_USERNAME=opensupplyhub \
               -e DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
               restore
-      - name: Reset database for ${{ vars.ENV_NAME }}
-        if: ${{ vars.ENV_NAME == 'Development' && inputs.restore-db == true}}
+      - name: Reset database for ${{ env.GITHUB_ENV_NAME }}
+        if: ${{ env.GITHUB_ENV_NAME == 'Development' && inputs.restore-db == true}}
         run: |
-          ./deployment/run_cli_task ${{ vars.ENV_NAME }} "reset_database"
-          ./deployment/run_cli_task ${{ vars.ENV_NAME }} "matchfixtures"
+          ./deployment/run_cli_task ${{ env.GITHUB_ENV_NAME }} "reset_database"
+          ./deployment/run_cli_task ${{ env.GITHUB_ENV_NAME }} "matchfixtures"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -284,22 +283,22 @@ jobs:
   update_services:
     needs: restore_database
     runs-on: self-hosted
-    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    environment: ${{ env.GITHUB_ENV_NAME }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
-      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+      - name: Get Environment Name for ${{ env.GITHUB_ENV_NAME }}
         id: get_env_name
         uses: Entepotenz/change-string-case-action-min-dependencies@v1
         with:
-          string: ${{ vars.ENV_NAME }}
-      - name: Update ECS Django Service with new Image for ${{ vars.ENV_NAME }}
+          string: ${{ env.GITHUB_ENV_NAME }}
+      - name: Update ECS Django Service with new Image for ${{ env.GITHUB_ENV_NAME }}
         run: |
           aws ecs update-service --cluster ${{ vars.CLUSTER }} --service ${{ vars.SERVICE_NAME }} --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: "eu-west-1"
-      - name: Update ECS Dedupe Hub Service with new Image for ${{ vars.ENV_NAME }}
+      - name: Update ECS Dedupe Hub Service with new Image for ${{ env.GITHUB_ENV_NAME }}
         run: |
           aws ecs update-service --cluster ${{ vars.CLUSTER }} --service ${{ vars.SERVICE_NAME }}DD --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}}
         env:
@@ -310,19 +309,19 @@ jobs:
   post_deploy:
     needs: update_services
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    environment: ${{ env.GITHUB_ENV_NAME }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
-      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+      - name: Get Environment Name for ${{ env.GITHUB_ENV_NAME }}
         id: get_env_name
         uses: Entepotenz/change-string-case-action-min-dependencies@v1
         with:
-          string: ${{ vars.ENV_NAME }}
+          string: ${{ env.GITHUB_ENV_NAME }}
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: Run migrations for ${{ vars.ENV_NAME }}
+      - name: Run migrations for ${{ env.GITHUB_ENV_NAME }}
         run: |
-          ./deployment/run_cli_task ${{ vars.ENV_NAME }} "migrate,api"
+          ./deployment/run_cli_task ${{ env.GITHUB_ENV_NAME }} "migrate,api"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
