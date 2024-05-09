@@ -38,7 +38,7 @@ database:
     condition: service_healthy
 ```
 * [OSDEV-1024](https://opensupplyhub.atlassian.net/browse/OSDEV-1024) - Dedupe Hub. Revise service configurations and refine gazetteer retraining. Remove option `--reload` & decrease number of workers in Dedupe Hub service configuration. Refactor initial rebuilding of gazetteer.
-
+* [OSDEV-885](https://opensupplyhub.atlassian.net/browse/OSDEV-885) - Implement option to reset database for `Dev`, `Test` and `Pre-prod` environmet to `Deploy to AWS` pipleine
 ### Bugfix
 * [OSDEV-870](https://opensupplyhub.atlassian.net/browse/OSDEV-870) - The returning confirm/reject URLs were fixed when a facility has been matched. Changes were made to the Dedupe-Hub to prevent adding rows with empty fields to the `api_facilitymatch` and `api_facilitymatchtemp` tables when the count of matches is more than one.
 
