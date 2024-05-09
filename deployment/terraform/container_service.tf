@@ -397,7 +397,7 @@ resource "aws_ecs_task_definition" "app_logstash" {
     name = "efs-logstash-jdbc-last-run"
     efs_volume_configuration {
       file_system_id = aws_efs_file_system.efs_app_logstash.id
-      root_directory = "/logstash/data/plugins/inputs/jdbc"
+      root_directory = "/"
     }
   }
 }
