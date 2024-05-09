@@ -281,6 +281,8 @@ data "template_file" "app_cli" {
     cache_host                       = aws_route53_record.cache.name
     cache_port                       = var.ec_memcached_port
     aws_storage_bucket_name          = local.files_bucket_name
+    kafka_bootstrap_servers          = join (",", module.msk_cluster.bootstrap_brokers)
+    kafka_topic_basic_name           = var.topic_dedup_basic_name
   }
 }
 
