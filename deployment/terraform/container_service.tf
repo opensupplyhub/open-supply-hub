@@ -392,6 +392,14 @@ resource "aws_ecs_task_definition" "app_logstash" {
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
 
   container_definitions = data.template_file.app_logstash.rendered
+
+  volume {
+    name = "efs-logstash-jdbc-last-run"
+    efs_volume_configuration {
+      file_system_id = aws_efs_file_system.efs_app_logstash.id
+      root_directory = "/logstash/data/plugins/inputs/jdbc"
+    }
+  }
 }
 
 resource "aws_ecs_service" "app" {

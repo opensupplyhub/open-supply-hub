@@ -12,6 +12,12 @@
               "awslogs-region": "${aws_region}",
               "awslogs-stream-prefix": "logstash"
           }
-      }
+      },
+      "mountPoints": [
+          {
+              "containerPath": "/usr/share/logstash/data/plugins/inputs/jdbc",
+              "sourceVolume": "efs-logstash-jdbc-last-run"
+          }
+      ]
     }
   ]

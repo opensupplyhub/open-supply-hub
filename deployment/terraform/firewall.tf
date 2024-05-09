@@ -343,6 +343,16 @@ resource "aws_security_group_rule" "app_logstash_https_egress" {
   security_group_id = aws_security_group.app_logstash.id
 }
 
+resource "aws_security_group_rule" "app_logstash_efs_egress" {
+  type             = "egress"
+  from_port        = 2049
+  to_port          = 2049
+  protocol         = "tcp"
+
+  security_group_id        = aws_security_group.app_logstash.id
+  source_security_group_id = aws_security_group.efs_app_logstash.id
+}
+
 #
 # Batch container instance security group resources
 #
