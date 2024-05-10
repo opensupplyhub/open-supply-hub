@@ -23,7 +23,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 Mail templates for the message to the claimant and the claims team signature were also added.
 
 ### Architecture/Environment changes
-* [OSDEV-897](https://opensupplyhub.atlassian.net/browse/OSDEV-897) FE(React) app. Set up a proper local Docker environment for the app. Local Docker environment for the react app has been created. Renamed `app` folder to `react` as more understandable in the project. Replaced name in the code base. Removed unnecessary commands.
+* [OSDEV-897](https://opensupplyhub.atlassian.net/browse/OSDEV-897) FE(React) app. An appropriate local Docker environment is configured for the application. A local Docker environment has been created for the React application. Renamed the `app` folder to `react` to be clearer in the project. Replaced name in the code base. Removed unnecessary commands.
 * [OSDEV-862](https://opensupplyhub.atlassian.net/browse/OSDEV-862) Fix `DB - Save Anonymized DB` / `DB - Apply Anonymized DB` workflows:
   - run actions on self-hosted runners to eliminate `lack of storage` issue that happens on github's runners.
   - use the `Test` environment for  `DB - Save Anonymized DB` action

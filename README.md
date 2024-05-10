@@ -54,7 +54,7 @@ See [Getting Started with Google Maps Platform](https://developers.google.com/ma
 
 
 ### Kick-off & start local development
-- Install node and create database structure
+- Build Docker images and create database structure
 ```
 ./scripts/update
 ```
