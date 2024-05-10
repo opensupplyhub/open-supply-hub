@@ -18,14 +18,14 @@ jobs:
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Install frontend NPM modules
-        run: docker compose run --rm --no-deps app yarn install
+        run: docker compose run --rm --no-deps react yarn install
       - name: Run the Jest tests and generate code cov report
-        run: docker compose run --rm --no-deps app yarn test
+        run: docker compose run --rm --no-deps react yarn test
       - name: Upload Jest code cov for the base branch
         uses: actions/upload-artifact@v4
         with:
           name: base-branch-fe-jest-code-cov
-          path: ./src/app/coverage/lcov.info
+          path: ./src/react/coverage/lcov.info
 
   run-fe-code-quality:
     environment: Quality Environment
