@@ -19,12 +19,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-1021](https://opensupplyhub.atlassian.net/browse/OSDEV-1021) Update the release protocol. The release protocol has been updated with the recent changes. Has been added the section about reloading DedupeHub and QA notification.
-* [OSDEV-997](https://opensupplyhub.atlassian.net/browse/OSDEV-997) - A new method, `message_claimant`, was added to the `FacilityClaimViewSet` for handling a POST request on the url-path `message-claimant` for messages to the claimant. 
+* [OSDEV-997](https://opensupplyhub.atlassian.net/browse/OSDEV-997) - A new method, `message_claimant`, was added to the `FacilityClaimViewSet` for handling a POST request on the url-path `message-claimant` for messages to the claimant.
 Mail templates for the message to the claimant and the claims team signature were also added.
 
 ### Architecture/Environment changes
+* [OSDEV-897](https://opensupplyhub.atlassian.net/browse/OSDEV-897) FE(React) app. Set up a proper local Docker environment for the app. Local Docker environment for the react app has been created. Renamed `app` folder to `react` as more understandable in the project. Replaced name in the code base. Removed unnecessary commands.
 * [OSDEV-862](https://opensupplyhub.atlassian.net/browse/OSDEV-862) Fix `DB - Save Anonymized DB` / `DB - Apply Anonymized DB` workflows:
-  - run actions on self-hosted runners to eliminate `lack of storage` issue that hapopen on github's runners.
+  - run actions on self-hosted runners to eliminate `lack of storage` issue that happens on github's runners.
   - use the `Test` environment for  `DB - Save Anonymized DB` action
 * [OSDEV-989](https://opensupplyhub.atlassian.net/browse/OSDEV-989) - The Strategy pattern was utilized to consolidate the processing of new facilities received from both API requests and list uploads. The code responsible for executing this processing was refactored, and new classes were implemented:
     * ProcessingFacility - abstract class for facility processing
