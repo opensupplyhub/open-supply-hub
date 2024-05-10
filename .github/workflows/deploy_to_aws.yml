@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      # - deploy-*
       - 'releases/**'
     tags:
       - 'sandbox-*'
@@ -28,18 +27,15 @@ on:
         type: boolean
         default: false
       restore-db:
-        description: 'Restore database'
+        description: 'Restore database to original state (Reset database for Development and restore anon dump for Test and Pre-prod)'
         required: false
         type: boolean
         default: false
 
-env:
-  GITHUB_ENV_NAME: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
-
 jobs:
   init-and-plan:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -87,7 +83,7 @@ jobs:
   apply:
     needs: init-and-plan
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -125,7 +121,7 @@ jobs:
   build_and_push_docker_image:
     needs: apply
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -223,7 +219,7 @@ jobs:
   create_kafka_topic:
     needs: build_and_push_docker_image
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -241,11 +237,11 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: "eu-west-1"
-  
+
   restore_database:
     needs: create_kafka_topic
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    runs-on: self-hosted
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
     if:  ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -258,17 +254,33 @@ jobs:
       - name: Restore database for ${{ vars.ENV_NAME }}
         if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME != 'Development') && inputs.restore-db == true}}
         run: |
-          echo "Restore anonymized database will be called here"
+          cd ./src/anon-tools
+          mkdir -p ./keys
+          echo "${{ secrets.KEY_FILE }}" > ./keys/key
+          docker build -t restore -f Dockerfile.restore .
+          docker run -v ./keys/key:/keys/key --shm-size=2gb --rm \
+              -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+              -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+              -e AWS_DEFAULT_REGION=eu-west-1 \
+              -e ENVIRONMENT=${{ vars.ENV_NAME }} \
+              -e DATABASE_NAME=opensupplyhub \
+              -e DATABASE_USERNAME=opensupplyhub \
+              -e DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
+              restore
       - name: Reset database for ${{ vars.ENV_NAME }}
         if: ${{ vars.ENV_NAME == 'Development' && inputs.restore-db == true}}
         run: |
-          echo "reset-database will be called here"
-         
-  
+          ./deployment/run_cli_task ${{ vars.ENV_NAME }} "reset_database"
+          ./deployment/run_cli_task ${{ vars.ENV_NAME }} "matchfixtures"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
+
   update_services:
     needs: restore_database
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    runs-on: self-hosted
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -294,7 +306,7 @@ jobs:
   post_deploy:
     needs: update_services
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || ((github.ref_name == 'main' || startsWith(github.ref_name, 'deploy-')) && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}

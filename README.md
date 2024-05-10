@@ -62,7 +62,7 @@ See [Getting Started with Google Maps Platform](https://developers.google.com/ma
 ```
 ./scripts/reset_database
 ```
-- Start Docker containers in the background (needed to process facitiles via Kafka)
+- Start Docker containers in the background (needed to process facilities via Kafka)
 ```
 docker compose up -d
 ```
