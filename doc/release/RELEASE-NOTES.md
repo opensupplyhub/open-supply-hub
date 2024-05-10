@@ -39,6 +39,11 @@ database:
 ```
 * [OSDEV-1024](https://opensupplyhub.atlassian.net/browse/OSDEV-1024) - Dedupe Hub. Revise service configurations and refine gazetteer retraining. Remove option `--reload` & decrease number of workers in Dedupe Hub service configuration. Refactor initial rebuilding of gazetteer.
 * [OSDEV-885](https://opensupplyhub.atlassian.net/browse/OSDEV-885) - Implement option to reset database for `Dev`, `Test` and `Pre-prod` environmet to `Deploy to AWS` pipleine
+* [OSDEV-1002](https://opensupplyhub.atlassian.net/browse/OSDEV-1002) - The following changes have been done:
+    * Prepared initial AWS infrastructure via Terraform for the Logstash service, including configuring AWS EFS storage to save the pointer of the last run for the jdbc plugin. Essentially, after deploying updated Terraform code to an environment, ECS task definition, ECR repository, ECS service, along with EFS storage, will be set up for Logstash to function.
+    * Moved the PoC solution of the Logstash + Elasticsearch setup to the repository to avoid losing it. Further work is needed as the solution requires development and is not functioning smoothly.
+
+
 ### Bugfix
 * [OSDEV-870](https://opensupplyhub.atlassian.net/browse/OSDEV-870) - The returning confirm/reject URLs were fixed when a facility has been matched. Changes were made to the Dedupe-Hub to prevent adding rows with empty fields to the `api_facilitymatch` and `api_facilitymatchtemp` tables when the count of matches is more than one.
 * [OSDEV-744](https://opensupplyhub.atlassian.net/browse/OSDEV-744) - API. When user want to confirm/reject potential_match it didn't found a match through `id`, was fixed by provided valid `id` from `api_facilitymatch` table.
