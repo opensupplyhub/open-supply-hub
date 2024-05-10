@@ -74,10 +74,10 @@ services:
 
   react:
     build:
-      context: ./src/app
+      context: ./src/react
       dockerfile: Dockerfile.local
     volumes:
-      - ./src/app:/usr/local/src
+      - ./src/react:/usr/local/src
       # Use a Docker volume to cache node_modules
       - /usr/local/src/node_modules
     ports:
