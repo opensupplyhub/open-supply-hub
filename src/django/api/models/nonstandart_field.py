@@ -10,7 +10,7 @@ class NonstandardField(models.Model):
         unique_together = ('contributor', 'column_name')
 
     # Keys in this set must be kept in sync with
-    # defaultNonstandardFieldLabels in app/src/app/util/embeddedMap.js
+    # defaultNonstandardFieldLabels in /src/react/src/util/embeddedMap.js
     EXTENDED_FIELDS = {
         'parent_company': 'Parent Company',
         'product_type': 'Product Type',
