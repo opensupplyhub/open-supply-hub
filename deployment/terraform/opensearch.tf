@@ -19,7 +19,7 @@ resource "aws_opensearch_domain" "opensearch" {
 
   cluster_config {
     instance_type          = "t3.small.search"
-    instance_count         = 0
+    instance_count         = 2
     zone_awareness_enabled = true
   }
 
