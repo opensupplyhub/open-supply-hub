@@ -8,6 +8,11 @@ resource "aws_security_group" "opensearch" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "opensearch" {
+  name              = "log${local.short}OpenSearch"
+  retention_in_days = 30
+}
+
 resource "aws_opensearch_domain" "opensearch" {
   domain_name    = "opensearch-domain"
   engine_version = "OpenSearch_2.11"
