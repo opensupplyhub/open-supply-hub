@@ -33,6 +33,7 @@ Mail templates for the message to the claimant and the claims team signature wer
     * ProcessingFacilityExecutor - class defines which interface to execute for the processing of a facility
 * Resource allocation has been optimized for the Test environment. The number of ECS tasks in the Test environment has been reduced from 4 to 2, while maintaining system stability.
 * [OSDEV-870](https://opensupplyhub.atlassian.net/browse/OSDEV-870) - In `docker-compose` for the `api-app`  added dependency that helps to fix connection with the database during tests pipelines for Dedupe-Hub:
+* [OSDEV-1001](https://opensupplyhub.atlassian.net/browse/OSDEV-1001) - Deploy OpenSearch service to OS Hub infrastructure.
 ```
 database:
     condition: service_healthy
@@ -53,7 +54,6 @@ database:
     * Removed the _Preferred method of contact_ field from both the claim form and the claim details page in the admin dashboard.
     * Implemented redirecting a user to the claim page after navigating to the login page via the CTA link on the claim page for unauthorized users and successful login.
 * [OSDEV-997](https://opensupplyhub.atlassian.net/browse/OSDEV-997) - Facility Claims. A new button, 'Message Claimant' has been added to the update status controls on the Facility Claim Details page. After successfully sending a message, the message text is recorded in the Claim Review Notes.
-* [OSDEV-1001](https://opensupplyhub.atlassian.net/browse/OSDEV-1001) - Deploy OpenSearch service to OS Hub infrastructure.
 
 ### Release instructions:
 * Update code.

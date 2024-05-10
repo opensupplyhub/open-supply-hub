@@ -1,3 +1,13 @@
+resource "aws_security_group" "opensearch" {
+  vpc_id = module.vpc.id
+
+  tags = {
+    Name        = "sgOpenSearch"
+    Project     = var.project
+    Environment = var.environment
+  }
+}
+
 resource "aws_opensearch_domain" "opensearch" {
   domain_name    = "opensearch-domain"
   engine_version = "OpenSearch_2.11"

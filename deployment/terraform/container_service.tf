@@ -51,16 +51,6 @@ resource "aws_security_group" "batch" {
   }
 }
 
-resource "aws_security_group" "opensearch" {
-  vpc_id = module.vpc.id
-
-  tags = {
-    Name        = "sgOpenSearch"
-    Project     = var.project
-    Environment = var.environment
-  }
-}
-
 #
 # ALB Resources
 #
