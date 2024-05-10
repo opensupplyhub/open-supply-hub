@@ -345,6 +345,25 @@ resource "aws_iam_role_policy" "step_functions_service_role_policy" {
 }
 
 #
+# OpenSearch IAM resources
+#
+data "aws_iam_policy_document" "opensearch_assume_role" {
+  statement {
+    effect    = "Allow"
+    actions   = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["es.amazonaws.com"]
+    }
+  }
+}
+resource "aws_iam_role" "opensearch_role" {
+  name               = "opensearch-role"
+
+  assume_role_policy = data.aws_iam_policy_document.opensearch_assume_role.json
+}
+
+#
 # CloudWatch Events IAM resources
 #
 data "aws_iam_policy_document" "cloudwatch_events_assume_role" {
@@ -381,4 +400,28 @@ resource "aws_iam_role_policy" "cloudwatch_events_service_role_policy" {
   name   = "cloudWatchEvents${local.short}ServiceRolePolicy"
   role   = aws_iam_role.cloudwatch_events_service_role.name
   policy = data.aws_iam_policy_document.cloudwatch_events_service_role_policy.json
+}
+
+data "aws_iam_policy_document" "opensearch" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["es.amazonaws.com"]
+    }
+
+    actions = [
+      "logs:PutLogEvents",
+      "logs:PutLogEventsBatch",
+      "logs:CreateLogStream",
+    ]
+
+    resources = ["arn:aws:logs:*"]
+  }
+}
+
+resource "aws_cloudwatch_log_resource_policy" "opensearch" {
+  policy_name     = "opensearch"
+  policy_document = data.aws_iam_policy_document.opensearch.json
 }
