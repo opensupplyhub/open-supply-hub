@@ -360,6 +360,19 @@ data "template_file" "app_dd" {
   }
 }
 
+resource "aws_ecs_task_definition" "app_cc" {
+  family                   = "${local.short}AppCC"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = var.app_cc_fargate_cpu
+  memory                   = var.app_cc_fargate_memory
+
+  task_role_arn      = aws_iam_role.app_task_role.arn
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+
+  container_definitions = data.template_file.app_cc.rendered
+}
+
 resource "aws_ecs_task_definition" "app_dd" {
   family                   = "${local.short}AppDD"
   network_mode             = "awsvpc"
