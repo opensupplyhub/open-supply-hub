@@ -639,13 +639,21 @@ def handle_external_match_process_result(id, result, request, should_create):
     if f_l_item is None:
         # Timeout
         return get_error_match_result(id, result)
-    queryset_f_m = FacilityMatchTemp.objects.filter(
+    if should_create:
+        match_object_type = FacilityMatch
+    else:
+        match_object_type = FacilityMatchTemp
+    queryset_f_m = match_object_type.objects.filter(
         facility_list_item=f_l_item.id)
     if queryset_f_m.count() == 0:
         # No Match and Geocoder Returned No Results
         return get_error_match_result(f_l_item.id, result)
-    if (queryset_f_m.count() == 1
-            and queryset_f_m[0].status == FacilityMatchTemp.AUTOMATIC):
+
+    automatic_matches = [
+        match for match in queryset_f_m
+        if match.status == match_object_type.AUTOMATIC
+    ]
+    if (len(automatic_matches) == 1):
         # New Facility
         if f_l_item.facility is None:
             return get_new_facility_match_result(f_l_item.id, None, result)
@@ -656,19 +664,22 @@ def handle_external_match_process_result(id, result, request, should_create):
         # Automatic Match
         return get_automatic_match_result(f_l_item.id,
                                           f_l_item.facility.id,
-                                          queryset_f_m[0].confidence,
+                                          automatic_matches[0].confidence,
                                           context,
                                           result)
 
-    for item in queryset_f_m:
-        if item.status == FacilityMatchTemp.PENDING:
-            # Potential Match
-            return get_potential_match_result(f_l_item,
-                                              item,
-                                              queryset_f_m.count(),
-                                              context,
-                                              should_create,
-                                              result)
+    pending_matches = [
+        match for match in queryset_f_m
+        if match.status == match_object_type.PENDING
+    ]
+    for item in pending_matches:
+        # Potential Match
+        return get_potential_match_result(f_l_item,
+                                          item,
+                                          len(pending_matches),
+                                          context,
+                                          should_create,
+                                          result)
 
     return result
 
