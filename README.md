@@ -58,7 +58,7 @@ See [Getting Started with Google Maps Platform](https://developers.google.com/ma
 ```
 ./scripts/update
 ```
-- Polulate database with seeded facility lists
+- Populate database with seeded facility lists
 ```
 ./scripts/reset_database
 ```

@@ -72,36 +72,16 @@ services:
       - "8081:8081"
     cpus: 2
 
-  app:
+  react:
     build:
-      context: .
-      dockerfile: ./src/django/Dockerfile
-      # context: ./src/django
-      # dockerfile: Dockerfile
-    # volumes:
-    #   - ./src/django:/usr/local/src
-    #   - node_modules:/usr/local/src/node_modules
-    #   - $HOME/.aws:/root/.aws:ro
-      # context: .
-      # dockerfile: src/django/Dockerfile
-      # context: .
-      # dockerfile: ./src/django/Dockerfile
-    # volumes:
-    #   - ./src/app:/usr/local/src/app
-    # working_dir: /usr/local/src/app
-    # volumes:
-    #   - ./src/app:/usr/local/src
-    #   - node_modules:/usr/local/src/node_modules
-    #   # - ./src/django/static:/opt/app/build
-    #   - $HOME/.aws:/root/.aws:ro
-    environment:
-      - REACT_APP_GIT_COMMIT=${REACT_APP_GIT_COMMIT:-latest}
-      - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=100
-      - PORT=6543
+      context: ./src/app
+      dockerfile: Dockerfile.local
+    volumes:
+      - ./src/app:/usr/local/src
+      # Use a Docker volume to cache node_modules
+      - /usr/local/src/node_modules
     ports:
       - 6543:6543
-    command: yarn run start
 
   zookeeper:
     image: "bitnami/zookeeper:latest"
@@ -198,6 +178,3 @@ services:
     depends_on:
       - elasticsearch
       - database
-
-volumes:
-  node_modules:
