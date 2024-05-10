@@ -32,8 +32,8 @@ This document outlines the SDLC pillars of the opensupplyhub monorepo, as well a
 | v1.9.0 | February 24, 2024  | February 19, 2024 | @Vlad Shapik |
 | v1.10.0 | March 23, 2024  | March 18, 2024 | @Nessa Drew |
 | v1.11.0 | April 20, 2024  | April 15, 2024 | @Nessa Drew |
-| v1.12.0 | May 18, 2024  | May 13, 2024 | @Vadim Kovalenko |
-| v1.13.0 | June 15, 2024  | June 10, 2024 | @Vadim Kovalenko |
+| v1.12.0 | May 18, 2024  | May 14, 2024 | @Vadim Kovalenko |
+| v1.13.0 | June 01, 2024  | May 27, 2024 | @Vadim Kovalenko |
 
 
 ## General Information
@@ -106,13 +106,13 @@ Hotfix branches are utilized to quickly patch production and sandbox releases. T
 
 ### Duration of the development of the new release version
 
-The development of the new release version takes four weeks before it is released.
+The development of the new release version takes two weeks before it is released.
 
 
 ### Introductory actions after starting the development cycle of the new release version
 
 Make sure that:
-1. The version planned for release in four weeks is created in Jira and is indicated in all Jira tickets related to the upcoming release.
+1. The version planned for release in two weeks is created in Jira and is indicated in all Jira tickets related to the upcoming release.
 2. The start and release dates are set on the page of the release in Jira.
 3. The draft with changes for the upcoming release is added to the RELEASE-NOTES.md file. Ensure the version of the release and its date are set for the change draft.
 4. Verify that the release schedule in the RELEASE-PROTOCOL.md file is correctly filled.
@@ -120,11 +120,9 @@ Make sure that:
 
 ### Code Freeze
 
-1. Code freeze occurs every Monday in the fourth week of new release version development. To enhance communication within the team, all stakeholders must be notified about the code freeze two working days before the code freeze by the responsible person for the release.
-2.  On the day of the code freeze, the responsible person has to verify that the pre-prod environment is up and running. The responsible person needs to change the database name of the existing `opensupplyhub-enc-pp` database to `opensupplyhub-enc-pp-current` via Amazon RDS in the Databases section.
-3. Once the renaming is completed, they need to run the Release [Init] workflow from the main branch, specifying the major and minor versions of the release. Subsequently, the `releases/vX.Y` branch will be created and automatically deployed to the running pre-prod environment via the Deploy to AWS workflow.
-4. The reposnsible person should go to the Databases section of Amazon RDS again and delete the newly created `opensupplyhub-enc-pp` database. After successful deletion, rename `opensupplyhub-enc-pp-current` to `opensupplyhub-enc-pp`.
-5. The final step is to follow the instructions outlined in the Release section of the [RELEASE-NOTES.md](./RELEASE-NOTES.md) file for the deployed version. In case there is a need to run a command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Migration+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5DHow-to-correctly-run-migrations-for-our-four-environments%3F---Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
+1. Code freeze occurs every Monday following two weeks of development for a new release version. To enhance communication within the team, all stakeholders must be notified about the code freeze two working days before the code freeze by the responsible person for the release.
+2.  On the day of the code freeze, the responsible person has to run the Release [Init] workflow from the main branch, specifying the major and minor versions of the release. Subsequently, the releases/vX.Y branch will be created and automatically deployed to the running pre-prod environment via the Deploy to AWS workflow.
+3. The final step is to follow the instructions outlined in the Release section of the [RELEASE-NOTES.md](./RELEASE-NOTES.md) file for the deployed version. In case there is a need to run a command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Migration+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5DHow-to-correctly-run-migrations-for-our-four-environments%3F---Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
 
 
 ### QA process
