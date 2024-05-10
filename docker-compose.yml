@@ -1,8 +1,8 @@
-version: "2.4"
+version: "3.7"
 services:
   database:
     image: quay.io/azavea/postgis:3-postgres12.4-slim
-    shm_size: '2gb'
+    shm_size: "2gb"
     environment:
       - POSTGRES_USER=openapparelregistry
       - POSTGRES_PASSWORD=openapparelregistry
@@ -16,14 +16,10 @@ services:
       - ./dumps:/dumps
     ports:
       - "5432:5432"
-    networks:
-      - my-app
 
   memcached:
     image: memcached:1.6-alpine
     command: -v -I 8m -m 256
-    networks:
-      - my-app
 
   django:
     image: opensupplyhub
@@ -74,8 +70,6 @@ services:
       - "oar.wsgi"
     ports:
       - "8081:8081"
-    networks:
-      - my-app
     cpus: 2
 
   app:
@@ -95,22 +89,16 @@ services:
     ports:
       - 6543:6543
     command: yarn run start
-    networks:
-      - my-app
 
   zookeeper:
     image: "bitnami/zookeeper:latest"
-    container_name: "zookeeper"
     ports:
       - "2181:2181"
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
-    networks:
-      - my-app
 
   kafka:
     image: "bitnami/kafka:latest"
-    container_name: "kafka"
     ports:
       - "9092:9092"
     environment:
@@ -122,18 +110,17 @@ services:
     depends_on:
       - zookeeper
     healthcheck:
-      test: [ "CMD-SHELL", "kafka-topics.sh --bootstrap-server kafka:9092 --list" ]
+      test:
+        ["CMD-SHELL", "kafka-topics.sh --bootstrap-server kafka:9092 --list"]
       interval: 5s
       timeout: 10s
       retries: 5
-    networks:
-      - my-app
 
   init-kafka:
     image: confluentinc/cp-kafka:6.1.1
     depends_on:
       - kafka
-    entrypoint: [ '/bin/sh', '-c' ]
+    entrypoint: ["/bin/sh", "-c"]
     command: |
       "
       # blocks until kafka is reachable
@@ -144,8 +131,6 @@ services:
       echo -e 'Successfully created the following topics:'
       kafka-topics --bootstrap-server kafka:9092 --list
       "
-    networks:
-      - my-app
 
   api-app:
     image: api-app
@@ -178,13 +163,28 @@ services:
       - POSTGRES_DB=openapparelregistry
       - GIT_COMMIT=Unknown
     command: uvicorn app.main:app --host 0.0.0.0 --port 84 --workers 1
-    networks:
-      - my-app
+
+  elasticsearch:
+    image: elasticsearch:8.12.1
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - 9200:9200
+      - 9300:9300
+
+  logstash:
+    build:
+      context: ./src/logstash
+      dockerfile: Dockerfile
+    ports:
+      - 9600:9600
+    environment:
+      - CONFIG_SUPPORT_ESCAPE=true
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+      - database
 
 volumes:
   node_modules:
-
-networks:
-  my-app:
-    driver: bridge
-    name: db_network
