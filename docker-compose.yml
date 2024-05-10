@@ -73,14 +73,27 @@ services:
     cpus: 2
 
   app:
-    image: node:14-slim
-    working_dir: /usr/local/src
-    volumes:
-      - ./src/app:/usr/local/src
-      # Use a Docker volume to cache node_modules
-      - node_modules:/usr/local/src/node_modules
-      - ./src/django/static:/usr/local/src/build
-      - $HOME/.aws:/root/.aws:ro
+    build:
+      context: .
+      dockerfile: ./src/django/Dockerfile
+      # context: ./src/django
+      # dockerfile: Dockerfile
+    # volumes:
+    #   - ./src/django:/usr/local/src
+    #   - node_modules:/usr/local/src/node_modules
+    #   - $HOME/.aws:/root/.aws:ro
+      # context: .
+      # dockerfile: src/django/Dockerfile
+      # context: .
+      # dockerfile: ./src/django/Dockerfile
+    # volumes:
+    #   - ./src/app:/usr/local/src/app
+    # working_dir: /usr/local/src/app
+    # volumes:
+    #   - ./src/app:/usr/local/src
+    #   - node_modules:/usr/local/src/node_modules
+    #   # - ./src/django/static:/opt/app/build
+    #   - $HOME/.aws:/root/.aws:ro
     environment:
       - REACT_APP_GIT_COMMIT=${REACT_APP_GIT_COMMIT:-latest}
       - CHOKIDAR_USEPOLLING=true
