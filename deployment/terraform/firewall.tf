@@ -153,6 +153,16 @@ resource "aws_security_group_rule" "rds_enc_bastion_ingress" {
   source_security_group_id = module.vpc.bastion_security_group_id
 }
 
+resource "aws_security_group_rule" "rds_enc_app_logstash_ingress" {
+  type      = "ingress"
+  from_port = module.database_enc.port
+  to_port   = module.database_enc.port
+  protocol  = "tcp"
+
+  security_group_id        = module.database_enc.database_security_group_id
+  source_security_group_id = aws_security_group.app_logstash.id
+}
+
 #
 # Memcached security group resources
 #
@@ -310,6 +320,37 @@ resource "aws_security_group_rule" "app_memcached_egress" {
 
   security_group_id        = aws_security_group.app.id
   source_security_group_id = aws_security_group.memcached.id
+}
+
+resource "aws_security_group_rule" "app_logstash_egress" {
+  type      = "egress"
+  from_port = module.database_enc.port
+  to_port   = module.database_enc.port
+  protocol  = "tcp"
+
+  security_group_id        = aws_security_group.app_logstash.id
+  source_security_group_id = module.database_enc.database_security_group_id
+}
+
+resource "aws_security_group_rule" "app_logstash_https_egress" {
+  type             = "egress"
+  from_port        = 443
+  to_port          = 443
+  protocol         = "tcp"
+  cidr_blocks      = ["0.0.0.0/0"]
+  ipv6_cidr_blocks = ["::/0"]
+
+  security_group_id = aws_security_group.app_logstash.id
+}
+
+resource "aws_security_group_rule" "app_logstash_efs_egress" {
+  type             = "egress"
+  from_port        = 2049
+  to_port          = 2049
+  protocol         = "tcp"
+
+  security_group_id        = aws_security_group.app_logstash.id
+  source_security_group_id = aws_security_group.efs_app_logstash.id
 }
 
 #

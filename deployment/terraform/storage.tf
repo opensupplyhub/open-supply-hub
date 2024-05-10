@@ -134,3 +134,11 @@ module "ecr_repository_kafka" {
 
   attach_lifecycle_policy = true
 }
+
+module "ecr_repository_logstash" {
+  source = "github.com/azavea/terraform-aws-ecr-repository?ref=1.0.0"
+
+  repository_name = "${lower(replace(var.project, " ", ""))}-logstash-${lower(var.environment)}"
+
+  attach_lifecycle_policy = true
+}
