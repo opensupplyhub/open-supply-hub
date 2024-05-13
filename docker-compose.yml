@@ -72,23 +72,16 @@ services:
       - "8081:8081"
     cpus: 2
 
-  app:
-    image: node:14-slim
-    working_dir: /usr/local/src
+  react:
+    build:
+      context: ./src/react
+      dockerfile: Dockerfile.local
     volumes:
-      - ./src/app:/usr/local/src
+      - ./src/react:/usr/local/src
       # Use a Docker volume to cache node_modules
-      - node_modules:/usr/local/src/node_modules
-      - ./src/django/static:/usr/local/src/build
-      - $HOME/.aws:/root/.aws:ro
-    environment:
-      - REACT_APP_GIT_COMMIT=${REACT_APP_GIT_COMMIT:-latest}
-      - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=100
-      - PORT=6543
+      - /usr/local/src/node_modules
     ports:
       - 6543:6543
-    command: yarn run start
 
   zookeeper:
     image: "bitnami/zookeeper:latest"
@@ -185,6 +178,3 @@ services:
     depends_on:
       - elasticsearch
       - database
-
-volumes:
-  node_modules:

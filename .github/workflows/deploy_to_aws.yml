@@ -141,19 +141,19 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
-            src/app/node_modules
+            src/react/node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
 
       - name: Install dependencies
-        working-directory: src/app
+        working-directory: src/react
         run: yarn install
 
       - name: Build static assets
-        working-directory: src/app
+        working-directory: src/react
         run: yarn run build
 
       - name: Move static
-        run: mv src/app/build src/django/static
+        run: mv src/react/build src/django/static
 
       - name: Configure AWS credentials for ${{ vars.ENV_NAME }}
         uses: aws-actions/configure-aws-credentials@v1

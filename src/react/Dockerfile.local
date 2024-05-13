@@ -1,0 +1,16 @@
+FROM node:14-slim
+
+WORKDIR /usr/local/src
+
+COPY package.json yarn.lock ./
+
+RUN yarn install
+
+COPY . .
+
+ENV REACT_APP_GIT_COMMIT=${REACT_APP_GIT_COMMIT:-latest} \
+    CHOKIDAR_USEPOLLING=true \
+    CHOKIDAR_INTERVAL=100 \
+    PORT=6543
+
+CMD ["yarn","start"]
