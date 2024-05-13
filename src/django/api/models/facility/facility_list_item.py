@@ -35,7 +35,7 @@ class FacilityListItem(models.Model):
     REMOVED = 'REMOVED'
 
     # These status choices must be kept in sync with the client's
-    # If a new status is added, add supporting styles src/app/src/App.css
+    # If a new status is added, add supporting styles src/react/src/App.css
     # `facilityListItemStatusChoicesEnum`.
     STATUS_CHOICES = (
         (UPLOADED, UPLOADED),

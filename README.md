@@ -54,11 +54,11 @@ See [Getting Started with Google Maps Platform](https://developers.google.com/ma
 
 
 ### Kick-off & start local development
-- Install node and create database structure
+- Build Docker images and create database structure
 ```
 ./scripts/update
 ```
-- Polulate database with seeded facility lists
+- Populate database with seeded facility lists
 ```
 ./scripts/reset_database
 ```
