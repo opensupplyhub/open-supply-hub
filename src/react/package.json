@@ -82,7 +82,8 @@
         "jsdom": "18",
         "prettier": "2.0.2",
         "prettier-loader": "3.3.0",
-        "redux-mock-store": "^1.5.4"
+        "redux-mock-store": "^1.5.4",
+        "@reduxjs/toolkit": "2.2.4"
     },
     "browserslist": [
         ">0.2%",
