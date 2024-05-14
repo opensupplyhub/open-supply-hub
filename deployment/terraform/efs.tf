@@ -1,7 +1,7 @@
 # EFS for Logstash
 
 resource "aws_efs_file_system" "efs_app_logstash" {
-  creation_token = "${replace(var.project, " ", "")}-${var.environment}-efs-app-logstash"
+  creation_token = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-efs-app-logstash"
 
   tags = {
     Name         = "efsAppLogstash"
