@@ -154,7 +154,6 @@ services:
       - POSTGRES_USER=openapparelregistry
       - POSTGRES_PASSWORD=openapparelregistry
       - POSTGRES_DB=openapparelregistry
-      - GIT_COMMIT=Unknown
     command: uvicorn app.main:app --host 0.0.0.0 --port 84 --workers 1
 
   elasticsearch:
