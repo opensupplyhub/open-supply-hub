@@ -358,7 +358,7 @@ data "aws_iam_policy_document" "opensearch_assume_role" {
   }
 }
 resource "aws_iam_role" "opensearch_role" {
-  name               = "opensearch-role"
+  name               = "opensearch${local.short}ServiceRole"
 
   assume_role_policy = data.aws_iam_policy_document.opensearch_assume_role.json
 }
