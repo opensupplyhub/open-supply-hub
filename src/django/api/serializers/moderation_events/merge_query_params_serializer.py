@@ -14,7 +14,7 @@ class MergeQueryParamsSerializer(Serializer):
     date_less_than = DateField(default='', required=False)
     contributors = ListField(
         default=[],
-        child=IntegerField(min_value=0,),
+        child=IntegerField(min_value=0),
         allow_empty=False,
         required=False)
 
