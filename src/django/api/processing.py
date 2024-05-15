@@ -15,6 +15,7 @@ from api.matching import normalize_extended_facility_id
 from api.models import (
     Facility,
     FacilityListItem,
+    FacilityListItemTemp,
     FacilityMatch,
     FacilityMatchTemp
 )
@@ -620,16 +621,20 @@ def save_exact_match_details(exact_results):
 
 def handle_external_match_process_result(id, result, request, should_create):
     context = {'request': request}
-    end_match_process_status = [FacilityListItem.MATCHED,
-                                FacilityListItem.POTENTIAL_MATCH,
-                                FacilityListItem.ERROR_MATCHING]
+    if should_create:
+        list_item_object_type = FacilityListItem
+    else:
+        list_item_object_type = FacilityListItemTemp
+    end_match_process_status = [list_item_object_type.MATCHED,
+                                list_item_object_type.POTENTIAL_MATCH,
+                                list_item_object_type.ERROR_MATCHING]
     f_l_item = None
     timer = 0
     timeout = 25
     while True:
         if timer > timeout:
             break
-        facility_list_item = FacilityListItem.objects.get(id=id)
+        facility_list_item = list_item_object_type.objects.get(id=id)
         if facility_list_item.status in end_match_process_status:
             f_l_item = facility_list_item
             break
@@ -654,19 +659,32 @@ def handle_external_match_process_result(id, result, request, should_create):
         if match.status == match_object_type.AUTOMATIC
     ]
     if (len(automatic_matches) == 1):
-        # New Facility
-        if f_l_item.facility is None:
-            return get_new_facility_match_result(f_l_item.id, None, result)
-        if f_l_item.facility.created_from == f_l_item:
-            return get_new_facility_match_result(
-                f_l_item.id, f_l_item.facility.id, result
-            )
-        # Automatic Match
-        return get_automatic_match_result(f_l_item.id,
-                                          f_l_item.facility.id,
-                                          automatic_matches[0].confidence,
-                                          context,
-                                          result)
+        if isinstance(f_l_item, FacilityListItem):
+            # New Facility
+            if f_l_item.facility is None:
+                return get_new_facility_match_result(f_l_item.id, None, result)
+            if f_l_item.facility.created_from == f_l_item:
+                return get_new_facility_match_result(
+                    f_l_item.id, f_l_item.facility.id, result
+                )
+            
+            # Automatic Match
+            return get_automatic_match_result(f_l_item.id,
+                                              f_l_item.facility.id,
+                                              automatic_matches[0].confidence,
+                                              context,
+                                              result)
+        else:
+            # New Facility
+            if f_l_item.facility_id is None:
+                return get_new_facility_match_result(f_l_item.id, None, result)
+            
+            # Automatic Match
+            return get_automatic_match_result(f_l_item.id,
+                                              f_l_item.facility_id,
+                                              automatic_matches[0].confidence,
+                                              context,
+                                              result)
 
     pending_matches = [
         match for match in queryset_f_m

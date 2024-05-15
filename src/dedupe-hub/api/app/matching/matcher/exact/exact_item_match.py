@@ -2,8 +2,6 @@ from typing import Any, Dict
 
 from app.database.models.facility_list_item_temp import FacilityListItemTemp
 from app.database.models.facility_match_temp import FacilityMatchTemp
-from app.database.models.source import Source
-from app.database.sqlalchemy import get_session
 from app.matching.DTOs.results_dto import ResultsDTO
 from app.matching.matcher.base_item_match import BaseItemMatch
 
@@ -52,11 +50,11 @@ class ExactItemMatch(BaseItemMatch):
             matches[0]["results"]["match_type"] = "multiple_exact_matches"
 
         self.item_save(exact_match=True)
-        with get_session() as session:
-            if session.query(Source.create).filter(Source.id==self.item.source_id).scalar():
-                return matches[:1]
+        # with get_session() as session:
+        #     if session.query(Source.create).filter(Source.id==self.item.source_id).scalar():
+        #         return matches[:1]
 
-        return []
+        return matches[:1]
 
     def make_match_object(
         self, facility_id, status=FacilityMatchTemp.PENDING, **kwargs

@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 from app.utils.constants import ProcessingAction
 from app.database.models.facility_list_item import FacilityListItem
 from app.database.models.facility_list_item_temp import FacilityListItemTemp
-from app.database.models.facility_match import FacilityMatch
+from app.database.models.source import Source
 from app.database.models.facility_match_temp import FacilityMatchTemp
 from app.matching.DTOs.facility_match_dto import FacilityMatchDTO
 from app.matching.DTOs.results_dto import ResultsDTO
@@ -78,15 +78,15 @@ class BaseItemMatch:
             session.commit()
 
         session.close()
+        if session.query(Source.create).filter(Source.id==self.item.source_id).scalar():
+            if settings.dedupe_hub_live:
+                with get_session() as session_two:
+                    origin_facility_list_item = session_two.query(FacilityListItem).filter(FacilityListItem.id==self.item.id).one()
+                    origin_facility_list_item.status = self.item.status
+                    # Update the JSON column data
+                    session_two.query(FacilityListItem).\
+                        filter(FacilityListItem.id == origin_facility_list_item.id).update({"processing_results": processing_results_data})
+                    origin_facility_list_item.facility_id = self.item.facility_id
+                    session_two.commit()
 
-        if settings.dedupe_hub_live:
-            with get_session() as session_two:
-                origin_facility_list_item = session_two.query(FacilityListItem).filter(FacilityListItem.id==self.item.id).one()
-                origin_facility_list_item.status = self.item.status
-                # Update the JSON column data
-                session_two.query(FacilityListItem).\
-                    filter(FacilityListItem.id == origin_facility_list_item.id).update({"processing_results": processing_results_data})
-                origin_facility_list_item.facility_id = self.item.facility_id
-                session_two.commit()
-
-            session_two.close()
+                session_two.close()

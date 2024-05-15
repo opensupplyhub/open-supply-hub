@@ -121,25 +121,26 @@ class CumulativeMatcher(BaseMatcher):
                     else:
                         facility_id = "AB_Test_" + make_os_id(unmatched_list_item.country_code)
 
-                    json_data = {
-                        'error': False,
-                        'action': ProcessingAction.MATCH,
-                        'started_at': str(datetime.now()),
-                        'finished_at': str(datetime.now())
-                    }
-                    processing_results_data = unmatched_list_item.processing_results
-                    processing_results_data.append(json_data)
+                json_data = {
+                    'error': False,
+                    'action': ProcessingAction.MATCH,
+                    'started_at': str(datetime.now()),
+                    'finished_at': str(datetime.now())
+                }
+                processing_results_data = unmatched_list_item.processing_results
+                processing_results_data.append(json_data)
 
-                    # Update the JSON column data
-                    session.query(FacilityListItemTemp).\
-                        filter(FacilityListItemTemp.id == unmatched_list_item.id).update({"processing_results": processing_results_data})
+                # Update the JSON column data
+                session.query(FacilityListItemTemp).\
+                    filter(FacilityListItemTemp.id == unmatched_list_item.id).update({"processing_results": processing_results_data})
 
-                    unmatched_list_item.status = FacilityListItemTemp.MATCHED
-                    unmatched_list_item.facility_id = facility_id
-                    unmatched_list_item.version = settings.dedupe_hub_version
+                unmatched_list_item.status = FacilityListItemTemp.MATCHED
+                unmatched_list_item.facility_id = facility_id
+                unmatched_list_item.version = settings.dedupe_hub_version
 
-                    session.commit()
+                session.commit()
 
+                if session.query(Source.create).filter(Source.id==unmatched_list_item.source_id).scalar():
                     if settings.dedupe_hub_live:
                         origin_list_item = session.query(FacilityListItem). \
                             filter(
@@ -156,13 +157,13 @@ class CumulativeMatcher(BaseMatcher):
 
                         session.commit()
 
-                    results.append({
-                        "facility_list_item_id": unmatched_list_item.id,
-                        "facility_id": facility_id,
-                        "status": FacilityMatchTemp.AUTOMATIC,
-                        "results": {'match_type': 'no_gazetteer_match'},
-                        "confidence": 1,
-                    })
+                results.append({
+                    "facility_list_item_id": unmatched_list_item.id,
+                    "facility_id": facility_id,
+                    "status": FacilityMatchTemp.AUTOMATIC,
+                    "results": {'match_type': 'no_gazetteer_match'},
+                    "confidence": 1,
+                })
 
             session.close()
 
