@@ -29,12 +29,11 @@ class ModerationEventsViewSet(ViewSet):
     def merge(self, request):
         """
         Returns an array of objects with the history of merge events applied
-        to the facilities that the user is associated with and that were
+        to the facilities that have occurred for all contributors and that were
         involved in a merge moderation event within the given date range.
-
-        In cases when the user has admin permissions, they can also specify
-        'all' or 'contributors' parameters. They can't be set at the same
-        time.
+        The API user can also specify 'contributors' parameters to receive
+        information about merges that have occurred for the contributors
+        with the specified IDs.
 
         ### Sample Response
             [

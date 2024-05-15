@@ -3,7 +3,9 @@ from drf_yasg.openapi import (
   IN_QUERY,
   TYPE_BOOLEAN,
   TYPE_STRING,
-  TYPE_INTEGER
+  TYPE_ARRAY,
+  TYPE_INTEGER,
+  Items,
 )
 
 merge_params = [
@@ -37,18 +39,10 @@ merge_params = [
             'merge events that occurred before the specified date.'),
     ),
     Parameter(
-        'all',
-        IN_QUERY,
-        type=TYPE_BOOLEAN,
-        required=False,
-        description=(
-            'Set this to true to return all the merge events accross '
-            'the whole system.'),
-    ),
-    Parameter(
         'contributors',
         IN_QUERY,
-        type=TYPE_INTEGER,
+        type=TYPE_ARRAY,
+        items=Items(type=TYPE_INTEGER),
         required=False,
         description=(
             'Specify the contributors as ids to retrieve the history of merge '
