@@ -746,7 +746,7 @@ export const makeReportADataIssueEmailLink = osId =>
     `mailto:data@opensupplyhub.org?subject=Reporting a data issue on ID ${osId}`;
 
 export const makeDisputeClaimEmailLink = osId =>
-    `mailto:data@opensupplyhub.org?subject=Disputing a claim of facility ID ${osId}`;
+    `mailto:claim@opensupplyhub.org?subject=Disputing a claim of facility ID ${osId}`;
 
 export const makeReportADuplicateEmailLink = osId =>
     `mailto:data@opensupplyhub.org?subject=Reporting ID ${osId} as a duplicate facility`;
