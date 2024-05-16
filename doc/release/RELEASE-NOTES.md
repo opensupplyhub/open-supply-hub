@@ -79,6 +79,7 @@ database:
 ### Bugfix
 * [OSDEV-870](https://opensupplyhub.atlassian.net/browse/OSDEV-870) - The returning confirm/reject URLs were fixed when a facility has been matched. Changes were made to the Dedupe-Hub to prevent adding rows with empty fields to the `api_facilitymatch` and `api_facilitymatchtemp` tables when the count of matches is more than one.
 * [OSDEV-744](https://opensupplyhub.atlassian.net/browse/OSDEV-744) - API. When user want to confirm/reject potential_match it didn't found a match through `id`, was fixed by provided valid `id` from `api_facilitymatch` table.
+* [OSDEV-1052](https://opensupplyhub.atlassian.net/browse/OSDEV-1052) - Replace data@opensupplyhub by claims@opensupplyhub in the Frontend
 
 ### What's new
 * [OSDEV-975](https://opensupplyhub.atlassian.net/browse/OSDEV-975) Reporting. Number of facilities with at least one extended field.`Facilities with Extended Field Data` report has been rewritten from Django ORM to SQL to optimize and speed up time of the report generation. Added two columns `With At Least 1 Extended Field` and `Sector`.

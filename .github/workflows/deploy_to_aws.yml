@@ -279,7 +279,7 @@ jobs:
 
   update_services:
     needs: restore_database
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
