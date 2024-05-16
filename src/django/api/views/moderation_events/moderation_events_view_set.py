@@ -65,7 +65,7 @@ class ModerationEventsViewSet(ViewSet):
                               FeatureGroups.CAN_GET_FACILITY_HISTORY):
             raise PermissionDenied()
 
-        query = build_query_string(params, request.user.contributor.id)
+        query = build_query_string(params)
         merge_history = retrieve_merge_events(query, fetch_all)
 
         if len(merge_history) == 0:

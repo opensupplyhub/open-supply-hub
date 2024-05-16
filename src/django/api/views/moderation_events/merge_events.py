@@ -61,10 +61,12 @@ def generate_detail_fields(detail: bool) -> str:
 
 def generate_source_data_sql(contributors: list) -> str:
     if not contributors:
+
         return (" FROM api_historicalfacility ahf "
                 "JOIN api_facilityalias afa ON afa.os_id = ahf.id ")
 
     if contributors:
+
         return (f" FROM UNNEST(ARRAY[{', '.join(map(str, contributors))}]) "
                 "as cid JOIN api_source asrc ON asrc.contributor_id = cid "
                 "JOIN api_facilitylistitem afli ON afli.source_id = asrc.id "
