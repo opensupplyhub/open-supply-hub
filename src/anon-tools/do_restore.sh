@@ -15,4 +15,16 @@ ssh-keyscan $bastion > ~/.ssh/known_hosts
 
 ssh -f -i /keys/key -L 5433:database.service.osh.internal:5432 -N ec2-user@$bastion
 
-pg_restore --verbose --clean --no-acl --no-owner -d $DATABASE_NAME -U $DATABASE_USERNAME -h localhost -p 5433 < /dumps/osh_prod_large.dump
+SQL_SCRIPT="DO \$\$
+DECLARE
+BEGIN
+  DROP SCHEMA public CASCADE;
+  CREATE SCHEMA public;
+
+  -- GRANT ALL ON SCHEMA public TO postgres;
+  GRANT ALL ON SCHEMA public TO public;
+END \$\$;"
+
+echo "Dropping tables"
+psql -d $DATABASE_NAME -U $DATABASE_USERNAME -h localhost -p 5433 -c "$SQL_SCRIPT"
+pg_restore --verbose --clean --no-acl --no-owner -d $DATABASE_NAME -U $DATABASE_USERNAME -h localhost -p 5433 < /dumps/osh_prod_large.dump || true
