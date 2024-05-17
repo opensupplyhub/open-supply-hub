@@ -55,7 +55,6 @@ def build_query_string(params: MergeQueryParamsSerializer) -> str:
 
 
 def generate_detail_fields(detail: bool) -> str:
-
     return detail and (", ahf.name AS original_name, "
                        "ahf.address AS original_address") or ""
 
