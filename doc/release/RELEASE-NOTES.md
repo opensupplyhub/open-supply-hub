@@ -17,18 +17,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe scheme changes here.*
 
 ### Code/API changes
-<<<<<<< HEAD
 * [OSDEV-994](https://opensupplyhub.atlassian.net/browse/OSDEV-994) API. Update to pass all merge events to user based on contrib id. A non-admin API user makes:
 - a GET call to /moderation-events/merge/
 and receives information about merges that have occurred for all contributors.
 - a GET call to /moderation-events/merge/?contributors=1078&contributors=20&contributors=2608
 and receives information about merges that have occurred for the contributors with the specified IDs.
-
-### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
-
-### Bugfix
-* *Describe bugfix here.*
 
 ### Architecture/Environment changes
 * [OSDEV-1003](https://opensupplyhub.atlassian.net/browse/OSDEV-1003) - Added automatic building for the Logstash Docker image in the `Deploy to AWS` workflow. Refactored the `Deploy to AWS` workflow to remove redundant setting values for `build-args` of the `docker/build-push-action` action in cases where the values are not used.
@@ -41,7 +34,6 @@ and receives information about merges that have occurred for the contributors wi
 
 ### Release instructions:
 * Update code.
-* Apply DB migrations up to the latest one.
 
 ## Release 1.12.0
 
