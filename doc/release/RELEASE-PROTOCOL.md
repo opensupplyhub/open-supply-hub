@@ -157,5 +157,21 @@ If there is no such message and DedupeHub hangs, you need to reload it (perhaps 
 2. First step is to destroy pre-prod DB Instance manually via RDS -> Databases -> `opensupplyhub-enc-pp`. Press Modify -> Enable deletion protection=false. Then select Delete in Actions.
 3. Finally, to shut down the Pre-prod the responsible person have to select `Destroy Environment` in the Actions menu. Press run workflow with `main` branch and select `Pre-prod` env.
 
+### Post Release Notes:
+
+On Monday after each release, current metrics should be checked by QA engineer.
+
+1. Kamino:
+
+    - Successfully logged with valid OS HUb admin credentials and re-directed to Kamino's [main page](https://34.241.25.221/kamino/bk).
+2. Looker:
+
+    - `duplicate_ratio_perc` ~ 2 (+- 0.1)
+
+    - `estimated_duplicates` ~ 4000-6000
+3. Airflow:
+
+    - Dag_Id duplillom should approximately take 50 min. So we can conclude that it <strong>must be > 2.5</strong>
+
 ### Reloading the DedupeHub
 - To restart DedupeHub the responsible person have to find `ecsOpenSupplyHubProductionCluster` in Amazon Elastic Container Service (ECS), select `OpenSupplyHubProductionAppDD` and press update. Then select `Force New Deployment` and press update button.
