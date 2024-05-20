@@ -179,10 +179,6 @@ jobs:
           file: src/kafka-tools/Dockerfile
           push: true
           tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-kafka-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
-          build-args: |
-            GIT_COMMIT=${{ env.GIT_COMMIT }}
-            DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}
-            ENVIRONMENT=${{ steps.get_env_name.outputs.lowercase }}
 
       - name: Build and push Django Docker image to ECR for ${{ vars.ENV_NAME }}
         uses: docker/build-push-action@v2
@@ -211,10 +207,14 @@ jobs:
           file: src/dedupe-hub/api/Dockerfile
           push: true
           tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-deduplicate-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
-          build-args: |
-            GIT_COMMIT=${{ env.GIT_COMMIT }}
-            DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}
-            ENVIRONMENT=${{ steps.get_env_name.outputs.lowercase }}
+
+      - name: Build and push Logstash Docker image to ECR for ${{ vars.ENV_NAME }}
+        uses: docker/build-push-action@v2
+        with:
+          context: src/logstash
+          file: src/logstash/Dockerfile
+          push: true
+          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-logstash-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
 
   create_kafka_topic:
     needs: build_and_push_docker_image
@@ -279,7 +279,7 @@ jobs:
 
   update_services:
     needs: restore_database
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
