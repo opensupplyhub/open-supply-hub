@@ -667,7 +667,7 @@ def handle_external_match_process_result(id, result, request, should_create):
                 return get_new_facility_match_result(
                     f_l_item.id, f_l_item.facility.id, result
                 )
-            
+
             # Automatic Match
             return get_automatic_match_result(f_l_item.id,
                                               f_l_item.facility.id,
@@ -678,7 +678,7 @@ def handle_external_match_process_result(id, result, request, should_create):
             # New Facility
             if f_l_item.facility_id is None:
                 return get_new_facility_match_result(f_l_item.id, None, result)
-            
+
             # Automatic Match
             return get_automatic_match_result(f_l_item.id,
                                               f_l_item.facility_id,
