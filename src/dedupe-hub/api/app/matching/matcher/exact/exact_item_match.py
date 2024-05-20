@@ -50,9 +50,6 @@ class ExactItemMatch(BaseItemMatch):
             matches[0]["results"]["match_type"] = "multiple_exact_matches"
 
         self.item_save(exact_match=True)
-        # with get_session() as session:
-        #     if session.query(Source.create).filter(Source.id==self.item.source_id).scalar():
-        #         return matches[:1]
 
         return matches[:1]
 

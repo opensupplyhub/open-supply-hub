@@ -86,10 +86,6 @@ class GazetteerItemMatch(BaseItemMatch):
 
         self.item_save()
 
-        # with get_session() as session:
-        #     if session.query(Source.create).filter(Source.id==self.item.source_id).scalar():
-        #         return self.matches
-
         return self.matches
 
     def reduce_matches(self, matches) -> List[Dict[str, str or int]]:
