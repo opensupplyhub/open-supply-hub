@@ -20,7 +20,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-994](https://opensupplyhub.atlassian.net/browse/OSDEV-994) API. Update to pass all merge events to user based on contrib id. A non-admin API user makes:
 - a GET call to /moderation-events/merge/
 and receives information about merges that have occurred for all contributors.
-- a GET call to /moderation-events/merge/?contributors=1078&contributors=20&contributors=2608
+- a GET call to /moderation-events/merge/?contributors=<id_number_x>&contributors=<id_number_y>&contributors=<id_number_z>
 and receives information about merges that have occurred for the contributors with the specified IDs.
 
 ### Architecture/Environment changes
