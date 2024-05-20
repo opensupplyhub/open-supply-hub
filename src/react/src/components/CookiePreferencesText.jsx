@@ -12,8 +12,7 @@ const CookiePreferencesText = () => (
             rel="noreferrer"
         >
             privacy policy
-        </a>{' '}
-        .
+        </a>.
     </div>
 );
 
