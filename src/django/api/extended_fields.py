@@ -19,16 +19,28 @@ def extract_int_range_value(value):
 MAX_PRODUCT_TYPE_COUNT = 50
 
 
-def get_facility_and_processing_type_extendfield_value(field,
-                                                       field_value, sector):
-    processed_values = field_value.get('processed_values')
-    raw_values = field_value.get('raw_values')
-
+def get_matched_values(field_value, sector):
     results = []
-
-    for value in processed_values:
+    for value in field_value:
         result = get_facility_and_processing_type(value, sector)
         results.append(result)
+    return results
+
+
+def get_facility_and_processing_type_extendfield_value(
+    field_value, sector,
+    isClaimEdit=False
+):
+    if isClaimEdit:
+        field_value_capitalized = (
+            [value.capitalize() for value in field_value]
+        )
+        raw_values = '|'.join(field_value_capitalized)
+        results = get_matched_values(field_value_capitalized, sector)
+    else:
+        processed_values = field_value.get('processed_values')
+        raw_values = field_value.get('raw_values')
+        results = get_matched_values(processed_values, sector)
 
     return {
         'raw_values': raw_values,
@@ -77,8 +89,11 @@ def create_extendedfield(field, field_value, item, contributor):
             field_value = get_product_type_extendedfield_value(field_value)
         elif (field == ExtendedField.FACILITY_TYPE or
               field == ExtendedField.PROCESSING_TYPE):
-            field_value = get_facility_and_processing_type_extendfield_value(
-                field, field_value, item.sector
+            field_value = (
+                get_facility_and_processing_type_extendfield_value(
+                    field_value,
+                    item.sector
+                )
             )
 
         ExtendedField.objects.create(
@@ -177,7 +192,7 @@ def create_extendedfields_for_claim(claim):
                                     ExtendedField.FACILITY_TYPE]:
                 field_value = (
                     get_facility_and_processing_type_extendfield_value(
-                        extended_field, field_value, claim.sector
+                       field_value, claim.sector, True
                     )
                 )
             elif extended_field == ExtendedField.PRODUCT_TYPE:
