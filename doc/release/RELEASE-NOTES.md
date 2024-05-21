@@ -31,6 +31,7 @@ and receives information about merges that have occurred for the contributors wi
 
 ### What's new
 * [OSDEV-1049](https://opensupplyhub.atlassian.net/browse/OSDEV-1049) Update Release protocol.
+* [OSDEV-922](https://opensupplyhub.atlassian.net/browse/OSDEV-922) Consent Message. Update wording of consent opt in message on Open Supply Hub. A user who verifies Open Supply Hub for the first time can see the updated message.
 
 ### Release instructions:
 * Update code.
