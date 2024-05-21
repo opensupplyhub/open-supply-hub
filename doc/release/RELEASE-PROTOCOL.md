@@ -21,6 +21,7 @@ This document outlines the SDLC pillars of the opensupplyhub monorepo, as well a
   - [Release to production and sandbox](#release-to-production-and-sandbox)
   - [Hotfixes](#hotfixes)
   - [Shut down the pre-prod environment](#shut-down-pre-prod)
+  - [Post Release Notes](#post-release-notes)
   - [Reloading the DedupeHub](#reload-dedupehub)
 
 
@@ -136,7 +137,7 @@ Make sure that:
 1. To enhance communication within the team, the responsible person for the release must notify all stakeholders about the release two working days before its scheduled date and in 1-2 hours to prevent any actions on the environment on which the deployment is carried out.
 2. The responsible person have to take db snapshot manually via Amazon RDS in the `Snapshots` tab with name `env-db-date` (examples: `stg-db-05-18-2024` and `prd-db-05-18-2024`).
 3. On the designated time and day, the responsible person runs the `Release [Deploy]` workflow for the sandbox and production environments from the release branch. They need to fill in the full release tag version (`X.Y.Z`) and choose the environment.  
-ℹ️ Note, that `Deploy to AWS` workflow will trigger <strong>automatically</strong> for the sandbox and production environments respectively.
+ℹ️ Note, that `Deploy to AWS` workflow will be triggered <strong>automatically</strong> for the sandbox and production environments respectively.
 4. After completing the triggered workflows, the responsible person must open the AWS console and verify that all tasks of the `OpenSupplyHubStagingAppDD`, `OpenSupplyHubStagingApp`, `OpenSupplyHubProductionAppDD`, and `OpenSupplyHubProductionApp` services in the `ecsOpenSupplyHubStagingCluster` and `ecsOpenSupplyHubProductionCluster` Amazon ECS clusters, respectively, have been restarted.
 5. The responsible person also needs to check that DedupeHub is up and running. To do this, they should open CloudWatch via the AWS console, navigate to the Log groups section in the menu, open logOpenSupplyHubProductionAppDD and logOpenSupplyHubStagingAppDD, then open the latest log stream of each log group. Ensure that there is a recent message: `INFO: Application startup complete.`
 If there is no such message and DedupeHub hangs, you need to reload it (perhaps several times), as mentioned in [Reloading the DedupeHub](#reload-dedupehub).
@@ -162,15 +163,11 @@ If there is no such message and DedupeHub hangs, you need to reload it (perhaps 
 On Monday after each release, current metrics should be checked by QA engineer.
 
 1. Kamino:
-
     - Successfully logged with valid OS HUb admin credentials and re-directed to Kamino's [main page](https://34.241.25.221/kamino/bk).
 2. Looker:
-
     - `duplicate_ratio_perc` ~ 2 (+- 0.1)
-
     - `estimated_duplicates` ~ 4000-6000
 3. Airflow:
-
     - Dag_Id duplillom should approximately take 50 min. So we can conclude that it <strong>must be > 2.5</strong>
 
 ### Reloading the DedupeHub
