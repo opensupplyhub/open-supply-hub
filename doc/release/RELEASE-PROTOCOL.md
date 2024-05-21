@@ -22,7 +22,7 @@ This document outlines the SDLC pillars of the opensupplyhub monorepo, as well a
   - [Hotfixes](#hotfixes)
   - [Shut down the pre-prod environment](#shut-down-pre-prod)
   - [Post Release Notes](#post-release-notes)
-  - [Reloading the DedupeHub](#reload-dedupehub)
+  - [Reloading the DedupeHub](#reloading-the-dedupehub)
 
 
 ## Release Schedule
