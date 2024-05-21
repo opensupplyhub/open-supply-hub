@@ -53,6 +53,7 @@ class TestGazetteerItemMatch(unittest.TestCase):
 
     def tearDown(self):
         self.session_patcher.stop()
+        self.session_patcher_gazetteer.stop()
 
     def create_gazetteer_match(self, matches):
         return GazetteerItemMatch(
