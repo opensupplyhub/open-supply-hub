@@ -30,7 +30,7 @@ and receives information about merges that have occurred for the contributors wi
 * [OSDEV-1056](https://opensupplyhub.atlassian.net/browse/OSDEV-1056) - Refactor OS Hub member's email anonymization.
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* [OSDEV-922](https://opensupplyhub.atlassian.net/browse/OSDEV-922) Consent Message. Update wording of consent opt in message on Open Supply Hub. A user who verifies Open Supply Hub for the first time can see the updated message.
 
 ### Release instructions:
 * Update code.
