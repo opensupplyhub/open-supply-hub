@@ -23,6 +23,11 @@ class TestGazetteerItemMatch(unittest.TestCase):
             {"id": 2073, "facility_id": "CN20241096SFEBB", "score": 0.90},
         ]
 
+        self.matches_multiple_second = [
+            {"id": 2072, "facility_id": "CN20241096SFEBA", "score": 0.85},
+            {"id": 2073, "facility_id": "CN20241096SFEBB", "score": 0.90},
+        ]
+
         # Setup mock for database session in BaseItemMatch
         self.session_patcher = patch(
             'app.matching.matcher.base_item_match.get_session'
@@ -99,6 +104,33 @@ class TestGazetteerItemMatch(unittest.TestCase):
                 'status': 'AUTOMATIC',
                 'results': {'match_type': 'one_gazetteer_match_greater_than_threshold'},
                 'confidence': 0.90,
+            }
+        ]
+
+        self.assertListEqual(result, expected_result)
+
+    def test_multiple_gazetteer(self):
+        gazetteer_match = self.create_gazetteer_match(self.matches_multiple_second)
+
+        string_matched_mock = MagicMock()
+        string_matched_mock.side_effect = [True, False]
+        gazetteer_match.string_matched = string_matched_mock
+
+        result = gazetteer_match.process()
+        expected_result = [
+            {
+                'facility_list_item_id': 1,
+                'facility_id': 'CN20241096SFEBB',
+                'status': 'PENDING',
+                'results': {},
+                'confidence': 0.9,
+            },
+            {
+                'facility_list_item_id': 1,
+                'facility_id': 'CN20241096SFEBA',
+                'status': 'AUTOMATIC',
+                'results': {'match_type': 'multiple_gazetteer_matches_with_one_exact_string_match'},
+                'confidence': 0.85,
             }
         ]
 
