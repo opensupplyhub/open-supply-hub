@@ -1,10 +1,11 @@
 import unittest
 from app.matching.matcher.cumulative_matcher import CumulativeMatcher
 
-class TestCumulativeMatcher(unittest.TestCase):
 
+class TestCumulativeMatcher(unittest.TestCase):
     def test_clean_matched(self):
         c_m = CumulativeMatcher()
+
         messy = {
             "1": {
                 "name": "Test 1",
@@ -17,6 +18,7 @@ class TestCumulativeMatcher(unittest.TestCase):
                 "country": "Test 2"
             }
         }
+
         processed_matches_one = [
             {
                 "facility_id": "CN20241096SFEBA",
