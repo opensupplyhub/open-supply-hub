@@ -42,7 +42,7 @@ class CumulativeMatcher(BaseMatcher):
         return results
 
     def clean_matched(self, messy, processed_matches):
-        match_ids = [fm_dto.get('facility_list_item_id', '') for fm_dto in processed_matches]
+        match_ids = [int(fm_dto.get('facility_list_item_id', 0)) for fm_dto in processed_matches]
         return {
             id: value
             for id, value in messy.items()
