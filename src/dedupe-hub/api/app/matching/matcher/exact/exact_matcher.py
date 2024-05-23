@@ -5,7 +5,6 @@ from typing import Any, Dict, List
 from app.database.models.facility_list_item import FacilityListItem
 from app.matching.DTOs.match_dto import MatchDTO
 from app.matching.DTOs.facility_list_item_dto import FacilityListItemDict
-from app.matching.DTOs.facility_match_dto import FacilityMatchDTO
 from app.matching.matcher.base_matcher import BaseMatcher
 from app.matching.matcher.exact.exact_item_match import ExactItemMatch
 from app.database.sqlalchemy import get_session

@@ -3,7 +3,6 @@ from typing import Any, Dict, List
 from app.database.models.facility import Facility
 from app.database.models.facility_list_item_temp import FacilityListItemTemp
 from app.database.models.facility_match_temp import FacilityMatchTemp
-from app.database.models.source import Source
 from app.database.sqlalchemy import get_session
 from app.matching.DTOs.facility_match_dto import FacilityMatchDTO
 from app.matching.DTOs.results_dto import ResultsDTO
@@ -87,11 +86,7 @@ class GazetteerItemMatch(BaseItemMatch):
 
         self.item_save()
 
-        with get_session() as session:
-            if session.query(Source.create).filter(Source.id==self.item.source_id).scalar():
-                return self.matches
-
-        return []
+        return self.matches
 
     def reduce_matches(self, matches) -> List[Dict[str, str or int]]:
         """
