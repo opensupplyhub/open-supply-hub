@@ -87,7 +87,7 @@ class TestCumulativeMatcher(unittest.TestCase):
         c_m = CumulativeMatcher()
 
         result_one = c_m.clean_matched(self.messy, self.processed_matches)
-        self.assertEqual(result_one, {})
+        self.assertDictEqual(result_one, {})
 
         processed_matches_two = [
             {
@@ -99,7 +99,7 @@ class TestCumulativeMatcher(unittest.TestCase):
             },
         ]
         result_two = c_m.clean_matched(self.messy, processed_matches_two)
-        self.assertEqual(result_two, {
+        self.assertDictEqual(result_two, {
             "2": {
                 "name": "Test 2",
                 "address": "Test 2",
