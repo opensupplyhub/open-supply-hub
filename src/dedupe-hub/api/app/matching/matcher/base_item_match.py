@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 from app.utils.constants import ProcessingAction
 from app.database.models.facility_list_item import FacilityListItem
 from app.database.models.facility_list_item_temp import FacilityListItemTemp
-from app.database.models.facility_match import FacilityMatch
+from app.database.models.source import Source
 from app.database.models.facility_match_temp import FacilityMatchTemp
 from app.matching.DTOs.facility_match_dto import FacilityMatchDTO
 from app.matching.DTOs.results_dto import ResultsDTO
@@ -55,6 +55,19 @@ class BaseItemMatch:
             "status": status,
             "results": kwargs
         }
+    
+    def item_update(self, session, list_item_type, processing_results_data):
+        facility_list_item = session.query(list_item_type).filter(list_item_type.id==self.item.id).one()
+        facility_list_item.status = self.item.status
+        # Update the JSON column data
+        session.query(list_item_type).\
+            filter(list_item_type.id == facility_list_item.id).update({"processing_results": processing_results_data})
+        facility_list_item.facility_id = self.item.facility_id
+        if list_item_type == FacilityListItemTemp:
+            facility_list_item.version = settings.dedupe_hub_version
+        session.commit()
+
+        session.close()
 
     def item_save(self, **kwargs):
         json_data = {
@@ -67,26 +80,12 @@ class BaseItemMatch:
 
         processing_results_data = self.item.processing_results
         processing_results_data.append(json_data)
+
         with get_session() as session:
-            facility_list_item = session.query(FacilityListItemTemp).filter(FacilityListItemTemp.id==self.item.id).one()
-            facility_list_item.status = self.item.status
-            # Update the JSON column data
-            session.query(FacilityListItemTemp).\
-                filter(FacilityListItemTemp.id == facility_list_item.id).update({"processing_results": processing_results_data})
-            facility_list_item.facility_id = self.item.facility_id
-            facility_list_item.version = settings.dedupe_hub_version
-            session.commit()
+            self.item_update(session, FacilityListItemTemp, processing_results_data)
 
-        session.close()
+        with get_session() as session_two:
+            if session_two.query(Source.create).filter(Source.id==self.item.source_id).scalar():
+                if settings.dedupe_hub_live:
+                    self.item_update(session_two, FacilityListItem, processing_results_data)
 
-        if settings.dedupe_hub_live:
-            with get_session() as session_two:
-                origin_facility_list_item = session_two.query(FacilityListItem).filter(FacilityListItem.id==self.item.id).one()
-                origin_facility_list_item.status = self.item.status
-                # Update the JSON column data
-                session_two.query(FacilityListItem).\
-                    filter(FacilityListItem.id == origin_facility_list_item.id).update({"processing_results": processing_results_data})
-                origin_facility_list_item.facility_id = self.item.facility_id
-                session_two.commit()
-
-            session_two.close()
