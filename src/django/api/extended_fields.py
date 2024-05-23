@@ -29,9 +29,9 @@ def get_matched_values(field_value, sector):
 
 def get_facility_and_processing_type_extendfield_value(
     field_value, sector,
-    isClaimEdit=False
+    is_claim_edit=False
 ):
-    if isClaimEdit:
+    if is_claim_edit:
         field_value_capitalized = (
             [value.capitalize() for value in field_value]
         )
