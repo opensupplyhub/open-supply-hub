@@ -303,7 +303,7 @@ jobs:
               run --rm --entrypoint /bin/sh api-app \
               -c "coverage run --data-file=./coverage/.coverage -m unittest \
               && coverage lcov --data-file=./coverage/.coverage -o ./coverage/coverage.lcov \
-              --source='api' --include='./app/*' --omit='./tests/*, ./app/config.py'"
+              --source=api --include='./app/*' --omit='./tests/*, ./app/config.py'"
       - name: Upload unittest code cov for the base branch
         uses: actions/upload-artifact@v4
         with:
@@ -327,7 +327,7 @@ jobs:
               run --rm --entrypoint /bin/sh api-app \
               -c "coverage run --data-file=./coverage/.coverage -m unittest \
               && coverage lcov --data-file=./coverage/.coverage -o ./coverage/coverage.lcov \
-              --source='api' --include='./app/*' --omit='./tests/*, ./app/config.py'"
+              --source=api --include='./app/*' --omit='./tests/*, ./app/config.py'"
       - name: Upload unittest code cov for the feature branch
         uses: actions/upload-artifact@v4
         with:
