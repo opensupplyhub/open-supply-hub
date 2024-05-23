@@ -1,11 +1,14 @@
 from django.core.management.base import BaseCommand
 
-from api.models.transactions.remove_facilitylistitems_with_potential_match_status_more_thirty_days import remove_facilitylistitems_with_potential_match_status_more_thirty_days
+from api.models.transactions.clean_facilitylistitems import (
+    clean_facilitylistitems,
+)
 
 
 class Command(BaseCommand):
-    help = 'Removes facilitylistitems with potential match status more than thirty days.'
+    help = 'Removes facilitylistitems where facility_id is null, '
+    'removes matches with PENDING status more than thirty days, '
+    'removes facilitylistitems without matches and related facilities.'
 
     def handle(self, *args, **options):
-        print("Start removing facilitylistitems with potential match status more than thirty days...")
-        remove_facilitylistitems_with_potential_match_status_more_thirty_days()
+        clean_facilitylistitems()
