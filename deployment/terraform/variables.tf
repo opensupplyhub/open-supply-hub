@@ -402,6 +402,10 @@ variable "check_api_limits_schedule_expression" {
   default = "rate(1 hour)"
 }
 
+variable "clean_facilitylistitems_schedule_expression" {
+  default = "rate(1 day)"
+}
+
 variable "ec2_service_role_policy_arn" {
   default = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
 }

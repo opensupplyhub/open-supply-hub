@@ -47,3 +47,25 @@ resource "aws_cloudwatch_event_rule" "check_api_limits" {
   schedule_expression = var.check_api_limits_schedule_expression
 }
 
+resource "aws_cloudwatch_event_target" "clean_facilitylistitems" {
+  target_id = "eventTarget${local.short}CleanFacilityListItems"
+  rule      = aws_cloudwatch_event_rule.clean_facilitylistitems.name
+  arn       = aws_sfn_state_machine.app_cli.id
+  role_arn  = aws_iam_role.cloudwatch_events_service_role.arn
+
+  input = <<EOF
+{
+  "commands": [
+    "clean_facilitylistitems"
+  ]
+}
+EOF
+
+}
+
+resource "aws_cloudwatch_event_rule" "clean_facilitylistitems" {
+  name                = "eventRule${local.short}CleanFacilityListItems"
+  description         = "Run clean_facilitylistitems management command at a scheduled time (${var.clean_facilitylistitems_schedule_expression})"
+  schedule_expression = var.clean_facilitylistitems_schedule_expression
+}
+
