@@ -25,9 +25,11 @@ and receives information about merges that have occurred for the contributors wi
 
 ### Architecture/Environment changes
 * [OSDEV-1003](https://opensupplyhub.atlassian.net/browse/OSDEV-1003) - Added automatic building for the Logstash Docker image in the `Deploy to AWS` workflow. Refactored the `Deploy to AWS` workflow to remove redundant setting values for `build-args` of the `docker/build-push-action` action in cases where the values are not used.
+* [OSDEV-1004](https://opensupplyhub.atlassian.net/browse/OSDEV-1004) - Prepared the local environment setup for the Logstash and OpenSearch services to enable local development. Created a script to start the project from scratch with a database populated with sample data.
 
 ### Bugfix
 * [OSDEV-1056](https://opensupplyhub.atlassian.net/browse/OSDEV-1056) - Refactor OS Hub member's email anonymization.
+* [OSDEV-1022](https://opensupplyhub.atlassian.net/browse/OSDEV-1022) - Fix updating facility claim for user. Bring the format of extended field values to the same format as for List / API upload during processing. This has been done because extending fields processing is happening both for List / API uploading and claim update.
 * [OSDEV-788](https://opensupplyhub.atlassian.net/browse/OSDEV-788) - Re-written logic for New_Facility/Automatic_Match/Potential_Match when we collect & save data for FacilityListItemTemp/FacilityMatchTemp. That fixed issue with option `create` equal `False` for API requests.
 
 ### What's new

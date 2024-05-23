@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# Exit immediately if a command exits with a non-zero status.
+set -e
+
+function usage() {
+    echo -e \
+	"Usage: $(basename "$0")" \
+    "\nThis script starts up the local development environment with seeded" \
+    "data in the database."
+}
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    if [ "${1:-}" = "--help" ]; then
+        usage
+    else
+        # Build Docker images and create database structure.
+        echo "Building Docker images and creating database structure..."
+        ./scripts/update
+
+        # Populate database with seeded facility lists.
+        echo "Populating database with seeded facility lists..."
+        ./scripts/reset_database
+
+        # Start Docker DedupeHub and Kafka containers in the background for
+        # matching.
+        echo "Starting Docker DedupeHub and Kafka containers..."
+        docker compose up -d api-app init-kafka
+
+        # Wait for the services to be up and running (optional sleep to allow
+        # all containers to initialize).
+        echo "Waiting 60 seconds for services to be fully up and running..."
+        sleep 60
+
+        # Launch deduplication process of seeded lists to create new facilities.
+        echo "Launching deduplication process of seeded lists..."
+        ./scripts/manage matchfixtures
+
+        # Wait for the matching to finish.
+        echo "Waiting 60 seconds for matching to finish..."
+        sleep 60
+
+        # Launch the rest of the services, including Logstash and OpenSearch
+        # which should index the newly created facility data from the DB and
+        # save it to OpenSearch.
+        echo "Launching the rest of the services..."
+        docker compose up -d
+        
+        echo "Process completed successfully!"
+    fi
+fi
