@@ -1,5 +1,6 @@
-CREATE OR REPLACE FUNCTION remove_facilitylistitems_where_facility_id_is_null_and_related_data()
-RETURNS void AS $$
+CREATE OR REPLACE PROCEDURE remove_facilitylistitems_where_facility_id_is_null()
+LANGUAGE plpgsql
+AS $$
 BEGIN
     -- Update facility_id in api_facilitylistitem
     UPDATE api_facilitylistitem
@@ -52,6 +53,4 @@ BEGIN
     DROP TABLE IF EXISTS temporary_facility_list_item_ids;
     DROP TABLE IF EXISTS temporary_facility_list_item_temp_ids;
 END;
-$$ LANGUAGE plpgsql;
-
-SELECT remove_facilitylistitems_where_facility_id_is_null_and_related_data();
+$$;

@@ -1,5 +1,6 @@
-CREATE OR REPLACE FUNCTION remove_facilitylistitems_without_matches_and_facilities_created_from_them()
-RETURNS void AS $$
+CREATE OR REPLACE PROCEDURE remove_items_without_matches_and_related_facilities()
+LANGUAGE plpgsql
+AS $$
 BEGIN
     -- Create temporary tables to store the IDs of the items that do not have matches and are not have facilities created from them
     CREATE TEMPORARY TABLE temporary_facility_list_item_ids AS
@@ -55,6 +56,4 @@ BEGIN
     DROP TABLE IF EXISTS temporary_facility_list_item_temp_ids;
 
 END;
-$$ LANGUAGE plpgsql;
-
-SELECT remove_facilitylistitems_without_matches_and_facilities_created_from_them();
+$$;
