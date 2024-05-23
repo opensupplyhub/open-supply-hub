@@ -28,6 +28,7 @@ and receives information about merges that have occurred for the contributors wi
 
 ### Bugfix
 * [OSDEV-1056](https://opensupplyhub.atlassian.net/browse/OSDEV-1056) - Refactor OS Hub member's email anonymization.
+* [OSDEV-1022](https://opensupplyhub.atlassian.net/browse/OSDEV-1022) - Fix updating facility claim for user. Bring the format of extended field values to the same format as for List / API upload during processing. This has been done because extending fields processing is happening both for List / API uploading and claim update.
 
 ### What's new
 * [OSDEV-1049](https://opensupplyhub.atlassian.net/browse/OSDEV-1049) Update Release protocol.
