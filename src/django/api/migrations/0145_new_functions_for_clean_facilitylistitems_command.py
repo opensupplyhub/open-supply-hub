@@ -19,7 +19,7 @@ def create_strip_all_triggers_proc(apps, schema_editor):
 
 def drop_strip_all_triggers_proc(apps, schema_editor):
     with connection.cursor() as cursor:
-        cursor.execute('DROP proc IF EXISTS strip_all_triggers;')
+        cursor.execute('DROP procedure IF EXISTS strip_all_triggers;')
 
 
 def create_remove_items_where_facility_id_is_null_proc(apps, schema_editor):
@@ -29,7 +29,7 @@ def create_remove_items_where_facility_id_is_null_proc(apps, schema_editor):
 def drop_remove_items_where_facility_id_is_null_proc(apps, schema_editor):
     with connection.cursor() as cursor:
         cursor.execute(
-            'DROP proc IF EXISTS remove_items_where_facility_id_is_null;'
+            'DROP procedure IF EXISTS remove_items_where_facility_id_is_null;'
         )
 
 
@@ -39,7 +39,9 @@ def create_remove_old_pending_matches_proc(apps, schema_editor):
 
 def drop_remove_old_pending_matches_proc(apps, schema_editor):
     with connection.cursor() as cursor:
-        cursor.execute('DROP proc IF EXISTS ' 'remove_old_pending_matches;')
+        cursor.execute(
+            'DROP procedure IF EXISTS ' 'remove_old_pending_matches;'
+        )
 
 
 def create_remove_items_without_matches_and_related_facilities_proc(
@@ -55,7 +57,7 @@ def drop_remove_items_without_matches_and_related_facilities_proc(
 ):
     with connection.cursor() as cursor:
         cursor.execute(
-            'DROP proc IF EXISTS '
+            'DROP procedure IF EXISTS '
             'remove_items_without_matches_and_related_facilities;'
         )
 
