@@ -2,6 +2,7 @@ import json
 
 from api.models import FacilityClaim
 from api.models.facility.facility_index import FacilityIndex
+from api.extended_fields import create_extendedfields_for_claim
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 from waffle.testutils import override_switch
 
@@ -79,13 +80,22 @@ class IndexFacilitiesTest(FacilityAPITestCaseBase):
     #     self.assertEqual(len(facility_index.sector), 2)
 
     @override_switch("claim_a_facility", active=True)
-    def test_updating_claim_sector_updates_index(self):
+    def test_updating_claim_sector_and_production_types_updates_index(self):
+        facility_production_types_mocked = [
+            'advanced battery industry',
+            'batteries',
+            'energy storage',
+            'minerals',
+            'renewables'
+        ]
+
         claim_data = dict(
             contact_person="Name",
             phone_number=12345,
             company_name="Test",
             website="http://example.com",
             facility_description="description",
+            facility_production_types=facility_production_types_mocked,
         )
         facility_claim = FacilityClaim.objects.create(
             contributor=self.contributor,
@@ -93,6 +103,7 @@ class IndexFacilitiesTest(FacilityAPITestCaseBase):
             status=FacilityClaim.APPROVED,
             **claim_data,
         )
+        create_extendedfields_for_claim(facility_claim)
         self.join_group_and_login()
         response = self.client.put(
             "/api/facility-claims/{}/claimed/".format(facility_claim.id),
@@ -113,3 +124,10 @@ class IndexFacilitiesTest(FacilityAPITestCaseBase):
 
         facility_index = FacilityIndex.objects.get(id=self.facility.id)
         self.assertIn("Mining", facility_index.sector)
+        facility_production_types_processed = (
+            facility_index.approved_claim["facility_production_types"]
+        )
+        self.assertListEqual(
+            facility_production_types_mocked,
+            facility_production_types_processed
+        )
