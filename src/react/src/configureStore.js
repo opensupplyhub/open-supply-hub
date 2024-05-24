@@ -1,4 +1,5 @@
 import { compose, createStore, applyMiddleware } from 'redux';
+import { configureStore } from '@reduxjs/toolkit';
 import { createLogger } from 'redux-logger';
 import { persistStore } from 'redux-persist';
 import thunkMiddleware from 'redux-thunk';
@@ -24,3 +25,9 @@ const enhancer = composeEnhancers(applyMiddleware(...middleware));
 
 export const store = createStore(rootReducer, enhancer);
 export const persistor = persistStore(store);
+
+export const setupStore = preloadedState =>
+    configureStore({
+        reducer: rootReducer,
+        preloadedState,
+    });
