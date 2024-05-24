@@ -11,7 +11,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Database changes
 #### Migrations:
-* *Describe migrations here.*
+* 0145_new_functions_for_clean_facilitylistitems_command - introduced new sql functions for `clean_facilitylistitems` command:
+    - strip_all_triggers
+    - remove_items_where_facility_id_is_null
+    - remove_old_pending_matches
+    - remove_items_without_matches_and_related_facilities
 
 #### Scheme changes
 * *Describe scheme changes here.*
@@ -26,6 +30,14 @@ and receives information about merges that have occurred for the contributors wi
 ### Architecture/Environment changes
 * [OSDEV-1003](https://opensupplyhub.atlassian.net/browse/OSDEV-1003) - Added automatic building for the Logstash Docker image in the `Deploy to AWS` workflow. Refactored the `Deploy to AWS` workflow to remove redundant setting values for `build-args` of the `docker/build-push-action` action in cases where the values are not used.
 * [OSDEV-1004](https://opensupplyhub.atlassian.net/browse/OSDEV-1004) - Prepared the local environment setup for the Logstash and OpenSearch services to enable local development. Created a script to start the project from scratch with a database populated with sample data.
+* [OSDEV-1054](https://opensupplyhub.atlassian.net/browse/OSDEV-1054) - Added Django command 'clean_facilitylistitems' that make next steps:
+    - strip all triggers;
+    - remove facilitylistitems where facility_id is null;
+    - remove facilitylistitems with potential match status more than thirty days;
+    - remove facilitylistitems without matches and related facilities;
+    - run indexing facilities
+    - create all triggers;
+Added terraform configuration that will run `clean_facilitylistitems` command regularly once per day.
 
 ### Bugfix
 * [OSDEV-1056](https://opensupplyhub.atlassian.net/browse/OSDEV-1056) - Refactor OS Hub member's email anonymization.
