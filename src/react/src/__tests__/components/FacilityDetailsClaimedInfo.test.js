@@ -31,11 +31,11 @@ describe('FacilityDetailsClaimedInfo component', () => {
             country: 'Canada',
             phone_number: '+098 765 4321',
         },
-      }
+      };
 
       const { getByText } = renderWithProviders(
           <FacilityDetailsClaimedInfo data={ data } />
-      )
+      );
 
       const fieldsToTest = [
         data.facility.website,
@@ -51,9 +51,9 @@ describe('FacilityDetailsClaimedInfo component', () => {
         data.office.phone_number,
       ];
 
-      for (const fieldText of fieldsToTest) {
+      fieldsToTest.forEach(fieldText => {
         const textElement = getByText(fieldText, { exact: false });
         expect(textElement).toBeInTheDocument();
-      }
+      });
     })
 });
