@@ -62,7 +62,7 @@ export default function FacilityDetailsClaimedInfo({ data, formatListItem }) {
                 label="Minimum Order"
             />
             <ClaimInfoSection
-                value={facility.average_lead}
+                value={facility.average_lead_time}
                 label="Average Lead Time"
             />
             <ClaimInfoSection

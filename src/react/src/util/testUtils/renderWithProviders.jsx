@@ -1,12 +1,15 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { Provider } from 'react-redux';
-
-import { store } from '../../configureStore';
+import { setupStore } from '../../configureStore';
 
 const renderWithProviders = (
     ui,
-    { reduxStore = store, ...renderOptions } = {},
+    {
+        preloadedState = {},
+        reduxStore = setupStore(preloadedState),
+        ...renderOptions
+    } = {},
 ) => {
     const Wrapper = ({ children }) => (
         <Provider store={reduxStore}>{children}</Provider>
