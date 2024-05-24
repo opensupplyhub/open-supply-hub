@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE remove_matches_with_pending_status_more_thirty_days()
+CREATE OR REPLACE PROCEDURE remove_old_pending_matches()
 LANGUAGE plpgsql
 AS $$
 BEGIN

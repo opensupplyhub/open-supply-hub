@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE remove_facilitylistitems_where_facility_id_is_null()
+CREATE OR REPLACE PROCEDURE remove_items_where_facility_id_is_null()
 LANGUAGE plpgsql
 AS $$
 BEGIN
