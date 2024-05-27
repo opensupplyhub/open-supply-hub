@@ -37,7 +37,9 @@ def clean_facilitylistitems():
                 'Removing facilitylistitems without matches and related '
                 'facilities...'
             )
-            call_procedure(cursor, 'remove_items_without_matches_and_related_facilities')
+            call_procedure(
+                cursor, 'remove_items_without_matches_and_related_facilities'
+            )
             print(
                 'Facilitylistitems without matches and related facilities '
                 'removed.'
