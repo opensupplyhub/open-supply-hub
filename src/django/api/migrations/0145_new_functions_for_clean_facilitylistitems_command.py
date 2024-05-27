@@ -13,15 +13,6 @@ def execute_sql_from_file(file_name):
         cursor.execute(sql_statement)
 
 
-def create_strip_all_triggers_proc(apps, schema_editor):
-    execute_sql_from_file('strip_all_triggers.sql')
-
-
-def drop_strip_all_triggers_proc(apps, schema_editor):
-    with connection.cursor() as cursor:
-        cursor.execute('DROP procedure IF EXISTS strip_all_triggers;')
-
-
 def create_remove_items_where_facility_id_is_null_proc(apps, schema_editor):
     execute_sql_from_file('remove_items_where_facility_id_is_null.sql')
 
@@ -69,10 +60,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(
-            create_strip_all_triggers_proc,
-            drop_strip_all_triggers_proc,
-        ),
         migrations.RunPython(
             create_remove_items_where_facility_id_is_null_proc,
             drop_remove_items_where_facility_id_is_null_proc,
