@@ -11,8 +11,7 @@ BEGIN
     WHERE api_facilitylistitem.id = api_facility.created_from_id
     AND api_facilitylistitem.facility_id IS NULL;
 
-    -- Store IDs of api_facilitylistitem where facility_id is NULL and 
-    -- updated_at is more than 30 days ago in an array
+    -- Store IDs of api_facilitylistitem where facility_id is NULL and updated_at is more than 30 days ago in an array
     SELECT array_agg(id) INTO item_ids
     FROM api_facilitylistitem 
     WHERE facility_id IS NULL AND updated_at < (NOW() - INTERVAL '1 month');
