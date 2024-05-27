@@ -1,5 +1,11 @@
 import os
+import logging
 from django.db import transaction, connection
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 
 @transaction.atomic
@@ -15,43 +21,47 @@ def clean_facilitylistitems():
 
     with connection.cursor() as cursor:
         try:
-            print('Dropping table triggers...')
+            logging.info('Dropping table triggers...')
             execute_sql_file(cursor, 'drop_table_triggers.sql')
-            print('Table triggers dropped.')
+            logging.info('Table triggers dropped.')
 
-            print('Removing facilitylistitems where facility_id is null...')
+            logging.info(
+                'Removing facilitylistitems where facility_id is null...'
+            )
             call_procedure(cursor, 'remove_items_where_facility_id_is_null')
-            print('Facilitylistitems where facility_id is null removed.')
+            logging.info(
+                'Facilitylistitems where facility_id is null removed.'
+            )
 
-            print(
+            logging.info(
                 'Removing facilitylistitems with potential match status more '
                 'than thirty days...'
             )
             call_procedure(cursor, 'remove_old_pending_matches')
-            print(
+            logging.info(
                 'Facilitylistitems with potential match status more than '
                 'thirty days removed.'
             )
 
-            print(
+            logging.info(
                 'Removing facilitylistitems without matches and related '
                 'facilities...'
             )
             call_procedure(
                 cursor, 'remove_items_without_matches_and_related_facilities'
             )
-            print(
+            logging.info(
                 'Facilitylistitems without matches and related facilities '
                 'removed.'
             )
 
-            print('Creating table triggers...')
+            logging.info('Creating table triggers...')
             execute_sql_file(cursor, 'create_table_triggers.sql')
-            print('Table triggers created.')
+            logging.info('Table triggers created.')
 
-            print('Start indexing facilities...')
+            logging.info('Start indexing facilities...')
             call_procedure(cursor, 'index_facilities')
-            print('Facilities indexed.')
+            logging.info('Facilities indexed.')
 
         except Exception as error:
             print(f"An error occurred: {error}")
