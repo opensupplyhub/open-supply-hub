@@ -1,6 +1,9 @@
 CREATE OR REPLACE PROCEDURE remove_items_where_facility_id_is_null()
 LANGUAGE plpgsql
 AS $$
+DECLARE
+    item_ids INTEGER[];
+    item_temp_ids INTEGER[];
 BEGIN
     -- Update facility_id in api_facilitylistitem
     UPDATE api_facilitylistitem
@@ -9,48 +12,34 @@ BEGIN
     WHERE api_facilitylistitem.id = api_facility.created_from_id
     AND api_facilitylistitem.facility_id IS NULL;
 
-    -- Create temporary tables to store the IDs of the items that have facility_id as NULL
-    CREATE TEMPORARY TABLE temporary_facility_list_item_ids AS
-    SELECT id 
+    -- Store IDs of api_facilitylistitem where facility_id is NULL into an array
+    SELECT array_agg(id) INTO item_ids
     FROM api_facilitylistitem 
     WHERE facility_id IS NULL;
 
-    CREATE TEMPORARY TABLE temporary_facility_list_item_temp_ids AS
-    SELECT id
+    -- Store IDs of api_facilitylistitemtemp where facility_id is NULL into an array
+    SELECT array_agg(id) INTO item_temp_ids
     FROM api_facilitylistitemtemp 
     WHERE facility_id IS NULL;
 
-    -- Perform deletions using the temporary collected IDs table
+    -- Use the array of IDs to perform deletions
     DELETE FROM api_facilitymatch
-    WHERE facility_list_item_id IN (SELECT id FROM temporary_facility_list_item_ids);
+    WHERE facility_list_item_id = ANY(item_ids);
 
     DELETE FROM api_facilitylistitemfield
-    WHERE facility_list_item_id IN (SELECT id FROM temporary_facility_list_item_ids);
+    WHERE facility_list_item_id = ANY(item_ids);
 
     DELETE FROM api_extendedfield
-    WHERE facility_list_item_id IN (SELECT id FROM temporary_facility_list_item_ids);
+    WHERE facility_list_item_id = ANY(item_ids);
 
     DELETE FROM api_historicalfacilitymatch
-    WHERE facility_list_item_id IN (SELECT id FROM temporary_facility_list_item_ids);
+    WHERE facility_list_item_id = ANY(item_ids);
 
     DELETE FROM api_historicalextendedfield
-    WHERE facility_list_item_id IN (SELECT id FROM temporary_facility_list_item_ids);
+    WHERE facility_list_item_id = ANY(item_ids);
 
-    DELETE FROM api_facilitymatchtemp
-    WHERE facility_list_item_id IN (SELECT id FROM temporary_facility_list_item_temp_ids);
-
-    DELETE FROM api_historicalfacilitymatchtemp
-    WHERE facility_list_item_id IN (SELECT id FROM temporary_facility_list_item_temp_ids);
-
-    -- Delete the items that have facility_id as NULL
+    -- Delete the items that have facility_id as NULL using the stored IDs
     DELETE FROM api_facilitylistitem 
-    WHERE facility_id IS NULL;
-
-    DELETE FROM api_facilitylistitemtemp 
-    WHERE facility_id IS NULL;
-
-    -- Drop the temporary tables
-    DROP TABLE IF EXISTS temporary_facility_list_item_ids;
-    DROP TABLE IF EXISTS temporary_facility_list_item_temp_ids;
+    WHERE id = ANY(item_ids);
 END;
 $$;
