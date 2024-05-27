@@ -14,7 +14,7 @@ def execute_sql_from_file(file_name):
 
 
 def create_remove_items_where_facility_id_is_null_proc(apps, schema_editor):
-    execute_sql_from_file('remove_items_where_facility_id_is_null.sql')
+    execute_sql_from_file('0145_remove_items_where_facility_id_is_null.sql')
 
 
 def drop_remove_items_where_facility_id_is_null_proc(apps, schema_editor):
@@ -25,7 +25,7 @@ def drop_remove_items_where_facility_id_is_null_proc(apps, schema_editor):
 
 
 def create_remove_old_pending_matches_proc(apps, schema_editor):
-    execute_sql_from_file('remove_old_pending_matches.sql')
+    execute_sql_from_file('0145_remove_old_pending_matches.sql')
 
 
 def drop_remove_old_pending_matches_proc(apps, schema_editor):
@@ -39,7 +39,7 @@ def create_remove_items_without_matches_and_related_facilities_proc(
     apps, schema_editor
 ):
     execute_sql_from_file(
-        'remove_items_without_matches_and_related_facilities.sql'
+        '0145_remove_items_without_matches_and_related_facilities.sql'
     )
 
 
