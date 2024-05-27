@@ -45,4 +45,4 @@ resource "aws_cloudwatch_event_rule" "check_api_limits" {
   name                = "eventRule${local.short}CheckAPILimits"
   description         = "Run check_api_limits management command at a scheduled time (${var.check_api_limits_schedule_expression})"
   schedule_expression = var.check_api_limits_schedule_expression
-} 
+}
