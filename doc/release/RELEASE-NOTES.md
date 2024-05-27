@@ -35,9 +35,8 @@ and receives information about merges that have occurred for the contributors wi
     - remove facilitylistitems where facility_id is null;
     - remove facilitylistitems with potential match status more than thirty days;
     - remove facilitylistitems without matches and related facilities;
-    - run indexing facilities
     - create all triggers;
-Added terraform configuration that will run `clean_facilitylistitems` command regularly once per day.
+    - run indexing facilities
 
 ### Bugfix
 * [OSDEV-1056](https://opensupplyhub.atlassian.net/browse/OSDEV-1056) - Refactor OS Hub member's email anonymization.
