@@ -1,23 +1,33 @@
+import os
 from django.db import transaction, connection
 
 
 @transaction.atomic
 def clean_facilitylistitems():
-    with connection.cursor() as c:
+    def execute_sql_file(cursor, file_name):
+        file_path = os.path.join('./sqls/', file_name)
+        with open(file_path, 'r') as sql_file:
+            sql_statement = sql_file.read()
+            cursor.execute(sql_statement)
+
+    def call_procedure(cursor, procedure_name):
+        cursor.execute(f"CALL {procedure_name}();")
+
+    with connection.cursor() as cursor:
         try:
-            print('Stripping all triggers...')
-            c.execute("call strip_all_triggers();")
-            print('All triggers stripped.')
+            print('Dropping table triggers...')
+            execute_sql_file(cursor, 'drop_table_triggers.sql')
+            print('Table triggers dropped.')
 
             print('Removing facilitylistitems where facility_id is null...')
-            c.execute("call remove_items_where_facility_id_is_null();")
-            print('Facilitylistitems where facility_id is null and removed.')
+            call_procedure(cursor, 'remove_items_where_facility_id_is_null')
+            print('Facilitylistitems where facility_id is null removed.')
 
             print(
                 'Removing facilitylistitems with potential match status more '
                 'than thirty days...'
             )
-            c.execute("call remove_old_pending_matches();")
+            call_procedure(cursor, 'remove_old_pending_matches')
             print(
                 'Facilitylistitems with potential match status more than '
                 'thirty days removed.'
@@ -27,23 +37,22 @@ def clean_facilitylistitems():
                 'Removing facilitylistitems without matches and related '
                 'facilities...'
             )
-            c.execute(
-                "call remove_items_without_matches_and_related_facilities();"
-            )
+            call_procedure(cursor, 'remove_items_without_matches_and_related_facilities')
             print(
                 'Facilitylistitems without matches and related facilities '
                 'removed.'
             )
 
+            print('Creating table triggers...')
+            execute_sql_file(cursor, 'create_table_triggers.sql')
+            print('Table triggers created.')
+
             print('Start indexing facilities...')
-            c.execute("call index_facilities();")
+            call_procedure(cursor, 'index_facilities')
             print('Facilities indexed.')
 
-            print('Creating all triggers...')
-            c.execute("call perform_contributor_indexing();")
-            print('All triggers created.')
-
         except Exception as error:
-            print(error)
+            print(f"An error occurred: {error}")
+
         finally:
-            c.close()
+            cursor.close()
