@@ -24,9 +24,6 @@ BEGIN
     DELETE FROM api_extendedfield
     WHERE facility_list_item_id = ANY(item_ids);
 
-    DELETE FROM api_historicalfacilitymatch
-    WHERE facility_list_item_id = ANY(item_ids);
-
     DELETE FROM api_historicalextendedfield
     WHERE facility_list_item_id = ANY(item_ids);
 
