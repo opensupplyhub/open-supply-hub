@@ -52,6 +52,7 @@ and receives information about merges that have occurred for the contributors wi
 
 ### Release instructions:
 * Update code.
+* Apply DB migrations up to the latest one.
 
 ## Release 1.12.0
 
