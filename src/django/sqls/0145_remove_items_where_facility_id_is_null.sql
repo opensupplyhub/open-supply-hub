@@ -14,7 +14,9 @@ BEGIN
     -- Store IDs of api_facilitylistitem where facility_id is NULL and updated_at is more than 30 days ago in an array
     SELECT array_agg(id) INTO item_ids
     FROM api_facilitylistitem 
-    WHERE facility_id IS NULL AND updated_at < (NOW() - INTERVAL '30 days');
+    WHERE facility_id IS NULL 
+    AND updated_at < (NOW() - INTERVAL '30 days')
+    AND api_facilitylistitem.status NOT IN ('UPLOADED', 'PARSED', 'GEOCODED');;
 
     -- Use the array of IDs to perform deletions
     DELETE FROM api_facilitymatch

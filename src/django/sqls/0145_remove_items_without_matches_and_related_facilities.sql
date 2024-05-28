@@ -16,7 +16,8 @@ BEGIN
         FROM api_facility
         WHERE api_facility.created_from_id = api_facilitylistitem.id
     )
-    AND api_facilitylistitem.updated_at < (NOW() - INTERVAL '30 days');
+    AND api_facilitylistitem.updated_at < (NOW() - INTERVAL '30 days')
+    AND api_facilitylistitem.status NOT IN ('UPLOADED', 'PARSED', 'GEOCODED');
 
     -- Perform deletions using the stored arrays of IDs
     DELETE FROM api_facilitylistitemfield
