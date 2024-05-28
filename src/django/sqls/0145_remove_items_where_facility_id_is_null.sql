@@ -16,7 +16,7 @@ BEGIN
     FROM api_facilitylistitem 
     WHERE facility_id IS NULL 
     AND updated_at < (NOW() - INTERVAL '30 days')
-    AND api_facilitylistitem.status NOT IN ('UPLOADED', 'PARSED', 'GEOCODED');;
+    AND api_facilitylistitem.status NOT IN ('UPLOADED', 'PARSED', 'GEOCODED');
 
     -- Use the array of IDs to perform deletions
     DELETE FROM api_facilitymatch
