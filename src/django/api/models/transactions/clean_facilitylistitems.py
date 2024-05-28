@@ -11,7 +11,7 @@ logging.basicConfig(
 @transaction.atomic
 def clean_facilitylistitems():
     def execute_sql_file(cursor, file_name):
-        file_path = os.path.join('./sqls/', file_name)
+        file_path = os.path.join('./sqls/table_triggers', file_name)
         with open(file_path, 'r') as sql_file:
             sql_statement = sql_file.read()
             cursor.execute(sql_statement)
