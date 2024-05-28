@@ -16,7 +16,7 @@ BEGIN
         FROM api_facility
         WHERE api_facility.created_from_id = api_facilitylistitem.id
     )
-    AND api_facilitylistitem.updated_at < (NOW() - interval '1 month');
+    AND api_facilitylistitem.updated_at < (NOW() - INTERVAL '30 days');
 
     -- Perform deletions using the stored arrays of IDs
     DELETE FROM api_facilitylistitemfield
