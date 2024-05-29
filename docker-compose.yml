@@ -1,20 +1,17 @@
 services:
   database:
-    image: quay.io/azavea/postgis:3-postgres12.4-slim
-    shm_size: "2gb"
-    environment:
-      - POSTGRES_USER=openapparelregistry
-      - POSTGRES_PASSWORD=openapparelregistry
-      - POSTGRES_DB=openapparelregistry
+    build:
+      context: ./src/database
+      dockerfile: Dockerfile.local
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "openapparelregistry"]
+      test: ["CMD", "pg_isready", "-U", "opensupplyhub"]
       interval: 3s
       timeout: 3s
       retries: 3
     volumes:
       - ./dumps:/dumps
     ports:
-      - "5432:5432"
+      - 5432:5432
 
   memcached:
     image: memcached:1.6-alpine
@@ -26,9 +23,9 @@ services:
     environment:
       - POSTGRES_HOST=database
       - POSTGRES_PORT=5432
-      - POSTGRES_USER=openapparelregistry
-      - POSTGRES_PASSWORD=openapparelregistry
-      - POSTGRES_DB=openapparelregistry
+      - POSTGRES_USER=opensupplyhub
+      - POSTGRES_PASSWORD=opensupplyhub
+      - POSTGRES_DB=opensupplyhub
       - CACHE_HOST=memcached
       - CACHE_PORT=11211
       - DJANGO_ENV=Development
@@ -150,9 +147,9 @@ services:
       - ROLLBAR_SERVER_SIDE_ACCESS_TOKEN=""
       - POSTGRES_HOST=database
       - POSTGRES_PORT=5432
-      - POSTGRES_USER=openapparelregistry
-      - POSTGRES_PASSWORD=openapparelregistry
-      - POSTGRES_DB=openapparelregistry
+      - POSTGRES_USER=opensupplyhub
+      - POSTGRES_PASSWORD=opensupplyhub
+      - POSTGRES_DB=opensupplyhub
       - GIT_COMMIT=Unknown
     command: uvicorn app.main:app --host 0.0.0.0 --port 84 --workers 1
 
