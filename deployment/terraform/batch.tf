@@ -81,8 +81,9 @@ data "template_file" "default_job_definition" {
 }
 
 resource "aws_batch_job_definition" "default" {
-  name = "job${local.short}Default"
-  type = "container"
+  name           = "job${local.short}Default"
+  type           = "container"
+  propagate_tags = false
 
   container_properties = data.template_file.default_job_definition.rendered
 
@@ -173,8 +174,9 @@ data "template_file" "notifications_job_definition" {
 }
 
 resource "aws_batch_job_definition" "notifications" {
-  name = "job${local.short}Notifications"
-  type = "container"
+  name           = "job${local.short}Notifications"
+  type           = "container"
+  propagate_tags = false
 
   container_properties = data.template_file.notifications_job_definition.rendered
 
