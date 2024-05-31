@@ -588,6 +588,44 @@ export const claimAFacilityFormFields = Object.freeze({
     }),
 });
 
+export const claimAFacilitySupportDocsFormFields = Object.freeze({
+    contactYourName: Object.freeze({
+        id: 'contact-your-name',
+        label: 'Your Name:',
+    }),
+    contactYourTitle: Object.freeze({
+        id: 'contact-your-title',
+        label: 'Your Title:',
+    }),
+    contactYourBusinessWebsite: Object.freeze({
+        id: 'contact-your-business-website',
+        label: 'Business Website (e.g. a page that lists your name and title):',
+    }),
+    contactBusinessWebsite: Object.freeze({
+        id: 'business-website',
+        label:
+            'Business Website (e.g. a page that lists the production location’s name and address): ',
+    }),
+    contactBusinessLinkedinProfile: Object.freeze({
+        id: 'business-linkedin-profile',
+        label: 'Business LinkedIn Profile:',
+    }),
+    yourAdditionalDocumentationTitle: Object.freeze({
+        id: 'your-additional-documentation-title',
+        label: 'Additional Documentation:',
+    }),
+    businessAdditionalDocumentationTitle: Object.freeze({
+        id: 'business-additional-documentation-title',
+        label:
+            'Additional Documentation (e.g. utility bill, business registration document):',
+    }),
+    additionalDocumentationSub: Object.freeze({
+        id: 'additional-documentation-sub',
+        label:
+            'Documentation is only used by our internal team to confirm information about your production location; these documents will never be shared externally.',
+    }),
+});
+
 export const GRID_COLOR_RAMP = Object.freeze([
     [0, '#C0EBC7'],
     [10, '#81D690'],

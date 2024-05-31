@@ -81,6 +81,27 @@ export const failSubmitClaimAFacilityData = createAction(
 export const completeSubmitClaimAFacilityData = createAction(
     'COMPLETE_SUBMIT_CLAIM_A_FACILITY_DATA',
 );
+export const updateClaimAFacilityYourName = createAction(
+    'UPDATE_CLAIM_A_FACILITY_YOUR_NAME',
+);
+export const updateClaimAFacilityYourTitle = createAction(
+    'UPDATE_CLAIM_A_FACILITY_YOUR_TITLE',
+);
+export const updateClaimAFacilityYourBusinessWebsite = createAction(
+    'UPDATE_CLAIM_A_FACILITY_YOUR_BUSINESS_WEBSITE',
+);
+export const updateClaimAFacilityBusinessWebsite = createAction(
+    'UPDATE_CLAIM_A_FACILITY_BUSINESS_WEBSITE',
+);
+export const updateClaimAFacilityBusinessLinkedinProfile = createAction(
+    'UPDATE_CLAIM_A_FACILITY_YOUR_BUSINESS_LINKEDIN_PROFILE',
+);
+export const updateClaimAFacilityYourUploadFiles = createAction(
+    'UPDATE_CLAIM_A_FACILITY_YOUR_UPLOAD_FILES',
+);
+export const updateClaimAFacilityBusinessUploadFiles = createAction(
+    'UPDATE_CLAIM_A_FACILITY_BUSINESS_UPLOAD_FILES',
+);
 
 export function submitClaimAFacilityData(osID) {
     return (dispatch, getState) => {

@@ -909,6 +909,9 @@ export const claimFacilityContactInfoStepIsValid = ({
 }) =>
     every([!isEmpty(contactPerson), !isEmpty(phoneNumber), !isEmpty(jobTitle)]);
 
+export const claimFacilitySupportDocsIsValid = ({ yourName, yourTitle }) =>
+    every([!isEmpty(yourName), !isEmpty(yourTitle)]);
+
 export const isValidFacilityURL = url =>
     isEmpty(url) || isURL(url, { protocols: ['http', 'https'] });
 

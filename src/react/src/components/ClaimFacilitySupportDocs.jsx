@@ -1,0 +1,256 @@
+import React from 'react';
+import { bool, func, string } from 'prop-types';
+import { connect } from 'react-redux';
+import Typography from '@material-ui/core/Typography';
+import TextField from '@material-ui/core/TextField';
+import InputLabel from '@material-ui/core/InputLabel';
+import isEmpty from 'lodash/isEmpty';
+
+import RequiredAsterisk from './RequiredAsterisk';
+
+import ClaimAttachmentsUploader from './ClaimAttachmentsUploader';
+
+import {
+    updateClaimAFacilityYourName,
+    updateClaimAFacilityYourTitle,
+    updateClaimAFacilityYourBusinessWebsite,
+    updateClaimAFacilityBusinessWebsite,
+    updateClaimAFacilityBusinessLinkedinProfile,
+} from '../actions/claimFacility.js';
+
+import { getValueFromEvent } from '../util/util';
+
+import { claimAFacilitySupportDocsFormStyles } from '../util/styles';
+
+import { claimAFacilitySupportDocsFormFields } from '../util/constants';
+
+import COLOURS from '../util/COLOURS';
+
+const yourContactInfoTitleStyle = Object.freeze({
+    paddingTop: '30px',
+    paddingBottom: '10px',
+    color: COLOURS.NEAR_BLACK,
+    fontWeight: 'bold',
+});
+
+const yourContactInfoDescStyle = Object.freeze({
+    fontWeight: 'bold',
+});
+
+const {
+    contactYourName,
+    contactYourTitle,
+    contactYourBusinessWebsite,
+    yourAdditionalDocumentationTitle,
+    businessAdditionalDocumentationTitle,
+    additionalDocumentationSub,
+    contactBusinessWebsite,
+    contactBusinessLinkedinProfile,
+} = claimAFacilitySupportDocsFormFields;
+
+const ClaimFacilitySupportDocs = ({
+    yourName,
+    updateYourName,
+    yourTitle,
+    updateYourTitle,
+    yourBusinessWebsite,
+    updateYourBusinessWebsite,
+    businessWebsite,
+    updateBusinessWebsite,
+    businessLinkedinProfile,
+    updateBusinessLinkedinProfile,
+    fetching,
+}) => (
+    <>
+        <div>
+            <Typography variant="display3" style={yourContactInfoTitleStyle}>
+                Supporting Documentation
+            </Typography>
+            <Typography variant="heading" style={yourContactInfoDescStyle}>
+                Use the form below to complete your claim request.
+            </Typography>
+        </div>
+        <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
+            <Typography variant="display1" style={yourContactInfoTitleStyle}>
+                Your Contact Information
+                <RequiredAsterisk />
+            </Typography>
+            <Typography variant="heading" style={yourContactInfoDescStyle}>
+                To confirm your affiliation with this production location, your
+                name and job title are required in addition to one of the
+                following: business website showing your name and title,
+                employment badge, letter of employment, or other relevant
+                employment documentation.
+            </Typography>
+        </div>
+        <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
+            <InputLabel htmlFor={contactYourName.id}>
+                <Typography variant="title">
+                    {contactYourName.label}
+                    <RequiredAsterisk />
+                </Typography>
+            </InputLabel>
+            <TextField
+                autoFocus
+                error={isEmpty(yourName)}
+                id={contactYourName.id}
+                variant="outlined"
+                style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
+                value={yourName}
+                onChange={updateYourName}
+                disabled={fetching}
+            />
+        </div>
+        <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
+            <InputLabel htmlFor={contactYourTitle.id}>
+                <Typography variant="title">
+                    {contactYourTitle.label}
+                    <RequiredAsterisk />
+                </Typography>
+            </InputLabel>
+            <TextField
+                error={isEmpty(yourTitle)}
+                id={contactYourTitle.id}
+                variant="outlined"
+                style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
+                value={yourTitle}
+                onChange={updateYourTitle}
+                disabled={fetching}
+            />
+        </div>
+        <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
+            <InputLabel htmlFor={contactYourBusinessWebsite.id}>
+                <Typography variant="title">
+                    {contactYourBusinessWebsite.label}
+                </Typography>
+            </InputLabel>
+            <TextField
+                id={contactYourBusinessWebsite.id}
+                variant="outlined"
+                style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
+                value={yourBusinessWebsite}
+                onChange={updateYourBusinessWebsite}
+                disabled={fetching}
+            />
+        </div>
+        <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
+            <Typography variant="title">
+                {yourAdditionalDocumentationTitle.label}
+            </Typography>
+            <Typography variant="subheading">
+                {additionalDocumentationSub.label}
+            </Typography>
+            <ClaimAttachmentsUploader />
+        </div>
+        <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
+            <Typography variant="display1" style={yourContactInfoTitleStyle}>
+                Business Contact Information
+                <RequiredAsterisk />
+            </Typography>
+            <Typography variant="heading" style={yourContactInfoDescStyle}>
+                To confirm the name and address of the production location, at
+                least one of the following documents is required: utility bill,
+                business website, registration document, or LinkedIn profile.
+            </Typography>
+            <Typography variant="heading" style={yourContactInfoDescStyle}>
+                Please make sure to provide enough documentation to confirm the
+                production location’s name AND address.
+            </Typography>
+        </div>
+        <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
+            <InputLabel htmlFor={contactBusinessWebsite.id}>
+                <Typography variant="title">
+                    {contactBusinessWebsite.label}
+                </Typography>
+            </InputLabel>
+            <TextField
+                id={contactBusinessWebsite.id}
+                variant="outlined"
+                style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
+                value={businessWebsite}
+                onChange={updateBusinessWebsite}
+                disabled={fetching}
+            />
+        </div>
+        <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
+            <InputLabel htmlFor={contactBusinessLinkedinProfile.id}>
+                <Typography variant="title">
+                    {contactBusinessLinkedinProfile.label}
+                </Typography>
+            </InputLabel>
+            <TextField
+                id={contactBusinessLinkedinProfile.id}
+                variant="outlined"
+                style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
+                value={businessLinkedinProfile}
+                onChange={updateBusinessLinkedinProfile}
+                disabled={fetching}
+            />
+        </div>
+        <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
+            <Typography variant="title">
+                {businessAdditionalDocumentationTitle.label}
+            </Typography>
+            <Typography variant="subheading">
+                {additionalDocumentationSub.label}
+            </Typography>
+            <ClaimAttachmentsUploader />
+        </div>
+    </>
+);
+
+ClaimFacilitySupportDocs.propTypes = {
+    yourName: string.isRequired,
+    updateYourName: func.isRequired,
+    yourTitle: string.isRequired,
+    updateYourTitle: func.isRequired,
+    yourBusinessWebsite: string.isRequired,
+    updateYourBusinessWebsite: func.isRequired,
+    businessWebsite: string.isRequired,
+    updateBusinessWebsite: func.isRequired,
+    businessLinkedinProfile: string.isRequired,
+    updateBusinessLinkedinProfile: func.isRequired,
+    fetching: bool.isRequired,
+};
+
+const mapStateToProps = ({
+    claimFacility: {
+        claimData: {
+            formData: {
+                yourName,
+                yourTitle,
+                yourBusinessWebsite,
+                businessWebsite,
+                businessLinkedinProfile,
+            },
+            fetching,
+        },
+    },
+}) => ({
+    yourName,
+    yourTitle,
+    yourBusinessWebsite,
+    businessWebsite,
+    businessLinkedinProfile,
+    fetching,
+});
+
+const mapDispatchToProps = dispatch => ({
+    updateYourName: e =>
+        dispatch(updateClaimAFacilityYourName(getValueFromEvent(e))),
+    updateYourTitle: e =>
+        dispatch(updateClaimAFacilityYourTitle(getValueFromEvent(e))),
+    updateYourBusinessWebsite: e =>
+        dispatch(updateClaimAFacilityYourBusinessWebsite(getValueFromEvent(e))),
+    updateBusinessWebsite: e =>
+        dispatch(updateClaimAFacilityBusinessWebsite(getValueFromEvent(e))),
+    updateBusinessLinkedinProfile: e =>
+        dispatch(
+            updateClaimAFacilityBusinessLinkedinProfile(getValueFromEvent(e)),
+        ),
+});
+
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps,
+)(ClaimFacilitySupportDocs);
