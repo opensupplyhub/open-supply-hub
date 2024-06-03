@@ -103,6 +103,14 @@ export const updateClaimAFacilityBusinessUploadFiles = createAction(
     'UPDATE_CLAIM_A_FACILITY_BUSINESS_UPLOAD_FILES',
 );
 
+export const updateClaimASector = createAction('UPDATE_CLAIM_A_SECTOR');
+export const updateClaimANumberOfWorkers = createAction(
+    'UPDATE_CLAIM_A_NUMBER_OF_WORKERS',
+);
+export const updateClaimALocalLanguageName = createAction(
+    'UPDATE_CLAIM_A_LOCAL_LANGUAGE_NAME',
+);
+
 export function submitClaimAFacilityData(osID) {
     return (dispatch, getState) => {
         const {

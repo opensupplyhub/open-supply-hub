@@ -626,6 +626,36 @@ export const claimAFacilitySupportDocsFormFields = Object.freeze({
     }),
 });
 
+export const claimAFacilityAdditionalDataFormFields = Object.freeze({
+    sectors: Object.freeze({
+        id: 'sectors',
+        label: 'Sector(s)',
+    }),
+    sectorsDecs: Object.freeze({
+        id: 'sectors-desc',
+        label:
+            'Select or enter the sector(s) that this location operates in; e.g.: “Apparel”,”Electronics”,”Renewable Energy”.',
+    }),
+    numberOfWorkers: Object.freeze({
+        id: 'number-of-workers',
+        label: 'Number of Workers',
+    }),
+    numberOfWorkersDesc: Object.freeze({
+        id: 'number-of-workers-desc',
+        label:
+            'Enter a number or a range for the number of people employed at the location; e.g.: “100”, “100-150”.',
+    }),
+    localLanguageName: Object.freeze({
+        id: 'local-language-name',
+        label: 'Local Language Name',
+    }),
+    localLanguageNameDesc: Object.freeze({
+        id: 'local-language-name-desc',
+        label:
+            'Enter the name of the production location in the language that is spoken in the local area.',
+    }),
+});
+
 export const GRID_COLOR_RAMP = Object.freeze([
     [0, '#C0EBC7'],
     [10, '#81D690'],

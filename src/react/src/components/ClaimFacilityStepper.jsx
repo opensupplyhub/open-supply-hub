@@ -14,7 +14,8 @@ import stubTrue from 'lodash/stubTrue';
 import BadgeClaimed from './BadgeClaimed';
 import ClaimFacilityIntroStep from './ClaimFacilityIntroStep';
 // import ClaimFacilityContactInfoStep from './ClaimFacilityContactInfoStep';
-import ClaimFacilitySupportDocs from './ClaimFacilitySupportDocs';
+// import ClaimFacilitySupportDocs from './ClaimFacilitySupportDocs';
+import ClaimFacilityAdditionalData from './ClaimFacilityAdditionalData';
 import ClaimFacilityFacilityInfoStep from './ClaimFacilityFacilityInfoStep';
 import ClaimFacilityVerificationInfoStep from './ClaimFacilityVerificationInfoStep';
 import ClaimFacilityConfirmationStep from './ClaimFacilityConfirmationStep';
@@ -25,7 +26,7 @@ import COLOURS from '../util/COLOURS';
 
 import {
     // claimFacilityContactInfoStepIsValid,
-    claimFacilitySupportDocsIsValid,
+    // claimFacilitySupportDocsIsValid,
     claimFacilityFacilityInfoStepIsValid,
     claimAFacilityFormIsValid,
 } from '../util/util';
@@ -64,11 +65,11 @@ const steps = Object.freeze([
     }),
     Object.freeze({
         name: 'Contact Information',
-        component: ClaimFacilitySupportDocs,
+        component: ClaimFacilityAdditionalData,
         next: 'Facility Information',
         hasBackButton: true,
         hasNextButton: true,
-        stepInputIsValid: claimFacilitySupportDocsIsValid,
+        stepInputIsValid: stubTrue,
     }),
     Object.freeze({
         name: 'Facility Information',
