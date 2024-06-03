@@ -74,3 +74,8 @@ resource "aws_opensearch_domain" "opensearch" {
     security_group_ids = [aws_security_group.opensearch.id]
   }
 }
+
+output "opensearch_vpc_endpoint" {
+  value       = aws_opensearch_domain.opensearch.endpoint
+  description = "The VPC endpoint URL for the OpenSearch domain."
+}
