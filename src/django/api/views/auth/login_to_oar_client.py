@@ -33,7 +33,7 @@ class LoginToOARClient(LoginView):
             email_address.send_confirmation(request)
 
             raise AuthenticationFailed(
-                'Account is not verified. '
+                'Your account is not verified. '
                 'Check your email for a confirmation link.'
             )
 
