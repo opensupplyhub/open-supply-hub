@@ -5,7 +5,6 @@
       "cpu": 0,
       "command": [],
       "environment": [
-        { "name": "ENV", "value": "${env}" },
         { "name": "POSTGRES_HOST", "value": "${postgres_host}" },
         { "name": "POSTGRES_PORT", "value": "${postgres_port}" },
         { "name": "POSTGRES_USER", "value": "${postgres_user}" },
