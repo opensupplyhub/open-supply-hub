@@ -17,7 +17,8 @@ class LoginToOARClient(LoginView):
         if email is None or password is None:
             raise AuthenticationFailed('Email and password are required')
 
-        user = authenticate(email=email.lower(), password=password)
+        email = email.lower()
+        user = authenticate(email=email, password=password)
 
         if user is None:
             raise AuthenticationFailed(
