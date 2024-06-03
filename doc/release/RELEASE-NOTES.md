@@ -24,7 +24,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1069](https://opensupplyhub.atlassian.net/browse/OSDEV-1069) - The following changes have been made:
     * Changed the Postgres Docker image for the database to use the official one and make the local database setup platform-agnostic, so it doesn't depend on the processor architecture.
     * Built the PostGIS program from source and installed it to avoid LLVM-related errors inside the database Docker container during local development.
-    * Added the `--if-exists` flag to all calls of the `pg_restore` command to eliminate spam errors when it tries to delete resources that don't exist just because the DB can be empty.
 
 ### Bugfix
 * *Describe bugfix here.*
