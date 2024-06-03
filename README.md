@@ -70,7 +70,7 @@ open http://localhost:6543
 3. Place it in `./dumps/` folder
 4. Then run in the terminal of your machine
 ```
-docker compose exec -T database pg_restore --verbose --clean --if-exists --no-acl --no-owner -d opensupplyhub -U opensupplyhub < ./dumps/[dump_name].dump
+docker compose exec -T database pg_restore --verbose --clean --no-acl --no-owner -d opensupplyhub -U opensupplyhub < ./dumps/[dump_name].dump
 ```
 
 ### Creation of Superusers
