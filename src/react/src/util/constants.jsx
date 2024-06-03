@@ -832,12 +832,14 @@ export const FooterLinks = [
         href: 'https://share.hsforms.com/1bQwXClZUTjihXk3wt1SX2Abujql',
     },
     { label: 'FAQs', href: `${InfoLink}/${InfoPaths.faqs}` },
-    { label: 'Privacy Policy', href: `${InfoLink}/${InfoPaths.privacyPolicy}` },
+    { label: 'Careers', href: `${InfoLink}/work-with-us` },
     { label: 'Media Hub', href: `${InfoLink}/${InfoPaths.mediaHub}` },
+    { label: 'Blog', href: OS_HUB_BLOG_LINK },
     {
         label: 'Terms of Service',
         href: `${InfoLink}/${InfoPaths.termsOfService}`,
     },
+    { label: 'Privacy Policy', href: `${InfoLink}/${InfoPaths.privacyPolicy}` },
     { label: 'Reporting Line', href: 'https://opensupplyhub.allvoices.co/' },
     { label: 'Contact Us', href: `${InfoLink}/${InfoPaths.contactUs}` },
 ];
