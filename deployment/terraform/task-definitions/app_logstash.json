@@ -4,7 +4,9 @@
       "image": "${image}",
       "cpu": 0,
       "command": [],
-      "environment": [],
+      "environment": [
+        { "name": "OPENSEARCH_ENDPOINT", "value": "${opensearch_endpoint}" }
+      ],
       "logConfiguration": {
           "logDriver": "awslogs",
           "options": {

@@ -183,6 +183,9 @@ services:
     build:
       context: ./src/logstash
       dockerfile: Dockerfile
+    environment:
+      - "OPENSEARCH_ENDPOINT=http://opensearch-single-node:9200"
+
     depends_on:
       - opensearch-single-node
       - database

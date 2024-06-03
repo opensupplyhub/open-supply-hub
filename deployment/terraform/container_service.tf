@@ -380,6 +380,7 @@ data "template_file" "app_logstash" {
     image                            = local.app_logstash_image
     log_group_name                   = "log${local.short}AppLogstash"
     aws_region                       = var.aws_region
+    opensearch_endpoint              = aws_opensearch_domain.opensearch.endpoint
   }
 }
 

@@ -72,13 +72,6 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
 
-      - name: Capture OpenSearch Endpoint
-        id: capture_output
-        run: |
-          echo "Fetching the OpenSearch VPC endpoint..."
-          OPENSEARCH_ENDPOINT=$(terraform output -raw opensearch_vpc_endpoint)
-          echo "OpenSearch VPC Endpoint is ${OPENSEARCH_ENDPOINT}"
-
       - name: Copy planfile to S3 bucket for ${{ vars.ENV_NAME }}
         run: aws s3 cp "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfplan" "s3://${{ env.SETTINGS_BUCKET }}/terraform/${{ env.SETTINGS_BUCKET }}.tfplan"
         env:
