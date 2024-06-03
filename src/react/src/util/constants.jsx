@@ -607,6 +607,8 @@ export const minimum100PercentWidthEmbedHeight = '500px';
 
 export const DONATE_LINK = 'https://givebutter.com/opensupplyhub2022';
 
+export const OS_HUB_BLOG_LINK = 'https://blog.opensupplyhub.org';
+
 export const NavbarItems = [
     {
         type: 'link',
@@ -634,8 +636,8 @@ export const NavbarItems = [
                         },
                         {
                             type: 'button',
-                            label: 'Donate',
-                            href: DONATE_LINK,
+                            label: 'Blog',
+                            href: OS_HUB_BLOG_LINK,
                         },
                     ],
                 },
