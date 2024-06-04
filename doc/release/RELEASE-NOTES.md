@@ -27,9 +27,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Bugfix
 * [OSDEV-1019](https://opensupplyhub.atlassian.net/browse/OSDEV-1019) - Fixed an error message to 'Your account is not verified. Check your email for a confirmation link.' when a user tries to log in with an uppercase letter in the email address and their account has not been activated through the confirmation link.
 
-### Bugfix
-* *Describe bugfix here.*
-
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
 
