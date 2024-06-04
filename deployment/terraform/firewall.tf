@@ -332,6 +332,16 @@ resource "aws_security_group_rule" "app_logstash_egress" {
   source_security_group_id = module.database_enc.database_security_group_id
 }
 
+resource "aws_security_group_rule" "app_logstash_opensearch_egress" {
+  type      = "egress"
+  from_port = var.logstash_port
+  to_port   = var.logstash_port
+  protocol  = "tcp"
+
+  security_group_id        = aws_security_group.app_logstash.id
+  source_security_group_id = aws_security_group.opensearch.id
+}
+
 resource "aws_security_group_rule" "app_logstash_https_egress" {
   type             = "egress"
   from_port        = 443
@@ -406,22 +416,12 @@ resource "aws_security_group_rule" "batch_msk_egress" {
   source_security_group_id = aws_security_group.msk.id
 }
 
-resource "aws_security_group_rule" "opensearch_egress" {
-  type      = "egress"
-  from_port = 9200
-  to_port   = 9200
-  protocol  = "tcp"
-
-  security_group_id        = module.database_enc.database_security_group_id
-  source_security_group_id = aws_security_group.opensearch.id
-}
-
 resource "aws_security_group_rule" "opensearch_ingress" {
   type      = "ingress"
-  from_port = 9200
-  to_port   = 9200
+  from_port = var.logstash_port
+  to_port   = var.logstash_port
   protocol  = "tcp"
 
-  security_group_id        = module.database_enc.database_security_group_id
-  source_security_group_id = aws_security_group.opensearch.id
+  security_group_id        = aws_security_group.opensearch.id
+  source_security_group_id = aws_security_group.app_logstash.id
 }
