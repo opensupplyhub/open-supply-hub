@@ -24,12 +24,19 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-1019](https://opensupplyhub.atlassian.net/browse/OSDEV-1019) - Fixed an error message to 'Your account is not verified. Check your email for a confirmation link.' when a user tries to log in with an uppercase letter in the email address and their account has not been activated through the confirmation link.
+* [OSDEV-1069](https://opensupplyhub.atlassian.net/browse/OSDEV-1069) - The following changes have been made:
+    * Changed the Postgres Docker image for the database to use the official one and make the local database setup platform-agnostic, so it doesn't depend on the processor architecture.
+    * Built the PostGIS program from source and installed it to avoid LLVM-related errors inside the database Docker container during local development.
+
+### Bugfix
+* *Describe bugfix here.*
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
 
 ### Release instructions:
-* *Provide release instructions here.*
+* Update code.
+
 
 ## Release 1.13.0
 
@@ -44,9 +51,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     - remove_items_where_facility_id_is_null
     - remove_old_pending_matches
     - remove_items_without_matches_and_related_facilities
-
-#### Scheme changes
-* *Describe scheme changes here.*
 
 ### Code/API changes
 * [OSDEV-994](https://opensupplyhub.atlassian.net/browse/OSDEV-994) API. Update to pass all merge events to user based on contrib id. A non-admin API user makes:
@@ -81,6 +85,7 @@ and receives information about merges that have occurred for the contributors wi
 ### Release instructions:
 * Update code.
 * Apply DB migrations up to the latest one.
+
 
 ## Release 1.12.0
 
@@ -124,7 +129,6 @@ database:
     * Prepared initial AWS infrastructure via Terraform for the Logstash service, including configuring AWS EFS storage to save the pointer of the last run for the jdbc plugin. Essentially, after deploying updated Terraform code to an environment, ECS task definition, ECR repository, ECS service, along with EFS storage, will be set up for Logstash to function.
     * Moved the PoC solution of the Logstash + Elasticsearch setup to the repository to avoid losing it. Further work is needed as the solution requires development and is not functioning smoothly.
 * In response to recent stability observations of the staging environment, resource allocation has been optimized by reducing the number of ECS tasks from 8 to 6 for the Django app instances, thus maintaining system stability.
-
 
 ### Bugfix
 * [OSDEV-870](https://opensupplyhub.atlassian.net/browse/OSDEV-870) - The returning confirm/reject URLs were fixed when a facility has been matched. Changes were made to the Dedupe-Hub to prevent adding rows with empty fields to the `api_facilitymatch` and `api_facilitymatchtemp` tables when the count of matches is more than one.
