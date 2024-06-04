@@ -380,7 +380,12 @@ data "template_file" "app_logstash" {
     image                            = local.app_logstash_image
     log_group_name                   = "log${local.short}AppLogstash"
     aws_region                       = var.aws_region
-    opensearch_endpoint              = aws_opensearch_domain.opensearch.endpoint
+    opensearch_endpoint              = aws_opensearch_domain.opensearch.endpoint,
+    postgres_host                    = aws_route53_record.database.name
+    postgres_port                    = module.database_enc.port
+    postgres_user                    = var.rds_database_username
+    postgres_password                = var.rds_database_password
+    postgres_db                      = var.rds_database_name
   }
 }
 
