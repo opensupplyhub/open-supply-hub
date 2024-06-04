@@ -11,9 +11,9 @@ class LoginToOARClientTest(APITestCase):
     def setUp(self):
         self.email = 'testuser@example.com'
         self.password = 'password'
-        self.user = User.objects.create_user(
-            email=self.email, password=self.password
-        )
+        self.user = User(email=self.email)
+        self.user.set_password(self.password)
+        self.user.save()
         self.login_url = reverse('login_to_oar_client')
 
     def create_email_address(self, verified):
@@ -23,7 +23,7 @@ class LoginToOARClientTest(APITestCase):
 
     def test_missing_email_or_password(self):
         response = self.client.post(self.login_url, {'email': self.email})
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
             response.data['detail'], 'Email and password are required'
         )
