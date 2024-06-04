@@ -16,6 +16,11 @@ class LoginToOARClientTest(APITestCase):
         )
         self.login_url = reverse('login_to_oar_client')
 
+    def create_email_address(self, verified):
+        return EmailAddress.objects.create(
+            user=self.user, email=self.email, verified=verified, primary=True
+        )
+
     def test_missing_email_or_password(self):
         response = self.client.post(self.login_url, {'email': self.email})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -33,9 +38,7 @@ class LoginToOARClientTest(APITestCase):
         )
 
     def test_unconfirmed_user_login(self):
-        EmailAddress.objects.create(
-            user=self.user, email=self.email, verified=False, primary=True
-        )
+        self.create_email_address(verified=False)
         response = self.client.post(
             self.login_url, {'email': self.email, 'password': self.password}
         )
@@ -47,9 +50,7 @@ class LoginToOARClientTest(APITestCase):
         )
 
     def test_successful_login(self):
-        EmailAddress.objects.create(
-            user=self.user, email=self.email, verified=True, primary=True
-        )
+        self.create_email_address(verified=True)
         response = self.client.post(
             self.login_url, {'email': self.email, 'password': self.password}
         )
@@ -57,9 +58,7 @@ class LoginToOARClientTest(APITestCase):
         self.assertEqual(response.data['email'], self.email)
 
     def test_successful_login_with_various_case_emails(self):
-        EmailAddress.objects.create(
-            user=self.user, email=self.email, verified=True, primary=True
-        )
+        self.create_email_address(verified=True)
         test_cases = ['TESTUSER@EXAMPLE.COM', 'TestUser@Example.Com']
         for case in test_cases:
             with self.subTest(email=case):
@@ -70,9 +69,7 @@ class LoginToOARClientTest(APITestCase):
                 self.assertEqual(response.data['email'], self.email)
 
     def test_unconfirmed_user_login_with_various_case_emails(self):
-        EmailAddress.objects.create(
-            user=self.user, email=self.email, verified=False, primary=True
-        )
+        self.create_email_address(verified=False)
         test_cases = ['TESTUSER@EXAMPLE.COM', 'TestUser@Example.Com']
         for case in test_cases:
             with self.subTest(email=case):
@@ -89,9 +86,7 @@ class LoginToOARClientTest(APITestCase):
                 )
 
     def test_unconfirmed_user_login_resends_confirmation_email(self):
-        EmailAddress.objects.create(
-            user=self.user, email=self.email, verified=False, primary=True
-        )
+        self.create_email_address(verified=False)
         with patch.object(
             EmailAddress, 'send_confirmation'
         ) as mock_send_confirmation:
