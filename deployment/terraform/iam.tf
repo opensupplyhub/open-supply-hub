@@ -406,22 +406,21 @@ data "aws_iam_policy_document" "opensearch" {
   statement {
     effect = "Allow"
 
-    principals {
-      type        = "Service"
-      identifiers = ["es.amazonaws.com"]
-    }
-
-    actions = [
-      "logs:PutLogEvents",
-      "logs:PutLogEventsBatch",
-      "logs:CreateLogStream",
+    resources = [
+        aws_opensearch_domain.opensearch.arn
     ]
 
-    resources = ["arn:aws:logs:*"]
+    actions = [
+        "es:ESHttpPost",
+        "es:ESHttpGet",
+        "es:ESHttpDelete",
+        "es:ESHttpPut"
+    ]
   }
 }
 
-resource "aws_cloudwatch_log_resource_policy" "opensearch" {
-  policy_name     = "opensearch"
-  policy_document = data.aws_iam_policy_document.opensearch.json
+resource "aws_iam_role_policy" "opensearch" {
+  name   = "opensearch"
+  role   = aws_iam_role.app_task_role.name
+  policy = data.aws_iam_policy_document.opensearch.json
 }
