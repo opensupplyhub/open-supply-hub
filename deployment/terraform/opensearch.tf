@@ -75,11 +75,17 @@ resource "aws_opensearch_domain" "opensearch" {
   }
 }
 
-resource "aws_opensearch_vpc_endpoint" "opensearch-logstash-vpc-endpoint" {
-  domain_arn = aws_opensearch_domain.opensearch.arn
-  vpc_options {
-    subnet_ids         = module.vpc.private_subnet_ids
+resource "aws_vpc_endpoint" "opensearch" {
+  vpc_id       = module.vpc.id
+  service_name = "com.amazonaws.${var.aws_region}.es"
+  subnet_ids   = module.vpc.private_subnet_ids
 
-    security_group_ids = [aws_security_group.opensearch.id]
-  }
+  policy = jsonencode({
+    Statement = [{
+      Action    = "es:*",
+      Effect    = "Allow",
+      Principal = "*",
+      Resource  = "arn:aws:es:${var.aws_region}:${data.aws_caller_identity.current.account_id}:domain/${aws_opensearch_domain.opensearch.domain_name}/*"
+    }]
+  })
 }
