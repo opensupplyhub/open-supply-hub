@@ -74,3 +74,12 @@ resource "aws_opensearch_domain" "opensearch" {
     security_group_ids = [aws_security_group.opensearch.id]
   }
 }
+
+resource "aws_opensearch_vpc_endpoint" "opensearch-logstash-vpc-endpoint" {
+  domain_arn = aws_opensearch_domain.opensearch.arn
+  vpc_options {
+    subnet_ids         = module.vpc.private_subnet_ids
+
+    security_group_ids = [aws_security_group.opensearch.id]
+  }
+}
