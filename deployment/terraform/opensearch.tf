@@ -76,16 +76,7 @@ resource "aws_opensearch_domain" "opensearch" {
 }
 
 resource "aws_vpc_endpoint" "opensearch" {
-  vpc_id       = module.vpc.id
-  service_name = "com.amazonaws.${var.aws_region}.es"
-  subnet_ids   = module.vpc.private_subnet_ids
-
-  policy = jsonencode({
-    Statement = [{
-      Action    = "es:*",
-      Effect    = "Allow",
-      Principal = "*",
-      Resource  = "arn:aws:es:${var.aws_region}:${data.aws_caller_identity.current.account_id}:domain/${aws_opensearch_domain.opensearch.domain_name}/*"
-    }]
-  })
+  vpc_id            = module.vpc.vpc_id
+  service_name      = "com.amazonaws.${var.aws_region}.es"
+  vpc_endpoint_type = "Interface"
 }
