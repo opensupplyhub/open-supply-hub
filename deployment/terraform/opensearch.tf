@@ -75,8 +75,10 @@ resource "aws_opensearch_domain" "opensearch" {
   }
 }
 
-resource "aws_vpc_endpoint" "opensearch" {
-  vpc_id            = module.vpc.vpc_id
-  service_name      = "com.amazonaws.${var.aws_region}.es"
-  vpc_endpoint_type = "Interface"
+resource "aws_opensearch_vpc_endpoint" "opensearch" {
+  domain_arn = aws_opensearch_domain.opensearch.arn
+  vpc_options {
+    security_group_ids = [aws_security_group.opensearch.id]
+    subnet_ids         = module.vpc.private_subnet_ids
+  }
 }
