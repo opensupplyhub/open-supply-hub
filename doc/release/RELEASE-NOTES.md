@@ -29,7 +29,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe bugfix here.*
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+*   [OSDEV-1030](https://opensupplyhub.atlassian.net/browse/OSDEV-1030) - The following changes have been made:
+    *   Replaced the "Donate" button with a "Blog" button in the header
+    *   Added links to the "Blog" and "Careers" pages in the footer
 
 ### Release instructions:
 * Update code.
