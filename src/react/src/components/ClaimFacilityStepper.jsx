@@ -80,7 +80,7 @@ const steps = Object.freeze([
     Object.freeze({
         name: 'Claim this facility',
         component: ClaimFacilityIntroStep,
-        next: 'Contact Information',
+        next: 'Support Documentation',
         hasBackButton: false,
         hasNextButton: true,
         stepInputIsValid: stubTrue,
@@ -242,32 +242,24 @@ function ClaimFacilityStepper({ fetching, submitClaimForm, formData, error }) {
 
     return (
         <div style={claimFacilityStepperStyles.containerStyles}>
-            {/* <Stepper activeStep={activeStep}>
-                {steps.map(({ name }, index) => (
-                    <Step key={name}>
-                        {name === lastStepName ? (
-                            <StepLabel
-                                icon={
-                                    <BadgeClaimed
-                                        color={
-                                            activeStepName === lastStepName
-                                                ? COLOURS.NAVY_BLUE
-                                                : COLOURS.GREY
-                                        }
-                                    />
-                                }
-                            >
-                                {activeStep === index ? name : ''}
-                            </StepLabel>
-                        ) : (
-                            <StepLabel>
-                                {activeStep === index ? name : ''}
-                            </StepLabel>
-                        )}
-                    </Step>
-                ))}
-            </Stepper> */}
             <div style={claimFacilityStepperStyles.formContainerStyles}>
+                {activeStepName === 'Claim this facility' ? (
+                    <div>
+                        <Typography
+                            variant="display3"
+                            style={yourContactInfoTitleStyle}
+                        >
+                            Claim a Production Location
+                        </Typography>
+                        <Typography
+                            variant="heading"
+                            style={yourContactInfoDescStyle}
+                        >
+                            In order to submit a claim request, you must be an
+                            owner or senior manager of the production location.
+                        </Typography>
+                    </div>
+                ) : null}
                 {activeStepName === 'Support Documentation' ? (
                     <div>
                         <Typography

@@ -8,6 +8,4 @@ export default {
     CIRCLE_COLOR_SHADOW: 'rgba(61, 50, 138, 0.5)',
     NAVIGATION: '#FCCF3F',
     NEAR_BLACK: '#0D1128',
-    MARKER_COLOR: '#FFCF3F',
-    PINK_COLOR: '#FFA6D0',
 };

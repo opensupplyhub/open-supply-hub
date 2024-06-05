@@ -106,10 +106,7 @@ const ClaimFacility = ({
                 }
             >
                 <div style={claimFacilityContainerStyles.containerStyles}>
-                    {/* <Paper style={claimFacilityContainerStyles.paperStyles}> */}
-                    {/* <ClaimFacilityHeader data={data} /> */}
                     <Route component={ClaimFacilityStepper} />
-                    {/* </Paper> */}
                 </div>
             </AppGrid>
         </AppOverflow>

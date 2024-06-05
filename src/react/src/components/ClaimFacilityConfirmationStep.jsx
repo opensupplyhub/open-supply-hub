@@ -34,16 +34,6 @@ export default function ClaimFacilityConfirmationStep() {
                     </ListItemIcon>
                     <ListItemText>
                         <Typography variant="headline">
-                            Update facility location and address details
-                        </Typography>
-                    </ListItemText>
-                </ListItem>
-                <ListItem>
-                    <ListItemIcon>
-                        <CheckIcon style={checkIconStyles} />
-                    </ListItemIcon>
-                    <ListItemText>
-                        <Typography variant="headline">
                             Specify production details and certifications
                         </Typography>
                     </ListItemText>
