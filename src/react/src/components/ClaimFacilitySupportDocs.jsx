@@ -27,7 +27,6 @@ import { claimAFacilitySupportDocsFormFields } from '../util/constants';
 import COLOURS from '../util/COLOURS';
 
 const yourContactInfoTitleStyle = Object.freeze({
-    paddingTop: '30px',
     paddingBottom: '10px',
     color: COLOURS.NEAR_BLACK,
     fontWeight: 'bold',
@@ -62,14 +61,6 @@ const ClaimFacilitySupportDocs = ({
     fetching,
 }) => (
     <>
-        <div>
-            <Typography variant="display3" style={yourContactInfoTitleStyle}>
-                Supporting Documentation
-            </Typography>
-            <Typography variant="heading" style={yourContactInfoDescStyle}>
-                Use the form below to complete your claim request.
-            </Typography>
-        </div>
         <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
             <Typography variant="display1" style={yourContactInfoTitleStyle}>
                 Your Contact Information
@@ -97,6 +88,7 @@ const ClaimFacilitySupportDocs = ({
                 variant="outlined"
                 style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
                 value={yourName}
+                placeholder={contactYourName.placeholder}
                 onChange={updateYourName}
                 disabled={fetching}
             />
@@ -114,6 +106,7 @@ const ClaimFacilitySupportDocs = ({
                 variant="outlined"
                 style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
                 value={yourTitle}
+                placeholder={contactYourTitle.placeholder}
                 onChange={updateYourTitle}
                 disabled={fetching}
             />
@@ -129,6 +122,7 @@ const ClaimFacilitySupportDocs = ({
                 variant="outlined"
                 style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
                 value={yourBusinessWebsite}
+                placeholder={contactYourBusinessWebsite.placeholder}
                 onChange={updateYourBusinessWebsite}
                 disabled={fetching}
             />
@@ -168,6 +162,7 @@ const ClaimFacilitySupportDocs = ({
                 variant="outlined"
                 style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
                 value={businessWebsite}
+                placeholder={contactBusinessWebsite.placeholder}
                 onChange={updateBusinessWebsite}
                 disabled={fetching}
             />
@@ -183,6 +178,7 @@ const ClaimFacilitySupportDocs = ({
                 variant="outlined"
                 style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
                 value={businessLinkedinProfile}
+                placeholder={contactBusinessLinkedinProfile.placeholder}
                 onChange={updateBusinessLinkedinProfile}
                 disabled={fetching}
             />

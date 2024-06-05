@@ -2,14 +2,14 @@ import React, { useEffect } from 'react';
 import { arrayOf, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import Paper from '@material-ui/core/Paper';
+// import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import { Link, Route } from 'react-router-dom';
 
 import AppGrid from '../components/AppGrid';
 import AppOverflow from '../components/AppOverflow';
-import ClaimFacilityHeader from '../components/ClaimFacilityHeader';
+// import ClaimFacilityHeader from '../components/ClaimFacilityHeader';
 import ClaimFacilityStepper from '../components/ClaimFacilityStepper';
 
 import {
@@ -30,9 +30,9 @@ const claimFacilityContainerStyles = Object.freeze({
         display: 'flex',
         justifyContent: 'center',
     }),
-    paperStyles: Object.freeze({
-        width: '80%',
-    }),
+    // paperStyles: Object.freeze({
+    //     width: '80%',
+    // }),
 });
 
 const ClaimFacility = ({
@@ -106,10 +106,10 @@ const ClaimFacility = ({
                 }
             >
                 <div style={claimFacilityContainerStyles.containerStyles}>
-                    <Paper style={claimFacilityContainerStyles.paperStyles}>
-                        <ClaimFacilityHeader data={data} />
-                        <Route component={ClaimFacilityStepper} />
-                    </Paper>
+                    {/* <Paper style={claimFacilityContainerStyles.paperStyles}> */}
+                    {/* <ClaimFacilityHeader data={data} /> */}
+                    <Route component={ClaimFacilityStepper} />
+                    {/* </Paper> */}
                 </div>
             </AppGrid>
         </AppOverflow>

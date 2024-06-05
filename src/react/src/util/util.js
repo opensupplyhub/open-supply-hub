@@ -893,14 +893,13 @@ export const checkWhetherUserHasDashboardAccess = user =>
     get(user, 'is_superuser', false);
 
 export const claimAFacilityFormIsValid = ({
-    companyName,
-    contactPerson,
-    phoneNumber,
+    yourName,
+    yourTitle,
+    businessWebsite,
+    businessLinkedinProfile,
 }) =>
-    every(
-        [!isEmpty(companyName), !isEmpty(contactPerson), !isEmpty(phoneNumber)],
-        identity,
-    );
+    every([!isEmpty(yourName), !isEmpty(yourTitle)], identity) &&
+    (!isEmpty(businessWebsite) || !isEmpty(businessLinkedinProfile));
 
 export const claimFacilityContactInfoStepIsValid = ({
     contactPerson,
@@ -909,9 +908,14 @@ export const claimFacilityContactInfoStepIsValid = ({
 }) =>
     every([!isEmpty(contactPerson), !isEmpty(phoneNumber), !isEmpty(jobTitle)]);
 
-export const claimFacilitySupportDocsIsValid = ({ yourName, yourTitle }) =>
-    every([!isEmpty(yourName), !isEmpty(yourTitle)]);
-
+export const claimFacilitySupportDocsIsValid = ({
+    yourName,
+    yourTitle,
+    businessWebsite,
+    businessLinkedinProfile,
+}) =>
+    every([!isEmpty(yourName), !isEmpty(yourTitle)]) &&
+    (!isEmpty(businessWebsite) || !isEmpty(businessLinkedinProfile));
 export const isValidFacilityURL = url =>
     isEmpty(url) || isURL(url, { protocols: ['http', 'https'] });
 

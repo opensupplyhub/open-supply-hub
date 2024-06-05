@@ -832,19 +832,24 @@ class FacilitiesViewSet(ListModelMixin,
             facility = Facility.objects.get(pk=pk)
             contributor = request.user.contributor
 
-            contact_person = request.data.get('contact_person')
-            job_title = request.data.get('job_title')
-            phone_number = request.data.get('phone_number')
-            company_name = request.data.get('company_name')
-            parent_company = request.data.get('parent_company')
-            website = request.data.get('website')
-            facility_description = request.data.get('facility_description')
-            verification_method = request.data.get('verification_method')
-            linkedin_profile = request.data.get('linkedin_profile', '')
+            contact_person = request.data.get('your_name')
+            job_title = request.data.get('your_title')
+            # phone_number = request.data.get('phone_number')
+            # company_name = request.data.get('company_name')
+            # parent_company = request.data.get('parent_company')
+            website = request.data.get('your_business_website')
+            business_website = request.data.get('business_website')
+            # facility_description = request.data.get('facility_description')
+            # verification_method = request.data.get('verification_method')
+            linkedin_profile = request.data.get('business_linkedin_profile')
+            sectors = request.data.getlist('sectors')
+            print(sectors)
+            number_of_workers = request.data.get('number_of_workers')
+            local_language_name = request.data.get('local_language_name')
             files = request.FILES.getlist('files')
 
-            if not company_name:
-                raise ValidationError('Company name is required')
+            # if not company_name:
+            #     raise ValidationError('Company name is required')
 
             for file in files:
                 extension = file.name.split('.')[-1].lower()
@@ -868,20 +873,20 @@ class FacilitiesViewSet(ListModelMixin,
                         already uploaded {MAX_ATTACHMENT_AMOUNT} attachments.'
                     )
 
-            if parent_company:
-                try:
-                    parent_company_contributor = (
-                        Contributor
-                        .objects
-                        .get(pk=parent_company)
-                    )
-                    parent_company_name = parent_company_contributor.name
-                except ValueError:
-                    parent_company_name = parent_company
-                    parent_company_contributor = None
-            else:
-                parent_company_name = None
-                parent_company_contributor = None
+            # if parent_company:
+            #     try:
+            #         parent_company_contributor = (
+            #             Contributor
+            #             .objects
+            #             .get(pk=parent_company)
+            #         )
+            #         parent_company_name = parent_company_contributor.name
+            #     except ValueError:
+            #         parent_company_name = parent_company
+            #         parent_company_contributor = None
+            # else:
+            #     parent_company_name = None
+            #     parent_company_contributor = None
 
             user_has_pending_claims = (
                 FacilityClaim
@@ -905,16 +910,28 @@ class FacilitiesViewSet(ListModelMixin,
                     contributor=contributor,
                     contact_person=contact_person,
                     job_title=job_title,
-                    phone_number=phone_number,
-                    company_name=company_name,
-                    parent_company=parent_company_contributor,
-                    parent_company_name=parent_company_name,
                     website=website,
-                    facility_description=facility_description,
-                    verification_method=verification_method,
+                    facility_website=business_website,
                     linkedin_profile=linkedin_profile,
                 )
             )
+
+            if len(sectors) > 0:
+                setattr(facility_claim, 'sector', sectors)
+            
+            try:
+                workers_count = int(number_of_workers)
+            except ValueError:
+                workers_count = None
+            except TypeError:
+                workers_count = None
+
+            facility_claim.facility_workers_count = workers_count
+
+            if local_language_name != '':
+                facility_claim.facility_name_native_language=local_language_name,
+
+            facility_claim.save()
 
             for file in files:
                 timestamp = datetime.now().strftime('%Y%m%d%H%M%S')

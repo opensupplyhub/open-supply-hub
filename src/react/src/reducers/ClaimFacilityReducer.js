@@ -1,23 +1,33 @@
 import { createReducer } from 'redux-act';
 import update from 'immutability-helper';
+import identity from 'lodash/identity';
+import orderBy from 'lodash/orderBy';
 
 import {
     startFetchClaimFacilityData,
     failFetchClaimFacilityData,
     completeFetchClaimFacilityData,
     clearClaimFacilityDataAndForm,
-    updateClaimAFacilityContactPerson,
-    updateClaimAFacilityPhoneNumber,
-    updateClaimAFacilityCompany,
-    updateClaimAFacilityParentCompany,
-    updateClaimAFacilityWebsite,
-    updateClaimAFacilityDescription,
-    updateClaimAFacilityVerificationMethod,
+    // updateClaimAFacilityContactPerson,
+    updateClaimAFacilityYourName,
+    updateClaimAFacilityYourTitle,
+    updateClaimAFacilityYourBusinessWebsite,
+    updateClaimAFacilityBusinessWebsite,
+    updateClaimAFacilityBusinessLinkedinProfile,
+    updateClaimASector,
+    updateClaimANumberOfWorkers,
+    updateClaimALocalLanguageName,
+    // updateClaimAFacilityPhoneNumber,
+    // updateClaimAFacilityCompany,
+    // updateClaimAFacilityParentCompany,
+    // updateClaimAFacilityWebsite,
+    // updateClaimAFacilityDescription,
+    // updateClaimAFacilityVerificationMethod,
     startSubmitClaimAFacilityData,
     failSubmitClaimAFacilityData,
     completeSubmitClaimAFacilityData,
-    updateClaimAFacilityJobTitle,
-    updateClaimAFacilityLinkedinProfile,
+    // updateClaimAFacilityJobTitle,
+    // updateClaimAFacilityLinkedinProfile,
     updateClaimAFacilityUploadFiles,
 } from '../actions/claimFacility';
 
@@ -29,15 +39,14 @@ const initialState = Object.freeze({
     }),
     claimData: Object.freeze({
         formData: Object.freeze({
-            contactPerson: '',
-            jobTitle: '',
-            phoneNumber: '',
-            companyName: '',
-            website: '',
-            facilityDescription: '',
-            verificationMethod: '',
-            parentCompany: null,
-            linkedinProfile: '',
+            yourName: '',
+            yourTitle: '',
+            yourBusinessWebsite: '',
+            businessWebsite: '',
+            businessLinkedinProfile: '',
+            sectors: null,
+            numberOfWorkers: '',
+            localLanguageName: '',
         }),
         fetching: false,
         error: null,
@@ -74,79 +83,147 @@ export default createReducer(
                     error: { $set: initialState.facilityData.error },
                 },
             }),
-        [updateClaimAFacilityContactPerson]: (state, payload) =>
+        // [updateClaimAFacilityContactPerson]: (state, payload) =>
+        //     update(state, {
+        //         claimData: {
+        //             formData: {
+        //                 contactPerson: { $set: payload },
+        //             },
+        //         },
+        //     }),
+        [updateClaimAFacilityYourName]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
-                        contactPerson: { $set: payload },
+                        yourName: { $set: payload },
                     },
                 },
             }),
-
-        [updateClaimAFacilityPhoneNumber]: (state, payload) =>
+        [updateClaimAFacilityYourTitle]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
-                        phoneNumber: { $set: payload },
+                        yourTitle: { $set: payload },
                     },
                 },
             }),
-        [updateClaimAFacilityCompany]: (state, payload) =>
+        [updateClaimAFacilityYourBusinessWebsite]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
-                        companyName: { $set: payload },
+                        yourBusinessWebsite: { $set: payload },
                     },
                 },
             }),
-        [updateClaimAFacilityParentCompany]: (state, payload) =>
+        [updateClaimAFacilityBusinessWebsite]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
-                        parentCompany: { $set: payload },
+                        businessWebsite: { $set: payload },
                     },
                 },
             }),
-        [updateClaimAFacilityWebsite]: (state, payload) =>
+        [updateClaimAFacilityBusinessLinkedinProfile]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
-                        website: { $set: payload },
+                        businessLinkedinProfile: { $set: payload },
                     },
                 },
             }),
-        [updateClaimAFacilityDescription]: (state, payload) =>
+        [updateClaimASector]: (state, sectors) =>
+            update(state, {
+                // updateData: {
+                //     error: { $set: initialState.updateData.error },
+                // },
+                claimData: {
+                    formData: {
+                        sectors: {
+                            $set: orderBy(sectors, identity),
+                        },
+                    },
+                },
+            }),
+        [updateClaimANumberOfWorkers]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
-                        facilityDescription: { $set: payload },
+                        numberOfWorkers: { $set: payload },
                     },
                 },
             }),
-        [updateClaimAFacilityVerificationMethod]: (state, payload) =>
+        [updateClaimALocalLanguageName]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
-                        verificationMethod: { $set: payload },
+                        localLanguageName: { $set: payload },
                     },
                 },
             }),
-        [updateClaimAFacilityJobTitle]: (state, payload) =>
-            update(state, {
-                claimData: {
-                    formData: {
-                        jobTitle: { $set: payload },
-                    },
-                },
-            }),
-        [updateClaimAFacilityLinkedinProfile]: (state, payload) =>
-            update(state, {
-                claimData: {
-                    formData: {
-                        linkedinProfile: { $set: payload },
-                    },
-                },
-            }),
+        // [updateClaimAFacilityPhoneNumber]: (state, payload) =>
+        //     update(state, {
+        //         claimData: {
+        //             formData: {
+        //                 phoneNumber: { $set: payload },
+        //             },
+        //         },
+        //     }),
+        // [updateClaimAFacilityCompany]: (state, payload) =>
+        //     update(state, {
+        //         claimData: {
+        //             formData: {
+        //                 companyName: { $set: payload },
+        //             },
+        //         },
+        //     }),
+        // [updateClaimAFacilityParentCompany]: (state, payload) =>
+        //     update(state, {
+        //         claimData: {
+        //             formData: {
+        //                 parentCompany: { $set: payload },
+        //             },
+        //         },
+        //     }),
+        // [updateClaimAFacilityWebsite]: (state, payload) =>
+        //     update(state, {
+        //         claimData: {
+        //             formData: {
+        //                 website: { $set: payload },
+        //             },
+        //         },
+        //     }),
+        // [updateClaimAFacilityDescription]: (state, payload) =>
+        //     update(state, {
+        //         claimData: {
+        //             formData: {
+        //                 facilityDescription: { $set: payload },
+        //             },
+        //         },
+        //     }),
+        // [updateClaimAFacilityVerificationMethod]: (state, payload) =>
+        //     update(state, {
+        //         claimData: {
+        //             formData: {
+        //                 verificationMethod: { $set: payload },
+        //             },
+        //         },
+        //     }),
+        // [updateClaimAFacilityJobTitle]: (state, payload) =>
+        //     update(state, {
+        //         claimData: {
+        //             formData: {
+        //                 jobTitle: { $set: payload },
+        //             },
+        //         },
+        //     }),
+        // [updateClaimAFacilityLinkedinProfile]: (state, payload) =>
+        //     update(state, {
+        //         claimData: {
+        //             formData: {
+        //                 linkedinProfile: { $set: payload },
+        //             },
+        //         },
+        //     }),
         [updateClaimAFacilityUploadFiles]: (state, payload) =>
             update(state, {
                 claimData: {

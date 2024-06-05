@@ -43,10 +43,6 @@ const yourContactInfoTitleStyle = Object.freeze({
     fontWeight: 'bold',
 });
 
-const yourContactInfoDescStyle = Object.freeze({
-    fontWeight: 'bold',
-});
-
 const claimedFacilitiesDetailsStyles = Object.freeze({
     containerStyles: Object.freeze({
         display: 'flex',
@@ -120,11 +116,11 @@ const selectStyles = Object.freeze({
 });
 
 const {
-    sectors,
+    sectorsForm,
     sectorsDecs,
-    numberOfWorkers,
+    numberOfWorkersForm,
     numberOfWorkersDesc,
-    localLanguageName,
+    localLanguageNameForm,
     localLanguageNameDesc,
 } = claimAFacilityAdditionalDataFormFields;
 
@@ -240,11 +236,11 @@ const InputSection = ({
 };
 
 function ClaimFacilityAdditionalData({
-    sectorsValue,
+    sectors,
     updateSectors,
-    numberOfWorkersValue,
+    numberOfWorkers,
     updateNumberOfWorkers,
-    localLanguageNameValue,
+    localLanguageName,
     updateLocalLanguageName,
     sectorOptions,
     fetchSectors,
@@ -258,47 +254,35 @@ function ClaimFacilityAdditionalData({
 
     return (
         <>
-            <div>
-                <Typography
-                    variant="display3"
-                    style={yourContactInfoTitleStyle}
-                >
-                    Additional Data
-                </Typography>
-                <Typography variant="heading" style={yourContactInfoDescStyle}>
-                    Use the form below to upload additional information about
-                    this production location.
-                </Typography>
-            </div>
             <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
-                <InputLabel htmlFor={sectors.id}>
+                <InputLabel htmlFor={sectorsForm.id}>
                     <Typography
                         variant="display1"
                         style={yourContactInfoTitleStyle}
                     >
-                        {sectors.label}
+                        {sectorsForm.label}
                     </Typography>
                 </InputLabel>
                 <Typography variant="subheading">
                     {sectorsDecs.label}
                 </Typography>
                 <InputSection
-                    value={sectorsValue}
+                    value={sectors}
                     onChange={updateSectors}
                     disabled={fetching}
                     isSelect
                     isMultiSelect
                     selectOptions={sectorOptions || []}
-                    selectPlaceholder="Select"
+                    selectPlaceholder={sectorsForm.placeholder}
                 />
             </div>
             <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
-                <InputLabel htmlFor={numberOfWorkers.id}>
+                <InputLabel htmlFor={numberOfWorkersForm.id}>
                     <Typography
                         variant="display1"
                         style={yourContactInfoTitleStyle}
                     >
-                        {numberOfWorkers.label}
+                        {numberOfWorkersForm.label}
                     </Typography>
                 </InputLabel>
                 <Typography variant="subheading">
@@ -306,31 +290,33 @@ function ClaimFacilityAdditionalData({
                 </Typography>
                 <TextField
                     autoFocus
-                    id={numberOfWorkers.id}
+                    id={numberOfWorkersForm.id}
                     variant="outlined"
                     style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
-                    value={numberOfWorkersValue}
+                    value={numberOfWorkers}
+                    placeholder={numberOfWorkersForm.placeholder}
                     onChange={updateNumberOfWorkers}
                     disabled={fetching}
                 />
             </div>
             <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
-                <InputLabel htmlFor={localLanguageName.id}>
+                <InputLabel htmlFor={localLanguageNameForm.id}>
                     <Typography
                         variant="display1"
                         style={yourContactInfoTitleStyle}
                     >
-                        {localLanguageName.label}
+                        {localLanguageNameForm.label}
                     </Typography>
                 </InputLabel>
                 <Typography variant="subheading">
                     {localLanguageNameDesc.label}
                 </Typography>
                 <TextField
-                    id={localLanguageName.id}
+                    id={localLanguageNameForm.id}
                     variant="outlined"
                     style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
-                    value={localLanguageNameValue}
+                    value={localLanguageName}
+                    placeholder={localLanguageNameForm.placeholder}
                     onChange={updateLocalLanguageName}
                     disabled={fetching}
                 />
@@ -344,10 +330,10 @@ ClaimFacilityAdditionalData.defaultProps = {
 };
 
 ClaimFacilityAdditionalData.propTypes = {
-    sectorsValue: string.isRequired,
-    numberOfWorkersValue: string.isRequired,
+    sectors: string.isRequired,
+    numberOfWorkers: string.isRequired,
     updateNumberOfWorkers: func.isRequired,
-    localLanguageNameValue: string.isRequired,
+    localLanguageName: string.isRequired,
     updateLocalLanguageName: func.isRequired,
     sectorOptions: sectorOptionsPropType,
     fetchSectors: func.isRequired,
@@ -357,11 +343,7 @@ ClaimFacilityAdditionalData.propTypes = {
 function mapStateToProps({
     claimFacility: {
         claimData: {
-            formData: {
-                sectorsValue,
-                numberOfWorkersValue,
-                localLanguageNameValue,
-            },
+            formData: { sectors, numberOfWorkers, localLanguageName },
             fetching,
         },
     },
@@ -370,9 +352,9 @@ function mapStateToProps({
     },
 }) {
     return {
-        sectorsValue,
-        numberOfWorkersValue,
-        localLanguageNameValue,
+        sectors,
+        numberOfWorkers,
+        localLanguageName,
         sectorOptions,
         fetching: fetching || fetchingSectors,
     };

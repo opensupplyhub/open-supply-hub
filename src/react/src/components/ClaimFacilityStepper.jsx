@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { arrayOf, bool, func, shape, string } from 'prop-types';
 import { connect } from 'react-redux';
-import Stepper from '@material-ui/core/Stepper';
-import Step from '@material-ui/core/Step';
-import StepLabel from '@material-ui/core/StepLabel';
+// import Stepper from '@material-ui/core/Stepper';
+// import Step from '@material-ui/core/Step';
+// import StepLabel from '@material-ui/core/StepLabel';
+import Paper from '@material-ui/core/Paper';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -11,13 +12,13 @@ import clamp from 'lodash/clamp';
 import last from 'lodash/last';
 import stubTrue from 'lodash/stubTrue';
 
-import BadgeClaimed from './BadgeClaimed';
+// import BadgeClaimed from './BadgeClaimed';
 import ClaimFacilityIntroStep from './ClaimFacilityIntroStep';
 // import ClaimFacilityContactInfoStep from './ClaimFacilityContactInfoStep';
-// import ClaimFacilitySupportDocs from './ClaimFacilitySupportDocs';
+import ClaimFacilitySupportDocs from './ClaimFacilitySupportDocs';
 import ClaimFacilityAdditionalData from './ClaimFacilityAdditionalData';
-import ClaimFacilityFacilityInfoStep from './ClaimFacilityFacilityInfoStep';
-import ClaimFacilityVerificationInfoStep from './ClaimFacilityVerificationInfoStep';
+// import ClaimFacilityFacilityInfoStep from './ClaimFacilityFacilityInfoStep';
+// import ClaimFacilityVerificationInfoStep from './ClaimFacilityVerificationInfoStep';
 import ClaimFacilityConfirmationStep from './ClaimFacilityConfirmationStep';
 
 import { submitClaimAFacilityData } from '../actions/claimFacility';
@@ -26,8 +27,8 @@ import COLOURS from '../util/COLOURS';
 
 import {
     // claimFacilityContactInfoStepIsValid,
-    // claimFacilitySupportDocsIsValid,
-    claimFacilityFacilityInfoStepIsValid,
+    claimFacilitySupportDocsIsValid,
+    // claimFacilityFacilityInfoStepIsValid,
     claimAFacilityFormIsValid,
 } from '../util/util';
 
@@ -36,10 +37,14 @@ const claimFacilityStepperStyles = Object.freeze({
         padding: '10px 20px 5px',
     }),
     buttonsContainerStyles: Object.freeze({
-        padding: '24px 0',
+        flexDirection: 'column',
     }),
     buttonStyles: Object.freeze({
-        margin: '10px',
+        margin: '5px',
+        width: '20%',
+        display: 'flex',
+        color: COLOURS.NEAR_BLACK,
+        fontWeight: 'bold',
     }),
     formContainerStyles: Object.freeze({
         width: '100%',
@@ -50,6 +55,23 @@ const claimFacilityStepperStyles = Object.freeze({
     validationMessageStyles: Object.freeze({
         padding: '5px 0',
     }),
+    paperStyles: Object.freeze({
+        padding: '0 50px 50px 50px',
+        width: '100%',
+    }),
+});
+
+const yourContactInfoTitleStyle = Object.freeze({
+    paddingBottom: '10px',
+    paddingLeft: '20px',
+    color: COLOURS.NEAR_BLACK,
+    fontWeight: 'bold',
+});
+
+const yourContactInfoDescStyle = Object.freeze({
+    fontWeight: 'bold',
+    paddingBottom: '30px',
+    paddingLeft: '20px',
 });
 
 const SUBMIT_FORM = 'SUBMIT_FORM';
@@ -64,30 +86,31 @@ const steps = Object.freeze([
         stepInputIsValid: stubTrue,
     }),
     Object.freeze({
-        name: 'Contact Information',
+        name: 'Support Documentation',
+        component: ClaimFacilitySupportDocs,
+        next: 'Additional Data',
+        hasBackButton: true,
+        hasNextButton: true,
+        stepInputIsValid: claimFacilitySupportDocsIsValid,
+    }),
+    Object.freeze({
+        name: 'Additional Data',
         component: ClaimFacilityAdditionalData,
-        next: 'Facility Information',
-        hasBackButton: true,
-        hasNextButton: true,
-        stepInputIsValid: stubTrue,
-    }),
-    Object.freeze({
-        name: 'Facility Information',
-        component: ClaimFacilityFacilityInfoStep,
-        next: 'Verification Information',
-        hasBackButton: true,
-        hasNextButton: true,
-        stepInputIsValid: claimFacilityFacilityInfoStepIsValid,
-    }),
-    Object.freeze({
-        name: 'Verification Information',
-        component: ClaimFacilityVerificationInfoStep,
-        next: 'Submit Facility Claim',
+        next: null,
         hasBackButton: true,
         hasNextButton: true,
         nextButtonAction: SUBMIT_FORM,
         stepInputIsValid: claimAFacilityFormIsValid,
     }),
+    // Object.freeze({
+    //     name: 'Verification Information',
+    //     component: ClaimFacilityVerificationInfoStep,
+    //     next: 'Submit Facility Claim',
+    //     hasBackButton: true,
+    //     hasNextButton: true,
+    //     nextButtonAction: SUBMIT_FORM,
+    // stepInputIsValid: claimAFacilityFormIsValid,
+    // }),
     Object.freeze({
         name: 'Submitted Successfully',
         component: ClaimFacilityConfirmationStep,
@@ -108,7 +131,6 @@ function ClaimFacilityStepper({ fetching, submitClaimForm, formData, error }) {
 
     const {
         component: ActiveStepComponent,
-        next: nextStepName,
         name: activeStepName,
         hasBackButton,
         hasNextButton,
@@ -144,11 +166,11 @@ function ClaimFacilityStepper({ fetching, submitClaimForm, formData, error }) {
         activeStepName !== lastStepName ? (
             <>
                 <div style={claimFacilityStepperStyles.formContainerStyles}>
-                    <Typography variant="title">
+                    {/* <Typography variant="title">
                         {nextButtonAction !== SUBMIT_FORM
                             ? `Step ${activeStep + 2}: ${nextStepName}`
                             : nextStepName}
-                    </Typography>
+                    </Typography> */}
                     {error || !stepInputIsValid(formData) ? (
                         <Typography
                             variant="body2"
@@ -167,20 +189,9 @@ function ClaimFacilityStepper({ fetching, submitClaimForm, formData, error }) {
                             claimFacilityStepperStyles.buttonsContainerStyles
                         }
                     >
-                        {hasBackButton && (
-                            <Button
-                                color="default"
-                                variant="outlined"
-                                onClick={decrementActiveStep}
-                                style={claimFacilityStepperStyles.buttonStyles}
-                                disabled={activeStep === 0}
-                            >
-                                Back
-                            </Button>
-                        )}
                         {hasNextButton && nextButtonAction !== SUBMIT_FORM && (
                             <Button
-                                color="primary"
+                                color="secondary"
                                 variant="contained"
                                 onClick={incrementActiveStep}
                                 style={claimFacilityStepperStyles.buttonStyles}
@@ -191,7 +202,7 @@ function ClaimFacilityStepper({ fetching, submitClaimForm, formData, error }) {
                         )}
                         {hasNextButton && nextButtonAction === SUBMIT_FORM && (
                             <Button
-                                color="primary"
+                                color="secondary"
                                 variant="contained"
                                 onClick={submitClaimForm}
                                 style={claimFacilityStepperStyles.buttonStyles}
@@ -208,13 +219,30 @@ function ClaimFacilityStepper({ fetching, submitClaimForm, formData, error }) {
                             </Button>
                         )}
                     </div>
+                    <div
+                        style={
+                            claimFacilityStepperStyles.buttonsContainerStyles
+                        }
+                    >
+                        {hasBackButton && (
+                            <Button
+                                color="primary"
+                                variant="contained"
+                                onClick={decrementActiveStep}
+                                style={claimFacilityStepperStyles.buttonStyles}
+                                disabled={activeStep === 0}
+                            >
+                                Go Back
+                            </Button>
+                        )}
+                    </div>
                 </div>
             </>
         ) : null;
 
     return (
         <div style={claimFacilityStepperStyles.containerStyles}>
-            <Stepper activeStep={activeStep}>
+            {/* <Stepper activeStep={activeStep}>
                 {steps.map(({ name }, index) => (
                     <Step key={name}>
                         {name === lastStepName ? (
@@ -238,9 +266,44 @@ function ClaimFacilityStepper({ fetching, submitClaimForm, formData, error }) {
                         )}
                     </Step>
                 ))}
-            </Stepper>
+            </Stepper> */}
             <div style={claimFacilityStepperStyles.formContainerStyles}>
-                <ActiveStepComponent />
+                {activeStepName === 'Support Documentation' ? (
+                    <div>
+                        <Typography
+                            variant="display3"
+                            style={yourContactInfoTitleStyle}
+                        >
+                            Supporting Documentation
+                        </Typography>
+                        <Typography
+                            variant="heading"
+                            style={yourContactInfoDescStyle}
+                        >
+                            Use the form below to complete your claim request.
+                        </Typography>
+                    </div>
+                ) : null}
+                {activeStepName === 'Additional Data' ? (
+                    <div>
+                        <Typography
+                            variant="display3"
+                            style={yourContactInfoTitleStyle}
+                        >
+                            Additional Data
+                        </Typography>
+                        <Typography
+                            variant="heading"
+                            style={yourContactInfoDescStyle}
+                        >
+                            Use the form below to upload additional information
+                            about this production location.
+                        </Typography>
+                    </div>
+                ) : null}
+                <Paper style={claimFacilityStepperStyles.paperStyles}>
+                    <ActiveStepComponent />
+                </Paper>
             </div>
             {controlsSection}
         </div>
@@ -255,9 +318,8 @@ ClaimFacilityStepper.propTypes = {
     fetching: bool.isRequired,
     submitClaimForm: func.isRequired,
     formData: shape({
-        companyName: string.isRequired,
-        contactPerson: string.isRequired,
-        phoneNumber: string.isRequired,
+        yourName: string.isRequired,
+        yourTitle: string.isRequired,
     }).isRequired,
     error: arrayOf(string),
 };
