@@ -263,6 +263,12 @@ class FacilityClaim(models.Model):
         blank=True,
         help_text='The editable facility workers count for this claim.',
         verbose_name='facility workers count')
+    facility_workers_count_new = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+        verbose_name='facility workers count',
+        help_text='The editable facility workers count for this claim.')
     facility_female_workers_percentage = models.IntegerField(
         null=True,
         blank=True,
