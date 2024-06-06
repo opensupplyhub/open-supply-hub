@@ -1,12 +1,14 @@
 from django.db import migrations
 
-from api.models.facility.facility_claim import FacilityClaim
 
-
-def copy_integer_to_char():
+def copy_integer_to_char(apps, schema_editor):
+    FacilityClaim = apps.get_model('your_app_name', 'FacilityClaim')
     for instance in FacilityClaim.objects.all():
-        instance.original_field_char = str(instance.original_field)
-        instance.save()
+        if instance.facility_workers_count:
+            instance.facility_workers_count_new = str(
+                instance.facility_workers_count
+            )
+            instance.save()
 
 
 class Migration(migrations.Migration):
