@@ -258,11 +258,6 @@ class FacilityClaim(models.Model):
         blank=True,
         verbose_name='average lead time',
         help_text='The editable facilty avg lead time for this claim.')
-    facility_workers_count = models.IntegerField(
-        null=True,
-        blank=True,
-        help_text='The editable facility workers count for this claim.',
-        verbose_name='facility workers count')
     facility_workers_count_new = models.CharField(
         max_length=200,
         null=True,
