@@ -268,7 +268,7 @@ class FacilityClaim(models.Model):
         null=True,
         blank=True,
         verbose_name='facility workers count',
-        help_text='The editable facility workers count for this claim.')
+        help_text='The editable facility workers count for this claim')
     facility_female_workers_percentage = models.IntegerField(
         null=True,
         blank=True,
