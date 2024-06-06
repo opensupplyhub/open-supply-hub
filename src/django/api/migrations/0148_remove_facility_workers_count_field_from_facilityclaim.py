@@ -2,6 +2,10 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
+    '''
+    This migration removes the facility_workers_count field
+    from the FacilityClaim model.
+    '''
 
     dependencies = [
         (
