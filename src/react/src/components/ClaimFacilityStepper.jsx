@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { arrayOf, bool, func, shape, string } from 'prop-types';
 import { connect } from 'react-redux';
-// import Stepper from '@material-ui/core/Stepper';
-// import Step from '@material-ui/core/Step';
-// import StepLabel from '@material-ui/core/StepLabel';
 import Paper from '@material-ui/core/Paper';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
@@ -12,13 +9,9 @@ import clamp from 'lodash/clamp';
 import last from 'lodash/last';
 import stubTrue from 'lodash/stubTrue';
 
-// import BadgeClaimed from './BadgeClaimed';
 import ClaimFacilityIntroStep from './ClaimFacilityIntroStep';
-// import ClaimFacilityContactInfoStep from './ClaimFacilityContactInfoStep';
 import ClaimFacilitySupportDocs from './ClaimFacilitySupportDocs';
 import ClaimFacilityAdditionalData from './ClaimFacilityAdditionalData';
-// import ClaimFacilityFacilityInfoStep from './ClaimFacilityFacilityInfoStep';
-// import ClaimFacilityVerificationInfoStep from './ClaimFacilityVerificationInfoStep';
 import ClaimFacilityConfirmationStep from './ClaimFacilityConfirmationStep';
 
 import { submitClaimAFacilityData } from '../actions/claimFacility';
@@ -26,9 +19,7 @@ import { submitClaimAFacilityData } from '../actions/claimFacility';
 import COLOURS from '../util/COLOURS';
 
 import {
-    // claimFacilityContactInfoStepIsValid,
     claimFacilitySupportDocsIsValid,
-    // claimFacilityFacilityInfoStepIsValid,
     claimAFacilityFormIsValid,
 } from '../util/util';
 
@@ -102,15 +93,6 @@ const steps = Object.freeze([
         nextButtonAction: SUBMIT_FORM,
         stepInputIsValid: claimAFacilityFormIsValid,
     }),
-    // Object.freeze({
-    //     name: 'Verification Information',
-    //     component: ClaimFacilityVerificationInfoStep,
-    //     next: 'Submit Facility Claim',
-    //     hasBackButton: true,
-    //     hasNextButton: true,
-    //     nextButtonAction: SUBMIT_FORM,
-    // stepInputIsValid: claimAFacilityFormIsValid,
-    // }),
     Object.freeze({
         name: 'Submitted Successfully',
         component: ClaimFacilityConfirmationStep,
@@ -166,11 +148,6 @@ function ClaimFacilityStepper({ fetching, submitClaimForm, formData, error }) {
         activeStepName !== lastStepName ? (
             <>
                 <div style={claimFacilityStepperStyles.formContainerStyles}>
-                    {/* <Typography variant="title">
-                        {nextButtonAction !== SUBMIT_FORM
-                            ? `Step ${activeStep + 2}: ${nextStepName}`
-                            : nextStepName}
-                    </Typography> */}
                     {error || !stepInputIsValid(formData) ? (
                         <Typography
                             variant="body2"
