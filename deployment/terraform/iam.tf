@@ -419,9 +419,26 @@ data "aws_iam_policy_document" "opensearch" {
   }
 }
 
+data "aws_iam_policy_document" "opensearch-log-publishing-policy" {
+  statement {
+    actions = [
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+      "logs:PutLogEventsBatch",
+    ]
+
+    resources = [aws_cloudwatch_log_group.opensearch.arn]
+
+    principals {
+      identifiers = ["es.amazonaws.com"]
+      type        = "Service"
+    }
+  }
+}
+
 resource "aws_cloudwatch_log_resource_policy" "opensearch" {
   policy_name     = "opensearch"
-  policy_document = data.aws_iam_policy_document.opensearch.json
+  policy_document = data.aws_iam_policy_document.opensearch-log-publishing-policy.json
 }
 
 resource "aws_iam_role_policy" "opensearch" {
