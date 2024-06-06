@@ -258,7 +258,7 @@ class FacilityClaim(models.Model):
         blank=True,
         verbose_name='average lead time',
         help_text='The editable facilty avg lead time for this claim.')
-    facility_workers_count_new = models.CharField(
+    facility_workers_count = models.CharField(
         max_length=200,
         null=True,
         blank=True,
