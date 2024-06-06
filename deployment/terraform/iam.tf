@@ -419,6 +419,11 @@ data "aws_iam_policy_document" "opensearch" {
   }
 }
 
+resource "aws_cloudwatch_log_resource_policy" "opensearch" {
+  policy_name     = "opensearch"
+  policy_document = data.aws_iam_policy_document.opensearch.json
+}
+
 resource "aws_iam_role_policy" "opensearch" {
   name   = "opensearch"
   role   = aws_iam_role.app_task_role.name
