@@ -20,11 +20,9 @@ DECLARE
 BEGIN
   DROP SCHEMA public CASCADE;
   CREATE SCHEMA public;
-
-  -- GRANT ALL ON SCHEMA public TO postgres;
   GRANT ALL ON SCHEMA public TO public;
 END \$\$;"
 
 echo "Dropping tables"
 psql -d $DATABASE_NAME -U $DATABASE_USERNAME -h localhost -p 5433 -c "$SQL_SCRIPT"
-pg_restore --verbose --clean --no-acl --no-owner -d $DATABASE_NAME -U $DATABASE_USERNAME -h localhost -p 5433 < /dumps/osh_prod_large.dump || true
+pg_restore --verbose --clean --if-exists --no-acl --no-owner -d $DATABASE_NAME -U $DATABASE_USERNAME -h localhost -p 5433 < /dumps/osh_prod_large.dump
