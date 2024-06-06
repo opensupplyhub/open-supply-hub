@@ -1,5 +1,5 @@
 import React from 'react';
-import { bool, func, string } from 'prop-types';
+import { bool, func, string, PropTypes } from 'prop-types';
 import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
@@ -16,6 +16,8 @@ import {
     updateClaimAFacilityYourBusinessWebsite,
     updateClaimAFacilityBusinessWebsite,
     updateClaimAFacilityBusinessLinkedinProfile,
+    updateClaimAFacilityUploadFiles,
+    updateClaimAFacilityBusinessUploadFiles,
 } from '../actions/claimFacility.js';
 
 import { getValueFromEvent } from '../util/util';
@@ -58,6 +60,10 @@ const ClaimFacilitySupportDocs = ({
     updateBusinessWebsite,
     businessLinkedinProfile,
     updateBusinessLinkedinProfile,
+    uploadFiles,
+    businessUploadFiles,
+    updateUploadFiles,
+    updateBusinessUploadFiles,
     fetching,
 }) => (
     <>
@@ -134,7 +140,11 @@ const ClaimFacilitySupportDocs = ({
             <Typography variant="subheading">
                 {additionalDocumentationSub.label}
             </Typography>
-            <ClaimAttachmentsUploader />
+            <ClaimAttachmentsUploader
+                inputId="yourFiles"
+                files={uploadFiles}
+                updateUploadFiles={updateUploadFiles}
+            />
         </div>
         <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
             <Typography variant="display1" style={yourContactInfoTitleStyle}>
@@ -190,10 +200,19 @@ const ClaimFacilitySupportDocs = ({
             <Typography variant="subheading">
                 {additionalDocumentationSub.label}
             </Typography>
-            <ClaimAttachmentsUploader />
+            <ClaimAttachmentsUploader
+                inputId="businessFiles"
+                files={businessUploadFiles}
+                updateUploadFiles={updateBusinessUploadFiles}
+            />
         </div>
     </>
 );
+
+ClaimFacilitySupportDocs.defaultProps = {
+    uploadFiles: [],
+    businessUploadFiles: [],
+};
 
 ClaimFacilitySupportDocs.propTypes = {
     yourName: string.isRequired,
@@ -206,6 +225,10 @@ ClaimFacilitySupportDocs.propTypes = {
     updateBusinessWebsite: func.isRequired,
     businessLinkedinProfile: string.isRequired,
     updateBusinessLinkedinProfile: func.isRequired,
+    uploadFiles: PropTypes.arrayOf(PropTypes.object),
+    businessUploadFiles: PropTypes.arrayOf(PropTypes.object),
+    updateUploadFiles: PropTypes.func.isRequired,
+    updateBusinessUploadFiles: PropTypes.func.isRequired,
     fetching: bool.isRequired,
 };
 
@@ -218,6 +241,8 @@ const mapStateToProps = ({
                 yourBusinessWebsite,
                 businessWebsite,
                 businessLinkedinProfile,
+                uploadFiles,
+                businessUploadFiles,
             },
             fetching,
         },
@@ -228,6 +253,8 @@ const mapStateToProps = ({
     yourBusinessWebsite,
     businessWebsite,
     businessLinkedinProfile,
+    uploadFiles,
+    businessUploadFiles,
     fetching,
 });
 
@@ -244,6 +271,10 @@ const mapDispatchToProps = dispatch => ({
         dispatch(
             updateClaimAFacilityBusinessLinkedinProfile(getValueFromEvent(e)),
         ),
+    updateUploadFiles: files =>
+        dispatch(updateClaimAFacilityUploadFiles(files)),
+    updateBusinessUploadFiles: files =>
+        dispatch(updateClaimAFacilityBusinessUploadFiles(files)),
 });
 
 export default connect(

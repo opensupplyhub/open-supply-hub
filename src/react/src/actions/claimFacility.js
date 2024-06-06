@@ -72,6 +72,9 @@ export const updateClaimAFacilityLinkedinProfile = createAction(
 export const updateClaimAFacilityUploadFiles = createAction(
     'UPDATE_CLAIM_A_FACILITY_UPLOAD_FILES',
 );
+export const updateClaimAFacilityBusinessUploadFiles = createAction(
+    'UPDATE_CLAIM_A_FACILITY_BUSINESS_UPLOAD_FILES',
+);
 export const startSubmitClaimAFacilityData = createAction(
     'START_SUBMIT_CLAIM_A_FACILITY_DATA',
 );
@@ -95,12 +98,6 @@ export const updateClaimAFacilityBusinessWebsite = createAction(
 );
 export const updateClaimAFacilityBusinessLinkedinProfile = createAction(
     'UPDATE_CLAIM_A_FACILITY_YOUR_BUSINESS_LINKEDIN_PROFILE',
-);
-export const updateClaimAFacilityYourUploadFiles = createAction(
-    'UPDATE_CLAIM_A_FACILITY_YOUR_UPLOAD_FILES',
-);
-export const updateClaimAFacilityBusinessUploadFiles = createAction(
-    'UPDATE_CLAIM_A_FACILITY_BUSINESS_UPLOAD_FILES',
 );
 
 export const updateClaimASector = createAction('UPDATE_CLAIM_A_SECTOR');
@@ -126,7 +123,10 @@ export function submitClaimAFacilityData(osID) {
         const postData = new FormData();
         toPairs(formData).forEach(([key, value]) => {
             const formattedKey = snakeCase(key);
-            if (formattedKey === 'upload_files') {
+            if (
+                formattedKey === 'upload_files' ||
+                formattedKey === 'business_upload_files'
+            ) {
                 mapKeys(value, file => {
                     postData.append('files', file);
                 });

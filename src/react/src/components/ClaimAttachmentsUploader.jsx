@@ -1,14 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { connect } from 'react-redux';
-import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 
 import Typography from '@material-ui/core/Typography';
 import SvgIcon from '@material-ui/core/SvgIcon';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
-
-import { updateClaimAFacilityUploadFiles } from '../actions/claimFacility';
 
 const claimAttachmentsUploaderStyles = Object.freeze({
     fileUploadArea: Object.freeze({
@@ -48,7 +45,7 @@ const claimAttachmentsUploaderStyles = Object.freeze({
     }),
 });
 
-const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
+const ClaimAttachmentsUploader = ({ inputId, files, updateUploadFiles }) => {
     const [errorMessage, setErrorMessage] = useState();
     const fileInputRef = useRef(null);
 
@@ -72,7 +69,7 @@ const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
                 );
                 return null;
             }
-            if (uploadFiles.length + newFiles.length > allowedFileAmount) {
+            if (files.length + newFiles.length > allowedFileAmount) {
                 setErrorMessage(
                     `${fileName} could not be uploaded because there is a maximum of ${allowedFileAmount} attachments and you have already uploaded ${allowedFileAmount} attachments.`,
                 );
@@ -85,24 +82,25 @@ const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
         e.preventDefault();
         setErrorMessage('');
         const newFiles = Array.from(e.dataTransfer.files);
-        updateUploadFiles([...uploadFiles, ...getValidFiles(newFiles)]);
+        updateUploadFiles([...files, ...getValidFiles(newFiles)]);
     };
 
     const handleFileChange = e => {
         setErrorMessage('');
         const newFiles = Array.from(e.target.files);
-        updateUploadFiles([...uploadFiles, ...getValidFiles(newFiles)]);
+        updateUploadFiles([...files, ...getValidFiles(newFiles)]);
     };
 
     const handleRemoveFile = index => {
-        const updatedFiles = uploadFiles.filter((file, i) => i !== index);
+        const updatedFiles = files.filter((file, i) => i !== index);
+        fileInputRef.current.value = null;
         updateUploadFiles(updatedFiles);
     };
 
     return (
         <div data-testid="claim-attachments-uploader">
             <ul style={claimAttachmentsUploaderStyles.fileListUploaded}>
-                {uploadFiles.map((file, index) => (
+                {files.map((file, index) => (
                     <li key={uuidv4()}>
                         <IconButton
                             key="remove"
@@ -140,10 +138,10 @@ const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
                 style={claimAttachmentsUploaderStyles.fileUploadArea}
                 onDrop={handleDrop}
                 onDragOver={e => e.preventDefault()}
-                htmlFor="fileInput"
+                htmlFor={inputId}
             >
                 <input
-                    id="fileInput"
+                    id={inputId}
                     type="file"
                     accept={allowedExtensions.map(ext => ext).join(',')}
                     onChange={handleFileChange}
@@ -169,35 +167,4 @@ const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
     );
 };
 
-ClaimAttachmentsUploader.defaultProps = {
-    uploadFiles: [],
-};
-
-ClaimAttachmentsUploader.propTypes = {
-    uploadFiles: PropTypes.arrayOf(PropTypes.object),
-    updateUploadFiles: PropTypes.func.isRequired,
-};
-
-function mapStateToProps({
-    claimFacility: {
-        claimData: {
-            formData: { uploadFiles },
-        },
-    },
-}) {
-    return {
-        uploadFiles,
-    };
-}
-
-function mapDispatchToProps(dispatch) {
-    return {
-        updateUploadFiles: files =>
-            dispatch(updateClaimAFacilityUploadFiles(files)),
-    };
-}
-
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps,
-)(ClaimAttachmentsUploader);
+export default connect()(ClaimAttachmentsUploader);

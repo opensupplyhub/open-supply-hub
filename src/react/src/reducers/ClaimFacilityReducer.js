@@ -29,6 +29,7 @@ import {
     // updateClaimAFacilityJobTitle,
     // updateClaimAFacilityLinkedinProfile,
     updateClaimAFacilityUploadFiles,
+    updateClaimAFacilityBusinessUploadFiles,
 } from '../actions/claimFacility';
 
 const initialState = Object.freeze({
@@ -229,6 +230,14 @@ export default createReducer(
                 claimData: {
                     formData: {
                         uploadFiles: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimAFacilityBusinessUploadFiles]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        businessUploadFiles: { $set: payload },
                     },
                 },
             }),
