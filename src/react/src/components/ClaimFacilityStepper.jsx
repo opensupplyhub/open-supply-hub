@@ -6,13 +6,16 @@ import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import clamp from 'lodash/clamp';
-import last from 'lodash/last';
 import stubTrue from 'lodash/stubTrue';
+import constant from 'lodash/constant';
+
+import Dialog from '@material-ui/core/Dialog';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogActions from '@material-ui/core/DialogActions';
 
 import ClaimFacilityIntroStep from './ClaimFacilityIntroStep';
 import ClaimFacilitySupportDocs from './ClaimFacilitySupportDocs';
 import ClaimFacilityAdditionalData from './ClaimFacilityAdditionalData';
-import ClaimFacilityConfirmationStep from './ClaimFacilityConfirmationStep';
 
 import { submitClaimAFacilityData } from '../actions/claimFacility';
 
@@ -22,6 +25,29 @@ import {
     claimFacilitySupportDocsIsValid,
     claimAFacilityFormIsValid,
 } from '../util/util';
+
+const popupDialogStyles = Object.freeze({
+    containerStyles: Object.freeze({
+        padding: '35px',
+    }),
+    titleStyles: Object.freeze({
+        fontWeight: 'bold',
+        margin: 'auto',
+        textAlign: 'center',
+        color: COLOURS.NEAR_BLACK,
+    }),
+    contentStyles: Object.freeze({
+        fontSize: '20px',
+        margin: 'auto',
+        textAlign: 'center',
+    }),
+    actionStyles: Object.freeze({
+        justifyContent: 'center',
+    }),
+    buttonStyles: Object.freeze({
+        margin: '10px',
+    }),
+});
 
 const claimFacilityStepperStyles = Object.freeze({
     containerStyles: Object.freeze({
@@ -93,14 +119,9 @@ const steps = Object.freeze([
         nextButtonAction: SUBMIT_FORM,
         stepInputIsValid: claimAFacilityFormIsValid,
     }),
-    Object.freeze({
-        name: 'Submitted Successfully',
-        component: ClaimFacilityConfirmationStep,
-        next: null,
-        hasBackButton: false,
-        hasNextButton: false,
-    }),
 ]);
+
+const InvisibleDiv = constant(<div style={{ display: 'none ' }} />);
 
 function ClaimFacilityStepper({ fetching, submitClaimForm, formData, error }) {
     const [activeStep, setActiveStep] = useState(0);
@@ -110,6 +131,12 @@ function ClaimFacilityStepper({ fetching, submitClaimForm, formData, error }) {
         setActiveStep(clamp(activeStep + 1, 0, steps.length));
     const decrementActiveStep = () =>
         setActiveStep(clamp(activeStep - 1, 0, steps.length));
+
+    const [dialogIsOpen, setDialogIsOpen] = useState(false);
+
+    const openDialog = () => {
+        setDialogIsOpen(true);
+    };
 
     const {
         component: ActiveStepComponent,
@@ -130,7 +157,7 @@ function ClaimFacilityStepper({ fetching, submitClaimForm, formData, error }) {
             submittingForm
         ) {
             setSubmittingForm(false);
-            setActiveStep(activeStep + 1);
+            openDialog();
         }
     }, [
         submittingForm,
@@ -142,83 +169,116 @@ function ClaimFacilityStepper({ fetching, submitClaimForm, formData, error }) {
         fetching,
     ]);
 
-    const { name: lastStepName } = last(steps);
-
-    const controlsSection =
-        activeStepName !== lastStepName ? (
-            <>
-                <div style={claimFacilityStepperStyles.formContainerStyles}>
-                    {error || !stepInputIsValid(formData) ? (
-                        <Typography
-                            variant="body2"
-                            style={
-                                claimFacilityStepperStyles.validationMessageStyles
-                            }
-                            color="error"
+    const controlsSection = (
+        <>
+            <div style={claimFacilityStepperStyles.formContainerStyles}>
+                {error || !stepInputIsValid(formData) ? (
+                    <Typography
+                        variant="body2"
+                        style={
+                            claimFacilityStepperStyles.validationMessageStyles
+                        }
+                        color="error"
+                    >
+                        {error
+                            ? 'An error prevented submitting the form'
+                            : 'Some required fields are missing or invalid.'}
+                    </Typography>
+                ) : null}
+                <div style={claimFacilityStepperStyles.buttonsContainerStyles}>
+                    {hasNextButton && nextButtonAction !== SUBMIT_FORM && (
+                        <Button
+                            color="secondary"
+                            variant="contained"
+                            onClick={incrementActiveStep}
+                            style={claimFacilityStepperStyles.buttonStyles}
+                            disabled={!stepInputIsValid(formData)}
                         >
-                            {error
-                                ? 'An error prevented submitting the form'
-                                : 'Some required fields are missing or invalid.'}
-                        </Typography>
-                    ) : null}
-                    <div
-                        style={
-                            claimFacilityStepperStyles.buttonsContainerStyles
-                        }
-                    >
-                        {hasNextButton && nextButtonAction !== SUBMIT_FORM && (
-                            <Button
-                                color="secondary"
-                                variant="contained"
-                                onClick={incrementActiveStep}
-                                style={claimFacilityStepperStyles.buttonStyles}
-                                disabled={!stepInputIsValid(formData)}
-                            >
-                                Next
-                            </Button>
-                        )}
-                        {hasNextButton && nextButtonAction === SUBMIT_FORM && (
-                            <Button
-                                color="secondary"
-                                variant="contained"
-                                onClick={submitClaimForm}
-                                style={claimFacilityStepperStyles.buttonStyles}
-                                disabled={
-                                    fetching ||
-                                    !claimAFacilityFormIsValid(formData)
-                                }
-                            >
-                                {fetching ? (
-                                    <CircularProgress size={5} />
-                                ) : (
-                                    'Submit'
-                                )}
-                            </Button>
-                        )}
-                    </div>
-                    <div
-                        style={
-                            claimFacilityStepperStyles.buttonsContainerStyles
-                        }
-                    >
-                        {hasBackButton && (
-                            <Button
-                                color="primary"
-                                variant="contained"
-                                onClick={decrementActiveStep}
-                                style={claimFacilityStepperStyles.buttonStyles}
-                                disabled={activeStep === 0}
-                            >
-                                Go Back
-                            </Button>
-                        )}
-                    </div>
+                            Next
+                        </Button>
+                    )}
+                    {hasNextButton && nextButtonAction === SUBMIT_FORM && (
+                        <Button
+                            color="secondary"
+                            variant="contained"
+                            onClick={submitClaimForm}
+                            style={claimFacilityStepperStyles.buttonStyles}
+                            disabled={
+                                fetching || !claimAFacilityFormIsValid(formData)
+                            }
+                        >
+                            {fetching ? (
+                                <CircularProgress size={5} />
+                            ) : (
+                                'Submit'
+                            )}
+                        </Button>
+                    )}
                 </div>
-            </>
-        ) : null;
+                <div style={claimFacilityStepperStyles.buttonsContainerStyles}>
+                    {hasBackButton && (
+                        <Button
+                            color="primary"
+                            variant="contained"
+                            onClick={decrementActiveStep}
+                            style={claimFacilityStepperStyles.buttonStyles}
+                            disabled={activeStep === 0}
+                        >
+                            Go Back
+                        </Button>
+                    )}
+                </div>
+            </div>
+        </>
+    );
 
     return (
         <div style={claimFacilityStepperStyles.containerStyles}>
+            <Dialog open={dialogIsOpen}>
+                {dialogIsOpen ? (
+                    <div style={popupDialogStyles.containerStyles}>
+                        <DialogContent>
+                            <Typography
+                                variant="display1"
+                                style={popupDialogStyles.titleStyles}
+                            >
+                                Thank you for submitting your claim request!
+                            </Typography>
+                            <Typography style={popupDialogStyles.contentStyles}>
+                                You will receive a notification once it has been
+                                reviewed.
+                            </Typography>
+                            <hr
+                                style={{
+                                    color: COLOURS.GREY,
+                                    backgroundColor: COLOURS.GREY,
+                                    height: 1,
+                                }}
+                            />
+                        </DialogContent>
+                        <DialogActions style={popupDialogStyles.actionStyles}>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                href="/claimed"
+                                style={popupDialogStyles.buttonStyles}
+                            >
+                                View My Claims
+                            </Button>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                href="/"
+                                style={popupDialogStyles.buttonStyles}
+                            >
+                                Search OS Hub
+                            </Button>
+                        </DialogActions>
+                    </div>
+                ) : (
+                    <InvisibleDiv />
+                )}
+            </Dialog>
             <div style={claimFacilityStepperStyles.formContainerStyles}>
                 {activeStepName === 'Claim this facility' ? (
                     <div>
