@@ -1,11 +1,13 @@
 from django.db import migrations
 
+from api.extended_fields import extract_int_range_value
+
 
 def copy_integer_to_char(apps, schema_editor):
     FacilityClaim = apps.get_model('api', 'FacilityClaim')
     for instance in FacilityClaim.objects.all():
         if instance.facility_workers_count:
-            instance.facility_workers_count_new = str(
+            instance.facility_workers_count_new = extract_int_range_value(
                 instance.facility_workers_count
             )
             instance.save()
