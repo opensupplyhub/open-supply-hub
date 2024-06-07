@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     dependencies = [
         (
             'api',
-            '0147_copy_data_from_facility_workers_count_to_facility_workers_count_new',
+            '0147_copy_facility_workers_count_to_facility_workers_count_new',
         ),
     ]
 
