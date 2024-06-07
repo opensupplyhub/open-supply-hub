@@ -2,7 +2,7 @@ from django.db import migrations
 
 
 def copy_integer_to_char(apps, schema_editor):
-    FacilityClaim = apps.get_model('your_app_name', 'FacilityClaim')
+    FacilityClaim = apps.get_model('api', 'FacilityClaim')
     for instance in FacilityClaim.objects.all():
         if instance.facility_workers_count:
             instance.facility_workers_count_new = str(
