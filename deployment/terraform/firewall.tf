@@ -425,3 +425,13 @@ resource "aws_security_group_rule" "opensearch_ingress" {
   security_group_id        = aws_security_group.opensearch.id
   source_security_group_id = aws_security_group.app_logstash.id
 }
+
+resource "aws_security_group_rule" "opensearch_bastion_ingress" {
+  type      = "ingress"
+  from_port = var.logstash_port
+  to_port   = var.logstash_port
+  protocol  = "tcp"
+
+  security_group_id        = aws_security_group.opensearch.id
+  source_security_group_id = module.vpc.bastion_security_group_id
+}
