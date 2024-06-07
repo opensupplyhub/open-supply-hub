@@ -21,20 +21,8 @@
           }
         }
       },
-      "country_code": {
-        "type": "keyword"
-      },
       "location": {
         "type": "geo_point"
-      },
-      "is_closed": {
-        "type": "boolean"
-      },
-      "created_at": {
-        "type": "date_nanos"
-      },
-      "updated_at": {
-        "type": "date_nanos"
       },
       "facility_type": {
         "type": "text",
