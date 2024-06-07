@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { arrayOf, bool, func, shape, string } from 'prop-types';
 import { connect } from 'react-redux';
+import { withStyles, withTheme } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
@@ -26,6 +27,30 @@ import {
     claimAFacilityFormIsValid,
 } from '../util/util';
 
+const stepperStyles = theme =>
+    Object.freeze({
+        buttonStyles: Object.freeze({
+            margin: '5px',
+            width: '20%',
+            display: 'flex',
+            fontWeight: 'bold',
+            backgroundColor: theme.palette.action.main,
+            color: theme.palette.getContrastText(theme.palette.action.main),
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
+        }),
+        popupButtonStyles: Object.freeze({
+            fontWeight: 'bold',
+            margin: '10px',
+            backgroundColor: theme.palette.action.main,
+            color: theme.palette.getContrastText(theme.palette.action.main),
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
+        }),
+    });
+
 const popupDialogStyles = Object.freeze({
     containerStyles: Object.freeze({
         padding: '35px',
@@ -44,9 +69,6 @@ const popupDialogStyles = Object.freeze({
     actionStyles: Object.freeze({
         justifyContent: 'center',
     }),
-    buttonStyles: Object.freeze({
-        margin: '10px',
-    }),
 });
 
 const claimFacilityStepperStyles = Object.freeze({
@@ -60,7 +82,6 @@ const claimFacilityStepperStyles = Object.freeze({
         margin: '5px',
         width: '20%',
         display: 'flex',
-        color: COLOURS.NEAR_BLACK,
         fontWeight: 'bold',
     }),
     formContainerStyles: Object.freeze({
@@ -123,7 +144,13 @@ const steps = Object.freeze([
 
 const InvisibleDiv = constant(<div style={{ display: 'none ' }} />);
 
-function ClaimFacilityStepper({ fetching, submitClaimForm, formData, error }) {
+function ClaimFacilityStepper({
+    fetching,
+    submitClaimForm,
+    formData,
+    error,
+    classes,
+}) {
     const [activeStep, setActiveStep] = useState(0);
     const [submittingForm, setSubmittingForm] = useState(false);
 
@@ -191,7 +218,7 @@ function ClaimFacilityStepper({ fetching, submitClaimForm, formData, error }) {
                             color="secondary"
                             variant="contained"
                             onClick={incrementActiveStep}
-                            style={claimFacilityStepperStyles.buttonStyles}
+                            className={classes.buttonStyles}
                             disabled={!stepInputIsValid(formData)}
                         >
                             Next
@@ -202,7 +229,7 @@ function ClaimFacilityStepper({ fetching, submitClaimForm, formData, error }) {
                             color="secondary"
                             variant="contained"
                             onClick={submitClaimForm}
-                            style={claimFacilityStepperStyles.buttonStyles}
+                            className={classes.buttonStyles}
                             disabled={
                                 fetching || !claimAFacilityFormIsValid(formData)
                             }
@@ -218,7 +245,7 @@ function ClaimFacilityStepper({ fetching, submitClaimForm, formData, error }) {
                 <div style={claimFacilityStepperStyles.buttonsContainerStyles}>
                     {hasBackButton && (
                         <Button
-                            color="primary"
+                            color="secondary"
                             variant="contained"
                             onClick={decrementActiveStep}
                             style={claimFacilityStepperStyles.buttonStyles}
@@ -261,7 +288,7 @@ function ClaimFacilityStepper({ fetching, submitClaimForm, formData, error }) {
                                 variant="contained"
                                 color="primary"
                                 href="/claimed"
-                                style={popupDialogStyles.buttonStyles}
+                                className={classes.popupButtonStyles}
                             >
                                 View My Claims
                             </Button>
@@ -269,7 +296,7 @@ function ClaimFacilityStepper({ fetching, submitClaimForm, formData, error }) {
                                 variant="contained"
                                 color="primary"
                                 href="/"
-                                style={popupDialogStyles.buttonStyles}
+                                className={classes.popupButtonStyles}
                             >
                                 Search OS Hub
                             </Button>
@@ -381,4 +408,4 @@ function mapDispatchToProps(
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(ClaimFacilityStepper);
+)(withTheme()(withStyles(stepperStyles)(ClaimFacilityStepper)));
