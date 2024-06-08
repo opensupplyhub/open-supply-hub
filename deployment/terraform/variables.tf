@@ -284,7 +284,7 @@ variable "app_cc_port" {
 }
 
 variable "logstash_port" {
-  default = "443"
+  default = "9200"
 }
 
 variable "gunicorn_worker_timeout" {
