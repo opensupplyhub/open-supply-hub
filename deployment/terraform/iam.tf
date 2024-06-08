@@ -447,7 +447,30 @@ resource "aws_iam_role_policy" "opensearch" {
   policy = data.aws_iam_policy_document.opensearch.json
 }
 
+resource "aws_iam_policy" "opensearch_access_policy" {
+  name        = "OpenSearchAccessPolicy"
+  description = "Policy for OpenSearch access"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid       = "VisualEditor0",
+        Effect    = "Allow",
+        Action    = [
+          "es:ESHttpPost",
+          "es:ESHttpGet",
+          "es:ESHttpDelete",
+          "es:ESHttpPut"
+        ],
+        Resource  = "arn:aws:es:${var.aws_region}:${data.aws_caller_identity.current.account_id}:domain/${aws_opensearch_domain.opensearch.domain_name}/*"
+      }
+    ]
+  })
+}
+
+
 resource "aws_iam_role_policy_attachment" "opensearch_access_policy_attachment" {
   role       = aws_iam_role.container_instance_ec2.name
-  policy_arn = data.aws_iam_policy.opensearch_access_policy.arn
+  policy_arn = aws_iam_policy.opensearch_access_policy.arn
 }
