@@ -446,3 +446,8 @@ resource "aws_iam_role_policy" "opensearch" {
   role   = aws_iam_role.app_task_role.name
   policy = data.aws_iam_policy_document.opensearch.json
 }
+
+resource "aws_iam_role_policy_attachment" "opensearch_access_policy_attachment" {
+  role       = aws_iam_role.container_instance_ec2.name
+  policy_arn = data.aws_iam_policy.opensearch_access_policy.arn
+}

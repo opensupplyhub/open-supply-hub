@@ -73,4 +73,18 @@ resource "aws_opensearch_domain" "opensearch" {
 
     security_group_ids = [aws_security_group.opensearch.id]
   }
+
+  access_policies = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${aws_iam_role.container_instance_ec2.name}"
+        },
+        Action = "es:*",
+        Resource = "arn:aws:es:${var.aws_region}:${data.aws_caller_identity.current.account_id}:domain/${aws_opensearch_domain.opensearch.domain_name}/*"
+      }
+    ]
+  })
 }
