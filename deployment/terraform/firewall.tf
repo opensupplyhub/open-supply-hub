@@ -435,3 +435,34 @@ resource "aws_security_group_rule" "opensearch_bastion_ingress" {
   security_group_id        = aws_security_group.opensearch.id
   source_security_group_id = module.vpc.bastion_security_group_id
 }
+
+resource "aws_security_group" "ec2_security_group" {
+  vpc_id = module.vpc.id
+
+  ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "ec2-test-security-group"
+  }
+}
+
+resource "aws_security_group_rule" "allow_ec2_to_opensearch" {
+  type                     = "ingress"
+  from_port                = 9200
+  to_port                  = 9200
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.opensearch.id
+  source_security_group_id = aws_security_group.ec2_security_group.id
+}
