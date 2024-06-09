@@ -2,7 +2,7 @@ data "aws_ami" "latest_amazon_linux" {
   most_recent = true
 
   filter {
-    name   = "ec2-test-ami"
+    name   = "name"
     values = ["amzn2-ami-hvm-*-x86_64-gp2"]
   }
 
