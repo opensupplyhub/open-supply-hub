@@ -436,6 +436,7 @@ resource "aws_security_group_rule" "opensearch_bastion_ingress" {
   source_security_group_id = module.vpc.bastion_security_group_id
 }
 
+# TODO: remove later
 resource "aws_security_group" "ec2_security_group" {
   vpc_id = module.vpc.id
 

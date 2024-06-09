@@ -21,7 +21,7 @@ resource "aws_instance" "test-ec2-instance" {
   subnet_id     = module.vpc.private_subnet_ids[count.index]
 
   security_groups = [
-    aws_security_group.ec2_security_group.name,
+    aws_security_group.ec2_security_group.id,
   ]
 
   depends_on = [
