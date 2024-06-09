@@ -55,6 +55,11 @@ resource "aws_instance" "example_server" {
     aws_security_group.ec2_security_group.name,
   ]
 
+  depends_on = [
+    aws_security_group.ec2_security_group,
+    aws_security_group_rule.allow_ec2_to_opensearch,
+  ]
+
   tags = {
     Name = "EC2Test"
   }
