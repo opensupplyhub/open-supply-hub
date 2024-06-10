@@ -9,4 +9,3 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         call_command('migrate')
-        call_command('clean_facilitylistitems')
