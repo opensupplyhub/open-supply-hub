@@ -63,7 +63,7 @@ BEGIN
 END \$\$;"
 
 
-pg_restore --verbose --clean --no-acl --no-owner -d anondb -U anondb -h localhost -p 5432 < /dumps/osh_prod_large.dump
+pg_restore --verbose --clean --if-exists --no-acl --no-owner -d anondb -U anondb -h localhost -p 5432 < /dumps/osh_prod_large.dump
 psql -U anondb -d anondb -h localhost -p 5432 -c "$SQL_SCRIPT"
 pg_dump --clean --no-owner --no-privileges -Fc -d anondb -U anondb  -f /dumps/osh_prod_large_anonimized.dump -w --verbose
 
