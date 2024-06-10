@@ -2,14 +2,11 @@ import React, { useEffect } from 'react';
 import { arrayOf, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
-// import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
-import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import { Link, Route } from 'react-router-dom';
 
 import AppGrid from '../components/AppGrid';
 import AppOverflow from '../components/AppOverflow';
-// import ClaimFacilityHeader from '../components/ClaimFacilityHeader';
 import ClaimFacilityStepper from '../components/ClaimFacilityStepper';
 
 import {
@@ -22,7 +19,6 @@ import { facilityDetailsPropType } from '../util/propTypes';
 
 import { authLoginFormRoute } from '../util/constants';
 
-import { makeFacilityDetailLink } from '../util/util';
 import COLOURS from '../util/COLOURS';
 
 const claimFacilityContainerStyles = Object.freeze({
@@ -49,9 +45,6 @@ const ClaimFacility = ({
     getClaimData,
     clearClaimData,
     userHasSignedIn,
-    match: {
-        params: { osID },
-    },
 }) => {
     /* eslint-disable react-hooks/exhaustive-deps */
     useEffect(() => {
@@ -98,18 +91,7 @@ const ClaimFacility = ({
     return (
         <div style={appStyles.gridStyles}>
             <AppOverflow>
-                <AppGrid
-                    title="Claim this facility"
-                    backButtonComponent={
-                        <Link
-                            to={makeFacilityDetailLink(osID)}
-                            href={makeFacilityDetailLink(osID)}
-                            style={{ color: 'black' }}
-                        >
-                            <ArrowBackIcon fill="black" />
-                        </Link>
-                    }
-                >
+                <AppGrid>
                     <div style={claimFacilityContainerStyles.containerStyles}>
                         <Route component={ClaimFacilityStepper} />
                     </div>

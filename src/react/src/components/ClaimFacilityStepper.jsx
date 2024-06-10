@@ -25,6 +25,7 @@ import COLOURS from '../util/COLOURS';
 import {
     claimFacilitySupportDocsIsValid,
     claimAFacilityFormIsValid,
+    makeFacilityDetailLink,
 } from '../util/util';
 
 const stepperStyles = theme =>
@@ -99,14 +100,14 @@ const claimFacilityStepperStyles = Object.freeze({
     }),
 });
 
-const yourContactInfoTitleStyle = Object.freeze({
+const infoTitleStyle = Object.freeze({
     paddingBottom: '10px',
     paddingLeft: '20px',
     color: COLOURS.NEAR_BLACK,
     fontWeight: 'bold',
 });
 
-const yourContactInfoDescStyle = Object.freeze({
+const infoDescStyle = Object.freeze({
     fontWeight: 'bold',
     paddingBottom: '30px',
     paddingLeft: '20px',
@@ -119,7 +120,7 @@ const steps = Object.freeze([
         name: 'Claim this facility',
         component: ClaimFacilityIntroStep,
         next: 'Support Documentation',
-        hasBackButton: false,
+        hasBackButton: true,
         hasNextButton: true,
         stepInputIsValid: stubTrue,
     }),
@@ -150,6 +151,9 @@ function ClaimFacilityStepper({
     formData,
     error,
     classes,
+    match: {
+        params: { osID },
+    },
 }) {
     const [activeStep, setActiveStep] = useState(0);
     const [submittingForm, setSubmittingForm] = useState(false);
@@ -243,13 +247,23 @@ function ClaimFacilityStepper({
                     )}
                 </div>
                 <div style={claimFacilityStepperStyles.buttonsContainerStyles}>
-                    {hasBackButton && (
+                    {hasBackButton && activeStep === 0 && (
+                        <Button
+                            color="secondary"
+                            variant="contained"
+                            to={makeFacilityDetailLink(osID)}
+                            href={makeFacilityDetailLink(osID)}
+                            style={claimFacilityStepperStyles.buttonStyles}
+                        >
+                            Go Back
+                        </Button>
+                    )}
+                    {hasBackButton && activeStep > 0 && (
                         <Button
                             color="secondary"
                             variant="contained"
                             onClick={decrementActiveStep}
                             style={claimFacilityStepperStyles.buttonStyles}
-                            disabled={activeStep === 0}
                         >
                             Go Back
                         </Button>
@@ -309,16 +323,10 @@ function ClaimFacilityStepper({
             <div style={claimFacilityStepperStyles.formContainerStyles}>
                 {activeStepName === 'Claim this facility' ? (
                     <div>
-                        <Typography
-                            variant="display3"
-                            style={yourContactInfoTitleStyle}
-                        >
+                        <Typography variant="display3" style={infoTitleStyle}>
                             Claim a Production Location
                         </Typography>
-                        <Typography
-                            variant="heading"
-                            style={yourContactInfoDescStyle}
-                        >
+                        <Typography variant="heading" style={infoDescStyle}>
                             In order to submit a claim request, you must be an
                             owner or senior manager of the production location.
                         </Typography>
@@ -326,32 +334,20 @@ function ClaimFacilityStepper({
                 ) : null}
                 {activeStepName === 'Support Documentation' ? (
                     <div>
-                        <Typography
-                            variant="display3"
-                            style={yourContactInfoTitleStyle}
-                        >
+                        <Typography variant="display3" style={infoTitleStyle}>
                             Supporting Documentation
                         </Typography>
-                        <Typography
-                            variant="heading"
-                            style={yourContactInfoDescStyle}
-                        >
+                        <Typography variant="heading" style={infoDescStyle}>
                             Use the form below to complete your claim request.
                         </Typography>
                     </div>
                 ) : null}
                 {activeStepName === 'Additional Data' ? (
                     <div>
-                        <Typography
-                            variant="display3"
-                            style={yourContactInfoTitleStyle}
-                        >
+                        <Typography variant="display3" style={infoTitleStyle}>
                             Additional Data
                         </Typography>
-                        <Typography
-                            variant="heading"
-                            style={yourContactInfoDescStyle}
-                        >
+                        <Typography variant="heading" style={infoDescStyle}>
                             Use the form below to upload additional information
                             about this production location.
                         </Typography>
