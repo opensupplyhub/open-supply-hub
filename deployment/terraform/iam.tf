@@ -421,6 +421,7 @@ data "aws_iam_policy_document" "opensearch" {
 
 data "aws_iam_policy_document" "opensearch-log-publishing-policy" {
   statement {
+    effect  = "Allow"
     actions = [
       "logs:CreateLogStream",
       "logs:PutLogEvents"
