@@ -5,6 +5,8 @@ import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import InputLabel from '@material-ui/core/InputLabel';
 import isEmpty from 'lodash/isEmpty';
+import every from 'lodash/every';
+import { isURL } from 'validator';
 
 import RequiredAsterisk from './RequiredAsterisk';
 
@@ -125,6 +127,10 @@ const ClaimFacilitySupportDocs = ({
             </InputLabel>
             <TextField
                 id={contactYourBusinessWebsite.id}
+                error={every([
+                    !isEmpty(yourBusinessWebsite),
+                    !isURL(yourBusinessWebsite),
+                ])}
                 variant="outlined"
                 style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
                 value={yourBusinessWebsite}
@@ -169,6 +175,10 @@ const ClaimFacilitySupportDocs = ({
             </InputLabel>
             <TextField
                 id={contactBusinessWebsite.id}
+                error={every([
+                    !isEmpty(businessWebsite),
+                    !isURL(businessWebsite),
+                ])}
                 variant="outlined"
                 style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
                 value={businessWebsite}
@@ -185,6 +195,10 @@ const ClaimFacilitySupportDocs = ({
             </InputLabel>
             <TextField
                 id={contactBusinessLinkedinProfile.id}
+                error={every([
+                    !isEmpty(businessLinkedinProfile),
+                    !isURL(businessLinkedinProfile),
+                ])}
                 variant="outlined"
                 style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
                 value={businessLinkedinProfile}

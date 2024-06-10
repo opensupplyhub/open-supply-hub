@@ -38,6 +38,7 @@ import {
     OTHER,
     FEATURE_COLLECTION,
     CLAIM_A_FACILITY,
+    NUMERIC_DASH_REGEX,
     inputTypesEnum,
     registrationFieldsEnum,
     registrationFormFields,
@@ -895,11 +896,23 @@ export const checkWhetherUserHasDashboardAccess = user =>
 export const claimAFacilityFormIsValid = ({
     yourName,
     yourTitle,
+    yourBusinessWebsite,
     businessWebsite,
     businessLinkedinProfile,
+    businessUploadFiles,
+    numberOfWorkers,
 }) =>
     every([!isEmpty(yourName), !isEmpty(yourTitle)], identity) &&
-    (!isEmpty(businessWebsite) || !isEmpty(businessLinkedinProfile));
+    some([isEmpty(yourBusinessWebsite), isURL(yourBusinessWebsite)]) &&
+    some([
+        isEmpty(numberOfWorkers),
+        NUMERIC_DASH_REGEX.test(numberOfWorkers),
+    ]) &&
+    some([
+        !isEmpty(businessWebsite) && isURL(businessWebsite),
+        !isEmpty(businessLinkedinProfile) && isURL(businessLinkedinProfile),
+        !isEmpty(businessUploadFiles),
+    ]);
 
 export const claimFacilityContactInfoStepIsValid = ({
     contactPerson,
@@ -911,11 +924,18 @@ export const claimFacilityContactInfoStepIsValid = ({
 export const claimFacilitySupportDocsIsValid = ({
     yourName,
     yourTitle,
+    yourBusinessWebsite,
     businessWebsite,
     businessLinkedinProfile,
+    businessUploadFiles,
 }) =>
     every([!isEmpty(yourName), !isEmpty(yourTitle)]) &&
-    (!isEmpty(businessWebsite) || !isEmpty(businessLinkedinProfile));
+    some([isEmpty(yourBusinessWebsite), isURL(yourBusinessWebsite)]) &&
+    some([
+        !isEmpty(businessWebsite) && isURL(businessWebsite),
+        !isEmpty(businessLinkedinProfile) && isURL(businessLinkedinProfile),
+        !isEmpty(businessUploadFiles),
+    ]);
 export const isValidFacilityURL = url =>
     isEmpty(url) || isURL(url, { protocols: ['http', 'https'] });
 

@@ -13,6 +13,8 @@ import map from 'lodash/map';
 import filter from 'lodash/filter';
 import includes from 'lodash/includes';
 import isNull from 'lodash/isNull';
+import isEmpty from 'lodash/isEmpty';
+import every from 'lodash/every';
 import Select from 'react-select';
 import Creatable from 'react-select/creatable';
 
@@ -33,7 +35,10 @@ import { getValueFromEvent } from '../util/util';
 
 import { claimAFacilitySupportDocsFormStyles } from '../util/styles';
 
-import { claimAFacilityAdditionalDataFormFields } from '../util/constants';
+import {
+    claimAFacilityAdditionalDataFormFields,
+    NUMERIC_DASH_REGEX,
+} from '../util/constants';
 
 import COLOURS from '../util/COLOURS';
 
@@ -289,8 +294,11 @@ function ClaimFacilityAdditionalData({
                     {numberOfWorkersDesc.label}
                 </Typography>
                 <TextField
-                    autoFocus
                     id={numberOfWorkersForm.id}
+                    error={every([
+                        !isEmpty(numberOfWorkers),
+                        !NUMERIC_DASH_REGEX.test(numberOfWorkers),
+                    ])}
                     variant="outlined"
                     style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
                     value={numberOfWorkers}
