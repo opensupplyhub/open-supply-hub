@@ -29,6 +29,9 @@ describe('ClaimAttachmentsUploader', () => {
                     formData: {
                         uploadFiles: [
                             new File(['file contents'], 'attachment_1.jpg', { type: 'image/jpg' })
+                        ],
+                        businessUploadFiles: [
+                            new File(['file contents'], 'attachment_1.jpg', { type: 'image/jpg' })
                         ]
                     },
                 },
@@ -40,7 +43,7 @@ describe('ClaimAttachmentsUploader', () => {
     global.URL.createObjectURL = jest.fn();
 
     it('renders without crashing', () => {
-        render(<ClaimAttachmentsUploader uploadFiles={[]} updateUploadFiles={() => {}} store={initialState} />);
+        render(<ClaimAttachmentsUploader inputId="files" files={[]} updateUploadFiles={() => {}} store={initialState} />);
     });
 
     it('adds files when selected', () => {
