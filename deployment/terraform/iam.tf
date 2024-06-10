@@ -423,7 +423,7 @@ data "aws_iam_policy_document" "opensearch-log-publishing-policy" {
   statement {
     actions = [
       "logs:CreateLogStream",
-      "logs:PutLogEventsBatch",
+      "logs:PutLogEvents"
     ]
 
     resources = [aws_cloudwatch_log_group.opensearch.arn]
