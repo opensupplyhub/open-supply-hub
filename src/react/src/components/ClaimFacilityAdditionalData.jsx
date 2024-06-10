@@ -42,7 +42,7 @@ import {
 
 import COLOURS from '../util/COLOURS';
 
-const yourContactInfoTitleStyle = Object.freeze({
+const infoTitleStyle = Object.freeze({
     paddingBottom: '10px',
     color: COLOURS.NEAR_BLACK,
     fontWeight: 'bold',
@@ -68,7 +68,7 @@ const claimedFacilitiesDetailsStyles = Object.freeze({
     inputSectionStyles: Object.freeze({
         display: 'flex',
         flexDirection: 'column',
-        width: '95%',
+        width: '50%',
         padding: '10px 0 10px',
     }),
     inputSectionLabelStyles: Object.freeze({
@@ -261,10 +261,7 @@ function ClaimFacilityAdditionalData({
         <>
             <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
                 <InputLabel htmlFor={sectorsForm.id}>
-                    <Typography
-                        variant="display1"
-                        style={yourContactInfoTitleStyle}
-                    >
+                    <Typography variant="display1" style={infoTitleStyle}>
                         {sectorsForm.label}
                     </Typography>
                 </InputLabel>
@@ -283,10 +280,7 @@ function ClaimFacilityAdditionalData({
             </div>
             <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
                 <InputLabel htmlFor={numberOfWorkersForm.id}>
-                    <Typography
-                        variant="display1"
-                        style={yourContactInfoTitleStyle}
-                    >
+                    <Typography variant="display1" style={infoTitleStyle}>
                         {numberOfWorkersForm.label}
                     </Typography>
                 </InputLabel>
@@ -309,10 +303,7 @@ function ClaimFacilityAdditionalData({
             </div>
             <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
                 <InputLabel htmlFor={localLanguageNameForm.id}>
-                    <Typography
-                        variant="display1"
-                        style={yourContactInfoTitleStyle}
-                    >
+                    <Typography variant="display1" style={infoTitleStyle}>
                         {localLanguageNameForm.label}
                     </Typography>
                 </InputLabel>

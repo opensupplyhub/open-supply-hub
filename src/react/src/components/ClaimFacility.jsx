@@ -24,7 +24,6 @@ import COLOURS from '../util/COLOURS';
 const claimFacilityContainerStyles = Object.freeze({
     containerStyles: Object.freeze({
         width: '100%',
-        display: 'flex',
         justifyContent: 'center',
     }),
 });

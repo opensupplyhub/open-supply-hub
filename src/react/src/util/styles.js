@@ -145,7 +145,7 @@ export const claimAFacilityFormStyles = Object.freeze({
 
 export const claimAFacilitySupportDocsFormStyles = Object.freeze({
     textFieldStyles: Object.freeze({
-        width: '95%',
+        width: '50%',
         padding: '10px 0 10px',
     }),
     inputGroupStyles: Object.freeze({
