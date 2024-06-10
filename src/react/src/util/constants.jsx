@@ -687,6 +687,8 @@ export const minimum100PercentWidthEmbedHeight = '500px';
 
 export const DONATE_LINK = 'https://givebutter.com/opensupplyhub2022';
 
+export const OS_HUB_BLOG_LINK = 'https://blog.opensupplyhub.org';
+
 export const NavbarItems = [
     {
         type: 'link',
@@ -714,8 +716,8 @@ export const NavbarItems = [
                         },
                         {
                             type: 'button',
-                            label: 'Donate',
-                            href: DONATE_LINK,
+                            label: 'Blog',
+                            href: OS_HUB_BLOG_LINK,
                         },
                     ],
                 },
@@ -910,12 +912,14 @@ export const FooterLinks = [
         href: 'https://share.hsforms.com/1bQwXClZUTjihXk3wt1SX2Abujql',
     },
     { label: 'FAQs', href: `${InfoLink}/${InfoPaths.faqs}` },
-    { label: 'Privacy Policy', href: `${InfoLink}/${InfoPaths.privacyPolicy}` },
+    { label: 'Careers', href: `${InfoLink}/work-with-us` },
     { label: 'Media Hub', href: `${InfoLink}/${InfoPaths.mediaHub}` },
+    { label: 'Blog', href: OS_HUB_BLOG_LINK },
     {
         label: 'Terms of Service',
         href: `${InfoLink}/${InfoPaths.termsOfService}`,
     },
+    { label: 'Privacy Policy', href: `${InfoLink}/${InfoPaths.privacyPolicy}` },
     { label: 'Reporting Line', href: 'https://opensupplyhub.allvoices.co/' },
     { label: 'Contact Us', href: `${InfoLink}/${InfoPaths.contactUs}` },
 ];
