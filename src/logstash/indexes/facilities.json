@@ -5,6 +5,9 @@
   ],
   "mappings": {
     "properties": {
+      "os_id": {
+        "type": "keyword"
+      },
       "name": {
         "type": "text",
         "fields": {
@@ -13,7 +16,39 @@
           }
         }
       },
+      "name_local": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "description": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
       "address": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "url": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "sector": {
         "type": "text",
         "fields": {
           "keyword": {

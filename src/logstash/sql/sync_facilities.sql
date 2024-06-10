@@ -10,6 +10,7 @@ SELECT
     SELECT
       COALESCE(NULLIF(afc.facility_address, ''), af.address)
   ) AS address,
+  afc.facility_website AS url_value,
   (
     SELECT
       COALESCE(afc.sector, afli.sector)

@@ -21,7 +21,7 @@ COPY --chown=logstash:root ./pipeline/ /usr/share/logstash/pipeline/
 # Copy sql script to the root folder of Logstash.
 COPY --chown=logstash:root ./sql/ /usr/share/logstash/sql/
 
-# Copy sql script to the scripts folder of Logstash.
+# Copy sql scripts to the scripts folder of Logstash.
 COPY --chown=logstash:root ./scripts/ /usr/share/logstash/scripts/
 
 # Copy sql script to the indexes folder of Logstash.
