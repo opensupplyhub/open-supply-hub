@@ -834,22 +834,14 @@ class FacilitiesViewSet(ListModelMixin,
 
             contact_person = request.data.get('your_name')
             job_title = request.data.get('your_title')
-            # phone_number = request.data.get('phone_number')
-            # company_name = request.data.get('company_name')
-            # parent_company = request.data.get('parent_company')
             website = request.data.get('your_business_website')
             business_website = request.data.get('business_website')
-            # facility_description = request.data.get('facility_description')
-            # verification_method = request.data.get('verification_method')
             linkedin_profile = request.data.get('business_linkedin_profile')
             sectors = request.data.getlist('sectors')
             print(sectors)
             number_of_workers = request.data.get('number_of_workers')
             local_language_name = request.data.get('local_language_name')
             files = request.FILES.getlist('files')
-
-            # if not company_name:
-            #     raise ValidationError('Company name is required')
 
             for file in files:
                 extension = file.name.split('.')[-1].lower()
@@ -872,21 +864,6 @@ class FacilitiesViewSet(ListModelMixin,
                         {MAX_ATTACHMENT_AMOUNT} attachments and you have \
                         already uploaded {MAX_ATTACHMENT_AMOUNT} attachments.'
                     )
-
-            # if parent_company:
-            #     try:
-            #         parent_company_contributor = (
-            #             Contributor
-            #             .objects
-            #             .get(pk=parent_company)
-            #         )
-            #         parent_company_name = parent_company_contributor.name
-            #     except ValueError:
-            #         parent_company_name = parent_company
-            #         parent_company_contributor = None
-            # else:
-            #     parent_company_name = None
-            #     parent_company_contributor = None
 
             user_has_pending_claims = (
                 FacilityClaim
