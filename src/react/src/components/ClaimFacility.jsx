@@ -23,6 +23,7 @@ import { facilityDetailsPropType } from '../util/propTypes';
 import { authLoginFormRoute } from '../util/constants';
 
 import { makeFacilityDetailLink } from '../util/util';
+import COLOURS from '../util/COLOURS';
 
 const claimFacilityContainerStyles = Object.freeze({
     containerStyles: Object.freeze({
@@ -30,9 +31,12 @@ const claimFacilityContainerStyles = Object.freeze({
         display: 'flex',
         justifyContent: 'center',
     }),
-    // paperStyles: Object.freeze({
-    //     width: '80%',
-    // }),
+});
+
+const appStyles = Object.freeze({
+    gridStyles: Object.freeze({
+        backgroundColor: COLOURS.CLAIM_GREY,
+    }),
 });
 
 const ClaimFacility = ({
@@ -92,24 +96,26 @@ const ClaimFacility = ({
     }
 
     return (
-        <AppOverflow>
-            <AppGrid
-                title="Claim this facility"
-                backButtonComponent={
-                    <Link
-                        to={makeFacilityDetailLink(osID)}
-                        href={makeFacilityDetailLink(osID)}
-                        style={{ color: 'black' }}
-                    >
-                        <ArrowBackIcon fill="black" />
-                    </Link>
-                }
-            >
-                <div style={claimFacilityContainerStyles.containerStyles}>
-                    <Route component={ClaimFacilityStepper} />
-                </div>
-            </AppGrid>
-        </AppOverflow>
+        <div style={appStyles.gridStyles}>
+            <AppOverflow>
+                <AppGrid
+                    title="Claim this facility"
+                    backButtonComponent={
+                        <Link
+                            to={makeFacilityDetailLink(osID)}
+                            href={makeFacilityDetailLink(osID)}
+                            style={{ color: 'black' }}
+                        >
+                            <ArrowBackIcon fill="black" />
+                        </Link>
+                    }
+                >
+                    <div style={claimFacilityContainerStyles.containerStyles}>
+                        <Route component={ClaimFacilityStepper} />
+                    </div>
+                </AppGrid>
+            </AppOverflow>
+        </div>
     );
 };
 
