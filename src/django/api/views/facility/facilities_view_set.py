@@ -838,7 +838,6 @@ class FacilitiesViewSet(ListModelMixin,
             business_website = request.data.get('business_website')
             linkedin_profile = request.data.get('business_linkedin_profile')
             sectors = request.data.getlist('sectors')
-            print(sectors)
             number_of_workers = request.data.get('number_of_workers')
             local_language_name = request.data.get('local_language_name')
             files = request.FILES.getlist('files')
