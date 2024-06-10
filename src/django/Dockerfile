@@ -29,7 +29,7 @@ CMD ["-b :8080", \
     "--workers=1", \
     "--timeout=180", \
     "--access-logfile=-", \
-    "--access-logformat=%({X-Forwarded-For}i)s %(h)s %(l)s %(u)s %(t)s \"%(r)s\" %(s)s %(b)s \"%(f)s\" \"%(a)s\"", \
+    "--access-logformat=-, \
     "--error-logfile=-", \
     "--log-level=info", \
     "--capture-output", \
