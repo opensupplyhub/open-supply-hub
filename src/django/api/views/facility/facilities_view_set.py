@@ -918,7 +918,7 @@ class FacilitiesViewSet(ListModelMixin,
 
             if len(sectors) > 0:
                 setattr(facility_claim, 'sector', sectors)
-            
+
             try:
                 workers_count = int(number_of_workers)
             except ValueError:
@@ -929,7 +929,8 @@ class FacilitiesViewSet(ListModelMixin,
             facility_claim.facility_workers_count = workers_count
 
             if local_language_name != '':
-                facility_claim.facility_name_native_language=local_language_name,
+                facility_claim.\
+                    facility_name_native_language = local_language_name,
 
             facility_claim.save()
 
