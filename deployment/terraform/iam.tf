@@ -423,7 +423,6 @@ data "aws_iam_policy_document" "opensearch-log-publishing-policy" {
   statement {
     actions = [
       "logs:CreateLogStream",
-      "logs:PutLogEvents",
       "logs:PutLogEventsBatch",
     ]
 
