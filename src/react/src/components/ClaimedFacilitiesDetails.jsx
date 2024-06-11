@@ -533,7 +533,33 @@ function ClaimedFacilitiesDetails({
                             return false;
                         }
 
-                        return !isInt(data.facility_workers_count, { min: 0 });
+                        const singleNumberPattern = /^\d+$/;
+                        const rangePattern = /^\d+-\d+$/;
+
+                        if (
+                            singleNumberPattern.test(
+                                data.facility_workers_count,
+                            )
+                        ) {
+                            return false;
+                        }
+
+                        if (rangePattern.test(data.facility_workers_count)) {
+                            const [
+                                start,
+                                end,
+                            ] = data.facility_workers_count.split('-');
+
+                            if (
+                                isInt(start.trim(), { min: 0 }) &&
+                                isInt(end.trim(), { min: 0 }) &&
+                                parseInt(start, 10) <= parseInt(end, 10)
+                            ) {
+                                return false;
+                            }
+                        }
+
+                        return true;
                     }}
                 />
                 <InputSection
