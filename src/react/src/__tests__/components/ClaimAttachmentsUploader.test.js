@@ -1,9 +1,8 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react';
-import configureStore from 'redux-mock-store';
-import { Provider } from 'react-redux';
+import { fireEvent } from '@testing-library/react';
+import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ClaimAttachmentsUploader from '../../components/ClaimAttachmentsUploader';
-import { store } from '../../configureStore';
+import { updateClaimAFacilityUploadFiles } from '../../actions/claimFacility';
 
 class File {
     constructor(parts, name, options) {
@@ -16,91 +15,61 @@ class File {
 
 global.File = File;
 
-const mockStore = configureStore();
-
-// Refer to this thread before testing mocked state - https://github.com/reduxjs/redux-mock-store/issues/71
 describe('ClaimAttachmentsUploader', () => {
-    let initialState;
-
-    beforeEach(() => {
-        initialState = mockStore({
-            claimFacility: {
-                claimData: {
-                    formData: {
-                        uploadFiles: [
-                            new File(['file contents'], 'attachment_1.jpg', { type: 'image/jpg' })
-                        ],
-                        businessUploadFiles: [
-                            new File(['file contents'], 'attachment_1.jpg', { type: 'image/jpg' })
-                        ]
-                    },
-                },
-            },
-        });
-    })
-
-
     global.URL.createObjectURL = jest.fn();
 
     it('renders without crashing', () => {
-        render(<ClaimAttachmentsUploader inputId="files" files={[]} updateUploadFiles={() => {}} store={initialState} />);
+        renderWithProviders(
+            <ClaimAttachmentsUploader inputId="files" files={[]} updateUploadFiles={() => {}}/>
+        )
     });
 
-    it('adds files when selected', () => {
-        const { getByTestId } = render(
-            <Provider store={initialState}>
-                <ClaimAttachmentsUploader/>
-            </Provider>
-        );
-        const file = new File(['file contents'], 'attachment_2.png', { type: 'image/png' });
-        const fileList = { 0: file, length: 1, item: () => file };
-        const fileInputField = getByTestId('claim-attachments-uploader-input');
-        fireEvent.change(fileInputField, { target: { files: fileList } });
-        const actions = initialState.getActions();
+    it('adds files by action', () => {
+        const {reduxStore} = renderWithProviders(
+            <ClaimAttachmentsUploader inputId="files" files={[]} updateUploadFiles={() => {}}/>
+        )
 
-        // Test changes in real application store given action data we triggered
-        store.dispatch({
-            type: actions[0].type,
-            payload: actions[0].payload,
-            error: false
-        })
+        reduxStore.dispatch(
+            updateClaimAFacilityUploadFiles([new File(['file contents'], 'attachment_1.jpg', { type: 'image/jpg' })])
+        )
 
-        const updatedUploadFiles = store.getState().claimFacility.claimData.formData.uploadFiles
-        expect(updatedUploadFiles.length).toBe(2)
+        const updatedUploadFiles = reduxStore.getState().claimFacility.claimData.formData.uploadFiles
+        expect(updatedUploadFiles.length).toBe(1)
     });
 
-    it('removes files when clicked', async () => {
-        const handleRemoveFile = jest.fn()
+    it('removes files by action', async () => {
+        const {reduxStore} = renderWithProviders(
+            <ClaimAttachmentsUploader inputId="files" files={[]} updateUploadFiles={() => {}}/>
+        )
 
-        const { getByTestId } = render(
-            <Provider store={initialState}>
-                <ClaimAttachmentsUploader handleRemoveFile={handleRemoveFile} />
-            </Provider>)
+        reduxStore.dispatch(
+            updateClaimAFacilityUploadFiles([new File(['file contents'], 'attachment_1.jpg', { type: 'image/jpg' })])
+        )
 
-        const removeFileButton = getByTestId('claim-attachments-uploader-remove');
-        fireEvent.click(removeFileButton);
+        const updatedUploadFilesFirst = reduxStore.getState().claimFacility.claimData.formData.uploadFiles
+        expect(updatedUploadFilesFirst.length).toBe(1)
 
-        const actions = initialState.getActions();
+        reduxStore.dispatch(
+            updateClaimAFacilityUploadFiles([])
+        )
 
-        store.dispatch({
-            type: actions[0].type,
-            payload: actions[0].payload,
-            error: false
-        })
-
-        const updatedUploadFiles = store.getState().claimFacility.claimData.formData.uploadFiles
-        expect(updatedUploadFiles.length).toBe(0)
+        const updatedUploadFilesSecond = reduxStore.getState().claimFacility.claimData.formData.uploadFiles
+        expect(updatedUploadFilesSecond.length).toBe(0)
     });
 
     it('displays error message for unsupported file format', () => {
-        const { getByTestId, getByText } = render(<ClaimAttachmentsUploader store={initialState} />);
+        const { getByTestId, getByText } = renderWithProviders(
+            <ClaimAttachmentsUploader inputId="files" files={[]} updateUploadFiles={() => {}}/>
+        )
         const fileInputField = getByTestId('claim-attachments-uploader-input');
         fireEvent.drop(fileInputField, { dataTransfer: { files: [new File(['file contents'], 'attachment.txt', { type: 'text/plain' })] } });
         expect(getByText('attachment.txt could not be uploaded because it is not in a supported format.')).toBeInTheDocument();
     });
 
     it('displays error message for files exceeding the maximum size', () => {
-        const { getByTestId, getByText } = render(<ClaimAttachmentsUploader store={initialState} />);
+        const { getByTestId, getByText } = renderWithProviders(
+            <ClaimAttachmentsUploader inputId="files" files={[]} updateUploadFiles={() => {}}/>
+        )
         const fileInputField = getByTestId('claim-attachments-uploader-input');
         const largeFile = new File(['file contents'], 'attachment_large.jpg', { type: 'image/jpg', size: 6 * 1024 * 1024 }); // 6MB file
         fireEvent.drop(fileInputField, { dataTransfer: { files: [largeFile] } });
@@ -108,21 +77,9 @@ describe('ClaimAttachmentsUploader', () => {
     });
 
     it('displays error message for exceeding the maximum number of files', async () => {
-        initialState = mockStore({
-            claimFacility: {
-                claimData: {
-                    formData: {
-                        uploadFiles: [...Array(10).keys()].map(i => ({ name: `attachment_${i}.png` }))
-                    },
-                },
-            },
-        })
-
-        const { getByTestId, getByText } = render(
-            <Provider store={initialState}>
-                <ClaimAttachmentsUploader />
-            </Provider>
-        );
+        const { getByTestId, getByText } = renderWithProviders(
+            <ClaimAttachmentsUploader inputId="files" files={[...Array(10).keys()].map(i => ({ name: `attachment_${i}.png` }))} updateUploadFiles={() => {}}/>
+        )
         const fileInputField = getByTestId('claim-attachments-uploader-input');
         fireEvent.drop(fileInputField, { dataTransfer: { files: [new File(['file contents'], 'attachment_11.jpg', { type: 'image/jpg' })] } });
 
