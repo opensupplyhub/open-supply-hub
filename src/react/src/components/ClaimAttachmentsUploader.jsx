@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react';
-import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -7,8 +6,6 @@ import Typography from '@material-ui/core/Typography';
 import SvgIcon from '@material-ui/core/SvgIcon';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
-
-import { updateClaimAFacilityUploadFiles } from '../actions/claimFacility';
 
 const claimAttachmentsUploaderStyles = Object.freeze({
     fileUploadArea: Object.freeze({
@@ -19,6 +16,7 @@ const claimAttachmentsUploaderStyles = Object.freeze({
         textAlign: 'center',
         cursor: 'pointer',
         width: '95%',
+        margin: '0 auto',
     }),
     fileInputHidden: Object.freeze({
         display: 'none',
@@ -30,8 +28,14 @@ const claimAttachmentsUploaderStyles = Object.freeze({
     primary: Object.freeze({
         fontSize: '20px',
         fontWeight: 700,
+        textAlign: 'center',
+        whiteSpace: 'pre-wrap',
+        lineHeight: '1.5em',
+        maxWidth: '50%',
+        margin: '5px auto',
     }),
     secondary: Object.freeze({
+        textAlign: 'center',
         margin: '0 auto',
     }),
     fileListUploaded: Object.freeze({
@@ -48,7 +52,12 @@ const claimAttachmentsUploaderStyles = Object.freeze({
     }),
 });
 
-const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
+const ClaimAttachmentsUploader = ({
+    inputId,
+    title,
+    files,
+    updateUploadFiles,
+}) => {
     const [errorMessage, setErrorMessage] = useState();
     const fileInputRef = useRef(null);
 
@@ -72,7 +81,7 @@ const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
                 );
                 return null;
             }
-            if (uploadFiles.length + newFiles.length > allowedFileAmount) {
+            if (files.length + newFiles.length > allowedFileAmount) {
                 setErrorMessage(
                     `${fileName} could not be uploaded because there is a maximum of ${allowedFileAmount} attachments and you have already uploaded ${allowedFileAmount} attachments.`,
                 );
@@ -85,24 +94,25 @@ const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
         e.preventDefault();
         setErrorMessage('');
         const newFiles = Array.from(e.dataTransfer.files);
-        updateUploadFiles([...uploadFiles, ...getValidFiles(newFiles)]);
+        updateUploadFiles([...files, ...getValidFiles(newFiles)]);
     };
 
     const handleFileChange = e => {
         setErrorMessage('');
         const newFiles = Array.from(e.target.files);
-        updateUploadFiles([...uploadFiles, ...getValidFiles(newFiles)]);
+        updateUploadFiles([...files, ...getValidFiles(newFiles)]);
     };
 
     const handleRemoveFile = index => {
-        const updatedFiles = uploadFiles.filter((file, i) => i !== index);
+        const updatedFiles = files.filter((file, i) => i !== index);
+        fileInputRef.current.value = null;
         updateUploadFiles(updatedFiles);
     };
 
     return (
         <div data-testid="claim-attachments-uploader">
             <ul style={claimAttachmentsUploaderStyles.fileListUploaded}>
-                {uploadFiles.map((file, index) => (
+                {files.map((file, index) => (
                     <li key={uuidv4()}>
                         <IconButton
                             key="remove"
@@ -140,10 +150,10 @@ const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
                 style={claimAttachmentsUploaderStyles.fileUploadArea}
                 onDrop={handleDrop}
                 onDragOver={e => e.preventDefault()}
-                htmlFor="fileInput"
+                htmlFor={inputId}
             >
                 <input
-                    id="fileInput"
+                    id={inputId}
                     type="file"
                     accept={allowedExtensions.map(ext => ext).join(',')}
                     onChange={handleFileChange}
@@ -155,11 +165,9 @@ const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
                 <SvgIcon style={claimAttachmentsUploaderStyles.uploadFileIcon}>
                     <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8zm4 18H6V4h7v5h5zM8 15.01l1.41 1.41L11 14.84V19h2v-4.16l1.59 1.59L16 15.01 12.01 11z" />
                 </SvgIcon>
-                <p style={claimAttachmentsUploaderStyles.primary}>
-                    Select a PNG, JPG, or PDf to upload
-                </p>
+                <p style={claimAttachmentsUploaderStyles.primary}>{title}</p>
                 <p style={claimAttachmentsUploaderStyles.secondary}>
-                    Or drag and drop files here
+                    Select or drag and drop a PNG, JPG, or PDF file.
                 </p>
                 <p style={claimAttachmentsUploaderStyles.secondary}>
                     File size must be 5 MB or less; 10 files maximum
@@ -170,34 +178,14 @@ const ClaimAttachmentsUploader = ({ uploadFiles, updateUploadFiles }) => {
 };
 
 ClaimAttachmentsUploader.defaultProps = {
-    uploadFiles: [],
+    files: [],
 };
 
 ClaimAttachmentsUploader.propTypes = {
-    uploadFiles: PropTypes.arrayOf(PropTypes.object),
+    inputId: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
+    files: PropTypes.arrayOf(PropTypes.object),
     updateUploadFiles: PropTypes.func.isRequired,
 };
 
-function mapStateToProps({
-    claimFacility: {
-        claimData: {
-            formData: { uploadFiles },
-        },
-    },
-}) {
-    return {
-        uploadFiles,
-    };
-}
-
-function mapDispatchToProps(dispatch) {
-    return {
-        updateUploadFiles: files =>
-            dispatch(updateClaimAFacilityUploadFiles(files)),
-    };
-}
-
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps,
-)(ClaimAttachmentsUploader);
+export default ClaimAttachmentsUploader;
