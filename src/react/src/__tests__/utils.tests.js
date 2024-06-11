@@ -69,8 +69,7 @@ const {
     convertFeatureFlagsObjectToListOfActiveFlags,
     checkWhetherUserHasDashboardAccess,
     claimAFacilityFormIsValid,
-    claimFacilityContactInfoStepIsValid,
-    claimFacilityFacilityInfoStepIsValid,
+    claimFacilitySupportDocsIsValid,
     anyListItemMatchesAreInactive,
     pluralizeResultsCount,
     removeDuplicatesFromOtherLocationsData,
@@ -1445,11 +1444,12 @@ it('creates a URL for POSTing the claim a facility form', () => {
 
 it('checks whether the claim a facility form is valid', () => {
     const validForm = {
-        companyName: 'companyName',
-        contactPerson: 'contactPerson',
-        phoneNumber: 'phoneNumber',
-        facilityDescription: 'facilityDescription',
-        jobTitle: 'computer programmer',
+        yourName: 'Name',
+        yourTitle: 'Person',
+        yourBusinessWebsite: 'www.example.com',
+        businessWebsite: 'www.example.com',
+        businessLinkedinProfile: 'www.example.com',
+        businessUploadFiles: [],
     };
 
     expect(isEqual(
@@ -1458,19 +1458,16 @@ it('checks whether the claim a facility form is valid', () => {
     )).toBe(true);
 
     expect(isEqual(
-        claimFacilityContactInfoStepIsValid(validForm),
-        true,
-    )).toBe(true);
-
-    expect(isEqual(
-        claimFacilityFacilityInfoStepIsValid(validForm),
+        claimFacilitySupportDocsIsValid(validForm),
         true,
     )).toBe(true);
 
     const invalidForm = {
-        companyName: '',
-        contactPerson: '',
-        phoneNumber: '',
+        yourTitle: 'Person',
+        yourBusinessWebsite: 'www.example.com',
+        businessWebsite: 'www.example.com',
+        businessLinkedinProfile: 'www.example.com',
+        businessUploadFiles: [],
     };
 
     expect(isEqual(
@@ -1479,12 +1476,7 @@ it('checks whether the claim a facility form is valid', () => {
     )).toBe(false);
 
     expect(isEqual(
-        claimFacilityContactInfoStepIsValid(invalidForm),
-        true,
-    )).toBe(false);
-
-    expect(isEqual(
-        claimFacilityFacilityInfoStepIsValid(invalidForm),
+        claimFacilitySupportDocsIsValid(invalidForm),
         true,
     )).toBe(false);
 });
