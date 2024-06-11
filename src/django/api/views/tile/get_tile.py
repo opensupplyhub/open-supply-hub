@@ -49,13 +49,6 @@ def get_tile(request, layer, cachekey, z, x, y, ext):
     if not params.is_valid():
         raise ValidationError(params.errors)
 
-    cached_tile, created = retrieve_cached_tile(request.get_full_path())
-    if not created and is_tile_cache_valid(cached_tile.created_at):
-        cached_tile.counter += 1
-        cached_tile.save()
-
-        return Response(cached_tile.value)
-
     try:
         tile = {
             'facilities': get_facilities_vector_tile(
@@ -63,11 +56,6 @@ def get_tile(request, layer, cachekey, z, x, y, ext):
             'facilitygrid': get_facility_grid_vector_tile(
                 request.query_params, layer, z, x, y)
         }[layer]
-        cached_tile.value = tile.tobytes()
-        cached_tile.counter = 0
-        cached_tile.embed = bool(params.validated_data['embed'])
-        cached_tile.contributors = params.validated_data['contributors']
-        cached_tile.save()
-        return Response(cached_tile.value)
+        return Response(tile.tobytes())
     except EmptyResultSet:
         return Response(None, status=HTTP_204_NO_CONTENT)

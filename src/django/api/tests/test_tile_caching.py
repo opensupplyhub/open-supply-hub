@@ -64,13 +64,6 @@ class TileCachingTest(APITestCase):
         self.assertEqual(1, cached_tile2.counter)
         self.assertFalse(created2)
 
-        # Force deletion of the temporary hex_grid table since the test is run
-        # in one DB transaction and the hex_grid table will not be deleted by
-        # the logic of CREATE TEMP TABLE because the DB transaction is not
-        # completed.
-        with connection.cursor() as cursor:
-            cursor.execute("DROP TABLE IF EXISTS hex_grid")
-
         time.sleep(25)
 
         # Verify that the cached tile binary data and the associated URL path
