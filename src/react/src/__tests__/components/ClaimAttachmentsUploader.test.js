@@ -20,13 +20,13 @@ describe('ClaimAttachmentsUploader', () => {
 
     it('renders without crashing', () => {
         renderWithProviders(
-            <ClaimAttachmentsUploader inputId="files" files={[]} updateUploadFiles={() => {}}/>
+            <ClaimAttachmentsUploader inputId="files" title="Test" files={[]} updateUploadFiles={() => {}}/>
         )
     });
 
     it('adds files by action', () => {
         const {reduxStore} = renderWithProviders(
-            <ClaimAttachmentsUploader inputId="files" files={[]} updateUploadFiles={() => {}}/>
+            <ClaimAttachmentsUploader inputId="files" title="Test" files={[]} updateUploadFiles={() => {}}/>
         )
 
         reduxStore.dispatch(
@@ -39,7 +39,7 @@ describe('ClaimAttachmentsUploader', () => {
 
     it('removes files by action', async () => {
         const {reduxStore} = renderWithProviders(
-            <ClaimAttachmentsUploader inputId="files" files={[]} updateUploadFiles={() => {}}/>
+            <ClaimAttachmentsUploader inputId="files" title="Test" files={[]} updateUploadFiles={() => {}}/>
         )
 
         reduxStore.dispatch(
@@ -59,7 +59,7 @@ describe('ClaimAttachmentsUploader', () => {
 
     it('displays error message for unsupported file format', () => {
         const { getByTestId, getByText } = renderWithProviders(
-            <ClaimAttachmentsUploader inputId="files" files={[]} updateUploadFiles={() => {}}/>
+            <ClaimAttachmentsUploader inputId="files" title="Test" files={[]} updateUploadFiles={() => {}}/>
         )
         const fileInputField = getByTestId('claim-attachments-uploader-input');
         fireEvent.drop(fileInputField, { dataTransfer: { files: [new File(['file contents'], 'attachment.txt', { type: 'text/plain' })] } });
@@ -68,7 +68,7 @@ describe('ClaimAttachmentsUploader', () => {
 
     it('displays error message for files exceeding the maximum size', () => {
         const { getByTestId, getByText } = renderWithProviders(
-            <ClaimAttachmentsUploader inputId="files" files={[]} updateUploadFiles={() => {}}/>
+            <ClaimAttachmentsUploader inputId="files" title="Test" files={[]} updateUploadFiles={() => {}}/>
         )
         const fileInputField = getByTestId('claim-attachments-uploader-input');
         const largeFile = new File(['file contents'], 'attachment_large.jpg', { type: 'image/jpg', size: 6 * 1024 * 1024 }); // 6MB file
@@ -78,7 +78,7 @@ describe('ClaimAttachmentsUploader', () => {
 
     it('displays error message for exceeding the maximum number of files', async () => {
         const { getByTestId, getByText } = renderWithProviders(
-            <ClaimAttachmentsUploader inputId="files" files={[...Array(10).keys()].map(i => ({ name: `attachment_${i}.png` }))} updateUploadFiles={() => {}}/>
+            <ClaimAttachmentsUploader inputId="files" title="Test" files={[...Array(10).keys()].map(i => ({ name: `attachment_${i}.png` }))} updateUploadFiles={() => {}}/>
         )
         const fileInputField = getByTestId('claim-attachments-uploader-input');
         fireEvent.drop(fileInputField, { dataTransfer: { files: [new File(['file contents'], 'attachment_11.jpg', { type: 'image/jpg' })] } });

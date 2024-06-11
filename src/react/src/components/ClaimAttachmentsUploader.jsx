@@ -16,6 +16,7 @@ const claimAttachmentsUploaderStyles = Object.freeze({
         textAlign: 'center',
         cursor: 'pointer',
         width: '95%',
+        margin: '0 auto',
     }),
     fileInputHidden: Object.freeze({
         display: 'none',
@@ -27,8 +28,14 @@ const claimAttachmentsUploaderStyles = Object.freeze({
     primary: Object.freeze({
         fontSize: '20px',
         fontWeight: 700,
+        textAlign: 'center',
+        whiteSpace: 'pre-wrap',
+        lineHeight: '1.5em',
+        maxWidth: '50%',
+        margin: '5px auto',
     }),
     secondary: Object.freeze({
+        textAlign: 'center',
         margin: '0 auto',
     }),
     fileListUploaded: Object.freeze({
@@ -45,7 +52,12 @@ const claimAttachmentsUploaderStyles = Object.freeze({
     }),
 });
 
-const ClaimAttachmentsUploader = ({ inputId, files, updateUploadFiles }) => {
+const ClaimAttachmentsUploader = ({
+    inputId,
+    title,
+    files,
+    updateUploadFiles,
+}) => {
     const [errorMessage, setErrorMessage] = useState();
     const fileInputRef = useRef(null);
 
@@ -153,11 +165,9 @@ const ClaimAttachmentsUploader = ({ inputId, files, updateUploadFiles }) => {
                 <SvgIcon style={claimAttachmentsUploaderStyles.uploadFileIcon}>
                     <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8zm4 18H6V4h7v5h5zM8 15.01l1.41 1.41L11 14.84V19h2v-4.16l1.59 1.59L16 15.01 12.01 11z" />
                 </SvgIcon>
-                <p style={claimAttachmentsUploaderStyles.primary}>
-                    Select a PNG, JPG, or PDf to upload
-                </p>
+                <p style={claimAttachmentsUploaderStyles.primary}>{title}</p>
                 <p style={claimAttachmentsUploaderStyles.secondary}>
-                    Or drag and drop files here
+                    Select or drag and drop a PNG, JPG, or PDF file.
                 </p>
                 <p style={claimAttachmentsUploaderStyles.secondary}>
                     File size must be 5 MB or less; 10 files maximum
@@ -173,6 +183,7 @@ ClaimAttachmentsUploader.defaultProps = {
 
 ClaimAttachmentsUploader.propTypes = {
     inputId: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
     files: PropTypes.arrayOf(PropTypes.object),
     updateUploadFiles: PropTypes.func.isRequired,
 };
