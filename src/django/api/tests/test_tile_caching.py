@@ -5,7 +5,6 @@ from api.views.tile.utils import retrieve_cached_tile
 from rest_framework.test import APITestCase
 from waffle.testutils import override_switch
 
-from django.db import connection
 from django.test import override_settings
 from django.urls import reverse
 

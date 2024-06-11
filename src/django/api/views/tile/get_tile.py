@@ -11,7 +11,6 @@ from waffle.decorators import waffle_switch
 from django.conf import settings
 from django.core.exceptions import EmptyResultSet
 from django.views.decorators.cache import cache_control
-from django.db import transaction
 
 from ...exceptions import BadRequestException
 from ...permissions import IsAllowedHost
@@ -21,11 +20,6 @@ from ...tiler import (
     get_facilities_vector_tile,
     get_facility_grid_vector_tile
 )
-from api.views.tile.utils import (
-    retrieve_cached_tile,
-    is_tile_cache_valid
-)
-
 
 @api_view(['GET'])
 @permission_classes([IsAllowedHost])
