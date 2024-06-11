@@ -66,11 +66,17 @@ open http://localhost:6543
 ### Restore the DB dump in the local Docker DB container
 
 1. The project containers must be running locally.
-2. Download prod dump file
-3. Place it in `./dumps/` folder
-4. Then run in the terminal of your machine
+2. Download the prod dump file.
+3. Place it in the `./dumps/` folder.
+4. Connect to the local DB instance, delete all the tables, and recreate an empty DB schema to avoid conflicts during the restore using the SQL below:
 ```
-docker compose exec -T database pg_restore --verbose --clean --no-acl --no-owner -d openapparelregistry -U openapparelregistry < ./dumps/[dump_name].dump
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+GRANT ALL ON SCHEMA public TO public;
+```
+5. Then run the following command in the terminal of your machine to apply the production database dump:
+```
+docker compose exec -T database pg_restore --verbose --clean --if-exists --no-acl --no-owner -d opensupplyhub -U opensupplyhub < ./dumps/[dump_name].dump
 ```
 
 ### Creation of Superusers
