@@ -334,8 +334,8 @@ resource "aws_security_group_rule" "app_logstash_egress" {
 
 resource "aws_security_group_rule" "app_logstash_opensearch_egress" {
   type      = "egress"
-  from_port = var.logstash_port
-  to_port   = var.logstash_port
+  from_port = 443
+  to_port   = 443
   protocol  = "tcp"
 
   security_group_id        = aws_security_group.app_logstash.id
@@ -418,8 +418,8 @@ resource "aws_security_group_rule" "batch_msk_egress" {
 
 resource "aws_security_group_rule" "opensearch_ingress" {
   type      = "ingress"
-  from_port = var.logstash_port
-  to_port   = var.logstash_port
+  from_port = 443
+  to_port   = 443
   protocol  = "tcp"
 
   security_group_id        = aws_security_group.opensearch.id
@@ -428,8 +428,8 @@ resource "aws_security_group_rule" "opensearch_ingress" {
 
 resource "aws_security_group_rule" "opensearch_bastion_ingress" {
   type      = "ingress"
-  from_port = var.logstash_port
-  to_port   = var.logstash_port
+  from_port = 443
+  to_port   = 443
   protocol  = "tcp"
 
   security_group_id        = aws_security_group.opensearch.id
