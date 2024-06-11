@@ -61,8 +61,9 @@ services:
       - "--reload"
       - "--timeout=90"
       - "--access-logfile=-"
+      - "--access-logformat=%(t)s '%(r)s' %(s)s '%(a)s' | %(M)sms"
       - "--error-logfile=-"
-      - "--log-level=debug"
+      - "--log-level=info"
       - "oar.wsgi"
     ports:
       - "8081:8081"
