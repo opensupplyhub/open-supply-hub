@@ -17,6 +17,7 @@ resource "aws_opensearch_domain" "opensearch" {
   domain_name    = "opensearch-domain"
   engine_version = "OpenSearch_2.11"
 
+  access_policies = data.aws_iam_policy_document.opensearch-log-publishing-policy.json
 
   cluster_config {
     instance_type          = "t3.small.search"
@@ -74,6 +75,4 @@ resource "aws_opensearch_domain" "opensearch" {
 
     security_group_ids = [aws_security_group.opensearch.id]
   }
-
-  access_policies = data.aws_iam_policy_document.opensearch-log-publishing-policy.json
 }
