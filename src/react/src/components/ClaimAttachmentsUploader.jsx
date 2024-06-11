@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { connect } from 'react-redux';
+import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 
 import Typography from '@material-ui/core/Typography';
@@ -167,4 +167,14 @@ const ClaimAttachmentsUploader = ({ inputId, files, updateUploadFiles }) => {
     );
 };
 
-export default connect()(ClaimAttachmentsUploader);
+ClaimAttachmentsUploader.defaultProps = {
+    files: [],
+};
+
+ClaimAttachmentsUploader.propTypes = {
+    inputId: PropTypes.string.isRequired,
+    files: PropTypes.arrayOf(PropTypes.object),
+    updateUploadFiles: PropTypes.func.isRequired,
+};
+
+export default ClaimAttachmentsUploader;
