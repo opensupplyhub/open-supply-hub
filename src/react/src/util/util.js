@@ -914,13 +914,6 @@ export const claimAFacilityFormIsValid = ({
         !isEmpty(businessUploadFiles),
     ]);
 
-export const claimFacilityContactInfoStepIsValid = ({
-    contactPerson,
-    phoneNumber,
-    jobTitle,
-}) =>
-    every([!isEmpty(contactPerson), !isEmpty(phoneNumber), !isEmpty(jobTitle)]);
-
 export const claimFacilitySupportDocsIsValid = ({
     yourName,
     yourTitle,
@@ -938,17 +931,6 @@ export const claimFacilitySupportDocsIsValid = ({
     ]);
 export const isValidFacilityURL = url =>
     isEmpty(url) || isURL(url, { protocols: ['http', 'https'] });
-
-export const claimFacilityFacilityInfoStepIsValid = ({
-    companyName,
-    website,
-    facilityDescription,
-}) =>
-    every([
-        !isEmpty(companyName),
-        isValidFacilityURL(website),
-        !isEmpty(facilityDescription),
-    ]);
 
 export const anyListItemMatchesAreInactive = ({ matches }) =>
     some(matches, ['is_active', false]);
