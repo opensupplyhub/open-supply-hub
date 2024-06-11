@@ -33,7 +33,6 @@ from api.views.tile.utils import (
 @cache_control(max_age=settings.TILE_CACHE_MAX_AGE_IN_SECONDS)
 @throttle_classes([])
 @waffle_switch('vector_tile')
-@transaction.atomic
 def get_tile(request, layer, cachekey, z, x, y, ext):
     if cachekey is None:
         raise BadRequestException('missing cache key')
