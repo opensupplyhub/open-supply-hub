@@ -342,6 +342,9 @@ class FacilityClaimViewSet(ModelViewSet):
 
             try:
                 workers_count = request.data.get('facility_workers_count')
+
+                if len(workers_count) == 0:
+                    workers_count = None
             except ValueError:
                 workers_count = None
 
