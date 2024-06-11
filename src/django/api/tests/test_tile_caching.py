@@ -7,8 +7,10 @@ from waffle.testutils import override_switch
 
 from django.test import override_settings
 from django.urls import reverse
+from unittest import skip
 
 
+@skip("We don't use the tile caching feature anymore.")
 class TileCachingTest(APITestCase):
     def setUp(self):
         self.domain = "http://allowed.org/"
