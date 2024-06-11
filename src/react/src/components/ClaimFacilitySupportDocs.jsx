@@ -148,7 +148,7 @@ const ClaimFacilitySupportDocs = ({
             </Typography>
             <ClaimAttachmentsUploader
                 inputId="yourFiles"
-                title="Upload an employment badge, letter of employment, or 
+                title="Upload an employment badge, letter of employment, or
                 other relevant employment documentation to confirm your name and title."
                 files={uploadFiles}
                 updateUploadFiles={updateUploadFiles}
@@ -218,7 +218,7 @@ const ClaimFacilitySupportDocs = ({
             </Typography>
             <ClaimAttachmentsUploader
                 inputId="businessFiles"
-                title="Upload a utility bill, business registration document or 
+                title="Upload a utility bill, business registration document or
                 other relevant documentation to confirm the production location’s name and address."
                 files={businessUploadFiles}
                 updateUploadFiles={updateBusinessUploadFiles}
