@@ -11,10 +11,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Database changes
 #### Migrations:
-* *Describe migrations here.*
+* 0146_add_facility_workers_count_new_field_to_facilityclaim - adds the facility_workers_count_new field to the FacilityClaim model.
+* 0147_copy_facility_workers_count_to_facility_workers_count_new - copies the data from the facility_workers_count field to the facility_workers_count_new field.
+* 0148_remove_facility_workers_count_field_from_facilityclaim - removes the facility_workers_count field from the FacilityClaim model.
+* 0149_rename_facility_workers_count_new_to_facility_workers_count - renames the facility_workers_count_new field to facility_workers_count.
 
 #### Scheme changes
-* *Describe scheme changes here.*
+* [OSDEV-1084](https://opensupplyhub.atlassian.net/browse/OSDEV-1084) - To enable adding a range for the number of workers during the claiming process, the type of the `facility_workers_count` field in the `FacilityClaim` table was changed from `IntegerField` to `CharField`.
 
 ### Code/API changes
 * *Describe code/API changes here.*
@@ -35,6 +38,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 *   [OSDEV-939](https://opensupplyhub.atlassian.net/browse/OSDEV-939) - The following changes have been made:
     *   Created new steps `Supporting Documentation` & `Additional Data` for `Facility Claim Request` page.
     *   Added popup for successfully submitted claim.
+* [OSDEV-1084](https://opensupplyhub.atlassian.net/browse/OSDEV-1084) - Enable adding a range for the number of workers during the claiming process, either after pressing the “I want to claim this production location” link or on the Claimed Facility Details page.
 
 ### Release instructions:
 * Update code.
