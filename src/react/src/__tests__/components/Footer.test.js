@@ -9,7 +9,7 @@ test('Footer component', () => {
             <Footer />
         </Router>
     );
-    
+
     const footer = screen.getByTestId('footer');
     expect(footer).toBeInTheDocument();
 
@@ -22,6 +22,12 @@ test('Footer component', () => {
 
     const faqLink = screen.getByText('FAQs');
     expect(faqLink).toHaveAttribute('href', 'https://info.opensupplyhub.org/faqs');
+
+    const carrerLink = screen.getByText("Careers")
+    expect(carrerLink).toHaveAttribute('href', 'https://info.opensupplyhub.org/work-with-us')
+
+    const blogLink = screen.getByText("Blog")
+    expect(blogLink).toHaveAttribute('href', 'https://blog.opensupplyhub.org')
 
     const privacyPolicyLink = screen.getByText('Privacy Policy');
     expect(privacyPolicyLink).toHaveAttribute('href', 'https://info.opensupplyhub.org/privacy-policy');
