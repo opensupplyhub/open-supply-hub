@@ -62,7 +62,7 @@ services:
       - "--timeout=90"
       - "--access-logfile=-"
       - "--error-logfile=-"
-      - "--log-level=info"
+      - "--log-level=debug"
       - "oar.wsgi"
     ports:
       - "8081:8081"
