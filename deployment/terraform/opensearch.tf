@@ -75,5 +75,31 @@ resource "aws_opensearch_domain" "opensearch" {
     security_group_ids = [aws_security_group.opensearch.id]
   }
 
-  access_policies = data.aws_iam_policy_document.opensearch-log-publishing-policy.json
+  access_policies = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "es.amazonaws.com"
+        },
+        "Action" : [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        "Resource" : "${aws_cloudwatch_log_group.opensearch.arn}:*"
+      },
+      {
+        "Effect" : "Allow",
+        "Principal" : "*",
+        "Action" : [
+          "es:ESHttpPost",
+          "es:ESHttpGet",
+          "es:ESHttpDelete",
+          "es:ESHttpPut"
+        ],
+        "Resource" : "${aws_opensearch_domain.opensearch.arn}"
+      }
+    ]
+  })
 }

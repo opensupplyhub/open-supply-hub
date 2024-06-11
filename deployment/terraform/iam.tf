@@ -405,30 +405,28 @@ resource "aws_iam_role_policy" "cloudwatch_events_service_role_policy" {
 data "aws_iam_policy_document" "opensearch" {
   statement {
     effect = "Allow"
-
     resources = [
-        aws_opensearch_domain.opensearch.arn
+      aws_opensearch_domain.opensearch.arn
     ]
-
     actions = [
-        "es:ESHttpPost",
-        "es:ESHttpGet",
-        "es:ESHttpDelete",
-        "es:ESHttpPut"
+      "es:ESHttpPost",
+      "es:ESHttpGet",
+      "es:ESHttpDelete",
+      "es:ESHttpPut"
     ]
   }
 }
 
-data "aws_iam_policy_document" "opensearch-log-publishing-policy" {
+data "aws_iam_policy_document" "opensearch_log_publishing_policy" {
   statement {
-    effect  = "Allow"
+    effect = "Allow"
     actions = [
       "logs:CreateLogStream",
       "logs:PutLogEvents"
     ]
-
-    resources = [aws_cloudwatch_log_group.opensearch.arn]
-
+    resources = [
+      "${aws_cloudwatch_log_group.opensearch.arn}:*"
+    ]
     principals {
       identifiers = ["es.amazonaws.com"]
       type        = "Service"
@@ -438,7 +436,7 @@ data "aws_iam_policy_document" "opensearch-log-publishing-policy" {
 
 resource "aws_cloudwatch_log_resource_policy" "opensearch" {
   policy_name     = "opensearch"
-  policy_document = data.aws_iam_policy_document.opensearch-log-publishing-policy.json
+  policy_document = data.aws_iam_policy_document.opensearch_log_publishing_policy.json
 }
 
 resource "aws_iam_role_policy" "opensearch" {
