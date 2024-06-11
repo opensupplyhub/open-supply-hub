@@ -8,4 +8,5 @@ export default {
     CIRCLE_COLOR_SHADOW: 'rgba(61, 50, 138, 0.5)',
     NAVIGATION: '#FCCF3F',
     NEAR_BLACK: '#0D1128',
+    CLAIM_GREY: '#F9F7F7',
 };
