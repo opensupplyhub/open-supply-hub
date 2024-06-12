@@ -9,10 +9,12 @@ def filter(event)
     if claim_status_value&.include?('APPROVED')
         event.set('claim_status', claim_statuses['claimed'])
         return [event]
+    end
     
     if claim_status_value&.include?('PENDING')
         event.set('claim_status', claim_statuses['pending'])
         return [event]
+    end
 
     event.set('claim_status', claim_statuses['unclaimed'])
     return [event]
