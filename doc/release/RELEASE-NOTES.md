@@ -32,6 +32,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 *   [OSDEV-1030](https://opensupplyhub.atlassian.net/browse/OSDEV-1030) - The following changes have been made:
     *   Replaced the "Donate" button with a "Blog" button in the header
     *   Added links to the "Blog" and "Careers" pages in the footer
+*   [OSDEV-939](https://opensupplyhub.atlassian.net/browse/OSDEV-939) - The following changes have been made:
+    *   Created new steps `Supporting Documentation` & `Additional Data` for `Facility Claim Request` page.
+    *   Added popup for successfully submitted claim.
 
 ### Release instructions:
 * Update code.
