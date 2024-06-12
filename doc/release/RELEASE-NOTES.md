@@ -28,6 +28,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Pushing the database-anonymizer container to the repo is turned off until the database anonymizing scheduled task will be deployed to the production.
 * [OSDEV-1089](https://opensupplyhub.atlassian.net/browse/OSDEV-1089) Change format gunicurn logs not pass IP address to AWS CloudWatch.
 * Added command `reindex_database`
+* [OSDEV-1075](https://opensupplyhub.atlassian.net/browse/OSDEV-1075) - The following changes have been made:
+    * All resources created via batch job will be tagged
+* [OSDEV-1089](https://opensupplyhub.atlassian.net/browse/OSDEV-1089) Change format gunicurn logs not pass IP address to AWS CloudWatch.
+* Make tile generation endpoint transaction-less and remove `CREATE TEMP TABLE` statement.
+* Added command `reindex_database`.
+* [OSDEV-1089](https://opensupplyhub.atlassian.net/browse/OSDEV-1089) Change format gunicurn logs not pass IP address to AWS CloudWatch.
+* Removed calling command `clean_facilitylistitems` from the `post_deployment` command.
+* Added calling command `reindex_database` from the `post_deployment` command.
 
 ### Bugfix
 * [OSDEV-1019](https://opensupplyhub.atlassian.net/browse/OSDEV-1019) - Fixed an error message to 'Your account is not verified. Check your email for a confirmation link.' when a user tries to log in with an uppercase letter in the email address and their account has not been activated through the confirmation link.
