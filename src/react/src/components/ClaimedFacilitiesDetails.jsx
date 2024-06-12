@@ -80,6 +80,7 @@ import {
     isValidFacilityURL,
     makeClaimGeocoderURL,
     logErrorToRollbar,
+    validateNumberOfWorkers,
 } from '../util/util';
 
 import {
@@ -528,39 +529,9 @@ function ClaimedFacilitiesDetails({
                     value={data.facility_workers_count}
                     onChange={updateFacilityWorkersCount}
                     disabled={updating}
-                    hasValidationErrorFn={() => {
-                        if (isEmpty(data.facility_workers_count)) {
-                            return false;
-                        }
-
-                        const singleNumberPattern = /^\d+$/;
-                        const rangePattern = /^\d+-\d+$/;
-
-                        if (
-                            singleNumberPattern.test(
-                                data.facility_workers_count,
-                            )
-                        ) {
-                            return false;
-                        }
-
-                        if (rangePattern.test(data.facility_workers_count)) {
-                            const [
-                                start,
-                                end,
-                            ] = data.facility_workers_count.split('-');
-
-                            if (
-                                isInt(start.trim(), { min: 0 }) &&
-                                isInt(end.trim(), { min: 0 }) &&
-                                parseInt(start, 10) <= parseInt(end, 10)
-                            ) {
-                                return false;
-                            }
-                        }
-
-                        return true;
-                    }}
+                    hasValidationErrorFn={() =>
+                        validateNumberOfWorkers(data.facility_workers_count)
+                    }
                 />
                 <InputSection
                     label="Percentage of female workers"

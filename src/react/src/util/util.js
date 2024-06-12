@@ -28,7 +28,7 @@ import every from 'lodash/every';
 import uniqWith from 'lodash/uniqWith';
 import filter from 'lodash/filter';
 import includes from 'lodash/includes';
-import { isURL } from 'validator';
+import { isURL, isInt } from 'validator';
 import { featureCollection, bbox } from '@turf/turf';
 import hash from 'object-hash';
 import * as XLSX from 'xlsx';
@@ -892,6 +892,33 @@ export const convertFeatureFlagsObjectToListOfActiveFlags = featureFlags =>
 
 export const checkWhetherUserHasDashboardAccess = user =>
     get(user, 'is_superuser', false);
+
+export const validateNumberOfWorkers = value => {
+    if (isEmpty(value)) {
+        return false;
+    }
+
+    const singleNumberPattern = /^\d+$/;
+    const rangePattern = /^\d+-\d+$/;
+
+    if (singleNumberPattern.test(value)) {
+        return false;
+    }
+
+    if (rangePattern.test(value)) {
+        const [start, end] = value.split('-');
+
+        if (
+            isInt(start.trim(), { min: 0 }) &&
+            isInt(end.trim(), { min: 0 }) &&
+            parseInt(start, 10) <= parseInt(end, 10)
+        ) {
+            return false;
+        }
+    }
+
+    return true;
+};
 
 export const claimAFacilityFormIsValid = ({
     yourName,
