@@ -142,3 +142,17 @@ export const claimAFacilityFormStyles = Object.freeze({
         padding: '5px 20px 5px 0',
     }),
 });
+
+export const claimAFacilitySupportDocsFormStyles = Object.freeze({
+    textFieldStyles: Object.freeze({
+        width: '50%',
+        padding: '10px 0 10px',
+    }),
+    inputGroupStyles: Object.freeze({
+        width: '100%',
+        paddingTop: '50px',
+    }),
+    asideStyles: Object.freeze({
+        padding: '5px 20px 5px 0',
+    }),
+});

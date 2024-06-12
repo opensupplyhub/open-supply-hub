@@ -26,6 +26,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1072](https://opensupplyhub.atlassian.net/browse/OSDEV-1072) - The following changes have been made:
     * Added building database-anonymizer container to the pipeline.
     * Pushing the database-anonymizer container to the repo is turned off until the database anonymizing scheduled task will be deployed to the production.
+* [OSDEV-1089](https://opensupplyhub.atlassian.net/browse/OSDEV-1089) Change format gunicurn logs not pass IP address to AWS CloudWatch.
+* Added command `reindex_database`
 
 ### Bugfix
 * [OSDEV-1019](https://opensupplyhub.atlassian.net/browse/OSDEV-1019) - Fixed an error message to 'Your account is not verified. Check your email for a confirmation link.' when a user tries to log in with an uppercase letter in the email address and their account has not been activated through the confirmation link.
@@ -35,6 +37,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 *   [OSDEV-1030](https://opensupplyhub.atlassian.net/browse/OSDEV-1030) - The following changes have been made:
     *   Replaced the "Donate" button with a "Blog" button in the header
     *   Added links to the "Blog" and "Careers" pages in the footer
+*   [OSDEV-939](https://opensupplyhub.atlassian.net/browse/OSDEV-939) - The following changes have been made:
+    *   Created new steps `Supporting Documentation` & `Additional Data` for `Facility Claim Request` page.
+    *   Added popup for successfully submitted claim.
 
 ### Release instructions:
 * Update code.
