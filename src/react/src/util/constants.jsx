@@ -16,8 +16,6 @@ export const REJECT_ACTION = 'reject';
 
 export const InfoLink = 'https://info.opensupplyhub.org';
 
-export const NUMERIC_DASH_REGEX = /^[0-9-]+$/;
-
 export const InfoPaths = {
     storiesResources: 'stories-resources',
     privacyPolicy: 'privacy-policy',
