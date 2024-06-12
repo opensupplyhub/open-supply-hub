@@ -9,43 +9,53 @@ GRID_ZOOM_FACTOR = 3
 
 def get_facility_grid_vector_tile(params, layer, z, x, y):
     xy_bounds = mercantile.xy_bounds(x, y, z)
-
     hex_width = abs(xy_bounds.right - xy_bounds.left) / (2**GRID_ZOOM_FACTOR)
-    hex_grid_query = """
-        CREATE TEMP TABLE hex_grid (geom, mvt_geom, wgs84_geom) AS (
-          SELECT geom, ST_AsMVTGeom(
+
+    query = """
+        SELECT ST_AsMVT(q, 'facilitygrid') from (
+        SELECT ST_AsMVTGeom(
+            ST_Centroid(geom), ST_MakeEnvelope(
+            {xmin}, {ymin}, {xmax}, {ymax}
+            )) as mvt_geom,
+            count(location),
+            ST_XMin(ST_Envelope(ST_Transform (geom, 4326))) as xmin,
+            ST_YMin(ST_Envelope(ST_Transform (geom, 4326))) as ymin,
+            ST_XMax(ST_Envelope(ST_Transform (geom, 4326))) as xmax,
+            ST_YMax(ST_Envelope(ST_Transform (geom, 4326))) as ymax
+        FROM generate_hexgrid({width}, {xmin}, {ymin}, {xmax}, {ymax})
+        JOIN api_facility ON ST_Contains(ST_Transform (geom, 4326), location)
+        {where_clause}
+        GROUP BY
+            ST_AsMVTGeom(
             ST_Centroid(geom), ST_MakeEnvelope(
                 {xmin}, {ymin}, {xmax}, {ymax}
-        )), ST_Transform (geom, 4326)
-          FROM generate_hexgrid({width}, {xmin}, {ymin}, {xmax}, {ymax})
-        )
+            ))
+            , ST_XMin(ST_Envelope(ST_Transform (geom, 4326)))
+            , ST_YMin(ST_Envelope(ST_Transform (geom, 4326)))
+            , ST_XMax(ST_Envelope(ST_Transform (geom, 4326)))
+            , ST_YMax(ST_Envelope(ST_Transform (geom, 4326)))
+            ) as q
     """
-    hex_grid_query = hex_grid_query.format(
-        width=hex_width,
-        xmin=xy_bounds.left,
-        ymin=xy_bounds.bottom,
-        xmax=xy_bounds.right,
-        ymax=xy_bounds.top,
-    )
-
-    hex_grid_idx_query = (
-        "CREATE INDEX hex_grid_idx ON hex_grid USING gist (wgs84_geom)"
-    )
 
     location_query, location_params = (
         Facility.objects.filter_by_query_params(params)
         .values("location")
         .query.sql_with_params()
     )
-
-    # Exclude geoms on the edges that wrap around the world
     wrap_filter = (
+        "ST_AsMVTGeom(ST_Centroid(geom), ST_MakeEnvelope("
+        "   {xmin}, {ymin}, {xmax}, {ymax}"
+        ")) is not null and "
         "abs("
-        "   ST_XMax(ST_Envelope(hex_grid.wgs84_geom))"
-        " - ST_XMin(ST_Envelope(hex_grid.wgs84_geom))"
-        ") < 180"
+        "   ST_XMax(ST_Envelope(ST_Transform (geom, 4326)))"
+        " - ST_XMin(ST_Envelope(ST_Transform (geom, 4326)))"
+        ") < 180".format(
+            xmin=xy_bounds.left,
+            ymin=xy_bounds.bottom,
+            xmax=xy_bounds.right,
+            ymax=xy_bounds.top,
+        )
     )
-
     if location_query.find("WHERE") >= 0:
         where_clause = location_query[
             location_query.find("WHERE"):
@@ -53,32 +63,17 @@ def get_facility_grid_vector_tile(params, layer, z, x, y):
     else:
         where_clause = " WHERE {} ".format(wrap_filter)
 
-    join_query = (
-        "SELECT "
-        "  hex_grid.mvt_geom, "
-        "  count(location), "
-        "  ST_XMin(ST_Envelope(hex_grid.wgs84_geom)) as xmin, "
-        "  ST_YMin(ST_Envelope(hex_grid.wgs84_geom)) as ymin, "
-        "  ST_XMax(ST_Envelope(hex_grid.wgs84_geom)) as xmax, "
-        "  ST_YMax(ST_Envelope(hex_grid.wgs84_geom)) as ymax "
-        "FROM hex_grid JOIN api_facility "
-        "  ON ST_Contains(hex_grid.wgs84_geom, location) "
-        " {where_clause} "
-        "GROUP BY hex_grid.mvt_geom, "
-        "  xmin, ymin, xmax, ymax"
-    )
-    join_query = join_query.format(where_clause=where_clause)
-
-    st_asmvt_query = "SELECT ST_AsMVT(q, '{}') FROM ({}) AS q".format(
-        layer, join_query
-    )
-
-    full_query = ";\n".join(
-        [hex_grid_query, hex_grid_idx_query, st_asmvt_query]
+    query = query.format(
+        width=hex_width,
+        xmin=xy_bounds.left,
+        ymin=xy_bounds.bottom,
+        xmax=xy_bounds.right,
+        ymax=xy_bounds.top,
+        where_clause=where_clause,
     )
 
     with connection.cursor() as cursor:
-        cursor.execute(full_query, location_params)
+        cursor.execute(query, location_params)
         rows = cursor.fetchall()
         return rows[0][0]
 
@@ -114,9 +109,8 @@ def get_facilities_vector_tile(params, layer, z, x, y):
     filter_buffer_percent = 0.2
     ew_buffer = abs(tile_bounds.east - tile_bounds.west) * \
         filter_buffer_percent
-    ns_buffer = (
-        abs(tile_bounds.north - tile_bounds.south) * filter_buffer_percent
-    )
+    ns_buffer = abs(tile_bounds.north - tile_bounds.south) * \
+        filter_buffer_percent
 
     filter_polygon = Polygon.from_bbox(
         (
@@ -148,8 +142,7 @@ def get_facilities_vector_tile(params, layer, z, x, y):
     )
 
     st_asmvt_query = "SELECT ST_AsMVT(q, '{}') FROM ({}) AS q".format(
-        layer, query
-    )
+        layer, query)
 
     with connection.cursor() as cursor:
         cursor.execute(st_asmvt_query, params_for_sql)
