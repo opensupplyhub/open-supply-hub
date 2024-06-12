@@ -1,24 +1,26 @@
 import { createReducer } from 'redux-act';
 import update from 'immutability-helper';
+import identity from 'lodash/identity';
+import orderBy from 'lodash/orderBy';
 
 import {
     startFetchClaimFacilityData,
     failFetchClaimFacilityData,
     completeFetchClaimFacilityData,
     clearClaimFacilityDataAndForm,
-    updateClaimAFacilityContactPerson,
-    updateClaimAFacilityPhoneNumber,
-    updateClaimAFacilityCompany,
-    updateClaimAFacilityParentCompany,
-    updateClaimAFacilityWebsite,
-    updateClaimAFacilityDescription,
-    updateClaimAFacilityVerificationMethod,
+    updateClaimAFacilityYourName,
+    updateClaimAFacilityYourTitle,
+    updateClaimAFacilityYourBusinessWebsite,
+    updateClaimAFacilityBusinessWebsite,
+    updateClaimAFacilityBusinessLinkedinProfile,
+    updateClaimASector,
+    updateClaimANumberOfWorkers,
+    updateClaimALocalLanguageName,
     startSubmitClaimAFacilityData,
     failSubmitClaimAFacilityData,
     completeSubmitClaimAFacilityData,
-    updateClaimAFacilityJobTitle,
-    updateClaimAFacilityLinkedinProfile,
     updateClaimAFacilityUploadFiles,
+    updateClaimAFacilityBusinessUploadFiles,
 } from '../actions/claimFacility';
 
 const initialState = Object.freeze({
@@ -29,15 +31,14 @@ const initialState = Object.freeze({
     }),
     claimData: Object.freeze({
         formData: Object.freeze({
-            contactPerson: '',
-            jobTitle: '',
-            phoneNumber: '',
-            companyName: '',
-            website: '',
-            facilityDescription: '',
-            verificationMethod: '',
-            parentCompany: null,
-            linkedinProfile: '',
+            yourName: '',
+            yourTitle: '',
+            yourBusinessWebsite: '',
+            businessWebsite: '',
+            businessLinkedinProfile: '',
+            sectors: null,
+            numberOfWorkers: '',
+            localLanguageName: '',
         }),
         fetching: false,
         error: null,
@@ -74,76 +75,69 @@ export default createReducer(
                     error: { $set: initialState.facilityData.error },
                 },
             }),
-        [updateClaimAFacilityContactPerson]: (state, payload) =>
+        [updateClaimAFacilityYourName]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
-                        contactPerson: { $set: payload },
+                        yourName: { $set: payload },
                     },
                 },
             }),
-
-        [updateClaimAFacilityPhoneNumber]: (state, payload) =>
+        [updateClaimAFacilityYourTitle]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
-                        phoneNumber: { $set: payload },
+                        yourTitle: { $set: payload },
                     },
                 },
             }),
-        [updateClaimAFacilityCompany]: (state, payload) =>
+        [updateClaimAFacilityYourBusinessWebsite]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
-                        companyName: { $set: payload },
+                        yourBusinessWebsite: { $set: payload },
                     },
                 },
             }),
-        [updateClaimAFacilityParentCompany]: (state, payload) =>
+        [updateClaimAFacilityBusinessWebsite]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
-                        parentCompany: { $set: payload },
+                        businessWebsite: { $set: payload },
                     },
                 },
             }),
-        [updateClaimAFacilityWebsite]: (state, payload) =>
+        [updateClaimAFacilityBusinessLinkedinProfile]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
-                        website: { $set: payload },
+                        businessLinkedinProfile: { $set: payload },
                     },
                 },
             }),
-        [updateClaimAFacilityDescription]: (state, payload) =>
+        [updateClaimASector]: (state, sectors) =>
             update(state, {
                 claimData: {
                     formData: {
-                        facilityDescription: { $set: payload },
+                        sectors: {
+                            $set: orderBy(sectors, identity),
+                        },
                     },
                 },
             }),
-        [updateClaimAFacilityVerificationMethod]: (state, payload) =>
+        [updateClaimANumberOfWorkers]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
-                        verificationMethod: { $set: payload },
+                        numberOfWorkers: { $set: payload },
                     },
                 },
             }),
-        [updateClaimAFacilityJobTitle]: (state, payload) =>
+        [updateClaimALocalLanguageName]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
-                        jobTitle: { $set: payload },
-                    },
-                },
-            }),
-        [updateClaimAFacilityLinkedinProfile]: (state, payload) =>
-            update(state, {
-                claimData: {
-                    formData: {
-                        linkedinProfile: { $set: payload },
+                        localLanguageName: { $set: payload },
                     },
                 },
             }),
@@ -152,6 +146,14 @@ export default createReducer(
                 claimData: {
                     formData: {
                         uploadFiles: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimAFacilityBusinessUploadFiles]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        businessUploadFiles: { $set: payload },
                     },
                 },
             }),

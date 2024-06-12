@@ -38,6 +38,7 @@ import {
     OTHER,
     FEATURE_COLLECTION,
     CLAIM_A_FACILITY,
+    NUMERIC_DASH_REGEX,
     inputTypesEnum,
     registrationFieldsEnum,
     registrationFormFields,
@@ -893,35 +894,43 @@ export const checkWhetherUserHasDashboardAccess = user =>
     get(user, 'is_superuser', false);
 
 export const claimAFacilityFormIsValid = ({
-    companyName,
-    contactPerson,
-    phoneNumber,
+    yourName,
+    yourTitle,
+    yourBusinessWebsite,
+    businessWebsite,
+    businessLinkedinProfile,
+    businessUploadFiles,
+    numberOfWorkers,
 }) =>
-    every(
-        [!isEmpty(companyName), !isEmpty(contactPerson), !isEmpty(phoneNumber)],
-        identity,
-    );
+    every([!isEmpty(yourName), !isEmpty(yourTitle)], identity) &&
+    some([isEmpty(yourBusinessWebsite), isURL(yourBusinessWebsite)]) &&
+    some([
+        isEmpty(numberOfWorkers),
+        NUMERIC_DASH_REGEX.test(numberOfWorkers),
+    ]) &&
+    some([
+        !isEmpty(businessWebsite) && isURL(businessWebsite),
+        !isEmpty(businessLinkedinProfile) && isURL(businessLinkedinProfile),
+        !isEmpty(businessUploadFiles),
+    ]);
 
-export const claimFacilityContactInfoStepIsValid = ({
-    contactPerson,
-    phoneNumber,
-    jobTitle,
+export const claimFacilitySupportDocsIsValid = ({
+    yourName,
+    yourTitle,
+    yourBusinessWebsite,
+    businessWebsite,
+    businessLinkedinProfile,
+    businessUploadFiles,
 }) =>
-    every([!isEmpty(contactPerson), !isEmpty(phoneNumber), !isEmpty(jobTitle)]);
-
+    every([!isEmpty(yourName), !isEmpty(yourTitle)]) &&
+    some([isEmpty(yourBusinessWebsite), isURL(yourBusinessWebsite)]) &&
+    some([
+        !isEmpty(businessWebsite) && isURL(businessWebsite),
+        !isEmpty(businessLinkedinProfile) && isURL(businessLinkedinProfile),
+        !isEmpty(businessUploadFiles),
+    ]);
 export const isValidFacilityURL = url =>
     isEmpty(url) || isURL(url, { protocols: ['http', 'https'] });
-
-export const claimFacilityFacilityInfoStepIsValid = ({
-    companyName,
-    website,
-    facilityDescription,
-}) =>
-    every([
-        !isEmpty(companyName),
-        isValidFacilityURL(website),
-        !isEmpty(facilityDescription),
-    ]);
 
 export const anyListItemMatchesAreInactive = ({ matches }) =>
     some(matches, ['is_active', false]);
