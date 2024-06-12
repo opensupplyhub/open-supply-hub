@@ -703,7 +703,8 @@ function ClaimedFacilitiesDetails({
                             (!isEmpty(data.point_of_contact_email) &&
                                 !isEmail(data.point_of_contact_email)) ||
                             (!isEmpty(data.facility_website) &&
-                                !isValidFacilityURL(data.facility_website))
+                                !isValidFacilityURL(data.facility_website)) ||
+                            validateNumberOfWorkers(data.facility_workers_count)
                         }
                     >
                         Save
