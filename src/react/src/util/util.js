@@ -38,7 +38,6 @@ import {
     OTHER,
     FEATURE_COLLECTION,
     CLAIM_A_FACILITY,
-    NUMERIC_DASH_REGEX,
     inputTypesEnum,
     registrationFieldsEnum,
     registrationFormFields,
@@ -931,10 +930,7 @@ export const claimAFacilityFormIsValid = ({
 }) =>
     every([!isEmpty(yourName), !isEmpty(yourTitle)], identity) &&
     some([isEmpty(yourBusinessWebsite), isURL(yourBusinessWebsite)]) &&
-    some([
-        isEmpty(numberOfWorkers),
-        NUMERIC_DASH_REGEX.test(numberOfWorkers),
-    ]) &&
+    !validateNumberOfWorkers(numberOfWorkers) &&
     some([
         !isEmpty(businessWebsite) && isURL(businessWebsite),
         !isEmpty(businessLinkedinProfile) && isURL(businessLinkedinProfile),
