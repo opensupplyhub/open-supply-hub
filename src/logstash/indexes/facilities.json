@@ -56,10 +56,7 @@
           }
         }
       },
-      "location": {
-        "type": "geo_point"
-      },
-      "facility_type": {
+      "parent_company": {
         "type": "text",
         "fields": {
           "keyword": {
@@ -75,6 +72,14 @@
           }
         }
       },
+      "facility_type": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
       "processing_type": {
         "type": "text",
         "fields": {
@@ -83,7 +88,20 @@
           }
         }
       },
-      "parent_company": {
+      "number_of_workers": {
+        "properties": {
+          "min": {
+            "type": "integer"
+          },
+          "max": {
+            "type": "integer"
+          }
+        }
+      },
+      "location": {
+        "type": "geo_point"
+      },
+      "minimum_order_quantity": {
         "type": "text",
         "fields": {
           "keyword": {
@@ -91,14 +109,50 @@
           }
         }
       },
-      "number_of_workers": {
-        "type": "nested",
+      "average_lead_time": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "percent_female_workers": {
+        "type": "integer",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "affiliations": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "certifications_standards_regulations": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "country": {
         "properties": {
-          "min": {
-            "type": "integer"
-          },
-          "max": {
-            "type": "integer"
+          "alpha_2": {
+            "type": "keyword"
+          }
+        }
+      },
+      "claim_status": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
           }
         }
       }
