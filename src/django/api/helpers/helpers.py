@@ -168,3 +168,15 @@ def parse_download_date(date: str):
             .strptime(date, parse_dateformat)
             .strftime("%Y-%m-%d")
         )
+
+
+def validate_workers_count(workers_count):
+    single_number_pattern = r'^\d+$'
+    range_pattern = r'^\d+-\d+$'
+
+    if re.match(single_number_pattern, workers_count):
+        return True
+    elif re.match(range_pattern, workers_count):
+        return True
+    else:
+        return False
