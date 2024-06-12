@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 
+import isEmpty from 'lodash/isEmpty';
+
 import Typography from '@material-ui/core/Typography';
 import SvgIcon from '@material-ui/core/SvgIcon';
 import IconButton from '@material-ui/core/IconButton';
@@ -16,7 +18,6 @@ const claimAttachmentsUploaderStyles = Object.freeze({
         textAlign: 'center',
         cursor: 'pointer',
         width: '95%',
-        margin: '0 auto',
     }),
     fileInputHidden: Object.freeze({
         display: 'none',
@@ -49,6 +50,9 @@ const claimAttachmentsUploaderStyles = Object.freeze({
     }),
     validationMessageStyles: Object.freeze({
         padding: '5px 0',
+    }),
+    hiddenSpace: Object.freeze({
+        paddingTop: '48px',
     }),
 });
 
@@ -112,6 +116,9 @@ const ClaimAttachmentsUploader = ({
     return (
         <div data-testid="claim-attachments-uploader">
             <ul style={claimAttachmentsUploaderStyles.fileListUploaded}>
+                {isEmpty(files) ? (
+                    <div style={claimAttachmentsUploaderStyles.hiddenSpace} />
+                ) : null}
                 {files.map((file, index) => (
                     <li key={uuidv4()}>
                         <IconButton
