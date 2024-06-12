@@ -896,7 +896,10 @@ class FacilitiesViewSet(ListModelMixin,
                 setattr(facility_claim, 'sector', sectors)
 
             try:
-                workers_count = int(number_of_workers)
+                workers_count = number_of_workers
+
+                if len(workers_count) == 0:
+                    workers_count = None
             except ValueError:
                 workers_count = None
             except TypeError:

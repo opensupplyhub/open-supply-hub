@@ -347,6 +347,8 @@ class FacilityClaimViewSet(ModelViewSet):
                     workers_count = None
             except ValueError:
                 workers_count = None
+            except TypeError:
+                workers_count = None
 
             claim.facility_workers_count = workers_count
 
