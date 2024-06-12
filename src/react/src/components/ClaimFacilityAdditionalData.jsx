@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { bool, func, string } from 'prop-types';
+import { bool, func, string, PropTypes } from 'prop-types';
 import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
@@ -317,11 +317,12 @@ function ClaimFacilityAdditionalData({
 }
 
 ClaimFacilityAdditionalData.defaultProps = {
+    sectors: [],
     sectorOptions: null,
 };
 
 ClaimFacilityAdditionalData.propTypes = {
-    sectors: string.isRequired,
+    sectors: PropTypes.arrayOf(PropTypes.string),
     numberOfWorkers: string.isRequired,
     updateNumberOfWorkers: func.isRequired,
     localLanguageName: string.isRequired,

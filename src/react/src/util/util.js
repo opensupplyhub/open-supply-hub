@@ -931,10 +931,15 @@ export const claimAFacilityFormIsValid = ({
     every([!isEmpty(yourName), !isEmpty(yourTitle)], identity) &&
     some([isEmpty(yourBusinessWebsite), isURL(yourBusinessWebsite)]) &&
     !validateNumberOfWorkers(numberOfWorkers) &&
-    some([
-        !isEmpty(businessWebsite) && isURL(businessWebsite),
-        !isEmpty(businessLinkedinProfile) && isURL(businessLinkedinProfile),
-        !isEmpty(businessUploadFiles),
+    every([
+        isEmpty(businessWebsite) ||
+            (!isEmpty(businessWebsite) && isURL(businessWebsite)),
+        isEmpty(businessLinkedinProfile) ||
+            (!isEmpty(businessLinkedinProfile) &&
+                isURL(businessLinkedinProfile)),
+        !isEmpty(businessUploadFiles) ||
+            !isEmpty(businessWebsite) ||
+            !isEmpty(businessLinkedinProfile),
     ]);
 
 export const claimFacilitySupportDocsIsValid = ({
@@ -947,10 +952,15 @@ export const claimFacilitySupportDocsIsValid = ({
 }) =>
     every([!isEmpty(yourName), !isEmpty(yourTitle)]) &&
     some([isEmpty(yourBusinessWebsite), isURL(yourBusinessWebsite)]) &&
-    some([
-        !isEmpty(businessWebsite) && isURL(businessWebsite),
-        !isEmpty(businessLinkedinProfile) && isURL(businessLinkedinProfile),
-        !isEmpty(businessUploadFiles),
+    every([
+        isEmpty(businessWebsite) ||
+            (!isEmpty(businessWebsite) && isURL(businessWebsite)),
+        isEmpty(businessLinkedinProfile) ||
+            (!isEmpty(businessLinkedinProfile) &&
+                isURL(businessLinkedinProfile)),
+        !isEmpty(businessUploadFiles) ||
+            !isEmpty(businessWebsite) ||
+            !isEmpty(businessLinkedinProfile),
     ]);
 export const isValidFacilityURL = url =>
     isEmpty(url) || isURL(url, { protocols: ['http', 'https'] });
