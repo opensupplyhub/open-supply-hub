@@ -1,6 +1,7 @@
 import json
 from api.models.transactions.index_facilities_new import index_facilities_new
 
+from api.helpers.helpers import validate_workers_count
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
     NotFound,
@@ -345,9 +346,10 @@ class FacilityClaimViewSet(ModelViewSet):
 
                 if len(workers_count) == 0:
                     workers_count = None
-            except ValueError:
-                workers_count = None
-            except TypeError:
+                elif not validate_workers_count(workers_count):
+                    workers_count = None
+
+            except (ValueError, TypeError):
                 workers_count = None
 
             claim.facility_workers_count = workers_count

@@ -11,6 +11,7 @@ from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.exceptions.handler_not_set_error \
     import HandlerNotSetError
 
+from api.helpers.helpers import validate_workers_count
 from oar.settings import (
     MAX_ATTACHMENT_SIZE_IN_BYTES,
     MAX_ATTACHMENT_AMOUNT,
@@ -900,9 +901,10 @@ class FacilitiesViewSet(ListModelMixin,
 
                 if len(workers_count) == 0:
                     workers_count = None
-            except ValueError:
-                workers_count = None
-            except TypeError:
+                elif not validate_workers_count(workers_count):
+                    workers_count = None
+
+            except (ValueError, TypeError):
                 workers_count = None
 
             facility_claim.facility_workers_count = workers_count
