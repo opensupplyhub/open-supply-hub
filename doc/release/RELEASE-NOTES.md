@@ -26,6 +26,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1069](https://opensupplyhub.atlassian.net/browse/OSDEV-1069) - The following changes have been made:
     * Changed the Postgres Docker image for the database to use the official one and make the local database setup platform-agnostic, so it doesn't depend on the processor architecture.
     * Built the PostGIS program from source and installed it to avoid LLVM-related errors inside the database Docker container during local development.
+* [OSDEV-1072](https://opensupplyhub.atlassian.net/browse/OSDEV-1072) - The following changes have been made:
+    * Added building database-anonymizer container to the pipeline.
+    * Pushing the database-anonymizer container to the repo is turned off until the database anonymizing scheduled task will be deployed to the production.
+* [OSDEV-1089](https://opensupplyhub.atlassian.net/browse/OSDEV-1089) Change format gunicurn logs not pass IP address to AWS CloudWatch.
+* Added command `reindex_database`
 * [OSDEV-1075](https://opensupplyhub.atlassian.net/browse/OSDEV-1075) - The following changes have been made:
     * All resources created via batch job will be tagged
 * [OSDEV-1089](https://opensupplyhub.atlassian.net/browse/OSDEV-1089) Change format gunicurn logs not pass IP address to AWS CloudWatch.

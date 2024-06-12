@@ -11,7 +11,7 @@ module "database_anonymizer" {
   aws_region                    = var.aws_region
   destination_aws_account       = var.anonymizer_destination_aws_account
   anonymizer_db_identifier      = var.anonymizer_db_identifier
-  database_anonymizer_image_tag = var.anonymizer_image_tag
+  database_anonymizer_image_tag = var.image_tag
   schedule_expression           = var.anonymizer_schedule_expression
   kms_key_admin_users           = var.anonymizer_kms_key_admin_users
   subnet_ids                    = module.vpc.private_subnet_ids
