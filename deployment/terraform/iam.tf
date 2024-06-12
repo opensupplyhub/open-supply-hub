@@ -19,11 +19,6 @@ data "aws_iam_policy_document" "ecs_assume_role" {
 resource "aws_iam_role" "ecs_task_execution_role" {
   name               = "ecs${local.short}TaskExecutionRole"
   assume_role_policy = data.aws_iam_policy_document.ecs_assume_role.json
-
-  managed_policy_arns = [
-    "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
-    "arn:aws:iam::aws:policy/AmazonOpenSearchServiceFullAccess"
-  ]
 }
 
 resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
