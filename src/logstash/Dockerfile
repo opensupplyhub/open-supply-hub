@@ -32,6 +32,7 @@ RUN mkdir -p /usr/share/logstash/data/plugins/inputs/jdbc \
     && chown -R logstash:root /usr/share/logstash/data \
     && chmod -R u+w /usr/share/logstash/data
 
-RUN mkdir -p /home/logstash && chown -R logstash:logstash
+RUN mkdir -p /home/logstash \
+    && chown -R logstash:logstash /home/logstash
 
 CMD ["logstash"]
