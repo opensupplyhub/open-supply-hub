@@ -588,6 +588,84 @@ export const claimAFacilityFormFields = Object.freeze({
     }),
 });
 
+export const claimAFacilitySupportDocsFormFields = Object.freeze({
+    contactYourName: Object.freeze({
+        id: 'contact-your-name',
+        label: 'Your Name:',
+        placeholder: 'Enter Your Name',
+    }),
+    contactYourTitle: Object.freeze({
+        id: 'contact-your-title',
+        label: 'Your Title:',
+        placeholder: 'Enter your title (e.g. Vice President)',
+    }),
+    contactYourBusinessWebsite: Object.freeze({
+        id: 'contact-your-business-website',
+        label: 'Business Website (e.g. a page that lists your name and title):',
+        placeholder:
+            'Enter the URL for a business website that lists your name and title',
+    }),
+    contactBusinessWebsite: Object.freeze({
+        id: 'business-website',
+        label:
+            'Business Website (e.g. a page that lists the production location’s name and address): ',
+        placeholder: 'Enter the URL for the production location’s website',
+    }),
+    contactBusinessLinkedinProfile: Object.freeze({
+        id: 'business-linkedin-profile',
+        label: 'Business LinkedIn Profile:',
+        placeholder: 'Enter the URL for the business’s LinkedIn profile',
+    }),
+    yourAdditionalDocumentationTitle: Object.freeze({
+        id: 'your-additional-documentation-title',
+        label: 'Additional Documentation:',
+    }),
+    businessAdditionalDocumentationTitle: Object.freeze({
+        id: 'business-additional-documentation-title',
+        label:
+            'Additional Documentation (e.g. utility bill, business registration document):',
+    }),
+    additionalDocumentationSub: Object.freeze({
+        id: 'additional-documentation-sub',
+        label:
+            'Documentation is only used by our internal team to confirm information about your production location; these documents will never be shared externally.',
+    }),
+});
+
+export const claimAFacilityAdditionalDataFormFields = Object.freeze({
+    sectorsForm: Object.freeze({
+        id: 'sectors',
+        label: 'Sector(s)',
+        placeholder: 'Select',
+    }),
+    sectorsDecs: Object.freeze({
+        id: 'sectors-desc',
+        label:
+            'Select or enter the sector(s) that this location operates in; e.g.: “Apparel”,”Electronics”,”Renewable Energy”.',
+    }),
+    numberOfWorkersForm: Object.freeze({
+        id: 'number-of-workers',
+        label: 'Number of Workers',
+        placeholder: 'Enter the number of workers as a number or range',
+    }),
+    numberOfWorkersDesc: Object.freeze({
+        id: 'number-of-workers-desc',
+        label:
+            'Enter a number or a range for the number of people employed at the location; e.g.: “100”, “100-150”.',
+    }),
+    localLanguageNameForm: Object.freeze({
+        id: 'local-language-name',
+        label: 'Local Language Name',
+        placeholder:
+            'Enter the production location’s name in the local language',
+    }),
+    localLanguageNameDesc: Object.freeze({
+        id: 'local-language-name-desc',
+        label:
+            'Enter the name of the production location in the language that is spoken in the local area.',
+    }),
+});
+
 export const GRID_COLOR_RAMP = Object.freeze([
     [0, '#C0EBC7'],
     [10, '#81D690'],
@@ -606,6 +684,8 @@ export const OARSecondaryColor = '#FFA6D0';
 export const minimum100PercentWidthEmbedHeight = '500px';
 
 export const DONATE_LINK = 'https://givebutter.com/opensupplyhub2022';
+
+export const OS_HUB_BLOG_LINK = 'https://blog.opensupplyhub.org';
 
 export const NavbarItems = [
     {
@@ -634,8 +714,8 @@ export const NavbarItems = [
                         },
                         {
                             type: 'button',
-                            label: 'Donate',
-                            href: DONATE_LINK,
+                            label: 'Blog',
+                            href: OS_HUB_BLOG_LINK,
                         },
                     ],
                 },
@@ -830,12 +910,14 @@ export const FooterLinks = [
         href: 'https://share.hsforms.com/1bQwXClZUTjihXk3wt1SX2Abujql',
     },
     { label: 'FAQs', href: `${InfoLink}/${InfoPaths.faqs}` },
-    { label: 'Privacy Policy', href: `${InfoLink}/${InfoPaths.privacyPolicy}` },
+    { label: 'Careers', href: `${InfoLink}/work-with-us` },
     { label: 'Media Hub', href: `${InfoLink}/${InfoPaths.mediaHub}` },
+    { label: 'Blog', href: OS_HUB_BLOG_LINK },
     {
         label: 'Terms of Service',
         href: `${InfoLink}/${InfoPaths.termsOfService}`,
     },
+    { label: 'Privacy Policy', href: `${InfoLink}/${InfoPaths.privacyPolicy}` },
     { label: 'Reporting Line', href: 'https://opensupplyhub.allvoices.co/' },
     { label: 'Contact Us', href: `${InfoLink}/${InfoPaths.contactUs}` },
 ];

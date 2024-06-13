@@ -226,13 +226,11 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
         )
 
         claim_facility_data = {
-            "contact_person": "contact_person",
-            "job_title": "job_title",
-            "company_name": "company_name",
-            "phone_number": 1234567,
-            "website": "https://example.com",
-            "facility_description": "facility_description",
-            "verification_method": "verification_method",
+            "your_name": "your_name",
+            "your_title": "your_title",
+            "your_business_website": "https://example.com",
+            "business_website": "https://example.com",
+            "business_linkedin_profile": "https://example.com",
         }
 
         file_data = {

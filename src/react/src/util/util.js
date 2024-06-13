@@ -28,7 +28,7 @@ import every from 'lodash/every';
 import uniqWith from 'lodash/uniqWith';
 import filter from 'lodash/filter';
 import includes from 'lodash/includes';
-import { isURL } from 'validator';
+import { isURL, isInt } from 'validator';
 import { featureCollection, bbox } from '@turf/turf';
 import hash from 'object-hash';
 import * as XLSX from 'xlsx';
@@ -892,36 +892,78 @@ export const convertFeatureFlagsObjectToListOfActiveFlags = featureFlags =>
 export const checkWhetherUserHasDashboardAccess = user =>
     get(user, 'is_superuser', false);
 
+export const validateNumberOfWorkers = value => {
+    if (isEmpty(value)) {
+        return false;
+    }
+
+    const singleNumberPattern = /^\d+$/;
+    const rangePattern = /^\d+-\d+$/;
+
+    if (singleNumberPattern.test(value)) {
+        return false;
+    }
+
+    if (rangePattern.test(value)) {
+        const [start, end] = value.split('-');
+
+        if (
+            isInt(start.trim(), { min: 0 }) &&
+            isInt(end.trim(), { min: 0 }) &&
+            parseInt(start, 10) <= parseInt(end, 10)
+        ) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
 export const claimAFacilityFormIsValid = ({
-    companyName,
-    contactPerson,
-    phoneNumber,
+    yourName,
+    yourTitle,
+    yourBusinessWebsite,
+    businessWebsite,
+    businessLinkedinProfile,
+    businessUploadFiles,
+    numberOfWorkers,
 }) =>
-    every(
-        [!isEmpty(companyName), !isEmpty(contactPerson), !isEmpty(phoneNumber)],
-        identity,
-    );
+    every([!isEmpty(yourName), !isEmpty(yourTitle)], identity) &&
+    some([isEmpty(yourBusinessWebsite), isURL(yourBusinessWebsite)]) &&
+    !validateNumberOfWorkers(numberOfWorkers) &&
+    every([
+        isEmpty(businessWebsite) ||
+            (!isEmpty(businessWebsite) && isURL(businessWebsite)),
+        isEmpty(businessLinkedinProfile) ||
+            (!isEmpty(businessLinkedinProfile) &&
+                isURL(businessLinkedinProfile)),
+        !isEmpty(businessUploadFiles) ||
+            !isEmpty(businessWebsite) ||
+            !isEmpty(businessLinkedinProfile),
+    ]);
 
-export const claimFacilityContactInfoStepIsValid = ({
-    contactPerson,
-    phoneNumber,
-    jobTitle,
+export const claimFacilitySupportDocsIsValid = ({
+    yourName,
+    yourTitle,
+    yourBusinessWebsite,
+    businessWebsite,
+    businessLinkedinProfile,
+    businessUploadFiles,
 }) =>
-    every([!isEmpty(contactPerson), !isEmpty(phoneNumber), !isEmpty(jobTitle)]);
-
+    every([!isEmpty(yourName), !isEmpty(yourTitle)]) &&
+    some([isEmpty(yourBusinessWebsite), isURL(yourBusinessWebsite)]) &&
+    every([
+        isEmpty(businessWebsite) ||
+            (!isEmpty(businessWebsite) && isURL(businessWebsite)),
+        isEmpty(businessLinkedinProfile) ||
+            (!isEmpty(businessLinkedinProfile) &&
+                isURL(businessLinkedinProfile)),
+        !isEmpty(businessUploadFiles) ||
+            !isEmpty(businessWebsite) ||
+            !isEmpty(businessLinkedinProfile),
+    ]);
 export const isValidFacilityURL = url =>
     isEmpty(url) || isURL(url, { protocols: ['http', 'https'] });
-
-export const claimFacilityFacilityInfoStepIsValid = ({
-    companyName,
-    website,
-    facilityDescription,
-}) =>
-    every([
-        !isEmpty(companyName),
-        isValidFacilityURL(website),
-        !isEmpty(facilityDescription),
-    ]);
 
 export const anyListItemMatchesAreInactive = ({ matches }) =>
     some(matches, ['is_active', false]);

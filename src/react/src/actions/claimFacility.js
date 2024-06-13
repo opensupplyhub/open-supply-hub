@@ -1,5 +1,5 @@
 import { createAction } from 'redux-act';
-import { get, toPairs, snakeCase, mapKeys } from 'lodash';
+import { toPairs, snakeCase, mapKeys } from 'lodash';
 
 import apiRequest from '../util/apiRequest';
 
@@ -72,6 +72,9 @@ export const updateClaimAFacilityLinkedinProfile = createAction(
 export const updateClaimAFacilityUploadFiles = createAction(
     'UPDATE_CLAIM_A_FACILITY_UPLOAD_FILES',
 );
+export const updateClaimAFacilityBusinessUploadFiles = createAction(
+    'UPDATE_CLAIM_A_FACILITY_BUSINESS_UPLOAD_FILES',
+);
 export const startSubmitClaimAFacilityData = createAction(
     'START_SUBMIT_CLAIM_A_FACILITY_DATA',
 );
@@ -80,6 +83,29 @@ export const failSubmitClaimAFacilityData = createAction(
 );
 export const completeSubmitClaimAFacilityData = createAction(
     'COMPLETE_SUBMIT_CLAIM_A_FACILITY_DATA',
+);
+export const updateClaimAFacilityYourName = createAction(
+    'UPDATE_CLAIM_A_FACILITY_YOUR_NAME',
+);
+export const updateClaimAFacilityYourTitle = createAction(
+    'UPDATE_CLAIM_A_FACILITY_YOUR_TITLE',
+);
+export const updateClaimAFacilityYourBusinessWebsite = createAction(
+    'UPDATE_CLAIM_A_FACILITY_YOUR_BUSINESS_WEBSITE',
+);
+export const updateClaimAFacilityBusinessWebsite = createAction(
+    'UPDATE_CLAIM_A_FACILITY_BUSINESS_WEBSITE',
+);
+export const updateClaimAFacilityBusinessLinkedinProfile = createAction(
+    'UPDATE_CLAIM_A_FACILITY_YOUR_BUSINESS_LINKEDIN_PROFILE',
+);
+
+export const updateClaimASector = createAction('UPDATE_CLAIM_A_SECTOR');
+export const updateClaimANumberOfWorkers = createAction(
+    'UPDATE_CLAIM_A_NUMBER_OF_WORKERS',
+);
+export const updateClaimALocalLanguageName = createAction(
+    'UPDATE_CLAIM_A_LOCAL_LANGUAGE_NAME',
 );
 
 export function submitClaimAFacilityData(osID) {
@@ -97,13 +123,17 @@ export function submitClaimAFacilityData(osID) {
         const postData = new FormData();
         toPairs(formData).forEach(([key, value]) => {
             const formattedKey = snakeCase(key);
-            if (formattedKey === 'upload_files') {
+            if (
+                formattedKey === 'upload_files' ||
+                formattedKey === 'business_upload_files'
+            ) {
                 mapKeys(value, file => {
                     postData.append('files', file);
                 });
-            } else if (formattedKey === 'parent_company') {
-                const newValue = get(value, 'value', null);
-                postData.append(formattedKey, newValue);
+            } else if (formattedKey === 'sectors') {
+                if (value !== null) {
+                    postData.append(formattedKey, value);
+                }
             } else {
                 postData.append(formattedKey, value);
             }
