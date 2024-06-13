@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+
 
 vpc_id="$(aws ec2 describe-vpcs --filters=Name=tag:Name,Values=vpcOpenSupplyHub$1 --query 'Vpcs[*].VpcId' --output text)"
 echo "VPC ID: $vpc_id"
@@ -30,7 +30,16 @@ id=$(echo $task_arn | awk -F'/' '{print $NF}')
 echo "Log Stream ID: $id"
 
 echo "Task URL: https://eu-west-1.console.aws.amazon.com/ecs/v2/clusters/ecsOpenSupplyHub${1}Cluster/tasks/$id"
-aws ecs wait tasks-stopped --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn}
+
+echo "Waiting for task to stop..."
+res=1
+while [ $res -ne 0 ]; do
+    echo "Continue waiting: $(date +%T)"
+    aws ecs wait tasks-stopped --cluster "ecsOpenSupplyHub${1}Cluster" --tasks "${task_arn}"
+    res=$?
+done
+
+echo "Stop time: $(date +%T)"
 
 echo "Task stopped reason:"
 aws ecs describe-tasks --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn} --query 'tasks[0].[stoppedReason]'
