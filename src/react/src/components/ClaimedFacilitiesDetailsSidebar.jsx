@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 import Typography from '@material-ui/core/Typography';
 
 import { facilityDetailsPropType } from '../util/propTypes';
@@ -50,17 +51,20 @@ export default function ClaimedFacilitiesDetailsSidebar({ facilityDetails }) {
                     style={claimedFacilitiesDetailsSidebarStyles.bodyTextStyles}
                 >
                     {facilityDetails.properties.contributors.map(
-                        ({ id, name }) => (
-                            <li key={id}>
-                                <Link
-                                    to={makeProfileRouteLink(id)}
-                                    href={makeProfileRouteLink(id)}
-                                    key={id}
-                                >
-                                    {name}
-                                </Link>
-                            </li>
-                        ),
+                        ({ id, name }) => {
+                            const uniqueKey = uuidv4();
+                            return (
+                                <li key={uniqueKey}>
+                                    <Link
+                                        to={makeProfileRouteLink(id)}
+                                        href={makeProfileRouteLink(id)}
+                                        key={uniqueKey}
+                                    >
+                                        {name}
+                                    </Link>
+                                </li>
+                            );
+                        },
                     )}
                 </ul>
             </div>
