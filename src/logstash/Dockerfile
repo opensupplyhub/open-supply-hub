@@ -18,13 +18,13 @@ COPY --chown=logstash:root ./config/ /usr/share/logstash/config/
 # Logstash.
 COPY --chown=logstash:root ./pipeline/ /usr/share/logstash/pipeline/
 
-# Copy sql script to the root folder of Logstash.
+# Copy SQL scripts to the sql folder of Logstash.
 COPY --chown=logstash:root ./sql/ /usr/share/logstash/sql/
 
-# Copy sql scripts to the scripts folder of Logstash.
+# Copy Ruby scripts to the scripts folder of Logstash.
 COPY --chown=logstash:root ./scripts/ /usr/share/logstash/scripts/
 
-# Copy sql script to the indexes folder of Logstash.
+# Copy OpenSearch index templates to the indexes folder of Logstash.
 COPY --chown=logstash:root ./indexes/ /usr/share/logstash/indexes/
 
 CMD ["logstash"]

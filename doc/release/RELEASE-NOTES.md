@@ -4,6 +4,40 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
 
+## Release 1.15.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: June 26, 2024
+
+### Database changes
+#### Migrations:
+* *Describe migrations here.*
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
+### Code/API changes
+* [OSDEV-1004](https://opensupplyhub.atlassian.net/browse/OSDEV-1004) - The following changes have been made to the Logstash and OpenSearch services:
+    * Prepared the SQL script to collect all the necessary data for the `v1/facilities` API endpoint according to the new API specification.
+    * Introduced a new set of Ruby scripts to filter and reorganize the incoming data at the Logstash app level, avoiding complex database queries that could lead to high database load.
+    * Updated the `facilities` index template for OpenSearch to define how new fields within the facility documents are stored and indexed by OpenSearch.
+
+    All changes have been made to meet the API specification requirements for `v1/facilities` API endpoint as closely as possible.
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* Update code.
+
+
 ## Release 1.14.0
 
 ## Introduction
@@ -19,9 +53,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Scheme changes
 * [OSDEV-1084](https://opensupplyhub.atlassian.net/browse/OSDEV-1084) - To enable adding a range for the number of workers during the claiming process, the type of the `facility_workers_count` field in the `FacilityClaim` table was changed from `IntegerField` to `CharField`.
-
-### Code/API changes
-* *Describe code/API changes here.*
 
 ### Architecture/Environment changes
 * [OSDEV-1069](https://opensupplyhub.atlassian.net/browse/OSDEV-1069) - The following changes have been made:
@@ -47,12 +78,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Added the `--if-exists` flag to all calls of the `pg_restore` command to eliminate spam errors when it tries to delete resources that don't exist just because the DB can be empty. Improved the section of the README about applying the database dump locally. Specifically, SQL queries have been added to delete all the tables and recreate an empty database schema to avoid conflicts during the database dump restore.
 
 ### What's new
-*   [OSDEV-1030](https://opensupplyhub.atlassian.net/browse/OSDEV-1030) - The following changes have been made:
-    *   Replaced the "Donate" button with a "Blog" button in the header
-    *   Added links to the "Blog" and "Careers" pages in the footer
-*   [OSDEV-939](https://opensupplyhub.atlassian.net/browse/OSDEV-939) - The following changes have been made:
-    *   Created new steps `Supporting Documentation` & `Additional Data` for `Facility Claim Request` page.
-    *   Added popup for successfully submitted claim.
+* [OSDEV-1030](https://opensupplyhub.atlassian.net/browse/OSDEV-1030) - The following changes have been made:
+    * Replaced the "Donate" button with a "Blog" button in the header
+    * Added links to the "Blog" and "Careers" pages in the footer
+* [OSDEV-939](https://opensupplyhub.atlassian.net/browse/OSDEV-939) - The following changes have been made:
+    * Created new steps `Supporting Documentation` & `Additional Data` for `Facility Claim Request` page.
+    * Added popup for successfully submitted claim.
 * [OSDEV-1084](https://opensupplyhub.atlassian.net/browse/OSDEV-1084) - Enable adding a range for the number of workers during the claiming process, either after pressing the “I want to claim this production location” link or on the Claimed Facility Details page.
 
 ### Release instructions:
