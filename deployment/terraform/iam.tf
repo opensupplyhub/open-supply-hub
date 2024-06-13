@@ -434,6 +434,20 @@ data "aws_iam_policy_document" "opensearch_log_publishing_policy" {
   }
 }
 
+data "aws_iam_policy_document" "opensearch_access_policy" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    actions   = ["es:*"]
+    resources = ["arn:aws:es:${var.aws_region}:${data.aws_caller_identity.current.account_id}:domain/opensearch-domain/*"]
+  }
+}
+
 resource "aws_cloudwatch_log_resource_policy" "opensearch" {
   policy_name     = "opensearch"
   policy_document = data.aws_iam_policy_document.opensearch_log_publishing_policy.json

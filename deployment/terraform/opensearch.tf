@@ -17,7 +17,10 @@ resource "aws_opensearch_domain" "opensearch" {
   domain_name    = "opensearch-domain"
   engine_version = "OpenSearch_2.11"
 
-  access_policies = data.aws_iam_policy_document.opensearch_log_publishing_policy.json
+  access_policies = [
+    data.aws_iam_policy_document.opensearch_log_publishing_policy.json,
+    data.aws_iam_policy_document.opensearch_access_policy.json
+  ]
 
   cluster_config {
     instance_type          = "t3.small.search"
