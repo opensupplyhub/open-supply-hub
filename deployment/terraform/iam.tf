@@ -436,15 +436,13 @@ data "aws_iam_policy_document" "opensearch_log_publishing_policy" {
 
 data "aws_iam_policy_document" "opensearch_access_policy" {
   statement {
-    effect = "Allow"
-
-    principals {
-      type        = "*"
-      identifiers = ["*"]
-    }
-
     actions   = ["es:*"]
+    effect    = "Allow"
     resources = ["arn:aws:es:${var.aws_region}:${data.aws_caller_identity.current.account_id}:domain/opensearch-domain/*"]
+    principals {
+      identifiers = ["*"]
+      type        = "AWS"
+    }
   }
 }
 
