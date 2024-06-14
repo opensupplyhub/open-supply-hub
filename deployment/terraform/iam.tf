@@ -133,7 +133,13 @@ data "aws_iam_policy_document" "container_instance_ec2_assume_role" {
       identifiers = ["ec2.amazonaws.com"]
     }
 
-    actions = ["sts:AssumeRole"]
+    actions = [
+      "sts:AssumeRole",
+      "es:ESHttpPost",
+      "es:ESHttpGet",
+      "es:ESHttpDelete",
+      "es:ESHttpPut"
+    ]
   }
 }
 
