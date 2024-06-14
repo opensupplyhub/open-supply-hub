@@ -24,7 +24,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Delete erc repostiroy for ${{ vars.ENV_NAME }}
+      - name: Delete ecr repostiroy for ${{ vars.ENV_NAME }}
         run: |
           ./deployment/delete_ecr opensupplyhub-batch-${{ steps.get_env_name.outputs.lowercase }}
           ./deployment/delete_ecr opensupplyhub-${{ steps.get_env_name.outputs.lowercase }}
