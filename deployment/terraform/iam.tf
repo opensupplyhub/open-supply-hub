@@ -133,13 +133,22 @@ data "aws_iam_policy_document" "container_instance_ec2_assume_role" {
       identifiers = ["ec2.amazonaws.com"]
     }
 
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+data "aws_iam_policy_document" "es_actions_policy" {
+  statement {
+    effect = "Allow"
+
     actions = [
-      "sts:AssumeRole",
       "es:ESHttpPost",
       "es:ESHttpGet",
       "es:ESHttpDelete",
       "es:ESHttpPut"
     ]
+
+    resources = [aws_opensearch_domain.opensearch.arn]
   }
 }
 
@@ -162,6 +171,16 @@ resource "aws_iam_role_policy" "ses_send_email_from_batch" {
 resource "aws_iam_instance_profile" "container_instance" {
   name = aws_iam_role.container_instance_ec2.name
   role = aws_iam_role.container_instance_ec2.name
+}
+
+resource "aws_iam_policy" "es_actions" {
+  name   = "ESActionsPolicy"
+  policy = data.aws_iam_policy_document.es_actions_policy.json
+}
+
+resource "aws_iam_role_policy_attachment" "es_actions_policy_attachment" {
+  role       = aws_iam_role.container_instance_ec2.name
+  policy_arn = aws_iam_policy.es_actions.arn
 }
 
 #
