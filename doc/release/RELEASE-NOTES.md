@@ -72,6 +72,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Removed calling command `clean_facilitylistitems` from the `post_deployment` command.
 * Added calling command `reindex_database` from the `post_deployment` command.
 * Added calling command `index_facilities_new` from the `post_deployment` command.
+* An additional loop was added to the `run_cli_task` script that repeatedly checks the status of an AWS ECS task, waiting for it to stop.
 
 ### Bugfix
 * [OSDEV-1019](https://opensupplyhub.atlassian.net/browse/OSDEV-1019) - Fixed an error message to 'Your account is not verified. Check your email for a confirmation link.' when a user tries to log in with an uppercase letter in the email address and their account has not been activated through the confirmation link.
