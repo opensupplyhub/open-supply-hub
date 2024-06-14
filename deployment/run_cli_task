@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 vpc_id="$(aws ec2 describe-vpcs --filters=Name=tag:Name,Values=vpcOpenSupplyHub$1 --query 'Vpcs[*].VpcId' --output text)"
 echo "VPC ID: $vpc_id"
 
