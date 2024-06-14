@@ -27,9 +27,4 @@ COPY --chown=logstash:root ./scripts/ /usr/share/logstash/scripts/
 # Copy sql script to the indexes folder of Logstash.
 COPY --chown=logstash:root ./indexes/ /usr/share/logstash/indexes/
 
-# Ensure logstash user has write permissions to the jdbc data directory
-RUN mkdir -p /usr/share/logstash/data/plugins/inputs/jdbc \
-    && chown -R logstash:logstash /usr/share/logstash/data \
-    && chmod -R u+w /usr/share/logstash/data
-
 CMD ["logstash"]
