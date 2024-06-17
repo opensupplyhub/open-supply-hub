@@ -1,6 +1,7 @@
 import json
 from api.models.transactions.index_facilities_new import index_facilities_new
 
+from api.helpers.helpers import validate_workers_count
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
     NotFound,
@@ -22,6 +23,7 @@ from ...mail import (
     send_claim_facility_denial_email,
     send_claim_facility_revocation_email,
     send_claim_update_notice_to_list_contributors,
+    send_message_to_claimant_email,
 )
 from ...models.contributor.contributor import Contributor
 from ...models.extended_field import ExtendedField
@@ -76,6 +78,34 @@ class FacilityClaimViewSet(ModelViewSet):
             claim = FacilityClaim.objects.get(pk=pk)
             response_data = FacilityClaimDetailsSerializer(claim).data
 
+            return Response(response_data)
+        except FacilityClaim.DoesNotExist as exc:
+            raise NotFound() from exc
+
+    @transaction.atomic
+    @action(detail=True,
+            methods=['post'],
+            url_path='message-claimant')
+    def message_claimant(self, request, pk=None):
+        if not request.user.is_superuser:
+            raise PermissionDenied()
+
+        try:
+            claim = FacilityClaim.objects.get(pk=pk)
+            message = request.data.get('message', '')
+
+            if not message:
+                raise BadRequestException('Message is required.')
+
+            FacilityClaimReviewNote.objects.create(
+                claim=claim,
+                author=request.user,
+                note=message,
+            )
+
+            send_message_to_claimant_email(request, claim, message)
+
+            response_data = FacilityClaimDetailsSerializer(claim).data
             return Response(response_data)
         except FacilityClaim.DoesNotExist as exc:
             raise NotFound() from exc
@@ -312,10 +342,14 @@ class FacilityClaimViewSet(ModelViewSet):
             claim.parent_company_name = parent_company_name
 
             try:
-                workers_count = int(request.data.get('facility_workers_count'))
-            except ValueError:
-                workers_count = None
-            except TypeError:
+                workers_count = request.data.get('facility_workers_count')
+
+                if len(workers_count) == 0:
+                    workers_count = None
+                elif not validate_workers_count(workers_count):
+                    workers_count = None
+
+            except (ValueError, TypeError):
                 workers_count = None
 
             claim.facility_workers_count = workers_count

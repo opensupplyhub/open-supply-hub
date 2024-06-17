@@ -61,21 +61,13 @@ class TestExactItemMatch(unittest.TestCase):
             }
         ]
 
-    def setup_session_mock(self, get_session_mock, return_value):
-        session_mock = MagicMock()
-        session_mock.query().filter().scalar.return_value = return_value
-        get_session_mock.return_value.__enter__.return_value = session_mock
-
     def test_process_no_matches(self):
         exact_match = self.create_exact_match(self.matches_empty)
         result = exact_match.process()
 
         self.assertEqual(result, [])
 
-    @patch('app.matching.matcher.exact.exact_item_match.get_session')
-    def test_process_with_single_match(self, get_session_mock):
-        self.setup_session_mock(get_session_mock, True)
-
+    def test_process_with_single_match(self):
         exact_match = self.create_exact_match(self.matches_single)
         result = exact_match.process()
         expected_result = self.expected_result_dict('single_exact_match')
@@ -83,25 +75,13 @@ class TestExactItemMatch(unittest.TestCase):
         self.assertListEqual(result, expected_result)
         self.assertEqual(exact_match.item.status, FacilityListItemTemp.MATCHED)
 
-    @patch('app.matching.matcher.exact.exact_item_match.get_session')
-    def test_process_with_multiple_matches(self, get_session_mock):
-        self.setup_session_mock(get_session_mock, True)
-
+    def test_process_with_multiple_matches(self):
         exact_match = self.create_exact_match(self.matches_multiple)
         result = exact_match.process()
         expected_result = self.expected_result_dict('multiple_exact_matches')
 
         self.assertListEqual(result, expected_result)
         self.assertEqual(exact_match.item.status, FacilityListItemTemp.MATCHED)
-
-    @patch('app.matching.matcher.exact.exact_item_match.get_session')
-    def test_process_without_session(self, get_session_mock):
-        self.setup_session_mock(get_session_mock, False)
-
-        exact_match = self.create_exact_match(self.matches_multiple)
-        result = exact_match.process()
-
-        self.assertEqual(result, [])
 
 
 if __name__ == "__main__":

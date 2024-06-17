@@ -3,6 +3,113 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.14.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: June 15, 2024
+
+### Database changes
+#### Migrations:
+* 0146_add_facility_workers_count_new_field_to_facilityclaim - adds the facility_workers_count_new field to the FacilityClaim model.
+* 0147_copy_facility_workers_count_to_facility_workers_count_new - copies the data from the facility_workers_count field to the facility_workers_count_new field.
+* 0148_remove_facility_workers_count_field_from_facilityclaim - removes the facility_workers_count field from the FacilityClaim model.
+* 0149_rename_facility_workers_count_new_to_facility_workers_count - renames the facility_workers_count_new field to facility_workers_count.
+
+#### Scheme changes
+* [OSDEV-1084](https://opensupplyhub.atlassian.net/browse/OSDEV-1084) - To enable adding a range for the number of workers during the claiming process, the type of the `facility_workers_count` field in the `FacilityClaim` table was changed from `IntegerField` to `CharField`.
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* [OSDEV-1069](https://opensupplyhub.atlassian.net/browse/OSDEV-1069) - The following changes have been made:
+    * Changed the Postgres Docker image for the database to use the official one and make the local database setup platform-agnostic, so it doesn't depend on the processor architecture.
+    * Built the PostGIS program from source and installed it to avoid LLVM-related errors inside the database Docker container during local development.
+* [OSDEV-1072](https://opensupplyhub.atlassian.net/browse/OSDEV-1072) - The following changes have been made:
+    * Added building database-anonymizer container to the pipeline.
+    * Pushing the database-anonymizer container to the repo is turned off until the database anonymizing scheduled task will be deployed to the production.
+* [OSDEV-1089](https://opensupplyhub.atlassian.net/browse/OSDEV-1089) Change format gunicurn logs not pass IP address to AWS CloudWatch.
+* Added command `reindex_database`
+* [OSDEV-1075](https://opensupplyhub.atlassian.net/browse/OSDEV-1075) - The following changes have been made:
+    * All resources created via batch job will be tagged
+* [OSDEV-1089](https://opensupplyhub.atlassian.net/browse/OSDEV-1089) Change format gunicurn logs not pass IP address to AWS CloudWatch.
+* Make tile generation endpoint transaction-less and remove `CREATE TEMP TABLE` statement.
+* Added command `reindex_database`.
+* [OSDEV-1089](https://opensupplyhub.atlassian.net/browse/OSDEV-1089) Change format gunicurn logs not pass IP address to AWS CloudWatch.
+* Removed calling command `clean_facilitylistitems` from the `post_deployment` command.
+* Added calling command `reindex_database` from the `post_deployment` command.
+* Added calling command `index_facilities_new` from the `post_deployment` command.
+* An additional loop was added to the `run_cli_task` script that repeatedly checks the status of an AWS ECS task, waiting for it to stop.
+
+### Bugfix
+* [OSDEV-1019](https://opensupplyhub.atlassian.net/browse/OSDEV-1019) - Fixed an error message to 'Your account is not verified. Check your email for a confirmation link.' when a user tries to log in with an uppercase letter in the email address and their account has not been activated through the confirmation link.
+* Added the `--if-exists` flag to all calls of the `pg_restore` command to eliminate spam errors when it tries to delete resources that don't exist just because the DB can be empty. Improved the section of the README about applying the database dump locally. Specifically, SQL queries have been added to delete all the tables and recreate an empty database schema to avoid conflicts during the database dump restore.
+
+### What's new
+*   [OSDEV-1030](https://opensupplyhub.atlassian.net/browse/OSDEV-1030) - The following changes have been made:
+    *   Replaced the "Donate" button with a "Blog" button in the header
+    *   Added links to the "Blog" and "Careers" pages in the footer
+*   [OSDEV-939](https://opensupplyhub.atlassian.net/browse/OSDEV-939) - The following changes have been made:
+    *   Created new steps `Supporting Documentation` & `Additional Data` for `Facility Claim Request` page.
+    *   Added popup for successfully submitted claim.
+* [OSDEV-1084](https://opensupplyhub.atlassian.net/browse/OSDEV-1084) - Enable adding a range for the number of workers during the claiming process, either after pressing the “I want to claim this production location” link or on the Claimed Facility Details page.
+
+### Release instructions:
+* Update code.
+* Apply DB migrations up to the latest one.
+* Run the index_facilities_new management command.
+
+
+## Release 1.13.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: June 01, 2024
+
+### Database changes
+#### Migrations:
+* 0145_new_functions_for_clean_facilitylistitems_command - introduced new sql functions for `clean_facilitylistitems` command:
+    - drop_table_triggers
+    - remove_items_where_facility_id_is_null
+    - remove_old_pending_matches
+    - remove_items_without_matches_and_related_facilities
+
+### Code/API changes
+* [OSDEV-994](https://opensupplyhub.atlassian.net/browse/OSDEV-994) API. Update to pass all merge events to user based on contrib id. A non-admin API user makes:
+- a GET call to /moderation-events/merge/
+and receives information about merges that have occurred for all contributors.
+- a GET call to /moderation-events/merge/?contributors=<id_number_x>&contributors=<id_number_y>&contributors=<id_number_z>
+and receives information about merges that have occurred for the contributors with the specified IDs.
+
+### Architecture/Environment changes
+* [OSDEV-1003](https://opensupplyhub.atlassian.net/browse/OSDEV-1003) - Added automatic building for the Logstash Docker image in the `Deploy to AWS` workflow. Refactored the `Deploy to AWS` workflow to remove redundant setting values for `build-args` of the `docker/build-push-action` action in cases where the values are not used.
+* [OSDEV-1004](https://opensupplyhub.atlassian.net/browse/OSDEV-1004) - Prepared the local environment setup for the Logstash and OpenSearch services to enable local development. Created a script to start the project from scratch with a database populated with sample data.
+* [OSDEV-1054](https://opensupplyhub.atlassian.net/browse/OSDEV-1054) - Added a Django command `clean_facilitylistitems` that make next steps:
+    - drop table triggers;
+    - remove facilitylistitems where facility_id is null;
+    - remove facilitylistitems with potential match status more than thirty days;
+    - remove facilitylistitems without matches and related facilities;
+    - create table triggers;
+    - run indexing facilities
+* [OSDEV-878](https://opensupplyhub.atlassian.net/browse/OSDEV-878) - Added a Django command `post_deployment` that runs Django migrations during the deployment process. This command can be expanded to include other post-deployment tasks. Used the `post_deployment` command in the `post_deploy` job of the Deploy to AWS workflow.
+
+### Bugfix
+* [OSDEV-1056](https://opensupplyhub.atlassian.net/browse/OSDEV-1056) - Refactor OS Hub member's email anonymization.
+* [OSDEV-1022](https://opensupplyhub.atlassian.net/browse/OSDEV-1022) - Fix updating facility claim for user. Bring the format of extended field values to the same format as for List / API upload during processing. This has been done because extending fields processing is happening both for List / API uploading and claim update.
+* [OSDEV-788](https://opensupplyhub.atlassian.net/browse/OSDEV-788) - Re-written logic for New_Facility/Automatic_Match/Potential_Match when we collect & save data for FacilityListItemTemp/FacilityMatchTemp. That fixed issue with option `create` equal `False` for API requests.
+* [OSDEV-1027](https://opensupplyhub.atlassian.net/browse/OSDEV-1027) - Fix rendering of the Average Lead Time section
+
+### What's new
+* [OSDEV-1049](https://opensupplyhub.atlassian.net/browse/OSDEV-1049) Update Release protocol.
+* [OSDEV-922](https://opensupplyhub.atlassian.net/browse/OSDEV-922) Consent Message. Update wording of consent opt in message on Open Supply Hub. A user who verifies Open Supply Hub for the first time can see the updated message.
+* [OSDEV-1068](https://opensupplyhub.atlassian.net/browse/OSDEV-1068) - Created report that shows the number of records from the api_facilitymatch table for contributors: 2060, 1045, 685, 3356
+
+### Release instructions:
+* Update code.
+* Apply DB migrations up to the latest one.
+
+
 ## Release 1.12.0
 
 ## Introduction
@@ -19,10 +126,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-1021](https://opensupplyhub.atlassian.net/browse/OSDEV-1021) Update the release protocol. The release protocol has been updated with the recent changes. Has been added the section about reloading DedupeHub and QA notification.
+* [OSDEV-997](https://opensupplyhub.atlassian.net/browse/OSDEV-997) - A new method, `message_claimant`, was added to the `FacilityClaimViewSet` for handling a POST request on the url-path `message-claimant` for messages to the claimant.
+Mail templates for the message to the claimant and the claims team signature were also added.
 
 ### Architecture/Environment changes
+* [OSDEV-897](https://opensupplyhub.atlassian.net/browse/OSDEV-897) FE(React) app. An appropriate local Docker environment is configured for the application. A local Docker environment has been created for the React application. Renamed the `app` folder to `react` to be clearer in the project. Replaced name in the code base. Removed unnecessary commands.
 * [OSDEV-862](https://opensupplyhub.atlassian.net/browse/OSDEV-862) Fix `DB - Save Anonymized DB` / `DB - Apply Anonymized DB` workflows:
-  - run actions on self-hosted runners to eliminate `lack of storage` issue that hapopen on github's runners.
+  - run actions on self-hosted runners to eliminate `lack of storage` issue that happens on github's runners.
   - use the `Test` environment for  `DB - Save Anonymized DB` action
 * [OSDEV-989](https://opensupplyhub.atlassian.net/browse/OSDEV-989) - The Strategy pattern was utilized to consolidate the processing of new facilities received from both API requests and list uploads. The code responsible for executing this processing was refactored, and new classes were implemented:
     * ProcessingFacility - abstract class for facility processing
@@ -30,17 +140,26 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * ProcessingFacilityAPI - class to process a facility from an API request
     * ProcessingFacilityExecutor - class defines which interface to execute for the processing of a facility
 * Resource allocation has been optimized for the Test environment. The number of ECS tasks in the Test environment has been reduced from 4 to 2, while maintaining system stability.
-* [OSDEV-870](https://opensupplyhub.atlassian.net/browse/OSDEV-870) - In `docker-compose` for the `api-app`  added dependency that helps to fix connection with the database during tests pipelines for Dedupe-Hub: 
+* [OSDEV-870](https://opensupplyhub.atlassian.net/browse/OSDEV-870) - In `docker-compose` for the `api-app`  added dependency that helps to fix connection with the database during tests pipelines for Dedupe-Hub:
+* [OSDEV-1001](https://opensupplyhub.atlassian.net/browse/OSDEV-1001) - Deploy OpenSearch service to OS Hub infrastructure.
 ```
-database: 
+database:
     condition: service_healthy
 ```
 * [OSDEV-1024](https://opensupplyhub.atlassian.net/browse/OSDEV-1024) - Dedupe Hub. Revise service configurations and refine gazetteer retraining. Remove option `--reload` & decrease number of workers in Dedupe Hub service configuration. Refactor initial rebuilding of gazetteer.
+* [OSDEV-885](https://opensupplyhub.atlassian.net/browse/OSDEV-885) - Implement option to reset database for `Dev`, `Test` and `Pre-prod` environmet to `Deploy to AWS` pipleine
+* [OSDEV-1002](https://opensupplyhub.atlassian.net/browse/OSDEV-1002) - The following changes have been done:
+    * Prepared initial AWS infrastructure via Terraform for the Logstash service, including configuring AWS EFS storage to save the pointer of the last run for the jdbc plugin. Essentially, after deploying updated Terraform code to an environment, ECS task definition, ECR repository, ECS service, along with EFS storage, will be set up for Logstash to function.
+    * Moved the PoC solution of the Logstash + Elasticsearch setup to the repository to avoid losing it. Further work is needed as the solution requires development and is not functioning smoothly.
+* In response to recent stability observations of the staging environment, resource allocation has been optimized by reducing the number of ECS tasks from 8 to 6 for the Django app instances, thus maintaining system stability.
 
 ### Bugfix
 * [OSDEV-870](https://opensupplyhub.atlassian.net/browse/OSDEV-870) - The returning confirm/reject URLs were fixed when a facility has been matched. Changes were made to the Dedupe-Hub to prevent adding rows with empty fields to the `api_facilitymatch` and `api_facilitymatchtemp` tables when the count of matches is more than one.
+* [OSDEV-744](https://opensupplyhub.atlassian.net/browse/OSDEV-744) - API. When user want to confirm/reject potential_match it didn't found a match through `id`, was fixed by provided valid `id` from `api_facilitymatch` table.
+* [OSDEV-1052](https://opensupplyhub.atlassian.net/browse/OSDEV-1052) - Replace data@opensupplyhub by claims@opensupplyhub in the Frontend
 
 ### What's new
+* [OSDEV-975](https://opensupplyhub.atlassian.net/browse/OSDEV-975) Reporting. Number of facilities with at least one extended field.`Facilities with Extended Field Data` report has been rewritten from Django ORM to SQL to optimize and speed up time of the report generation. Added two columns `With At Least 1 Extended Field` and `Sector`.
 * [OSDEV-945](https://opensupplyhub.atlassian.net/browse/OSDEV-945) - Facility Claim. Update text of claim link on profile to "I want to claim this production location".
 * [OSDEV-745](https://opensupplyhub.atlassian.net/browse/OSDEV-745) - New "Portuguese" translated resources option added to international menu.
 * [OSDEV-944](https://opensupplyhub.atlassian.net/browse/OSDEV-944) - Facility claims. Short-term new screen for claim documentation.
@@ -48,6 +167,7 @@ database:
     * Made the Email field in the claim form uneditable, setting the claimer's email as the default value for this field.
     * Removed the _Preferred method of contact_ field from both the claim form and the claim details page in the admin dashboard.
     * Implemented redirecting a user to the claim page after navigating to the login page via the CTA link on the claim page for unauthorized users and successful login.
+* [OSDEV-997](https://opensupplyhub.atlassian.net/browse/OSDEV-997) - Facility Claims. A new button, 'Message Claimant' has been added to the update status controls on the Facility Claim Details page. After successfully sending a message, the message text is recorded in the Claim Review Notes.
 
 ### Release instructions:
 * Update code.

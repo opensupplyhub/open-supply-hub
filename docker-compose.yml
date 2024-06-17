@@ -1,29 +1,21 @@
-version: "2.4"
 services:
   database:
-    image: quay.io/azavea/postgis:3-postgres12.4-slim
-    shm_size: '2gb'
-    environment:
-      - POSTGRES_USER=openapparelregistry
-      - POSTGRES_PASSWORD=openapparelregistry
-      - POSTGRES_DB=openapparelregistry
+    build:
+      context: ./src/database
+      dockerfile: Dockerfile.local
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "openapparelregistry"]
+      test: ["CMD", "pg_isready", "-U", "opensupplyhub"]
       interval: 3s
       timeout: 3s
       retries: 3
     volumes:
       - ./dumps:/dumps
     ports:
-      - "5432:5432"
-    networks:
-      - my-app
+      - 5432:5432
 
   memcached:
     image: memcached:1.6-alpine
     command: -v -I 8m -m 256
-    networks:
-      - my-app
 
   django:
     image: opensupplyhub
@@ -31,9 +23,9 @@ services:
     environment:
       - POSTGRES_HOST=database
       - POSTGRES_PORT=5432
-      - POSTGRES_USER=openapparelregistry
-      - POSTGRES_PASSWORD=openapparelregistry
-      - POSTGRES_DB=openapparelregistry
+      - POSTGRES_USER=opensupplyhub
+      - POSTGRES_PASSWORD=opensupplyhub
+      - POSTGRES_DB=opensupplyhub
       - CACHE_HOST=memcached
       - CACHE_PORT=11211
       - DJANGO_ENV=Development
@@ -69,48 +61,34 @@ services:
       - "--reload"
       - "--timeout=90"
       - "--access-logfile=-"
+      - "--access-logformat=%(t)s '%(r)s' %(s)s | %(M)sms"
       - "--error-logfile=-"
-      - "--log-level=debug"
+      - "--log-level=info"
       - "oar.wsgi"
     ports:
       - "8081:8081"
-    networks:
-      - my-app
     cpus: 2
 
-  app:
-    image: node:14-slim
-    working_dir: /usr/local/src
+  react:
+    build:
+      context: ./src/react
+      dockerfile: Dockerfile.local
     volumes:
-      - ./src/app:/usr/local/src
+      - ./src/react:/usr/local/src
       # Use a Docker volume to cache node_modules
-      - node_modules:/usr/local/src/node_modules
-      - ./src/django/static:/usr/local/src/build
-      - $HOME/.aws:/root/.aws:ro
-    environment:
-      - REACT_APP_GIT_COMMIT=${REACT_APP_GIT_COMMIT:-latest}
-      - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=100
-      - PORT=6543
+      - /usr/local/src/node_modules
     ports:
       - 6543:6543
-    command: yarn run start
-    networks:
-      - my-app
 
   zookeeper:
     image: "bitnami/zookeeper:latest"
-    container_name: "zookeeper"
     ports:
       - "2181:2181"
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
-    networks:
-      - my-app
 
   kafka:
     image: "bitnami/kafka:latest"
-    container_name: "kafka"
     ports:
       - "9092:9092"
     environment:
@@ -122,18 +100,17 @@ services:
     depends_on:
       - zookeeper
     healthcheck:
-      test: [ "CMD-SHELL", "kafka-topics.sh --bootstrap-server kafka:9092 --list" ]
+      test:
+        ["CMD-SHELL", "kafka-topics.sh --bootstrap-server kafka:9092 --list"]
       interval: 5s
       timeout: 10s
       retries: 5
-    networks:
-      - my-app
-  
+
   init-kafka:
     image: confluentinc/cp-kafka:6.1.1
     depends_on:
       - kafka
-    entrypoint: [ '/bin/sh', '-c' ]
+    entrypoint: ["/bin/sh", "-c"]
     command: |
       "
       # blocks until kafka is reachable
@@ -144,8 +121,6 @@ services:
       echo -e 'Successfully created the following topics:'
       kafka-topics --bootstrap-server kafka:9092 --list
       "
-    networks:
-      - my-app
 
   api-app:
     image: api-app
@@ -173,18 +148,38 @@ services:
       - ROLLBAR_SERVER_SIDE_ACCESS_TOKEN=""
       - POSTGRES_HOST=database
       - POSTGRES_PORT=5432
-      - POSTGRES_USER=openapparelregistry
-      - POSTGRES_PASSWORD=openapparelregistry
-      - POSTGRES_DB=openapparelregistry
+      - POSTGRES_USER=opensupplyhub
+      - POSTGRES_PASSWORD=opensupplyhub
+      - POSTGRES_DB=opensupplyhub
       - GIT_COMMIT=Unknown
     command: uvicorn app.main:app --host 0.0.0.0 --port 84 --workers 1
-    networks:
-      - my-app
 
-volumes:
-  node_modules:
+  opensearch-single-node:
+    image: opensearchproject/opensearch:2.11.0
+    environment:
+      - cluster.name=opensearch-cluster # Name the cluster.
+      - node.name=opensearch-single-node # Name the node that will run in this container.
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true # Disable JVM heap memory swapping.
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" # Set min and max JVM heap sizes to at least 50% of system RAM.
+      - "DISABLE_INSTALL_DEMO_CONFIG=true" # Prevents execution of bundled demo script which installs demo certificates and security configurations to OpenSearch.
+      - "DISABLE_SECURITY_PLUGIN=true" # Disables Security plugin.
+    ulimits:
+      memlock:
+        soft: -1 # Set memlock to unlimited (no soft or hard limit).
+        hard: -1
+      nofile:
+        soft: 65536 # Maximum number of open files for the opensearch user - set to at least 65536.
+        hard: 65536
+    ports:
+      - 9200:9200
+    volumes:
+      - /usr/share/opensearch/data
 
-networks:
-  my-app:
-    driver: bridge
-    name: db_network
+  logstash:
+    build:
+      context: ./src/logstash
+      dockerfile: Dockerfile
+    depends_on:
+      - opensearch-single-node
+      - database

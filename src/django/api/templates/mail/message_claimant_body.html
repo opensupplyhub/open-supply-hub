@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Your Facility claim request on OS Hub - Action Required</title>
+    </head>
+    <body>
+        <p>Hi,</p>
+        <p>
+            You're receiving this email because you were listed as the contact
+            for a facility claim request on Open Supply Hub.
+        </p>
+        <p>Facility Details:</p>
+        <ul>
+            <li>
+                Facility: {{ facility_name }}, {{ facility_address }}, {{ facility_country }}
+            </li>
+            <li>
+                Facility URL:
+                <a href="{{ facility_url }}">{{ facility_url }}</a>
+            </li>
+        </ul>
+        <p>
+            We have completed our review of the material(s) submitted with the
+            request and require additional information to proceed with this
+            claim. A Facility Claim request will only be approved when it is
+            submitted by a facility owner and/or senior management staff at the
+            facility location in question. Additional information about our
+            claims process can be found
+            <a href="https://info.opensupplyhub.org/resources/claim-a-facility"
+                >here</a
+            >.
+        </p>
+        <p>Action Items:</p>
+        <p>{{ message_to_claimant }}</p>
+        <p>
+            Please reply to this message with the requested items. From there,
+            we can process this straight away. We'll review the materials and
+            get in touch if we need any additional information.
+        </p>
+        <p>Best wishes,</p>
+        {% include "mail/claims_team_signature_block.html" %}
+    </body>
+</html>

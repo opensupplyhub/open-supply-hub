@@ -14,21 +14,21 @@
 
 --         IF column_exists_email THEN
 --             EXECUTE 'UPDATE ' || current_table || ' SET 
---                 email = CASE WHEN email NOT LIKE ''%@speedandfuncion.com'' AND email NOT LIKE ''%@opensupplyhub.com'' THEN md5(random()::text) || ''@'' || substring(email from position(''@'' in email) + 1) ELSE email END';
+--                 email = CASE WHEN email NOT LIKE ''%@speedandfunction.com'' AND email NOT LIKE ''%@opensupplyhub.org'' THEN md5(random()::text) || ''@'' || substring(email from position(''@'' in email) + 1) ELSE email END';
 
 --             IF column_exists_username THEN
 --                 EXECUTE 'UPDATE ' || current_table || ' SET 
---                     username = CASE WHEN email NOT LIKE ''%@speedandfuncion.com'' AND email NOT LIKE ''%@opensupplyhub.com'' THEN substr(md5(random()::text), 1, 20) ELSE username END';
+--                     username = CASE WHEN email NOT LIKE ''%@speedandfunction.com'' AND email NOT LIKE ''%@opensupplyhub.org'' THEN substr(md5(random()::text), 1, 20) ELSE username END';
 --             END IF;
 
 --             IF column_exists_password THEN
 --                 EXECUTE 'UPDATE ' || current_table || ' SET 
---                     password = CASE WHEN email NOT LIKE ''%@speedandfuncion.com'' AND email NOT LIKE ''%@opensupplyhub.com'' THEN md5(random()::text) ELSE password END';
+--                     password = CASE WHEN email NOT LIKE ''%@speedandfunction.com'' AND email NOT LIKE ''%@opensupplyhub.org'' THEN md5(random()::text) ELSE password END';
 --             END IF;
 
 --             IF column_exists_phone_number THEN
 --                 EXECUTE 'UPDATE ' || current_table || ' SET 
---                     phone_number = CASE WHEN email NOT LIKE ''%@speedandfuncion.com'' AND email NOT LIKE ''%@opensupplyhub.com'' THEN md5(random()::text) ELSE phone_number END';
+--                     phone_number = CASE WHEN email NOT LIKE ''%@speedandfunction.com'' AND email NOT LIKE ''%@opensupplyhub.org'' THEN md5(random()::text) ELSE phone_number END';
 --             END IF;
 --         END IF;
 --     END LOOP;

@@ -5,11 +5,12 @@ from api.views.tile.utils import retrieve_cached_tile
 from rest_framework.test import APITestCase
 from waffle.testutils import override_switch
 
-from django.db import connection
 from django.test import override_settings
 from django.urls import reverse
+from unittest import skip
 
 
+@skip("We don't use the tile caching feature anymore.")
 class TileCachingTest(APITestCase):
     def setUp(self):
         self.domain = "http://allowed.org/"
@@ -63,13 +64,6 @@ class TileCachingTest(APITestCase):
         self.assertEqual(cached_tile1.value, cached_tile2.value)
         self.assertEqual(1, cached_tile2.counter)
         self.assertFalse(created2)
-
-        # Force deletion of the temporary hex_grid table since the test is run
-        # in one DB transaction and the hex_grid table will not be deleted by
-        # the logic of CREATE TEMP TABLE because the DB transaction is not
-        # completed.
-        with connection.cursor() as cursor:
-            cursor.execute("DROP TABLE IF EXISTS hex_grid")
 
         time.sleep(25)
 

@@ -54,21 +54,9 @@ See [Getting Started with Google Maps Platform](https://developers.google.com/ma
 
 
 ### Kick-off & start local development
-- Install node and create database structure
+- Start up the local development environment with seeded data in the database.
 ```
-./scripts/update
-```
-- Polulate database with seeded facility lists
-```
-./scripts/reset_database
-```
-- Start Docker containers in the background (needed to process facitiles via Kafka)
-```
-docker compose up -d
-```
-- Launch deduplication process of seeded lists to create new facilities (please note that all containers and services must be up, see step before)
-```
-./scripts/manage matchfixtures
+./scripts/start_local_dev
 ```
 - Now you are ready for quick start the app
 ```
@@ -78,11 +66,17 @@ open http://localhost:6543
 ### Restore the DB dump in the local Docker DB container
 
 1. The project containers must be running locally.
-2. Download prod dump file
-3. Place it in `./dumps/` folder
-4. Then run in the terminal of your machine
+2. Download the prod dump file.
+3. Place it in the `./dumps/` folder.
+4. Connect to the local DB instance, delete all the tables, and recreate an empty DB schema to avoid conflicts during the restore using the SQL below:
 ```
-docker compose exec -T database pg_restore --verbose --clean --no-acl --no-owner -d openapparelregistry -U openapparelregistry < ./dumps/[dump_name].dump
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+GRANT ALL ON SCHEMA public TO public;
+```
+5. Then run the following command in the terminal of your machine to apply the production database dump:
+```
+docker compose exec -T database pg_restore --verbose --clean --if-exists --no-acl --no-owner -d opensupplyhub -U opensupplyhub < ./dumps/[dump_name].dump
 ```
 
 ### Creation of Superusers
@@ -191,9 +185,9 @@ be available on their page, or you can visit http://localhost:6543/?embed=1&cont
 | Name | Description |
 | --- | --- |
 | `infra` | Plan and apply remote infrastructure changes.|
+| `start_local_dev` | This script starts up the local development environment with seeded data in the database. |
 | `reset_database` | Clear development database & load fixture data including users, facility lists, matches, and facilities.|
 | `server` | Run `docker-compose.yml` services. |
-| `setup` | Provision Docker and run `update`. |
 | `update` | Build container images and execute database migrations. |
 | `run_be_code_quality` | This script runs a linting check, tests, and also generates the unittest code coverage report for the Django app. The script performs the same code quality checks for the backend as those conducted during the CI pipeline, excluding code coverage comparison. |
 | `run_fe_code_quality` | This script performs linting and formatting checks, runs tests, and also generates the Jest code coverage report for the React app. The script performs the same code quality checks for the front-end as those conducted during the CI pipeline, excluding code coverage comparison. |

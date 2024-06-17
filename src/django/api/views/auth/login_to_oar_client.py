@@ -17,7 +17,8 @@ class LoginToOARClient(LoginView):
         if email is None or password is None:
             raise AuthenticationFailed('Email and password are required')
 
-        user = authenticate(email=email.lower(), password=password)
+        normalized_email = email.lower()
+        user = authenticate(email=normalized_email, password=password)
 
         if user is None:
             raise AuthenticationFailed(
@@ -28,11 +29,11 @@ class LoginToOARClient(LoginView):
         if not request.user.did_register_and_confirm_email:
             # Mimic the behavior of django-allauth and resend the confirmation
             # email if an unconfirmed user tries to log in.
-            email_address = EmailAddress.objects.get(email=email)
+            email_address = EmailAddress.objects.get(email=normalized_email)
             email_address.send_confirmation(request)
 
             raise AuthenticationFailed(
-                'Account is not verified. '
+                'Your account is not verified. '
                 'Check your email for a confirmation link.'
             )
 
