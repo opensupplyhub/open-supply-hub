@@ -19,7 +19,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-1004](https://opensupplyhub.atlassian.net/browse/OSDEV-1004) - The following changes have been made to the Logstash and OpenSearch services:
-    * Prepared the SQL script to collect all the necessary data for the `v1/facilities` API endpoint according to the new API specification.
+    * Prepared the SQL script to collect all the necessary data for the `v1/facilities` API endpoint according to the new API specification. Agreed upon and established a prioritization scale for gathering data related to the name, address, sector, parent_company, product_type, facility_type, processing_type, number_of_workers and location fields as follows:
+        * Data from the approved claim.
+        * Promoted matches (considered as promoted facility list items).
+        * The most recently contributed data.
+    * For the country field, the same prioritization scale has been utilized except for 'Data from the approved claims' because the claimant cannot update the country in any way.
     * Introduced a new set of Ruby scripts to filter and reorganize the incoming data at the Logstash app level, avoiding complex database queries that could lead to high database load.
     * Updated the `facilities` index template for OpenSearch to define how new fields within the facility documents are stored and indexed by OpenSearch.
     * Set up the main Logstash pipeline to run every 15 minutes.
