@@ -357,6 +357,8 @@ data "aws_iam_policy_document" "opensearch_assume_role" {
     }
   }
 }
+
+# TODO: remove this later if needed
 resource "aws_iam_role" "opensearch_role" {
   name               = "opensearch${local.short}ServiceRole"
 
