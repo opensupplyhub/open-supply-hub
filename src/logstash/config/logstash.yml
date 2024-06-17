@@ -1,0 +1,6 @@
+xpack:
+  monitoring:
+    enabled: true
+    opensearch:
+      ssl:
+        verification_mode: none
