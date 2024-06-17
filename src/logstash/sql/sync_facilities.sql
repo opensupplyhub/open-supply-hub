@@ -2,111 +2,487 @@ SELECT
   af.id AS os_id,
   (
     SELECT
-      COALESCE(NULLIF(afc.facility_name_english, ''), af.name)
+      COALESCE(
+        NULLIF(afc.facility_name_english, ''),
+        (
+          SELECT
+            afli.name
+          FROM
+            api_facilitylistitem afli
+          WHERE
+            afli.id = af.created_from_id
+            AND EXISTS (
+              SELECT
+                1
+              FROM
+                jsonb_array_elements(afli.processing_results) AS elem
+              WHERE
+                elem ->> 'action' = 'promote_match'
+            )
+        ),
+        (
+          SELECT
+            afli.name
+          FROM
+            api_facilitylistitem afli
+          WHERE
+            afli.facility_id = af.id
+          ORDER BY
+            afli.created_at DESC
+          LIMIT
+            1
+        ),
+        af.name
+      )
   ) AS name,
   afc.facility_name_native_language AS name_local_value,
   afc.facility_description AS description_value,
   (
     SELECT
-      COALESCE(NULLIF(afc.facility_address, ''), af.address)
+      COALESCE(
+        NULLIF(afc.facility_address, ''),
+        (
+          SELECT
+            afli.address
+          FROM
+            api_facilitylistitem afli
+          WHERE
+            afli.id = af.created_from_id
+            AND EXISTS (
+              SELECT
+                1
+              FROM
+                jsonb_array_elements(afli.processing_results) AS elem
+              WHERE
+                elem ->> 'action' = 'promote_match'
+            )
+        ),
+        (
+          SELECT
+            afli.address
+          FROM
+            api_facilitylistitem afli
+          WHERE
+            afli.facility_id = af.id
+          ORDER BY
+            afli.created_at DESC
+          LIMIT
+            1
+        ),
+        af.address
+      )
   ) AS address,
   afc.facility_website AS url_value,
   (
     SELECT
-      COALESCE(afc.sector, afli.sector)
-    FROM
-      api_facilitylistitem afli
-    WHERE
-      afli.id = af.created_from_id
+      COALESCE(
+        (
+          CASE
+            WHEN NOT EXISTS (
+              SELECT
+                1
+              FROM
+                UNNEST(afc.sector) AS unnested_sector_value
+              WHERE
+                unnested_sector_value = 'Unspecified'
+            ) THEN afc.sector
+            ELSE NULL
+          END
+        ),
+        (
+          SELECT
+            afli.sector
+          FROM
+            api_facilitylistitem afli
+          WHERE
+            afli.id = af.created_from_id
+            AND EXISTS (
+              SELECT
+                1
+              FROM
+                jsonb_array_elements(afli.processing_results) AS elem
+              WHERE
+                elem ->> 'action' = 'promote_match'
+            )
+            AND NOT EXISTS (
+              SELECT
+                1
+              FROM
+                UNNEST(afli.sector) AS unnested_sector_value
+              WHERE
+                unnested_sector_value = 'Unspecified'
+            )
+        ),
+        (
+          SELECT
+            afli.sector
+          FROM
+            api_facilitylistitem afli
+          WHERE
+            afli.facility_id = af.id
+            AND NOT EXISTS (
+              SELECT
+                1
+              FROM
+                UNNEST(afli.sector) AS unnested_sector_value
+              WHERE
+                unnested_sector_value = 'Unspecified'
+            )
+          ORDER BY
+            afli.created_at DESC
+          LIMIT
+            1
+        ),
+        (
+          SELECT
+            afli.sector
+          FROM
+            api_facilitylistitem afli
+          WHERE
+            afli.id = af.created_from_id
+        )
+      )
   ) AS sector_value,
   (
     SELECT
-      ae.value::TEXT
-    FROM
-      api_extendedfield ae
-    WHERE
-      ae.field_name = 'parent_company'
-      AND (
-        ae.facility_list_item_id = af.created_from_id
-        OR ae.facility_claim_id = afc.id
+      COALESCE(
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+          WHERE
+            ae.field_name = 'parent_company'
+            AND ae.facility_claim_id = afc.id
+        ),
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+            LEFT JOIN api_facilitylistitem afli ON afli.id = af.created_from_id
+          WHERE
+            ae.field_name = 'parent_company'
+            AND ae.facility_list_item_id = af.created_from_id
+            AND EXISTS (
+              SELECT
+                1
+              FROM
+                jsonb_array_elements(afli.processing_results) AS elem
+              WHERE
+                elem ->> 'action' = 'promote_match'
+            )
+        ),
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+          WHERE
+            ae.facility_id = af.id
+            AND ae.facility_claim_id IS NULL
+            AND ae.field_name = 'parent_company'
+          ORDER BY
+            created_at DESC
+          LIMIT
+            1
+        )
       )
-    ORDER BY
-      ae.facility_claim_id IS NOT NULL DESC
-    LIMIT
-      1
   ) AS parent_company_value,
   (
     SELECT
-      ae.value::TEXT
-    FROM
-      api_extendedfield ae
-    WHERE
-      ae.field_name = 'product_type'
-      AND (
-        ae.facility_list_item_id = af.created_from_id
-        OR ae.facility_claim_id = afc.id
+      COALESCE(
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+          WHERE
+            ae.field_name = 'product_type'
+            AND ae.facility_claim_id = afc.id
+        ),
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+            LEFT JOIN api_facilitylistitem afli ON afli.id = af.created_from_id
+          WHERE
+            ae.field_name = 'product_type'
+            AND ae.facility_list_item_id = af.created_from_id
+            AND EXISTS (
+              SELECT
+                1
+              FROM
+                jsonb_array_elements(afli.processing_results) AS elem
+              WHERE
+                elem ->> 'action' = 'promote_match'
+            )
+        ),
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+          WHERE
+            ae.facility_id = af.id
+            AND ae.facility_claim_id IS NULL
+            AND ae.field_name = 'product_type'
+          ORDER BY
+            created_at DESC
+          LIMIT
+            1
+        )
       )
-    ORDER BY
-      ae.facility_claim_id IS NOT NULL DESC
-    LIMIT
-      1
   ) AS product_type_value,
   (
     SELECT
-      ae.value::TEXT
-    FROM
-      api_extendedfield ae
-    WHERE
-      ae.field_name = 'facility_type'
-      AND (
-        ae.facility_list_item_id = af.created_from_id
-        OR ae.facility_claim_id = afc.id
+      COALESCE(
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+          WHERE
+            ae.field_name = 'facility_type'
+            AND ae.facility_claim_id = afc.id
+        ),
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+            LEFT JOIN api_facilitylistitem afli ON afli.id = af.created_from_id
+          WHERE
+            ae.field_name = 'facility_type'
+            AND ae.facility_list_item_id = af.created_from_id
+            AND EXISTS (
+              SELECT
+                1
+              FROM
+                jsonb_array_elements(afli.processing_results) AS elem
+              WHERE
+                elem ->> 'action' = 'promote_match'
+            )
+        ),
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+          WHERE
+            ae.facility_id = af.id
+            AND ae.facility_claim_id IS NULL
+            AND ae.field_name = 'facility_type'
+          ORDER BY
+            created_at DESC
+          LIMIT
+            1
+        )
       )
-    ORDER BY
-      ae.facility_claim_id IS NOT NULL DESC
-    LIMIT
-      1
   ) AS facility_type_value,
   (
     SELECT
-      ae.value::TEXT
-    FROM
-      api_extendedfield ae
-    WHERE
-      ae.field_name = 'processing_type'
-      AND (
-        ae.facility_list_item_id = af.created_from_id
-        OR ae.facility_claim_id = afc.id
+      COALESCE(
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+          WHERE
+            ae.field_name = 'processing_type'
+            AND ae.facility_claim_id = afc.id
+        ),
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+            LEFT JOIN api_facilitylistitem afli ON afli.id = af.created_from_id
+          WHERE
+            ae.field_name = 'processing_type'
+            AND ae.facility_list_item_id = af.created_from_id
+            AND EXISTS (
+              SELECT
+                1
+              FROM
+                jsonb_array_elements(afli.processing_results) AS elem
+              WHERE
+                elem ->> 'action' = 'promote_match'
+            )
+        ),
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+          WHERE
+            ae.facility_id = af.id
+            AND ae.facility_claim_id IS NULL
+            AND ae.field_name = 'processing_type'
+          ORDER BY
+            created_at DESC
+          LIMIT
+            1
+        )
       )
-    ORDER BY
-      ae.facility_claim_id IS NOT NULL DESC
-    LIMIT
-      1
   ) AS processing_type_value,
   (
     SELECT
-      ae.value::TEXT
-    FROM
-      api_extendedfield ae
-    WHERE
-      ae.field_name = 'number_of_workers'
-      AND (
-        ae.facility_list_item_id = af.created_from_id
-        OR ae.facility_claim_id = afc.id
+      COALESCE(
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+          WHERE
+            ae.field_name = 'number_of_workers'
+            AND ae.facility_claim_id = afc.id
+        ),
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+            LEFT JOIN api_facilitylistitem afli ON afli.id = af.created_from_id
+          WHERE
+            ae.field_name = 'number_of_workers'
+            AND ae.facility_list_item_id = af.created_from_id
+            AND EXISTS (
+              SELECT
+                1
+              FROM
+                jsonb_array_elements(afli.processing_results) AS elem
+              WHERE
+                elem ->> 'action' = 'promote_match'
+            )
+        ),
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+          WHERE
+            ae.facility_id = af.id
+            AND ae.facility_claim_id IS NULL
+            AND ae.field_name = 'number_of_workers'
+          ORDER BY
+            created_at DESC
+          LIMIT
+            1
+        )
       )
-    ORDER BY
-      ae.facility_claim_id IS NOT NULL DESC
-    LIMIT
-      1
   ) AS number_of_workers_value,
-  ST_Y (COALESCE(afc.facility_location, af.location)) AS latitude,
-  ST_X (COALESCE(afc.facility_location, af.location)) AS longitude,
+  ST_Y (
+    COALESCE(
+      afc.facility_location,
+      (
+        SELECT
+          afli.geocoded_point
+        FROM
+          api_facilitylistitem afli
+        WHERE
+          afli.id = af.created_from_id
+          AND afli.geocoded_point IS NOT NULL
+          AND EXISTS (
+            SELECT
+              1
+            FROM
+              jsonb_array_elements(afli.processing_results) AS elem
+            WHERE
+              elem ->> 'action' = 'promote_match'
+          )
+      ),
+      (
+        SELECT
+          afli.geocoded_point
+        FROM
+          api_facilitylistitem afli
+        WHERE
+          afli.facility_id = af.id
+          AND afli.geocoded_point IS NOT NULL
+        ORDER BY
+          afli.created_at DESC
+        LIMIT
+          1
+      ),
+      af.location
+    )
+  ) AS latitude,
+  ST_X (
+    COALESCE(
+      afc.facility_location,
+      (
+        SELECT
+          afli.geocoded_point
+        FROM
+          api_facilitylistitem afli
+        WHERE
+          afli.id = af.created_from_id
+          AND afli.geocoded_point IS NOT NULL
+          AND EXISTS (
+            SELECT
+              1
+            FROM
+              jsonb_array_elements(afli.processing_results) AS elem
+            WHERE
+              elem ->> 'action' = 'promote_match'
+          )
+      ),
+      (
+        SELECT
+          afli.geocoded_point
+        FROM
+          api_facilitylistitem afli
+        WHERE
+          afli.facility_id = af.id
+          AND afli.geocoded_point IS NOT NULL
+        ORDER BY
+          afli.created_at DESC
+        LIMIT
+          1
+      ),
+      af.location
+    )
+  ) AS longitude,
   afc.facility_minimum_order_quantity AS minimum_order_quantity_value,
   afc.facility_average_lead_time AS average_lead_time_value,
   afc.facility_female_workers_percentage AS percent_female_workers_value,
   afc.facility_affiliations AS affiliations_value,
   afc.facility_certifications AS certifications_standards_regulations_value,
-  af.country_code AS country_value,
+  (
+    COALESCE(
+      (
+        SELECT
+          afli.country_code
+        FROM
+          api_facilitylistitem afli
+        WHERE
+          afli.id = af.created_from_id
+          AND EXISTS (
+            SELECT
+              1
+            FROM
+              jsonb_array_elements(afli.processing_results) AS elem
+            WHERE
+              elem ->> 'action' = 'promote_match'
+          )
+      ),
+      (
+        SELECT
+          afli.country_code
+        FROM
+          api_facilitylistitem afli
+        WHERE
+          afli.facility_id = af.id
+        ORDER BY
+          afli.created_at DESC
+        LIMIT
+          1
+      ),
+      af.country_code
+    )
+  ) AS country_value,
   (
     SELECT
       ARRAY_AGG(afc2.status)
