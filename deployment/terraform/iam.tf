@@ -345,27 +345,6 @@ resource "aws_iam_role_policy" "step_functions_service_role_policy" {
 }
 
 #
-# OpenSearch IAM resources
-#
-data "aws_iam_policy_document" "opensearch_assume_role" {
-  statement {
-    effect    = "Allow"
-    actions   = ["sts:AssumeRole"]
-    principals {
-      type        = "Service"
-      identifiers = ["es.amazonaws.com"]
-    }
-  }
-}
-
-# TODO: remove this later if needed
-resource "aws_iam_role" "opensearch_role" {
-  name               = "opensearch${local.short}ServiceRole"
-
-  assume_role_policy = data.aws_iam_policy_document.opensearch_assume_role.json
-}
-
-#
 # CloudWatch Events IAM resources
 #
 data "aws_iam_policy_document" "cloudwatch_events_assume_role" {
