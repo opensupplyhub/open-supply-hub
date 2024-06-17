@@ -22,6 +22,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Prepared the SQL script to collect all the necessary data for the `v1/facilities` API endpoint according to the new API specification.
     * Introduced a new set of Ruby scripts to filter and reorganize the incoming data at the Logstash app level, avoiding complex database queries that could lead to high database load.
     * Updated the `facilities` index template for OpenSearch to define how new fields within the facility documents are stored and indexed by OpenSearch.
+    * Set up the main Logstash pipeline to run every 15 minutes.
 
     All changes have been made to meet the API specification requirements for `v1/facilities` API endpoint as closely as possible.
 
