@@ -33,6 +33,7 @@ import { featureCollection, bbox } from '@turf/turf';
 import hash from 'object-hash';
 import * as XLSX from 'xlsx';
 import moment from 'moment';
+// import { equal } from 'assert';
 
 import {
     OTHER,
@@ -892,6 +893,12 @@ export const convertFeatureFlagsObjectToListOfActiveFlags = featureFlags =>
 
 export const checkWhetherUserHasDashboardAccess = user =>
     get(user, 'is_superuser', false);
+
+// export const claimFacilityIntroIsValid = ({ agreement }) => {
+//     console.log('!!!', agreement);
+//     return false;
+// };
+// equal([agreement, '1']);
 
 export const claimAFacilityFormIsValid = ({
     yourName,

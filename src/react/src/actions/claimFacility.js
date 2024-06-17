@@ -42,6 +42,10 @@ export function fetchClaimFacilityData(osID) {
     };
 }
 
+export const updateClaimFacilityIntro = createAction(
+    'UPDATE_CLAIM_A_FACILITY_INTRO',
+);
+
 export const updateClaimAFacilityContactPerson = createAction(
     'UPDATE_CLAIM_A_FACILITY_CONTACT_PERSON',
 );

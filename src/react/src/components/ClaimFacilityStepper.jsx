@@ -23,6 +23,7 @@ import { submitClaimAFacilityData } from '../actions/claimFacility';
 import COLOURS from '../util/COLOURS';
 
 import {
+    // claimFacilityIntroIsValid,
     claimFacilitySupportDocsIsValid,
     claimAFacilityFormIsValid,
     makeFacilityDetailLink,
@@ -122,7 +123,7 @@ const steps = Object.freeze([
         next: 'Support Documentation',
         hasBackButton: true,
         hasNextButton: true,
-        stepInputIsValid: stubTrue,
+        stepInputIsValid: stubTrue, // claimFacilityIntroIsValid,
     }),
     Object.freeze({
         name: 'Support Documentation',
@@ -154,7 +155,10 @@ function ClaimFacilityStepper({
     match: {
         params: { osID },
     },
+    // agreement,
 }) {
+    // const [agreement, setAgreement] = useState('0');
+    // console.log('agreement', agreement);
     const [activeStep, setActiveStep] = useState(0);
     const [submittingForm, setSubmittingForm] = useState(false);
 
@@ -373,6 +377,7 @@ ClaimFacilityStepper.propTypes = {
         yourName: string.isRequired,
         yourTitle: string.isRequired,
     }).isRequired,
+    // agreement: string.isRequired,
     error: arrayOf(string),
 };
 
@@ -380,10 +385,12 @@ function mapStateToProps({
     claimFacility: {
         claimData: { fetching, formData, error },
     },
+    // introData: { agreement },
 }) {
     return {
         fetching,
         formData,
+        // agreement,
         error,
     };
 }

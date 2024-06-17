@@ -1005,7 +1005,7 @@ export const facilityDetailsActions = {
     REPORT_AS_CLOSED: 'Report as Closed',
     REPORT_AS_REOPENED: 'Report as Reopened',
     DISPUTE_CLAIM: 'Dispute Claim',
-    CLAIM_FACILITY: 'Claim this Facility',
+    CLAIM_FACILITY: 'Claim this Facility', //
     VIEW_ON_OAR: 'View on Open Supply Hub',
 };
 

@@ -59,7 +59,7 @@ const ClaimFacility = ({
 
     if (!userHasSignedIn) {
         return (
-            <AppGrid title="Claim this facility">
+            <AppGrid title="Claim this production location">
                 <Grid container className="margin-bottom-64">
                     <Grid item xs={12}>
                         <Link
@@ -69,7 +69,8 @@ const ClaimFacility = ({
                             }}
                             href={authLoginFormRoute}
                         >
-                            Log in to claim a facility on Open Supply Hub
+                            Login to claim a production location on Open Supply
+                            Hub
                         </Link>
                     </Grid>
                 </Grid>
