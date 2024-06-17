@@ -4,8 +4,8 @@ from datetime import datetime
 from django.core.management.base import BaseCommand
 
 from api.models.transactions.index_facilities_new import index_facilities_new
-from api.serializers.facility.facility_index_download_serializer import (
-    FacilityIndexDownloadSerializer
+from api.serializers.facility.facility_download_serializer import (
+    FacilityDownloadSerializer
 )
 from api.models.facility.facility_index import FacilityIndex
 
@@ -32,7 +32,7 @@ class Command(BaseCommand):
         count = facilities.count()
         print_with_time(f"Finished indexing {count} facilities")
 
-        serializer = FacilityIndexDownloadSerializer()
+        serializer = FacilityDownloadSerializer()
 
         now = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
         with open(f"./facilities-command-{now}.csv", 'w+') as f:
