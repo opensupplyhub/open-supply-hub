@@ -10,7 +10,7 @@ resource "aws_security_group" "opensearch" {
 
 resource "aws_cloudwatch_log_group" "opensearch" {
   // TODO: remove 'count' meta-argument once OpenSearch will be fully setup
-  // count             = 0
+  count             = 0
   name              = "log${local.short}OpenSearch"
   retention_in_days = 30
 }
