@@ -8,9 +8,6 @@ RUN bin/logstash-plugin install --version 2.0.2 logstash-output-opensearch
 RUN rm -f /usr/share/logstash/pipeline/* \
     && rm -f /usr/share/logstash/config/logstash-sample.conf
 
-RUN mkdir -p /home \
-    && chown -R logstash:root /home
-
 # Copy the PostgreSQL jdbc driver to the external library folder of Logstash.
 COPY --chown=logstash:root ./bin/ /usr/share/logstash/logstash-core/lib/jars/
 
