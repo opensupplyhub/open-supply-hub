@@ -6,18 +6,6 @@ import { updateClaimFacilityIntro } from '../../actions/claimFacility';
 
 
 describe('ClaimFacilityIntroStep component', () => {
-    // let store;
-
-    // beforeEach(() => {
-    //     store = mockStore({
-    //         claimFacility: {
-    //             claimData: {
-    //                 formData: { agreement },
-    //         },
-    //         },
-    //     });
-    // });
-
     it('renders without crashing', () => {
         renderWithProviders(
             <ClaimFacilityIntroStep/>
@@ -49,23 +37,5 @@ describe('ClaimFacilityIntroStep component', () => {
         const updatedAgreementState = reduxStore.getState().claimFacility.claimData.formData.agreement
         expect(updatedAgreementState).toBe(false)
     });
-
-    // it('renders correct button for unselected radio button', () => {
-    //     const { getByText, queryByText } = renderComponent(store, defaultProps);
-    //     expect(getByText("GO BACK")).toBeInTheDocument();
-    //     expect(queryByText("NEXT")).not.toBeInTheDocument();
-    // });
-
-    // test('renders correct buttons for selected "Yes" radio button', () => {
-    // const props = {
-    //     ...defaultProps,
-    //     data: { ...defaultProps.data, status: "APPROVED" },
-    // };
-    // const { getByText, queryByText } = renderComponent(store, props);
-    // expect(getByText("Revoke Claim")).toBeInTheDocument();
-    // expect(queryByText("Message Claimant")).not.toBeInTheDocument();
-    // expect(queryByText("Approve Claim")).not.toBeInTheDocument();
-    // expect(queryByText("Deny Claim")).not.toBeInTheDocument();
-    // });
 });
 

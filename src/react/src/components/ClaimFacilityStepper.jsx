@@ -236,7 +236,7 @@ function ClaimFacilityStepper({
                             variant="contained"
                             onClick={incrementActiveStep}
                             className={classes.buttonStyles}
-                            disabled={fetching || !stepInputIsValid(formData)}
+                            disabled={!stepInputIsValid(formData)}
                         >
                             Next
                         </Button>

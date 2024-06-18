@@ -25,9 +25,6 @@ import {
 } from '../actions/claimFacility';
 
 const initialState = Object.freeze({
-    introData: Object.freeze({
-        agreement: false,
-    }),
     facilityData: Object.freeze({
         data: null,
         fetching: false,
