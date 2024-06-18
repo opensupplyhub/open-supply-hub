@@ -36,3 +36,18 @@ resource "aws_efs_mount_target" "efs_app_logstash" {
   subnet_id       = module.vpc.private_subnet_ids[count.index]
   security_groups = [aws_security_group.efs_app_logstash.id]
 }
+
+# Set EFS access point permissions for logstash:root user
+resource "aws_efs_access_point" "efs_app_logstash_user" {
+  file_system_id = aws_efs_file_system.efs_app_logstash.id
+  posix_user {
+    gid = 0
+    uid = 1000
+  }
+
+  tags = {
+    Name        = "sgEfsAppLogstashAccessPointUser"
+    Project     = var.project
+    Environment = var.environment
+  }
+}
