@@ -7,7 +7,7 @@ import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import clamp from 'lodash/clamp';
-import stubTrue from 'lodash/stubTrue';
+// import stubTrue from 'lodash/stubTrue';
 import constant from 'lodash/constant';
 
 import Dialog from '@material-ui/core/Dialog';
@@ -23,7 +23,7 @@ import { submitClaimAFacilityData } from '../actions/claimFacility';
 import COLOURS from '../util/COLOURS';
 
 import {
-    // claimFacilityIntroIsValid,
+    claimFacilityIntroIsValid,
     claimFacilitySupportDocsIsValid,
     claimAFacilityFormIsValid,
     makeFacilityDetailLink,
@@ -123,7 +123,8 @@ const steps = Object.freeze([
         next: 'Support Documentation',
         hasBackButton: true,
         hasNextButton: true,
-        stepInputIsValid: stubTrue, // claimFacilityIntroIsValid,
+        // stepInputIsValid: stubTrue, // claimFacilityIntroIsValid,
+        stepInputIsValid: claimFacilityIntroIsValid,
     }),
     Object.freeze({
         name: 'Support Documentation',
@@ -155,10 +156,10 @@ function ClaimFacilityStepper({
     match: {
         params: { osID },
     },
-    // agreement,
+    agreement,
 }) {
     // const [agreement, setAgreement] = useState('0');
-    // console.log('agreement', agreement);
+    console.log('agreement in the Stepper >>>', agreement);
     const [activeStep, setActiveStep] = useState(0);
     const [submittingForm, setSubmittingForm] = useState(false);
 
@@ -182,6 +183,7 @@ function ClaimFacilityStepper({
         stepInputIsValid,
     } = steps[activeStep];
 
+    console.log('formData >>>', formData);
     useEffect(() => {
         if (fetching) {
             setSubmittingForm(true);
@@ -227,7 +229,10 @@ function ClaimFacilityStepper({
                             variant="contained"
                             onClick={incrementActiveStep}
                             className={classes.buttonStyles}
-                            disabled={!stepInputIsValid(formData)}
+                            disabled={
+                                !stepInputIsValid(formData) ||
+                                agreement === false
+                            }
                         >
                             Next
                         </Button>
@@ -377,20 +382,20 @@ ClaimFacilityStepper.propTypes = {
         yourName: string.isRequired,
         yourTitle: string.isRequired,
     }).isRequired,
-    // agreement: string.isRequired,
+    agreement: bool.isRequired,
     error: arrayOf(string),
 };
 
 function mapStateToProps({
     claimFacility: {
         claimData: { fetching, formData, error },
+        introData: { agreement },
     },
-    // introData: { agreement },
 }) {
     return {
         fetching,
         formData,
-        // agreement,
+        agreement,
         error,
     };
 }

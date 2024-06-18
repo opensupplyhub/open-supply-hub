@@ -6,10 +6,11 @@ import RadioGroup from '@material-ui/core/RadioGroup';
 import Radio from '@material-ui/core/Radio';
 // import Icon from '@material-ui/core/Icon';
 
+import { connect } from 'react-redux';
+import { func } from 'prop-types';
 import BadgeClaimed from './BadgeClaimed';
-// import { connect } from 'react-redux';
 // import { string } from 'prop-types'; //  bool, arrayOf func
-// import { updateClaimFacilityIntro } from '../actions/claimFacility';
+import { updateClaimFacilityIntro } from '../actions/claimFacility';
 
 const radioGroupStyles = Object.freeze({
     radioItem: {
@@ -39,7 +40,9 @@ const inlineStyle = Object.freeze({
     display: 'inline-block',
 });
 
-export default function ClaimFacilityIntroStep() {
+// export default function ClaimFacilityIntroStep() {
+function ClaimFacilityIntroStep({ agreement, updateAgreement }) {
+    console.log('agreement', agreement);
     //
     // updateAgreement
     const [selectedValue, setRadio] = useState('');
@@ -49,9 +52,7 @@ export default function ClaimFacilityIntroStep() {
     };
 
     useEffect(() => {
-        console.log('!!!!!!!!!!', selectedValue);
-        // setAgreement(selectedValue);
-        // updateAgreement(selectedValue);
+        updateAgreement(selectedValue === '1');
     }, [selectedValue]);
 
     return (
@@ -143,27 +144,32 @@ export default function ClaimFacilityIntroStep() {
     );
 }
 
-// ClaimFacilityIntroStep.defaultProps = {
-//     agreement: '',
-// };
+ClaimFacilityIntroStep.defaultProps = {
+    agreement: false,
+};
 
-// ClaimFacilityIntroStep.propTypes = {
-//     agreement: string,
-//     // updateAgreement: func.isRequired,
-// };
+ClaimFacilityIntroStep.propTypes = {
+    agreement: Boolean,
+    updateAgreement: func.isRequired,
+};
 
-// function mapStateToProps({ introData: { agreement } }) {
-//     return {
-//         agreement,
-//     };
-// }
+function mapStateToProps({
+    claimFacility: {
+        introData: { agreement },
+    },
+}) {
+    console.log('agreement >>>>', agreement);
+    // return {
+    //     agreement,
+    // };
+}
 
-// const mapDispatchToProps = dispatch => ({
-//     updateAgreement: selectedValue =>
-//         dispatch(updateClaimFacilityIntro(selectedValue)),
-// });
+const mapDispatchToProps = dispatch => ({
+    updateAgreement: selectedValue =>
+        dispatch(updateClaimFacilityIntro(selectedValue)),
+});
 
-// export default connect(
-//     mapStateToProps,
-//     mapDispatchToProps,
-// )(ClaimFacilityIntroStep);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps,
+)(ClaimFacilityIntroStep);

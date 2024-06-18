@@ -894,10 +894,10 @@ export const convertFeatureFlagsObjectToListOfActiveFlags = featureFlags =>
 export const checkWhetherUserHasDashboardAccess = user =>
     get(user, 'is_superuser', false);
 
-// export const claimFacilityIntroIsValid = ({ agreement }) => {
-//     console.log('!!!', agreement);
-//     return false;
-// };
+export const claimFacilityIntroIsValid = ({ agreement }) => {
+    console.log('!!!', agreement);
+    return agreement;
+};
 // equal([agreement, '1']);
 
 export const claimAFacilityFormIsValid = ({
