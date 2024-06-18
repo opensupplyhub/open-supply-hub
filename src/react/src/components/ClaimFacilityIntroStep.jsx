@@ -39,9 +39,7 @@ const inlineStyle = Object.freeze({
 });
 
 function ClaimFacilityIntroStep({ agreement, updateAgreement }) {
-    console.log('1 toString(agreement)', agreement);
-
-    const [selectedValue, setRadio] = useState('');
+    const [selectedValue, setRadio] = useState(agreement);
 
     const handleChange = event => {
         setRadio(event.target.value);
@@ -66,7 +64,11 @@ function ClaimFacilityIntroStep({ agreement, updateAgreement }) {
                     additional details can be displayed on the production
                     location’s OS Hub profile. All data contributed by a
                     claimant will have the “claimed” icon{' '}
-                    <BadgeClaimed fontSize="18px" />
+                    <BadgeClaimed
+                        fontSize="18px"
+                        viewBox="0 -5 16 20"
+                        overflow="visible"
+                    />{' '}
                     displayed next to it on the OS Hub profile.
                 </Typography>
             </div>

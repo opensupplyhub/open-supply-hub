@@ -33,7 +33,6 @@ import { featureCollection, bbox } from '@turf/turf';
 import hash from 'object-hash';
 import * as XLSX from 'xlsx';
 import moment from 'moment';
-// import { equal } from 'assert';
 
 import {
     OTHER,
