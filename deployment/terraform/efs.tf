@@ -45,6 +45,15 @@ resource "aws_efs_access_point" "efs_app_logstash_user" {
     uid = 1000
   }
 
+  root_directory {
+    path = "/logstash"
+    creation_info {
+      owner_uid = 1000
+      owner_gid = 0
+      permissions = 755
+    }
+  }
+
   tags = {
     Name        = "sgEfsAppLogstashAccessPointUser"
     Project     = var.project

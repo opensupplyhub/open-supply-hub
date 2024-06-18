@@ -404,8 +404,12 @@ resource "aws_ecs_task_definition" "app_logstash" {
   volume {
     name = "efs-logstash-jdbc-last-run"
     efs_volume_configuration {
-      file_system_id = aws_efs_file_system.efs_app_logstash.id
-      root_directory = "/"
+      file_system_id     = aws_efs_file_system.efs_app_logstash.id
+      root_directory     = "/"
+      transit_encryption = "ENABLED"
+      authorization_config {
+        access_point_id = aws_efs_access_point.efs_app_logstash_user.id
+      }
     }
   }
 }
