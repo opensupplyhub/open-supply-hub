@@ -23,6 +23,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Parameterized database credentials for the logstash configs input
     * Parameterized OpenSearch domain for the logstash configs output
     * Specifies the ARN of an IAM role to be used as the master user for the OpenSearch domain
+    * Set EFS access point permissions for logstash:root user
 
 ### Architecture/Environment changes
 * *Describe architecture/environment changes here.*
