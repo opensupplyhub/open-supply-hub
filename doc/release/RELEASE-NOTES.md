@@ -29,6 +29,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Added the `--if-exists` flag to all calls of the `pg_restore` command to eliminate spam errors when it tries to delete resources that don't exist just because the DB can be empty. Improved the section of the README about applying the database dump locally. Specifically, SQL queries have been added to delete all the tables and recreate an empty database schema to avoid conflicts during the database dump restore.
 
 ### What's new
+*  [OSDEV-933](https://opensupplyhub.atlassian.net/browse/OSDEV-933) Facility Claims. Add "what is claims" screen. `What is claims` page with radio buttons has been added that explains more about the claim. Updated title and link text for not logged in user who wants to claim a production location.
 *   [OSDEV-1030](https://opensupplyhub.atlassian.net/browse/OSDEV-1030) - The following changes have been made:
     *   Replaced the "Donate" button with a "Blog" button in the header
     *   Added links to the "Blog" and "Careers" pages in the footer
