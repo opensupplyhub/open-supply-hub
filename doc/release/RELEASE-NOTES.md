@@ -3,6 +3,40 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+
+## Release 1.15.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: June 29, 2024
+
+### Database changes
+#### Migrations:
+* *Describe migrations here.*
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
+### Code/API changes
+* [OSDEV-1004](https://opensupplyhub.atlassian.net/browse/OSDEV-1004) - The following changes have been made to the Logstash and OpenSearch services:
+    * Introduce ingress and egress rules for the Opensearch and Logstash
+    * Parameterized database credentials for the logstash configs input
+    * Parameterized OpenSearch domain for the logstash configs output
+    * Specifies the ARN of an IAM role to be used as the master user for the OpenSearch domain
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* Update code.
+
+
 ## Release 1.14.0
 
 ## Introduction
