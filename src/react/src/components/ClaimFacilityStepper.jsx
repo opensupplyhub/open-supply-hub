@@ -7,7 +7,6 @@ import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import clamp from 'lodash/clamp';
-// import stubTrue from 'lodash/stubTrue';
 import constant from 'lodash/constant';
 
 import Dialog from '@material-ui/core/Dialog';
@@ -21,6 +20,7 @@ import ClaimFacilityAdditionalData from './ClaimFacilityAdditionalData';
 import { submitClaimAFacilityData } from '../actions/claimFacility';
 
 import COLOURS from '../util/COLOURS';
+import { facilityClaimStepsNames } from '../util/constants';
 
 import {
     claimFacilityIntroIsValid,
@@ -86,6 +86,9 @@ const claimFacilityStepperStyles = Object.freeze({
         display: 'flex',
         fontWeight: 'bold',
     }),
+    displayNone: Object.freeze({
+        display: 'none',
+    }),
     formContainerStyles: Object.freeze({
         width: '100%',
         padding: '20px',
@@ -118,24 +121,23 @@ const SUBMIT_FORM = 'SUBMIT_FORM';
 
 const steps = Object.freeze([
     Object.freeze({
-        name: 'Claim this facility',
+        name: facilityClaimStepsNames.CLAIM_PROD_LOCATION,
         component: ClaimFacilityIntroStep,
-        next: 'Support Documentation',
+        next: facilityClaimStepsNames.SUPPORT_DOC,
         hasBackButton: true,
         hasNextButton: true,
-        // stepInputIsValid: stubTrue, // claimFacilityIntroIsValid,
         stepInputIsValid: claimFacilityIntroIsValid,
     }),
     Object.freeze({
-        name: 'Support Documentation',
+        name: facilityClaimStepsNames.SUPPORT_DOC,
         component: ClaimFacilitySupportDocs,
-        next: 'Additional Data',
+        next: facilityClaimStepsNames.ADDITIONAL_DATA,
         hasBackButton: true,
         hasNextButton: true,
         stepInputIsValid: claimFacilitySupportDocsIsValid,
     }),
     Object.freeze({
-        name: 'Additional Data',
+        name: facilityClaimStepsNames.ADDITIONAL_DATA,
         component: ClaimFacilityAdditionalData,
         next: null,
         hasBackButton: true,
@@ -156,10 +158,7 @@ function ClaimFacilityStepper({
     match: {
         params: { osID },
     },
-    agreement,
 }) {
-    // const [agreement, setAgreement] = useState('0');
-    console.log('agreement in the Stepper >>>', agreement);
     const [activeStep, setActiveStep] = useState(0);
     const [submittingForm, setSubmittingForm] = useState(false);
 
@@ -183,7 +182,6 @@ function ClaimFacilityStepper({
         stepInputIsValid,
     } = steps[activeStep];
 
-    console.log('formData >>>', formData);
     useEffect(() => {
         if (fetching) {
             setSubmittingForm(true);
@@ -209,7 +207,10 @@ function ClaimFacilityStepper({
     const controlsSection = (
         <>
             <div style={claimFacilityStepperStyles.formContainerStyles}>
-                {error || !stepInputIsValid(formData) ? (
+                {error ||
+                (!stepInputIsValid(formData) &&
+                    activeStepName !==
+                        facilityClaimStepsNames.CLAIM_PROD_LOCATION) ? (
                     <Typography
                         variant="body2"
                         style={
@@ -222,17 +223,20 @@ function ClaimFacilityStepper({
                             : 'Some required fields are missing or invalid.'}
                     </Typography>
                 ) : null}
-                <div style={claimFacilityStepperStyles.buttonsContainerStyles}>
+                <div
+                    style={
+                        formData.agreement
+                            ? claimFacilityStepperStyles.buttonsContainerStyles
+                            : claimFacilityStepperStyles.displayNone
+                    }
+                >
                     {hasNextButton && nextButtonAction !== SUBMIT_FORM && (
                         <Button
                             color="secondary"
                             variant="contained"
                             onClick={incrementActiveStep}
                             className={classes.buttonStyles}
-                            disabled={
-                                !stepInputIsValid(formData) ||
-                                agreement === false
-                            }
+                            disabled={fetching || !stepInputIsValid(formData)}
                         >
                             Next
                         </Button>
@@ -330,7 +334,8 @@ function ClaimFacilityStepper({
                 )}
             </Dialog>
             <div style={claimFacilityStepperStyles.formContainerStyles}>
-                {activeStepName === 'Claim this facility' ? (
+                {activeStepName ===
+                facilityClaimStepsNames.CLAIM_PROD_LOCATION ? (
                     <div>
                         <Typography variant="display3" style={infoTitleStyle}>
                             Claim a Production Location
@@ -341,7 +346,7 @@ function ClaimFacilityStepper({
                         </Typography>
                     </div>
                 ) : null}
-                {activeStepName === 'Support Documentation' ? (
+                {activeStepName === facilityClaimStepsNames.SUPPORT_DOC ? (
                     <div>
                         <Typography variant="display3" style={infoTitleStyle}>
                             Supporting Documentation
@@ -351,7 +356,7 @@ function ClaimFacilityStepper({
                         </Typography>
                     </div>
                 ) : null}
-                {activeStepName === 'Additional Data' ? (
+                {activeStepName === facilityClaimStepsNames.ADDITIONAL_DATA ? (
                     <div>
                         <Typography variant="display3" style={infoTitleStyle}>
                             Additional Data
@@ -381,21 +386,19 @@ ClaimFacilityStepper.propTypes = {
     formData: shape({
         yourName: string.isRequired,
         yourTitle: string.isRequired,
+        agreement: bool.isRequired,
     }).isRequired,
-    agreement: bool.isRequired,
     error: arrayOf(string),
 };
 
 function mapStateToProps({
     claimFacility: {
         claimData: { fetching, formData, error },
-        introData: { agreement },
     },
 }) {
     return {
         fetching,
         formData,
-        agreement,
         error,
     };
 }

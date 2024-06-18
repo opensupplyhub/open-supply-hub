@@ -2,7 +2,7 @@ import React from 'react';
 import { string } from 'prop-types';
 import SvgIcon from '@material-ui/core/SvgIcon';
 
-export default function BadgeClaimed({ color, fontSize = '20px' }) {
+export default function BadgeClaimed({ color, fontSize = '24px' }) {
     return (
         <SvgIcon viewBox="0 0 16 20" style={{ fontSize }}>
             <path

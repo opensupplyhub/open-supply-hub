@@ -4,12 +4,10 @@ import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import Radio from '@material-ui/core/Radio';
-// import Icon from '@material-ui/core/Icon';
 
 import { connect } from 'react-redux';
 import { func } from 'prop-types';
 import BadgeClaimed from './BadgeClaimed';
-// import { string } from 'prop-types'; //  bool, arrayOf func
 import { updateClaimFacilityIntro } from '../actions/claimFacility';
 
 const radioGroupStyles = Object.freeze({
@@ -40,11 +38,9 @@ const inlineStyle = Object.freeze({
     display: 'inline-block',
 });
 
-// export default function ClaimFacilityIntroStep() {
 function ClaimFacilityIntroStep({ agreement, updateAgreement }) {
-    console.log('agreement', agreement);
-    //
-    // updateAgreement
+    console.log('1 toString(agreement)', agreement);
+
     const [selectedValue, setRadio] = useState('');
 
     const handleChange = event => {
@@ -52,7 +48,7 @@ function ClaimFacilityIntroStep({ agreement, updateAgreement }) {
     };
 
     useEffect(() => {
-        updateAgreement(selectedValue === '1');
+        updateAgreement(selectedValue === 'true');
     }, [selectedValue]);
 
     return (
@@ -117,7 +113,7 @@ function ClaimFacilityIntroStep({ agreement, updateAgreement }) {
                     onChange={handleChange}
                 >
                     <FormControlLabel
-                        value="1"
+                        value="true"
                         control={<Radio style={radioGroupStyles.radio} />}
                         label={
                             <Typography variant="subheading">
@@ -129,7 +125,7 @@ function ClaimFacilityIntroStep({ agreement, updateAgreement }) {
                         style={radioGroupStyles.radioItem}
                     />
                     <FormControlLabel
-                        value="0"
+                        value="false"
                         control={<Radio style={radioGroupStyles.radio} />}
                         label={
                             <Typography variant="subheading">
@@ -144,29 +140,27 @@ function ClaimFacilityIntroStep({ agreement, updateAgreement }) {
     );
 }
 
-ClaimFacilityIntroStep.defaultProps = {
-    agreement: false,
-};
-
 ClaimFacilityIntroStep.propTypes = {
-    agreement: Boolean,
+    agreement: Boolean.isRequired,
     updateAgreement: func.isRequired,
 };
 
 function mapStateToProps({
     claimFacility: {
-        introData: { agreement },
+        claimData: {
+            formData: { agreement },
+        },
     },
 }) {
-    console.log('agreement >>>>', agreement);
-    // return {
-    //     agreement,
-    // };
+    return {
+        agreement,
+    };
 }
 
 const mapDispatchToProps = dispatch => ({
-    updateAgreement: selectedValue =>
-        dispatch(updateClaimFacilityIntro(selectedValue)),
+    updateAgreement: selectedValue => {
+        dispatch(updateClaimFacilityIntro(selectedValue));
+    },
 });
 
 export default connect(

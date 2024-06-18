@@ -43,6 +43,7 @@ const initialState = Object.freeze({
             sectors: null,
             numberOfWorkers: '',
             localLanguageName: '',
+            agreement: false,
         }),
         fetching: false,
         error: null,
@@ -58,8 +59,10 @@ export default createReducer(
     {
         [updateClaimFacilityIntro]: (state, payload) =>
             update(state, {
-                introData: {
-                    agreement: { $set: payload },
+                claimData: {
+                    formData: {
+                        agreement: { $set: payload },
+                    },
                 },
             }),
         [startFetchClaimFacilityData]: state =>
