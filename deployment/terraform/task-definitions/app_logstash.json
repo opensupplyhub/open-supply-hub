@@ -11,8 +11,7 @@
         { "name": "POSTGRES_USER", "value": "${postgres_user}" },
         { "name": "POSTGRES_PASSWORD", "value": "${postgres_password}" },
         { "name": "POSTGRES_DB", "value": "${postgres_db}" },
-        { "name": "REGION", "value": "${aws_region}"},
-        { "name": "ENV", "value": "${environment}" }
+        { "name": "REGION", "value": "${aws_region}"}
       ],
       "logConfiguration": {
           "logDriver": "awslogs",
