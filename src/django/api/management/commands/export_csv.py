@@ -4,7 +4,6 @@ from datetime import datetime
 
 from django.core.management.base import BaseCommand
 
-from api.models.transactions.index_facilities_new import index_facilities_new
 from api.serializers.facility.facility_download_serializer import (
     FacilityDownloadSerializer
 )
@@ -17,6 +16,7 @@ def count_with_percent(i: int, count: int) -> str:
 
 def print_with_time(text: str) -> None:
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} -- {text}")
+
 
 def divide_chunks(list, size, amount):
     chunks = []
@@ -46,7 +46,11 @@ class Command(BaseCommand):
         print_with_time(f"Amount of indexed facilities: {count}")
         print_with_time(f"Amount of chunks: {amount_of_chunks}")
 
-        facilities_pool = divide_chunks(facilities, size_of_chunk, amount_of_chunks)
+        facilities_pool = divide_chunks(
+            facilities,
+            size_of_chunk,
+            amount_of_chunks
+        )
 
         serializer = FacilityDownloadSerializer()
 
@@ -66,7 +70,9 @@ class Command(BaseCommand):
                 for facility in facilities_chunk:
                     print(i)
                     if i == 0:
-                        print_with_time(f"Started exporting {count} facilities")
+                        print_with_time(
+                            f"Started exporting {count} facilities"
+                        )
 
                     i += 1
 
@@ -74,6 +80,10 @@ class Command(BaseCommand):
                     writer.writerow(row)
 
                     if i % 100 == 0:
-                        print_with_time(f"Wrote {count_with_percent(i, count)}")
+                        print_with_time(
+                            f"Wrote {count_with_percent(i, count)}"
+                        )
 
-            print_with_time(f"Finished {count_with_percent(i, count)}")
+            print_with_time(
+                f"Finished {count_with_percent(i, count)}"
+            )
