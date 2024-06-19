@@ -13,11 +13,11 @@ import { updateClaimFacilityIntro } from '../actions/claimFacility';
 
 const styles = theme =>
     Object.freeze({
-        radioItem: {
-            marginRight: '30px',
+        rightMargin: {
+            marginRight: theme.spacing.unit * 4,
         },
-        radio: {
-            color: 'rgb(0, 0, 0)',
+        radioStyle: {
+            color: 'rgb(0, 0, 0) !important',
             padding: '3px 5px 0 7px',
         },
         inputGroup: {
@@ -28,31 +28,31 @@ const styles = theme =>
             fontWeight: 'bold',
         },
         paragraphStyle: {
-            paddingBottom: '20px',
+            paddingBottom: theme.spacing.unit * 3,
         },
         listStyle: {
             margin: '0',
         },
         inlineStyle: {
-            display: 'inline-block',
+            display: 'inline',
         },
     });
 
-function ClaimFacilityIntroStep({ classes, agreement, updateAgreement }) {
-    const [selectedValue, setRadio] = useState(agreement);
+function ClaimFacilityIntroStep({ classes, updateAgreement }) {
+    const [selectedValue, setRadio] = useState('');
 
     const handleChange = event => {
         setRadio(event.target.value);
     };
 
     useEffect(() => {
-        updateAgreement(selectedValue === 'true');
+        updateAgreement(selectedValue === 'yes');
     }, [selectedValue]);
 
     return (
         <div className={classes.inputGroup}>
             <div className={classes.paragraphStyle}>
-                <Typography variant="heading" className={classes.bold}>
+                <Typography variant="subheading" className={classes.bold}>
                     What is a claim?
                 </Typography>
                 <Typography variant="subheading">
@@ -73,7 +73,7 @@ function ClaimFacilityIntroStep({ classes, agreement, updateAgreement }) {
                 </Typography>
             </div>
             <div className={classes.paragraphStyle}>
-                <Typography variant="heading" className={classes.bold}>
+                <Typography variant="subheading" className={classes.bold}>
                     To complete a claim request, you will need to submit the
                     following documentation:
                 </Typography>
@@ -95,12 +95,7 @@ function ClaimFacilityIntroStep({ classes, agreement, updateAgreement }) {
                 </Typography>
             </div>
             <div className={classes.paragraphStyle}>
-                <Typography
-                    variant="heading"
-                    className={{ ...classes.bold, ...classes.inlineStyle }}
-                >
-                    Note:
-                </Typography>
+                <b>Note:</b>
                 &nbsp;
                 <Typography
                     variant="subheading"
@@ -118,8 +113,8 @@ function ClaimFacilityIntroStep({ classes, agreement, updateAgreement }) {
                     onChange={handleChange}
                 >
                     <FormControlLabel
-                        value="true"
-                        control={<Radio className={classes.radio} />}
+                        value="yes"
+                        control={<Radio className={classes.radioStyle} />}
                         label={
                             <Typography variant="subheading">
                                 Yes, I am an owner or senior manager at this
@@ -127,17 +122,17 @@ function ClaimFacilityIntroStep({ classes, agreement, updateAgreement }) {
                                 claim request.
                             </Typography>
                         }
-                        className={classes.radioItem}
+                        className={classes.rightMargin}
                     />
                     <FormControlLabel
-                        value="false"
-                        control={<Radio className={classes.radio} />}
+                        value="no"
+                        control={<Radio className={classes.radioStyle} />}
                         label={
                             <Typography variant="subheading">
                                 No, I do not want to submit a claim request.
                             </Typography>
                         }
-                        className={classes.radioItem}
+                        className={classes.rightMargin}
                     />
                 </RadioGroup>
             </FormControl>
@@ -146,7 +141,6 @@ function ClaimFacilityIntroStep({ classes, agreement, updateAgreement }) {
 }
 
 ClaimFacilityIntroStep.propTypes = {
-    agreement: Boolean.isRequired,
     updateAgreement: func.isRequired,
 };
 

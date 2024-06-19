@@ -340,7 +340,7 @@ function ClaimFacilityStepper({
                         <Typography variant="display3" style={infoTitleStyle}>
                             Claim a Production Location
                         </Typography>
-                        <Typography variant="heading" style={infoDescStyle}>
+                        <Typography variant="subheading" style={infoDescStyle}>
                             In order to submit a claim request, you must be an
                             owner or senior manager of the production location.
                         </Typography>
@@ -351,7 +351,7 @@ function ClaimFacilityStepper({
                         <Typography variant="display3" style={infoTitleStyle}>
                             Supporting Documentation
                         </Typography>
-                        <Typography variant="heading" style={infoDescStyle}>
+                        <Typography variant="subheading" style={infoDescStyle}>
                             Use the form below to complete your claim request.
                         </Typography>
                     </div>
@@ -361,7 +361,7 @@ function ClaimFacilityStepper({
                         <Typography variant="display3" style={infoTitleStyle}>
                             Additional Data
                         </Typography>
-                        <Typography variant="heading" style={infoDescStyle}>
+                        <Typography variant="subheading" style={infoDescStyle}>
                             Use the form below to upload additional information
                             about this production location.
                         </Typography>

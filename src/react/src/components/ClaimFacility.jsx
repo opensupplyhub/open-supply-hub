@@ -91,7 +91,7 @@ const ClaimFacility = ({
     return (
         <div style={appStyles.gridStyles}>
             <AppOverflow>
-                <AppGrid>
+                <AppGrid title="">
                     <div style={claimFacilityContainerStyles.containerStyles}>
                         <Route component={ClaimFacilityStepper} />
                     </div>
