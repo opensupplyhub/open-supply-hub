@@ -188,7 +188,6 @@ services:
       - POSTGRES_PASSWORD=opensupplyhub
       - POSTGRES_DB=opensupplyhub
       - AWS_REGION=eu-west-1
-      - ENV=Development
 
     depends_on:
       - opensearch-single-node
