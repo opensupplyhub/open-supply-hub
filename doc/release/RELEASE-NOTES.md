@@ -37,7 +37,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe bugfix here.*
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* [OSDEV-1071](https://opensupplyhub.atlassian.net/browse/OSDEV-1071) - Replaced the term "facility" with "production location" in the claims banners
 
 ### Release instructions:
 * Update code.
