@@ -7,38 +7,38 @@ import Radio from '@material-ui/core/Radio';
 
 import { connect } from 'react-redux';
 import { func } from 'prop-types';
+import { withStyles, withTheme } from '@material-ui/core/styles';
 import BadgeClaimed from './BadgeClaimed';
 import { updateClaimFacilityIntro } from '../actions/claimFacility';
 
-const radioGroupStyles = Object.freeze({
-    radioItem: {
-        marginRight: '30px',
-    },
-    radio: {
-        color: 'rgb(0, 0, 0)',
-        padding: '3px 5px 0 7px',
-    },
-});
+const styles = theme =>
+    Object.freeze({
+        radioItem: {
+            marginRight: '30px',
+        },
+        radio: {
+            color: 'rgb(0, 0, 0)',
+            padding: '3px 5px 0 7px',
+        },
+        inputGroup: {
+            width: '100%',
+            paddingTop: theme.spacing.unit * 4,
+        },
+        bold: {
+            fontWeight: 'bold',
+        },
+        paragraphStyle: {
+            paddingBottom: '20px',
+        },
+        listStyle: {
+            margin: '0',
+        },
+        inlineStyle: {
+            display: 'inline-block',
+        },
+    });
 
-const inputGroupStyles = Object.freeze({
-    width: '100%',
-    paddingTop: '30px',
-});
-
-const boldStyle = Object.freeze({
-    fontWeight: 'bold',
-});
-const paragraphStyle = Object.freeze({
-    paddingBottom: '20px',
-});
-const listStyle = Object.freeze({
-    margin: '0',
-});
-const inlineStyle = Object.freeze({
-    display: 'inline-block',
-});
-
-function ClaimFacilityIntroStep({ agreement, updateAgreement }) {
+function ClaimFacilityIntroStep({ classes, agreement, updateAgreement }) {
     const [selectedValue, setRadio] = useState(agreement);
 
     const handleChange = event => {
@@ -50,9 +50,9 @@ function ClaimFacilityIntroStep({ agreement, updateAgreement }) {
     }, [selectedValue]);
 
     return (
-        <div style={inputGroupStyles}>
-            <div style={paragraphStyle}>
-                <Typography variant="heading" style={boldStyle}>
+        <div className={classes.inputGroup}>
+            <div className={classes.paragraphStyle}>
+                <Typography variant="heading" className={classes.bold}>
                     What is a claim?
                 </Typography>
                 <Typography variant="subheading">
@@ -72,13 +72,13 @@ function ClaimFacilityIntroStep({ agreement, updateAgreement }) {
                     displayed next to it on the OS Hub profile.
                 </Typography>
             </div>
-            <div style={paragraphStyle}>
-                <Typography variant="heading" style={boldStyle}>
+            <div className={classes.paragraphStyle}>
+                <Typography variant="heading" className={classes.bold}>
                     To complete a claim request, you will need to submit the
                     following documentation:
                 </Typography>
                 <Typography variant="subheading">
-                    <ul style={listStyle}>
+                    <ul className={classes.listStyle}>
                         <li>
                             A document or website that lists the name and
                             address of the production location (e.g. utility
@@ -94,15 +94,18 @@ function ClaimFacilityIntroStep({ agreement, updateAgreement }) {
                     </ul>
                 </Typography>
             </div>
-            <div style={paragraphStyle}>
+            <div className={classes.paragraphStyle}>
                 <Typography
                     variant="heading"
-                    style={{ ...boldStyle, ...inlineStyle }}
+                    className={{ ...classes.bold, ...classes.inlineStyle }}
                 >
                     Note:
                 </Typography>
                 &nbsp;
-                <Typography variant="subheading" style={inlineStyle}>
+                <Typography
+                    variant="subheading"
+                    className={classes.inlineStyle}
+                >
                     Any documentation appearing to be forged or counterfeit may
                     result in your claim request being denied.
                 </Typography>
@@ -116,7 +119,7 @@ function ClaimFacilityIntroStep({ agreement, updateAgreement }) {
                 >
                     <FormControlLabel
                         value="true"
-                        control={<Radio style={radioGroupStyles.radio} />}
+                        control={<Radio className={classes.radio} />}
                         label={
                             <Typography variant="subheading">
                                 Yes, I am an owner or senior manager at this
@@ -124,17 +127,17 @@ function ClaimFacilityIntroStep({ agreement, updateAgreement }) {
                                 claim request.
                             </Typography>
                         }
-                        style={radioGroupStyles.radioItem}
+                        className={classes.radioItem}
                     />
                     <FormControlLabel
                         value="false"
-                        control={<Radio style={radioGroupStyles.radio} />}
+                        control={<Radio className={classes.radio} />}
                         label={
                             <Typography variant="subheading">
                                 No, I do not want to submit a claim request.
                             </Typography>
                         }
-                        style={radioGroupStyles.radioItem}
+                        className={classes.radioItem}
                     />
                 </RadioGroup>
             </FormControl>
@@ -168,4 +171,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(ClaimFacilityIntroStep);
+)(withTheme()(withStyles(styles)(ClaimFacilityIntroStep)));
