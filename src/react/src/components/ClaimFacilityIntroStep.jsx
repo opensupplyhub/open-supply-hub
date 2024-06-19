@@ -150,17 +150,15 @@ ClaimFacilityIntroStep.propTypes = {
     updateAgreement: func.isRequired,
 };
 
-function mapStateToProps({
+const mapStateToProps = ({
     claimFacility: {
         claimData: {
             formData: { agreement },
         },
     },
-}) {
-    return {
-        agreement,
-    };
-}
+}) => ({
+    agreement,
+});
 
 const mapDispatchToProps = dispatch => ({
     updateAgreement: selectedValue => {
