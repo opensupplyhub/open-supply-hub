@@ -15,7 +15,7 @@ resource "aws_cloudwatch_log_group" "opensearch" {
 
 resource "aws_opensearch_domain" "opensearch" {
   // TODO: remove 'count' meta-argument once OpenSearch will be fully setup
-  # count          = 1
+  count          = 0
   domain_name    = "opensearch-domain"
   engine_version = "OpenSearch_2.13"
 
