@@ -520,7 +520,7 @@ variable "dedupe_hub_version" {
 
 variable "app_logstash_ecs_desired_count" {
   type    = number
-  default = 1 # Temporary set to zero to prevent money consumption.
+  default = 0 # Temporary set to zero to prevent money consumption.
 }
 
 variable "app_logstash_ecs_deployment_min_percent" {
