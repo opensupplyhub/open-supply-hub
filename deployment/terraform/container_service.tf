@@ -386,6 +386,7 @@ data "template_file" "app_logstash" {
     postgres_user                    = var.rds_database_username
     postgres_password                = var.rds_database_password
     postgres_db                      = var.rds_database_name
+    environment                      = var.environment
   }
 }
 
