@@ -19,11 +19,21 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-1004](https://opensupplyhub.atlassian.net/browse/OSDEV-1004) - The following changes have been made to the Logstash and OpenSearch services:
+    * Prepared the SQL script to collect all the necessary data for the `v1/facilities` API endpoint according to the new API specification. Agreed upon and established a prioritization scale for gathering data related to the name, address, sector, parent_company, product_type, facility_type, processing_type, number_of_workers and location fields as follows:
+        * Data from the approved claim.
+        * Promoted matches (considered as promoted facility list items).
+        * The most recently contributed data.
+    * For the country field, the same prioritization scale has been utilized except for 'Data from the approved claims' because the claimant cannot update the country in any way.
+    * Introduced a new set of Ruby scripts to filter and reorganize the incoming data at the Logstash app level, avoiding complex database queries that could lead to high database load.
+    * Updated the `facilities` index template for OpenSearch to define how new fields within the facility documents are stored and indexed by OpenSearch.
+    * Set up the main Logstash pipeline to run every 15 minutes.
     * Introduce ingress and egress rules for the Opensearch and Logstash
     * Parameterized database credentials for the logstash configs input
     * Parameterized OpenSearch domain for the logstash configs output
     * Specifies the ARN of an IAM role to be used as the master user for the OpenSearch domain
     * Set EFS access point permissions for logstash:root user
+
+    All changes have been made to meet the API specification requirements for `v1/facilities` API endpoint as closely as possible.
 
 ### Architecture/Environment changes
 * *Describe architecture/environment changes here.*
@@ -54,9 +64,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Scheme changes
 * [OSDEV-1084](https://opensupplyhub.atlassian.net/browse/OSDEV-1084) - To enable adding a range for the number of workers during the claiming process, the type of the `facility_workers_count` field in the `FacilityClaim` table was changed from `IntegerField` to `CharField`.
 
-### Code/API changes
-* *Describe code/API changes here.*
-
 ### Architecture/Environment changes
 * [OSDEV-1069](https://opensupplyhub.atlassian.net/browse/OSDEV-1069) - The following changes have been made:
     * Changed the Postgres Docker image for the database to use the official one and make the local database setup platform-agnostic, so it doesn't depend on the processor architecture.
@@ -82,12 +89,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Added the `--if-exists` flag to all calls of the `pg_restore` command to eliminate spam errors when it tries to delete resources that don't exist just because the DB can be empty. Improved the section of the README about applying the database dump locally. Specifically, SQL queries have been added to delete all the tables and recreate an empty database schema to avoid conflicts during the database dump restore.
 
 ### What's new
-*   [OSDEV-1030](https://opensupplyhub.atlassian.net/browse/OSDEV-1030) - The following changes have been made:
-    *   Replaced the "Donate" button with a "Blog" button in the header
-    *   Added links to the "Blog" and "Careers" pages in the footer
-*   [OSDEV-939](https://opensupplyhub.atlassian.net/browse/OSDEV-939) - The following changes have been made:
-    *   Created new steps `Supporting Documentation` & `Additional Data` for `Facility Claim Request` page.
-    *   Added popup for successfully submitted claim.
+* [OSDEV-1030](https://opensupplyhub.atlassian.net/browse/OSDEV-1030) - The following changes have been made:
+    * Replaced the "Donate" button with a "Blog" button in the header
+    * Added links to the "Blog" and "Careers" pages in the footer
+* [OSDEV-939](https://opensupplyhub.atlassian.net/browse/OSDEV-939) - The following changes have been made:
+    * Created new steps `Supporting Documentation` & `Additional Data` for `Facility Claim Request` page.
+    * Added popup for successfully submitted claim.
 * [OSDEV-1084](https://opensupplyhub.atlassian.net/browse/OSDEV-1084) - Enable adding a range for the number of workers during the claiming process, either after pressing the “I want to claim this production location” link or on the Claimed Facility Details page.
 
 ### Release instructions:
