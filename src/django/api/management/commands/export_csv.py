@@ -1,4 +1,5 @@
 import csv
+import math
 from datetime import datetime
 
 from django.core.management.base import BaseCommand
@@ -17,20 +18,35 @@ def count_with_percent(i: int, count: int) -> str:
 def print_with_time(text: str) -> None:
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} -- {text}")
 
+def divide_chunks(list, size, amount):
+    chunks = []
+    last_index = size
+    first_index = 0
+    for i in range(1, amount + 1):
+        if i == amount:
+            chunks.append(list[first_index:])
+        else:
+            chunks.append(list[first_index:last_index])
+            first_index = last_index
+            last_index = last_index + size
+    return chunks
+
 
 class Command(BaseCommand):
     help = 'Export all facilities to a CSV file.'
 
     def add_arguments(self, parser):
         return
-        print("add_arguments")
 
     def handle(self, *args, **options):
-        print_with_time("Started indexing facilities")
-        index_facilities_new()
         facilities = FacilityIndex.objects.order_by("id").all()
         count = facilities.count()
-        print_with_time(f"Finished indexing {count} facilities")
+        size_of_chunk = 1000
+        amount_of_chunks = math.ceil(count / size_of_chunk)
+        print_with_time(f"Amount of indexed facilities: {count}")
+        print_with_time(f"Amount of chunks: {amount_of_chunks}")
+
+        facilities_pool = divide_chunks(facilities, size_of_chunk, amount_of_chunks)
 
         serializer = FacilityDownloadSerializer()
 
@@ -39,21 +55,25 @@ class Command(BaseCommand):
             writer = csv.writer(f)
             print_with_time("Opened file")
 
-            writer.writerow(serializer.get_headers())
+            headers = serializer.get_headers()
+            writer.writerow(headers)
+
             print_with_time("Written headers")
 
             print_with_time("Fetching data from DB")
             i = 0
-            for facility in facilities:
-                if i == 0:
-                    print_with_time(f"Started exporting {count} facilities")
+            for facilities_chunk in facilities_pool:
+                for facility in facilities_chunk:
+                    print(i)
+                    if i == 0:
+                        print_with_time(f"Started exporting {count} facilities")
 
-                i += 1
+                    i += 1
 
-                row = serializer.get_row(facility)
-                writer.writerow(row)
+                    row = serializer.get_row(facility)
+                    writer.writerow(row)
 
-                if i % 100 == 0:
-                    print_with_time(f"Wrote {count_with_percent(i, count)}")
+                    if i % 100 == 0:
+                        print_with_time(f"Wrote {count_with_percent(i, count)}")
 
             print_with_time(f"Finished {count_with_percent(i, count)}")
