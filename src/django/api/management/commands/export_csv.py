@@ -68,7 +68,6 @@ class Command(BaseCommand):
             i = 0
             for facilities_chunk in facilities_pool:
                 for facility in facilities_chunk:
-                    print(i)
                     if i == 0:
                         print_with_time(
                             f"Started exporting {count} facilities"
