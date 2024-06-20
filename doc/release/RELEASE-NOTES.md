@@ -94,8 +94,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Release instructions:
 * Update code.
-* Apply DB migrations up to the latest one.
-* Run the index_facilities_new management command.
 
 
 ## Release 1.13.0
