@@ -14,7 +14,7 @@ describe('ClaimFacilityIntroStep component', () => {
 
     it('select "Yes" radio button by action', () => {
         const {reduxStore} = renderWithProviders(
-            <ClaimFacilityIntroStep agreement="true" updateAgreement={() => {}}/>
+            <ClaimFacilityIntroStep agreement="yes" updateAgreement={() => {}}/>
         )
 
         reduxStore.dispatch(
@@ -27,7 +27,7 @@ describe('ClaimFacilityIntroStep component', () => {
 
     it('select "No" radio button by action', () => {
         const {reduxStore} = renderWithProviders(
-            <ClaimFacilityIntroStep agreement="false" updateAgreement={() => {}}/>
+            <ClaimFacilityIntroStep agreement="no" updateAgreement={() => {}}/>
         )
 
         reduxStore.dispatch(
