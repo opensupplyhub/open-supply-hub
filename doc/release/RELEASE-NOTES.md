@@ -37,7 +37,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     All changes have been made to meet the API specification requirements for `v1/facilities` API endpoint as closely as possible.
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* For the job `clean_ecr_repositories` of Destroy Environment action, it was added a new line to the script responsible for deleting ECR repositories, specifically targeting the `opensupplyhub-logstash` repository.
 
 ### Bugfix
 * *Describe bugfix here.*
@@ -100,8 +100,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Release instructions:
 * Update code.
-* Apply DB migrations up to the latest one.
-* Run the index_facilities_new management command.
 
 
 ## Release 1.13.0
