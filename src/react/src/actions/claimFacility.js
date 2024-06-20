@@ -1,5 +1,5 @@
 import { createAction } from 'redux-act';
-import { get, toPairs, snakeCase, mapKeys } from 'lodash';
+import { toPairs, snakeCase, mapKeys } from 'lodash';
 
 import apiRequest from '../util/apiRequest';
 
@@ -134,9 +134,10 @@ export function submitClaimAFacilityData(osID) {
                 mapKeys(value, file => {
                     postData.append('files', file);
                 });
-            } else if (formattedKey === 'parent_company') {
-                const newValue = get(value, 'value', null);
-                postData.append(formattedKey, newValue);
+            } else if (formattedKey === 'sectors') {
+                if (value !== null) {
+                    postData.append(formattedKey, value);
+                }
             } else {
                 postData.append(formattedKey, value);
             }

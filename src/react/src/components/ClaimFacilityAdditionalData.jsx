@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { bool, func, string } from 'prop-types';
+import { bool, func, string, PropTypes } from 'prop-types';
 import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
@@ -13,8 +13,6 @@ import map from 'lodash/map';
 import filter from 'lodash/filter';
 import includes from 'lodash/includes';
 import isNull from 'lodash/isNull';
-import isEmpty from 'lodash/isEmpty';
-import every from 'lodash/every';
 import Select from 'react-select';
 import Creatable from 'react-select/creatable';
 
@@ -31,14 +29,11 @@ import { fetchSectorOptions } from '../actions/filterOptions';
 
 import { sectorOptionsPropType } from '../util/propTypes';
 
-import { getValueFromEvent } from '../util/util';
+import { getValueFromEvent, validateNumberOfWorkers } from '../util/util';
 
 import { claimAFacilitySupportDocsFormStyles } from '../util/styles';
 
-import {
-    claimAFacilityAdditionalDataFormFields,
-    NUMERIC_DASH_REGEX,
-} from '../util/constants';
+import { claimAFacilityAdditionalDataFormFields } from '../util/constants';
 
 import COLOURS from '../util/COLOURS';
 
@@ -289,10 +284,7 @@ function ClaimFacilityAdditionalData({
                 </Typography>
                 <TextField
                     id={numberOfWorkersForm.id}
-                    error={every([
-                        !isEmpty(numberOfWorkers),
-                        !NUMERIC_DASH_REGEX.test(numberOfWorkers),
-                    ])}
+                    error={validateNumberOfWorkers(numberOfWorkers)}
                     variant="outlined"
                     style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
                     value={numberOfWorkers}
@@ -325,11 +317,12 @@ function ClaimFacilityAdditionalData({
 }
 
 ClaimFacilityAdditionalData.defaultProps = {
+    sectors: [],
     sectorOptions: null,
 };
 
 ClaimFacilityAdditionalData.propTypes = {
-    sectors: string.isRequired,
+    sectors: PropTypes.arrayOf(PropTypes.string),
     numberOfWorkers: string.isRequired,
     updateNumberOfWorkers: func.isRequired,
     localLanguageName: string.isRequired,

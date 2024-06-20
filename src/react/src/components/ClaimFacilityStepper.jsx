@@ -66,6 +66,7 @@ const popupDialogStyles = Object.freeze({
         fontSize: '20px',
         margin: 'auto',
         textAlign: 'center',
+        paddingTop: '10px',
     }),
     actionStyles: Object.freeze({
         justifyContent: 'center',

@@ -80,6 +80,7 @@ import {
     isValidFacilityURL,
     makeClaimGeocoderURL,
     logErrorToRollbar,
+    validateNumberOfWorkers,
 } from '../util/util';
 
 import {
@@ -528,13 +529,9 @@ function ClaimedFacilitiesDetails({
                     value={data.facility_workers_count}
                     onChange={updateFacilityWorkersCount}
                     disabled={updating}
-                    hasValidationErrorFn={() => {
-                        if (isEmpty(data.facility_workers_count)) {
-                            return false;
-                        }
-
-                        return !isInt(data.facility_workers_count, { min: 0 });
-                    }}
+                    hasValidationErrorFn={() =>
+                        validateNumberOfWorkers(data.facility_workers_count)
+                    }
                 />
                 <InputSection
                     label="Percentage of female workers"
@@ -706,7 +703,8 @@ function ClaimedFacilitiesDetails({
                             (!isEmpty(data.point_of_contact_email) &&
                                 !isEmail(data.point_of_contact_email)) ||
                             (!isEmpty(data.facility_website) &&
-                                !isValidFacilityURL(data.facility_website))
+                                !isValidFacilityURL(data.facility_website)) ||
+                            validateNumberOfWorkers(data.facility_workers_count)
                         }
                     >
                         Save

@@ -1,0 +1,1 @@
+test_raw_data_with_doublequote (api.tests.test_facility_submit.FacilitySubmitTest),38.246827

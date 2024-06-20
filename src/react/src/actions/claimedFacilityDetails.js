@@ -91,11 +91,7 @@ export function submitClaimedFacilityDetailsUpdate(claimID) {
                 'initial_facility_address',
             ]),
             {
-                facility_workers_count:
-                    isInteger(data.facility_workers_count) ||
-                    isInt(data.facility_workers_count)
-                        ? data.facility_workers_count
-                        : null,
+                facility_workers_count: data.facility_workers_count,
                 facility_female_workers_percentage:
                     isInteger(data.facility_female_workers_percentage) ||
                     isInt(data.facility_female_workers_percentage)
@@ -103,7 +99,6 @@ export function submitClaimedFacilityDetailsUpdate(claimID) {
                         : null,
             },
         );
-
         return apiRequest
             .put(makeGetOrUpdateApprovedFacilityClaimURL(claimID), updateData)
             .then(({ data: responseData }) =>
