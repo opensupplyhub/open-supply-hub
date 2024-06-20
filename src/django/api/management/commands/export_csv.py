@@ -18,18 +18,8 @@ def print_with_time(text: str) -> None:
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} -- {text}")
 
 
-def divide_chunks(list, size, amount):
-    chunks = []
-    last_index = size
-    first_index = 0
-    for i in range(1, amount + 1):
-        if i == amount:
-            chunks.append(list[first_index:])
-        else:
-            chunks.append(list[first_index:last_index])
-            first_index = last_index
-            last_index = last_index + size
-    return chunks
+def create_chunk(list, size, last_id):
+    return list[last_id:last_id + size]
 
 
 class Command(BaseCommand):
@@ -41,16 +31,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         facilities = FacilityIndex.objects.order_by("id").all()
         count = facilities.count()
-        size_of_chunk = 1000
-        amount_of_chunks = math.ceil(count / size_of_chunk)
         print_with_time(f"Amount of indexed facilities: {count}")
-        print_with_time(f"Amount of chunks: {amount_of_chunks}")
-
-        facilities_pool = divide_chunks(
-            facilities,
-            size_of_chunk,
-            amount_of_chunks
-        )
 
         serializer = FacilityDownloadSerializer()
 
@@ -65,16 +46,20 @@ class Command(BaseCommand):
         print_with_time("Written headers")
 
         print_with_time("Fetching data from DB")
-        i = 0
-        for facilities_chunk in facilities_pool:
-            for facility in facilities_chunk:
-                with open(f"./facilities-command-{now}.csv", 'a') as f:
-                    writer = csv.writer(f)
+
+        last_id = 0
+        size_of_chunk = 1000
+        while last_id != count - 1:
+            facility_chunk = create_chunk(facilities, size_of_chunk, last_id)
+            last_id = len(facility_chunk) - 1
+            with open(f"./facilities-command-{now}.csv", 'a') as f:
+                writer = csv.writer(f)
+                i = 0
+                for facility in facility_chunk:
                     if i == 0:
                         print_with_time(
                             f"Started exporting {count} facilities"
                         )
-
                     i += 1
 
                     row = serializer.get_row(facility)
