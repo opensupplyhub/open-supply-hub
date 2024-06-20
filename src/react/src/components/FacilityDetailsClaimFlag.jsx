@@ -66,7 +66,11 @@ const FacilityDetailsClaimFlag = ({
     const backgroundColor = getBackgroundColor(isClaimed, isPending);
     const claimFacilityLink = makeClaimFacilityLink(osId);
     return (
-        <div className={classes.root} style={{ backgroundColor }}>
+        <div
+            className={classes.root}
+            style={{ backgroundColor }}
+            data-testid="cliam-banner"
+        >
             <div className={classes.contentContainer}>
                 <Icon className={classes.itemPadding}>
                     <BadgeClaimed />
