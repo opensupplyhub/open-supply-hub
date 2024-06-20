@@ -27,6 +27,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Introduced a new set of Ruby scripts to filter and reorganize the incoming data at the Logstash app level, avoiding complex database queries that could lead to high database load.
     * Updated the `facilities` index template for OpenSearch to define how new fields within the facility documents are stored and indexed by OpenSearch.
     * Set up the main Logstash pipeline to run every 15 minutes.
+    * Introduce ingress and egress rules for the Opensearch and Logstash
+    * Parameterized database credentials for the logstash configs input
+    * Parameterized OpenSearch domain for the logstash configs output
+    * Specifies the ARN of an IAM role to be used as the master user for the OpenSearch domain
+    * Set EFS access point permissions for logstash:root user
 
     All changes have been made to meet the API specification requirements for `v1/facilities` API endpoint as closely as possible.
 

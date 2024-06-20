@@ -345,25 +345,6 @@ resource "aws_iam_role_policy" "step_functions_service_role_policy" {
 }
 
 #
-# OpenSearch IAM resources
-#
-data "aws_iam_policy_document" "opensearch_assume_role" {
-  statement {
-    effect    = "Allow"
-    actions   = ["sts:AssumeRole"]
-    principals {
-      type        = "Service"
-      identifiers = ["es.amazonaws.com"]
-    }
-  }
-}
-resource "aws_iam_role" "opensearch_role" {
-  name               = "opensearch${local.short}ServiceRole"
-
-  assume_role_policy = data.aws_iam_policy_document.opensearch_assume_role.json
-}
-
-#
 # CloudWatch Events IAM resources
 #
 data "aws_iam_policy_document" "cloudwatch_events_assume_role" {
@@ -405,23 +386,54 @@ resource "aws_iam_role_policy" "cloudwatch_events_service_role_policy" {
 data "aws_iam_policy_document" "opensearch" {
   statement {
     effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["es.amazonaws.com"]
-    }
-
-    actions = [
-      "logs:PutLogEvents",
-      "logs:PutLogEventsBatch",
-      "logs:CreateLogStream",
+    resources = [
+      aws_opensearch_domain.opensearch.arn
     ]
+    actions = [
+      "es:ESHttpPost",
+      "es:ESHttpGet",
+      "es:ESHttpDelete",
+      "es:ESHttpPut"
+    ]
+  }
+}
 
-    resources = ["arn:aws:logs:*"]
+data "aws_iam_policy_document" "opensearch_log_publishing_policy" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+    resources = [
+      "${aws_cloudwatch_log_group.opensearch.arn}:*"
+    ]
+    principals {
+      identifiers = ["es.amazonaws.com"]
+      type        = "Service"
+    }
+  }
+}
+
+data "aws_iam_policy_document" "opensearch_access_policy" {
+  statement {
+    actions   = ["es:*"]
+    effect    = "Allow"
+    resources = ["arn:aws:es:${var.aws_region}:${data.aws_caller_identity.current.account_id}:domain/opensearch-domain/*"]
+    principals {
+      identifiers = ["*"]
+      type        = "AWS"
+    }
   }
 }
 
 resource "aws_cloudwatch_log_resource_policy" "opensearch" {
   policy_name     = "opensearch"
-  policy_document = data.aws_iam_policy_document.opensearch.json
+  policy_document = data.aws_iam_policy_document.opensearch_log_publishing_policy.json
+}
+
+resource "aws_iam_role_policy" "opensearch" {
+  name   = "opensearch"
+  role   = aws_iam_role.app_task_role.name
+  policy = data.aws_iam_policy_document.opensearch.json
 }

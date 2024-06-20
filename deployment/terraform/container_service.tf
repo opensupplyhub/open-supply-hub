@@ -380,6 +380,12 @@ data "template_file" "app_logstash" {
     image                            = local.app_logstash_image
     log_group_name                   = "log${local.short}AppLogstash"
     aws_region                       = var.aws_region
+    opensearch_endpoint              = "${aws_opensearch_domain.opensearch.endpoint}:${var.opensearch_port}",
+    postgres_host                    = aws_route53_record.database.name
+    postgres_port                    = module.database_enc.port
+    postgres_user                    = var.rds_database_username
+    postgres_password                = var.rds_database_password
+    postgres_db                      = var.rds_database_name
   }
 }
 
@@ -398,8 +404,12 @@ resource "aws_ecs_task_definition" "app_logstash" {
   volume {
     name = "efs-logstash-jdbc-last-run"
     efs_volume_configuration {
-      file_system_id = aws_efs_file_system.efs_app_logstash.id
-      root_directory = "/"
+      file_system_id     = aws_efs_file_system.efs_app_logstash.id
+      root_directory     = "/"
+      transit_encryption = "ENABLED"
+      authorization_config {
+        access_point_id = aws_efs_access_point.efs_app_logstash_user.id
+      }
     }
   }
 }
