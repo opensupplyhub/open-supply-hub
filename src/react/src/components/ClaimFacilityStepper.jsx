@@ -23,7 +23,6 @@ import COLOURS from '../util/COLOURS';
 import { facilityClaimStepsNames } from '../util/constants';
 
 import {
-    claimFacilityIntroIsValid,
     claimFacilitySupportDocsIsValid,
     claimAFacilityFormIsValid,
     makeFacilityDetailLink,
@@ -126,7 +125,7 @@ const steps = Object.freeze([
         next: facilityClaimStepsNames.SUPPORT_DOC,
         hasBackButton: true,
         hasNextButton: true,
-        stepInputIsValid: claimFacilityIntroIsValid,
+        stepInputIsValid: ({ agreement }) => agreement,
     }),
     Object.freeze({
         name: facilityClaimStepsNames.SUPPORT_DOC,
