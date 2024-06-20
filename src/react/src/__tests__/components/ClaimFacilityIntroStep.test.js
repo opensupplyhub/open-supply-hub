@@ -18,12 +18,13 @@ describe('ClaimFacilityIntroStep component', () => {
         )
 
         reduxStore.dispatch(
-            updateClaimFacilityIntro(true)
+            updateClaimFacilityIntro('yes')
         )
 
         const updatedAgreementState = reduxStore.getState().claimFacility.claimData.formData.agreement
         expect(updatedAgreementState).toBe('yes')
     });
+
 
     it('select "No" radio button by action', () => {
         const {reduxStore} = renderWithProviders(
@@ -31,7 +32,7 @@ describe('ClaimFacilityIntroStep component', () => {
         )
 
         reduxStore.dispatch(
-            updateClaimFacilityIntro(false)
+            updateClaimFacilityIntro('no')
         )
 
         const updatedAgreementState = reduxStore.getState().claimFacility.claimData.formData.agreement
