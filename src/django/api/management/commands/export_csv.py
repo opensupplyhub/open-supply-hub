@@ -61,7 +61,7 @@ class Command(BaseCommand):
 
             headers = serializer.get_headers()
             writer.writerow(headers)
-        
+
         print_with_time("Written headers")
 
         print_with_time("Fetching data from DB")
