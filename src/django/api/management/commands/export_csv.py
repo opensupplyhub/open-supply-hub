@@ -61,13 +61,15 @@ class Command(BaseCommand):
 
             headers = serializer.get_headers()
             writer.writerow(headers)
+        
+        print_with_time("Written headers")
 
-            print_with_time("Written headers")
-
-            print_with_time("Fetching data from DB")
-            i = 0
-            for facilities_chunk in facilities_pool:
-                for facility in facilities_chunk:
+        print_with_time("Fetching data from DB")
+        i = 0
+        for facilities_chunk in facilities_pool:
+            for facility in facilities_chunk:
+                with open(f"./facilities-command-{now}.csv", 'a') as f:
+                    writer = csv.writer(f)
                     if i == 0:
                         print_with_time(
                             f"Started exporting {count} facilities"
@@ -83,6 +85,6 @@ class Command(BaseCommand):
                             f"Wrote {count_with_percent(i, count)}"
                         )
 
-            print_with_time(
-                f"Finished {count_with_percent(i, count)}"
-            )
+        print_with_time(
+            f"Finished {count_with_percent(i, count)}"
+        )
