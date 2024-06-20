@@ -283,6 +283,10 @@ variable "app_cc_port" {
   default = "80"
 }
 
+variable "opensearch_port" {
+  default = "443"
+}
+
 variable "gunicorn_worker_timeout" {
   default = "180"
 }
