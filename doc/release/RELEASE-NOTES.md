@@ -27,17 +27,23 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Introduced a new set of Ruby scripts to filter and reorganize the incoming data at the Logstash app level, avoiding complex database queries that could lead to high database load.
     * Updated the `facilities` index template for OpenSearch to define how new fields within the facility documents are stored and indexed by OpenSearch.
     * Set up the main Logstash pipeline to run every 15 minutes.
+    * Introduced ingress and egress rules for the Opensearch and Logstash.
+    * Parameterized database credentials for the logstash configs input.
+    * Parameterized OpenSearch domain for the logstash configs output.
+    * Specified the ARN of an IAM role to be used as the master user for the OpenSearch domain.
+    * Set EFS access point permissions for logstash:root user.
+    * Utilized environment variables to disable authentication for OpenSearch during local development, as the authentication isn't necessary.
 
     All changes have been made to meet the API specification requirements for `v1/facilities` API endpoint as closely as possible.
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* For the job `clean_ecr_repositories` of Destroy Environment action, it was added a new line to the script responsible for deleting ECR repositories, specifically targeting the `opensupplyhub-logstash` repository.
 
 ### Bugfix
 * *Describe bugfix here.*
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* [OSDEV-933](https://opensupplyhub.atlassian.net/browse/OSDEV-933) Facility Claims. Add "what is claims" screen. `What is claims` page with radio buttons has been added that explains more about the claim. Updated title and link text for not logged in user who wants to claim a production location.
 
 ### Release instructions:
 * Update code.
@@ -94,8 +100,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Release instructions:
 * Update code.
-* Apply DB migrations up to the latest one.
-* Run the index_facilities_new management command.
 
 
 ## Release 1.13.0
