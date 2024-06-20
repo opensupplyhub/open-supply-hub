@@ -387,7 +387,9 @@ data "aws_iam_policy_document" "opensearch" {
   statement {
     effect = "Allow"
     resources = [
-      aws_opensearch_domain.opensearch.arn
+      # TODO: Once count in openseach.tf be removed, uncomment this.
+      # aws_opensearch_domain.opensearch.arn
+      "*"
     ]
     actions = [
       "es:ESHttpPost",
