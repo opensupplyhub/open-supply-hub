@@ -518,6 +518,21 @@ variable "dedupe_hub_name" {
 variable "dedupe_hub_version" {
 }
 
+variable "opensearch_auth_type" {
+  type = string
+  default = "aws_iam"
+}
+
+variable "opensearch_ssl" {
+  type = bool
+  default = true
+}
+
+variable "opensearch_ssl_cert_verification" {
+  type = bool
+  default = true
+}
+
 variable "app_logstash_ecs_desired_count" {
   type    = number
   default = 0 # Temporary set to zero to prevent money consumption.
