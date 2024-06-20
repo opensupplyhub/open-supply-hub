@@ -74,7 +74,7 @@ const ClaimFacilitySupportDocs = ({
                 Your Contact Information
                 <RequiredAsterisk />
             </Typography>
-            <Typography variant="heading" style={yourContactInfoDescStyle}>
+            <Typography variant="subheading" style={yourContactInfoDescStyle}>
                 To confirm your affiliation with this production location, your
                 name and job title are required in addition to one of the
                 following: business website showing your name and title,
@@ -159,12 +159,12 @@ const ClaimFacilitySupportDocs = ({
                 Business Contact Information
                 <RequiredAsterisk />
             </Typography>
-            <Typography variant="heading" style={yourContactInfoDescStyle}>
+            <Typography variant="subheading" style={yourContactInfoDescStyle}>
                 To confirm the name and address of the production location, at
                 least one of the following documents is required: utility bill,
                 business website, registration document, or LinkedIn profile.
             </Typography>
-            <Typography variant="heading" style={yourContactInfoDescStyle}>
+            <Typography variant="subheading" style={yourContactInfoDescStyle}>
                 Please make sure to provide enough documentation to confirm the
                 production location’s name AND address.
             </Typography>
