@@ -22,7 +22,7 @@ describe('ClaimFacilityIntroStep component', () => {
         )
 
         const updatedAgreementState = reduxStore.getState().claimFacility.claimData.formData.agreement
-        expect(updatedAgreementState).toBe(true)
+        expect(updatedAgreementState).toBe('yes')
     });
 
     it('select "No" radio button by action', () => {
@@ -35,7 +35,7 @@ describe('ClaimFacilityIntroStep component', () => {
         )
 
         const updatedAgreementState = reduxStore.getState().claimFacility.claimData.formData.agreement
-        expect(updatedAgreementState).toBe(false)
+        expect(updatedAgreementState).toBe('no')
     });
 });
 

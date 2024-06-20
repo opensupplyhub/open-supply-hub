@@ -39,14 +39,14 @@ const styles = theme =>
     });
 
 function ClaimFacilityIntroStep({ classes, updateAgreement }) {
-    const [selectedValue, setRadio] = useState('');
+    const [selectedValue, setRadio] = useState('no');
 
     const handleChange = event => {
         setRadio(event.target.value);
     };
 
     useEffect(() => {
-        updateAgreement(selectedValue === 'yes');
+        updateAgreement(selectedValue);
     }, [selectedValue]);
 
     return (

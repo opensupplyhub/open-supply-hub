@@ -125,7 +125,7 @@ const steps = Object.freeze([
         next: facilityClaimStepsNames.SUPPORT_DOC,
         hasBackButton: true,
         hasNextButton: true,
-        stepInputIsValid: ({ agreement }) => agreement,
+        stepInputIsValid: ({ agreement }) => agreement === 'yes',
     }),
     Object.freeze({
         name: facilityClaimStepsNames.SUPPORT_DOC,
@@ -224,7 +224,7 @@ function ClaimFacilityStepper({
                 ) : null}
                 <div
                     style={
-                        formData.agreement
+                        formData.agreement === 'yes'
                             ? claimFacilityStepperStyles.buttonsContainerStyles
                             : claimFacilityStepperStyles.displayNone
                     }
@@ -385,7 +385,7 @@ ClaimFacilityStepper.propTypes = {
     formData: shape({
         yourName: string.isRequired,
         yourTitle: string.isRequired,
-        agreement: bool.isRequired,
+        agreement: string.isRequired,
     }).isRequired,
     error: arrayOf(string),
 };

@@ -40,7 +40,7 @@ const initialState = Object.freeze({
             sectors: null,
             numberOfWorkers: '',
             localLanguageName: '',
-            agreement: false,
+            agreement: 'no',
         }),
         fetching: false,
         error: null,
