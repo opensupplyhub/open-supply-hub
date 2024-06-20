@@ -17,7 +17,9 @@ resource "aws_opensearch_domain" "opensearch" {
   // TODO: remove 'count' meta-argument once OpenSearch will be fully setup
   count          = 0
   domain_name    = "opensearch-domain"
-  engine_version = "OpenSearch_2.11"
+  engine_version = "OpenSearch_2.13"
+
+  access_policies = data.aws_iam_policy_document.opensearch_access_policy.json
 
   cluster_config {
     instance_type          = "t3.small.search"
@@ -33,7 +35,7 @@ resource "aws_opensearch_domain" "opensearch" {
   advanced_security_options {
     enabled = true
     master_user_options {
-      master_user_arn = aws_iam_role.opensearch_role.arn
+     master_user_arn = aws_iam_role.app_task_role.arn
     }
   }
 
