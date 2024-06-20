@@ -382,7 +382,7 @@ data "template_file" "app_logstash" {
     aws_region                       = var.aws_region
     # TODO: enable opensearch_enpoint once count in opensearch.tf be removed
     # opensearch_endpoint              = "${aws_opensearch_domain.opensearch.endpoint}:${var.opensearch_port}"
-    opensearch_endpoint              = null
+    opensearch_endpoint              = "dummy-opensearch-endpoint"
     postgres_host                    = aws_route53_record.database.name
     postgres_port                    = module.database_enc.port
     postgres_user                    = var.rds_database_username
