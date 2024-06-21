@@ -1,5 +1,4 @@
 import csv
-import math
 from datetime import datetime
 
 from django.core.management.base import BaseCommand
@@ -23,6 +22,7 @@ def print_with_time(text: str) -> None:
 def create_chunk(list, size, index):
     return list[index:index + size]
 
+
 def create_with_headers():
     now = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
     filename = f"./facilities-command-{now}.csv"
@@ -33,8 +33,9 @@ def create_with_headers():
         headers = serializer.get_headers()
         writer.writerow(headers)
         print_with_time("Written headers")
-    
+
     return filename
+
 
 def modify(filename, chunk):
     with open(filename, 'a') as f:
