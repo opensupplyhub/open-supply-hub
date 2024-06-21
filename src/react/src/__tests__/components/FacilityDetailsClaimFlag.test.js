@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react';
 import FacilityDetailsClaimFlag from '../../components/FacilityDetailsClaimFlag';
 
 describe('FacilityDetailsClaimFlag', () => {
-    test('it renders without rashing', () => {
+    test('it renders without crashing', () => {
         const osId = 'id_221kjaksiie';
         const isClaimed = true;
         const isPending = false;
@@ -21,7 +21,7 @@ describe('FacilityDetailsClaimFlag', () => {
             </Router>,
         );
 
-        const banner = screen.getByTestId('cliam-banner');
+        const banner = screen.getByTestId('claim-banner');
 
         expect(banner).toBeInTheDocument();
     });
@@ -45,7 +45,7 @@ describe('FacilityDetailsClaimFlag', () => {
             </Router>,
         );
 
-        const banner = screen.getByTestId('cliam-banner');
+        const banner = screen.getByTestId('claim-banner');
 
         expect(banner).toHaveTextContent(text);
     });
@@ -68,7 +68,7 @@ describe('FacilityDetailsClaimFlag', () => {
             </Router>,
         );
 
-        const banner = screen.getByTestId('cliam-banner');
+        const banner = screen.getByTestId('claim-banner');
 
         expect(banner).toHaveTextContent(text);
     });
@@ -91,7 +91,7 @@ describe('FacilityDetailsClaimFlag', () => {
             </Router>,
         );
 
-        const banner = screen.getByTestId('cliam-banner');
+        const banner = screen.getByTestId('claim-banner');
 
         expect(banner).toHaveTextContent(text);
     });
@@ -113,7 +113,7 @@ describe('FacilityDetailsClaimFlag', () => {
             </Router>,
         );
 
-        const banner = screen.queryByTestId('cliam-banner');
+        const banner = screen.getByTestId('claim-banner');
 
         expect(banner).not.toBeInTheDocument();
     });

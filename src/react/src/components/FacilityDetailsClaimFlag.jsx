@@ -69,7 +69,7 @@ const FacilityDetailsClaimFlag = ({
         <div
             className={classes.root}
             style={{ backgroundColor }}
-            data-testid="cliam-banner"
+            data-testid="claim-banner"
         >
             <div className={classes.contentContainer}>
                 <Icon className={classes.itemPadding}>
