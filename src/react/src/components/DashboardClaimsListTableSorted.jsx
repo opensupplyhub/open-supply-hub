@@ -1,10 +1,8 @@
-// TODO: replace this by DashboardClaimsListTableSorted
-import React from 'react';
+import React, { useState } from 'react';
 import { func, shape } from 'prop-types';
 import { withRouter, Link } from 'react-router-dom';
 import Paper from '@material-ui/core/Paper';
 import Table from '@material-ui/core/Table';
-import TableHead from '@material-ui/core/TableHead';
 import TableBody from '@material-ui/core/TableBody';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
@@ -12,6 +10,7 @@ import moment from 'moment';
 import flow from 'lodash/flow';
 import includes from 'lodash/includes';
 import noop from 'lodash/noop';
+import DashboardClaimsListTableHeaderSorted from './DashboardClaimsListTableHeaderSorted';
 
 import { facilityClaimsListPropType } from '../util/propTypes';
 
@@ -22,7 +21,7 @@ import {
     getIDFromEvent,
 } from '../util/util';
 
-const dashboardClaimsListTableStyles = Object.freeze({
+const dashboardClaimsListTableSortedStyles = Object.freeze({
     containerStyles: Object.freeze({
         marginBottom: '60px',
     }),
@@ -31,10 +30,46 @@ const dashboardClaimsListTableStyles = Object.freeze({
     }),
 });
 
+// TODO: move sorting functionality (3 functions) to util.js
+function descendingComparator(a, b, orderBy) {
+    if (b[orderBy] < a[orderBy]) {
+        return -1;
+    }
+    if (b[orderBy] > a[orderBy]) {
+        return 1;
+    }
+    return 0;
+}
+
+function getComparator(order, orderBy) {
+    return order === 'desc'
+        ? (a, b) => descendingComparator(a, b, orderBy)
+        : (a, b) => -descendingComparator(a, b, orderBy);
+}
+
+function sort(array, comparator) {
+    const stabilizedThis = array.map((el, index) => [el, index]);
+    stabilizedThis.sort((a, b) => {
+        const order = comparator(a[0], b[0]);
+        if (order !== 0) {
+            return order;
+        }
+        return a[1] - b[1];
+    });
+    return stabilizedThis.map(el => el[0]);
+}
+
 const FACILITY_LINK_ID = 'FACILITY_LINK_ID';
 const CONTRIBUTOR_LINK_ID = 'CONTRIBUTOR_LINK_ID';
 
-function DashboardClaimsListTable({ data, history: { push } }) {
+function DashboardClaimsListTableSorted({
+    data,
+    handleSortClaims,
+    history: { push },
+}) {
+    const [order, setOrder] = useState('asc');
+    const [orderBy, setOrderBy] = useState('claim_id');
+
     const makeRowClickHandler = claimID =>
         flow(getIDFromEvent, id => {
             if (includes([FACILITY_LINK_ID, CONTRIBUTOR_LINK_ID], id)) {
@@ -44,27 +79,31 @@ function DashboardClaimsListTable({ data, history: { push } }) {
             return push(makeFacilityClaimDetailsLink(claimID));
         });
 
+    const handleRequestSort = (event, property) => {
+        const isAsc = orderBy === property && order === 'asc';
+        setOrder(isAsc ? 'desc' : 'asc');
+        setOrderBy(property);
+        const sortedData = sort(data, getComparator(order, orderBy)).slice();
+        handleSortClaims(sortedData);
+    };
+
     return (
-        <Paper style={dashboardClaimsListTableStyles.containerStyles}>
+        <Paper style={dashboardClaimsListTableSortedStyles.containerStyles}>
             <Table>
-                <TableHead>
-                    <TableRow>
-                        <TableCell padding="dense">Claim ID</TableCell>
-                        <TableCell>Facility Name</TableCell>
-                        <TableCell>Organization Name</TableCell>
-                        <TableCell padding="dense">Country</TableCell>
-                        <TableCell padding="dense">Created</TableCell>
-                        <TableCell padding="dense">Last Updated</TableCell>
-                        <TableCell padding="dense">Status</TableCell>
-                    </TableRow>
-                </TableHead>
+                <DashboardClaimsListTableHeaderSorted
+                    order={order}
+                    orderBy={orderBy}
+                    onRequestSort={handleRequestSort}
+                />
                 <TableBody>
                     {data.map(claim => (
                         <TableRow
                             hover
                             key={claim.id}
                             onClick={makeRowClickHandler(claim.id)}
-                            style={dashboardClaimsListTableStyles.rowStyles}
+                            style={
+                                dashboardClaimsListTableSortedStyles.rowStyles
+                            }
                         >
                             <TableCell padding="dense">{claim.id}</TableCell>
                             <TableCell>
@@ -109,11 +148,11 @@ function DashboardClaimsListTable({ data, history: { push } }) {
     );
 }
 
-DashboardClaimsListTable.propTypes = {
+DashboardClaimsListTableSorted.propTypes = {
     data: facilityClaimsListPropType.isRequired,
     history: shape({
         push: func.isRequired,
     }).isRequired,
 };
 
-export default withRouter(DashboardClaimsListTable);
+export default withRouter(DashboardClaimsListTableSorted);

@@ -6,11 +6,14 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 
 import DownloadFacilityClaimsButton from './DownloadFacilityClaimsButton';
-import DashboardClaimsListTable from './DashboardClaimsListTable';
+// TODO: Rename sorted table later
+// import DashboardClaimsListTable from './DashboardClaimsListTable';
+import DashboardClaimsListTableSorted from './DashboardClaimsListTableSorted';
 
 import {
     fetchFacilityClaims,
     clearFacilityClaims,
+    sortFacilityClaims,
 } from '../actions/claimFacilityDashboard';
 
 import { facilityClaimsListPropType } from '../util/propTypes';
@@ -29,6 +32,7 @@ const DashboardClaims = ({
     error,
     getClaims,
     clearClaims,
+    sortClaims,
     classes,
 }) => {
     useEffect(() => {
@@ -52,7 +56,10 @@ const DashboardClaims = ({
     return (
         <div className={classes.dashboardClaimsContainer}>
             <DownloadFacilityClaimsButton data={data} />
-            <DashboardClaimsListTable data={data} />
+            <DashboardClaimsListTableSorted
+                data={data}
+                handleSortClaims={sortClaims}
+            />
         </div>
     );
 };
@@ -68,6 +75,7 @@ DashboardClaims.propTypes = {
     error: arrayOf(string),
     getClaims: func.isRequired,
     clearClaims: func.isRequired,
+    sortClaims: func.isRequired,
 };
 
 function mapStateToProps({
@@ -86,6 +94,7 @@ function mapDispatchToProps(dispatch) {
     return {
         getClaims: () => dispatch(fetchFacilityClaims()),
         clearClaims: () => dispatch(clearFacilityClaims()),
+        sortClaims: () => dispatch(sortFacilityClaims()),
     };
 }
 
