@@ -85,12 +85,13 @@ function DashboardClaimsListTable({
         ).slice();
 
         handleSortClaims(sortedData);
-
-        setLoading(false);
     };
 
     useEffect(() => {
-        setLoading(false);
+        // Add small timeout to proper render the loader
+        setTimeout(() => {
+            setLoading(false);
+        }, 200);
     }, [data]);
 
     return (
