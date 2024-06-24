@@ -89,9 +89,11 @@ function DashboardClaimsListTable({
 
     useEffect(() => {
         // Add small timeout to proper render the loader
-        setTimeout(() => {
+        const timer = setTimeout(() => {
             setLoading(false);
         }, 200);
+
+        return () => clearTimeout(timer);
     }, [data]);
 
     return (
