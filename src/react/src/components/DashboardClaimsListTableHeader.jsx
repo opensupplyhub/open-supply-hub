@@ -1,15 +1,13 @@
-/* eslint no-unused-vars: 0 */
 import React from 'react';
+import { func, string } from 'prop-types';
 import TableHead from '@material-ui/core/TableHead';
 import TableSortLabel from '@material-ui/core/TableSortLabel';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
-// TODO: probably you don't need this util
-import { visuallyHidden } from '@mui/utils';
 
 const claimsListHeadCells = [
     {
-        id: 'claim_id',
+        id: 'id',
         numeric: true,
         padding: 'dense',
         label: 'Claim ID',
@@ -21,25 +19,25 @@ const claimsListHeadCells = [
         label: 'Facility Name',
     },
     {
-        id: 'organization_name',
+        id: 'contributor_name',
         numeric: false,
         disablePadding: true,
         label: 'Organization Name',
     },
     {
-        id: 'country',
+        id: 'facility_country_name',
         numeric: false,
         padding: 'dense',
         label: 'Country',
     },
     {
-        id: 'created',
+        id: 'created_at',
         numeric: false,
         padding: 'dense',
         label: 'Created',
     },
     {
-        id: 'last_updated',
+        id: 'updated_at',
         numeric: false,
         padding: 'dense',
         label: 'Last Updated',
@@ -52,11 +50,7 @@ const claimsListHeadCells = [
     },
 ];
 
-function DashboardClaimsListTableHeaderSorted({
-    order,
-    orderBy,
-    onRequestSort,
-}) {
+function DashboardClaimsListTableHeader({ order, orderBy, onRequestSort }) {
     const createSortHandler = property => event => {
         onRequestSort(event, property);
     };
@@ -75,13 +69,6 @@ function DashboardClaimsListTableHeaderSorted({
                             onClick={createSortHandler(headCell.id)}
                         >
                             {headCell.label}
-                            {orderBy === headCell.id ? (
-                                <span sx={visuallyHidden}>
-                                    {order === 'desc'
-                                        ? 'sorted descending'
-                                        : 'sorted ascending'}
-                                </span>
-                            ) : null}
                         </TableSortLabel>
                     </TableCell>
                 ))}
@@ -90,6 +77,10 @@ function DashboardClaimsListTableHeaderSorted({
     );
 }
 
-// TODO: Apply proptypes
+DashboardClaimsListTableHeader.propTypes = {
+    order: string.isRequired,
+    orderBy: string.isRequired,
+    onRequestSort: func.isRequired,
+};
 
-export default DashboardClaimsListTableHeaderSorted;
+export default DashboardClaimsListTableHeader;

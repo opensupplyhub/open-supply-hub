@@ -1,10 +1,8 @@
-// TODO: replace this by DashboardClaimsListTableSorted
-import React from 'react';
+import React, { useState } from 'react';
 import { func, shape } from 'prop-types';
 import { withRouter, Link } from 'react-router-dom';
 import Paper from '@material-ui/core/Paper';
 import Table from '@material-ui/core/Table';
-import TableHead from '@material-ui/core/TableHead';
 import TableBody from '@material-ui/core/TableBody';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
@@ -12,6 +10,7 @@ import moment from 'moment';
 import flow from 'lodash/flow';
 import includes from 'lodash/includes';
 import noop from 'lodash/noop';
+import DashboardClaimsListTableHeader from './DashboardClaimsListTableHeader';
 
 import { facilityClaimsListPropType } from '../util/propTypes';
 
@@ -20,6 +19,8 @@ import {
     makeProfileRouteLink,
     makeFacilityClaimDetailsLink,
     getIDFromEvent,
+    getComparator,
+    sort,
 } from '../util/util';
 
 const dashboardClaimsListTableStyles = Object.freeze({
@@ -34,7 +35,18 @@ const dashboardClaimsListTableStyles = Object.freeze({
 const FACILITY_LINK_ID = 'FACILITY_LINK_ID';
 const CONTRIBUTOR_LINK_ID = 'CONTRIBUTOR_LINK_ID';
 
-function DashboardClaimsListTable({ data, history: { push } }) {
+function DashboardClaimsListTable({
+    data,
+    handleSortClaims,
+    history: { push },
+}) {
+    /*
+     Facility claims are sorted by id/desc by default on BE,
+     make same defaults on FE
+     */
+    const [order, setOrder] = useState('desc');
+    const [orderBy, setOrderBy] = useState('id');
+
     const makeRowClickHandler = claimID =>
         flow(getIDFromEvent, id => {
             if (includes([FACILITY_LINK_ID, CONTRIBUTOR_LINK_ID], id)) {
@@ -44,20 +56,31 @@ function DashboardClaimsListTable({ data, history: { push } }) {
             return push(makeFacilityClaimDetailsLink(claimID));
         });
 
+    const handleRequestSort = (event, property) => {
+        let isAsc;
+        setOrder(prevOrder => {
+            isAsc = orderBy === property && prevOrder === 'asc';
+            const newOrder = isAsc ? 'desc' : 'asc';
+            return newOrder;
+        });
+
+        setOrderBy(property);
+
+        const sortedData = sort(
+            data,
+            getComparator(isAsc ? 'desc' : 'asc', property),
+        ).slice();
+        handleSortClaims(sortedData);
+    };
+
     return (
         <Paper style={dashboardClaimsListTableStyles.containerStyles}>
             <Table>
-                <TableHead>
-                    <TableRow>
-                        <TableCell padding="dense">Claim ID</TableCell>
-                        <TableCell>Facility Name</TableCell>
-                        <TableCell>Organization Name</TableCell>
-                        <TableCell padding="dense">Country</TableCell>
-                        <TableCell padding="dense">Created</TableCell>
-                        <TableCell padding="dense">Last Updated</TableCell>
-                        <TableCell padding="dense">Status</TableCell>
-                    </TableRow>
-                </TableHead>
+                <DashboardClaimsListTableHeader
+                    order={order}
+                    orderBy={orderBy}
+                    onRequestSort={handleRequestSort}
+                />
                 <TableBody>
                     {data.map(claim => (
                         <TableRow

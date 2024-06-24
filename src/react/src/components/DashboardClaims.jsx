@@ -6,9 +6,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 
 import DownloadFacilityClaimsButton from './DownloadFacilityClaimsButton';
-// TODO: Rename sorted table later
-// import DashboardClaimsListTable from './DashboardClaimsListTable';
-import DashboardClaimsListTableSorted from './DashboardClaimsListTableSorted';
+import DashboardClaimsListTable from './DashboardClaimsListTable';
 
 import {
     fetchFacilityClaims,
@@ -56,7 +54,7 @@ const DashboardClaims = ({
     return (
         <div className={classes.dashboardClaimsContainer}>
             <DownloadFacilityClaimsButton data={data} />
-            <DashboardClaimsListTableSorted
+            <DashboardClaimsListTable
                 data={data}
                 handleSortClaims={sortClaims}
             />
@@ -94,7 +92,7 @@ function mapDispatchToProps(dispatch) {
     return {
         getClaims: () => dispatch(fetchFacilityClaims()),
         clearClaims: () => dispatch(clearFacilityClaims()),
-        sortClaims: () => dispatch(sortFacilityClaims()),
+        sortClaims: sortedData => dispatch(sortFacilityClaims(sortedData)),
     };
 }
 
