@@ -1,10 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import FacilityDetailsClaimFlag from '../../components/FacilityDetailsClaimFlag';
 
-
-function renderComponent(props = {}) {
+describe('FacilityDetailsClaimFlag', () => {
     const defaultProps = {
         osId: 'id_221kjaksiie',
         isClaimed: false,
@@ -12,20 +12,17 @@ function renderComponent(props = {}) {
         isEmbed: false,
     };
 
-    render(
-        <Router>
-            <FacilityDetailsClaimFlag
-                {...defaultProps} {...props}
-            />
-        </Router>,
-    );
-}
-
-describe('FacilityDetailsClaimFlag', () => {
     test('it renders without crashing', () => {
         const isClaimed = true;
 
-        renderComponent({ isClaimed })
+        renderWithProviders(
+            <Router>
+                <FacilityDetailsClaimFlag
+                    {...defaultProps}
+                    isClaimed={isClaimed}
+                />
+            </Router>,
+        );
 
         const banner = screen.getByTestId('claim-banner');
 
@@ -37,7 +34,14 @@ describe('FacilityDetailsClaimFlag', () => {
         const text =
             'This production location has been claimed by an owner or manager';
 
-        renderComponent({ isClaimed })
+        renderWithProviders(
+            <Router>
+                <FacilityDetailsClaimFlag
+                    {...defaultProps}
+                    isClaimed={isClaimed}
+                />
+            </Router>,
+        );
 
         const banner = screen.getByTestId('claim-banner');
 
@@ -47,7 +51,11 @@ describe('FacilityDetailsClaimFlag', () => {
     test('facility has not been claimed', () => {
         const text = 'This production location has not been claimed';
 
-        renderComponent()
+        renderWithProviders(
+            <Router>
+                <FacilityDetailsClaimFlag {...defaultProps} />
+            </Router>,
+        );
 
         const banner = screen.getByTestId('claim-banner');
 
@@ -58,7 +66,14 @@ describe('FacilityDetailsClaimFlag', () => {
         const isPending = true;
         const text = 'There is a pending claim for this production location';
 
-        renderComponent({ isPending })
+        renderWithProviders(
+            <Router>
+                <FacilityDetailsClaimFlag
+                    {...defaultProps}
+                    isPending={isPending}
+                />
+            </Router>,
+        );
 
         const banner = screen.getByTestId('claim-banner');
 
@@ -68,7 +83,11 @@ describe('FacilityDetailsClaimFlag', () => {
     test('facility claim should not be rendered', () => {
         const isEmbed = true;
 
-        renderComponent({ isEmbed })
+        renderWithProviders(
+            <Router>
+                <FacilityDetailsClaimFlag {...defaultProps} isEmbed={isEmbed} />
+            </Router>,
+        );
 
         const banner = screen.queryByTestId('claim-banner');
 
