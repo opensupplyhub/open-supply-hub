@@ -4,14 +4,18 @@ import { render, screen } from '@testing-library/react';
 import FacilityDetailsClaimFlag from '../../components/FacilityDetailsClaimFlag';
 
 
-function renderComponent({ osId, isClaimed, isPending, isEmbed }) {
+function renderComponent(props = {}) {
+    const defaultProps = {
+        osId: 'id_221kjaksiie',
+        isClaimed: false,
+        isPending: false,
+        isEmbed: false,
+    };
+
     render(
         <Router>
             <FacilityDetailsClaimFlag
-                osId={osId}
-                isClaimed={isClaimed}
-                isPending={isPending}
-                isEmbed={isEmbed}
+                {...defaultProps} {...props}
             />
         </Router>,
     );
@@ -19,12 +23,9 @@ function renderComponent({ osId, isClaimed, isPending, isEmbed }) {
 
 describe('FacilityDetailsClaimFlag', () => {
     test('it renders without crashing', () => {
-        const osId = 'id_221kjaksiie';
         const isClaimed = true;
-        const isPending = false;
-        const isEmbed = false;
 
-        renderComponent({ osId, isClaimed, isPending, isEmbed })
+        renderComponent({ isClaimed })
 
         const banner = screen.getByTestId('claim-banner');
 
@@ -32,14 +33,11 @@ describe('FacilityDetailsClaimFlag', () => {
     });
 
     test('facility has been claimed', () => {
-        const osId = 'id_221kjaksiie';
         const isClaimed = true;
-        const isPending = false;
-        const isEmbed = false;
         const text =
             'This production location has been claimed by an owner or manager';
 
-        renderComponent({ osId, isClaimed, isPending, isEmbed })
+        renderComponent({ isClaimed })
 
         const banner = screen.getByTestId('claim-banner');
 
@@ -47,13 +45,9 @@ describe('FacilityDetailsClaimFlag', () => {
     });
 
     test('facility has not been claimed', () => {
-        const osId = 'id_221kjaksiie';
-        const isClaimed = false;
-        const isPending = false;
-        const isEmbed = false;
         const text = 'This production location has not been claimed';
 
-        renderComponent({ osId, isClaimed, isPending, isEmbed })
+        renderComponent()
 
         const banner = screen.getByTestId('claim-banner');
 
@@ -61,13 +55,10 @@ describe('FacilityDetailsClaimFlag', () => {
     });
 
     test('pending claim for facility ', () => {
-        const osId = 'id_221kjaksiie';
-        const isClaimed = false;
         const isPending = true;
-        const isEmbed = false;
         const text = 'There is a pending claim for this production location';
 
-        renderComponent({ osId, isClaimed, isPending, isEmbed })
+        renderComponent({ isPending })
 
         const banner = screen.getByTestId('claim-banner');
 
@@ -75,12 +66,9 @@ describe('FacilityDetailsClaimFlag', () => {
     });
 
     test('facility claim should not be rendered', () => {
-        const osId = 'id_221kjaksiie';
-        const isClaimed = false;
-        const isPending = true;
         const isEmbed = true;
 
-        renderComponent({ osId, isClaimed, isPending, isEmbed })
+        renderComponent({ isEmbed })
 
         const banner = screen.queryByTestId('claim-banner');
 
