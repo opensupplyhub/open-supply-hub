@@ -47,12 +47,12 @@ const getBackgroundColor = (isClaimed, isPending) => {
 
 const getMainText = (isClaimed, isPending) => {
     if (isClaimed) {
-        return 'This facility has been claimed by an owner or manager';
+        return 'This production location has been claimed by an owner or manager';
     }
     if (isPending) {
-        return 'There is a pending claim for this facility';
+        return 'There is a pending claim for this production location';
     }
-    return 'This facility has not been claimed';
+    return 'This production location has not been claimed';
 };
 
 const FacilityDetailsClaimFlag = ({
@@ -66,7 +66,11 @@ const FacilityDetailsClaimFlag = ({
     const backgroundColor = getBackgroundColor(isClaimed, isPending);
     const claimFacilityLink = makeClaimFacilityLink(osId);
     return (
-        <div className={classes.root} style={{ backgroundColor }}>
+        <div
+            className={classes.root}
+            style={{ backgroundColor }}
+            data-testid="claim-banner"
+        >
             <div className={classes.contentContainer}>
                 <Icon className={classes.itemPadding}>
                     <BadgeClaimed />
