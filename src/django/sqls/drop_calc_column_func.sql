@@ -1,1 +1,0 @@
-DROP FUNCTION IF EXISTS calc_column(int8, int8);

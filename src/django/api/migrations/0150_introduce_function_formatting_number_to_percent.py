@@ -10,8 +10,8 @@ helper = MigrationHelper(connection)
 
 def introduce_function_formatting_number_to_percent(apps, schema_editor):
     helper.run_sql_files([
-        'drop_calc_column_func.sql',
-        'add_percent_to_number.sql',
+        '0150_drop_calc_column_func.sql',
+        '0150_add_percent_to_number.sql',
     ])
 
 
