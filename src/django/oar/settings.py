@@ -476,6 +476,7 @@ if not DEBUG:
         'environment': ENVIRONMENT.lower(),
         'root': BASE_DIR,
         'suppress_reinit_warning': True,
+        'capture_ip': False
     }
     import rollbar
     rollbar.init(**ROLLBAR)
