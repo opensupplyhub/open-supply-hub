@@ -12,8 +12,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Database changes
 #### Migrations:
-* *Describe migrations here.*
-
+* 0150_introduce_function_formatting_number_to_percent - adds add_percent_to_number to DB and drop
+drop_calc_column_func.
 #### Scheme changes
 * *Describe scheme changes here.*
 
@@ -38,12 +38,15 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * For the job `clean_ecr_repositories` of Destroy Environment action, it was added a new line to the script responsible for deleting ECR repositories, specifically targeting the `opensupplyhub-logstash` repository.
+* The `reindex_database` and `index_facilities_new` commands have been removed from the `post_deployment` command.
 
 ### Bugfix
-* *Describe bugfix here.*
+* [OSDEV-1098](https://opensupplyhub.atlassian.net/browse/OSDEV-1098) Reporting. A columns values in the report "Contributor type by %" are not cumulative. The SQL for the report has been rewritten in such a way that first calculates the monthly counts, then computes the cumulative counts for each month, and finally applies the add_percent_to_number function to get the desired percentages. This gives us the accumulated values for each month.
 
 ### What's new
+* [OSDEV-1071](https://opensupplyhub.atlassian.net/browse/OSDEV-1071)  Replaced the term "facility" with "production location" in the claims banners
 * [OSDEV-933](https://opensupplyhub.atlassian.net/browse/OSDEV-933) Facility Claims. Add "what is claims" screen. `What is claims` page with radio buttons has been added that explains more about the claim. Updated title and link text for not logged in user who wants to claim a production location.
+* [OSDEV-1088](https://opensupplyhub.atlassian.net/browse/OSDEV-1088) - Collecting users' public IP addresses in the Rollbar error tracker has been disabled to meet GDPR compliance.
 
 ### Release instructions:
 * Update code.
