@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION add_percent_to_number(total_count int8, filtered_count int8)
+CREATE OR REPLACE FUNCTION add_percent_to_number(total_count numeric, filtered_count numeric)
 RETURNS text AS $$
 DECLARE
 BEGIN
