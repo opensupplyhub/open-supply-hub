@@ -45,6 +45,7 @@ drop_calc_column_func.
 ### What's new
 * [OSDEV-1071](https://opensupplyhub.atlassian.net/browse/OSDEV-1071)  Replaced the term "facility" with "production location" in the claims banners
 * [OSDEV-933](https://opensupplyhub.atlassian.net/browse/OSDEV-933) Facility Claims. Add "what is claims" screen. `What is claims` page with radio buttons has been added that explains more about the claim. Updated title and link text for not logged in user who wants to claim a production location.
+* [OSDEV-1088](https://opensupplyhub.atlassian.net/browse/OSDEV-1088) - Collecting users' public IP addresses in the Rollbar error tracker has been disabled to meet GDPR compliance.
 
 ### Release instructions:
 * Update code.
