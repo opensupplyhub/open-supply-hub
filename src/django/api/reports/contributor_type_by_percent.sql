@@ -1,17 +1,5 @@
 -- Count the total number of contributors which cumulate each month
 -- Count cumulative level of contributor type by % only for contributors that have active data.
-
-CREATE OR REPLACE FUNCTION calc_column(total_count bigint, filtered_count bigint)
-RETURNS text AS $$
-DECLARE
-BEGIN
-    IF total_count = 0 THEN
-        RETURN '0%';
-    ELSE
-        RETURN round(100.0 * filtered_count / total_count, 2) || '%';
-    END IF;
-END;
-$$ LANGUAGE plpgsql;
 WITH base_query AS (
   SELECT
     min(to_char(s.created_at, 'YYYY-MM')) AS month,
@@ -57,12 +45,12 @@ cumulative_counts AS (
 SELECT
   month,
   total_contributors,
-  calc_column(total_contributors, "Brand / Retailer") AS "Brand / Retailer",
-  calc_column(total_contributors, "Civil Society Organization") AS "Civil Society Organization",
-  calc_column(total_contributors, "Facility / Factory / Manufacturing Group / Supplier / Vendor") AS "Facility / Factory / Manufacturing Group / Supplier / Vendor",
-  calc_column(total_contributors, "Multi-Stakeholder Initiative") AS "Multi-Stakeholder Initiative",
-  calc_column(total_contributors, "Auditor / Certification Scheme / Service Provider") AS "Auditor / Certification Scheme / Service Provider",
-  calc_column(total_contributors, "Academic / Researcher / Journalist / Student") AS "Academic / Researcher / Journalist / Student",
-  calc_column(total_contributors, "Other") AS "Other"
+  add_percent_to_number(total_contributors, "Brand / Retailer") AS "Brand / Retailer",
+  add_percent_to_number(total_contributors, "Civil Society Organization") AS "Civil Society Organization",
+  add_percent_to_number(total_contributors, "Facility / Factory / Manufacturing Group / Supplier / Vendor") AS "Facility / Factory / Manufacturing Group / Supplier / Vendor",
+  add_percent_to_number(total_contributors, "Multi-Stakeholder Initiative") AS "Multi-Stakeholder Initiative",
+  add_percent_to_number(total_contributors, "Auditor / Certification Scheme / Service Provider") AS "Auditor / Certification Scheme / Service Provider",
+  add_percent_to_number(total_contributors, "Academic / Researcher / Journalist / Student") AS "Academic / Researcher / Journalist / Student",
+  add_percent_to_number(total_contributors, "Other") AS "Other"
 FROM cumulative_counts
 ORDER BY month DESC;
