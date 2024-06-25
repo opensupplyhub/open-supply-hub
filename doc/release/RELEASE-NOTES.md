@@ -12,8 +12,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Database changes
 #### Migrations:
-* *Describe migrations here.*
-
+* 0150_introduce_function_formatting_number_to_percent - adds add_percent_to_number to DB and drop
+drop_calc_column_func.
 #### Scheme changes
 * *Describe scheme changes here.*
 
@@ -48,7 +48,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Release instructions:
 * Update code.
-* Apply DB migrations up to the latest one.
 
 
 ## Release 1.14.0
