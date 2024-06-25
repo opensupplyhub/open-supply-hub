@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS calc_column(numeric, numeric);
