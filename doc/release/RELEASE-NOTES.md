@@ -38,6 +38,7 @@ drop_calc_column_func.
 
 ### Architecture/Environment changes
 * For the job `clean_ecr_repositories` of Destroy Environment action, it was added a new line to the script responsible for deleting ECR repositories, specifically targeting the `opensupplyhub-logstash` repository.
+* The `reindex_database` and `index_facilities_new` commands have been removed from the `post_deployment` command.
 
 ### Bugfix
 * [OSDEV-1098](https://opensupplyhub.atlassian.net/browse/OSDEV-1098) Reporting. A columns values in the report "Contributor type by %" are not cumulative. The SQL for the report has been rewritten in such a way that first calculates the monthly counts, then computes the cumulative counts for each month, and finally applies the add_percent_to_number function to get the desired percentages. This gives us the accumulated values for each month.
