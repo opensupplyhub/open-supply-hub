@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import ControlledTextInput from './ControlledTextInput';
 import Button from './Button';
 import ContributeFormSelectListToReplace from './ContributeFormSelectListToReplace';
+import ErrorItem from './ErrorItem';
 
 import COLOURS from '../util/COLOURS';
 
@@ -95,7 +96,6 @@ class ContributeForm extends Component {
     handleUploadList = () => this.props.uploadList(this.fileInput);
 
     render() {
-        const parser = new DOMParser();
         const {
             name,
             description,
@@ -115,25 +115,9 @@ class ContributeForm extends Component {
             error && error.length ? (
                 <React.Fragment>
                     <ul>
-                        {error.map(err => {
-                            const parsedString = parser
-                                .parseFromString(err, 'text/html')
-                                .querySelector('body').innerHTML;
-                            function createMarkup() {
-                                return {
-                                    __html: parsedString,
-                                };
-                            }
-
-                            return (
-                                <li
-                                    key={err}
-                                    style={{ color: 'red' }}
-                                    className="content"
-                                    dangerouslySetInnerHTML={createMarkup()}
-                                />
-                            );
-                        })}
+                        {error.map(err => (
+                            <ErrorItem key={err} errorText={err} />
+                        ))}
                     </ul>
                     <div style={contributeFormStyles.postErrorHelp}>
                         If you continue to have trouble submitting your list,
