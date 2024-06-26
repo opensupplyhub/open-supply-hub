@@ -119,16 +119,19 @@ class ContributeForm extends Component {
                             const parsedString = parser
                                 .parseFromString(err, 'text/html')
                                 .querySelector('body').innerHTML;
+                            function createMarkup() {
+                                return {
+                                    __html: parsedString,
+                                };
+                            }
 
                             return (
                                 <li
                                     key={err}
                                     style={{ color: 'red' }}
                                     className="content"
-                                    dangerouslySetInnerHTML={{
-                                        __html: parsedString,
-                                    }}
-                                ></li>
+                                    dangerouslySetInnerHTML={createMarkup()}
+                                />
                             );
                         })}
                     </ul>
