@@ -98,13 +98,13 @@ Each new feature should reside in its own branch, which can be pushed to the cen
 
 #### Release branches and tags
 
-Once `main` has acquired enough features for a release (or a predetermined release date is approaching), you run the Release [Init] GitHub workflow that creates a new release branch with a version number for the release. The release version number for release branches includes only the major and minor versions.
+Once `main` has acquired enough features for a release (or a predetermined release date is approaching), you run the `Release [Init]` GitHub workflow that creates a new release branch with a version number for the release. The release version number for release branches includes only the major and minor versions.
 
-When the release branch is ready for release, the Release [Deploy] workflow should be run for each environment, such as sandbox and production. This workflow will create two Git tags, each with a version number.
+When the release branch is ready for release, the `Release [Deploy]` workflow should be run for each environment, such as sandbox and production. This workflow will create two Git tags, each with a version number.
 
 #### Hotfix branches
 
-Hotfix branches are utilized to quickly patch production and sandbox releases. They resemble release branches and feature branches, except they are based on a release branch instead of `main`. This is the only branch that should fork directly from a release branch. As soon as the fix is complete, it should be merged into the release branch and, if the fix isn't dirty, into `main` as well. After manually running the Release [Deploy] workflow, two new tags with increased patch versions will be created, and the new version will be shipped to sandbox and production environments.
+Hotfix branches are utilized to quickly patch production and sandbox releases. They resemble release branches and feature branches, except they are based on a release branch instead of `main`. This is the only branch that should fork directly from a release branch. As soon as the fix is complete, it should be merged into the release branch and, if the fix isn't dirty, into `main` as well. After manually running the `Release [Deploy]` workflow, two new tags with increased patch versions will be created, and the new version will be shipped to sandbox and production environments.
 
 
 ## Development and release of the new release version
@@ -127,7 +127,7 @@ Make sure that:
 
 1. Code freeze occurs every Monday following two weeks of development for a new release version. To enhance communication within the team, all stakeholders must be notified about the code freeze two working days before the code freeze by the responsible person for the release.
 2. Before initiating the code freeze process, ensure that all commands required for the deployment process (e.g., `index_facilities_new`) are included in the `post_deployment` command.
-3. On the day of the code freeze, the responsible person has to run the `Release [Init]` workflow from the `main` branch, specifying the major and minor versions of the release. Subsequently, the `releases/v.X.Y` branch will be created and automatically deployed to the running pre-prod environment via the Deploy to AWS workflow.
+3. On the day of the code freeze, the responsible person has to run the `Release [Init]` workflow from the `main` branch, specifying the major and minor versions of the release. Subsequently, the `releases/v.X.Y` branch will be created and automatically deployed to the running pre-prod environment via the `Deploy to AWS` workflow.
 4. In case there is a need to run a command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Migration+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5DHow-to-correctly-run-migrations-for-our-four-environments%3F---Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
 
 ### QA process
@@ -154,7 +154,7 @@ In case there is a need to run additional command in the terminal of the Django 
 
 ### Hotfixes
 
-- To deploy a hotfix to pre-prod, you should fork from the latest release branch, and after preparing the fix, merge it back. Merging will trigger the Deploy to AWS workflow that will deploy the hotfix to the **running** pre-prod environment.
+- To deploy a hotfix to pre-prod, you should fork from the latest release branch, and after preparing the fix, merge it back. Merging will trigger the `Deploy to AWS` workflow that will deploy the hotfix to the **running** pre-prod environment.
 - To release a hotfix to production and staging, you should fork from the latest release branch, and after preparing the fix, merge it back. The last step is to execute the `Release [Deploy]` workflow for each environment separately, which will deploy the fix to these two environments.
 
 ### Shut down the pre-prod environment
