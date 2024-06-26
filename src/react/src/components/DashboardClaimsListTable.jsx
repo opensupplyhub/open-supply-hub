@@ -1,7 +1,6 @@
 import React from 'react';
 import { func, shape } from 'prop-types';
 import { withRouter, Link } from 'react-router-dom';
-import Paper from '@material-ui/core/Paper';
 import Table from '@material-ui/core/Table';
 import TableHead from '@material-ui/core/TableHead';
 import TableBody from '@material-ui/core/TableBody';
@@ -44,67 +43,61 @@ function DashboardClaimsListTable({ data, history: { push } }) {
         });
 
     return (
-        <Paper style={dashboardClaimsListTableStyles.containerStyles}>
-            <Table>
-                <TableHead>
-                    <TableRow>
-                        <TableCell padding="dense">Claim ID</TableCell>
-                        <TableCell>Facility Name</TableCell>
-                        <TableCell>Organization Name</TableCell>
-                        <TableCell padding="dense">Country</TableCell>
-                        <TableCell padding="dense">Created</TableCell>
-                        <TableCell padding="dense">Last Updated</TableCell>
-                        <TableCell padding="dense">Status</TableCell>
+        <Table>
+            <TableHead>
+                <TableRow>
+                    <TableCell padding="dense">Claim ID</TableCell>
+                    <TableCell>Facility Name</TableCell>
+                    <TableCell>Organization Name</TableCell>
+                    <TableCell padding="dense">Country</TableCell>
+                    <TableCell padding="dense">Created</TableCell>
+                    <TableCell padding="dense">Last Updated</TableCell>
+                    <TableCell padding="dense">Status</TableCell>
+                </TableRow>
+            </TableHead>
+            <TableBody>
+                {data.map(claim => (
+                    <TableRow
+                        hover
+                        key={claim.id}
+                        onClick={makeRowClickHandler(claim.id)}
+                        style={dashboardClaimsListTableStyles.rowStyles}
+                    >
+                        <TableCell padding="dense">{claim.id}</TableCell>
+                        <TableCell>
+                            <Link
+                                to={makeFacilityDetailLink(claim.os_id)}
+                                href={makeFacilityDetailLink(claim.os_id)}
+                                id={FACILITY_LINK_ID}
+                            >
+                                {claim.facility_name}
+                            </Link>
+                        </TableCell>
+                        <TableCell>
+                            <Link
+                                to={makeProfileRouteLink(claim.contributor_id)}
+                                href={makeProfileRouteLink(
+                                    claim.contributor_id,
+                                )}
+                                id={CONTRIBUTOR_LINK_ID}
+                            >
+                                {claim.contributor_name}
+                            </Link>
+                        </TableCell>
+                        <TableCell padding="dense">
+                            {claim.facility_country_name}
+                        </TableCell>
+                        <TableCell padding="dense">
+                            {moment(claim.created_at).format('LL')}
+                        </TableCell>
+                        <TableCell padding="dense">
+                            {moment(claim.updated_at).format('LL')}
+                        </TableCell>
+                        <TableCell padding="dense">{claim.status}</TableCell>
                     </TableRow>
-                </TableHead>
-                <TableBody>
-                    {data.map(claim => (
-                        <TableRow
-                            hover
-                            key={claim.id}
-                            onClick={makeRowClickHandler(claim.id)}
-                            style={dashboardClaimsListTableStyles.rowStyles}
-                        >
-                            <TableCell padding="dense">{claim.id}</TableCell>
-                            <TableCell>
-                                <Link
-                                    to={makeFacilityDetailLink(claim.os_id)}
-                                    href={makeFacilityDetailLink(claim.os_id)}
-                                    id={FACILITY_LINK_ID}
-                                >
-                                    {claim.facility_name}
-                                </Link>
-                            </TableCell>
-                            <TableCell>
-                                <Link
-                                    to={makeProfileRouteLink(
-                                        claim.contributor_id,
-                                    )}
-                                    href={makeProfileRouteLink(
-                                        claim.contributor_id,
-                                    )}
-                                    id={CONTRIBUTOR_LINK_ID}
-                                >
-                                    {claim.contributor_name}
-                                </Link>
-                            </TableCell>
-                            <TableCell padding="dense">
-                                {claim.facility_country_name}
-                            </TableCell>
-                            <TableCell padding="dense">
-                                {moment(claim.created_at).format('LL')}
-                            </TableCell>
-                            <TableCell padding="dense">
-                                {moment(claim.updated_at).format('LL')}
-                            </TableCell>
-                            <TableCell padding="dense">
-                                {claim.status}
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </Paper>
+                ))}
+            </TableBody>
+        </Table>
     );
 }
 

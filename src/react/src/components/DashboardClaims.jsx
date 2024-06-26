@@ -1,7 +1,10 @@
+/* eslint no-unused-vars: 0 */
 import React, { useEffect } from 'react';
+import ReactSelect from 'react-select';
 import { connect } from 'react-redux';
 import { arrayOf, bool, func, string } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
+import Paper from '@material-ui/core/Paper';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 
@@ -15,11 +18,26 @@ import {
 
 import { facilityClaimsListPropType } from '../util/propTypes';
 
+const STATUS = 'STATUS';
+
 const dashboardClaimsStyles = () =>
     Object.freeze({
+        container: Object.freeze({
+            marginBottom: '60px',
+            width: '100%',
+        }),
         dashboardClaimsContainer: Object.freeze({
             marginTop: '24px',
             width: '100%',
+        }),
+        filterRow: Object.freeze({
+            padding: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+        }),
+        filter: Object.freeze({
+            flex: 1,
         }),
     });
 
@@ -50,10 +68,32 @@ const DashboardClaims = ({
     }
 
     return (
-        <div className={classes.dashboardClaimsContainer}>
-            <DownloadFacilityClaimsButton data={data} />
-            <DashboardClaimsListTable data={data} />
-        </div>
+        <Paper className={classes.container}>
+            <div className={classes.dashboardClaimsContainer}>
+                <DownloadFacilityClaimsButton data={data} />
+                <div className={classes.filterRow}>
+                    <div className={classes.filter}>
+                        <label htmlFor={STATUS}>Claim Status</label>
+                        {/**
+                     * <ReactSelect
+                        id={STATUS}
+                        name={STATUS}
+                        classNamePrefix="select"
+                        options={facilityClaimStatusChoicesEnum}
+                        value={facilityClaimStatusChoicesEnum.find(
+                            s => s.value === status,
+                        )}
+                        onChange={onStatusUpdate}
+                        disabled={fetchingData}
+                        styles={selectStyles}
+                        theme={getSelectTheme}
+                    />
+                     */}
+                    </div>
+                </div>
+                <DashboardClaimsListTable data={data} />
+            </div>
+        </Paper>
     );
 };
 
