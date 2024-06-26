@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { func, shape } from 'prop-types';
 import { withRouter, Link } from 'react-router-dom';
+import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -44,6 +45,7 @@ function DashboardClaimsListTable({
     data,
     handleSortClaims,
     history: { push },
+    classes,
 }) {
     /*
      Facility claims are sorted by id/desc by default on BE;
@@ -97,7 +99,7 @@ function DashboardClaimsListTable({
     }, [data]);
 
     return (
-        <Paper style={dashboardClaimsListTableStyles.containerStyles}>
+        <Paper className={classes.containerStyles}>
             <Table>
                 <DashboardClaimsListTableHeader
                     order={order}
@@ -110,9 +112,7 @@ function DashboardClaimsListTable({
                             <TableCell colSpan={7}>
                                 <CircularProgress
                                     size={25}
-                                    style={
-                                        dashboardClaimsListTableStyles.loaderStyle
-                                    }
+                                    className={classes.loaderStyle}
                                 />
                             </TableCell>
                         </TableRow>
@@ -124,7 +124,7 @@ function DashboardClaimsListTable({
                                 hover
                                 key={claim.id}
                                 onClick={makeRowClickHandler(claim.id)}
-                                style={dashboardClaimsListTableStyles.rowStyles}
+                                className={classes.rowStyles}
                             >
                                 <TableCell padding="dense">
                                     {claim.id}
@@ -181,4 +181,6 @@ DashboardClaimsListTable.propTypes = {
     }).isRequired,
 };
 
-export default withRouter(DashboardClaimsListTable);
+export default withRouter(
+    withStyles(dashboardClaimsListTableStyles)(DashboardClaimsListTable),
+);

@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { func, string } from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
 import TableHead from '@material-ui/core/TableHead';
 import TableSortLabel from '@material-ui/core/TableSortLabel';
 import TableRow from '@material-ui/core/TableRow';
@@ -69,19 +70,24 @@ const claimsListHeadCells = [
     },
 ];
 
-function DashboardClaimsListTableHeader({ order, orderBy, onRequestSort }) {
+function DashboardClaimsListTableHeader({
+    order,
+    orderBy,
+    onRequestSort,
+    classes,
+}) {
     const getStyleByIndex = useCallback(index => {
         switch (index) {
             case 0:
-                return DashboardClaimsListTableHeaderStyles.firstTh;
+                return classes.firstTh;
             case 1:
-                return DashboardClaimsListTableHeaderStyles.secondTh;
+                return classes.secondTh;
             case 2:
-                return DashboardClaimsListTableHeaderStyles.thirdTh;
+                return classes.thirdTh;
             case 3:
-                return DashboardClaimsListTableHeaderStyles.fourTh;
+                return classes.fourTh;
             case 5:
-                return DashboardClaimsListTableHeaderStyles.sixthTh;
+                return classes.sixthTh;
             default:
                 return {};
         }
@@ -98,7 +104,7 @@ function DashboardClaimsListTableHeader({ order, orderBy, onRequestSort }) {
                     <TableCell
                         key={headCell.id}
                         sortDirection={orderBy === headCell.id ? order : false}
-                        style={getStyleByIndex(index)}
+                        className={getStyleByIndex(index)}
                     >
                         <TableSortLabel
                             active={orderBy === headCell.id}
@@ -120,4 +126,6 @@ DashboardClaimsListTableHeader.propTypes = {
     onRequestSort: func.isRequired,
 };
 
-export default DashboardClaimsListTableHeader;
+export default withStyles(DashboardClaimsListTableHeaderStyles)(
+    DashboardClaimsListTableHeader,
+);
