@@ -115,8 +115,11 @@ class ContributeForm extends Component {
                 <React.Fragment>
                     <ul>
                         {error.map(err => (
-                            <li key={err.errorText} style={{ color: 'red' }}>
-                                {err.errorText}
+                            <li
+                                key={err.errorComponent}
+                                style={{ color: 'red' }}
+                            >
+                                {err.errorComponent}
                             </li>
                         ))}
                     </ul>

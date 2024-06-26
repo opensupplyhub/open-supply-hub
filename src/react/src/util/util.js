@@ -569,26 +569,26 @@ export function createUploadFormErrorMessages(name, file) {
 
     if (!name) {
         errorMessages.push({
-            errorText: componentsWithErrorMessage.missingFacilityName,
+            errorComponent: componentsWithErrorMessage.missingFacilityName,
         });
     } else {
         // Didn't allow name with invalid characters.
         if (!allowedCharsRegex.test(name)) {
             errorMessages.push({
-                errorText: componentsWithErrorMessage.invalidCharacters,
+                errorComponent: componentsWithErrorMessage.invalidCharacters,
             });
         }
         // Didn't allow name that consists only of symbols or numbers.
         if (restrictedCharsRegex.test(name)) {
             errorMessages.push({
-                errorText: componentsWithErrorMessage.mustConsistOfLetters,
+                errorComponent: componentsWithErrorMessage.mustConsistOfLetters,
             });
         }
     }
 
     if (!file) {
         errorMessages.push({
-            errorText: componentsWithErrorMessage.missingFile,
+            errorComponent: componentsWithErrorMessage.missingFile,
         });
     }
 
