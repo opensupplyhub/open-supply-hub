@@ -54,6 +54,7 @@ import {
     minimum100PercentWidthEmbedHeight,
     matchResponsibilityEnum,
     optionsForSortingResults,
+    componentsWithErrorMessage,
 } from './constants';
 
 import { createListItemCSV } from './util.listItemCSV';
@@ -567,24 +568,28 @@ export function createUploadFormErrorMessages(name, file) {
     const errorMessages = [];
 
     if (!name) {
-        errorMessages.push('Missing required Facility List Name');
+        errorMessages.push({
+            errorText: componentsWithErrorMessage.missingFacilityName,
+        });
     } else {
         // Didn't allow name with invalid characters.
         if (!allowedCharsRegex.test(name)) {
-            errorMessages.push(
-                `The <b>List Name</b> you entered contains invalid characters. Allowed characters include: letters, numbers, spaces, apostrophe ( ' ), comma ( , ), hyphen ( - ), ampersand ( & ), period ( . ), parentheses ( ), and square brackets ( [] ). Characters that contain accents are not allowed.`,
-            );
+            errorMessages.push({
+                errorText: componentsWithErrorMessage.invalidCharacters,
+            });
         }
         // Didn't allow name that consists only of symbols or numbers.
         if (restrictedCharsRegex.test(name)) {
-            errorMessages.push(
-                'Facility List Name must also consist of letters',
-            );
+            errorMessages.push({
+                errorText: componentsWithErrorMessage.mustConsistOfLetters,
+            });
         }
     }
 
     if (!file) {
-        errorMessages.push('Missing required Facility List File');
+        errorMessages.push({
+            errorText: componentsWithErrorMessage.missingFile,
+        });
     }
 
     return errorMessages;

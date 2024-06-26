@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { arrayOf, bool, func, number, string } from 'prop-types';
+import { arrayOf, bool, func, number, object, string } from 'prop-types';
 import { connect } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import MaterialButton from '@material-ui/core/Button';
@@ -8,7 +8,6 @@ import { toast } from 'react-toastify';
 import ControlledTextInput from './ControlledTextInput';
 import Button from './Button';
 import ContributeFormSelectListToReplace from './ContributeFormSelectListToReplace';
-import ErrorItem from './ErrorItem';
 
 import COLOURS from '../util/COLOURS';
 
@@ -116,7 +115,9 @@ class ContributeForm extends Component {
                 <React.Fragment>
                     <ul>
                         {error.map(err => (
-                            <ErrorItem key={err} errorText={err} />
+                            <li key={err.errorText} style={{ color: 'red' }}>
+                                {err.errorText}
+                            </li>
                         ))}
                     </ul>
                     <div style={contributeFormStyles.postErrorHelp}>
@@ -225,7 +226,7 @@ ContributeForm.propTypes = {
     filename: string.isRequired,
     replaces: number.isRequired,
     fetching: bool.isRequired,
-    error: arrayOf(string),
+    error: arrayOf(object),
     updateName: func.isRequired,
     updateDescription: func.isRequired,
     updateFileName: func.isRequired,

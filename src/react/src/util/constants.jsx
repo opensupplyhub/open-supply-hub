@@ -1268,3 +1268,18 @@ export const facilityClaimStepsNames = Object.freeze({
     SUPPORT_DOC: 'Support Documentation',
     ADDITIONAL_DATA: 'Additional Data',
 });
+
+export const componentsWithErrorMessage = Object.freeze({
+    missingFacilityName: <>Missing required Facility List Name</>,
+    invalidCharacters: (
+        <>
+            The <b>List Name</b> you entered contains invalid characters.
+            Allowed characters include: letters, numbers, spaces, apostrophe (
+            &#39; ), comma ( &#44; ), hyphen ( &#45; ), ampersand ( &#38; ),
+            period ( &#46; ), parentheses ( ), and square brackets ( &#91;&#93;
+            ). Characters that contain accents are not allowed.
+        </>
+    ),
+    mustConsistOfLetters: <>Facility List Name must also consist of letters</>,
+    missingFile: <>Missing required Facility List File</>,
+});
