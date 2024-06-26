@@ -561,7 +561,7 @@ export const createProfileUpdateErrorMessages = makeCreateFormErrorMessagesFn(
 );
 
 export function createUploadFormErrorMessages(name, file) {
-    const allowedCharsRegex = /^[a-zA-Z0-9\s'&.()[\]-]+$/;
+    const allowedCharsRegex = /^[a-zA-Z0-9\s'&,.()[\]-]+$/;
     const restrictedCharsRegex = /^[0-9&.'()[\]-]+$/;
 
     const errorMessages = [];
@@ -572,7 +572,11 @@ export function createUploadFormErrorMessages(name, file) {
         // Didn't allow name with invalid characters.
         if (!allowedCharsRegex.test(name)) {
             errorMessages.push(
-                'List name contains invalid characters. Only letters, numbers, spaces, apostrophe, hyphen, ampersand, period, parentheses, and square brackets are allowed',
+                // <>
+                //     example: <b>Your Organization’s Name</b> Facility List June
+                //     2023
+                // </>,
+                `The <b>List Name</b> you entered contains invalid characters. Allowed characters include: letters, numbers, spaces, apostrophe ( ' ), comma ( , ), hyphen ( - ), ampersand ( & ), period ( . ), parentheses ( ), and square brackets ( [] ). Characters that contain accents are not allowed.`,
             );
         }
         // Didn't allow name that consists only of symbols or numbers.

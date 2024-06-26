@@ -95,6 +95,7 @@ class ContributeForm extends Component {
     handleUploadList = () => this.props.uploadList(this.fileInput);
 
     render() {
+        const parser = new DOMParser();
         const {
             name,
             description,
@@ -114,11 +115,22 @@ class ContributeForm extends Component {
             error && error.length ? (
                 <React.Fragment>
                     <ul>
-                        {error.map(err => (
-                            <li key={err} style={{ color: 'red' }}>
-                                {err}
-                            </li>
-                        ))}
+                        {error.map(err => {
+                            const parsedString = parser
+                                .parseFromString(err, 'text/html')
+                                .querySelector('body').innerHTML;
+
+                            return (
+                                <li
+                                    key={err}
+                                    style={{ color: 'red' }}
+                                    className="content"
+                                    dangerouslySetInnerHTML={{
+                                        __html: parsedString,
+                                    }}
+                                ></li>
+                            );
+                        })}
                     </ul>
                     <div style={contributeFormStyles.postErrorHelp}>
                         If you continue to have trouble submitting your list,
