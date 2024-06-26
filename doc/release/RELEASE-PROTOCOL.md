@@ -125,7 +125,7 @@ Make sure that:
 
 ### Code Freeze
 
-1. Code freeze occurs every Monday following two weeks of development for a new release version. To enhance communication within the team, all stakeholders must be notified about the code freeze two working days before the code freeze by the responsible person for the release.
+1. Code freeze occurs every Wednesday following two weeks of development for a new release version. To enhance communication within the team, all stakeholders must be notified about the code freeze two working days before the code freeze by the responsible person for the release.
 2. Before initiating the code freeze process, ensure that all commands required for the deployment process (e.g., `index_facilities_new`) are included in the `post_deployment` command.
 3. On the day of the code freeze, the responsible person has to run the `Release [Init]` workflow from the `main` branch, specifying the major and minor versions of the release. Subsequently, the `releases/v.X.Y` branch will be created and automatically deployed to the running pre-prod environment via the `Deploy to AWS` workflow.
 4. In case there is a need to run a command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Migration+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5DHow-to-correctly-run-migrations-for-our-four-environments%3F---Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
