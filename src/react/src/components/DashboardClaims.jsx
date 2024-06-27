@@ -71,11 +71,11 @@ const DashboardClaims = ({
 
     return (
         <Paper className={classes.container}>
-          <div className={classes.dashboardClaimsContainer}>
-              <DownloadFacilityClaimsButton data={data} />
-              <div className={classes.filterRow}>
-                  <div className={classes.filter}>
-                      <label htmlFor={STATUS}>Claim Status</label>
+            <div className={classes.dashboardClaimsContainer}>
+                <DownloadFacilityClaimsButton data={data} />
+                <div className={classes.filterRow}>
+                    <div className={classes.filter}>
+                        <label htmlFor={STATUS}>Claim Status</label>
                         {/**
                      * <ReactSelect
                         id={STATUS}
@@ -93,11 +93,11 @@ const DashboardClaims = ({
                      */}
                     </div>
                 </div>
-              <DashboardClaimsListTable
-                  data={data}
-                  handleSortClaims={sortClaims}
-              />
-          </div>
+                <DashboardClaimsListTable
+                    data={data}
+                    handleSortClaims={sortClaims}
+                />
+            </div>
         </Paper>
     );
 };

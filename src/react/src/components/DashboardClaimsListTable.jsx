@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { func, shape } from 'prop-types';
 import { withRouter, Link } from 'react-router-dom';
+import { withStyles } from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableRow from '@material-ui/core/TableRow';
@@ -123,15 +124,11 @@ function DashboardClaimsListTable({
                             onClick={makeRowClickHandler(claim.id)}
                             className={classes.rowStyles}
                         >
-                            <TableCell padding="dense">
-                                {claim.id}
-                            </TableCell>
+                            <TableCell padding="dense">{claim.id}</TableCell>
                             <TableCell>
                                 <Link
                                     to={makeFacilityDetailLink(claim.os_id)}
-                                    href={makeFacilityDetailLink(
-                                        claim.os_id,
-                                    )}
+                                    href={makeFacilityDetailLink(claim.os_id)}
                                     id={FACILITY_LINK_ID}
                                 >
                                     {claim.facility_name}
