@@ -30,7 +30,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-272](https://opensupplyhub.atlassian.net/browse/OSDEV-272) Facility Claims Page. Implement ascending/descending and alphabetic sort on FE.
 
 ### Release instructions:
-* Update code.
+* *Provide release instructions here.*
 
 
 ## Release 1.15.0
