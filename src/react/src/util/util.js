@@ -54,6 +54,7 @@ import {
     minimum100PercentWidthEmbedHeight,
     matchResponsibilityEnum,
     optionsForSortingResults,
+    componentsWithErrorMessage,
 } from './constants';
 
 import { createListItemCSV } from './util.listItemCSV';
@@ -561,30 +562,34 @@ export const createProfileUpdateErrorMessages = makeCreateFormErrorMessagesFn(
 );
 
 export function createUploadFormErrorMessages(name, file) {
-    const allowedCharsRegex = /^[a-zA-Z0-9\s'&.()[\]-]+$/;
+    const allowedCharsRegex = /^[a-zA-Z0-9\s'&,.()[\]-]+$/;
     const restrictedCharsRegex = /^[0-9&.'()[\]-]+$/;
 
     const errorMessages = [];
 
     if (!name) {
-        errorMessages.push('Missing required Facility List Name');
+        errorMessages.push({
+            errorComponent: componentsWithErrorMessage.missingListName,
+        });
     } else {
         // Didn't allow name with invalid characters.
         if (!allowedCharsRegex.test(name)) {
-            errorMessages.push(
-                'List name contains invalid characters. Only letters, numbers, spaces, apostrophe, hyphen, ampersand, period, parentheses, and square brackets are allowed',
-            );
+            errorMessages.push({
+                errorComponent: componentsWithErrorMessage.invalidCharacters,
+            });
         }
         // Didn't allow name that consists only of symbols or numbers.
         if (restrictedCharsRegex.test(name)) {
-            errorMessages.push(
-                'Facility List Name must also consist of letters',
-            );
+            errorMessages.push({
+                errorComponent: componentsWithErrorMessage.mustConsistOfLetters,
+            });
         }
     }
 
     if (!file) {
-        errorMessages.push('Missing required Facility List File');
+        errorMessages.push({
+            errorComponent: componentsWithErrorMessage.missingFile,
+        });
     }
 
     return errorMessages;
@@ -1138,3 +1143,31 @@ export const logErrorToRollbar = (window, error, user) => {
         }
     }
 };
+
+function descendingComparator(a, b, orderBy) {
+    if (b[orderBy] < a[orderBy]) {
+        return -1;
+    }
+    if (b[orderBy] > a[orderBy]) {
+        return 1;
+    }
+    return 0;
+}
+
+export function getComparator(order, orderBy) {
+    return order === 'desc'
+        ? (a, b) => descendingComparator(a, b, orderBy)
+        : (a, b) => -descendingComparator(a, b, orderBy);
+}
+
+export function sort(array, comparator) {
+    const stabilizedThis = array.map((el, index) => [el, index]);
+    stabilizedThis.sort((a, b) => {
+        const order = comparator(a[0], b[0]);
+        if (order !== 0) {
+            return order;
+        }
+        return a[1] - b[1];
+    });
+    return stabilizedThis.map(el => el[0]);
+}
