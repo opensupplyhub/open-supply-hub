@@ -54,6 +54,7 @@ import {
     minimum100PercentWidthEmbedHeight,
     matchResponsibilityEnum,
     optionsForSortingResults,
+    componentsWithErrorMessage,
 } from './constants';
 
 import { createListItemCSV } from './util.listItemCSV';
@@ -561,30 +562,34 @@ export const createProfileUpdateErrorMessages = makeCreateFormErrorMessagesFn(
 );
 
 export function createUploadFormErrorMessages(name, file) {
-    const allowedCharsRegex = /^[a-zA-Z0-9\s'&.()[\]-]+$/;
+    const allowedCharsRegex = /^[a-zA-Z0-9\s'&,.()[\]-]+$/;
     const restrictedCharsRegex = /^[0-9&.'()[\]-]+$/;
 
     const errorMessages = [];
 
     if (!name) {
-        errorMessages.push('Missing required Facility List Name');
+        errorMessages.push({
+            errorComponent: componentsWithErrorMessage.missingListName,
+        });
     } else {
         // Didn't allow name with invalid characters.
         if (!allowedCharsRegex.test(name)) {
-            errorMessages.push(
-                'List name contains invalid characters. Only letters, numbers, spaces, apostrophe, hyphen, ampersand, period, parentheses, and square brackets are allowed',
-            );
+            errorMessages.push({
+                errorComponent: componentsWithErrorMessage.invalidCharacters,
+            });
         }
         // Didn't allow name that consists only of symbols or numbers.
         if (restrictedCharsRegex.test(name)) {
-            errorMessages.push(
-                'Facility List Name must also consist of letters',
-            );
+            errorMessages.push({
+                errorComponent: componentsWithErrorMessage.mustConsistOfLetters,
+            });
         }
     }
 
     if (!file) {
-        errorMessages.push('Missing required Facility List File');
+        errorMessages.push({
+            errorComponent: componentsWithErrorMessage.missingFile,
+        });
     }
 
     return errorMessages;
