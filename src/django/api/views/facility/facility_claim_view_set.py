@@ -1,3 +1,4 @@
+import logging
 import json
 from api.models.transactions.index_facilities_new import index_facilities_new
 
@@ -5,7 +6,8 @@ from api.helpers.helpers import validate_workers_count
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
     NotFound,
-    PermissionDenied
+    PermissionDenied,
+    ValidationError
 )
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -31,6 +33,7 @@ from ...models.facility.facility_claim import FacilityClaim
 from ...models.facility.facility_claim_review_note import (
     FacilityClaimReviewNote
 )
+from ...constants import FacilityClaimListQueryParams
 from ...permissions import (
     IsRegisteredAndConfirmed,
     IsSuperuser
@@ -39,9 +42,11 @@ from ...serializers import (
     ApprovedFacilityClaimSerializer,
     FacilityClaimSerializer,
     FacilityClaimDetailsSerializer,
+    FacilityClaimListQueryParamsSerializer
 )
 from ..make_report import _report_facility_claim_email_error_to_rollbar
 
+logger = logging.getLogger(__name__)
 
 class FacilityClaimViewSet(ModelViewSet):
     """
@@ -60,13 +65,17 @@ class FacilityClaimViewSet(ModelViewSet):
         pass
 
     def list(self, request):
-        if not switch_is_active('claim_a_facility'):
-            raise NotFound()
+        params = FacilityClaimListQueryParamsSerializer(data=self.request.query_params)
+        if not params.is_valid():
+            raise ValidationError(params.errors)
 
-        response_data = FacilityClaimSerializer(
-            FacilityClaim.objects.all().order_by('-id'),
-            many=True
-        ).data
+        status = params.data.get(FacilityClaimListQueryParams.STATUS)
+
+        queryset = FacilityClaim.objects.all().order_by('-id')
+        if status:
+            queryset = queryset.filter(status=status)
+
+        response_data = FacilityClaimSerializer(queryset, many=True).data
 
         return Response(response_data)
 

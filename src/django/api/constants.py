@@ -58,6 +58,8 @@ class FacilityListQueryParams:
     STATUS = 'status'
     MATCH_RESPONSIBILITY = 'match_responsibility'
 
+class FacilityClaimListQueryParams:
+    STATUS = 'status'
 
 class FacilityListItemsQueryParams:
     SEARCH = 'search'
