@@ -569,7 +569,7 @@ export function createUploadFormErrorMessages(name, file) {
 
     if (!name) {
         errorMessages.push({
-            errorComponent: componentsWithErrorMessage.missingFacilityName,
+            errorComponent: componentsWithErrorMessage.missingListName,
         });
     } else {
         // Didn't allow name with invalid characters.

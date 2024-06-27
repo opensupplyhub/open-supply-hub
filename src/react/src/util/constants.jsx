@@ -1270,7 +1270,7 @@ export const facilityClaimStepsNames = Object.freeze({
 });
 
 export const componentsWithErrorMessage = Object.freeze({
-    missingFacilityName: <>Missing required Facility List Name</>,
+    missingListName: <>Missing required Facility List Name</>,
     invalidCharacters: (
         <>
             The <b>List Name</b> you entered contains invalid characters.
