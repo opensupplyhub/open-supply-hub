@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
-import { arrayOf, bool, func, string } from 'prop-types';
+import { arrayOf, bool, func, shape, string } from 'prop-types';
+import map from 'lodash/map';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -18,6 +19,8 @@ import {
 import ClaimStatusFilter from './Filters/ClaimStatusFilter';
 
 import { facilityClaimsListPropType } from '../util/propTypes';
+
+import { makeDashboardClaimListLink } from '../util/util';
 
 const dashboardClaimsStyles = () =>
     Object.freeze({
@@ -48,6 +51,12 @@ const DashboardClaims = ({
     clearClaims,
     sortClaims,
     classes,
+    history: {
+        location: { search },
+        push,
+        replace,
+    },
+    claimStatuses,
 }) => {
     useEffect(() => {
         getClaims();
@@ -67,11 +76,28 @@ const DashboardClaims = ({
         return null;
     }
 
+    /*
+     TODO: This will come from predefined URL on component mount, omit for now
+     */
+    const newParams = {
+        statuses: claimStatuses,
+    };
+
+    const onClaimStatusUpdate = s => {
+        replace(
+            makeDashboardClaimListLink({
+                statuses: map(s, 'value'),
+            }),
+        );
+    };
+
     return (
         <Paper className={classes.container}>
             <div className={classes.dashboardClaimsContainer}>
                 <DownloadFacilityClaimsButton data={data} />
-                <ClaimStatusFilter />
+                <ClaimStatusFilter
+                    handleClaimStatusUpdate={onClaimStatusUpdate}
+                />
                 <DashboardClaimsListTable
                     data={data}
                     handleSortClaims={sortClaims}
@@ -93,17 +119,22 @@ DashboardClaims.propTypes = {
     getClaims: func.isRequired,
     clearClaims: func.isRequired,
     sortClaims: func.isRequired,
+    history: shape({
+        replace: func.isRequired,
+    }).isRequired,
 };
 
 function mapStateToProps({
     claimFacilityDashboard: {
         list: { data, fetching, error },
     },
+    filters: { claimStatuses },
 }) {
     return {
         data,
         fetching,
         error,
+        claimStatuses,
     };
 }
 

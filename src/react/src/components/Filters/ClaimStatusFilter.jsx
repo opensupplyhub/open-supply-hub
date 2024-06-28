@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { func } from 'prop-types';
 import { connect } from 'react-redux';
 
@@ -12,10 +12,18 @@ import { facilityClaimStatusChoices } from '../../util/constants';
 
 const CLAIM_STATUSES = 'CLAIM_STATUSES';
 
-console.log('claimStatusesOptions: ', facilityClaimStatusChoices);
-
-function ClaimStatusFilter({ claimStatuses, updateClaimStatus }) {
-    console.log('claim statuses are: ', claimStatuses);
+function ClaimStatusFilter({
+    claimStatuses,
+    updateClaimStatus,
+    handleClaimStatusUpdate,
+}) {
+    const onChangeClaimStatus = useCallback(
+        s => {
+            handleClaimStatusUpdate(s);
+            updateClaimStatus(s);
+        },
+        [claimStatuses],
+    );
 
     return (
         <div className="form__field">
@@ -24,7 +32,7 @@ function ClaimStatusFilter({ claimStatuses, updateClaimStatus }) {
                 name={CLAIM_STATUSES}
                 options={facilityClaimStatusChoices}
                 value={claimStatuses}
-                onChange={updateClaimStatus}
+                onChange={onChangeClaimStatus}
             />
         </div>
     );
