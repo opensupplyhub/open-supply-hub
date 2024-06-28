@@ -5,4 +5,5 @@ class ApiConfig(AppConfig):
     name = 'api'
 
     def ready(self):
-        return
+        # Implicitly connect signal handlers decorated with @receiver.
+        from api import signals  # noqa: F401
