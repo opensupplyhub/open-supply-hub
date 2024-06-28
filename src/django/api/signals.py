@@ -4,5 +4,5 @@ from api.models.facility.facility import Facility
 
 
 @receiver(post_delete, sender=Facility)
-def facility_post_delete(sender, **kwargs):
+def facility_post_delete_handler(sender, **kwargs):
     print('Hi OpenSearch!')
