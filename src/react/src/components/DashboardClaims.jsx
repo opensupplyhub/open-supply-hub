@@ -1,6 +1,4 @@
-/* eslint no-unused-vars: 0 */
 import React, { useEffect } from 'react';
-import ReactSelect from 'react-select';
 import { connect } from 'react-redux';
 import { arrayOf, bool, func, string } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -17,9 +15,9 @@ import {
     sortFacilityClaims,
 } from '../actions/claimFacilityDashboard';
 
-import { facilityClaimsListPropType } from '../util/propTypes';
+import ClaimStatusFilter from './Filters/ClaimStatusFilter';
 
-const STATUS = 'STATUS';
+import { facilityClaimsListPropType } from '../util/propTypes';
 
 const dashboardClaimsStyles = () =>
     Object.freeze({
@@ -73,26 +71,7 @@ const DashboardClaims = ({
         <Paper className={classes.container}>
             <div className={classes.dashboardClaimsContainer}>
                 <DownloadFacilityClaimsButton data={data} />
-                <div className={classes.filterRow}>
-                    <div className={classes.filter}>
-                        <label htmlFor={STATUS}>Claim Status</label>
-                        {/**
-                     * <ReactSelect
-                        id={STATUS}
-                        name={STATUS}
-                        classNamePrefix="select"
-                        options={facilityClaimStatusChoicesEnum}
-                        value={facilityClaimStatusChoicesEnum.find(
-                            s => s.value === status,
-                        )}
-                        onChange={onStatusUpdate}
-                        disabled={fetchingData}
-                        styles={selectStyles}
-                        theme={getSelectTheme}
-                    />
-                     */}
-                    </div>
-                </div>
+                <ClaimStatusFilter />
                 <DashboardClaimsListTable
                     data={data}
                     handleSortClaims={sortClaims}

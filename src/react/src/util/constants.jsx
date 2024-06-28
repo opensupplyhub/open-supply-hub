@@ -79,6 +79,12 @@ export const facilityClaimStatusChoicesEnum = Object.freeze({
     DENIED: 'DENIED',
     REVOKED: 'REVOKED',
 });
+export const facilityClaimStatusChoices = [
+    { value: facilityClaimStatusChoicesEnum.PENDING, label: 'PENDING' },
+    { value: facilityClaimStatusChoicesEnum.APPROVED, label: 'APPROVED' },
+    { value: facilityClaimStatusChoicesEnum.DENIED, label: 'DENIED' },
+    { value: facilityClaimStatusChoicesEnum.REVOKED, label: 'REVOKED' },
+];
 
 export const facilityListStatusChoicesEnum = Object.freeze({
     PENDING: 'PENDING',

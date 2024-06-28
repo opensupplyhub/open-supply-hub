@@ -48,6 +48,7 @@ import {
     DEFAULT_ROWS_PER_PAGE,
     ENTER_KEY,
     facilityListStatusChoicesEnum,
+    facilityClaimStatusChoicesEnum,
     facilityListItemStatusChoicesEnum,
     facilityListItemErrorStatuses,
     facilityListSummaryStatusMessages,
@@ -441,6 +442,26 @@ export const getDashboardListParamsFromQueryString = qs => {
         ),
         matchResponsibility,
         status,
+    });
+};
+
+// TODO: This requires further refactoring for claim statuses
+export const dashboardClaimsListParamsDefaults = Object.freeze({
+    countries: [],
+    statuses: [facilityClaimStatusChoicesEnum.PENDING],
+});
+
+export const getDashboardClaimsListParamsFromQueryString = qs => {
+    const qsToParse = startsWith(qs, '?') ? qs.slice(1) : qs;
+
+    const {
+        countries,
+        statuses = dashboardListParamsDefaults.status,
+    } = querystring.parse(qsToParse);
+
+    return Object.freeze({
+        countries,
+        statuses,
     });
 };
 

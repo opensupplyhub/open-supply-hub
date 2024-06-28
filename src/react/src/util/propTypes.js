@@ -195,6 +195,13 @@ export const contributorListOptionsPropType = arrayOf(
     }),
 );
 
+export const claimStatusOptionsPropType = arrayOf(
+    shape({
+        value: string.isRequired,
+        label: string.isRequired,
+    }),
+);
+
 export const countryOptionsPropType = arrayOf(
     shape({
         value: string.isRequired,
