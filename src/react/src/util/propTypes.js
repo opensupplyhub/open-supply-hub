@@ -334,6 +334,7 @@ export const facilityClaimsListPropType = arrayOf(
         contributor_name: string.isRequired,
         facility_country_name: string.isRequired,
         status: oneOf(Object.values(facilityClaimStatusChoicesEnum)).isRequired,
+        last_decision: string.isReqired,
     }).isRequired,
 );
 

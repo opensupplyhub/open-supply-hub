@@ -165,6 +165,9 @@ function DashboardClaimsListTable({
                                 <TableCell padding="dense">
                                     {claim.status}
                                 </TableCell>
+                                <TableCell padding="dense">
+                                    {claim.last_decision}
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>

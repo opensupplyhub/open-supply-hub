@@ -68,6 +68,12 @@ const claimsListHeadCells = [
         disablePadding: true,
         label: 'Status',
     },
+    {
+        id: 'last_decision',
+        numeric: false,
+        disablePadding: true,
+        label: 'Last Decision',
+    },
 ];
 
 function DashboardClaimsListTableHeader({
