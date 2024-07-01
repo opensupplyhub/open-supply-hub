@@ -19,9 +19,6 @@ const DashboardClaimsListTableHeaderStyles = Object.freeze({
     fourthTh: {
         width: '90px',
     },
-    sixthTh: {
-        width: '100px',
-    },
 });
 
 // Table header ids should match keys from BE
@@ -93,7 +90,9 @@ function DashboardClaimsListTableHeader({
             case 3:
                 return classes.fourTh;
             case 5:
-                return classes.sixthTh;
+                return classes.thirdTh;
+            case 7:
+                return classes.thirdTh;
             default:
                 return {};
         }
