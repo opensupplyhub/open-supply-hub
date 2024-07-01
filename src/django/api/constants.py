@@ -96,6 +96,11 @@ class FacilityHistoryActions:
     CLAIM_UPDATE = 'CLAIM_UPDATE'
     CLAIM_REVOKE = 'CLAIM_REVOKE'
 
+class FacilityClaimStatuses:
+    PENDING = 'PENDING'
+    APPROVED = 'APPROVED'
+    DENIED = 'DENIED'
+    REVOKED = 'REVOKED'
 
 class Affiliations:
     BENEFITS_BUSINESS_WORKERS = 'Benefits for Business and Workers (BBW)'

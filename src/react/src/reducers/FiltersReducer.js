@@ -44,6 +44,7 @@ const initialState = Object.freeze({
     contributors: Object.freeze([]),
     contributorTypes: Object.freeze([]),
     countries: Object.freeze([]),
+    // TODO: this will probably be reconsidered since you upload statues from BE
     claimStatuses: facilityClaimStatusChoices[0],
     sectors: Object.freeze([]),
     sortAlgorithm: optionsForSortingResults[2],

@@ -10,6 +10,7 @@ import {
     makeGetContributorTypesURL,
     mapDjangoChoiceDictToSelectOptions,
     makeGetCountriesURL,
+    makeGetClaimStatusesURL,
     makeGetSectorsURL,
     makeGetParentCompaniesURL,
     makeGetFacilitiesTypeProcessingTypeURL,
@@ -93,6 +94,15 @@ export const failFetchNumberOfWorkersOptions = createAction(
 );
 export const completeFetchNumberOfWorkersTypeOptions = createAction(
     'COMPLETE_FETCH_NUMBER_OF_WORKERS_TYPE_OPTIONS',
+);
+export const startFetchClaimStatusOptions = createAction(
+    'START_FETCH_CLAIM_STATUS_OPTIONS',
+);
+export const failFetchClaimStatusOption = createAction(
+    'FAIL_FETCH_CLAIM_STATUS_OPTIONS',
+);
+export const completeFetchClaimStatusOption = createAction(
+    'COMPLETE_FETCH_CLAIM_STATUS_OPTIONS',
 );
 
 export const resetFilterOptions = createAction('RESET_FILTER_OPTIONS');
@@ -276,6 +286,28 @@ export function fetchNumberOfWorkersOptions() {
                         err,
                         'An error prevented fetching number of workers options',
                         failFetchNumberOfWorkersOptions,
+                    ),
+                ),
+            );
+    };
+}
+
+export function fetchClaimStatusOptions() {
+    return dispatch => {
+        dispatch(startFetchClaimStatusOptions());
+
+        return apiRequest
+            .get(makeGetClaimStatusesURL())
+            .then(({ data }) => mapDjangoChoiceTuplesValueToSelectOptions(data))
+            .then(data => {
+                dispatch(completeFetchClaimStatusOption(data));
+            })
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented fetching number of workers options',
+                        failFetchClaimStatusOption,
                     ),
                 ),
             );

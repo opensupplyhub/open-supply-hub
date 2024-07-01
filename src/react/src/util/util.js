@@ -175,6 +175,7 @@ export const makeGetFacilitiesTypeProcessingTypeURL = () =>
     '/api/facility-processing-types/';
 export const makeGetNumberOfWorkersURL = () => '/api/workers-ranges/';
 export const makeGetNativeLanguageName = () => '/api/native_language_name/';
+export const makeGetClaimStatusesURL = () => '/api/claim-statuses';
 
 export const makeGetFacilitiesURL = () => '/api/facilities/';
 export const makeGetFacilityByOSIdURL = (
@@ -329,6 +330,8 @@ export const getAlgorithm = sortBy =>
 export const createFiltersFromQueryString = qs => {
     const qsToParse = startsWith(qs, '?') ? qs.slice(1) : qs;
 
+    console.log('@@@ Create filter in createFiltersFromQueryString');
+
     const {
         q: facilityFreeTextQuery = '',
         contributors = [],
@@ -336,6 +339,7 @@ export const createFiltersFromQueryString = qs => {
         contributor_types: contributorTypes = [],
         countries = [],
         sectors = [],
+        statuses = [],
         parent_company: parentCompany = [],
         facility_type: facilityType = [],
         processing_type: processingType = [],
@@ -353,6 +357,7 @@ export const createFiltersFromQueryString = qs => {
         lists: createSelectOptionsFromParams(lists),
         contributorTypes: createSelectOptionsFromParams(contributorTypes),
         countries: createSelectOptionsFromParams(countries),
+        statuses: createSelectOptionsFromParams(statuses),
         sectors: createSelectOptionsFromParams(sectors),
         parentCompany: createSelectOptionsFromParams(parentCompany),
         facilityType: createSelectOptionsFromParams(facilityType),
@@ -463,6 +468,11 @@ export const getDashboardClaimsListParamsFromQueryString = qs => {
         countries,
         statuses = dashboardClaimsListParamsDefaults.claimStatuses,
     } = querystring.parse(qsToParse);
+
+    console.log(
+        'Return of getDashboardClaimsListParamsFromQueryString: ',
+        Object.freeze({ countries, statuses }),
+    );
 
     return Object.freeze({
         countries,
@@ -709,10 +719,12 @@ export const makeDashboardContributorListLink = ({
 
 // TODO: this function needed to prepare URL and push it to the URL history
 export const makeDashboardClaimListLink = ({ statuses }) =>
-    `/dashboard/claims/${join(
-        map(statuses, value => `statuses=${value}`),
-        '&',
-    )}`;
+    statuses && statuses.length > 0
+        ? `/dashboard/claims/?${join(
+              map(statuses, value => `statuses=${value}`),
+              '&',
+          )}`
+        : '/dashboard/claims';
 
 export const splitContributorsIntoPublicAndNonPublic = contributors =>
     contributors.reduce(

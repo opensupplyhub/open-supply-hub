@@ -10,12 +10,19 @@ import Typography from '@material-ui/core/Typography';
 
 import DownloadFacilityClaimsButton from './DownloadFacilityClaimsButton';
 import DashboardClaimsListTable from './DashboardClaimsListTable';
+// TODO: abstract this component to not being coupled to the values that come from Dashboard
+import withQueryStringSync from '../util/withQueryStringSync';
 
 import {
     fetchFacilityClaims,
     clearFacilityClaims,
     sortFacilityClaims,
 } from '../actions/claimFacilityDashboard';
+
+import {
+    // fetchCountryOptions,
+    fetchClaimStatusOptions,
+} from '../actions/filterOptions';
 
 import ClaimStatusFilter from './Filters/ClaimStatusFilter';
 
@@ -57,10 +64,18 @@ const DashboardClaims = ({
         push,
         replace,
     },
-    claimStatuses,
+    claimStatuses, // TODO: replace this with fetchClaimStatus
+    fetchClaimStatus,
 }) => {
     useEffect(() => {
+        /*
+         TODO: this should pass default pending parameter
+         There is no need to pass parameters here (for now, I'd rather do this)
+         It looks like it can take params from the search bar but now it just take it from const
+         export const makeGetFacilityClaimsURL = () => '/api/facility-claims/';
+         */
         getClaims();
+        fetchClaimStatus();
 
         return clearClaims;
     }, [getClaims, clearClaims]);
@@ -144,10 +159,11 @@ function mapDispatchToProps(dispatch) {
         getClaims: () => dispatch(fetchFacilityClaims()),
         clearClaims: () => dispatch(clearFacilityClaims()),
         sortClaims: sortedData => dispatch(sortFacilityClaims(sortedData)),
+        fetchClaimStatus: () => dispatch(fetchClaimStatusOptions()),
     };
 }
 
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(withStyles(dashboardClaimsStyles)(DashboardClaims));
+)(withStyles(dashboardClaimsStyles)(withQueryStringSync(DashboardClaims)));
