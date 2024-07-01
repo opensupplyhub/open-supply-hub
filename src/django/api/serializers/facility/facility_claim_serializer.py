@@ -13,13 +13,13 @@ class FacilityClaimSerializer(ModelSerializer):
     contributor_id = SerializerMethodField()
     facility_address = SerializerMethodField()
     facility_country_name = SerializerMethodField()
-    last_decision = SerializerMethodField()
+    claim_decision = SerializerMethodField()
 
     class Meta:
         model = FacilityClaim
         fields = ('id', 'created_at', 'updated_at', 'contributor_id', 'os_id',
                   'contributor_name', 'facility_name', 'facility_address',
-                  'facility_country_name', 'status', 'last_decision')
+                  'facility_country_name', 'status', 'claim_decision')
 
     def get_facility_name(self, claim):
         return claim.facility.name
@@ -39,5 +39,5 @@ class FacilityClaimSerializer(ModelSerializer):
     def get_facility_country_name(self, claim):
         return COUNTRY_NAMES.get(claim.facility.country_code, '')
     
-    def get_last_decision(self, claim):
+    def get_claim_decision(self, claim):
         return claim.status_change_date

@@ -57,10 +57,10 @@ const claimsListHeadCells = [
         label: 'Created',
     },
     {
-        id: 'updated_at',
+        id: 'claim_decision',
         numeric: false,
         disablePadding: true,
-        label: 'Last Updated',
+        label: 'Claim Decision',
     },
     {
         id: 'status',
@@ -69,10 +69,10 @@ const claimsListHeadCells = [
         label: 'Status',
     },
     {
-        id: 'last_decision',
+        id: 'updated_at',
         numeric: false,
         disablePadding: true,
-        label: 'Last Decision',
+        label: 'Last Updated',
     },
 ];
 
