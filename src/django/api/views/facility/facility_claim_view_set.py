@@ -32,7 +32,6 @@ from ...models.facility.facility_claim import FacilityClaim
 from ...models.facility.facility_claim_review_note import (
     FacilityClaimReviewNote
 )
-from ...constants import FacilityClaimListQueryParams
 from ...permissions import (
     IsRegisteredAndConfirmed,
     IsSuperuser
