@@ -1,4 +1,3 @@
-import logging
 import json
 from api.models.transactions.index_facilities_new import index_facilities_new
 
@@ -46,7 +45,6 @@ from ...serializers import (
 )
 from ..make_report import _report_facility_claim_email_error_to_rollbar
 
-logger = logging.getLogger(__name__)
 
 class FacilityClaimViewSet(ModelViewSet):
     """
@@ -65,15 +63,17 @@ class FacilityClaimViewSet(ModelViewSet):
         pass
 
     def list(self, request):
-        params = FacilityClaimListQueryParamsSerializer(data=self.request.query_params)
+        params = FacilityClaimListQueryParamsSerializer(
+            data=self.request.query_params
+        )
         if not params.is_valid():
             raise ValidationError(params.errors)
 
-        status = params.data.get(FacilityClaimListQueryParams.STATUS)
+        statuses = params.validated_data.get('statuses')
 
         queryset = FacilityClaim.objects.all().order_by('-id')
-        if status:
-            queryset = queryset.filter(status=status)
+        if statuses:
+            queryset = queryset.filter(status__in=statuses)
 
         response_data = FacilityClaimSerializer(queryset, many=True).data
 
