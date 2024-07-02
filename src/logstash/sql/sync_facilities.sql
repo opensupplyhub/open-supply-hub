@@ -280,7 +280,7 @@ SELECT
             1
         )
       )
-  ) AS location_type_value,
+  ) AS facility_type_value,
   (
     SELECT
       COALESCE(

@@ -25,8 +25,6 @@ export const completeFetchFacilityClaims = createAction(
 );
 export const clearFacilityClaims = createAction('CLEAR_FACILITY_CLAIMS');
 
-export const sortFacilityClaims = createAction('SORT_FACILITY_CLAIMS');
-
 export function fetchFacilityClaims() {
     return dispatch => {
         dispatch(startFetchFacilityClaims());

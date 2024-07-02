@@ -35,10 +35,8 @@ This document outlines the SDLC pillars of the opensupplyhub monorepo, as well a
 | v1.11.0 | April 20, 2024  | April 15, 2024 | @Nessa Drew |
 | v1.12.0 | May 18, 2024  | May 14, 2024 | @Vadim Kovalenko |
 | v1.13.0 | June 01, 2024  | May 29, 2024 | @Vadim Kovalenko |
-| v1.14.0 | June 15, 2024  | June 12, 2024 | @Oleksandr Mazur |
-| v1.15.0 | June 29, 2024  | June 26, 2024 | @Oleksandr Mazur |
-| v1.16.0 | July 13, 2024  | July 10, 2024 | @Roman Stolar |
-| v1.17.0 | July 27, 2024  | July 24, 2024 | @Roman Stolar |
+| v1.14.0 | June 12, 2024  | June 15, 2024 | @Oleksandr Mazur |
+| v1.15.0 | June 29, 2024  | June 29, 2024 | @Oleksandr Mazur |
 
 
 ## General Information
@@ -98,13 +96,13 @@ Each new feature should reside in its own branch, which can be pushed to the cen
 
 #### Release branches and tags
 
-Once `main` has acquired enough features for a release (or a predetermined release date is approaching), you run the `Release [Init]` GitHub workflow that creates a new release branch with a version number for the release. The release version number for release branches includes only the major and minor versions.
+Once `main` has acquired enough features for a release (or a predetermined release date is approaching), you run the Release [Init] GitHub workflow that creates a new release branch with a version number for the release. The release version number for release branches includes only the major and minor versions.
 
-When the release branch is ready for release, the `Release [Deploy]` workflow should be run for each environment, such as sandbox and production. This workflow will create two Git tags, each with a version number.
+When the release branch is ready for release, the Release [Deploy] workflow should be run for each environment, such as sandbox and production. This workflow will create two Git tags, each with a version number.
 
 #### Hotfix branches
 
-Hotfix branches are utilized to quickly patch production and sandbox releases. They resemble release branches and feature branches, except they are based on a release branch instead of `main`. This is the only branch that should fork directly from a release branch. As soon as the fix is complete, it should be merged into the release branch and, if the fix isn't dirty, into `main` as well. After manually running the `Release [Deploy]` workflow, two new tags with increased patch versions will be created, and the new version will be shipped to sandbox and production environments.
+Hotfix branches are utilized to quickly patch production and sandbox releases. They resemble release branches and feature branches, except they are based on a release branch instead of `main`. This is the only branch that should fork directly from a release branch. As soon as the fix is complete, it should be merged into the release branch and, if the fix isn't dirty, into `main` as well. After manually running the Release [Deploy] workflow, two new tags with increased patch versions will be created, and the new version will be shipped to sandbox and production environments.
 
 
 ## Development and release of the new release version
@@ -125,16 +123,15 @@ Make sure that:
 
 ### Code Freeze
 
-1. Code freeze occurs every Wednesday following two weeks of development for a new release version. To enhance communication within the team, all stakeholders must be notified about the code freeze two working days before the code freeze by the responsible person for the release.
+1. Code freeze occurs every Monday following two weeks of development for a new release version. To enhance communication within the team, all stakeholders must be notified about the code freeze two working days before the code freeze by the responsible person for the release.
 2. Before initiating the code freeze process, ensure that all commands required for the deployment process (e.g., `index_facilities_new`) are included in the `post_deployment` command.
-3. On the day of the code freeze, the responsible person has to run the `Release [Init]` workflow from the `main` branch, specifying the major and minor versions of the release. Subsequently, the `releases/v.X.Y` branch will be created and automatically deployed to the running pre-prod environment via the `Deploy to AWS` workflow.
-4. After a successful deployment, you need to run the `DB - Save Anonymized DB` workflow (if this job did not run on the same or the previous day). Once the Anonymized DB is successfully saved, run the `DB - Apply Anonymized DB` workflow to ensure that testing will be conducted with up-to-date data.
-5. In case there is a need to run a command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Migration+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5DHow-to-correctly-run-migrations-for-our-four-environments%3F---Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
+3. On the day of the code freeze, the responsible person has to run the `Release [Init]` workflow from the `main` branch, specifying the major and minor versions of the release. Subsequently, the `releases/v.X.Y` branch will be created and automatically deployed to the running pre-prod environment via the Deploy to AWS workflow.
+4. In case there is a need to run a command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Migration+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5DHow-to-correctly-run-migrations-for-our-four-environments%3F---Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
 
 ### QA process
 
-- The Test environment can be updated manually by running the `Deploy to AWS` workflow from the `main` branch at any convenient time. Be sure to select 'Test' in the 'Environment to deploy' field. This allows QA engineers to test the most recent changes on a copy of the live database. To identify the tasks that should be tested, QA engineers can refer to the Jira release page for the developing version, where all feature and bug-fix tickets intended for the release are displayed.
-- Five working days before the release, which always takes place on Saturday, the QA engineer creates a new tab in [the QA Checklist sheet](https://docs.google.com/spreadsheets/d/1uinHJOPpGfrUNkewBxPVsDeDXnNx4dJnnX94LoBA_zk/edit?usp=sharing) for the new release version. They add all the features that will be shipped with the release on Saturday to the Change List section. Then, the QA engineer goes through all the items in the list. If a regression bug is found, it should be immediately documented as a Jira bug ticket and rated depending on whether it is a P1-P3 bug. If the bug has a P1 level, the entire team should be notified, and the bug ticket should be assigned to the software development team for fixing as quickly as possible. After the bug is fixed and the fix is deployed to the pre-prod environment, the entire QA checklist should be verified from the very beginning before the release.
+- Twice a week, the Test environment is updated so that QA engineers can test the most recent changes on a copy of the live database. To identify the tasks that should be tested, they can use the Jira release page of the developing version, where all the feature and bug fix tickets intended for the release are displayed.
+- Five working days before the release, which always takes place on Saturday, the QA engineer creates a new tab in [the QA Checklist sheet](https://docs.google.com/spreadsheets/d/1uinHJOPpGfrUNkewBxPVsDeDXnNx4dJnnX94LoBA_zk/edit?usp=sharing) for the new release version. They add all the features that will be shipped with the release on Saturday to the Change List section. Then, the QA engineer goes through all the items in the list. If a regression bug is found, it should be immediately documented as a Jira bug ticket and rated depending on whether it is a P1-P4 bug. If the bug has a P1 level, the entire team should be notified, and the bug ticket should be assigned to the software development team for fixing as quickly as possible. After the bug is fixed and the fix is deployed to the pre-prod environment, the entire QA checklist should be verified from the very beginning before the release.
 - The QA Engineer should also test the items listed under the *prod* column in [the QA Checklist sheet](https://docs.google.com/spreadsheets/d/1uinHJOPpGfrUNkewBxPVsDeDXnNx4dJnnX94LoBA_zk/edit?usp=sharing) on the production site once the new version is released on the designated date.
 
 ### Release to production and sandbox
@@ -155,7 +152,7 @@ In case there is a need to run additional command in the terminal of the Django 
 
 ### Hotfixes
 
-- To deploy a hotfix to pre-prod, you should fork from the latest release branch, and after preparing the fix, merge it back. Merging will trigger the `Deploy to AWS` workflow that will deploy the hotfix to the **running** pre-prod environment.
+- To deploy a hotfix to pre-prod, you should fork from the latest release branch, and after preparing the fix, merge it back. Merging will trigger the Deploy to AWS workflow that will deploy the hotfix to the **running** pre-prod environment.
 - To release a hotfix to production and staging, you should fork from the latest release branch, and after preparing the fix, merge it back. The last step is to execute the `Release [Deploy]` workflow for each environment separately, which will deploy the fix to these two environments.
 
 ### Shut down the pre-prod environment
