@@ -383,9 +383,11 @@ data "template_file" "app_logstash" {
     aws_region                       = var.aws_region
     opensearch_ssl                   = var.opensearch_ssl
     opensearch_ssl_cert_verification = var.opensearch_ssl_cert_verification
-    # TODO: enable opensearch_enpoint once count in opensearch.tf be removed
-    # opensearch_endpoint              = "${aws_opensearch_domain.opensearch.endpoint}:${var.opensearch_port}"
-    opensearch_endpoint              = "dummy-opensearch-endpoint"
+    # TODO: enable opensearch_host and opensearch_port once count in opensearch.tf be removed
+    # opensearch_host              = ${aws_opensearch_domain.opensearch.endpoint}
+    # opensearch_port              = ${var.opensearch_port}
+    opensearch_host                  = "dummy-opensearch-host"
+    opensearch_port                  = 0000
     postgres_host                    = aws_route53_record.database.name
     postgres_port                    = module.database_enc.port
     postgres_user                    = var.rds_database_username
