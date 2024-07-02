@@ -1,28 +1,15 @@
 {% block content %}
-Hi,
+Hello,
 
-You're receiving this email because you were listed as the contact for a facility claim request on Open Supply Hub. We'll review the request and be in touch soon. The expected processing time for the initial review of a claim is 10 - 14 days. 
+You are receiving this email because you submitted a request to claim the following production location on Open Supply Hub:
 
-Vendors can refer facilities to claim their profiles, however, the Facility Claim request will only be approved when it is submitted by a facility owner and/or senior management staff at the facility location in question.  If this claim is a referral, please visit our website [https://opensupplyhub.org/auth/register], and register as a user on Open Supply Hub. 
+- Name of Production Location: {{ facility_name }}
+- Address of Production Location: {{ facility_address }}
+- OS Hub Profile: {{ facility_url }}
 
-To complete a claim request, you'll need to submit the following documentation:
+Please note: Buyers can refer their suppliers to claim their profiles on OS Hub; however, the claim request will only be approved when it is submitted by an owner or senior management associated with the production location in question. Requests submitted by a buyer will not be approved. 
 
-- A document or website with the address of your site (e.g. company website, LinkedIn profile, business registration document)
-- A document of website that shows your relationship to the site as an owner or senior manager (e.g. Your LinkedIn profile, business card, or letter of employment on company letterhead)
-
-Here is the information submitted with the request:
-
-- Facility: {{ facility_name }}, {{ facility_address }}, {{ facility_country }}
-- Facility URL: {{ facility_url }}
-- Contact person: {{ contact_person }}
-- Email: {{ email }}
-- Phone number: {{ phone_number }}
-- Company name: {{ company_name }}
-- Website: {{ website }}
-- Facility description: {{ facility_description }}
-- Verification method: {{ verification_method }}
-
-We'll review the request to claim the facility and get in touch if we need any additional information.
+The OS Hub Team will review your request and be in touch soon. The expected processing time for the initial review of a claim is 10-14 days.
 
 Best wishes,
 
