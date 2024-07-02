@@ -1145,16 +1145,26 @@ export const logErrorToRollbar = (window, error, user) => {
 };
 
 function descendingComparator(a, b, orderBy) {
-    if (a[orderBy] === null) {
+    let aValue = a[orderBy];
+    let bValue = b[orderBy];
+
+    if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+    }
+    if (typeof bValue === 'string') {
+        bValue = bValue.toLowerCase();
+    }
+
+    if (aValue === null) {
         return -1;
     }
-    if (b[orderBy] === null) {
+    if (bValue === null) {
         return 1;
     }
-    if (b[orderBy] < a[orderBy]) {
+    if (bValue < aValue) {
         return -1;
     }
-    if (b[orderBy] > a[orderBy]) {
+    if (bValue > aValue) {
         return 1;
     }
     return 0;
