@@ -11,6 +11,7 @@ import omitBy from 'lodash/omitBy';
 import isEmpty from 'lodash/isEmpty';
 import isNumber from 'lodash/isNumber';
 import isNil from 'lodash/isNil';
+import intersection from 'lodash/intersection';
 import values from 'lodash/values';
 import flow from 'lodash/flow';
 import noop from 'lodash/noop';
@@ -28,6 +29,9 @@ import every from 'lodash/every';
 import uniqWith from 'lodash/uniqWith';
 import filter from 'lodash/filter';
 import includes from 'lodash/includes';
+import join from 'lodash/join';
+import map from 'lodash/map';
+import uniq from 'lodash/uniq';
 import { isURL, isInt } from 'validator';
 import { featureCollection, bbox } from '@turf/turf';
 import hash from 'object-hash';
@@ -48,6 +52,7 @@ import {
     DEFAULT_ROWS_PER_PAGE,
     ENTER_KEY,
     facilityListStatusChoicesEnum,
+    facilityClaimStatusChoices,
     facilityListItemStatusChoicesEnum,
     facilityListItemErrorStatuses,
     facilityListSummaryStatusMessages,
@@ -172,6 +177,7 @@ export const makeGetFacilitiesTypeProcessingTypeURL = () =>
     '/api/facility-processing-types/';
 export const makeGetNumberOfWorkersURL = () => '/api/workers-ranges/';
 export const makeGetNativeLanguageName = () => '/api/native_language_name/';
+export const makeGetClaimStatusesURL = () => '/api/claim-statuses/';
 
 export const makeGetFacilitiesURL = () => '/api/facilities/';
 export const makeGetFacilityByOSIdURL = (
@@ -326,6 +332,8 @@ export const getAlgorithm = sortBy =>
 export const createFiltersFromQueryString = qs => {
     const qsToParse = startsWith(qs, '?') ? qs.slice(1) : qs;
 
+    console.log('@@@ Create filter in createFiltersFromQueryString');
+
     const {
         q: facilityFreeTextQuery = '',
         contributors = [],
@@ -333,6 +341,7 @@ export const createFiltersFromQueryString = qs => {
         contributor_types: contributorTypes = [],
         countries = [],
         sectors = [],
+        statuses = [],
         parent_company: parentCompany = [],
         facility_type: facilityType = [],
         processing_type: processingType = [],
@@ -350,6 +359,7 @@ export const createFiltersFromQueryString = qs => {
         lists: createSelectOptionsFromParams(lists),
         contributorTypes: createSelectOptionsFromParams(contributorTypes),
         countries: createSelectOptionsFromParams(countries),
+        statuses: createSelectOptionsFromParams(statuses),
         sectors: createSelectOptionsFromParams(sectors),
         parentCompany: createSelectOptionsFromParams(parentCompany),
         facilityType: createSelectOptionsFromParams(facilityType),
@@ -419,6 +429,8 @@ export const getTokenFromQueryString = qs => {
     return isArray(token) ? head(token) : token;
 };
 
+const parseFilterQueryString = qs => (startsWith(qs, '?') ? qs.slice(1) : qs);
+
 export const dashboardListParamsDefaults = Object.freeze({
     contributor: null,
     matchResponsibility: matchResponsibilityEnum.MODERATOR,
@@ -426,13 +438,11 @@ export const dashboardListParamsDefaults = Object.freeze({
 });
 
 export const getDashboardListParamsFromQueryString = qs => {
-    const qsToParse = startsWith(qs, '?') ? qs.slice(1) : qs;
-
     const {
         contributor,
         matchResponsibility = dashboardListParamsDefaults.matchResponsibility,
         status = dashboardListParamsDefaults.status,
-    } = querystring.parse(qsToParse);
+    } = querystring.parse(parseFilterQueryString(qs));
 
     return Object.freeze({
         contributor: getNumberFromParsedQueryStringParamOrUseDefault(
@@ -441,6 +451,28 @@ export const getDashboardListParamsFromQueryString = qs => {
         ),
         matchResponsibility,
         status,
+    });
+};
+
+export const dashboardClaimsListParamsDefaults = Object.freeze({
+    countries: [],
+    claimStatuses: facilityClaimStatusChoices[0].value,
+});
+
+export const getDashboardClaimsListParamsFromQueryString = qs => {
+    const {
+        countries,
+        statuses = dashboardClaimsListParamsDefaults.claimStatuses,
+    } = querystring.parse(parseFilterQueryString(qs));
+
+    const statusesArray = Array.isArray(statuses) ? statuses : [statuses];
+
+    return Object.freeze({
+        countries,
+        statuses: intersection(
+            uniq(statusesArray),
+            map(facilityClaimStatusChoices, 'value'),
+        ),
     });
 };
 
@@ -680,6 +712,14 @@ export const makeDashboardContributorListLink = ({
         params.length > 0 ? `?${params.join('&')}` : ''
     }`;
 };
+
+export const makeDashboardClaimListLink = ({ statuses }) =>
+    statuses && statuses.length > 0
+        ? `/dashboard/claims/?${join(
+              map(statuses, value => `statuses=${value}`),
+              '&',
+          )}`
+        : '/dashboard/claims';
 
 export const splitContributorsIntoPublicAndNonPublic = contributors =>
     contributors.reduce(

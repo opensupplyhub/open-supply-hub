@@ -15,7 +15,7 @@ class FacilityClaim(models.Model):
     Data submitted from a user attempting to make a verified claim of a
     Facility to be evaluated by OS Hub moderators.
     """
-
+    # TODO: use values from constants file
     PENDING = 'PENDING'
     APPROVED = 'APPROVED'
     DENIED = 'DENIED'

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { func, shape } from 'prop-types';
 import { withRouter, Link } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
-import Paper from '@material-ui/core/Paper';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableRow from '@material-ui/core/TableRow';
@@ -99,78 +98,72 @@ function DashboardClaimsListTable({
     }, [data]);
 
     return (
-        <Paper className={classes.containerStyles}>
-            <Table>
-                <DashboardClaimsListTableHeader
-                    order={order}
-                    orderBy={orderBy}
-                    onRequestSort={handleRequestSort}
-                />
-                {loading ? (
-                    <TableBody>
-                        <TableRow>
-                            <TableCell colSpan={7}>
-                                <CircularProgress
-                                    size={25}
-                                    className={classes.loaderStyle}
-                                />
+        <Table>
+            <DashboardClaimsListTableHeader
+                order={order}
+                orderBy={orderBy}
+                onRequestSort={handleRequestSort}
+            />
+            {loading ? (
+                <TableBody>
+                    <TableRow>
+                        <TableCell colSpan={7}>
+                            <CircularProgress
+                                size={25}
+                                className={classes.loaderStyle}
+                            />
+                        </TableCell>
+                    </TableRow>
+                </TableBody>
+            ) : (
+                <TableBody>
+                    {data.map(claim => (
+                        <TableRow
+                            hover
+                            key={claim.id}
+                            onClick={makeRowClickHandler(claim.id)}
+                            className={classes.rowStyles}
+                        >
+                            <TableCell padding="dense">{claim.id}</TableCell>
+                            <TableCell>
+                                <Link
+                                    to={makeFacilityDetailLink(claim.os_id)}
+                                    href={makeFacilityDetailLink(claim.os_id)}
+                                    id={FACILITY_LINK_ID}
+                                >
+                                    {claim.facility_name}
+                                </Link>
+                            </TableCell>
+                            <TableCell>
+                                <Link
+                                    to={makeProfileRouteLink(
+                                        claim.contributor_id,
+                                    )}
+                                    href={makeProfileRouteLink(
+                                        claim.contributor_id,
+                                    )}
+                                    id={CONTRIBUTOR_LINK_ID}
+                                >
+                                    {claim.contributor_name}
+                                </Link>
+                            </TableCell>
+                            <TableCell padding="dense">
+                                {claim.facility_country_name}
+                            </TableCell>
+                            <TableCell padding="dense">
+                                {moment(claim.created_at).format('LL')}
+                            </TableCell>
+                            <TableCell padding="dense">
+                                {moment(claim.updated_at).format('LL')}
+                            </TableCell>
+                            <TableCell padding="dense">
+                                {claim.status}
                             </TableCell>
                         </TableRow>
-                    </TableBody>
-                ) : (
-                    <TableBody>
-                        {data.map(claim => (
-                            <TableRow
-                                hover
-                                key={claim.id}
-                                onClick={makeRowClickHandler(claim.id)}
-                                className={classes.rowStyles}
-                            >
-                                <TableCell padding="dense">
-                                    {claim.id}
-                                </TableCell>
-                                <TableCell>
-                                    <Link
-                                        to={makeFacilityDetailLink(claim.os_id)}
-                                        href={makeFacilityDetailLink(
-                                            claim.os_id,
-                                        )}
-                                        id={FACILITY_LINK_ID}
-                                    >
-                                        {claim.facility_name}
-                                    </Link>
-                                </TableCell>
-                                <TableCell>
-                                    <Link
-                                        to={makeProfileRouteLink(
-                                            claim.contributor_id,
-                                        )}
-                                        href={makeProfileRouteLink(
-                                            claim.contributor_id,
-                                        )}
-                                        id={CONTRIBUTOR_LINK_ID}
-                                    >
-                                        {claim.contributor_name}
-                                    </Link>
-                                </TableCell>
-                                <TableCell padding="dense">
-                                    {claim.facility_country_name}
-                                </TableCell>
-                                <TableCell padding="dense">
-                                    {moment(claim.created_at).format('LL')}
-                                </TableCell>
-                                <TableCell padding="dense">
-                                    {moment(claim.updated_at).format('LL')}
-                                </TableCell>
-                                <TableCell padding="dense">
-                                    {claim.status}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                )}
-            </Table>
-        </Paper>
+                    ))}
+                </TableBody>
+            )}
+        </Table>
     );
 }
 

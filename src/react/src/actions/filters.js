@@ -20,6 +20,9 @@ export const updateContributorTypeFilter = createAction(
 );
 export const updateListFilter = createAction('UPDATE_LIST_FILTER');
 export const updateCountryFilter = createAction('UPDATE_COUNTRY_FILTER');
+export const updateClaimStatusFilter = createAction(
+    'UPDATE_CLAIM_STATUS_FILTER',
+);
 export const updateSectorFilter = createAction('UPDATE_SECTOR_FILTER');
 export const updateParentCompanyFilter = createAction(
     'UPDATE_PARENT_COMPANY_FILTER',

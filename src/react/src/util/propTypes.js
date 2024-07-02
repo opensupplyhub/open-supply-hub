@@ -188,7 +188,9 @@ export const contributorTypeOptionsPropType = arrayOf(
     }),
 );
 
-export const contributorListOptionsPropType = arrayOf(
+export const contributorListOptionsPropType = arrayOf(string);
+
+export const claimStatusOptionsPropType = arrayOf(
     shape({
         value: string.isRequired,
         label: string.isRequired,
