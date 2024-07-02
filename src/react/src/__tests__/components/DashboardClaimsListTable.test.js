@@ -64,7 +64,19 @@ const data = [
         "facility_address": "202 Epsilon Parkway, Epsilon City, Spain",
         "facility_country_name": "Spain",
         "status": "DENIED"
-    }
+    },
+    {
+        "id": 20,
+        "created_at": "2024-06-15T04:58:23.352025Z",
+        "updated_at": "2024-06-15T05:23:10.352040Z",
+        "contributor_id": 1006,
+        "os_id": "DM5021177DCET89",
+        "contributor_name": "contributor b (lowercase test)",
+        "facility_name": "facility beta (lowercase test)",
+        "facility_address": "123 BetaLowerCase Street, BetaLowerCase City, Greece",
+        "facility_country_name": "Greece",
+        "status": "REVOKED"
+    },
 ];
 
 describe('DashboardClaimsListTable component', () => {
@@ -104,6 +116,8 @@ describe('DashboardClaimsListTable component', () => {
             expect(handleSortClaimsMock).toHaveBeenCalled();
             const sortedData = handleSortClaimsMock.mock.calls[0][0];
             expect(sortedData[0].facility_name).toBe('Facility Alpha');
+            expect(sortedData[1].facility_name).toBe('Facility Beta');
+            expect(sortedData[2].facility_name).toBe('facility beta (lowercase test)');
             expect(sortedData[sortedData.length - 1].facility_name).toBe('Facility Gamma');
         });
     });
@@ -117,6 +131,8 @@ describe('DashboardClaimsListTable component', () => {
             expect(handleSortClaimsMock).toHaveBeenCalled();
             const sortedData = handleSortClaimsMock.mock.calls[0][0];
             expect(sortedData[0].contributor_name).toBe('Contributor A');
+            expect(sortedData[1].contributor_name).toBe('Contributor B');
+            expect(sortedData[2].contributor_name).toBe('contributor b (lowercase test)');
             expect(sortedData[sortedData.length - 1].contributor_name).toBe('Contributor E');
         });
     });
@@ -156,7 +172,7 @@ describe('DashboardClaimsListTable component', () => {
             expect(handleSortClaimsMock).toHaveBeenCalled();
             const sortedData = handleSortClaimsMock.mock.calls[0][0];
             expect(sortedData[0].created_at).toBe('2024-06-13T00:24:49.566190Z');
-            expect(sortedData[sortedData.length - 1].created_at).toBe('2024-06-15T04:52:16.352025Z');
+            expect(sortedData[sortedData.length - 1].created_at).toBe('2024-06-15T04:58:23.352025Z');
         });
     });
 
@@ -169,7 +185,7 @@ describe('DashboardClaimsListTable component', () => {
             expect(handleSortClaimsMock).toHaveBeenCalled();
             const sortedData = handleSortClaimsMock.mock.calls[0][0];
             expect(sortedData[0].updated_at).toBe('2024-06-13T00:24:49.566204Z');
-            expect(sortedData[sortedData.length - 1].updated_at).toBe('2024-06-15T04:52:16.352040Z');
+            expect(sortedData[sortedData.length - 1].updated_at).toBe('2024-06-15T05:23:10.352040Z');
         });
     });
 
