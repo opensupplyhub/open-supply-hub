@@ -85,11 +85,16 @@ const DashboardClaims = ({
     useEffect(() => {
         if (statuses && statuses.length > 0) {
             const uniqueStatuses = uniq(statuses);
-            const newParams = map(uniqueStatuses, status => ({
+            const uniqueStatusesSerialized = map(uniqueStatuses, status => ({
                 label: status,
                 value: status,
             }));
-            updateClaimStatus(newParams);
+            updateClaimStatus(uniqueStatusesSerialized);
+            replace(
+                makeDashboardClaimListLink({
+                    statuses: uniqueStatuses,
+                }),
+            );
         }
     }, []);
 
