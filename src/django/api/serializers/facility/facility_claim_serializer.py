@@ -38,6 +38,6 @@ class FacilityClaimSerializer(ModelSerializer):
 
     def get_facility_country_name(self, claim):
         return COUNTRY_NAMES.get(claim.facility.country_code, '')
-    
+
     def get_claim_decision(self, claim):
         return claim.status_change_date
