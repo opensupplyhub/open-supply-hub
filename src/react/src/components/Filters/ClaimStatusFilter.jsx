@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { func } from 'prop-types';
+import { array, func } from 'prop-types';
 import { connect } from 'react-redux';
 
 import StyledSelect from './StyledSelect';
@@ -8,17 +8,17 @@ import { updateClaimStatusFilter } from '../../actions/filters';
 
 import { claimStatusOptionsPropType } from '../../util/propTypes';
 
-import { facilityClaimStatusChoices } from '../../util/constants';
-
 const CLAIM_STATUSES = 'CLAIM_STATUSES';
 
 function ClaimStatusFilter({
     claimStatuses,
+    claimStatusesOptions,
     updateClaimStatus,
     handleClaimStatusUpdate,
 }) {
     const onChangeClaimStatus = useCallback(
         s => {
+            console.log('s is ', s);
             handleClaimStatusUpdate(s);
             updateClaimStatus(s);
         },
@@ -30,7 +30,7 @@ function ClaimStatusFilter({
             <StyledSelect
                 label="Claim Status"
                 name={CLAIM_STATUSES}
-                options={facilityClaimStatusChoices}
+                options={claimStatusesOptions.data || []}
                 value={claimStatuses}
                 onChange={onChangeClaimStatus}
             />
@@ -41,11 +41,16 @@ function ClaimStatusFilter({
 ClaimStatusFilter.propTypes = {
     updateClaimStatus: func.isRequired,
     claimStatuses: claimStatusOptionsPropType.isRequired,
+    claimStatusesOptions: array.isRequired,
 };
 
-function mapStateToProps({ filters: { claimStatuses } }) {
+function mapStateToProps({
+    filters: { claimStatuses },
+    filterOptions: { claimStatuses: claimStatusesOptions },
+}) {
     return {
         claimStatuses,
+        claimStatusesOptions,
     };
 }
 

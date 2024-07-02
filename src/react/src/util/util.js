@@ -427,6 +427,7 @@ export const getTokenFromQueryString = qs => {
     return isArray(token) ? head(token) : token;
 };
 
+// TODO: getDashboardListParamsFromQueryString and getDashboardClaimsListParamsFromQueryString can be merged
 export const dashboardListParamsDefaults = Object.freeze({
     contributor: null,
     matchResponsibility: matchResponsibilityEnum.MODERATOR,
@@ -452,13 +453,9 @@ export const getDashboardListParamsFromQueryString = qs => {
     });
 };
 
-/*
-TODO: This function is needed to get parameters from the URL (if they present)
-and pass it to the component state (such as select element) into newParams variable
-*/
 export const dashboardClaimsListParamsDefaults = Object.freeze({
     countries: [],
-    claimStatuses: facilityClaimStatusChoices[0],
+    claimStatuses: facilityClaimStatusChoices[0].value,
 });
 
 export const getDashboardClaimsListParamsFromQueryString = qs => {
@@ -469,14 +466,11 @@ export const getDashboardClaimsListParamsFromQueryString = qs => {
         statuses = dashboardClaimsListParamsDefaults.claimStatuses,
     } = querystring.parse(qsToParse);
 
-    console.log(
-        'Return of getDashboardClaimsListParamsFromQueryString: ',
-        Object.freeze({ countries, statuses }),
-    );
+    const statusesArray = Array.isArray(statuses) ? statuses : [statuses];
 
     return Object.freeze({
         countries,
-        statuses,
+        statuses: statusesArray,
     });
 };
 

@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { arrayOf, bool, func, shape, string } from 'prop-types';
 import map from 'lodash/map';
+import uniq from 'lodash/uniq';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -10,8 +11,6 @@ import Typography from '@material-ui/core/Typography';
 
 import DownloadFacilityClaimsButton from './DownloadFacilityClaimsButton';
 import DashboardClaimsListTable from './DashboardClaimsListTable';
-// TODO: abstract this component to not being coupled to the values that come from Dashboard
-import withQueryStringSync from '../util/withQueryStringSync';
 
 import {
     fetchFacilityClaims,
@@ -20,15 +19,20 @@ import {
 } from '../actions/claimFacilityDashboard';
 
 import {
+    // TODO: adjust countries
     // fetchCountryOptions,
     fetchClaimStatusOptions,
 } from '../actions/filterOptions';
 
 import ClaimStatusFilter from './Filters/ClaimStatusFilter';
+import { updateClaimStatusFilter } from './../actions/filters';
 
 import { facilityClaimsListPropType } from '../util/propTypes';
 
-import { makeDashboardClaimListLink } from '../util/util';
+import {
+    makeDashboardClaimListLink,
+    getDashboardClaimsListParamsFromQueryString,
+} from '../util/util';
 
 const dashboardClaimsStyles = () =>
     Object.freeze({
@@ -64,21 +68,30 @@ const DashboardClaims = ({
         push,
         replace,
     },
-    claimStatuses, // TODO: replace this with fetchClaimStatus
     fetchClaimStatus,
+    updateClaimStatus,
 }) => {
+    const { countries, statuses } = getDashboardClaimsListParamsFromQueryString(
+        search,
+    );
+
     useEffect(() => {
-        /*
-         TODO: this should pass default pending parameter
-         There is no need to pass parameters here (for now, I'd rather do this)
-         It looks like it can take params from the search bar but now it just take it from const
-         export const makeGetFacilityClaimsURL = () => '/api/facility-claims/';
-         */
         getClaims();
         fetchClaimStatus();
 
         return clearClaims;
     }, [getClaims, clearClaims]);
+
+    useEffect(() => {
+        if (statuses && statuses.length > 0) {
+            const uniqueStatuses = uniq(statuses);
+            const newParams = map(uniqueStatuses, status => ({
+                label: status,
+                value: status,
+            }));
+            updateClaimStatus(newParams);
+        }
+    }, []);
 
     if (fetching) {
         return <CircularProgress />;
@@ -91,13 +104,6 @@ const DashboardClaims = ({
     if (!data) {
         return null;
     }
-
-    /*
-     TODO: This will come from predefined URL on component mount, omit for now
-     */
-    const newParams = {
-        statuses: claimStatuses,
-    };
 
     const onClaimStatusUpdate = s => {
         replace(
@@ -138,6 +144,7 @@ DashboardClaims.propTypes = {
     history: shape({
         replace: func.isRequired,
     }).isRequired,
+    updateClaimStatus: func.isRequired,
 };
 
 function mapStateToProps({
@@ -160,10 +167,11 @@ function mapDispatchToProps(dispatch) {
         clearClaims: () => dispatch(clearFacilityClaims()),
         sortClaims: sortedData => dispatch(sortFacilityClaims(sortedData)),
         fetchClaimStatus: () => dispatch(fetchClaimStatusOptions()),
+        updateClaimStatus: v => dispatch(updateClaimStatusFilter(v)),
     };
 }
 
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(withStyles(dashboardClaimsStyles)(withQueryStringSync(DashboardClaims)));
+)(withStyles(dashboardClaimsStyles)(DashboardClaims));

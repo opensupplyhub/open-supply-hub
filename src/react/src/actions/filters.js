@@ -57,8 +57,6 @@ export function setFiltersFromQueryString(qs = '') {
             return null;
         }
 
-        console.log('qs in setFiltersFromQueryString is: ', qs);
-
         dispatch(setEmbeddedMapStatusFromQueryString(qs));
 
         // If contributor / parent company data already exists in the state,
@@ -72,7 +70,6 @@ export function setFiltersFromQueryString(qs = '') {
                 contributors: { data: contributors },
                 parentCompanies: { data: parentCompanies },
                 lists: { data: lists },
-                // claimStatuses: { claimStatuses },
             },
             embeddedMap: { embed },
         } = getState();
@@ -114,16 +111,6 @@ export function setFiltersFromQueryString(qs = '') {
                   },
               })
             : payload;
-
-        /*
-        payload = claimStatuses
-            ? update(payload, {
-                  claimStatuses: {
-                      $set: claimStatuses,
-                  },
-              })
-            : payload;
-        */
 
         return dispatch(updateAllFilters(payload));
     };
