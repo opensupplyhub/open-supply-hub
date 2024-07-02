@@ -10,7 +10,7 @@ from api.constants import FacilityClaimStatuses
 @throttle_classes([])
 def claim_statuses(_):
     """
-    Returns a list of standardized ranges for potential claim statuses.
+    Returns a list of claim statuses.
 
     ## Sample Response
 
