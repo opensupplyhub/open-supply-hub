@@ -427,49 +427,52 @@ export const getTokenFromQueryString = qs => {
     return isArray(token) ? head(token) : token;
 };
 
-// TODO: getDashboardListParamsFromQueryString and getDashboardClaimsListParamsFromQueryString can be merged
-export const dashboardListParamsDefaults = Object.freeze({
+const dashboardListParamsDefaults = Object.freeze({
     contributor: null,
     matchResponsibility: matchResponsibilityEnum.MODERATOR,
     status: facilityListStatusChoicesEnum.PENDING,
 });
 
-export const getDashboardListParamsFromQueryString = qs => {
-    const qsToParse = startsWith(qs, '?') ? qs.slice(1) : qs;
-
-    const {
-        contributor,
-        matchResponsibility = dashboardListParamsDefaults.matchResponsibility,
-        status = dashboardListParamsDefaults.status,
-    } = querystring.parse(qsToParse);
-
-    return Object.freeze({
-        contributor: getNumberFromParsedQueryStringParamOrUseDefault(
-            contributor,
-            null,
-        ),
-        matchResponsibility,
-        status,
-    });
-};
-
-export const dashboardClaimsListParamsDefaults = Object.freeze({
+const dashboardClaimsListParamsDefaults = Object.freeze({
     countries: [],
     claimStatuses: facilityClaimStatusChoices[0].value,
 });
 
-export const getDashboardClaimsListParamsFromQueryString = qs => {
+const parseQueryString = (qs, defaults) => {
     const qsToParse = startsWith(qs, '?') ? qs.slice(1) : qs;
+    const parsedQuery = querystring.parse(qsToParse);
 
-    const {
-        countries,
-        statuses = dashboardClaimsListParamsDefaults.claimStatuses,
-    } = querystring.parse(qsToParse);
+    return Object.keys(defaults).reduce((acc, key) => {
+        acc[key] =
+            parsedQuery[key] !== undefined ? parsedQuery[key] : defaults[key];
+        return acc;
+    }, {});
+};
 
-    const statusesArray = Array.isArray(statuses) ? statuses : [statuses];
+export const getDashboardListParamsFromQueryString = qs => {
+    const parsedParams = parseQueryString(qs, dashboardListParamsDefaults);
 
     return Object.freeze({
-        countries,
+        contributor: getNumberFromParsedQueryStringParamOrUseDefault(
+            parsedParams.contributor,
+            null,
+        ),
+        matchResponsibility: parsedParams.matchResponsibility,
+        status: parsedParams.status,
+    });
+};
+
+export const getDashboardClaimsListParamsFromQueryString = qs => {
+    const parsedParams = parseQueryString(
+        qs,
+        dashboardClaimsListParamsDefaults,
+    );
+    const statusesArray = Array.isArray(parsedParams.claimStatuses)
+        ? parsedParams.claimStatuses
+        : [parsedParams.claimStatuses];
+
+    return Object.freeze({
+        countries: parsedParams.countries,
         statuses: statusesArray,
     });
 };
