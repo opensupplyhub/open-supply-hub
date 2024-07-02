@@ -1,0 +1,22 @@
+name: "Weekly PR Analytics"
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 1'
+jobs:
+  create-report:
+    name: "Create report"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Run script for analytics"
+        uses: AlexSim93/pull-request-analytics-action@v2
+        with:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+          GITHUB_REPO_FOR_ISSUE: "open-supply-hub"
+          GITHUB_OWNER_FOR_ISSUE: "opensupplyhub"
+          GITHUB_OWNERS_REPOS: "opensupplyhub/open-supply-hub"
+          REPORT_PERIOD: "weeks:1"
+          PERIOD_SPLIT_UNIT: "none"
+          EXECUTION_OUTCOME: "existing-issue"
+          ISSUE_NUMBER: "172"
+          ISSUE_TITLE: "Weekly PR report (Updates every Monday on 00:00 UTC)"
