@@ -19,9 +19,6 @@ const DashboardClaimsListTableHeaderStyles = Object.freeze({
     fourthTh: {
         width: '90px',
     },
-    sixthTh: {
-        width: '100px',
-    },
 });
 
 // Table header ids should match keys from BE
@@ -57,16 +54,22 @@ const claimsListHeadCells = [
         label: 'Created',
     },
     {
-        id: 'updated_at',
+        id: 'claim_decision',
         numeric: false,
         disablePadding: true,
-        label: 'Last Updated',
+        label: 'Claim Decision',
     },
     {
         id: 'status',
         numeric: false,
         disablePadding: true,
         label: 'Status',
+    },
+    {
+        id: 'updated_at',
+        numeric: false,
+        disablePadding: true,
+        label: 'Last Updated',
     },
 ];
 
@@ -87,7 +90,9 @@ function DashboardClaimsListTableHeader({
             case 3:
                 return classes.fourTh;
             case 5:
-                return classes.sixthTh;
+                return classes.thirdTh;
+            case 7:
+                return classes.thirdTh;
             default:
                 return {};
         }
