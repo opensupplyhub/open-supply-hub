@@ -1167,6 +1167,10 @@ export function sort(array, comparator) {
         if (order !== 0) {
             return order;
         }
+        // to handle 'N/A' or null
+        if (order === 0) {
+            return -1;
+        }
         return a[1] - b[1];
     });
     return stabilizedThis.map(el => el[0]);
