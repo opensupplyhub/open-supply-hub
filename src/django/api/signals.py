@@ -10,7 +10,6 @@ from api.services.opensearch import OpenSearchServiceConnection
 from oar.rollbar import report_error_to_rollbar
 
 
-# Initialize logger.
 log = logging.getLogger(__name__)
 
 

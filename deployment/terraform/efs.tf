@@ -2,6 +2,8 @@
 
 resource "aws_efs_file_system" "efs_app_logstash" {
   creation_token = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-efs-app-logstash"
+  # TODO: remove 'count' meta-argument once OpenSearch will be fully setup.
+  count = 0
 
   tags = {
     Name         = "efsAppLogstash"
