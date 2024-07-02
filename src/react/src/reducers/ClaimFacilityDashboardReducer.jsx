@@ -12,6 +12,7 @@ import {
     startFetchSingleFacilityClaim,
     failFetchSingleFacilityClaim,
     completeFetchSingleFacilityClaim,
+    sortFacilityClaims,
     clearSingleFacilityClaim,
     startApproveFacilityClaim,
     startDenyFacilityClaim,
@@ -106,6 +107,12 @@ export default createReducer(
                 list: {
                     fetching: { $set: initialState.list.fetching },
                     error: { $set: initialState.list.error },
+                    data: { $set: data },
+                },
+            }),
+        [sortFacilityClaims]: (state, data) =>
+            update(state, {
+                list: {
                     data: { $set: data },
                 },
             }),

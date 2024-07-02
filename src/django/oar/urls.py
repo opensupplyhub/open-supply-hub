@@ -83,7 +83,7 @@ schema_view = get_schema_view(
         default_version='1',
         description='Open Supply Hub API',
         terms_of_service="https://info.opensupplyhub.org/terms-of-service",
-        license=openapi.License(name='MIT', url='https://github.com/open-apparel-registry/open-apparel-registry/blob/develop/LICENSE')  # NOQA
+        license=openapi.License(name='MIT', url='https://github.com/opensupplyhub/open-supply-hub/blob/main/LICENSE.txt')  # NOQA
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),

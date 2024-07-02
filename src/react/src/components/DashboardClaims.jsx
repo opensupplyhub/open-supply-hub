@@ -11,6 +11,7 @@ import DashboardClaimsListTable from './DashboardClaimsListTable';
 import {
     fetchFacilityClaims,
     clearFacilityClaims,
+    sortFacilityClaims,
 } from '../actions/claimFacilityDashboard';
 
 import { facilityClaimsListPropType } from '../util/propTypes';
@@ -29,6 +30,7 @@ const DashboardClaims = ({
     error,
     getClaims,
     clearClaims,
+    sortClaims,
     classes,
 }) => {
     useEffect(() => {
@@ -52,7 +54,10 @@ const DashboardClaims = ({
     return (
         <div className={classes.dashboardClaimsContainer}>
             <DownloadFacilityClaimsButton data={data} />
-            <DashboardClaimsListTable data={data} />
+            <DashboardClaimsListTable
+                data={data}
+                handleSortClaims={sortClaims}
+            />
         </div>
     );
 };
@@ -68,6 +73,7 @@ DashboardClaims.propTypes = {
     error: arrayOf(string),
     getClaims: func.isRequired,
     clearClaims: func.isRequired,
+    sortClaims: func.isRequired,
 };
 
 function mapStateToProps({
@@ -86,6 +92,7 @@ function mapDispatchToProps(dispatch) {
     return {
         getClaims: () => dispatch(fetchFacilityClaims()),
         clearClaims: () => dispatch(clearFacilityClaims()),
+        sortClaims: sortedData => dispatch(sortFacilityClaims(sortedData)),
     };
 }
 
