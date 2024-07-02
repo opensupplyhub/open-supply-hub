@@ -1145,6 +1145,12 @@ export const logErrorToRollbar = (window, error, user) => {
 };
 
 function descendingComparator(a, b, orderBy) {
+    if (a[orderBy] === null) {
+        return -1;
+    }
+    if (b[orderBy] === null) {
+        return 1;
+    }
     if (b[orderBy] < a[orderBy]) {
         return -1;
     }
@@ -1166,10 +1172,6 @@ export function sort(array, comparator) {
         const order = comparator(a[0], b[0]);
         if (order !== 0) {
             return order;
-        }
-        // to handle 'N/A' or null
-        if (order === 0) {
-            return -1;
         }
         return a[1] - b[1];
     });
