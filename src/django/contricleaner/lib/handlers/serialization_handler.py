@@ -23,6 +23,8 @@ from contricleaner.lib.serializers.row_serializers.row_sector_serializer \
 from contricleaner.lib.serializers.row_serializers \
     .row_required_fields_serializer \
     import RowRequiredFieldsSerializer
+from contricleaner.lib.serializers.row_serializers.row_coordinates_serializer \
+    import RowCoordinatesSerializer
 
 
 class SerializationHandler(ListRowHandler):
@@ -62,6 +64,7 @@ class SerializationHandler(ListRowHandler):
             RowCountrySerializer(),
             RowRequiredFieldsSerializer(),
             RowFacilityTypeSerializer(split_pattern),
+            RowCoordinatesSerializer(),
             RowEmptySerializer(),
         )
 
