@@ -306,7 +306,7 @@ export function fetchClaimStatusOptions() {
                 dispatch(
                     logErrorAndDispatchFailure(
                         err,
-                        'An error prevented fetching number of workers options',
+                        'An error prevented fetching of claim status options',
                         failFetchClaimStatusOption,
                     ),
                 ),

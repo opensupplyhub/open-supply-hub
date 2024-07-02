@@ -1,9 +1,6 @@
 import { createReducer } from 'redux-act';
 import update from 'immutability-helper';
-import {
-    optionsForSortingResults,
-    facilityClaimStatusChoices,
-} from '../util/constants';
+import { optionsForSortingResults } from '../util/constants';
 
 import {
     updateFacilityFreeTextQueryFilter,
@@ -44,8 +41,7 @@ const initialState = Object.freeze({
     contributors: Object.freeze([]),
     contributorTypes: Object.freeze([]),
     countries: Object.freeze([]),
-    // TODO: this will probably be reconsidered since you upload statues from BE
-    claimStatuses: facilityClaimStatusChoices[0],
+    claimStatuses: Object.freeze([]),
     sectors: Object.freeze([]),
     sortAlgorithm: optionsForSortingResults[2],
     parentCompany: Object.freeze([]),

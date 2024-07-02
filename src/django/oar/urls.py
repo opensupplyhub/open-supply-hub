@@ -69,7 +69,7 @@ public_apis = [
     path('api/log-download/', views.log_download, name='log_download'),
     path('api/workers-ranges/', views.number_of_workers_ranges,
          name='number_of_workers_ranges'),
-    path('api/claim_statuses/', views.claim_statuses, name='claim_statuses'),
+    path('api/claim-statuses/', views.claim_statuses, name='claim_statuses'),
     path('api/facility-processing-types/', views.facility_processing_types,
          name='facility_processing_types'),
     path('api/parent-companies/', views.parent_companies,

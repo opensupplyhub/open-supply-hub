@@ -175,7 +175,7 @@ export const makeGetFacilitiesTypeProcessingTypeURL = () =>
     '/api/facility-processing-types/';
 export const makeGetNumberOfWorkersURL = () => '/api/workers-ranges/';
 export const makeGetNativeLanguageName = () => '/api/native_language_name/';
-export const makeGetClaimStatusesURL = () => '/api/claim-statuses';
+export const makeGetClaimStatusesURL = () => '/api/claim-statuses/';
 
 export const makeGetFacilitiesURL = () => '/api/facilities/';
 export const makeGetFacilityByOSIdURL = (

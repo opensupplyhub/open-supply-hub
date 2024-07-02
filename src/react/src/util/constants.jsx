@@ -73,6 +73,7 @@ export const contributorTypeOptions = Object.freeze([
 
 // These choices must be kept in sync with the identical list
 // kept in the Django API's models.py file
+// TODO: I will need to remove this since claim statuses come from the BE now
 export const facilityClaimStatusChoicesEnum = Object.freeze({
     PENDING: 'PENDING',
     APPROVED: 'APPROVED',
