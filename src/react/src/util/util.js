@@ -11,6 +11,7 @@ import omitBy from 'lodash/omitBy';
 import isEmpty from 'lodash/isEmpty';
 import isNumber from 'lodash/isNumber';
 import isNil from 'lodash/isNil';
+import intersection from 'lodash/intersection';
 import values from 'lodash/values';
 import flow from 'lodash/flow';
 import noop from 'lodash/noop';
@@ -30,6 +31,7 @@ import filter from 'lodash/filter';
 import includes from 'lodash/includes';
 import join from 'lodash/join';
 import map from 'lodash/map';
+import uniq from 'lodash/uniq';
 import { isURL, isInt } from 'validator';
 import { featureCollection, bbox } from '@turf/turf';
 import hash from 'object-hash';
@@ -467,7 +469,10 @@ export const getDashboardClaimsListParamsFromQueryString = qs => {
 
     return Object.freeze({
         countries,
-        statuses: statusesArray,
+        statuses: intersection(
+            uniq(statusesArray),
+            map(facilityClaimStatusChoices, 'value'),
+        ),
     });
 };
 
