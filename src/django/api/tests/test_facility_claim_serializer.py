@@ -8,7 +8,9 @@ from api.models import (
     User,
 )
 from api.serializers import ApprovedFacilityClaimSerializer
+from api.serializers import FacilityClaimSerializer
 
+from django.utils import timezone
 from django.contrib.gis.geos import Point
 from django.test import TestCase
 
@@ -70,3 +72,22 @@ class FacilityClaimSerializerTest(TestCase):
         self.assertIn("production_type_choices", data)
         self.assertIsNotNone(data["production_type_choices"])
         self.assertNotEqual([], data["production_type_choices"])
+    
+    def test_claim_decision(self):
+        claim_one = FacilityClaim.objects.create(
+            contributor=self.contributor,
+            facility=self.facility,
+            status=FacilityClaim.PENDING,
+        )
+        data_one = FacilityClaimSerializer(claim_one).data
+
+        self.assertIsNone(data_one["claim_decision"])
+
+        date = timezone.now()
+
+        claim_one.status_change_date = date
+        claim_one.save()
+
+        data_two = FacilityClaimSerializer(claim_one).data
+
+        self.assertEqual(data_two["claim_decision"], date)
