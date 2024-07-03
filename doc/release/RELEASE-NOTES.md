@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
 
+## Release 1.16.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: July 13, 2024
+
+### Database changes
+#### Migrations:
+* *Describe migrations here.*
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
+### Code/API changes
+* [OSDEV-1100](https://opensupplyhub.atlassian.net/browse/OSDEV-1100) - Replaced all mentions of "facility" and "facilities" with the new production location naming in the Logstash app. Renamed `location` field in the production locations index to `coordinates`.
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* [OSDEV-1105](https://opensupplyhub.atlassian.net/browse/OSDEV-1105) - Contribution. Allow commas in list name and update error message.
+* [OSDEV-272](https://opensupplyhub.atlassian.net/browse/OSDEV-272) - Facility Claims Page. Implement ascending/descending and alphabetic sort on FE.
+
+### Release instructions:
+* *Provide release instructions here.*
+
+
 ## Release 1.15.0
 
 ## Introduction
@@ -14,8 +44,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Migrations:
 * 0150_introduce_function_formatting_number_to_percent - adds add_percent_to_number to DB and drop
 drop_calc_column_func.
-#### Scheme changes
-* *Describe scheme changes here.*
 
 ### Code/API changes
 * [OSDEV-1004](https://opensupplyhub.atlassian.net/browse/OSDEV-1004) - The following changes have been made to the Logstash and OpenSearch services:
