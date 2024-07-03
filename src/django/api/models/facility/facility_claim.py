@@ -6,6 +6,7 @@ from django.contrib.postgres import fields as postgres
 from django.db import models
 
 from countries.lib.countries import COUNTRY_CHOICES
+from api.constants import FacilityClaimStatuses
 from ...constants import Affiliations, Certifications
 from ...facility_type_processing_type import ALL_FACILITY_TYPE_CHOICES
 
@@ -15,11 +16,11 @@ class FacilityClaim(models.Model):
     Data submitted from a user attempting to make a verified claim of a
     Facility to be evaluated by OS Hub moderators.
     """
-    # TODO: use values from constants file
-    PENDING = 'PENDING'
-    APPROVED = 'APPROVED'
-    DENIED = 'DENIED'
-    REVOKED = 'REVOKED'
+
+    PENDING = FacilityClaimStatuses.PENDING
+    APPROVED = FacilityClaimStatuses.APPROVED
+    DENIED = FacilityClaimStatuses.DENIED
+    REVOKED = FacilityClaimStatuses.REVOKED
 
     # These status choices must be kept in sync with the client's
     # `facilityClaimStatusChoicesEnum`.
