@@ -10,6 +10,7 @@ import AppOverflow from './AppOverflow';
 import Button from './Button';
 import ShowOnly from './ShowOnly';
 import SendResetPasswordEmailForm from './SendResetPasswordEmailForm';
+import TogglePassswordField from './TogglePassswordField';
 
 import {
     updateLoginFormEmailAddress,
@@ -104,20 +105,7 @@ const LoginForm = ({
                             }
                         />
                     </div>
-                    <div className="form__field">
-                        <label className="form__label" htmlFor={LOGIN_PASSWORD}>
-                            Password
-                        </label>
-                        <ControlledTextInput
-                            id={LOGIN_PASSWORD}
-                            type="password"
-                            value={password}
-                            onChange={updatePassword}
-                            submitFormOnEnterKeyPress={
-                                submitFormOnEnterKeyPress
-                            }
-                        />
-                    </div>
+                    <TogglePassswordField />
                     <SendResetPasswordEmailForm />
                     <ShowOnly when={!!(error && error.length)}>
                         <ul style={formValidationErrorMessageStyle}>

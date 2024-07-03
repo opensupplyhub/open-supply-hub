@@ -129,6 +129,42 @@ export const makeFilterStyles = theme =>
         }),
     });
 
+export const togglePasswordFieldStyles = () =>
+    Object.freeze({
+        lable: Object.freeze({
+            marginBottom: '8px',
+            opacity: 1,
+            color: '#000000',
+            fontSize: '14px',
+            fontWeight: 900,
+            letterSpacing: '0.5px',
+            lineHeight: '14px',
+            textTransform: 'uppercase',
+        }),
+        wrapper: Object.freeze({
+            marginTop: '8px',
+            paddingLeft: '16px',
+            boxSizing: 'border-box',
+            border: '1px solid #D6D8DD',
+        }),
+        input: Object.freeze({
+            padding: 0,
+        }),
+        inputType: Object.freeze({
+            height: '1.375em',
+        }),
+        inputFocused: Object.freeze({
+            border: '1px solid #3d2f8c',
+            boxShadow: '0px 0px 8px -1px rgba(12, 70, 225,0.5)',
+        }),
+        adornment: Object.freeze({
+            maxHeight: '2.375em',
+        }),
+        button: Object.freeze({
+            padding: '8px',
+        }),
+    });
+
 export const claimAFacilityFormStyles = Object.freeze({
     textFieldStyles: Object.freeze({
         width: '95%',
