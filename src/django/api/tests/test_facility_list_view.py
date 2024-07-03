@@ -17,7 +17,7 @@ class FacilityListViewTest(BaseFacilityListTest):
             myfile = open('test.csv', 'w')
             wr = csv.writer(myfile)
             wr.writerow(('name', 'address', 'country'))
-            wr.writerow(('Test LTD', 'str Test 17 Test', 'Test'))
+            wr.writerow(('Test LTD', 'str Test 17 Test', 'United States'))
             wr.writerow(('Test LTD', 'str Test 78 Test', 'Test'))
         finally:
             myfile.close()
@@ -68,18 +68,20 @@ class FacilityListViewTest(BaseFacilityListTest):
         file_path = myfile.name
         f = open(file_path, "r")
 
-        response_one = self.client.post("/api/facility-lists/",
-                                        {'file': f,
-                                         'name': 'Test',
-                                         'description': 'Test'})
+        response_one = self.client.post(
+            "/api/facility-lists/createlist/",
+            {'file': f, 'name': 'Test', 'description': 'Test'},
+        )
         self.assertEqual(200, response_one.status_code)
 
-        response_two = self.client.post("/api/facility-lists/",
-                                        {'file': f,
-                                         'name': 'Test',
-                                         'description': 'Test | Test'})
-        self.assertEqual(response_two.json()[0],
-                         'Description cannot contain the "|" character.')
+        response_two = self.client.post(
+            "/api/facility-lists/createlist/",
+            {'file': f, 'name': 'Test', 'description': 'Test | Test'},
+        )
+        self.assertEqual(
+            response_two.json()[0],
+            'Description cannot contain the "|" character.',
+        )
         self.assertEqual(400, response_two.status_code)
 
     def test_superuser_can_list_own_lists(self):
