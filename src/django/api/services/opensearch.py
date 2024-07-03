@@ -60,7 +60,7 @@ class OpenSearchServiceConnection:
                        'the connection with the OpenSearch cluster.'))
             raise
 
-        region = os.getenv('AWS_REGION')
+        region = os.getenv('AWS_DEFAULT_REGION')
         try:
             aws_auth = AWSV4SignerAuth(credentials, region)
         except ValueError:
