@@ -1,6 +1,5 @@
-/* eslint no-unused-vars: 0 */
-import React, { useState, useEffect } from 'react';
-import { func, shape } from 'prop-types';
+import React, { useState, useEffect, useRef } from 'react';
+import { func, shape, bool } from 'prop-types';
 import { withRouter, Link } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
@@ -14,7 +13,10 @@ import includes from 'lodash/includes';
 import noop from 'lodash/noop';
 import DashboardClaimsListTableHeader from './DashboardClaimsListTableHeader';
 
-import { facilityClaimsListPropType } from '../util/propTypes';
+import {
+    facilityClaimsListPropType,
+    claimStatusOptionsPropType,
+} from '../util/propTypes';
 
 import {
     makeFacilityDetailLink,
@@ -43,7 +45,11 @@ const CONTRIBUTOR_LINK_ID = 'CONTRIBUTOR_LINK_ID';
 
 function DashboardClaimsListTable({
     data,
+    fetching,
     handleSortClaims,
+    handleGetClaims,
+    claimStatuses,
+    clearClaims,
     history: { push },
     classes,
 }) {
@@ -54,6 +60,8 @@ function DashboardClaimsListTable({
     const [order, setOrder] = useState('desc');
     const [orderBy, setOrderBy] = useState('id');
     const [loading, setLoading] = useState(true);
+    const isFirstRender = useRef(true);
+    const previousClaimStatuses = useRef(claimStatuses);
 
     const makeRowClickHandler = claimID =>
         flow(getIDFromEvent, id => {
@@ -90,6 +98,22 @@ function DashboardClaimsListTable({
     };
 
     useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+        } else if (
+            claimStatuses.length > 0 ||
+            (previousClaimStatuses.current.length > 0 &&
+                claimStatuses.length === 0)
+        ) {
+            handleGetClaims();
+        }
+
+        previousClaimStatuses.current = claimStatuses;
+    }, [claimStatuses]);
+
+    useEffect(() => clearClaims, [handleGetClaims, clearClaims]);
+
+    useEffect(() => {
         // Add small timeout to proper render the loader
         const timer = setTimeout(() => {
             setLoading(false);
@@ -98,6 +122,10 @@ function DashboardClaimsListTable({
         return () => clearTimeout(timer);
     }, [data]);
 
+    if (!data) {
+        return null;
+    }
+
     return (
         <Table>
             <DashboardClaimsListTableHeader
@@ -105,7 +133,7 @@ function DashboardClaimsListTable({
                 orderBy={orderBy}
                 onRequestSort={handleRequestSort}
             />
-            {loading ? (
+            {loading || fetching ? (
                 <TableBody>
                     <TableRow>
                         <TableCell colSpan={7}>
@@ -168,11 +196,19 @@ function DashboardClaimsListTable({
     );
 }
 
+DashboardClaimsListTable.defaultProps = {
+    data: null,
+};
+
 DashboardClaimsListTable.propTypes = {
-    data: facilityClaimsListPropType.isRequired,
+    data: facilityClaimsListPropType,
+    fetching: bool.isRequired,
+    handleGetClaims: func.isRequired,
     history: shape({
         push: func.isRequired,
     }).isRequired,
+    claimStatuses: claimStatusOptionsPropType.isRequired,
+    clearClaims: func.isRequired,
 };
 
 export default withRouter(

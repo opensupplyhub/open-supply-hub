@@ -27,7 +27,10 @@ import {
 import ClaimStatusFilter from './Filters/ClaimStatusFilter';
 import { updateClaimStatusFilter } from './../actions/filters';
 
-import { facilityClaimsListPropType } from '../util/propTypes';
+import {
+    facilityClaimsListPropType,
+    claimStatusOptionsPropType,
+} from '../util/propTypes';
 
 import {
     makeDashboardClaimListLink,
@@ -57,6 +60,7 @@ const dashboardClaimsStyles = () =>
 
 const DashboardClaims = ({
     data,
+    claimStatuses,
     fetching,
     error,
     getClaims,
@@ -65,7 +69,6 @@ const DashboardClaims = ({
     classes,
     history: {
         location: { search },
-        push,
         replace,
     },
     fetchClaimStatus,
@@ -76,12 +79,8 @@ const DashboardClaims = ({
     );
 
     useEffect(() => {
-        // TODO: Disable getClaims here
-        getClaims();
         fetchClaimStatus();
-
-        return clearClaims;
-    }, [getClaims, clearClaims]);
+    }, []);
 
     useEffect(() => {
         if (statuses && statuses.length > 0) {
@@ -98,16 +97,8 @@ const DashboardClaims = ({
         }
     }, []);
 
-    if (fetching) {
-        return <CircularProgress />;
-    }
-
     if (error) {
         return <Typography>{error}</Typography>;
-    }
-
-    if (!data) {
-        return null;
     }
 
     const onClaimStatusUpdate = s => {
@@ -121,13 +112,20 @@ const DashboardClaims = ({
     return (
         <Paper className={classes.container}>
             <div className={classes.dashboardClaimsContainer}>
-                <DownloadFacilityClaimsButton data={data} />
+                <DownloadFacilityClaimsButton
+                    fetching={fetching}
+                    data={data || []}
+                />
                 <ClaimStatusFilter
                     handleClaimStatusUpdate={onClaimStatusUpdate}
                 />
                 <DashboardClaimsListTable
+                    fetching={fetching}
                     data={data}
                     handleSortClaims={sortClaims}
+                    handleGetClaims={getClaims}
+                    claimStatuses={claimStatuses}
+                    clearClaims={clearClaims}
                 />
             </div>
         </Paper>
@@ -150,6 +148,7 @@ DashboardClaims.propTypes = {
         replace: func.isRequired,
     }).isRequired,
     updateClaimStatus: func.isRequired,
+    claimStatuses: claimStatusOptionsPropType.isRequired,
 };
 
 function mapStateToProps({
@@ -168,7 +167,6 @@ function mapStateToProps({
 
 function mapDispatchToProps(dispatch) {
     return {
-        // TODO: remove getClaims later from here and place into the table or change rendering conditions
         getClaims: () => dispatch(fetchFacilityClaims()),
         clearClaims: () => dispatch(clearFacilityClaims()),
         sortClaims: sortedData => dispatch(sortFacilityClaims(sortedData)),
