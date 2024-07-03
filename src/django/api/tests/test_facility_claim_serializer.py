@@ -72,7 +72,7 @@ class FacilityClaimSerializerTest(TestCase):
         self.assertIn("production_type_choices", data)
         self.assertIsNotNone(data["production_type_choices"])
         self.assertNotEqual([], data["production_type_choices"])
-    
+
     def test_claim_decision(self):
         claim_one = FacilityClaim.objects.create(
             contributor=self.contributor,
