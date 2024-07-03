@@ -210,7 +210,9 @@ export const makeMergeTwoFacilitiesAPIURL = (targetOSID, toMergeOSID) =>
 export const makeGetFacilitiesCountURL = () => '/api/facilities/count/';
 
 export const makeGetAPIFeatureFlagsURL = () => '/api-feature-flags/';
-export const makeGetFacilityClaimsURL = () => '/api/facility-claims/';
+// TODO: handle &sort_by=contributors_desc at the end of a query
+export const makeGetFacilityClaimsURLWithQueryString = qs =>
+    `/api/facility-claims/?${qs}`;
 export const makeGetFacilityClaimByClaimIDURL = claimID =>
     `/api/facility-claims/${claimID}/`;
 export const makeMessageFacilityClaimantByClaimIDURL = claimID =>
@@ -263,6 +265,7 @@ export const createQueryStringFromSearchFilters = (
         combineContributors = '',
         boundary = {},
         sortAlgorithm = {},
+        claimStatuses = [],
     },
     withEmbed,
     detail,
@@ -275,6 +278,7 @@ export const createQueryStringFromSearchFilters = (
             contributorTypes,
         ),
         countries: createCompactSortedQuerystringInputObject(countries),
+        statuses: createCompactSortedQuerystringInputObject(claimStatuses),
         sectors: createCompactSortedQuerystringInputObject(sectors),
         parent_company: createCompactSortedQuerystringInputObject(
             parentCompany,

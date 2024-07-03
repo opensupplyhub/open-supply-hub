@@ -1,3 +1,4 @@
+/* eslint no-unused-vars: 0 */
 import React, { useState, useEffect } from 'react';
 import { func, shape } from 'prop-types';
 import { withRouter, Link } from 'react-router-dom';

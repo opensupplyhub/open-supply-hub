@@ -1,26 +1,33 @@
+/* eslint no-unused-vars: 0 */
 import React, { useCallback } from 'react';
-import { array, func } from 'prop-types';
+import { func } from 'prop-types';
 import { connect } from 'react-redux';
 
 import StyledSelect from './StyledSelect';
 
 import { updateClaimStatusFilter } from '../../actions/filters';
 
-import { claimStatusOptionsPropType } from '../../util/propTypes';
+import {
+    claimStatusOptionsPropType,
+    filterOptionsPropType,
+} from '../../util/propTypes';
+
+import { fetchFacilityClaims } from '../../actions/claimFacilityDashboard';
 
 const CLAIM_STATUSES = 'CLAIM_STATUSES';
 
 function ClaimStatusFilter({
     claimStatuses,
     claimStatusesOptions,
+    getClaims,
     updateClaimStatus,
     handleClaimStatusUpdate,
 }) {
     const onChangeClaimStatus = useCallback(
         s => {
-            console.log('s is ', s);
             handleClaimStatusUpdate(s);
             updateClaimStatus(s);
+            getClaims();
         },
         [claimStatuses],
     );
@@ -39,9 +46,10 @@ function ClaimStatusFilter({
 }
 
 ClaimStatusFilter.propTypes = {
+    getClaims: func.isRequired,
     updateClaimStatus: func.isRequired,
     claimStatuses: claimStatusOptionsPropType.isRequired,
-    claimStatusesOptions: array.isRequired,
+    claimStatusesOptions: filterOptionsPropType.isRequired,
 };
 
 function mapStateToProps({
@@ -56,6 +64,7 @@ function mapStateToProps({
 
 function mapDispatchToProps(dispatch) {
     return {
+        getClaims: () => dispatch(fetchFacilityClaims()),
         updateClaimStatus: v => dispatch(updateClaimStatusFilter(v)),
     };
 }

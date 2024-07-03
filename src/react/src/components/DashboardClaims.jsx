@@ -76,6 +76,7 @@ const DashboardClaims = ({
     );
 
     useEffect(() => {
+        // TODO: Disable getClaims here
         getClaims();
         fetchClaimStatus();
 
@@ -167,6 +168,7 @@ function mapStateToProps({
 
 function mapDispatchToProps(dispatch) {
     return {
+        // TODO: remove getClaims later from here and place into the table or change rendering conditions
         getClaims: () => dispatch(fetchFacilityClaims()),
         clearClaims: () => dispatch(clearFacilityClaims()),
         sortClaims: sortedData => dispatch(sortFacilityClaims(sortedData)),
