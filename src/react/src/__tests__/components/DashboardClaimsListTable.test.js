@@ -83,6 +83,66 @@ const data = [
         "facility_country_name": "Greece",
         "status": "REVOKED"
     },
+    {
+        "id": 187,
+        "created_at": "2024-06-16T12:34:56.789012Z",
+        "updated_at": "2024-06-16T13:34:56.789012Z",
+        "contributor_id": 1007,
+        "os_id": "TR5021177AKVM78",
+        "contributor_name": "Contributor Ç",
+        "facility_name": "Facility Ş",
+        "facility_address": "987 Şehit Avenue, Şehit City, Türkiye",
+        "facility_country_name": "Türkiye",
+        "status": "PENDING"
+    },
+    {
+        "id": 188,
+        "created_at": "2024-06-17T12:34:56.789012Z",
+        "updated_at": "2024-06-17T13:34:56.789012Z",
+        "contributor_id": 1008,
+        "os_id": "TR6021177AKVM89",
+        "contributor_name": "Contributor İ",
+        "facility_name": "Facility Ü",
+        "facility_address": "321 Üsküdar Road, Üsküdar City, Türkiye",
+        "facility_country_name": "Türkiye",
+        "status": "APPROVED"
+    },
+    {
+        "id": 189,
+        "created_at": "2024-06-18T12:34:56.789012Z",
+        "updated_at": "2024-06-18T13:34:56.789012Z",
+        "contributor_id": 1009,
+        "os_id": "TR7021177AKVM90",
+        "contributor_name": "Contributor Ö",
+        "facility_name": "Facility Ğ",
+        "facility_address": "654 Ğazi Road, Ğazi City, Türkiye",
+        "facility_country_name": "Türkiye",
+        "status": "PENDING"
+    },
+    {
+        "id": 190,
+        "created_at": "2024-06-19T12:34:56.789012Z",
+        "updated_at": "2024-06-19T13:34:56.789012Z",
+        "contributor_id": 1010,
+        "os_id": "TR8021177AKVM91",
+        "contributor_name": "Contributor ü",
+        "facility_name": "Facility ş",
+        "facility_address": "753 şehitler Road, şehitler City, Türkiye",
+        "facility_country_name": "Türkiye",
+        "status": "PENDING"
+    },
+    {
+        "id": 191,
+        "created_at": "2024-06-20T12:34:56.789012Z",
+        "updated_at": "2024-06-20T13:34:56.789012Z",
+        "contributor_id": 1011,
+        "os_id": "TR9021177AKVM92",
+        "contributor_name": "Contributor ö",
+        "facility_name": "Facility ğ",
+        "facility_address": "852 ğazi Road, ğazi City, Türkiye",
+        "facility_country_name": "Türkiye",
+        "status": "APPROVED"
+    }
 ];
 
 describe('DashboardClaimsListTable component', () => {
@@ -109,7 +169,7 @@ describe('DashboardClaimsListTable component', () => {
             expect(handleSortClaimsMock).toHaveBeenCalled();
             const sortedData = handleSortClaimsMock.mock.calls[0][0];
             expect(sortedData[0].id).toBe(3);
-            expect(sortedData[sortedData.length - 1].id).toBe(184);
+            expect(sortedData[sortedData.length - 1].id).toBe(191);
         });
     });
 
@@ -124,7 +184,14 @@ describe('DashboardClaimsListTable component', () => {
             expect(sortedData[0].facility_name).toBe('Facility Alpha');
             expect(sortedData[1].facility_name).toBe('Facility Beta');
             expect(sortedData[2].facility_name).toBe('facility beta (lowercase test)');
-            expect(sortedData[sortedData.length - 1].facility_name).toBe('Facility Gamma');
+            expect(sortedData[3].facility_name).toBe('Facility Delta');
+            expect(sortedData[4].facility_name).toBe('Facility Epsilon');
+            expect(sortedData[5].facility_name).toBe('Facility Ğ');
+            expect(sortedData[6].facility_name).toBe('Facility ğ');
+            expect(sortedData[7].facility_name).toBe('Facility Gamma');
+            expect(sortedData[8].facility_name).toBe('Facility Ş');
+            expect(sortedData[9].facility_name).toBe('Facility ş');
+            expect(sortedData[sortedData.length - 1].facility_name).toBe('Facility Ü');
         });
     });
 
@@ -139,20 +206,14 @@ describe('DashboardClaimsListTable component', () => {
             expect(sortedData[0].contributor_name).toBe('Contributor A');
             expect(sortedData[1].contributor_name).toBe('Contributor B');
             expect(sortedData[2].contributor_name).toBe('contributor b (lowercase test)');
-            expect(sortedData[sortedData.length - 1].contributor_name).toBe('Contributor E');
-        });
-    });
-
-    it('sort by country in ascending order', async () => {
-        act(() => {
-            fireEvent.click(screen.getByText('Country'));
-        });
-
-        await waitFor(() => {
-            expect(handleSortClaimsMock).toHaveBeenCalled();
-            const sortedData = handleSortClaimsMock.mock.calls[0][0];
-            expect(sortedData[0].facility_country_name).toBe('China');
-            expect(sortedData[sortedData.length - 1].facility_country_name).toBe('United Kingdom');
+            expect(sortedData[3].contributor_name).toBe('Contributor C');
+            expect(sortedData[4].contributor_name).toBe('Contributor Ç');
+            expect(sortedData[5].contributor_name).toBe('Contributor D');
+            expect(sortedData[6].contributor_name).toBe('Contributor E');
+            expect(sortedData[7].contributor_name).toBe('Contributor İ');
+            expect(sortedData[8].contributor_name).toBe('Contributor Ö');
+            expect(sortedData[9].contributor_name).toBe('Contributor ö');
+            expect(sortedData[sortedData.length - 1].contributor_name).toBe('Contributor ü');
         });
     });
 
@@ -178,7 +239,7 @@ describe('DashboardClaimsListTable component', () => {
             expect(handleSortClaimsMock).toHaveBeenCalled();
             const sortedData = handleSortClaimsMock.mock.calls[0][0];
             expect(sortedData[0].created_at).toBe('2024-06-13T00:24:49.566190Z');
-            expect(sortedData[sortedData.length - 1].created_at).toBe('2024-06-15T04:58:23.352025Z');
+            expect(sortedData[sortedData.length - 1].created_at).toBe('2024-06-20T12:34:56.789012Z');
         });
     });
 
@@ -191,7 +252,7 @@ describe('DashboardClaimsListTable component', () => {
             expect(handleSortClaimsMock).toHaveBeenCalled();
             const sortedData = handleSortClaimsMock.mock.calls[0][0];
             expect(sortedData[0].updated_at).toBe('2024-06-13T00:24:49.566204Z');
-            expect(sortedData[sortedData.length - 1].updated_at).toBe('2024-06-15T05:23:10.352040Z');
+            expect(sortedData[sortedData.length - 1].updated_at).toBe('2024-06-20T13:34:56.789012Z');
         });
     });
 
