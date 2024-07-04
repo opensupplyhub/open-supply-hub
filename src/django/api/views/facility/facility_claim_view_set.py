@@ -69,10 +69,13 @@ class FacilityClaimViewSet(ModelViewSet):
             raise ValidationError(params.errors)
 
         statuses = params.validated_data.get('statuses')
+        countries = params.validated_data.get('countries')
 
         queryset = FacilityClaim.objects.all().order_by('-id')
         if statuses:
             queryset = queryset.filter(status__in=statuses)
+        if countries:
+            queryset = queryset.filter(facility__country_code__in=countries)
 
         response_data = FacilityClaimSerializer(queryset, many=True).data
 

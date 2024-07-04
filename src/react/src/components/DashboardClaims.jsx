@@ -3,10 +3,8 @@ import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { arrayOf, bool, func, shape, string } from 'prop-types';
 import map from 'lodash/map';
-import uniq from 'lodash/uniq';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
-import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 
 import DownloadFacilityClaimsButton from './DownloadFacilityClaimsButton';
@@ -19,17 +17,18 @@ import {
 } from '../actions/claimFacilityDashboard';
 
 import {
-    // TODO: adjust countries
-    // fetchCountryOptions,
+    fetchCountryOptions,
     fetchClaimStatusOptions,
 } from '../actions/filterOptions';
 
 import ClaimStatusFilter from './Filters/ClaimStatusFilter';
+import CountryNameFilter from './Filters/CountryNameFilter';
 import { updateClaimStatusFilter } from './../actions/filters';
 
 import {
     facilityClaimsListPropType,
     claimStatusOptionsPropType,
+    countryOptionsPropType,
 } from '../util/propTypes';
 
 import {
@@ -72,7 +71,9 @@ const DashboardClaims = ({
         replace,
     },
     fetchClaimStatus,
+    fetchCountries,
     updateClaimStatus,
+    countriesData,
 }) => {
     const { countries, statuses } = getDashboardClaimsListParamsFromQueryString(
         search,
@@ -119,13 +120,16 @@ const DashboardClaims = ({
                 <ClaimStatusFilter
                     handleClaimStatusUpdate={onClaimStatusUpdate}
                 />
+                <CountryNameFilter />
                 <DashboardClaimsListTable
                     fetching={fetching}
                     data={data}
                     handleSortClaims={sortClaims}
                     handleGetClaims={getClaims}
+                    handleGetCountries={fetchCountries}
                     claimStatuses={claimStatuses}
                     clearClaims={clearClaims}
+                    countriesData={countriesData}
                 />
             </div>
         </Paper>
@@ -135,11 +139,15 @@ const DashboardClaims = ({
 DashboardClaims.defaultProps = {
     data: null,
     error: null,
+    countriesData: null,
 };
 
 DashboardClaims.propTypes = {
     data: facilityClaimsListPropType,
     fetching: bool.isRequired,
+    fetchCountries: func.isRequired,
+    countriesData: countryOptionsPropType,
+    fetchClaimStatus: func.isRequired,
     error: arrayOf(string),
     getClaims: func.isRequired,
     clearClaims: func.isRequired,
@@ -155,13 +163,17 @@ function mapStateToProps({
     claimFacilityDashboard: {
         list: { data, fetching, error },
     },
-    filters: { claimStatuses },
+    filters: {
+        claimStatuses,
+        countries: { data: countriesData },
+    },
 }) {
     return {
         data,
         fetching,
         error,
         claimStatuses,
+        countriesData,
     };
 }
 
@@ -170,6 +182,7 @@ function mapDispatchToProps(dispatch) {
         getClaims: () => dispatch(fetchFacilityClaims()),
         clearClaims: () => dispatch(clearFacilityClaims()),
         sortClaims: sortedData => dispatch(sortFacilityClaims(sortedData)),
+        fetchCountries: () => dispatch(fetchCountryOptions()),
         fetchClaimStatus: () => dispatch(fetchClaimStatusOptions()),
         updateClaimStatus: v => dispatch(updateClaimStatusFilter(v)),
     };

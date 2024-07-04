@@ -16,6 +16,7 @@ import DashboardClaimsListTableHeader from './DashboardClaimsListTableHeader';
 import {
     facilityClaimsListPropType,
     claimStatusOptionsPropType,
+    countryOptionsPropType,
 } from '../util/propTypes';
 
 import {
@@ -48,10 +49,12 @@ function DashboardClaimsListTable({
     fetching,
     handleSortClaims,
     handleGetClaims,
+    handleGetCountries,
     claimStatuses,
     clearClaims,
     history: { push },
     classes,
+    countriesData,
 }) {
     /*
      Facility claims are sorted by id/desc by default on BE;
@@ -96,6 +99,12 @@ function DashboardClaimsListTable({
 
         handleSortClaims(sortedData);
     };
+
+    useEffect(() => {
+        if (!countriesData) {
+            handleGetCountries();
+        }
+    }, []);
 
     useEffect(() => {
         if (isFirstRender.current) {
@@ -198,16 +207,19 @@ function DashboardClaimsListTable({
 
 DashboardClaimsListTable.defaultProps = {
     data: null,
+    countriesData: null,
 };
 
 DashboardClaimsListTable.propTypes = {
     data: facilityClaimsListPropType,
     fetching: bool.isRequired,
     handleGetClaims: func.isRequired,
+    handleGetCountries: func.isRequired,
     history: shape({
         push: func.isRequired,
     }).isRequired,
     claimStatuses: claimStatusOptionsPropType.isRequired,
+    countriesData: countryOptionsPropType,
     clearClaims: func.isRequired,
 };
 

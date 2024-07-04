@@ -2,6 +2,7 @@ from rest_framework.serializers import (
     ChoiceField,
     ListField,
     Serializer,
+    CharField,
 )
 from ...models import FacilityClaim
 
@@ -15,3 +16,7 @@ class FacilityClaimListQueryParamsSerializer(Serializer):
             FacilityClaim.DENIED
         ]),
         required=False)
+    countries = ListField(
+        child=CharField(required=False),
+        required=False,
+    )
