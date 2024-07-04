@@ -29,12 +29,6 @@ def location_post_delete_handler_for_opensearch(sender, **kwargs):
     except ConnectionError:
         log.error(('[Location Deletion] The Django app lost the connection '
                    'with the OpenSearch cluster.'))
-        report_error_to_rollbar(
-            message=(
-                '[Location Deletion] The Django app lost the connection with '
-                'the OpenSearch cluster.'
-            ),
-        )
         raise
 
     if (response and response.get('result') == 'not_found'):
