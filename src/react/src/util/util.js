@@ -1155,10 +1155,10 @@ function descendingComparator(a, b, orderBy) {
         bValue = bValue.toLowerCase();
     }
 
-    if (bValue < aValue) {
+    if (aValue === null || bValue < aValue) {
         return -1;
     }
-    if (bValue > aValue) {
+    if (bValue === null || bValue > aValue) {
         return 1;
     }
     return 0;
