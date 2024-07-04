@@ -11,9 +11,6 @@ from oar.rollbar import report_error_to_rollbar
 
 
 # Initialize logger.
-logging.basicConfig(
-    format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO
-)
 log = logging.getLogger(__name__)
 
 
