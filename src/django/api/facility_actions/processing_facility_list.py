@@ -172,9 +172,8 @@ class ProcessingFacilityList(ProcessingFacility):
     ) -> None:
         lat: Optional[float] = row.fields.get(FileHeaderField.LAT)
         lng: Optional[float] = row.fields.get(FileHeaderField.LNG)
-        if (
-            lat and lng
-        ):
+
+        if lat and lng:
             item.geocoded_point = Point(lng, lat)
             self.is_geocoded = True
 
