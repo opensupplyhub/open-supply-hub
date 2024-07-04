@@ -11,8 +11,7 @@ SELECT
 FROM api_contributor ac
 LEFT JOIN api_source s ON s.contributor_id = ac.id
 LEFT JOIN api_facilitylist l on l.id = s.facility_list_id
-LEFT JOIN api_facilitylistitem i ON i.source_id = s.id
 LEFT JOIN api_user u ON ac.admin_id = u.id
-where ac.id = s.contributor_id
+where s.create = true
 GROUP BY ac.id, ac.name, ac.contrib_type
 ORDER BY COALESCE(max(l.created_at), max(s.created_at)) DESC;
