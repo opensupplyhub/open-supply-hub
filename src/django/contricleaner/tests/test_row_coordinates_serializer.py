@@ -20,14 +20,8 @@ class RowCoordinatesSerializerTest(TestCase):
         self.assertEqual(result['lat'], 40.7128)
         self.assertEqual(result['lng'], -74.0060)
 
-    def test_missing_lat(self):
-        row = {'lng': '-74.0060'}
-        result = self.serializer.validate(row, self.current)
-        self.assertIsNone(result['lat'])
-        self.assertIsNone(result['lng'])
-
-    def test_missing_lng(self):
-        row = {'lat': '40.7128'}
+    def test_empty_coordinates(self):
+        row = {'lat': '', 'lng': ''}
         result = self.serializer.validate(row, self.current)
         self.assertIsNone(result['lat'])
         self.assertIsNone(result['lng'])
