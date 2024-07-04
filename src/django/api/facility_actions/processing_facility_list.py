@@ -1,7 +1,7 @@
 import logging
 import traceback
 from types import MethodType
-from typing import Any, Dict, Set, Union
+from typing import Any, Dict, Optional, Set, Union
 
 from api.constants import FileHeaderField, ProcessingAction
 from api.extended_fields import create_extendedfields_for_single_item
@@ -170,13 +170,10 @@ class ProcessingFacilityList(ProcessingFacility):
     def __process_valid_item(
         self, item: FacilityListItem, row: RowDTO
     ) -> None:
-        if (
-            FileHeaderField.LAT in row.fields.keys()
-            and FileHeaderField.LNG in row.fields.keys()
-        ):
-            # TODO: Move floating to the ContriCleaner library.
-            lat = float(row.fields[FileHeaderField.LAT])
-            lng = float(row.fields[FileHeaderField.LNG])
+        lat: Optional[float] = row.fields.get(FileHeaderField.LAT)
+        lng: Optional[float] = row.fields.get(FileHeaderField.LNG)
+
+        if lat and lng:
             item.geocoded_point = Point(lng, lat)
             self.is_geocoded = True
 

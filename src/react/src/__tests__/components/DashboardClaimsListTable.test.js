@@ -9,6 +9,7 @@ const data = [
         "id": 184,
         "created_at": "2024-06-14T10:45:53.857805Z",
         "updated_at": "2024-06-14T13:25:49.835368Z",
+        "claim_decision": "2024-06-14T13:25:49.835368Z",
         "contributor_id": 1002,
         "os_id": "TR2024425AKVM2E",
         "contributor_name": "Contributor B",
@@ -21,6 +22,7 @@ const data = [
         "id": 45,
         "created_at": "2024-06-13T05:38:41.859592Z",
         "updated_at": "2024-06-13T05:38:41.859607Z",
+        "claim_decision": null,
         "contributor_id": 1003,
         "os_id": "UK2661125AKVMHV",
         "contributor_name": "Contributor C",
@@ -33,6 +35,7 @@ const data = [
         "id": 24,
         "created_at": "2024-06-13T00:48:46.677503Z",
         "updated_at": "2024-06-13T00:48:46.677518Z",
+        "claim_decision": null,
         "contributor_id": 1004,
         "os_id": "CN3023325AKVMQ3",
         "contributor_name": "Contributor D",
@@ -45,6 +48,7 @@ const data = [
         "id": 12,
         "created_at": "2024-06-15T04:52:16.352025Z",
         "updated_at": "2024-06-15T04:52:16.352040Z",
+        "claim_decision": "2024-06-15T04:52:16.352040Z",
         "contributor_id": 1001,
         "os_id": "CN2021177AKVM66",
         "contributor_name": "Contributor A",
@@ -57,6 +61,7 @@ const data = [
         "id": 3,
         "created_at": "2024-06-13T00:24:49.566190Z",
         "updated_at": "2024-06-13T00:24:49.566204Z",
+        "claim_decision": "2024-06-13T00:24:49.566204Z",
         "contributor_id": 1005,
         "os_id": "SP2421145AKVMH4",
         "contributor_name": "Contributor E",
@@ -69,6 +74,7 @@ const data = [
         "id": 20,
         "created_at": "2024-06-15T04:58:23.352025Z",
         "updated_at": "2024-06-15T05:23:10.352040Z",
+        "claim_decision": "2024-06-15T05:23:10.352040Z",
         "contributor_id": 1006,
         "os_id": "DM5021177DCET89",
         "contributor_name": "contributor b (lowercase test)",
@@ -199,6 +205,19 @@ describe('DashboardClaimsListTable component', () => {
             const sortedData = handleSortClaimsMock.mock.calls[0][0];
             expect(sortedData[0].status).toBe('APPROVED');
             expect(sortedData[sortedData.length - 1].status).toBe('REVOKED');
+        });
+    });
+
+    it('sort by claim decision in ascending order', async () => {
+        act(() => {
+            fireEvent.click(screen.getByText('Claim Decision'));
+        });
+
+        await waitFor(() => {
+            expect(handleSortClaimsMock).toHaveBeenCalled();
+            const sortedData = handleSortClaimsMock.mock.calls[0][0];
+            expect(sortedData[0].claim_decision).toBe('2024-06-13T00:24:49.566204Z');
+            expect(sortedData[sortedData.length - 1].claim_decision).toBe(null);
         });
     });
 });

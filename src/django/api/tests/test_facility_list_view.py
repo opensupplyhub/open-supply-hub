@@ -7,6 +7,7 @@ from api.tests.base_facility_list_test import BaseFacilityListTest
 
 from django.core import mail
 from django.test import override_settings
+from rest_framework import status
 
 
 class FacilityListViewTest(BaseFacilityListTest):
@@ -16,8 +17,43 @@ class FacilityListViewTest(BaseFacilityListTest):
             myfile = open('test.csv', 'w')
             wr = csv.writer(myfile)
             wr.writerow(('name', 'address', 'country'))
-            wr.writerow(('Test LTD', 'str Test 17 Test', 'Test'))
+            wr.writerow(('Test LTD', 'str Test 17 Test', 'United States'))
             wr.writerow(('Test LTD', 'str Test 78 Test', 'Test'))
+        finally:
+            myfile.close()
+
+        return myfile
+
+    def generate_wide_test_file(self):
+        try:
+            myfile = open('test.csv', 'w')
+            wr = csv.writer(myfile)
+            wr.writerow(
+                (
+                    'name',
+                    'address',
+                    'country',
+                    'sector_product_type',
+                    'lat',
+                    'lng',
+                    'facility_type_processing_type',
+                    'number_of_workers',
+                    'custom_field',
+                )
+            )
+            wr.writerow(
+                (
+                    'Test LTD',
+                    'str Test 17 Test',
+                    'United States',
+                    'Apparel',
+                    '30',
+                    '30',
+                    'Factory',
+                    '100',
+                    'Test custom field data',
+                )
+            )
         finally:
             myfile.close()
 
@@ -32,18 +68,20 @@ class FacilityListViewTest(BaseFacilityListTest):
         file_path = myfile.name
         f = open(file_path, "r")
 
-        response_one = self.client.post("/api/facility-lists/",
-                                        {'file': f,
-                                         'name': 'Test',
-                                         'description': 'Test'})
+        response_one = self.client.post(
+            "/api/facility-lists/createlist/",
+            {'file': f, 'name': 'Test', 'description': 'Test'},
+        )
         self.assertEqual(200, response_one.status_code)
 
-        response_two = self.client.post("/api/facility-lists/",
-                                        {'file': f,
-                                         'name': 'Test',
-                                         'description': 'Test | Test'})
-        self.assertEqual(response_two.json()[0],
-                         'Description cannot contain the "|" character.')
+        response_two = self.client.post(
+            "/api/facility-lists/createlist/",
+            {'file': f, 'name': 'Test', 'description': 'Test | Test'},
+        )
+        self.assertEqual(
+            response_two.json()[0],
+            'Description cannot contain the "|" character.',
+        )
         self.assertEqual(400, response_two.status_code)
 
     def test_superuser_can_list_own_lists(self):
@@ -191,3 +229,24 @@ class FacilityListViewTest(BaseFacilityListTest):
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, [self.superuser_email])
+
+    def test_successful_wide_list_upload(self):
+        self.client.login(
+            email=self.superuser_email, password=self.superuser_password
+        )
+
+        myfile = self.generate_wide_test_file()
+        file_path = myfile.name
+        f = open(file_path, "r")
+
+        response = self.client.post(
+            "/api/facility-lists/createlist/",
+            {
+                'file': f,
+                'name': 'Test wide list',
+                'description': 'Test wide csv list',
+            },
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['name'], 'Test wide list')
+        self.assertEqual(response.data['description'], 'Test wide csv list')
