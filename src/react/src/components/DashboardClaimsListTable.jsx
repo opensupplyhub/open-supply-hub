@@ -160,10 +160,17 @@ function DashboardClaimsListTable({
                                     {moment(claim.created_at).format('LL')}
                                 </TableCell>
                                 <TableCell padding="dense">
-                                    {moment(claim.updated_at).format('LL')}
+                                    {claim.claim_decision !== null
+                                        ? moment(claim.claim_decision).format(
+                                              'LL',
+                                          )
+                                        : 'N/A'}
                                 </TableCell>
                                 <TableCell padding="dense">
                                     {claim.status}
+                                </TableCell>
+                                <TableCell padding="dense">
+                                    {moment(claim.updated_at).format('LL')}
                                 </TableCell>
                             </TableRow>
                         ))}
