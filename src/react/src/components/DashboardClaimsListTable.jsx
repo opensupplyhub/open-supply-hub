@@ -1,3 +1,4 @@
+/* eslint no-unused-vars: 0 */
 import React, { useState, useEffect, useRef } from 'react';
 import { func, shape, bool } from 'prop-types';
 import { withRouter, Link } from 'react-router-dom';
@@ -49,12 +50,10 @@ function DashboardClaimsListTable({
     fetching,
     handleSortClaims,
     handleGetClaims,
-    handleGetCountries,
     claimStatuses,
     clearClaims,
     history: { push },
     classes,
-    countriesData,
 }) {
     /*
      Facility claims are sorted by id/desc by default on BE;
@@ -101,12 +100,6 @@ function DashboardClaimsListTable({
     };
 
     useEffect(() => {
-        if (!countriesData) {
-            handleGetCountries();
-        }
-    }, []);
-
-    useEffect(() => {
         if (isFirstRender.current) {
             isFirstRender.current = false;
         } else if (
@@ -134,6 +127,8 @@ function DashboardClaimsListTable({
     if (!data) {
         return null;
     }
+
+    // TODO: this part only responsible to re-render with loader once country/status filter changes
 
     return (
         <Table>
@@ -207,19 +202,18 @@ function DashboardClaimsListTable({
 
 DashboardClaimsListTable.defaultProps = {
     data: null,
-    countriesData: null,
+    // countriesData: null,
 };
 
 DashboardClaimsListTable.propTypes = {
     data: facilityClaimsListPropType,
     fetching: bool.isRequired,
     handleGetClaims: func.isRequired,
-    handleGetCountries: func.isRequired,
     history: shape({
         push: func.isRequired,
     }).isRequired,
     claimStatuses: claimStatusOptionsPropType.isRequired,
-    countriesData: countryOptionsPropType,
+    // countriesData: countryOptionsPropType,
     clearClaims: func.isRequired,
 };
 

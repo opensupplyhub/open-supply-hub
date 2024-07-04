@@ -717,13 +717,24 @@ export const makeDashboardContributorListLink = ({
     }`;
 };
 
-export const makeDashboardClaimListLink = ({ statuses }) =>
-    statuses && statuses.length > 0
-        ? `/dashboard/claims/?${join(
-              map(statuses, value => `statuses=${value}`),
-              '&',
-          )}`
-        : '/dashboard/claims';
+export const makeDashboardClaimListLink = ({ statuses, countries }) => {
+    const createClaimFilterParams = (key, claimParamValues) =>
+        claimParamValues && claimParamValues.length > 0
+            ? join(
+                  map(claimParamValues, value => `${key}=${value}`),
+                  '&',
+              )
+            : '';
+
+    const statusParams = createClaimFilterParams('statuses', statuses);
+    const countryParams = createClaimFilterParams('countries', countries);
+
+    const params = [statusParams, countryParams]
+        .filter(param => param)
+        .join('&');
+
+    return params ? `/dashboard/claims/?${params}` : '/dashboard/claims';
+};
 
 export const splitContributorsIntoPublicAndNonPublic = contributors =>
     contributors.reduce(

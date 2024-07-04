@@ -75,11 +75,16 @@ const DashboardClaims = ({
     updateClaimStatus,
     countriesData,
 }) => {
+    // TODO: since this came from URL, it will be good to rename it a bit meaningfully
     const { countries, statuses } = getDashboardClaimsListParamsFromQueryString(
         search,
     );
 
+    console.log('@@@ countries from search ', countries);
+    console.log('@@@ statuses from search ', statuses); // This can take value from URL like &countries=CN
+
     useEffect(() => {
+        fetchCountries();
         fetchClaimStatus();
     }, []);
 
@@ -97,6 +102,15 @@ const DashboardClaims = ({
             );
         }
     }, []);
+
+    useEffect(() => {
+        console.log('countries from Redux ', countriesData);
+        replace(
+            makeDashboardClaimListLink({
+                countries: map(countriesData, 'value'),
+            }),
+        );
+    }, [countriesData]);
 
     if (error) {
         return <Typography>{error}</Typography>;
@@ -163,10 +177,7 @@ function mapStateToProps({
     claimFacilityDashboard: {
         list: { data, fetching, error },
     },
-    filters: {
-        claimStatuses,
-        countries: { data: countriesData },
-    },
+    filters: { claimStatuses, countries: countriesData },
 }) {
     return {
         data,
