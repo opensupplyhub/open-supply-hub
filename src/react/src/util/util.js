@@ -33,6 +33,7 @@ import { featureCollection, bbox } from '@turf/turf';
 import hash from 'object-hash';
 import * as XLSX from 'xlsx';
 import moment from 'moment';
+import removeAccents from 'remove-accents';
 
 import {
     OTHER,
@@ -1149,10 +1150,10 @@ function descendingComparator(a, b, orderBy) {
     let bValue = b[orderBy];
 
     if (typeof aValue === 'string') {
-        aValue = aValue.toLowerCase();
+        aValue = removeAccents(aValue.toLowerCase());
     }
     if (typeof bValue === 'string') {
-        bValue = bValue.toLowerCase();
+        bValue = removeAccents(bValue.toLowerCase());
     }
 
     if (aValue === null || bValue < aValue) {
