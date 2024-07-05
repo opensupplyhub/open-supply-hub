@@ -1,7 +1,5 @@
-/* eslint no-unused-vars: 0 */
 import React, { useCallback } from 'react';
 import { func } from 'prop-types';
-import map from 'lodash/map';
 import { connect } from 'react-redux';
 
 import StyledSelect from './StyledSelect';

@@ -1,5 +1,3 @@
-/* eslint no-unused-vars: 0 */
-/* eslint-disable arrow-body-style */
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { arrayOf, bool, func, shape, string } from 'prop-types';
@@ -62,11 +60,6 @@ const dashboardClaimsStyles = () =>
         }),
     });
 
-/*
-let countries;
-let statuses;
-*/
-
 const DashboardClaims = ({
     data,
     claimStatuses,
@@ -79,7 +72,6 @@ const DashboardClaims = ({
     history: {
         location: { search },
         push,
-        replace,
     },
     fetchClaimStatus,
     fetchCountries,
@@ -88,14 +80,6 @@ const DashboardClaims = ({
     clearCountry,
     countriesData,
 }) => {
-    /*
-    if (!countries || !statuses) {
-        ({ countries, statuses } = getDashboardClaimsListParamsFromQueryString(
-            search,
-        ));
-    }
-    */
-
     const { countries, statuses } = getDashboardClaimsListParamsFromQueryString(
         search,
     );
@@ -104,7 +88,7 @@ const DashboardClaims = ({
         fetchCountries();
         fetchClaimStatus();
 
-        // Always keep default PENDING status in search bar
+        // Always keep default PENDING status in the search bar
         if (statuses && statuses.length > 0) {
             const statusesSerialized = map(statuses, status => ({
                 label: status,
@@ -126,15 +110,29 @@ const DashboardClaims = ({
             }));
             updateCountry(countriesSerialized);
         }
+
+        return () => {
+            clearCountry();
+            clearClaims();
+        };
     }, []);
 
     useEffect(() => {
-        push(
-            makeDashboardClaimListLink({
-                statuses: map(claimStatuses, 'value'),
-                countries: map(countriesData, 'value'),
-            }),
-        );
+        if (countriesData.length > 0 && statuses) {
+            push(
+                makeDashboardClaimListLink({
+                    statuses,
+                    countries: map(countriesData, 'value'),
+                }),
+            );
+        } else if (countriesData.length > 0 && claimStatuses.length > 0) {
+            push(
+                makeDashboardClaimListLink({
+                    statuses: map(claimStatuses, 'value'),
+                    countries: map(countriesData, 'value'),
+                }),
+            );
+        }
     }, [countriesData]);
 
     const onClaimStatusUpdate = (s, c) => {
