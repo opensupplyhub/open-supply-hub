@@ -10,6 +10,7 @@ from api.models import (
 )
 from rest_framework import status
 from rest_framework.test import APITestCase
+from waffle.testutils import override_switch
 
 from django.contrib.gis.geos import Point
 from django.core import mail
@@ -73,19 +74,34 @@ class FacilityClaimViewSetTest(APITestCase):
             facility_description="description",
         )
 
+        self.update_claim_data = {
+            "facility_description": "description",
+            "facility_phone_number_publicly_visible": False,
+            "office_info_publicly_visible": False,
+            "point_of_contact_publicly_visible": False,
+            "facility_website_publicly_visible": False,
+        }
+
+        self.update_claim_url = "/api/facility-claims/{}/claimed/".format(
+            self.facility_claim.id
+        )
+
+    def __login_superuser(self):
         self.client.login(email="superuser@example.com", password="superuser")
 
-    def _post_message_claimant(self, claim_id, message):
+    def __login_contributor(self):
+        self.client.login(username='test@example.com', password='example123')
+
+    def __post_message_claimant(self, claim_id, message):
         return self.client.post(
             "/api/facility-claims/{}/message-claimant/".format(claim_id),
             {"message": message},
         )
 
     def test_message_claimant_permission_denied(self):
-        self.client.logout()
         self.client.login(username='user', password='userpass')
 
-        response = self._post_message_claimant(
+        response = self.__post_message_claimant(
             self.facility_claim.id, "Hello, claimant!"
         )
 
@@ -96,21 +112,27 @@ class FacilityClaimViewSetTest(APITestCase):
         )
 
     def test_message_claimant_not_found(self):
+        self.__login_superuser()
         not_exist_id = 9999
-        response = self._post_message_claimant(
+
+        response = self.__post_message_claimant(
             not_exist_id, "Hello, claimant!"
         )
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_message_claimant_no_message(self):
-        response = self._post_message_claimant(self.facility_claim.id, "")
+        self.__login_superuser()
+
+        response = self.__post_message_claimant(self.facility_claim.id, "")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['detail'], 'Message is required.')
 
     def test_message_claimant_success(self):
-        response = self._post_message_claimant(
+        self.__login_superuser()
+
+        response = self.__post_message_claimant(
             self.facility_claim.id, "Hello, claimant!"
         )
         notes_count = FacilityClaimReviewNote.objects.filter(
@@ -121,3 +143,48 @@ class FacilityClaimViewSetTest(APITestCase):
         self.assertEqual(response.data['notes'][0]['note'], 'Hello, claimant!')
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(notes_count, 1)
+
+    @override_switch("claim_a_facility", active=True)
+    def test_update_valid_number_of_workers_in_claimed_facility(self):
+        self.__login_contributor()
+        self.facility_claim.status = FacilityClaim.APPROVED
+        self.facility_claim.save()
+        self.update_claim_data["facility_workers_count"] = "100-249"
+
+        response = self.client.put(
+            self.update_claim_url, self.update_claim_data
+        )
+        updated_claim = FacilityClaim.objects.get(pk=self.facility_claim.id)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(updated_claim.facility_workers_count, "100-249")
+
+    @override_switch("claim_a_facility", active=True)
+    def test_update_invalid_number_of_workers_in_claimed_facility(self):
+        self.__login_contributor()
+        self.facility_claim.status = FacilityClaim.APPROVED
+        self.facility_claim.save()
+        self.update_claim_data["facility_workers_count"] = "invalid"
+
+        response = self.client.put(
+            self.update_claim_url, self.update_claim_data
+        )
+        updated_claim = FacilityClaim.objects.get(pk=self.facility_claim.id)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(updated_claim.facility_workers_count, None)
+
+    @override_switch("claim_a_facility", active=True)
+    def test_update_empty_number_of_workers_in_claimed_facility(self):
+        self.__login_contributor()
+        self.facility_claim.status = FacilityClaim.APPROVED
+        self.facility_claim.save()
+        self.update_claim_data["facility_workers_count"] = ""
+
+        response = self.client.put(
+            self.update_claim_url, self.update_claim_data
+        )
+        updated_claim = FacilityClaim.objects.get(pk=self.facility_claim.id)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(updated_claim.facility_workers_count, None)
