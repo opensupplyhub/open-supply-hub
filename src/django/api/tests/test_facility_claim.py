@@ -65,6 +65,19 @@ class FacilityClaimTest(APITestCase):
             facility_list_item=self.list_item_one,
         )
 
+        self.claim_data = {
+            'your_name': 'Test Name',
+            'your_title': 'Test Title',
+            'your_business_website': 'www.test.com',
+            'business_website': 'www.test.com',
+            'business_linkedin_profile': 'www.linkedin.com',
+            'sectors': 'Apparel',
+            'local_language_name': 'Local name',
+        }
+
+    def login(self):
+        self.client.login(email=self.email, password=self.password)
+
     @override_switch("claim_a_facility", active=True)
     def test_requires_login(self):
         url = reverse("facility-claimed")
@@ -73,11 +86,7 @@ class FacilityClaimTest(APITestCase):
 
     @override_switch("claim_a_facility", active=True)
     def test_claimed_facilities_list(self):
-        self.client.post(
-            "/user-login/",
-            {"email": self.email, "password": self.password},
-            format="json",
-        )
+        self.login()
         url = reverse("facility-claimed")
         response = self.client.get(url)
         self.assertEqual(200, response.status_code)
@@ -101,3 +110,58 @@ class FacilityClaimTest(APITestCase):
         self.assertEqual(200, response.status_code)
         data = json.loads(response.content)
         self.assertEqual(1, len(data))
+
+    @override_switch("claim_a_facility", active=True)
+    def test_facility_claim_success(self):
+        self.login()
+        url = "/api/facilities/{}/claim/".format(self.facility.id)
+
+        response = self.client.post(url, self.claim_data)
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(FacilityClaim.objects.count(), 1)
+
+    @override_switch("claim_a_facility", active=True)
+    def test_facility_claim_with_valid_number_of_workers(self):
+        self.login()
+        self.claim_data['number_of_workers'] = '2-251'
+
+        url = "/api/facilities/{}/claim/".format(self.facility.id)
+
+        response = self.client.post(url, self.claim_data)
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(FacilityClaim.objects.count(), 1)
+        self.assertEqual(
+            FacilityClaim.objects.first().facility_workers_count, '2-251'
+        )
+
+    @override_switch("claim_a_facility", active=True)
+    def test_facility_claim_with_invalid_number_of_workers(self):
+        self.login()
+        self.claim_data['number_of_workers'] = 'invalid'
+
+        url = "/api/facilities/{}/claim/".format(self.facility.id)
+
+        response = self.client.post(url, self.claim_data)
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(FacilityClaim.objects.count(), 1)
+        self.assertEqual(
+            FacilityClaim.objects.first().facility_workers_count, None
+        )
+
+    @override_switch("claim_a_facility", active=True)
+    def test_facility_claim_with_empty_number_of_workers(self):
+        self.login()
+        self.claim_data['number_of_workers'] = ''
+
+        url = "/api/facilities/{}/claim/".format(self.facility.id)
+
+        response = self.client.post(url, self.claim_data)
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(FacilityClaim.objects.count(), 1)
+        self.assertEqual(
+            FacilityClaim.objects.first().facility_workers_count, None
+        )
