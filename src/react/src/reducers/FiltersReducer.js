@@ -8,6 +8,7 @@ import {
     updateListFilter,
     updateContributorTypeFilter,
     updateCountryFilter,
+    clearCountryFilter,
     updateClaimStatusFilter,
     updateSectorFilter,
     updateParentCompanyFilter,
@@ -87,6 +88,10 @@ export default createReducer(
         [updateCountryFilter]: (state, payload) =>
             update(state, {
                 countries: { $set: payload },
+            }),
+        [clearCountryFilter]: state =>
+            update(state, {
+                countries: { $set: initialState.countries },
             }),
         [updateClaimStatusFilter]: (state, payload) =>
             update(state, {

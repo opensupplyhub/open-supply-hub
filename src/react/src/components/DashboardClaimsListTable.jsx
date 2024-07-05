@@ -1,3 +1,4 @@
+/* eslint no-unused-vars: 0 */
 import React, { useState, useEffect, useRef } from 'react';
 import { func, shape, bool } from 'prop-types';
 import { withRouter, Link } from 'react-router-dom';
@@ -16,6 +17,7 @@ import DashboardClaimsListTableHeader from './DashboardClaimsListTableHeader';
 import {
     facilityClaimsListPropType,
     claimStatusOptionsPropType,
+    countryOptionsPropType,
 } from '../util/propTypes';
 
 import {
@@ -45,6 +47,7 @@ const CONTRIBUTOR_LINK_ID = 'CONTRIBUTOR_LINK_ID';
 
 function DashboardClaimsListTable({
     data,
+    countriesData,
     fetching,
     handleSortClaims,
     handleGetClaims,
@@ -126,8 +129,6 @@ function DashboardClaimsListTable({
         return null;
     }
 
-    // TODO: this part only responsible to re-render with loader once country/status filter changes
-
     return (
         <Table>
             <DashboardClaimsListTableHeader
@@ -205,6 +206,7 @@ function DashboardClaimsListTable({
 
 DashboardClaimsListTable.defaultProps = {
     data: null,
+    countriesData: null,
 };
 
 DashboardClaimsListTable.propTypes = {
@@ -216,6 +218,7 @@ DashboardClaimsListTable.propTypes = {
     }).isRequired,
     claimStatuses: claimStatusOptionsPropType.isRequired,
     clearClaims: func.isRequired,
+    countriesData: countryOptionsPropType,
 };
 
 export default withRouter(

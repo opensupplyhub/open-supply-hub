@@ -1,3 +1,5 @@
+/* eslint no-unused-vars: 0 */
+/* eslint-disable arrow-body-style */
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { arrayOf, bool, func, shape, string } from 'prop-types';
@@ -25,6 +27,7 @@ import CountryNameFilter from './Filters/CountryNameFilter';
 import {
     updateClaimStatusFilter,
     updateCountryFilter,
+    clearCountryFilter,
 } from './../actions/filters';
 
 import {
@@ -59,6 +62,11 @@ const dashboardClaimsStyles = () =>
         }),
     });
 
+/*
+let countries;
+let statuses;
+*/
+
 const DashboardClaims = ({
     data,
     claimStatuses,
@@ -71,13 +79,23 @@ const DashboardClaims = ({
     history: {
         location: { search },
         push,
+        replace,
     },
     fetchClaimStatus,
     fetchCountries,
     updateClaimStatus,
     updateCountry,
+    clearCountry,
     countriesData,
 }) => {
+    /*
+    if (!countries || !statuses) {
+        ({ countries, statuses } = getDashboardClaimsListParamsFromQueryString(
+            search,
+        ));
+    }
+    */
+
     const { countries, statuses } = getDashboardClaimsListParamsFromQueryString(
         search,
     );
@@ -86,6 +104,7 @@ const DashboardClaims = ({
         fetchCountries();
         fetchClaimStatus();
 
+        // Always keep default PENDING status in search bar
         if (statuses && statuses.length > 0) {
             const statusesSerialized = map(statuses, status => ({
                 label: status,
@@ -95,49 +114,34 @@ const DashboardClaims = ({
             push(
                 makeDashboardClaimListLink({
                     statuses,
-                    countries: countries || map(countriesData, 'value'),
+                    countries,
                 }),
             );
         }
+        // If country code is present in URL, it should be set in filter field automatically
         if (countries && countries.length > 0) {
             const countriesSerialized = map(countries, country => ({
                 value: country,
                 label: country,
             }));
             updateCountry(countriesSerialized);
-            push(
-                makeDashboardClaimListLink({
-                    statuses,
-                    countries: map(countriesSerialized, 'value'),
-                }),
-            );
         }
     }, []);
 
     useEffect(() => {
-        if (countriesData && countriesData.length > 0) {
-            push(
-                makeDashboardClaimListLink({
-                    statuses,
-                    countries: map(countriesData, 'value'),
-                }),
-            );
-        }
-        if (countries) {
-            push(
-                makeDashboardClaimListLink({
-                    statuses,
-                    countries: map(countriesData, 'value'),
-                }),
-            );
-        }
-    }, [countriesData]);
-
-    const onClaimStatusUpdate = s => {
         push(
             makeDashboardClaimListLink({
-                statuses: map(s, 'value'),
+                statuses: map(claimStatuses, 'value'),
                 countries: map(countriesData, 'value'),
+            }),
+        );
+    }, [countriesData]);
+
+    const onClaimStatusUpdate = (s, c) => {
+        push(
+            makeDashboardClaimListLink({
+                countries: map(c, 'value'),
+                statuses: map(s, 'value'),
             }),
         );
     };
@@ -154,6 +158,7 @@ const DashboardClaims = ({
                     data={data || []}
                 />
                 <ClaimStatusFilter
+                    countriesData={countriesData}
                     handleClaimStatusUpdate={onClaimStatusUpdate}
                 />
                 <CountryNameFilter />
@@ -195,6 +200,7 @@ DashboardClaims.propTypes = {
     updateClaimStatus: func.isRequired,
     updateCountry: func.isRequired,
     claimStatuses: claimStatusOptionsPropType.isRequired,
+    clearCountry: func.isRequired,
 };
 
 function mapStateToProps({
@@ -221,6 +227,7 @@ function mapDispatchToProps(dispatch) {
         fetchClaimStatus: () => dispatch(fetchClaimStatusOptions()),
         updateClaimStatus: v => dispatch(updateClaimStatusFilter(v)),
         updateCountry: v => dispatch(updateCountryFilter(v)),
+        clearCountry: () => dispatch(clearCountryFilter()),
     };
 }
 

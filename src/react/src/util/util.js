@@ -472,9 +472,9 @@ export const getDashboardClaimsListParamsFromQueryString = qs => {
     const countriesArray = Array.isArray(countries) ? countries : [countries];
 
     return Object.freeze({
-        countries: uniq(countriesArray),
+        countries: uniq(compact(countriesArray)),
         statuses: intersection(
-            uniq(statusesArray),
+            uniq(compact(statusesArray)),
             map(facilityClaimStatusChoices, 'value'),
         ),
     });
