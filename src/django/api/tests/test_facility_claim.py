@@ -75,18 +75,18 @@ class FacilityClaimTest(APITestCase):
             'local_language_name': 'Local name',
         }
 
-    def login(self):
+    def __login(self):
         self.client.login(email=self.email, password=self.password)
 
     @override_switch("claim_a_facility", active=True)
-    def test_requires_login(self):
+    def test_requires___login(self):
         url = reverse("facility-claimed")
         response = self.client.get(url)
         self.assertEqual(401, response.status_code)
 
     @override_switch("claim_a_facility", active=True)
     def test_claimed_facilities_list(self):
-        self.login()
+        self.__login()
         url = reverse("facility-claimed")
         response = self.client.get(url)
         self.assertEqual(200, response.status_code)
@@ -113,7 +113,7 @@ class FacilityClaimTest(APITestCase):
 
     @override_switch("claim_a_facility", active=True)
     def test_facility_claim_success(self):
-        self.login()
+        self.__login()
         url = "/api/facilities/{}/claim/".format(self.facility.id)
 
         response = self.client.post(url, self.claim_data)
@@ -123,7 +123,7 @@ class FacilityClaimTest(APITestCase):
 
     @override_switch("claim_a_facility", active=True)
     def test_facility_claim_with_valid_number_of_workers(self):
-        self.login()
+        self.__login()
         self.claim_data['number_of_workers'] = '2-251'
 
         url = "/api/facilities/{}/claim/".format(self.facility.id)
@@ -138,7 +138,7 @@ class FacilityClaimTest(APITestCase):
 
     @override_switch("claim_a_facility", active=True)
     def test_facility_claim_with_invalid_number_of_workers(self):
-        self.login()
+        self.__login()
         self.claim_data['number_of_workers'] = 'invalid'
 
         url = "/api/facilities/{}/claim/".format(self.facility.id)
@@ -153,7 +153,7 @@ class FacilityClaimTest(APITestCase):
 
     @override_switch("claim_a_facility", active=True)
     def test_facility_claim_with_empty_number_of_workers(self):
-        self.login()
+        self.__login()
         self.claim_data['number_of_workers'] = ''
 
         url = "/api/facilities/{}/claim/".format(self.facility.id)
