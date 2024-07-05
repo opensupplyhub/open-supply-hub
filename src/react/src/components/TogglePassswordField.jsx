@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { func, objectOf, string } from 'prop-types';
+import { func, objectOf, shape, string } from 'prop-types';
 import { connect } from 'react-redux';
 import InputLabel from '@material-ui/core/InputLabel';
 import InputBase from '@material-ui/core/InputBase';
@@ -20,12 +20,14 @@ import { togglePasswordFieldStyles } from '../util/styles';
 const LOGIN_PASSWORD = 'LOGIN_PASSWORD';
 
 function TogglePassswordField({
-    password,
+    auth,
     updatePassword,
     submitFormOnEnterKeyPress,
     classes,
 }) {
     const [showPassword, setShowPassword] = useState(false);
+
+    const { password } = auth.login.form;
 
     const handleClickShowPassword = () => {
         setShowPassword(prevShowPassword => !prevShowPassword);
@@ -78,7 +80,13 @@ function TogglePassswordField({
 }
 
 TogglePassswordField.prototypes = {
-    password: string.isRequired,
+    auth: shape({
+        login: shape({
+            form: shape({
+                password: string,
+            }),
+        }),
+    }).isRequired,
     updatePassword: func.isRequired,
     submitFormOnEnterKeyPress: func.isRequired,
     classes: objectOf(string),
@@ -87,7 +95,11 @@ TogglePassswordField.prototypes = {
 const mapStateToProps = ({ auth }) => {
     const { password } = auth.login.form;
     return {
-        password,
+        auth: {
+            login: {
+                form: { password },
+            },
+        },
     };
 };
 
