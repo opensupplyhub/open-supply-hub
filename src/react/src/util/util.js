@@ -337,8 +337,6 @@ export const getAlgorithm = sortBy =>
 export const createFiltersFromQueryString = qs => {
     const qsToParse = startsWith(qs, '?') ? qs.slice(1) : qs;
 
-    console.log('@@@ Create filter in createFiltersFromQueryString');
-
     const {
         q: facilityFreeTextQuery = '',
         contributors = [],
@@ -471,9 +469,10 @@ export const getDashboardClaimsListParamsFromQueryString = qs => {
     } = querystring.parse(parseFilterQueryString(qs));
 
     const statusesArray = Array.isArray(statuses) ? statuses : [statuses];
+    const countriesArray = Array.isArray(countries) ? countries : [countries];
 
     return Object.freeze({
-        countries,
+        countries: uniq(countriesArray),
         statuses: intersection(
             uniq(statusesArray),
             map(facilityClaimStatusChoices, 'value'),

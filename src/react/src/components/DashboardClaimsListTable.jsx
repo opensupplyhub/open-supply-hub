@@ -17,7 +17,6 @@ import DashboardClaimsListTableHeader from './DashboardClaimsListTableHeader';
 import {
     facilityClaimsListPropType,
     claimStatusOptionsPropType,
-    countryOptionsPropType,
 } from '../util/propTypes';
 
 import {
@@ -207,7 +206,6 @@ function DashboardClaimsListTable({
 
 DashboardClaimsListTable.defaultProps = {
     data: null,
-    // countriesData: null,
 };
 
 DashboardClaimsListTable.propTypes = {
@@ -218,7 +216,6 @@ DashboardClaimsListTable.propTypes = {
         push: func.isRequired,
     }).isRequired,
     claimStatuses: claimStatusOptionsPropType.isRequired,
-    // countriesData: countryOptionsPropType,
     clearClaims: func.isRequired,
 };
 

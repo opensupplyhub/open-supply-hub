@@ -23,7 +23,10 @@ import {
 
 import ClaimStatusFilter from './Filters/ClaimStatusFilter';
 import CountryNameFilter from './Filters/CountryNameFilter';
-import { updateClaimStatusFilter } from './../actions/filters';
+import {
+    updateClaimStatusFilter,
+    updateCountryFilter,
+} from './../actions/filters';
 
 import {
     facilityClaimsListPropType,
@@ -68,61 +71,81 @@ const DashboardClaims = ({
     classes,
     history: {
         location: { search },
-        replace,
+        push,
     },
     fetchClaimStatus,
     fetchCountries,
     updateClaimStatus,
+    updateCountry,
     countriesData,
 }) => {
-    // TODO: since this came from URL, it will be good to rename it a bit meaningfully
     const { countries, statuses } = getDashboardClaimsListParamsFromQueryString(
         search,
     );
 
-    console.log('@@@ countries from search ', countries);
-    console.log('@@@ statuses from search ', statuses); // This can take value from URL like &countries=CN
-
     useEffect(() => {
         fetchCountries();
         fetchClaimStatus();
-    }, []);
 
-    useEffect(() => {
         if (statuses && statuses.length > 0) {
             const statusesSerialized = map(statuses, status => ({
                 label: status,
                 value: status,
             }));
             updateClaimStatus(statusesSerialized);
-            replace(
+            push(
                 makeDashboardClaimListLink({
                     statuses,
+                    countries: countries || map(countriesData, 'value'),
+                }),
+            );
+        }
+        if (countries && countries.length > 0) {
+            const countriesSerialized = map(countries, country => ({
+                value: country,
+                label: country,
+            }));
+            updateCountry(countriesSerialized);
+            push(
+                makeDashboardClaimListLink({
+                    statuses,
+                    countries: map(countriesSerialized, 'value'),
                 }),
             );
         }
     }, []);
 
     useEffect(() => {
-        console.log('countries from Redux ', countriesData);
-        replace(
+        if (countriesData && countriesData.length > 0) {
+            push(
+                makeDashboardClaimListLink({
+                    statuses,
+                    countries: map(countriesData, 'value'),
+                }),
+            );
+        }
+        if (countries) {
+            push(
+                makeDashboardClaimListLink({
+                    statuses,
+                    countries: map(countriesData, 'value'),
+                }),
+            );
+        }
+    }, [countriesData]);
+
+    const onClaimStatusUpdate = s => {
+        push(
             makeDashboardClaimListLink({
+                statuses: map(s, 'value'),
                 countries: map(countriesData, 'value'),
             }),
         );
-    }, [countriesData]);
+    };
 
     if (error) {
         return <Typography>{error}</Typography>;
     }
-
-    const onClaimStatusUpdate = s => {
-        replace(
-            makeDashboardClaimListLink({
-                statuses: map(s, 'value'),
-            }),
-        );
-    };
 
     return (
         <Paper className={classes.container}>
@@ -168,8 +191,10 @@ DashboardClaims.propTypes = {
     sortClaims: func.isRequired,
     history: shape({
         replace: func.isRequired,
+        push: func.isRequired,
     }).isRequired,
     updateClaimStatus: func.isRequired,
+    updateCountry: func.isRequired,
     claimStatuses: claimStatusOptionsPropType.isRequired,
 };
 
@@ -196,6 +221,7 @@ function mapDispatchToProps(dispatch) {
         fetchCountries: () => dispatch(fetchCountryOptions()),
         fetchClaimStatus: () => dispatch(fetchClaimStatusOptions()),
         updateClaimStatus: v => dispatch(updateClaimStatusFilter(v)),
+        updateCountry: v => dispatch(updateCountryFilter(v)),
     };
 }
 
