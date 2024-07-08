@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { func, objectOf, shape, string } from 'prop-types';
+import { func, objectOf, string } from 'prop-types';
 import { connect } from 'react-redux';
 import InputLabel from '@material-ui/core/InputLabel';
 import InputBase from '@material-ui/core/InputBase';
@@ -10,24 +10,17 @@ import Visibility from '@material-ui/icons/VisibilityOutlined';
 import VisibilityOff from '@material-ui/icons/VisibilityOffOutlined';
 import { withStyles } from '@material-ui/core/styles';
 
-import { updateLoginFormPassword, submitLoginForm } from '../actions/auth';
-import {
-    getValueFromEvent,
-    makeSubmitFormOnEnterKeyPressFunction,
-} from '../util/util';
 import { togglePasswordFieldStyles } from '../util/styles';
 
-const LOGIN_PASSWORD = 'LOGIN_PASSWORD';
-
 function TogglePassswordField({
-    auth,
+    id,
+    value,
+    lable,
     updatePassword,
     submitFormOnEnterKeyPress,
     classes,
 }) {
     const [showPassword, setShowPassword] = useState(false);
-
-    const { password } = auth.login.form;
 
     const handleClickShowPassword = () => {
         setShowPassword(prevShowPassword => !prevShowPassword);
@@ -39,14 +32,14 @@ function TogglePassswordField({
 
     return (
         <div className="form__field">
-            <InputLabel className={classes.lable} htmlFor={LOGIN_PASSWORD}>
-                Password
+            <InputLabel className={classes.lable} htmlFor={id}>
+                {lable}
             </InputLabel>
             <InputBase
                 className={classes.wrapper}
-                id={LOGIN_PASSWORD}
+                id={id}
                 type={showPassword ? 'text' : 'password'}
-                value={password}
+                value={value}
                 onChange={updatePassword}
                 onKeyPress={submitFormOnEnterKeyPress}
                 fullWidth
@@ -80,38 +73,14 @@ function TogglePassswordField({
 }
 
 TogglePassswordField.prototypes = {
-    auth: shape({
-        login: shape({
-            form: shape({
-                password: string,
-            }),
-        }),
-    }).isRequired,
+    id: string.isRequired,
+    value: string.isRequired,
+    lable: string.isRequired,
     updatePassword: func.isRequired,
     submitFormOnEnterKeyPress: func.isRequired,
     classes: objectOf(string),
 };
 
-const mapStateToProps = ({ auth }) => {
-    const { password } = auth.login.form;
-    return {
-        auth: {
-            login: {
-                form: { password },
-            },
-        },
-    };
-};
-
-const mapDispatchToProps = dispatch => ({
-    updatePassword: e =>
-        dispatch(updateLoginFormPassword(getValueFromEvent(e))),
-    submitFormOnEnterKeyPress: makeSubmitFormOnEnterKeyPressFunction(() =>
-        dispatch(submitLoginForm()),
-    ),
-});
-
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps,
-)(withStyles(togglePasswordFieldStyles)(TogglePassswordField));
+export default connect()(
+    withStyles(togglePasswordFieldStyles)(TogglePassswordField),
+);

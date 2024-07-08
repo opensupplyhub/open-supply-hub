@@ -105,7 +105,13 @@ const LoginForm = ({
                             }
                         />
                     </div>
-                    <TogglePassswordField />
+                    <TogglePassswordField
+                        id={LOGIN_PASSWORD}
+                        value={password}
+                        lable="Passowrd"
+                        updatePassword={updatePassword}
+                        submitFormOnEnterKeyPress={submitFormOnEnterKeyPress}
+                    />
                     <SendResetPasswordEmailForm />
                     <ShowOnly when={!!(error && error.length)}>
                         <ul style={formValidationErrorMessageStyle}>
