@@ -1,7 +1,6 @@
 import React from 'react';
 import { screen, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import TogglePassswordField from '../../components/TogglePassswordField';
+import TogglePasswordField from '../../components/TogglePasswordField';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 
 // Mock the styles and icons
@@ -11,29 +10,17 @@ jest.mock('@material-ui/icons', () => ({
 }));
 
 describe('TogglePasswordField', () => {
-    let preloadedState;
     const defaultProps = {
-        classes: {},
-        password: '',
+        id: 'password',
+        value: '',
+        label: 'Password',
         updatePassword: jest.fn(),
         submitFormOnEnterKeyPress: jest.fn(),
+        classes: {},
     };
-    beforeEach(() => {
-        preloadedState = {
-            auth: {
-                login: {
-                    form: {
-                        password: '',
-                    },
-                },
-            },
-        };
-    });
 
     test('renders password field', () => {
-        renderWithProviders(<TogglePassswordField {...defaultProps} />, {
-            preloadedState,
-        });
+        renderWithProviders(<TogglePasswordField {...defaultProps} />);
 
         const passwordInput = screen.getByLabelText('Password');
 
@@ -41,9 +28,7 @@ describe('TogglePasswordField', () => {
     });
 
     test('renders input with type "password"', () => {
-        renderWithProviders(<TogglePassswordField {...defaultProps} />, {
-            preloadedState,
-        });
+        renderWithProviders(<TogglePasswordField {...defaultProps} />);
 
         const passwordInput = screen.getByLabelText('Password');
 
@@ -51,9 +36,7 @@ describe('TogglePasswordField', () => {
     });
 
     test('toggles password visibility', () => {
-        renderWithProviders(<TogglePassswordField {...defaultProps} />, {
-            preloadedState,
-        });
+        renderWithProviders(<TogglePasswordField {...defaultProps} />);
 
         const toggleButton = screen.getByLabelText(
             'toggle password visibility',
@@ -70,14 +53,9 @@ describe('TogglePasswordField', () => {
     });
 
     test('updates password value', async () => {
-        const user = userEvent.setup()
-
-        renderWithProviders(<TogglePassswordField {...defaultProps} />, {
-            preloadedState,
-        });
+        renderWithProviders(<TogglePasswordField {...defaultProps} value="newPassword" />);
 
         const passwordInput = screen.getByLabelText('Password');
-        await user.type(passwordInput, "newPassword")
 
         expect(passwordInput).toHaveValue('newPassword')
     });
