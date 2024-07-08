@@ -108,10 +108,14 @@ function DashboardClaimsListTable({
          when claims or countries filters are removing in UI at the moment
         */
         const wasNotEmptyAndNowEmptyClaimStatuses =
-            prevClaimStatuses.current.length > 0 && claimStatuses.length === 0;
+            prevClaimStatuses.current &&
+            prevClaimStatuses.current.length > 0 &&
+            claimStatuses.length === 0;
 
         const wasNotEmptyAndNowEmptyCountriesData =
-            prevCountriesData.current.length > 0 && countriesData.length === 0;
+            prevClaimStatuses.current &&
+            prevCountriesData.current.length > 0 &&
+            countriesData.length === 0;
 
         if (isFirstRender.current) {
             isFirstRender.current = false;
@@ -230,8 +234,8 @@ DashboardClaimsListTable.propTypes = {
     history: shape({
         push: func.isRequired,
     }).isRequired,
-    claimStatuses: claimStatusOptionsPropType.isRequired,
-    clearClaims: func.isRequired,
+    claimStatuses: claimStatusOptionsPropType,
+    clearClaims: func,
     countriesData: countryOptionsPropType,
 };
 

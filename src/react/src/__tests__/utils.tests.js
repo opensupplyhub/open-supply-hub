@@ -198,6 +198,7 @@ it('creates a querystring from a set of filter selection', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: []
     };
 
     const expectedEmptySelectionQSMatch = '';
@@ -294,6 +295,7 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -328,6 +330,7 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -353,6 +356,7 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -383,6 +387,7 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [
             {
                 value: 2,
@@ -422,6 +427,7 @@ it('creates a set of filters from a querystring', () => {
         ],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -456,6 +462,7 @@ it('creates a set of filters from a querystring', () => {
             },
         ],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -486,6 +493,7 @@ it('creates a set of filters from a querystring', () => {
         ],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -511,6 +519,7 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [{
             value: 1,
@@ -543,6 +552,7 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [{
@@ -575,6 +585,7 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -607,6 +618,7 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -639,6 +651,7 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -671,6 +684,7 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
