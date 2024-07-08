@@ -10,7 +10,7 @@ import AppOverflow from './AppOverflow';
 import Button from './Button';
 import ShowOnly from './ShowOnly';
 import SendResetPasswordEmailForm from './SendResetPasswordEmailForm';
-import TogglePassswordField from './TogglePassswordField';
+import TogglePasswordField from './TogglePasswordField';
 
 import {
     updateLoginFormEmailAddress,
@@ -105,7 +105,7 @@ const LoginForm = ({
                             }
                         />
                     </div>
-                    <TogglePassswordField
+                    <TogglePasswordField
                         id={LOGIN_PASSWORD}
                         value={password}
                         lable="Passowrd"
