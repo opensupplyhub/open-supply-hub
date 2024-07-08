@@ -659,7 +659,7 @@ class GazetteerCache:
                     # deleted. We don't need to index a deleted facility.
                     if item['id'] in latest_facility_dedupe_records:
                         record = latest_facility_dedupe_records[item['id']]
-                        logger.debug(
+                        logger.info(
                             'Indexing facility {}'.format(str(record)))
                         cls._gazetter.index(record)
                 cls._facility_version = item['history_id']
@@ -719,7 +719,7 @@ class GazetteerCache:
                         # facility.
                         if match and match['is_active']:
                             record = dedupe_record_for_match_item(item)
-                            logger.debug(
+                            logger.info(
                                 'Indexing match {}'.format(str(record)))
                             cls._gazetter.index(record)
                     cls._match_version = item['history_id']

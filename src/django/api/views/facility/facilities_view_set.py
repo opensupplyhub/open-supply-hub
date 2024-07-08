@@ -98,9 +98,7 @@ from .facility_parameters import (
     facilities_create_parameters,
 )
 
-# initialize logger
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+# Initialize logger.
 log = logging.getLogger(__name__)
 
 

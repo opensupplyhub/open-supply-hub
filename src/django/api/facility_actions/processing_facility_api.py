@@ -24,10 +24,7 @@ from django.core import exceptions as core_exceptions
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
-# initialize logger
-logging.basicConfig(
-    format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO
-)
+# Initialize logger.
 log = logging.getLogger(__name__)
 
 

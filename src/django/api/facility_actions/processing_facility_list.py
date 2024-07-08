@@ -27,10 +27,7 @@ from django.core.files.uploadedfile import (
     TemporaryUploadedFile,
 )
 
-# initialize logger
-logging.basicConfig(
-    format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO
-)
+# Initialize logger.
 log = logging.getLogger(__name__)
 
 
