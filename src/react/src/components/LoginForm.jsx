@@ -108,7 +108,7 @@ const LoginForm = ({
                     <TogglePasswordField
                         id={LOGIN_PASSWORD}
                         value={password}
-                        lable="Passowrd"
+                        label="Passowrd"
                         updatePassword={updatePassword}
                         submitFormOnEnterKeyPress={submitFormOnEnterKeyPress}
                     />
