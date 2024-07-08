@@ -15,7 +15,7 @@ import { togglePasswordFieldStyles } from '../util/styles';
 function TogglePassswordField({
     id,
     value,
-    lable,
+    label,
     updatePassword,
     submitFormOnEnterKeyPress,
     classes,
@@ -33,7 +33,7 @@ function TogglePassswordField({
     return (
         <div className="form__field">
             <InputLabel className={classes.lable} htmlFor={id}>
-                {lable}
+                {label}
             </InputLabel>
             <InputBase
                 className={classes.wrapper}
@@ -75,7 +75,7 @@ function TogglePassswordField({
 TogglePassswordField.prototypes = {
     id: string.isRequired,
     value: string.isRequired,
-    lable: string.isRequired,
+    label: string.isRequired,
     updatePassword: func.isRequired,
     submitFormOnEnterKeyPress: func.isRequired,
     classes: objectOf(string),
