@@ -225,6 +225,7 @@ function DashboardClaimsListTable({
 DashboardClaimsListTable.defaultProps = {
     data: null,
     countriesData: null,
+    claimStatuses: [],
 };
 
 DashboardClaimsListTable.propTypes = {
@@ -235,7 +236,7 @@ DashboardClaimsListTable.propTypes = {
         push: func.isRequired,
     }).isRequired,
     claimStatuses: claimStatusOptionsPropType,
-    clearClaims: func,
+    clearClaims: func.isRequired,
     countriesData: countryOptionsPropType,
 };
 
