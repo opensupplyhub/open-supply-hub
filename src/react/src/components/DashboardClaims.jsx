@@ -4,6 +4,7 @@ import { arrayOf, bool, func, shape, string } from 'prop-types';
 import map from 'lodash/map';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
+import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 
 import DownloadFacilityClaimsButton from './DownloadFacilityClaimsButton';
@@ -49,6 +50,9 @@ const dashboardClaimsStyles = () =>
             marginTop: '24px',
             width: '100%',
         }),
+        dashboardClaimsFilters: Object.freeze({
+            padding: '20px',
+        }),
         filterRow: Object.freeze({
             padding: '20px',
             display: 'flex',
@@ -58,6 +62,7 @@ const dashboardClaimsStyles = () =>
         filter: Object.freeze({
             flex: 1,
         }),
+        numberResults: { fontWeight: 800 },
     });
 
 const DashboardClaims = ({
@@ -150,18 +155,25 @@ const DashboardClaims = ({
         return <Typography>{error}</Typography>;
     }
 
+    const claimsCount = data && data.length;
+
     return (
         <Paper className={classes.container}>
             <div className={classes.dashboardClaimsContainer}>
-                <DownloadFacilityClaimsButton
-                    fetching={fetching}
-                    data={data || []}
-                />
-                <ClaimStatusFilter
-                    countriesData={countriesData}
-                    handleClaimStatusUpdate={onClaimStatusUpdate}
-                />
-                <CountryNameFilter />
+                <div className={classes.dashboardClaimsFilters}>
+                    <DownloadFacilityClaimsButton
+                        fetching={fetching}
+                        data={data || []}
+                    />
+                    <ClaimStatusFilter
+                        countriesData={countriesData}
+                        handleClaimStatusUpdate={onClaimStatusUpdate}
+                    />
+                    <CountryNameFilter />
+                    <Grid item className={classes.numberResults}>
+                        {claimsCount} results
+                    </Grid>
+                </div>
                 <DashboardClaimsListTable
                     fetching={fetching}
                     data={data}

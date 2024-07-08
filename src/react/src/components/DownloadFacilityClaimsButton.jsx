@@ -15,7 +15,6 @@ import { facilityClaimsListPropType } from '../util/propTypes';
 const downloadFacilityClaimsButtonStyles = theme =>
     Object.freeze({
         button: Object.freeze({
-            marginLeft: '20px',
             marginBottom: '44px',
             padding: '14px 13px',
             color: theme.palette.getContrastText(theme.palette.action.main),
