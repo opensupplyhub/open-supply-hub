@@ -118,21 +118,23 @@ const DashboardClaims = ({
     }, []);
 
     useEffect(() => {
-        if (countriesData.length > 0 && statuses) {
-            push(
-                makeDashboardClaimListLink({
-                    statuses,
-                    countries: map(countriesData, 'value'),
-                }),
-            );
-        } else if (countriesData.length > 0 && claimStatuses.length > 0) {
-            push(
-                makeDashboardClaimListLink({
-                    statuses: map(claimStatuses, 'value'),
-                    countries: map(countriesData, 'value'),
-                }),
-            );
+        const finalCountries = map(countriesData, 'value');
+        let finalStatuses = statuses;
+
+        if (countriesData.length > 0) {
+            if (!statuses && claimStatuses.length > 0) {
+                finalStatuses = map(claimStatuses, 'value');
+            }
+        } else if (claimStatuses.length > 0) {
+            finalStatuses = map(claimStatuses, 'value');
         }
+
+        push(
+            makeDashboardClaimListLink({
+                statuses: finalStatuses,
+                countries: finalCountries,
+            }),
+        );
     }, [countriesData]);
 
     const onClaimStatusUpdate = (s, c) => {
@@ -167,8 +169,8 @@ const DashboardClaims = ({
                     handleGetClaims={getClaims}
                     handleGetCountries={fetchCountries}
                     claimStatuses={claimStatuses}
-                    clearClaims={clearClaims}
                     countriesData={countriesData}
+                    clearClaims={clearClaims}
                 />
             </div>
         </Paper>

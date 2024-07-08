@@ -1,4 +1,3 @@
-/* eslint no-unused-vars: 0 */
 import React, { useState, useEffect, useRef } from 'react';
 import { func, shape, bool } from 'prop-types';
 import { withRouter, Link } from 'react-router-dom';
@@ -47,11 +46,11 @@ const CONTRIBUTOR_LINK_ID = 'CONTRIBUTOR_LINK_ID';
 
 function DashboardClaimsListTable({
     data,
-    countriesData,
     fetching,
     handleSortClaims,
     handleGetClaims,
     claimStatuses,
+    countriesData,
     clearClaims,
     history: { push },
     classes,
@@ -64,7 +63,8 @@ function DashboardClaimsListTable({
     const [orderBy, setOrderBy] = useState('id');
     const [loading, setLoading] = useState(true);
     const isFirstRender = useRef(true);
-    const previousClaimStatuses = useRef(claimStatuses);
+    const prevClaimStatuses = useRef(claimStatuses);
+    const prevCountriesData = useRef(countriesData);
 
     const makeRowClickHandler = claimID =>
         flow(getIDFromEvent, id => {
@@ -101,18 +101,32 @@ function DashboardClaimsListTable({
     };
 
     useEffect(() => {
+        /*
+         Fetch data if prev filters were not empty but 
+         become empty after user click on select field.
+         This will resolve conflict of when we want to fetch data
+         when claims or countries filters are removing in UI at the moment
+        */
+        const wasNotEmptyAndNowEmptyClaimStatuses =
+            prevClaimStatuses.current.length > 0 && claimStatuses.length === 0;
+
+        const wasNotEmptyAndNowEmptyCountriesData =
+            prevCountriesData.current.length > 0 && countriesData.length === 0;
+
         if (isFirstRender.current) {
             isFirstRender.current = false;
         } else if (
             claimStatuses.length > 0 ||
-            (previousClaimStatuses.current.length > 0 &&
-                claimStatuses.length === 0)
+            wasNotEmptyAndNowEmptyClaimStatuses ||
+            countriesData.length > 0 ||
+            wasNotEmptyAndNowEmptyCountriesData
         ) {
             handleGetClaims();
         }
 
-        previousClaimStatuses.current = claimStatuses;
-    }, [claimStatuses]);
+        prevClaimStatuses.current = claimStatuses;
+        prevCountriesData.current = countriesData;
+    }, [claimStatuses, countriesData]);
 
     useEffect(() => clearClaims, [handleGetClaims, clearClaims]);
 
