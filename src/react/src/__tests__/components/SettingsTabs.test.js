@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter as Router } from 'react-router-dom';
-import userEvent from '@testing-library/user-event';
+import UserEvent from "user-event";
 import SettingTabs from '../../components/Settings/SettingTabs';
 
 import {
@@ -11,21 +11,20 @@ import {
 } from '../../components/Settings/constants';
 
 test('SettingsTabs component', () => {
-    const user = userEvent.setup()
     const handleTabChange = (event, tab) => {
         // Check index of clicked tab
         expect(tab).toBe(2);
     };
     const tabs = [PROFILE_TAB, EMBED_TAB, API_TAB];
 
-    render(
-        <Router>
+    render (
+            <Router>
             <SettingTabs
                 value={0}
                 onChange={handleTabChange}
                 tabs={tabs}
             />
-        </Router>
+            </Router>
     );
 
     // Check component presence on the page
@@ -34,5 +33,5 @@ test('SettingsTabs component', () => {
 
     // Click on 'Token' tab
     const itemClickable = screen.getByText(API_TAB);
-    user.click(itemClickable)
+    UserEvent.click(itemClickable);
 })
