@@ -14,6 +14,7 @@ import TogglePassswordField from './TogglePassswordField';
 
 import {
     updateLoginFormEmailAddress,
+    updateLoginFormPassword,
     submitLoginForm,
     resetAuthFormState,
 } from '../actions/auth';
@@ -34,15 +35,18 @@ import {
 import { formValidationErrorMessageStyle } from '../util/styles';
 
 const LOGIN_EMAIL = 'LOGIN_EMAIL';
+const LOGIN_PASSWORD = 'LOGIN_PASSWORD';
 
 const LoginForm = ({
     history,
     user,
     email,
+    password,
     fetching,
     sessionFetching,
     error,
     updateEmail,
+    updatePassword,
     submitForm,
     submitFormOnEnterKeyPress,
     clearForm,
@@ -128,9 +132,11 @@ LoginForm.defaultProps = {
 
 LoginForm.propTypes = {
     email: string.isRequired,
+    password: string.isRequired,
     fetching: bool.isRequired,
     error: arrayOf(string.isRequired),
     updateEmail: func.isRequired,
+    updatePassword: func.isRequired,
     submitForm: func.isRequired,
     submitFormOnEnterKeyPress: func.isRequired,
     clearForm: func.isRequired,
@@ -144,7 +150,7 @@ LoginForm.propTypes = {
 const mapStateToProps = ({
     auth: {
         login: {
-            form: { email },
+            form: { email, password },
         },
         user: { user },
         session: { fetching: sessionFetching },
@@ -153,6 +159,7 @@ const mapStateToProps = ({
     },
 }) => ({
     email,
+    password,
     fetching,
     error,
     user,
@@ -162,6 +169,8 @@ const mapStateToProps = ({
 const mapDispatchToProps = dispatch => ({
     updateEmail: e =>
         dispatch(updateLoginFormEmailAddress(getValueFromEvent(e))),
+    updatePassword: e =>
+        dispatch(updateLoginFormPassword(getValueFromEvent(e))),
     submitForm: () => dispatch(submitLoginForm()),
     clearForm: () => dispatch(resetAuthFormState()),
     submitFormOnEnterKeyPress: makeSubmitFormOnEnterKeyPressFunction(() =>
