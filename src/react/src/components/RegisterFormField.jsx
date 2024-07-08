@@ -81,7 +81,9 @@ export default function RegisterFormField({
                 label={label}
                 updatePassword={handleChange}
                 submitFormOnEnterKeyPress={submitFormOnEnterKeyPress}
-            />
+            >
+                {requiredIndicator}
+            </TogglePasswordField>
         );
     }
 
