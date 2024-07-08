@@ -4,6 +4,44 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
 
+## Release 1.16.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: July 13, 2024
+
+### Database changes
+#### Migrations:
+* *Describe migrations here.*
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
+### Code/API changes
+* [OSDEV-1100](https://opensupplyhub.atlassian.net/browse/OSDEV-1100) - Replaced all mentions of "facility" and "facilities" with the new production location naming in the Logstash app. Renamed `location` field in the production locations index to `coordinates`.
+* [OSDEV-705](https://opensupplyhub.atlassian.net/browse/OSDEV-705) - Created an additional `RowCoordinatesSerializer` in the ContriCleaner to handle coordinate values ("lat" and "lng"). Moved the conversion of "lat" and "lng" into float point numbers from `FacilityListViewSet` to this serializer.
+* Introduced a general format for all Python logs by updating the Django `LOGGING` constant. Disabled propagation for the `django` logger to the `root` logger to avoid log duplication. Removed unnecessary calls to the `basicConfig` method since only the configuration defined in the `LOGGING` constant in the settings.py file is considered valid by the current Django app.
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* [OSDEV-705](https://opensupplyhub.atlassian.net/browse/OSDEV-705) - Fixed the error “could not convert string to float” that occurred when a list contained columns for “lat” and “lng” and only some of the rows in these columns had data. As a result, rows are processed regardless of whether the values for “lat” and “lng” are present and valid, invalid, or empty.
+
+### What's new
+* [OSDEV-981](https://opensupplyhub.atlassian.net/browse/OSDEV-981) Reporting. History of contributor uploads. Created a new report with details about the contributor:
+    * including name, ID, contributor type;
+    * first upload, including date of the first upload and time since the first upload in days;
+    * most recent (or “last”) upload, including date of the last upload and time since the last upload in days;
+    * total (or “lifetime”) uploads and a calculation for uploads per year (= lifetime uploads/time since the first upload (in years)). This data is ordered based on the “date of last upload” column so that contributors who have recently contributed data are at the top of the report.
+* [OSDEV-1105](https://opensupplyhub.atlassian.net/browse/OSDEV-1105) - Contribution. Allow commas in list name and update error message.
+* [OSDEV-272](https://opensupplyhub.atlassian.net/browse/OSDEV-272) - Facility Claims Page. Implement ascending/descending and alphabetic sort on FE. Applied proper sorting for lower case/upper case/accented strings.
+* [OSDEV-1036](https://opensupplyhub.atlassian.net/browse/OSDEV-1036) - Claims. Add a sortable "claim decision" column to claims admin page.
+
+### Release instructions:
+* *Provide release instructions here.*
+
+
 ## Release 1.15.0
 
 ## Introduction
@@ -12,10 +50,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Database changes
 #### Migrations:
-* *Describe migrations here.*
-
-#### Scheme changes
-* *Describe scheme changes here.*
+* 0150_introduce_function_formatting_number_to_percent - adds add_percent_to_number to DB and drop
+drop_calc_column_func.
 
 ### Code/API changes
 * [OSDEV-1004](https://opensupplyhub.atlassian.net/browse/OSDEV-1004) - The following changes have been made to the Logstash and OpenSearch services:
@@ -27,17 +63,26 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Introduced a new set of Ruby scripts to filter and reorganize the incoming data at the Logstash app level, avoiding complex database queries that could lead to high database load.
     * Updated the `facilities` index template for OpenSearch to define how new fields within the facility documents are stored and indexed by OpenSearch.
     * Set up the main Logstash pipeline to run every 15 minutes.
+    * Introduced ingress and egress rules for the Opensearch and Logstash.
+    * Parameterized database credentials for the logstash configs input.
+    * Parameterized OpenSearch domain for the logstash configs output.
+    * Specified the ARN of an IAM role to be used as the master user for the OpenSearch domain.
+    * Set EFS access point permissions for logstash:root user.
+    * Utilized environment variables to disable authentication for OpenSearch during local development, as the authentication isn't necessary.
 
     All changes have been made to meet the API specification requirements for `v1/facilities` API endpoint as closely as possible.
 
 ### Architecture/Environment changes
 * For the job `clean_ecr_repositories` of Destroy Environment action, it was added a new line to the script responsible for deleting ECR repositories, specifically targeting the `opensupplyhub-logstash` repository.
+* The `reindex_database` and `index_facilities_new` commands have been removed from the `post_deployment` command.
 
 ### Bugfix
-* *Describe bugfix here.*
+* [OSDEV-1098](https://opensupplyhub.atlassian.net/browse/OSDEV-1098) Reporting. A columns values in the report "Contributor type by %" are not cumulative. The SQL for the report has been rewritten in such a way that first calculates the monthly counts, then computes the cumulative counts for each month, and finally applies the add_percent_to_number function to get the desired percentages. This gives us the accumulated values for each month.
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* [OSDEV-1071](https://opensupplyhub.atlassian.net/browse/OSDEV-1071)  Replaced the term "facility" with "production location" in the claims banners
+* [OSDEV-933](https://opensupplyhub.atlassian.net/browse/OSDEV-933) Facility Claims. Add "what is claims" screen. `What is claims` page with radio buttons has been added that explains more about the claim. Updated title and link text for not logged in user who wants to claim a production location.
+* [OSDEV-1088](https://opensupplyhub.atlassian.net/browse/OSDEV-1088) - Collecting users' public IP addresses in the Rollbar error tracker has been disabled to meet GDPR compliance.
 
 ### Release instructions:
 * Update code.

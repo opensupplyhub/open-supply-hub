@@ -9,5 +9,3 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         call_command('migrate')
-        call_command('index_facilities_new')
-        call_command('reindex_database')

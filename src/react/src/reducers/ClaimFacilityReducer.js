@@ -4,6 +4,7 @@ import identity from 'lodash/identity';
 import orderBy from 'lodash/orderBy';
 
 import {
+    updateClaimFacilityIntro,
     startFetchClaimFacilityData,
     failFetchClaimFacilityData,
     completeFetchClaimFacilityData,
@@ -39,6 +40,7 @@ const initialState = Object.freeze({
             sectors: null,
             numberOfWorkers: '',
             localLanguageName: '',
+            agreement: 'no',
         }),
         fetching: false,
         error: null,
@@ -52,6 +54,14 @@ const initialState = Object.freeze({
 
 export default createReducer(
     {
+        [updateClaimFacilityIntro]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        agreement: { $set: payload },
+                    },
+                },
+            }),
         [startFetchClaimFacilityData]: state =>
             update(state, {
                 facilityData: {

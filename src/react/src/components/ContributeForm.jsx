@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { arrayOf, bool, func, number, string } from 'prop-types';
+import { arrayOf, bool, func, number, object, string } from 'prop-types';
 import { connect } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import MaterialButton from '@material-ui/core/Button';
@@ -115,8 +115,11 @@ class ContributeForm extends Component {
                 <React.Fragment>
                     <ul>
                         {error.map(err => (
-                            <li key={err} style={{ color: 'red' }}>
-                                {err}
+                            <li
+                                key={err.errorComponent}
+                                style={{ color: 'red' }}
+                            >
+                                {err.errorComponent}
                             </li>
                         ))}
                     </ul>
@@ -226,7 +229,7 @@ ContributeForm.propTypes = {
     filename: string.isRequired,
     replaces: number.isRequired,
     fetching: bool.isRequired,
-    error: arrayOf(string),
+    error: arrayOf(object),
     updateName: func.isRequired,
     updateDescription: func.isRequired,
     updateFileName: func.isRequired,

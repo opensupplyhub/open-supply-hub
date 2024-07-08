@@ -1003,7 +1003,7 @@ export const facilityDetailsActions = {
     REPORT_AS_CLOSED: 'Report as Closed',
     REPORT_AS_REOPENED: 'Report as Reopened',
     DISPUTE_CLAIM: 'Dispute Claim',
-    CLAIM_FACILITY: 'Claim this Facility',
+    CLAIM_FACILITY: 'Claim this production location',
     VIEW_ON_OAR: 'View on Open Supply Hub',
 };
 
@@ -1261,4 +1261,25 @@ export const USER_DEFAULT_STATE = Object.freeze({
     is_superuser: false,
     is_staff: false,
     is_moderation_mode: false,
+});
+
+export const facilityClaimStepsNames = Object.freeze({
+    CLAIM_PROD_LOCATION: 'Claim this production location',
+    SUPPORT_DOC: 'Support Documentation',
+    ADDITIONAL_DATA: 'Additional Data',
+});
+
+export const componentsWithErrorMessage = Object.freeze({
+    missingListName: <>Missing required Facility List Name</>,
+    invalidCharacters: (
+        <>
+            The <b>List Name</b> you entered contains invalid characters.
+            Allowed characters include: letters, numbers, spaces, apostrophe (
+            &#39; ), comma ( &#44; ), hyphen ( &#45; ), ampersand ( &#38; ),
+            period ( &#46; ), parentheses ( ), and square brackets ( &#91;&#93;
+            ). Characters that contain accents are not allowed.
+        </>
+    ),
+    mustConsistOfLetters: <>Facility List Name must also consist of letters</>,
+    missingFile: <>Missing required Facility List File</>,
 });
