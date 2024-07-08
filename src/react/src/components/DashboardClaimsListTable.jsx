@@ -108,12 +108,14 @@ function DashboardClaimsListTable({
          when claims or countries filters are removing in UI at the moment
         */
         const wasNotEmptyAndNowEmptyClaimStatuses =
+            prevClaimStatuses &&
             prevClaimStatuses.current &&
             prevClaimStatuses.current.length > 0 &&
             claimStatuses.length === 0;
 
         const wasNotEmptyAndNowEmptyCountriesData =
-            prevClaimStatuses.current &&
+            prevCountriesData &&
+            prevCountriesData.current &&
             prevCountriesData.current.length > 0 &&
             countriesData.length === 0;
 
