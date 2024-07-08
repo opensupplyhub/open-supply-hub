@@ -48,6 +48,7 @@
         "remove-accents": "^0.5.0",
         "sass": "^1.54.9",
         "typeface-darker-grotesque": "^1.1.13",
+        "user-event": "2.0.1",
         "uuid": "^9.0.1",
         "validator": "13.7.0",
         "xlsx": "0.18.5"
@@ -69,7 +70,6 @@
         "@testing-library/jest-dom": "^6.2.0",
         "@testing-library/react": "12.1.5",
         "@testing-library/react-hooks": "^8.0.1",
-        "@testing-library/user-event": "^14.5.2",
         "babel-jest": "^26.6.0",
         "eslint": "^7.11.0",
         "eslint-config-airbnb": "^18.2.1",
