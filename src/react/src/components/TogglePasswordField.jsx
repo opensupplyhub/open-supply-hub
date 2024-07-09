@@ -12,7 +12,7 @@ import { withStyles } from '@material-ui/core/styles';
 
 import { togglePasswordFieldStyles } from '../util/styles';
 
-function TogglePassswordField({
+function TogglePasswordField({
     id,
     value,
     label,
@@ -33,7 +33,7 @@ function TogglePassswordField({
 
     return (
         <div className="form__field">
-            <InputLabel className={classes.lable} htmlFor={id}>
+            <InputLabel className={classes.label} htmlFor={id}>
                 {label}
                 {children || null}
             </InputLabel>
@@ -74,7 +74,7 @@ function TogglePassswordField({
     );
 }
 
-TogglePassswordField.prototypes = {
+TogglePasswordField.prototypes = {
     id: string.isRequired,
     value: string.isRequired,
     label: string.isRequired,
@@ -84,5 +84,5 @@ TogglePassswordField.prototypes = {
 };
 
 export default connect()(
-    withStyles(togglePasswordFieldStyles)(TogglePassswordField),
+    withStyles(togglePasswordFieldStyles)(TogglePasswordField),
 );

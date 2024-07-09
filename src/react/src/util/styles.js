@@ -131,7 +131,7 @@ export const makeFilterStyles = theme =>
 
 export const togglePasswordFieldStyles = () =>
     Object.freeze({
-        lable: Object.freeze({
+        label: Object.freeze({
             marginBottom: '8px',
             opacity: 1,
             color: '#000000',
