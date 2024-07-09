@@ -40,8 +40,6 @@ def send_claim_facility_confirmation_email(request, facility_claim):
     text_template = get_template('mail/claim_facility_submitted_body.txt')
     html_template = get_template('mail/claim_facility_submitted_body.html')
 
-    facility_country = COUNTRY_NAMES[facility_claim.facility.country_code]
-
     claim_dictionary = {
         'facility_name': facility_claim.facility.name,
         'facility_address': facility_claim.facility.address,
