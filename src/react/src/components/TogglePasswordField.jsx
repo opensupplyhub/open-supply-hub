@@ -74,7 +74,7 @@ function TogglePasswordField({
     );
 }
 
-TogglePasswordField.prototypes = {
+TogglePasswordField.propTypes = {
     id: string.isRequired,
     value: string.isRequired,
     label: string.isRequired,
