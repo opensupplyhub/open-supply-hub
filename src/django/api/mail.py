@@ -40,20 +40,10 @@ def send_claim_facility_confirmation_email(request, facility_claim):
     text_template = get_template('mail/claim_facility_submitted_body.txt')
     html_template = get_template('mail/claim_facility_submitted_body.html')
 
-    facility_country = COUNTRY_NAMES[facility_claim.facility.country_code]
-
     claim_dictionary = {
         'facility_name': facility_claim.facility.name,
         'facility_address': facility_claim.facility.address,
-        'facility_country': facility_country,
         'facility_url': make_facility_url(request, facility_claim.facility),
-        'contact_person': facility_claim.contact_person,
-        'email': facility_claim.contributor.admin.email,
-        'phone_number': facility_claim.phone_number,
-        'company_name': facility_claim.company_name,
-        'website': facility_claim.website,
-        'facility_description': facility_claim.facility_description,
-        'verification_method': facility_claim.verification_method,
     }
 
     send_mail(
