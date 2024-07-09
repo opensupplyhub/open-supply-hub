@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
 
+## Release 1.17.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: July 24, 2024
+
+### Database changes
+#### Migrations:
+* *Describe migrations here.*
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* [OSDEV-273](https://opensupplyhub.atlassian.net/browse/OSDEV-273) - Facility Claims. Implement filtering by Country and Status. Set 'pending' claim status as a default filter.
+
+### Release instructions:
+* *Provide release instructions here.*
+
 ## Release 1.16.0
 
 ## Introduction
