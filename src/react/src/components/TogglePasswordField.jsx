@@ -80,7 +80,7 @@ TogglePasswordField.propTypes = {
     label: string.isRequired,
     updatePassword: func.isRequired,
     submitFormOnEnterKeyPress: func.isRequired,
-    classes: objectOf(string),
+    classes: objectOf(string).isRequired,
 };
 
 export default connect()(
