@@ -19,6 +19,7 @@ function TogglePassswordField({
     updatePassword,
     submitFormOnEnterKeyPress,
     classes,
+    children,
 }) {
     const [showPassword, setShowPassword] = useState(false);
 
@@ -34,6 +35,7 @@ function TogglePassswordField({
         <div className="form__field">
             <InputLabel className={classes.lable} htmlFor={id}>
                 {label}
+                {children || null}
             </InputLabel>
             <InputBase
                 className={classes.wrapper}
