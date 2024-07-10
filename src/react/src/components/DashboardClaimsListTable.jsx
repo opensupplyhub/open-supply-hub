@@ -159,7 +159,7 @@ function DashboardClaimsListTable({
             {loading || fetching ? (
                 <TableBody>
                     <TableRow>
-                        <TableCell colSpan={7}>
+                        <TableCell colSpan={8}>
                             <CircularProgress
                                 size={25}
                                 className={classes.loaderStyle}
