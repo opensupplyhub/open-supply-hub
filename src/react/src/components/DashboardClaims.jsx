@@ -47,7 +47,6 @@ const dashboardClaimsStyles = () =>
             width: '100%',
         }),
         dashboardClaimsContainer: Object.freeze({
-            marginTop: '24px',
             width: '100%',
         }),
         dashboardClaimsFilters: Object.freeze({
