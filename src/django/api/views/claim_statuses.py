@@ -15,9 +15,9 @@ def claim_statuses(_):
     ## Sample Response
 
         [
-            "PENDING"
-            "APPROVED"
-            "DENIED"
+            "PENDING",
+            "APPROVED",
+            "DENIED",
             "REVOKED"
         ]
 
