@@ -27,8 +27,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe bugfix here.*
 
 ### What's new
-* [OSDEV-1083](https://opensupplyhub.atlassian.net/browse/OSDEV-1083) - Enable Password Visibility on Chrome Browser.
-    *  Implemented a 'toggle password visibility' feature in the login, registration, and user profile forms.
+* [OSDEV-1083](https://opensupplyhub.atlassian.net/browse/OSDEV-1083) - Implemented a 'toggle password visibility' feature in the login, registration, reset password and user profile forms.
 
 ### Release instructions:
 * *Provide release instructions here.*
