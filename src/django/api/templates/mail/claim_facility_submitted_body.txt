@@ -13,5 +13,5 @@ The OS Hub Team will review your request and be in touch soon. The expected proc
 
 Best wishes,
 
-{% include "mail/data_team_signature_block.txt" %}
+{% include "mail/claims_team_signature_block.txt" %}
 {% endblock content %}
