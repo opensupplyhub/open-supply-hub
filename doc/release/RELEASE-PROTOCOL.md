@@ -71,7 +71,7 @@ The following list of environments could support [Requirements and key results](
 2. [Development Environment](http://dev.os-hub.net):
     - The environment intended for quick and preliminary tests of new features and fixed bugs on seeded data by software developers immediately after merging into the `main` branch. This environment uses minimal AWS resources.
 3. [Test Environment](http://test.os-hub.net):
-    - The environment designed for testing new features and fixed bugs by QA and software engineers on real datasets twice a week. This environment utilizes average AWS resources and is automatically deployed twice a week.
+    - The environment designed for testing new features and fixed bugs by QA and software engineers on real datasets. This environment utilizes average AWS resources and is manually deployed by QA Engineer as needed.
 4. [Pre-Prod Environment](https://preprod.os-hub.net/):
     - The environment intended for use during the preparation for deploying to production and sandbox. All features and bug fixes should be verified here, as well as regression testing. It is supposed to be run only during the release process, five working days before the release. This environment uses maximum AWS resources to mirror the production environment.
 
@@ -125,7 +125,7 @@ Make sure that:
 
 ### Code Freeze
 
-1. Code freeze occurs every Wednesday following two weeks of development for a new release version. To enhance communication within the team, all stakeholders must be notified about the code freeze two working days before the code freeze by the responsible person for the release.
+1. Code freeze occurs every Tuesday following two weeks of development for a new release version. To enhance communication within the team, all stakeholders must be notified about the code freeze two working days before the code freeze by the responsible person for the release.
 2. Before initiating the code freeze process, ensure that all commands required for the deployment process (e.g., `index_facilities_new`) are included in the `post_deployment` command.
 3. On the day of the code freeze, the responsible person has to run the `Release [Init]` workflow from the `main` branch, specifying the major and minor versions of the release. Subsequently, the `releases/v.X.Y` branch will be created and automatically deployed to the running pre-prod environment via the `Deploy to AWS` workflow.
 4. After a successful deployment, you need to run the `DB - Save Anonymized DB` workflow (if this job did not run on the same or the previous day). Once the Anonymized DB is successfully saved, run the `DB - Apply Anonymized DB` workflow to ensure that testing will be conducted with up-to-date data.
