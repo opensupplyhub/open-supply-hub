@@ -55,6 +55,7 @@ function TogglePasswordField({
                         position="end"
                         classes={{
                             root: classes.adornment,
+                            positionEnd: classes.adornmentPositionEnd,
                         }}
                     >
                         <IconButton
