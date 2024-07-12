@@ -145,9 +145,10 @@ export const togglePasswordFieldStyles = () =>
             marginTop: '8px',
             boxSizing: 'border-box',
             border: '1px solid #D6D8DD',
+            position: 'relative',
         }),
         input: Object.freeze({
-            padding: '6px 16px 10px 16px',
+            padding: '6px 56px 10px 16px',
         }),
         inputType: Object.freeze({
             height: '100%',
@@ -158,6 +159,9 @@ export const togglePasswordFieldStyles = () =>
         }),
         adornment: Object.freeze({
             maxHeight: '2.375em',
+            position: 'absolute',
+            top: 0,
+            right: 0,
         }),
         adornmentPositionEnd: {
             margin: 0,
