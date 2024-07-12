@@ -2,7 +2,7 @@ from django.db import migrations, models
 
 
 def populate_sector_groups(apps, schema_editor):
-    SectorGroups = apps.get_model('api', 'SectorGroups')
+    SectorGroup = apps.get_model('api', 'SectorGroup')
     groups_names = [
         "Apparel, Footwear, Textiles",
         "Agriculture, Food & Beverage",
@@ -32,12 +32,12 @@ def populate_sector_groups(apps, schema_editor):
     ]
 
     for name in groups_names:
-        SectorGroups.objects.create(name=name)
+        SectorGroup.objects.create(name=name)
 
 
 class Migration(migrations.Migration):
     '''
-    This migration creates the SectorGroups model and populates it with
+    This migration creates the SectorGroup model and populates it with
     the sector groups names.
     '''
 
@@ -49,7 +49,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='SectorGroups',
+            name='SectorGroup',
             fields=[
                 (
                     'id',
