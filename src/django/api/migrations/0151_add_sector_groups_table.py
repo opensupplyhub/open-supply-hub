@@ -38,7 +38,7 @@ def populate_sector_groups(apps, schema_editor):
 class Migration(migrations.Migration):
     '''
     This migration creates the SectorGroups model and populates it with
-    the sector groups.
+    the sector groups names.
     '''
 
     initial = True
