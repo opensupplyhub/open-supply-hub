@@ -6,6 +6,7 @@ import Checkbox from '@material-ui/core/Checkbox';
 import ControlledTextInput from './ControlledTextInput';
 import ControlledSelectInput from './ControlledSelectInput';
 import ShowOnly from './ShowOnly';
+import TogglePasswordField from './TogglePasswordField';
 
 import {
     inputTypesEnum,
@@ -133,6 +134,23 @@ export default function UserProfileField({
                         style={checkboxStyles.sizeCheckbox}
                     />
                 </div>
+            </div>
+        );
+    }
+
+    if (type === inputTypesEnum.password) {
+        return (
+            <div className="control-panel__group">
+                <ShowOnly when={!!header}>
+                    <div className="form__field-header">{header}</div>
+                </ShowOnly>
+                <TogglePasswordField
+                    id={id}
+                    value={value}
+                    label={label}
+                    updatePassword={handleChange}
+                    submitFormOnEnterKeyPress={submitFormOnEnterKeyPress}
+                />
             </div>
         );
     }
