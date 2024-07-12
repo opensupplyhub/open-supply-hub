@@ -68,6 +68,7 @@ from .product_type import ProductType
 from .production_type import ProductionType
 from .request_log import RequestLog
 from .sector import Sector
+from .sector_group import SectorGroup
 from .source import Source
 from .user import (
   EmailAsUsernameUserManager,
