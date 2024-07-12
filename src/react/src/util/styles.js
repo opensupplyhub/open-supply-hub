@@ -151,7 +151,7 @@ export const togglePasswordFieldStyles = () =>
             padding: '6px 56px 10px 16px',
         }),
         inputType: Object.freeze({
-            height: '100%',
+            height: '1.375em',
         }),
         inputFocused: Object.freeze({
             border: '1px solid #3d2f8c',
