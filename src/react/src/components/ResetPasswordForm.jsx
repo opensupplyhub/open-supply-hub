@@ -4,10 +4,10 @@ import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import Grid from '@material-ui/core/Grid';
 
-import ControlledTextInput from './ControlledTextInput';
 import AppGrid from './AppGrid';
 import Button from './Button';
 import ShowOnly from './ShowOnly';
+import TogglePasswordField from './TogglePasswordField';
 
 import {
     updateResetPasswordFormUID,
@@ -75,38 +75,20 @@ class ResetPasswordForm extends Component {
         return (
             <AppGrid title="Reset Password">
                 <Grid item xs={12} sm={7}>
-                    <div className="form__field">
-                        <label className="form__label" htmlFor={NEW_PASSWORD}>
-                            New password
-                        </label>
-                        <ControlledTextInput
-                            autoFocus
-                            id={NEW_PASSWORD}
-                            type="password"
-                            value={newPassword}
-                            onChange={updatePassword}
-                            submitFormOnEnterKeyPress={
-                                submitFormOnEnterKeyPress
-                            }
-                        />
-                    </div>
-                    <div className="form__field">
-                        <label
-                            className="form__label"
-                            htmlFor={CONFIRM_NEW_PASSWORD}
-                        >
-                            Confirm new password
-                        </label>
-                        <ControlledTextInput
-                            id={CONFIRM_NEW_PASSWORD}
-                            type="password"
-                            value={newPasswordConfirmation}
-                            onChange={updateConfirmPassword}
-                            submitFormOnEnterKeyPress={
-                                submitFormOnEnterKeyPress
-                            }
-                        />
-                    </div>
+                    <TogglePasswordField
+                        id={NEW_PASSWORD}
+                        value={newPassword}
+                        label="New password"
+                        updatePassword={updatePassword}
+                        submitFormOnEnterKeyPress={submitFormOnEnterKeyPress}
+                    />
+                    <TogglePasswordField
+                        id={CONFIRM_NEW_PASSWORD}
+                        value={newPasswordConfirmation}
+                        label="Confirm new password"
+                        updatePassword={updateConfirmPassword}
+                        submitFormOnEnterKeyPress={submitFormOnEnterKeyPress}
+                    />
                     <ShowOnly when={!!(error && error.length)}>
                         <ul style={formValidationErrorMessageStyle}>
                             {error && error.length
