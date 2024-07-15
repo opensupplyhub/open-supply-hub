@@ -5,7 +5,6 @@ from rest_framework.serializers import (
     Serializer,
     CharField,
 )
-from ...models import FacilityClaim
 
 
 class FacilityClaimListQueryParamsSerializer(Serializer):

@@ -264,7 +264,10 @@ class FacilityMergeTest(APITestCase):
         self.facility_2_claim.refresh_from_db()
         # The pending claim on the merge facility should have been updated
         self.assertEqual(self.facility_1, self.facility_2_claim.facility)
-        self.assertEqual(FacilityClaimStatuses.DENIED, self.facility_2_claim.status)
+        self.assertEqual(
+            FacilityClaimStatuses.DENIED,
+            self.facility_2_claim.status
+        )
 
     def test_merge_with_extended_fields(self):
         self.client.login(
@@ -319,8 +322,14 @@ class FacilityMergeTest(APITestCase):
         self.facility_2_claim.refresh_from_db()
 
         self.assertEqual(self.facility_1, self.facility_2_claim.facility)
-        self.assertEqual(FacilityClaimStatuses.APPROVED, self.facility_1_claim.status)
-        self.assertEqual(FacilityClaimStatuses.REVOKED, self.facility_2_claim.status)
+        self.assertEqual(
+            FacilityClaimStatuses.APPROVED,
+            self.facility_1_claim.status
+        )
+        self.assertEqual(
+            FacilityClaimStatuses.REVOKED,
+            self.facility_2_claim.status
+        )
         self.assertEqual(
             self.superuser, self.facility_2_claim.status_change_by
         )

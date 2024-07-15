@@ -180,7 +180,9 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         if should_show_pending_claim_info(self):
             pending_claim_info = FacilityClaim.objects \
                 .filter(
-                    status=FacilityClaimStatuses.PENDING, facility_id=facility.id) \
+                    status=FacilityClaimStatuses.PENDING,
+                    facility_id=facility.id
+                ) \
                 .values_list('id', flat=True)
 
             if pending_claim_info:

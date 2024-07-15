@@ -152,7 +152,7 @@ class FacilityClaimAdminDashboardTest(APITestCase):
 
         self.assertEqual(200, response.status_code)
 
-        updated_facility_claim = FacilityClaimStatuses.objects.get(
+        updated_facility_claim = FacilityClaim.objects.get(
             pk=self.facility_claim.id
         )
 

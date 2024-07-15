@@ -1059,7 +1059,10 @@ class FacilitiesViewSet(ListModelMixin,
         for claim in merge_claims:
             claim.facility = target
             should_change_status = (
-                claim.status in (FacilityClaimStatuses.APPROVED, FacilityClaimStatuses.PENDING)
+                claim.status in (
+                    FacilityClaimStatuses.APPROVED,
+                    FacilityClaimStatuses.PENDING
+                )
                 and target_has_approved_claim)
             if should_change_status:
                 claim.status = (
