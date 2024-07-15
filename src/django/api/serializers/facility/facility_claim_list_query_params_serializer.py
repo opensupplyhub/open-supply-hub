@@ -1,3 +1,4 @@
+from api.constants import FacilityClaimStatuses
 from rest_framework.serializers import (
     ChoiceField,
     ListField,
@@ -10,10 +11,10 @@ from ...models import FacilityClaim
 class FacilityClaimListQueryParamsSerializer(Serializer):
     statuses = ListField(
         child=ChoiceField(choices=[
-            FacilityClaim.PENDING,
-            FacilityClaim.APPROVED,
-            FacilityClaim.REVOKED,
-            FacilityClaim.DENIED
+            FacilityClaimStatuses.PENDING,
+            FacilityClaimStatuses.APPROVED,
+            FacilityClaimStatuses.REVOKED,
+            FacilityClaimStatuses.DENIED
         ]),
         required=False)
     countries = ListField(

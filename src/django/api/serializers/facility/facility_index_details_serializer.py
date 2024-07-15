@@ -3,6 +3,7 @@ from rest_framework.serializers import (
 )
 from waffle import switch_is_active
 
+from api.constants import FacilityClaimStatuses
 from countries.lib.countries import COUNTRY_NAMES
 from ...models.contributor.contributor import Contributor
 from ...models.facility.facility_index import FacilityIndex
@@ -179,11 +180,11 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         if should_show_pending_claim_info(self):
             pending_claim_info = FacilityClaim.objects \
                 .filter(
-                    status=FacilityClaim.PENDING, facility_id=facility.id) \
+                    status=FacilityClaimStatuses.PENDING, facility_id=facility.id) \
                 .values_list('id', flat=True)
 
             if pending_claim_info:
-                claim_info = {'status': FacilityClaim.PENDING}
+                claim_info = {'status': FacilityClaimStatuses.PENDING}
 
         return claim_info
 

@@ -1,4 +1,4 @@
-from api.constants import FacilityHistoryActions, ProcessingAction
+from api.constants import FacilityHistoryActions, ProcessingAction, FacilityClaimStatuses
 from api.helpers.helpers import prefix_a_an
 from api.models import (
     FacilityClaim,
@@ -249,7 +249,7 @@ def processing_results_has_move_action_for_os_id(list_item, facility_id):
 
 
 def create_facility_claim_entry(claim):
-    if claim.status == FacilityClaim.REVOKED:
+    if claim.status == FacilityClaimStatuses.REVOKED:
         return {
             'updated_at': str(claim.history_date),
             'action': FacilityHistoryActions.CLAIM_REVOKE,
@@ -259,8 +259,8 @@ def create_facility_claim_entry(claim):
             ),
         }
 
-    if claim.status == FacilityClaim.APPROVED \
-       and claim.prev_record.status == FacilityClaim.PENDING:
+    if claim.status == FacilityClaimStatuses.APPROVED \
+       and claim.prev_record.status == FacilityClaimStatuses.PENDING:
         return {
             'updated_at': str(claim.history_date),
             'action': FacilityHistoryActions.CLAIM,
@@ -270,7 +270,7 @@ def create_facility_claim_entry(claim):
             ),
         }
 
-    if claim.status == FacilityClaim.APPROVED:
+    if claim.status == FacilityClaimStatuses.APPROVED:
         public_claim_data_keys = [
             'facility_description',
             'facility_name_english',
@@ -424,8 +424,8 @@ def create_facility_history_list(entries, facility_id, user=None):
         in FacilityClaim
         .history
         .filter(status__in=[
-            FacilityClaim.APPROVED,
-            FacilityClaim.REVOKED,
+            FacilityClaimStatuses.APPROVED,
+            FacilityClaimStatuses.REVOKED,
         ])
         if is_claim_for_facility(c, facility_id)
         if create_facility_claim_entry(c) is not None

@@ -17,18 +17,13 @@ class FacilityClaim(models.Model):
     Facility to be evaluated by OS Hub moderators.
     """
 
-    PENDING = FacilityClaimStatuses.PENDING
-    APPROVED = FacilityClaimStatuses.APPROVED
-    DENIED = FacilityClaimStatuses.DENIED
-    REVOKED = FacilityClaimStatuses.REVOKED
-
     # These status choices must be kept in sync with the client's
     # `facilityClaimStatusChoicesEnum`.
     STATUS_CHOICES = (
-        (PENDING, PENDING),
-        (APPROVED, APPROVED),
-        (DENIED, DENIED),
-        (REVOKED, REVOKED),
+        (FacilityClaimStatuses.PENDING, FacilityClaimStatuses.PENDING),
+        (FacilityClaimStatuses.APPROVED, FacilityClaimStatuses.APPROVED),
+        (FacilityClaimStatuses.DENIED, FacilityClaimStatuses.DENIED),
+        (FacilityClaimStatuses.REVOKED, FacilityClaimStatuses.REVOKED),
     )
 
     CUT_AND_SEW = 'Cut and Sew / RMG'
@@ -185,7 +180,7 @@ class FacilityClaim(models.Model):
         null=False,
         blank=False,
         choices=STATUS_CHOICES,
-        default=PENDING,
+        default=FacilityClaimStatuses.PENDING,
         verbose_name='status',
         help_text='The current status of this facility claim')
     status_change_reason = models.TextField(

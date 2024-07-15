@@ -67,6 +67,7 @@ from ...constants import (
     FacilityMergeQueryParams,
     ProcessingAction,
     UpdateLocationParams,
+    FacilityClaimStatuses
 )
 from ...exceptions import BadRequestException
 from ...facility_history import (
@@ -866,7 +867,7 @@ class FacilitiesViewSet(ListModelMixin,
             user_has_pending_claims = (
                 FacilityClaim
                 .objects
-                .filter(status=FacilityClaim.PENDING)
+                .filter(status=FacilityClaimStatuses.PENDING)
                 .filter(facility=facility)
                 .filter(contributor=contributor)
                 .count() > 0
@@ -932,14 +933,14 @@ class FacilitiesViewSet(ListModelMixin,
             approved = (
                 FacilityClaim
                 .objects
-                .filter(status=FacilityClaim.APPROVED)
+                .filter(status=FacilityClaimStatuses.APPROVED)
                 .filter(contributor=contributor)
                 .values_list('facility__id', flat=True)
             )
             pending = (
                 FacilityClaim
                 .objects
-                .filter(status=FacilityClaim.PENDING)
+                .filter(status=FacilityClaimStatuses.PENDING)
                 .filter(contributor=contributor)
                 .values_list('facility__id', flat=True)
             )
@@ -982,7 +983,7 @@ class FacilitiesViewSet(ListModelMixin,
         try:
             claims = FacilityClaim.objects.filter(
                 contributor=request.user.contributor,
-                status=FacilityClaim.APPROVED)
+                status=FacilityClaimStatuses.APPROVED)
         except Contributor.DoesNotExist as exc:
             raise NotFound(
                 'The current User does not have an associated Contributor'
@@ -1053,18 +1054,18 @@ class FacilitiesViewSet(ListModelMixin,
             unmatched_item.save()
 
         target_has_approved_claim = FacilityClaim.objects.filter(
-            facility=target, status=FacilityClaim.APPROVED).exists()
+            facility=target, status=FacilityClaimStatuses.APPROVED).exists()
         merge_claims = FacilityClaim.objects.filter(facility=merge)
         for claim in merge_claims:
             claim.facility = target
             should_change_status = (
-                claim.status in (FacilityClaim.APPROVED, FacilityClaim.PENDING)
+                claim.status in (FacilityClaimStatuses.APPROVED, FacilityClaimStatuses.PENDING)
                 and target_has_approved_claim)
             if should_change_status:
                 claim.status = (
-                    FacilityClaim.REVOKED
-                    if claim.status == FacilityClaim.APPROVED
-                    else FacilityClaim.DENIED)
+                    FacilityClaimStatuses.REVOKED
+                    if claim.status == FacilityClaimStatuses.APPROVED
+                    else FacilityClaimStatuses.DENIED)
                 claim.status_change_by = request.user
                 claim.status_change_date = timezone.now()
                 change_reason_template = (

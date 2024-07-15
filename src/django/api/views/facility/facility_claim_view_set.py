@@ -15,6 +15,7 @@ from django.db import transaction
 from django.utils import timezone
 from waffle import switch_is_active
 
+from api.constants import FacilityClaimStatuses
 from ...exceptions import BadRequestException
 from ...extended_fields import create_extendedfields_for_claim
 from ...geocoding import geocode_address
@@ -135,7 +136,7 @@ class FacilityClaimViewSet(ModelViewSet):
         try:
             claim = FacilityClaim.objects.get(pk=pk)
 
-            if claim.status != FacilityClaim.PENDING:
+            if claim.status != FacilityClaimStatuses.PENDING:
                 raise BadRequestException(
                     'Only PENDING claims can be approved.',
                 )
@@ -143,7 +144,7 @@ class FacilityClaimViewSet(ModelViewSet):
             approved_claims_for_facility_count = (
                 FacilityClaim
                 .objects
-                .filter(status=FacilityClaim.APPROVED)
+                .filter(status=FacilityClaimStatuses.APPROVED)
                 .filter(facility=claim.facility)
                 .count()
             )
@@ -155,11 +156,11 @@ class FacilityClaimViewSet(ModelViewSet):
             claim.status_change_reason = request.data.get('reason', '')
             claim.status_change_by = request.user
             claim.status_change_date = timezone.now()
-            claim.status = FacilityClaim.APPROVED
+            claim.status = FacilityClaimStatuses.APPROVED
             claim.save()
 
             note = (
-                f'Status was updated to {FacilityClaim.APPROVED} '
+                f'Status was updated to {FacilityClaimStatuses.APPROVED} '
                 f'for reason: {claim.status_change_reason}'
             )
 
@@ -197,7 +198,7 @@ class FacilityClaimViewSet(ModelViewSet):
         try:
             claim = FacilityClaim.objects.get(pk=pk)
 
-            if claim.status != FacilityClaim.PENDING:
+            if claim.status != FacilityClaimStatuses.PENDING:
                 raise BadRequestException(
                     'Only PENDING claims can be denied.',
                 )
@@ -205,11 +206,11 @@ class FacilityClaimViewSet(ModelViewSet):
             claim.status_change_reason = request.data.get('reason', '')
             claim.status_change_by = request.user
             claim.status_change_date = timezone.now()
-            claim.status = FacilityClaim.DENIED
+            claim.status = FacilityClaimStatuses.DENIED
             claim.save()
 
             note = (
-                f'Status was updated to {FacilityClaim.DENIED} '
+                f'Status was updated to {FacilityClaimStatuses.DENIED} '
                 f'for reason: {claim.status_change_reason}'
             )
 
@@ -240,7 +241,7 @@ class FacilityClaimViewSet(ModelViewSet):
         try:
             claim = FacilityClaim.objects.get(pk=pk)
 
-            if claim.status != FacilityClaim.APPROVED:
+            if claim.status != FacilityClaimStatuses.APPROVED:
                 raise BadRequestException(
                     'Only APPROVED claims can be revoked.',
                 )
@@ -248,11 +249,11 @@ class FacilityClaimViewSet(ModelViewSet):
             claim.status_change_reason = request.data.get('reason', '')
             claim.status_change_by = request.user
             claim.status_change_date = timezone.now()
-            claim.status = FacilityClaim.REVOKED
+            claim.status = FacilityClaimStatuses.REVOKED
             claim.save()
 
             note = (
-                f'Status was updated to {FacilityClaim.REVOKED} '
+                f'Status was updated to {FacilityClaimStatuses.REVOKED} '
                 f'for reason: {claim.status_change_reason}'
             )
 
@@ -311,7 +312,7 @@ class FacilityClaimViewSet(ModelViewSet):
                 FacilityClaim
                 .objects
                 .filter(contributor=request.user.contributor)
-                .filter(status=FacilityClaim.APPROVED)
+                .filter(status=FacilityClaimStatuses.APPROVED)
                 .get(pk=pk)
             )
             if request.user.contributor != claim.contributor:
@@ -475,7 +476,7 @@ class FacilityClaimViewSet(ModelViewSet):
             FacilityClaim
             .objects
             .filter(contributor=request.user.contributor)
-            .filter(status=FacilityClaim.APPROVED)
+            .filter(status=FacilityClaimStatuses.APPROVED)
             .get(pk=pk)
         )
         if request.user.contributor != claim.contributor:
