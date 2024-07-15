@@ -26,9 +26,6 @@ import {
     startFetchNumberOfWorkersOptions,
     failFetchNumberOfWorkersOptions,
     completeFetchNumberOfWorkersTypeOptions,
-    startFetchClaimStatusOptions,
-    failFetchClaimStatusOption,
-    completeFetchClaimStatusOption,
     resetFilterOptions,
 } from '../actions/filterOptions';
 
@@ -74,11 +71,6 @@ const initialState = Object.freeze({
         error: null,
     }),
     numberOfWorkers: Object.freeze({
-        data: null,
-        fetching: false,
-        error: null,
-    }),
-    claimStatuses: Object.freeze({
         data: null,
         fetching: false,
         error: null,
@@ -261,28 +253,6 @@ export default createReducer(
         [completeFetchNumberOfWorkersTypeOptions]: (state, payload) =>
             update(state, {
                 numberOfWorkers: {
-                    fetching: { $set: false },
-                    error: { $set: null },
-                    data: { $set: payload },
-                },
-            }),
-        [startFetchClaimStatusOptions]: state =>
-            update(state, {
-                claimStatuses: {
-                    fetching: { $set: true },
-                    error: { $set: null },
-                },
-            }),
-        [failFetchClaimStatusOption]: (state, payload) =>
-            update(state, {
-                claimStatuses: {
-                    fetching: { $set: false },
-                    error: { $set: payload },
-                },
-            }),
-        [completeFetchClaimStatusOption]: (state, payload) =>
-            update(state, {
-                claimStatuses: {
                     fetching: { $set: false },
                     error: { $set: null },
                     data: { $set: payload },

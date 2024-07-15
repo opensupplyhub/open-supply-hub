@@ -8,8 +8,6 @@ import {
     updateListFilter,
     updateContributorTypeFilter,
     updateCountryFilter,
-    clearCountryFilter,
-    updateClaimStatusFilter,
     updateSectorFilter,
     updateParentCompanyFilter,
     updateFacilityTypeFilter,
@@ -42,7 +40,6 @@ const initialState = Object.freeze({
     contributors: Object.freeze([]),
     contributorTypes: Object.freeze([]),
     countries: Object.freeze([]),
-    claimStatuses: Object.freeze([]),
     sectors: Object.freeze([]),
     sortAlgorithm: optionsForSortingResults[2],
     parentCompany: Object.freeze([]),
@@ -88,14 +85,6 @@ export default createReducer(
         [updateCountryFilter]: (state, payload) =>
             update(state, {
                 countries: { $set: payload },
-            }),
-        [clearCountryFilter]: state =>
-            update(state, {
-                countries: { $set: initialState.countries },
-            }),
-        [updateClaimStatusFilter]: (state, payload) =>
-            update(state, {
-                claimStatuses: { $set: payload },
             }),
         [updateSectorFilter]: (state, payload) =>
             update(state, {

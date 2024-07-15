@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { arrayOf, string, func, bool } from 'prop-types';
+import { arrayOf, string, func } from 'prop-types';
 import { connect } from 'react-redux';
 import Button from '@material-ui/core/Button';
 import { withStyles, withTheme } from '@material-ui/core/styles';
@@ -37,7 +37,6 @@ const downloadFacilityClaimsButtonStyles = theme =>
     });
 
 const DownloadFacilityClaimsButton = ({
-    fetching,
     downloadClaims,
     downloadError,
     data,
@@ -62,7 +61,7 @@ const DownloadFacilityClaimsButton = ({
         <Button
             className={classes.button}
             onClick={() => handleDownload()}
-            disabled={fetching}
+            disabled={!data.length}
         >
             <div className={classes.buttonContent}>
                 <DownloadIcon
@@ -83,7 +82,6 @@ DownloadFacilityClaimsButton.defaultProps = {
 };
 
 DownloadFacilityClaimsButton.propTypes = {
-    fetching: bool.isRequired,
     downloadClaims: func.isRequired,
     downloadError: arrayOf(string),
     data: facilityClaimsListPropType.isRequired,

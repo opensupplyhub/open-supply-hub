@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { func, shape, bool } from 'prop-types';
+import React, { useState, useEffect } from 'react';
+import { func, shape } from 'prop-types';
 import { withRouter, Link } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
+import Paper from '@material-ui/core/Paper';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableRow from '@material-ui/core/TableRow';
@@ -13,11 +14,7 @@ import includes from 'lodash/includes';
 import noop from 'lodash/noop';
 import DashboardClaimsListTableHeader from './DashboardClaimsListTableHeader';
 
-import {
-    facilityClaimsListPropType,
-    claimStatusOptionsPropType,
-    countryOptionsPropType,
-} from '../util/propTypes';
+import { facilityClaimsListPropType } from '../util/propTypes';
 
 import {
     makeFacilityDetailLink,
@@ -46,12 +43,7 @@ const CONTRIBUTOR_LINK_ID = 'CONTRIBUTOR_LINK_ID';
 
 function DashboardClaimsListTable({
     data,
-    fetching,
     handleSortClaims,
-    handleGetClaims,
-    claimStatuses,
-    countriesData,
-    clearClaims,
     history: { push },
     classes,
 }) {
@@ -62,9 +54,6 @@ function DashboardClaimsListTable({
     const [order, setOrder] = useState('desc');
     const [orderBy, setOrderBy] = useState('id');
     const [loading, setLoading] = useState(true);
-    const isFirstRender = useRef(true);
-    const prevClaimStatuses = useRef(claimStatuses);
-    const prevCountriesData = useRef(countriesData);
 
     const makeRowClickHandler = claimID =>
         flow(getIDFromEvent, id => {
@@ -101,42 +90,6 @@ function DashboardClaimsListTable({
     };
 
     useEffect(() => {
-        /*
-         Fetch data if prev filters were not empty but 
-         become empty after user click on select field.
-         This will resolve conflict of when we want to fetch data
-         when claims or countries filters are removing in UI at the moment
-        */
-        const wasNotEmptyAndNowEmptyClaimStatuses =
-            prevClaimStatuses &&
-            prevClaimStatuses.current &&
-            prevClaimStatuses.current.length > 0 &&
-            claimStatuses.length === 0;
-
-        const wasNotEmptyAndNowEmptyCountriesData =
-            prevCountriesData &&
-            prevCountriesData.current &&
-            prevCountriesData.current.length > 0 &&
-            countriesData.length === 0;
-
-        if (isFirstRender.current) {
-            isFirstRender.current = false;
-        } else if (
-            claimStatuses.length > 0 ||
-            wasNotEmptyAndNowEmptyClaimStatuses ||
-            countriesData.length > 0 ||
-            wasNotEmptyAndNowEmptyCountriesData
-        ) {
-            handleGetClaims();
-        }
-
-        prevClaimStatuses.current = claimStatuses;
-        prevCountriesData.current = countriesData;
-    }, [claimStatuses, countriesData]);
-
-    useEffect(() => clearClaims, [handleGetClaims, clearClaims]);
-
-    useEffect(() => {
         // Add small timeout to proper render the loader
         const timer = setTimeout(() => {
             setLoading(false);
@@ -145,101 +98,94 @@ function DashboardClaimsListTable({
         return () => clearTimeout(timer);
     }, [data]);
 
-    if (!data) {
-        return null;
-    }
-
     return (
-        <Table>
-            <DashboardClaimsListTableHeader
-                order={order}
-                orderBy={orderBy}
-                onRequestSort={handleRequestSort}
-            />
-            {loading || fetching ? (
-                <TableBody>
-                    <TableRow>
-                        <TableCell colSpan={8}>
-                            <CircularProgress
-                                size={25}
-                                className={classes.loaderStyle}
-                            />
-                        </TableCell>
-                    </TableRow>
-                </TableBody>
-            ) : (
-                <TableBody>
-                    {data.map(claim => (
-                        <TableRow
-                            hover
-                            key={claim.id}
-                            onClick={makeRowClickHandler(claim.id)}
-                            className={classes.rowStyles}
-                        >
-                            <TableCell padding="dense">{claim.id}</TableCell>
-                            <TableCell>
-                                <Link
-                                    to={makeFacilityDetailLink(claim.os_id)}
-                                    href={makeFacilityDetailLink(claim.os_id)}
-                                    id={FACILITY_LINK_ID}
-                                >
-                                    {claim.facility_name}
-                                </Link>
-                            </TableCell>
-                            <TableCell>
-                                <Link
-                                    to={makeProfileRouteLink(
-                                        claim.contributor_id,
-                                    )}
-                                    href={makeProfileRouteLink(
-                                        claim.contributor_id,
-                                    )}
-                                    id={CONTRIBUTOR_LINK_ID}
-                                >
-                                    {claim.contributor_name}
-                                </Link>
-                            </TableCell>
-                            <TableCell padding="dense">
-                                {claim.facility_country_name}
-                            </TableCell>
-                            <TableCell padding="dense">
-                                {moment(claim.created_at).format('LL')}
-                            </TableCell>
-                            <TableCell padding="dense">
-                                {claim.claim_decision !== null
-                                    ? moment(claim.claim_decision).format('LL')
-                                    : 'N/A'}
-                            </TableCell>
-                            <TableCell padding="dense">
-                                {claim.status}
-                            </TableCell>
-                            <TableCell padding="dense">
-                                {moment(claim.updated_at).format('LL')}
+        <Paper className={classes.containerStyles}>
+            <Table>
+                <DashboardClaimsListTableHeader
+                    order={order}
+                    orderBy={orderBy}
+                    onRequestSort={handleRequestSort}
+                />
+                {loading ? (
+                    <TableBody>
+                        <TableRow>
+                            <TableCell colSpan={7}>
+                                <CircularProgress
+                                    size={25}
+                                    className={classes.loaderStyle}
+                                />
                             </TableCell>
                         </TableRow>
-                    ))}
-                </TableBody>
-            )}
-        </Table>
+                    </TableBody>
+                ) : (
+                    <TableBody>
+                        {data.map(claim => (
+                            <TableRow
+                                hover
+                                key={claim.id}
+                                onClick={makeRowClickHandler(claim.id)}
+                                className={classes.rowStyles}
+                            >
+                                <TableCell padding="dense">
+                                    {claim.id}
+                                </TableCell>
+                                <TableCell>
+                                    <Link
+                                        to={makeFacilityDetailLink(claim.os_id)}
+                                        href={makeFacilityDetailLink(
+                                            claim.os_id,
+                                        )}
+                                        id={FACILITY_LINK_ID}
+                                    >
+                                        {claim.facility_name}
+                                    </Link>
+                                </TableCell>
+                                <TableCell>
+                                    <Link
+                                        to={makeProfileRouteLink(
+                                            claim.contributor_id,
+                                        )}
+                                        href={makeProfileRouteLink(
+                                            claim.contributor_id,
+                                        )}
+                                        id={CONTRIBUTOR_LINK_ID}
+                                    >
+                                        {claim.contributor_name}
+                                    </Link>
+                                </TableCell>
+                                <TableCell padding="dense">
+                                    {claim.facility_country_name}
+                                </TableCell>
+                                <TableCell padding="dense">
+                                    {moment(claim.created_at).format('LL')}
+                                </TableCell>
+                                <TableCell padding="dense">
+                                    {claim.claim_decision !== null
+                                        ? moment(claim.claim_decision).format(
+                                              'LL',
+                                          )
+                                        : 'N/A'}
+                                </TableCell>
+                                <TableCell padding="dense">
+                                    {claim.status}
+                                </TableCell>
+                                <TableCell padding="dense">
+                                    {moment(claim.updated_at).format('LL')}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                )}
+            </Table>
+        </Paper>
     );
 }
 
-DashboardClaimsListTable.defaultProps = {
-    data: null,
-    countriesData: null,
-    claimStatuses: [],
-};
-
 DashboardClaimsListTable.propTypes = {
-    data: facilityClaimsListPropType,
-    fetching: bool.isRequired,
-    handleGetClaims: func.isRequired,
+    data: facilityClaimsListPropType.isRequired,
     history: shape({
         push: func.isRequired,
     }).isRequired,
-    claimStatuses: claimStatusOptionsPropType,
-    clearClaims: func.isRequired,
-    countriesData: countryOptionsPropType,
 };
 
 export default withRouter(

@@ -188,9 +188,7 @@ export const contributorTypeOptionsPropType = arrayOf(
     }),
 );
 
-export const contributorListOptionsPropType = arrayOf(string);
-
-export const claimStatusOptionsPropType = arrayOf(
+export const contributorListOptionsPropType = arrayOf(
     shape({
         value: string.isRequired,
         label: string.isRequired,
@@ -436,15 +434,4 @@ export const activityReportPropType = shape({
     status_change_date: string,
     status_change_reason: string,
     updated_at: string.isRequired,
-});
-
-export const filterOptionsPropType = shape({
-    data: arrayOf(
-        shape({
-            value: string.isRequired,
-            label: string.isRequired,
-        }),
-    ),
-    error: oneOfType([string, oneOf([null])]),
-    fetching: bool.isRequired,
 });

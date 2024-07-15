@@ -198,7 +198,6 @@ it('creates a querystring from a set of filter selection', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
-        statuses: []
     };
 
     const expectedEmptySelectionQSMatch = '';
@@ -295,7 +294,6 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
-        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -330,7 +328,6 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
-        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -356,7 +353,6 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
-        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -387,7 +383,6 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
-        statuses: [],
         lists: [
             {
                 value: 2,
@@ -427,7 +422,6 @@ it('creates a set of filters from a querystring', () => {
         ],
         countries: [],
         sectors: [],
-        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -462,7 +456,6 @@ it('creates a set of filters from a querystring', () => {
             },
         ],
         sectors: [],
-        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -493,7 +486,6 @@ it('creates a set of filters from a querystring', () => {
         ],
         countries: [],
         sectors: [],
-        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -519,7 +511,6 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
-        statuses: [],
         lists: [],
         parentCompany: [{
             value: 1,
@@ -552,7 +543,6 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
-        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [{
@@ -585,7 +575,6 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
-        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -618,7 +607,6 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
-        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -651,7 +639,6 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
-        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -684,7 +671,6 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
-        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -702,50 +688,7 @@ it('creates a set of filters from a querystring', () => {
     expect(
         createFiltersFromQueryString(nativeLanguageNameString),
     ).toEqual(expectedNativeLanguageNameMatch);
-
-    const claimStatusesString = '?statuses=PENDING&statuses=APPROVED&statuses=DENIED&statuses=REVOKED'
-    const expectedClaimStatusesMatch = {
-        facilityFreeTextQuery: '',
-        contributors: [],
-        contributorTypes: [],
-        countries: [],
-        sectors: [],
-        statuses: [
-            {
-                "label": "PENDING",
-                "value": "PENDING",
-            },
-            {
-                "label": "APPROVED",
-                "value": "APPROVED",
-            },
-            {
-                "label": "DENIED",
-                "value": "DENIED",
-            },
-            {
-                "label": "REVOKED",
-                "value": "REVOKED",
-            },
-        ],
-        lists: [],
-        parentCompany: [],
-        facilityType: [],
-        processingType: [],
-        productType: [],
-        numberOfWorkers: [],
-        nativeLanguageName: '',
-        combineContributors: '',
-        boundary: null,
-        sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
-          }
-    };
-
-    expect(
-        createFiltersFromQueryString(claimStatusesString),
-    ).toEqual(expectedClaimStatusesMatch);
-});
+    });
 
 it('creates a facility detail link', () => {
     const expectedMatch = '/facilities/hello';

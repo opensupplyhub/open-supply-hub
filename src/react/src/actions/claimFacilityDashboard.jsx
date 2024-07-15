@@ -3,8 +3,7 @@ import { createAction } from 'redux-act';
 import apiRequest from '../util/apiRequest';
 
 import {
-    createQueryStringFromSearchFilters,
-    makeGetFacilityClaimsURLWithQueryString,
+    makeGetFacilityClaimsURL,
     logErrorAndDispatchFailure,
     makeMessageFacilityClaimantByClaimIDURL,
     makeGetFacilityClaimByClaimIDURL,
@@ -29,14 +28,11 @@ export const clearFacilityClaims = createAction('CLEAR_FACILITY_CLAIMS');
 export const sortFacilityClaims = createAction('SORT_FACILITY_CLAIMS');
 
 export function fetchFacilityClaims() {
-    return (dispatch, getState) => {
+    return dispatch => {
         dispatch(startFetchFacilityClaims());
 
-        const { filters } = getState();
-        const qs = createQueryStringFromSearchFilters(filters);
-
         return apiRequest
-            .get(makeGetFacilityClaimsURLWithQueryString(qs))
+            .get(makeGetFacilityClaimsURL())
             .then(({ data }) => dispatch(completeFetchFacilityClaims(data)))
             .catch(err =>
                 dispatch(
