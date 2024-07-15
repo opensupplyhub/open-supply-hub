@@ -70,4 +70,3 @@ from .number_of_workers_ranges import number_of_workers_ranges
 from .parent_companies import parent_companies
 from .product_types import product_types
 from .sectors import sectors
-from .claim_statuses import claim_statuses

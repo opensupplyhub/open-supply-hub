@@ -5,8 +5,7 @@ from api.helpers.helpers import validate_workers_count
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
     NotFound,
-    PermissionDenied,
-    ValidationError
+    PermissionDenied
 )
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -40,7 +39,6 @@ from ...serializers import (
     ApprovedFacilityClaimSerializer,
     FacilityClaimSerializer,
     FacilityClaimDetailsSerializer,
-    FacilityClaimListQueryParamsSerializer
 )
 from ..make_report import _report_facility_claim_email_error_to_rollbar
 
@@ -62,22 +60,13 @@ class FacilityClaimViewSet(ModelViewSet):
         pass
 
     def list(self, request):
-        params = FacilityClaimListQueryParamsSerializer(
-            data=self.request.query_params
-        )
-        if not params.is_valid():
-            raise ValidationError(params.errors)
+        if not switch_is_active('claim_a_facility'):
+            raise NotFound()
 
-        statuses = params.validated_data.get('statuses')
-        countries = params.validated_data.get('countries')
-
-        queryset = FacilityClaim.objects.all().order_by('-id')
-        if statuses:
-            queryset = queryset.filter(status__in=statuses)
-        if countries:
-            queryset = queryset.filter(facility__country_code__in=countries)
-
-        response_data = FacilityClaimSerializer(queryset, many=True).data
+        response_data = FacilityClaimSerializer(
+            FacilityClaim.objects.all().order_by('-id'),
+            many=True
+        ).data
 
         return Response(response_data)
 

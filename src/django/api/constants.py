@@ -97,13 +97,6 @@ class FacilityHistoryActions:
     CLAIM_REVOKE = 'CLAIM_REVOKE'
 
 
-class FacilityClaimStatuses:
-    PENDING = 'PENDING'
-    APPROVED = 'APPROVED'
-    DENIED = 'DENIED'
-    REVOKED = 'REVOKED'
-
-
 class Affiliations:
     BENEFITS_BUSINESS_WORKERS = 'Benefits for Business and Workers (BBW)'
     BETTER_MILLS_PROGRAM = 'Better Mills Program'
