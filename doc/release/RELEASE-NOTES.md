@@ -31,7 +31,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1083](https://opensupplyhub.atlassian.net/browse/OSDEV-1083) - Implemented a 'toggle password visibility' feature in the login, registration, reset password and user profile forms.
 
 ### Release instructions:
-* *Provide release instructions here.*git add
+* *Provide release instructions here.*
 
 
 ## Release 1.16.0
