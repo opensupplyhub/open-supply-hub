@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
 
+## Release 1.17.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: July 27, 2024
+
+### Database changes
+#### Migrations:
+* *Describe migrations here.*
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* [OSDEV-1083](https://opensupplyhub.atlassian.net/browse/OSDEV-1083) - Implemented a 'toggle password visibility' feature in the login, registration, reset password and user profile forms.
+
+### Release instructions:
+* *Provide release instructions here.*
+
+
 ## Release 1.16.0
 
 ## Introduction
@@ -33,7 +62,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * including name, ID, contributor type;
     * first upload, including date of the first upload and time since the first upload in days;
     * most recent (or “last”) upload, including date of the last upload and time since the last upload in days;
-    * total (or “lifetime”) uploads and a calculation for uploads per year (= lifetime uploads/time since the first upload (in years)). This data is ordered based on the “date of last upload” column so that contributors who have recently contributed data are at the top of the report.
+    * total (or “lifetime”) uploads and a calculation for uploads per year (= lifetime uploads = total uploads / (current year - first upload year); if “first upload year” = “current year”, then use 1 in denominator). This data is ordered based on the “date of last upload” column so that contributors who have recently contributed data are at the top of the report.
 * [OSDEV-1105](https://opensupplyhub.atlassian.net/browse/OSDEV-1105) - Contribution. Allow commas in list name and update error message.
 * [OSDEV-272](https://opensupplyhub.atlassian.net/browse/OSDEV-272) - Facility Claims Page. Implement ascending/descending and alphabetic sort on FE. Applied proper sorting for lower case/upper case/accented strings.
 * [OSDEV-1036](https://opensupplyhub.atlassian.net/browse/OSDEV-1036) - Claims. Add a sortable "claim decision" column to claims admin page.
