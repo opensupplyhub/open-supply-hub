@@ -21,9 +21,9 @@ function ClaimStatusFilter({
     handleClaimStatusUpdate,
 }) {
     const onChangeClaimStatus = useCallback(
-        s => {
+        status => {
             handleClaimStatusUpdate(s, countriesData);
-            updateClaimStatus(s);
+            updateClaimStatus(status);
         },
         [claimStatuses, countriesData],
     );
@@ -59,7 +59,8 @@ function mapStateToProps({
 
 function mapDispatchToProps(dispatch) {
     return {
-        updateClaimStatus: v => dispatch(updateClaimStatusFilter(v)),
+        updateClaimStatus: claimStatuses =>
+            dispatch(updateClaimStatusFilter(claimStatuses)),
     };
 }
 

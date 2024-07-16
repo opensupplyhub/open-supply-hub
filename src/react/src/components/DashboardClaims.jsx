@@ -236,7 +236,8 @@ function mapDispatchToProps(dispatch) {
         sortClaims: sortedData => dispatch(sortFacilityClaims(sortedData)),
         fetchCountries: () => dispatch(fetchCountryOptions()),
         fetchClaimStatus: () => dispatch(fetchClaimStatusOptions()),
-        updateClaimStatus: v => dispatch(updateClaimStatusFilter(v)),
+        updateClaimStatus: claimStatuses =>
+            dispatch(updateClaimStatusFilter(claimStatuses)),
         updateCountry: v => dispatch(updateCountryFilter(v)),
         clearCountry: () => dispatch(clearCountryFilter()),
     };

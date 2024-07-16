@@ -33,10 +33,10 @@ export function fetchFacilityClaims() {
         dispatch(startFetchFacilityClaims());
 
         const { filters } = getState();
-        const qs = createQueryStringFromSearchFilters(filters);
+        const queryString = createQueryStringFromSearchFilters(filters);
 
         return apiRequest
-            .get(makeGetFacilityClaimsURLWithQueryString(qs))
+            .get(makeGetFacilityClaimsURLWithQueryString(queryString))
             .then(({ data }) => dispatch(completeFetchFacilityClaims(data)))
             .catch(err =>
                 dispatch(
