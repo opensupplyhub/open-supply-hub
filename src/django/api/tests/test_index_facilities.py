@@ -1,5 +1,5 @@
 import json
-
+from api.constants import FacilityClaimStatuses
 from api.models import FacilityClaim
 from api.models.facility.facility_index import FacilityIndex
 from api.extended_fields import create_extendedfields_for_claim
@@ -100,7 +100,7 @@ class IndexFacilitiesTest(FacilityAPITestCaseBase):
         facility_claim = FacilityClaim.objects.create(
             contributor=self.contributor,
             facility=self.facility,
-            status=FacilityClaim.APPROVED,
+            status=FacilityClaimStatuses.APPROVED,
             **claim_data,
         )
         create_extendedfields_for_claim(facility_claim)
