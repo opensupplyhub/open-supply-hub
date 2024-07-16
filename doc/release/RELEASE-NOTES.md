@@ -12,7 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Database changes
 #### Migrations:
-* *Describe migrations here.*
+* 0151_replace_index_number_of_workers - replace function `index_number_of_workers` to use one source of truth for both`number_of_workers` & `extended_fields`.
 
 #### Scheme changes
 * *Describe scheme changes here.*
@@ -29,7 +29,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1083](https://opensupplyhub.atlassian.net/browse/OSDEV-1083) - Implemented a 'toggle password visibility' feature in the login, registration, reset password and user profile forms.
 
 ### Release instructions:
-* *Provide release instructions here.*
+* Apply DB migrations up to the latest one. (post_deploy)
+* Run the `index_facilities_new` management command. (post_deploy)
 
 
 ## Release 1.16.0
