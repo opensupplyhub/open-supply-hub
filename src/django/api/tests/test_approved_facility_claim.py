@@ -1,5 +1,6 @@
 import json
 
+from api.constants import FacilityClaimStatuses
 from api.models import (
     Contributor,
     Facility,
@@ -107,19 +108,19 @@ class ApprovedFacilityClaimTest(APITestCase):
         pending_response = self.client.get(api_url)
         self.assertEqual(404, pending_response.status_code)
 
-        self.facility_claim.status = FacilityClaim.DENIED
+        self.facility_claim.status = FacilityClaimStatuses.DENIED
         self.facility_claim.save()
         denied_response = self.client.get(api_url)
         self.assertEqual(404, denied_response.status_code)
 
-        self.facility_claim.status = FacilityClaim.REVOKED
+        self.facility_claim.status = FacilityClaimStatuses.REVOKED
         self.facility_claim.save()
         revoked_response = self.client.get(api_url)
         self.assertEqual(404, revoked_response.status_code)
 
     @override_switch("claim_a_facility", active=True)
     def test_approved_facility_claim_is_visible_to_claimant(self):
-        self.facility_claim.status = FacilityClaim.APPROVED
+        self.facility_claim.status = FacilityClaimStatuses.APPROVED
         self.facility_claim.save()
 
         response = self.client.get(
@@ -135,7 +136,7 @@ class ApprovedFacilityClaimTest(APITestCase):
             email=self.superuser_email, pasword=self.superuser_password
         )
 
-        self.facility_claim.status = FacilityClaim.APPROVED
+        self.facility_claim.status = FacilityClaimStatuses.APPROVED
         self.facility_claim.save()
 
         response = self.client.get(
@@ -145,7 +146,7 @@ class ApprovedFacilityClaimTest(APITestCase):
 
     @override_switch("claim_a_facility", active=True)
     def test_approved_facility_claim_info_is_in_details_response(self):
-        self.facility_claim.status = FacilityClaim.APPROVED
+        self.facility_claim.status = FacilityClaimStatuses.APPROVED
         self.facility_claim.facility_description = "new_description"
         self.facility_claim.save()
 
@@ -158,7 +159,7 @@ class ApprovedFacilityClaimTest(APITestCase):
     @override_switch("claim_a_facility", active=True)
     def test_updating_claim_profile_sends_email_to_contributor(self):
         self.assertEqual(len(mail.outbox), 0)
-        self.facility_claim.status = FacilityClaim.APPROVED
+        self.facility_claim.status = FacilityClaimStatuses.APPROVED
         self.facility_claim.save()
 
         response = self.client.put(
@@ -184,7 +185,7 @@ class ApprovedFacilityClaimTest(APITestCase):
 
     @override_switch("claim_a_facility", active=True)
     def test_non_visible_facility_phone_is_not_in_details_response(self):
-        self.facility_claim.status = FacilityClaim.APPROVED
+        self.facility_claim.status = FacilityClaimStatuses.APPROVED
         self.facility_claim.save()
 
         response_data = self.client.get(
@@ -195,7 +196,7 @@ class ApprovedFacilityClaimTest(APITestCase):
 
     @override_switch("claim_a_facility", active=True)
     def test_non_visible_office_info_is_not_in_details_response(self):
-        self.facility_claim.status = FacilityClaim.APPROVED
+        self.facility_claim.status = FacilityClaimStatuses.APPROVED
         self.facility_claim.save()
 
         response_data = self.client.get(
@@ -206,7 +207,7 @@ class ApprovedFacilityClaimTest(APITestCase):
 
     @override_switch("claim_a_facility", active=True)
     def test_non_visible_contact_info_is_not_in_details_response(self):
-        self.facility_claim.status = FacilityClaim.APPROVED
+        self.facility_claim.status = FacilityClaimStatuses.APPROVED
         self.facility_claim.save()
 
         response_data = self.client.get(
@@ -217,7 +218,7 @@ class ApprovedFacilityClaimTest(APITestCase):
 
     @override_switch("claim_a_facility", active=True)
     def test_non_visible_website_is_not_in_details_response(self):
-        self.facility_claim.status = FacilityClaim.APPROVED
+        self.facility_claim.status = FacilityClaimStatuses.APPROVED
         self.facility_claim.save()
 
         response_data = self.client.get(
@@ -228,7 +229,7 @@ class ApprovedFacilityClaimTest(APITestCase):
 
     @override_switch("claim_a_facility", active=True)
     def test_update_location(self):
-        self.facility_claim.status = FacilityClaim.APPROVED
+        self.facility_claim.status = FacilityClaimStatuses.APPROVED
         self.facility_claim.save()
 
         new_point = {"type": "Point", "coordinates": [44, 55]}
@@ -258,7 +259,7 @@ class ApprovedFacilityClaimTest(APITestCase):
     def test_clears_location(self):
         point = Point(44, 55)
 
-        self.facility_claim.status = FacilityClaim.APPROVED
+        self.facility_claim.status = FacilityClaimStatuses.APPROVED
         self.facility_claim.facility_address = "134 Claim St"
         self.facility_claim.facility_location = point
         self.facility_claim.save()
