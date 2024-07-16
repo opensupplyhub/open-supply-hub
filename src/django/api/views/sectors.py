@@ -1,3 +1,4 @@
+from api.constants import FacilityClaimStatuses
 from api.models.facility.facility_index import FacilityIndex
 from rest_framework.decorators import (
     api_view,
@@ -55,7 +56,7 @@ def sectors(request):
             FacilityClaim
             .objects
             .filter(contributor_id=contributor,
-                    status=FacilityClaim.APPROVED)
+                    status=FacilityClaimStatuses.APPROVED)
             .annotate(values=Func('sector', function='unnest'))
             .values_list('values', flat=True)
             .distinct()

@@ -1,3 +1,4 @@
+from api.constants import FacilityClaimStatuses
 from api.models.facility.facility_index import FacilityIndex
 from rest_framework.serializers import (
   ModelSerializer,
@@ -46,7 +47,7 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
         return FacilityIndexSerializer(facility).data
 
     def get_status_change(self, claim):
-        if claim.status == FacilityClaim.PENDING:
+        if claim.status == FacilityClaimStatuses.PENDING:
             return {
                 'status_change_by': None,
                 'status_change_date': None,

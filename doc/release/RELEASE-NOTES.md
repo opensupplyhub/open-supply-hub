@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
 
+## Release 1.17.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: July 27, 2024
+
+### Database changes
+#### Migrations:
+* *Describe migrations here.*
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* [OSDEV-1090](https://opensupplyhub.atlassian.net/browse/OSDEV-1090) - Claims. Remove extra product type field on Claimed Facility Details page.
+* [OSDEV-273](https://opensupplyhub.atlassian.net/browse/OSDEV-273) - Facility Claims. Implement filtering by Country and Status. Set 'pending' claim status as a default filter.
+* [OSDEV-1083](https://opensupplyhub.atlassian.net/browse/OSDEV-1083) - Implemented a 'toggle password visibility' feature in the login, registration, reset password and user profile forms.
+
+### Release instructions:
+* *Provide release instructions here.*
+
+
 ## Release 1.16.0
 
 ## Introduction
@@ -20,6 +51,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Code/API changes
 * [OSDEV-1100](https://opensupplyhub.atlassian.net/browse/OSDEV-1100) - Replaced all mentions of "facility" and "facilities" with the new production location naming in the Logstash app. Renamed `location` field in the production locations index to `coordinates`.
 * [OSDEV-705](https://opensupplyhub.atlassian.net/browse/OSDEV-705) - Created an additional `RowCoordinatesSerializer` in the ContriCleaner to handle coordinate values ("lat" and "lng"). Moved the conversion of "lat" and "lng" into float point numbers from `FacilityListViewSet` to this serializer.
+* Introduced a general format for all Python logs by updating the Django `LOGGING` constant. Disabled propagation for the `django` logger to the `root` logger to avoid log duplication. Removed unnecessary calls to the `basicConfig` method since only the configuration defined in the `LOGGING` constant in the settings.py file is considered valid by the current Django app.
 
 ### Architecture/Environment changes
 * *Describe architecture/environment changes here.*
@@ -28,9 +60,15 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-705](https://opensupplyhub.atlassian.net/browse/OSDEV-705) - Fixed the error “could not convert string to float” that occurred when a list contained columns for “lat” and “lng” and only some of the rows in these columns had data. As a result, rows are processed regardless of whether the values for “lat” and “lng” are present and valid, invalid, or empty.
 
 ### What's new
+* [OSDEV-981](https://opensupplyhub.atlassian.net/browse/OSDEV-981) Reporting. History of contributor uploads. Created a new report with details about the contributor:
+    * including name, ID, contributor type;
+    * first upload, including date of the first upload and time since the first upload in days;
+    * most recent (or “last”) upload, including date of the last upload and time since the last upload in days;
+    * total (or “lifetime”) uploads and a calculation for uploads per year (= lifetime uploads = total uploads / (current year - first upload year); if “first upload year” = “current year”, then use 1 in denominator). This data is ordered based on the “date of last upload” column so that contributors who have recently contributed data are at the top of the report.
 * [OSDEV-1105](https://opensupplyhub.atlassian.net/browse/OSDEV-1105) - Contribution. Allow commas in list name and update error message.
 * [OSDEV-272](https://opensupplyhub.atlassian.net/browse/OSDEV-272) - Facility Claims Page. Implement ascending/descending and alphabetic sort on FE. Applied proper sorting for lower case/upper case/accented strings.
 * [OSDEV-1036](https://opensupplyhub.atlassian.net/browse/OSDEV-1036) - Claims. Add a sortable "claim decision" column to claims admin page.
+* [OSDEV-1053](https://opensupplyhub.atlassian.net/browse/OSDEV-1053) - Updated email notification about the claim submission.
 
 ### Release instructions:
 * *Provide release instructions here.*

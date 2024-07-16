@@ -12,6 +12,7 @@ import {
 import ControlledTextInput from './ControlledTextInput';
 import ControlledSelectInput from './ControlledSelectInput';
 import ControlledCheckboxInput from './ControlledCheckboxInput';
+import TogglePasswordField from './TogglePasswordField';
 
 import {
     inputTypesEnum,
@@ -69,6 +70,20 @@ export default function RegisterFormField({
                     link={link}
                 />
             </div>
+        );
+    }
+
+    if (type === inputTypesEnum.password) {
+        return (
+            <TogglePasswordField
+                id={id}
+                value={value}
+                label={label}
+                updatePassword={handleChange}
+                submitFormOnEnterKeyPress={submitFormOnEnterKeyPress}
+            >
+                {requiredIndicator}
+            </TogglePasswordField>
         );
     }
 
