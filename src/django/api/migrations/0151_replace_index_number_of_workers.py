@@ -14,13 +14,15 @@ def replace_number_of_workers_functions(apps, schema_editor):
     ])
 
 
-def revert_number_of_workers_functions_functions(apps, schema_editor):
-    raise Exception("151 migration is unrevertable")
+def revert_replace_number_of_workers_functions(apps, schema_editor):
+    helper.run_sql_files([
+        '0130_index_number_of_workers.sql',
+    ])
 
 
 class Migration(Migration):
     dependencies = [('api', '0150_introduce_function_formatting_number_to_percent')]
     operations = [
         RunPython(replace_number_of_workers_functions,
-                  revert_number_of_workers_functions_functions)
+                  revert_replace_number_of_workers_functions)
     ]
