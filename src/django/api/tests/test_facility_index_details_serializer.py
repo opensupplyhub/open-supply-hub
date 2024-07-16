@@ -1,5 +1,5 @@
 from unittest.mock import Mock
-
+from api.constants import FacilityClaimStatuses
 from api.models import (
     Contributor,
     Facility,
@@ -133,7 +133,7 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             company_name="Test",
             website="http://example.com",
             facility_description="description",
-            status=FacilityClaim.APPROVED,
+            status=FacilityClaimStatuses.APPROVED,
         )
 
     def test_has_sector_data(self):
@@ -155,7 +155,7 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             contact_person="test",
             phone_number="1234567890",
             sector=["Beauty"],
-            status=FacilityClaim.APPROVED,
+            status=FacilityClaimStatuses.APPROVED,
         )
         facility_index = FacilityIndex.objects.get(id=self.facility.id)
         data = FacilityIndexDetailsSerializer(facility_index).data
@@ -169,7 +169,7 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             contact_person="test",
             phone_number="1234567890",
             sector=["Beauty"],
-            status=FacilityClaim.DENIED,
+            status=FacilityClaimStatuses.DENIED,
         )
         facility_index = FacilityIndex.objects.get(id=self.facility.id)
         data = FacilityIndexDetailsSerializer(facility_index).data
@@ -260,7 +260,7 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         FacilityClaim.objects.create(
             contributor=self.contrib_two,
             facility=self.facility,
-            status=FacilityClaim.APPROVED,
+            status=FacilityClaimStatuses.APPROVED,
         )
 
         facility_index = FacilityIndex.objects.get(id=self.facility.id)
