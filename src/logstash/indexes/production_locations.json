@@ -9,12 +9,7 @@
           "type": "keyword"
         },
         "name": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword"
-            }
-          }
+          "type": "keyword"
         },
         "name_local": {
           "type": "text",

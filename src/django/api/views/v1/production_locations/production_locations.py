@@ -32,21 +32,10 @@ def production_locations_view(request):
                 'must': []
             }
         },
-    }
-    # TODO: refactor sorting setting
-    '''
-    query_body = {
-        'size': size,
-        'query': {
-            'bool': {
-                'must': []
-            }
-        },
         'sort': [
             {sort_by: {'order': order_by}}
         ]
     }
-    '''
 
     if query:
         query_body['query']['bool']['must'].append({
