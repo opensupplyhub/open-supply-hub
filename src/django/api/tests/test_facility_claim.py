@@ -1,5 +1,6 @@
 import json
 
+from api.constants import FacilityClaimStatuses
 from api.models import (
     Contributor,
     Facility,
@@ -95,7 +96,7 @@ class FacilityClaimTest(APITestCase):
         data = json.loads(response.content)
         self.assertEqual([], data)
 
-        claim.status = FacilityClaim.APPROVED
+        claim.status = FacilityClaimStatuses.APPROVED
         claim.save()
         response = self.client.get(url)
         self.assertEqual(200, response.status_code)

@@ -6,6 +6,7 @@ from rest_framework.serializers import (
     SerializerMethodField,
     ValidationError,
 )
+from api.constants import FacilityClaimStatuses
 from waffle import switch_is_active
 from django.contrib.auth import password_validation
 from django.core import exceptions
@@ -118,14 +119,14 @@ class UserSerializer(ModelSerializer):
             approved = (
                 FacilityClaim
                 .objects
-                .filter(status=FacilityClaim.APPROVED)
+                .filter(status=FacilityClaimStatuses.APPROVED)
                 .filter(contributor=user.contributor)
                 .values_list('facility__id', flat=True)
             )
             pending = (
                 FacilityClaim
                 .objects
-                .filter(status=FacilityClaim.PENDING)
+                .filter(status=FacilityClaimStatuses.PENDING)
                 .filter(contributor=user.contributor)
                 .values_list('facility__id', flat=True)
             )
