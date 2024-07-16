@@ -135,4 +135,8 @@ internal_apis = [
     path('api/geocoder/', views.get_geocoding, name='get_geocoding'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-urlpatterns = public_apis + internal_apis + info_apis
+opensearch_apis = [
+    path('v1/production-locations', views.production_locations_view, name='v1_production_locations')
+]
+
+urlpatterns = public_apis + internal_apis + info_apis + opensearch_apis
