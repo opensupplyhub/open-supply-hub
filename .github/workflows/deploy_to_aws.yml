@@ -222,7 +222,7 @@ jobs:
         with:
           context: deployment/terraform/database_anonymizer_sheduled_task/docker
           file: deployment/terraform/database_anonymizer_sheduled_task/docker/Dockerfile
-          push: false
+          push: true
           tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-database-anonymizer-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
 
 

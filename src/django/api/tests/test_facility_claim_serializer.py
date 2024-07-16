@@ -7,6 +7,7 @@ from api.models import (
     Source,
     User,
 )
+from api.constants import FacilityClaimStatuses
 from api.serializers import ApprovedFacilityClaimSerializer
 from api.serializers import FacilityClaimSerializer
 
@@ -63,7 +64,7 @@ class FacilityClaimSerializerTest(TestCase):
         self.claim = FacilityClaim.objects.create(
             contributor=self.contributor,
             facility=self.facility,
-            status=FacilityClaim.APPROVED,
+            status=FacilityClaimStatuses.APPROVED,
         )
 
     def test_product_and_production_options_are_serialized(self):
@@ -77,7 +78,7 @@ class FacilityClaimSerializerTest(TestCase):
         claim_one = FacilityClaim.objects.create(
             contributor=self.contributor,
             facility=self.facility,
-            status=FacilityClaim.PENDING,
+            status=FacilityClaimStatuses.PENDING,
         )
         data_one = FacilityClaimSerializer(claim_one).data
 
