@@ -22,7 +22,7 @@ function ClaimStatusFilter({
 }) {
     const onChangeClaimStatus = useCallback(
         status => {
-            handleClaimStatusUpdate(s, countriesData);
+            handleClaimStatusUpdate(status, countriesData);
             updateClaimStatus(status);
         },
         [claimStatuses, countriesData],
