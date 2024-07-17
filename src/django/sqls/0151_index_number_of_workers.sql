@@ -6,7 +6,7 @@ AS $Body$
 BEGIN
 	RETURN QUERY
 SELECT
-    DISTINCT now_result
+    now_result
 FROM
     (
         SELECT
