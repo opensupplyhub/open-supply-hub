@@ -2,6 +2,9 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from api.services.search import OpenSearchService
 
+# TODO: Remove loggers from here later
+import logging
+log = logging.getLogger(__name__)
 
 @api_view(['GET'])
 def production_locations_view(request,
@@ -52,7 +55,7 @@ def production_locations_view(request,
         'percent_female_workers': 'match',
         'affiliations': 'match',
         'certifications_standards_regulations': 'terms',
-        'country': 'match',
+        'country': 'term',
     }
 
     for field, query_type in field_queries.items():
@@ -63,16 +66,24 @@ def production_locations_view(request,
             else request.query_params.get(field)
         )
 
+        logging.info(f"value is {value}")
+        logging.info(f"field is {field}")
+
         if value:
             if query_type == 'geo_distance':
                 query_body['query']['bool']['must'] \
-                    .append({query_type: {
-                                'distance': '100km',
-                                'location': value
+                    .append({query_type: 
+                            {'distance': '100km',
+                            'location': value
                             }})
+            elif query_type == 'term' and field == 'country':
+                query_body['query']['bool']['must'] \
+                    .append({query_type: {f"{field}.alpha_2.keyword": value}})
             else:
                 query_body['query']['bool']['must'] \
                     .append({query_type: {field: value}})
+
+    logging.info(f"query body is {query_body}")
 
     if start_after:
         query_body['search_after'] = [start_after]
