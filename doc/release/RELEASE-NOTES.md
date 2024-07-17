@@ -31,8 +31,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1083](https://opensupplyhub.atlassian.net/browse/OSDEV-1083) - Implemented a 'toggle password visibility' feature in the login, registration, reset password and user profile forms.
 
 ### Release instructions:
-* Apply DB migrations up to the latest one. (post_deploy)
-* Run the `index_facilities_new` management command. (post_deploy)
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `index_facilities_new`
 
 
 ## Release 1.16.0
