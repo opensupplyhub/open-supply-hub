@@ -6,5 +6,12 @@ class Sector(models.Model):
 
     name = models.CharField(max_length=200, primary_key=True)
 
+    groups = models.ManyToManyField(
+        'SectorGroup',
+        blank=True,
+        related_name='sectors',
+        help_text='The sector groups to which this sector belongs.',
+    )
+
     def __str__(self):
         return self.name
