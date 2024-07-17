@@ -7,6 +7,8 @@ from botocore.exceptions import ProfileNotFound
 from opensearchpy import OpenSearch, RequestsHttpConnection, AWSV4SignerAuth
 from django.conf import settings
 
+
+# Initialize logger.
 log = logging.getLogger(__name__)
 
 
@@ -23,10 +25,10 @@ class OpenSearchServiceConnection:
         if cls._instance is None:
             cls._instance = super(OpenSearchServiceConnection, cls) \
                 .__new__(cls)
-            cls._instance.__initialize()
+            cls._instance._initialize()
         return cls._instance
 
-    def __initialize(self):
+    def _initialize(self):
         auth = None
         if not getattr(settings, 'DEBUG', False):
             # Set up AWS authentication only if the application is running in

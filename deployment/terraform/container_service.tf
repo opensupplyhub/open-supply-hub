@@ -242,8 +242,11 @@ data "template_file" "app" {
     claim_from_email                 = var.claim_from_email
     kafka_bootstrap_servers          = join (",", module.msk_cluster.bootstrap_brokers)
     kafka_topic_basic_name           = var.topic_dedup_basic_name
+    # TODO: enable opensearch_host and opensearch_port once count in opensearch.tf be removed
     opensearch_host                  = aws_opensearch_domain.opensearch.endpoint
     opensearch_port                  = var.opensearch_port
+    # opensearch_host                  = "dummy-opensearch-host"
+    # opensearch_port                  = 0000
     opensearch_ssl                   = var.opensearch_ssl
     opensearch_ssl_cert_verification = var.opensearch_ssl_cert_verification
   }
@@ -391,8 +394,11 @@ data "template_file" "app_logstash" {
     aws_region                       = var.aws_region
     opensearch_ssl                   = var.opensearch_ssl
     opensearch_ssl_cert_verification = var.opensearch_ssl_cert_verification
+    # TODO: enable opensearch_host and opensearch_port once count in opensearch.tf be removed
     opensearch_host                  = aws_opensearch_domain.opensearch.endpoint
     opensearch_port                  = var.opensearch_port
+    # opensearch_host                  = "dummy-opensearch-host"
+    # opensearch_port                  = 0000
     postgres_host                    = aws_route53_record.database.name
     postgres_port                    = module.database_enc.port
     postgres_user                    = var.rds_database_username
