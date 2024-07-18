@@ -24,7 +24,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe architecture/environment changes here.*
 
 ### Bugfix
-* *Describe bugfix here.*
+* [OSDEV-1145](https://opensupplyhub.atlassian.net/browse/OSDEV-1145) - Error message appearing as red dot with no context.
 
 ### What's new
 * [OSDEV-1090](https://opensupplyhub.atlassian.net/browse/OSDEV-1090) - Claims. Remove extra product type field on Claimed Facility Details page.

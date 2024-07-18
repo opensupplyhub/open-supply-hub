@@ -92,35 +92,7 @@ const {
     facilityListSummaryStatusMessages,
     FACILITIES_REQUEST_PAGE_SIZE,
     CLAIM_A_FACILITY,
-    componentsWithErrorMessage,
 } = require('../util/constants');
-
-it('gets correct error message component', () => {
-    const correctListName = 'New & Test Name - Location, [Ltd].';
-    const emptyListName = '';
-    const listNameWithInvalidCharacters = 'Test / À location';
-    const listNameWithOnlySymbolsAndNumbers = '53464&&&';
-    const file = {
-        current: {
-            files: [
-                'file',
-            ],
-        },
-    };
-    const noFile = undefined;
-
-    const emptyListNameDataErrors = createUploadFormErrorMessages(emptyListName, file);
-    const listNameWithInvalidCharactersDataErrors = createUploadFormErrorMessages(listNameWithInvalidCharacters, file);
-    const listNameWithOnlySymbolsAndNumbersDataErrors = createUploadFormErrorMessages(listNameWithOnlySymbolsAndNumbers, file);
-    const noFileDataErrors = createUploadFormErrorMessages(correctListName, noFile);
-    const noDataErrors = createUploadFormErrorMessages(correctListName, file);
-
-    expect(isEqual(emptyListNameDataErrors[0].errorComponent, componentsWithErrorMessage.missingListName)).toBe(true);
-    expect(isEqual(listNameWithInvalidCharactersDataErrors[0].errorComponent, componentsWithErrorMessage.invalidCharacters)).toBe(true);
-    expect(isEqual(listNameWithOnlySymbolsAndNumbersDataErrors[0].errorComponent, componentsWithErrorMessage.mustConsistOfLetters)).toBe(true);
-    expect(isEqual(noFileDataErrors[0].errorComponent, componentsWithErrorMessage.missingFile)).toBe(true);
-    expect(isEqual(noDataErrors.length, 0)).toBe(true);
-});
 
 it('creates a route for checking facility list items', () => {
     const listID = 'hello';

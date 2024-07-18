@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { arrayOf, bool, func, number, object, string } from 'prop-types';
+import { arrayOf, bool, func, number, string } from 'prop-types';
 import { connect } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import MaterialButton from '@material-ui/core/Button';
@@ -94,6 +94,30 @@ class ContributeForm extends Component {
 
     handleUploadList = () => this.props.uploadList(this.fileInput);
 
+    containsTag = (content, tagName) => {
+        const tagRegex = new RegExp(`<${tagName}>.*?<\\/${tagName}>`, 'i');
+        return tagRegex.test(content);
+    };
+
+    parseContent = content => {
+        if (!this.containsTag(content, 'strong')) {
+            return content;
+        }
+        const parts = content.split(/(<strong>.*?<\/strong>)/g);
+
+        return parts.map(part => {
+            if (part.match(/<strong>(.*?)<\/strong>/)) {
+                return (
+                    <strong key={part}>
+                        {part.replace(/<\/?strong>/g, '')}
+                    </strong>
+                );
+            }
+
+            return <span key={part}>{part}</span>;
+        });
+    };
+
     render() {
         const {
             name,
@@ -115,11 +139,8 @@ class ContributeForm extends Component {
                 <React.Fragment>
                     <ul>
                         {error.map(err => (
-                            <li
-                                key={err.errorComponent}
-                                style={{ color: 'red' }}
-                            >
-                                {err.errorComponent}
+                            <li key={err} style={{ color: 'red' }}>
+                                {this.parseContent(err)}
                             </li>
                         ))}
                     </ul>
@@ -229,7 +250,7 @@ ContributeForm.propTypes = {
     filename: string.isRequired,
     replaces: number.isRequired,
     fetching: bool.isRequired,
-    error: arrayOf(object),
+    error: arrayOf(string),
     updateName: func.isRequired,
     updateDescription: func.isRequired,
     updateFileName: func.isRequired,
