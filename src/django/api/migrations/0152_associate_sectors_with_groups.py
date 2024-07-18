@@ -208,10 +208,11 @@ class Migration(migrations.Migration):
             name='groups',
             field=models.ManyToManyField(
                 blank=False,
-                related_name='sector_groups',
+                related_name='sectors',
                 to='api.SectorGroup',
                 help_text='The sector groups to which this sector belongs.',
             ),
         ),
+
         migrations.RunPython(associate_sectors_with_groups, revert_changes),
     ]
