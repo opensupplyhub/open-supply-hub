@@ -6,8 +6,9 @@ const xlsxHeaders = Object.freeze([
     'Organization Name',
     'Country',
     'Created',
-    'Last Updated',
+    'Claim Decision',
     'Status',
+    'Last Updated',
 ]);
 
 const formatFacilityClaimsDataForXLSX = facilityClaims =>
@@ -18,8 +19,11 @@ const formatFacilityClaimsDataForXLSX = facilityClaims =>
             facilityClaim.contributor_name,
             facilityClaim.facility_country_name,
             moment(facilityClaim.created_at).format('LL'),
-            moment(facilityClaim.updated_at).format('LL'),
+            facilityClaim.claim_decision !== null
+                ? moment(facilityClaim.claim_decision).format('LL')
+                : 'N/A',
             facilityClaim.status,
+            moment(facilityClaim.updated_at).format('LL'),
         ]),
     );
 
