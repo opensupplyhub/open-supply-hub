@@ -177,9 +177,14 @@ class ExtendedFieldAdmin(admin.ModelAdmin):
 
 
 class SectorAdmin(admin.ModelAdmin):
+    filter_horizontal = ('groups',)
+
     def get_ordering(self, request):
         return ['name']
 
+class SectorGroupAdmin(admin.ModelAdmin):
+    def get_ordering(self, request):
+        return ['name']
 
 class TileCacheAdmin(SimpleHistoryAdmin):
     search_fields = ('path', 'embed')
