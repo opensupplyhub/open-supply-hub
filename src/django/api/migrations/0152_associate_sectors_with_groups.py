@@ -183,10 +183,7 @@ def associate_sectors_with_groups(apps, schema_editor):
     }
 
     sectors = Sector.objects.all()
-    print('sectors >>>', sectors)
-
     for sector in sectors:
-        print('sector >>>', sector)
         for group_name, sector_names in sector_groups.items():
             if sector.name in sector_names:
                 group_instance, created = SectorGroup.objects.get_or_create(
