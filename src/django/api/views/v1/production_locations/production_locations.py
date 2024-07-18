@@ -7,7 +7,7 @@ import logging
 log = logging.getLogger(__name__)
 
 @api_view(['GET'])
-def production_locations_view(request,
+def production_locations(request,
                               opensearch_service=OpenSearchService()):
 
     size = request.query_params.get('size', 10)

@@ -137,7 +137,7 @@ internal_apis = [
 
 api_v1 = [
     path('api/v1/production-locations',
-         views.production_locations_view, name='production_locations')
+         views.production_locations, name='production_locations')
 ]
 
 urlpatterns = public_apis + internal_apis + info_apis + api_v1
