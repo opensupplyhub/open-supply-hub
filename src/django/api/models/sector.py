@@ -9,7 +9,7 @@ class Sector(models.Model):
     groups = models.ManyToManyField(
         'SectorGroup',
         blank=True,
-        related_name='sectors',
+        related_name='sector_groups',
         help_text='The sector groups to which this sector belongs.',
     )
 
