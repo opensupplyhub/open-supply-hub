@@ -1,8 +1,8 @@
 from django.db import migrations, models
+from api.models import SectorGroup
 
 
 def populate_sector_groups(apps, schema_editor):
-    SectorGroup = apps.get_model('api', 'SectorGroup')
     groups_names = [
         "Apparel, Footwear, Textiles",
         "Agriculture, Food & Beverage",
