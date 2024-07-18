@@ -57,33 +57,40 @@ def production_locations_view(request,
         'percent_female_workers': 'match',
         'affiliations': 'match',
         'certifications_standards_regulations': 'terms',
-        'country': 'term',
+        'country': 'terms',
     }
 
     for field, query_type in field_queries.items():
 
-        value = (
-            request.query_params.getlist(field)
-            if query_type == 'terms'
-            else request.query_params.get(field)
-        )
+        if query_type == 'terms':
+            value = request.query_params.getlist(field)
+        else:
+            value = request.query_params.get(field)
 
         logging.info(f"value is {value}")
         logging.info(f"field is {field}")
 
         if value:
             if query_type == 'geo_distance':
-                query_body['query']['bool']['must'] \
-                    .append({query_type: 
-                            {'distance': '100km',
-                            'location': value
-                            }})
-            elif query_type == 'term' and field == 'country':
-                query_body['query']['bool']['must'] \
-                    .append({query_type: {f"{field}.alpha_2.keyword": value}})
+                query_body['query']['bool']['must'].append({
+                    query_type: {
+                        'distance': '100km',
+                        'location': value
+                    }
+                })
+            elif query_type == 'terms' and field == 'country':
+                query_body['query']['bool']['must'].append({
+                    query_type: {
+                        f"{field}.alpha_2.keyword": value
+                    }
+                })
             else:
-                query_body['query']['bool']['must'] \
-                    .append({query_type: {field: value}})
+                query_body['query']['bool']['must'].append({
+                    query_type: {
+                        field: value
+                    }
+                })
+
 
     logging.info(f"query body is {query_body}")
 
