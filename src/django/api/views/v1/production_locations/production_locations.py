@@ -20,7 +20,9 @@ def production_locations_view(request,
     TODO: using sorting for keyword search will increase response time,
     see https://forum.opensearch.org/t/issue-with-message-field-data/13420
     '''
+    # TODO: abstract common query_body for all OpenSearch endpoints
     query_body = {
+        'track_total_hits': 'true',
         'size': size,
         'query': {
             'bool': {
