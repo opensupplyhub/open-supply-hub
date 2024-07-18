@@ -461,6 +461,7 @@ function ClaimedFacilitiesDetails({
                     selectOptions={sectorOptions || []}
                     selectPlaceholder="Select..."
                 />
+                <InputSection label="Product Types" />
                 <InputSection
                     label="Phone Number"
                     value={data.facility_phone_number}
