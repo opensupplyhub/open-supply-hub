@@ -28,6 +28,8 @@ import {
     sort,
 } from '../util/util';
 
+import { CLAIM_DECISION_EMPTY } from '../util/constants';
+
 const dashboardClaimsListTableStyles = Object.freeze({
     containerStyles: Object.freeze({
         marginBottom: '60px',
@@ -208,7 +210,7 @@ function DashboardClaimsListTable({
                             <TableCell padding="dense">
                                 {claim.claim_decision !== null
                                     ? moment(claim.claim_decision).format('LL')
-                                    : 'N/A'}
+                                    : CLAIM_DECISION_EMPTY}
                             </TableCell>
                             <TableCell padding="dense">
                                 {claim.status}
