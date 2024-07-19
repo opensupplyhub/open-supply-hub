@@ -15,6 +15,10 @@ def associate_sectors_with_groups(apps, schema_editor):
             "Home Accessories",
             "Home Textiles",
             "Leather",
+            "Manufacturing",
+            "Material Production",
+            "Printing",
+            "Sporting Goods",
             "Textiles",
             "Jewelry",
         ],
@@ -24,8 +28,10 @@ def associate_sectors_with_groups(apps, schema_editor):
             "Aquaculture",
             "Beverages",
             "Biotechnology",
+            "Commodities",
             "Crop Production",
             "Farming",
+            "Fishing",
             "Food",
             "Food & Beverage",
             "Food Industry",
@@ -67,7 +73,12 @@ def associate_sectors_with_groups(apps, schema_editor):
             "Solar Energy",
             "Utilities",
         ],
-        "Utilities": ["Utilities", "Water Utilities"],
+        "Utilities": [
+            "Utilities",
+            "Water Utilities",
+            "Recycling",
+            "Waste Management",
+        ],
         "Mining": [
             "Coal",
             "Commodities",
@@ -114,11 +125,11 @@ def associate_sectors_with_groups(apps, schema_editor):
             "Air Transportation",
             "Equipment",
             "Ground Passenger Transportation",
+            "Maritime Transportation",
             "Pipeline Transportation",
             "Rail Transportation",
             "Transportation Equipment",
             "Trucking",
-            "Maritime Transportation",
         ],
         "Aerospace": ["Aerospace", "Air Transportation"],
         "Forestry": [
@@ -134,6 +145,7 @@ def associate_sectors_with_groups(apps, schema_editor):
         ],
         "Press": ["Books", "Paper Products", "Printing"],
         "Health": [
+            "Health",
             "Healthcare",
             "Hospitals",
             "Medical Equipment & Services",
@@ -147,6 +159,7 @@ def associate_sectors_with_groups(apps, schema_editor):
             "Recreation",
         ],
         "Accommodation": ["Accommodation", "Renting"],
+        "Governmental": ["Civics", "Government Registry"],
         "Finance": ["Banking", "Finance", "Financial Services"],
         "General Merchandise": [
             "Commodities",
@@ -162,13 +175,20 @@ def associate_sectors_with_groups(apps, schema_editor):
             "Rubber Products",
             "Supplies Dealers",
             "Toys",
+            "Waste Management",
             "Wholesale Trade",
         ],
         "Storage": ["Storage", "Warehousing"],
-        "Sporting Goods": ["Sporting Goods", "Sports Equipment"],
+        "Sporting Goods": [
+            "Manufacturing",
+            "Recreation",
+            "Sporting Goods",
+            "Sports Equipment",
+        ],
         "Education, Research, Services": [
             "Archives",
             "Educational Services",
+            "Environmental, Social and Corporate Governance",
             "International Affairs",
             "Professional Services",
             "Research",
@@ -186,7 +206,7 @@ def associate_sectors_with_groups(apps, schema_editor):
     for sector in sectors:
         for group_name, sector_names in sector_groups.items():
             if sector.name in sector_names:
-                group_instance, created = SectorGroup.objects.get_or_create(
+                group_instance, created = SectorGroup.objects.get(
                     name=group_name
                 )
                 sector.groups.add(group_instance)
@@ -213,6 +233,5 @@ class Migration(migrations.Migration):
                 help_text='The sector groups to which this sector belongs.',
             ),
         ),
-
         migrations.RunPython(associate_sectors_with_groups, revert_changes),
     ]
