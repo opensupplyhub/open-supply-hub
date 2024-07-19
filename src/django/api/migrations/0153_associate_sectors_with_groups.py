@@ -206,14 +206,13 @@ def associate_sectors_with_groups(apps, schema_editor):
     for sector in sectors:
         for group_name, sector_names in sector_groups.items():
             if sector.name in sector_names:
-                group_instance = SectorGroup.objects.get(
-                    name=group_name
-                )
+                group_instance = SectorGroup.objects.get(name=group_name)
                 sector.groups.add(group_instance)
 
 
-def revert_changes(apps, schema_editor):
-    pass
+def revert_associate_sectors_with_groups(apps, schema_editor):
+    for group in SectorGroup.objects.all():
+        group.sectors.clear()
 
 
 class Migration(migrations.Migration):
@@ -233,5 +232,7 @@ class Migration(migrations.Migration):
                 help_text='The sector groups to which this sector belongs.',
             ),
         ),
-        migrations.RunPython(associate_sectors_with_groups, revert_changes),
+        migrations.RunPython(
+            associate_sectors_with_groups, revert_associate_sectors_with_groups
+        ),
     ]
