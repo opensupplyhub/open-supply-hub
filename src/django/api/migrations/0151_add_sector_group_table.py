@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('api', '0150_introduce_function_formatting_number_to_percent'),
+        ('api', '0151_replace_index_number_of_workers'),
     ]
 
     operations = [

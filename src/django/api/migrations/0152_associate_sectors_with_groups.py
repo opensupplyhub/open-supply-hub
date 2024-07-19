@@ -206,7 +206,7 @@ def associate_sectors_with_groups(apps, schema_editor):
     for sector in sectors:
         for group_name, sector_names in sector_groups.items():
             if sector.name in sector_names:
-                group_instance, created = SectorGroup.objects.get(
+                group_instance = SectorGroup.objects.get(
                     name=group_name
                 )
                 sector.groups.add(group_instance)
@@ -219,7 +219,7 @@ def revert_changes(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0151_add_sector_group_table'),
+        ('api', '0152_add_sector_group_table'),
     ]
 
     operations = [
