@@ -35,6 +35,10 @@ def populate_sector_groups(apps, schema_editor):
         SectorGroup.objects.create(name=name)
 
 
+def reverse_migration(apps, schema_editor):
+    SectorGroup.objects.all().delete()
+
+
 class Migration(migrations.Migration):
     '''
     This migration creates the SectorGroup model and populates it with
@@ -63,5 +67,5 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=200)),
             ],
         ),
-        migrations.RunPython(populate_sector_groups),
+        migrations.RunPython(populate_sector_groups, reverse_migration),
     ]
