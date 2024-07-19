@@ -1,6 +1,6 @@
 import moment from 'moment';
 
-import { CLAIM_DECISION_EMPTY } from '../util/constants'
+import { CLAIM_DECISION_EMPTY } from '../util/constants';
 
 const xlsxHeaders = Object.freeze([
     'Claim ID',

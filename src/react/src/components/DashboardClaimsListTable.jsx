@@ -28,7 +28,7 @@ import {
     sort,
 } from '../util/util';
 
-import { CLAIM_DECISION_EMPTY } from '../util/constants'
+import { CLAIM_DECISION_EMPTY } from '../util/constants';
 
 const dashboardClaimsListTableStyles = Object.freeze({
     containerStyles: Object.freeze({
