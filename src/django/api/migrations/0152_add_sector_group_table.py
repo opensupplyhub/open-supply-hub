@@ -35,7 +35,7 @@ def populate_sector_groups(apps, schema_editor):
         SectorGroup.objects.create(name=name)
 
 
-def reverse_migration(apps, schema_editor):
+def revert_populate_sector_groups(apps, schema_editor):
     SectorGroup.objects.all().delete()
 
 
@@ -67,5 +67,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=200)),
             ],
         ),
-        migrations.RunPython(populate_sector_groups, reverse_migration),
+        migrations.RunPython(
+            populate_sector_groups, revert_populate_sector_groups
+        ),
     ]
