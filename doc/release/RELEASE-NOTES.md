@@ -24,6 +24,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe architecture/environment changes here.*
 
 ### Bugfix
+* [OSDEV-1145](https://opensupplyhub.atlassian.net/browse/OSDEV-1145) - Error message appearing as red dot with no context. Error display has been fixed. Simplified displaying logic of errors. Changed error prop type
 * [OSDEV-576](https://opensupplyhub.atlassian.net/browse/OSDEV-576) - Implemented one source of truth to Search query source & Production Location Details page source for field `number_of_workers`.
 ### What's new
 * [OSDEV-1090](https://opensupplyhub.atlassian.net/browse/OSDEV-1090) - Claims. Remove extra product type field on Claimed Facility Details page.
