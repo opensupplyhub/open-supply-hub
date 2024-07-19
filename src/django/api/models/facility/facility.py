@@ -1,5 +1,6 @@
 from itertools import groupby
 
+from api.constants import FacilityClaimStatuses
 from api.models.facility.facility_manager import FacilityManager
 from simple_history.models import HistoricalRecords
 
@@ -151,9 +152,8 @@ class Facility(models.Model):
         if contributor_id is not None:
             base_qs = base_qs.filter(contributor_id=contributor_id)
 
-        from .facility_claim import FacilityClaim
         has_active_claim = Q(
-            facility_claim__status=FacilityClaim.APPROVED
+            facility_claim__status=FacilityClaimStatuses.APPROVED
         )
         fields = (
             base_qs
@@ -270,7 +270,7 @@ class Facility(models.Model):
         return (
             FacilityClaim
             .objects
-            .filter(facility=self, status=FacilityClaim.APPROVED)
+            .filter(facility=self, status=FacilityClaimStatuses.APPROVED)
             .order_by('-status_change_date')
             .first()
         )

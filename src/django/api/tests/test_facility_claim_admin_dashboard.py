@@ -1,3 +1,4 @@
+from api.constants import FacilityClaimStatuses
 from api.models import (
     Contributor,
     Facility,
@@ -127,7 +128,7 @@ class FacilityClaimAdminDashboardTest(APITestCase):
         )
 
         self.assertEqual(
-            FacilityClaim.APPROVED,
+            FacilityClaimStatuses.APPROVED,
             updated_facility_claim.status,
         )
 
@@ -156,7 +157,7 @@ class FacilityClaimAdminDashboardTest(APITestCase):
         )
 
         self.assertEqual(
-            FacilityClaim.APPROVED,
+            FacilityClaimStatuses.APPROVED,
             updated_facility_claim.status,
         )
 
@@ -199,7 +200,7 @@ class FacilityClaimAdminDashboardTest(APITestCase):
         )
 
         self.assertEqual(
-            FacilityClaim.DENIED,
+            FacilityClaimStatuses.DENIED,
             updated_facility_claim.status,
         )
 
@@ -225,7 +226,7 @@ class FacilityClaimAdminDashboardTest(APITestCase):
 
         self.assertEqual(400, error_response.status_code)
 
-        self.facility_claim.status = FacilityClaim.APPROVED
+        self.facility_claim.status = FacilityClaimStatuses.APPROVED
         self.facility_claim.save()
 
         response = self.client.post(
@@ -240,7 +241,7 @@ class FacilityClaimAdminDashboardTest(APITestCase):
         )
 
         self.assertEqual(
-            FacilityClaim.REVOKED,
+            FacilityClaimStatuses.REVOKED,
             updated_facility_claim.status,
         )
 
