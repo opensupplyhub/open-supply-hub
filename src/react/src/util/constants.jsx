@@ -1274,7 +1274,7 @@ export const facilityClaimStepsNames = Object.freeze({
 });
 
 export const componentsWithErrorMessage = Object.freeze({
-    missingListName: <>Missing required Facility List Name</>,
+    missingListName: 'Missing required Facility List Name.',
     invalidCharacters: (
         <>
             The <b>List Name</b> you entered contains invalid characters.
@@ -1284,6 +1284,6 @@ export const componentsWithErrorMessage = Object.freeze({
             ). Characters that contain accents are not allowed.
         </>
     ),
-    mustConsistOfLetters: <>Facility List Name must also consist of letters</>,
-    missingFile: <>Missing required Facility List File</>,
+    mustConsistOfLetters: 'Facility List Name must also consist of letters.',
+    missingFile: 'Missing required Facility List File.',
 });
