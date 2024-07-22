@@ -216,6 +216,9 @@ def revert_associate_sectors_with_groups(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    '''
+    This migration associates sectors with sector groups.
+    '''
 
     dependencies = [
         ('api', '0152_add_sector_group_table'),
