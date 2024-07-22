@@ -1,9 +1,7 @@
 from django.db import migrations, models
 
-from api.models import (
-    Sector,
-    SectorGroup,
-)
+from api.models.sector import Sector
+from api.models.sector_group import SectorGroup
 
 
 def associate_sectors_with_groups(apps, schema_editor):
