@@ -210,11 +210,6 @@ def associate_sectors_with_groups(apps, schema_editor):
                 sector.groups.add(group_instance)
 
 
-def revert_associate_sectors_with_groups(apps, schema_editor):
-    for sector in Sector.objects.all():
-        sector.groups.clear()
-
-
 class Migration(migrations.Migration):
     '''
     This migration associates sectors with sector groups.
@@ -236,6 +231,6 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.RunPython(
-            associate_sectors_with_groups, revert_associate_sectors_with_groups
+            associate_sectors_with_groups, migrations.RunPython.noop
         ),
     ]
