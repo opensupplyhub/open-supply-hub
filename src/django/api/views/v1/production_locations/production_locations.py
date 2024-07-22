@@ -38,7 +38,8 @@ def production_locations(request,
         query_body['query']['bool']['must'].append({
             'multi_match': {
                 'query': query,
-                'fields': ['name^2', 'address', 'description', 'name_local']
+                'fields': ['name^2', 'address', 'description', 'name_local'],
+                'fuzziness': '2'
             }
         })
 
@@ -49,18 +50,23 @@ def production_locations(request,
         'address': 'match',
         'sector': 'terms',
         'product_type': 'terms',
+        'processing_type': 'terms',
         'location_type': 'terms',
         'number_of_workers': 'range',
         'coordinates': 'geo_distance',
         'minimum_order_quantity': 'match',
         'average_lead_time': 'match',
         'percent_female_workers': 'match',
-        'affiliations': 'match',
+        'affiliations': 'terms',
         'certifications_standards_regulations': 'terms',
         'country': 'terms',
     }
 
     for field, query_type in field_queries.items():
+
+        logging.info(f"query_type is {query_type}")
+        logging.info(f"field is {field}")
+        logging.info(f"query_params are {request.query_params.dict()}")
 
         if query_type == 'terms':
             value = request.query_params.getlist(field)
@@ -68,7 +74,6 @@ def production_locations(request,
             value = request.query_params.get(field)
 
         logging.info(f"value is {value}")
-        logging.info(f"field is {field}")
 
         if value:
             if query_type == 'geo_distance':
@@ -82,6 +87,26 @@ def production_locations(request,
                 query_body['query']['bool']['must'].append({
                     query_type: {
                         f"{field}.alpha_2.keyword": value
+                    }
+                })
+            elif query_type == 'terms' and field == 'sector' \
+                or field == 'product_type' \
+                or field == 'location_type' \
+                or field == 'processing_type' \
+                or field == 'certifications_standards_regulations' \
+                or field == 'affiliations':
+                query_body['query']['bool']['must'].append({
+                    query_type: {
+                        f"{field}.keyword": value
+                    }
+                })
+            elif query_type == 'match' and field == 'address' or field == 'name':
+                query_body['query']['bool']['must'].append({
+                    'match': {
+                        field: {
+                            'query': value,
+                            'fuzziness': '2'
+                        }
                     }
                 })
             else:
