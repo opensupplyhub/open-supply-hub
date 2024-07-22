@@ -115,10 +115,10 @@ it('gets correct error message component', () => {
     const noFileDataErrors = createUploadFormErrorMessages(correctListName, noFile);
     const noDataErrors = createUploadFormErrorMessages(correctListName, file);
 
-    expect(isEqual(emptyListNameDataErrors[0].errorComponent, componentsWithErrorMessage.missingListName)).toBe(true);
-    expect(isEqual(listNameWithInvalidCharactersDataErrors[0].errorComponent, componentsWithErrorMessage.invalidCharacters)).toBe(true);
-    expect(isEqual(listNameWithOnlySymbolsAndNumbersDataErrors[0].errorComponent, componentsWithErrorMessage.mustConsistOfLetters)).toBe(true);
-    expect(isEqual(noFileDataErrors[0].errorComponent, componentsWithErrorMessage.missingFile)).toBe(true);
+    expect(isEqual(emptyListNameDataErrors[0], componentsWithErrorMessage.missingListName)).toBe(true);
+    expect(isEqual(listNameWithInvalidCharactersDataErrors[0], componentsWithErrorMessage.invalidCharacters)).toBe(true);
+    expect(isEqual(listNameWithOnlySymbolsAndNumbersDataErrors[0], componentsWithErrorMessage.mustConsistOfLetters)).toBe(true);
+    expect(isEqual(noFileDataErrors[0], componentsWithErrorMessage.missingFile)).toBe(true);
     expect(isEqual(noDataErrors.length, 0)).toBe(true);
 });
 

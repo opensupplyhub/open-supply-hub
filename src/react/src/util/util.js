@@ -604,28 +604,20 @@ export function createUploadFormErrorMessages(name, file) {
     const errorMessages = [];
 
     if (!name) {
-        errorMessages.push({
-            errorComponent: componentsWithErrorMessage.missingListName,
-        });
+        errorMessages.push(componentsWithErrorMessage.missingListName);
     } else {
         // Didn't allow name with invalid characters.
         if (!allowedCharsRegex.test(name)) {
-            errorMessages.push({
-                errorComponent: componentsWithErrorMessage.invalidCharacters,
-            });
+            errorMessages.push(componentsWithErrorMessage.invalidCharacters);
         }
         // Didn't allow name that consists only of symbols or numbers.
         if (restrictedCharsRegex.test(name)) {
-            errorMessages.push({
-                errorComponent: componentsWithErrorMessage.mustConsistOfLetters,
-            });
+            errorMessages.push(componentsWithErrorMessage.mustConsistOfLetters);
         }
     }
 
     if (!file) {
-        errorMessages.push({
-            errorComponent: componentsWithErrorMessage.missingFile,
-        });
+        errorMessages.push(componentsWithErrorMessage.missingFile);
     }
 
     return errorMessages;
