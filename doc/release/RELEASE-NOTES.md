@@ -19,7 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Scheme changes
 * [OSDEV-360](https://opensupplyhub.atlassian.net/browse/OSDEV-360) - The following changes have been implemented:
     * A new table, `api_sectorgroup`, has been introduced and populated with sector group names. 
-    * A new field named `groups` has been added to the `Sector` model to establish a many-to-many relationship between the `Sector` model and the `SectorGroup` model.
+    * A new field named `groups` has been added to the `Sector` model to establish a many-to-many relationship between the `api_sector` and the `api_sectorgroup` tables.
 
 ### Code/API changes
 * *Describe code/API changes here.*
