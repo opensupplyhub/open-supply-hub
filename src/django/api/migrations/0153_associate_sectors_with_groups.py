@@ -211,8 +211,8 @@ def associate_sectors_with_groups(apps, schema_editor):
 
 
 def revert_associate_sectors_with_groups(apps, schema_editor):
-    for group in SectorGroup.objects.all():
-        group.sectors.clear()
+    for sector in Sector.objects.all():
+        sector.groups.clear()
 
 
 class Migration(migrations.Migration):
