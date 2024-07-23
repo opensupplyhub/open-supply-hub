@@ -2,10 +2,6 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from api.services.search import OpenSearchService
 
-# TODO: Remove loggers from here later
-import logging
-log = logging.getLogger(__name__)
-
 @api_view(['GET'])
 def production_locations(request,
                               opensearch_service=OpenSearchService()):
@@ -20,7 +16,7 @@ def production_locations(request,
     TODO: using sorting for keyword search will increase response time,
     see https://forum.opensearch.org/t/issue-with-message-field-data/13420
     '''
-    # TODO: abstract common query_body for all OpenSearch endpoints
+    # TODO: Refactor query_body creation for all OpenSearch endpoints using Builder pattern
     query_body = {
         'track_total_hits': 'true',
         'size': size,
@@ -63,10 +59,6 @@ def production_locations(request,
     }
 
     for field, query_type in field_queries.items():
-        logging.info(f"query_type is {query_type}")
-        logging.info(f"field is {field}")
-        logging.info(f"query_params are {request.query_params.dict()}")
-
         if query_type == 'terms':
             value = request.query_params.getlist(field)
 
@@ -120,10 +112,24 @@ def production_locations(request,
                         }
                     })
 
+        elif query_type == 'geo_distance' and field == 'coordinates':
+            lat = request.query_params.get('coordinates[lat]')
+            lon = request.query_params.get('coordinates[lon]')
+            distance = "10km"
+
+            if lat and lon:
+                query_body['query']['bool']['must'].append({
+                    'geo_distance': {
+                        'distance': distance,
+                        'coordinates': {
+                            'lat': float(lat),
+                            'lon': float(lon)
+                        }
+                    }
+                })
+
         else:
             value = request.query_params.get(field)
-
-        logging.info(f"value is {value}")
 
         if value:
             if query_type == 'geo_distance':
@@ -170,8 +176,6 @@ def production_locations(request,
                     }
                 })
 
-
-    logging.info(f"query body is {query_body}")
 
     if start_after:
         query_body['search_after'] = [start_after]
