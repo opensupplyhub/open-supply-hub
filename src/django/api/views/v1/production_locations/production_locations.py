@@ -56,7 +56,7 @@ def production_locations(request,
         'coordinates': 'geo_distance',
         'minimum_order_quantity': 'terms',
         'average_lead_time': 'terms',
-        'percent_female_workers': 'match',
+        'percent_female_workers': 'range',
         'affiliations': 'terms',
         'certifications_standards_regulations': 'terms',
         'country': 'terms',
@@ -70,6 +70,48 @@ def production_locations(request,
 
         if query_type == 'terms':
             value = request.query_params.getlist(field)
+        elif query_type == 'range' and field in ['number_of_workers']:
+            min_value = request.query_params.get(f'{field}[min]', 0)
+            max_value = request.query_params.get(f'{field}[max]')
+
+            min_value = int(min_value) if min_value else None
+            max_value = int(max_value) if max_value else None
+
+            range_query = {}
+            if min_value is not None:
+                range_query['gte'] = min_value
+            if max_value is not None:
+                range_query['lte'] = max_value
+
+            if range_query:
+                query_body['query']['bool']['must'].append({
+                    'bool': {
+                        'should': [
+                            {
+                                'bool': {
+                                    'must': [
+                                        {
+                                            'range': {
+                                                f'{field}.min': {
+                                                    'lte': range_query.get('lte', float('inf')),
+                                                    'gte': range_query.get('gte', float('-inf'))
+                                                }
+                                            }
+                                        },
+                                        {
+                                            'range': {
+                                                f'{field}.max': {
+                                                    'gte': range_query.get('gte', float('-inf')),
+                                                    'lte': range_query.get('lte', float('inf'))
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                })
         else:
             value = request.query_params.get(field)
 
@@ -89,20 +131,22 @@ def production_locations(request,
                         f"{field}.alpha_2.keyword": value
                     }
                 })
-            elif query_type == 'terms' and field == 'sector' \
-                or field == 'product_type' \
-                or field == 'location_type' \
-                or field == 'processing_type' \
-                or field == 'certifications_standards_regulations' \
-                or field == 'average_lead_time' \
-                or field == 'minimum_order_quantity' \
-                or field == 'affiliations':
+            elif query_type == 'terms' and field in ['sector',
+                'product_type', 
+                'location_type',
+                'processing_type',
+                'certifications_standards_regulations',
+                'average_lead_time',
+                'minimum_order_quantity',
+                'affiliations']:
                 query_body['query']['bool']['must'].append({
                     query_type: {
                         f"{field}.keyword": value
                     }
                 })
-            elif query_type == 'match' and field == 'address' or field == 'name':
+            # TODO: there is a problem with sorting that will sort by name by default
+            # and not by the score in the output
+            elif query_type == 'match' and field in ['address', 'name']:
                 query_body['query']['bool']['must'].append({
                     'match': {
                         field: {
