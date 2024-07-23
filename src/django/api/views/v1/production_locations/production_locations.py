@@ -53,29 +53,29 @@ def production_locations(request,
         'processing_type': 'terms',
         'location_type': 'terms',
         'number_of_workers': 'range',
-        'coordinates': 'geo_distance',
         'minimum_order_quantity': 'terms',
         'average_lead_time': 'terms',
         'percent_female_workers': 'range',
         'affiliations': 'terms',
         'certifications_standards_regulations': 'terms',
         'country': 'terms',
+        'coordinates': 'geo_distance',
     }
 
     for field, query_type in field_queries.items():
-
         logging.info(f"query_type is {query_type}")
         logging.info(f"field is {field}")
         logging.info(f"query_params are {request.query_params.dict()}")
 
         if query_type == 'terms':
             value = request.query_params.getlist(field)
-        elif query_type == 'range' and field in ['number_of_workers']:
-            min_value = request.query_params.get(f'{field}[min]', 0)
-            max_value = request.query_params.get(f'{field}[max]')
 
-            min_value = int(min_value) if min_value else None
-            max_value = int(max_value) if max_value else None
+        elif query_type == 'range':
+            min_value = request.query_params.get(f'{field}[min]')
+            max_value = request.query_params.get(f'{field}[max]')
+            
+            min_value = int(min_value) if min_value is not None else None
+            max_value = int(max_value) if max_value is not None else None
 
             range_query = {}
             if min_value is not None:
@@ -84,34 +84,42 @@ def production_locations(request,
                 range_query['lte'] = max_value
 
             if range_query:
-                query_body['query']['bool']['must'].append({
-                    'bool': {
-                        'should': [
-                            {
-                                'bool': {
-                                    'must': [
-                                        {
-                                            'range': {
-                                                f'{field}.min': {
-                                                    'lte': range_query.get('lte', float('inf')),
-                                                    'gte': range_query.get('gte', float('-inf'))
+                if field == 'number_of_workers':
+                    query_body['query']['bool']['must'].append({
+                        'bool': {
+                            'should': [
+                                {
+                                    'bool': {
+                                        'must': [
+                                            {
+                                                'range': {
+                                                    f'{field}.min': {
+                                                        'lte': range_query.get('lte', float('inf')),
+                                                        'gte': range_query.get('gte', float('-inf'))
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                'range': {
+                                                    f'{field}.max': {
+                                                        'gte': range_query.get('gte', float('-inf')),
+                                                        'lte': range_query.get('lte', float('inf'))
+                                                    }
                                                 }
                                             }
-                                        },
-                                        {
-                                            'range': {
-                                                f'{field}.max': {
-                                                    'gte': range_query.get('gte', float('-inf')),
-                                                    'lte': range_query.get('lte', float('inf'))
-                                                }
-                                            }
-                                        }
-                                    ]
+                                        ]
+                                    }
                                 }
-                            }
-                        ]
-                    }
-                })
+                            ]
+                        }
+                    })
+                elif field == 'percent_female_workers':
+                    query_body['query']['bool']['must'].append({
+                        'range': {
+                            field: range_query
+                        }
+                    })
+
         else:
             value = request.query_params.get(field)
 
