@@ -8,7 +8,6 @@ from django.contrib.auth.models import Group
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from api.models.sector_group import SectorGroup
 from simple_history.admin import SimpleHistoryAdmin
 from waffle.models import Flag, Sample, Switch
 from waffle.admin import FlagAdmin, SampleAdmin, SwitchAdmin
@@ -178,13 +177,6 @@ class ExtendedFieldAdmin(admin.ModelAdmin):
 
 
 class SectorAdmin(admin.ModelAdmin):
-    filter_horizontal = ('groups',)
-
-    def get_ordering(self, request):
-        return ['name']
-
-
-class SectorGroupAdmin(admin.ModelAdmin):
     def get_ordering(self, request):
         return ['name']
 
@@ -213,6 +205,5 @@ admin_site.register(Group)
 admin_site.register(models.RequestLog, RequestLogAdmin)
 admin_site.register(models.ApiLimit, ApiLimitAdmin)
 admin_site.register(models.Sector, SectorAdmin)
-admin_site.register(SectorGroup, SectorGroupAdmin)
 admin_site.register(models.TileCache, TileCacheAdmin)
 admin_site.register(models.DynamicSetting)
