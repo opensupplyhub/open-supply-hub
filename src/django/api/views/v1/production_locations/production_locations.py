@@ -54,8 +54,8 @@ def production_locations(request,
         'location_type': 'terms',
         'number_of_workers': 'range',
         'coordinates': 'geo_distance',
-        'minimum_order_quantity': 'match',
-        'average_lead_time': 'match',
+        'minimum_order_quantity': 'terms',
+        'average_lead_time': 'terms',
         'percent_female_workers': 'match',
         'affiliations': 'terms',
         'certifications_standards_regulations': 'terms',
@@ -94,6 +94,8 @@ def production_locations(request,
                 or field == 'location_type' \
                 or field == 'processing_type' \
                 or field == 'certifications_standards_regulations' \
+                or field == 'average_lead_time' \
+                or field == 'minimum_order_quantity' \
                 or field == 'affiliations':
                 query_body['query']['bool']['must'].append({
                     query_type: {
