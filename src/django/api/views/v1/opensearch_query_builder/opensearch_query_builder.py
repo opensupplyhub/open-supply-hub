@@ -1,14 +1,19 @@
+import copy
 from .opensearch_query_builder_interface import OpenSearchQueryBuilderInterface
 
 
 class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
     def __init__(self):
-        self.query_body = {
+        self.default_query_body = {
             'track_total_hits': 'true',
             'size': 10,
             'query': {'bool': {'must': []}},
             'sort': []
         }
+        self.query_body = copy.deepcopy(self.default_query_body)
+
+    def reset(self):
+        self.query_body = copy.deepcopy(self.default_query_body)
 
     def add_size(self, size):
         self.query_body['size'] = size
@@ -19,8 +24,20 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
             match_query['match'][field]['fuzziness'] = fuzziness
         self.query_body['query']['bool']['must'].append(match_query)
 
+    def add_multi_match(self, query):
+        self.query_body['query']['bool']['must'].append({
+            'multi_match': {
+                'query': query,
+                'fields': ['name^2', 'address', 'description', 'name_local'],
+                'fuzziness': '2'
+            }
+        })
+
     def add_terms(self, field, values):
-        terms_query = {'terms': {field: values}}
+        if field == 'country':
+            terms_query = {'terms': {f'{field}.alpha_2': values}}
+        else:
+            terms_query = {'terms': {f'{field}.keyword': values}}
         self.query_body['query']['bool']['must'].append(terms_query)
 
     def add_range(self, field, query_params):
@@ -95,5 +112,5 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
             self.query_body['query']['bool']['must'] \
                 .append({'match': {'_id': field}})
 
-    def get_query_body(self):
+    def get_final_query_body(self):
         return self.query_body

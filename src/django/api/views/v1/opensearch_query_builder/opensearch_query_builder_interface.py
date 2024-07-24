@@ -12,6 +12,14 @@ class OpenSearchQueryBuilderInterface:
         pass
 
     @abstractmethod
+    def add_match(self, field, value, fuzziness):
+        pass
+
+    @abstractmethod
+    def add_multi_match(self, query):
+        pass
+
+    @abstractmethod
     def add_terms(self, field, values):
         pass
 
@@ -24,17 +32,9 @@ class OpenSearchQueryBuilderInterface:
         pass
 
     @abstractmethod
-    def add_match(self, field, value):
-        pass
-
-    @abstractmethod
     def add_sort(self, field, order):
         pass
 
     @abstractmethod
     def add_start_after(self, start_after):
-        pass
-
-    @abstractmethod
-    def build(self):
         pass

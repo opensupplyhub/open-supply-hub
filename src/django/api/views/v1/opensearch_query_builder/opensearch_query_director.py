@@ -21,6 +21,8 @@ class OpenSearchQueryDirector:
         }
 
     def build_query(self, query_params):
+        self.builder.reset()
+
         for field, query_type in self._opensearch_template_fields.items():
             if query_type == 'match':
                 value = query_params.get(field)
@@ -51,4 +53,8 @@ class OpenSearchQueryDirector:
         if size:
             self.builder.add_size(size)
 
-        return self.builder.get_query_body()
+        multi_match_query = query_params.get('query')
+        if multi_match_query:
+            self.builder.add_multi_match(multi_match_query)
+
+        return self.builder.get_final_query_body()
