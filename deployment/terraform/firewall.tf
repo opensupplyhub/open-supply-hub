@@ -262,6 +262,16 @@ resource "aws_security_group_rule" "app_rds_enc_egress" {
   source_security_group_id = module.database_enc.database_security_group_id
 }
 
+resource "aws_security_group_rule" "app_opensearch_egress" {
+  type      = "ingress"
+  from_port = var.opensearch_port
+  to_port   = var.opensearch_port
+  protocol  = "tcp"
+
+  security_group_id        = aws_security_group.app.id
+  source_security_group_id = aws_security_group.opensearch.id
+}
+
 resource "aws_security_group_rule" "app_alb_ingress" {
   type      = "ingress"
   from_port = var.app_port
@@ -416,7 +426,7 @@ resource "aws_security_group_rule" "batch_msk_egress" {
   source_security_group_id = aws_security_group.msk.id
 }
 
-resource "aws_security_group_rule" "opensearch_ingress" {
+resource "aws_security_group_rule" "logstash_opensearch_ingress" {
   type      = "ingress"
   from_port = var.opensearch_port
   to_port   = var.opensearch_port
@@ -424,4 +434,14 @@ resource "aws_security_group_rule" "opensearch_ingress" {
 
   security_group_id        = aws_security_group.opensearch.id
   source_security_group_id = aws_security_group.app_logstash.id
+}
+
+resource "aws_security_group_rule" "app_opensearch_ingress" {
+  type      = "ingress"
+  from_port = var.opensearch_port
+  to_port   = var.opensearch_port
+  protocol  = "tcp"
+
+  security_group_id        = aws_security_group.opensearch.id
+  source_security_group_id = aws_security_group.app.id
 }
