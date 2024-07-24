@@ -185,6 +185,14 @@ class SectorAdmin(admin.ModelAdmin):
 
 
 class SectorGroupAdmin(admin.ModelAdmin):
+    readonly_fields = ('related_sectors',)
+    fields = ('name', 'related_sectors')
+
+    def related_sectors(self, obj):
+        return obj.related_sectors()
+
+    related_sectors.short_description = 'Related Sectors'
+
     def get_ordering(self, request):
         return ['name']
 
