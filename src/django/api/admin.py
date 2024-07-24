@@ -185,8 +185,17 @@ class SectorAdmin(admin.ModelAdmin):
 
 
 class SectorGroupAdmin(admin.ModelAdmin):
-    readonly_fields = ('related_sectors',)
-    fields = ('name', 'related_sectors')
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return ['related_sectors']
+        else:
+            return []
+
+    def get_fields(self, request, obj=None):
+        if obj:
+            return ['name', 'related_sectors']
+        else:
+            return ['name']
 
     def related_sectors(self, obj):
         return obj.related_sectors()
