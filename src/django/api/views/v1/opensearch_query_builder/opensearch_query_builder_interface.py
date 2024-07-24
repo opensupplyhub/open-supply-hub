@@ -1,9 +1,15 @@
 from abc import abstractmethod
 
+
 class OpenSearchQueryBuilderInterface:
     '''
-    Interface for query build methods that will be used for the OpenSearchQueryBuilder
+    Interface for query build methods that will be
+    used for the OpenSearchQueryBuilder
     '''
+
+    @abstractmethod
+    def add_size(self, size):
+        pass
 
     @abstractmethod
     def add_terms(self, field, values):
