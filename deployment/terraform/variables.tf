@@ -540,7 +540,8 @@ variable "logstash_update_interval_minutes" {
 
 variable "app_logstash_ecs_desired_count" {
   type    = number
-  default = 0 # Temporary set to zero to prevent money consumption.
+  # default = 0 # Temporary set to zero to prevent money consumption.
+  default = 1
 }
 
 variable "app_logstash_ecs_deployment_min_percent" {
