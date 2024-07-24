@@ -263,7 +263,7 @@ resource "aws_security_group_rule" "app_rds_enc_egress" {
 }
 
 resource "aws_security_group_rule" "app_opensearch_egress" {
-  type      = "ingress"
+  type      = "egress"
   from_port = var.opensearch_port
   to_port   = var.opensearch_port
   protocol  = "tcp"
