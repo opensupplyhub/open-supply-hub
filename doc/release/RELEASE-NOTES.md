@@ -12,7 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Database changes
 #### Migrations:
-* *Describe migrations here.*
+* 0151_replace_index_number_of_workers - replace function `index_number_of_workers` to use one source of truth for both`number_of_workers` & `extended_fields`.
 
 #### Scheme changes
 * *Describe scheme changes here.*
@@ -24,15 +24,19 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe architecture/environment changes here.*
 
 ### Bugfix
-* *Describe bugfix here.*
-
+* [OSDEV-1145](https://opensupplyhub.atlassian.net/browse/OSDEV-1145) - Error message appearing as red dot with no context. Error display has been fixed. Simplified displaying logic of errors. Changed error property type.
+* [OSDEV-576](https://opensupplyhub.atlassian.net/browse/OSDEV-576) - Implemented one source of truth to Search query source & Production Location Details page source for field `number_of_workers`.
+* [OSDEV-1146](https://opensupplyhub.atlassian.net/browse/OSDEV-1146) - Fixed issue with missed header & data for Claim Decision column while downloaded Facility Claims data in xlsx format.
 ### What's new
 * [OSDEV-1090](https://opensupplyhub.atlassian.net/browse/OSDEV-1090) - Claims. Remove extra product type field on Claimed Facility Details page.
 * [OSDEV-273](https://opensupplyhub.atlassian.net/browse/OSDEV-273) - Facility Claims. Implement filtering by Country and Status. Set 'pending' claim status as a default filter.
 * [OSDEV-1083](https://opensupplyhub.atlassian.net/browse/OSDEV-1083) - Implemented a 'toggle password visibility' feature in the login, registration, reset password and user profile forms.
+* The legacy `_template` API endpoint was disabled via the configuration file in favor of the new `_index_template` API endpoint, since the composable index template is used for OpenSearch. The `legacy_template` was set to `false` to start using the defined composable index template in the `production_locations.json` file. This change is necessary to avoid omitting the `production_locations.json` index template for the `production-locations` index defined in the Logstash app and to enforce the OpenSearch cluster to use the explicit mapping for the `production-locations` index.
 
 ### Release instructions:
-* *Provide release instructions here.*
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `index_facilities_new`
 
 
 ## Release 1.16.0
