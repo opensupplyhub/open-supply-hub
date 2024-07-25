@@ -136,8 +136,8 @@ internal_apis = [
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 api_v1 = [
-    path('api/v1/production-locations',
-         views.production_locations, name='production_locations')
+     path('api/v1/production-locations',
+          views.ProductionLocations.as_view(), name='production_locations')
 ]
 
 urlpatterns = public_apis + internal_apis + info_apis + api_v1

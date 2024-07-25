@@ -1,23 +1,24 @@
-from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from api.services.search import OpenSearchService
-from api.views.v1.opensearch_query_builder import \
-    OpenSearchQueryDirector, OpenSearchQueryBuilder
+from api.views.v1.opensearch_query_builder \
+    import OpenSearchQueryDirector, OpenSearchQueryBuilder
 
 
-@api_view(['GET'])
-def production_locations(
-        request,
-        opensearch_service=OpenSearchService(),
-        opensearch_query_builder=OpenSearchQueryBuilder()):
+class ProductionLocations(APIView):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.opensearch_service = OpenSearchService()
+        self.opensearch_query_builder = OpenSearchQueryBuilder()
 
-    opensearch_query_director = \
-        OpenSearchQueryDirector(opensearch_query_builder)
+    def get(self, request):
+        opensearch_query_director = \
+            OpenSearchQueryDirector(self.opensearch_query_builder)
 
-    query_params = request.GET
-    query_body = opensearch_query_director.build_query(query_params)
+        query_params = request.GET
+        query_body = opensearch_query_director.build_query(query_params)
 
-    response = opensearch_service. \
-        search_production_locations(query_body)
+        response = self.opensearch_service \
+            .search_production_locations(query_body)
 
-    return Response(response)
+        return Response(response)

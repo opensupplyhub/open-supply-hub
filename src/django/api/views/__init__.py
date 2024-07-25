@@ -72,4 +72,4 @@ from .product_types import product_types
 from .sectors import sectors
 from .claim_statuses import claim_statuses
 
-from .v1.production_locations.production_locations import production_locations_view
+from .v1.production_locations.production_locations import ProductionLocations
