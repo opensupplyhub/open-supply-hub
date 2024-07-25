@@ -126,7 +126,7 @@ const DashboardClaims = ({
         let finalStatuses = statuses;
 
         if (countriesData.length > 0) {
-            if (!statuses && claimStatuses.length > 0) {
+            if (!statuses && claimStatuses && claimStatuses.length > 0) {
                 finalStatuses = map(claimStatuses, 'value');
             }
         } else if (claimStatuses.length > 0) {
@@ -167,8 +167,9 @@ const DashboardClaims = ({
                     <ClaimStatusFilter
                         countriesData={countriesData}
                         handleClaimStatusUpdate={onClaimStatusUpdate}
+                        isDisabled={fetching}
                     />
-                    <CountryNameFilter />
+                    <CountryNameFilter isDisabled={fetching} />
                     <Grid item className={classes.numberResults}>
                         {claimsCount} results
                     </Grid>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { func, string } from 'prop-types';
+import { func, string, bool } from 'prop-types';
 import TableHead from '@material-ui/core/TableHead';
 import TableSortLabel from '@material-ui/core/TableSortLabel';
 import TableRow from '@material-ui/core/TableRow';
@@ -57,7 +57,13 @@ const claimsListHeadCells = [
     },
 ];
 
-function DashboardClaimsListTableHeader({ order, orderBy, onRequestSort }) {
+function DashboardClaimsListTableHeader({
+    order,
+    orderBy,
+    onRequestSort,
+    fetching,
+    loading,
+}) {
     const createSortHandler = property => event => {
         onRequestSort(event, property);
     };
@@ -74,6 +80,7 @@ function DashboardClaimsListTableHeader({ order, orderBy, onRequestSort }) {
                             active={orderBy === headCell.id}
                             direction={orderBy === headCell.id ? order : 'asc'}
                             onClick={createSortHandler(headCell.id)}
+                            disabled={fetching || loading}
                         >
                             {headCell.label}
                         </TableSortLabel>
@@ -85,6 +92,8 @@ function DashboardClaimsListTableHeader({ order, orderBy, onRequestSort }) {
 }
 
 DashboardClaimsListTableHeader.propTypes = {
+    loading: bool.isRequired,
+    fetching: bool.isRequired,
     order: string.isRequired,
     orderBy: string.isRequired,
     onRequestSort: func.isRequired,
