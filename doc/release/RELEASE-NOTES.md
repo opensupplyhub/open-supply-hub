@@ -43,9 +43,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * 0151_replace_index_number_of_workers - replace function `index_number_of_workers` to use one source of truth for both`number_of_workers` & `extended_fields`.
 
 #### Scheme changes
-* [OSDEV-360](https://opensupplyhub.atlassian.net/browse/OSDEV-360) - The following changes have been implemented:
-    * A new table, `api_sectorgroup`, has been introduced and populated with sector group names.
-    * A new field named `groups` has been added to the `Sector` model to establish a many-to-many relationship between the `api_sector` and the `api_sectorgroup` tables.
+*Describe scheme changes here.*
 
 ### Code/API changes
 * *Describe code/API changes here.*
