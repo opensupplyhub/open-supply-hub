@@ -157,6 +157,8 @@ function DashboardClaimsListTable({
                 order={order}
                 orderBy={orderBy}
                 onRequestSort={handleRequestSort}
+                fetching={fetching}
+                loading={loading}
             />
             {loading || fetching ? (
                 <TableBody>
