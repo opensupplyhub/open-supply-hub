@@ -11,6 +11,7 @@ import { countryOptionsPropType } from '../../util/propTypes';
 const COUNTRIES = 'COUNTRIES';
 
 function CountryNameFilter({
+    isDisabled,
     countryOptions,
     countries,
     updateCountry,
@@ -25,16 +26,19 @@ function CountryNameFilter({
                 value={countries}
                 onChange={updateCountry}
                 disabled={fetching}
+                isDisabled={isDisabled}
             />
         </div>
     );
 }
 
 CountryNameFilter.defaultProps = {
+    isDisabled: false,
     countryOptions: null,
 };
 
 CountryNameFilter.propTypes = {
+    isDisabled: bool,
     countryOptions: countryOptionsPropType,
     updateCountry: func.isRequired,
     countries: countryOptionsPropType.isRequired,
