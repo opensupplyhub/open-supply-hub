@@ -300,6 +300,13 @@ data "template_file" "app_cli" {
     aws_storage_bucket_name          = local.files_bucket_name
     kafka_bootstrap_servers          = join (",", module.msk_cluster.bootstrap_brokers)
     kafka_topic_basic_name           = var.topic_dedup_basic_name
+    # TODO: enable opensearch_host and opensearch_port once count in opensearch.tf be removed
+    opensearch_host                  = aws_opensearch_domain.opensearch.endpoint
+    opensearch_port                  = var.opensearch_port
+    # opensearch_host                  = "dummy-opensearch-host"
+    # opensearch_port                  = 0000
+    opensearch_ssl                   = var.opensearch_ssl
+    opensearch_ssl_cert_verification = var.opensearch_ssl_cert_verification
   }
 }
 

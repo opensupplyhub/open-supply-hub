@@ -15,8 +15,9 @@ resource "aws_cloudwatch_log_group" "opensearch" {
 
 resource "aws_opensearch_domain" "opensearch" {
   # TODO: remove 'count' meta-argument once OpenSearch will be fully setup
-  # Related procedure should be done in deployment/terraform/iam.tf -> data "aws_iam_policy_document" "opensearch"
-  # and in deployment/terraform/container_service.tf -> opensearch_host and opensearch_port
+  # Related procedure should be done in deployment/terraform/iam.tf -> data "aws_iam_policy_document" "opensearch",
+  # in deployment/terraform/container_service.tf -> data "template_file" "app" and
+  # in deployment/terraform/container_service.tf -> data "template_file" "app_cli"
   
   # count          = 0
   domain_name    = "opensearch-domain"
@@ -25,7 +26,7 @@ resource "aws_opensearch_domain" "opensearch" {
   access_policies = data.aws_iam_policy_document.opensearch_access_policy.json
 
   cluster_config {
-    instance_type          = "t3.small.search"
+    instance_type          = "m6g.large.search"
     instance_count         = 2
     zone_awareness_enabled = true
   }
