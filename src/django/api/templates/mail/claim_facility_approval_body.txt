@@ -17,7 +17,5 @@ information to a claimed production location’s profile.
 
 Best wishes,
 
-The OS Hub Claims Team
-
 {% include "mail/data_team_signature_block.txt" %}
 {% endblock content %}
