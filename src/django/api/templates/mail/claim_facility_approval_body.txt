@@ -1,20 +1,23 @@
 {% block content %}
-Hi,
+Hello,
 
-You're receiving this email because we approved your request to claim this Open Supply Hub facility:
+You are receiving this email because your request to claim the following production location on
+Open Supply Hub has been approved:
 
-- Facility: {{ facility_name }}, {{ facility_address }}, {{ facility_country }}
-- Facility URL: {{ facility_url }}
+- Name of Production Location: {{ facility_name }}
+- OS Hub Profile: {{ facility_url }}
 
-{% if approval_reason|length %}
-Here's the reason for the approval:
+You can now add data about your operations, including: a description of your location,
+production capabilities, certifications, MOQs and more. If you have additional production
+locations within your organization’s network, you can follow this guide to prepare and upload
+your data to OS Hub. Once approved, those locations can be claimed as well.
 
-{{ approval_reason }}
-{% endif %}
-
-You are approved! You can now complete your profile, adding business information including production capabilities, certifications, MOQs and more. The "Facility name (English language)" & "Address" fields cannot be edited. Doing so will result in the claim being revoked. Visit opensupplyhub.org/claimed to view your approved facility and complete your profile.
+Visit https://opensupplyhub.org/claimed to view your approved claims and add additional
+information to a claimed production location’s profile.
 
 Best wishes,
+
+The OS Hub Claims Team
 
 {% include "mail/data_team_signature_block.txt" %}
 {% endblock content %}

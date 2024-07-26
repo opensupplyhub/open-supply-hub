@@ -104,7 +104,7 @@ def send_claim_facility_approval_email(request, facility_claim):
     )
 
 
-def send_claim_facility_denial_email(request, facility_claim):
+def send_claim_facility_denial_email(request, facility_claim)://
     subj_template = get_template('mail/claim_facility_denial_subject.txt')
     text_template = get_template('mail/claim_facility_denial_body.txt')
     html_template = get_template('mail/claim_facility_denial_body.html')
