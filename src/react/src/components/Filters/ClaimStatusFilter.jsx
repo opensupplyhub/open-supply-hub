@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { func } from 'prop-types';
+import { func, bool } from 'prop-types';
 import { connect } from 'react-redux';
 
 import StyledSelect from './StyledSelect';
@@ -14,6 +14,7 @@ import {
 const CLAIM_STATUSES = 'CLAIM_STATUSES';
 
 function ClaimStatusFilter({
+    isDisabled,
     claimStatuses,
     countriesData,
     claimStatusesOptions,
@@ -36,12 +37,14 @@ function ClaimStatusFilter({
                 options={claimStatusesOptions.data || []}
                 value={claimStatuses}
                 onChange={onChangeClaimStatus}
+                isDisabled={isDisabled}
             />
         </div>
     );
 }
 
 ClaimStatusFilter.propTypes = {
+    isDisabled: bool.isRequired,
     updateClaimStatus: func.isRequired,
     claimStatuses: claimStatusOptionsPropType.isRequired,
     claimStatusesOptions: filterOptionsPropType.isRequired,

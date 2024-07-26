@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
 
-## Release Release 1.18.0
+## Release 1.18.0
 
 ## Introduction
 * Product name: Open Supply Hub
@@ -12,10 +12,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Database changes
 #### Migrations:
-* 0152_add_sector_group_table - creates the `SectorGroup` model and populates it with the sector groups names.
-* 0153_associate_sectors_with_groups - associates sectors with sector groups.
+* 0152_delete_tilecache_and_dynamicsetting - removed unused `api_tilecache` and `api_dynamicsetting` tables.
+* 0153_add_sector_group_table - creates the `SectorGroup` model and populates it with the sector groups names.
+* 0154_associate_sectors_with_groups - associates sectors with sector groups.
 
 #### Scheme changes
+* [OSDEV-1142](https://opensupplyhub.atlassian.net/browse/OSDEV-1142) - Technical Debt. Remove unused `api_tilecache` and `api_dynamicsetting` tables. Migration has been created, removed related data in the code base.
 * [OSDEV-360](https://opensupplyhub.atlassian.net/browse/OSDEV-360) - The following changes have been implemented:
     * A new table, `api_sectorgroup`, has been introduced and populated with sector group names. 
     * A new field named `groups` has been added to the `Sector` model to establish a many-to-many relationship between the `api_sector` and the `api_sectorgroup` tables.

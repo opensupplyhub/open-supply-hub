@@ -225,10 +225,6 @@ class SectorGroupAdmin(admin.ModelAdmin):
         return ['name']
 
 
-class TileCacheAdmin(SimpleHistoryAdmin):
-    search_fields = ('path', 'embed')
-
-
 admin_site.register(models.Version)
 admin_site.register(models.User, OarUserAdmin)
 admin_site.register(models.Contributor, ContributorAdmin)
@@ -250,5 +246,3 @@ admin_site.register(models.RequestLog, RequestLogAdmin)
 admin_site.register(models.ApiLimit, ApiLimitAdmin)
 admin_site.register(models.Sector, SectorAdmin)
 admin_site.register(SectorGroup, SectorGroupAdmin)
-admin_site.register(models.TileCache, TileCacheAdmin)
-admin_site.register(models.DynamicSetting)
