@@ -5,16 +5,14 @@ import django.contrib.postgres.indexes
 from django.db import models
 from django.db.migrations import Migration, CreateModel, RunPython
 
-from api.models.dynamic_setting import DynamicSetting
-
 
 def add_default_dynamic_settings(apps, schema_editor):
+    DynamicSetting = apps.get_model('api', 'DynamicSetting')
     dynamic_settings = DynamicSetting()
     dynamic_settings.save()
 
 
 class Migration(Migration):
-
     dependencies = [
         ('api', '0132_add_moderation_mode_field'),
     ]
