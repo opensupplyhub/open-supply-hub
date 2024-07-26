@@ -84,13 +84,9 @@ def send_claim_facility_approval_email(request, facility_claim):
     text_template = get_template('mail/claim_facility_approval_body.txt')
     html_template = get_template('mail/claim_facility_approval_body.html')
 
-    facility_country = COUNTRY_NAMES[facility_claim.facility.country_code]
-
     approval_dictionary = {
         'approval_reason': facility_claim.status_change_reason,
         'facility_name': facility_claim.facility.name,
-        'facility_address': facility_claim.facility.address,
-        'facility_country': facility_country,
         'facility_url': make_facility_url(request, facility_claim.facility),
         'claimed_url': make_claimed_url(request),
     }
@@ -109,13 +105,9 @@ def send_claim_facility_denial_email(request, facility_claim):
     text_template = get_template('mail/claim_facility_denial_body.txt')
     html_template = get_template('mail/claim_facility_denial_body.html')
 
-    facility_country = COUNTRY_NAMES[facility_claim.facility.country_code]
-
     denial_dictionary = {
         'denial_reason': facility_claim.status_change_reason,
         'facility_name': facility_claim.facility.name,
-        'facility_address': facility_claim.facility.address,
-        'facility_country': facility_country,
         'facility_url': make_facility_url(request, facility_claim.facility),
     }
 
