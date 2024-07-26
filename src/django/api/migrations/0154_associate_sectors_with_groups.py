@@ -214,7 +214,7 @@ class Migration(migrations.Migration):
     '''
 
     dependencies = [
-        ('api', '0152_add_sector_group_table'),
+        ('api', '0153_add_sector_group_table'),
     ]
 
     operations = [

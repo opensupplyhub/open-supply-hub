@@ -45,7 +45,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('api', '0151_replace_index_number_of_workers'),
+        ('api', '0152_delete_tilecache_and_dynamicsetting'),
     ]
 
     operations = [
