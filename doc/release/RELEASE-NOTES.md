@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+
 ## Release 1.18.0
 
 ## Introduction
@@ -12,9 +13,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 #### Migrations:
 * 0152_delete_tilecache_and_dynamicsetting - removed unused `api_tilecache` and `api_dynamicsetting` tables.
+* 0153_add_sector_group_table - creates the `SectorGroup` model and populates it with the sector groups names.
+* 0154_associate_sectors_with_groups - associates sectors with sector groups.
 
 #### Scheme changes
 * [OSDEV-1142](https://opensupplyhub.atlassian.net/browse/OSDEV-1142) - Technical Debt. Remove unused `api_tilecache` and `api_dynamicsetting` tables. Migration has been created, removed related data in the code base.
+* [OSDEV-360](https://opensupplyhub.atlassian.net/browse/OSDEV-360) - The following changes have been implemented:
+    * A new table, `api_sectorgroup`, has been introduced and populated with sector group names.
+    * A new field named `groups` has been added to the `Sector` model to establish a many-to-many relationship between the `api_sector` and the `api_sectorgroup` tables.
 
 ### Code/API changes
 * *Describe code/API changes here.*
@@ -27,9 +33,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-1144](https://opensupplyhub.atlassian.net/browse/OSDEV-1144) - Claims emails. Updated text for approval, revocation, and denial emails.
+* [OSDEV-360](https://opensupplyhub.atlassian.net/browse/OSDEV-360) - On the admin dashboard, functionality has been added to allow Admins to add, remove, or modify sector groups. In the `Sectors` tab, Admins can now adjust the related sector groups for each sector. Each sector must be associated with at least one group.
 
 ### Release instructions:
-* *Provide release instructions here.*
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `index_facilities_new`
 
 
 ## Release 1.17.0
@@ -55,6 +64,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1145](https://opensupplyhub.atlassian.net/browse/OSDEV-1145) - Error message appearing as red dot with no context. Error display has been fixed. Simplified displaying logic of errors. Changed error property type.
 * [OSDEV-576](https://opensupplyhub.atlassian.net/browse/OSDEV-576) - Implemented one source of truth to Search query source & Production Location Details page source for field `number_of_workers`.
 * [OSDEV-1146](https://opensupplyhub.atlassian.net/browse/OSDEV-1146) - Fixed issue with missed header & data for Claim Decision column while downloaded Facility Claims data in xlsx format.
+
 ### What's new
 * [OSDEV-1090](https://opensupplyhub.atlassian.net/browse/OSDEV-1090) - Claims. Remove extra product type field on Claimed Facility Details page.
 * [OSDEV-273](https://opensupplyhub.atlassian.net/browse/OSDEV-273) - Facility Claims. Implement filtering by Country and Status. Set 'pending' claim status as a default filter.
