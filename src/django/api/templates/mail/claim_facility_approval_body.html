@@ -10,15 +10,18 @@
             Hello,
         </p>
         <p>
-            You are receiving this email because <a href="https://info.opensupplyhub.org/resources/claim-a-facility">your request to claim</a> the following production location on
+            You are receiving this email because your <a href="https://info.opensupplyhub.org/resources/claim-a-facility">request to claim</a> the following production location on
             Open Supply Hub has been approved:
         </p>
         <ul>
             <li>
-                Name of Production Location: {{ facility_name }}
+                Name of Production Location: {{ production_location_name }}
             </li>
             <li>
-                OS Hub Profile: <a href="{{ facility_url }}">{{ facility_url }}</a>
+                Address of Production Location: {{ production_location_address }}
+            </li>
+            <li>
+                OS Hub Profile: <a href="{{ production_location_url }}">{{ production_location_url }}</a>
             </li>
         </ul>
         <p>
@@ -26,8 +29,9 @@
             production capabilities, certifications, MOQs and more. If you have additional production
             locations within your organization’s network, you can <a href="https://info.opensupplyhub.org/resources/preparing-data">follow this guide</a> to prepare and upload
             your data to OS Hub. Once approved, those locations can be claimed as well.
-
-            Visit https://opensupplyhub.org/claimed to view your approved claims and add additional
+        </p>
+        <p>
+            Visit <a href="https://opensupplyhub.org/claimed">https://opensupplyhub.org/claimed</a> to view your approved claims and add additional
             information to a claimed production location’s profile.
         </p>
         <p>

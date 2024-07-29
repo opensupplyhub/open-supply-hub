@@ -15,10 +15,13 @@
         </p>
         <ul>
             <li>
-                Name of Production Location: {{ facility_name }}
+                Name of Production Location: {{ production_location_name }}
             </li>
             <li>
-                OS Hub Profile: <a href="{{ facility_url }}">{{ facility_url }}</a>
+                Address of Production Location: {{ production_location_address }}
+            </li>
+            <li>
+                OS Hub Profile: <a href="{{ production_location_url }}">{{ production_location_url }}</a>
             </li>
         </ul>
         {% if denial_reason|length %}
