@@ -1,5 +1,10 @@
 import json
 
+from rest_framework.test import APITestCase
+from django.contrib.gis.geos import Point
+from django.utils import timezone
+from django.db.models.signals import post_delete
+
 from api.constants import ProcessingAction, FacilityClaimStatuses
 from api.models import (
     Contributor,
@@ -14,14 +19,18 @@ from api.models import (
     User,
 )
 from api.models.facility.facility_index import FacilityIndex
-from rest_framework.test import APITestCase
-
-from django.contrib.gis.geos import Point
-from django.utils import timezone
+from api.signals import location_post_delete_handler_for_opensearch
 
 
 class FacilityMergeTest(APITestCase):
     def setUp(self):
+        # Disconnect location deletion propagation to OpenSearch cluster, as
+        # it is outside the scope of Django unit testing.
+        post_delete.disconnect(
+            location_post_delete_handler_for_opensearch,
+            Facility
+        )
+
         self.user_email = "test@example.com"
         self.user_password = "example123"
         self.user = User.objects.create(email=self.user_email)

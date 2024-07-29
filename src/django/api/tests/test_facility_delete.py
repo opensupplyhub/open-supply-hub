@@ -1,3 +1,7 @@
+from rest_framework.test import APITestCase
+from django.db.models.signals import post_delete
+from django.contrib.gis.geos import Point
+
 from api.constants import ProcessingAction, FacilityClaimStatuses
 from api.models import (
     Contributor,
@@ -11,13 +15,18 @@ from api.models import (
     Source,
     User,
 )
-from rest_framework.test import APITestCase
-
-from django.contrib.gis.geos import Point
+from api.signals import location_post_delete_handler_for_opensearch
 
 
 class FacilityDeleteTest(APITestCase):
     def setUp(self):
+        # Disconnect location deletion propagation to OpenSearch cluster, as
+        # it is outside the scope of Django unit testing.
+        post_delete.disconnect(
+            location_post_delete_handler_for_opensearch,
+            Facility
+        )
+
         self.user_email = "test@example.com"
         self.user_password = "example123"
         self.user = User.objects.create(email=self.user_email)
