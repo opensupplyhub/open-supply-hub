@@ -26,7 +26,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe bugfix here.*
 
 ### What's new
-* [OSDEV-1144](https://opensupplyhub.atlassian.net/browse/OSDEV-1144) - Claims emails. Updated text for approval and denied emails.
+* [OSDEV-1144](https://opensupplyhub.atlassian.net/browse/OSDEV-1144) - Claims emails. Updated text for approval, revocation, and denial emails.
 
 ### Release instructions:
 * *Provide release instructions here.*

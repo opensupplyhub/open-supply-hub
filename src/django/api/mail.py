@@ -84,11 +84,14 @@ def send_claim_facility_approval_email(request, facility_claim):
     text_template = get_template('mail/claim_facility_approval_body.txt')
     html_template = get_template('mail/claim_facility_approval_body.html')
 
+    production_location_country = COUNTRY_NAMES[facility_claim.facility.country_code]
+
     approval_dictionary = {
         'production_location_name': facility_claim.facility.name,
         'production_location_url': make_facility_url(request,
                                                      facility_claim.facility),
         'production_location_address': facility_claim.facility.address,
+        'production_location_country': production_location_country,
     }
 
     send_mail(
@@ -105,12 +108,15 @@ def send_claim_facility_denial_email(request, facility_claim):
     text_template = get_template('mail/claim_facility_denial_body.txt')
     html_template = get_template('mail/claim_facility_denial_body.html')
 
+    production_location_country = COUNTRY_NAMES[facility_claim.facility.country_code]
+
     denial_dictionary = {
         'denial_reason': facility_claim.status_change_reason,
         'production_location_name': facility_claim.facility.name,
         'production_location_url': make_facility_url(request,
                                                      facility_claim.facility),
         'production_location_address': facility_claim.facility.address,
+        'production_location_country': production_location_country,
     }
 
     send_mail(
@@ -127,12 +133,15 @@ def send_claim_facility_revocation_email(request, facility_claim):
     text_template = get_template('mail/claim_facility_revocation_body.txt')
     html_template = get_template('mail/claim_facility_revocation_body.html')
 
+    production_location_country = COUNTRY_NAMES[facility_claim.facility.country_code]
+
     revocation_dictionary = {
         'revocation_reason': facility_claim.status_change_reason,
         'production_location_name': facility_claim.facility.name,
         'production_location_url': make_facility_url(request,
                                                      facility_claim.facility),
         'production_location_address': facility_claim.facility.address,
+        'production_location_country': production_location_country,
     }
 
     send_mail(

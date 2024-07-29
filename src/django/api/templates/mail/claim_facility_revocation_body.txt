@@ -5,7 +5,7 @@ You are receiving this email because your request to claim the following product
 Open Supply Hub has been revoked:
 
 - Name of Production Location: {{ production_location_name }}
-- Address of Production Location: {{ production_location_address }}
+- Address of Production Location: {{ production_location_address }}, {{ production_location_country }}
 -  OS Hub Profile: {{ production_location_url }}
 
 {% if revocation_reason|length %}
