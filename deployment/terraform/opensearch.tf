@@ -25,7 +25,7 @@ resource "aws_opensearch_domain" "opensearch" {
   access_policies = data.aws_iam_policy_document.opensearch_access_policy.json
 
   cluster_config {
-    instance_type          = "t3.small.search"
+    instance_type          = "m6g.large.search"
     instance_count         = 2
     zone_awareness_enabled = true
   }
