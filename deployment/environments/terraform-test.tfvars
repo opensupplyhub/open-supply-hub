@@ -60,4 +60,4 @@ app_cc_ecs_desired_count = 0
 opensearch_instance_type = "t3.small.search"
 
 app_logstash_fargate_cpu = 256
-app_logstash_fargate_memory = 2048
+app_logstash_fargate_memory = 1024
