@@ -23,16 +23,17 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * A new field named `groups` has been added to the `Sector` model to establish a many-to-many relationship between the `api_sector` and the `api_sectorgroup` tables.
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-1005](https://opensupplyhub.atlassian.net/browse/OSDEV-1005) - Disconnect location deletion propagation to the OpenSearch cluster while the Django tests are running, as it is outside the scope of Django unit testing.
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* [OSDEV-1005](https://opensupplyhub.atlassian.net/browse/OSDEV-1005) - Enable deployment of the Logstash and OpenSearch infra to AWS environments.
 
 ### Bugfix
 * *Describe bugfix here.*
 
 ### What's new
 * [OSDEV-360](https://opensupplyhub.atlassian.net/browse/OSDEV-360) - On the admin dashboard, functionality has been added to allow Admins to add, remove, or modify sector groups. In the `Sectors` tab, Admins can now adjust the related sector groups for each sector. Each sector must be associated with at least one group.
+* [OSDEV-1005](https://opensupplyhub.atlassian.net/browse/OSDEV-1005) - Implement the propagation of production location deletions from the PostgreSQL database to the OpenSearch cluster. After this fix, the locations that were deleted will be excluded from the response of the `v1/production-location` GET API endpoint.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
