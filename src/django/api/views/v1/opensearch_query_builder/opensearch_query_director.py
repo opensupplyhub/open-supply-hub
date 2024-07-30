@@ -44,10 +44,13 @@ class OpenSearchQueryDirector:
                                                   float(lat),
                                                   float(lon),
                                                   distance)
+        sort_by = query_params.get('sort_by')
+        if sort_by:
+            self.builder.add_sort(sort_by)
 
-        start_after = query_params.get('start_after')
-        if start_after:
-            self.builder.add_start_after(start_after.split(','))
+        search_after = query_params.get('search_after')
+        if search_after:
+            self.builder.add_start_after(search_after)
 
         size = query_params.get('size')
         if size:

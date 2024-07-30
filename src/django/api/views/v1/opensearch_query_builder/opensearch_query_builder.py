@@ -11,6 +11,9 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
             'sort': []
         }
         self.query_body = copy.deepcopy(self.default_query_body)
+        self.default_fuzziness = 2
+        self.default_sort = 'name'
+        self.default_sort_order = 'asc'
 
     def reset(self):
         self.query_body = copy.deepcopy(self.default_query_body)
@@ -29,7 +32,7 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
             'multi_match': {
                 'query': query,
                 'fields': ['name^2', 'address', 'description', 'name_local'],
-                'fuzziness': '2'
+                'fuzziness': self.default_fuzziness
             }
         })
 
@@ -105,12 +108,25 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         self.query_body['query']['bool']['must'].append(geo_distance_query)
 
     def add_sort(self, field, order='asc'):
-        self.query_body['sort'].append({field: {'order': order}})
+        self.query_body['sort'].append({f'{field}.keyword': {'order': order}})
 
-    def add_start_after(self, start_after_fields):
-        for field in start_after_fields:
-            self.query_body['query']['bool']['must'] \
-                .append({'match': {'_id': field}})
+    def add_start_after(self, search_after):
+        # search_after can't be present as empty by default in query_body
+        if 'search_after' not in self.query_body:
+            self.query_body['search_after'] = []
+        '''
+        There should be always sort if there is a search_after field.
+        So if it is empty, sort by name by default
+        '''
+        if not self.query_body['sort']:
+            sort_criteria = {
+                f'{self.default_sort}.keyword': {
+                    'order': self.default_sort_order
+                }
+            }
+            self.query_body['sort'].append(sort_criteria)
+
+        self.query_body['search_after'].append(search_after)
 
     def get_final_query_body(self):
         return self.query_body
