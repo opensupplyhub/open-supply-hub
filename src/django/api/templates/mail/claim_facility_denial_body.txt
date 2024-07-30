@@ -20,5 +20,5 @@ steps. Remember to provide the additional supporting evidence requested in your 
 
 Best wishes,
 
-{% include "mail/data_team_signature_block.txt" %}
+{% include "mail/claims_team_signature_block.txt" %}
 {% endblock content %}

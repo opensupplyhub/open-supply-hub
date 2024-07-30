@@ -18,5 +18,5 @@ information to a claimed production location’s profile.
 
 Best wishes,
 
-{% include "mail/data_team_signature_block.txt" %}
+{% include "mail/claims_team_signature_block.txt" %}
 {% endblock content %}

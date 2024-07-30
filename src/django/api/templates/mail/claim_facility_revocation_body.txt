@@ -21,5 +21,5 @@ Remember to provide supporting evidence to address the reason that your claim wa
 
 Best wishes,
 
-{% include "mail/data_team_signature_block.txt" %}
+{% include "mail/claims_team_signature_block.txt" %}
 {% endblock content %}
