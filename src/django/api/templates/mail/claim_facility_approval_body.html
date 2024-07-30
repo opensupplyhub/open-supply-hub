@@ -2,43 +2,41 @@
 <html lang="en">
     <head>
         <title>
-            Your request to claim an Open Supply Hub facility was approved
+            Your request to claim a profile on Open Supply Hub has been approved!
         </title>
     </head>
     <body>
         <p>
-            Hi,
+            Hello,
         </p>
         <p>
-            You're receiving this email because we approved your request to claim this
-            Open Supply Hub facility:
+            You are receiving this email because your <a href="https://info.opensupplyhub.org/resources/claim-a-facility">request to claim</a> the following production location on
+            Open Supply Hub has been approved:
         </p>
         <ul>
             <li>
-                Facility: {{ facility_name }}, {{ facility_address }}, {{ facility_country }}
+                Name of Production Location: {{ production_location_name }}
             </li>
             <li>
-                Facility URL: <a href="{{ facility_url }}">{{ facility_url }}</a>
+                Address of Production Location: {{ production_location_address }}, {{ production_location_country }}
+            </li>
+            <li>
+                OS Hub Profile: <a href="{{ production_location_url }}">{{ production_location_url }}</a>
             </li>
         </ul>
-        {% if approval_reason|length %}
         <p>
-            Here's the reason for the approval:
+            You can now add data about your operations, including: a description of your location,
+            production capabilities, certifications, MOQs and more. If you have additional production
+            locations within your organization’s network, you can <a href="https://info.opensupplyhub.org/resources/preparing-data">follow this guide</a> to prepare and upload
+            your data to OS Hub. Once approved, those locations can be claimed as well.
         </p>
         <p>
-            {{ approval_reason }}
-        </p>
-        {% endif %}
-        <p>
-            You are approved! You can now complete your profile, adding business information
-            including production capabilities, certifications, MOQs and more. <em>The "Facility 
-            name (English language)" & "Address" fields cannot be edited. Doing so will result 
-            in the claim being revoked.</em> Visit<a href="{{ claimed_url }}">{{ claimed_url }}</a> 
-            to view your approved facility and complete your profile.
+            Visit <a href="https://opensupplyhub.org/claimed">https://opensupplyhub.org/claimed</a> to view your approved claims and add additional
+            information to a claimed production location’s profile.
         </p>
         <p>
             Best wishes,
         </p>
-        {% include "mail/data_team_signature_block.html" %}
+        {% include "mail/claims_team_signature_block.html" %}
     </body>
 </html>

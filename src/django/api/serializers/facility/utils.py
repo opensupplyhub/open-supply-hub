@@ -1,6 +1,7 @@
 from typing import Union
 from itertools import groupby
 
+from api.constants import FacilityClaimStatuses
 from dateutil import parser
 from django.utils import timezone
 
@@ -13,7 +14,6 @@ from ...helpers.helpers import (
 )
 from ...models import (
     ExtendedField,
-    FacilityClaim,
     FacilityListItem,
     FacilityMatch,
     Facility,
@@ -99,7 +99,7 @@ def get_facility_name(serializer, facility):
         .objects
         .filter(facility=facility,
                 field_name=ExtendedField.NAME,
-                facility_claim__status=FacilityClaim.APPROVED)
+                facility_claim__status=FacilityClaimStatuses.APPROVED)
         .order_by('-updated_at')
         .values_list('value', flat=True)
     )
@@ -147,7 +147,7 @@ def get_facility_name_index_new(serializer, facility):
         .objects
         .filter(facility=facility.id,
                 field_name=ExtendedField.NAME,
-                facility_claim__status=FacilityClaim.APPROVED)
+                facility_claim__status=FacilityClaimStatuses.APPROVED)
         .order_by('-updated_at')
         .values_list('value', flat=True)
     )

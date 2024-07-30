@@ -69,6 +69,7 @@ public_apis = [
     path('api/log-download/', views.log_download, name='log_download'),
     path('api/workers-ranges/', views.number_of_workers_ranges,
          name='number_of_workers_ranges'),
+    path('api/claim-statuses/', views.claim_statuses, name='claim_statuses'),
     path('api/facility-processing-types/', views.facility_processing_types,
          name='facility_processing_types'),
     path('api/parent-companies/', views.parent_companies,
@@ -83,7 +84,7 @@ schema_view = get_schema_view(
         default_version='1',
         description='Open Supply Hub API',
         terms_of_service="https://info.opensupplyhub.org/terms-of-service",
-        license=openapi.License(name='MIT', url='https://github.com/open-apparel-registry/open-apparel-registry/blob/develop/LICENSE')  # NOQA
+        license=openapi.License(name='MIT', url='https://github.com/opensupplyhub/open-supply-hub/blob/main/LICENSE.txt')  # NOQA
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),

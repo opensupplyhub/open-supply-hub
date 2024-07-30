@@ -1,6 +1,6 @@
 import json
 
-from api.constants import ProcessingAction
+from api.constants import ProcessingAction, FacilityClaimStatuses
 from api.models import (
     Contributor,
     ExtendedField,
@@ -95,7 +95,7 @@ class FacilityMergeTest(APITestCase):
             phone_number="1234567890",
             company_name="test 1",
             facility_description="test 1",
-            status=FacilityClaim.APPROVED,
+            status=FacilityClaimStatuses.APPROVED,
         )
 
         self.contributor_2 = Contributor.objects.create(
@@ -264,7 +264,10 @@ class FacilityMergeTest(APITestCase):
         self.facility_2_claim.refresh_from_db()
         # The pending claim on the merge facility should have been updated
         self.assertEqual(self.facility_1, self.facility_2_claim.facility)
-        self.assertEqual(FacilityClaim.DENIED, self.facility_2_claim.status)
+        self.assertEqual(
+            FacilityClaimStatuses.DENIED,
+            self.facility_2_claim.status
+        )
 
     def test_merge_with_extended_fields(self):
         self.client.login(
@@ -303,9 +306,9 @@ class FacilityMergeTest(APITestCase):
         )
 
     def test_merge_with_two_approved_claims(self):
-        self.facility_1_claim.status = FacilityClaim.APPROVED
+        self.facility_1_claim.status = FacilityClaimStatuses.APPROVED
         self.facility_1_claim.save()
-        self.facility_2_claim.status = FacilityClaim.APPROVED
+        self.facility_2_claim.status = FacilityClaimStatuses.APPROVED
         self.facility_2_claim.save()
 
         just_before_change = timezone.now()
@@ -319,8 +322,14 @@ class FacilityMergeTest(APITestCase):
         self.facility_2_claim.refresh_from_db()
 
         self.assertEqual(self.facility_1, self.facility_2_claim.facility)
-        self.assertEqual(FacilityClaim.APPROVED, self.facility_1_claim.status)
-        self.assertEqual(FacilityClaim.REVOKED, self.facility_2_claim.status)
+        self.assertEqual(
+            FacilityClaimStatuses.APPROVED,
+            self.facility_1_claim.status
+        )
+        self.assertEqual(
+            FacilityClaimStatuses.REVOKED,
+            self.facility_2_claim.status
+        )
         self.assertEqual(
             self.superuser, self.facility_2_claim.status_change_by
         )

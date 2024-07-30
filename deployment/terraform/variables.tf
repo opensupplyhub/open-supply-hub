@@ -283,6 +283,10 @@ variable "app_cc_port" {
   default = "80"
 }
 
+variable "opensearch_port" {
+  default = "443"
+}
+
 variable "gunicorn_worker_timeout" {
   default = "180"
 }
@@ -512,6 +516,21 @@ variable "dedupe_hub_live" {
 variable "dedupe_hub_name" {
 }
 variable "dedupe_hub_version" {
+}
+
+variable "opensearch_auth_type" {
+  type = string
+  default = "aws_iam"
+}
+
+variable "opensearch_ssl" {
+  type = bool
+  default = true
+}
+
+variable "opensearch_ssl_cert_verification" {
+  type = bool
+  default = true
 }
 
 variable "app_logstash_ecs_desired_count" {

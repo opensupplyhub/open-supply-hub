@@ -291,9 +291,16 @@ CACHES = {
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': '[{asctime}] [{levelname}] {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'simple'
         },
     },
     'root': {
@@ -304,6 +311,7 @@ LOGGING = {
         'django': {
             'handlers': ['console'],
             'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+            'propagate': False,
         },
     },
 }
@@ -476,6 +484,7 @@ if not DEBUG:
         'environment': ENVIRONMENT.lower(),
         'root': BASE_DIR,
         'suppress_reinit_warning': True,
+        'capture_ip': False
     }
     import rollbar
     rollbar.init(**ROLLBAR)

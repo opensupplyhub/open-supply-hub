@@ -11,6 +11,7 @@ import omitBy from 'lodash/omitBy';
 import isEmpty from 'lodash/isEmpty';
 import isNumber from 'lodash/isNumber';
 import isNil from 'lodash/isNil';
+import intersection from 'lodash/intersection';
 import values from 'lodash/values';
 import flow from 'lodash/flow';
 import noop from 'lodash/noop';
@@ -28,11 +29,15 @@ import every from 'lodash/every';
 import uniqWith from 'lodash/uniqWith';
 import filter from 'lodash/filter';
 import includes from 'lodash/includes';
+import join from 'lodash/join';
+import map from 'lodash/map';
+import uniq from 'lodash/uniq';
 import { isURL, isInt } from 'validator';
 import { featureCollection, bbox } from '@turf/turf';
 import hash from 'object-hash';
 import * as XLSX from 'xlsx';
 import moment from 'moment';
+import removeAccents from 'remove-accents';
 
 import {
     OTHER,
@@ -48,12 +53,14 @@ import {
     DEFAULT_ROWS_PER_PAGE,
     ENTER_KEY,
     facilityListStatusChoicesEnum,
+    facilityClaimStatusChoices,
     facilityListItemStatusChoicesEnum,
     facilityListItemErrorStatuses,
     facilityListSummaryStatusMessages,
     minimum100PercentWidthEmbedHeight,
     matchResponsibilityEnum,
     optionsForSortingResults,
+    componentsWithErrorMessage,
 } from './constants';
 
 import { createListItemCSV } from './util.listItemCSV';
@@ -171,6 +178,7 @@ export const makeGetFacilitiesTypeProcessingTypeURL = () =>
     '/api/facility-processing-types/';
 export const makeGetNumberOfWorkersURL = () => '/api/workers-ranges/';
 export const makeGetNativeLanguageName = () => '/api/native_language_name/';
+export const makeGetClaimStatusesURL = () => '/api/claim-statuses/';
 
 export const makeGetFacilitiesURL = () => '/api/facilities/';
 export const makeGetFacilityByOSIdURL = (
@@ -203,7 +211,9 @@ export const makeMergeTwoFacilitiesAPIURL = (targetOSID, toMergeOSID) =>
 export const makeGetFacilitiesCountURL = () => '/api/facilities/count/';
 
 export const makeGetAPIFeatureFlagsURL = () => '/api-feature-flags/';
-export const makeGetFacilityClaimsURL = () => '/api/facility-claims/';
+// TODO: handle &sort_by=contributors_desc at the end of a query
+export const makeGetFacilityClaimsURLWithQueryString = qs =>
+    `/api/facility-claims/?${qs}`;
 export const makeGetFacilityClaimByClaimIDURL = claimID =>
     `/api/facility-claims/${claimID}/`;
 export const makeMessageFacilityClaimantByClaimIDURL = claimID =>
@@ -256,6 +266,7 @@ export const createQueryStringFromSearchFilters = (
         combineContributors = '',
         boundary = {},
         sortAlgorithm = {},
+        claimStatuses = [],
     },
     withEmbed,
     detail,
@@ -268,6 +279,7 @@ export const createQueryStringFromSearchFilters = (
             contributorTypes,
         ),
         countries: createCompactSortedQuerystringInputObject(countries),
+        statuses: createCompactSortedQuerystringInputObject(claimStatuses),
         sectors: createCompactSortedQuerystringInputObject(sectors),
         parent_company: createCompactSortedQuerystringInputObject(
             parentCompany,
@@ -332,6 +344,7 @@ export const createFiltersFromQueryString = qs => {
         contributor_types: contributorTypes = [],
         countries = [],
         sectors = [],
+        statuses = [],
         parent_company: parentCompany = [],
         facility_type: facilityType = [],
         processing_type: processingType = [],
@@ -349,6 +362,7 @@ export const createFiltersFromQueryString = qs => {
         lists: createSelectOptionsFromParams(lists),
         contributorTypes: createSelectOptionsFromParams(contributorTypes),
         countries: createSelectOptionsFromParams(countries),
+        statuses: createSelectOptionsFromParams(statuses),
         sectors: createSelectOptionsFromParams(sectors),
         parentCompany: createSelectOptionsFromParams(parentCompany),
         facilityType: createSelectOptionsFromParams(facilityType),
@@ -418,6 +432,8 @@ export const getTokenFromQueryString = qs => {
     return isArray(token) ? head(token) : token;
 };
 
+const parseFilterQueryString = qs => (startsWith(qs, '?') ? qs.slice(1) : qs);
+
 export const dashboardListParamsDefaults = Object.freeze({
     contributor: null,
     matchResponsibility: matchResponsibilityEnum.MODERATOR,
@@ -425,13 +441,11 @@ export const dashboardListParamsDefaults = Object.freeze({
 });
 
 export const getDashboardListParamsFromQueryString = qs => {
-    const qsToParse = startsWith(qs, '?') ? qs.slice(1) : qs;
-
     const {
         contributor,
         matchResponsibility = dashboardListParamsDefaults.matchResponsibility,
         status = dashboardListParamsDefaults.status,
-    } = querystring.parse(qsToParse);
+    } = querystring.parse(parseFilterQueryString(qs));
 
     return Object.freeze({
         contributor: getNumberFromParsedQueryStringParamOrUseDefault(
@@ -440,6 +454,29 @@ export const getDashboardListParamsFromQueryString = qs => {
         ),
         matchResponsibility,
         status,
+    });
+};
+
+export const dashboardClaimsListParamsDefaults = Object.freeze({
+    countries: [],
+    claimStatuses: facilityClaimStatusChoices[0].value,
+});
+
+export const getDashboardClaimsListParamsFromQueryString = qs => {
+    const {
+        countries,
+        statuses = dashboardClaimsListParamsDefaults.claimStatuses,
+    } = querystring.parse(parseFilterQueryString(qs));
+
+    const statusesArray = Array.isArray(statuses) ? statuses : [statuses];
+    const countriesArray = Array.isArray(countries) ? countries : [countries];
+
+    return Object.freeze({
+        countries: uniq(compact(countriesArray)),
+        statuses: intersection(
+            uniq(compact(statusesArray)),
+            map(facilityClaimStatusChoices, 'value'),
+        ),
     });
 };
 
@@ -561,30 +598,26 @@ export const createProfileUpdateErrorMessages = makeCreateFormErrorMessagesFn(
 );
 
 export function createUploadFormErrorMessages(name, file) {
-    const allowedCharsRegex = /^[a-zA-Z0-9\s'&.()[\]-]+$/;
+    const allowedCharsRegex = /^[a-zA-Z0-9\s'&,.()[\]-]+$/;
     const restrictedCharsRegex = /^[0-9&.'()[\]-]+$/;
 
     const errorMessages = [];
 
     if (!name) {
-        errorMessages.push('Missing required Facility List Name');
+        errorMessages.push(componentsWithErrorMessage.missingListName);
     } else {
         // Didn't allow name with invalid characters.
         if (!allowedCharsRegex.test(name)) {
-            errorMessages.push(
-                'List name contains invalid characters. Only letters, numbers, spaces, apostrophe, hyphen, ampersand, period, parentheses, and square brackets are allowed',
-            );
+            errorMessages.push(componentsWithErrorMessage.invalidCharacters);
         }
         // Didn't allow name that consists only of symbols or numbers.
         if (restrictedCharsRegex.test(name)) {
-            errorMessages.push(
-                'Facility List Name must also consist of letters',
-            );
+            errorMessages.push(componentsWithErrorMessage.mustConsistOfLetters);
         }
     }
 
     if (!file) {
-        errorMessages.push('Missing required Facility List File');
+        errorMessages.push(componentsWithErrorMessage.missingFile);
     }
 
     return errorMessages;
@@ -674,6 +707,25 @@ export const makeDashboardContributorListLink = ({
     return `/dashboard/lists/${
         params.length > 0 ? `?${params.join('&')}` : ''
     }`;
+};
+
+export const makeDashboardClaimListLink = ({ statuses, countries }) => {
+    const createClaimFilterParams = (key, claimParamValues) =>
+        claimParamValues && claimParamValues.length > 0
+            ? join(
+                  map(claimParamValues, value => `${key}=${value}`),
+                  '&',
+              )
+            : '';
+
+    const statusParams = createClaimFilterParams('statuses', statuses);
+    const countryParams = createClaimFilterParams('countries', countries);
+
+    const params = [statusParams, countryParams]
+        .filter(param => param)
+        .join('&');
+
+    return params ? `/dashboard/claims/?${params}` : '/dashboard/claims';
 };
 
 export const splitContributorsIntoPublicAndNonPublic = contributors =>
@@ -1138,3 +1190,41 @@ export const logErrorToRollbar = (window, error, user) => {
         }
     }
 };
+
+function descendingComparator(a, b, orderBy) {
+    let aValue = a[orderBy];
+    let bValue = b[orderBy];
+
+    if (typeof aValue === 'string') {
+        aValue = removeAccents(aValue.toLowerCase());
+    }
+    if (typeof bValue === 'string') {
+        bValue = removeAccents(bValue.toLowerCase());
+    }
+
+    if (aValue === null || bValue < aValue) {
+        return -1;
+    }
+    if (bValue === null || bValue > aValue) {
+        return 1;
+    }
+    return 0;
+}
+
+export function getComparator(order, orderBy) {
+    return order === 'desc'
+        ? (a, b) => descendingComparator(a, b, orderBy)
+        : (a, b) => -descendingComparator(a, b, orderBy);
+}
+
+export function sort(array, comparator) {
+    const stabilizedThis = array.map((el, index) => [el, index]);
+    stabilizedThis.sort((a, b) => {
+        const order = comparator(a[0], b[0]);
+        if (order !== 0) {
+            return order;
+        }
+        return a[1] - b[1];
+    });
+    return stabilizedThis.map(el => el[0]);
+}

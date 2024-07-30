@@ -16,6 +16,8 @@ export const REJECT_ACTION = 'reject';
 
 export const InfoLink = 'https://info.opensupplyhub.org';
 
+export const CLAIM_DECISION_EMPTY = 'N/A';
+
 export const InfoPaths = {
     storiesResources: 'stories-resources',
     privacyPolicy: 'privacy-policy',
@@ -71,14 +73,18 @@ export const contributorTypeOptions = Object.freeze([
     OTHER,
 ]);
 
-// These choices must be kept in sync with the identical list
-// kept in the Django API's models.py file
 export const facilityClaimStatusChoicesEnum = Object.freeze({
     PENDING: 'PENDING',
     APPROVED: 'APPROVED',
     DENIED: 'DENIED',
     REVOKED: 'REVOKED',
 });
+export const facilityClaimStatusChoices = [
+    { value: facilityClaimStatusChoicesEnum.PENDING, label: 'PENDING' },
+    { value: facilityClaimStatusChoicesEnum.APPROVED, label: 'APPROVED' },
+    { value: facilityClaimStatusChoicesEnum.DENIED, label: 'DENIED' },
+    { value: facilityClaimStatusChoicesEnum.REVOKED, label: 'REVOKED' },
+];
 
 export const facilityListStatusChoicesEnum = Object.freeze({
     PENDING: 'PENDING',
@@ -1003,7 +1009,7 @@ export const facilityDetailsActions = {
     REPORT_AS_CLOSED: 'Report as Closed',
     REPORT_AS_REOPENED: 'Report as Reopened',
     DISPUTE_CLAIM: 'Dispute Claim',
-    CLAIM_FACILITY: 'Claim this Facility',
+    CLAIM_FACILITY: 'Claim this production location',
     VIEW_ON_OAR: 'View on Open Supply Hub',
 };
 
@@ -1261,4 +1267,25 @@ export const USER_DEFAULT_STATE = Object.freeze({
     is_superuser: false,
     is_staff: false,
     is_moderation_mode: false,
+});
+
+export const facilityClaimStepsNames = Object.freeze({
+    CLAIM_PROD_LOCATION: 'Claim this production location',
+    SUPPORT_DOC: 'Support Documentation',
+    ADDITIONAL_DATA: 'Additional Data',
+});
+
+export const componentsWithErrorMessage = Object.freeze({
+    missingListName: 'Missing required Facility List Name.',
+    invalidCharacters: (
+        <>
+            The <b>List Name</b> you entered contains invalid characters.
+            Allowed characters include: letters, numbers, spaces, apostrophe (
+            &#39; ), comma ( &#44; ), hyphen ( &#45; ), ampersand ( &#38; ),
+            period ( &#46; ), parentheses ( ), and square brackets ( &#91;&#93;
+            ). Characters that contain accents are not allowed.
+        </>
+    ),
+    mustConsistOfLetters: 'Facility List Name must also consist of letters.',
+    missingFile: 'Missing required Facility List File.',
 });

@@ -1,13 +1,15 @@
 import json
 
 from django.urls import path
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.admin import AdminSite
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext as _
+from api.models.sector_group import SectorGroup
 from simple_history.admin import SimpleHistoryAdmin
 from waffle.models import Flag, Sample, Switch
 from waffle.admin import FlagAdmin, SampleAdmin, SwitchAdmin
@@ -177,12 +179,50 @@ class ExtendedFieldAdmin(admin.ModelAdmin):
 
 
 class SectorAdmin(admin.ModelAdmin):
+    filter_horizontal = ('groups',)
+
     def get_ordering(self, request):
         return ['name']
 
 
-class TileCacheAdmin(SimpleHistoryAdmin):
-    search_fields = ('path', 'embed')
+class SectorGroupAdmin(admin.ModelAdmin):
+    readonly_fields = ('related_sectors',)
+
+    def get_readonly_fields(self, request, obj=None):
+        return self.readonly_fields if obj else []
+
+    def get_fields(self, request, obj=None):
+        fields = ['name']
+        if obj:
+            fields.append('related_sectors')
+        return fields
+
+    def related_sectors(self, obj):
+        return obj.related_sectors()
+
+    related_sectors.short_description = 'Related Sectors'
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and obj.sectors.exists():
+            messages.warning(
+                request,
+                _(
+                    "Sector group '%s' cannot be deleted because it is "
+                    "associated with one or more sectors."
+                )
+                % obj,
+            )
+            return False
+        return super().has_delete_permission(request, obj)
+
+    def get_ordering(self, request):
+        return ['name']
 
 
 admin_site.register(models.Version)
@@ -205,5 +245,4 @@ admin_site.register(Group)
 admin_site.register(models.RequestLog, RequestLogAdmin)
 admin_site.register(models.ApiLimit, ApiLimitAdmin)
 admin_site.register(models.Sector, SectorAdmin)
-admin_site.register(models.TileCache, TileCacheAdmin)
-admin_site.register(models.DynamicSetting)
+admin_site.register(SectorGroup, SectorGroupAdmin)

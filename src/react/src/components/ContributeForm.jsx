@@ -1,5 +1,13 @@
 import React, { Component } from 'react';
-import { arrayOf, bool, func, number, string } from 'prop-types';
+import {
+    arrayOf,
+    bool,
+    func,
+    number,
+    string,
+    oneOfType,
+    element,
+} from 'prop-types';
 import { connect } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import MaterialButton from '@material-ui/core/Button';
@@ -226,7 +234,7 @@ ContributeForm.propTypes = {
     filename: string.isRequired,
     replaces: number.isRequired,
     fetching: bool.isRequired,
-    error: arrayOf(string),
+    error: arrayOf(oneOfType([element, string])),
     updateName: func.isRequired,
     updateDescription: func.isRequired,
     updateFileName: func.isRequired,

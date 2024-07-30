@@ -77,5 +77,3 @@ from .user import (
   User,
 )
 from .version import Version
-from .tile_cache import TileCache
-from .dynamic_setting import DynamicSetting

@@ -7,7 +7,6 @@ import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import clamp from 'lodash/clamp';
-import stubTrue from 'lodash/stubTrue';
 import constant from 'lodash/constant';
 
 import Dialog from '@material-ui/core/Dialog';
@@ -21,6 +20,7 @@ import ClaimFacilityAdditionalData from './ClaimFacilityAdditionalData';
 import { submitClaimAFacilityData } from '../actions/claimFacility';
 
 import COLOURS from '../util/COLOURS';
+import { facilityClaimStepsNames } from '../util/constants';
 
 import {
     claimFacilitySupportDocsIsValid,
@@ -86,6 +86,9 @@ const claimFacilityStepperStyles = Object.freeze({
         display: 'flex',
         fontWeight: 'bold',
     }),
+    displayNone: Object.freeze({
+        display: 'none',
+    }),
     formContainerStyles: Object.freeze({
         width: '100%',
         padding: '20px',
@@ -118,23 +121,23 @@ const SUBMIT_FORM = 'SUBMIT_FORM';
 
 const steps = Object.freeze([
     Object.freeze({
-        name: 'Claim this facility',
+        name: facilityClaimStepsNames.CLAIM_PROD_LOCATION,
         component: ClaimFacilityIntroStep,
-        next: 'Support Documentation',
+        next: facilityClaimStepsNames.SUPPORT_DOC,
         hasBackButton: true,
         hasNextButton: true,
-        stepInputIsValid: stubTrue,
+        stepInputIsValid: ({ agreement }) => agreement === 'yes',
     }),
     Object.freeze({
-        name: 'Support Documentation',
+        name: facilityClaimStepsNames.SUPPORT_DOC,
         component: ClaimFacilitySupportDocs,
-        next: 'Additional Data',
+        next: facilityClaimStepsNames.ADDITIONAL_DATA,
         hasBackButton: true,
         hasNextButton: true,
         stepInputIsValid: claimFacilitySupportDocsIsValid,
     }),
     Object.freeze({
-        name: 'Additional Data',
+        name: facilityClaimStepsNames.ADDITIONAL_DATA,
         component: ClaimFacilityAdditionalData,
         next: null,
         hasBackButton: true,
@@ -204,7 +207,10 @@ function ClaimFacilityStepper({
     const controlsSection = (
         <>
             <div style={claimFacilityStepperStyles.formContainerStyles}>
-                {error || !stepInputIsValid(formData) ? (
+                {error ||
+                (!stepInputIsValid(formData) &&
+                    activeStepName !==
+                        facilityClaimStepsNames.CLAIM_PROD_LOCATION) ? (
                     <Typography
                         variant="body2"
                         style={
@@ -217,7 +223,13 @@ function ClaimFacilityStepper({
                             : 'Some required fields are missing or invalid.'}
                     </Typography>
                 ) : null}
-                <div style={claimFacilityStepperStyles.buttonsContainerStyles}>
+                <div
+                    style={
+                        formData.agreement === 'yes'
+                            ? claimFacilityStepperStyles.buttonsContainerStyles
+                            : claimFacilityStepperStyles.displayNone
+                    }
+                >
                     {hasNextButton && nextButtonAction !== SUBMIT_FORM && (
                         <Button
                             color="secondary"
@@ -322,33 +334,34 @@ function ClaimFacilityStepper({
                 )}
             </Dialog>
             <div style={claimFacilityStepperStyles.formContainerStyles}>
-                {activeStepName === 'Claim this facility' ? (
+                {activeStepName ===
+                facilityClaimStepsNames.CLAIM_PROD_LOCATION ? (
                     <div>
                         <Typography variant="display3" style={infoTitleStyle}>
                             Claim a Production Location
                         </Typography>
-                        <Typography variant="heading" style={infoDescStyle}>
+                        <Typography variant="subheading" style={infoDescStyle}>
                             In order to submit a claim request, you must be an
                             owner or senior manager of the production location.
                         </Typography>
                     </div>
                 ) : null}
-                {activeStepName === 'Support Documentation' ? (
+                {activeStepName === facilityClaimStepsNames.SUPPORT_DOC ? (
                     <div>
                         <Typography variant="display3" style={infoTitleStyle}>
                             Supporting Documentation
                         </Typography>
-                        <Typography variant="heading" style={infoDescStyle}>
+                        <Typography variant="subheading" style={infoDescStyle}>
                             Use the form below to complete your claim request.
                         </Typography>
                     </div>
                 ) : null}
-                {activeStepName === 'Additional Data' ? (
+                {activeStepName === facilityClaimStepsNames.ADDITIONAL_DATA ? (
                     <div>
                         <Typography variant="display3" style={infoTitleStyle}>
                             Additional Data
                         </Typography>
-                        <Typography variant="heading" style={infoDescStyle}>
+                        <Typography variant="subheading" style={infoDescStyle}>
                             Use the form below to upload additional information
                             about this production location.
                         </Typography>
@@ -373,6 +386,7 @@ ClaimFacilityStepper.propTypes = {
     formData: shape({
         yourName: string.isRequired,
         yourTitle: string.isRequired,
+        agreement: string.isRequired,
     }).isRequired,
     error: arrayOf(string),
 };

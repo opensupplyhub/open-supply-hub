@@ -11,6 +11,7 @@ ROLLBAR = {
     'environment': settings.env.lower(),
     'root': BASE_DIR,
     'suppress_reinit_warning': True,
+    'capture_ip': False
 }
 
 COUNTRY_CHOICES = [

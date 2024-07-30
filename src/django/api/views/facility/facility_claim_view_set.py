@@ -5,7 +5,8 @@ from api.helpers.helpers import validate_workers_count
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
     NotFound,
-    PermissionDenied
+    PermissionDenied,
+    ValidationError
 )
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -14,6 +15,7 @@ from django.db import transaction
 from django.utils import timezone
 from waffle import switch_is_active
 
+from api.constants import FacilityClaimStatuses
 from ...exceptions import BadRequestException
 from ...extended_fields import create_extendedfields_for_claim
 from ...geocoding import geocode_address
@@ -39,6 +41,7 @@ from ...serializers import (
     ApprovedFacilityClaimSerializer,
     FacilityClaimSerializer,
     FacilityClaimDetailsSerializer,
+    FacilityClaimListQueryParamsSerializer
 )
 from ..make_report import _report_facility_claim_email_error_to_rollbar
 
@@ -60,13 +63,22 @@ class FacilityClaimViewSet(ModelViewSet):
         pass
 
     def list(self, request):
-        if not switch_is_active('claim_a_facility'):
-            raise NotFound()
+        params = FacilityClaimListQueryParamsSerializer(
+            data=self.request.query_params
+        )
+        if not params.is_valid():
+            raise ValidationError(params.errors)
 
-        response_data = FacilityClaimSerializer(
-            FacilityClaim.objects.all().order_by('-id'),
-            many=True
-        ).data
+        statuses = params.validated_data.get('statuses')
+        countries = params.validated_data.get('countries')
+
+        queryset = FacilityClaim.objects.all().order_by('-id')
+        if statuses:
+            queryset = queryset.filter(status__in=statuses)
+        if countries:
+            queryset = queryset.filter(facility__country_code__in=countries)
+
+        response_data = FacilityClaimSerializer(queryset, many=True).data
 
         return Response(response_data)
 
@@ -124,7 +136,7 @@ class FacilityClaimViewSet(ModelViewSet):
         try:
             claim = FacilityClaim.objects.get(pk=pk)
 
-            if claim.status != FacilityClaim.PENDING:
+            if claim.status != FacilityClaimStatuses.PENDING:
                 raise BadRequestException(
                     'Only PENDING claims can be approved.',
                 )
@@ -132,7 +144,7 @@ class FacilityClaimViewSet(ModelViewSet):
             approved_claims_for_facility_count = (
                 FacilityClaim
                 .objects
-                .filter(status=FacilityClaim.APPROVED)
+                .filter(status=FacilityClaimStatuses.APPROVED)
                 .filter(facility=claim.facility)
                 .count()
             )
@@ -144,11 +156,11 @@ class FacilityClaimViewSet(ModelViewSet):
             claim.status_change_reason = request.data.get('reason', '')
             claim.status_change_by = request.user
             claim.status_change_date = timezone.now()
-            claim.status = FacilityClaim.APPROVED
+            claim.status = FacilityClaimStatuses.APPROVED
             claim.save()
 
             note = (
-                f'Status was updated to {FacilityClaim.APPROVED} '
+                f'Status was updated to {FacilityClaimStatuses.APPROVED} '
                 f'for reason: {claim.status_change_reason}'
             )
 
@@ -186,7 +198,7 @@ class FacilityClaimViewSet(ModelViewSet):
         try:
             claim = FacilityClaim.objects.get(pk=pk)
 
-            if claim.status != FacilityClaim.PENDING:
+            if claim.status != FacilityClaimStatuses.PENDING:
                 raise BadRequestException(
                     'Only PENDING claims can be denied.',
                 )
@@ -194,11 +206,11 @@ class FacilityClaimViewSet(ModelViewSet):
             claim.status_change_reason = request.data.get('reason', '')
             claim.status_change_by = request.user
             claim.status_change_date = timezone.now()
-            claim.status = FacilityClaim.DENIED
+            claim.status = FacilityClaimStatuses.DENIED
             claim.save()
 
             note = (
-                f'Status was updated to {FacilityClaim.DENIED} '
+                f'Status was updated to {FacilityClaimStatuses.DENIED} '
                 f'for reason: {claim.status_change_reason}'
             )
 
@@ -229,7 +241,7 @@ class FacilityClaimViewSet(ModelViewSet):
         try:
             claim = FacilityClaim.objects.get(pk=pk)
 
-            if claim.status != FacilityClaim.APPROVED:
+            if claim.status != FacilityClaimStatuses.APPROVED:
                 raise BadRequestException(
                     'Only APPROVED claims can be revoked.',
                 )
@@ -237,11 +249,11 @@ class FacilityClaimViewSet(ModelViewSet):
             claim.status_change_reason = request.data.get('reason', '')
             claim.status_change_by = request.user
             claim.status_change_date = timezone.now()
-            claim.status = FacilityClaim.REVOKED
+            claim.status = FacilityClaimStatuses.REVOKED
             claim.save()
 
             note = (
-                f'Status was updated to {FacilityClaim.REVOKED} '
+                f'Status was updated to {FacilityClaimStatuses.REVOKED} '
                 f'for reason: {claim.status_change_reason}'
             )
 
@@ -300,7 +312,7 @@ class FacilityClaimViewSet(ModelViewSet):
                 FacilityClaim
                 .objects
                 .filter(contributor=request.user.contributor)
-                .filter(status=FacilityClaim.APPROVED)
+                .filter(status=FacilityClaimStatuses.APPROVED)
                 .get(pk=pk)
             )
             if request.user.contributor != claim.contributor:
@@ -464,7 +476,7 @@ class FacilityClaimViewSet(ModelViewSet):
             FacilityClaim
             .objects
             .filter(contributor=request.user.contributor)
-            .filter(status=FacilityClaim.APPROVED)
+            .filter(status=FacilityClaimStatuses.APPROVED)
             .get(pk=pk)
         )
         if request.user.contributor != claim.contributor:

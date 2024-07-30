@@ -17,6 +17,7 @@ module "database_anonymizer" {
   subnet_ids                    = module.vpc.private_subnet_ids
   database_subnet_group_name    = aws_db_subnet_group.default.name
   database_security_group_ids   = module.database_enc.database_security_group_id
+  environment                   = var.environment
 
   security_group_ids = [
     module.vpc.bastion_security_group_id,

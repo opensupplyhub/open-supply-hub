@@ -3,6 +3,165 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+
+## Release 1.18.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: August 10, 2024
+
+### Database changes
+#### Migrations:
+* 0152_delete_tilecache_and_dynamicsetting - removed unused `api_tilecache` and `api_dynamicsetting` tables.
+* 0153_add_sector_group_table - creates the `SectorGroup` model and populates it with the sector groups names.
+* 0154_associate_sectors_with_groups - associates sectors with sector groups.
+
+#### Scheme changes
+* [OSDEV-1142](https://opensupplyhub.atlassian.net/browse/OSDEV-1142) - Technical Debt. Remove unused `api_tilecache` and `api_dynamicsetting` tables. Migration has been created, removed related data in the code base.
+* [OSDEV-360](https://opensupplyhub.atlassian.net/browse/OSDEV-360) - The following changes have been implemented:
+    * A new table, `api_sectorgroup`, has been introduced and populated with sector group names.
+    * A new field named `groups` has been added to the `Sector` model to establish a many-to-many relationship between the `api_sector` and the `api_sectorgroup` tables.
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* [OSDEV-1144](https://opensupplyhub.atlassian.net/browse/OSDEV-1144) - Claims emails. Updated text for approval, revocation, and denial emails.
+* [OSDEV-360](https://opensupplyhub.atlassian.net/browse/OSDEV-360) - On the admin dashboard, functionality has been added to allow Admins to add, remove, or modify sector groups. In the `Sectors` tab, Admins can now adjust the related sector groups for each sector. Each sector must be associated with at least one group.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `index_facilities_new`
+
+
+## Release 1.17.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: July 27, 2024
+
+### Database changes
+#### Migrations:
+* 0151_replace_index_number_of_workers - replace function `index_number_of_workers` to use one source of truth for both`number_of_workers` & `extended_fields`.
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* [OSDEV-1145](https://opensupplyhub.atlassian.net/browse/OSDEV-1145) - Error message appearing as red dot with no context. Error display has been fixed. Simplified displaying logic of errors. Changed error property type.
+* [OSDEV-576](https://opensupplyhub.atlassian.net/browse/OSDEV-576) - Implemented one source of truth to Search query source & Production Location Details page source for field `number_of_workers`.
+* [OSDEV-1146](https://opensupplyhub.atlassian.net/browse/OSDEV-1146) - Fixed issue with missed header & data for Claim Decision column while downloaded Facility Claims data in xlsx format.
+
+### What's new
+* [OSDEV-1090](https://opensupplyhub.atlassian.net/browse/OSDEV-1090) - Claims. Remove extra product type field on Claimed Facility Details page.
+* [OSDEV-273](https://opensupplyhub.atlassian.net/browse/OSDEV-273) - Facility Claims. Implement filtering by Country and Status. Set 'pending' claim status as a default filter.
+* [OSDEV-1083](https://opensupplyhub.atlassian.net/browse/OSDEV-1083) - Implemented a 'toggle password visibility' feature in the login, registration, reset password and user profile forms.
+* The legacy `_template` API endpoint was disabled via the configuration file in favor of the new `_index_template` API endpoint, since the composable index template is used for OpenSearch. The `legacy_template` was set to `false` to start using the defined composable index template in the `production_locations.json` file. This change is necessary to avoid omitting the `production_locations.json` index template for the `production-locations` index defined in the Logstash app and to enforce the OpenSearch cluster to use the explicit mapping for the `production-locations` index.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `index_facilities_new`
+
+
+## Release 1.16.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: July 13, 2024
+
+### Database changes
+#### Migrations:
+* *Describe migrations here.*
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
+### Code/API changes
+* [OSDEV-1100](https://opensupplyhub.atlassian.net/browse/OSDEV-1100) - Replaced all mentions of "facility" and "facilities" with the new production location naming in the Logstash app. Renamed `location` field in the production locations index to `coordinates`.
+* [OSDEV-705](https://opensupplyhub.atlassian.net/browse/OSDEV-705) - Created an additional `RowCoordinatesSerializer` in the ContriCleaner to handle coordinate values ("lat" and "lng"). Moved the conversion of "lat" and "lng" into float point numbers from `FacilityListViewSet` to this serializer.
+* Introduced a general format for all Python logs by updating the Django `LOGGING` constant. Disabled propagation for the `django` logger to the `root` logger to avoid log duplication. Removed unnecessary calls to the `basicConfig` method since only the configuration defined in the `LOGGING` constant in the settings.py file is considered valid by the current Django app.
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* [OSDEV-705](https://opensupplyhub.atlassian.net/browse/OSDEV-705) - Fixed the error “could not convert string to float” that occurred when a list contained columns for “lat” and “lng” and only some of the rows in these columns had data. As a result, rows are processed regardless of whether the values for “lat” and “lng” are present and valid, invalid, or empty.
+
+### What's new
+* [OSDEV-981](https://opensupplyhub.atlassian.net/browse/OSDEV-981) Reporting. History of contributor uploads. Created a new report with details about the contributor:
+    * including name, ID, contributor type;
+    * first upload, including date of the first upload and time since the first upload in days;
+    * most recent (or “last”) upload, including date of the last upload and time since the last upload in days;
+    * total (or “lifetime”) uploads and a calculation for uploads per year (= lifetime uploads = total uploads / (current year - first upload year); if “first upload year” = “current year”, then use 1 in denominator). This data is ordered based on the “date of last upload” column so that contributors who have recently contributed data are at the top of the report.
+* [OSDEV-1105](https://opensupplyhub.atlassian.net/browse/OSDEV-1105) - Contribution. Allow commas in list name and update error message.
+* [OSDEV-272](https://opensupplyhub.atlassian.net/browse/OSDEV-272) - Facility Claims Page. Implement ascending/descending and alphabetic sort on FE. Applied proper sorting for lower case/upper case/accented strings.
+* [OSDEV-1036](https://opensupplyhub.atlassian.net/browse/OSDEV-1036) - Claims. Add a sortable "claim decision" column to claims admin page.
+* [OSDEV-1053](https://opensupplyhub.atlassian.net/browse/OSDEV-1053) - Updated email notification about the claim submission.
+
+### Release instructions:
+* *Provide release instructions here.*
+
+
+## Release 1.15.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: June 29, 2024
+
+### Database changes
+#### Migrations:
+* 0150_introduce_function_formatting_number_to_percent - adds add_percent_to_number to DB and drop
+drop_calc_column_func.
+
+### Code/API changes
+* [OSDEV-1004](https://opensupplyhub.atlassian.net/browse/OSDEV-1004) - The following changes have been made to the Logstash and OpenSearch services:
+    * Prepared the SQL script to collect all the necessary data for the `v1/facilities` API endpoint according to the new API specification. Agreed upon and established a prioritization scale for gathering data related to the name, address, sector, parent_company, product_type, facility_type, processing_type, number_of_workers and location fields as follows:
+        * Data from the approved claim.
+        * Promoted matches (considered as promoted facility list items).
+        * The most recently contributed data.
+    * For the country field, the same prioritization scale has been utilized except for 'Data from the approved claims' because the claimant cannot update the country in any way.
+    * Introduced a new set of Ruby scripts to filter and reorganize the incoming data at the Logstash app level, avoiding complex database queries that could lead to high database load.
+    * Updated the `facilities` index template for OpenSearch to define how new fields within the facility documents are stored and indexed by OpenSearch.
+    * Set up the main Logstash pipeline to run every 15 minutes.
+    * Introduced ingress and egress rules for the Opensearch and Logstash.
+    * Parameterized database credentials for the logstash configs input.
+    * Parameterized OpenSearch domain for the logstash configs output.
+    * Specified the ARN of an IAM role to be used as the master user for the OpenSearch domain.
+    * Set EFS access point permissions for logstash:root user.
+    * Utilized environment variables to disable authentication for OpenSearch during local development, as the authentication isn't necessary.
+
+    All changes have been made to meet the API specification requirements for `v1/facilities` API endpoint as closely as possible.
+
+### Architecture/Environment changes
+* For the job `clean_ecr_repositories` of Destroy Environment action, it was added a new line to the script responsible for deleting ECR repositories, specifically targeting the `opensupplyhub-logstash` repository.
+* The `reindex_database` and `index_facilities_new` commands have been removed from the `post_deployment` command.
+
+### Bugfix
+* [OSDEV-1098](https://opensupplyhub.atlassian.net/browse/OSDEV-1098) Reporting. A columns values in the report "Contributor type by %" are not cumulative. The SQL for the report has been rewritten in such a way that first calculates the monthly counts, then computes the cumulative counts for each month, and finally applies the add_percent_to_number function to get the desired percentages. This gives us the accumulated values for each month.
+
+### What's new
+* [OSDEV-1071](https://opensupplyhub.atlassian.net/browse/OSDEV-1071)  Replaced the term "facility" with "production location" in the claims banners
+* [OSDEV-933](https://opensupplyhub.atlassian.net/browse/OSDEV-933) Facility Claims. Add "what is claims" screen. `What is claims` page with radio buttons has been added that explains more about the claim. Updated title and link text for not logged in user who wants to claim a production location.
+* [OSDEV-1088](https://opensupplyhub.atlassian.net/browse/OSDEV-1088) - Collecting users' public IP addresses in the Rollbar error tracker has been disabled to meet GDPR compliance.
+
+### Release instructions:
+* Update code.
+
+
 ## Release 1.14.0
 
 ## Introduction
@@ -18,9 +177,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Scheme changes
 * [OSDEV-1084](https://opensupplyhub.atlassian.net/browse/OSDEV-1084) - To enable adding a range for the number of workers during the claiming process, the type of the `facility_workers_count` field in the `FacilityClaim` table was changed from `IntegerField` to `CharField`.
-
-### Code/API changes
-* *Describe code/API changes here.*
 
 ### Architecture/Environment changes
 * [OSDEV-1069](https://opensupplyhub.atlassian.net/browse/OSDEV-1069) - The following changes have been made:
@@ -47,18 +203,16 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Added the `--if-exists` flag to all calls of the `pg_restore` command to eliminate spam errors when it tries to delete resources that don't exist just because the DB can be empty. Improved the section of the README about applying the database dump locally. Specifically, SQL queries have been added to delete all the tables and recreate an empty database schema to avoid conflicts during the database dump restore.
 
 ### What's new
-*   [OSDEV-1030](https://opensupplyhub.atlassian.net/browse/OSDEV-1030) - The following changes have been made:
-    *   Replaced the "Donate" button with a "Blog" button in the header
-    *   Added links to the "Blog" and "Careers" pages in the footer
-*   [OSDEV-939](https://opensupplyhub.atlassian.net/browse/OSDEV-939) - The following changes have been made:
-    *   Created new steps `Supporting Documentation` & `Additional Data` for `Facility Claim Request` page.
-    *   Added popup for successfully submitted claim.
+* [OSDEV-1030](https://opensupplyhub.atlassian.net/browse/OSDEV-1030) - The following changes have been made:
+    * Replaced the "Donate" button with a "Blog" button in the header
+    * Added links to the "Blog" and "Careers" pages in the footer
+* [OSDEV-939](https://opensupplyhub.atlassian.net/browse/OSDEV-939) - The following changes have been made:
+    * Created new steps `Supporting Documentation` & `Additional Data` for `Facility Claim Request` page.
+    * Added popup for successfully submitted claim.
 * [OSDEV-1084](https://opensupplyhub.atlassian.net/browse/OSDEV-1084) - Enable adding a range for the number of workers during the claiming process, either after pressing the “I want to claim this production location” link or on the Claimed Facility Details page.
 
 ### Release instructions:
 * Update code.
-* Apply DB migrations up to the latest one.
-* Run the index_facilities_new management command.
 
 
 ## Release 1.13.0

@@ -1,4 +1,4 @@
-from api.constants import ProcessingAction
+from api.constants import ProcessingAction, FacilityClaimStatuses
 from api.models import (
     Contributor,
     Facility,
@@ -135,7 +135,7 @@ class FacilityDeleteTest(APITestCase):
             facility=self.facility,
             contact_person="test",
             phone_number="1234567890",
-            status=FacilityClaim.APPROVED,
+            status=FacilityClaimStatuses.APPROVED,
         )
         self.client.login(
             email=self.superuser_email, password=self.superuser_password
@@ -149,7 +149,7 @@ class FacilityDeleteTest(APITestCase):
             facility=self.facility,
             contact_person="test",
             phone_number="1234567890",
-            status=FacilityClaim.PENDING,
+            status=FacilityClaimStatuses.PENDING,
         )
         self.client.login(
             email=self.superuser_email, password=self.superuser_password
@@ -631,7 +631,7 @@ class FacilityDeleteTest(APITestCase):
             facility=self.facility,
             contact_person="test",
             phone_number="1234567890",
-            status=FacilityClaim.DENIED,
+            status=FacilityClaimStatuses.DENIED,
         )
 
         FacilityClaimReviewNote.objects.create(

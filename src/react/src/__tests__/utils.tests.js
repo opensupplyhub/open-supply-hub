@@ -74,7 +74,8 @@ const {
     pluralizeResultsCount,
     removeDuplicatesFromOtherLocationsData,
     makeGetSectorsURL,
-    createUserDropdownLinks
+    createUserDropdownLinks,
+    createUploadFormErrorMessages
 } = require('../util/util');
 
 const {
@@ -90,8 +91,36 @@ const {
     facilityListItemStatusChoicesEnum,
     facilityListSummaryStatusMessages,
     FACILITIES_REQUEST_PAGE_SIZE,
-    CLAIM_A_FACILITY
+    CLAIM_A_FACILITY,
+    componentsWithErrorMessage,
 } = require('../util/constants');
+
+it('gets correct error message component', () => {
+    const correctListName = 'New & Test Name - Location, [Ltd].';
+    const emptyListName = '';
+    const listNameWithInvalidCharacters = 'Test / À location';
+    const listNameWithOnlySymbolsAndNumbers = '53464&&&';
+    const file = {
+        current: {
+            files: [
+                'file',
+            ],
+        },
+    };
+    const noFile = undefined;
+
+    const emptyListNameDataErrors = createUploadFormErrorMessages(emptyListName, file);
+    const listNameWithInvalidCharactersDataErrors = createUploadFormErrorMessages(listNameWithInvalidCharacters, file);
+    const listNameWithOnlySymbolsAndNumbersDataErrors = createUploadFormErrorMessages(listNameWithOnlySymbolsAndNumbers, file);
+    const noFileDataErrors = createUploadFormErrorMessages(correctListName, noFile);
+    const noDataErrors = createUploadFormErrorMessages(correctListName, file);
+
+    expect(isEqual(emptyListNameDataErrors[0], componentsWithErrorMessage.missingListName)).toBe(true);
+    expect(isEqual(listNameWithInvalidCharactersDataErrors[0], componentsWithErrorMessage.invalidCharacters)).toBe(true);
+    expect(isEqual(listNameWithOnlySymbolsAndNumbersDataErrors[0], componentsWithErrorMessage.mustConsistOfLetters)).toBe(true);
+    expect(isEqual(noFileDataErrors[0], componentsWithErrorMessage.missingFile)).toBe(true);
+    expect(isEqual(noDataErrors.length, 0)).toBe(true);
+});
 
 it('creates a route for checking facility list items', () => {
     const listID = 'hello';
@@ -169,6 +198,7 @@ it('creates a querystring from a set of filter selection', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: []
     };
 
     const expectedEmptySelectionQSMatch = '';
@@ -265,6 +295,7 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -299,6 +330,7 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -324,6 +356,7 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -354,6 +387,7 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [
             {
                 value: 2,
@@ -393,6 +427,7 @@ it('creates a set of filters from a querystring', () => {
         ],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -427,6 +462,7 @@ it('creates a set of filters from a querystring', () => {
             },
         ],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -457,6 +493,7 @@ it('creates a set of filters from a querystring', () => {
         ],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -482,6 +519,7 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [{
             value: 1,
@@ -514,6 +552,7 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [{
@@ -546,6 +585,7 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -578,6 +618,7 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -610,6 +651,7 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -642,6 +684,7 @@ it('creates a set of filters from a querystring', () => {
         contributorTypes: [],
         countries: [],
         sectors: [],
+        statuses: [],
         lists: [],
         parentCompany: [],
         facilityType: [],
@@ -659,7 +702,50 @@ it('creates a set of filters from a querystring', () => {
     expect(
         createFiltersFromQueryString(nativeLanguageNameString),
     ).toEqual(expectedNativeLanguageNameMatch);
-    });
+
+    const claimStatusesString = '?statuses=PENDING&statuses=APPROVED&statuses=DENIED&statuses=REVOKED'
+    const expectedClaimStatusesMatch = {
+        facilityFreeTextQuery: '',
+        contributors: [],
+        contributorTypes: [],
+        countries: [],
+        sectors: [],
+        statuses: [
+            {
+                "label": "PENDING",
+                "value": "PENDING",
+            },
+            {
+                "label": "APPROVED",
+                "value": "APPROVED",
+            },
+            {
+                "label": "DENIED",
+                "value": "DENIED",
+            },
+            {
+                "label": "REVOKED",
+                "value": "REVOKED",
+            },
+        ],
+        lists: [],
+        parentCompany: [],
+        facilityType: [],
+        processingType: [],
+        productType: [],
+        numberOfWorkers: [],
+        nativeLanguageName: '',
+        combineContributors: '',
+        boundary: null,
+        sortAlgorithm: {
+            value: 'name_asc', label: 'A to Z',
+          }
+    };
+
+    expect(
+        createFiltersFromQueryString(claimStatusesString),
+    ).toEqual(expectedClaimStatusesMatch);
+});
 
 it('creates a facility detail link', () => {
     const expectedMatch = '/facilities/hello';
