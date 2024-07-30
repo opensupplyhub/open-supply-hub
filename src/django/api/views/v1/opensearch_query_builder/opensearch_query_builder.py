@@ -37,11 +37,21 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         })
 
     def add_terms(self, field, values):
-        if field == 'country':
-            terms_query = {'terms': {f'{field}.alpha_2': values}}
+        if not values:
+            return self.query_body
+        terms_field = f'{field}.alpha_2' if field == 'country' \
+            else f'{field}.keyword'
+
+        existing_terms = next(
+            (item['terms'] for item in self.query_body['query']['bool']['must']
+             if 'terms' in item and terms_field in item['terms']), None)
+
+        if existing_terms:
+            existing_terms[terms_field].extend(values)
         else:
-            terms_query = {'terms': {f'{field}.keyword': values}}
-        self.query_body['query']['bool']['must'].append(terms_query)
+            self.query_body['query']['bool']['must'].append({
+                'terms': {terms_field: values}
+            })
 
     def add_range(self, field, query_params):
         min_value = query_params.get(f'{field}[min]')
@@ -107,8 +117,9 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         }
         self.query_body['query']['bool']['must'].append(geo_distance_query)
 
-    def add_sort(self, field, order='asc'):
-        self.query_body['sort'].append({f'{field}.keyword': {'order': order}})
+    def add_sort(self, field, order_by='asc'):
+        self.query_body['sort']. \
+            append({f'{field}.keyword': {'order': order_by}})
 
     def add_start_after(self, search_after):
         # search_after can't be present as empty by default in query_body

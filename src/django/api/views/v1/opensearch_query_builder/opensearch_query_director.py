@@ -2,10 +2,11 @@ class OpenSearchQueryDirector:
     def __init__(self, builder):
         self.builder = builder
         self._opensearch_template_fields = {
-            'name': 'match',
-            'name_local': 'match',
             'description': 'match',
             'address': 'match',
+            'name': 'terms',
+            'name_local': 'terms',
+            'country': 'terms',
             'sector': 'terms',
             'product_type': 'terms',
             'processing_type': 'terms',
@@ -16,7 +17,6 @@ class OpenSearchQueryDirector:
             'percent_female_workers': 'range',
             'affiliations': 'terms',
             'certifications_standards_regulations': 'terms',
-            'country': 'terms',
             'coordinates': 'geo_distance',
         }
 
@@ -26,13 +26,11 @@ class OpenSearchQueryDirector:
         for field, query_type in self._opensearch_template_fields.items():
             if query_type == 'match':
                 value = query_params.get(field)
-                fuzziness = '2' if field in ['address', 'name'] else None
                 if value:
-                    self.builder.add_match(field, value, fuzziness=fuzziness)
+                    self.builder.add_match(field, value, fuzziness='2')
             elif query_type == 'terms':
-                value = query_params.getlist(field)
-                if value:
-                    self.builder.add_terms(field, value)
+                values = query_params.getlist(field)
+                self.builder.add_terms(field, values)
             elif query_type == 'range':
                 self.builder.add_range(field, query_params)
             elif query_type == 'geo_distance':
@@ -46,7 +44,8 @@ class OpenSearchQueryDirector:
                                                   distance)
         sort_by = query_params.get('sort_by')
         if sort_by:
-            self.builder.add_sort(sort_by)
+            order_by = query_params.get('order_by')
+            self.builder.add_sort(sort_by, order_by)
 
         search_after = query_params.get('search_after')
         if search_after:
