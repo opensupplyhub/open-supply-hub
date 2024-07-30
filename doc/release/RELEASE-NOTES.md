@@ -23,7 +23,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * A new field named `groups` has been added to the `Sector` model to establish a many-to-many relationship between the `api_sector` and the `api_sectorgroup` tables.
 
 ### Code/API changes
+<<<<<<< HEAD
 * [OSDEV-1005](https://opensupplyhub.atlassian.net/browse/OSDEV-1005) - Disconnect location deletion propagation to the OpenSearch cluster while the Django tests are running, as it is outside the scope of Django unit testing.
+=======
+* [OSDEV-1006](https://opensupplyhub.atlassian.net/browse/OSDEV-1006) - Create new "api/v1/production-locations" endpoint.
+>>>>>>> f3b39f6 (Update release notes)
 
 ### Architecture/Environment changes
 * [OSDEV-1005](https://opensupplyhub.atlassian.net/browse/OSDEV-1005) - Enable deployment of the Logstash and OpenSearch infra to AWS environments.
