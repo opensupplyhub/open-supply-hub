@@ -22,9 +22,10 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         self.query_body['size'] = size
 
     def add_match(self, field, value, fuzziness=None):
-        match_query = {'match': {field: {'query': value}}}
-        if fuzziness:
-            match_query['match'][field]['fuzziness'] = fuzziness
+        if fuzziness is None:
+            fuzziness = self.default_fuzziness
+        match_query = \
+            {'match': {field: {'query': value, 'fuzziness': fuzziness}}}
         self.query_body['query']['bool']['must'].append(match_query)
 
     def add_multi_match(self, query):
