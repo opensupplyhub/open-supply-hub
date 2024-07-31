@@ -1,3 +1,6 @@
+from django.test import TestCase
+from django.db.models.signals import post_delete
+
 from api.matching import GazetteerCache, match_facility_list_items
 from api.models import (
     Contributor,
@@ -8,8 +11,7 @@ from api.models import (
     Source,
 )
 from api.processing import is_string_match, reduce_matches
-
-from django.test import TestCase
+from api.signals import location_post_delete_handler_for_opensearch
 
 
 def junk_chars(string):
@@ -28,6 +30,13 @@ class DedupeMatchingTest(TestCase):
     ]
 
     def setUp(self):
+        # Disconnect location deletion propagation to OpenSearch cluster, as
+        # it is outside the scope of Django unit testing.
+        post_delete.disconnect(
+            location_post_delete_handler_for_opensearch,
+            Facility
+        )
+
         self.contributor = Contributor.objects.first()
 
     def tearDown(self):

@@ -242,6 +242,10 @@ data "template_file" "app" {
     claim_from_email                 = var.claim_from_email
     kafka_bootstrap_servers          = join (",", module.msk_cluster.bootstrap_brokers)
     kafka_topic_basic_name           = var.topic_dedup_basic_name
+    opensearch_host                  = aws_opensearch_domain.opensearch.endpoint
+    opensearch_port                  = var.opensearch_port
+    opensearch_ssl                   = var.opensearch_ssl
+    opensearch_ssl_cert_verification = var.opensearch_ssl_cert_verification
   }
 }
 
@@ -293,6 +297,10 @@ data "template_file" "app_cli" {
     aws_storage_bucket_name          = local.files_bucket_name
     kafka_bootstrap_servers          = join (",", module.msk_cluster.bootstrap_brokers)
     kafka_topic_basic_name           = var.topic_dedup_basic_name
+    opensearch_host                  = aws_opensearch_domain.opensearch.endpoint
+    opensearch_port                  = var.opensearch_port
+    opensearch_ssl                   = var.opensearch_ssl
+    opensearch_ssl_cert_verification = var.opensearch_ssl_cert_verification
   }
 }
 
@@ -383,14 +391,14 @@ data "template_file" "app_logstash" {
     aws_region                       = var.aws_region
     opensearch_ssl                   = var.opensearch_ssl
     opensearch_ssl_cert_verification = var.opensearch_ssl_cert_verification
-    # TODO: enable opensearch_enpoint once count in opensearch.tf be removed
-    # opensearch_endpoint              = "${aws_opensearch_domain.opensearch.endpoint}:${var.opensearch_port}"
-    opensearch_endpoint              = "dummy-opensearch-endpoint"
+    opensearch_host                  = aws_opensearch_domain.opensearch.endpoint
+    opensearch_port                  = var.opensearch_port
     postgres_host                    = aws_route53_record.database.name
     postgres_port                    = module.database_enc.port
     postgres_user                    = var.rds_database_username
     postgres_password                = var.rds_database_password
     postgres_db                      = var.rds_database_name
+    logstash_update_interval_minutes = var.logstash_update_interval_minutes
   }
 }
 

@@ -5,7 +5,8 @@
       "cpu": 0,
       "command": [],
       "environment": [
-        { "name": "OPENSEARCH_ENDPOINT", "value": "${opensearch_endpoint}" },
+        { "name": "OPENSEARCH_HOST", "value": "${opensearch_host}" },
+        { "name": "OPENSEARCH_PORT", "value": "${opensearch_port}" },
         { "name": "OPENSEARCH_AUTH_TYPE", "value": "${opensearch_auth_type}" },
         { "name": "OPENSEARCH_SSL", "value": "${opensearch_ssl}" },
         { "name": "OPENSEARCH_SSL_CERT_VERIFICATION", "value": "${opensearch_ssl_cert_verification}" },
@@ -14,7 +15,8 @@
         { "name": "POSTGRES_USER", "value": "${postgres_user}" },
         { "name": "POSTGRES_PASSWORD", "value": "${postgres_password}" },
         { "name": "POSTGRES_DB", "value": "${postgres_db}" },
-        { "name": "AWS_REGION", "value": "${aws_region}"}
+        { "name": "AWS_REGION", "value": "${aws_region}"},
+        { "name": "LOGSTASH_UPDATE_INTERVAL_MINUTES", "value": "${logstash_update_interval_minutes}"}
       ],
       "logConfiguration": {
           "logDriver": "awslogs",
