@@ -1,5 +1,12 @@
 import json
 
+from django.db.models.signals import post_delete
+from django.contrib import auth
+from django.contrib.auth.models import Group
+from django.contrib.gis.geos import Point
+from django.urls import reverse
+from waffle.testutils import override_flag, override_switch
+
 from api.constants import (
     FeatureGroups,
     MatchResponsibility,
@@ -14,16 +21,18 @@ from api.models import (
     Source,
 )
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
-from waffle.testutils import override_flag, override_switch
-
-from django.contrib import auth
-from django.contrib.auth.models import Group
-from django.contrib.gis.geos import Point
-from django.urls import reverse
+from api.signals import location_post_delete_handler_for_opensearch
 
 
 class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
     def setUp(self):
+        # Disconnect location deletion propagation to OpenSearch cluster, as
+        # it is outside the scope of Django unit testing.
+        post_delete.disconnect(
+            location_post_delete_handler_for_opensearch,
+            Facility
+        )
+
         super(FacilityHistoryEndpointTest, self).setUp()
         self.history_url = "/api/facilities/{}/history/".format(
             self.facility.id

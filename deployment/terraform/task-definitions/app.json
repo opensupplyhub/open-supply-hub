@@ -42,7 +42,11 @@
         { "name": "AWS_STORAGE_BUCKET_NAME", "value": "${aws_storage_bucket_name}" },
         { "name": "CLAIM_FROM_EMAIL", "value": "${claim_from_email}" },
         { "name": "KAFKA_BOOTSTRAP_SERVERS", "value": "${kafka_bootstrap_servers}" },
-        { "name": "KAFKA_TOPIC_DEDUPE_BASIC_NAME", "value": "${kafka_topic_basic_name}" }
+        { "name": "KAFKA_TOPIC_DEDUPE_BASIC_NAME", "value": "${kafka_topic_basic_name}" },
+        { "name": "OPENSEARCH_HOST", "value": "${opensearch_host}" },
+        { "name": "OPENSEARCH_PORT", "value": "${opensearch_port}" },
+        { "name": "OPENSEARCH_SSL", "value": "${opensearch_ssl}" },
+        { "name": "OPENSEARCH_SSL_CERT_VERIFICATION", "value": "${opensearch_ssl_cert_verification}" }
     ],
     "portMappings": [
       {
