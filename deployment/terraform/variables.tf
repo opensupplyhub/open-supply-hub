@@ -1,7 +1,7 @@
 locals {
   short                  = "${replace(var.project, " ", "")}${var.environment}"
   files_bucket_name      = lower("${replace(var.project, " ", "")}-${var.environment}-files-${var.aws_region}")
-  opensearch_domain_name = "${var.environment}-os-domain"
+  opensearch_domain_name = "${lower("${var.environment}")}-os-domain"
 }
 
 variable "project" {
