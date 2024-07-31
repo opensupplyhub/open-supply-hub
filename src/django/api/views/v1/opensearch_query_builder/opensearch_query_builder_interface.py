@@ -36,5 +36,5 @@ class OpenSearchQueryBuilderInterface:
         pass
 
     @abstractmethod
-    def add_start_after(self, start_after):
+    def add_search_after(self, search_after):
         pass

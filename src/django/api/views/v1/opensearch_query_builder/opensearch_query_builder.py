@@ -117,11 +117,13 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         }
         self.query_body['query']['bool']['must'].append(geo_distance_query)
 
-    def add_sort(self, field, order_by='asc'):
+    def add_sort(self, field, order_by=None):
+        if order_by is None:
+            order_by = self.default_sort_order
         self.query_body['sort']. \
             append({f'{field}.keyword': {'order': order_by}})
 
-    def add_start_after(self, search_after):
+    def add_search_after(self, search_after):
         # search_after can't be present as empty by default in query_body
         if 'search_after' not in self.query_body:
             self.query_body['search_after'] = []

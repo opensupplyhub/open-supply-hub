@@ -49,7 +49,7 @@ class OpenSearchQueryDirector:
 
         search_after = query_params.get('search_after')
         if search_after:
-            self.builder.add_start_after(search_after)
+            self.builder.add_search_after(search_after)
 
         size = query_params.get('size')
         if size:
