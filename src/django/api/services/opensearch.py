@@ -23,10 +23,10 @@ class OpenSearchServiceConnection:
         if cls._instance is None:
             cls._instance = super(OpenSearchServiceConnection, cls) \
                 .__new__(cls)
-            cls._instance._initialize()
+            cls._instance.__initialize()
         return cls._instance
 
-    def _initialize(self):
+    def __initialize(self):
         auth = None
         if not getattr(settings, 'DEBUG', False):
             # Set up AWS authentication only if the application is running in
