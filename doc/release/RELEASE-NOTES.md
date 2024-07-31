@@ -29,7 +29,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1005](https://opensupplyhub.atlassian.net/browse/OSDEV-1005) - Enable deployment of the Logstash and OpenSearch infra to AWS environments.
 
 ### Bugfix
-* *Describe bugfix here.*
+* Ensure that the OpenSearch domain name is unique for each environment to avoid conflicts when provisioning domains across different environments.
 
 ### What's new
 * [OSDEV-1144](https://opensupplyhub.atlassian.net/browse/OSDEV-1144) - Claims emails. Updated text for approval, revocation, and denial emails.
