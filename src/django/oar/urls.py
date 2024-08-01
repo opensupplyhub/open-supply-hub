@@ -47,6 +47,13 @@ router.register('facilities-downloads', FacilitiesDownloadViewSet,
 router.register('moderation-events', views.ModerationEventsViewSet,
                 'moderation-event')
 
+v1_router = routers.DefaultRouter()
+v1_router.register(
+    'production-locations',
+    views.ProductionLocations,
+    basename='production-locations'
+)
+
 public_apis = [
     path('api/', include(router.urls)),
     path('api/contributors/active_count/', views.active_contributors_count,
@@ -78,6 +85,10 @@ public_apis = [
     path('api/sectors/', views.sectors, name='sectors'),
 ]
 
+api_v1 = [
+     path('api/v1/', include(v1_router.urls)),
+]
+
 schema_view = get_schema_view(
     openapi.Info(
         title='Open Supply Hub API',
@@ -88,7 +99,7 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
-    patterns=[path("", include(public_apis))],
+    patterns=[path("", include(public_apis + api_v1))],
 )
 
 info_apis = [
@@ -135,9 +146,5 @@ internal_apis = [
     path('api/geocoder/', views.get_geocoding, name='get_geocoding'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-api_v1 = [
-     path('api/v1/production-locations',
-          views.ProductionLocations.as_view(), name='production_locations')
-]
 
-urlpatterns = public_apis + internal_apis + info_apis + api_v1
+urlpatterns = public_apis + api_v1 + internal_apis + info_apis
