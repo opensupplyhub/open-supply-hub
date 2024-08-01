@@ -1,8 +1,10 @@
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from api.services.search import OpenSearchService
-from api.views.v1.opensearch_query_builder \
-    import OpenSearchQueryDirector, OpenSearchQueryBuilder
+from api.views.v1.opensearch_query_builder. \
+    opensearch_query_builder import OpenSearchQueryBuilder
+from api.views.v1.opensearch_query_builder. \
+    opensearch_query_director import OpenSearchQueryDirector
 
 
 class ProductionLocations(ViewSet):

@@ -1,5 +1,6 @@
 import copy
-from .opensearch_query_builder_interface import OpenSearchQueryBuilderInterface
+from api.views.v1.opensearch_query_builder. \
+    opensearch_query_builder_interface import OpenSearchQueryBuilderInterface
 
 
 class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):

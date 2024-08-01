@@ -1,6 +1,6 @@
 import logging
-from .opensearch import OpenSearchServiceConnection
-from .search_interface import SearchInterface
+from api.services.opensearch import OpenSearchServiceConnection
+from api.services.search_interface import SearchInterface
 from opensearchpy.exceptions import OpenSearchException
 
 logger = logging.getLogger(__name__)
