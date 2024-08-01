@@ -57,7 +57,7 @@ dedupe_hub_name = "deduplicate"
 dedupe_hub_version = 1
 app_cc_ecs_desired_count = 0
 
-opensearch_instance_type = "t3.medium.search"
+opensearch_instance_type = "t3.small.search"
 
 app_logstash_fargate_cpu = 256
 app_logstash_fargate_memory = 2048
