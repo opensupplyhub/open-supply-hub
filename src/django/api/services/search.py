@@ -8,12 +8,12 @@ logger = logging.getLogger(__name__)
 
 class OpenSearchService(SearchInterface):
     def __init__(self):
-        self.client = OpenSearchServiceConnection().client
+        self.__client = OpenSearchServiceConnection().client
 
     def search_production_locations(self, query_body):
         index_name = 'production-locations'
         try:
-            response = self.client.search(
+            response = self.__client.search(
                 body=query_body,
                 index=index_name
             )
