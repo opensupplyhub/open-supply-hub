@@ -61,7 +61,7 @@ class ProductionLocations(ViewSet):
                 )
 
             query_body = opensearch_query_director.build_query(
-                flattened_query_params
+                query_params
             )
             response = self.opensearch_service.search_production_locations(
                 query_body

@@ -9,7 +9,8 @@ class ProductionLocationsSerializer(serializers.Serializer):
     number_of_workers_min = serializers.IntegerField(required=False)
     number_of_workers_max = serializers.IntegerField(required=False)
     percent_female_workers = serializers.FloatField(required=False)
-    coordinates = serializers.JSONField(required=False)
+    coordinates_lat = serializers.FloatField(required=False)
+    coordinates_lon = serializers.FloatField(required=False)
 
     def validate(self, data):
         errors = []
@@ -36,6 +37,33 @@ class ProductionLocationsSerializer(serializers.Serializer):
                     "to maximum value."
                 )
             })
+
+        lat = data.get('coordinates_lat')
+        lon = data.get('coordinates_lon')
+
+        if ((lat is not None and lon is None) or
+                (lat is None and lon is not None)):
+            errors.append({
+                "field": "coordinates",
+                "message": "Both latitude and longitude must be provided."
+            })
+
+        if lat is not None:
+            if not (-90 <= lat <= 90):
+                errors.append({
+                    "field": "coordinates",
+                    "message": "Latitude must be between -90 and 90 degrees."
+                })
+
+        if lon is not None:
+            if not (-180 <= lon <= 180):
+                errors.append({
+                    "field": "coordinates",
+                    "message": (
+                        "Longitude must be between -180",
+                        " and 180 degrees."
+                    )
+                })
 
         if errors:
             raise serializers.ValidationError({
