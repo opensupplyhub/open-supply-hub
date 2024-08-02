@@ -17,10 +17,8 @@ resource "aws_opensearch_domain" "opensearch" {
   domain_name    = local.opensearch_domain_name
   engine_version = "OpenSearch_2.13"
 
-  access_policies = data.aws_iam_policy_document.opensearch_access_policy.json
-
   cluster_config {
-    instance_type          = "t3.small.search"
+    instance_type          = var.opensearch_instance_type
     instance_count         = 2
     zone_awareness_enabled = true
   }
@@ -75,4 +73,9 @@ resource "aws_opensearch_domain" "opensearch" {
 
     security_group_ids = [aws_security_group.opensearch.id]
   }
+}
+
+resource "aws_opensearch_domain_policy" "main" {
+  domain_name     = aws_opensearch_domain.opensearch.domain_name
+  access_policies = data.aws_iam_policy_document.opensearch_access_policy.json
 }

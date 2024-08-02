@@ -419,7 +419,7 @@ data "aws_iam_policy_document" "opensearch_access_policy" {
   statement {
     actions   = ["es:*"]
     effect    = "Allow"
-    resources = ["arn:aws:es:${var.aws_region}:${data.aws_caller_identity.current.account_id}:domain/opensearch-domain/*"]
+    resources = ["arn:aws:es:${var.aws_region}:${data.aws_caller_identity.current.account_id}:domain/${local.opensearch_domain_name}/*"]
     principals {
       identifiers = ["*"]
       type        = "AWS"
