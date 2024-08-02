@@ -17,6 +17,7 @@ import {
     makeGetNumberOfWorkersURL,
     mapDjangoChoiceTuplesToSelectOptions,
     mapDjangoChoiceTuplesValueToSelectOptions,
+    mapSectorGroupsToSelectOptions,
     updateListWithLabels,
 } from '../util/util';
 
@@ -215,7 +216,12 @@ export function fetchSectorOptions() {
                     embed,
                 }),
             )
-            .then(({ data }) => mapDjangoChoiceTuplesValueToSelectOptions(data))
+            .then(({ data }) => {
+                if (embed) {
+                    return mapDjangoChoiceTuplesValueToSelectOptions(data);
+                }
+                return mapSectorGroupsToSelectOptions(data);
+            })
             .then(data => dispatch(completeFetchSectorOptions(data)))
             .catch(err =>
                 dispatch(
