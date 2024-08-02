@@ -21,7 +21,7 @@ from ..models.facility.facility_list_item import FacilityListItem
         Parameter(
             'embed',
             IN_QUERY,
-            description="Set to true to return an embedded list of sectors.",
+            description="Set to true to enable embed mode.",
             type=TYPE_BOOLEAN,
         ),
         Parameter(
