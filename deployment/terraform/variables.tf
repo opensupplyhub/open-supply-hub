@@ -262,7 +262,7 @@ variable "app_logstash_fargate_cpu" {
 
 variable "app_logstash_fargate_memory" {
   type    = number
-  default = 3072
+  default = 2048
 }
 
 variable "cli_fargate_cpu" {
@@ -519,6 +519,11 @@ variable "dedupe_hub_name" {
 variable "dedupe_hub_version" {
 }
 
+variable "opensearch_instance_type" {
+  type = string
+  default = "t3.small.search"
+}
+
 variable "opensearch_auth_type" {
   type = string
   default = "aws_iam"
@@ -541,7 +546,6 @@ variable "logstash_update_interval_minutes" {
 
 variable "app_logstash_ecs_desired_count" {
   type    = number
-  # default = 0 # Temporary set to zero to prevent money consumption.
   default = 1
 }
 
