@@ -55,3 +55,8 @@ app_cc_ecs_desired_count = 0 # secure
 app_dd_fargate_cpu = 4096
 app_dd_fargate_memory = 8192
 app_dd_ecs_desired_count = 1
+
+opensearch_instance_type = "m6g.large.search"
+
+app_logstash_fargate_cpu = 256
+app_logstash_fargate_memory = 2048

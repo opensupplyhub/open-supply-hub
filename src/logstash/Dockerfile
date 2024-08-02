@@ -1,5 +1,7 @@
 FROM logstash:8.13.4
 
+ENV LS_JAVA_OPTS="-XX:MaxDirectMemorySize=512m"
+
 # Install a specific version of the OpenSearch output plugin for Logstash.
 RUN bin/logstash-plugin install --version 2.0.2 logstash-output-opensearch
 
