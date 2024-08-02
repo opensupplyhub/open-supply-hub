@@ -673,6 +673,17 @@ const mapSingleChoiceValueToSelectOption = value =>
 export const mapDjangoChoiceTuplesValueToSelectOptions = data =>
     Object.freeze(data.map(mapSingleChoiceValueToSelectOption));
 
+export const mapSectorGroupsToSelectOptions = data =>
+    Object.freeze(
+        data.map(group => ({
+            label: group.group_name,
+            options: group.sectors.map(sector => ({
+                value: sector,
+                label: sector,
+            })),
+        })),
+    );
+
 export const allListsAreEmpty = (...lists) => negate(some)(lists, size);
 
 export const makeFacilityDetailLink = (osID, search) =>
