@@ -49,7 +49,7 @@ def sectors(request):
 
     ## Sample Response
 
-    If `embed` is provided:
+    If `embed` is provided the response will be a flat list of sectors.:
 
         [
             "Agriculture",
