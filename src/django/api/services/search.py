@@ -20,5 +20,5 @@ class OpenSearchService(SearchInterface):
             return response
         except OpenSearchException as e:
             logger.error(f"An error occurred while \
-                         searching in index '{index_name}': {e}")
+                            searching in index '{index_name}': {e}")
             return None

@@ -17,7 +17,7 @@ from django.conf.urls.static import static
 from django.urls import path, include
 
 from api import views
-from api.views.v1.production_locations.production_locations \
+from api.views.v1.production_locations \
      import ProductionLocations
 from api.admin import admin_site
 from api.facilities_download_view_set import FacilitiesDownloadViewSet
