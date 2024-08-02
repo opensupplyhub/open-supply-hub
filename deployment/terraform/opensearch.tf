@@ -17,8 +17,6 @@ resource "aws_opensearch_domain" "opensearch" {
   domain_name    = local.opensearch_domain_name
   engine_version = "OpenSearch_2.13"
 
-  # access_policies = data.aws_iam_policy_document.opensearch_access_policy.json
-
   cluster_config {
     instance_type          = var.opensearch_instance_type
     instance_count         = 2
