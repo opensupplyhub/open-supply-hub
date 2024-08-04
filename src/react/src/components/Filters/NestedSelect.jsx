@@ -3,12 +3,13 @@ import { connect } from 'react-redux';
 import ReactSelect, { components } from 'react-select';
 import InputLabel from '@material-ui/core/InputLabel';
 import { withStyles } from '@material-ui/core/styles';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import { makeFilterStyles } from '../../util/styles';
 import ArrowDropDownIcon from '../ArrowDropDownIcon';
 import { OARColor } from '../../util/constants';
 
 const makeSelectFilterStyles = () => {
-    // const themeColor = color || OARColor;
     const themeColor = OARColor;
 
     return {
@@ -38,11 +39,10 @@ const makeSelectFilterStyles = () => {
                 },
             };
         },
-        // clearIndicator: provided => ({
-        //     ...provided,
-        //     padding:
-        //         windowWidth > 699 && windowWidth < 900 ? 0 : provided.padding,
-        // }),
+        clearIndicator: provided => ({
+            ...provided,
+            padding: provided.padding,
+        }),
     };
 };
 
@@ -92,7 +92,7 @@ const GroupHeading = ({ children, ...props }) => {
                 <div
                     style={{
                         display: 'flex',
-                        // alignItems: 'center',
+                        alignItems: 'center',
                         justifyContent: 'flex-start',
                         gap: '0.5em',
                     }}
@@ -106,10 +106,11 @@ const GroupHeading = ({ children, ...props }) => {
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
-                            // marginLeft: 'auto',
                         }}
                     >
-                        <span>{isOpen ? 'v' : '>'}</span>
+                        <span>
+                            {isOpen ? <ExpandMoreIcon /> : <ChevronRightIcon />}
+                        </span>
                     </div>
                     <div
                         onClick={selectGroup}
@@ -120,6 +121,10 @@ const GroupHeading = ({ children, ...props }) => {
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
+                            fontFamily: 'Darker Grotesque',
+                            fontWeight: 700,
+                            fontSize: '14px',
+                            color: 'black',
                         }}
                     >
                         <span>{groupLabel}</span>
@@ -210,18 +215,13 @@ const NestedSelect = ({
     sectors,
     updateSector,
     isSideBarSearch,
-    // color,
-    // windowWidth,
     ...rest
 }) => {
     const selectFilterStyles = makeSelectFilterStyles();
-    // const [selectedOptions, setSelectedOptions] = useState([]);
     const [inputValue, setInputValue] = useState('');
 
-    // console.log('selectedOptions >>>', selectedOptions);
     const handleChange = options => {
         updateSector(options || []);
-        // setSelectedOptions(options || []);
         setInputValue('');
     };
 
@@ -230,7 +230,6 @@ const NestedSelect = ({
     };
 
     const getFilteredOptions = () => {
-        // const selectedValues = selectedOptions.map(option => option.value);
         const selectedValues = sectors.map(option => option.value);
 
         return optionsData
