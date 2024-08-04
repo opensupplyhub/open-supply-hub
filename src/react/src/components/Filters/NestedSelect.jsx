@@ -209,8 +209,10 @@ const NestedSelect = ({
     optionsData,
     sectors,
     updateSector,
+    isSideBarSearch,
     // color,
     // windowWidth,
+    ...rest
 }) => {
     const selectFilterStyles = makeSelectFilterStyles();
     // const [selectedOptions, setSelectedOptions] = useState([]);
@@ -258,6 +260,16 @@ const NestedSelect = ({
         IndicatorSeparator: null,
     };
 
+    const additionalProps = !isSideBarSearch
+        ? {
+              menuPosition: 'fixed',
+              menuPortalTarget: document.body,
+              closeMenuOnScroll: e =>
+                  e.target.classList === undefined ||
+                  !e.target.classList.contains('select__menu-list'),
+          }
+        : {};
+
     return (
         <>
             <InputLabel
@@ -268,19 +280,22 @@ const NestedSelect = ({
                 {label}
             </InputLabel>
             <ReactSelect
+                isMulti
+                id={name}
+                components={customComponents}
+                name={name}
                 options={getFilteredOptions()}
                 onChange={handleChange}
-                // value={selectedOptions}
                 value={sectors}
                 isClearable
-                isMulti
-                components={customComponents}
                 inputValue={inputValue}
                 onInputChange={handleInputChange}
                 placeholder="Select"
                 className={`basic-multi-select notranslate ${classes.selectStyle}`}
                 classNamePrefix="select"
                 styles={selectFilterStyles}
+                {...additionalProps}
+                {...rest}
             />
         </>
     );
