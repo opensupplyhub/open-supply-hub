@@ -3,7 +3,9 @@ from api.serializers.v1.opensearch_validation_interface \
 
 
 class CoordinatesValidator(OpenSearchValidationInterface):
-    def validate_opensearch_params(self, data, errors):
+    def validate_opensearch_params(self, data):
+        errors = []
+
         lat = data.get('coordinates_lat')
         lon = data.get('coordinates_lon')
 
@@ -28,3 +30,5 @@ class CoordinatesValidator(OpenSearchValidationInterface):
                     "message":
                         "Longitude must be between -180 and 180 degrees."
                 })
+
+        return errors

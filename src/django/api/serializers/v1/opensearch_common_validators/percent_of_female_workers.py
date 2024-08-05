@@ -3,7 +3,9 @@ from api.serializers.v1.opensearch_validation_interface \
 
 
 class PercentOfFemaleWorkersValidator(OpenSearchValidationInterface):
-    def validate_opensearch_params(self, data, errors):
+    def validate_opensearch_params(self, data):
+        errors = []
+
         percent_female_workers_min = data.get('percent_female_workers_min')
         percent_female_workers_max = data.get('percent_female_workers_max')
 
@@ -32,3 +34,5 @@ class PercentOfFemaleWorkersValidator(OpenSearchValidationInterface):
                         "maximum percentage."
                     )
                 })
+
+        return errors

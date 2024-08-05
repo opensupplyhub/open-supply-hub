@@ -3,7 +3,9 @@ from api.serializers.v1.opensearch_validation_interface \
 
 
 class NumberOfWorkersValidator(OpenSearchValidationInterface):
-    def validate_opensearch_params(self, data, errors):
+    def validate_opensearch_params(self, data):
+        errors = []
+
         min_value = data.get('number_of_workers_min')
         max_value = data.get('number_of_workers_max')
 
@@ -26,3 +28,5 @@ class NumberOfWorkersValidator(OpenSearchValidationInterface):
                     "to maximum value."
                 )
             })
+
+        return errors
