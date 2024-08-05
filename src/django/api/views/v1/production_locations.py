@@ -1,16 +1,18 @@
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
-from api.services.search import OpenSearchService
+from api.views.v1.utils import (
+    serialize_params,
+    handle_value_error,
+    handle_opensearch_exception
+)
+from api.services.search import OpenSearchService, OpenSearchServiceException
 from api.views.v1.opensearch_query_builder.opensearch_query_builder \
     import OpenSearchQueryBuilder
 from api.views.v1.opensearch_query_builder.opensearch_query_director \
     import OpenSearchQueryDirector
 from api.serializers.v1.production_locations_serializer \
     import ProductionLocationsSerializer
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class ProductionLocations(ViewSet):
@@ -25,36 +27,12 @@ class ProductionLocations(ViewSet):
         )
         query_params = request.GET
 
-        '''
-        There is no native support of OpenAPI deepObject parameters
-        in Django serializers, so we need to parse them manually
-        '''
-        flattened_query_params = {
-            key.replace(']', '').replace('[', '_'): value
-            for key, value in query_params.items()
-        }
-
-        params = ProductionLocationsSerializer(data=flattened_query_params)
-
         try:
-            if not params.is_valid():
-                error_response = {
-                    'message': None,
-                    'errors': []
-                }
-
-                error_response['message'] = (
-                    params.errors.get('message')[0].title()
-                )
-
-                for error_item in params.errors.get('errors', []):
-                    field = str(error_item.get('field', '')).title()
-                    message = str(error_item.get('message', '')).title()
-                    error_response['errors'].append({
-                        'field': field,
-                        'message': message
-                    })
-
+            params, error_response = serialize_params(
+                ProductionLocationsSerializer,
+                query_params
+            )
+            if error_response:
                 return Response(
                     error_response,
                     status=status.HTTP_400_BAD_REQUEST
@@ -69,19 +47,7 @@ class ProductionLocations(ViewSet):
             return Response(response)
 
         except ValueError as e:
-            logger.error(f'Error processing request: {e}')
-            return Response(
-                {
-                    "message": "The request query is invalid.",
-                    "errors": [
-                        {
-                            "field": "general",
-                            "message": (
-                                "There was a problem processing your request. "
-                                "Please check your input."
-                            )
-                        }
-                    ]
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return handle_value_error(e)
+
+        except OpenSearchServiceException as e:
+            return handle_opensearch_exception(e)

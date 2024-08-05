@@ -6,6 +6,15 @@ from opensearchpy.exceptions import OpenSearchException
 logger = logging.getLogger(__name__)
 
 
+class OpenSearchServiceException(Exception):
+    def __init__(
+        self,
+        message="An unexpected error occurred while processing the request."
+    ):
+        self.message = message
+        super().__init__(self.message)
+
+
 class OpenSearchService(SearchInterface):
     def __init__(self):
         self.__client = OpenSearchServiceConnection().client
@@ -21,4 +30,4 @@ class OpenSearchService(SearchInterface):
         except OpenSearchException as e:
             logger.error(f"An error occurred while \
                             searching in index '{index_name}': {e}")
-            return None
+            raise OpenSearchServiceException()
