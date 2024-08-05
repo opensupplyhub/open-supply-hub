@@ -23,33 +23,32 @@ class ProductionLocations(ViewSet):
         self.opensearch_query_builder = OpenSearchQueryBuilder()
 
     def list(self, request):
-        opensearch_query_director = OpenSearchQueryDirector(
-            self.opensearch_query_builder
-        )
-        query_params = request.GET
-
-        try:
-            params, error_response = serialize_params(
-                ProductionLocationsSerializer,
-                query_params
+        if request.method == 'GET':
+            opensearch_query_director = OpenSearchQueryDirector(
+                self.opensearch_query_builder
             )
-            if error_response:
-                return Response(
-                    error_response,
-                    status=status.HTTP_400_BAD_REQUEST
+            try:
+                params, error_response = serialize_params(
+                    ProductionLocationsSerializer,
+                    request.GET
                 )
+                if error_response:
+                    return Response(
+                        error_response,
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
-            query_body = opensearch_query_director.build_query(
-                query_params
-            )
-            response = self.opensearch_service.search_production_locations(
-                OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
-                query_body
-            )
-            return Response(response)
+                query_body = opensearch_query_director.build_query(
+                    request.GET
+                )
+                response = self.opensearch_service.search_index(
+                    OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
+                    query_body
+                )
+                return Response(response)
 
-        except ValueError as e:
-            return handle_value_error(e)
+            except ValueError as e:
+                return handle_value_error(e)
 
-        except OpenSearchServiceException as e:
-            return handle_opensearch_exception(e)
+            except OpenSearchServiceException as e:
+                return handle_opensearch_exception(e)

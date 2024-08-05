@@ -43,19 +43,26 @@ class OpenSearchQueryDirector:
         self.__builder.reset()
 
         for field, query_type in self.__opensearch_template_fields.items():
-            if query_type == 'match':
+            if query_type == "match":
                 value = query_params.get(field)
                 self.__add_match_query(field, value)
-            elif query_type == 'terms':
+                continue
+
+            if query_type == "terms":
                 values = query_params.getlist(field)
                 self.__add_terms_query(field, values)
-            elif query_type == 'range':
+                continue
+
+            if query_type == "range":
                 self.__add_range_query(field, query_params)
-            elif query_type == 'geo_distance':
-                lat = query_params.get(f'{field}[lat]')
-                lon = query_params.get(f'{field}[lon]')
-                distance = query_params.get('distance', '10km')
+                continue
+
+            if query_type == "geo_distance":
+                lat = query_params.get(f"{field}[lat]")
+                lon = query_params.get(f"{field}[lon]")
+                distance = query_params.get("distance", "10km")
                 self.__add_geo_distance_query(field, lat, lon, distance)
+                continue
 
         sort_by = query_params.get('sort_by')
         if sort_by:
