@@ -19,8 +19,7 @@ class OpenSearchService(SearchInterface):
     def __init__(self):
         self.__client = OpenSearchServiceConnection().client
 
-    def search_production_locations(self, query_body):
-        index_name = 'production-locations'
+    def search_production_locations(self, index_name, query_body):
         try:
             response = self.__client.search(
                 body=query_body,

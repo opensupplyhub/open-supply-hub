@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
 
+## Release 1.19.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: August 24, 2024
+
+### Database changes
+#### Migrations:
+* *Describe migrations here.*
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
+### Code/API changes
+* [OSDEV-1006](https://opensupplyhub.atlassian.net/browse/OSDEV-1006) - Create new "api/v1/production-locations" endpoint.
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* *Provide release instructions here.*
+
+
 ## Release 1.18.0
 
 ## Introduction
@@ -24,7 +53,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-1005](https://opensupplyhub.atlassian.net/browse/OSDEV-1005) - Disconnect location deletion propagation to the OpenSearch cluster while the Django tests are running, as it is outside the scope of Django unit testing.
-* [OSDEV-1006](https://opensupplyhub.atlassian.net/browse/OSDEV-1006) - Create new "api/v1/production-locations" endpoint.
 
 ### Architecture/Environment changes
 * [OSDEV-1005](https://opensupplyhub.atlassian.net/browse/OSDEV-1005) - Enable deployment of the Logstash and OpenSearch infra to AWS environments.

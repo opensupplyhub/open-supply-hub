@@ -28,6 +28,7 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
 from oar import settings
+from api.views.v1.index_names import OpenSearchIndexNames
 
 
 router = routers.DefaultRouter()
@@ -51,9 +52,9 @@ router.register('moderation-events', views.ModerationEventsViewSet,
 
 v1_router = routers.DefaultRouter()
 v1_router.register(
-    'production-locations',
+    OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
     ProductionLocations,
-    basename='production-locations'
+    basename=OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX
 )
 
 public_apis = [

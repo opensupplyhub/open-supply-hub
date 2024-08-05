@@ -8,6 +8,7 @@ from opensearchpy.exceptions import ConnectionError
 from api.models.facility.facility import Facility
 from api.services.opensearch import OpenSearchServiceConnection
 from oar.rollbar import report_error_to_rollbar
+from api.views.v1.index_names import OpenSearchIndexNames
 
 
 log = logging.getLogger(__name__)
@@ -19,7 +20,7 @@ def location_post_delete_handler_for_opensearch(sender, **kwargs):
     location_instance = kwargs.get('instance')
     try:
         response = opensearch.client.delete(
-            index='production-locations',
+            index=OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
             id=location_instance.id
         )
     except ConnectionError:

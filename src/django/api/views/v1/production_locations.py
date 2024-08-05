@@ -13,6 +13,7 @@ from api.views.v1.opensearch_query_builder.opensearch_query_director \
     import OpenSearchQueryDirector
 from api.serializers.v1.production_locations_serializer \
     import ProductionLocationsSerializer
+from api.views.v1.index_names import OpenSearchIndexNames
 
 
 class ProductionLocations(ViewSet):
@@ -42,6 +43,7 @@ class ProductionLocations(ViewSet):
                 query_params
             )
             response = self.opensearch_service.search_production_locations(
+                OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
                 query_body
             )
             return Response(response)

@@ -7,5 +7,5 @@ class SearchInterface:
     '''
 
     @abstractmethod
-    def search_production_locations(self, query_body):
+    def search_production_locations(self, index_name, query_body):
         pass
