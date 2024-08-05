@@ -17,7 +17,6 @@ const makeSelectFilterStyles = () => {
             ...provided,
             background: '#C0EBC7',
             borderRadius: '100px',
-            fontFamily: 'Darker Grotesque',
             fontWeight: 700,
             fontSize: '14px',
             lineHeight: '16px',
@@ -39,10 +38,29 @@ const makeSelectFilterStyles = () => {
                 },
             };
         },
-        clearIndicator: provided => ({
+        groupHeading: provided => ({
             ...provided,
-            padding: provided.padding,
+            fontWeight: 700,
+            fontSize: '16px',
+            color: 'black',
+            textTransform: 'capitalize',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            margin: '0',
+            padding: '5px 12px',
         }),
+        option: provided => ({
+            ...provided,
+            padding: '1px 12px 1px 55px',
+            // '&:hover': {
+            //     backgroundColor: '#f5f5f5',
+            // },
+        }),
+        // menuList: provided => ({
+        //     ...provided,
+        //     // overflow: 'scroll',
+        // }),
     };
 };
 
@@ -87,48 +105,27 @@ const GroupHeading = ({ children, ...props }) => {
     };
 
     return (
-        <div>
+        <>
             <components.GroupHeading {...props}>
                 <div
+                    onClick={toggleGroup}
+                    onKeyDown={handleToggleKeyDown}
+                    role="button"
+                    tabIndex={0}
                     style={{
+                        cursor: 'pointer',
                         display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'flex-start',
-                        gap: '0.5em',
                     }}
                 >
-                    <div
-                        onClick={toggleGroup}
-                        onKeyDown={handleToggleKeyDown}
-                        role="button"
-                        tabIndex={0}
-                        style={{
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                        }}
-                    >
-                        <span>
-                            {isOpen ? <ExpandMoreIcon /> : <ChevronRightIcon />}
-                        </span>
-                    </div>
-                    <div
-                        onClick={selectGroup}
-                        onKeyDown={handleGroupSelectKeyDown}
-                        role="button"
-                        tabIndex={0}
-                        style={{
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            fontFamily: 'Darker Grotesque',
-                            fontWeight: 700,
-                            fontSize: '14px',
-                            color: 'black',
-                        }}
-                    >
-                        <span>{groupLabel}</span>
-                    </div>
+                    {isOpen ? <ExpandMoreIcon /> : <ChevronRightIcon />}
+                </div>
+                <div
+                    onClick={selectGroup}
+                    onKeyDown={handleGroupSelectKeyDown}
+                    role="button"
+                    tabIndex={0}
+                >
+                    {groupLabel}
                 </div>
             </components.GroupHeading>
             {isOpen &&
@@ -163,7 +160,7 @@ const GroupHeading = ({ children, ...props }) => {
                         {option.label}
                     </components.Option>
                 ))}
-        </div>
+        </>
     );
 };
 
@@ -281,6 +278,8 @@ const NestedSelect = ({
             <ReactSelect
                 isMulti
                 id={name}
+                // menuIsOpen
+                // overflowY="auto"
                 components={customComponents}
                 name={name}
                 options={getFilteredOptions()}
