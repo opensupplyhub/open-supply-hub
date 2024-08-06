@@ -26,7 +26,12 @@ class ProductionLocationsSerializer(serializers.Serializer):
         ]
 
         error_list_builder = OpenSearchErrorListBuilder(validators)
+        errors = error_list_builder.build_error_list(data)
 
-        error_list_builder.build_error_list(data)
+        if errors:
+            raise serializers.ValidationError({
+                "message": "The request query is invalid.",
+                "errors": errors
+            })
 
         return data
