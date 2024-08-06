@@ -9,7 +9,7 @@ import { makeFilterStyles } from '../../util/styles';
 import ArrowDropDownIcon from '../ArrowDropDownIcon';
 import { OARColor } from '../../util/constants';
 
-const makeSelectFilterStyles = () => {
+const makeSelectFilterStyles = windowWidth => {
     const themeColor = OARColor;
 
     return {
@@ -38,6 +38,11 @@ const makeSelectFilterStyles = () => {
                 },
             };
         },
+        clearIndicator: provided => ({
+            ...provided,
+            padding:
+                windowWidth > 699 && windowWidth < 900 ? 0 : provided.padding,
+        }),
         groupHeading: (provided, state) => ({
             ...provided,
             fontWeight: 700,
@@ -211,9 +216,10 @@ const NestedSelect = ({
     sectors,
     updateSector,
     isSideBarSearch,
+    windowWidth,
     ...rest
 }) => {
-    const selectFilterStyles = makeSelectFilterStyles();
+    const selectFilterStyles = makeSelectFilterStyles(windowWidth);
     const [inputValue, setInputValue] = useState('');
 
     const handleChange = options => {
@@ -297,8 +303,14 @@ const NestedSelect = ({
     );
 };
 
-function mapStateToProps() {
-    return {};
+function mapStateToProps({
+    ui: {
+        window: { innerWidth },
+    },
+}) {
+    return {
+        windowWidth: innerWidth,
+    };
 }
 
 export default connect(mapStateToProps)(
