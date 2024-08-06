@@ -245,7 +245,7 @@ const NestedSelect = ({
                 placeholder="Select"
                 className={`basic-multi-select notranslate ${classes.selectStyle}`}
                 classNamePrefix="select"
-                styles={selectFilterStyles}
+                styles={combinedStyles}
                 {...additionalProps}
                 {...rest}
             />
