@@ -1,7 +1,6 @@
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
-from rest_framework.exceptions import MethodNotAllowed
 from api.views.v1.utils import (
     serialize_params,
     handle_value_error,
@@ -24,8 +23,6 @@ class ProductionLocations(ViewSet):
         self.opensearch_query_builder = OpenSearchQueryBuilder()
 
     def list(self, request):
-        if request.method != 'GET':
-            raise MethodNotAllowed()
         opensearch_query_director = OpenSearchQueryDirector(
             self.opensearch_query_builder
         )
