@@ -278,8 +278,7 @@ const NestedSelect = ({
             <ReactSelect
                 isMulti
                 id={name}
-                // menuIsOpen
-                // overflowY="auto"
+                captureMenuScroll={false}
                 components={customComponents}
                 name={name}
                 options={getFilteredOptions()}
