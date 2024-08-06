@@ -6,6 +6,5 @@ class OpenSearchErrorListBuilder:
         errors = []
         for validator in self.validators:
             validator_errors = validator.validate(data)
-            if validator_errors:
-                errors.extend(validator_errors)
+            errors.extend(validator_errors)
         return errors

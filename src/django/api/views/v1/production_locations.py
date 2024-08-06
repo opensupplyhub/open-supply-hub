@@ -1,6 +1,7 @@
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
+from rest_framework.exceptions import MethodNotAllowed
 from api.views.v1.utils import (
     serialize_params,
     handle_value_error,
@@ -23,32 +24,33 @@ class ProductionLocations(ViewSet):
         self.opensearch_query_builder = OpenSearchQueryBuilder()
 
     def list(self, request):
-        if request.method == 'GET':
-            opensearch_query_director = OpenSearchQueryDirector(
-                self.opensearch_query_builder
+        if request.method != 'GET':
+            raise MethodNotAllowed()
+        opensearch_query_director = OpenSearchQueryDirector(
+            self.opensearch_query_builder
+        )
+        try:
+            params, error_response = serialize_params(
+                ProductionLocationsSerializer,
+                request.GET
             )
-            try:
-                params, error_response = serialize_params(
-                    ProductionLocationsSerializer,
-                    request.GET
+            if error_response:
+                return Response(
+                    error_response,
+                    status=status.HTTP_400_BAD_REQUEST
                 )
-                if error_response:
-                    return Response(
-                        error_response,
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
 
-                query_body = opensearch_query_director.build_query(
-                    request.GET
-                )
-                response = self.opensearch_service.search_index(
-                    OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
-                    query_body
-                )
-                return Response(response)
+            query_body = opensearch_query_director.build_query(
+                request.GET
+            )
+            response = self.opensearch_service.search_index(
+                OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
+                query_body
+            )
+            return Response(response)
 
-            except ValueError as e:
-                return handle_value_error(e)
+        except ValueError as e:
+            return handle_value_error(e)
 
-            except OpenSearchServiceException as e:
-                return handle_opensearch_exception(e)
+        except OpenSearchServiceException as e:
+            return handle_opensearch_exception(e)
