@@ -1,3 +1,5 @@
+import { OARColor } from './constants';
+
 export const formValidationErrorMessageStyle = Object.freeze({
     color: 'red',
     fontSize: '16px',
@@ -195,4 +197,66 @@ export const claimAFacilitySupportDocsFormStyles = Object.freeze({
     asideStyles: Object.freeze({
         padding: '5px 20px 5px 0',
     }),
+});
+
+export const makeSelectFilterStyles = (windowWidth, color = OARColor) =>
+    Object.freeze({
+        multiValue: Object.freeze(provided => ({
+            ...provided,
+            background: '#C0EBC7',
+            borderRadius: '100px',
+            fontFamily: 'Darker Grotesque',
+            fontWeight: 700,
+            fontSize: '14px',
+            lineHeight: '16px',
+            paddingLeft: '5px',
+            paddingRight: '5px',
+        })),
+        control: Object.freeze((provided, state) => {
+            const isInUse = state.isFocused || state.menuIsOpen;
+            return {
+                ...provided,
+                borderRadius: 0,
+                '*': {
+                    boxShadow: 'none !important',
+                },
+                boxShadow: 'none',
+                borderColor: isInUse ? color : provided.borderColor,
+                '&:hover': {
+                    borderColor: isInUse ? color : provided.borderColor,
+                },
+            };
+        }),
+        clearIndicator: Object.freeze(provided => ({
+            ...provided,
+            padding:
+                windowWidth > 699 && windowWidth < 900 ? 0 : provided.padding,
+        })),
+    });
+
+export const makeNestedSelectFilterStyles = Object.freeze({
+    groupHeading: (provided, state) =>
+        Object.freeze({
+            ...provided,
+            fontWeight: 700,
+            fontSize: '16px',
+            color: 'black',
+            textTransform: 'capitalize',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            margin: '0',
+            padding: '5px 12px',
+            '&:hover': {
+                backgroundColor: state.theme.colors.primary25,
+            },
+        }),
+    option: (provided, state) =>
+        Object.freeze({
+            ...provided,
+            padding: '1px 12px 1px 55px',
+            '&:hover': {
+                backgroundColor: state.theme.colors.primary25,
+            },
+        }),
 });

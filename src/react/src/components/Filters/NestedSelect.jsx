@@ -5,68 +5,12 @@ import InputLabel from '@material-ui/core/InputLabel';
 import { withStyles } from '@material-ui/core/styles';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
-import { makeFilterStyles } from '../../util/styles';
+import {
+    makeFilterStyles,
+    makeSelectFilterStyles,
+    makeNestedSelectFilterStyles,
+} from '../../util/styles';
 import ArrowDropDownIcon from '../ArrowDropDownIcon';
-import { OARColor } from '../../util/constants';
-
-const makeSelectFilterStyles = windowWidth => {
-    const themeColor = OARColor;
-
-    return {
-        multiValue: provided => ({
-            ...provided,
-            background: '#C0EBC7',
-            borderRadius: '100px',
-            fontWeight: 700,
-            fontSize: '14px',
-            lineHeight: '16px',
-            paddingLeft: '5px',
-            paddingRight: '5px',
-        }),
-        control: (provided, state) => {
-            const isInUse = state.isFocused || state.menuIsOpen;
-            return {
-                ...provided,
-                borderRadius: 0,
-                '*': {
-                    boxShadow: 'none !important',
-                },
-                boxShadow: 'none',
-                borderColor: isInUse ? themeColor : provided.borderColor,
-                '&:hover': {
-                    borderColor: isInUse ? themeColor : provided.borderColor,
-                },
-            };
-        },
-        clearIndicator: provided => ({
-            ...provided,
-            padding:
-                windowWidth > 699 && windowWidth < 900 ? 0 : provided.padding,
-        }),
-        groupHeading: (provided, state) => ({
-            ...provided,
-            fontWeight: 700,
-            fontSize: '16px',
-            color: 'black',
-            textTransform: 'capitalize',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px',
-            margin: '0',
-            padding: '5px 12px',
-            '&:hover': {
-                backgroundColor: state.theme.colors.primary25,
-            },
-        }),
-        option: (provided, state) => ({
-            ...provided,
-            padding: '1px 12px 1px 55px',
-            '&:hover': {
-                backgroundColor: state.theme.colors.primary25,
-            },
-        }),
-    };
-};
 
 const GroupHeading = ({ children, ...props }) => {
     const { label: groupLabel, options: groupOptions, open } = props.data;
@@ -220,6 +164,12 @@ const NestedSelect = ({
     ...rest
 }) => {
     const selectFilterStyles = makeSelectFilterStyles(windowWidth);
+    const nestedSelectFilterStyles = makeNestedSelectFilterStyles;
+    const combinedStyles = {
+        ...selectFilterStyles,
+        ...nestedSelectFilterStyles,
+    };
+
     const [inputValue, setInputValue] = useState('');
 
     const handleChange = options => {
