@@ -38,7 +38,7 @@ const makeSelectFilterStyles = () => {
                 },
             };
         },
-        groupHeading: provided => ({
+        groupHeading: (provided, state) => ({
             ...provided,
             fontWeight: 700,
             fontSize: '16px',
@@ -49,18 +49,17 @@ const makeSelectFilterStyles = () => {
             gap: '5px',
             margin: '0',
             padding: '5px 12px',
+            '&:hover': {
+                backgroundColor: state.theme.colors.primary25,
+            },
         }),
-        option: provided => ({
+        option: (provided, state) => ({
             ...provided,
             padding: '1px 12px 1px 55px',
-            // '&:hover': {
-            //     backgroundColor: '#f5f5f5',
-            // },
+            '&:hover': {
+                backgroundColor: state.theme.colors.primary25,
+            },
         }),
-        // menuList: provided => ({
-        //     ...provided,
-        //     // overflow: 'scroll',
-        // }),
     };
 };
 
