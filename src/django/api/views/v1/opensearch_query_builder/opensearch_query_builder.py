@@ -41,8 +41,13 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
     def add_terms(self, field, values):
         if not values:
             return self.query_body
-        terms_field = f'{field}.alpha_2' if field == 'country' \
-            else f'{field}.keyword'
+
+        if (field == 'country'):
+            terms_field = f'{field}.alpha_2'
+        elif (field == 'os_id'):
+            terms_field = field
+        else:
+            terms_field = f'{field}.keyword'
 
         existing_terms = next(
             (item['terms'] for item in self.query_body['query']['bool']['must']
