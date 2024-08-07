@@ -1,10 +1,13 @@
 import unittest
 from unittest.mock import patch
 from api.services.search import \
-    prepare_opensearch_response, OpenSearchServiceException
+    OpenSearchService, OpenSearchServiceException
 
 
 class TestPrepareOpenSearchResponse(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.service = OpenSearchService()
 
     @patch('api.services.search.logger')
     def test_prepare_opensearch_response_valid_response(self, mock_logger):
@@ -25,7 +28,8 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
             ]
         }
 
-        result = prepare_opensearch_response(response)
+        result = self.service. \
+            _OpenSearchService__prepare_opensearch_response(response)
         self.assertEqual(result, expected_result)
         mock_logger.warning.assert_not_called()
 
@@ -47,7 +51,8 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
             ]
         }
 
-        result = prepare_opensearch_response(response)
+        result = self.service. \
+            _OpenSearchService__prepare_opensearch_response(response)
         self.assertEqual(result, expected_result)
         mock_logger.warning.assert_called_once_with(
             "Missing '_source' in hit: {'other_field': {'field2': 'value2'}}"
@@ -58,7 +63,8 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
         response = {"hits": {"total": {"value": 0}, "hits": []}}
         expected_result = {"count": 0, "data": []}
 
-        result = prepare_opensearch_response(response)
+        result = self.service. \
+            _OpenSearchService__prepare_opensearch_response(response)
         self.assertEqual(result, expected_result)
         mock_logger.warning.assert_not_called()
 
@@ -69,7 +75,8 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
     ):
         response = {}
         with self.assertRaises(OpenSearchServiceException):
-            prepare_opensearch_response(response)
+            self.service. \
+                _OpenSearchService__prepare_opensearch_response(response)
         mock_logger.error.assert_called_once_with(
             "Invalid response format: {}"
             )
@@ -80,7 +87,8 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
         mock_logger
     ):
         with self.assertRaises(OpenSearchServiceException):
-            prepare_opensearch_response(None)
+            self.service. \
+                _OpenSearchService__prepare_opensearch_response(None)
         mock_logger.error.assert_called_once_with(
             "Invalid response format: None")
 
