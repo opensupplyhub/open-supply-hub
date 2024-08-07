@@ -18,11 +18,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe scheme changes here.*
 
 ### Code/API changes
-* [OSDEV-1167](https://opensupplyhub.atlassian.net/browse/OSDEV-1167) - Search. Update field names in Open Search. The following parameter/field names in the API schema has been changed changed:
-    - “name_local” -> “local_name”
-    - “url” -> “business_url”
-    - “lon” -> ”longitude”
-    - “lat” -> “latitude”
+* [OSDEV-1167](https://opensupplyhub.atlassian.net/browse/OSDEV-1167) - Search. Update field names in Open Search. The following parameter/field names in the API schema has been changed:
+    - `name_local` -> `local_name`
+    - `url` -> `business_url`
+    - `lon` -> `longitude`
+    - `lat` -> `latitude`
 * [OSDEV-1006](https://opensupplyhub.atlassian.net/browse/OSDEV-1006) - Create new "api/v1/production-locations" endpoint.
 
 ### Architecture/Environment changes
