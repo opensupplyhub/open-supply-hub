@@ -1,13 +1,14 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from api.services.search import \
     OpenSearchService, OpenSearchServiceException
 
 
 class TestPrepareOpenSearchResponse(unittest.TestCase):
 
-    def setUp(self) -> None:
-        self.service = OpenSearchService()
+    def setUp(self):
+        self.mock_client = MagicMock()
+        self.service = OpenSearchService(client=self.mock_client)
 
     @patch('api.services.search.logger')
     def test_prepare_opensearch_response_valid_response(self, mock_logger):

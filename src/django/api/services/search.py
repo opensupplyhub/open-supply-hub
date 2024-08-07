@@ -16,8 +16,8 @@ class OpenSearchServiceException(Exception):
 
 
 class OpenSearchService(SearchInterface):
-    def __init__(self):
-        self.__client = OpenSearchServiceConnection().client
+    def __init__(self, client=None):
+        self.__client = client or OpenSearchServiceConnection().client
 
     def __prepare_opensearch_response(self, response):
         if not response or "hits" not in response:
