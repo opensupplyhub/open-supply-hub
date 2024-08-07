@@ -30,9 +30,10 @@ def prepare_opensearch_response(response):
 
 
 class OpenSearchServiceException(Exception):
-    def __init__(self,
-                 message="An unexpected error occurred  \
-                    while processing the request."):
+    def __init__(
+        self,
+        message="An unexpected error occurred while processing the request."
+    ):
         self.message = message
         super().__init__(self.message)
 
