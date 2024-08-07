@@ -5,7 +5,7 @@ class OpenSearchQueryDirector:
             'description': 'match',
             'address': 'match',
             'name': 'terms',
-            'name_local': 'terms',
+            'local_name': 'terms',
             'country': 'terms',
             'sector': 'terms',
             'product_type': 'terms',

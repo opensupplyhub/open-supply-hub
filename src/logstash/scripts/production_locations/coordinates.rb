@@ -13,8 +13,8 @@ def filter(event)
 
   # Create a hash to store the coordinates data (latitude and longitude).
   coordinates = {
-    'lat' => lat,
-    'lon' => lon
+    'latitude' => lat,
+    'longitude' => lon
   }
 
   # Set a new field named 'coordinates' within the event containing the coordinates data.
