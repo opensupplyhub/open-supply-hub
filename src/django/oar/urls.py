@@ -17,6 +17,8 @@ from django.conf.urls.static import static
 from django.urls import path, include
 
 from api import views
+from api.views.v1.production_locations \
+     import ProductionLocations
 from api.admin import admin_site
 from api.facilities_download_view_set import FacilitiesDownloadViewSet
 from web.views import environment
@@ -26,6 +28,7 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
 from oar import settings
+from api.views.v1.index_names import OpenSearchIndexNames
 
 
 router = routers.DefaultRouter()
@@ -46,6 +49,13 @@ router.register('facilities-downloads', FacilitiesDownloadViewSet,
                 'facilities-downloads')
 router.register('moderation-events', views.ModerationEventsViewSet,
                 'moderation-event')
+
+v1_router = routers.DefaultRouter()
+v1_router.register(
+    OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
+    ProductionLocations,
+    basename=OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX
+)
 
 public_apis = [
     path('api/', include(router.urls)),
@@ -78,6 +88,10 @@ public_apis = [
     path('api/sectors/', views.sectors, name='sectors'),
 ]
 
+api_v1 = [
+     path('api/v1/', include(v1_router.urls)),
+]
+
 schema_view = get_schema_view(
     openapi.Info(
         title='Open Supply Hub API',
@@ -88,7 +102,7 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
-    patterns=[path("", include(public_apis))],
+    patterns=[path("", include(public_apis + api_v1))],
 )
 
 info_apis = [
@@ -135,4 +149,5 @@ internal_apis = [
     path('api/geocoder/', views.get_geocoding, name='get_geocoding'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-urlpatterns = public_apis + internal_apis + info_apis
+
+urlpatterns = public_apis + api_v1 + internal_apis + info_apis
