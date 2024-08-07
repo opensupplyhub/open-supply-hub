@@ -235,6 +235,11 @@ export const makeSelectFilterStyles = (windowWidth, color = OARColor) =>
     });
 
 export const makeNestedSelectFilterStyles = Object.freeze({
+    group: provided =>
+        Object.freeze({
+            ...provided,
+            padding: '0',
+        }),
     groupHeading: (provided, state) =>
         Object.freeze({
             ...provided,
@@ -252,9 +257,13 @@ export const makeNestedSelectFilterStyles = Object.freeze({
             },
         }),
     option: (provided, state) =>
+        console.log('state >>>', state) ||
         Object.freeze({
             ...provided,
             padding: '1px 12px 1px 55px',
+            backgroundColor: state.isFocused
+                ? 'transparent'
+                : provided.backgroundColor,
             '&:hover': {
                 backgroundColor: state.theme.colors.primary25,
             },
