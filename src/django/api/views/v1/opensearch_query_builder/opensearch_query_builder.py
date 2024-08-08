@@ -19,62 +19,8 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
     def reset(self):
         self.query_body = copy.deepcopy(self.default_query_body)
 
-    def add_size(self, size):
-        self.query_body['size'] = size
-
-    def add_match(self, field, value, fuzziness=None):
-        if fuzziness is None:
-            fuzziness = self.default_fuzziness
-        match_query = \
-            {'match': {field: {'query': value, 'fuzziness': fuzziness}}}
-        self.query_body['query']['bool']['must'].append(match_query)
-
-    def add_multi_match(self, query):
+    def __build_number_of_workers(self, field, range_query):
         self.query_body['query']['bool']['must'].append({
-            'multi_match': {
-                'query': query,
-                'fields': ['name^2', 'address', 'description', 'name_local'],
-                'fuzziness': self.default_fuzziness
-            }
-        })
-
-    def add_terms(self, field, values):
-        if not values:
-            return self.query_body
-
-        if (field == 'country'):
-            terms_field = f'{field}.alpha_2'
-        elif (field == 'os_id'):
-            terms_field = field
-        else:
-            terms_field = f'{field}.keyword'
-
-        existing_terms = next(
-            (item['terms'] for item in self.query_body['query']['bool']['must']
-             if 'terms' in item and terms_field in item['terms']), None)
-
-        if existing_terms:
-            existing_terms[terms_field].extend(values)
-        else:
-            self.query_body['query']['bool']['must'].append({
-                'terms': {terms_field: values}
-            })
-
-    def add_range(self, field, query_params):
-        min_value = query_params.get(f'{field}[min]')
-        max_value = query_params.get(f'{field}[max]')
-        min_value = int(min_value) if min_value else None
-        max_value = int(max_value) if max_value else None
-
-        range_query = {}
-        if min_value is not None:
-            range_query['gte'] = min_value
-        if max_value is not None:
-            range_query['lte'] = max_value
-
-        if range_query:
-            if field == 'number_of_workers':
-                self.query_body['query']['bool']['must'].append({
                     'bool': {
                         'should': [
                             {
@@ -110,6 +56,69 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
                         ]
                     }
                 })
+
+    def __build_os_id(self, field):
+        return field
+
+    def __build_country(self, field):
+        return f'{field}.alpha_2'
+
+    def add_size(self, size):
+        self.query_body['size'] = size
+
+    def add_match(self, field, value, fuzziness=None):
+        if fuzziness is None:
+            fuzziness = self.default_fuzziness
+        match_query = \
+            {'match': {field: {'query': value, 'fuzziness': fuzziness}}}
+        self.query_body['query']['bool']['must'].append(match_query)
+
+    def add_multi_match(self, query):
+        self.query_body['query']['bool']['must'].append({
+            'multi_match': {
+                'query': query,
+                'fields': ['name^2', 'address', 'description', 'name_local'],
+                'fuzziness': self.default_fuzziness
+            }
+        })
+
+    def add_terms(self, field, values):
+        if not values:
+            return self.query_body
+
+        if (field == 'country'):
+            terms_field = self.__build_country(field)
+        elif (field == 'os_id'):
+            terms_field = self.__build_os_id(field)
+        else:
+            terms_field = f'{field}.keyword'
+
+        existing_terms = next(
+            (item['terms'] for item in self.query_body['query']['bool']['must']
+             if 'terms' in item and terms_field in item['terms']), None)
+
+        if existing_terms:
+            existing_terms[terms_field].extend(values)
+        else:
+            self.query_body['query']['bool']['must'].append({
+                'terms': {terms_field: values}
+            })
+
+    def add_range(self, field, query_params):
+        min_value = query_params.get(f'{field}[min]')
+        max_value = query_params.get(f'{field}[max]')
+        min_value = int(min_value) if min_value else None
+        max_value = int(max_value) if max_value else None
+
+        range_query = {}
+        if min_value is not None:
+            range_query['gte'] = min_value
+        if max_value is not None:
+            range_query['lte'] = max_value
+
+        if range_query:
+            if field == 'number_of_workers':
+                self.__build_number_of_workers(field, range_query)
             else:
                 self.query_body['query']['bool']['must'].append({
                     'range': {field: range_query}
