@@ -44,6 +44,8 @@ const GroupHeading = props => {
             ...selectedOptions.filter(opt => !groupOptions.includes(opt.value)),
             ...data.options,
         ];
+        // console.log('groupOptions >>>', groupOptions);
+        // console.log('newSelectedOptions >>>', newSelectedOptions);
         setSelectedOptions(newSelectedOptions);
         setMenuIsOpen(false);
     };
@@ -69,10 +71,8 @@ const Option = props => {
     const { expandedGroups } = selectProps;
     // console.log('Option data >>>', data);
 
-    const isVisible = expandedGroups.some(group =>
-        data.groupLabels.includes(group),
-    );
-    console.log('isVisible >>>', isVisible);
+    const isVisible = expandedGroups.some(group => data.groupLabel === group);
+    // console.log('isVisible >>>', isVisible);
 
     return isVisible ? <components.Option {...props} /> : null;
 };
@@ -107,20 +107,22 @@ const NestedSelect = ({
     };
 
     const selectedOptions = sectors;
+    console.log('selectedOptions >>>', selectedOptions);
     const [menuIsOpen, setMenuIsOpen] = useState(false);
     // console.log('menuIsOpen >>>', menuIsOpen);
     const [expandedGroups, setExpandedGroups] = useState([]);
     // console.log('expandedGroups >>>', expandedGroups);
     // console.log('updateSector >>>', updateSector);
-    const groupOptions = optionsData.map(group => ({
-        ...group,
-        options: group.options.map(option => ({
-            ...option,
-            groupLabels: [group.label],
-        })),
-    }));
-    // console.log('optionsData >>>', optionsData);
-    console.log('groupOptions >>>', groupOptions);
+    // const groupOptions = optionsData.map(group => ({
+    //     ...group,
+    //     options: group.options.map(option => ({
+    //         ...option,
+    //         groupLabel: group.label,
+    //     })),
+    // }));
+    // const groupOptions = optionsData;
+    console.log('optionsData >>>', optionsData);
+    // console.log('groupOptions >>>', groupOptions);
 
     const handleInputChange = inputValue => {
         const newExpandedGroups = optionsData
@@ -189,7 +191,7 @@ const NestedSelect = ({
                 components={customComponents}
                 //
                 value={selectedOptions}
-                options={groupOptions}
+                options={optionsData}
                 expandedGroups={expandedGroups}
                 setExpandedGroups={setExpandedGroups}
                 selectedOptions={selectedOptions}
@@ -216,6 +218,7 @@ NestedSelect.propTypes = {
             label: string.isRequired,
             options: arrayOf(
                 shape({
+                    groupLabel: string.isRequired,
                     label: string.isRequired,
                     value: string.isRequired,
                 }),
@@ -224,6 +227,7 @@ NestedSelect.propTypes = {
     ).isRequired,
     sectors: arrayOf(
         shape({
+            groupLabel: string.isRequired,
             label: string.isRequired,
             value: string.isRequired,
         }),
