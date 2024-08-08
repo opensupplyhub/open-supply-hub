@@ -1,5 +1,7 @@
+from functools import wraps
 from rest_framework.response import Response
 from rest_framework import status
+from api.services.search import OpenSearchServiceException
 import logging
 logger = logging.getLogger(__name__)
 
@@ -61,3 +63,15 @@ def handle_opensearch_exception(e):
         },
         status=status.HTTP_500_INTERNAL_SERVER_ERROR
     )
+
+
+def handle_errors_decorator(view_func):
+    @wraps(view_func)
+    def _wrapped_view(self, request, *args, **kwargs):
+        try:
+            return view_func(self, request, *args, **kwargs)
+        except ValueError as e:
+            return handle_value_error(e)
+        except OpenSearchServiceException as e:
+            return handle_opensearch_exception(e)
+    return _wrapped_view

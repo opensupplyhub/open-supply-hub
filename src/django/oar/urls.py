@@ -90,6 +90,11 @@ public_apis = [
 
 api_v1 = [
      path('api/v1/', include(v1_router.urls)),
+     path(
+        'api/v1/production-locations/<str:os_id>/',
+        ProductionLocations.as_view({'get': 'retrieve'}),
+        name='production-locations-details'
+     ),
 ]
 
 schema_view = get_schema_view(
