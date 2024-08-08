@@ -257,7 +257,6 @@ export const makeNestedSelectFilterStyles = Object.freeze({
             },
         }),
     option: (provided, state) =>
-        console.log('state >>>', state) ||
         Object.freeze({
             ...provided,
             padding: '1px 12px 1px 55px',
