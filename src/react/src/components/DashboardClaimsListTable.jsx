@@ -102,6 +102,9 @@ function DashboardClaimsListTable({
         handleSortClaims(sortedData);
     };
 
+    const wasNotEmptyAndNowEmpty = (prev, current) =>
+        prev?.current?.length > 0 && current?.length === 0;
+
     useEffect(() => {
         /*
          Fetch data if prev filters were not empty but 
@@ -109,24 +112,21 @@ function DashboardClaimsListTable({
          This will resolve conflict of when we want to fetch data
          when claims or countries filters are removing in UI at the moment
         */
-        const wasNotEmptyAndNowEmptyClaimStatuses =
-            prevClaimStatuses &&
-            prevClaimStatuses.current &&
-            prevClaimStatuses.current.length > 0 &&
-            claimStatuses.length === 0;
-
-        const wasNotEmptyAndNowEmptyCountriesData =
-            prevCountriesData &&
-            prevCountriesData.current &&
-            prevCountriesData.current.length > 0 &&
-            countriesData.length === 0;
+        const wasNotEmptyAndNowEmptyClaimStatuses = wasNotEmptyAndNowEmpty(
+            prevClaimStatuses,
+            claimStatuses,
+        );
+        const wasNotEmptyAndNowEmptyCountriesData = wasNotEmptyAndNowEmpty(
+            prevCountriesData,
+            countriesData,
+        );
 
         if (isFirstRender.current) {
             isFirstRender.current = false;
         } else if (
-            claimStatuses.length > 0 ||
+            claimStatuses?.length > 0 ||
             wasNotEmptyAndNowEmptyClaimStatuses ||
-            countriesData.length > 0 ||
+            countriesData?.length > 0 ||
             wasNotEmptyAndNowEmptyCountriesData
         ) {
             handleGetClaims();
