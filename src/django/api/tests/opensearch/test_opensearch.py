@@ -7,7 +7,7 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
     
     def setUp(self):
         # Ensure the index is created before each test
-        self.client = self.getClient()
+        self.client: OpenSearch = self.getClient()
         self.client.indices.create(index=self.index_name, ignore=400)
 
     def tearDown(self):
