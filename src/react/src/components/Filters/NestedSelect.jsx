@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+
+import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import ReactSelect, { components } from 'react-select';
-import InputLabel from '@material-ui/core/InputLabel';
+import { string, arrayOf, shape, func, object, bool, number } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
+import InputLabel from '@material-ui/core/InputLabel';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import {
@@ -12,133 +15,66 @@ import {
 } from '../../util/styles';
 import ArrowDropDownIcon from '../ArrowDropDownIcon';
 
-const GroupHeading = ({ children, ...props }) => {
-    const { label: groupLabel, options: groupOptions, open } = props.data;
-    const [isOpen, setIsOpen] = useState(open);
+const GroupHeading = props => {
+    const { data, selectProps } = props;
+    const {
+        expandedGroups,
+        setExpandedGroups,
+        selectedOptions,
+        setSelectedOptions,
+        setMenuIsOpen,
+    } = selectProps;
+    // console.log('GroupHeading props >>>', props);
+    // console.log('MenuIsOpen >>>', menuIsOpen);
+    const isExpanded = expandedGroups.includes(data.label);
 
-    useEffect(() => {
-        setIsOpen(open);
-    }, [open]);
-
-    const toggleGroup = () => {
-        setIsOpen(prevIsOpen => !prevIsOpen);
+    const handleClick = () => {
+        if (isExpanded) {
+            setExpandedGroups(
+                expandedGroups.filter(label => label !== data.label),
+            );
+        } else {
+            setExpandedGroups([...expandedGroups, data.label]);
+        }
     };
 
-    const selectGroup = () => {
-        const selectedOptions = props.selectProps.value || [];
+    const handleGroupSelect = () => {
+        const groupOptions = data.options.map(option => option.value);
         const newSelectedOptions = [
-            ...selectedOptions,
-            ...groupOptions.filter(
-                option =>
-                    !selectedOptions.some(
-                        selectedOption => selectedOption.value === option.value,
-                    ),
-            ),
+            ...selectedOptions.filter(opt => !groupOptions.includes(opt.value)),
+            ...data.options,
         ];
-        props.selectProps.onChange(newSelectedOptions);
-    };
-
-    const handleGroupSelectKeyDown = event => {
-        if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            selectGroup();
-        }
-    };
-
-    const handleToggleKeyDown = event => {
-        if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            toggleGroup();
-        }
+        setSelectedOptions(newSelectedOptions);
+        setMenuIsOpen(false);
     };
 
     return (
-        <>
-            <components.GroupHeading {...props}>
-                <div
-                    onClick={toggleGroup}
-                    onKeyDown={handleToggleKeyDown}
-                    role="button"
-                    tabIndex={0}
-                    style={{
-                        cursor: 'pointer',
-                        display: 'flex',
-                    }}
-                >
-                    {isOpen ? <ExpandMoreIcon /> : <ChevronRightIcon />}
-                </div>
-                <div
-                    onClick={selectGroup}
-                    onKeyDown={handleGroupSelectKeyDown}
-                    role="button"
-                    tabIndex={0}
-                >
-                    {groupLabel}
-                </div>
-            </components.GroupHeading>
-            {isOpen &&
-                groupOptions.map(option => (
-                    <components.Option
-                        key={option.value}
-                        {...props}
-                        data={option}
-                        innerRef={props.innerRef}
-                        innerProps={{
-                            ...props.innerProps,
-                            onClick: () => {
-                                const selectedOptions =
-                                    props.selectProps.value || [];
-                                const isSelected = selectedOptions.some(
-                                    selectedOption =>
-                                        selectedOption.value === option.value,
-                                );
-
-                                const newSelectedOptions = isSelected
-                                    ? selectedOptions.filter(
-                                          selectedOption =>
-                                              selectedOption.value !==
-                                              option.value,
-                                      )
-                                    : [...selectedOptions, option];
-
-                                props.selectProps.onChange(newSelectedOptions);
-                            },
-                        }}
-                    >
-                        {option.label}
-                    </components.Option>
-                ))}
-        </>
+        <components.GroupHeading {...props}>
+            <div
+                onClick={handleClick}
+                style={{
+                    cursor: 'pointer',
+                    display: 'flex',
+                }}
+            >
+                {isExpanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
+            </div>
+            <div onClick={handleGroupSelect}>{data.label}</div>
+        </components.GroupHeading>
     );
 };
 
-const MenuList = props => {
-    const { children } = props;
+const Option = props => {
+    const { data, selectProps } = props;
+    const { expandedGroups } = selectProps;
+    // console.log('Option data >>>', data);
 
-    return (
-        <components.MenuList {...props}>
-            {React.Children.map(children, child => {
-                if (
-                    child &&
-                    child.props &&
-                    child.props.data &&
-                    child.props.data.options
-                ) {
-                    return (
-                        <GroupHeading
-                            {...child.props}
-                            key={child.props.data.label}
-                            data={child.props.data}
-                            selectProps={props.selectProps}
-                            innerProps={props.innerProps}
-                            innerRef={props.innerRef}
-                        />
-                    );
-                }
-                return child;
-            })}
-        </components.MenuList>
+    const isVisible = expandedGroups.some(group =>
+        data.groupLabels.includes(group),
     );
+    console.log('isVisible >>>', isVisible);
+
+    return isVisible ? <components.Option {...props} /> : null;
 };
 
 const DropdownIndicator = () => (
@@ -155,10 +91,10 @@ const DropdownIndicator = () => (
 const NestedSelect = ({
     name,
     label,
-    classes,
     optionsData,
     sectors,
     updateSector,
+    classes,
     isSideBarSearch,
     windowWidth,
     ...rest
@@ -170,43 +106,52 @@ const NestedSelect = ({
         ...nestedSelectFilterStyles,
     };
 
-    const [inputValue, setInputValue] = useState('');
+    const selectedOptions = sectors;
+    const [menuIsOpen, setMenuIsOpen] = useState(false);
+    // console.log('menuIsOpen >>>', menuIsOpen);
+    const [expandedGroups, setExpandedGroups] = useState([]);
+    // console.log('expandedGroups >>>', expandedGroups);
+    // console.log('updateSector >>>', updateSector);
+    const groupOptions = optionsData.map(group => ({
+        ...group,
+        options: group.options.map(option => ({
+            ...option,
+            groupLabels: [group.label],
+        })),
+    }));
+    // console.log('optionsData >>>', optionsData);
+    console.log('groupOptions >>>', groupOptions);
 
-    const handleChange = options => {
-        updateSector(options || []);
-        setInputValue('');
-    };
-
-    const handleInputChange = value => {
-        setInputValue(value);
-    };
-
-    const getFilteredOptions = () => {
-        const selectedValues = sectors.map(option => option.value);
-
-        return optionsData
-            .map(group => ({
-                ...group,
-                options: group.options.filter(
-                    option =>
-                        !selectedValues.includes(option.value) &&
-                        option.label
-                            .toLowerCase()
-                            .includes(inputValue.toLowerCase()),
+    const handleInputChange = inputValue => {
+        const newExpandedGroups = optionsData
+            .filter(group =>
+                group.options.some(option =>
+                    option.label
+                        .toLowerCase()
+                        .includes(inputValue.toLowerCase()),
                 ),
-                open:
-                    inputValue.length > 0 &&
-                    group.options.some(option =>
-                        option.label
-                            .toLowerCase()
-                            .includes(inputValue.toLowerCase()),
-                    ),
-            }))
-            .filter(group => group.options.length > 0);
+            )
+            .map(group => group.label);
+
+        setExpandedGroups(newExpandedGroups);
+    };
+
+    const handleSelect = selected => {
+        updateSector(selected);
+    };
+
+    const onMenuOpen = () => {
+        setMenuIsOpen(true);
+    };
+
+    const onMenuClose = () => {
+        setExpandedGroups([]);
+        setMenuIsOpen(false);
     };
 
     const customComponents = {
-        MenuList,
+        GroupHeading,
+        Option,
         DropdownIndicator,
         IndicatorSeparator: null,
     };
@@ -216,8 +161,9 @@ const NestedSelect = ({
               menuPosition: 'fixed',
               menuPortalTarget: document.body,
               closeMenuOnScroll: e =>
-                  e.target.classList === undefined ||
-                  !e.target.classList.contains('select__menu-list'),
+                  menuIsOpen &&
+                  (e.target.classList === undefined ||
+                      !e.target.classList.contains('select__menu-list')),
           }
         : {};
 
@@ -230,27 +176,62 @@ const NestedSelect = ({
             >
                 {label}
             </InputLabel>
+
             <ReactSelect
                 isMulti
                 id={name}
-                captureMenuScroll={false}
-                components={customComponents}
                 name={name}
-                options={getFilteredOptions()}
-                onChange={handleChange}
-                value={sectors}
-                isClearable
-                inputValue={inputValue}
-                onInputChange={handleInputChange}
+                label={label}
                 placeholder="Select"
                 className={`basic-multi-select notranslate ${classes.selectStyle}`}
                 classNamePrefix="select"
                 styles={combinedStyles}
+                components={customComponents}
+                //
+                value={selectedOptions}
+                options={groupOptions}
+                expandedGroups={expandedGroups}
+                setExpandedGroups={setExpandedGroups}
+                selectedOptions={selectedOptions}
+                setSelectedOptions={updateSector}
+                onChange={handleSelect}
+                onMenuClose={onMenuClose}
+                onInputChange={handleInputChange}
                 {...additionalProps}
                 {...rest}
+                //
+                onMenuOpen={onMenuOpen}
+                menuIsOpen={menuIsOpen}
+                setMenuIsOpen={setMenuIsOpen}
             />
         </>
     );
+};
+
+NestedSelect.propTypes = {
+    name: string.isRequired,
+    label: string.isRequired,
+    optionsData: arrayOf(
+        shape({
+            label: string.isRequired,
+            options: arrayOf(
+                shape({
+                    label: string.isRequired,
+                    value: string.isRequired,
+                }),
+            ).isRequired,
+        }),
+    ).isRequired,
+    sectors: arrayOf(
+        shape({
+            label: string.isRequired,
+            value: string.isRequired,
+        }),
+    ).isRequired,
+    updateSector: func.isRequired,
+    classes: object.isRequired,
+    isSideBarSearch: bool.isRequired,
+    windowWidth: number.isRequired,
 };
 
 function mapStateToProps({
