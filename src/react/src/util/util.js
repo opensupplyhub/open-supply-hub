@@ -678,6 +678,7 @@ export const mapSectorGroupsToSelectOptions = data =>
         data.map(group => ({
             label: group.group_name,
             options: group.sectors.map(sector => ({
+                groupLabel: group.group_name,
                 value: sector,
                 label: sector,
             })),
