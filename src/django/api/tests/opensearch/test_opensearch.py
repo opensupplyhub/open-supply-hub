@@ -1,18 +1,12 @@
 from opensearchpy import OpenSearch
-
 from .opensearch_test_case import OpenSearchIntegrationTestCase
 
 
 class OpenSearchTest(OpenSearchIntegrationTestCase):
-    
-    def setUp(self):
-        # Ensure the index is created before each test
-        self.client: OpenSearch = self.getClient()
-        self.client.indices.create(index=self.index_name, ignore=400)
 
-    def tearDown(self):
-        # Delete the index after each test
-        self.client.indices.delete(index=self.index_name, ignore=[400, 404])
+    def setUp(self):
+        super().setUp()
+        self.client: OpenSearch = self.getClient()
 
     def test_connection(self):
         health = self.client.cluster.health()
