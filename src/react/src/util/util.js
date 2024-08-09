@@ -173,6 +173,7 @@ export const makeGetSectorsURL = options =>
     options && options.embed
         ? `/api/sectors?contributor=${options.contributor}&embed=${options.embed}`
         : '/api/sectors/';
+export const makeGetGroupedSectorsURL = () => '/api/sectors/?grouped=true';
 export const makeGetParentCompaniesURL = () => '/api/parent-companies/';
 export const makeGetFacilitiesTypeProcessingTypeURL = () =>
     '/api/facility-processing-types/';
