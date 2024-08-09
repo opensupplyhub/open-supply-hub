@@ -7,9 +7,8 @@ from rest_framework.decorators import (
 )
 from rest_framework.response import Response
 from django.db.models import F, Func
-
 from drf_yasg.utils import swagger_auto_schema
-from drf_yasg.openapi import Parameter, IN_QUERY, TYPE_INTEGER, TYPE_BOOLEAN
+from drf_yasg import openapi
 
 from ..models.facility.facility_claim import FacilityClaim
 from ..models.facility.facility_list_item import FacilityListItem
@@ -18,18 +17,25 @@ from ..models.facility.facility_list_item import FacilityListItem
 @swagger_auto_schema(
     method='get',
     manual_parameters=[
-        Parameter(
+        openapi.Parameter(
             'embed',
-            IN_QUERY,
-            description="Set to true to enable embed mode.",
-            type=TYPE_BOOLEAN,
+            openapi.IN_QUERY,
+            description="If present, returns a flat list of sectors submitted "
+            "by a specific contributor.",
+            type=openapi.TYPE_BOOLEAN,
         ),
-        Parameter(
+        openapi.Parameter(
             'contributor',
-            IN_QUERY,
-            description="If `embed` is provided, this parameter must be "
-            "included to filter sectors submitted by a specific contributor.",
-            type=TYPE_INTEGER,
+            openapi.IN_QUERY,
+            description="Contributor ID, required when 'embed' is present.",
+            type=openapi.TYPE_INTEGER,
+        ),
+        openapi.Parameter(
+            'grouped',
+            openapi.IN_QUERY,
+            description="If present, returns a grouped list of sectors by "
+            "their sector groups.",
+            type=openapi.TYPE_BOOLEAN,
         ),
     ],
 )
@@ -37,28 +43,29 @@ from ..models.facility.facility_list_item import FacilityListItem
 @throttle_classes([])
 def sectors(request):
     """
-    Returns a list of suggested sectors submitted by contributors,
-    sorted alphabetically.
+    Returns a list of sectors or sectors grouped by their sector groups.
 
-    ## Query Parameters
-
-    - `embed` (optional): If provided, the response will be a flat list
-    of sectors.
+    ## Parameters:
+    - `embed` (optional): If present, returns a flat list of sectors submitted
+    by a specific contributor.
     - `contributor` (optional): If `embed` is provided, this parameter must be
-      included to filter sectors submitted by a specific contributor.
+    included to filter sectors submitted by a specific contributor.
+    - `grouped` (optional): If present, returns a grouped list of sectors by
+    their sector groups.
 
-    ## Sample Response
+    Note: If both `embed` and `grouped` are provided, the `embed` parameter
+    will take precedence.
 
-    If `embed` is provided the response will be a flat list of sectors.:
+    ## Sample Responses:
 
+    ### Flat List (with or without 'embed'):
         [
             "Agriculture",
             "Apparel",
             "Information",
         ]
 
-    If `embed` is not provided the response will be grouped by sector groups:
-
+    ### Grouped List:
         [
             {
                 "group_name": "Agriculture, Food & Beverage",
@@ -84,40 +91,41 @@ def sectors(request):
     """
 
     submitted_sectors = set()
-
     embed = request.query_params.get('embed', None)
+    grouped = request.query_params.get('grouped', None)
+
     if embed is not None:
         contributor = request.query_params.get('contributor', None)
         if contributor is None:
             return Response(submitted_sectors)
 
         item_sectors = set(
-            FacilityListItem
-            .objects
-            .filter(
+            FacilityListItem.objects.filter(
                 status__in=[
                     FacilityListItem.MATCHED,
-                    FacilityListItem.CONFIRMED_MATCH],
+                    FacilityListItem.CONFIRMED_MATCH,
+                ],
                 source__contributor_id=contributor,
                 source__is_active=True,
-                source__is_public=True
-            ).annotate(
-                values=Func('sector', function='unnest')
-            ).values_list('values', flat=True)
+                source__is_public=True,
+            )
+            .annotate(values=Func('sector', function='unnest'))
+            .values_list('values', flat=True)
             .distinct()
         )
 
         claim_sectors = set(
-            FacilityClaim
-            .objects
-            .filter(contributor_id=contributor,
-                    status=FacilityClaimStatuses.APPROVED)
+            FacilityClaim.objects.filter(
+                contributor_id=contributor,
+                status=FacilityClaimStatuses.APPROVED,
+            )
             .annotate(values=Func('sector', function='unnest'))
             .values_list('values', flat=True)
             .distinct()
         )
 
         submitted_sectors = item_sectors.union(claim_sectors)
+
         return Response(sorted(list(submitted_sectors)))
 
     else:
@@ -129,24 +137,31 @@ def sectors(request):
             .distinct()
         )
 
-        sector_groups = SectorGroup.objects.all()
-        response_data = []
+        if grouped is not None:
+            sector_groups = SectorGroup.objects.prefetch_related(
+                'sectors'
+            ).all()
+            response_data = []
 
-        for group in sector_groups:
-            group_sectors = group.sectors.filter(name__in=submitted_sectors)
-
-            if group_sectors.exists():
-                response_data.append(
-                    {
-                        "group_name": group.name,
-                        "sectors": list(
-                            group_sectors.values_list('name', flat=True)
-                        ),
-                    }
+            for group in sector_groups:
+                group_sectors = group.sectors.filter(
+                    name__in=submitted_sectors
                 )
 
-        response_data_sorted = sorted(
-            response_data, key=lambda x: x['group_name']
-        )
+                if group_sectors.exists():
+                    response_data.append(
+                        {
+                            "group_name": group.name,
+                            "sectors": list(
+                                group_sectors.values_list('name', flat=True)
+                            ),
+                        }
+                    )
 
-        return Response(response_data_sorted)
+            response_data_sorted = sorted(
+                response_data, key=lambda x: x['group_name']
+            )
+            return Response(response_data_sorted)
+
+        else:
+            return Response(sorted(list(submitted_sectors)))
