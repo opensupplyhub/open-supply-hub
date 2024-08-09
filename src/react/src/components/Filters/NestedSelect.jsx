@@ -1,5 +1,3 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import ReactSelect, { components } from 'react-select';
@@ -8,6 +6,8 @@ import { withStyles } from '@material-ui/core/styles';
 import InputLabel from '@material-ui/core/InputLabel';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import IconButton from '@material-ui/core/IconButton';
+import ButtonBase from '@material-ui/core/ButtonBase';
 import {
     makeFilterStyles,
     makeSelectFilterStyles,
@@ -24,8 +24,6 @@ const GroupHeading = props => {
         setSelectedOptions,
         setMenuIsOpen,
     } = selectProps;
-    // console.log('GroupHeading props >>>', props);
-    // console.log('MenuIsOpen >>>', menuIsOpen);
     const isExpanded = expandedGroups.includes(data.label);
 
     const handleClick = () => {
@@ -44,24 +42,35 @@ const GroupHeading = props => {
             ...selectedOptions.filter(opt => !groupOptions.includes(opt.value)),
             ...data.options,
         ];
-        // console.log('groupOptions >>>', groupOptions);
-        // console.log('newSelectedOptions >>>', newSelectedOptions);
         setSelectedOptions(newSelectedOptions);
         setMenuIsOpen(false);
     };
 
     return (
         <components.GroupHeading {...props}>
-            <div
+            <IconButton
                 onClick={handleClick}
                 style={{
-                    cursor: 'pointer',
                     display: 'flex',
+                    padding: '0',
                 }}
             >
                 {isExpanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
-            </div>
-            <div onClick={handleGroupSelect}>{data.label}</div>
+            </IconButton>
+            <ButtonBase
+                onClick={handleGroupSelect}
+                style={{
+                    display: 'flex',
+                    justifyContent: 'flex-start',
+                    textAlign: 'left',
+                    width: '100%',
+                    fontWeight: 700,
+                    fontSize: '16px',
+                    cursor: 'default',
+                }}
+            >
+                {data.label}
+            </ButtonBase>
         </components.GroupHeading>
     );
 };
@@ -69,10 +78,7 @@ const GroupHeading = props => {
 const Option = props => {
     const { data, selectProps } = props;
     const { expandedGroups } = selectProps;
-    // console.log('Option data >>>', data);
-
     const isVisible = expandedGroups.some(group => data.groupLabel === group);
-    // console.log('isVisible >>>', isVisible);
 
     return isVisible ? <components.Option {...props} /> : null;
 };
@@ -105,24 +111,8 @@ const NestedSelect = ({
         ...selectFilterStyles,
         ...nestedSelectFilterStyles,
     };
-
-    const selectedOptions = sectors;
-    console.log('selectedOptions >>>', selectedOptions);
-    const [menuIsOpen, setMenuIsOpen] = useState(false);
-    // console.log('menuIsOpen >>>', menuIsOpen);
+    const [menuIsOpen, setMenuIsOpen] = useState(true);
     const [expandedGroups, setExpandedGroups] = useState([]);
-    // console.log('expandedGroups >>>', expandedGroups);
-    // console.log('updateSector >>>', updateSector);
-    // const groupOptions = optionsData.map(group => ({
-    //     ...group,
-    //     options: group.options.map(option => ({
-    //         ...option,
-    //         groupLabel: group.label,
-    //     })),
-    // }));
-    // const groupOptions = optionsData;
-    console.log('optionsData >>>', optionsData);
-    // console.log('groupOptions >>>', groupOptions);
 
     const handleInputChange = inputValue => {
         const newExpandedGroups = optionsData
@@ -148,7 +138,7 @@ const NestedSelect = ({
 
     const onMenuClose = () => {
         setExpandedGroups([]);
-        setMenuIsOpen(false);
+        // setMenuIsOpen(false);
     };
 
     const customComponents = {
@@ -184,27 +174,25 @@ const NestedSelect = ({
                 id={name}
                 name={name}
                 label={label}
+                options={optionsData}
+                value={sectors}
+                components={customComponents}
                 placeholder="Select"
                 className={`basic-multi-select notranslate ${classes.selectStyle}`}
                 classNamePrefix="select"
                 styles={combinedStyles}
-                components={customComponents}
-                //
-                value={selectedOptions}
-                options={optionsData}
                 expandedGroups={expandedGroups}
                 setExpandedGroups={setExpandedGroups}
-                selectedOptions={selectedOptions}
+                selectedOptions={sectors}
                 setSelectedOptions={updateSector}
                 onChange={handleSelect}
                 onMenuClose={onMenuClose}
                 onInputChange={handleInputChange}
-                {...additionalProps}
-                {...rest}
-                //
                 onMenuOpen={onMenuOpen}
                 menuIsOpen={menuIsOpen}
                 setMenuIsOpen={setMenuIsOpen}
+                {...additionalProps}
+                {...rest}
             />
         </>
     );
