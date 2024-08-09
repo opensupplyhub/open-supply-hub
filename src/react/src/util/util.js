@@ -858,12 +858,19 @@ export const joinDataIntoCSVString = data =>
     }, '');
 
 // Given a list where each item is like { label: 'ABCD', value: 123 }, and
-// a payload which is a list of items like { label: '123', value: 123 },
-// returns a list of items from the payload with their labels replaced with
-// matching items found in the list.
+// a payload which can be either:
+// 1. A list of items like { label: '123', value: 123 }, or
+// 2. A list of items where each item contains an `options` array, like:
+//    { label: 'Category', options: [{ label: '123', value: 123 }, ...] },
+// this function returns a list of items from the payload with their labels
+// replaced by matching items found in the original list.
 export const updateListWithLabels = (list, payload) =>
     list.reduce((accumulator, { value }) => {
-        const validOption = payload.find(
+        const flatPayload = payload.flatMap(item =>
+            item.options ? item.options : item,
+        );
+
+        const validOption = flatPayload.find(
             ({ value: otherValue }) => value === otherValue,
         );
 
