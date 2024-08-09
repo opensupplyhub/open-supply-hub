@@ -243,10 +243,7 @@ export const makeNestedSelectFilterStyles = Object.freeze({
     groupHeading: (provided, state) =>
         Object.freeze({
             ...provided,
-            fontWeight: 700,
-            fontSize: '16px',
             color: 'black',
-            textTransform: 'capitalize',
             display: 'flex',
             alignItems: 'center',
             gap: '5px',
