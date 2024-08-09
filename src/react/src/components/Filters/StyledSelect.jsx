@@ -4,49 +4,10 @@ import { string, bool, func } from 'prop-types';
 import InputLabel from '@material-ui/core/InputLabel';
 import ReactSelect from 'react-select';
 import { withStyles } from '@material-ui/core/styles';
-
-import { makeFilterStyles } from '../../util/styles';
-import { OARColor } from '../../util/constants';
+import { makeFilterStyles, makeSelectFilterStyles } from '../../util/styles';
 
 import ArrowDropDownIcon from '../ArrowDropDownIcon';
 import CreatableInputOnly from '../CreatableInputOnly';
-
-const makeSelectFilterStyles = (color, windowWidth) => {
-    const themeColor = color || OARColor;
-    return {
-        multiValue: provided => ({
-            ...provided,
-            background: '#C0EBC7',
-            borderRadius: '100px',
-            fontFamily: 'Darker Grotesque',
-            fontWeight: 700,
-            fontSize: '14px',
-            lineHeight: '16px',
-            paddingLeft: '5px',
-            paddingRight: '5px',
-        }),
-        control: (provided, state) => {
-            const isInUse = state.isFocused || state.menuIsOpen;
-            return {
-                ...provided,
-                borderRadius: 0,
-                '*': {
-                    boxShadow: 'none !important',
-                },
-                boxShadow: 'none',
-                borderColor: isInUse ? themeColor : provided.borderColor,
-                '&:hover': {
-                    borderColor: isInUse ? themeColor : provided.borderColor,
-                },
-            };
-        },
-        clearIndicator: provided => ({
-            ...provided,
-            padding:
-                windowWidth > 699 && windowWidth < 900 ? 0 : provided.padding,
-        }),
-    };
-};
 
 function StyledSelect({
     name,
@@ -59,7 +20,7 @@ function StyledSelect({
     isSideBarSearch,
     ...rest
 }) {
-    const selectFilterStyles = makeSelectFilterStyles(color, windowWidth);
+    const selectFilterStyles = makeSelectFilterStyles(windowWidth, color);
     return (
         <>
             <InputLabel

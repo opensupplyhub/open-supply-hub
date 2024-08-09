@@ -31,6 +31,7 @@ import {
     completeFetchCountryOptions,
     completeFetchSectorOptions,
     completeFetchParentCompanyOptions,
+    completeFetchGroupedSectorOptions,
 } from '../actions/filterOptions';
 
 import { completeSubmitLogOut } from '../actions/auth';
@@ -168,6 +169,7 @@ export default createReducer(
         ),
         [completeFetchCountryOptions]: maybeSetFromQueryString('countries'),
         [completeFetchSectorOptions]: maybeSetFromQueryString('sectors'),
+        [completeFetchGroupedSectorOptions]: maybeSetFromQueryString('sectors'),
         [completeFetchParentCompanyOptions]: maybeSetFromQueryString(
             'parentCompany',
         ),
