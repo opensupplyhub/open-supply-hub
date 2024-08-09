@@ -12,6 +12,7 @@ import {
     makeGetCountriesURL,
     makeGetClaimStatusesURL,
     makeGetSectorsURL,
+    makeGetGroupedSectorsURL,
     makeGetParentCompaniesURL,
     makeGetFacilitiesTypeProcessingTypeURL,
     makeGetNumberOfWorkersURL,
@@ -65,6 +66,16 @@ export const startFetchSectorOptions = createAction(
 export const failFetchSectorOptions = createAction('FAIL_FETCH_SECTOR_OPTIONS');
 export const completeFetchSectorOptions = createAction(
     'COMPLETE_FETCH_SECTOR_OPTIONS',
+);
+
+export const startFetchGroupedSectorOptions = createAction(
+    'START_FETCH_GROUPED_SECTOR_OPTIONS',
+);
+export const failFetchGroupedSectorOptions = createAction(
+    'FAIL_FETCH_GROUPED_SECTOR_OPTIONS',
+);
+export const completeFetchGroupedSectorOptions = createAction(
+    'COMPLETE_FETCH_GROUPED_SECTOR_OPTIONS',
 );
 
 export const startFetchParentCompanyOptions = createAction(
@@ -216,12 +227,7 @@ export function fetchSectorOptions() {
                     embed,
                 }),
             )
-            .then(({ data }) => {
-                if (embed) {
-                    return mapDjangoChoiceTuplesValueToSelectOptions(data);
-                }
-                return mapSectorGroupsToSelectOptions(data);
-            })
+            .then(({ data }) => mapDjangoChoiceTuplesValueToSelectOptions(data))
             .then(data => dispatch(completeFetchSectorOptions(data)))
             .catch(err =>
                 dispatch(
@@ -229,6 +235,26 @@ export function fetchSectorOptions() {
                         err,
                         'An error prevented fetching sector options',
                         failFetchSectorOptions,
+                    ),
+                ),
+            );
+    };
+}
+
+export function fetchGroupedSectorOptions() {
+    return dispatch => {
+        dispatch(startFetchGroupedSectorOptions());
+
+        return apiRequest
+            .get(makeGetGroupedSectorsURL())
+            .then(({ data }) => mapSectorGroupsToSelectOptions(data))
+            .then(data => dispatch(completeFetchGroupedSectorOptions(data)))
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented fetching grouped sector options',
+                        failFetchGroupedSectorOptions,
                     ),
                 ),
             );
