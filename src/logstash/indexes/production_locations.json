@@ -16,7 +16,7 @@
             }
           }
         },
-        "name_local": {
+        "local_name": {
           "type": "text",
           "fields": {
             "keyword": {
@@ -40,7 +40,7 @@
             }
           }
         },
-        "url": {
+        "business_url": {
           "type": "text",
           "fields": {
             "keyword": {

@@ -28,7 +28,7 @@ class OpenSearchQueryBuilderInterface:
         pass
 
     @abstractmethod
-    def add_geo_distance(self, field, lat, lon, distance):
+    def add_geo_distance(self, field, lat, lng, distance):
         pass
 
     @abstractmethod
