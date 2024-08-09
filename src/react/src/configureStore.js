@@ -26,9 +26,8 @@ const enhancer = composeEnhancers(applyMiddleware(...middleware));
 export const store = createStore(rootReducer, enhancer);
 export const persistor = persistStore(store);
 
-export const setupStore = preloadedState => {
+export const setupStore = preloadedState =>
     configureStore({
         reducer: rootReducer,
         preloadedState,
     });
-};
