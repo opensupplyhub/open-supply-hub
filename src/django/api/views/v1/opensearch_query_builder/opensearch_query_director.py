@@ -30,12 +30,12 @@ class OpenSearchQueryDirector:
     def __add_range_query(self, field, query_params):
         self.__builder.add_range(field, query_params)
 
-    def __add_geo_distance_query(self, field, lat, lon, distance):
-        if lat and lon:
+    def __add_geo_distance_query(self, field, lat, lng, distance):
+        if lat and lng:
             self.__builder.add_geo_distance(
                 field,
                 float(lat),
-                float(lon),
+                float(lng),
                 distance
             )
 
@@ -59,9 +59,10 @@ class OpenSearchQueryDirector:
 
             if query_type == "geo_distance":
                 lat = query_params.get(f"{field}[lat]")
-                lon = query_params.get(f"{field}[lon]")
+                lng = query_params.get(f"{field}[lng]")
                 distance = query_params.get("distance", "10km")
-                self.__add_geo_distance_query(field, lat, lon, distance)
+                self.__add_geo_distance_query(field, lat, lng,
+                                              distance)
                 continue
 
         sort_by = query_params.get('sort_by')

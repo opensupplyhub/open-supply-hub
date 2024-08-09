@@ -33,7 +33,7 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         self.query_body['query']['bool']['must'].append({
             'multi_match': {
                 'query': query,
-                'fields': ['name^2', 'address', 'description', 'name_local'],
+                'fields': ['name^2', 'address', 'description', 'local_name'],
                 'fuzziness': self.default_fuzziness
             }
         })
@@ -110,11 +110,11 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
                     'range': {field: range_query}
                 })
 
-    def add_geo_distance(self, field, lat, lon, distance):
+    def add_geo_distance(self, field, lat, lng, distance):
         geo_distance_query = {
             'geo_distance': {
                 'distance': distance,
-                field: {'lat': lat, 'lon': lon}
+                field: {'lat': lat, 'lng': lng}
             }
         }
         self.query_body['query']['bool']['must'].append(geo_distance_query)

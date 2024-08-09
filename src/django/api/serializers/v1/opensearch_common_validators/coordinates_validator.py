@@ -7,10 +7,10 @@ class CoordinatesValidator(OpenSearchValidationInterface):
         errors = []
 
         lat = data.get('coordinates_lat')
-        lon = data.get('coordinates_lon')
+        lng = data.get('coordinates_lng')
 
-        if ((lat is not None and lon is None) or
-                (lat is None and lon is not None)):
+        if ((lat is not None and lng is None) or
+                (lat is None and lng is not None)):
             errors.append({
                 "field": "coordinates",
                 "message": "Both latitude and longitude must be provided."
@@ -23,8 +23,8 @@ class CoordinatesValidator(OpenSearchValidationInterface):
                     "message": "Latitude must be between -90 and 90 degrees."
                 })
 
-        if lon is not None:
-            if not (-180 <= lon <= 180):
+        if lng is not None:
+            if not (-180 <= lng <= 180):
                 errors.append({
                     "field": "coordinates",
                     "message":

@@ -113,7 +113,7 @@ class TestOpenSearchQueryBuilder(TestCase):
         expected = {
             'geo_distance': {
                 'distance': '10km',
-                'location': {'lat': 40.7128, 'lon': -74.0060}
+                'location': {'lat': 40.7128, 'lng': -74.0060}
             }
         }
         self.assertIn(
