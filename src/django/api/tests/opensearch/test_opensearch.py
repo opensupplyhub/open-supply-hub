@@ -25,7 +25,22 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
 
     def test_search_document(self):
         # Index a document
-        doc = {'title': 'Test Document'}
+        doc = {
+            "sector": [
+            "Apparel"
+            ],
+            "address": "NO.11 DONGQIAN LAKE AREA,YINXIAN AVENUE,NINGBO,CHINA",
+            "name": "NINGBO HUAYI GARMENTS CO LTD",
+            "country": {
+            "alpha_2": "CN"
+            },
+            "os_id": "CN2024221G4W0WA",
+            "coordinates": {
+            "lon": 121.5504069,
+            "lat": 29.8194363
+            },
+            "claim_status": "unclaimed"
+        }
         self.client.index(index=self.index_name, body=doc, id=1)
         self.client.indices.refresh(index=self.index_name)
 
@@ -33,7 +48,7 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
         query = {
             'query': {
                 'match': {
-                    'title': 'Test'
+                    'name': 'HUAYI'
                 }
             }
         }
