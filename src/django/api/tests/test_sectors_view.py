@@ -94,11 +94,13 @@ class SectorsViewTest(FacilityAPITestCaseBase):
             response.data,
             sorted(['Agriculture', 'Apparel', 'Health', 'Information']),
         )
+        self.assertNotIn('Manufacturing', response.data)
 
     def test_get_sectors_with_embed_and_contributor_has_claims(self):
         response = self.client.get(
             self.url, {'embed': 'true', 'contributor': self.contributor_2.id}
         )
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
             response.data, sorted(['Agriculture', 'Health', 'Information'])
@@ -108,18 +110,20 @@ class SectorsViewTest(FacilityAPITestCaseBase):
         response = self.client.get(
             self.url, {'embed': 'true', 'contributor': self.contributor.id}
         )
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, ['Apparel'])
 
     def test_get_sectors_with_embed_without_contributor(self):
         response = self.client.get(self.url, {'embed': 'true'})
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, set())
 
     def test_get_sectors_with_grouped(self):
         response = self.client.get(self.url, {'grouped': 'true'})
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        print('response.data >>>', response.data)
         self.assertEqual(
             response.data,
             [
@@ -132,4 +136,8 @@ class SectorsViewTest(FacilityAPITestCaseBase):
                     'sectors': sorted(['Health', 'Information']),
                 },
             ],
+        )
+        self.assertNotIn(
+            'Manufacturing',
+            [sector for group in response.data for sector in group['sectors']],
         )
