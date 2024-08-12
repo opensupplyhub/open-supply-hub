@@ -71,12 +71,7 @@ function StyledSelect({
                         id={name}
                         components={{
                             DropdownIndicator: () => (
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        marginRight: '0.5em',
-                                    }}
-                                >
+                                <div className={classes.dropdownIndicator}>
                                     <ArrowDropDownIcon />
                                 </div>
                             ),
