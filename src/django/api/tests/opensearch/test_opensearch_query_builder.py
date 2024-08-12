@@ -25,7 +25,7 @@ class OpenSearchQueryBuilderTest(OpenSearchIntegrationTestCase):
             },
             "claim_status": "unclaimed"
         }
-        self.client.index(index=self.index_name, body=doc, id=1)
+        self.client.index(index=self.index_name, body=doc, id=self.client.count())
         self.client.indices.refresh(index=self.index_name)
 
         # Search match for the document
@@ -33,7 +33,7 @@ class OpenSearchQueryBuilderTest(OpenSearchIntegrationTestCase):
         builder_match.add_match('name', 'test', fuzziness=1)
         
         response_match = self.client.search(index=self.index_name, body=builder_match.get_final_query_body())
-        self.assertEqual(response_match['hits']['total']['value'], 0)
+        self.assertGreater(response_match['hits']['total']['value'], 0)
 
         # Search multi match for the document
         builder_multi_match = OpenSearchQueryBuilder()

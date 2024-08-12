@@ -14,7 +14,7 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
 
     def test_create_and_index_document(self):
         doc = {'title': 'Test Document'}
-        response = self.client.index(index=self.index_name, body=doc, id=1)
+        response = self.client.index(index=self.index_name, body=doc, id=self.client.count())
         self.assertEqual(response['result'], 'created')
 
     def test_search_document(self):
@@ -35,7 +35,7 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
             },
             "claim_status": "unclaimed"
         }
-        self.client.index(index=self.index_name, body=doc, id=1)
+        self.client.index(index=self.index_name, body=doc, id=self.client.count())
         self.client.indices.refresh(index=self.index_name)
 
         # Search for the document

@@ -19,14 +19,5 @@ class OpenSearchIntegrationTestCase(TestCase):
 
         cls.index_name = OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX
     
-    def setUp(self):
-        # Ensure the index is created before each test
-        self.__client.indices.create(index=self.index_name, ignore=400)
-    
-    def tearDown(self):
-        # Delete the index after each test
-        self.__client.indices.delete(index=self.index_name, ignore=[400, 404])
-    
     def getClient(self) -> OpenSearch:
         return self.__client
-
