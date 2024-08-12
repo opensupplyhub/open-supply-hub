@@ -129,6 +129,23 @@ export const makeFilterStyles = theme =>
         searchAdornment: Object.freeze({
             padding: 0,
         }),
+        groupHeadingIconButton: Object.freeze({
+            display: 'flex',
+            padding: 0,
+        }),
+        groupHeadingButtonBase: Object.freeze({
+            display: 'flex',
+            justifyContent: 'flex-start',
+            textAlign: 'left',
+            width: '100%',
+            fontWeight: 700,
+            fontSize: '16px',
+            cursor: 'default',
+        }),
+        dropdownIndicator: Object.freeze({
+            display: 'flex',
+            marginRight: '0.5em',
+        }),
     });
 
 export const togglePasswordFieldStyles = () =>

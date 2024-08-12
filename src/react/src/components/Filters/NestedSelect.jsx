@@ -23,8 +23,10 @@ const GroupHeading = props => {
         selectedOptions,
         setSelectedOptions,
         setMenuIsOpen,
+        classes,
     } = selectProps;
     const isExpanded = expandedGroups.includes(data.label);
+    console.log('selectProps >>>', selectProps);
 
     const handleClick = () => {
         if (isExpanded) {
@@ -50,24 +52,13 @@ const GroupHeading = props => {
         <components.GroupHeading {...props}>
             <IconButton
                 onClick={handleClick}
-                style={{
-                    display: 'flex',
-                    padding: '0',
-                }}
+                className={classes.groupHeadingIconButton}
             >
                 {isExpanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
             </IconButton>
             <ButtonBase
                 onClick={handleGroupSelect}
-                style={{
-                    display: 'flex',
-                    justifyContent: 'flex-start',
-                    textAlign: 'left',
-                    width: '100%',
-                    fontWeight: 700,
-                    fontSize: '16px',
-                    cursor: 'default',
-                }}
+                className={classes.groupHeadingButtonBase}
             >
                 {data.label}
             </ButtonBase>
@@ -83,13 +74,8 @@ const Option = props => {
     return isVisible ? <components.Option {...props} /> : null;
 };
 
-const DropdownIndicator = () => (
-    <div
-        style={{
-            display: 'flex',
-            marginRight: '0.5em',
-        }}
-    >
+const DropdownIndicator = ({ selectProps: { classes } }) => (
+    <div className={classes.dropdownIndicator}>
         <ArrowDropDownIcon />
     </div>
 );
@@ -111,7 +97,7 @@ const NestedSelect = ({
         ...selectFilterStyles,
         ...nestedSelectFilterStyles,
     };
-    const [menuIsOpen, setMenuIsOpen] = useState(true);
+    const [menuIsOpen, setMenuIsOpen] = useState(false);
     const [expandedGroups, setExpandedGroups] = useState([]);
 
     const handleInputChange = inputValue => {
@@ -138,7 +124,7 @@ const NestedSelect = ({
 
     const onMenuClose = () => {
         setExpandedGroups([]);
-        // setMenuIsOpen(false);
+        setMenuIsOpen(false);
     };
 
     const customComponents = {
@@ -180,6 +166,7 @@ const NestedSelect = ({
                 placeholder="Select"
                 className={`basic-multi-select notranslate ${classes.selectStyle}`}
                 classNamePrefix="select"
+                classes={classes}
                 styles={combinedStyles}
                 expandedGroups={expandedGroups}
                 setExpandedGroups={setExpandedGroups}
