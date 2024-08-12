@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
 
+## Release 1.19.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: August 24, 2024
+
+### Database changes
+#### Migrations:
+* *Describe migrations here.*
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
+### Code/API changes
+* [OSDEV-1006](https://opensupplyhub.atlassian.net/browse/OSDEV-1006) - Create new "api/v1/production-locations" endpoint.
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* *Provide release instructions here.*
+
+
 ## Release 1.18.0
 
 ## Introduction
@@ -19,20 +48,29 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Scheme changes
 * [OSDEV-1142](https://opensupplyhub.atlassian.net/browse/OSDEV-1142) - Technical Debt. Remove unused `api_tilecache` and `api_dynamicsetting` tables. Migration has been created, removed related data in the code base.
 * [OSDEV-360](https://opensupplyhub.atlassian.net/browse/OSDEV-360) - The following changes have been implemented:
-    * A new table, `api_sectorgroup`, has been introduced and populated with sector group names. 
+    * A new table, `api_sectorgroup`, has been introduced and populated with sector group names.
     * A new field named `groups` has been added to the `Sector` model to establish a many-to-many relationship between the `api_sector` and the `api_sectorgroup` tables.
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-1005](https://opensupplyhub.atlassian.net/browse/OSDEV-1005) - Disconnect location deletion propagation to the OpenSearch cluster while the Django tests are running, as it is outside the scope of Django unit testing.
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* [OSDEV-1005](https://opensupplyhub.atlassian.net/browse/OSDEV-1005) - Enable deployment of the Logstash and OpenSearch infra to AWS environments.
+* [OSDEV-1156](https://opensupplyhub.atlassian.net/browse/OSDEV-1156) - The following changes have been made:
+    * Defined memory and CPU configurations for Logstash and instance types for OpenSearch in each AWS environment. The memory and CPU configurations for Logstash have been set uniformly across all environments. After an investigation, it was found that the minimally sufficient requirements are 0.25 CPU and 2 GB of memory for proper Logstash operation, even with the production database. [This documentation](https://www.elastic.co/guide/en/logstash/current/jvm-settings.html) about JVM settings in the Logstash app was used to determine the appropriate resource settings. Regarding OpenSearch, the least powerful instance type was used for the Dev, Staging, and Test environments since high OpenSearch performance is not required there. For the Prod and Pre-prod environments, the minimally recommended general-purpose instance type, `m6g.large.search`, was selected. Research showed that it can process document deletions in 0.04 seconds, which is relatively fast compared to the 0.1-0.2 seconds on the `t3.small.search` instance type used for Dev, Staging, and Test. This decision was based on [this AWS Blog article](https://aws.amazon.com/blogs/aws-cloud-financial-management/better-together-graviton-2-and-gp3-with-amazon-opensearch-service/).
+    * The OpenSearch instance type was parameterized.
+    * The JVM direct memory consumption in the Logstash app was decreased to 512 MB to fit into two gigabytes of memory, which is the maximum available for 0.25 CPU. Total memory usage was calculated based on the formula in [this section](https://www.elastic.co/guide/en/logstash/current/jvm-settings.html#memory-size-calculation) of the Logstash JVM settings documentation.
+* Updated the OpenSearch domain name to the environment-dependent Terraform (TF) local variable in the resources of the OpenSearch access policy. Utilized the `aws_opensearch_domain_policy` resource since the `access_policies` parameter on `aws_opensearch_domain` does not validate the policy correctly after its updates. See [the discussion on GitHub](https://github.com/hashicorp/terraform-provider-aws/issues/26433).
 
 ### Bugfix
-* *Describe bugfix here.*
+* Ensure that the OpenSearch domain name is unique for each environment to avoid conflicts when provisioning domains across different environments.
+* [OSDEV-1176](https://opensupplyhub.atlassian.net/browse/OSDEV-1176) - Fixed a spelling mistake in the label for the password field on the LogIn page. After the fix, the label reads "Password".
+* [OSDEV-1178](https://opensupplyhub.atlassian.net/browse/OSDEV-1178) - Fixed error "Something went wrong" error after clicking on Dashboard -> View Facility Claims.
 
 ### What's new
+* [OSDEV-1144](https://opensupplyhub.atlassian.net/browse/OSDEV-1144) - Claims emails. Updated text for approval, revocation, and denial emails.
 * [OSDEV-360](https://opensupplyhub.atlassian.net/browse/OSDEV-360) - On the admin dashboard, functionality has been added to allow Admins to add, remove, or modify sector groups. In the `Sectors` tab, Admins can now adjust the related sector groups for each sector. Each sector must be associated with at least one group.
+* [OSDEV-1005](https://opensupplyhub.atlassian.net/browse/OSDEV-1005) - Implement the propagation of production location deletions from the PostgreSQL database to the OpenSearch cluster. After this fix, the locations that were deleted will be excluded from the response of the `v1/production-location` GET API endpoint.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:

@@ -387,9 +387,7 @@ data "aws_iam_policy_document" "opensearch" {
   statement {
     effect = "Allow"
     resources = [
-      # TODO: Once count in openseach.tf be removed, uncomment this.
-      # aws_opensearch_domain.opensearch.arn
-      "*"
+      aws_opensearch_domain.opensearch.arn
     ]
     actions = [
       "es:ESHttpPost",
@@ -421,7 +419,7 @@ data "aws_iam_policy_document" "opensearch_access_policy" {
   statement {
     actions   = ["es:*"]
     effect    = "Allow"
-    resources = ["arn:aws:es:${var.aws_region}:${data.aws_caller_identity.current.account_id}:domain/opensearch-domain/*"]
+    resources = ["arn:aws:es:${var.aws_region}:${data.aws_caller_identity.current.account_id}:domain/${local.opensearch_domain_name}/*"]
     principals {
       identifiers = ["*"]
       type        = "AWS"
