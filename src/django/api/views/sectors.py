@@ -84,7 +84,7 @@ from ..models.facility.facility_list_item import FacilityListItem
                 ]
             }
         ]
-    """
+    """,
 )
 @api_view(['GET'])
 @throttle_classes([])
