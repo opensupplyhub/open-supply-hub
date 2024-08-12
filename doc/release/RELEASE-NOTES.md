@@ -24,7 +24,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe architecture/environment changes here.*
 
 ### Bugfix
-* *Describe bugfix here.*
+* [OSDEV-1048](https://opensupplyhub.atlassian.net/browse/OSDEV-1048) - Fixed error "User Cannot read properties of undefined (reading 'length')".
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
@@ -65,6 +65,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Bugfix
 * Ensure that the OpenSearch domain name is unique for each environment to avoid conflicts when provisioning domains across different environments.
 * [OSDEV-1176](https://opensupplyhub.atlassian.net/browse/OSDEV-1176) - Fixed a spelling mistake in the label for the password field on the LogIn page. After the fix, the label reads "Password".
+* [OSDEV-1178](https://opensupplyhub.atlassian.net/browse/OSDEV-1178) - Fixed error "Something went wrong" error after clicking on Dashboard -> View Facility Claims.
 
 ### What's new
 * [OSDEV-1144](https://opensupplyhub.atlassian.net/browse/OSDEV-1144) - Claims emails. Updated text for approval, revocation, and denial emails.

@@ -16,17 +16,40 @@ class OpenSearchServiceException(Exception):
 
 
 class OpenSearchService(SearchInterface):
-    def __init__(self):
-        self.__client = OpenSearchServiceConnection().client
+    def __init__(self, client=None):
+        self.__client = client or OpenSearchServiceConnection().client
+
+    def __prepare_opensearch_response(self, response):
+        if not response or "hits" not in response:
+            logger.error(f"Invalid response format: {response}")
+            raise OpenSearchServiceException(
+                "Invalid response format from OpenSearch."
+                )
+
+        total_hits = response.get("hits", {}).get("total", {}).get("value", 0)
+        hits = response.get("hits", {}).get("hits", [])
+
+        data = []
+        for hit in hits:
+            if "_source" in hit:
+                data.append(hit["_source"])
+            else:
+                logger.warning(f"Missing '_source' in hit: {hit}")
+
+        return {
+            "count": total_hits,
+            "data": data
+        }
 
     def search_index(self, index_name, query_body):
         try:
-            response = self.__client.search(
-                body=query_body,
-                index=index_name
-            )
-            return response
+            response = self.__client.search(body=query_body, index=index_name)
+            return self.__prepare_opensearch_response(response)
+
         except OpenSearchException as e:
-            logger.error(f"An error occurred while \
-                            searching in index '{index_name}': {e}")
+            logger.error(f"An error occurred while searching in \
+                          index '{index_name}': {e}")
+            raise OpenSearchServiceException()
+        except Exception as e:
+            logger.error(f"An unexpected error occurred: {e}")
             raise OpenSearchServiceException()
