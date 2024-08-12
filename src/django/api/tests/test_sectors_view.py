@@ -1,23 +1,18 @@
-from django.urls import reverse
-from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
+from api.constants import FacilityClaimStatuses
+from api.models.contributor.contributor import Contributor
+from api.models.facility.facility import Facility
+from api.models.facility.facility_claim import FacilityClaim
+from api.models.facility.facility_list import FacilityList
+from api.models.facility.facility_list_item import FacilityListItem
 from api.models.sector import Sector
 from api.models.sector_group import SectorGroup
-from api.models.facility.facility_list_item import FacilityListItem
-from api.models.facility.facility import Facility
+from api.models.source import Source
+from api.models.user import User
+from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
+from rest_framework import status
 
 from django.contrib.gis.geos import Point
-
-from api.models.contributor.contributor import Contributor
-from api.models.source import Source
-from api.models.facility.facility_list import FacilityList
-from api.models.user import User
-from api.models.facility.facility_claim import FacilityClaim
-from api.constants import FacilityClaimStatuses
-
-# from api.models.facility.facility_match import FacilityMatch
-
-
-from rest_framework import status
+from django.urls import reverse
 
 
 class SectorsApiViewTests(FacilityAPITestCaseBase):
