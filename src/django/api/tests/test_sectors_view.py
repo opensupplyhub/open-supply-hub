@@ -15,7 +15,7 @@ from django.contrib.gis.geos import Point
 from django.urls import reverse
 
 
-class SectorsApiViewTests(FacilityAPITestCaseBase):
+class SectorsViewTest(FacilityAPITestCaseBase):
     def setUp(self):
         super().setUp()
 
