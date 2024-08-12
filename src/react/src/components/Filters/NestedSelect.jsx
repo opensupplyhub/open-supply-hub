@@ -100,6 +100,11 @@ const NestedSelect = ({
     const [expandedGroups, setExpandedGroups] = useState([]);
 
     const handleInputChange = inputValue => {
+        if (inputValue.trim() === '') {
+            setExpandedGroups([]);
+            return;
+        }
+
         const newExpandedGroups = optionsData
             .filter(group =>
                 group.options.some(option =>
