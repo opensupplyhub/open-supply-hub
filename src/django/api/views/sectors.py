@@ -152,7 +152,7 @@ def sectors(request):
                     response_data.append(
                         {
                             "group_name": group.name,
-                            "sectors": list(
+                            "sectors": sorted(
                                 group_sectors.values_list('name', flat=True)
                             ),
                         }
