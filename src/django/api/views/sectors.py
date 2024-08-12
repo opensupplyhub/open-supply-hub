@@ -38,11 +38,7 @@ from ..models.facility.facility_list_item import FacilityListItem
             type=openapi.TYPE_BOOLEAN,
         ),
     ],
-)
-@api_view(['GET'])
-@throttle_classes([])
-def sectors(request):
-    """
+    operation_description="""
     Returns a list of sectors or sectors grouped by their sector groups.
 
     ## Parameters:
@@ -89,6 +85,10 @@ def sectors(request):
             }
         ]
     """
+)
+@api_view(['GET'])
+@throttle_classes([])
+def sectors(request):
 
     submitted_sectors = set()
     embed = request.query_params.get('embed', None)
