@@ -26,7 +26,6 @@ const GroupHeading = props => {
         classes,
     } = selectProps;
     const isExpanded = expandedGroups.includes(data.label);
-    console.log('selectProps >>>', selectProps);
 
     const handleClick = () => {
         if (isExpanded) {
