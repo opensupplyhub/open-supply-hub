@@ -1,3 +1,4 @@
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
@@ -22,6 +23,7 @@ class ProductionLocations(ViewSet):
         self.opensearch_service = OpenSearchService()
         self.opensearch_query_builder = OpenSearchQueryBuilder()
 
+    @swagger_auto_schema(auto_schema=None)
     def list(self, request):
         opensearch_query_director = OpenSearchQueryDirector(
             self.opensearch_query_builder
