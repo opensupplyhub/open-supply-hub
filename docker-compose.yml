@@ -60,6 +60,9 @@ services:
         condition: service_started
       kafka:
         condition: service_healthy
+      opensearch-single-node:
+        condition: service_healthy
+      
     command:
       - "-b :8081"
       - "--reload"
