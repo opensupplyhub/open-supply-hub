@@ -4,8 +4,9 @@ from opensearchpy import OpenSearch, RequestsHttpConnection
 
 from api.views.v1.index_names import OpenSearchIndexNames
 
+
 class OpenSearchIntegrationTestCase(TestCase):
-    
+
     @classmethod
     def setUpTestData(cls):
         host = os.getenv('OPENSEARCH_HOST')
@@ -18,6 +19,6 @@ class OpenSearchIntegrationTestCase(TestCase):
         )
 
         cls.index_name = OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX
-    
+
     def getClient(self) -> OpenSearch:
         return self.__client
