@@ -19,6 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-1006](https://opensupplyhub.atlassian.net/browse/OSDEV-1006) - Create new "api/v1/production-locations" endpoint.
+* [OSDEV-1184](https://opensupplyhub.atlassian.net/browse/OSDEV-1184) - Handle validation errors for size parameter of "api/v1/production-locations" endpoint.
 
 ### Architecture/Environment changes
 * *Describe architecture/environment changes here.*
