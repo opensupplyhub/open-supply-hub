@@ -9,10 +9,12 @@ from api.serializers.v1.opensearch_common_validators. \
     percent_of_female_workers import PercentOfFemaleWorkersValidator
 from api.serializers.v1.opensearch_common_validators. \
     coordinates_validator import CoordinatesValidator
+from api.views.v1.utils import COMMON_ERROR_MESSAGE
 
 
 class ProductionLocationsSerializer(serializers.Serializer):
 
+    size = serializers.IntegerField(required=False)
     number_of_workers_min = serializers.IntegerField(required=False)
     number_of_workers_max = serializers.IntegerField(required=False)
     percent_female_workers_min = serializers.FloatField(required=False)
@@ -37,7 +39,7 @@ class ProductionLocationsSerializer(serializers.Serializer):
 
         if errors:
             raise serializers.ValidationError({
-                "message": "The request query is invalid.",
+                "message": COMMON_ERROR_MESSAGE,
                 "errors": errors
             })
 
