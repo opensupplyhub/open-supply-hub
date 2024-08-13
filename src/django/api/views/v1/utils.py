@@ -4,11 +4,18 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def is_deep_object_url_param(s):
+    return '[' in s and ']' in s
+
+
 def serialize_params(serializer_class, query_params):
-    flattened_query_params = {
-        key.replace(']', '').replace('[', '_'): value
-        for key, value in query_params.items()
-    }
+    flattened_query_params = {}
+    for key, value in query_params.lists():
+        new_key = key.replace(']', '').replace('[', '_')
+        if len(value) == 1 and is_deep_object_url_param(key):
+            flattened_query_params[new_key] = value[0]
+        else:
+            flattened_query_params[new_key] = value
 
     params = serializer_class(data=flattened_query_params)
     if not params.is_valid():

@@ -2,6 +2,8 @@ from rest_framework import serializers
 from api.serializers.v1.opensearch_error_list_builder  \
     import OpenSearchErrorListBuilder
 from api.serializers.v1.opensearch_common_validators. \
+    countries_validator import CountryValidator
+from api.serializers.v1.opensearch_common_validators. \
     number_of_workers_validator import NumberOfWorkersValidator
 from api.serializers.v1.opensearch_common_validators. \
     percent_of_female_workers import PercentOfFemaleWorkersValidator
@@ -17,12 +19,17 @@ class ProductionLocationsSerializer(serializers.Serializer):
     percent_female_workers_max = serializers.FloatField(required=False)
     coordinates_lat = serializers.FloatField(required=False)
     coordinates_lon = serializers.FloatField(required=False)
+    country = serializers.ListField(
+        child=serializers.CharField(),
+        required=False
+    )
 
     def validate(self, data):
         validators = [
             NumberOfWorkersValidator(),
             PercentOfFemaleWorkersValidator(),
-            CoordinatesValidator()
+            CoordinatesValidator(),
+            CountryValidator(),
         ]
 
         error_list_builder = OpenSearchErrorListBuilder(validators)
