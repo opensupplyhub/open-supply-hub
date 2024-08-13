@@ -1,5 +1,3 @@
-import logging
-
 from opensearchpy import OpenSearch
 from api.views.v1.opensearch_query_builder. \
     opensearch_query_builder import OpenSearchQueryBuilder
