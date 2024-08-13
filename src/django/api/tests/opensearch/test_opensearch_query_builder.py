@@ -1,7 +1,14 @@
+import logging
+
 from opensearchpy import OpenSearch
 from api.views.v1.opensearch_query_builder. \
     opensearch_query_builder import OpenSearchQueryBuilder
 from .opensearch_test_case import OpenSearchIntegrationTestCase
+
+# initialize logger
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
+log = logging.getLogger(__name__)
 
 
 class OpenSearchQueryBuilderTest(OpenSearchIntegrationTestCase):
@@ -31,9 +38,9 @@ class OpenSearchQueryBuilderTest(OpenSearchIntegrationTestCase):
         # Search match for the document
         builder_match = OpenSearchQueryBuilder()
         builder_match.add_match('name', 'test', fuzziness=1)
-        print(builder_match.get_final_query_body())
+        log.info(builder_match.get_final_query_body())
         response_match = self.client.search(index=self.index_name, body=builder_match.get_final_query_body())
-        print(response_match)
+        log.info(response_match)
         self.assertEqual(response_match['hits']['total']['value'], 0)
 
         # Search multi match for the document
