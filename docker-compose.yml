@@ -62,6 +62,8 @@ services:
         condition: service_healthy
       opensearch-single-node:
         condition: service_started
+      logstash:
+        condition: service_started
       
     command:
       - "-b :8081"
