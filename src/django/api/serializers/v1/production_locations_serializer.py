@@ -21,8 +21,13 @@ class ProductionLocationsSerializer(serializers.Serializer):
     percent_female_workers_max = serializers.FloatField(required=False)
     coordinates_lat = serializers.FloatField(required=False)
     coordinates_lon = serializers.FloatField(required=False)
-    country = serializers.ListField(
-        child=serializers.CharField(),
+    country = serializers.CharField(required=False)
+    sort_by = serializers.ChoiceField(
+        choices=['name', 'address'],
+        required=False
+    )
+    order_by = serializers.ChoiceField(
+        choices=['asc', 'desc'],
         required=False
     )
 

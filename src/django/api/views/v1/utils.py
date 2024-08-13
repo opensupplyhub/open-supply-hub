@@ -28,7 +28,7 @@ def serialize_params(serializer_class, query_params):
         else:
             flattened_query_params[new_key] = (
                 int(value[0]) if can_be_converted_to_int_url_param(value[0])
-                else value
+                else value[0]
             )
 
     params = serializer_class(data=flattened_query_params)
