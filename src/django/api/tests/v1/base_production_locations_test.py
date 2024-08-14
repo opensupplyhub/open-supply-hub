@@ -1,5 +1,6 @@
 from django.conf import settings
 from rest_framework.test import APITestCase
+from api.tests.opensearch.opensearch_test_case import OpenSearchIntegrationTestCase
 
 from api.models import (
     Contributor,
@@ -7,10 +8,12 @@ from api.models import (
 )
 
 
-class BaseProductionLocationsTest(APITestCase):
+class BaseProductionLocationsTest(APITestCase, OpenSearchIntegrationTestCase):
 
     def setUp(self):
         super().setUp()
+
+        self.open_search_client = self.getClient()
 
         setattr(settings, 'DEBUG', True)
 

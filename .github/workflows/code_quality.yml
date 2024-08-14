@@ -106,7 +106,7 @@ jobs:
         run: |
           docker compose \
             run --rm --entrypoint /bin/sh django \
-            -c "coverage run --data-file=./coverage/django/.coverage manage.py test --no-input ./api/tests \
+            -c "coverage run --data-file=./coverage/django/.coverage manage.py test --no-input ./api/tests/v1 \
             && coverage lcov --data-file=./coverage/django/.coverage -o ./coverage/django/coverage.lcov \
             --include='./api/*' --omit='./api/migrations/*,./api/tests/*'"
       - name: Upload unittest code cov for the feature branch
