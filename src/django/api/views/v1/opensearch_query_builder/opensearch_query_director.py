@@ -1,23 +1,26 @@
+from api.views.v1.parameters_list import V1_PARAMETERS_LIST
+
+
 class OpenSearchQueryDirector:
     def __init__(self, builder):
         self.__builder = builder
         self.__opensearch_template_fields = {
-            'description': 'match',
-            'address': 'match',
-            'name': 'terms',
-            'name_local': 'terms',
-            'country': 'terms',
-            'sector': 'terms',
-            'product_type': 'terms',
-            'processing_type': 'terms',
-            'location_type': 'terms',
-            'number_of_workers': 'range',
-            'minimum_order_quantity': 'terms',
-            'average_lead_time': 'terms',
-            'percent_female_workers': 'range',
-            'affiliations': 'terms',
-            'certifications_standards_regulations': 'terms',
-            'coordinates': 'geo_distance',
+            V1_PARAMETERS_LIST.DESCRIPTION: 'match',
+            V1_PARAMETERS_LIST.ADDRESS: 'match',
+            V1_PARAMETERS_LIST.NAME: 'terms',
+            V1_PARAMETERS_LIST.NAME_LOCAL: 'terms',
+            V1_PARAMETERS_LIST.COUNTRY: 'terms',
+            V1_PARAMETERS_LIST.SECTOR: 'terms',
+            V1_PARAMETERS_LIST.PRODUCT_TYPE: 'terms',
+            V1_PARAMETERS_LIST.PROCESSING_TYPE: 'terms',
+            V1_PARAMETERS_LIST.LOCATION_TYPE: 'terms',
+            V1_PARAMETERS_LIST.NUMBER_OF_WORKERS: 'range',
+            V1_PARAMETERS_LIST.MINIMUM_ORDER_QUANTITY: 'terms',
+            V1_PARAMETERS_LIST.AVERAGE_LEAD_TIME: 'terms',
+            V1_PARAMETERS_LIST.PERCENT_FEMALE_WORKERS: 'range',
+            V1_PARAMETERS_LIST.AFFILIATIONS: 'terms',
+            V1_PARAMETERS_LIST.CERTIFICATIONS_STANDARDS_REGULATIONS: 'terms',
+            V1_PARAMETERS_LIST.COORDINATES: 'geo_distance',
         }
 
     def __add_match_query(self, field, value):
@@ -64,20 +67,20 @@ class OpenSearchQueryDirector:
                 self.__add_geo_distance_query(field, lat, lon, distance)
                 continue
 
-        sort_by = query_params.get('sort_by')
+        sort_by = query_params.get(V1_PARAMETERS_LIST.SORT_BY)
         if sort_by:
-            order_by = query_params.get('order_by')
+            order_by = query_params.get(V1_PARAMETERS_LIST.ORDER_BY)
             self.__builder.add_sort(sort_by, order_by)
 
-        search_after = query_params.get('search_after')
+        search_after = query_params.get(V1_PARAMETERS_LIST.SEARCH_AFTER)
         if search_after:
             self.__builder.add_search_after(search_after)
 
-        size = query_params.get('size')
+        size = query_params.get(V1_PARAMETERS_LIST.SIZE)
         if size:
             self.__builder.add_size(size)
 
-        multi_match_query = query_params.get('query')
+        multi_match_query = query_params.get(V1_PARAMETERS_LIST.QUERY)
         if multi_match_query:
             self.__builder.add_multi_match(multi_match_query)
 

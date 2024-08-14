@@ -21,7 +21,10 @@ class ProductionLocationsSerializer(serializers.Serializer):
     percent_female_workers_max = serializers.FloatField(required=False)
     coordinates_lat = serializers.FloatField(required=False)
     coordinates_lon = serializers.FloatField(required=False)
-    country = serializers.CharField(required=False)
+    country = serializers.ListField(
+        child=serializers.CharField(required=False),
+        required=False
+    )
     sort_by = serializers.ChoiceField(
         choices=['name', 'address'],
         required=False
@@ -43,6 +46,7 @@ class ProductionLocationsSerializer(serializers.Serializer):
         errors = error_list_builder.build_error_list(data)
 
         if errors:
+            # TODO: Pass error msg to the Rollbar here
             raise serializers.ValidationError({
                 "message": COMMON_ERROR_MESSAGE,
                 "errors": errors

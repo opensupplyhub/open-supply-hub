@@ -1,5 +1,6 @@
 from rest_framework.response import Response
 from rest_framework import status
+from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 import logging
 logger = logging.getLogger(__name__)
 
@@ -7,40 +8,38 @@ logger = logging.getLogger(__name__)
 COMMON_ERROR_MESSAGE = 'The request query is invalid.'
 
 
-def is_deep_object_url_param(s):
-    return '[' in s and ']' in s
-
-
-def can_be_converted_to_int_url_param(s):
-    try:
-        int(s)
-        return True
-    except ValueError:
-        return False
-
-
 def serialize_params(serializer_class, query_params):
     flattened_query_params = {}
     for key, value in query_params.lists():
-        new_key = key.replace(']', '').replace('[', '_')
-        if len(value) == 1 and is_deep_object_url_param(key):
+        # Convert deepObject params
+        if key in [
+            f'{V1_PARAMETERS_LIST.NUMBER_OF_WORKERS}[min]',
+            f'{V1_PARAMETERS_LIST.NUMBER_OF_WORKERS}[max]',
+            f'{V1_PARAMETERS_LIST.PERCENT_FEMALE_WORKERS}[min]',
+            f'{V1_PARAMETERS_LIST.PERCENT_FEMALE_WORKERS}[max]',
+            f'{V1_PARAMETERS_LIST.COORDINATES}[lat]',
+            f'{V1_PARAMETERS_LIST.COORDINATES}[lon]',
+        ]:
+            new_key = key.replace(']', '').replace('[', '_')
             flattened_query_params[new_key] = value[0]
+        # Prepare only single params
+        elif key in [
+            V1_PARAMETERS_LIST.ADDRESS,
+            V1_PARAMETERS_LIST.DESCRIPTION,
+            V1_PARAMETERS_LIST.SEARCH_AFTER,
+            V1_PARAMETERS_LIST.SORT_BY,
+            V1_PARAMETERS_LIST.ORDER_BY,
+            V1_PARAMETERS_LIST.SIZE
+        ]:
+            flattened_query_params[key] = value[0]
         else:
-            flattened_query_params[new_key] = (
-                int(value[0]) if can_be_converted_to_int_url_param(value[0])
-                else value[0]
-            )
+            flattened_query_params[key] = value
 
     params = serializer_class(data=flattened_query_params)
 
     if not params.is_valid():
         error_response = {'message': None, 'errors': []}
-
-        '''
-        Handle common validation errors.
-        If there is at least one validation errors,
-        errors from serializers won't appear.
-        '''
+        # Handle common validation errors.
         if 'message' not in params.errors and 'errors' not in params.errors:
             error_response['message'] = COMMON_ERROR_MESSAGE
             for field, error_list in params.errors.items():
@@ -59,8 +58,6 @@ def serialize_params(serializer_class, query_params):
                     'field': error_item.get('field', '').title(),
                     'message': error_item.get('message', '').title()
                 })
-
-        logger.info(f'### Error is {params.errors}')
 
         return None, error_response
 
