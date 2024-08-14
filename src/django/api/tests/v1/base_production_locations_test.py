@@ -38,6 +38,6 @@ class BaseProductionLocationsTest(APITestCase):
             name="test super contributor",
             contrib_type=Contributor.OTHER_CONTRIB_TYPE,
         )
-  
+
     def tearDown(self):
         setattr(settings, 'DEBUG', False)

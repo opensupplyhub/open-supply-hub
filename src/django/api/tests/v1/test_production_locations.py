@@ -1,4 +1,5 @@
-from api.tests.v1.base_production_locations_test import BaseProductionLocationsTest
+from api.tests.v1.base_production_locations_test \
+    import BaseProductionLocationsTest
 
 
 class ProductionLocationsTest(BaseProductionLocationsTest):
