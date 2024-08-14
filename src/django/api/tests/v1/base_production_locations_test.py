@@ -1,6 +1,7 @@
 from django.conf import settings
 from rest_framework.test import APITestCase
-from api.tests.opensearch.opensearch_test_case import OpenSearchIntegrationTestCase
+from api.tests.opensearch.opensearch_test_case \
+    import OpenSearchIntegrationTestCase
 
 from api.models import (
     Contributor,
