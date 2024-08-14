@@ -34,7 +34,7 @@ resource "aws_efs_mount_target" "efs_app_logstash" {
   count           = length(module.vpc.private_subnet_ids)
   file_system_id  = aws_efs_file_system.efs_app_logstash.id
   subnet_id       = module.vpc.private_subnet_ids[count.index]
-  security_groups = [aws_security_group.efs_app_logstash.id]
+  security_groups = [aws_security_group.efs_app_logstash.id,module.vpc.bastion_security_group_id]
 }
 
 # Set EFS access point permissions for the logstash:root user.
