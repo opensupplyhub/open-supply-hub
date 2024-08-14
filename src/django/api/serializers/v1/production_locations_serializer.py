@@ -13,7 +13,7 @@ from api.views.v1.utils import COMMON_ERROR_MESSAGE
 
 
 class ProductionLocationsSerializer(serializers.Serializer):
-
+    # These params are checking considering serialize_params output
     size = serializers.IntegerField(required=False)
     number_of_workers_min = serializers.IntegerField(required=False)
     number_of_workers_max = serializers.IntegerField(required=False)
