@@ -1,7 +1,8 @@
 from django.db.models import F, Func
+
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework.decorators import api_view, throttle_classes
 from rest_framework.response import Response
-from drf_yasg.utils import swagger_auto_schema
 
 from api.constants import FacilityClaimStatuses
 from api.models.facility.facility_index import FacilityIndex
