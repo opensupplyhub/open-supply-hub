@@ -5,10 +5,13 @@ from rest_framework.decorators import (
     api_view,
     throttle_classes,
 )
+from api.views.sectors_swagger_schema import (
+    sectors_manual_parameters,
+    sectors_operation_description,
+)
 from rest_framework.response import Response
 from django.db.models import F, Func
 from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
 
 from ..models.facility.facility_claim import FacilityClaim
 from ..models.facility.facility_list_item import FacilityListItem
@@ -16,75 +19,8 @@ from ..models.facility.facility_list_item import FacilityListItem
 
 @swagger_auto_schema(
     method='GET',
-    manual_parameters=[
-        openapi.Parameter(
-            'embed',
-            openapi.IN_QUERY,
-            description="If present, returns a flat list of sectors submitted "
-            "by a specific contributor.",
-            type=openapi.TYPE_BOOLEAN,
-        ),
-        openapi.Parameter(
-            'contributor',
-            openapi.IN_QUERY,
-            description="Contributor ID, required when 'embed' is present.",
-            type=openapi.TYPE_INTEGER,
-        ),
-        openapi.Parameter(
-            'grouped',
-            openapi.IN_QUERY,
-            description="If present, returns a grouped list of sectors by "
-            "their sector groups.",
-            type=openapi.TYPE_BOOLEAN,
-        ),
-    ],
-    operation_description="""
-    Returns a list of sectors or sectors grouped by their sector groups.
-
-    ## Parameters:
-    - `embed` (optional): If present, returns a flat list of sectors submitted
-    by a specific contributor.
-    - `contributor` (optional): If `embed` is provided, this parameter must be
-    included to filter sectors submitted by a specific contributor.
-    - `grouped` (optional): If present, returns a grouped list of sectors by
-    their sector groups.
-
-    Note: If both `embed` and `grouped` are provided, the `embed` parameter
-    will take precedence.
-
-    ## Sample Responses:
-
-    ### Flat List (with or without 'embed'):
-        [
-            "Agriculture",
-            "Apparel",
-            "Information",
-        ]
-
-    ### Grouped List:
-        [
-            {
-                "group_name": "Agriculture, Food & Beverage",
-                "sectors": [
-                    "Agriculture",
-                    "Animal Production",
-                    "Aquaculture",
-                    "Beverages",
-                    "Biotechnology",
-                ]
-            },
-            {
-                "group_name": "Apparel, Footwear, Textiles",
-                "sectors": [
-                    "Apparel",
-                    "Apparel Accessories",
-                    "Footwear",
-                    "Home Accessories",
-                    "Home Textiles",
-                ]
-            }
-        ]
-    """,
+    manual_parameters=sectors_manual_parameters,
+    operation_description=sectors_operation_description,
 )
 @api_view(['GET'])
 @throttle_classes([])
