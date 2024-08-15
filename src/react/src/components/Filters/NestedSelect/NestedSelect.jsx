@@ -1,83 +1,17 @@
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
-import ReactSelect, { components } from 'react-select';
-import { string, arrayOf, shape, func, object, bool, number } from 'prop-types';
+import ReactSelect from 'react-select';
+import { arrayOf, bool, func, number, object, shape, string } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import InputLabel from '@material-ui/core/InputLabel';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import ChevronRightIcon from '@material-ui/icons/ChevronRight';
-import IconButton from '@material-ui/core/IconButton';
-import ButtonBase from '@material-ui/core/ButtonBase';
+import CustomDropdownIndicator from './CustomDropdownIndicator';
+import CustomGroupHeading from './CustomGroupHeading';
+import CustomOption from './CustomOption';
 import {
     makeFilterStyles,
-    makeSelectFilterStyles,
     makeNestedSelectFilterStyles,
-} from '../../util/styles';
-import ArrowDropDownIcon from '../ArrowDropDownIcon';
-
-const GroupHeading = props => {
-    const { data, selectProps } = props;
-    const {
-        expandedGroups,
-        setExpandedGroups,
-        selectedOptions,
-        setSelectedOptions,
-        setMenuIsOpen,
-        classes,
-    } = selectProps;
-    const isExpanded = expandedGroups.includes(data.label);
-
-    const handleClick = () => {
-        if (isExpanded) {
-            setExpandedGroups(
-                expandedGroups.filter(label => label !== data.label),
-            );
-        } else {
-            setExpandedGroups([...expandedGroups, data.label]);
-        }
-    };
-
-    const handleGroupSelect = () => {
-        const groupOptions = data.options.map(option => option.value);
-        const newSelectedOptions = [
-            ...selectedOptions.filter(opt => !groupOptions.includes(opt.value)),
-            ...data.options,
-        ];
-        setSelectedOptions(newSelectedOptions);
-        setMenuIsOpen(false);
-    };
-
-    return (
-        <components.GroupHeading {...props}>
-            <IconButton
-                onClick={handleClick}
-                className={classes.groupHeadingIconButton}
-            >
-                {isExpanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
-            </IconButton>
-            <ButtonBase
-                onClick={handleGroupSelect}
-                className={classes.groupHeadingButtonBase}
-            >
-                {data.label}
-            </ButtonBase>
-        </components.GroupHeading>
-    );
-};
-
-const Option = props => {
-    const { data, selectProps } = props;
-    const { expandedGroups } = selectProps;
-    const isVisible = expandedGroups.some(group => data.groupLabel === group);
-
-    return isVisible ? <components.Option {...props} /> : null;
-};
-
-const DropdownIndicator = ({ selectProps: { classes } }) => (
-    <div className={classes.dropdownIndicator}>
-        <ArrowDropDownIcon />
-    </div>
-);
+    makeSelectFilterStyles,
+} from '../../../util/styles';
 
 const NestedSelect = ({
     name,
@@ -132,9 +66,9 @@ const NestedSelect = ({
     };
 
     const customComponents = {
-        GroupHeading,
-        Option,
-        DropdownIndicator,
+        GroupHeading: CustomGroupHeading,
+        Option: CustomOption,
+        DropdownIndicator: CustomDropdownIndicator,
         IndicatorSeparator: null,
     };
 
