@@ -1,3 +1,8 @@
+from django.contrib.gis.geos import Point
+from django.urls import reverse
+
+from rest_framework import status
+
 from api.constants import FacilityClaimStatuses
 from api.models.contributor.contributor import Contributor
 from api.models.facility.facility import Facility
@@ -9,10 +14,7 @@ from api.models.sector_group import SectorGroup
 from api.models.source import Source
 from api.models.user import User
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
-from rest_framework import status
 
-from django.contrib.gis.geos import Point
-from django.urls import reverse
 
 
 class SectorsViewTest(FacilityAPITestCaseBase):
