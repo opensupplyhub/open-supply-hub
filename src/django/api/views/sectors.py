@@ -1,18 +1,15 @@
+from django.db.models import F, Func
+from rest_framework.decorators import api_view, throttle_classes
+from rest_framework.response import Response
+from drf_yasg.utils import swagger_auto_schema
+
 from api.constants import FacilityClaimStatuses
 from api.models.facility.facility_index import FacilityIndex
 from api.models.sector_group import SectorGroup
-from rest_framework.decorators import (
-    api_view,
-    throttle_classes,
-)
 from api.views.sectors_swagger_schema import (
     sectors_manual_parameters,
     sectors_operation_description,
 )
-from rest_framework.response import Response
-from django.db.models import F, Func
-from drf_yasg.utils import swagger_auto_schema
-
 from ..models.facility.facility_claim import FacilityClaim
 from ..models.facility.facility_list_item import FacilityListItem
 
@@ -26,78 +23,89 @@ from ..models.facility.facility_list_item import FacilityListItem
 @throttle_classes([])
 def sectors(request):
 
-    submitted_sectors = set()
-    embed = request.query_params.get('embed', None)
-    grouped = request.query_params.get('grouped', None)
+    embed = request.query_params.get('embed')
+    grouped = request.query_params.get('grouped')
 
-    if embed is not None:
-        contributor = request.query_params.get('contributor', None)
-        if contributor is None:
-            return Response(submitted_sectors)
+    if embed:
+        contributor = request.query_params.get('contributor')
+        if not contributor:
+            return Response([])
 
-        item_sectors = set(
-            FacilityListItem.objects.filter(
-                status__in=[
-                    FacilityListItem.MATCHED,
-                    FacilityListItem.CONFIRMED_MATCH,
-                ],
-                source__contributor_id=contributor,
-                source__is_active=True,
-                source__is_public=True,
-            )
-            .annotate(values=Func('sector', function='unnest'))
-            .values_list('values', flat=True)
-            .distinct()
-        )
-
-        claim_sectors = set(
-            FacilityClaim.objects.filter(
-                contributor_id=contributor,
-                status=FacilityClaimStatuses.APPROVED,
-            )
-            .annotate(values=Func('sector', function='unnest'))
-            .values_list('values', flat=True)
-            .distinct()
-        )
-
-        submitted_sectors = item_sectors.union(claim_sectors)
+        submitted_sectors = get_sectors_for_contributor(contributor)
 
         return Response(sorted(list(submitted_sectors)))
 
     else:
-        submitted_sectors = set(
-            FacilityIndex.objects.annotate(
-                all_sectors=Func(F('sector'), function='unnest')
-            )
-            .values_list('all_sectors', flat=True)
-            .distinct()
-        )
+        submitted_sectors = get_all_submitted_sectors()
 
-        if grouped is not None:
-            sector_groups = SectorGroup.objects.prefetch_related(
-                'sectors'
-            ).all()
-            response_data = []
+        if grouped:
+            grouped_sectors = group_sectors_by_group_name(submitted_sectors)
 
-            for group in sector_groups:
-                group_sectors = group.sectors.filter(
-                    name__in=submitted_sectors
-                )
-
-                if group_sectors.exists():
-                    response_data.append(
-                        {
-                            "group_name": group.name,
-                            "sectors": sorted(
-                                group_sectors.values_list('name', flat=True)
-                            ),
-                        }
-                    )
-
-            response_data_sorted = sorted(
-                response_data, key=lambda x: x['group_name']
-            )
-            return Response(response_data_sorted)
+            return Response(grouped_sectors)
 
         else:
             return Response(sorted(list(submitted_sectors)))
+
+
+def get_sectors_for_contributor(contributor):
+    item_sectors = get_item_sectors(contributor)
+    claim_sectors = get_claim_sectors(contributor)
+    return item_sectors.union(claim_sectors)
+
+
+def get_item_sectors(contributor):
+    return set(
+        FacilityListItem.objects.filter(
+            status__in=[
+                FacilityListItem.MATCHED,
+                FacilityListItem.CONFIRMED_MATCH,
+            ],
+            source__contributor_id=contributor,
+            source__is_active=True,
+            source__is_public=True,
+        )
+        .annotate(values=Func('sector', function='unnest'))
+        .values_list('values', flat=True)
+        .distinct()
+    )
+
+
+def get_claim_sectors(contributor):
+    return set(
+        FacilityClaim.objects.filter(
+            contributor_id=contributor,
+            status=FacilityClaimStatuses.APPROVED,
+        )
+        .annotate(values=Func('sector', function='unnest'))
+        .values_list('values', flat=True)
+        .distinct()
+    )
+
+
+def get_all_submitted_sectors():
+    return set(
+        FacilityIndex.objects.annotate(
+            all_sectors=Func(F('sector'), function='unnest')
+        )
+        .values_list('all_sectors', flat=True)
+        .distinct()
+    )
+
+
+def group_sectors_by_group_name(sectors):
+    sector_groups = SectorGroup.objects.prefetch_related('sectors').all()
+    grouped_data = []
+
+    for group in sector_groups:
+        group_sectors = group.sectors.filter(name__in=sectors)
+        if group_sectors.exists():
+            grouped_data.append(
+                {
+                    "group_name": group.name,
+                    "sectors": sorted(
+                        group_sectors.values_list('name', flat=True)
+                    ),
+                }
+            )
+
+    return sorted(grouped_data, key=lambda x: x['group_name'])
