@@ -1,12 +1,12 @@
+from django.http import QueryDict
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from api.views.v1.utils import (
     serialize_params,
-    handle_value_error,
-    handle_opensearch_exception
+    handle_errors_decorator
 )
-from api.services.search import OpenSearchService, OpenSearchServiceException
+from api.services.search import OpenSearchService
 from api.views.v1.opensearch_query_builder.opensearch_query_builder \
     import OpenSearchQueryBuilder
 from api.views.v1.opensearch_query_builder.opensearch_query_director \
@@ -23,33 +23,39 @@ class ProductionLocations(ViewSet):
         super().__init__(**kwargs)
         self.opensearch_service = OpenSearchService()
         self.opensearch_query_builder = OpenSearchQueryBuilder()
+        self.opensearch_query_director = OpenSearchQueryDirector(
+                self.opensearch_query_builder
+            )
 
+    @handle_errors_decorator
     def list(self, request):
-        opensearch_query_director = OpenSearchQueryDirector(
-            self.opensearch_query_builder
+        params, error_response = serialize_params(
+            ProductionLocationsSerializer,
+            request.GET
         )
-        try:
-            params, error_response = serialize_params(
-                ProductionLocationsSerializer,
-                request.GET
+        if error_response:
+            return Response(
+                error_response,
+                status=status.HTTP_400_BAD_REQUEST
             )
-            if error_response:
-                return Response(
-                    error_response,
-                    status=status.HTTP_400_BAD_REQUEST
-                )
 
-            query_body = opensearch_query_director.build_query(
-                request.GET
-            )
-            response = self.opensearch_service.search_index(
-                OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
-                query_body
-            )
-            return Response(response)
+        query_body = self.opensearch_query_director.build_query(
+            request.GET
+        )
+        response = self.opensearch_service.search_index(
+            OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
+            query_body
+        )
+        return Response(response)
 
-        except ValueError as e:
-            return handle_value_error(e)
-
-        except OpenSearchServiceException as e:
-            return handle_opensearch_exception(e)
+    @handle_errors_decorator
+    def retrieve(self, request,  pk=None):
+        query_params = QueryDict('', mutable=True)
+        query_params.update({'os_id': pk})
+        query_body = self.opensearch_query_director. \
+            build_query(query_params)
+        response = self.opensearch_service.search_index(
+            OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
+            query_body
+        )
+        return Response(response)
