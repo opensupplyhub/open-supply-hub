@@ -16,7 +16,7 @@ class ProductionLocationsSerializer(serializers.Serializer):
     percent_female_workers_min = serializers.FloatField(required=False)
     percent_female_workers_max = serializers.FloatField(required=False)
     coordinates_lat = serializers.FloatField(required=False)
-    coordinates_lng = serializers.FloatField(required=False)
+    coordinates_lon = serializers.FloatField(required=False)
 
     def validate(self, data):
         validators = [
