@@ -1,7 +1,7 @@
+import logging
 from rest_framework.response import Response
 from rest_framework import status
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
-import logging
 logger = logging.getLogger(__name__)
 
 

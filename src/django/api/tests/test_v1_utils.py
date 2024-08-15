@@ -1,6 +1,13 @@
 from django.test import TestCase
 from django.http import QueryDict
-from rest_framework import serializers
+from rest_framework.serializers import (
+    CharField,
+    ChoiceField,
+    FloatField,
+    IntegerField,
+    ListField,
+    Serializer
+)
 from rest_framework.response import Response
 from api.views.v1.utils import (
     serialize_params,
@@ -10,26 +17,26 @@ from api.views.v1.utils import (
 from api.services.search import OpenSearchServiceException
 
 
-class TestProductionLocationsSerializer(serializers.Serializer):
-    size = serializers.IntegerField(required=False)
-    address = serializers.CharField(required=False)
-    description = serializers.CharField(required=False)
-    search_after = serializers.CharField(required=False)
-    number_of_workers_min = serializers.IntegerField(required=False)
-    number_of_workers_max = serializers.IntegerField(required=False)
-    percent_female_workers_min = serializers.FloatField(required=False)
-    percent_female_workers_max = serializers.FloatField(required=False)
-    coordinates_lat = serializers.FloatField(required=False)
-    coordinates_lon = serializers.FloatField(required=False)
-    country = serializers.ListField(
-        child=serializers.CharField(required=False),
+class TestProductionLocationsSerializer(Serializer):
+    size = IntegerField(required=False)
+    address = CharField(required=False)
+    description = CharField(required=False)
+    search_after = CharField(required=False)
+    number_of_workers_min = IntegerField(required=False)
+    number_of_workers_max = IntegerField(required=False)
+    percent_female_workers_min = FloatField(required=False)
+    percent_female_workers_max = FloatField(required=False)
+    coordinates_lat = FloatField(required=False)
+    coordinates_lon = FloatField(required=False)
+    country = ListField(
+        child=CharField(required=False),
         required=False
     )
-    sort_by = serializers.ChoiceField(
+    sort_by = ChoiceField(
         choices=['name', 'address'],
         required=False
     )
-    order_by = serializers.ChoiceField(
+    order_by = ChoiceField(
         choices=['asc', 'desc'],
         required=False
     )

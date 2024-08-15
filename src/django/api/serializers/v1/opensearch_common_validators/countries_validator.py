@@ -1,12 +1,13 @@
+import re
 from api.serializers.v1.opensearch_validation_interface \
     import OpenSearchValidationInterface
-import re
 
 
 class CountryValidator(OpenSearchValidationInterface):
     def validate_opensearch_params(self, data):
         errors = []
         countries = data.get('country')
+        valid_country_value_regexp = r'^[A-Z]{2}$'
 
         if not countries:
             return errors
@@ -15,7 +16,7 @@ class CountryValidator(OpenSearchValidationInterface):
             countries = [countries]
 
         for country in countries:
-            if not re.match(r'^[A-Z]{2}$', country):
+            if not re.match(valid_country_value_regexp, country):
                 errors.append({
                     "field": "country",
                     "message":

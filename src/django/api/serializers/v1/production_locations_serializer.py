@@ -1,4 +1,12 @@
-from rest_framework import serializers
+from rest_framework.serializers import (
+    CharField,
+    ChoiceField,
+    FloatField,
+    IntegerField,
+    ListField,
+    Serializer,
+    ValidationError
+)
 from api.serializers.v1.opensearch_error_list_builder  \
     import OpenSearchErrorListBuilder
 from api.serializers.v1.opensearch_common_validators. \
@@ -12,24 +20,24 @@ from api.serializers.v1.opensearch_common_validators. \
 from api.views.v1.utils import COMMON_ERROR_MESSAGE
 
 
-class ProductionLocationsSerializer(serializers.Serializer):
+class ProductionLocationsSerializer(Serializer):
     # These params are checking considering serialize_params output
-    size = serializers.IntegerField(required=False)
-    number_of_workers_min = serializers.IntegerField(required=False)
-    number_of_workers_max = serializers.IntegerField(required=False)
-    percent_female_workers_min = serializers.FloatField(required=False)
-    percent_female_workers_max = serializers.FloatField(required=False)
-    coordinates_lat = serializers.FloatField(required=False)
-    coordinates_lon = serializers.FloatField(required=False)
-    country = serializers.ListField(
-        child=serializers.CharField(required=False),
+    size = IntegerField(required=False)
+    number_of_workers_min = IntegerField(required=False)
+    number_of_workers_max = IntegerField(required=False)
+    percent_female_workers_min = FloatField(required=False)
+    percent_female_workers_max = FloatField(required=False)
+    coordinates_lat = FloatField(required=False)
+    coordinates_lon = FloatField(required=False)
+    country = ListField(
+        child=CharField(required=False),
         required=False
     )
-    sort_by = serializers.ChoiceField(
+    sort_by = ChoiceField(
         choices=['name', 'address'],
         required=False
     )
-    order_by = serializers.ChoiceField(
+    order_by = ChoiceField(
         choices=['asc', 'desc'],
         required=False
     )
@@ -47,7 +55,7 @@ class ProductionLocationsSerializer(serializers.Serializer):
 
         if errors:
             # TODO: Pass error msg to the Rollbar here
-            raise serializers.ValidationError({
+            raise ValidationError({
                 "message": COMMON_ERROR_MESSAGE,
                 "errors": errors
             })
