@@ -218,7 +218,7 @@ jobs:
 
       - name: Build and push Database Anonymizer Docker image to ECR for ${{ vars.ENV_NAME }}
         uses: docker/build-push-action@v2
-        if: ${{ steps.get_env_name.outputs.lowercase == 'development' }}
+        if: ${{ steps.get_env_name.outputs.lowercase == 'production' }}
         with:
           context: deployment/terraform/database_anonymizer_sheduled_task/docker
           file: deployment/terraform/database_anonymizer_sheduled_task/docker/Dockerfile
