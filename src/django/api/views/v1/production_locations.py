@@ -18,12 +18,12 @@ from api.views.v1.index_names import OpenSearchIndexNames
 
 
 class ProductionLocations(ViewSet):
+    swagger_schema = None
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.opensearch_service = OpenSearchService()
         self.opensearch_query_builder = OpenSearchQueryBuilder()
 
-    @swagger_auto_schema(auto_schema=None)
     def list(self, request):
         opensearch_query_director = OpenSearchQueryDirector(
             self.opensearch_query_builder
