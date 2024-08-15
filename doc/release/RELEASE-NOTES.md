@@ -22,7 +22,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-982](https://opensupplyhub.atlassian.net/browse/OSDEV-982) - Search, API. Add OS ID query parameter to v1/production-locations.
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* [OSDEV-1165](https://opensupplyhub.atlassian.net/browse/OSDEV-1165) - Updated the release protocol to include information about quick fixes and how to perform them. Additionally, updated the GitFlow diagram to visually depict this process.
+* Updated the `RELEASE-PROTOCOL.md` file to include information about OpenSearch and Logstash, stating that their functionality should also be checked after deployment.
 
 ### Bugfix
 * [OSDEV-1048](https://opensupplyhub.atlassian.net/browse/OSDEV-1048) - Fixed error "User Cannot read properties of undefined (reading 'length')".
@@ -76,7 +77,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
-    * `index_facilities_new`
 
 
 ## Release 1.17.0
