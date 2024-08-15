@@ -279,7 +279,7 @@ jobs:
           ssh -i ~/.ssh/bastion ec2-user@${{ vars.BASTION_IP }} \
               "curl -XDELETE https://${{ vars.OPENSEARCH_DOMAIN }}/production-locations --aws-sigv4 \"aws:amz:eu-west-1:es\" --user \"${{ secrets.AWS_ACCESS_KEY_ID }}:${{ secrets.AWS_SECRET_ACCESS_KEY }}\""
           ssh -i ~/.ssh/bastion ec2-user@${{ vars.BASTION_IP }} \
-              "sudo mount -t efs -o tls,accesspoint=${{EFS_AP_ID}} ${{EFS_ID}}:/ /mnt && \
+              "sudo mount -t efs -o tls,accesspoint=${{vars.EFS_AP_ID}} ${{vars.EFS_ID}}:/ /mnt && \
                sudo rm /mnt/logstash_jdbc_last_run && \
                sudo umount /mnt"
       - name: Restore database for ${{ vars.ENV_NAME }}
