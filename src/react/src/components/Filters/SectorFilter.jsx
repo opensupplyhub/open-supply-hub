@@ -37,45 +37,43 @@ function SectorFilter({
     }
 
     return (
-        <>
-            <div className="form__field">
-                {embed ? (
-                    <StyledSelect
-                        name={SECTORS}
-                        label="Sector"
-                        options={sectorOptions || []}
-                        value={sectors}
-                        onChange={updateSector}
-                        onFocus={() =>
-                            !sectorOptions && !fetchingSectors && fetchSectors()
-                        }
-                        noOptionsMessage={() =>
-                            fetchingSectors ? 'Loading..' : 'No options'
-                        }
-                        disabled={fetchingOptions || fetchingSectors}
-                        isSideBarSearch={isSideBarSearch}
-                    />
-                ) : (
-                    <NestedSelect
-                        name={SECTORS}
-                        label="Sector"
-                        optionsData={groupedSectorOptions || []}
-                        sectors={sectors}
-                        updateSector={updateSector}
-                        onFocus={() =>
-                            !groupedSectorOptions &&
-                            !fetchingGroupedSectors &&
-                            fetchGroupedSectors()
-                        }
-                        noOptionsMessage={() =>
-                            fetchingGroupedSectors ? 'Loading..' : 'No options'
-                        }
-                        disabled={fetchingOptions || fetchingGroupedSectors}
-                        isSideBarSearch={isSideBarSearch}
-                    />
-                )}
-            </div>
-        </>
+        <div className="form__field">
+            {embed ? (
+                <StyledSelect
+                    name={SECTORS}
+                    label="Sector"
+                    options={sectorOptions || []}
+                    value={sectors}
+                    onChange={updateSector}
+                    onFocus={() =>
+                        !sectorOptions && !fetchingSectors && fetchSectors()
+                    }
+                    noOptionsMessage={() =>
+                        fetchingSectors ? 'Loading..' : 'No options'
+                    }
+                    disabled={fetchingOptions || fetchingSectors}
+                    isSideBarSearch={isSideBarSearch}
+                />
+            ) : (
+                <NestedSelect
+                    name={SECTORS}
+                    label="Sector"
+                    optionsData={groupedSectorOptions || []}
+                    sectors={sectors}
+                    updateSector={updateSector}
+                    onFocus={() =>
+                        !groupedSectorOptions &&
+                        !fetchingGroupedSectors &&
+                        fetchGroupedSectors()
+                    }
+                    noOptionsMessage={() =>
+                        fetchingGroupedSectors ? 'Loading..' : 'No options'
+                    }
+                    disabled={fetchingOptions || fetchingGroupedSectors}
+                    isSideBarSearch={isSideBarSearch}
+                />
+            )}
+        </div>
     );
 }
 
