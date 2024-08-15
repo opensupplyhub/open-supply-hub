@@ -15,7 +15,7 @@ from ..models.facility.facility_list_item import FacilityListItem
 
 
 @swagger_auto_schema(
-    method='get',
+    method='GET',
     manual_parameters=[
         openapi.Parameter(
             'embed',
