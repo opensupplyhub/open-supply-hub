@@ -16,7 +16,6 @@ from api.models.user import User
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 
 
-
 class SectorsViewTest(FacilityAPITestCaseBase):
     def setUp(self):
         super().setUp()
