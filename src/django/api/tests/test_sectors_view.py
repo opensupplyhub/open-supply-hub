@@ -66,7 +66,7 @@ class SectorsViewTest(FacilityAPITestCaseBase):
         self.claim = FacilityClaim.objects.create(
             contributor=self.contributor_2,
             facility=self.facility,
-            sector=["Agriculture"],
+            sector=["Agriculture", "Health"],
             status=FacilityClaimStatuses.APPROVED,
         )
 
@@ -119,7 +119,7 @@ class SectorsViewTest(FacilityAPITestCaseBase):
         response = self.client.get(self.url, {'embed': 'true'})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, set())
+        self.assertEqual(response.data, [])
 
     def test_get_sectors_with_grouped(self):
         response = self.client.get(self.url, {'grouped': 'true'})
