@@ -1,0 +1,17 @@
+networks:
+  my-proxy-net:
+    external:
+      name: os-hub-development
+
+services:
+  integration-test:
+    build:
+      context: ./src/tests
+      dockerfile: Dockerfile
+    environment:
+      - OPENSEARCH_HOST=opensearch-single-node
+      - OPENSEARCH_PORT=9200
+      - OPENSEARCH_INDEX_NAME=production-locations
+    command: uvicorn main:app --host 0.0.0.0 --port 84
+    networks:
+      - my-proxy-net

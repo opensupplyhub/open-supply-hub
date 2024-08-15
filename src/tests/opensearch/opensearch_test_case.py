@@ -1,24 +1,21 @@
 import os
-from django.test import TestCase
+import unittest
 from opensearchpy import OpenSearch, RequestsHttpConnection
 
-from api.views.v1.index_names import OpenSearchIndexNames
 
+class OpenSearchIntegrationTestCase(unittest.TestCase):
 
-class OpenSearchIntegrationTestCase(TestCase):
-
-    @classmethod
-    def setUpTestData(cls):
+    def setUp(self):
         host = os.getenv('OPENSEARCH_HOST')
         port = os.getenv('OPENSEARCH_PORT')
 
-        cls.__client = OpenSearch(
+        self.__client = OpenSearch(
             hosts=[{'host': host, 'port': port}],
             http_auth=None,
             connection_class=RequestsHttpConnection,
         )
 
-        cls.index_name = OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX
+        self.index_name = os.getenv('OPENSEARCH_INDEX_NAME')
 
     def getClient(self) -> OpenSearch:
         return self.__client
