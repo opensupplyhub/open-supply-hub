@@ -1,7 +1,14 @@
 from rest_framework import status
 from rest_framework.test import APITestCase
-
 from django.urls import reverse
+from django.contrib.auth.models import Group
+from unittest.mock import patch
+
+from api.models.user import User
+from api.constants import FeatureGroups
+
+
+DEFAULT_LIMIT = 3
 
 
 class FacilitiesDownloadViewSetTest(APITestCase):
@@ -419,3 +426,48 @@ class FacilitiesDownloadViewSetTest(APITestCase):
 
         rows = response.data.get("results", {}).get("rows", [])
         self.assertEqual(rows, expected_data)
+
+    @patch('api.constants.FacilitiesDownloadSettings.DEFAULT_LIMIT',
+           DEFAULT_LIMIT)
+    def test_api_user_can_download_over_limit(self):
+        email = "test@example.com"
+        password = "example123"
+        user = User.objects.create(email=email)
+        user.set_password(password)
+        group = Group.objects.get(
+            name=FeatureGroups.CAN_SUBMIT_FACILITY,
+        )
+        user.groups.set([group.id])
+        user.save()
+        self.client.login(email=email, password=password)
+
+        download_url = reverse("facilities-downloads-list")
+
+        response = self.client.get(download_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        rows = response.data.get("results", {}).get("rows", [])
+        self.assertGreater(len(rows), DEFAULT_LIMIT)
+
+    @patch('api.constants.FacilitiesDownloadSettings.DEFAULT_LIMIT',
+           DEFAULT_LIMIT)
+    def test_non_api_user_cannot_download_over_limit(self):
+        expected_error_message = (
+            'Downloads are supported only for searches resulting in '
+            f'{DEFAULT_LIMIT} facilities or less.'
+        )
+
+        email = "test@example.com"
+        password = "example123"
+        user = User.objects.create(email=email)
+        user.set_password(password)
+        user.save()
+        self.client.login(email=email, password=password)
+
+        download_url = reverse("facilities-downloads-list")
+
+        response = self.client.get(download_url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        response_data = response.json()
+        self.assertEqual(response_data[0], expected_error_message)
