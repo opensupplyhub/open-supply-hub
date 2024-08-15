@@ -23,12 +23,17 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     - `url` -> `business_url`
     - `lon` -> `lng`
 * [OSDEV-1006](https://opensupplyhub.atlassian.net/browse/OSDEV-1006) - Create new "api/v1/production-locations" endpoint.
+* [OSDEV-1184](https://opensupplyhub.atlassian.net/browse/OSDEV-1184) - Handle validation errors for size, sort_by and order_by parameters of "api/v1/production-locations" endpoint.
+* [OSDEV-982](https://opensupplyhub.atlassian.net/browse/OSDEV-982) - Search, API. Add OS ID query parameter to v1/production-locations. Implement "api/v1/production-locations/{os_id}" endpoint.
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* [OSDEV-1165](https://opensupplyhub.atlassian.net/browse/OSDEV-1165) - Updated the release protocol to include information about quick fixes and how to perform them. Additionally, updated the GitFlow diagram to visually depict this process.
+* Updated the `RELEASE-PROTOCOL.md` file to include information about OpenSearch and Logstash, stating that their functionality should also be checked after deployment.
+* [OSDEV-1169](https://opensupplyhub.atlassian.net/browse/OSDEV-1169) - Activated deployment database-anonymizer to production.
 
 ### Bugfix
-* *Describe bugfix here.*
+* [OSDEV-1048](https://opensupplyhub.atlassian.net/browse/OSDEV-1048) - Fixed error "User Cannot read properties of undefined (reading 'length')".
+* [OSDEV-1180](https://opensupplyhub.atlassian.net/browse/OSDEV-1180) - Introduced a 10,000-download limit check on the api/facilities-downloads API endpoint to prevent non-API users from downloading more than 10,000 production locations.
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
@@ -68,6 +73,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * Ensure that the OpenSearch domain name is unique for each environment to avoid conflicts when provisioning domains across different environments.
+* [OSDEV-1176](https://opensupplyhub.atlassian.net/browse/OSDEV-1176) - Fixed a spelling mistake in the label for the password field on the LogIn page. After the fix, the label reads "Password".
+* [OSDEV-1178](https://opensupplyhub.atlassian.net/browse/OSDEV-1178) - Fixed error "Something went wrong" error after clicking on Dashboard -> View Facility Claims.
 
 ### What's new
 * [OSDEV-1144](https://opensupplyhub.atlassian.net/browse/OSDEV-1144) - Claims emails. Updated text for approval, revocation, and denial emails.
@@ -77,7 +84,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
-    * `index_facilities_new`
 
 
 ## Release 1.17.0
