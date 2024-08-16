@@ -129,7 +129,7 @@ const DashboardClaims = ({
             if (!statuses && claimStatuses && claimStatuses.length > 0) {
                 finalStatuses = map(claimStatuses, 'value');
             }
-        } else if (claimStatuses.length > 0) {
+        } else if (claimStatuses && claimStatuses.length > 0) {
             finalStatuses = map(claimStatuses, 'value');
         }
 
