@@ -6,7 +6,6 @@ import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
 const CustomGroupHeading = props => {
-    console.log('props >>>', props);
     const { data, selectProps } = props;
     const {
         expandedGroups,
