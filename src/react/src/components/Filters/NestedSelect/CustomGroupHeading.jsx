@@ -1,19 +1,20 @@
 import React from 'react';
 import { components } from 'react-select';
+import { withStyles } from '@material-ui/core/styles';
 import ButtonBase from '@material-ui/core/ButtonBase';
 import IconButton from '@material-ui/core/IconButton';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import { makeCustomGroupHeadingStyles } from '../../../util/styles';
 
 const CustomGroupHeading = props => {
-    const { data, selectProps } = props;
+    const { data, selectProps, classes } = props;
     const {
         expandedGroups,
         setExpandedGroups,
         selectedOptions,
         setSelectedOptions,
         setMenuIsOpen,
-        classes,
     } = selectProps;
     const isExpanded = expandedGroups.includes(data.label);
 
@@ -55,4 +56,4 @@ const CustomGroupHeading = props => {
     );
 };
 
-export default CustomGroupHeading;
+export default withStyles(makeCustomGroupHeadingStyles)(CustomGroupHeading);

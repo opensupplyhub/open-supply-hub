@@ -87,7 +87,6 @@ const NestedSelect = ({
                 placeholder="Select"
                 className={`basic-multi-select notranslate ${classes.selectStyle}`}
                 classNamePrefix="select"
-                classes={classes}
                 styles={combinedStyles}
                 expandedGroups={expandedGroups}
                 setExpandedGroups={setExpandedGroups}
