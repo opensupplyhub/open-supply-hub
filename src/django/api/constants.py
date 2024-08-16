@@ -205,3 +205,7 @@ class NumberOfWorkersRanges:
 
 class ErrorMessages:
     GEOCODED_NO_RESULTS = "The address you submitted can not be geocoded."
+
+
+class FacilitiesDownloadSettings:
+    DEFAULT_LIMIT = 10000

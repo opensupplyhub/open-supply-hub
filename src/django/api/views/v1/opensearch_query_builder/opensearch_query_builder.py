@@ -1,6 +1,7 @@
 import copy
 from api.views.v1.opensearch_query_builder. \
     opensearch_query_builder_interface import OpenSearchQueryBuilderInterface
+from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 
 
 class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
@@ -13,27 +14,86 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         }
         self.query_body = copy.deepcopy(self.default_query_body)
         self.default_fuzziness = 2
-        self.default_sort = 'name'
+        self.default_sort = V1_PARAMETERS_LIST.NAME
         self.default_sort_order = 'asc'
+        self.build_options = {
+            'country': self.__build_country,
+            'os_id': self.__build_os_id,
+            'number_of_workers': self.__build_number_of_workers
+        }
 
     def reset(self):
         self.query_body = copy.deepcopy(self.default_query_body)
 
+    def __build_number_of_workers(self, field, range_query):
+        self.query_body['query']['bool']['must'].append({
+            'bool': {
+                'should': [
+                    {
+                        'bool': {
+                            'must': [
+                                {
+                                    'range': {
+                                        f'{field}.min': {
+                                            'lte': range_query.get(
+                                                'lte',
+                                                float('inf')
+                                            ),
+                                            'gte': range_query.get(
+                                                'gte',
+                                                float('-inf')
+                                            )
+                                        }
+                                    }
+                                },
+                                {
+                                    'range': {
+                                        f'{field}.max': {
+                                            'gte': range_query.get(
+                                                'gte',
+                                                float('-inf')
+                                            ),
+                                            'lte': range_query.get(
+                                                'lte',
+                                                float('inf')
+                                            )
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        })
+
+    def __build_os_id(self, field):
+        return field
+
+    def __build_country(self, field):
+        return f'{field}.alpha_2'
+
     def add_size(self, size):
-        self.query_body['size'] = size
+        self.query_body[V1_PARAMETERS_LIST.SIZE] = size
 
     def add_match(self, field, value, fuzziness=None):
         if fuzziness is None:
             fuzziness = self.default_fuzziness
-        match_query = \
-            {'match': {field: {'query': value, 'fuzziness': fuzziness}}}
+        match_query = {
+            'match': {field: {'query': value, 'fuzziness': fuzziness}}
+        }
         self.query_body['query']['bool']['must'].append(match_query)
 
     def add_multi_match(self, query):
         self.query_body['query']['bool']['must'].append({
             'multi_match': {
                 'query': query,
-                'fields': ['name^2', 'address', 'description', 'name_local'],
+                'fields': [
+                    f'{V1_PARAMETERS_LIST.NAME}^2',
+                    V1_PARAMETERS_LIST.ADDRESS,
+                    V1_PARAMETERS_LIST.DESCRIPTION,
+                    V1_PARAMETERS_LIST.NAME_LOCAL
+                ],
                 'fuzziness': self.default_fuzziness
             }
         })
@@ -41,8 +101,9 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
     def add_terms(self, field, values):
         if not values:
             return self.query_body
-        terms_field = f'{field}.alpha_2' if field == 'country' \
-            else f'{field}.keyword'
+
+        terms_field = self.build_options \
+            .get(field, lambda x: f'{x}.keyword')(field)
 
         existing_terms = next(
             (item['terms'] for item in self.query_body['query']['bool']['must']
@@ -68,43 +129,9 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
             range_query['lte'] = max_value
 
         if range_query:
-            if field == 'number_of_workers':
-                self.query_body['query']['bool']['must'].append({
-                    'bool': {
-                        'should': [
-                            {
-                                'bool': {
-                                    'must': [
-                                        {
-                                            'range': {
-                                                f'{field}.min': {
-                                                    'lte': range_query.get(
-                                                        'lte', float('inf')
-                                                    ),
-                                                    'gte': range_query.get(
-                                                        'gte', float('-inf')
-                                                    )
-                                                }
-                                            }
-                                        },
-                                        {
-                                            'range': {
-                                                f'{field}.max': {
-                                                    'gte': range_query.get(
-                                                        'gte', float('-inf')
-                                                    ),
-                                                    'lte': range_query.get(
-                                                        'lte', float('inf')
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                })
+            build_action = self.build_options.get(field)
+            if build_action:
+                build_action(field, range_query)
             else:
                 self.query_body['query']['bool']['must'].append({
                     'range': {field: range_query}
@@ -122,15 +149,15 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
     def add_sort(self, field, order_by=None):
         if order_by is None:
             order_by = self.default_sort_order
-        self.query_body['sort']. \
-            append({f'{field}.keyword': {'order': order_by}})
+        self.query_body['sort'] \
+            .append({f'{field}.keyword': {'order': order_by}})
 
     def add_search_after(self, search_after):
         # search_after can't be present as empty by default in query_body
-        if 'search_after' not in self.query_body:
-            self.query_body['search_after'] = []
+        if V1_PARAMETERS_LIST.SEARCH_AFTER not in self.query_body:
+            self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER] = []
         '''
-        There should be always sort if there is a search_after field.
+        There should always be sort if there is a search_after field.
         So if it is empty, sort by name by default
         '''
         if not self.query_body['sort']:
@@ -141,7 +168,8 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
             }
             self.query_body['sort'].append(sort_criteria)
 
-        self.query_body['search_after'].append(search_after)
+        self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER] \
+            .append(search_after)
 
     def get_final_query_body(self):
         return self.query_body
