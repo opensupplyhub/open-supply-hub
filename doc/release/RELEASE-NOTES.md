@@ -35,6 +35,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Bugfix
 * [OSDEV-1048](https://opensupplyhub.atlassian.net/browse/OSDEV-1048) - Fixed error "User Cannot read properties of undefined (reading 'length')".
 * [OSDEV-1180](https://opensupplyhub.atlassian.net/browse/OSDEV-1180) - Introduced a 10,000-download limit check on the api/facilities-downloads API endpoint to prevent non-API users from downloading more than 10,000 production locations.
+* [OSDEV-1178](https://opensupplyhub.atlassian.net/browse/OSDEV-1178) - Added null check for claimStatuses array that fixes JS error on Dashboard/Facility Claims page.
 
 ### What's new
 * [OSDEV-633](https://opensupplyhub.atlassian.net/browse/OSDEV-633) - Added a nested select to the Sectors filter. The main selection is the group name of related sectors. By pressing the header, a user can select all related sectors from this group. To view the list of related sectors, it's necessary to press the "carrot" icon next to the group heading. This action allows a user to choose a single sector from the grouped list. Additionally, entering text into the search filter displays only the filtered sectors within the opened groups.
