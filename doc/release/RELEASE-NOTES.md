@@ -19,6 +19,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-1006](https://opensupplyhub.atlassian.net/browse/OSDEV-1006) - Create new "api/v1/production-locations" endpoint.
+* [OSDEV-1184](https://opensupplyhub.atlassian.net/browse/OSDEV-1184) - Handle validation errors for size, sort_by and order_by parameters of "api/v1/production-locations" endpoint.
+* [OSDEV-982](https://opensupplyhub.atlassian.net/browse/OSDEV-982) - Search, API. Add OS ID query parameter to v1/production-locations. Implement "api/v1/production-locations/{os_id}" endpoint.
 
 ### Architecture/Environment changes
 * [OSDEV-1165](https://opensupplyhub.atlassian.net/browse/OSDEV-1165) - Updated the release protocol to include information about quick fixes and how to perform them. Additionally, updated the GitFlow diagram to visually depict this process.
