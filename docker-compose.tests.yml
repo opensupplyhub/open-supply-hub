@@ -12,6 +12,8 @@ services:
       - OPENSEARCH_HOST=opensearch-single-node
       - OPENSEARCH_PORT=9200
       - OPENSEARCH_INDEX_NAME=production-locations
+      - REACT_HOST=react
+      - REACT_PORT=6543
     command: uvicorn main:app --host 0.0.0.0 --port 84
     networks:
       - my-proxy-net

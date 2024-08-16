@@ -1,26 +1,18 @@
-from src.tests.v1.base_production_locations_test \
+import requests
+from .base_production_locations_test \
     import BaseProductionLocationsTest
 
 
 class ProductionLocationsTest(BaseProductionLocationsTest):
 
     def test_production_locations_status(self):
-        self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/",
+            headers=self.basic_headers,
         )
-
-        response = self.client.get(
-                '/api/v1/production-locations/'
-            )
-
         self.assertEqual(response.status_code, 200)
 
     def test_production_locations_exact(self):
-        self.client.login(
-            email=self.superuser_email,
-            password=self.superuser_password
-        )
-
         # Index a document
         doc = {
             "sector": [
@@ -51,8 +43,9 @@ class ProductionLocationsTest(BaseProductionLocationsTest):
         query = "?size=1&name={}&sort_by=name&order_by=asc".\
             format(search_name)
 
-        response = self.client.get(
-                '/api/v1/production-locations/{}'.format(query)
+        response = requests.get(
+                f"{self.root_url}/api/v1/production-locations/{query}",
+                headers=self.basic_headers,
             )
 
         result = response.json()

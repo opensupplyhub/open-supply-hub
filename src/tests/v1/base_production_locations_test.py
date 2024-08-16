@@ -1,47 +1,20 @@
-from django.conf import settings
-from rest_framework.test import APITestCase
-from src.tests.opensearch.opensearch_test_case \
+import os
+from opensearch.opensearch_test_case \
     import OpenSearchIntegrationTestCase
 
-from src.django.api.models import (
-    Contributor,
-    User,
-)
 
-
-class BaseProductionLocationsTest(APITestCase, OpenSearchIntegrationTestCase):
+class BaseProductionLocationsTest(OpenSearchIntegrationTestCase):
 
     def setUp(self):
         super().setUp()
+        self.open_search_client= self.getClient()
 
-        self.open_search_client = self.getClient()
+        host = os.getenv('REACT_HOST')
+        port = os.getenv('REACT_PORT')
+        self.root_url = f"http://{host}:{port}"
 
-        setattr(settings, 'DEBUG', True)
-
-        self.user_email = "test@example.com"
-        self.user_password = "example123"
-        self.user = User.objects.create(email=self.user_email)
-        self.user.set_password(self.user_password)
-        self.user.save()
-
-        self.contributor = Contributor.objects.create(
-            admin=self.user,
-            name="test contributor",
-            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
-        )
-
-        self.superuser_email = "superuser@example.com"
-        self.superuser_password = "superuser"
-
-        self.superuser = User.objects.create_superuser(
-            self.superuser_email, self.superuser_password
-        )
-
-        self.supercontributor = Contributor.objects.create(
-            admin=self.superuser,
-            name="test super contributor",
-            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
-        )
-
-    def tearDown(self):
-        setattr(settings, 'DEBUG', False)
+        self.basic_headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Token 1d18b962d6f976b0b7e8fcf9fcc39b56cf278051',
+            'Host': "localhost:6543"
+        }
