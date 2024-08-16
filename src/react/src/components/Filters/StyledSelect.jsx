@@ -6,8 +6,8 @@ import ReactSelect from 'react-select';
 import { withStyles } from '@material-ui/core/styles';
 import { makeFilterStyles, makeSelectFilterStyles } from '../../util/styles';
 
-import ArrowDropDownIcon from '../ArrowDropDownIcon';
 import CreatableInputOnly from '../CreatableInputOnly';
+import CustomDropdownIndicator from './CustomReactSelectComponents/CustomDropdownIndicator';
 
 function StyledSelect({
     name,
@@ -50,11 +50,7 @@ function StyledSelect({
                             isMulti
                             id={name}
                             components={{
-                                DropdownIndicator: () => (
-                                    <div className={classes.dropdownIndicator}>
-                                        <ArrowDropDownIcon />
-                                    </div>
-                                ),
+                                DropdownIndicator: CustomDropdownIndicator,
                                 IndicatorSeparator: null,
                             }}
                             name={name}
@@ -70,11 +66,7 @@ function StyledSelect({
                         isMulti
                         id={name}
                         components={{
-                            DropdownIndicator: () => (
-                                <div className={classes.dropdownIndicator}>
-                                    <ArrowDropDownIcon />
-                                </div>
-                            ),
+                            DropdownIndicator: CustomDropdownIndicator,
                             IndicatorSeparator: null,
                         }}
                         name={name}
