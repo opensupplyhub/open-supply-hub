@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import ReactSelect from 'react-select';
 import { arrayOf, bool, func, number, object, shape, string } from 'prop-types';
@@ -12,6 +12,7 @@ import {
     makeNestedSelectFilterStyles,
     makeSelectFilterStyles,
 } from '../../../util/styles';
+import { useExpandedGroups, useMenuState } from './../../../util/hooks';
 
 const NestedSelect = ({
     name,
@@ -30,39 +31,21 @@ const NestedSelect = ({
         ...selectFilterStyles,
         ...nestedSelectFilterStyles,
     };
-    const [menuIsOpen, setMenuIsOpen] = useState(false);
-    const [expandedGroups, setExpandedGroups] = useState([]);
 
-    const handleInputChange = inputValue => {
-        if (inputValue.trim() === '') {
-            setExpandedGroups([]);
-            return;
-        }
-
-        const newExpandedGroups = optionsData
-            .filter(group =>
-                group.options.some(option =>
-                    option.label
-                        .toLowerCase()
-                        .includes(inputValue.toLowerCase()),
-                ),
-            )
-            .map(group => group.label);
-
-        setExpandedGroups(newExpandedGroups);
-    };
+    const {
+        expandedGroups,
+        setExpandedGroups,
+        handleInputChange,
+    } = useExpandedGroups(optionsData);
+    const {
+        menuIsOpen,
+        setMenuIsOpen,
+        onMenuOpen,
+        onMenuClose,
+    } = useMenuState();
 
     const handleSelect = selected => {
         updateSector(selected);
-    };
-
-    const onMenuOpen = () => {
-        setMenuIsOpen(true);
-    };
-
-    const onMenuClose = () => {
-        setExpandedGroups([]);
-        setMenuIsOpen(false);
     };
 
     const customComponents = {

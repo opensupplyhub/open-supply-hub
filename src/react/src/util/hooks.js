@@ -297,3 +297,45 @@ export const useMergeButtonClickHandler = ({
 
     return handleMergeButtonClick;
 };
+
+export const useMenuState = () => {
+    const [menuIsOpen, setMenuIsOpen] = useState(false);
+
+    const onMenuOpen = () => {
+        setMenuIsOpen(true);
+    };
+
+    const onMenuClose = () => {
+        setMenuIsOpen(false);
+    };
+
+    return { menuIsOpen, setMenuIsOpen, onMenuOpen, onMenuClose };
+};
+
+export const useExpandedGroups = optionsData => {
+    const [expandedGroups, setExpandedGroups] = useState([]);
+
+    const handleInputChange = useCallback(
+        inputValue => {
+            if (inputValue.trim() === '') {
+                setExpandedGroups([]);
+                return;
+            }
+
+            const newExpandedGroups = optionsData
+                .filter(group =>
+                    group.options.some(option =>
+                        option.label
+                            .toLowerCase()
+                            .includes(inputValue.toLowerCase()),
+                    ),
+                )
+                .map(group => group.label);
+
+            setExpandedGroups(newExpandedGroups);
+        },
+        [optionsData],
+    );
+
+    return { expandedGroups, setExpandedGroups, handleInputChange };
+};
