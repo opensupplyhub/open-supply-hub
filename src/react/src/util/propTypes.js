@@ -211,6 +211,19 @@ export const sectorOptionsPropType = arrayOf(
     }),
 );
 
+export const groupedSectorOptionsPropType = arrayOf(
+    shape({
+        label: string.isRequired,
+        options: arrayOf(
+            shape({
+                groupLabel: string.isRequired,
+                label: string.isRequired,
+                value: string.isRequired,
+            }),
+        ).isRequired,
+    }),
+);
+
 export const facilityTypeOptionsPropType = arrayOf(
     shape({
         value: string.isRequired,
