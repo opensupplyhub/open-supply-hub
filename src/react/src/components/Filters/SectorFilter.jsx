@@ -14,7 +14,7 @@ import {
     sectorOptionsPropType,
     groupedSectorOptionsPropType,
 } from '../../util/propTypes';
-import NestedSelect from './NestedSelect/NestedSelect';
+import NestedSelect from './NestedSelect';
 
 const SECTORS = 'SECTORS';
 

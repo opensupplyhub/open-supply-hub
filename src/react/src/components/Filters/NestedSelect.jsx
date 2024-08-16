@@ -4,15 +4,15 @@ import ReactSelect from 'react-select';
 import { arrayOf, bool, func, number, object, shape, string } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import InputLabel from '@material-ui/core/InputLabel';
-import CustomDropdownIndicator from './CustomDropdownIndicator';
-import CustomGroupHeading from './CustomGroupHeading';
-import CustomOption from './CustomOption';
+import CustomDropdownIndicator from './NestedSelect/CustomDropdownIndicator';
+import CustomGroupHeading from './NestedSelect/CustomGroupHeading';
+import CustomOption from './NestedSelect/CustomOption';
 import {
     makeFilterStyles,
     makeNestedSelectFilterStyles,
     makeSelectFilterStyles,
-} from '../../../util/styles';
-import { useExpandedGroups, useMenuState } from './../../../util/hooks';
+} from '../../util/styles';
+import { useExpandedGroups, useMenuState } from '../../util/hooks';
 
 const NestedSelect = ({
     name,
