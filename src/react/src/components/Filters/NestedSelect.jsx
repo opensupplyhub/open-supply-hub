@@ -4,9 +4,9 @@ import ReactSelect from 'react-select';
 import { arrayOf, bool, func, number, object, shape, string } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import InputLabel from '@material-ui/core/InputLabel';
-import CustomDropdownIndicator from './NestedSelect/CustomDropdownIndicator';
-import CustomGroupHeading from './NestedSelect/CustomGroupHeading';
-import CustomOption from './NestedSelect/CustomOption';
+import CustomDropdownIndicator from './CustomReactSelectComponents/CustomDropdownIndicator';
+import CustomGroupHeading from './CustomReactSelectComponents/CustomGroupHeading';
+import CustomOption from './CustomReactSelectComponents/CustomOption';
 import {
     makeFilterStyles,
     makeNestedSelectFilterStyles,
