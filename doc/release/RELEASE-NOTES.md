@@ -23,8 +23,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     - `url` -> `business_url`
     - `lon` -> `lng`
 * [OSDEV-1006](https://opensupplyhub.atlassian.net/browse/OSDEV-1006) - Create new "api/v1/production-locations" endpoint.
+* [OSDEV-633](https://opensupplyhub.atlassian.net/browse/OSDEV-633) - Modified the `sectors` endpoint to return either a list of sectors or sectors grouped by their sector groups, depending on the query parameters passed to the request. Possible parameters include:
+    * `embed` (optional): If present, returns a flat list of sectors submitted by a specific contributor.
+    * `contributor` (optional): If embed is provided, this parameter must be included to filter sectors submitted by a specific contributor.
+    * `grouped` (optional): If present, returns sectors grouped by their sector groups.
 * [OSDEV-1184](https://opensupplyhub.atlassian.net/browse/OSDEV-1184) - Handle validation errors for size, sort_by and order_by parameters of "api/v1/production-locations" endpoint.
 * [OSDEV-982](https://opensupplyhub.atlassian.net/browse/OSDEV-982) - Search, API. Add OS ID query parameter to v1/production-locations. Implement "api/v1/production-locations/{os_id}" endpoint.
+* [OSDEV-1103](https://opensupplyhub.atlassian.net/browse/OSDEV-1103) - Enabled accent-insensitive search for `name` and `address` fields of production location by designing the index mapping to do ASCII folding for search tokens.
 
 ### Architecture/Environment changes
 * [OSDEV-1165](https://opensupplyhub.atlassian.net/browse/OSDEV-1165) - Updated the release protocol to include information about quick fixes and how to perform them. Additionally, updated the GitFlow diagram to visually depict this process.
@@ -34,9 +39,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Bugfix
 * [OSDEV-1048](https://opensupplyhub.atlassian.net/browse/OSDEV-1048) - Fixed error "User Cannot read properties of undefined (reading 'length')".
 * [OSDEV-1180](https://opensupplyhub.atlassian.net/browse/OSDEV-1180) - Introduced a 10,000-download limit check on the api/facilities-downloads API endpoint to prevent non-API users from downloading more than 10,000 production locations.
+* [OSDEV-1178](https://opensupplyhub.atlassian.net/browse/OSDEV-1178) - Added null check for claimStatuses array that fixes JS error on Dashboard/Facility Claims page.
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* [OSDEV-633](https://opensupplyhub.atlassian.net/browse/OSDEV-633) - Added a nested select to the Sectors filter. The main selection is the group name of related sectors. By pressing the header, a user can select all related sectors from this group. To view the list of related sectors, it's necessary to press the "carrot" icon next to the group heading. This action allows a user to choose a single sector from the grouped list. Additionally, entering text into the search filter displays only the filtered sectors within the opened groups.
 
 ### Release instructions:
 * *Provide release instructions here.*

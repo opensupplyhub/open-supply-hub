@@ -3,6 +3,24 @@
     "production-locations*"
   ],
   "template": {
+    "settings": {
+      "analysis": {
+        "analyzer": {
+          "custom_asciifolding_analyzer": {
+            "tokenizer": "standard",
+            "filter": [
+              "custom_asciifolding_filter"
+            ]
+          }
+        },
+        "filter": {
+          "custom_asciifolding_filter": {
+            "type": "asciifolding",
+            "preserve_original": true
+          }
+        }
+      }
+    },
     "mappings": {
       "properties": {
         "os_id": {
@@ -10,6 +28,7 @@
         },
         "name": {
           "type": "text",
+          "analyzer": "custom_asciifolding_analyzer",
           "fields": {
             "keyword": {
               "type": "keyword"
@@ -34,6 +53,7 @@
         },
         "address": {
           "type": "text",
+          "analyzer": "custom_asciifolding_analyzer",
           "fields": {
             "keyword": {
               "type": "keyword"

@@ -5,9 +5,16 @@ import { connect } from 'react-redux';
 import StyledSelect from './StyledSelect';
 
 import { updateSectorFilter } from '../../actions/filters';
-import { fetchSectorOptions } from '../../actions/filterOptions';
+import {
+    fetchSectorOptions,
+    fetchGroupedSectorOptions,
+} from '../../actions/filterOptions';
 
-import { sectorOptionsPropType } from '../../util/propTypes';
+import {
+    sectorOptionsPropType,
+    groupedSectorOptionsPropType,
+} from '../../util/propTypes';
+import NestedSelect from './NestedSelect';
 
 const SECTORS = 'SECTORS';
 
@@ -20,33 +27,59 @@ function SectorFilter({
     fetchingOptions,
     hideSectorData,
     isSideBarSearch,
+    embed,
+    groupedSectorOptions,
+    fetchingGroupedSectors,
+    fetchGroupedSectors,
 }) {
     if (hideSectorData) {
         return null;
     }
+
     return (
         <div className="form__field">
-            <StyledSelect
-                name={SECTORS}
-                label="Sector"
-                options={sectorOptions || []}
-                value={sectors}
-                onChange={updateSector}
-                onFocus={() =>
-                    !sectorOptions && !fetchingSectors && fetchSectors()
-                }
-                noOptionsMessage={() =>
-                    fetchingSectors ? 'Loading..' : 'No options'
-                }
-                disabled={fetchingOptions || fetchingSectors}
-                isSideBarSearch={isSideBarSearch}
-            />
+            {embed ? (
+                <StyledSelect
+                    name={SECTORS}
+                    label="Sector"
+                    options={sectorOptions || []}
+                    value={sectors}
+                    onChange={updateSector}
+                    onFocus={() =>
+                        !sectorOptions && !fetchingSectors && fetchSectors()
+                    }
+                    noOptionsMessage={() =>
+                        fetchingSectors ? 'Loading..' : 'No options'
+                    }
+                    disabled={fetchingOptions || fetchingSectors}
+                    isSideBarSearch={isSideBarSearch}
+                />
+            ) : (
+                <NestedSelect
+                    name={SECTORS}
+                    label="Sector"
+                    optionsData={groupedSectorOptions || []}
+                    sectors={sectors}
+                    updateSector={updateSector}
+                    onFocus={() =>
+                        !groupedSectorOptions &&
+                        !fetchingGroupedSectors &&
+                        fetchGroupedSectors()
+                    }
+                    noOptionsMessage={() =>
+                        fetchingGroupedSectors ? 'Loading..' : 'No options'
+                    }
+                    disabled={fetchingOptions || fetchingGroupedSectors}
+                    isSideBarSearch={isSideBarSearch}
+                />
+            )}
         </div>
     );
 }
 
 SectorFilter.defaultProps = {
     sectorOptions: null,
+    groupedSectorOptions: null,
 };
 
 SectorFilter.propTypes = {
@@ -56,11 +89,19 @@ SectorFilter.propTypes = {
     sectors: sectorOptionsPropType.isRequired,
     fetchingSectors: bool.isRequired,
     fetchingOptions: bool.isRequired,
+    embed: bool.isRequired,
+    groupedSectorOptions: groupedSectorOptionsPropType,
+    fetchingGroupedSectors: bool.isRequired,
+    fetchGroupedSectors: func.isRequired,
 };
 
 function mapStateToProps({
     filterOptions: {
         sectors: { data: sectorOptions, fetching: fetchingSectors },
+        groupedSectors: {
+            data: groupedSectorOptions,
+            fetching: fetchingGroupedSectors,
+        },
         contributors: { fetching: fetchingContributors },
         countries: { fetching: fetchingCountries },
     },
@@ -73,6 +114,9 @@ function mapStateToProps({
         fetchingSectors,
         fetchingOptions: fetchingCountries || fetchingContributors,
         hideSectorData: embed ? config.hide_sector_data : false,
+        embed,
+        groupedSectorOptions,
+        fetchingGroupedSectors,
     };
 }
 
@@ -80,6 +124,7 @@ function mapDispatchToProps(dispatch) {
     return {
         updateSector: v => dispatch(updateSectorFilter(v)),
         fetchSectors: () => dispatch(fetchSectorOptions()),
+        fetchGroupedSectors: () => dispatch(fetchGroupedSectorOptions()),
     };
 }
 
