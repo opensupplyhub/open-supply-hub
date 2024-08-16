@@ -6,15 +6,15 @@
     "settings": {
       "analysis": {
         "analyzer": {
-          "custom_asciifolding": {
+          "custom_asciifolding_analyzer": {
             "tokenizer": "standard",
             "filter": [
-              "my_ascii_folding"
+              "custom_asciifolding_filter"
             ]
           }
         },
         "filter": {
-          "my_ascii_folding": {
+          "custom_asciifolding_filter": {
             "type": "asciifolding",
             "preserve_original": true
           }
@@ -28,7 +28,7 @@
         },
         "name": {
           "type": "text",
-          "analyzer": "custom_asciifolding",
+          "analyzer": "custom_asciifolding_analyzer",
           "fields": {
             "keyword": {
               "type": "keyword"
@@ -53,7 +53,7 @@
         },
         "address": {
           "type": "text",
-          "analyzer": "custom_asciifolding",
+          "analyzer": "custom_asciifolding_analyzer",
           "fields": {
             "keyword": {
               "type": "keyword"
