@@ -4,7 +4,7 @@ class V1_PARAMETERS_LIST:
     QUERY = 'query'
     OS_ID = 'os_id'
     NAME = 'name'
-    NAME_LOCAL = 'name_local'
+    LOCAL_NAME = 'local_name'
     DESCRIPTION = 'description'
     ADDRESS = 'address'
     SECTOR = 'sector'

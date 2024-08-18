@@ -92,7 +92,7 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
                     f'{V1_PARAMETERS_LIST.NAME}^2',
                     V1_PARAMETERS_LIST.ADDRESS,
                     V1_PARAMETERS_LIST.DESCRIPTION,
-                    V1_PARAMETERS_LIST.NAME_LOCAL
+                    V1_PARAMETERS_LIST.LOCAL_NAME
                 ],
                 'fuzziness': self.default_fuzziness
             }

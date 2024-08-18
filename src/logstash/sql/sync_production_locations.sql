@@ -35,7 +35,7 @@ SELECT
         af.name
       )
   ) AS name,
-  afc.facility_name_native_language AS name_local_value,
+  afc.facility_name_native_language AS local_name_value,
   afc.facility_description AS description_value,
   (
     SELECT
@@ -72,7 +72,7 @@ SELECT
         af.address
       )
   ) AS address,
-  afc.facility_website AS url_value,
+  afc.facility_website AS business_url,
   (
     SELECT
       COALESCE(

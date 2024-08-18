@@ -9,7 +9,7 @@ class OpenSearchQueryDirector:
             V1_PARAMETERS_LIST.ADDRESS: 'match',
             V1_PARAMETERS_LIST.NAME: 'terms',
             V1_PARAMETERS_LIST.OS_ID: 'terms',
-            V1_PARAMETERS_LIST.NAME_LOCAL: 'terms',
+            V1_PARAMETERS_LIST.LOCAL_NAME: 'terms',
             V1_PARAMETERS_LIST.COUNTRY: 'terms',
             V1_PARAMETERS_LIST.SECTOR: 'terms',
             V1_PARAMETERS_LIST.PRODUCT_TYPE: 'terms',
@@ -63,7 +63,7 @@ class OpenSearchQueryDirector:
 
             if query_type == "geo_distance":
                 lat = query_params.get(f"{field}[lat]")
-                lng = query_params.get(f"{field}[lon]")
+                lng = query_params.get(f"{field}[lng]")
                 distance = query_params.get("distance", "10km")
                 self.__add_geo_distance_query(field, lat, lng,
                                               distance)

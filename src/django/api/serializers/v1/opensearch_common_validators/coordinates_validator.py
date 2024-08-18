@@ -7,7 +7,7 @@ class CoordinatesValidator(OpenSearchValidationInterface):
         errors = []
 
         lat = data.get('coordinates_lat')
-        lng = data.get('coordinates_lon')
+        lng = data.get('coordinates_lng')
 
         if ((lat is not None and lng is None) or
                 (lat is None and lng is not None)):
