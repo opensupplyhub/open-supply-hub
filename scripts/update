@@ -31,9 +31,9 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             manage.py migrate --no-input
 
         # Collect Django static files
-        docker compose \
-            run --rm --entrypoint python \
-            django \
-            manage.py collectstatic --noinput
+        # docker compose \
+        #     run --rm --entrypoint python \
+        #     django \
+        #     manage.py collectstatic --noinput
     fi
 fi
