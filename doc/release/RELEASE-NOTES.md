@@ -25,12 +25,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `grouped` (optional): If present, returns sectors grouped by their sector groups.
 * [OSDEV-1184](https://opensupplyhub.atlassian.net/browse/OSDEV-1184) - Handle validation errors for size, sort_by and order_by parameters of "api/v1/production-locations" endpoint.
 * [OSDEV-982](https://opensupplyhub.atlassian.net/browse/OSDEV-982) - Search, API. Add OS ID query parameter to v1/production-locations. Implement "api/v1/production-locations/{os_id}" endpoint.
+* [OSDEV-1103](https://opensupplyhub.atlassian.net/browse/OSDEV-1103) - Enabled accent-insensitive search for `name` and `address` fields of production location by designing the index mapping to do ASCII folding for search tokens.
 
 ### Architecture/Environment changes
 * [OSDEV-1165](https://opensupplyhub.atlassian.net/browse/OSDEV-1165) - Updated the release protocol to include information about quick fixes and how to perform them. Additionally, updated the GitFlow diagram to visually depict this process.
 * Updated the `RELEASE-PROTOCOL.md` file to include information about OpenSearch and Logstash, stating that their functionality should also be checked after deployment.
 * [OSDEV-1169](https://opensupplyhub.atlassian.net/browse/OSDEV-1169) - Activated deployment database-anonymizer to production.
 * [OSDEV-1177](https://opensupplyhub.atlassian.net/browse/OSDEV-1177) - Clear OpenSearch and stop Logstash during Postgres DB Restore/Reset in Pre-prod/Test/Dev env.
+* [OSDEV-1197](https://opensupplyhub.atlassian.net/browse/OSDEV-1197) - Upgrade Kafka tools to version 3.8.0
 
 ### Bugfix
 * [OSDEV-1048](https://opensupplyhub.atlassian.net/browse/OSDEV-1048) - Fixed error "User Cannot read properties of undefined (reading 'length')".
