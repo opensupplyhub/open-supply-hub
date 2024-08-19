@@ -14,6 +14,7 @@ services:
       - OPENSEARCH_INDEX_NAME=production-locations
       - REACT_HOST=react
       - REACT_PORT=6543
+      - USER_API_TOKEN=1d18b962d6f976b0b7e8fcf9fcc39b56cf278051
     command: uvicorn main:app --host 0.0.0.0 --port 84
     networks:
       - my-proxy-net
