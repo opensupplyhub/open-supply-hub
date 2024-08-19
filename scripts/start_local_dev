@@ -18,6 +18,13 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         echo "Building Docker images and creating database structure..."
         ./scripts/update
 
+        # Collect Django static files
+        echo "Collecting Django static files..."
+        docker compose \
+            run --rm --entrypoint python \
+            django \
+            manage.py collectstatic --noinput
+
         # Populate database with seeded facility lists.
         echo "Populating database with seeded facility lists..."
         ./scripts/reset_database

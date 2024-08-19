@@ -16,7 +16,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     else
         # Build Docker images and create database structure.
         echo "Building Docker images and creating database structure..."
-        ./scripts/update_code_quality
+        ./scripts/update
 
         # Populate database with seeded facility lists.
         echo "Populating database with seeded facility lists..."
