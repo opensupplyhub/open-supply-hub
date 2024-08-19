@@ -17,6 +17,10 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         # Build Docker images and create database structure.
         echo "Building Docker images and creating database structure..."
 
+        if [[ -n "${OAR_DEBUG}" ]]; then
+            set -x
+        fi
+
         # Ensure container images are current
         docker compose build
 
