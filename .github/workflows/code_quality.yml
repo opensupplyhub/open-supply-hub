@@ -366,10 +366,8 @@ jobs:
       - name: Create required env file
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
-      - name: Build OS Hub image's
-        run: docker compose build
-      - name: Up OS Hub image's
-        run: docker compose up
+      - name: Build & Run OS Hub
+        run: scripts/start_local_dev
       - name: Build Integration Test image
         run: docker compose -f docker-compose.tests.yml build
       - name: Run Integration Test image
