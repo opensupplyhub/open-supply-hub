@@ -274,37 +274,27 @@ jobs:
       - name: Clear OpenSearch' index for ${{ vars.ENV_NAME }}
         if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME) && inputs.restore-db == true}}
         run: |
+          mkdir -p script
+          cat <<EOF > script/clear_opensearch.sh
+          #!/bin/bash
+          curl -X DELETE https://${{ vars.OPENSEARCH_DOMAIN }}/production-locations --aws-sigv4 "aws:amz:eu-west-1:es" --user "${{ secrets.AWS_ACCESS_KEY_ID }}:${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          sudo mount -t efs -o tls,accesspoint=${{ vars.EFS_AP_ID }} ${{ vars.EFS_ID }}:/ /mnt
+          sudo rm /mnt/logstash_jdbc_last_run
+          sudo umount /mnt
+          EOF
           docker run --rm  \
-              -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-              -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-              -e AWS_DEFAULT_REGION=eu-west-1 \
+              -v ./script:/script \
               -e SSH_KEY=${{ secrets.SSH_PRIVATE_KEY }} \
               -e BASTION_IP=${{ vars.BASTION_IP }} \
-              -e OPENSEARCH_DOMAIN=${{ vars.OPENSEARCH_DOMAIN }} \
-              kroniak/ssh-client \
+              kroniak/ssh-client bash -c \
               "mkdir -p ~/.ssh ; \
               chmod 700 ~/.ssh ; \
               echo -e \"Host *\n\tStrictHostKeyChecking no\n\n\" > ~/.ssh/config ; \
               printf \"%s\n\" \"${SSH_KEY}\" > /root/.ssh/id_rsa ; \
               chmod 600 ~/.ssh/id_rsa ; \
-              CMD=\"curl https://$OPENSEARCH_DOMAIN --aws-sigv4 \"aws:amz:eu-west-1:es\" --user \"$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY\"\" \
-              ssh ec2-user@$BASTION_IP \"sh -c \"$CMD\"\""
-          docker run --rm  \
-              -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-              -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-              -e AWS_DEFAULT_REGION=eu-west-1 \
-              -e SSH_KEY=${{ secrets.SSH_PRIVATE_KEY }} \
-              -e BASTION_IP=${{ vars.BASTION_IP }} \
-              -e EFS_AP_ID=${{ vars.EFS_AP_ID }} \
-              -e EFS_ID=${{ vars.EFS_ID }} \
-              kroniak/ssh-client \
-              "mkdir -p ~/.ssh ; \
-              chmod 700 ~/.ssh ; \
-              echo -e \"Host *\n\tStrictHostKeyChecking no\n\n\" > ~/.ssh/config ; \
-              printf \"%s\n\" \"${SSH_KEY}\" > /root/.ssh/id_rsa ; \
-              chmod 600 ~/.ssh/id_rsa ; \
-              CMD=\"sudo mount -t efs -o tls,accesspoint=$EFS_AP_ID $EFS_ID:/ /mnt && sudo rm /mnt/logstash_jdbc_last_run && sudo umount /mnt\"
-              ssh ec2-user@$BASTION_IP \"sh -c \"$CMD\"\""
+              chmod +x /script/clear_opensearch.sh ; \
+              scp /script/clear_opensearch.sh ec2-user@$BASTION_IP: ; \
+              ssh ec2-user@$BASTION_IP ./clear_opensearch.sh"
       - name: Restore database for ${{ vars.ENV_NAME }}
         if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME != 'Development') && inputs.restore-db == true}}
         run: |
