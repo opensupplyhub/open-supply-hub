@@ -18,6 +18,12 @@
             "type": "asciifolding",
             "preserve_original": true
           }
+        },
+        "normalizer": {
+          "custom_asciifolding_normalizer": {
+            "type": "custom",
+            "filter": "asciifolding"
+          }
         }
       }
     },
@@ -31,7 +37,8 @@
           "analyzer": "custom_asciifolding_analyzer",
           "fields": {
             "keyword": {
-              "type": "keyword"
+              "type": "keyword",
+              "normalizer": "custom_asciifolding_normalizer"
             }
           }
         },
