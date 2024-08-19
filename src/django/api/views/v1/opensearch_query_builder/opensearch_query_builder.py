@@ -141,7 +141,7 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         geo_distance_query = {
             'geo_distance': {
                 'distance': distance,
-                field: {'lat': lat, 'lng': lng}
+                field: {'lat': lat, 'lon': lng}
             }
         }
         self.query_body['query']['bool']['must'].append(geo_distance_query)
