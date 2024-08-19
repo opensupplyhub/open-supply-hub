@@ -368,15 +368,15 @@ jobs:
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Build OS Hub image's
         run: docker compose build
-      - name: Run OS Hub image's
-        run: docker compose run
+      - name: Up OS Hub image's
+        run: docker compose up
       - name: Build Integration Test image
         run: docker compose -f docker-compose.tests.yml build
       - name: Run Integration Test image
         run: |
           docker compose -f docker-compose.tests.yml \
               run --rm --entrypoint /bin/sh integration-test \
-              -c "-m unittest"
+              -c "python -m unittest"
 
   # code quality formatting
   run-bash-script-linter:
