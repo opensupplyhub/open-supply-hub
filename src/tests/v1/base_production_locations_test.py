@@ -18,5 +18,5 @@ class BaseProductionLocationsTest(OpenSearchIntegrationTestCase):
         self.basic_headers = {
             'Content-Type': 'application/json',
             'Authorization': f'Token {token}',
-            'Host': "localhost:6543"
+            'Host': f'localhost:{port}'
         }
