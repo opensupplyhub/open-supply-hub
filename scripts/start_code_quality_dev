@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Exit immediately if a command exits with a non-zero status.
-set -e
+set -x
 
 function usage() {
     echo -e \
@@ -16,10 +16,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     else
         # Build Docker images and create database structure.
         echo "Building Docker images and creating database structure..."
-
-        if [[ -n "${OAR_DEBUG}" ]]; then
-            set -x
-        fi
 
         # Ensure container images are current
         docker compose build
