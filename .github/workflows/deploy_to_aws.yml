@@ -293,6 +293,8 @@ jobs:
               printf \"%s\n\" \"${SSH_KEY}\" > /root/.ssh/id_rsa ; \
               chmod 600 ~/.ssh/id_rsa ; \
               chmod +x /script/clear_opensearch.sh ; \
+              set -x
+              set -V
               scp /script/clear_opensearch.sh ec2-user@$BASTION_IP: ; \
               ssh ec2-user@$BASTION_IP ./clear_opensearch.sh"
       - name: Restore database for ${{ vars.ENV_NAME }}
