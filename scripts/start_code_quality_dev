@@ -1,7 +1,11 @@
 #!/bin/bash
 
 # Exit immediately if a command exits with a non-zero status.
-set -x
+set -e
+
+if [[ -n "${OAR_DEBUG}" ]]; then
+    set -x
+fi
 
 function usage() {
     echo -e \
