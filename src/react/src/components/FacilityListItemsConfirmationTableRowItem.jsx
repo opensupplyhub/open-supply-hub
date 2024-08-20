@@ -3,6 +3,7 @@ import { bool, number, func, string, shape, arrayOf } from 'prop-types';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 import Checkbox from '@material-ui/core/Checkbox';
+import BadgeVerified from './BadgeVerified';
 import CellElement from './CellElement';
 import ShowOnly from './ShowOnly';
 
@@ -30,6 +31,7 @@ const FacilityListItemsConfirmationTableRowItem = ({
     readOnly,
     toggleCheckbox,
     action,
+    is_claimed, // eslint-disable-line camelcase
 }) => (
     <TableRow
         hover={false}
@@ -40,7 +42,13 @@ const FacilityListItemsConfirmationTableRowItem = ({
         className={className}
         key={id}
     >
-        <TableCell padding="default" variant="head" colSpan={2} />
+        <TableCell style={listTableCellStyles.badgeCellStyles} colSpan={2}>
+            {/* eslint-disable camelcase */}
+            <ShowOnly when={is_claimed}>
+                <BadgeVerified />
+            </ShowOnly>
+        </TableCell>
+
         <TableCell padding="default" style={listTableCellStyles.nameCellStyles}>
             <CellElement item={name} linkURL={makeFacilityDetailLink(os_id)} />
         </TableCell>
@@ -130,6 +138,7 @@ FacilityListItemsConfirmationTableRowItem.propTypes = {
     readOnly: bool.isRequired,
     toggleCheckbox: func.isRequired,
     action: string.isRequired,
+    is_claimed: bool.isRequired, // eslint-disable-line camelcase
 };
 
 export default FacilityListItemsConfirmationTableRowItem;
