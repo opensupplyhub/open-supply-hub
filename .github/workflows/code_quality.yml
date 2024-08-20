@@ -370,7 +370,7 @@ jobs:
         run: scripts/start_cq_dev
       - name: Build Integration Test image
         run: docker compose -f docker-compose.tests.yml build
-      - name: Run Integration Test image
+      - name: Run Integration Test
         run: |
           docker compose -f docker-compose.tests.yml \
               run --rm --entrypoint /bin/sh integration-test \

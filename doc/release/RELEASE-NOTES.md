@@ -3,6 +3,23 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.20.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: September 7, 2024
+
+### Code/API changes
+
+### Architecture/Environment changes
+* [OSDEV-1153](https://opensupplyhub.atlassian.net/browse/OSDEV-1153) - Created integration tests for the OpenSearch and for new `/api/v1/production-locations/` API endpoint.
+
+### Bugfix
+
+### What's new
+
+### Release instructions:
+
 
 ## Release 1.19.0
 
@@ -25,7 +42,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Updated the `RELEASE-PROTOCOL.md` file to include information about OpenSearch and Logstash, stating that their functionality should also be checked after deployment.
 * [OSDEV-1169](https://opensupplyhub.atlassian.net/browse/OSDEV-1169) - Activated deployment database-anonymizer to production.
 * [OSDEV-1197](https://opensupplyhub.atlassian.net/browse/OSDEV-1197) - Upgrade Kafka tools to version 3.8.0
-* [OSDEV-1153](https://opensupplyhub.atlassian.net/browse/OSDEV-1153) - Created integration tests for the OpenSearch and for new `/api/v1/production-locations/` API endpoint.
 
 ### Bugfix
 * [OSDEV-1048](https://opensupplyhub.atlassian.net/browse/OSDEV-1048) - Fixed error "User Cannot read properties of undefined (reading 'length')".
