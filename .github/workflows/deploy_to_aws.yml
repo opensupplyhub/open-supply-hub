@@ -289,10 +289,9 @@ jobs:
           docker run --rm  \
               -v ./script:/script \
               -v ./ssh:/root/.ssh \
-              -e SSH_KEY="${{ secrets.SSH_PRIVATE_KEY }}" \
-              -e BASTION_IP="${{ vars.BASTION_IP }}" \
               kroniak/ssh-client bash -c \
-              "chmod 700 /root/.ssh ; \
+              "set -x ; set -v ; \
+              chmod 700 /root/.ssh ; \
               chmod 600 /root/.ssh/id_rsa ; \
               chmod +x /script/clear_opensearch.sh ; \
               source /script/.env ; \
