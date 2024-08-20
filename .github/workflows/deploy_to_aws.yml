@@ -288,7 +288,7 @@ jobs:
           EOF
           docker run --rm  \
               -v ./script:/script \
-              -v ./ssh:/root/.ssh
+              -v ./ssh:/root/.ssh \
               -e SSH_KEY="${{ secrets.SSH_PRIVATE_KEY }}" \
               -e BASTION_IP="${{ vars.BASTION_IP }}" \
               kroniak/ssh-client bash -c \
