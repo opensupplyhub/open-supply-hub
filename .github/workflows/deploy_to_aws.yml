@@ -277,6 +277,7 @@ jobs:
           mkdir -p script
           mkdir -p ssh
           echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ssh/config
+          printf "%s\n" "${{ secrets.SSH_KEY }}" > ssh/id_rsa
           echo -n ${{ vars.BASTION_IP }} > script/.env
           cat <<EOF > script/clear_opensearch.sh
           #!/bin/bash
@@ -287,10 +288,8 @@ jobs:
           EOF
           cat <<EOF > script/run.sh
           set -xv
-          eval $(ssh-agent -s)
-          printf "%s\n" "${SSH_KEY}" | ssh-add -
-          ssh-add -l
           chmod 700 /root/.ssh
+          chmod 400 /root/.ssh/id_rsa
           chmod +x /script/clear_opensearch.sh
           scp /script/clear_opensearch.sh ec2-user@${{ vars.BASTION_IP }}:
           ssh ec2-user@${{ vars.BASTION_IP }} ./clear_opensearch.sh
