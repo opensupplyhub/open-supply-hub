@@ -279,6 +279,7 @@ jobs:
           echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ssh/config
           printf "%s\n" "${{ secrets.SSH_KEY }}" > ssh/id_rsa
           echo "" >> ssh/id_rsa
+          tail ssh/id_rsa
           echo -n ${{ vars.BASTION_IP }} > script/.env
           cat <<EOF > script/clear_opensearch.sh
           #!/bin/bash
