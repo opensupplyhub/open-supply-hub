@@ -71,6 +71,7 @@ function FacilityListItemsConfirmationTableRow({
     fetchToMergeFacility,
     fetchTargetFacility,
 }) {
+    // console.log('item >>>', item);
     const {
         action,
         activeCheckboxes,
@@ -89,6 +90,7 @@ function FacilityListItemsConfirmationTableRow({
     const isSideBarSearch = false;
 
     const [matches, setMatches] = useState([]);
+    // console.log('matches >>>', matches);
 
     const filterUniqueMatches = matchList => {
         const uniqueOsIdItems = matchList.reduce((acc, matchItem) => {
@@ -273,25 +275,36 @@ function FacilityListItemsConfirmationTableRow({
                     className={className}
                 />
             ) : (
-                matches.map((
-                    { id, status, address, os_id, name, confidence }, // eslint-disable-line camelcase
-                ) => (
-                    <FacilityListItemsConfirmationTableRowItem
-                        key={id}
-                        id={id}
-                        os_id={os_id} // eslint-disable-line camelcase
-                        name={name}
-                        status={status}
-                        className={className}
-                        activeCheckboxes={activeCheckboxes}
-                        address={address}
-                        isCheckboxDisabled={isCheckboxDisabled}
-                        confidence={confidence}
-                        readOnly={readOnly}
-                        toggleCheckbox={toggleCheckbox}
-                        action={action}
-                    />
-                ))
+                matches.map(
+                    ({
+                        id,
+                        status,
+                        address,
+                        os_id, // eslint-disable-line camelcase
+                        name,
+                        confidence,
+                        is_claimed, // eslint-disable-line camelcase
+                    }) => {
+                        return (
+                            <FacilityListItemsConfirmationTableRowItem
+                                key={id}
+                                id={id}
+                                os_id={os_id} // eslint-disable-line camelcase
+                                name={name}
+                                status={status}
+                                className={className}
+                                activeCheckboxes={activeCheckboxes}
+                                address={address}
+                                isCheckboxDisabled={isCheckboxDisabled}
+                                confidence={confidence}
+                                readOnly={readOnly}
+                                toggleCheckbox={toggleCheckbox}
+                                action={action}
+                                is_claimed={is_claimed} // eslint-disable-line camelcase
+                            />
+                        );
+                    },
+                )
             )}
         </>
     );
