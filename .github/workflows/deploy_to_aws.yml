@@ -278,7 +278,7 @@ jobs:
           mkdir -p ssh
           echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ssh/config
           printf \"%s\n\" \"${SSH_KEY}\" > ssh/id_rsa
-          echo "export BASTION_IP={{ vars.BASTION_IP }}" > script/.env
+          echo "export BASTION_IP=${{ vars.BASTION_IP }}" > script/.env
           cat <<EOF > script/clear_opensearch.sh
           #!/bin/bash
           curl -X DELETE https://${{ vars.OPENSEARCH_DOMAIN }}/production-locations --aws-sigv4 "aws:amz:eu-west-1:es" --user "${{ secrets.AWS_ACCESS_KEY_ID }}:${{ secrets.AWS_SECRET_ACCESS_KEY }}"
