@@ -278,7 +278,7 @@ jobs:
           mkdir -p ssh
           echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ssh/config
           printf \"%s\n\" \"${SSH_KEY}\" > ssh/id_rsa
-          echo ${{ vars.BASTION_IP }} > script/.env
+          echo -n ${{ vars.BASTION_IP }} > script/.env
           ls -la script/
           cat <<EOF > script/clear_opensearch.sh
           #!/bin/bash
