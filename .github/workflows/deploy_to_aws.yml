@@ -294,6 +294,7 @@ jobs:
               chmod 700 /root/.ssh ; \
               chmod 600 /root/.ssh/id_rsa ; \
               chmod +x /script/clear_opensearch.sh ; \
+              cat /script/.env ; \
               export BASTION_IP=`cat /script/.env`; \
               echo $BASTION_IP ; \
               scp /script/clear_opensearch.sh ec2-user@$BASTION_IP: ; \
