@@ -279,7 +279,6 @@ jobs:
           echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ssh/config
           printf \"%s\n\" \"${SSH_KEY}\" > ssh/id_rsa
           echo -n ${{ vars.BASTION_IP }} > script/.env
-          ls -la script/
           cat <<EOF > script/clear_opensearch.sh
           #!/bin/bash
           curl -X DELETE https://${{ vars.OPENSEARCH_DOMAIN }}/production-locations --aws-sigv4 "aws:amz:eu-west-1:es" --user "${{ secrets.AWS_ACCESS_KEY_ID }}:${{ secrets.AWS_SECRET_ACCESS_KEY }}"
@@ -291,16 +290,15 @@ jobs:
               -v ./script:/script \
               -v ./ssh:/root/.ssh \
               kroniak/ssh-client bash -c \
-              "set -x ; set -v ; \
-              chmod 700 /root/.ssh ; \
+              "chmod 700 /root/.ssh ; \
               chmod 600 /root/.ssh/id_rsa ; \
               chmod +x /script/clear_opensearch.sh ; \
               ls -la /script ; \
               cat /script/.env ; \
               export BASTION_IP=`cat /script/.env`; \
               echo $BASTION_IP ; \
-              scp /script/clear_opensearch.sh ec2-user@`head -1 /script/.env`: ; \
-              ssh ec2-user@`head -1 /script/.env` ./clear_opensearch.sh"
+              scp /script/clear_opensearch.sh ec2-user@$BASTION_IP: ; \
+              ssh ec2-user@$BASTION_IP ./clear_opensearch.sh"
       - name: Restore database for ${{ vars.ENV_NAME }}
         if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME != 'Development') && inputs.restore-db == true}}
         run: |
