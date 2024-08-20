@@ -279,6 +279,7 @@ jobs:
           echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ssh/config
           printf \"%s\n\" \"${SSH_KEY}\" > ssh/id_rsa
           echo ${{ vars.BASTION_IP }} > script/.env
+          ls -la script/
           cat <<EOF > script/clear_opensearch.sh
           #!/bin/bash
           curl -X DELETE https://${{ vars.OPENSEARCH_DOMAIN }}/production-locations --aws-sigv4 "aws:amz:eu-west-1:es" --user "${{ secrets.AWS_ACCESS_KEY_ID }}:${{ secrets.AWS_SECRET_ACCESS_KEY }}"
@@ -294,6 +295,7 @@ jobs:
               chmod 700 /root/.ssh ; \
               chmod 600 /root/.ssh/id_rsa ; \
               chmod +x /script/clear_opensearch.sh ; \
+              ls -la /script ; \
               cat /script/.env ; \
               export BASTION_IP=`cat /script/.env`; \
               echo $BASTION_IP ; \
