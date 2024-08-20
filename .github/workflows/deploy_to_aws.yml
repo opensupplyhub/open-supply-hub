@@ -299,8 +299,8 @@ jobs:
               cat /script/.env ; \
               export BASTION_IP=`cat /script/.env`; \
               echo $BASTION_IP ; \
-              scp /script/clear_opensearch.sh ec2-user@$BASTION_IP: ; \
-              ssh ec2-user@$BASTION_IP ./clear_opensearch.sh"
+              scp /script/clear_opensearch.sh ec2-user@`head -1 /script/.env`: ; \
+              ssh ec2-user@`head -1 /script/.env` ./clear_opensearch.sh"
       - name: Restore database for ${{ vars.ENV_NAME }}
         if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME != 'Development') && inputs.restore-db == true}}
         run: |
