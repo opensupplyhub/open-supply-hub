@@ -276,10 +276,10 @@ jobs:
         run: |
           mkdir -p script
           mkdir -p ssh
-          echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ssh/config ; \
-          printf \"%s\n\" \"${SSH_KEY}\" > ssh/id_rsa ; \
-          cat <<EOF > script/clear_opensearch.sh
+          echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ssh/config
+          printf \"%s\n\" \"${SSH_KEY}\" > ssh/id_rsa
           echo "export BASTION_IP={{ vars.BASTION_IP }}" > script/.env
+          cat <<EOF > script/clear_opensearch.sh
           #!/bin/bash
           curl -X DELETE https://${{ vars.OPENSEARCH_DOMAIN }}/production-locations --aws-sigv4 "aws:amz:eu-west-1:es" --user "${{ secrets.AWS_ACCESS_KEY_ID }}:${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           sudo mount -t efs -o tls,accesspoint=${{ vars.EFS_AP_ID }} ${{ vars.EFS_ID }}:/ /mnt
