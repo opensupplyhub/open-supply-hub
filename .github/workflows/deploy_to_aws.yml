@@ -291,7 +291,7 @@ jobs:
           cat <<EOF > script/run.sh
           set -xv
           eval $(ssh-agent -s)
-          echo "$SSH_KEY" | tr -d '\r' | ssh-add -
+          printf "%s\n" "${SSH_KEY}" | ssh-add -
           ssh-add -l
           chmod 700 /root/.ssh
           chmod +x /script/clear_opensearch.sh
