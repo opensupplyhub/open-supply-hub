@@ -71,7 +71,6 @@ function FacilityListItemsConfirmationTableRow({
     fetchToMergeFacility,
     fetchTargetFacility,
 }) {
-    // console.log('item >>>', item);
     const {
         action,
         activeCheckboxes,
@@ -90,7 +89,6 @@ function FacilityListItemsConfirmationTableRow({
     const isSideBarSearch = false;
 
     const [matches, setMatches] = useState([]);
-    // console.log('matches >>>', matches);
 
     const filterUniqueMatches = matchList => {
         const uniqueOsIdItems = matchList.reduce((acc, matchItem) => {
