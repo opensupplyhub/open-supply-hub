@@ -293,8 +293,8 @@ jobs:
               "chmod 700 /root/.ssh ; \
               chmod 600 /root/.ssh/id_rsa ; \
               chmod +x /script/clear_opensearch.sh ; \
-              ls -la /script ; \
-              cat /script/.env ; \
+              set -x ; \
+              set -v ; \
               export BASTION_IP=`cat /script/.env`; \
               echo $BASTION_IP ; \
               scp /script/clear_opensearch.sh ec2-user@$BASTION_IP: ; \
