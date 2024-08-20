@@ -282,26 +282,24 @@ function FacilityListItemsConfirmationTableRow({
                         name,
                         confidence,
                         is_claimed, // eslint-disable-line camelcase
-                    }) => {
-                        return (
-                            <FacilityListItemsConfirmationTableRowItem
-                                key={id}
-                                id={id}
-                                os_id={os_id} // eslint-disable-line camelcase
-                                name={name}
-                                status={status}
-                                className={className}
-                                activeCheckboxes={activeCheckboxes}
-                                address={address}
-                                isCheckboxDisabled={isCheckboxDisabled}
-                                confidence={confidence}
-                                readOnly={readOnly}
-                                toggleCheckbox={toggleCheckbox}
-                                action={action}
-                                is_claimed={is_claimed} // eslint-disable-line camelcase
-                            />
-                        );
-                    },
+                    }) => (
+                        <FacilityListItemsConfirmationTableRowItem
+                            key={id}
+                            id={id}
+                            os_id={os_id} // eslint-disable-line camelcase
+                            name={name}
+                            status={status}
+                            className={className}
+                            activeCheckboxes={activeCheckboxes}
+                            address={address}
+                            isCheckboxDisabled={isCheckboxDisabled}
+                            confidence={confidence}
+                            readOnly={readOnly}
+                            toggleCheckbox={toggleCheckbox}
+                            action={action}
+                            is_claimed={is_claimed} // eslint-disable-line camelcase
+                        />
+                    ),
                 )
             )}
         </>
