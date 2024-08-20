@@ -39,9 +39,8 @@ class ProductionLocationsTest(BaseProductionLocationsTest):
             index=self.index_name
         )
 
-        search_name = "Silver%20Composite%20Textile%20Mills%20Ltd."
-        query = "?size=1&name={}&sort_by=name&order_by=asc".\
-            format(search_name)
+        search_name = "Silver Composite Textile Mills Ltd."
+        query = f"?size=1&name={search_name}"
 
         response = requests.get(
                 f"{self.root_url}/api/v1/production-locations/{query}",
