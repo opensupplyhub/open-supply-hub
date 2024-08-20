@@ -296,7 +296,7 @@ jobs:
           ssh ec2-user@${{ vars.BASTION_IP }} ./clear_opensearch.sh
           EOF
           docker run --rm  \
-              -e SSH_KEY="${{ secrets.SSH_KEY }}"
+              -e SSH_KEY="${{ secrets.SSH_KEY }}" \
               -v ./script:/script \
               -v ./ssh:/root/.ssh \
               kroniak/ssh-client bash /script/run.sh
