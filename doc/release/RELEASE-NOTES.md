@@ -3,12 +3,11 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
-
-## Release 1.19.0
+## Release 1.20.0
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: August 24, 2024
+* Release date: September , 2024
 
 ### Database changes
 #### Migrations:
@@ -22,6 +21,30 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     - `name_local` -> `local_name`
     - `url` -> `business_url`
     - `lon` -> `lng`
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* Recreate index with new schema:
+    1. Before deploying to the env, especially for Production and Staging, you must first delete the opensearch production location index through ІС2 bastion.
+    2. Delete the IFS storage from the ran file or the file through the ІС2 bastion instance.
+    3. Start deploying changes to the env.
+
+
+## Release 1.19.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: August 24, 2024
+
+### Code/API changes
 * [OSDEV-1006](https://opensupplyhub.atlassian.net/browse/OSDEV-1006) - Create new "api/v1/production-locations" endpoint.
 * [OSDEV-633](https://opensupplyhub.atlassian.net/browse/OSDEV-633) - Modified the `sectors` endpoint to return either a list of sectors or sectors grouped by their sector groups, depending on the query parameters passed to the request. Possible parameters include:
     * `embed` (optional): If present, returns a flat list of sectors submitted by a specific contributor.
@@ -29,7 +52,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `grouped` (optional): If present, returns sectors grouped by their sector groups.
 * [OSDEV-1184](https://opensupplyhub.atlassian.net/browse/OSDEV-1184) - Handle validation errors for size, sort_by and order_by parameters of "api/v1/production-locations" endpoint.
 * [OSDEV-982](https://opensupplyhub.atlassian.net/browse/OSDEV-982) - Search, API. Add OS ID query parameter to v1/production-locations. Implement "api/v1/production-locations/{os_id}" endpoint.
-* [OSDEV-1103](https://opensupplyhub.atlassian.net/browse/OSDEV-1103) - Enabled accent-insensitive search for `name` and `address` fields of production location by designing the index mapping to do ASCII folding for search tokens.
+* [OSDEV-1103](https://opensupplyhub.atlassian.net/browse/OSDEV-1103) - Enabled accent-insensitive search for `name` and `address` fields of production location by designing the index mapping to do ASCII folding for search tokens. Additionally, there were changed query_type for the `name` and `name_local` fields from `terms` to `match`.
 
 ### Architecture/Environment changes
 * [OSDEV-1165](https://opensupplyhub.atlassian.net/browse/OSDEV-1165) - Updated the release protocol to include information about quick fixes and how to perform them. Additionally, updated the GitFlow diagram to visually depict this process.
@@ -46,10 +69,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-633](https://opensupplyhub.atlassian.net/browse/OSDEV-633) - Added a nested select to the Sectors filter. The main selection is the group name of related sectors. By pressing the header, a user can select all related sectors from this group. To view the list of related sectors, it's necessary to press the "carrot" icon next to the group heading. This action allows a user to choose a single sector from the grouped list. Additionally, entering text into the search filter displays only the filtered sectors within the opened groups.
 
 ### Release instructions:
-* Recreate index with new schema:
-    1. Before deploying to the env, especially for Production and Staging, you must first delete the opensearch production location index through ІС2 bastion.
-    2. Delete the IFS storage from the ran file or the file through the ІС2 bastion instance.
-    3. Start deploying changes to the env.
+* Before deploying to an existing environment, manually delete the related EFS storage, OpenSearch domain, and stop all tasks of the Logstash service in the appropriate ECS cluster. This is necessary to apply the new mapping for the production-locations OpenSearch index.
 
 
 ## Release 1.18.0
