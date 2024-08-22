@@ -21,7 +21,6 @@ class FacilityMatchSerializer(ModelSerializer):
                   'is_active', 'is_claimed')
 
     def get_os_id(self, match):
-        print('match >>>', match)
         return match.facility.id
 
     def get_name(self, match):
