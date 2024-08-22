@@ -275,7 +275,7 @@ jobs:
         if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME) && inputs.restore-db == true}}
         run: |
           set -xv
-          OS_DOMAIN_NAME=$(echo "${{ var.ENV_NAME }}-os-domain" | tr '[:upper:]' '[:lower:]')
+          OS_DOMAIN_NAME=$(echo "${{ vars.ENV_NAME }}-os-domain" | tr '[:upper:]' '[:lower:]')
           OPENSEARCH_DOMAIN=$(docker run --rm \
                        -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
                        -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
