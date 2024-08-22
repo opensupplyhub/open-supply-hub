@@ -7,14 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: September , 2024
-
-### Database changes
-#### Migrations:
-* *Describe migrations here.*
-
-#### Scheme changes
-* *Describe scheme changes here.*
+* Release date: September 7, 2024
 
 ### Code/API changes
 * [OSDEV-1167](https://opensupplyhub.atlassian.net/browse/OSDEV-1167) - Search. Update field names in Open Search. The following parameter/field names in the API schema has been changed:
@@ -23,13 +16,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     - `lon` -> `lng`
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* [OSDEV-1153](https://opensupplyhub.atlassian.net/browse/OSDEV-1153) - Created integration tests for the OpenSearch and for new `/api/v1/production-locations/` API endpoint.
 
 ### Bugfix
-* *Describe bugfix here.*
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
 
 ### Release instructions:
 * Recreate index with new schema:

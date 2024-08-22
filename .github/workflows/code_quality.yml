@@ -356,6 +356,26 @@ jobs:
           show-annotations: "warning"
           app-name: Dedupe Hub App | Unittest test suite
 
+  # code quality integration test
+  run-integration-test-code-quality:
+    environment: Quality Environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Create required env file
+        run: |
+          echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
+      - name: Build & Run OS Hub
+        run: scripts/start_code_quality_dev
+      - name: Build Integration Test image
+        run: docker compose -f docker-compose.tests.yml build
+      - name: Run Integration Test
+        run: |
+          docker compose -f docker-compose.tests.yml \
+              run --rm --entrypoint /bin/sh integration-test \
+              -c "python -m unittest"
+
   # code quality formatting
   run-bash-script-linter:
     environment: Quality Environment
