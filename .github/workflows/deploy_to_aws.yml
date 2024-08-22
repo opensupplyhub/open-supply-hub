@@ -297,7 +297,7 @@ jobs:
                           -e AWS_DEFAULT_REGION=eu-west-1 \
                           amazon/aws-cli \
                           efs describe-access-points \
-                          --query "AccessPoints[?FileSystemId==$EFS_ID].AccessPointId" \
+                          --query "AccessPoints[?FileSystemId==\"$EFS_ID\"].AccessPointId" \
                           --output text)
           echo $EFS_ID >> $GITHUB_OUTPUT
           echo $EFS_AP_ID >> $GITHUB_OUTPUT
