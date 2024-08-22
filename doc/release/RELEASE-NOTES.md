@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
 
+## Release 1.20.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: September 31, 2024
+
+### Database changes
+#### Migrations:
+* *Describe migrations here.*
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
+### Code/API changes
+* *Provide release instructions here.*
+
+### Architecture/Environment changes
+* [OSDEV-1177](https://opensupplyhub.atlassian.net/browse/OSDEV-1177) - Implemented clearing OpenSearch and stopping Logstash during Postgres DB restore/reset in pre-prod/test/dev environments to freshly populate OpenSearch with data from the restored or reset Postgres DB.
+
+### Bugfix
+* *Provide release instructions here.*
+
+### What's new
+* *Provide release instructions here.*
+
+### Release instructions:
+* *Provide release instructions here.*
+
+
 ## Release 1.19.0
 
 ## Introduction
