@@ -19,6 +19,10 @@ class OpenSearchService(SearchInterface):
     def __init__(self, client=None):
         self.__client = client or OpenSearchServiceConnection().client
 
+    def __rename_lon_field(self, source):
+        source.get('coordinates')['lng'] = source.get('coordinates').pop("lon")
+        return source
+
     def __prepare_opensearch_response(self, response):
         if not response or "hits" not in response:
             logger.error(f"Invalid response format: {response}")
@@ -32,7 +36,7 @@ class OpenSearchService(SearchInterface):
         data = []
         for hit in hits:
             if "_source" in hit:
-                data.append(hit["_source"])
+                data.append(self.__rename_lon_field(hit["_source"]))
             else:
                 logger.warning(f"Missing '_source' in hit: {hit}")
 
