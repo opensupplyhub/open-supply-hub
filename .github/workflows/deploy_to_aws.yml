@@ -271,6 +271,27 @@ jobs:
               amazon/aws-cli \
               ecs update-service --desired-count 0 --cluster=ecsOpenSupplyHub${{vars.ENV_NAME}}Cluster \
               --service=OpenSupplyHub${{vars.ENV_NAME}}AppLogstash  --region=eu-west-1
+      - name: Get EFS filesytem and acces point ids for ${{ vars.ENV_NAME }}
+        if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME) && inputs.restore-db == true}}
+        run: |
+          EFS_ID=$(docker run --rm \
+                       -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+                       -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+                       -e AWS_DEFAULT_REGION=eu-west-1 \
+                       amazon/aws-cli \
+                       efs describe-file-systems \
+                       --query "FileSystems[?Tags[?Key=='Environment' && Value=='${{vars.ENV_NAME}}']].FileSystemId" \
+                       --output text)
+          EFS_AP_ID=$(docker run --rm \
+                          -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+                          -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+                          -e AWS_DEFAULT_REGION=eu-west-1 \
+                          amazon/aws-cli \
+                          efs describe-access-points \
+                          --query "AccessPoints[?FileSystemId=='${{vars.ENV_NAME}}'].AccessPointId" \
+                          --output text)
+          echo "EFS_ID=$(echo $EFS_ID)" >> $GITHUB_OUTPUT
+          echo "EFS_AP_ID=$(echo $EFS_AP_ID)" >> $GITHUB_OUTPUT
       - name: Clear OpenSearch index for ${{ vars.ENV_NAME }}
         if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME) && inputs.restore-db == true}}
         run: |
@@ -283,10 +304,11 @@ jobs:
           cat <<EOF > script/clear_opensearch.sh
           #!/bin/bash
           curl -X DELETE https://${{ vars.OPENSEARCH_DOMAIN }}/production-locations --aws-sigv4 "aws:amz:eu-west-1:es" --user "${{ secrets.AWS_ACCESS_KEY_ID }}:${{ secrets.AWS_SECRET_ACCESS_KEY }}"
-          sudo mount -t efs -o tls,accesspoint=${{ vars.EFS_AP_ID }} ${{ vars.EFS_ID }}:/ /mnt
+          sudo mount -t efs -o tls,accesspoint=${{ steps.vars.outputs.EFS_AP_ID }} ${{ steps.vars.outputs.EFS_ID }}:/ /mnt
           sudo rm /mnt/logstash_jdbc_last_run
           sudo umount /mnt
           EOF
+          grep mount script/clear_opensearch.sh
           cat <<EOF > script/run.sh
           chmod 700 /root/.ssh
           chmod 400 /root/.ssh/id_rsa
