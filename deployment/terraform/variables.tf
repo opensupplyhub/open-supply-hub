@@ -588,8 +588,3 @@ variable "database_anonymizer_enabled" {
   type    = bool
   default = false
 }
-
-variable "create_bastion_iam_profile" {
-  type    = bool
-  default = false
-}
