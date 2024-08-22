@@ -271,7 +271,7 @@ jobs:
               amazon/aws-cli \
               ecs update-service --desired-count 0 --cluster=ecsOpenSupplyHub${{vars.ENV_NAME}}Cluster \
               --service=OpenSupplyHub${{vars.ENV_NAME}}AppLogstash  --region=eu-west-1
-      - name: Clear OpenSearch' index for ${{ vars.ENV_NAME }}
+      - name: Clear OpenSearch index for ${{ vars.ENV_NAME }}
         if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME) && inputs.restore-db == true}}
         run: |
           mkdir -p script
