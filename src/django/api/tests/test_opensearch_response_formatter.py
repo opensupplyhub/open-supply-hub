@@ -93,6 +93,31 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
         mock_logger.error.assert_called_once_with(
             "Invalid response format: None")
 
+    @patch('api.services.search.logger')
+    def test_prepare_opensearch_response_rename_lon_field(self, mock_logger):
+        response = {
+            "hits": {
+                "total": {"value": 1},
+                "hits": [
+                    {"_source": {"coordinates":
+                                 {"lon": 119.82232, "lat": 33.44029}}
+                     }
+                ]
+            }
+        }
+        expected_result = {
+          "count": 1,
+          "data": [
+            {"coordinates":
+             {"lng": 119.82232, "lat": 33.44029}}
+          ]
+        }
+
+        result = self.service. \
+            _OpenSearchService__prepare_opensearch_response(response)
+        self.assertEqual(result, expected_result)
+        mock_logger.warning.assert_not_called()
+
 
 if __name__ == '__main__':
     unittest.main()

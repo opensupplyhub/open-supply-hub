@@ -20,8 +20,15 @@ class OpenSearchService(SearchInterface):
         self.__client = client or OpenSearchServiceConnection().client
 
     def __rename_lon_field(self, source):
-        source.get('coordinates')['lng'] = source.get('coordinates').pop("lon")
-        return source
+        if not source.get('coordinates'):
+            return source
+        else:
+            value_of_lon = source.get('coordinates').pop("lon")
+            new_dictionary = {"lng": value_of_lon}
+            new_dictionary.update(source.get('coordinates'))
+            source['coordinates'] = new_dictionary
+
+            return source
 
     def __prepare_opensearch_response(self, response):
         if not response or "hits" not in response:
