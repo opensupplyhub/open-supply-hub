@@ -271,16 +271,25 @@ jobs:
               amazon/aws-cli \
               ecs update-service --desired-count 0 --cluster=ecsOpenSupplyHub${{vars.ENV_NAME}}Cluster \
               --service=OpenSupplyHub${{vars.ENV_NAME}}AppLogstash  --region=eu-west-1
-      - name: Get EFS filesytem and acces point ids for ${{ vars.ENV_NAME }}
+      - name: Get Opensearch domain, filesystems and accespoint ids for ${{ vars.ENV_NAME }}
         if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME) && inputs.restore-db == true}}
         run: |
+          set -xv
+          OS_DOMAIN_NAME=$(echo "${{ var.ENV_NAME }}-os-domain" | tr '[:upper:]' '[:lower:]')
+          OPENSEARCH_DOMAIN=$(docker run --rm \
+                       -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+                       -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+                       -e AWS_DEFAULT_REGION=eu-west-1 \
+                       amazon/aws-cli \
+                       es $OS_DOMAIN_NAME --domain-names development-os-domain \
+                       --query "DomainStatusList[].Endpoints.vpc" --output text)
           EFS_ID=$(docker run --rm \
                        -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
                        -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
                        -e AWS_DEFAULT_REGION=eu-west-1 \
                        amazon/aws-cli \
                        efs describe-file-systems \
-                       --query "FileSystems[?Tags[?Key=='Environment' && Value=='${{vars.ENV_NAME}}']].FileSystemId" \
+                       --query "FileSystems[?Tags[?Key=='Environment' && Value=='${{ vars.ENV_NAME }}']].FileSystemId" \
                        --output text)
           EFS_AP_ID=$(docker run --rm \
                           -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
@@ -288,10 +297,11 @@ jobs:
                           -e AWS_DEFAULT_REGION=eu-west-1 \
                           amazon/aws-cli \
                           efs describe-access-points \
-                          --query "AccessPoints[?FileSystemId=='${{vars.ENV_NAME}}'].AccessPointId" \
+                          --query "AccessPoints[?FileSystemId==$EFS_ID].AccessPointId" \
                           --output text)
-          echo "EFS_ID=$(echo $EFS_ID)" >> $GITHUB_OUTPUT
-          echo "EFS_AP_ID=$(echo $EFS_AP_ID)" >> $GITHUB_OUTPUT
+          echo $EFS_ID >> $GITHUB_OUTPUT
+          echo $EFS_AP_ID >> $GITHUB_OUTPUT
+          echo $OPENSEARCH_DOMAIN >> $GITHUB_OUTPUT
       - name: Clear OpenSearch index for ${{ vars.ENV_NAME }}
         if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME) && inputs.restore-db == true}}
         run: |
@@ -303,7 +313,7 @@ jobs:
           echo -n ${{ vars.BASTION_IP }} > script/.env
           cat <<EOF > script/clear_opensearch.sh
           #!/bin/bash
-          curl -X DELETE https://${{ vars.OPENSEARCH_DOMAIN }}/production-locations --aws-sigv4 "aws:amz:eu-west-1:es" --user "${{ secrets.AWS_ACCESS_KEY_ID }}:${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          curl -X DELETE https://${{ steps.vars.outputs.OPENSEARCH_DOMAIN }}/production-locations --aws-sigv4 "aws:amz:eu-west-1:es" --user "${{ secrets.AWS_ACCESS_KEY_ID }}:${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           sudo mount -t efs -o tls,accesspoint=${{ steps.vars.outputs.EFS_AP_ID }} ${{ steps.vars.outputs.EFS_ID }}:/ /mnt
           sudo rm /mnt/logstash_jdbc_last_run
           sudo umount /mnt
