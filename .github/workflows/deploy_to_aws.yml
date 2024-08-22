@@ -273,6 +273,7 @@ jobs:
               --service=OpenSupplyHub${{vars.ENV_NAME}}AppLogstash  --region=eu-west-1
       - name: Get Opensearch domain, filesystems and accespoint ids for ${{ vars.ENV_NAME }}
         if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME) && inputs.restore-db == true}}
+        id: export_variables
         run: |
           set -xv
           OS_DOMAIN_NAME=$(echo "${{ vars.ENV_NAME }}-os-domain" | tr '[:upper:]' '[:lower:]')
@@ -313,8 +314,8 @@ jobs:
           echo -n ${{ vars.BASTION_IP }} > script/.env
           cat <<EOF > script/clear_opensearch.sh
           #!/bin/bash
-          curl -X DELETE https://${{ steps.vars.outputs.OPENSEARCH_DOMAIN }}/production-locations --aws-sigv4 "aws:amz:eu-west-1:es" --user "${{ secrets.AWS_ACCESS_KEY_ID }}:${{ secrets.AWS_SECRET_ACCESS_KEY }}"
-          sudo mount -t efs -o tls,accesspoint=${{ steps.vars.outputs.EFS_AP_ID }} ${{ steps.vars.outputs.EFS_ID }}:/ /mnt
+          curl -X DELETE https://${{ steps.export_variables.outputs.OPENSEARCH_DOMAIN }}/production-locations --aws-sigv4 "aws:amz:eu-west-1:es" --user "${{ secrets.AWS_ACCESS_KEY_ID }}:${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          sudo mount -t efs -o tls,accesspoint=${{ steps.export_variables.outputs.EFS_AP_ID }} ${{ steps.export_variables.outputs.EFS_ID }}:/ /mnt
           sudo rm /mnt/logstash_jdbc_last_run
           sudo umount /mnt
           EOF
