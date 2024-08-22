@@ -299,9 +299,9 @@ jobs:
                           efs describe-access-points \
                           --query "AccessPoints[?FileSystemId=='$EFS_ID'].AccessPointId" \
                           --output text)
-          echo $EFS_ID >> $GITHUB_OUTPUT
-          echo $EFS_AP_ID >> $GITHUB_OUTPUT
-          echo $OPENSEARCH_DOMAIN >> $GITHUB_OUTPUT
+          echo "EFS_ID=$EFS_ID" >> $GITHUB_OUTPUT
+          echo "EFS_AP_ID=$EFS_AP_ID" >> $GITHUB_OUTPUT
+          echo "OPENSEARCH_DOMAIN=$OPENSEARCH_DOMAIN" >> $GITHUB_OUTPUT
       - name: Clear OpenSearch index for ${{ vars.ENV_NAME }}
         if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME) && inputs.restore-db == true}}
         run: |
