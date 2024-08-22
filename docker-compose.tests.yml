@@ -1,0 +1,20 @@
+networks:
+  my-proxy-net:
+    external:
+      name: os-hub-development
+
+services:
+  integration-test:
+    build:
+      context: ./src/tests
+      dockerfile: Dockerfile
+    environment:
+      - OPENSEARCH_HOST=opensearch-single-node
+      - OPENSEARCH_PORT=9200
+      - OPENSEARCH_INDEX_NAME=production-locations
+      - REACT_HOST=react
+      - REACT_PORT=6543
+      - USER_API_TOKEN=1d18b962d6f976b0b7e8fcf9fcc39b56cf278051
+    command: uvicorn main:app --host 0.0.0.0 --port 84
+    networks:
+      - my-proxy-net
