@@ -3,19 +3,29 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.20.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: September 7, 2024
+
+### Code/API changes
+
+### Architecture/Environment changes
+* [OSDEV-1153](https://opensupplyhub.atlassian.net/browse/OSDEV-1153) - Created integration tests for the OpenSearch and for new `/api/v1/production-locations/` API endpoint.
+
+### Bugfix
+
+### What's new
+
+### Release instructions:
+
 
 ## Release 1.19.0
 
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: August 24, 2024
-
-### Database changes
-#### Migrations:
-* *Describe migrations here.*
-
-#### Scheme changes
-* *Describe scheme changes here.*
 
 ### Code/API changes
 * [OSDEV-1006](https://opensupplyhub.atlassian.net/browse/OSDEV-1006) - Create new "api/v1/production-locations" endpoint.
@@ -42,7 +52,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-633](https://opensupplyhub.atlassian.net/browse/OSDEV-633) - Added a nested select to the Sectors filter. The main selection is the group name of related sectors. By pressing the header, a user can select all related sectors from this group. To view the list of related sectors, it's necessary to press the "carrot" icon next to the group heading. This action allows a user to choose a single sector from the grouped list. Additionally, entering text into the search filter displays only the filtered sectors within the opened groups.
 
 ### Release instructions:
-* *Provide release instructions here.*
+* Before deploying to an existing environment, manually delete the related EFS storage, OpenSearch domain, and stop all tasks of the Logstash service in the appropriate ECS cluster. This is necessary to apply the new mapping for the production-locations OpenSearch index.
 
 
 ## Release 1.18.0

@@ -1,3 +1,7 @@
+networks:
+  proxynet:
+    name: os-hub-development
+
 services:
   database:
     build:
@@ -12,10 +16,14 @@ services:
       - ./dumps:/dumps
     ports:
       - 5432:5432
+    networks:
+      - proxynet
 
   memcached:
     image: memcached:1.6-alpine
     command: -v -I 8m -m 256
+    networks:
+      - proxynet
 
   django:
     image: opensupplyhub
@@ -60,6 +68,11 @@ services:
         condition: service_started
       kafka:
         condition: service_healthy
+      opensearch-single-node:
+        condition: service_started
+      logstash:
+        condition: service_started
+      
     command:
       - "-b :8081"
       - "--reload"
@@ -72,6 +85,8 @@ services:
     ports:
       - "8081:8081"
     cpus: 2
+    networks:
+      - proxynet
 
   react:
     build:
@@ -83,6 +98,8 @@ services:
       - /usr/local/src/node_modules
     ports:
       - 6543:6543
+    networks:
+      - proxynet
 
   zookeeper:
     image: "bitnami/zookeeper:latest"
@@ -90,6 +107,8 @@ services:
       - "2181:2181"
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
+    networks:
+      - proxynet
 
   kafka:
     image: "bitnami/kafka:latest"
@@ -109,6 +128,8 @@ services:
       interval: 5s
       timeout: 10s
       retries: 5
+    networks:
+      - proxynet
 
   init-kafka:
     image: confluentinc/cp-kafka:6.1.1
@@ -126,6 +147,8 @@ services:
       echo -e 'Successfully created the following topics:'
       kafka-topics --bootstrap-server kafka:9092 --list
       "
+    networks:
+      - proxynet
 
   api-app:
     image: api-app
@@ -158,6 +181,8 @@ services:
       - POSTGRES_DB=opensupplyhub
       - GIT_COMMIT=Unknown
     command: uvicorn app.main:app --host 0.0.0.0 --port 84 --workers 1
+    networks:
+      - proxynet
 
   opensearch-single-node:
     image: opensearchproject/opensearch:2.13.0
@@ -180,6 +205,8 @@ services:
       - 9200:9200
     volumes:
       - /usr/share/opensearch/data
+    networks:
+      - proxynet
 
   logstash:
     build:
@@ -202,3 +229,5 @@ services:
     depends_on:
       - opensearch-single-node
       - database
+    networks:
+      - proxynet
