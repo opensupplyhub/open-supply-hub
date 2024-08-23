@@ -72,7 +72,7 @@ SELECT
         af.address
       )
   ) AS address,
-  afc.facility_website AS business_url,
+  afc.facility_website AS business_url_value,
   (
     SELECT
       COALESCE(

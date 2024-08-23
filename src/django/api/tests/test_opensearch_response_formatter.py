@@ -100,7 +100,7 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
                 "total": {"value": 1},
                 "hits": [
                     {"_source": {"coordinates":
-                                 {"lon": 119.82232, "lat": 33.44029}}
+                                 {"lat": 33.44029, "lon": 119.82232}}
                      }
                 ]
             }
@@ -109,7 +109,7 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
           "count": 1,
           "data": [
             {"coordinates":
-             {"lng": 119.82232, "lat": 33.44029}}
+             {"lat": 33.44029, "lon": 119.82232}}
           ]
         }
 
