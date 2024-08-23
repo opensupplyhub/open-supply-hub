@@ -132,6 +132,18 @@ async def handle(value):
         log.info(f'[Matching] Start processing!')
         result = matcher(value)
         log.info(f'[Matching] Result: {result}')
+
+        # Emit the message to Kafka moderation-events topic
+        producer = AIOKafkaProducer(
+            bootstrap_servers=settings.bootstrap_servers
+        )
+        await producer.start()
+        try:
+            await producer.send("moderation-events", json.dumps(result).encode())
+            log.info(f'[Kafka] Sent message to moderation-events topic: {result}')
+        finally:
+            await producer.stop()
+
     except Exception as error:
         log.error(f'[Matching] Error: {error}')
     return

@@ -121,6 +121,7 @@ services:
       kafka-topics --bootstrap-server kafka:9092 --list
       echo -e 'Creating kafka topics'
       kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic dedupe.hub.topic --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic moderation-events --replication-factor 1 --partitions 1
 
       echo -e 'Successfully created the following topics:'
       kafka-topics --bootstrap-server kafka:9092 --list
@@ -196,7 +197,7 @@ services:
       - POSTGRES_USER=opensupplyhub
       - POSTGRES_PASSWORD=opensupplyhub
       - POSTGRES_DB=opensupplyhub
-      - LOGSTASH_UPDATE_INTERVAL_MINUTES=2
+      - LOGSTASH_UPDATE_INTERVAL_MINUTES=10
 
     depends_on:
       - opensearch-single-node
