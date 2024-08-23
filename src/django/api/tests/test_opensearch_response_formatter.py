@@ -109,7 +109,7 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
           "count": 1,
           "data": [
             {"coordinates":
-             {"lat": 33.44029, "lon": 119.82232}}
+             {"lat": 33.44029, "lng": 119.82232}}
           ]
         }
 
