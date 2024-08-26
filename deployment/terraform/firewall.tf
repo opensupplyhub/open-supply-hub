@@ -445,3 +445,24 @@ resource "aws_security_group_rule" "app_opensearch_ingress" {
   security_group_id        = aws_security_group.opensearch.id
   source_security_group_id = aws_security_group.app.id
 }
+
+
+resource "aws_security_group_rule" "bastion_opensearch_ingress" {
+  type      = "ingress"
+  from_port = var.opensearch_port
+  to_port   = var.opensearch_port
+  protocol  = "tcp"
+
+  security_group_id        = aws_security_group.opensearch.id
+  source_security_group_id = module.vpc.bastion_security_group_id
+}
+
+resource "aws_security_group_rule" "bastion_efs_ingress" {
+  type             = "ingress"
+  from_port        = 2049
+  to_port          = 2049
+  protocol         = "tcp"
+
+  security_group_id        = aws_security_group.efs_app_logstash.id
+  source_security_group_id = module.vpc.bastion_security_group_id
+}
