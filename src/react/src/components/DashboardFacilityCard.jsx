@@ -58,6 +58,9 @@ const dashboardFacilityCardStyles = Object.freeze({
     infoContainerStyles: Object.freeze({
         marging: '10px 0',
     }),
+    claimedCardStyle: Object.freeze({
+        background: '#E0F5E3',
+    }),
 });
 
 export default function DashboardFacilityCard({
@@ -104,8 +107,21 @@ export default function DashboardFacilityCard({
         </>
     );
 
+    let isClaimed = false;
+    if (data) {
+        const claimInfo = data.properties.claim_info;
+        isClaimed = claimInfo !== null;
+    }
+
     return (
-        <Card style={dashboardFacilityCardStyles.cardStyles}>
+        <Card
+            style={{
+                ...dashboardFacilityCardStyles.cardStyles,
+                ...(isClaimed
+                    ? dashboardFacilityCardStyles.claimedCardStyle
+                    : {}),
+            }}
+        >
             <Typography
                 variant="title"
                 style={dashboardFacilityCardStyles.textSectionStyles}

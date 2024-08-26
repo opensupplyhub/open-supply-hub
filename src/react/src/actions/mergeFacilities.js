@@ -55,12 +55,14 @@ export function fetchMergeTargetFacility() {
                 ),
             );
         }
+        console.log('!!! works');
 
         return apiRequest
             .get(makeGetFacilityByOSIdURL(osID))
-            .then(({ data }) =>
-                dispatch(completeFetchMergeTargetFacility(data)),
-            )
+            .then(({ data }) => {
+                console.log('!!! data', data);
+                return dispatch(completeFetchMergeTargetFacility(data));
+            })
             .catch(err =>
                 dispatch(
                     logErrorAndDispatchFailure(
@@ -116,7 +118,10 @@ export function fetchFacilityToMerge() {
 
         return apiRequest
             .get(makeGetFacilityByOSIdURL(osID))
-            .then(({ data }) => dispatch(completeFetchFacilityToMerge(data)))
+            .then(({ data }) => {
+                console.log('!!!2', data);
+                return dispatch(completeFetchFacilityToMerge(data));
+            })
             .catch(err =>
                 dispatch(
                     logErrorAndDispatchFailure(
