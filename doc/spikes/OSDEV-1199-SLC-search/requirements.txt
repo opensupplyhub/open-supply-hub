@@ -1,2 +1,4 @@
 opensearch-py >= 2.7.1
 numpy >= 2.2.2
+googlemaps >= 4.10.0
+python-dotenv >= 1.0.1
