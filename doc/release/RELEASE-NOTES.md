@@ -17,6 +17,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Bugfix
 
 ### What's new
+* [OSDEV-1045](https://opensupplyhub.atlassian.net/browse/OSDEV-1045) - Data Moderation. Change the color of the facility panel for claimed facilities in the Merge moderation screens.
 
 ### Release instructions:
 
