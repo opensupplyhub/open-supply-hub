@@ -50,6 +50,10 @@ export const listTableCellStyles = Object.freeze({
         padding: '10px 24px',
         borderColor: '#f3f3f3',
     }),
+    badgeCellStyles: Object.freeze({
+        padding: '15px 0',
+        textAlign: 'right',
+    }),
 });
 
 export const confirmRejectMatchRowStyles = Object.freeze({
