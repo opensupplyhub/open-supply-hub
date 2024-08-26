@@ -1,8 +1,10 @@
+from api.constants import FacilityClaimStatuses
+from api.models.facility.facility_claim import FacilityClaim
+from api.models.facility.facility_match import FacilityMatch
 from rest_framework.serializers import (
     SerializerMethodField,
     ModelSerializer,
 )
-from ...models import FacilityMatch
 
 
 class FacilityMatchSerializer(ModelSerializer):
@@ -10,12 +12,13 @@ class FacilityMatchSerializer(ModelSerializer):
     name = SerializerMethodField()
     address = SerializerMethodField()
     location = SerializerMethodField()
+    is_claimed = SerializerMethodField()
 
     class Meta:
         model = FacilityMatch
         fields = ('id', 'status', 'confidence', 'results',
                   'os_id', 'name', 'address', 'location',
-                  'is_active')
+                  'is_active', 'is_claimed')
 
     def get_os_id(self, match):
         return match.facility.id
@@ -30,3 +33,9 @@ class FacilityMatchSerializer(ModelSerializer):
         [lng, lat] = match.facility.location
 
         return {"lat": lat, "lng": lng}
+
+    def get_is_claimed(self, match):
+        return FacilityClaim.objects.filter(
+            facility=match.facility,
+            status=FacilityClaimStatuses.APPROVED
+        ).exists()
