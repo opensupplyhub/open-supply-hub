@@ -36,7 +36,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Release instructions:
 * Recreate index with new schema:
     1. Before deploying to the env, especially for Production and Staging, you must first delete the OpenSearch production location index through EС2 bastion.
-    2. Delete the EFS storage from the running Logstash app or the file through the EС2 bastion instance.
+    2. Delete the appropriate EFS storage or the logstash_jdbc_last_run file saved on the EFS storage through the EC2 bastion instance.
     3. Start deploying changes to the env.
 
 
