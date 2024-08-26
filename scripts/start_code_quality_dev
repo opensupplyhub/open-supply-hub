@@ -6,7 +6,7 @@ set -e
 function usage() {
     echo -e \
 	"Usage: $(basename "$0")" \
-    "\nThis script starts up the local development environment with seeded" \
+    "\nThis script starts up the code quality development environment with seeded" \
     "data in the database."
 }
 
@@ -17,13 +17,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         # Build Docker images and create database structure.
         echo "Building Docker images and creating database structure..."
         ./scripts/update
-
-        # Collect Django static files
-        echo "Collecting Django static files..."
-        docker compose \
-            run --rm --entrypoint python \
-            django \
-            manage.py collectstatic --noinput
 
         # Populate database with seeded facility lists.
         echo "Populating database with seeded facility lists..."
