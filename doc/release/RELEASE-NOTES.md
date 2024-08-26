@@ -9,26 +9,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: September 7, 2024
 
-### Code/API changes
-* [OSDEV-1025](https://opensupplyhub.atlassian.net/browse/OSDEV-1025) - Added the `get_is_claimed` method to the `FacilityMatchSerializer` that returns a boolean value depending on whether the matched facility has an approved claim or not.
-
-### Architecture/Environment changes
-* [OSDEV-1153](https://opensupplyhub.atlassian.net/browse/OSDEV-1153) - Created integration tests for the OpenSearch and for new `/api/v1/production-locations/` API endpoint.
-
-### Bugfix
-
-### What's new
-* [OSDEV-1025](https://opensupplyhub.atlassian.net/browse/OSDEV-1025) - Added the claim badge to the facility details on the C/R moderation screen when the facility has an approved claim.
-
-### Release instructions:
-
-
-## Release 1.20.0
-
-## Introduction
-* Product name: Open Supply Hub
-* Release date: September 31, 2024
-
 ### Database changes
 #### Migrations:
 * *Describe migrations here.*
@@ -37,19 +17,20 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe scheme changes here.*
 
 ### Code/API changes
-* *Provide release instructions here.*
+* [OSDEV-1025](https://opensupplyhub.atlassian.net/browse/OSDEV-1025) - Added the `get_is_claimed` method to the `FacilityMatchSerializer` that returns a boolean value depending on whether the matched facility has an approved claim or not.
 
 ### Architecture/Environment changes
+* [OSDEV-1153](https://opensupplyhub.atlassian.net/browse/OSDEV-1153) - Created integration tests for the OpenSearch and for new `/api/v1/production-locations/` API endpoint.
 * [OSDEV-1177](https://opensupplyhub.atlassian.net/browse/OSDEV-1177) - Implemented clearing OpenSearch and stopping Logstash during Postgres DB restore/reset in pre-prod/test/dev environments to freshly populate OpenSearch with data from the restored or reset Postgres DB.
 
 ### Bugfix
-* *Provide release instructions here.*
+* 
 
 ### What's new
-* *Provide release instructions here.*
+* [OSDEV-1025](https://opensupplyhub.atlassian.net/browse/OSDEV-1025) - Added the claim badge to the facility details on the C/R moderation screen when the facility has an approved claim.
 
 ### Release instructions:
-* *Provide release instructions here.*
+* 
 
 
 ## Release 1.19.0
