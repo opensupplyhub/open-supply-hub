@@ -130,7 +130,6 @@ function DashboardClaimsDetails({
                 />
                 <InfoSection label="Job Title" value={data.job_title} />
                 <InfoSection label="Email" value={data.email} />
-                <InfoSection label="Phone Number" value={data.phone_number} />
                 <InfoSection label="Company Name" value={data.company_name} />
                 <InfoSection
                     label="Website"
@@ -191,10 +190,6 @@ function DashboardClaimsDetails({
                 <InfoSection
                     label="Facility Description"
                     value={data.facility_description}
-                />
-                <InfoSection
-                    label="Verification Method"
-                    value={data.verification_method}
                 />
             </Paper>
             <div style={dashboardClaimsDetailsStyles.notesHeaderStyles}>
