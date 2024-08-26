@@ -53,7 +53,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1165](https://opensupplyhub.atlassian.net/browse/OSDEV-1165) - Updated the release protocol to include information about quick fixes and how to perform them. Additionally, updated the GitFlow diagram to visually depict this process.
 * Updated the `RELEASE-PROTOCOL.md` file to include information about OpenSearch and Logstash, stating that their functionality should also be checked after deployment.
 * [OSDEV-1169](https://opensupplyhub.atlassian.net/browse/OSDEV-1169) - Activated deployment database-anonymizer to production.
-* [OSDEV-1177](https://opensupplyhub.atlassian.net/browse/OSDEV-1177) - Clear OpenSearch and stop Logstash during Postgres DB Restore/Reset in Pre-prod/Test/Dev env.
 * [OSDEV-1197](https://opensupplyhub.atlassian.net/browse/OSDEV-1197) - Upgrade Kafka tools to version 3.8.0
 
 ### Bugfix
