@@ -17,7 +17,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe scheme changes here.*
 
 ### Code/API changes
-* [OSDEV-1167](https://opensupplyhub.atlassian.net/browse/OSDEV-1167) - Search. Update field names in Open Search. The following parameter/field names in the API schema has been changed:
+* [OSDEV-1167](https://opensupplyhub.atlassian.net/browse/OSDEV-1167) - Search. Update field names in Open Search. The following parameter/field names in the API schema for GET api/v1/production-locations has been changed:
     - `name_local` -> `local_name`
     - `url` -> `business_url`
     - `lon` -> `lng`
@@ -36,7 +36,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Release instructions:
 * Recreate index with new schema:
     1. Before deploying to the env, especially for Production and Staging, you must first delete the OpenSearch production location index through EС2 bastion.
-    2. Delete the EFS storage from the ran file or the file through the EС2 bastion instance.
+    2. Delete the EFS storage from the running Logstash app or the file through the EС2 bastion instance.
     3. Start deploying changes to the env.
 
 
