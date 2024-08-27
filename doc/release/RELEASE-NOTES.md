@@ -18,6 +18,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-1025](https://opensupplyhub.atlassian.net/browse/OSDEV-1025) - Added the `get_is_claimed` method to the `FacilityMatchSerializer` that returns a boolean value depending on whether the matched facility has an approved claim or not.
+* [OSDEV-1101](https://opensupplyhub.atlassian.net/browse/OSDEV-1101) - API v1/production-locations. Extend the country object to include alpha-3 code, numeric code, and country name.
 
 ### Architecture/Environment changes
 * [OSDEV-1153](https://opensupplyhub.atlassian.net/browse/OSDEV-1153) - Created integration tests for the OpenSearch and for new `/api/v1/production-locations/` API endpoint.
