@@ -9,7 +9,7 @@ class OpenSearchQueryDirector:
             V1_PARAMETERS_LIST.ADDRESS: 'match',
             V1_PARAMETERS_LIST.NAME: 'match',
             V1_PARAMETERS_LIST.OS_ID: 'terms',
-            V1_PARAMETERS_LIST.NAME_LOCAL: 'match',
+            V1_PARAMETERS_LIST.LOCAL_NAME: 'match',
             V1_PARAMETERS_LIST.COUNTRY: 'terms',
             V1_PARAMETERS_LIST.SECTOR: 'terms',
             V1_PARAMETERS_LIST.PRODUCT_TYPE: 'terms',
@@ -34,12 +34,12 @@ class OpenSearchQueryDirector:
     def __add_range_query(self, field, query_params):
         self.__builder.add_range(field, query_params)
 
-    def __add_geo_distance_query(self, field, lat, lon, distance):
-        if lat and lon:
+    def __add_geo_distance_query(self, field, lat, lng, distance):
+        if lat and lng:
             self.__builder.add_geo_distance(
                 field,
                 float(lat),
-                float(lon),
+                float(lng),
                 distance
             )
 
@@ -63,9 +63,10 @@ class OpenSearchQueryDirector:
 
             if query_type == "geo_distance":
                 lat = query_params.get(f"{field}[lat]")
-                lon = query_params.get(f"{field}[lon]")
+                lng = query_params.get(f"{field}[lon]")
                 distance = query_params.get("distance", "10km")
-                self.__add_geo_distance_query(field, lat, lon, distance)
+                self.__add_geo_distance_query(field, lat, lng,
+                                              distance)
                 continue
 
         sort_by = query_params.get(V1_PARAMETERS_LIST.SORT_BY)
