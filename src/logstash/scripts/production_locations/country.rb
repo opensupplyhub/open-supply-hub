@@ -6,9 +6,9 @@ def filter(event)
     alpha_2_country_code = event.get('country_value')
 
     # Define the path to the JSON file's
-    json_names_file_path = File.expand_path('../../data/country_names.json', __FILE__)
-    json_alpha3_file_path = File.expand_path('../../data/country_alpha_3.json', __FILE__)
-    json_numeric_file_path = File.expand_path('../../data/country_numeric.json', __FILE__)
+    json_names_file_path = File.expand_path('../../../static-data/country_names.json', __FILE__)
+    json_alpha3_file_path = File.expand_path('../../../static-data/country_alpha_3.json', __FILE__)
+    json_numeric_file_path = File.expand_path('../../../static-data/country_numeric.json', __FILE__)
 
     # Read and parse the JSON file's
     json_names_data = File.read(json_names_file_path)
