@@ -11,6 +11,11 @@ import {
 } from '../actions/deleteFacility';
 
 import {
+    dashboardFacilityCardTitles,
+    dashboardFacilityMergeCards,
+} from '../util/constants';
+
+import {
     getValueFromEvent,
     makeSubmitFormOnEnterKeyPressFunction,
 } from '../util/util';
@@ -58,7 +63,10 @@ function DashboardDeleteFacility({
                     fetching={fetching}
                     error={error}
                     handleEnterKeyPress={fetchFacilityOnEnterKeyPress}
-                    title="Facility to delete"
+                    title={dashboardFacilityCardTitles.facilityToDelete}
+                    needShowClaimedPL={dashboardFacilityMergeCards.includes(
+                        dashboardFacilityCardTitles.facilityToDelete,
+                    )}
                 />
             </div>
         </>

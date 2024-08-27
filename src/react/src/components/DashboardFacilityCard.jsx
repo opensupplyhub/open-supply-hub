@@ -73,6 +73,7 @@ export default function DashboardFacilityCard({
     error,
     handleEnterKeyPress,
     title,
+    needShowClaimedPL,
 }) {
     const cardActions = data ? (
         <>
@@ -108,7 +109,7 @@ export default function DashboardFacilityCard({
     );
 
     let isClaimed = false;
-    if (data) {
+    if (data && needShowClaimedPL) {
         const claimInfo = data.properties.claim_info;
         isClaimed = claimInfo !== null;
     }

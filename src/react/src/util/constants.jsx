@@ -1289,3 +1289,16 @@ export const componentsWithErrorMessage = Object.freeze({
     mustConsistOfLetters: 'Facility List Name must also consist of letters.',
     missingFile: 'Missing required Facility List File.',
 });
+
+export const dashboardFacilityCardTitles = Object.freeze({
+    facilityToAdjust: 'Facility to adjust',
+    facilityToDelete: 'Facility to delete',
+    targetFacilityToMerge: 'Target facility for merge',
+    facilityToMergeIntoTarget: 'Facility to merge into target',
+    facility: 'facility',
+});
+
+export const dashboardFacilityMergeCards = Object.freeze([
+    'Target facility for merge',
+    'Facility to merge into target',
+]);

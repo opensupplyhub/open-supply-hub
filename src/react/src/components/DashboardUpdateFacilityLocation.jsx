@@ -15,6 +15,11 @@ import {
 } from '../actions/updateFacilityLocation';
 
 import {
+    dashboardFacilityCardTitles,
+    dashboardFacilityMergeCards,
+} from '../util/constants';
+
+import {
     getValueFromEvent,
     makeSubmitFormOnEnterKeyPressFunction,
 } from '../util/util';
@@ -86,7 +91,10 @@ function DashboardUpdateFacilityLocation({
                     fetching={targetFetching}
                     error={targetError}
                     handleEnterKeyPress={fetchTargetFacilityOnEnterKeyPress}
-                    title="Facility"
+                    title={dashboardFacilityCardTitles.facility}
+                    needShowClaimedPL={dashboardFacilityMergeCards.includes(
+                        dashboardFacilityCardTitles.facility,
+                    )}
                 />
                 <DashboardUpdateFacilityLocationCard
                     title="New Location"
