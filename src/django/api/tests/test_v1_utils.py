@@ -27,7 +27,7 @@ class TestProductionLocationsSerializer(Serializer):
     percent_female_workers_min = FloatField(required=False)
     percent_female_workers_max = FloatField(required=False)
     coordinates_lat = FloatField(required=False)
-    coordinates_lon = FloatField(required=False)
+    coordinates_lng = FloatField(required=False)
     country = ListField(
         child=CharField(required=False),
         required=False
@@ -52,7 +52,7 @@ class V1UtilsTests(TestCase):
             'percent_female_workers[min]': '20',
             'percent_female_workers[max]': '80',
             'coordinates[lat]': '12.34',
-            'coordinates[lon]': '56.78',
+            'coordinates[lng]': '56.78',
         })
         serialized_params, error_response = \
             serialize_params(TestProductionLocationsSerializer, query_dict)
@@ -62,7 +62,7 @@ class V1UtilsTests(TestCase):
         self.assertEqual(serialized_params['percent_female_workers_min'], 20)
         self.assertEqual(serialized_params['percent_female_workers_max'], 80)
         self.assertEqual(serialized_params['coordinates_lat'], 12.34)
-        self.assertEqual(serialized_params['coordinates_lon'], 56.78)
+        self.assertEqual(serialized_params['coordinates_lng'], 56.78)
 
     def test_serialize_params_with_single_values(self):
         query_dict = QueryDict('', mutable=True)

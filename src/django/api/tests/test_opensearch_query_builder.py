@@ -31,7 +31,7 @@ class TestOpenSearchQueryBuilder(TestCase):
         expected = {
             'multi_match': {
                 'query': 'test query',
-                'fields': ['name^2', 'address', 'description', 'name_local'],
+                'fields': ['name^2', 'address', 'description', 'local_name'],
                 'fuzziness': 2
             }
         }
