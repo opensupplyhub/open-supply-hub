@@ -163,7 +163,7 @@
         },
         "country": {
           "properties": {
-            "numeric": {
+            "name": {
               "type": "keyword"
             },
             "alpha_2": {
@@ -172,7 +172,7 @@
             "alpha_3": {
               "type": "keyword"
             },
-            "name": {
+            "numeric": {
               "type": "keyword"
             }
           }
