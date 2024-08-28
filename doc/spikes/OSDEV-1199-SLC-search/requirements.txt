@@ -1,4 +1,6 @@
-opensearch-py >= 2.7.1
-numpy >= 2.2.2
+opensearch-py >= 2.5.0
+pandas >= 2.2.2
 googlemaps >= 4.10.0
 python-dotenv >= 1.0.1
+jupyter_contrib_nbextensions >= 0.7.0
+folium >= 0.17.0

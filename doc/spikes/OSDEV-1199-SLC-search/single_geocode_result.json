@@ -1,0 +1,79 @@
+{
+  "address_components": [
+      {
+          "long_name": "Pur SenChey",
+          "short_name": "Pur SenChey",
+          "types": [
+              "administrative_area_level_2",
+              "political"
+          ]
+      },
+      {
+          "long_name": "Khan Pou Senchey",
+          "short_name": "Khan Pou Senchey",
+          "types": [
+              "political",
+              "sublocality",
+              "sublocality_level_1"
+          ]
+      },
+      {
+          "long_name": "Phnom Penh",
+          "short_name": "PP",
+          "types": [
+              "locality",
+              "political"
+          ]
+      },
+      {
+          "long_name": "Phnom Penh",
+          "short_name": "Phnom Penh",
+          "types": [
+              "administrative_area_level_1",
+              "political"
+          ]
+      },
+      {
+          "long_name": "Cambodia",
+          "short_name": "KH",
+          "types": [
+              "country",
+              "political"
+          ]
+      }
+  ],
+  "formatted_address": "Pur SenChey, Phnom Penh, Cambodia",
+  "geometry": {
+      "bounds": {
+          "northeast": {
+              "lat": 11.6101069,
+              "lng": 104.8781132
+          },
+          "southwest": {
+              "lat": 11.4520869,
+              "lng": 104.7127079
+          }
+      },
+      "location": {
+          "lat": 11.5392693,
+          "lng": 104.7871004
+      },
+      "location_type": "APPROXIMATE",
+      "viewport": {
+          "northeast": {
+              "lat": 11.6101069,
+              "lng": 104.8781132
+          },
+          "southwest": {
+              "lat": 11.4520869,
+              "lng": 104.7127079
+          }
+      }
+  },
+  "partial_match": true,
+  "place_id": "ChIJZU5mrgtPCTEReAJNEOIOsTw",
+  "types": [
+      "administrative_area_level_2",
+      "political"
+  ]
+}
