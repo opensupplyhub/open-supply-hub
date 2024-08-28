@@ -70,7 +70,18 @@ describe('DashboardClaimsDetails component', () => {
                     id: '1',
                     properties: {
                         name: 'Example Facility',
+                        address: '123 Main St',
+                        country_code: 'US',
+                        country_name: 'United States',
                     },
+                    type: "Feature",
+                    geometry: {
+                        type: "Point",
+                        coordinates: [
+                            90.5740474,
+                            23.8973734
+                        ]
+                    }
                 },
                 contributor: {
                     id: '2',
@@ -84,6 +95,12 @@ describe('DashboardClaimsDetails component', () => {
                 facility_parent_company: {
                     name: 'Parent Co',
                     id: '3',
+                },
+                status: "PENDING",
+                status_change: {
+                    status_change_by: '',
+                    status_change_date: '',
+                    status_change_reason: '',
                 },
                 linkedin_profile: 'www.linkedin.com/in/janedoe',
                 facility_description: 'A detailed description here.',
