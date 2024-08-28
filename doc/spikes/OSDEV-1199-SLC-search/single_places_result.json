@@ -1,0 +1,124 @@
+{
+    "html_attributions": [],
+    "result": {
+        "address_components": [
+            {
+                "long_name": "Pur SenChey",
+                "short_name": "Pur SenChey",
+                "types": ["administrative_area_level_2", "political"]
+            },
+            {
+                "long_name": "Khan Pou Senchey",
+                "short_name": "Khan Pou Senchey",
+                "types": ["sublocality_level_1", "sublocality", "political"]
+            },
+            {
+                "long_name": "Phnom Penh",
+                "short_name": "PP",
+                "types": ["locality", "political"]
+            },
+            {
+                "long_name": "Phnom Penh",
+                "short_name": "Phnom Penh",
+                "types": ["administrative_area_level_1", "political"]
+            },
+            {
+                "long_name": "Cambodia",
+                "short_name": "KH",
+                "types": ["country", "political"]
+            }
+        ],
+        "adr_address": "Pur SenChey, <span class=\"locality\">Phnom Penh</span>, <span class=\"country-name\">Cambodia</span>",
+        "formatted_address": "Pur SenChey, Phnom Penh, Cambodia",
+        "geometry": {
+            "location": { "lat": 11.5392693, "lng": 104.7871004 },
+            "viewport": {
+                "northeast": {
+                    "lat": 11.6101069459236,
+                    "lng": 104.8781131767694
+                },
+                "southwest": {
+                    "lat": 11.45208688423134,
+                    "lng": 104.7127078685404
+                }
+            }
+        },
+        "icon": "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/geocode-71.png",
+        "icon_background_color": "#7B9EB0",
+        "icon_mask_base_uri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
+        "name": "Pur SenChey",
+        "photos": [
+            {
+                "height": 3456,
+                "html_attributions": [
+                    "<a href=\"https://maps.google.com/maps/contrib/110856765893317614804\">Etu Chayuy</a>"
+                ],
+                "photo_reference": "AXCi2Q6jMJyZ7e8DoaLRrrRGgZ84s_Y_WjQC-bC66f5UbPqqd5XD-UJX76C77QOBMpWLx72FN5muKT9Rp4dAFTYmsVwFyWM3hTtDXyLZESDjNlvunebaspWO5g3HwvLrsRq3774qDhRq1iyOXjkSPWzhiW_YZ5cv2NBA5Y9A8LUaSMI44ACc",
+                "width": 4608
+            },
+            {
+                "height": 3456,
+                "html_attributions": [
+                    "<a href=\"https://maps.google.com/maps/contrib/110856765893317614804\">Etu Chayuy</a>"
+                ],
+                "photo_reference": "AXCi2Q4ty_XghXUc4I_-M3leFkTumrvMzIzHnDLn4fFDGuKUFx1RYaGdaHFFi048B2wtAt6DhJazkW5R9H1OIBObarCOtBeYaAZNIHlOkoOEIG5Xgou6SlqTZG86xFK4icnsxeRaq5YT9ww1i4asahO-klkvN4QTl8NOJkt5JpPt4DQ_Zo_D",
+                "width": 4608
+            },
+            {
+                "height": 4160,
+                "html_attributions": [
+                    "<a href=\"https://maps.google.com/maps/contrib/113899470543583572943\">Ga Da</a>"
+                ],
+                "photo_reference": "AXCi2Q5BD1cJ8edV5R2vNgAsr1T4ElCdl9uwXKm1L1jFmL3nt7CCnD8urLLX4gSRjxbZHi4qrENlXvGZqVl_x7w7VfrRQVoR2WTiFwyBM7DaCHO-ohy2BYvKzn8hd4M0z4PzE9lgIfIUS42or9Ygkr4AVD5IjpzA6JjjXXurkfaNtSzW0HqV",
+                "width": 3120
+            },
+            {
+                "height": 3456,
+                "html_attributions": [
+                    "<a href=\"https://maps.google.com/maps/contrib/110856765893317614804\">Etu Chayuy</a>"
+                ],
+                "photo_reference": "AXCi2Q4FXYsTZOQdtvWIvDJWjg4Ioe1uPkcB58saP63dejQIjnhaOvRIDY7rnqVeHfVtHU4w4_nSNj9IAdFY_IhKQ6_h6U2eQQGljxXvV_wQsZ3_BYIIUlPyqrwEpP7pFZA819kJvdJd7a8ltKLzwJgvQxdiI0Q-1QBYk3o6QB_KzRlNRBTr",
+                "width": 4608
+            },
+            {
+                "height": 3456,
+                "html_attributions": [
+                    "<a href=\"https://maps.google.com/maps/contrib/110856765893317614804\">Etu Chayuy</a>"
+                ],
+                "photo_reference": "AXCi2Q4SMpYuwuraECOs6DRgFOyTEDf5Eu-MhIHLW0Gyv10iulw3_MdNpddWK2fg69v_E6fL3DRnj8zUoTnMtCgeaysC3HdA75ouICLg-Ezqi3Hl8xlO2zz6LvWz8jTM6-qETsI8tyv1ZjQjBR5cz8hRVTCLMcvzBlQmspKS8B6cfpLrk5f_",
+                "width": 4608
+            },
+            {
+                "height": 3456,
+                "html_attributions": [
+                    "<a href=\"https://maps.google.com/maps/contrib/110856765893317614804\">Etu Chayuy</a>"
+                ],
+                "photo_reference": "AXCi2Q6iYqFfwwR0uDtekJPXWpkkxmXCGn_tbuvF8HZ6j2e1-ZbNF1JMfYka8_lxDgpbQHfzrt8WlI2CMPnRhK6WjqeX4vrXEA0hBfFFSZnV2_p8c5KQUjanZC4i5cjWJ4gE_LQOUMAE3_Evr_ReUmiG-3b2H64Fm3kRDNkbf2ByGZd27fZq",
+                "width": 4608
+            },
+            {
+                "height": 3456,
+                "html_attributions": [
+                    "<a href=\"https://maps.google.com/maps/contrib/110856765893317614804\">Etu Chayuy</a>"
+                ],
+                "photo_reference": "AXCi2Q55OxoXgRzlxaoPL1WtMw9cHVVpY-elZjUmBfnIhZyefAvKmEKHZi1FHKYOCjobeD1CXUe-TgYt0GK5q-lTf2motXRreK7kBwFhcfaG_AYwInfbmBi919skvbcwSvQ5blgcRl5ef1D9qBdH3CmbKf3FzAguleHN5Z-zSGhn5MgZJ0Ab",
+                "width": 4608
+            },
+            {
+                "height": 3456,
+                "html_attributions": [
+                    "<a href=\"https://maps.google.com/maps/contrib/110856765893317614804\">Etu Chayuy</a>"
+                ],
+                "photo_reference": "AXCi2Q5BBh_-dZWWysPgD5nJ0VZtYiXtXXN9FPTEsxplvjjfRucmbPXgtmUw3DQ8FPXaD8RnlpVgYGujo3PCeGYeQ-FHCkk1_ULyIpXs1HeogdPNhCXU1f8YX-GaxpfQ0B26elcIUew692C4n0Enkqu1SiEe1xosoOEJrv9IMp6zLjnw6RFm",
+                "width": 4608
+            }
+        ],
+        "place_id": "ChIJZU5mrgtPCTEReAJNEOIOsTw",
+        "reference": "ChIJZU5mrgtPCTEReAJNEOIOsTw",
+        "types": ["administrative_area_level_2", "political"],
+        "url": "https://maps.google.com/?q=Pur+SenChey,+Phnom+Penh,+Cambodia&ftid=0x31094f0bae664e65:0x3cb10ee2104d0278",
+        "utc_offset": 420,
+        "vicinity": "Khan Pou Senchey"
+    },
+    "status": "OK"
+}
