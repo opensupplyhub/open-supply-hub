@@ -17,6 +17,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe scheme changes here.*
 
 ### Code/API changes
+* [OSDEV-1167](https://opensupplyhub.atlassian.net/browse/OSDEV-1167) - Search. Update field names in Open Search. The following parameter/field names in the API schema for GET api/v1/production-locations has been changed:
+    - `name_local` -> `local_name`
+    - `url` -> `business_url`
+    - `lon` -> `lng`
 * [OSDEV-1025](https://opensupplyhub.atlassian.net/browse/OSDEV-1025) - Added the `get_is_claimed` method to the `FacilityMatchSerializer` that returns a boolean value depending on whether the matched facility has an approved claim or not.
 
 ### Architecture/Environment changes
@@ -24,13 +28,16 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1177](https://opensupplyhub.atlassian.net/browse/OSDEV-1177) - Implemented clearing OpenSearch and stopping Logstash during Postgres DB restore/reset in pre-prod/test/dev environments to freshly populate OpenSearch with data from the restored or reset Postgres DB.
 
 ### Bugfix
-* 
+*
 
 ### What's new
 * [OSDEV-1025](https://opensupplyhub.atlassian.net/browse/OSDEV-1025) - Added the claim badge to the facility details on the C/R moderation screen when the facility has an approved claim.
 
 ### Release instructions:
-* 
+* Recreate index with new schema:
+    1. Before deploying to an existing environment, especially for Production and Staging, manually delete the related EFS storage.
+    2. Delete the OpenSearch production location index through EС2 bastion.
+    3. Stop all tasks of the Logstash service in the appropriate ECS cluster. This is necessary to apply the new mapping for the production-locations OpenSearch index.
 
 
 ## Release 1.19.0
