@@ -29,7 +29,7 @@ COPY --chown=logstash:root ./scripts/ /usr/share/logstash/scripts/
 # Copy OpenSearch index templates to the indexes folder of Logstash.
 COPY --chown=logstash:root ./indexes/ /usr/share/logstash/indexes/
 
-# Copy OpenSearch static-data to the static-data folder of Logstash.
+# Copy country formats static-data to the static-data folder of Logstash.
 COPY --chown=logstash:root ./static-data/ /usr/share/logstash/static-data/
 
 CMD ["logstash"]
