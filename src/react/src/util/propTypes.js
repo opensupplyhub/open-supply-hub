@@ -377,7 +377,6 @@ export const facilityClaimPropType = shape({
     contact_person: string.isRequired,
     job_title: string.isRequired,
     email: string.isRequired,
-    phone_number: string.isRequired,
     company_name: string.isRequired,
     website: string.isRequired,
     facility_description: string.isRequired,
