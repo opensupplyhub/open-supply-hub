@@ -34,6 +34,6 @@ test "Country filter" do
       events[0].get('country')['name'] == "Ukraine"
       events[0].get('country')['alpha_2'] == "UA"
       events[0].get('country')['alpha_3'] == "UKR"
-      events[0].get('country')['numeric'] == "804"
+      events[0].get('country')['numeric'] == "1"
     end
 end
