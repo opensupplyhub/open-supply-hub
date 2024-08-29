@@ -6,7 +6,7 @@ def filter(event)
     alpha_2_country_code = event.get('country_value')
 
     # Define the path to the JSON file
-    json_countries_file_path = File.expand_path('../../../static-data/countries.json', __FILE__)
+    json_countries_file_path = File.expand_path('../../../static_data/countries.json', __FILE__)
 
     # Read and parse the JSON file
     json_countries_data = File.read(json_countries_file_path)
@@ -34,6 +34,6 @@ test "Country filter" do
       events[0].get('country')['name'] == "Ukraine"
       events[0].get('country')['alpha_2'] == "UA"
       events[0].get('country')['alpha_3'] == "UKR"
-      events[0].get('country')['numeric'] == "1"
+      events[0].get('country')['numeric'] == "804"
     end
 end
