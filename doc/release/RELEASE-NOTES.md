@@ -31,7 +31,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 *
 
 ### What's new
-* [OSDEV-1045](https://opensupplyhub.atlassian.net/browse/OSDEV-1045) - Data Moderation. Change the color of the facility panel for claimed facilities in the Merge moderation screens.
+* [OSDEV-1045](https://opensupplyhub.atlassian.net/browse/OSDEV-1045) - The color of the facility panel for claimed facilities in the Merge moderation screens has been changed to green. Added flag `highlightBackground` for different screens to highlight panel only on the Dashboard Merge Facilities screen.
 * [OSDEV-1025](https://opensupplyhub.atlassian.net/browse/OSDEV-1025) - Added the claim badge to the facility details on the C/R moderation screen when the facility has an approved claim.
 
 ### Release instructions:
