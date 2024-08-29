@@ -92,7 +92,7 @@ function DashboardUpdateFacilityLocation({
                     error={targetError}
                     handleEnterKeyPress={fetchTargetFacilityOnEnterKeyPress}
                     title={dashboardFacilityCardTitles.facility}
-                    needShowClaimedPL={dashboardFacilityMergeCards.includes(
+                    highlightBackground={dashboardFacilityMergeCards.includes(
                         dashboardFacilityCardTitles.facility,
                     )}
                 />

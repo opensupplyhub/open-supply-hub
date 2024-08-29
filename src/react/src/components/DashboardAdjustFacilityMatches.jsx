@@ -58,7 +58,7 @@ function DashboardAdjustFacilityMatches({
                 error={error}
                 handleEnterKeyPress={fetchFacilityOnEnterKeyPress}
                 title={dashboardFacilityCardTitles.facilityToAdjust}
-                needShowClaimedPL={dashboardFacilityMergeCards.includes(
+                highlightBackground={dashboardFacilityMergeCards.includes(
                     dashboardFacilityCardTitles.facilityToAdjust,
                 )}
             />

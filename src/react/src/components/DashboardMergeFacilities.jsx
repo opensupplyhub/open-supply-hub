@@ -99,7 +99,7 @@ function DashboardMergeFacilities({
                     error={targetError}
                     handleEnterKeyPress={fetchTargetFacilityOnEnterKeyPress}
                     title={dashboardFacilityCardTitles.targetFacilityToMerge}
-                    needShowClaimedPL={dashboardFacilityMergeCards.includes(
+                    highlightBackground={dashboardFacilityMergeCards.includes(
                         dashboardFacilityCardTitles.targetFacilityToMerge,
                     )}
                 />
@@ -115,7 +115,7 @@ function DashboardMergeFacilities({
                     title={
                         dashboardFacilityCardTitles.facilityToMergeIntoTarget
                     }
-                    needShowClaimedPL={dashboardFacilityMergeCards.includes(
+                    highlightBackground={dashboardFacilityMergeCards.includes(
                         dashboardFacilityCardTitles.facilityToMergeIntoTarget,
                     )}
                 />

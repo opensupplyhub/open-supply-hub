@@ -64,7 +64,7 @@ function DashboardDeleteFacility({
                     error={error}
                     handleEnterKeyPress={fetchFacilityOnEnterKeyPress}
                     title={dashboardFacilityCardTitles.facilityToDelete}
-                    needShowClaimedPL={dashboardFacilityMergeCards.includes(
+                    highlightBackground={dashboardFacilityMergeCards.includes(
                         dashboardFacilityCardTitles.facilityToDelete,
                     )}
                 />

@@ -5,6 +5,7 @@ import CardActions from '@material-ui/core/CardActions';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
+import COLOURS from '../util/COLOURS';
 
 import { facilityDetailsPropType } from '../util/propTypes';
 
@@ -59,7 +60,7 @@ const dashboardFacilityCardStyles = Object.freeze({
         marging: '10px 0',
     }),
     claimedCardStyle: Object.freeze({
-        background: '#E0F5E3',
+        background: COLOURS.GREEN,
     }),
 });
 
@@ -73,7 +74,7 @@ export default function DashboardFacilityCard({
     error,
     handleEnterKeyPress,
     title,
-    needShowClaimedPL,
+    highlightBackground,
 }) {
     const cardActions = data ? (
         <>
@@ -108,21 +109,15 @@ export default function DashboardFacilityCard({
         </>
     );
 
-    let isClaimed = false;
-    if (data && needShowClaimedPL) {
-        const claimInfo = data.properties.claim_info;
-        isClaimed = claimInfo !== null;
-    }
+    const facilityCardStyle = {
+        ...dashboardFacilityCardStyles.cardStyles,
+        ...(highlightBackground && data?.properties.is_claimed
+            ? dashboardFacilityCardStyles.claimedCardStyle
+            : {}),
+    };
 
     return (
-        <Card
-            style={{
-                ...dashboardFacilityCardStyles.cardStyles,
-                ...(isClaimed
-                    ? dashboardFacilityCardStyles.claimedCardStyle
-                    : {}),
-            }}
-        >
+        <Card style={facilityCardStyle}>
             <Typography
                 variant="title"
                 style={dashboardFacilityCardStyles.textSectionStyles}

@@ -36,6 +36,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
     extended_fields = SerializerMethodField()
     created_from = SerializerMethodField()
     sector = SerializerMethodField()
+    is_claimed = SerializerMethodField()
 
     class Meta:
         model = FacilityIndex
@@ -60,6 +61,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             'extended_fields',
             'created_from',
             'sector',
+            'is_claimed',
         )
         geo_field = 'location'
 
@@ -344,3 +346,9 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
 
     def get_has_inexact_coordinates(self, facility):
         return False
+
+    def get_is_claimed(self, facility):
+        return FacilityClaim.objects.filter(
+            facility_id=facility.id,
+            status=FacilityClaimStatuses.APPROVED
+        ).exists()
