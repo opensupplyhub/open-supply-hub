@@ -6,7 +6,6 @@ import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
 import moment from 'moment';
 import { Link, Route } from 'react-router-dom';
-import get from 'lodash/get';
 
 import DashboardClaimDetailsControls from './DashboardClaimDetailsControls';
 import DashboardClaimsDetailsNote from './DashboardClaimsDetailsNote';
@@ -103,7 +102,7 @@ function DashboardClaimsDetails({
             </div>
             <Paper style={dashboardClaimsDetailsStyles.containerStyles}>
                 <InfoSection
-                    label="Facility"
+                    label="Location Name"
                     value={
                         <Link
                             to={makeFacilityDetailLink(data.facility.id)}
@@ -114,7 +113,7 @@ function DashboardClaimsDetails({
                     }
                 />
                 <InfoSection
-                    label="Claim Contributor"
+                    label="Claimant Account"
                     value={
                         <Link
                             to={makeProfileRouteLink(data.contributor.id)}
@@ -128,11 +127,10 @@ function DashboardClaimsDetails({
                     label="Contact Person"
                     value={data.contact_person}
                 />
-                <InfoSection label="Job Title" value={data.job_title} />
-                <InfoSection label="Email" value={data.email} />
-                <InfoSection label="Company Name" value={data.company_name} />
+                <InfoSection label="Claimant Title" value={data.job_title} />
+                <InfoSection label="Account Email" value={data.email} />
                 <InfoSection
-                    label="Website"
+                    label="Claimant's Website"
                     value={
                         data.website && (
                             <a
@@ -148,31 +146,24 @@ function DashboardClaimsDetails({
                     }
                 />
                 <InfoSection
-                    label="Facility Parent Company / Supplier Group"
-                    value={(() => {
-                        const parentCompanyName = get(
-                            data,
-                            'facility_parent_company.name',
-                            null,
-                        );
-
-                        if (!parentCompanyName) {
-                            return '';
-                        }
-
-                        const profileLink = makeProfileRouteLink(
-                            get(data, 'facility_parent_company.id', null),
-                        );
-
-                        return (
-                            <Link to={profileLink} href={profileLink}>
-                                {parentCompanyName}
-                            </Link>
-                        );
-                    })()}
+                    label="Production Location's Website"
+                    value={
+                        data.facility_website && (
+                            <a
+                                href={addProtocolToWebsiteURLIfMissing(
+                                    data.facility_website,
+                                )}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                {data.facility_website}
+                            </a>
+                        )
+                    }
                 />
+
                 <InfoSection
-                    label="LinkedIn Profile"
+                    label="Production Location's LinkedIn"
                     value={
                         data.linkedin_profile && (
                             <a
@@ -188,8 +179,16 @@ function DashboardClaimsDetails({
                     }
                 />
                 <InfoSection
-                    label="Facility Description"
-                    value={data.facility_description}
+                    label="Sector(s)"
+                    value={data.sector && data.sector.join(', ')}
+                />
+                <InfoSection
+                    label="Number of Workers"
+                    value={data.facility_workers_count}
+                />
+                <InfoSection
+                    label="Local Language Name"
+                    value={data.facility_name_native_language}
                 />
             </Paper>
             <div style={dashboardClaimsDetailsStyles.notesHeaderStyles}>
