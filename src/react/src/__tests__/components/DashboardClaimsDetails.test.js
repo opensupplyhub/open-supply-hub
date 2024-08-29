@@ -85,7 +85,7 @@ describe('DashboardClaimsDetails component', () => {
                 },
                 contributor: {
                     id: '2',
-                    name: 'John Doe',
+                    name: 'Test contributor',
                 },
                 contact_person: 'Jane Smith',
                 job_title: 'Manager',
@@ -102,8 +102,12 @@ describe('DashboardClaimsDetails component', () => {
                     status_change_date: '',
                     status_change_reason: '',
                 },
-                linkedin_profile: 'www.linkedin.com/in/janedoe',
+                sector: ['Agriculture', 'Food & Beverage'],
+                linkedin_profile: 'www.linkedin.com',
+                facility_website: 'www.facility-web.com',
                 facility_description: 'A detailed description here.',
+                facility_workers_count: '100-250',
+                facility_name_native_language: 'Local Name',
                 attachments: [],
                 notes: [],
             },
@@ -111,14 +115,15 @@ describe('DashboardClaimsDetails component', () => {
 
         expect(screen.getByText('Created on August 25, 2021 12:34 PM / Last updated on August 25, 2021 12:34 PM')).toBeInTheDocument();
         expect(screen.getByText('Example Facility')).toBeInTheDocument();
-        expect(screen.getByText('John Doe')).toBeInTheDocument();
+        expect(screen.getByText('Test contributor')).toBeInTheDocument();
         expect(screen.getByText('Jane Smith')).toBeInTheDocument();
         expect(screen.getByText('Manager')).toBeInTheDocument();
         expect(screen.getByText('jane@example.com')).toBeInTheDocument();
-        expect(screen.getByText('Example Co')).toBeInTheDocument();
         expect(screen.getByText('www.example.com')).toBeInTheDocument();
-        expect(screen.getByText('Parent Co')).toBeInTheDocument();
-        expect(screen.getByText('www.linkedin.com/in/janedoe')).toBeInTheDocument();
-        expect(screen.getByText('A detailed description here.')).toBeInTheDocument();
+        expect(screen.getByText('www.facility-web.com')).toBeInTheDocument();
+        expect(screen.getByText('www.linkedin.com')).toBeInTheDocument();
+        expect(screen.getByText('Agriculture, Food & Beverage')).toBeInTheDocument();
+        expect(screen.getByText('100-250')).toBeInTheDocument();
+        expect(screen.getByText('Local Name')).toBeInTheDocument();
     });
 });
