@@ -53,7 +53,7 @@ class ProductionLocationsTest(BaseProductionLocationsTest):
     def test_production_locations_country(self):
 
         response = requests.get(
-                f"{self.root_url}/api/v1/production-locations/?size=1",
+                f"{self.root_url}/api/v1/production-locations/",
                 headers=self.basic_headers,
             )
         
