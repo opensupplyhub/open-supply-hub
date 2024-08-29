@@ -5,27 +5,20 @@ def filter(event)
     # Country code Alpha-2 data
     alpha_2_country_code = event.get('country_value')
 
-    # Define the path to the JSON file's
-    json_names_file_path = File.expand_path('../../../static-data/country_names.json', __FILE__)
-    json_alpha3_file_path = File.expand_path('../../../static-data/country_alpha_3.json', __FILE__)
-    json_numeric_file_path = File.expand_path('../../../static-data/country_numeric.json', __FILE__)
+    # Define the path to the JSON file
+    json_countries_file_path = File.expand_path('../../../static-data/countries.json', __FILE__)
 
-    # Read and parse the JSON file's
-    json_names_data = File.read(json_names_file_path)
-    country_names = JSON.parse(json_names_data)
-
-    json_alpha3_data = File.read(json_alpha3_file_path)
-    country_alpha3 = JSON.parse(json_alpha3_data)
-
-    json_numeric_data = File.read(json_numeric_file_path)
-    country_numeric = JSON.parse(json_numeric_data)
+    # Read and parse the JSON file
+    json_countries_data = File.read(json_countries_file_path)
+    countries = JSON.parse(json_countries_data)
+    exact_country = countries[alpha_2_country_code]
 
     # Build country object
     country = {
-        'name' => country_names[alpha_2_country_code],
+        'name' => exact_country["name"],
         'alpha_2' => alpha_2_country_code,
-        'alpha_3' => country_alpha3[alpha_2_country_code],
-        'numeric' => country_numeric[alpha_2_country_code],
+        'alpha_3' => exact_country["alpha_3"],
+        'numeric' => exact_country["numeric"],
     }
     event.set('country', country)
   
