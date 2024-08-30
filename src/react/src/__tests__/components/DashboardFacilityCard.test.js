@@ -246,7 +246,6 @@ describe('DashboardFacilityCard component', () => {
     });
 
     it('renders the claimed facility card with green background', () => {
-
         const { container } = renderComponent({highlightBackground: true,
             data: {
                 ...defaultProps.data,
