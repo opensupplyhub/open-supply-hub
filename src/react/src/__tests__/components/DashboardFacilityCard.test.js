@@ -2,10 +2,6 @@ import React from 'react';
 import DashboardFacilityCard from '../../components/DashboardFacilityCard';
 import COLOURS from '../../util/COLOURS';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
-import {
-    dashboardFacilityCardTitles,
-} from '../../util/constants';
-
 
 describe('DashboardFacilityCard component', () => {
     const defaultProps = {
@@ -219,7 +215,7 @@ describe('DashboardFacilityCard component', () => {
         fetching: false,
         error: null,
         handleEnterKeyPress: jest.fn(),
-        title: dashboardFacilityCardTitles.targetFacilityToMerge,
+        title: "Target facility for merge",
         highlightBackground: false,
     };
 
