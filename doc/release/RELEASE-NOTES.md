@@ -48,7 +48,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Release instructions:
 * Recreate index with new schema:
-    1. Before deploying to an existing environment, especially for Profacility_workers_count
+    1. Before deploying to an existing environment, especially for Production and Staging, manually delete the related EFS storage.
+    2. Delete the OpenSearch production location index through EС2 bastion.
+    3. Stop all tasks of the Logstash service in the appropriate ECS cluster. This is necessary to apply the new mapping for the production-locations OpenSearch index.
 
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
