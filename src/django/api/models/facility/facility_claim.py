@@ -142,12 +142,6 @@ class FacilityClaim(models.Model):
         help_text='The contact person\'s job title',
         verbose_name='contact person\'s job title',
         default='')
-    phone_number = models.CharField(
-        max_length=200,
-        null=False,
-        blank=False,
-        verbose_name='phone number',
-        help_text='The contact phone number for the facility claim')
     company_name = models.CharField(
         max_length=200,
         null=False,
