@@ -35,10 +35,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1025](https://opensupplyhub.atlassian.net/browse/OSDEV-1025) - Added the claim badge to the facility details on the C/R moderation screen when the facility has an approved claim.
 
 ### Release instructions:
-* Recreate index with new schema:
-    1. Before deploying to an existing environment, especially for Production and Staging, manually delete the related EFS storage.
-    2. Delete the OpenSearch production location index through EС2 bastion.
-    3. Stop all tasks of the Logstash service in the appropriate ECS cluster. This is necessary to apply the new mapping for the production-locations OpenSearch index.
+* Before deploying to an existing environment, manually delete the related EFS storage, OpenSearch domain, and stop all tasks of the Logstash service in the appropriate ECS cluster. This is necessary to apply the new mapping for the production-locations OpenSearch index.
 
 
 ## Release 1.19.0
