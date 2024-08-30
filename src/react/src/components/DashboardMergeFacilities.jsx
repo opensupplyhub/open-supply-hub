@@ -17,11 +17,6 @@ import {
 } from '../actions/mergeFacilities';
 
 import {
-    dashboardFacilityCardTitles,
-    dashboardFacilityMergeCards,
-} from '../util/constants';
-
-import {
     getValueFromEvent,
     makeSubmitFormOnEnterKeyPressFunction,
 } from '../util/util';
@@ -98,10 +93,8 @@ function DashboardMergeFacilities({
                     fetching={targetFetching}
                     error={targetError}
                     handleEnterKeyPress={fetchTargetFacilityOnEnterKeyPress}
-                    title={dashboardFacilityCardTitles.targetFacilityToMerge}
-                    highlightBackground={dashboardFacilityMergeCards.includes(
-                        dashboardFacilityCardTitles.targetFacilityToMerge,
-                    )}
+                    title="Target facility for merge"
+                    highlightBackground
                 />
                 <DashboardFacilityCard
                     updateOSID={updateToMergeOSID}
@@ -112,12 +105,8 @@ function DashboardMergeFacilities({
                     fetching={toMergeFetching}
                     error={toMergeError}
                     handleEnterKeyPress={fetchToMergeFacilityOnEnterKeyPress}
-                    title={
-                        dashboardFacilityCardTitles.facilityToMergeIntoTarget
-                    }
-                    highlightBackground={dashboardFacilityMergeCards.includes(
-                        dashboardFacilityCardTitles.facilityToMergeIntoTarget,
-                    )}
+                    title="Facility to merge into target"
+                    highlightBackground
                 />
             </div>
         </>

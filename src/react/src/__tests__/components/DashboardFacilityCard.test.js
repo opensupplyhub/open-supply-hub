@@ -74,7 +74,7 @@ describe('DashboardFacilityCard component', () => {
                     },
                     "contributor": "Zaber and Zubair Fabrics Ltd"
                 },
-                "is_claimed": true,
+                "is_claimed": false,
                 "other_locations": [
                     {
                         "lat": 23.8952576,
@@ -220,12 +220,12 @@ describe('DashboardFacilityCard component', () => {
         error: null,
         handleEnterKeyPress: jest.fn(),
         title: dashboardFacilityCardTitles.targetFacilityToMerge,
-        highlightBackground: true,
+        highlightBackground: false,
     };
 
     const renderComponent = (props = {}) =>
         renderWithProviders(
-            <DashboardFacilityCard {...defaultProps} {...props}  data-testid='mock-component-child'/>
+            <DashboardFacilityCard {...{...defaultProps, ...props}}/>
         );
 
     it('renders without crashing', () => {
@@ -238,8 +238,23 @@ describe('DashboardFacilityCard component', () => {
         expect(getByText(dashboardFacilityCardTitles.targetFacilityToMerge)).toBeInTheDocument();
     });
 
-    it('renders the claimed facility card with green background', () => {
+
+    it('renders the NOT claimed facility card without green background', () => {
         const { container } = renderComponent();
+
+        expect(container.firstChild).not.toHaveStyle(`background:${COLOURS.GREEN}`)
+    });
+
+    it('renders the claimed facility card with green background', () => {
+
+        const { container } = renderComponent({highlightBackground: true,
+            data: {
+                ...defaultProps.data,
+                properties: {
+                    ...defaultProps.data.properties,
+                    is_claimed: true,
+                },
+            },});
 
         expect(container.firstChild).toHaveStyle(`background:${COLOURS.GREEN}`)
     });

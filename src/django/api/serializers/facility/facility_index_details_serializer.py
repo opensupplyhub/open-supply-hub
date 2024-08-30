@@ -348,7 +348,5 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         return False
 
     def get_is_claimed(self, facility):
-        return FacilityClaim.objects.filter(
-            facility_id=facility.id,
-            status=FacilityClaimStatuses.APPROVED
-        ).exists()
+
+        return facility.approved_claim is not None

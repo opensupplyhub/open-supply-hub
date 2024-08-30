@@ -12,11 +12,6 @@ import {
 } from '../actions/adjustFacilityMatches';
 
 import {
-    dashboardFacilityCardTitles,
-    dashboardFacilityMergeCards,
-} from '../util/constants';
-
-import {
     getValueFromEvent,
     makeSubmitFormOnEnterKeyPressFunction,
 } from '../util/util';
@@ -57,10 +52,7 @@ function DashboardAdjustFacilityMatches({
                 fetching={fetching}
                 error={error}
                 handleEnterKeyPress={fetchFacilityOnEnterKeyPress}
-                title={dashboardFacilityCardTitles.facilityToAdjust}
-                highlightBackground={dashboardFacilityMergeCards.includes(
-                    dashboardFacilityCardTitles.facilityToAdjust,
-                )}
+                title="Facility to adjust"
             />
             {data && (
                 <DashboardAdjustMatchCard

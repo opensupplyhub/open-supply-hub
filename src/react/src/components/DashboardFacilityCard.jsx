@@ -139,6 +139,7 @@ export default function DashboardFacilityCard({
 DashboardFacilityCard.defaultProps = {
     data: null,
     error: null,
+    highlightBackground: false,
 };
 
 DashboardFacilityCard.propTypes = {
@@ -151,4 +152,5 @@ DashboardFacilityCard.propTypes = {
     error: arrayOf(string),
     handleEnterKeyPress: func.isRequired,
     title: string.isRequired,
+    highlightBackground: bool,
 };
