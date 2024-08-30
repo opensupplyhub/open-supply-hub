@@ -110,7 +110,7 @@ SELECT
 	ST_X(afc.facility_location)
 	)
 	'facility_workers_count',
-	afc.facility_workers_count,
+	afc.facility_workers_count
 	)
 FROM
 	api_facilityclaim afc
