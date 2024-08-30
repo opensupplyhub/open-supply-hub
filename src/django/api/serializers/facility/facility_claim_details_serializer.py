@@ -33,7 +33,8 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
     class Meta:
         model = FacilityClaim
         fields = ('id', 'created_at', 'updated_at', 'contact_person', 'email',
-                  'company_name', 'website', 'facility_description', 'status',
+                  'phone_number', 'company_name', 'website',
+                  'facility_description', 'status',
                   'contributor', 'facility', 'status_change', 'notes',
                   'facility_parent_company', 'job_title', 'linkedin_profile',
                   'attachments', 'facility_website', 'sector',
