@@ -170,11 +170,6 @@ class FacilityClaim(models.Model):
         blank=True,
         help_text='A LinkedIn profile for verifying the facility claim',
         verbose_name='verification LinkedIn profile')
-    verification_method = models.TextField(
-        null=False,
-        blank=True,
-        verbose_name='verification method',
-        help_text='An explanation of how the facility can be verified')
     status = models.CharField(
         max_length=200,
         null=False,
