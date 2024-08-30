@@ -231,7 +231,7 @@ describe('DashboardFacilityCard component', () => {
     it('renders the facility title', () => {
         const { getByText } = renderComponent();
 
-        expect(getByText(dashboardFacilityCardTitles.targetFacilityToMerge)).toBeInTheDocument();
+        expect(getByText("Target facility for merge")).toBeInTheDocument();
     });
 
 
