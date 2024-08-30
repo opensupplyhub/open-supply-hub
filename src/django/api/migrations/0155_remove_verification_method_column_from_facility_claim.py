@@ -1,5 +1,5 @@
 from django.db import connection
-from django.db.migrations import RemoveField, Migration, RunPython
+from django.db.migrations import Migration, RemoveField, RunPython
 
 from api.migrations._migration_helper import MigrationHelper
 
@@ -12,16 +12,14 @@ def update_indexing_function(apps, schema_editor):
     similar one that does not index verification_method and
     phone_number fields.
     '''
-
     helper.run_sql_files(['0155_index_approved_claim.sql'])
 
 
 class Migration(Migration):
     '''
-    Since the verification_method and phone_number fields is no longer
-    necessary for the claim form and isn't used anywhere in the codebase,
-    it should be deleted from the FacilityClaim model and the respective
-    history table.
+    This migration removes the verification_method and phone_number fields
+    from the FacilityClaim and HistoricalFacilityClaim models.
+    It also updates the indexing function accordingly.
     '''
 
     dependencies = [
