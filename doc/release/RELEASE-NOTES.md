@@ -14,7 +14,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * 0155_remove_verification_method_column_from_facility_claim - This migration replaces the old `index_approved_claim` function with a new one that does not index the `verification_method` and `phone_number` fields. Additionally, it removes the `verification_method` and `phone_number` fields from the FacilityClaim model and the respective history table.
 
 #### Scheme changes
-* [OSDEV-1092](https://opensupplyhub.atlassian.net/browse/OSDEV-1092) - Since the `verification_method` and `phone_number` fields is no longer necessary for the claim form and isn't used anywhere in the codebase, it has been deleted from the FacilityClaim model and the respective history table.
+* [OSDEV-1092](https://opensupplyhub.atlassian.net/browse/OSDEV-1092) - Since the `verification_method` and `phone_number` fields are no longer necessary for the claim form and aren't used anywhere in the codebase, they have been deleted from the FacilityClaim model and the respective history table.
 
 ### Code/API changes
 * [OSDEV-1167](https://opensupplyhub.atlassian.net/browse/OSDEV-1167) - Search. Update field names in Open Search. The following parameter/field names in the API schema for GET api/v1/production-locations has been changed:
