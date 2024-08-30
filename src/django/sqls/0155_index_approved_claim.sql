@@ -82,8 +82,6 @@ SELECT
 	afc.facility_type,
 	'facility_website_publicly_visible',
 	afc.facility_website_publicly_visible,
-	'facility_workers_count',
-	afc.facility_workers_count,
 	'job_title',
 	afc.job_title,
 	'linkedin_profile',
@@ -111,6 +109,8 @@ SELECT
 		'lng',
 	ST_X(afc.facility_location)
 	)
+	'facility_workers_count',
+	afc.facility_workers_count,
 	)
 FROM
 	api_facilityclaim afc
