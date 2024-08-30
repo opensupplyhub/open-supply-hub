@@ -11,8 +11,6 @@ SELECT
 	afc.id, 
 	'contact_person',
 	afc.contact_person,
-	'phone_number',
-	afc.phone_number,
 	'company_name',
 	afc.company_name,
 	'website',
