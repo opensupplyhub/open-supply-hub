@@ -27,7 +27,7 @@ class Migration(Migration):
     ]
 
     operations = [
-        RunPython(update_indexing_function),
+        RunPython(update_indexing_function, RunPython.noop),
 
         RemoveField(
             model_name='facilityclaim',
