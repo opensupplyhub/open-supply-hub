@@ -106,7 +106,7 @@ SELECT
 	ST_Y(afc.facility_location),
 		'lng',
 	ST_X(afc.facility_location)
-	)
+	),
 	'facility_workers_count',
 	afc.facility_workers_count
 	)
