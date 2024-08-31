@@ -25,6 +25,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1092](https://opensupplyhub.atlassian.net/browse/OSDEV-1092) - Modified the serialized output of the `FacilityClaimDetailsSerializer`:
     * Removed the `verification_method` and `phone_number` fields.
     * Added `facility_website`, `sector`, `facility_workers_count`, and `facility_name_native_language`.
+* [OSDEV-1101](https://opensupplyhub.atlassian.net/browse/OSDEV-1101) - API v1/production-locations. Extend the country object to include alpha-3 code, numeric code, and country name.
 
 ### Architecture/Environment changes
 * [OSDEV-1153](https://opensupplyhub.atlassian.net/browse/OSDEV-1153) - Created integration tests for the OpenSearch and for new `/api/v1/production-locations/` API endpoint.
@@ -47,10 +48,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
         * 'LinkedIn Profile' to 'Production Location's LinkedIn'.
 
 ### Release instructions:
-* Recreate index with new schema:
-    1. Before deploying to an existing environment, especially for Production and Staging, manually delete the related EFS storage.
-    2. Delete the OpenSearch production location index through EС2 bastion.
-    3. Stop all tasks of the Logstash service in the appropriate ECS cluster. This is necessary to apply the new mapping for the production-locations OpenSearch index.
+* Before deploying to an existing environment, manually delete the related EFS storage, OpenSearch domain, and stop all tasks of the Logstash service in the appropriate ECS cluster. This is necessary to apply the new mapping for the production-locations OpenSearch index.
 
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
