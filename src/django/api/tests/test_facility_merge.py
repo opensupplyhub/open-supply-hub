@@ -101,7 +101,6 @@ class FacilityMergeTest(APITestCase):
             facility=self.facility_1,
             contact_person="test 1",
             job_title="test 1",
-            phone_number="1234567890",
             company_name="test 1",
             facility_description="test 1",
             status=FacilityClaimStatuses.APPROVED,
@@ -159,7 +158,6 @@ class FacilityMergeTest(APITestCase):
             facility=self.facility_2,
             contact_person="test 2",
             job_title="test 2",
-            phone_number="1234567890",
             company_name="test 2",
             facility_description="test 2",
         )
