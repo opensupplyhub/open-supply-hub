@@ -221,7 +221,7 @@ describe('DashboardFacilityCard component', () => {
 
     const renderComponent = (props = {}) =>
         renderWithProviders(
-            <DashboardFacilityCard {...{...defaultProps, ...props}}/>
+            <DashboardFacilityCard {...defaultProps} {...props} />
         );
 
     it('renders without crashing', () => {
@@ -242,14 +242,15 @@ describe('DashboardFacilityCard component', () => {
     });
 
     it('renders the claimed facility card with green background', () => {
-        const { container } = renderComponent({highlightBackground: true,
+        const claimedFacilityProps = {highlightBackground: true,
             data: {
                 ...defaultProps.data,
                 properties: {
                     ...defaultProps.data.properties,
                     is_claimed: true,
                 },
-            },});
+            },};
+        const { container } = renderComponent(claimedFacilityProps);
 
         expect(container.firstChild).toHaveStyle(`background:${COLOURS.GREEN}`)
     });
