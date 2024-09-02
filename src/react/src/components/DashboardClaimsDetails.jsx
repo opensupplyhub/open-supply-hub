@@ -53,12 +53,13 @@ const InfoSection = ({ label, value }) => (
     <div style={dashboardClaimsDetailsStyles.infoSectionStyles}>
         <Typography variant="title">{label}</Typography>
         <Typography variant="body1" style={defaultInfoSectionValueStyle}>
-            {value || ''}
+            {value}
         </Typography>
     </div>
 );
+
 InfoSection.defaultProps = {
-    value: null,
+    value: '',
 };
 
 InfoSection.propTypes = {
