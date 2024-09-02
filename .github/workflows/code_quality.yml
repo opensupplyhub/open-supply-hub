@@ -368,6 +368,8 @@ jobs:
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Build & Run OS Hub
         run: scripts/start_code_quality_dev
+      - name: Waiting for all OS Hub services processes completed
+        run: sleep 60
       - name: Build Integration Test image
         run: docker compose -f docker-compose.tests.yml build
       - name: Run Integration Test
