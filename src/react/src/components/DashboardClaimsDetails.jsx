@@ -4,7 +4,6 @@ import { connect } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
-import moment from 'moment';
 import { Link, Route } from 'react-router-dom';
 
 import DashboardClaimDetailsControls from './DashboardClaimDetailsControls';
@@ -23,6 +22,7 @@ import {
     makeProfileRouteLink,
     makeFacilityDetailLink,
     addProtocolToWebsiteURLIfMissing,
+    formatDate,
 } from '../util/util';
 
 const dashboardClaimsDetailsStyles = Object.freeze({
@@ -82,8 +82,6 @@ const createExternalLink = url => (
         {url}
     </a>
 );
-
-const formatDate = date => moment(date).format('LLL');
 
 function DashboardClaimsDetails({
     getFacilityClaim,

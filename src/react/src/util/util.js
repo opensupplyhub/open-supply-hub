@@ -1249,3 +1249,5 @@ export function sort(array, comparator) {
     });
     return stabilizedThis.map(el => el[0]);
 }
+
+export const formatDate = date => moment(date).format('LLL');
