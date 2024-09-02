@@ -177,7 +177,6 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             contributor=self.contrib_one,
             facility=self.facility,
             contact_person=self.contrib_one_name,
-            phone_number=12345,
             company_name="Test",
             website="http://example.com",
             facility_description="description",
@@ -201,7 +200,6 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             contributor=self.contrib_one,
             facility=self.facility,
             contact_person="test",
-            phone_number="1234567890",
             sector=["Beauty"],
             status=FacilityClaimStatuses.APPROVED,
         )
@@ -215,7 +213,6 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             contributor=self.contrib_one,
             facility=self.facility,
             contact_person="test",
-            phone_number="1234567890",
             sector=["Beauty"],
             status=FacilityClaimStatuses.DENIED,
         )
@@ -430,7 +427,6 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             contributor=self.contrib_one,
             facility=self.facility,
             contact_person="test",
-            phone_number="1234567890",
             sector=["Beauty"],
             status=FacilityClaimStatuses.APPROVED,
         )
@@ -447,7 +443,6 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             contributor=self.contrib_two,
             facility=self.second_facility,
             contact_person="test",
-            phone_number="1234567890",
             sector=["Beauty"],
             status=FacilityClaimStatuses.DENIED,
         )
@@ -456,7 +451,6 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             contributor=self.contrib_three,
             facility=self.third_facility,
             contact_person="test",
-            phone_number="1234567890",
             sector=["Apparel"],
             status=FacilityClaimStatuses.PENDING,
         )
