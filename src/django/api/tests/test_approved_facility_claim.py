@@ -85,7 +85,7 @@ class ApprovedFacilityClaimTest(APITestCase):
             contributor=self.user_contributor,
             facility=self.facility,
             contact_person="Name",
-            phone_number=12345,
+            facility_phone_number='12345',
             company_name="Test",
             website="http://example.com",
             facility_description="description",

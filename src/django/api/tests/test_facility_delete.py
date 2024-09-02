@@ -143,7 +143,6 @@ class FacilityDeleteTest(APITestCase):
             contributor=self.contributor,
             facility=self.facility,
             contact_person="test",
-            phone_number="1234567890",
             status=FacilityClaimStatuses.APPROVED,
         )
         self.client.login(
@@ -157,7 +156,6 @@ class FacilityDeleteTest(APITestCase):
             contributor=self.contributor,
             facility=self.facility,
             contact_person="test",
-            phone_number="1234567890",
             status=FacilityClaimStatuses.PENDING,
         )
         self.client.login(
@@ -639,7 +637,6 @@ class FacilityDeleteTest(APITestCase):
             contributor=self.contributor,
             facility=self.facility,
             contact_person="test",
-            phone_number="1234567890",
             status=FacilityClaimStatuses.DENIED,
         )
 

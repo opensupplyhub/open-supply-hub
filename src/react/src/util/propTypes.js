@@ -377,7 +377,6 @@ export const facilityClaimPropType = shape({
     contact_person: string.isRequired,
     job_title: string.isRequired,
     email: string.isRequired,
-    phone_number: string.isRequired,
     company_name: string.isRequired,
     website: string.isRequired,
     facility_description: string.isRequired,
@@ -385,6 +384,10 @@ export const facilityClaimPropType = shape({
     status: oneOf(Object.values(facilityClaimStatusChoicesEnum)).isRequired,
     contributor: shape({}).isRequired,
     facility: facilityPropType.isRequired,
+    facility_website: string.isRequired,
+    sector: oneOfType([arrayOf(string), oneOf([null])]),
+    facility_workers_count: oneOfType([string, oneOf([null])]),
+    facility_name_native_language: string.isRequired,
     status_change: shape({
         status_change_by: string,
         status_change_date: string,
