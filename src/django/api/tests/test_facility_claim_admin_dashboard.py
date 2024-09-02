@@ -72,7 +72,6 @@ class FacilityClaimAdminDashboardTest(APITestCase):
             contributor=self.contributor,
             facility=self.facility,
             contact_person="Name",
-            phone_number=12345,
             company_name="Test",
             website="http://example.com",
             facility_description="description",
@@ -93,7 +92,6 @@ class FacilityClaimAdminDashboardTest(APITestCase):
             "/api/facilities/{}/claim/".format(self.facility.id),
             {
                 "contact_person": "contact_person",
-                "phone_number": "12345",
                 "company_name": "company_name",
                 "website": "http://example.com",
                 "facility_description": "facility_description",
@@ -172,7 +170,6 @@ class FacilityClaimAdminDashboardTest(APITestCase):
             contributor=new_contributor,
             facility=self.facility,
             contact_person="Name",
-            phone_number=12345,
             company_name="Test",
             website="http://example.com",
             facility_description="description",
