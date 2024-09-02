@@ -5,13 +5,14 @@ import Icon from '@material-ui/core/Icon';
 import { withStyles } from '@material-ui/core/styles';
 
 import BadgeClaimed from './BadgeClaimed';
+import COLOURS from '../util/COLOURS';
 
 import { makeClaimFacilityLink } from '../util/util';
 
 const claimFlagBaseStyles = theme =>
     Object.freeze({
         root: {
-            backgroundColor: '#FFEAEA',
+            backgroundColor: COLOURS.LIGHT_RED,
             color: '#191919',
             display: 'flex',
             justifyContent: 'center',
@@ -37,12 +38,12 @@ const claimFlagBaseStyles = theme =>
 
 const getBackgroundColor = (isClaimed, isPending) => {
     if (isClaimed) {
-        return '#E0F5E3';
+        return COLOURS.GREEN;
     }
     if (isPending) {
-        return '#FCCF3F';
+        return COLOURS.NAVIGATION;
     }
-    return '#FFEAEA';
+    return COLOURS.LIGHT_RED;
 };
 
 const getMainText = (isClaimed, isPending) => {
