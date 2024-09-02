@@ -223,7 +223,7 @@ services:
       - POSTGRES_USER=opensupplyhub
       - POSTGRES_PASSWORD=opensupplyhub
       - POSTGRES_DB=opensupplyhub
-      - LOGSTASH_UPDATE_INTERVAL_MINUTES=2
+      - LOGSTASH_UPDATE_INTERVAL_MINUTES=1
 
     depends_on:
       - opensearch-single-node
