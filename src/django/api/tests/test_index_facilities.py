@@ -91,7 +91,7 @@ class IndexFacilitiesTest(FacilityAPITestCaseBase):
 
         claim_data = dict(
             contact_person="Name",
-            phone_number=12345,
+            facility_phone_number='12345',
             company_name="Test",
             website="http://example.com",
             facility_description="description",
