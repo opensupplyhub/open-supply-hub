@@ -17,6 +17,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1092](https://opensupplyhub.atlassian.net/browse/OSDEV-1092) - Since the `verification_method` and `phone_number` fields are no longer necessary for the claim form and aren't used anywhere in the codebase, they have been deleted from the FacilityClaim model and the respective history table.
 
 ### Code/API changes
+* [OSDEV-1045](https://opensupplyhub.atlassian.net/browse/OSDEV-1045) - Added flag `highlightBackground` to the DashboardFacilityCard component to highlight background for claimed facilities only on the Merge moderation screen. Added the `get_is_claimed` method to the `FacilityIndexDetailsSerializer` that returns a boolean value depending on whether the facility has an approved claim or not.
 * [OSDEV-1167](https://opensupplyhub.atlassian.net/browse/OSDEV-1167) - Search. Update field names in Open Search. The following parameter/field names in the API schema for GET api/v1/production-locations has been changed:
     - `name_local` -> `local_name`
     - `url` -> `business_url`
@@ -35,6 +36,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 *
 
 ### What's new
+* [OSDEV-1045](https://opensupplyhub.atlassian.net/browse/OSDEV-1045) - The color of the facility panel for claimed facilities in the Merge moderation screen has been changed to green.
 * [OSDEV-1025](https://opensupplyhub.atlassian.net/browse/OSDEV-1025) - Added the claim badge to the facility details on the C/R moderation screen when the facility has an approved claim.
 * [OSDEV-1092](https://opensupplyhub.atlassian.net/browse/OSDEV-1092) - On the Facility Claims Details page, fields have been updated to show only those that could be uploaded as part of the claim form:
     * Removed deprecated fields: Phone Number, Company Name, Facility Parent Company / Supplier Group, Facility Description, and Verification Method.

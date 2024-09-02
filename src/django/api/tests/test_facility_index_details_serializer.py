@@ -29,17 +29,23 @@ class FacilityIndexDetailsSerializerTest(TestCase):
     def setUp(self):
         self.name_one = "name_one"
         self.name_two = "name_two"
+        self.name_three = "name_three"
         self.address_one = "address_one"
         self.address_two = "address_two"
+        self.address_three = "address_three"
         self.email_one = "one@example.com"
         self.email_two = "two@example.com"
+        self.email_three = "three@example.com"
         self.contrib_one_name = "contributor one"
         self.contrib_two_name = "contributor two"
+        self.contrib_three_name = "contributor three"
         self.country_code = "US"
         self.list_one_name = "one"
         self.list_two_name = "two"
+        self.list_three_name = "three"
         self.user_one = User.objects.create(email=self.email_one)
         self.user_two = User.objects.create(email=self.email_two)
+        self.user_three = User.objects.create(email=self.email_three)
 
         self.contrib_one = Contributor.objects.create(
             admin=self.user_one,
@@ -50,6 +56,12 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         self.contrib_two = Contributor.objects.create(
             admin=self.user_two,
             name=self.contrib_two_name,
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+
+        self.contrib_three = Contributor.objects.create(
+            admin=self.user_three,
+            name=self.contrib_three_name,
             contrib_type=Contributor.OTHER_CONTRIB_TYPE,
         )
 
@@ -78,6 +90,9 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         self.list_two = FacilityList.objects.create(
             header="header", file_name="two", name=self.list_two_name
         )
+        self.list_three = FacilityList.objects.create(
+            header="header", file_name="three", name=self.list_three_name
+        )
 
         self.source_two = Source.objects.create(
             facility_list=self.list_two,
@@ -85,6 +100,13 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             is_active=True,
             is_public=True,
             contributor=self.contrib_two,
+        )
+        self.source_three = Source.objects.create(
+            facility_list=self.list_three,
+            source_type=Source.LIST,
+            is_active=True,
+            is_public=True,
+            contributor=self.contrib_three,
         )
 
         self.list_item_two = FacilityListItem.objects.create(
@@ -97,12 +119,38 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             source=self.source_two,
         )
 
+        self.list_item_tree = FacilityListItem.objects.create(
+            name=self.name_three,
+            address=self.address_three,
+            country_code=self.country_code,
+            sector=["Mining", "Metals"],
+            row_index="2",
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=self.source_three,
+        )
+
         self.facility = Facility.objects.create(
             name=self.name_one,
             address=self.address_one,
             country_code=self.country_code,
             location=Point(0, 0),
             created_from=self.list_item_one,
+        )
+
+        self.second_facility = Facility.objects.create(
+            name=self.name_two,
+            address=self.address_two,
+            country_code=self.country_code,
+            location=Point(0, 0),
+            created_from=self.list_item_two,
+        )
+
+        self.third_facility = Facility.objects.create(
+            name=self.name_three,
+            address=self.address_three,
+            country_code=self.country_code,
+            location=Point(0, 0),
+            created_from=self.list_item_tree,
         )
 
         self.facility_match_one = FacilityMatch.objects.create(
@@ -373,3 +421,50 @@ class FacilityIndexDetailsSerializerTest(TestCase):
 
         for key, value in actual_activity_reports[0].items():
             self.assertEqual(activity_reports_data.get(key), value)
+
+    def test_is_claimed_returns_true(self):
+        FacilityClaim.objects.create(
+            contributor=self.contrib_one,
+            facility=self.facility,
+            contact_person="test",
+            sector=["Beauty"],
+            status=FacilityClaimStatuses.APPROVED,
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        data = FacilityIndexDetailsSerializer(facility_index).data
+
+        self.assertEqual(
+            True, data["properties"]["is_claimed"]
+        )
+
+    def test_is_claimed_returns_false(self):
+        FacilityClaim.objects.create(
+            contributor=self.contrib_two,
+            facility=self.second_facility,
+            contact_person="test",
+            sector=["Beauty"],
+            status=FacilityClaimStatuses.DENIED,
+        )
+
+        FacilityClaim.objects.create(
+            contributor=self.contrib_three,
+            facility=self.third_facility,
+            contact_person="test",
+            sector=["Apparel"],
+            status=FacilityClaimStatuses.PENDING,
+        )
+
+        facility_index_one = FacilityIndex.objects.get(
+            id=self.second_facility.id)
+        facility_index_two = FacilityIndex.objects.get(
+            id=self.third_facility.id)
+        data_one = FacilityIndexDetailsSerializer(facility_index_one).data
+        data_two = FacilityIndexDetailsSerializer(facility_index_two).data
+
+        self.assertEqual(
+            False, data_one["properties"]["is_claimed"]
+        )
+        self.assertEqual(
+            False, data_two["properties"]["is_claimed"]
+        )
