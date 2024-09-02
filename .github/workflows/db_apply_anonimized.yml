@@ -16,7 +16,7 @@ jobs:
   apply-anonymized-db:
     runs-on: self-hosted
     environment: ${{ inputs.deploy-env || 'Test' }}
-    
+
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -25,6 +25,64 @@ jobs:
           string: ${{ vars.ENV_NAME }}
       - name: Checkout repo
         uses: actions/checkout@v4
+      - name: Get Opensearch domain, filesystems and accespoint ids for ${{ vars.ENV_NAME }}
+        if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME) && inputs.restore-db == true}}
+        id: export_variables
+        run: |
+          OS_DOMAIN_NAME=$(echo "${{ vars.ENV_NAME }}-os-domain" | tr '[:upper:]' '[:lower:]')
+          OPENSEARCH_DOMAIN=$(docker run --rm \
+                       -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+                       -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+                       -e AWS_DEFAULT_REGION=eu-west-1 \
+                       amazon/aws-cli \
+                       es describe-elasticsearch-domains --domain-names $OS_DOMAIN_NAME \
+                       --query "DomainStatusList[].Endpoints.vpc" --output text)
+          EFS_ID=$(docker run --rm \
+                       -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+                       -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+                       -e AWS_DEFAULT_REGION=eu-west-1 \
+                       amazon/aws-cli \
+                       efs describe-file-systems \
+                       --query "FileSystems[?Tags[?Key=='Environment' && Value=='${{ vars.ENV_NAME }}']].FileSystemId" \
+                       --output text)
+          EFS_AP_ID=$(docker run --rm \
+                          -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+                          -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+                          -e AWS_DEFAULT_REGION=eu-west-1 \
+                          amazon/aws-cli \
+                          efs describe-access-points \
+                          --query "AccessPoints[?FileSystemId=='$EFS_ID'].AccessPointId" \
+                          --output text)
+          echo "EFS_ID=$EFS_ID" >> $GITHUB_OUTPUT
+          echo "EFS_AP_ID=$EFS_AP_ID" >> $GITHUB_OUTPUT
+          echo "OPENSEARCH_DOMAIN=$OPENSEARCH_DOMAIN" >> $GITHUB_OUTPUT
+      - name: Clear OpenSearch index for ${{ vars.ENV_NAME }}
+        if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME) && inputs.restore-db == true}}
+        run: |
+          mkdir -p script
+          mkdir -p ssh
+          echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ssh/config
+          printf "%s\n" "${{ secrets.SSH_PRIVATE_KEY }}" > ssh/id_rsa
+          echo "" >> ssh/id_rsa
+          echo -n ${{ vars.BASTION_IP }} > script/.env
+          cat <<EOF > script/clear_opensearch.sh
+          #!/bin/bash
+          curl -X DELETE https://${{ steps.export_variables.outputs.OPENSEARCH_DOMAIN }}/production-locations --aws-sigv4 "aws:amz:eu-west-1:es" --user "${{ secrets.AWS_ACCESS_KEY_ID }}:${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          sudo mount -t efs -o tls,accesspoint=${{ steps.export_variables.outputs.EFS_AP_ID }} ${{ steps.export_variables.outputs.EFS_ID }}:/ /mnt
+          sudo rm /mnt/logstash_jdbc_last_run
+          sudo umount /mnt
+          EOF
+          cat <<EOF > script/run.sh
+          chmod 700 /root/.ssh
+          chmod 400 /root/.ssh/id_rsa
+          chmod +x /script/clear_opensearch.sh
+          scp /script/clear_opensearch.sh ec2-user@${{ vars.BASTION_IP }}:
+          ssh ec2-user@${{ vars.BASTION_IP }} ./clear_opensearch.sh
+          EOF
+          docker run --rm  \
+              -v ./script:/script \
+              -v ./ssh:/root/.ssh \
+              kroniak/ssh-client bash /script/run.sh
       - name: Restore database for ${{ vars.ENV_NAME }}
         run: |
           cd ./src/anon-tools
@@ -40,6 +98,16 @@ jobs:
               -e DATABASE_USERNAME=opensupplyhub \
               -e DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
               restore
+      - name: Start Logstash for ${{ vars.ENV_NAME }}
+        if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME) && inputs.restore-db == true}}
+        run: |
+          docker run --rm \
+              -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+              -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+              -e AWS_DEFAULT_REGION=eu-west-1 \
+              amazon/aws-cli \
+              ecs update-service --desired-count 1 --cluster=ecsOpenSupplyHub${{vars.ENV_NAME}}Cluster \
+              --service=OpenSupplyHub${{vars.ENV_NAME}}AppLogstash  --region=eu-west-1
   post_deploy:
     needs: apply-anonymized-db
     runs-on: ubuntu-latest
