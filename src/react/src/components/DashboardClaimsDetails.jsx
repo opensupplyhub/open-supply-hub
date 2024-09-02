@@ -67,6 +67,24 @@ InfoSection.propTypes = {
     value: node,
 };
 
+const createLink = (url, text) => (
+    <Link to={url} href={url}>
+        {text}
+    </Link>
+);
+
+const createExternalLink = url => (
+    <a
+        href={addProtocolToWebsiteURLIfMissing(url)}
+        target="_blank"
+        rel="noopener noreferrer"
+    >
+        {url}
+    </a>
+);
+
+const formatDate = date => moment(date).format('LLL');
+
 function DashboardClaimsDetails({
     getFacilityClaim,
     clearFacilityClaim,
@@ -98,34 +116,28 @@ function DashboardClaimsDetails({
     return (
         <>
             <DashboardClaimDetailsControls data={data} />
+
             <div style={dashboardClaimsDetailsStyles.dateStyles}>
                 <Typography variant="body2">
-                    Created on {moment(data.created_at).format('LLL')} / Last
-                    updated on {moment(data.updated_at).format('LLL')}
+                    Created on {formatDate(data.created_at)} / Last updated on{' '}
+                    {formatDate(data.updated_at)}
                 </Typography>
             </div>
+
             <Paper style={dashboardClaimsDetailsStyles.containerStyles}>
                 <InfoSection
                     label="Location Name"
-                    value={
-                        <Link
-                            to={makeFacilityDetailLink(data.facility.id)}
-                            href={makeFacilityDetailLink(data.facility.id)}
-                        >
-                            {data.facility.properties.name}
-                        </Link>
-                    }
+                    value={createLink(
+                        makeFacilityDetailLink(data.facility.id),
+                        data.facility.properties.name,
+                    )}
                 />
                 <InfoSection
                     label="Claimant Account"
-                    value={
-                        <Link
-                            to={makeProfileRouteLink(data.contributor.id)}
-                            href={makeProfileRouteLink(data.contributor.id)}
-                        >
-                            {data.contributor.name}
-                        </Link>
-                    }
+                    value={createLink(
+                        makeProfileRouteLink(data.contributor.id),
+                        data.contributor.name,
+                    )}
                 />
                 <InfoSection
                     label="Contact Person"
@@ -135,51 +147,20 @@ function DashboardClaimsDetails({
                 <InfoSection label="Account Email" value={data.email} />
                 <InfoSection
                     label="Claimant's Website"
-                    value={
-                        data.website && (
-                            <a
-                                href={addProtocolToWebsiteURLIfMissing(
-                                    data.website,
-                                )}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                {data.website}
-                            </a>
-                        )
-                    }
+                    value={data.website && createExternalLink(data.website)}
                 />
                 <InfoSection
                     label="Production Location's Website"
                     value={
-                        data.facility_website && (
-                            <a
-                                href={addProtocolToWebsiteURLIfMissing(
-                                    data.facility_website,
-                                )}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                {data.facility_website}
-                            </a>
-                        )
+                        data.facility_website &&
+                        createExternalLink(data.facility_website)
                     }
                 />
-
                 <InfoSection
                     label="Production Location's LinkedIn"
                     value={
-                        data.linkedin_profile && (
-                            <a
-                                href={addProtocolToWebsiteURLIfMissing(
-                                    data.linkedin_profile,
-                                )}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                {data.linkedin_profile}
-                            </a>
-                        )
+                        data.linkedin_profile &&
+                        createExternalLink(data.linkedin_profile)
                     }
                 />
                 <InfoSection
@@ -195,15 +176,19 @@ function DashboardClaimsDetails({
                     value={data.facility_name_native_language}
                 />
             </Paper>
+
             <div style={dashboardClaimsDetailsStyles.notesHeaderStyles}>
                 <Typography variant="title">
                     Facility Claim Review Notes
                 </Typography>
             </div>
+
             <DashboardClaimsDetailsAttachments attachments={data.attachments} />
+
             {data.notes.map(note => (
                 <DashboardClaimsDetailsNote key={note.id} note={note} />
             ))}
+
             <Route component={DashboardClaimsDetailsAddNote} />
         </>
     );
