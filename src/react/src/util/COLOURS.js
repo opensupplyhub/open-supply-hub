@@ -4,9 +4,11 @@ export default {
     WHITE: '#fff',
     LIGHT_BLUE: '#009ee6',
     LIGHT_GREY: '#A5A5A5',
+    LIGHT_RED: '#FFEAEA',
     CIRCLE_COLOR: '#0427a4',
     CIRCLE_COLOR_SHADOW: 'rgba(61, 50, 138, 0.5)',
     NAVIGATION: '#FCCF3F',
     NEAR_BLACK: '#0D1128',
     CLAIM_GREY: '#F9F7F7',
+    GREEN: '#E0F5E3',
 };

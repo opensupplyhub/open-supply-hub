@@ -5,6 +5,7 @@ import CardActions from '@material-ui/core/CardActions';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
+import COLOURS from '../util/COLOURS';
 
 import { facilityDetailsPropType } from '../util/propTypes';
 
@@ -58,6 +59,9 @@ const dashboardFacilityCardStyles = Object.freeze({
     infoContainerStyles: Object.freeze({
         marging: '10px 0',
     }),
+    claimedCardStyle: Object.freeze({
+        background: COLOURS.GREEN,
+    }),
 });
 
 export default function DashboardFacilityCard({
@@ -70,6 +74,7 @@ export default function DashboardFacilityCard({
     error,
     handleEnterKeyPress,
     title,
+    highlightBackground,
 }) {
     const cardActions = data ? (
         <>
@@ -104,8 +109,15 @@ export default function DashboardFacilityCard({
         </>
     );
 
+    const facilityCardStyle = {
+        ...dashboardFacilityCardStyles.cardStyles,
+        ...(highlightBackground && data?.properties.is_claimed
+            ? dashboardFacilityCardStyles.claimedCardStyle
+            : {}),
+    };
+
     return (
-        <Card style={dashboardFacilityCardStyles.cardStyles}>
+        <Card style={facilityCardStyle}>
             <Typography
                 variant="title"
                 style={dashboardFacilityCardStyles.textSectionStyles}
@@ -127,6 +139,7 @@ export default function DashboardFacilityCard({
 DashboardFacilityCard.defaultProps = {
     data: null,
     error: null,
+    highlightBackground: false,
 };
 
 DashboardFacilityCard.propTypes = {
@@ -139,4 +152,5 @@ DashboardFacilityCard.propTypes = {
     error: arrayOf(string),
     handleEnterKeyPress: func.isRequired,
     title: string.isRequired,
+    highlightBackground: bool,
 };
