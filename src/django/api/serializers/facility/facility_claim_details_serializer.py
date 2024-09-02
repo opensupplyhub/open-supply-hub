@@ -33,11 +33,11 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
     class Meta:
         model = FacilityClaim
         fields = ('id', 'created_at', 'updated_at', 'contact_person', 'email',
-                  'phone_number', 'company_name', 'website',
-                  'facility_description', 'status',
-                  'contributor', 'facility', 'verification_method',
-                  'status_change', 'notes', 'facility_parent_company',
-                  'job_title', 'linkedin_profile', 'attachments')
+                  'company_name', 'website', 'facility_description', 'status',
+                  'contributor', 'facility', 'status_change', 'notes',
+                  'facility_parent_company', 'job_title', 'linkedin_profile',
+                  'attachments', 'facility_website', 'sector',
+                  'facility_workers_count', 'facility_name_native_language')
 
     def get_contributor(self, claim):
         return UserProfileSerializer(claim.contributor.admin).data
