@@ -21,7 +21,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     - `name_local` -> `local_name`
     - `url` -> `business_url`
     - `lon` -> `lng`
-* [OSDEV-1025](https://opensupplyhub.atlassian.net/browse/OSDEV-1025) - Added the `get_is_claimed` method to the `FacilityMatchSerializer` that returns a boolean value depending on whether the matched facility has an approved claim or not.
+* [OSDEV-1025](https://opensupplyhub.atlassian.net/browse/OSDEV-1025) - Added the `get_is_claimed` method to the `FacilityMatchSerializer` that returns a boolean value depending on whether the matched facility has an approved claim or not. The color of the facility panel for claimed facilities in the Merge moderation screen has been changed to green. Added flag `highlightBackground` to highlight panel only on the Dashboard Merge Facilities screen.
 * [OSDEV-1101](https://opensupplyhub.atlassian.net/browse/OSDEV-1101) - API v1/production-locations. Extend the country object to include alpha-3 code, numeric code, and country name.
 
 ### Architecture/Environment changes
@@ -32,7 +32,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 *
 
 ### What's new
-* [OSDEV-1045](https://opensupplyhub.atlassian.net/browse/OSDEV-1045) - The color of the facility panel for claimed facilities in the Merge moderation screen has been changed to green. Added flag `highlightBackground` to highlight panel only on the Dashboard Merge Facilities screen.
 * [OSDEV-1025](https://opensupplyhub.atlassian.net/browse/OSDEV-1025) - Added the claim badge to the facility details on the C/R moderation screen when the facility has an approved claim.
 
 ### Release instructions:
