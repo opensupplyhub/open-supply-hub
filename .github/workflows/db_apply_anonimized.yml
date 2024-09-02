@@ -26,7 +26,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
       - name: Get Opensearch domain, filesystems and accespoint ids for ${{ vars.ENV_NAME }}
-        if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME) && inputs.restore-db == true}}
         id: export_variables
         run: |
           OS_DOMAIN_NAME=$(echo "${{ vars.ENV_NAME }}-os-domain" | tr '[:upper:]' '[:lower:]')
@@ -57,7 +56,6 @@ jobs:
           echo "EFS_AP_ID=$EFS_AP_ID" >> $GITHUB_OUTPUT
           echo "OPENSEARCH_DOMAIN=$OPENSEARCH_DOMAIN" >> $GITHUB_OUTPUT
       - name: Clear OpenSearch index for ${{ vars.ENV_NAME }}
-        if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME) && inputs.restore-db == true}}
         run: |
           mkdir -p script
           mkdir -p ssh
@@ -99,7 +97,6 @@ jobs:
               -e DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
               restore
       - name: Start Logstash for ${{ vars.ENV_NAME }}
-        if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME) && inputs.restore-db == true}}
         run: |
           docker run --rm \
               -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
