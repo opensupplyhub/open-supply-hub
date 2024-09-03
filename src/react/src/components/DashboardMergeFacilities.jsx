@@ -94,7 +94,6 @@ function DashboardMergeFacilities({
                     error={targetError}
                     handleEnterKeyPress={fetchTargetFacilityOnEnterKeyPress}
                     title="Target facility for merge"
-                    highlightBackground
                 />
                 <DashboardFacilityCard
                     updateOSID={updateToMergeOSID}
@@ -106,7 +105,6 @@ function DashboardMergeFacilities({
                     error={toMergeError}
                     handleEnterKeyPress={fetchToMergeFacilityOnEnterKeyPress}
                     title="Facility to merge into target"
-                    highlightBackground
                 />
             </div>
         </>
