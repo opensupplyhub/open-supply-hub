@@ -498,7 +498,7 @@ SELECT
       api_facilityalias afa
     WHERE
       afa.facility_id = af.id
-  ) AS historical_os_id,
+  ) AS historical_os_id_value,
   af.updated_at
 FROM
   api_facility af
