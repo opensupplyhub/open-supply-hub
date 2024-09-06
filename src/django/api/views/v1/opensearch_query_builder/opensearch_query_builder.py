@@ -18,7 +18,6 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         self.default_sort_order = 'asc'
         self.build_options = {
             'country': self.__build_country,
-            'os_id': self.__build_os_id,
             'number_of_workers': self.__build_number_of_workers
         }
 
@@ -67,9 +66,6 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
             }
         })
 
-    def __build_os_id(self, field):
-        return field
-
     def __build_country(self, field):
         return f'{field}.alpha_2'
 
@@ -102,25 +98,42 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         if not values:
             return self.query_body
 
-        terms_field = self.build_options.get(
-            field, lambda x: f'{x}.keyword'
-        )(field)
+        if field == V1_PARAMETERS_LIST.OS_ID:
+            self.__build_os_id(values)
 
-        existing_terms = next(
-            (
-                item['terms']
-                for item in self.query_body['query']['bool']['must']
-                if 'terms' in item and terms_field in item['terms']
-            ),
-            None,
-        )
-
-        if existing_terms:
-            existing_terms[terms_field].extend(values)
         else:
-            self.query_body['query']['bool']['must'].append(
-                {'terms': {terms_field: values}}
+            terms_field = self.build_options.get(
+                field, lambda x: f'{x}.keyword'
+            )(field)
+
+            existing_terms = next(
+                (
+                    item['terms']
+                    for item in self.query_body['query']['bool']['must']
+                    if 'terms' in item and terms_field in item['terms']
+                ),
+                None,
             )
+
+            if existing_terms:
+                existing_terms[terms_field].extend(values)
+            else:
+                self.query_body['query']['bool']['must'].append(
+                    {'terms': {terms_field: values}}
+                )
+
+    def __build_os_id(self, values):
+        # Build a query to search in both os_id and historical_os_id.keyword
+        self.query_body['query']['bool']['must'].append(
+            {
+                'bool': {
+                    'should': [
+                        {'terms': {'os_id': values}},
+                        {'terms': {'historical_os_id.keyword': values}},
+                    ]
+                }
+            }
+        )
 
     def add_range(self, field, query_params):
         min_value = query_params.get(f'{field}[min]')
