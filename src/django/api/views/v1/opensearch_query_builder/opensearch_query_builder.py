@@ -102,19 +102,25 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         if not values:
             return self.query_body
 
-        terms_field = self.build_options \
-            .get(field, lambda x: f'{x}.keyword')(field)
+        terms_field = self.build_options.get(
+            field, lambda x: f'{x}.keyword'
+        )(field)
 
         existing_terms = next(
-            (item['terms'] for item in self.query_body['query']['bool']['must']
-             if 'terms' in item and terms_field in item['terms']), None)
+            (
+                item['terms']
+                for item in self.query_body['query']['bool']['must']
+                if 'terms' in item and terms_field in item['terms']
+            ),
+            None,
+        )
 
         if existing_terms:
             existing_terms[terms_field].extend(values)
         else:
-            self.query_body['query']['bool']['must'].append({
-                'terms': {terms_field: values}
-            })
+            self.query_body['query']['bool']['must'].append(
+                {'terms': {terms_field: values}}
+            )
 
     def add_range(self, field, query_params):
         min_value = query_params.get(f'{field}[min]')
@@ -149,8 +155,9 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
     def add_sort(self, field, order_by=None):
         if order_by is None:
             order_by = self.default_sort_order
-        self.query_body['sort'] \
-            .append({f'{field}.keyword': {'order': order_by}})
+        self.query_body['sort'].append(
+            {f'{field}.keyword': {'order': order_by}}
+        )
 
     def add_search_after(self, search_after):
         # search_after can't be present as empty by default in query_body
@@ -168,8 +175,7 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
             }
             self.query_body['sort'].append(sort_criteria)
 
-        self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER] \
-            .append(search_after)
+        self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER].append(search_after)
 
     def get_final_query_body(self):
         return self.query_body
