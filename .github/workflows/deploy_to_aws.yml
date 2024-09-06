@@ -315,7 +315,8 @@ jobs:
         run: |
           pwd
           ls
-          cd ./src/clear_opensearch
+          ls src/
+          cd src/clear_opensearch
           mkdir -p script
           mkdir -p ssh
           echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ssh/config
