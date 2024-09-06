@@ -313,10 +313,7 @@ jobs:
           EFS_ID: ${{ steps.export_variables.outputs.EFS_ID }}
           BASTION_IP: ${{ vars.BASTION_IP }}
         run: |
-          pwd
-          ls
-          ls src/
-          cd src/clear_opensearch
+          cd ./src/clear_opensearch
           mkdir -p script
           mkdir -p ssh
           echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ssh/config
