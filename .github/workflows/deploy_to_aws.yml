@@ -313,6 +313,8 @@ jobs:
           EFS_ID: ${{ steps.export_variables.outputs.EFS_ID }}
           BASTION_IP: ${{ vars.BASTION_IP }}
         run: |
+          pwd
+          ls
           cd ./src/clear_opensearch
           mkdir -p script
           mkdir -p ssh
