@@ -7,7 +7,7 @@ class BaseProductionLocationsTest(OpenSearchIntegrationTestCase):
 
     def setUp(self):
         super().setUp()
-        self.open_search_client= self.getClient()
+        self.open_search_client = self.getClient()
 
         host = os.getenv('REACT_HOST')
         port = os.getenv('REACT_PORT')
