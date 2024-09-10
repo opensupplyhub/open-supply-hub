@@ -53,8 +53,19 @@ class TestOpenSearchQueryBuilder(TestCase):
         expected = {
             'bool': {
                 'should': [
-                    {'terms': {'os_id': ['1', '2']}},
-                    {'terms': {'historical_os_id.keyword': ['1', '2']}},
+                    {
+                        'terms': {
+                            'os_id': ['CN2021250D1DTN7', 'BD2020021QK28YZ']
+                        }
+                    },
+                    {
+                        'terms': {
+                            'historical_os_id.keyword': [
+                                'CN2021250D1DTN7',
+                                'BD2020021QK28YZ',
+                            ]
+                        }
+                    },
                 ]
             }
         }
