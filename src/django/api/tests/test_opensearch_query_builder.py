@@ -49,7 +49,7 @@ class TestOpenSearchQueryBuilder(TestCase):
         )
 
     def test_add_terms_for_os_id(self):
-        self.builder.add_terms('os_id', ['1', '2'])
+        self.builder.add_terms('os_id', ['CN2021250D1DTN7', 'BD2020021QK28YZ'])
         expected = {
             'bool': {
                 'should': [
