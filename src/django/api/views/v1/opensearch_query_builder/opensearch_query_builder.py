@@ -106,21 +106,9 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
                 field, lambda x: f'{x}.keyword'
             )(field)
 
-            existing_terms = next(
-                (
-                    item['terms']
-                    for item in self.query_body['query']['bool']['must']
-                    if 'terms' in item and terms_field in item['terms']
-                ),
-                None,
+            self.query_body['query']['bool']['must'].append(
+                {'terms': {terms_field: values}}
             )
-
-            if existing_terms:
-                existing_terms[terms_field].extend(values)
-            else:
-                self.query_body['query']['bool']['must'].append(
-                    {'terms': {terms_field: values}}
-                )
 
     def __build_os_id(self, values):
         # Build a query to search in both os_id and historical_os_id.keyword

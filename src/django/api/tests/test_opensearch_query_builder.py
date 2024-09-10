@@ -81,17 +81,6 @@ class TestOpenSearchQueryBuilder(TestCase):
             []
         )
 
-    def test_add_terms_existing_terms(self):
-        self.builder.query_body['query']['bool']['must'] = [
-            {'terms': {'country.alpha_2': ['US', 'CA']}}
-        ]
-        self.builder.add_terms('country', ['MX'])
-        expected = {'terms': {'country.alpha_2': ['US', 'CA', 'MX']}}
-        self.assertIn(
-            expected,
-            self.builder.query_body['query']['bool']['must']
-        )
-
     def test_add_terms_with_different_field(self):
         self.builder.add_terms('country', ['US', 'CA'])
         self.builder.add_terms('sector', ['Agriculture', 'Apparel'])
