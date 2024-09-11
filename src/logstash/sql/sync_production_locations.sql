@@ -491,6 +491,14 @@ SELECT
     WHERE
       afc2.facility_id = af.id
   ) AS claim_status_value,
+  (
+    SELECT
+      ARRAY_AGG(afa.os_id)
+    FROM
+      api_facilityalias afa
+    WHERE
+      afa.facility_id = af.id
+  ) AS historical_os_id_value,
   af.updated_at
 FROM
   api_facility af

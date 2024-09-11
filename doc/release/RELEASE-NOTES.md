@@ -17,7 +17,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe scheme changes here.*
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-1126](https://opensupplyhub.atlassian.net/browse/OSDEV-1126) - Added the `historical_os_id` field to the response from the `v1/production-locations` endpoint if the searched production location contains this data. Modified the search query for `os_id` so that the search is conducted in both the `os_id` and `historical_os_id` fields in the OpenSearch production-locations index.
+To make this possible, the `sync_production_locations.sql` script, which generates data for the production-locations index, was modified to include the selection of `historical_os_id_value` from the `api_facilityalias` table.
+Additionally, a `historical_os_id` filter was added to the `sync_production_locations.conf`, ensuring that the `historical_os_id` is included in the index document only when the `historical_os_id_value` is not empty.
 
 ### Architecture/Environment changes
 * *Describe architecture/environment changes here.*
@@ -31,7 +33,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1225](https://opensupplyhub.atlassian.net/browse/OSDEV-1225) - The auto email responses for `Approved` and `Rejected` statuses have been updated to improve user experience. A user receives an email updating them on the status of their list and the next steps they need to take.
 
 ### Release instructions:
-* *Provide release instructions here.*
+* Before deploying to an existing environment, manually delete the related EFS storage, OpenSearch domain, and stop all tasks of the Logstash service in the appropriate ECS cluster. This is necessary to apply the new mapping for the production-locations OpenSearch index.
 
 
 ## Release 1.20.0
