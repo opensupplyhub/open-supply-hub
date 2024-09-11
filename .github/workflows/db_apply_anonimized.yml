@@ -68,13 +68,12 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "eu-west-1"
           OPENSEARCH_DOMAIN: ${{ steps.export_variables.outputs.OPENSEARCH_DOMAIN }}
           EFS_AP_ID: ${{ steps.export_variables.outputs.EFS_AP_ID }}
           EFS_ID: ${{ steps.export_variables.outputs.EFS_ID }}
           BASTION_IP: ${{ vars.BASTION_IP }}
         run: |
-          cd ./src/clear_opensearch
+          cd ./deployment/terraform/clear_opensearch
           mkdir -p script
           mkdir -p ssh
           echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ssh/config
