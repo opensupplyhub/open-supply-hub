@@ -30,7 +30,7 @@ Additionally, a `historical_os_id` filter was added to the `sync_production_loca
     * Corrected grammar mistakes in the description of the job steps for stopping Logstash and clearing OpenSearch for the `DB - Apply Anonymized DB` and `Deploy to AWS` GitHub workflows.
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* [OSDEV-1225](https://opensupplyhub.atlassian.net/browse/OSDEV-1225) - The auto email responses for `Approved` and `Rejected` statuses have been updated to improve user experience. A user receives an email updating them on the status of their list and the next steps they need to take.
 
 ### Release instructions:
 * Before deploying to an existing environment, manually delete the related EFS storage, OpenSearch domain, and stop all tasks of the Logstash service in the appropriate ECS cluster. This is necessary to apply the new mapping for the production-locations OpenSearch index.
