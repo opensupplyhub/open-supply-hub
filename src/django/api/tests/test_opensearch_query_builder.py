@@ -40,13 +40,62 @@ class TestOpenSearchQueryBuilder(TestCase):
             self.builder.query_body['query']['bool']['must']
             )
 
-    def test_add_terms(self):
+    def test_add_terms_for_standard_field(self):
         self.builder.add_terms('country', ['US', 'CA'])
         expected = {'terms': {'country.alpha_2': ['US', 'CA']}}
         self.assertIn(
             expected,
             self.builder.query_body['query']['bool']['must']
-            )
+        )
+
+    def test_add_terms_for_os_id(self):
+        self.builder.add_terms('os_id', ['CN2021250D1DTN7', 'BD2020021QK28YZ'])
+        expected = {
+            'bool': {
+                'should': [
+                    {
+                        'terms': {
+                            'os_id': ['CN2021250D1DTN7', 'BD2020021QK28YZ']
+                        }
+                    },
+                    {
+                        'terms': {
+                            'historical_os_id.keyword': [
+                                'CN2021250D1DTN7',
+                                'BD2020021QK28YZ',
+                            ]
+                        }
+                    },
+                ]
+            }
+        }
+        self.assertIn(
+            expected,
+            self.builder.query_body['query']['bool']['must']
+        )
+
+    def test_add_terms_empty_values(self):
+        self.builder.add_terms('country', [])
+        self.assertEqual(
+            self.builder.query_body['query']['bool']['must'],
+            []
+        )
+
+    def test_add_terms_with_different_field(self):
+        self.builder.add_terms('country', ['US', 'CA'])
+        self.builder.add_terms('sector', ['Agriculture', 'Apparel'])
+        expected_country_terms = {'terms': {'country.alpha_2': ['US', 'CA']}}
+        expected_sector_terms = {
+            'terms': {'sector.keyword': ['Agriculture', 'Apparel']}
+        }
+        self.assertIn(
+            expected_country_terms,
+            self.builder.query_body['query']['bool']['must']
+        )
+        self.assertIn(
+            expected_sector_terms,
+            self.builder.query_body['query']['bool']['must']
+        )
 
     def test_add_range_for_number_of_workers(self):
         self.builder.add_range(

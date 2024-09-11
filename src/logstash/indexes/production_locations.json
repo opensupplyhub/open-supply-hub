@@ -184,6 +184,14 @@
               "type": "keyword"
             }
           }
+        },
+        "historical_os_id": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
         }
       }
     }

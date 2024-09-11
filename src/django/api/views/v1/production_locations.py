@@ -52,8 +52,9 @@ class ProductionLocations(ViewSet):
     def retrieve(self, request,  pk=None):
         query_params = QueryDict('', mutable=True)
         query_params.update({'os_id': pk})
-        query_body = self.opensearch_query_director. \
-            build_query(query_params)
+        query_body = self.opensearch_query_director.build_query(
+            query_params
+        )
         response = self.opensearch_service.search_index(
             OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
             query_body
