@@ -1,21 +1,35 @@
 {% block content %}
-Hi there,
+Hello,
 
-We’re writing to let you know that your request to upload a data list to Open Supply Hub was rejected. The details of your list are as follows:
+Thank you for submitting {{ facility_list_name }} to OS Hub. Your list is almost ready!
 
-- Facility list: {{ facility_list_name }} created on {{ facility_list_created_at }}
-- Facility list description: {{ facility_list_description }}
-- Facility list URL: {{ facility_list_url }}
+Here are the details of your list:
+
+  - Facility list: {{ facility_list_name }} created on {{ facility_list_created_at }}
+  - Facility list description: {{ facility_list_description }}
+  - Facility list URL: {{ facility_list_url }}
+
+In the Feedback Phase we will support you with a few data quality updates and then we can
+continue processing your list.
+
+Make the updates listed below in your Excel/CSV file and <a href="https://info.opensupplyhub.org/resources/preparing-data">upload the FULL list again</a>.
 
 {% if rejection_reason|length %}
-Not to worry! Below are details on the reason for rejection, as well as guidance on next steps: 
+<strong>Here are the updates that need to be made:</strong>
 
 {{ rejection_reason }}
 {% endif %}
 
-For any questions, feel free to reach out to the OS Hub Data Team: data@opensupplyhub.org. We appreciate your support as we work to maintain a high quality dataset that is open and beneficial to all who need it.
+Useful Resources:
 
-Best wishes,
+  - <a href="http://info.opensupplyhub.org/faqs">Frequently Asked Questions</a>: For more information on common upload issues and
+    how to resolve them.
+  - <a href="https://info.opensupplyhub.org/resources/preparing-data">Preparing Data for Upload Guide</a>: For step-by-step instructions for preparing your
+    Excel/CSV file.
+  - <strong>Need more help?</strong> Can’t find what you need? Email <a href="data@opensupplyhub.org">data@opensupplyhub.org</a>.
+
+Thank you for your contribution! Your data helps open doors to safe and sustainable supply
+chains.
 
 {% include "mail/data_team_signature_block.txt" %}
 {% endblock content %}
