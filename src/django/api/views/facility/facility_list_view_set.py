@@ -376,6 +376,115 @@ class FacilityListViewSet(ModelViewSet):
 
         return processing_facility_executor.run_processing()
 
+    # TODO: Rename this method to `create`. A temporary duplicate was created
+    #       for testing purposes of the ContriCleaner parsing.
+    @action(detail=False, methods=['POST'],
+            url_path='createlistv2')
+    @transaction.atomic
+    def createlistv2(self, request):
+        """
+        Upload a new Facility List.
+
+        ## Request Body
+
+        *Required*
+
+        `file` (`file`): CSV file to upload.
+
+        *Optional*
+
+        `name` (`string`): Name of the uploaded file.
+
+        `description` (`string`): Description of the uploaded file.
+
+        `replaces` (`number`): An optional ID for an existing list to replace
+                   with the new list
+
+        ### Sample Response
+
+            {
+                "id": 1,
+                "name": "list name",
+                "description": "list description",
+                "file_name": "list-1.csv",
+                "is_active": true,
+                "is_public": true
+            }
+        """
+        if 'file' not in request.data:
+            raise ValidationError('No file specified.')
+        uploaded_file = request.data['file']
+        if type(uploaded_file) not in (
+                InMemoryUploadedFile, TemporaryUploadedFile):
+            raise ValidationError('File not submitted properly.')
+        if uploaded_file.size > MAX_UPLOADED_FILE_SIZE_IN_BYTES:
+            mb = MAX_UPLOADED_FILE_SIZE_IN_BYTES / (1024*1024)
+            raise ValidationError(
+                'Uploaded file exceeds the maximum size of {:.1f}MB.'.format(
+                    mb))
+
+        try:
+            contributor = request.user.contributor
+        except Contributor.DoesNotExist as exc:
+            raise ValidationError(
+                'User contributor cannot be None'
+            ) from exc
+
+        if 'name' in request.data:
+            name = request.data['name']
+        else:
+            name = os.path.splitext(uploaded_file.name)[0]
+
+        if '|' in name:
+            raise ValidationError('Name cannot contain the "|" character.')
+
+        if 'description' in request.data:
+            description = request.data['description']
+        else:
+            description = None
+
+        if description is not None and '|' in description:
+            raise ValidationError(
+                'Description cannot contain the "|" character.'
+            )
+
+        replaces = None
+        if 'replaces' in request.data:
+            try:
+                replaces = int(request.data['replaces'])
+            except ValueError as exc:
+                raise ValidationError(
+                    '"replaces" must be an integer ID.'
+                ) from exc
+            old_list_qs = FacilityList.objects.filter(
+                source__contributor=contributor, pk=replaces)
+            if old_list_qs.count() == 0:
+                raise ValidationError(
+                    f'{replaces} is not a valid FacilityList ID.'
+                )
+            replaces = old_list_qs[0]
+            if FacilityList.objects.filter(replaces=replaces).count() > 0:
+                raise ValidationError(
+                    f'FacilityList {replaces.pk} has already been replaced.'
+                )
+
+        new_list = FacilityList(
+            name=name,
+            description=description,
+            file_name=uploaded_file.name,
+            file=uploaded_file,
+            replaces=replaces,
+            match_responsibility=contributor.match_responsibility)
+        new_list.save()
+
+        Source.objects.create(
+            contributor=contributor,
+            source_type=Source.LIST,
+            facility_list=new_list)
+
+        serializer = self.get_serializer(new_list)
+        return Response(serializer.data)
+
     def list(self, request):
         """
         Returns Facility Lists for an authenticated Contributor.

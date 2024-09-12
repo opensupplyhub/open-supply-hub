@@ -248,6 +248,7 @@ export function assembleAndDownloadFacilityListCSV() {
                     list: { data },
                 },
             } = getState();
+            console.log('Hi, we are here');
 
             const { id, item_count: count } = data;
 
