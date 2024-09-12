@@ -32,7 +32,7 @@ on:
         type: boolean
         default: false
       clear-opensearch:
-        description: 'Clear OpenSearch index'
+        description: 'Clear OpenSearch indexes'
         required: false
         type: boolean
         default: false
@@ -407,7 +407,7 @@ jobs:
           EFS_ID: ${{ steps.export_variables.outputs.EFS_ID }}
           BASTION_IP: ${{ vars.BASTION_IP }}
         run: |
-          cd ./deployment/terraform/clear_opensearch
+          cd ./deployment/clear_opensearch
           mkdir -p script
           mkdir -p ssh
           echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ssh/config
