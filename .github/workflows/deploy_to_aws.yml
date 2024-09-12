@@ -266,12 +266,12 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
       - name: Stop Logstash for ${{ vars.ENV_NAME }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
         run: |
-          docker run --rm \
-              -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-              -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-              -e AWS_DEFAULT_REGION=eu-west-1 \
-              amazon/aws-cli \
+          aws \
               ecs update-service --desired-count 0 --cluster=ecsOpenSupplyHub${{vars.ENV_NAME}}Cluster \
               --service=OpenSupplyHub${{vars.ENV_NAME}}AppLogstash  --region=eu-west-1
 
@@ -375,28 +375,20 @@ jobs:
       - name: Get OpenSearch domain, filesystem and access point IDs for ${{ vars.ENV_NAME }}
         if: ${{  inputs.clear-opensearch == true }}
         id: export_variables
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
         run: |
           OS_DOMAIN_NAME=$(echo "${{ vars.ENV_NAME }}-os-domain" | tr '[:upper:]' '[:lower:]')
-          OPENSEARCH_DOMAIN=$(docker run --rm \
-                       -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-                       -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-                       -e AWS_DEFAULT_REGION=eu-west-1 \
-                       amazon/aws-cli \
+          OPENSEARCH_DOMAIN=$(aws \
                        es describe-elasticsearch-domains --domain-names $OS_DOMAIN_NAME \
                        --query "DomainStatusList[].Endpoints.vpc" --output text)
-          EFS_ID=$(docker run --rm \
-                       -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-                       -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-                       -e AWS_DEFAULT_REGION=eu-west-1 \
-                       amazon/aws-cli \
+          EFS_ID=$(aws \
                        efs describe-file-systems \
                        --query "FileSystems[?Tags[?Key=='Environment' && Value=='${{ vars.ENV_NAME }}']].FileSystemId" \
                        --output text)
-          EFS_AP_ID=$(docker run --rm \
-                          -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-                          -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-                          -e AWS_DEFAULT_REGION=eu-west-1 \
-                          amazon/aws-cli \
+          EFS_AP_ID=$(aws \
                           efs describe-access-points \
                           --query "AccessPoints[?FileSystemId=='$EFS_ID'].AccessPointId" \
                           --output text)
@@ -439,11 +431,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
       - name: Start Logstash for ${{ vars.ENV_NAME }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
         run: |
-          docker run --rm \
-              -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-              -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-              -e AWS_DEFAULT_REGION=eu-west-1 \
-              amazon/aws-cli \
+          aws \
               ecs update-service --desired-count 1 --cluster=ecsOpenSupplyHub${{vars.ENV_NAME}}Cluster \
               --service=OpenSupplyHub${{vars.ENV_NAME}}AppLogstash  --region=eu-west-1
