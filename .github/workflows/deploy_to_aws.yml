@@ -256,6 +256,7 @@ jobs:
   stop_logstash:
     needs: create_kafka_topic
     runs-on: ubuntu-latest
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -364,6 +365,7 @@ jobs:
   clear_opensearch:
     needs: post_deploy
     runs-on: ubuntu-latest
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -422,6 +424,7 @@ jobs:
   start_logstash:
     needs: clear_opensearch
     runs-on: ubuntu-latest
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
