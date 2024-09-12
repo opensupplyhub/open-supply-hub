@@ -365,6 +365,13 @@ jobs:
     needs: post_deploy
     runs-on: ubuntu-latest
     steps:
+      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+        id: get_env_name
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
+        with:
+          string: ${{ vars.ENV_NAME }}
+      - name: Checkout repo
+        uses: actions/checkout@v4
       - name: Get OpenSearch domain, filesystem and access point IDs for ${{ vars.ENV_NAME }}
         if: ${{  inputs.clear-opensearch == true }}
         id: export_variables
