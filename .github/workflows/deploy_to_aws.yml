@@ -274,7 +274,7 @@ jobs:
         run: |
           aws \
               ecs update-service --desired-count 0 --cluster=ecsOpenSupplyHub${{vars.ENV_NAME}}Cluster \
-              --service=OpenSupplyHub${{vars.ENV_NAME}}AppLogstash  --region=eu-west-1
+              --service=OpenSupplyHub${{vars.ENV_NAME}}AppLogstash
 
   restore_database:
     needs: stop_logstash
@@ -441,4 +441,4 @@ jobs:
         run: |
           aws \
               ecs update-service --desired-count 1 --cluster=ecsOpenSupplyHub${{vars.ENV_NAME}}Cluster \
-              --service=OpenSupplyHub${{vars.ENV_NAME}}AppLogstash  --region=eu-west-1
+              --service=OpenSupplyHub${{vars.ENV_NAME}}AppLogstash
