@@ -29,6 +29,7 @@ import SurveyDialogNotification from './components/SurveyDialogNotification';
 import Settings from './components/Settings/Settings';
 import ExternalRedirect from './components/ExternalRedirect';
 import Facilities from './components/Facilities';
+import ContributeProductionLocation from './components/Contribute/ContributeProductionLocation';
 
 import { sessionLogin } from './actions/auth';
 import { fetchFeatureFlags } from './actions/featureFlags';
@@ -53,6 +54,7 @@ import {
     settingsRoute,
     InfoLink,
     InfoPaths,
+    contributeProductionLocationRoute,
 } from './util/constants';
 
 class Routes extends Component {
@@ -154,6 +156,11 @@ class Routes extends Component {
                                     exact
                                     path={settingsRoute}
                                     component={Settings}
+                                />
+                                <Route
+                                    exact
+                                    path={contributeProductionLocationRoute}
+                                    component={ContributeProductionLocation}
                                 />
                                 <Route exact path="/about/processing">
                                     <ExternalRedirect
