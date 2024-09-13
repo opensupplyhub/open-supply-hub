@@ -61,6 +61,7 @@ jobs:
               -e DATABASE_USERNAME=opensupplyhub \
               -e DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
               restore
+
   post_deploy:
     needs: apply-anonymized-db
     runs-on: ubuntu-latest
