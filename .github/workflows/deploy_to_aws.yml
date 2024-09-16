@@ -5,9 +5,9 @@ on:
     branches:
       - main
       - 'releases/**'
-    tags:
-      - 'sandbox-*'
-      - 'production-*'
+    # tags:
+    #   - 'sandbox-*'
+    #   - 'production-*'
   workflow_dispatch:
     inputs:
       deploy-env:
