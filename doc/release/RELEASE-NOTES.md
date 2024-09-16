@@ -23,9 +23,10 @@ Additionally, a `historical_os_id` filter was added to the `sync_production_loca
 
 ### Architecture/Environment changes
 * [OSDEV-1177](https://opensupplyhub.atlassian.net/browse/OSDEV-1177)
-  - Improved OpenSearch indexes cleanup step in the _Deploy to AWS_ and _DB - Apply Anonymized DB_ pipelines to use script templates so that changes can be made in one place rather than in each pipeline separately
-  - Stop/start Logstash and clearing OpenSearch indexes moved to separate jobs of _Deploy to AWS_ and _DB - Apply Anonymized DB_ pipelines.
-  - Stop/start Logstash and clearing OpenSearch indexes now runs on ubuntu-latest runner.
+  * Improved OpenSearch indexes cleanup step in the `Deploy to AWS` and `DB - Apply Anonymized DB` pipelines to use script templates so that changes can be made in one place rather than in each pipeline separately
+  * Stop/start Logstash and clearing OpenSearch indexes moved to separate jobs of `Deploy to AWS` and `DB - Apply Anonymized DB` pipelines.
+  * Stop/start Logstash and clearing OpenSearch indexes now runs on ubuntu-latest runner.
+  * The automation deployment to AWS after creating tags for `sandbox` and `production` was temporarily prevented (until the implementation of [OSDEV-1325](https://opensupplyhub.atlassian.net/browse/OSDEV-1325)).
 
 ### Bugfix
 * [OSDEV-1177](https://opensupplyhub.atlassian.net/browse/OSDEV-1177) - The following changes have been made:
