@@ -22,7 +22,10 @@ To make this possible, the `sync_production_locations.sql` script, which generat
 Additionally, a `historical_os_id` filter was added to the `sync_production_locations.conf`, ensuring that the `historical_os_id` is included in the index document only when the `historical_os_id_value` is not empty.
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* [OSDEV-1177](https://opensupplyhub.atlassian.net/browse/OSDEV-1177)
+  - Improved OpenSearch indexes cleanup step in the _Deploy to AWS_ and _DB - Apply Anonymized DB_ pipelines to use script templates so that changes can be made in one place rather than in each pipeline separately
+  - Stop/start Logstash and clearing OpenSearch indexes moved to separate jobs of _Deploy to AWS_ and _DB - Apply Anonymized DB_ pipelines.
+  - Stop/start Logstash and clearing OpenSearch indexes now runs on ubuntu-latest runner.
 
 ### Bugfix
 * [OSDEV-1177](https://opensupplyhub.atlassian.net/browse/OSDEV-1177) - The following changes have been made:
