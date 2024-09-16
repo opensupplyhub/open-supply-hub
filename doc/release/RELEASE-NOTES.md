@@ -38,7 +38,7 @@ Additionally, a `historical_os_id` filter was added to the `sync_production_loca
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
-* After running the Release [Deploy] workflow for both the sandbox and production environments, the responsible person must manually run the Deploy to AWS workflow, ensuring that the Clear OpenSearch indexes option is checked for each environment.
+* After running the `Release [Deploy]` workflow for both the `sandbox` and `production` environments, the responsible person must manually run the `Deploy to AWS` workflow, ensuring that the `Clear OpenSearch indexes` option is checked for each environment.
 Note: This instruction updates item 3 of the ['Release to Production and Sandbox'](https://github.com/opensupplyhub/open-supply-hub/blob/main/doc/release/RELEASE-PROTOCOL.md#release-to-production-and-sandbox) section of the RELEASE-PROTOCOL.
 
 
