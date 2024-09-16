@@ -36,7 +36,10 @@ Additionally, a `historical_os_id` filter was added to the `sync_production_loca
 * [OSDEV-1225](https://opensupplyhub.atlassian.net/browse/OSDEV-1225) - The auto email responses for `Approved` and `Rejected` statuses have been updated to improve user experience. A user receives an email updating them on the status of their list and the next steps they need to take.
 
 ### Release instructions:
-* Before deploying to an existing environment, manually delete the related EFS storage, OpenSearch domain, and stop all tasks of the Logstash service in the appropriate ECS cluster. This is necessary to apply the new mapping for the production-locations OpenSearch index.
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+* After running the Release [Deploy] workflow for both the sandbox and production environments, the responsible person must manually run the Deploy to AWS workflow, ensuring that the Clear OpenSearch indexes option is checked for each environment.
+Note: This instruction updates item 3 of the ['Release to Production and Sandbox'](https://github.com/opensupplyhub/open-supply-hub/blob/main/doc/release/RELEASE-PROTOCOL.md#release-to-production-and-sandbox) section of the RELEASE-PROTOCOL.
 
 
 ## Release 1.20.0
