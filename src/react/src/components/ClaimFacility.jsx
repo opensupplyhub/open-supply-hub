@@ -30,7 +30,7 @@ const claimFacilityContainerStyles = Object.freeze({
 
 const appStyles = Object.freeze({
     gridStyles: Object.freeze({
-        backgroundColor: COLOURS.CLAIM_GREY,
+        backgroundColor: COLOURS.LIGHT_GREY,
     }),
 });
 
