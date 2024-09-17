@@ -6,26 +6,34 @@ import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
 import SearchByOsId from './SearchByOsId';
 
-function TabContainer(props) {
-    return (
-        <Typography component="div" style={{ padding: 8 * 3 }}>
-            {props.children}
-        </Typography>
-    );
-}
+import COLOURS from '../../util/COLOURS';
 
-TabContainer.propTypes = {
-    children: PropTypes.node.isRequired,
-};
-
-const styles = theme => ({
+const makeContributeProductionLocationStyles = theme => ({
     root: {
         flexGrow: 1,
-        backgroundColor: theme.palette.background.paper,
+        marginTop: 48,
     },
+    tabsIndicator: {
+        backgroundColor: theme.palette.primary.main,
+        height: '4px',
+    },
+    tabRoot: {
+        textTransform: 'initial',
+        fontSize: '18px',
+        fontWeight: theme.typography.fontWeightSemiBold,
+        width: '100%',
+        maxWidth: 300,
+        borderBottom: `1px solid ${COLOURS.NEAR_BLACK}`,
+        paddingBottom: 16,
+        '&$tabSelected': {
+            fontWeight: theme.typography.fontWeightBold,
+        },
+    },
+    tabLabelContainer: {
+        padding: '0 24px',
+    },
+    tabSelected: {},
 });
-// const osId = 'OS ID';
-// const nameAndCountry = 'name and country';
 
 const ContributeProductionLocation = ({ classes }) => {
     const [value, setValue] = useState(0);
@@ -35,23 +43,52 @@ const ContributeProductionLocation = ({ classes }) => {
     };
 
     return (
-        <>
-            <Typography component="h1" variant="h1" gutterBottom>
+        <div
+            style={{
+                background: COLOURS.LIGHT_GREY,
+                padding: '48px 5% 120px 5%',
+            }}
+        >
+            <Typography
+                component="h1"
+                variant="h1"
+                style={{
+                    fontWeight: '900',
+                    fontSize: '56px',
+                }}
+            >
                 Production Location Search
             </Typography>
             <div className={classes.root}>
-                <Tabs value={value} onChange={handleChange}>
-                    <Tab label="Search by OS ID" />
-                    <Tab label="Search by Name and Address" />
+                <Tabs
+                    value={value}
+                    onChange={handleChange}
+                    classes={{
+                        root: classes.tabsRoot,
+                        indicator: classes.tabsIndicator,
+                    }}
+                >
+                    <Tab
+                        classes={{
+                            root: classes.tabRoot,
+                            selected: classes.tabSelected,
+                            labelContainer: classes.tabLabelContainer,
+                        }}
+                        label="Search by OS ID"
+                    />
+                    <Tab
+                        classes={{
+                            root: classes.tabRoot,
+                            selected: classes.tabSelected,
+                            labelContainer: classes.tabLabelContainer,
+                        }}
+                        label="Search by Name and Address"
+                    />
                 </Tabs>
-                {/* <p>
-                    Enter the full name and country to search for a matching
-                    profile. Use the field below and click “search”.
-                </p> */}
                 {value === 0 && <SearchByOsId />}
-                {value === 1 && <TabContainer>Item Two</TabContainer>}
+                {value === 1 && <div>Search by Name and Address</div>}
             </div>
-        </>
+        </div>
     );
 };
 
@@ -59,4 +96,6 @@ ContributeProductionLocation.propTypes = {
     classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(ContributeProductionLocation);
+export default withStyles(makeContributeProductionLocationStyles)(
+    ContributeProductionLocation,
+);
