@@ -42,6 +42,8 @@ function App({
                 },
                 typography: {
                     fontFamily: config.font,
+                    fontWeightBold: 900,
+                    fontWeightSemiBold: 600,
                 },
                 palette: {
                     primary: {
@@ -63,6 +65,9 @@ function App({
                             config.color,
                             'rgb(255, 216, 101)',
                         ),
+                    },
+                    background: {
+                        grey: '#F9F7F7',
                     },
                 },
             }),
