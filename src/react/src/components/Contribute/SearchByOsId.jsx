@@ -6,48 +6,7 @@ import TextField from '@material-ui/core/TextField';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 import Paper from '@material-ui/core/Paper';
 import Button from '@material-ui/core/Button';
-import COLOURS from '../../util/COLOURS';
-
-const makeSearchByOsIdStyles = theme =>
-    Object.freeze({
-        buttonStyles: Object.freeze({
-            width: '200px',
-            borderRadius: '0',
-            textTransform: 'none',
-            fontWeight: 'bold',
-            backgroundColor: theme.palette.action.main,
-            marginTop: '26px',
-            color: theme.palette.getContrastText(theme.palette.action.main),
-            '&:hover': {
-                backgroundColor: theme.palette.action.dark,
-            },
-        }),
-        searchInputRoot: Object.freeze({}),
-        searchInput: Object.freeze({
-            fontSize: '18px',
-            fontWeight: '600',
-            lineHeight: '22px',
-            padding: '16px',
-        }),
-        notchedOutline: Object.freeze({
-            borderRadius: 0,
-        }),
-    });
-
-const helperText = () => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-        <InfoOutlinedIcon style={{ fontSize: 16, verticalAlign: 'middle' }} />
-        <Typography
-            style={{
-                fontSize: '16px',
-                fontWeight: '600',
-                color: COLOURS.DARK_GREY,
-            }}
-        >
-            To search you need to enter the full ID production location
-        </Typography>
-    </div>
-);
+import { makeSearchByOsIdStyles } from '../../util/styles';
 
 const SearchByOsId = ({ classes }) => {
     const [value, setValue] = useState('');
@@ -57,43 +16,33 @@ const SearchByOsId = ({ classes }) => {
         setValue(uppercaseValue);
     };
 
+    const helperText = (
+        <div className={classes.helperTextContainerStyles}>
+            <InfoOutlinedIcon className={classes.infoIconStyles} />
+            <Typography className={classes.helperTextStyles}>
+                To search you need to enter the full ID production location
+            </Typography>
+        </div>
+    );
+
     return (
         <>
-            <Typography
-                style={{
-                    fontSize: '18px',
-                    fontWeight: '600',
-                    margin: '24px 0 32px 0',
-                }}
-            >
+            <Typography className={classes.instructionTextStyles}>
                 Enter the full OS ID to search for a matching profile. Use the
                 field below and click “search”.
             </Typography>
-            <Paper
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    padding: '40px 110px',
-                    borderRadius: '0',
-                    boxShadow: 'none',
-                }}
-            >
+            <Paper className={classes.searchContainerStyles}>
                 <Typography
                     component="h2"
                     variant="h2"
-                    style={{
-                        fontSize: '36px',
-                        fontWeight: '700',
-                    }}
+                    className={classes.mainTitleStyles}
                 >
                     Know the OS ID for your location?
                 </Typography>
                 <Typography
-                    style={{
-                        fontSize: '21px',
-                        fontWeight: '600',
-                        margin: '8px 0 24px 0',
-                    }}
+                    component="h4"
+                    variant="h4"
+                    className={classes.subTitleStyles}
                 >
                     If you know the OS ID for your production location enter it
                     below, otherwise select the “Search by Name and Address”
@@ -101,19 +50,17 @@ const SearchByOsId = ({ classes }) => {
                 </Typography>
                 <TextField
                     id="osId"
-                    style={{
-                        maxWidth: '528px',
-                    }}
+                    className={classes.textFieldStyles}
                     value={value}
                     onChange={handleChange}
-                    helperText={helperText()}
+                    helperText={helperText}
                     placeholder="Enter the OS ID"
                     variant="outlined"
+                    aria-label="Enter the OS ID"
                     InputProps={{
                         classes: {
-                            input: classes.searchInput,
-                            root: classes.searchInputRoot,
-                            notchedOutline: classes.notchedOutline,
+                            input: classes.searchInputStyles,
+                            notchedOutline: classes.notchedOutlineStyles,
                         },
                         inputProps: {
                             maxLength: 15,

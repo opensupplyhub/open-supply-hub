@@ -329,3 +329,66 @@ export const makeContributeProductionLocationStyles = theme =>
         }),
         tabSelected: Object.freeze({}),
     });
+
+export const makeSearchByOsIdStyles = theme =>
+    Object.freeze({
+        helperTextContainerStyles: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+        }),
+        infoIconStyles: Object.freeze({
+            fontSize: '16px',
+            verticalAlign: 'middle',
+        }),
+        helperTextStyles: Object.freeze({
+            fontSize: '16px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            color: COLOURS.DARK_GREY,
+        }),
+        instructionTextStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            margin: '24px 0 32px 0',
+        }),
+        searchContainerStyles: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '40px 110px',
+            borderRadius: '0',
+            boxShadow: 'none',
+        }),
+        mainTitleStyles: Object.freeze({
+            fontSize: '36px',
+            fontWeight: '700',
+        }),
+        subTitleStyles: Object.freeze({
+            fontSize: '21px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            margin: '8px 0 24px 0',
+        }),
+        textFieldStyles: Object.freeze({
+            maxWidth: '528px',
+        }),
+        searchInputStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: '600',
+            lineHeight: '22px',
+            padding: '16px',
+        }),
+        notchedOutlineStyles: Object.freeze({
+            borderRadius: 0,
+        }),
+        buttonStyles: Object.freeze({
+            width: '200px',
+            borderRadius: '0',
+            textTransform: 'none',
+            fontWeight: 'bold',
+            backgroundColor: theme.palette.action.main,
+            marginTop: '26px',
+            color: theme.palette.getContrastText(theme.palette.action.main),
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
+        }),
+    });
