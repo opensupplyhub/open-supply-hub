@@ -1,4 +1,5 @@
 import { OARColor } from './constants';
+import COLOURS from './COLOURS';
 
 export const formValidationErrorMessageStyle = Object.freeze({
     color: 'red',
@@ -292,3 +293,39 @@ export const makeCustomDropdownIndicatorStyles = Object.freeze({
         marginRight: '0.5em',
     }),
 });
+
+export const makeContributeProductionLocationStyles = theme =>
+    Object.freeze({
+        mainContainer: Object.freeze({
+            background: theme.palette.background.grey,
+            padding: '48px 5% 120px 5%',
+        }),
+        title: Object.freeze({
+            fontWeight: theme.typography.fontWeightBold,
+            fontSize: '56px',
+        }),
+        tabsContainer: Object.freeze({
+            flexGrow: 1,
+            marginTop: 48,
+        }),
+        tabsIndicator: Object.freeze({
+            backgroundColor: theme.palette.primary.main,
+            height: '4px',
+        }),
+        tabRoot: Object.freeze({
+            textTransform: 'initial',
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            width: '100%',
+            maxWidth: 300,
+            borderBottom: `1px solid ${COLOURS.NEAR_BLACK}`,
+            paddingBottom: 16,
+            '&$tabSelected': {
+                fontWeight: theme.typography.fontWeightBold,
+            },
+        }),
+        tabLabelContainer: Object.freeze({
+            padding: '0 24px',
+        }),
+        tabSelected: Object.freeze({}),
+    });
