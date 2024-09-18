@@ -14,32 +14,36 @@ const ContributeProductionLocation = ({ classes }) => {
     };
 
     return (
-        <div className={classes.mainContainer}>
-            <Typography component="h1" variant="h1" className={classes.title}>
+        <div className={classes.mainContainerStyles}>
+            <Typography
+                component="h1"
+                variant="h1"
+                className={classes.titleStyles}
+            >
                 Production Location Search
             </Typography>
-            <div className={classes.tabsContainer}>
+            <div className={classes.tabsContainerStyles}>
                 <Tabs
                     value={value}
                     onChange={handleChange}
                     classes={{
-                        root: classes.tabsRoot,
-                        indicator: classes.tabsIndicator,
+                        root: classes.tabsRootStyles,
+                        indicator: classes.tabsIndicatorStyles,
                     }}
                 >
                     <Tab
                         classes={{
-                            root: classes.tabRoot,
-                            selected: classes.tabSelected,
-                            labelContainer: classes.tabLabelContainer,
+                            root: classes.tabRootStyles,
+                            selected: classes.tabSelectedStyles,
+                            labelContainer: classes.tabLabelContainerStyles,
                         }}
                         label="Search by OS ID"
                     />
                     <Tab
                         classes={{
-                            root: classes.tabRoot,
-                            selected: classes.tabSelected,
-                            labelContainer: classes.tabLabelContainer,
+                            root: classes.tabRootStyles,
+                            selected: classes.tabSelectedStyles,
+                            labelContainer: classes.tabLabelContainerStyles,
                         }}
                         label="Search by Name and Address"
                     />

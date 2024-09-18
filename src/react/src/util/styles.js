@@ -296,23 +296,23 @@ export const makeCustomDropdownIndicatorStyles = Object.freeze({
 
 export const makeContributeProductionLocationStyles = theme =>
     Object.freeze({
-        mainContainer: Object.freeze({
+        mainContainerStyles: Object.freeze({
             background: theme.palette.background.grey,
             padding: '48px 5% 120px 5%',
         }),
-        title: Object.freeze({
+        titleStyles: Object.freeze({
             fontWeight: theme.typography.fontWeightBold,
             fontSize: '56px',
         }),
-        tabsContainer: Object.freeze({
+        tabsContainerStyles: Object.freeze({
             flexGrow: 1,
             marginTop: '48px',
         }),
-        tabsIndicator: Object.freeze({
+        tabsIndicatorStyles: Object.freeze({
             backgroundColor: theme.palette.primary.main,
             height: '4px',
         }),
-        tabRoot: Object.freeze({
+        tabRootStyles: Object.freeze({
             textTransform: 'initial',
             fontSize: '18px',
             fontWeight: theme.typography.fontWeightSemiBold,
@@ -320,14 +320,14 @@ export const makeContributeProductionLocationStyles = theme =>
             maxWidth: '300px',
             borderBottom: `1px solid ${COLOURS.NEAR_BLACK}`,
             paddingBottom: '16px',
-            '&$tabSelected': {
+            '&$tabSelectedStyles': {
                 fontWeight: theme.typography.fontWeightBold,
             },
         }),
-        tabLabelContainer: Object.freeze({
+        tabLabelContainerStyles: Object.freeze({
             padding: '0 24px',
         }),
-        tabSelected: Object.freeze({}),
+        tabSelectedStyles: Object.freeze({}),
     });
 
 export const makeSearchByOsIdStyles = theme =>
