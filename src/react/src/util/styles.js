@@ -306,7 +306,7 @@ export const makeContributeProductionLocationStyles = theme =>
         }),
         tabsContainer: Object.freeze({
             flexGrow: 1,
-            marginTop: 48,
+            marginTop: '48px',
         }),
         tabsIndicator: Object.freeze({
             backgroundColor: theme.palette.primary.main,
@@ -317,9 +317,9 @@ export const makeContributeProductionLocationStyles = theme =>
             fontSize: '18px',
             fontWeight: theme.typography.fontWeightSemiBold,
             width: '100%',
-            maxWidth: 300,
+            maxWidth: '300px',
             borderBottom: `1px solid ${COLOURS.NEAR_BLACK}`,
-            paddingBottom: 16,
+            paddingBottom: '16px',
             '&$tabSelected': {
                 fontWeight: theme.typography.fontWeightBold,
             },
