@@ -7,10 +7,10 @@ import SearchByOsId from './SearchByOsId';
 import { makeContributeProductionLocationStyles } from '../../util/styles';
 
 const ContributeProductionLocation = ({ classes }) => {
-    const [value, setValue] = useState(0);
+    const [selectedTab, setSelectedTab] = useState(0);
 
-    const handleChange = (event, v) => {
-        setValue(v);
+    const handleChange = (event, value) => {
+        setSelectedTab(value);
     };
 
     return (
@@ -24,7 +24,7 @@ const ContributeProductionLocation = ({ classes }) => {
             </Typography>
             <div className={classes.tabsContainerStyles}>
                 <Tabs
-                    value={value}
+                    value={selectedTab}
                     onChange={handleChange}
                     classes={{
                         root: classes.tabsRootStyles,
@@ -48,8 +48,8 @@ const ContributeProductionLocation = ({ classes }) => {
                         label="Search by Name and Address"
                     />
                 </Tabs>
-                {value === 0 && <SearchByOsId />}
-                {value === 1 && <div>Search by Name and Address</div>}
+                {selectedTab === 0 && <SearchByOsId />}
+                {selectedTab === 1 && <div>Search by Name and Address</div>}
             </div>
         </div>
     );
