@@ -6,8 +6,9 @@ import TextField from '@material-ui/core/TextField';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 import Paper from '@material-ui/core/Paper';
 import Button from '@material-ui/core/Button';
+import COLOURS from '../../util/COLOURS';
 
-const searchByOsIdStyles = theme =>
+const makeSearchByOsIdStyles = theme =>
     Object.freeze({
         buttonStyles: Object.freeze({
             width: '200px',
@@ -40,7 +41,7 @@ const helperText = () => (
             style={{
                 fontSize: '16px',
                 fontWeight: '600',
-                color: '#6E707E',
+                color: COLOURS.DARK_GREY,
             }}
         >
             To search you need to enter the full ID production location
@@ -57,7 +58,7 @@ const SearchByOsId = ({ classes }) => {
     };
 
     return (
-        <div>
+        <>
             <Typography
                 style={{
                     fontSize: '18px',
@@ -129,7 +130,7 @@ const SearchByOsId = ({ classes }) => {
                     Search by ID
                 </Button>
             </Paper>
-        </div>
+        </>
     );
 };
 
@@ -144,4 +145,4 @@ const mapDispatchToProps = () => ({
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(withStyles(searchByOsIdStyles)(SearchByOsId));
+)(withStyles(makeSearchByOsIdStyles)(SearchByOsId));

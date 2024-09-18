@@ -9,5 +9,6 @@ export default {
     NAVIGATION: '#FCCF3F',
     NEAR_BLACK: '#0D1128',
     LIGHT_GREY: '#F9F7F7',
+    DARK_GREY: '#6E707E',
     GREEN: '#E0F5E3',
 };
