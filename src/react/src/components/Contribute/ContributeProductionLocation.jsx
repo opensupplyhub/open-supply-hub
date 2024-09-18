@@ -27,7 +27,6 @@ const ContributeProductionLocation = ({ classes }) => {
                     value={selectedTab}
                     onChange={handleChange}
                     classes={{
-                        root: classes.tabsRootStyles,
                         indicator: classes.tabsIndicatorStyles,
                     }}
                 >
