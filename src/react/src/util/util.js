@@ -245,6 +245,9 @@ export const makeContributorEmbedConfigURL = contributorId =>
     `/api/contributor-embed-configs/${contributorId}/`;
 export const makeNonStandardFieldsURL = () => '/api/nonstandard-fields/';
 
+export const makeGetProductionLocationByOsIdURL = osID =>
+    `/api/v1/production-locations/${osID}/`;
+
 export const getValueFromObject = ({ value }) => value;
 
 const createCompactSortedQuerystringInputObject = (inputObject = []) =>
