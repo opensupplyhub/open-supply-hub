@@ -1,14 +1,22 @@
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
+import { func, object, bool } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 import Paper from '@material-ui/core/Paper';
 import Button from '@material-ui/core/Button';
-import { makeSearchByOsIdStyles } from '../../util/styles';
 
-const SearchByOsId = ({ classes }) => {
+import { fetchProductionLocationByOsId } from '../../actions/contributeProductionLocation';
+import { makeSearchByOsIdStyles } from '../../util/styles';
+import { productionLocationPropType } from '../../util/propTypes';
+
+const OS_ID = 'OS ID';
+
+const SearchByOsId = ({ data, fetching, fetchProductionLocation, classes }) => {
+    console.log('data >>>', data);
+    console.log('fetching >>>', fetching);
     const [value, setValue] = useState('');
 
     const handleChange = event => {
@@ -49,7 +57,7 @@ const SearchByOsId = ({ classes }) => {
                     tab.
                 </Typography>
                 <TextField
-                    id="osId"
+                    id={OS_ID}
                     className={classes.textFieldStyles}
                     value={value}
                     onChange={handleChange}
@@ -70,7 +78,7 @@ const SearchByOsId = ({ classes }) => {
                 <Button
                     color="secondary"
                     variant="contained"
-                    onClick={() => console.log('Search by ID >>>')}
+                    onClick={() => fetchProductionLocation(value)}
                     className={classes.buttonStyles}
                     disabled={value.length < 15}
                 >
@@ -81,12 +89,29 @@ const SearchByOsId = ({ classes }) => {
     );
 };
 
-const mapStateToProps = () => ({
-    // formData: state.form.formData,
+SearchByOsId.defaultProps = {
+    data: null,
+};
+
+SearchByOsId.propTypes = {
+    data: productionLocationPropType,
+    fetching: bool.isRequired,
+    fetchProductionLocation: func.isRequired,
+    classes: object.isRequired,
+};
+
+const mapStateToProps = ({
+    contributeProductionLocation: {
+        singleProductionLocation: { data, fetching },
+    },
+}) => ({
+    data,
+    fetching,
 });
 
-const mapDispatchToProps = () => ({
-    // updateFormData: data => dispatch(updateFormData(data)),
+const mapDispatchToProps = dispatch => ({
+    fetchProductionLocation: data =>
+        dispatch(fetchProductionLocationByOsId(data)),
 });
 
 export default connect(
