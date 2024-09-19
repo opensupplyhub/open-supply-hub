@@ -1,6 +1,9 @@
 name: 'Test master'
 
 on:
+  pull_request:
+    types: [opened, reopened]
+    branches: OSDEV-1325/deploy-trigger
   workflow_dispatch:
     inputs:
       deploy-tag-version:
