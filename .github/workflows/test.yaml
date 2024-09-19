@@ -1,0 +1,33 @@
+name: 'Test master'
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy-tag-version:
+        description: 'Release/Tag version (e.g. 0.1.0)'
+        required: true
+        type: string
+      deploy-env:
+        description: 'Environment to deploy'
+        required: true
+        type: choice
+        options:
+          - sandbox
+          - production
+        default: sandbox
+      clear-opensearch:
+        description: 'Clear OpenSearch indexes'
+        required: false
+        type: boolean
+        default: false
+jobs:
+  trigger-second-workflow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger second workflow
+        run: |
+          curl -X POST \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/${{ github.repository }}/actions/workflows/test2.yml/dispatches \
+          -d '{"ref":"${{ github.event.inputs.deploy-env }}-${{ github.event.inputs.deploy-tag-version }}", "inputs": {"deploy-env": ${{ inputs.deploy-env }}, "clear-opensearch": ${{ inputs.clear-opensearch }} }}'
