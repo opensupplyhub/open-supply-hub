@@ -8,24 +8,40 @@ on:
         required: true
         type: string
       deploy-env:
-        description: 'Environment to deploy'     
+        description: 'Environment to deploy'
         required: true
         type: choice
         options:
-        - sandbox
-        - production
+          - sandbox
+          - production
         default: sandbox
+      clear-opensearch:
+        description: 'Clear OpenSearch indexes'
+        required: false
+        type: boolean
+        default: false
+
 jobs:
-  create-release-tag:
+#  create-release-tag:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout repo
+#        uses: actions/checkout@v4
+#
+#      - name: Create Release Tag
+#        id: tag_version
+#        uses: mathieudutour/github-tag-action@v6.2
+#        with:
+#          custom_tag: ${{ github.event.inputs.deploy-env }}-${{ github.event.inputs.deploy-tag-version }}
+#          tag_prefix: ''
+#          github_token: ${{ secrets.PAT }}
+  trigger-second-workflow:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Create Release Tag
-        id: tag_version
-        uses: mathieudutour/github-tag-action@v6.2
-        with:
-          custom_tag: ${{ github.event.inputs.deploy-env }}-${{ github.event.inputs.deploy-tag-version }}
-          tag_prefix: ''
-          github_token: ${{ secrets.PAT }}
+      - name: Trigger second workflow
+        run: |
+          curl -X POST \
+          -H "Authorization: token ${{ secrets.PAT }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/${{ github.repository }}/actions/workflows/test2.yml/dispatches \
+          -d '{"ref":"${{ github.event.inputs.deploy-env }}-${{ github.event.inputs.deploy-tag-version }}", "inputs": {"deploy-env": ${{ inputs.deploy-env }}, "clear-opensearch": ${{ inputs.clear-opensearch }} }}'
