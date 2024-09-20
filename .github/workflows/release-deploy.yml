@@ -23,23 +23,24 @@ on:
         default: false
 
 jobs:
-#  create-release-tag:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout repo
-#        uses: actions/checkout@v4
-#
-#      - name: Create Release Tag
-#        id: tag_version
-#        uses: mathieudutour/github-tag-action@v6.2
-#        with:
-#          custom_tag: ${{ github.event.inputs.deploy-env }}-${{ github.event.inputs.deploy-tag-version }}
-#          tag_prefix: ''
-#          github_token: ${{ secrets.PAT }}
-  trigger-second-workflow:
+  create-release-tag:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger second workflow
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Create Release Tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          custom_tag: ${{ github.event.inputs.deploy-env }}-${{ github.event.inputs.deploy-tag-version }}
+          tag_prefix: ''
+          github_token: ${{ secrets.PAT }}
+
+  trigger-deploy-to-aws:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Deploy to AWS workflow
         run: |
           set -xv
           curl -L \
@@ -48,4 +49,4 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.PAT }}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             https://api.github.com/repos/opensupplyhub/open-supply-hub/actions/workflows/deploy_to_aws.yml/dispatches \
-            -d '{"ref": "OSDEV-1325/deploy-trigger", "inputs": {"clear-opensearch": ${{ inputs.clear-opensearch }} }}'
+            -d '{"ref": "${{ github.event.inputs.deploy-env }}-${{ github.event.inputs.deploy-tag-version }}", "inputs": {"clear-opensearch": ${{ inputs.clear-opensearch }} }}'
