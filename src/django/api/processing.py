@@ -3,6 +3,7 @@ import csv
 import time
 import traceback
 import logging
+import os
 
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
@@ -191,6 +192,10 @@ def parse_production_location_list(location_list: FacilityList):
     print('Show url value >>>>')
     print(type(location_list.file.path))
     print(location_list.file.path)
+
+    print('Show DJANGO_ENV value >>>>')
+    value = os.getenv('DJANGO_ENV', 'default_value')
+    print(value)
     contri_cleaner = ContriCleaner(location_list.file, SectorCache())
     try:
         contri_cleaner_processed_data = contri_cleaner.process_data()
