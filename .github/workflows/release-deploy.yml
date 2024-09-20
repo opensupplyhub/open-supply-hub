@@ -41,7 +41,6 @@ jobs:
     steps:
       - name: Trigger Deploy to AWS workflow
         run: |
-          set -xv
           curl -L \
             -X POST \
             -H "Accept: application/vnd.github+json" \
