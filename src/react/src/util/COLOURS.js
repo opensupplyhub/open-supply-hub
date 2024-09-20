@@ -11,4 +11,5 @@ export default {
     NEAR_BLACK: '#0D1128',
     CLAIM_GREY: '#F9F7F7',
     GREEN: '#E0F5E3',
+    DARK_GREEN: '#4A9957',
 };

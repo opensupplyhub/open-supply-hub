@@ -1,3 +1,4 @@
+/* eslint no-unused-vars: 0 */
 import React, { Component } from 'react';
 import { arrayOf, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
@@ -6,12 +7,19 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import Button from '@material-ui/core/Button';
+import Dialog from '@material-ui/core/Dialog';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogActions from '@material-ui/core/DialogActions';
+import Check from '@material-ui/icons/Check';
 
 import AppGrid from './AppGrid';
 import AppOverflow from './AppOverflow';
 import FacilityListItemsEmpty from './FacilityListItemsEmpty';
 import FacilityListItemsTable from './FacilityListItemsTable';
 import FacilityListControls from './FacilityListControls';
+
+import COLOURS from '../util/COLOURS';
 
 import {
     fetchFacilityList,
@@ -21,6 +29,7 @@ import {
 } from '../actions/facilityListDetails';
 
 import {
+    mainRoute,
     OARFont,
     listsRoute,
     facilityListItemsRoute,
@@ -92,7 +101,34 @@ const facilityListItemsStyles = Object.freeze({
     }),
 });
 
+const refreshListModalStyles = Object.freeze({
+    titleContentStyle: Object.freeze({
+        textAlign: 'center',
+    }),
+    icon: Object.freeze({
+        color: COLOURS.DARK_GREEN,
+        verticalAlign: 'middle',
+        marginRight: '10px',
+    }),
+    separator: Object.freeze({
+        color: COLOURS.GREY,
+    }),
+    dialogContentStyles: Object.freeze({
+        textAlign: 'center',
+        fontSize: '20px',
+    }),
+    buttonContentStyle: Object.freeze({
+        justifyContent: 'center',
+    }),
+});
+
+// TODO: re-write to functional component
 class FacilityListItems extends Component {
+    constructor() {
+        super();
+        this.state = { dialogIsOpen: true };
+    }
+
     componentDidMount() {
         this.props.fetchList();
         this.props.fetchListItems();
@@ -203,6 +239,52 @@ class FacilityListItems extends Component {
         return (
             <AppOverflow>
                 <Grid container justify="center">
+                    <Dialog open={this.state.dialogIsOpen}>
+                        <DialogTitle
+                            style={refreshListModalStyles.titleContentStyle}
+                        >
+                            <Check style={refreshListModalStyles.icon} />
+                            Thank you for submitting your list!
+                        </DialogTitle>
+                        <DialogContent>
+                            <Typography
+                                variant="body1"
+                                style={
+                                    refreshListModalStyles.dialogContentStyles
+                                }
+                            >
+                                Your data has been successfully uploaded and is
+                                being processed.
+                                <br />
+                                Check back in a few minutes to review the
+                                status.
+                            </Typography>
+                            <hr style={refreshListModalStyles.separator} />
+                        </DialogContent>
+                        <DialogActions
+                            style={refreshListModalStyles.buttonContentStyle}
+                        >
+                            <Button
+                                variant="outlined"
+                                color="secondary"
+                                onClick={() => {
+                                    console.log('Go back to the main page');
+                                    this.props.history.push(mainRoute);
+                                }}
+                            >
+                                Go to the main page
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                color="primary"
+                                onClick={() => {
+                                    console.log('Refresh');
+                                }}
+                            >
+                                Refresh
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
                     <Grid item style={facilityListItemsStyles.tableStyles}>
                         <div style={facilityListItemsStyles.headerStyles}>
                             <div>
