@@ -1,10 +1,7 @@
 import os
 from typing import Union, List, Dict
 
-from django.core.files.uploadedfile import (
-    InMemoryUploadedFile,
-    TemporaryUploadedFile
-)
+from django.db.models.fields.files import FieldFile
 
 from contricleaner.lib.client_abstractions.sector_cache_interface import (
     SectorCacheInterface
@@ -34,18 +31,15 @@ class ContriCleaner:
     '''
 
     def __init__(self,
-                 data: Union[
-                     InMemoryUploadedFile, TemporaryUploadedFile, Dict],
+                 data: Union[FieldFile, Dict],
                  sector_cache: SectorCacheInterface) -> None:
         unsupported_data_value_type_message = ('The data value type should be '
-                                               'either dict, '
-                                               'InMemoryUploadedFile, or '
-                                               'TemporaryUploadedFile.')
+                                               'either dict or FieldFile.')
         unsupported_sector_cache_value_type_message = (
             'The sector_cache value type should be SectorCacheInterface.')
         assert isinstance(
             data,
-            (dict, InMemoryUploadedFile, TemporaryUploadedFile)
+            (dict, FieldFile)
         ), unsupported_data_value_type_message
         assert isinstance(
             sector_cache, SectorCacheInterface

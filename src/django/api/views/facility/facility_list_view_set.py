@@ -119,6 +119,7 @@ class FacilityListViewSet(ModelViewSet):
         rows = map(clean_row, rows)
         return header, rows
 
+    # TODO: delete this method and all unused methods.
     @transaction.atomic
     def create(self, request):
         """
@@ -246,8 +247,9 @@ class FacilityListViewSet(ModelViewSet):
         serializer = self.get_serializer(new_list)
         return Response(serializer.data)
 
-    # TODO: Rename this method to `create`. A temporary duplicate was created
-    #       for testing purposes of the ContriCleaner parsing.
+    # TODO: 1. Delete this method.
+    #       2. Delete all old unused methods that was partially or fully moved
+    #       to ContriCleaner or new list or API processing classes.
     @action(detail=False, methods=['POST'],
             url_path='createlist')
     @transaction.atomic
@@ -468,19 +470,23 @@ class FacilityListViewSet(ModelViewSet):
                     f'FacilityList {replaces.pk} has already been replaced.'
                 )
 
-        new_list = FacilityList(
+        new_list = FacilityList.objects.create(
             name=name,
             description=description,
             file_name=uploaded_file.name,
             file=uploaded_file,
             replaces=replaces,
             match_responsibility=contributor.match_responsibility)
-        new_list.save()
+        log.info(f'[List Upload] FacilityList created. ID {new_list.id}.')
 
-        Source.objects.create(
+        source = Source.objects.create(
             contributor=contributor,
             source_type=Source.LIST,
             facility_list=new_list)
+        log.info(f'[List Upload] Source created. ID {source.id}.')
+
+        if ENVIRONMENT in ('Test', 'Staging', 'Production', 'Preprod'):
+            submit_parse_job(new_list)
 
         serializer = self.get_serializer(new_list)
         return Response(serializer.data)

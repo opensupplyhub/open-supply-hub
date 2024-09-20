@@ -4,6 +4,14 @@ import time
 import traceback
 import logging
 
+from openpyxl import load_workbook
+from openpyxl.utils import get_column_letter
+from django.contrib.gis.geos import Point
+from django.core.exceptions import ValidationError
+from django.urls import reverse
+from django.utils import timezone
+from django.db import transaction
+
 from api.constants import CsvHeaderField, ProcessingAction
 from api.extended_fields import (
     create_extendedfields_for_listitem,
@@ -12,24 +20,34 @@ from api.extended_fields import (
 from api.geocoding import geocode_address
 from api.helpers.helpers import clean, cleanup_data, replace_invalid_data
 from api.matching import normalize_extended_facility_id
-from api.models import (
-    Facility,
-    FacilityListItem,
-    FacilityListItemTemp,
-    FacilityMatch,
-    FacilityMatchTemp
-)
+from api.models.facility.facility import Facility
+from api.models.facility.facility_list_item import FacilityListItem
+from api.models.facility.facility_list_item_temp import FacilityListItemTemp
+from api.models.facility.facility_match import FacilityMatch
+from api.models.facility.facility_match_temp import FacilityMatchTemp
 from api.models.facility.facility_index import FacilityIndex
+from api.models.facility.facility_list import FacilityList
 from api.sector_product_type_parser import CsvRowSectorProductTypeParser
-from openpyxl import load_workbook
-from openpyxl.utils import get_column_letter
-
-from django.contrib.gis.geos import Point
-from django.core.exceptions import ValidationError
+from contricleaner.lib.contri_cleaner import ContriCleaner
+from contricleaner.lib.exceptions.parsing_error import ParsingError
+from contricleaner.lib.exceptions.handler_not_set_error \
+    import HandlerNotSetError
+from api.sector_product_type_parser import SectorCache
+from api.facility_actions.processing_facility_executor import (
+    ProcessingFacilityExecutor
+)
+from api.facility_actions.processing_facility_list import (
+    ProcessingFacilityList
+)
 from countries.lib.get_country_code import get_country_code
-from django.urls import reverse
-from django.utils import timezone
 from oar.rollbar import report_error_to_rollbar
+
+from django.core.files.uploadedfile import (
+    InMemoryUploadedFile,
+    TemporaryUploadedFile
+)
+
+from django.db.models.fields.files import FieldFile
 
 logger = logging.getLogger(__name__)
 
@@ -161,7 +179,45 @@ class ItemRemovedException(Exception):
     pass
 
 
-def parse_facility_list_item(item):
+@transaction.atomic
+def parse_production_location_list(location_list: FacilityList):
+    parsing_started = str(timezone.now())
+    logger.info('[List Upload] Started CC Parse process!')
+
+    contri_cleaner = ContriCleaner(location_list.file, SectorCache())
+    try:
+        contri_cleaner_processed_data = contri_cleaner.process_data()
+    except ParsingError as err:
+        logger.error(f'[List Upload] Data Parsing Error: {err}')
+        report_error_to_rollbar(
+            message=str(err),
+            extra_data=f'List file: {str(location_list)}'
+            )
+        raise ValidationError(str(err))  # TODO: save it to the DB
+    except HandlerNotSetError as err:
+        logger.error(f'[List Upload] Internal ContriCleaner Error: {err}')
+        report_error_to_rollbar(
+            message=str(err),
+            extra_data=f'List file: {str(location_list)}'
+            )
+        raise Exception('Internal System Error. '
+                        'Please contact support.')  # TODO: save it to the DB
+
+    processing_input = {
+        'facility_list': location_list,
+        'contri_cleaner_processed_data': contri_cleaner_processed_data,
+        'parsing_started': parsing_started,
+    }
+
+    processing_facility_executor = ProcessingFacilityExecutor(
+        ProcessingFacilityList(processing_input)
+    )
+    processing_facility_executor.run_processing()
+
+
+
+# TODO: delete this function
+def parse_facility_list_item_old(item):
     started = str(timezone.now())
     if type(item) != FacilityListItem:
         raise ValueError('Argument must be a FacilityListItem')

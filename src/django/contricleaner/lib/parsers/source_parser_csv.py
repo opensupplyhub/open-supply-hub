@@ -1,10 +1,7 @@
 import csv
-from typing import List, Union
+from typing import List
 
-from django.core.files.uploadedfile import (
-    InMemoryUploadedFile,
-    TemporaryUploadedFile
-)
+from django.db.models.fields.files import FieldFile
 
 from contricleaner.lib.parsers.abstractions.source_parser import SourceParser
 from contricleaner.lib.parsers.abstractions.file_parser import FileParser
@@ -16,9 +13,7 @@ class SourceParserCSV(SourceParser, FileParser):
         return self._parse(self._file)
 
     @staticmethod
-    def _parse(
-            file: Union[InMemoryUploadedFile, TemporaryUploadedFile]
-            ) -> List[dict]:
+    def _parse(file: FieldFile) -> List[dict]:
         rows = []
 
         try:
