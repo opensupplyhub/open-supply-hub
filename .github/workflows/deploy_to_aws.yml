@@ -48,7 +48,7 @@ jobs:
         run: |
           echo "Tag: ${{ github.ref_name }}"
           echo "clear-opensearch: ${{ github.event.inputs.clear-opensearch }}, default: ${{ inputs.clear-opensearch }}"
-          echo "deploy-env: ${{ github.event.inputs.deploy-env }}, default: ${{ inputs.deploy-env }}"
+          echo "deploy-env: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}, default: ${{ inputs.deploy-env }}"
 #  init-and-plan:
 #    runs-on: ubuntu-latest
 #    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
