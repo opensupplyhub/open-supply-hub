@@ -48,4 +48,4 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.PAT }}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             https://api.github.com/repos/opensupplyhub/open-supply-hub/actions/workflows/deploy_to_aws.yml/dispatches \
-            -d '{"ref": "OSDEV-1325/deploy-trigger", "inputs": {"deploy-env": "clear-opensearch": ${{ inputs.clear-opensearch }} }}'
+            -d '{"ref": "OSDEV-1325/deploy-trigger", "inputs": {"clear-opensearch": ${{ inputs.clear-opensearch }} }}'
