@@ -46,7 +46,7 @@ jobs:
     steps:
       - name: Show input parameters
         run: |
-          echo "Tag: ${{ github.event.inputs.tag }}"
+          echo "Tag: ${{ github.ref_name }}"
           echo "clear-opensearch: ${{ github.event.inputs.clear-opensearch }}, default: ${{ inputs.clear-opensearch }}"
           echo "deploy-env: ${{ github.event.inputs.deploy-env }}, default: ${{ inputs.deploy-env }}"
 #  init-and-plan:
