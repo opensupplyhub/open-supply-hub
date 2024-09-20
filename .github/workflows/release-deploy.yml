@@ -14,7 +14,6 @@ on:
         options:
           - sandbox
           - production
-          - Test
         default: sandbox
       clear-opensearch:
         description: 'Clear OpenSearch indexes'
