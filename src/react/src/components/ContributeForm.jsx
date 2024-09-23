@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+/* eslint no-unused-vars: 0 */
+import React, { useEffect, useRef } from 'react';
 import {
     arrayOf,
     bool,
@@ -62,167 +63,146 @@ const contributeFormStyles = Object.freeze({
     }),
 });
 
-class ContributeForm extends Component {
-    constructor(props) {
-        super(props);
-        this.fileInput = React.createRef();
-    }
+const ContributeForm = ({
+    name,
+    description,
+    filename,
+    replaces,
+    fetching,
+    error,
+    updateName,
+    updateDescription,
+    updateFileName,
+    updateListToReplace,
+    uploadList,
+    fetchLists,
+    resetForm,
+    facilityLists,
+    fetchingFacilityLists,
+    fetchingFeatureFlags,
+}) => {
+    const fileInput = useRef(null);
+    const prevFetchingRef = useRef();
 
-    componentDidMount() {
-        return this.props.fetchLists();
-    }
+    useEffect(() => {
+        prevFetchingRef.current = fetching;
+    }, [fetching]);
 
-    componentDidUpdate({ fetching: wasFetching }) {
-        const { fetching, error } = this.props;
+    const prevFetching = prevFetchingRef.current;
 
-        if (fetching) {
-            return null;
+    useEffect(() => {
+        if (prevFetching && !fetching && !error) {
+            fetchLists();
+            if (fileInput.current) {
+                fileInput.current.value = null;
+            }
+            toast('Your facility list has been uploaded successfully!');
         }
+    }, [fetching, error, fetchLists, prevFetching]);
 
-        if (error) {
-            return null;
-        }
+    useEffect(() => () => resetForm(), [resetForm]);
 
-        if (!wasFetching) {
-            return null;
-        }
+    const selectFile = () => fileInput.current.click();
+    const updateSelectedFileName = () => updateFileName(fileInput);
+    const handleUploadList = () => uploadList(fileInput);
 
-        this.props.fetchLists();
-        this.fileInput.current.value = null;
-        return toast('Your facility list has been uploaded successfully!');
-    }
+    const errorMessages =
+        error && error.length ? (
+            <>
+                <ul>
+                    {error.map(err => (
+                        <li key={err} style={{ color: 'red' }}>
+                            {err}
+                        </li>
+                    ))}
+                </ul>
+                <div style={contributeFormStyles.postErrorHelp}>
+                    If you continue to have trouble submitting your list, please
+                    check the <a href="#troubleshooting">troubleshooting</a>{' '}
+                    section on this page or email{' '}
+                    <a href="mailto:info@opensupplyhub.org">
+                        info@opensupplyhub.org
+                    </a>
+                    .
+                </div>
+            </>
+        ) : null;
 
-    componentWillUnmount() {
-        return this.props.resetForm();
-    }
+    const formInputs = contributeFormFields.map(field => (
+        <div key={field.id} className="form__field">
+            <label htmlFor={field.id} className="form__label">
+                {field.label}
+            </label>
+            <span style={{ color: 'red' }}>{field.required ? ' *' : ''}</span>
+            <ControlledTextInput
+                id={field.id}
+                type={field.type}
+                hint={field.hint}
+                placeholder={field.placeholder}
+                onChange={
+                    field.id === contributeFieldsEnum.name
+                        ? updateName
+                        : updateDescription
+                }
+                value={
+                    field.id === contributeFieldsEnum.name ? name : description
+                }
+            />
+        </div>
+    ));
 
-    selectFile = () => this.fileInput.current.click();
+    const submitButtonIsDisabled = fetching || fetchingFacilityLists;
 
-    updateSelectedFileName = () => this.props.updateFileName(this.fileInput);
+    const replacesSection =
+        facilityLists && facilityLists.length ? (
+            <ContributeFormSelectListToReplace
+                lists={facilityLists}
+                replaces={replaces}
+                handleChange={updateListToReplace}
+            />
+        ) : null;
 
-    handleUploadList = () => this.props.uploadList(this.fileInput);
-
-    render() {
-        const {
-            name,
-            description,
-            filename,
-            replaces,
-            fetching,
-            error,
-            updateName,
-            updateDescription,
-            updateListToReplace,
-            fetchingFacilityLists,
-            facilityLists,
-            fetchingFeatureFlags,
-        } = this.props;
-
-        const errorMessages =
-            error && error.length ? (
-                <React.Fragment>
-                    <ul>
-                        {error.map(err => (
-                            <li key={err} style={{ color: 'red' }}>
-                                {err}
-                            </li>
-                        ))}
-                    </ul>
-                    <div style={contributeFormStyles.postErrorHelp}>
-                        If you continue to have trouble submitting your list,
-                        please check the{' '}
-                        <a href="#troubleshooting">troubleshooting</a> section
-                        on this page or email{' '}
-                        <a href="mailto:info@opensupplyhub.org">
-                            info@opensupplyhub.org
-                        </a>
-                        .
-                    </div>
-                </React.Fragment>
-            ) : null;
-
-        const formInputs = contributeFormFields.map(field => (
-            <div key={field.id} className="form__field">
-                <label htmlFor={field.id} className="form__label">
-                    {field.label}
-                </label>
-                <span style={{ color: 'red' }}>
-                    {field.required ? ' *' : ''}
-                </span>
-                <ControlledTextInput
-                    id={field.id}
-                    type={field.type}
-                    hint={field.hint}
-                    placeholder={field.placeholder}
-                    onChange={
-                        field.id === contributeFieldsEnum.name
-                            ? updateName
-                            : updateDescription
-                    }
-                    value={
-                        field.id === contributeFieldsEnum.name
-                            ? name
-                            : description
-                    }
+    return (
+        <div className="control-panel__group">
+            {formInputs}
+            <div className="form__field">
+                <MaterialButton
+                    onClick={selectFile}
+                    type="button"
+                    variant="outlined"
+                    color="primary"
+                    className="outlined-button"
+                    disableRipple
+                >
+                    Select Facility List File
+                </MaterialButton>
+                <p style={contributeFormStyles.fileNameText}>{filename}</p>
+                <input
+                    type="file"
+                    accept=".csv,.xlsx"
+                    ref={fileInput}
+                    style={contributeFormStyles.fileInputHidden}
+                    onChange={updateSelectedFileName}
                 />
             </div>
-        ));
-
-        const submitButtonIsDisabled = fetching || fetchingFacilityLists;
-
-        const replacesSection =
-            facilityLists && facilityLists.length ? (
-                <ContributeFormSelectListToReplace
-                    lists={facilityLists}
-                    replaces={replaces}
-                    handleChange={updateListToReplace}
-                />
-            ) : null;
-
-        return (
-            <div className="control-panel__group">
-                {formInputs}
-                <div className="form__field">
-                    <MaterialButton
-                        onClick={this.selectFile}
-                        type="button"
-                        variant="outlined"
-                        color="primary"
-                        className="outlined-button"
+            {replacesSection}
+            <div className="form__field">
+                {errorMessages}
+                {fetching || fetchingFeatureFlags ? (
+                    <CircularProgress size={30} />
+                ) : (
+                    <Button
+                        onClick={handleUploadList}
+                        disabled={submitButtonIsDisabled}
+                        text="SUBMIT"
+                        variant="contained"
                         disableRipple
-                    >
-                        Select Facility List File
-                    </MaterialButton>
-                    <p style={contributeFormStyles.fileNameText}>{filename}</p>
-                    <input
-                        type="file"
-                        accept=".csv,.xlsx"
-                        ref={this.fileInput}
-                        style={contributeFormStyles.fileInputHidden}
-                        onChange={this.updateSelectedFileName}
                     />
-                </div>
-                {replacesSection}
-                <div className="form__field">
-                    {errorMessages}
-                    {fetching || fetchingFeatureFlags ? (
-                        <CircularProgress size={30} />
-                    ) : (
-                        <Button
-                            onClick={this.handleUploadList}
-                            disabled={submitButtonIsDisabled}
-                            text="SUBMIT"
-                            variant="contained"
-                            disableRipple
-                        >
-                            SUBMIT
-                        </Button>
-                    )}
-                </div>
+                )}
             </div>
-        );
-    }
-}
+        </div>
+    );
+};
 
 ContributeForm.defaultProps = {
     error: null,
@@ -247,7 +227,7 @@ ContributeForm.propTypes = {
     fetchingFeatureFlags: bool.isRequired,
 };
 
-function mapStateToProps({
+const mapStateToProps = ({
     upload: {
         form: { name, description, filename, replaces },
         fetching,
@@ -255,41 +235,37 @@ function mapStateToProps({
     },
     facilityLists: { facilityLists, fetching: fetchingFacilityLists },
     featureFlags: { fetching: fetchingFeatureFlags },
-}) {
-    return {
-        name,
-        description,
-        filename,
-        replaces,
-        fetching,
-        error,
-        facilityLists,
-        fetchingFacilityLists,
-        fetchingFeatureFlags,
-    };
-}
+}) => ({
+    name,
+    description,
+    filename,
+    replaces,
+    fetching,
+    error,
+    facilityLists,
+    fetchingFacilityLists,
+    fetchingFeatureFlags,
+});
 
-function mapDispatchToProps(dispatch, { history: { push } }) {
-    return {
-        updateName: e => dispatch(updateFileUploadName(getValueFromEvent(e))),
-        updateDescription: e =>
-            dispatch(updateFileUploadDescription(getValueFromEvent(e))),
-        updateFileName: r =>
-            dispatch(updateFileUploadFileName(getFileNameFromInputRef(r))),
-        updateListToReplace: e =>
-            dispatch(updateFileUploadListToReplaceID(getValueFromEvent(e))),
-        uploadList: r =>
-            dispatch(
-                uploadFile(getFileFromInputRef(r), id =>
-                    push(makeFacilityListItemsDetailLink(id)),
-                ),
+const mapDispatchToProps = (dispatch, { history: { push } }) => ({
+    updateName: e => dispatch(updateFileUploadName(getValueFromEvent(e))),
+    updateDescription: e =>
+        dispatch(updateFileUploadDescription(getValueFromEvent(e))),
+    updateFileName: r =>
+        dispatch(updateFileUploadFileName(getFileNameFromInputRef(r))),
+    updateListToReplace: e =>
+        dispatch(updateFileUploadListToReplaceID(getValueFromEvent(e))),
+    uploadList: r =>
+        dispatch(
+            uploadFile(getFileFromInputRef(r), id =>
+                push(makeFacilityListItemsDetailLink(id)),
             ),
-        fetchLists: () => dispatch(fetchUserFacilityLists()),
-        resetForm: () => {
-            dispatch(resetUserFacilityLists());
-            return dispatch(resetUploadState());
-        },
-    };
-}
+        ),
+    fetchLists: () => dispatch(fetchUserFacilityLists()),
+    resetForm: () => {
+        dispatch(resetUserFacilityLists());
+        return dispatch(resetUploadState());
+    },
+});
 
 export default connect(mapStateToProps, mapDispatchToProps)(ContributeForm);
