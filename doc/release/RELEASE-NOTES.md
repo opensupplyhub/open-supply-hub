@@ -20,7 +20,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe code/API changes here.*
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* [OSDEV-1325](https://opensupplyhub.atlassian.net/browse/OSDEV-1325)
+  * __Deploy to AWS__ pipeline will init from __[Release] Deploy__ pipeline and get deployment parameters, such as cleaning OpenSearch indexes, by trigger.
 
 ### Bugfix
 * *Describe bugfix here.*
