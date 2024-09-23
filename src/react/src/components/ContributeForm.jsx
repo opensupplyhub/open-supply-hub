@@ -27,7 +27,11 @@ import {
     makeFacilityListItemsDetailLink,
 } from '../util/util';
 
-import { contributeFormFields, contributeFieldsEnum } from '../util/constants';
+import {
+    contributeFormFields,
+    contributeFieldsEnum,
+    listsRoute,
+} from '../util/constants';
 
 import {
     updateFileUploadName,
@@ -64,6 +68,7 @@ const contributeFormStyles = Object.freeze({
 });
 
 const ContributeForm = ({
+    history,
     name,
     description,
     filename,
@@ -97,6 +102,9 @@ const ContributeForm = ({
                 fileInput.current.value = null;
             }
             toast('Your facility list has been uploaded successfully!');
+            // TODO: should be a real list id here
+            const listID = 'dummy-list-id';
+            history.push(`${listsRoute}/${listID}`);
         }
     }, [fetching, error, fetchLists, prevFetching]);
 
