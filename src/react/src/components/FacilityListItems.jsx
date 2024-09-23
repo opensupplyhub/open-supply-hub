@@ -381,7 +381,7 @@ FacilityListItems.propTypes = {
 
 function mapStateToProps({
     facilityListDetails: {
-        list: { data: list, fetching: fetchingList, error: listError },
+        list: { data: list, fetching: fetchingList, error: listErrors },
         items: { data: items, error: itemsError },
         downloadCSV: { fetching: downloadingCSV, error: csvDownloadingError },
     },
@@ -411,7 +411,7 @@ function mapStateToProps({
     return {
         list,
         fetchingList,
-        error: listError || itemsError,
+        error: listErrors || itemsError,
         downloadingCSV,
         csvDownloadingError,
         userHasSignedIn: !user.isAnon,
