@@ -38,13 +38,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: September 21, 2024
 
-### Database changes
-#### Migrations:
-* *Describe migrations here.*
-
-#### Scheme changes
-* *Describe scheme changes here.*
-
 ### Code/API changes
 * [OSDEV-1126](https://opensupplyhub.atlassian.net/browse/OSDEV-1126) - Added the `historical_os_id` field to the response from the `v1/production-locations` endpoint if the searched production location contains this data. Modified the search query for `os_id` so that the search is conducted in both the `os_id` and `historical_os_id` fields in the OpenSearch production-locations index.
 To make this possible, the `sync_production_locations.sql` script, which generates data for the production-locations index, was modified to include the selection of `historical_os_id_value` from the `api_facilityalias` table.
