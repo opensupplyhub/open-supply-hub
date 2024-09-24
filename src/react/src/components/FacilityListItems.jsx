@@ -99,6 +99,10 @@ const facilityListItemsStyles = Object.freeze({
         fontSize: '0.875rem',
         fontWeight: '500',
     }),
+    postErrorHelp: Object.freeze({
+        margin: '1.5rem 0',
+        fontWeight: 500,
+    }),
 });
 
 const refreshListModalStyles = Object.freeze({
@@ -122,7 +126,6 @@ const refreshListModalStyles = Object.freeze({
     }),
 });
 
-// TODO: re-write to functional component
 class FacilityListItems extends Component {
     constructor() {
         super();
@@ -143,6 +146,7 @@ class FacilityListItems extends Component {
             list,
             fetchingList,
             error,
+            uploadError,
             downloadCSV,
             downloadingCSV,
             csvDownloadingError,
@@ -236,119 +240,147 @@ class FacilityListItems extends Component {
             ? `${dashboardListsRoute}${adminSearch || ''}`
             : listsRoute;
 
+        const renderUploadError = () => (
+            <Grid item style={facilityListItemsStyles.tableStyles}>
+                <ul>
+                    {uploadError.map(err => (
+                        <li key={err} style={{ color: 'red' }}>
+                            {err}
+                        </li>
+                    ))}
+                </ul>
+                <div style={facilityListItemsStyles.postErrorHelp}>
+                    If you continue to have trouble submitting your list, please
+                    check the <a href="#troubleshooting">troubleshooting</a>{' '}
+                    section on this page or email{' '}
+                    <a href="mailto:info@opensupplyhub.org">
+                        info@opensupplyhub.org
+                    </a>
+                    .
+                </div>
+            </Grid>
+        );
+
+        const renderDialog = () => (
+            <Dialog open={this.state.dialogIsOpen}>
+                <DialogTitle style={refreshListModalStyles.titleContentStyle}>
+                    <Check style={refreshListModalStyles.icon} />
+                    Thank you for submitting your list!
+                </DialogTitle>
+                <DialogContent>
+                    <Typography
+                        variant="body1"
+                        style={refreshListModalStyles.dialogContentStyles}
+                    >
+                        Your data has been successfully uploaded and is being
+                        processed.
+                        <br />
+                        Check back in a few minutes to review the status.
+                    </Typography>
+                    <hr style={refreshListModalStyles.separator} />
+                </DialogContent>
+                <DialogActions
+                    style={refreshListModalStyles.buttonContentStyle}
+                >
+                    <Button
+                        variant="outlined"
+                        color="secondary"
+                        onClick={() => {
+                            console.log('Go back to the main page');
+                            this.props.history.push(mainRoute);
+                        }}
+                    >
+                        Go to the main page
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={() => {
+                            console.log('Refresh');
+                        }}
+                    >
+                        Refresh
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        );
+
+        const renderFacilityList = () => (
+            <Grid item style={facilityListItemsStyles.tableStyles}>
+                <div style={facilityListItemsStyles.headerStyles}>
+                    <div>
+                        <h2 style={facilityListItemsStyles.titleStyles}>
+                            {list.name || list.id}
+                        </h2>
+                        <Typography
+                            variant="subheading"
+                            style={facilityListItemsStyles.descriptionStyles}
+                        >
+                            {list.description || ''}
+                        </Typography>
+                    </div>
+                    <div
+                        style={
+                            facilityListItemsStyles.buttonGroupWithErrorStyles
+                        }
+                    >
+                        {csvDownloadErrorMessage}
+                        <div style={facilityListItemsStyles.buttonGroupStyles}>
+                            {csvDownloadButton}
+                            {originalCsvDownloadButton}
+                            <Button
+                                variant="outlined"
+                                component={Link}
+                                to={backRoute}
+                                href={backRoute}
+                                style={facilityListItemsStyles.buttonStyles}
+                            >
+                                Back to lists
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
+                {list.status_counts.UPLOADED === 0 && (
+                    <FacilityListControls
+                        isAdminUser={isAdminUser}
+                        id={list.id}
+                    />
+                )}
+
+                <div style={facilityListItemsStyles.subheadStyles}>
+                    The processing time may be longer for lists that include
+                    additional data points beyond facility name and address. You
+                    will receive an email when your list has finished
+                    processing.
+                    {awaitingModerationMessage}
+                </div>
+
+                {list.item_count ? (
+                    <Route
+                        path={facilityListItemsRoute}
+                        component={FacilityListItemsTable}
+                    />
+                ) : (
+                    <FacilityListItemsEmpty />
+                )}
+            </Grid>
+        );
+
+        const content =
+            uploadError && uploadError.length ? (
+                renderUploadError()
+            ) : (
+                <>
+                    {renderDialog()}
+                    {renderFacilityList()}
+                </>
+            );
+
         return (
             <AppOverflow>
                 <Grid container justify="center">
-                    <Dialog open={this.state.dialogIsOpen}>
-                        <DialogTitle
-                            style={refreshListModalStyles.titleContentStyle}
-                        >
-                            <Check style={refreshListModalStyles.icon} />
-                            Thank you for submitting your list!
-                        </DialogTitle>
-                        <DialogContent>
-                            <Typography
-                                variant="body1"
-                                style={
-                                    refreshListModalStyles.dialogContentStyles
-                                }
-                            >
-                                Your data has been successfully uploaded and is
-                                being processed.
-                                <br />
-                                Check back in a few minutes to review the
-                                status.
-                            </Typography>
-                            <hr style={refreshListModalStyles.separator} />
-                        </DialogContent>
-                        <DialogActions
-                            style={refreshListModalStyles.buttonContentStyle}
-                        >
-                            <Button
-                                variant="outlined"
-                                color="secondary"
-                                onClick={() => {
-                                    console.log('Go back to the main page');
-                                    this.props.history.push(mainRoute);
-                                }}
-                            >
-                                Go to the main page
-                            </Button>
-                            <Button
-                                variant="outlined"
-                                color="primary"
-                                onClick={() => {
-                                    console.log('Refresh');
-                                }}
-                            >
-                                Refresh
-                            </Button>
-                        </DialogActions>
-                    </Dialog>
-                    <Grid item style={facilityListItemsStyles.tableStyles}>
-                        <div style={facilityListItemsStyles.headerStyles}>
-                            <div>
-                                <h2 style={facilityListItemsStyles.titleStyles}>
-                                    {list.name || list.id}
-                                </h2>
-                                <Typography
-                                    variant="subheading"
-                                    style={
-                                        facilityListItemsStyles.descriptionStyles
-                                    }
-                                >
-                                    {list.description || ''}
-                                </Typography>
-                            </div>
-                            <div
-                                style={
-                                    facilityListItemsStyles.buttonGroupWithErrorStyles
-                                }
-                            >
-                                {csvDownloadErrorMessage}
-                                <div
-                                    style={
-                                        facilityListItemsStyles.buttonGroupStyles
-                                    }
-                                >
-                                    {csvDownloadButton}
-                                    {originalCsvDownloadButton}
-                                    <Button
-                                        variant="outlined"
-                                        component={Link}
-                                        to={backRoute}
-                                        href={backRoute}
-                                        style={
-                                            facilityListItemsStyles.buttonStyles
-                                        }
-                                    >
-                                        Back to lists
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                        {list.status_counts.UPLOADED === 0 ? (
-                            <FacilityListControls
-                                isAdminUser={isAdminUser}
-                                id={list.id}
-                            />
-                        ) : null}
-                        <div style={facilityListItemsStyles.subheadStyles}>
-                            The processing time may be longer for lists that
-                            include additional data points beyond facility name
-                            and address. You will receive an email when your
-                            list has finished processing.
-                            {awaitingModerationMessage}
-                        </div>
-                        {list.item_count ? (
-                            <Route
-                                path={facilityListItemsRoute}
-                                component={FacilityListItemsTable}
-                            />
-                        ) : (
-                            <FacilityListItemsEmpty />
-                        )}
-                    </Grid>
+                    {content}
                 </Grid>
             </AppOverflow>
         );
@@ -381,13 +413,14 @@ FacilityListItems.propTypes = {
 
 function mapStateToProps({
     facilityListDetails: {
-        list: { data: list, fetching: fetchingList, error: listErrors },
+        list: { data: list, fetching: fetchingList, error: listError },
         items: { data: items, error: itemsError },
         downloadCSV: { fetching: downloadingCSV, error: csvDownloadingError },
     },
     auth: {
         user: { user },
     },
+    upload: { error },
 }) {
     const isAdminUser =
         !user.isAnon &&
@@ -411,7 +444,8 @@ function mapStateToProps({
     return {
         list,
         fetchingList,
-        error: listErrors || itemsError,
+        error: listError || itemsError,
+        uploadError: error,
         downloadingCSV,
         csvDownloadingError,
         userHasSignedIn: !user.isAnon,
