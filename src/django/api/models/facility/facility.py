@@ -295,6 +295,7 @@ class Facility(models.Model):
 
         return f'{timestamp}-{tile_version}'
 
+    @staticmethod
     def update_facility_updated_at_field(facility_id):
         facility = Facility.objects.get(pk=facility_id)
         facility.updated_at = timezone.now()

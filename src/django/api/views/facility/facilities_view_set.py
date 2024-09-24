@@ -929,8 +929,7 @@ class FacilitiesViewSet(ListModelMixin,
                 )
 
             send_claim_facility_confirmation_email(request, facility_claim)
-            facility.updated_at = timezone.now()
-            facility.save()
+            Facility.update_facility_updated_at_field(facility.id)
 
             approved = (
                 FacilityClaim
@@ -1112,8 +1111,8 @@ class FacilitiesViewSet(ListModelMixin,
         merge.delete()
 
         target.refresh_from_db()
-        target.updated_at = timezone.now()
-        target.save()
+        Facility.update_facility_updated_at_field(target.id)
+
         context = {'request': request}
         facility_index = FacilityIndex.objects.get(id=target.id)
         response_data = FacilityIndexDetailsSerializer(
