@@ -61,10 +61,6 @@ const contributeFormStyles = Object.freeze({
         display: 'none',
         visibility: 'hidden',
     }),
-    postErrorHelp: Object.freeze({
-        margin: '1.5rem 0',
-        fontWeight: 500,
-    }),
 });
 
 const ContributeForm = ({
@@ -90,6 +86,10 @@ const ContributeForm = ({
     const prevFetchingRef = useRef();
 
     useEffect(() => {
+        resetForm();
+    }, []);
+
+    useEffect(() => {
         prevFetchingRef.current = fetching;
     }, [fetching]);
 
@@ -102,39 +102,22 @@ const ContributeForm = ({
                 fileInput.current.value = null;
             }
             toast('Your facility list has been uploaded successfully!');
-            // TODO: should be a real list id here
-            const listID = 'dummy-list-id';
-            history.push(`${listsRoute}/${listID}`);
         }
     }, [fetching, error, fetchLists, prevFetching]);
 
-    useEffect(() => () => resetForm(), [resetForm]);
+    useEffect(() => {
+        if (error && error.length) {
+            // TODO: should be a real list id here
+            // Enforce error render on existing local list
+            console.log(`Error uploading is ${error}`);
+            const listID = 5345;
+            history.push(`${listsRoute}/${listID}`);
+        }
+    }, [error]);
 
     const selectFile = () => fileInput.current.click();
     const updateSelectedFileName = () => updateFileName(fileInput);
     const handleUploadList = () => uploadList(fileInput);
-
-    const errorMessages =
-        error && error.length ? (
-            <>
-                <ul>
-                    {error.map(err => (
-                        <li key={err} style={{ color: 'red' }}>
-                            {err}
-                        </li>
-                    ))}
-                </ul>
-                <div style={contributeFormStyles.postErrorHelp}>
-                    If you continue to have trouble submitting your list, please
-                    check the <a href="#troubleshooting">troubleshooting</a>{' '}
-                    section on this page or email{' '}
-                    <a href="mailto:info@opensupplyhub.org">
-                        info@opensupplyhub.org
-                    </a>
-                    .
-                </div>
-            </>
-        ) : null;
 
     const formInputs = contributeFormFields.map(field => (
         <div key={field.id} className="form__field">
@@ -195,7 +178,6 @@ const ContributeForm = ({
             </div>
             {replacesSection}
             <div className="form__field">
-                {errorMessages}
                 {fetching || fetchingFeatureFlags ? (
                     <CircularProgress size={30} />
                 ) : (
