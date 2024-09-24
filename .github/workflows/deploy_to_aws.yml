@@ -5,12 +5,7 @@ on:
     branches:
       - main
       - 'releases/**'
-    # TODO: Uncomment the following lines to enable deployment to production and sandbox environments
-    #       after the implementation of the OSDEV-1325 CI/CD. Trigger the 'Deploy to AWS' pipeline using the API.
-    #       https://opensupplyhub.atlassian.net/browse/OSDEV-1325
-    # tags:
-    #   - 'sandbox-*'
-    #   - 'production-*'
+
   workflow_dispatch:
     inputs:
       deploy-env:
