@@ -1,4 +1,5 @@
 from itertools import groupby
+from django.utils import timezone
 
 from api.constants import FacilityClaimStatuses
 from api.models.facility.facility_manager import FacilityManager
@@ -293,3 +294,8 @@ class Facility(models.Model):
             tile_version = 0
 
         return f'{timestamp}-{tile_version}'
+
+    def update_facility_updated_at_field(facility_id):
+        facility = Facility.objects.get(pk=facility_id)
+        facility.updated_at = timezone.now()
+        facility.save()
