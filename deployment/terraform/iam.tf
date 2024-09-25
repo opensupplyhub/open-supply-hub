@@ -189,11 +189,13 @@ data "aws_iam_policy_document" "batch_s3_read_policy" {
     effect = "Allow"
 
     resources = [
+      aws_s3_bucket.files.arn,
       "${aws_s3_bucket.files.arn}/*",
     ]
 
     actions = [
       "s3:GetObject",
+      "s3:ListBucket"
     ]
   }
 }
