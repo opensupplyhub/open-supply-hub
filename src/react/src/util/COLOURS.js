@@ -11,4 +11,5 @@ export default {
     LIGHT_GREY: '#F9F7F7',
     DARK_GREY: '#6E707E',
     GREEN: '#E0F5E3',
+    DARK_SLATE_GRAY: '#3D4153',
 };
