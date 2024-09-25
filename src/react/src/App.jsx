@@ -42,8 +42,10 @@ function App({
                 },
                 typography: {
                     fontFamily: config.font,
-                    fontWeightBold: 900,
                     fontWeightSemiBold: 600,
+                    fontWeightSemiBoldPlus: 700,
+                    fontWeightBold: 800,
+                    fontWeightExtraBold: 900,
                 },
                 palette: {
                     primary: {
