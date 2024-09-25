@@ -466,8 +466,8 @@ export const filterOptionsPropType = shape({
 });
 
 export const productionLocationPropType = shape({
-    os_id: string.isRequired,
-    name: string.isRequired,
-    address: string.isRequired,
-    historical_os_id: arrayOf(string).isRequired,
+    os_id: string,
+    name: string,
+    address: string,
+    historical_os_id: arrayOf(string),
 });
