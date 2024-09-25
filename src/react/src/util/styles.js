@@ -301,8 +301,9 @@ export const makeContributeProductionLocationStyles = theme =>
             padding: '48px 5% 120px 5%',
         }),
         titleStyles: Object.freeze({
-            fontWeight: theme.typography.fontWeightBold,
+            fontWeight: theme.typography.fontWeightExtraBold,
             fontSize: '56px',
+            lineHeight: '60px',
         }),
         tabsContainerStyles: Object.freeze({
             flexGrow: 1,
@@ -321,7 +322,7 @@ export const makeContributeProductionLocationStyles = theme =>
             borderBottom: `1px solid ${COLOURS.NEAR_BLACK}`,
             paddingBottom: '16px',
             '&$tabSelectedStyles': {
-                fontWeight: theme.typography.fontWeightBold,
+                fontWeight: theme.typography.fontWeightExtraBold,
             },
         }),
         tabLabelContainerStyles: Object.freeze({
@@ -379,6 +380,11 @@ export const makeSearchByOsIdStyles = theme =>
         notchedOutlineStyles: Object.freeze({
             borderRadius: 0,
         }),
+        buttonLabel: Object.freeze({
+            fontSize: '18px',
+            lineHeight: '20px',
+            fontWeight: theme.typography.fontWeightExtraBold,
+        }),
         buttonStyles: Object.freeze({
             width: '200px',
             borderRadius: '0',
@@ -390,5 +396,71 @@ export const makeSearchByOsIdStyles = theme =>
             '&:hover': {
                 backgroundColor: theme.palette.action.dark,
             },
+        }),
+    });
+
+export const makeSearchByOsIdResultStyles = theme =>
+    Object.freeze({
+        circularProgressContainerStyles: Object.freeze({
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: 'calc(100vh - 116px)',
+        }),
+        mainContainerStyles: Object.freeze({
+            backgroundColor: theme.palette.background.grey,
+            padding: '48px 5% 120px 5%',
+        }),
+        mainTitleStyles: Object.freeze({
+            fontWeight: theme.typography.fontWeightExtraBold,
+            fontSize: '56px',
+            lineHeight: '60px',
+            margin: '40px 0 48px 0',
+        }),
+        resultContainerStyles: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '40px 110px',
+            borderRadius: '0',
+            boxShadow: 'none',
+        }),
+        resultTitleStyles: Object.freeze({
+            fontSize: '36px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
+            lineHeight: '44px',
+        }),
+        resultSubTitleStyles: Object.freeze({
+            fontSize: '18px',
+            lineHeight: '21px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            margin: '8px 0 24px 0',
+        }),
+        locationDetailsStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            margin: '24px 0',
+        }),
+        locationNameStyles: Object.freeze({
+            fontSize: '36px',
+            lineHeight: '44px',
+            fontWeight: theme.typography.fontWeightBold,
+        }),
+        locationCurrentOsIdStyles: Object.freeze({
+            fontSize: '16px',
+            lineHeight: '20px',
+            fontWeight: theme.typography.fontWeightBold,
+            margin: '8px 0',
+        }),
+        locationHistoricalOsIdStyles: Object.freeze({
+            fontSize: '14px',
+            lineHeight: '20px',
+            fontWeight: theme.typography.fontWeightBold,
+            color: COLOURS.DARK_GREY,
+        }),
+        locationAddressStyles: Object.freeze({
+            fontSize: '16px',
+            lineHeight: '20px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            marginTop: '12px',
         }),
     });
