@@ -184,6 +184,26 @@ resource "aws_iam_role_policy_attachment" "batch_policy" {
   policy_arn = var.batch_service_role_policy_arn
 }
 
+data "aws_iam_policy_document" "batch_s3_read_policy" {
+  statement {
+    effect = "Allow"
+
+    resources = [
+      "${aws_s3_bucket.files.arn}/*",
+    ]
+
+    actions = [
+      "s3:GetObject",
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "batch_s3_read_policy" {
+  name   = "BatchS3ReadFiles"
+  role   = aws_iam_role.container_instance_batch.name
+  policy = data.aws_iam_policy_document.batch_s3_read_policy.json
+}
+
 #
 # Spot Fleet IAM resources
 #
