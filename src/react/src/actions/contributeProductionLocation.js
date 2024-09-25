@@ -19,8 +19,7 @@ export const resetSingleProductionLocation = createAction(
     'RESET_SINGLE_PRODUCTION_LOCATION',
 );
 
-export const fetchProductionLocationByOsId = osID => {
-    console.log('fetchProductionLocation osID >>>', osID);
+export function fetchProductionLocationByOsId(osID) {
     return dispatch => {
         dispatch(startFetchingSingleProductionLocation());
 
@@ -39,4 +38,4 @@ export const fetchProductionLocationByOsId = osID => {
                 ),
             );
     };
-};
+}
