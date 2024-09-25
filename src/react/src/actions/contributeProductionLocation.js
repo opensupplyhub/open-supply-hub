@@ -15,6 +15,9 @@ export const failFetchingSingleProductionLocation = createAction(
 export const completeFetchingSingleProductionLocation = createAction(
     'COMPLETE_FETCHING_SINGLE_PRODUCTION_LOCATION',
 );
+export const resetSingleProductionLocation = createAction(
+    'RESET_SINGLE_PRODUCTION_LOCATION',
+);
 
 export const fetchProductionLocationByOsId = osID => {
     console.log('fetchProductionLocation osID >>>', osID);
