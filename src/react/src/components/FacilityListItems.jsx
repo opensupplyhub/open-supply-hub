@@ -1,8 +1,8 @@
 /* eslint no-unused-vars: 0 */
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 import { arrayOf, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
-import { Link, Route } from 'react-router-dom';
+import { Link, Route, useHistory } from 'react-router-dom';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
@@ -19,15 +19,17 @@ import FacilityListItemsEmpty from './FacilityListItemsEmpty';
 import FacilityListItemsTable from './FacilityListItemsTable';
 import FacilityListControls from './FacilityListControls';
 
+import {
+    createPaginationOptionsFromQueryString,
+    createParamsFromQueryString,
+} from '../util/util';
 import COLOURS from '../util/COLOURS';
-
 import {
     fetchFacilityList,
     fetchFacilityListItems,
     resetFacilityListItems,
     assembleAndDownloadFacilityListCSV,
 } from '../actions/facilityListDetails';
-
 import {
     mainRoute,
     OARFont,
@@ -38,13 +40,7 @@ import {
     dashboardListsRoute,
     matchResponsibilityEnum,
 } from '../util/constants';
-
 import { facilityListPropType } from '../util/propTypes';
-
-import {
-    createPaginationOptionsFromQueryString,
-    createParamsFromQueryString,
-} from '../util/util';
 
 const facilityListItemsStyles = Object.freeze({
     headerStyles: Object.freeze({
@@ -126,266 +122,240 @@ const refreshListModalStyles = Object.freeze({
     }),
 });
 
-class FacilityListItems extends Component {
-    constructor() {
-        super();
-        this.state = { dialogIsOpen: true };
+const FacilityListItems = ({
+    list,
+    fetchingList,
+    error,
+    uploadError,
+    downloadCSVFetching,
+    downloadingCSV,
+    csvDownloadingError,
+    userHasSignedIn,
+    isAdminUser,
+    readOnly,
+    fetchList,
+    fetchListItems,
+    clearListItems,
+    adminSearch,
+}) => {
+    const [dialogIsOpen, setDialogIsOpen] = useState(true);
+    const history = useHistory();
+
+    useEffect(() => {
+        fetchList();
+        fetchListItems();
+        return () => clearListItems();
+    }, [fetchList, fetchListItems, clearListItems]);
+
+    if (fetchingList) {
+        return (
+            <AppGrid title="">
+                <CircularProgress />
+            </AppGrid>
+        );
     }
 
-    componentDidMount() {
-        this.props.fetchList();
-        this.props.fetchListItems();
-    }
-
-    componentWillUnmount() {
-        return this.props.clearListItems();
-    }
-
-    render() {
-        const {
-            list,
-            fetchingList,
-            error,
-            uploadError,
-            downloadCSV,
-            downloadingCSV,
-            csvDownloadingError,
-            userHasSignedIn,
-            isAdminUser,
-            readOnly,
-            adminSearch,
-        } = this.props;
-
-        if (fetchingList) {
-            return (
-                <AppGrid title="">
-                    <CircularProgress />
-                </AppGrid>
-            );
-        }
-
-        if (error && error.length) {
-            if (!userHasSignedIn) {
-                return (
-                    <AppGrid title="Unable to retrieve that list">
-                        <Link to={authLoginFormRoute} href={authLoginFormRoute}>
-                            Sign in to view your Open Supply Hub lists
-                        </Link>
-                    </AppGrid>
-                );
-            }
-
+    if (error && error.length) {
+        if (!userHasSignedIn) {
             return (
                 <AppGrid title="Unable to retrieve that list">
-                    <ul>
-                        {error.map(err => (
-                            <li key={err}>{err}</li>
-                        ))}
-                    </ul>
+                    <Link to={authLoginFormRoute}>
+                        Sign in to view your Open Supply Hub lists
+                    </Link>
                 </AppGrid>
             );
         }
-
-        if (!list) {
-            return (
-                <AppGrid title="No list was found for that ID">
-                    <div />
-                </AppGrid>
-            );
-        }
-
-        const csvDownloadErrorMessage =
-            csvDownloadingError && csvDownloadingError.length ? (
-                <p style={{ color: 'red', textAlign: 'right' }}>
-                    An error prevented downloading the CSV.
-                </p>
-            ) : null;
-
-        const awaitingModerationMessage = readOnly ? (
-            <p style={{ color: 'red' }}>
-                This list has matches awaiting moderation from the{' '}
-                {isAdminUser ? 'contributor' : 'OS Hub admins'}.
-            </p>
-        ) : null;
-
-        const csvDownloadButton = downloadingCSV ? (
-            <div>
-                <CircularProgress size={25} />
-            </div>
-        ) : (
-            <Button
-                variant="outlined"
-                color="primary"
-                style={facilityListItemsStyles.buttonStyles}
-                onClick={downloadCSV}
-                disabled={downloadingCSV}
-            >
-                Download Formatted File
-            </Button>
-        );
-
-        const originalCsvDownloadButton = list.file ? (
-            <a
-                style={facilityListItemsStyles.buttonLinkStyles}
-                href={list.file}
-                target="_blank"
-                rel="noreferrer"
-                component={Button}
-            >
-                Download Submitted File
-            </a>
-        ) : null;
-
-        const backRoute = isAdminUser
-            ? `${dashboardListsRoute}${adminSearch || ''}`
-            : listsRoute;
-
-        const renderUploadError = () => (
-            <Grid item style={facilityListItemsStyles.tableStyles}>
-                <ul>
-                    {uploadError.map(err => (
-                        <li key={err} style={{ color: 'red' }}>
-                            {err}
-                        </li>
-                    ))}
-                </ul>
-                <div style={facilityListItemsStyles.postErrorHelp}>
-                    If you continue to have trouble submitting your list, please
-                    check the <a href="#troubleshooting">troubleshooting</a>{' '}
-                    section on this page or email{' '}
-                    <a href="mailto:info@opensupplyhub.org">
-                        info@opensupplyhub.org
-                    </a>
-                    .
-                </div>
-            </Grid>
-        );
-
-        const renderDialog = () => (
-            <Dialog open={this.state.dialogIsOpen}>
-                <DialogTitle style={refreshListModalStyles.titleContentStyle}>
-                    <Check style={refreshListModalStyles.icon} />
-                    Thank you for submitting your list!
-                </DialogTitle>
-                <DialogContent>
-                    <Typography
-                        variant="body1"
-                        style={refreshListModalStyles.dialogContentStyles}
-                    >
-                        Your data has been successfully uploaded and is being
-                        processed.
-                        <br />
-                        Check back in a few minutes to review the status.
-                    </Typography>
-                    <hr style={refreshListModalStyles.separator} />
-                </DialogContent>
-                <DialogActions
-                    style={refreshListModalStyles.buttonContentStyle}
-                >
-                    <Button
-                        variant="outlined"
-                        color="secondary"
-                        onClick={() => {
-                            console.log('Go back to the main page');
-                            this.props.history.push(mainRoute);
-                        }}
-                    >
-                        Go to the main page
-                    </Button>
-                    <Button
-                        variant="outlined"
-                        color="primary"
-                        onClick={() => {
-                            console.log('Refresh');
-                        }}
-                    >
-                        Refresh
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        );
-
-        const renderFacilityList = () => (
-            <Grid item style={facilityListItemsStyles.tableStyles}>
-                <div style={facilityListItemsStyles.headerStyles}>
-                    <div>
-                        <h2 style={facilityListItemsStyles.titleStyles}>
-                            {list.name || list.id}
-                        </h2>
-                        <Typography
-                            variant="subheading"
-                            style={facilityListItemsStyles.descriptionStyles}
-                        >
-                            {list.description || ''}
-                        </Typography>
-                    </div>
-                    <div
-                        style={
-                            facilityListItemsStyles.buttonGroupWithErrorStyles
-                        }
-                    >
-                        {csvDownloadErrorMessage}
-                        <div style={facilityListItemsStyles.buttonGroupStyles}>
-                            {csvDownloadButton}
-                            {originalCsvDownloadButton}
-                            <Button
-                                variant="outlined"
-                                component={Link}
-                                to={backRoute}
-                                href={backRoute}
-                                style={facilityListItemsStyles.buttonStyles}
-                            >
-                                Back to lists
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-
-                {list.status_counts.UPLOADED === 0 && (
-                    <FacilityListControls
-                        isAdminUser={isAdminUser}
-                        id={list.id}
-                    />
-                )}
-
-                <div style={facilityListItemsStyles.subheadStyles}>
-                    The processing time may be longer for lists that include
-                    additional data points beyond facility name and address. You
-                    will receive an email when your list has finished
-                    processing.
-                    {awaitingModerationMessage}
-                </div>
-
-                {list.item_count ? (
-                    <Route
-                        path={facilityListItemsRoute}
-                        component={FacilityListItemsTable}
-                    />
-                ) : (
-                    <FacilityListItemsEmpty />
-                )}
-            </Grid>
-        );
-
-        const content =
-            uploadError && uploadError.length ? (
-                renderUploadError()
-            ) : (
-                <>
-                    {renderDialog()}
-                    {renderFacilityList()}
-                </>
-            );
 
         return (
-            <AppOverflow>
-                <Grid container justify="center">
-                    {content}
-                </Grid>
-            </AppOverflow>
+            <AppGrid title="Unable to retrieve that list">
+                <ul>
+                    {error.map(err => (
+                        <li key={err}>{err}</li>
+                    ))}
+                </ul>
+            </AppGrid>
         );
     }
-}
+
+    if (!list) {
+        return (
+            <AppGrid title="No list was found for that ID">
+                <div />
+            </AppGrid>
+        );
+    }
+
+    const csvDownloadErrorMessage = csvDownloadingError &&
+        csvDownloadingError.length && (
+            <p style={{ color: 'red', textAlign: 'right' }}>
+                An error prevented downloading the CSV.
+            </p>
+        );
+
+    const awaitingModerationMessage = readOnly && (
+        <p style={{ color: 'red' }}>
+            This list has matches awaiting moderation from the{' '}
+            {isAdminUser ? 'contributor' : 'OS Hub admins'}.
+        </p>
+    );
+
+    const csvDownloadButton = downloadingCSV ? (
+        <div>
+            <CircularProgress size={25} />
+        </div>
+    ) : (
+        <Button
+            variant="outlined"
+            color="primary"
+            style={facilityListItemsStyles.buttonStyles}
+            onClick={downloadCSVFetching}
+            disabled={downloadingCSV}
+        >
+            Download Formatted File
+        </Button>
+    );
+
+    const originalCsvDownloadButton = list.file && (
+        <a
+            style={facilityListItemsStyles.buttonLinkStyles}
+            href={list.file}
+            target="_blank"
+            rel="noreferrer"
+            component={Button}
+        >
+            Download Submitted File
+        </a>
+    );
+
+    const backRoute = isAdminUser
+        ? `${dashboardListsRoute}${adminSearch || ''}`
+        : listsRoute;
+
+    const renderUploadError = () => (
+        <Grid item style={facilityListItemsStyles.tableStyles}>
+            <ul>
+                {uploadError.map(err => (
+                    <li key={err} style={{ color: 'red' }}>
+                        {err}
+                    </li>
+                ))}
+            </ul>
+            <div style={facilityListItemsStyles.postErrorHelp}>
+                If you continue to have trouble submitting your list, please
+                check the <a href="#troubleshooting">troubleshooting</a> section
+                on this page or email{' '}
+                <a href="mailto:info@opensupplyhub.org">
+                    info@opensupplyhub.org
+                </a>
+                .
+            </div>
+        </Grid>
+    );
+
+    const renderDialog = () => (
+        <Dialog open={dialogIsOpen}>
+            <DialogTitle style={refreshListModalStyles.titleContentStyle}>
+                <Check style={refreshListModalStyles.icon} />
+                Thank you for submitting your list!
+            </DialogTitle>
+            <DialogContent>
+                <Typography
+                    variant="body1"
+                    style={refreshListModalStyles.dialogContentStyles}
+                >
+                    Your data has been successfully uploaded and is being
+                    processed.
+                    <br />
+                    Check back in a few minutes to review the status.
+                </Typography>
+                <hr style={refreshListModalStyles.separator} />
+            </DialogContent>
+            <DialogActions style={refreshListModalStyles.buttonContentStyle}>
+                <Button
+                    variant="outlined"
+                    color="secondary"
+                    onClick={() => history.push(mainRoute)}
+                >
+                    Go to the main page
+                </Button>
+                <Button variant="outlined" color="primary">
+                    Refresh
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+
+    const renderFacilityList = () => (
+        <Grid item style={facilityListItemsStyles.tableStyles}>
+            <div style={facilityListItemsStyles.headerStyles}>
+                <div>
+                    <h2 style={facilityListItemsStyles.titleStyles}>
+                        {list.name || list.id}
+                    </h2>
+                    <Typography
+                        variant="subheading"
+                        style={facilityListItemsStyles.descriptionStyles}
+                    >
+                        {list.description || ''}
+                    </Typography>
+                </div>
+                <div style={facilityListItemsStyles.buttonGroupWithErrorStyles}>
+                    {csvDownloadErrorMessage}
+                    <div style={facilityListItemsStyles.buttonGroupStyles}>
+                        {csvDownloadButton}
+                        {originalCsvDownloadButton}
+                        <Button
+                            variant="outlined"
+                            component={Link}
+                            to={backRoute}
+                            style={facilityListItemsStyles.buttonStyles}
+                        >
+                            Back to lists
+                        </Button>
+                    </div>
+                </div>
+            </div>
+
+            {list.status_counts.UPLOADED === 0 && (
+                <FacilityListControls isAdminUser={isAdminUser} id={list.id} />
+            )}
+
+            <div style={facilityListItemsStyles.subheadStyles}>
+                The processing time may be longer for lists that include
+                additional data points beyond facility name and address. You
+                will receive an email when your list has finished processing.
+                {awaitingModerationMessage}
+            </div>
+
+            {list.item_count ? (
+                <Route
+                    path={facilityListItemsRoute}
+                    component={FacilityListItemsTable}
+                />
+            ) : (
+                <FacilityListItemsEmpty />
+            )}
+        </Grid>
+    );
+
+    const content =
+        uploadError && uploadError.length ? (
+            renderUploadError()
+        ) : (
+            <>
+                {renderDialog()}
+                {renderFacilityList()}
+            </>
+        );
+
+    return (
+        <AppOverflow>
+            <Grid container justify="center">
+                {content}
+            </Grid>
+        </AppOverflow>
+    );
+};
 
 FacilityListItems.defaultProps = {
     list: null,
@@ -402,7 +372,7 @@ FacilityListItems.propTypes = {
     fetchList: func.isRequired,
     fetchListItems: func.isRequired,
     clearListItems: func.isRequired,
-    downloadCSV: func.isRequired,
+    downloadCSVFetching: func.isRequired,
     downloadingCSV: bool.isRequired,
     csvDownloadingError: arrayOf(string),
     userHasSignedIn: bool.isRequired,
@@ -411,7 +381,7 @@ FacilityListItems.propTypes = {
     adminSearch: string,
 };
 
-function mapStateToProps({
+const mapStateToProps = ({
     facilityListDetails: {
         list: { data: list, fetching: fetchingList, error: listError },
         items: { data: items, error: itemsError },
@@ -421,7 +391,7 @@ function mapStateToProps({
         user: { user },
     },
     upload: { error },
-}) {
+}) => {
     const isAdminUser =
         !user.isAnon &&
         user.is_superuser &&
@@ -446,15 +416,15 @@ function mapStateToProps({
         fetchingList,
         error: listError || itemsError,
         uploadError: error,
-        downloadingCSV,
+        downloadCSVFetching: downloadingCSV,
         csvDownloadingError,
-        userHasSignedIn: !user.isAnon,
+        userHasSignedIn: !!user,
         isAdminUser,
         readOnly,
     };
-}
+};
 
-function mapDispatchToProps(
+const mapDispatchToProps = (
     dispatch,
     {
         match: {
@@ -464,11 +434,10 @@ function mapDispatchToProps(
             location: { search, state: { search: adminSearch } = {} },
         },
     },
-) {
+) => {
     const { page, rowsPerPage } = createPaginationOptionsFromQueryString(
         search,
     );
-
     const params = createParamsFromQueryString(search);
 
     return {
@@ -476,9 +445,10 @@ function mapDispatchToProps(
         fetchListItems: () =>
             dispatch(fetchFacilityListItems(listID, page, rowsPerPage, params)),
         clearListItems: () => dispatch(resetFacilityListItems()),
-        downloadCSV: () => dispatch(assembleAndDownloadFacilityListCSV()),
+        downloadCSVFetching: () =>
+            dispatch(assembleAndDownloadFacilityListCSV()),
         adminSearch,
     };
-}
+};
 
 export default connect(mapStateToProps, mapDispatchToProps)(FacilityListItems);

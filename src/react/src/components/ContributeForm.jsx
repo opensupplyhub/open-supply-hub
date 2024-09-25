@@ -1,5 +1,4 @@
-/* eslint no-unused-vars: 0 */
-import React, { useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import {
     arrayOf,
     bool,
@@ -33,6 +32,8 @@ import {
     listsRoute,
 } from '../util/constants';
 
+import { useFileUploadHandler } from '../util/hooks';
+
 import {
     updateFileUploadName,
     updateFileUploadDescription,
@@ -64,7 +65,6 @@ const contributeFormStyles = Object.freeze({
 });
 
 const ContributeForm = ({
-    history,
     name,
     description,
     filename,
@@ -82,38 +82,19 @@ const ContributeForm = ({
     fetchingFacilityLists,
     fetchingFeatureFlags,
 }) => {
-    const fileInput = useRef(null);
-    const prevFetchingRef = useRef();
-
-    useEffect(() => {
-        resetForm();
-    }, []);
-
-    useEffect(() => {
-        prevFetchingRef.current = fetching;
-    }, [fetching]);
-
-    const prevFetching = prevFetchingRef.current;
-
-    useEffect(() => {
-        if (prevFetching && !fetching && !error) {
-            fetchLists();
-            if (fileInput.current) {
-                fileInput.current.value = null;
-            }
-            toast('Your facility list has been uploaded successfully!');
-        }
-    }, [fetching, error, fetchLists, prevFetching]);
-
-    useEffect(() => {
-        if (error && error.length) {
-            // TODO: should be a real list id here
-            // Enforce error render on existing local list
-            console.log(`Error uploading is ${error}`);
-            const listID = 5345;
-            history.push(`${listsRoute}/${listID}`);
-        }
-    }, [error]);
+    const [hasUploadErrorBeenHandled, setHasUploadErrorBeenHandled] = useState(
+        false,
+    );
+    const { fileInput } = useFileUploadHandler({
+        resetForm,
+        fetching,
+        error,
+        fetchLists,
+        listsRoute,
+        hasUploadErrorBeenHandled,
+        setHasUploadErrorBeenHandled,
+        toast,
+    });
 
     const selectFile = () => fileInput.current.click();
     const updateSelectedFileName = () => updateFileName(fileInput);
