@@ -5,6 +5,7 @@ import {
     startFetchingSingleProductionLocation,
     failFetchingSingleProductionLocation,
     completeFetchingSingleProductionLocation,
+    resetSingleProductionLocation,
 } from '../actions/contributeProductionLocation';
 
 const initialState = Object.freeze({
@@ -38,6 +39,12 @@ export default createReducer(
                     fetching: { $set: false },
                     error: { $set: null },
                     data: { $set: payload },
+                },
+            }),
+        [resetSingleProductionLocation]: state =>
+            update(state, {
+                singleProductionLocation: {
+                    $set: initialState.singleProductionLocation,
                 },
             }),
     },
