@@ -68,10 +68,12 @@ class ContriCleaner:
         else:
             ext = os.path.splitext(self.__data.name)[1].lower()
             if ext == '.xlsx':
+                print("It is XLSX")
                 parsing_executor = ParsingExecutor(
                     SourceParserXLSX(self.__data)
                 )
             elif ext == '.csv':
+                print("It is CSV")
                 parsing_executor = ParsingExecutor(
                     SourceParserCSV(self.__data)
                 )

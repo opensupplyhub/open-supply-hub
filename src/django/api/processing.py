@@ -185,20 +185,13 @@ def parse_production_location_list(location_list: FacilityList):
     parsing_started = str(timezone.now())
     logger.info('[List Upload] Started CC Parse process!')
 
-    print('Show path value >>>>')
-    print(type(location_list.file.path))
-    print(location_list.file.url)
-
-    print('Show url value >>>>')
-    print(type(location_list.file.path))
-    print(location_list.file.path)
-
     print('Show DJANGO_ENV value >>>>')
     value = os.getenv('DJANGO_ENV', 'default_value')
     print(value)
     contri_cleaner = ContriCleaner(location_list.file, SectorCache())
     try:
         contri_cleaner_processed_data = contri_cleaner.process_data()
+        print(contri_cleaner_processed_data)
     except ParsingError as err:
         logger.error(f'[List Upload] Data Parsing Error: {err}')
         report_error_to_rollbar(
@@ -215,7 +208,6 @@ def parse_production_location_list(location_list: FacilityList):
         raise Exception('Internal System Error. '
                         'Please contact support.')  # TODO: save it to the DB
 
-    return
     processing_input = {
         'facility_list': location_list,
         'contri_cleaner_processed_data': contri_cleaner_processed_data,
