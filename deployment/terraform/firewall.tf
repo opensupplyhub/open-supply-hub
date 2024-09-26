@@ -382,6 +382,7 @@ resource "aws_security_group_rule" "batch_https_egress" {
   to_port     = 443
   protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
+  ipv6_cidr_blocks = ["::/0"]
 
   security_group_id = aws_security_group.batch.id
 }
@@ -424,17 +425,6 @@ resource "aws_security_group_rule" "batch_msk_egress" {
 
   security_group_id        = aws_security_group.batch.id
   source_security_group_id = aws_security_group.msk.id
-}
-
-resource "aws_security_group_rule" "batch_https_egress" {
-  type             = "egress"
-  from_port        = 443
-  to_port          = 443
-  protocol         = "tcp"
-  cidr_blocks      = ["0.0.0.0/0"]
-  ipv6_cidr_blocks = ["::/0"]
-
-  security_group_id = aws_security_group.batch.id
 }
 
 resource "aws_security_group_rule" "logstash_opensearch_ingress" {
