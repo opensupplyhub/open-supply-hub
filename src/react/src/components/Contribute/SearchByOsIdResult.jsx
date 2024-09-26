@@ -1,128 +1,132 @@
-import React from 'react';
-import { useHistory } from 'react-router-dom';
-import { object } from 'prop-types';
+import React, { useEffect } from 'react';
+import { useHistory, useLocation } from 'react-router-dom';
+import { connect } from 'react-redux';
+import get from 'lodash/get';
+import isEmpty from 'lodash/isEmpty';
+import { object, bool, func } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
-import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
-import ArrowBack from '@material-ui/icons/ArrowBack';
-
-import SearchByOsIdNoResult from './SearchByOsIdNoResult';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import {
+    fetchProductionLocationByOsId,
+    resetSingleProductionLocation,
+} from '../../actions/contributeProductionLocation';
 import { contributeProductionLocationRoute } from '../../util/constants';
-// import { makeSearchByOsIdResultStyles } from '../../util/styles';
+import { productionLocationPropType } from '../../util/propTypes';
+import SearchByOsIdNotFoundResult from './SearchByOsIdNotFoundResult';
+import SearchByOsIdSuccessResult from './SearchByOsIdSuccessResult';
+import BackToSearchButton from './BackToSearchButton';
+import { makeSearchByOsIdResultStyles } from '../../util/styles';
 
-export const makeSearchByOsIdResultStyles = theme =>
-    Object.freeze({
-        titleStyles: Object.freeze({
-            fontSize: '36px',
-            fontWeight: '700',
-        }),
-        resultContainerStyles: Object.freeze({
-            display: 'flex',
-            flexDirection: 'column',
-            padding: '40px 110px',
-            borderRadius: '0',
-            boxShadow: 'none',
-        }),
-        locationDetailsStyles: Object.freeze({
-            fontSize: '18px',
-            fontWeight: '600',
-            margin: '24px 0',
-        }),
-        actionsStyles: Object.freeze({
-            display: 'flex',
-            gap: '16px',
-            marginTop: '40px',
-        }),
-        secondaryButtonStyles: Object.freeze({
-            width: '200px',
-            borderRadius: '0',
-            textTransform: 'none',
-            fontWeight: 'bold',
-            backgroundColor: theme.palette.action.main,
-            color: theme.palette.getContrastText(theme.palette.action.main),
-            '&:hover': {
-                backgroundColor: theme.palette.action.dark,
-            },
-        }),
-        primaryButtonStyles: Object.freeze({
-            width: '200px',
-            borderRadius: '0',
-            textTransform: 'none',
-            fontWeight: 'bold',
-        }),
-    });
-
-const SearchByOsIdResult = ({ data, classes }) => {
-    console.log('data in SearchByOsIdResult >>>', data);
+const SearchByOsIdResult = ({
+    data,
+    fetching,
+    fetchProductionLocation,
+    clearProductionLocation,
+    classes,
+}) => {
+    const location = useLocation();
     const history = useHistory();
 
-    if (!data || data?.data.length === 0) {
-        return <SearchByOsIdNoResult />;
+    useEffect(() => {
+        const osId = new URLSearchParams(location.search).get('os_id');
+
+        if (osId) {
+            fetchProductionLocation(osId);
+        }
+    }, [location.search, fetchProductionLocation]);
+
+    const locationData = get(data, 'data[0]', {});
+    const isLocationDataAvailable = isEmpty(locationData);
+    const {
+        name,
+        os_id: osId,
+        historical_os_id: historicalOsIds,
+        address,
+    } = locationData;
+
+    const handleBackToSearchByNameAddress = () => {
+        clearProductionLocation();
+        history.push(`${contributeProductionLocationRoute}?tab=name-address`);
+    };
+
+    const handleBackToSearchByOsId = () => {
+        clearProductionLocation();
+        history.push(`${contributeProductionLocationRoute}?tab=os-id`);
+    };
+
+    if (fetching) {
+        return (
+            <div className={classes.circularProgressContainerStyles}>
+                <CircularProgress />
+            </div>
+        );
     }
 
-    const { data: newData } = data;
-    const { os_id: osId, name, address } = newData[0];
-
     return (
-        <>
-            <Button
-                color="primary"
-                className={classes.backButton}
-                onClick={() => {
-                    // clearFacility();
-                    history.push(contributeProductionLocationRoute);
-                }}
-            >
-                <ArrowBack />
-                Back to ID search
-            </Button>
-            <Typography
-                component="h1"
-                variant="h1"
-                className={classes.titleStyles}
-            >
+        <div className={classes.mainContainerStyles}>
+            <BackToSearchButton
+                label="Back to ID search"
+                handleBackToSearch={handleBackToSearchByOsId}
+            />
+            <Typography component="h1" className={classes.mainTitleStyles}>
                 Production Location Search
             </Typography>
+
             <Paper className={classes.resultContainerStyles}>
-                <Typography
-                    component="h2"
-                    variant="h2"
-                    className={classes.titleStyles}
-                >
-                    Is this your production location?
-                </Typography>
-                <div className={classes.locationDetailsStyles}>
-                    <Typography>Location Name: {name}</Typography>
-                    <Typography>OS ID: {osId}</Typography>
-                    <Typography>Address Line 1: {address}</Typography>
-                </div>
-                <div className={classes.actionsStyles}>
-                    <Button
-                        variant="outlined"
-                        className={classes.secondaryButtonStyles}
-                    >
-                        No, search by name and address
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        className={classes.primaryButtonStyles}
-                    >
-                        Yes, add data and claim
-                    </Button>
-                </div>
+                {!isLocationDataAvailable ? (
+                    <SearchByOsIdSuccessResult
+                        name={name}
+                        osId={osId}
+                        historicalOsIds={historicalOsIds}
+                        address={address}
+                        handleBackToSearchByNameAddress={
+                            handleBackToSearchByNameAddress
+                        }
+                    />
+                ) : (
+                    <SearchByOsIdNotFoundResult
+                        handleBackToSearchByNameAddress={
+                            handleBackToSearchByNameAddress
+                        }
+                        handleBackToSearchByOsId={handleBackToSearchByOsId}
+                    />
+                )}
             </Paper>
-        </>
+        </div>
     );
 };
 
 SearchByOsIdResult.defaultProps = {
     data: {},
+    fetching: false,
 };
 
 SearchByOsIdResult.propTypes = {
-    data: object,
+    data: productionLocationPropType,
+    fetching: bool,
+    fetchProductionLocation: func.isRequired,
+    clearProductionLocation: func.isRequired,
+    classes: object.isRequired,
 };
 
-export default withStyles(makeSearchByOsIdResultStyles)(SearchByOsIdResult);
+const mapStateToProps = ({
+    contributeProductionLocation: {
+        singleProductionLocation: { data, fetching },
+    },
+}) => ({
+    data,
+    fetching,
+});
+
+const mapDispatchToProps = dispatch => ({
+    fetchProductionLocation: osId =>
+        dispatch(fetchProductionLocationByOsId(osId)),
+    clearProductionLocation: () => dispatch(resetSingleProductionLocation()),
+});
+
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps,
+)(withStyles(makeSearchByOsIdResultStyles)(SearchByOsIdResult));
