@@ -4,7 +4,7 @@ import { useLocation, useHistory } from 'react-router-dom';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
-import SearchByOsId from './SearchByOsId';
+import SearchByOsIdTab from './SearchByOsIdTab';
 import { makeContributeProductionLocationStyles } from '../../util/styles';
 
 const TAB_OS_ID = 'os-id';
@@ -66,7 +66,7 @@ const ContributeProductionLocation = ({ classes }) => {
                         value={TAB_NAME_ADDRESS}
                     />
                 </Tabs>
-                {selectedTab === TAB_OS_ID && <SearchByOsId />}
+                {selectedTab === TAB_OS_ID && <SearchByOsIdTab />}
                 {selectedTab === TAB_NAME_ADDRESS && (
                     <div>Search by Name and Address</div>
                 )}
