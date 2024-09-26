@@ -213,6 +213,12 @@ class FacilityMergeTest(APITestCase):
             self.merge_endpoint, self.facility_1.id, self.facility_2.id
         )
 
+    def set_up_updated_at_field(self):
+        """Helper method to set updated_at field older than now"""
+        self.facility_1.updated_at = '2019-03-24 02:23:22.195 +0100'
+        self.old_updated_at = self.facility_1.updated_at
+        self.facility_1.save(update_fields=['updated_at'])
+
     def test_requires_auth(self):
         response = self.client.post(self.merge_url)
         self.assertEqual(401, response.status_code)
@@ -223,12 +229,18 @@ class FacilityMergeTest(APITestCase):
         self.assertEqual(403, response.status_code)
 
     def test_merge(self):
+        current_time = timezone.now()
+        self.set_up_updated_at_field()
         original_facility_count = Facility.objects.all().count()
         original_alias_count = FacilityAlias.objects.all().count()
         self.client.login(
             email=self.superuser_email, password=self.superuser_password
         )
         response = self.client.post(self.merge_url)
+        self.assertNotEqual(self.old_updated_at, self.facility_1.updated_at)
+        self.assertEqual(
+            current_time.replace(microsecond=0),
+            self.facility_1.updated_at.replace(microsecond=0))
         self.assertEqual(200, response.status_code)
         data = json.loads(response.content)
         self.assertEqual(self.facility_1.id, data["id"])

@@ -1,3 +1,4 @@
+from django.utils import timezone
 from api.constants import FacilityClaimStatuses
 from api.models import (
     Contributor,
@@ -82,6 +83,13 @@ class FacilityClaimAdminDashboardTest(APITestCase):
         )
 
         self.client.login(email="superuser@example.com", password="superuser")
+        self.current_time = timezone.now()
+
+    def set_up_updated_at_field(self):
+        """Helper method to set updated_at field older than now"""
+        self.facility.updated_at = '2019-03-24 02:23:22.195 +0100'
+        self.old_updated_at = self.facility.updated_at
+        self.facility.save(update_fields=['updated_at'])
 
     @override_switch("claim_a_facility", active=True)
     def test_user_cannot_submit_second_facility_claim_with_one_pending(self):
@@ -108,11 +116,17 @@ class FacilityClaimAdminDashboardTest(APITestCase):
 
     @override_switch("claim_a_facility", active=True)
     def test_approve_claim_and_email_claimant_and_contributors(self):
+        self.set_up_updated_at_field()
+
         self.assertEqual(len(mail.outbox), 0)
 
         response = self.client.post(
             "/api/facility-claims/{}/approve/".format(self.facility_claim.id)
         )
+        self.assertEqual(
+            self.current_time.replace(microsecond=0),
+            self.facility.updated_at.replace(microsecond=0))
+        self.assertNotEqual(self.old_updated_at, self.facility.updated_at)
 
         self.assertEqual(200, response.status_code)
 
@@ -183,11 +197,17 @@ class FacilityClaimAdminDashboardTest(APITestCase):
 
     @override_switch("claim_a_facility", active=True)
     def test_deny_facility_claim(self):
+        self.set_up_updated_at_field()
         self.assertEqual(len(mail.outbox), 0)
 
         response = self.client.post(
             "/api/facility-claims/{}/deny/".format(self.facility_claim.id)
         )
+
+        self.assertEqual(
+            self.current_time.replace(microsecond=0),
+            self.facility.updated_at.replace(microsecond=0))
+        self.assertNotEqual(self.old_updated_at, self.facility.updated_at)
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(len(mail.outbox), 1)
@@ -215,6 +235,7 @@ class FacilityClaimAdminDashboardTest(APITestCase):
 
     @override_switch("claim_a_facility", active=True)
     def test_revoke_facility_claim(self):
+        self.set_up_updated_at_field()
         self.assertEqual(len(mail.outbox), 0)
 
         error_response = self.client.post(
@@ -236,6 +257,11 @@ class FacilityClaimAdminDashboardTest(APITestCase):
         updated_facility_claim = FacilityClaim.objects.get(
             pk=self.facility_claim.id
         )
+
+        self.assertEqual(
+            self.current_time.replace(microsecond=0),
+            self.facility.updated_at.replace(microsecond=0))
+        self.assertNotEqual(self.old_updated_at, self.facility.updated_at)
 
         self.assertEqual(
             FacilityClaimStatuses.REVOKED,
