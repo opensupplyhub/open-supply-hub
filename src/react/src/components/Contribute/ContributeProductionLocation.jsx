@@ -7,42 +7,36 @@ import Typography from '@material-ui/core/Typography';
 import SearchByOsId from './SearchByOsId';
 import { makeContributeProductionLocationStyles } from '../../util/styles';
 
+const TAB_OS_ID = 'os-id';
+const TAB_NAME_ADDRESS = 'name-address';
+const VALID_TABS = [TAB_OS_ID, TAB_NAME_ADDRESS];
+
 const ContributeProductionLocation = ({ classes }) => {
     const location = useLocation();
     const history = useHistory();
 
-    const hash = location.hash ? location.hash.substring(1) : '';
-    const initialTab = hash === 'name-address' ? 1 : 0;
+    const queryParams = new URLSearchParams(location.search);
+    const tabInQuery = queryParams.get('tab');
 
-    const [selectedTab, setSelectedTab] = useState(initialTab);
+    const [selectedTab, setSelectedTab] = useState(tabInQuery);
 
     useEffect(() => {
-        if (!location.hash) {
-            history.replace('#os-id');
+        if (VALID_TABS.includes(tabInQuery)) {
+            setSelectedTab(tabInQuery);
+        } else {
+            history.replace(`?tab=${TAB_OS_ID}`);
+            setSelectedTab(TAB_OS_ID);
         }
-
-        const handleHashChange = () => {
-            const newHash = window.location.hash.substring(1);
-            setSelectedTab(newHash === 'name-address' ? 1 : 0);
-        };
-
-        window.addEventListener('hashchange', handleHashChange);
-        return () => window.removeEventListener('hashchange', handleHashChange);
-    }, [location.hash, history]);
+    }, [tabInQuery, history]);
 
     const handleChange = (event, value) => {
         setSelectedTab(value);
-        const newHash = value === 1 ? '#name-address' : '#os-id';
-        history.replace(newHash);
+        history.push(`?tab=${value}`);
     };
 
     return (
         <div className={classes.mainContainerStyles}>
-            <Typography
-                component="h1"
-                variant="h1"
-                className={classes.titleStyles}
-            >
+            <Typography component="h1" className={classes.titleStyles}>
                 Production Location Search
             </Typography>
             <div className={classes.tabsContainerStyles}>
@@ -60,6 +54,7 @@ const ContributeProductionLocation = ({ classes }) => {
                             labelContainer: classes.tabLabelContainerStyles,
                         }}
                         label="Search by OS ID"
+                        value={TAB_OS_ID}
                     />
                     <Tab
                         classes={{
@@ -68,10 +63,13 @@ const ContributeProductionLocation = ({ classes }) => {
                             labelContainer: classes.tabLabelContainerStyles,
                         }}
                         label="Search by Name and Address"
+                        value={TAB_NAME_ADDRESS}
                     />
                 </Tabs>
-                {selectedTab === 0 && <SearchByOsId />}
-                {selectedTab === 1 && <div>Search by Name and Address</div>}
+                {selectedTab === TAB_OS_ID && <SearchByOsId />}
+                {selectedTab === TAB_NAME_ADDRESS && (
+                    <div>Search by Name and Address</div>
+                )}
             </div>
         </div>
     );
