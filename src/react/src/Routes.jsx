@@ -30,7 +30,7 @@ import Settings from './components/Settings/Settings';
 import ExternalRedirect from './components/ExternalRedirect';
 import Facilities from './components/Facilities';
 import ContributeProductionLocation from './components/Contribute/ContributeProductionLocation';
-import ContributeProductionLocationSearch from './components/Contribute/ContributeProductionLocationSearch';
+import SearchByOsIdResult from './components/Contribute/SearchByOsIdResult';
 
 import { sessionLogin } from './actions/auth';
 import { fetchFeatureFlags } from './actions/featureFlags';
@@ -56,7 +56,7 @@ import {
     InfoLink,
     InfoPaths,
     contributeProductionLocationRoute,
-    contributeProductionLocationSearchRoute,
+    searchByOsIdResultRoute,
 } from './util/constants';
 
 class Routes extends Component {
@@ -166,12 +166,8 @@ class Routes extends Component {
                                 />
                                 <Route
                                     exact
-                                    path={
-                                        contributeProductionLocationSearchRoute
-                                    }
-                                    component={
-                                        ContributeProductionLocationSearch
-                                    }
+                                    path={searchByOsIdResultRoute}
+                                    component={SearchByOsIdResult}
                                 />
                                 <Route exact path="/about/processing">
                                     <ExternalRedirect
