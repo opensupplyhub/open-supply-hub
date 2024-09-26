@@ -567,3 +567,33 @@ export const makePreviousOsIdTooltipStyles = theme =>
             verticalAlign: 'middle',
         }),
     });
+
+export const makeSearchByOsIdResultActionsStyles = theme =>
+    Object.freeze({
+        actionsStyles: Object.freeze({
+            display: 'flex',
+            gap: '24px',
+        }),
+        buttonLabelStyles: Object.freeze({
+            fontSize: '18px',
+            lineHeight: '20px',
+            fontWeight: theme.typography.fontWeightExtraBold,
+            letterSpacing: '-0.05px',
+        }),
+        buttonBaseStyles: Object.freeze({
+            width: '265px',
+            height: '49px',
+            borderRadius: '0',
+            textTransform: 'none',
+        }),
+        defaultButtonStyles: Object.freeze({
+            borderColor: COLOURS.NEAR_BLACK,
+        }),
+        secondaryButtonStyles: Object.freeze({
+            backgroundColor: theme.palette.action.main,
+            color: theme.palette.getContrastText(theme.palette.action.main),
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
+        }),
+    });
