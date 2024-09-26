@@ -7,7 +7,7 @@ describe('BackToSearchButton component', () => {
     const handleBackToSearch = jest.fn();
     const defaultProps = {
         label: 'Back to ID search',
-        handleBackToSearch: handleBackToSearch,
+        handleBackToSearch,
     };
 
     it('renders the button with the correct label', () => {
