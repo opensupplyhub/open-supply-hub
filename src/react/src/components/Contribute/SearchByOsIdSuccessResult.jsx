@@ -13,49 +13,43 @@ const SearchByOsIdSuccessResult = ({
     address,
     handleBackToSearchByNameAddress,
     classes,
-}) => {
-    return (
-        <>
-            <Typography component="h2" className={classes.resultTitleStyles}>
-                Is this your production location?
+}) => (
+    <>
+        <Typography component="h2" className={classes.resultTitleStyles}>
+            Is this your production location?
+        </Typography>
+        <div className={classes.locationDetailsStyles}>
+            <Typography component="h3" className={classes.locationNameStyles}>
+                {name}
             </Typography>
-            <div className={classes.locationDetailsStyles}>
-                <Typography
-                    component="h3"
-                    className={classes.locationNameStyles}
-                >
-                    {name}
-                </Typography>
-                <Typography
-                    component="h6"
-                    className={classes.locationCurrentOsIdStyles}
-                >
-                    {historicalOsIds ? 'Current OS ID:' : 'OS ID:'} {osId}
-                </Typography>
-                {historicalOsIds &&
-                    historicalOsIds.map(historicalOsId => (
-                        <Typography
-                            key={historicalOsId}
-                            className={classes.locationHistoricalOsIdStyles}
-                        >
-                            Previous OS ID: {historicalOsId}{' '}
-                            <PreviousOsIdTooltip />
-                        </Typography>
-                    ))}
+            <Typography
+                component="h6"
+                className={classes.locationCurrentOsIdStyles}
+            >
+                {historicalOsIds ? 'Current OS ID:' : 'OS ID:'} {osId}
+            </Typography>
+            {historicalOsIds &&
+                historicalOsIds.map(historicalOsId => (
+                    <Typography
+                        key={historicalOsId}
+                        className={classes.locationHistoricalOsIdStyles}
+                    >
+                        Previous OS ID: {historicalOsId} <PreviousOsIdTooltip />
+                    </Typography>
+                ))}
 
-                <Typography className={classes.locationAddressStyles}>
-                    {address}
-                </Typography>
-            </div>
-            <SearchByOsIdResultActions
-                defaultButtonLabel="No, search by name and address"
-                defaultButtonAction={handleBackToSearchByNameAddress}
-                secondaryButtonLabel="Yes, add data and claim"
-                secondaryButtonAction={() => {}}
-            />
-        </>
-    );
-};
+            <Typography className={classes.locationAddressStyles}>
+                {address}
+            </Typography>
+        </div>
+        <SearchByOsIdResultActions
+            defaultButtonLabel="No, search by name and address"
+            defaultButtonAction={handleBackToSearchByNameAddress}
+            secondaryButtonLabel="Yes, add data and claim"
+            secondaryButtonAction={() => {}}
+        />
+    </>
+);
 
 SearchByOsIdSuccessResult.defaultProps = {
     historicalOsIds: null,
