@@ -5,19 +5,21 @@ import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
 import { object, bool, func } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
-import CircularProgress from '@material-ui/core/CircularProgress';
+
 import {
     fetchProductionLocationByOsId,
     resetSingleProductionLocation,
 } from '../../actions/contributeProductionLocation';
 import { contributeProductionLocationRoute } from '../../util/constants';
+import { makeSearchByOsIdResultStyles } from '../../util/styles';
 import { productionLocationPropType } from '../../util/propTypes';
+
+import BackToSearchButton from './BackToSearchButton';
 import SearchByOsIdNotFoundResult from './SearchByOsIdNotFoundResult';
 import SearchByOsIdSuccessResult from './SearchByOsIdSuccessResult';
-import BackToSearchButton from './BackToSearchButton';
-import { makeSearchByOsIdResultStyles } from '../../util/styles';
 
 const SearchByOsIdResult = ({
     data,
