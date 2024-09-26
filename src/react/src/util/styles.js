@@ -331,7 +331,7 @@ export const makeContributeProductionLocationStyles = theme =>
         tabSelectedStyles: Object.freeze({}),
     });
 
-export const makeSearchByOsIdStyles = theme =>
+export const makeSearchByOsIdTabStyles = theme =>
     Object.freeze({
         helperTextContainerStyles: Object.freeze({
             display: 'flex',
@@ -361,7 +361,7 @@ export const makeSearchByOsIdStyles = theme =>
         }),
         mainTitleStyles: Object.freeze({
             fontSize: '36px',
-            fontWeight: '700',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
         }),
         subTitleStyles: Object.freeze({
             fontSize: '21px',
@@ -373,7 +373,7 @@ export const makeSearchByOsIdStyles = theme =>
         }),
         searchInputStyles: Object.freeze({
             fontSize: '18px',
-            fontWeight: '600',
+            fontWeight: theme.typography.fontWeightSemiBold,
             lineHeight: '22px',
             padding: '16px',
         }),
@@ -389,7 +389,6 @@ export const makeSearchByOsIdStyles = theme =>
             width: '200px',
             borderRadius: '0',
             textTransform: 'none',
-            fontWeight: 'bold',
             backgroundColor: theme.palette.action.main,
             marginTop: '26px',
             color: theme.palette.getContrastText(theme.palette.action.main),

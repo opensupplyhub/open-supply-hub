@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { connect } from 'react-redux';
-import { func, object, bool } from 'prop-types';
+import { useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
@@ -8,29 +7,34 @@ import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 import Paper from '@material-ui/core/Paper';
 import Button from '@material-ui/core/Button';
 
-import { fetchProductionLocationByOsId } from '../../actions/contributeProductionLocation';
-import { makeSearchByOsIdStyles } from '../../util/styles';
-import { productionLocationPropType } from '../../util/propTypes';
+import { makeSearchByOsIdTabStyles } from '../../util/styles';
 
 const OS_ID = 'OS ID';
 
-const SearchByOsId = ({ data, fetching, fetchProductionLocation, classes }) => {
-    console.log('data >>>', data);
-    console.log('fetching >>>', fetching);
+const SearchByOsIdTab = ({ classes }) => {
     const [value, setValue] = useState('');
+    const history = useHistory();
 
     const handleChange = event => {
         const uppercaseValue = event.target.value.toUpperCase();
         setValue(uppercaseValue);
     };
 
+    const handleSearch = () => {
+        if (value.length === 15) {
+            history.push(
+                `/contribute/production-location/search/?os_id=${value}`,
+            );
+        }
+    };
+
     const helperText = (
-        <div className={classes.helperTextContainerStyles}>
+        <span className={classes.helperTextContainerStyles}>
             <InfoOutlinedIcon className={classes.infoIconStyles} />
-            <Typography className={classes.helperTextStyles}>
+            <Typography component="span" className={classes.helperTextStyles}>
                 To search you need to enter the full ID production location
             </Typography>
-        </div>
+        </span>
     );
 
     return (
@@ -40,18 +44,10 @@ const SearchByOsId = ({ data, fetching, fetchProductionLocation, classes }) => {
                 field below and click “search”.
             </Typography>
             <Paper className={classes.searchContainerStyles}>
-                <Typography
-                    component="h2"
-                    variant="h2"
-                    className={classes.mainTitleStyles}
-                >
+                <Typography component="h2" className={classes.mainTitleStyles}>
                     Know the OS ID for your location?
                 </Typography>
-                <Typography
-                    component="h4"
-                    variant="h4"
-                    className={classes.subTitleStyles}
-                >
+                <Typography component="h4" className={classes.subTitleStyles}>
                     If you know the OS ID for your production location enter it
                     below, otherwise select the “Search by Name and Address”
                     tab.
@@ -78,8 +74,11 @@ const SearchByOsId = ({ data, fetching, fetchProductionLocation, classes }) => {
                 <Button
                     color="secondary"
                     variant="contained"
-                    onClick={() => fetchProductionLocation(value)}
+                    onClick={handleSearch}
                     className={classes.buttonStyles}
+                    classes={{
+                        label: classes.buttonLabel,
+                    }}
                     disabled={value.length < 15}
                 >
                     Search by ID
@@ -89,32 +88,4 @@ const SearchByOsId = ({ data, fetching, fetchProductionLocation, classes }) => {
     );
 };
 
-SearchByOsId.defaultProps = {
-    data: null,
-};
-
-SearchByOsId.propTypes = {
-    data: productionLocationPropType,
-    fetching: bool.isRequired,
-    fetchProductionLocation: func.isRequired,
-    classes: object.isRequired,
-};
-
-const mapStateToProps = ({
-    contributeProductionLocation: {
-        singleProductionLocation: { data, fetching },
-    },
-}) => ({
-    data,
-    fetching,
-});
-
-const mapDispatchToProps = dispatch => ({
-    fetchProductionLocation: data =>
-        dispatch(fetchProductionLocationByOsId(data)),
-});
-
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps,
-)(withStyles(makeSearchByOsIdStyles)(SearchByOsId));
+export default withStyles(makeSearchByOsIdTabStyles)(SearchByOsIdTab);
