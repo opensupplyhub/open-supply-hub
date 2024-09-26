@@ -26,25 +26,30 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'secret')
 
 # Set environment
-ENVIRONMENT = os.getenv('DJANGO_ENV', 'Development')
-VALID_ENVIRONMENTS = ('Production', 'Staging', 'Development', 'Test', 'Preprod')
+ENVIRONMENT = os.getenv('DJANGO_ENV', 'Local')
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = (ENVIRONMENT == 'Local')
+
+VALID_ENVIRONMENTS = ('Production', 'Staging', 'Development', 'Test',
+                      'Preprod', 'Local')
 if ENVIRONMENT not in VALID_ENVIRONMENTS:
     raise ImproperlyConfigured(
         'Invalid ENVIRONMENT provided, must be one of {}'
         .format(VALID_ENVIRONMENTS))
 
 BATCH_JOB_QUEUE_NAME = os.getenv('BATCH_JOB_QUEUE_NAME')
-if BATCH_JOB_QUEUE_NAME is None and ENVIRONMENT != 'Development':
+if BATCH_JOB_QUEUE_NAME is None and not DEBUG:
     raise ImproperlyConfigured(
         'Invalid BATCH_JOB_QUEU_NAME provided, must be set')
 
 BATCH_JOB_DEF_NAME = os.getenv('BATCH_JOB_DEF_NAME')
-if BATCH_JOB_DEF_NAME is None and ENVIRONMENT != 'Development':
+if BATCH_JOB_DEF_NAME is None and not DEBUG:
     raise ImproperlyConfigured(
         'Invalid BATCH_JOB_DEF_NAME provided, must be set')
 
 EXTERNAL_DOMAIN = os.getenv('EXTERNAL_DOMAIN')
-if EXTERNAL_DOMAIN is None and ENVIRONMENT != 'Development':
+if EXTERNAL_DOMAIN is None and not DEBUG:
     raise ImproperlyConfigured(
         'Invalid EXTERNAL_DOMAIN provided, must be set')
 
@@ -56,22 +61,19 @@ LOGLEVEL = os.getenv('DJANGO_LOG_LEVEL', 'INFO')
 
 GIT_COMMIT = os.getenv('GIT_COMMIT', 'UNKNOWN')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = (ENVIRONMENT == 'Development')
-
 ALLOWED_HOSTS = [
     '.openapparel.org',
     '.opensupplyhub.org',
     '.os-hub.net',
 ]
 
-if ENVIRONMENT == 'Development':
+if DEBUG:
     ALLOWED_HOSTS.append('localhost')
     ALLOWED_HOSTS.append('django')
     ALLOWED_HOSTS.append('app')
     ALLOWED_HOSTS.append('contricleaner')
 
-if ENVIRONMENT in ['Production', 'Staging', 'Test'] and BATCH_MODE == '':
+if not DEBUG and BATCH_MODE == '':
     # Within EC2, the Elastic Load Balancer HTTP health check will use the
     # target instance's private IP address for the Host header.
     #

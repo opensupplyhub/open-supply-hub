@@ -1,6 +1,5 @@
 project = "OpenSupplyHub"
 environment = "Development"
-py_environment = "Staging"
 
 aws_region = "eu-west-1"
 aws_availability_zones = ["eu-west-1a", "eu-west-1b"]

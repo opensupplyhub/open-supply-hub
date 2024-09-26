@@ -4,7 +4,7 @@ from django.db.models import Count
 
 from api.models import FacilityList, FacilityListItem
 
-from oar.settings import ENVIRONMENT
+from oar.settings import DEBUG
 
 from api.aws_batch import submit_jobs
 
@@ -48,8 +48,7 @@ class Command(BaseCommand):
 
         self.stdout.write('Reprocessing {} lists'.format(str(lists.count())))
         for facility_list in lists:
-            if ENVIRONMENT in ('Test', 'Staging',
-                               'Production', 'Preprod'):
+            if not DEBUG:
                 job_ids = submit_jobs(facility_list)
                 self.stdout.write('{} {}'.format(facility_list.id, job_ids))
             else:
