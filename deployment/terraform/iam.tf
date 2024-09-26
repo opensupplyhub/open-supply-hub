@@ -153,6 +153,26 @@ resource "aws_iam_role_policy" "ses_send_email_from_batch" {
   policy = data.aws_iam_policy_document.ses_send_email.json
 }
 
+data "aws_iam_policy_document" "batch_s3_read_policy" {
+  statement {
+    effect = "Allow"
+
+    resources = [
+      "${aws_s3_bucket.files.arn}/*",
+    ]
+
+    actions = [
+      "s3:GetObject",
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "batch_s3_read_policy" {
+  name   = "BatchS3ReadFiles"
+  role   = aws_iam_role.container_instance_ec2.name
+  policy = data.aws_iam_policy_document.batch_s3_read_policy.json
+}
+
 resource "aws_iam_instance_profile" "container_instance" {
   name = aws_iam_role.container_instance_ec2.name
   role = aws_iam_role.container_instance_ec2.name
@@ -182,28 +202,6 @@ resource "aws_iam_role" "container_instance_batch" {
 resource "aws_iam_role_policy_attachment" "batch_policy" {
   role       = aws_iam_role.container_instance_batch.name
   policy_arn = var.batch_service_role_policy_arn
-}
-
-data "aws_iam_policy_document" "batch_s3_read_policy" {
-  statement {
-    effect = "Allow"
-
-    resources = [
-      aws_s3_bucket.files.arn,
-      "${aws_s3_bucket.files.arn}/*",
-    ]
-
-    actions = [
-      "s3:GetObject",
-      "s3:ListBucket"
-    ]
-  }
-}
-
-resource "aws_iam_role_policy" "batch_s3_read_policy" {
-  name   = "BatchS3ReadFiles"
-  role   = aws_iam_role.container_instance_batch.name
-  policy = data.aws_iam_policy_document.batch_s3_read_policy.json
 }
 
 #
