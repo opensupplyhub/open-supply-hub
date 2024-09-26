@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Tooltip, Typography } from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
+import { makePreviousOsIdTooltipStyles } from '../../util/styles';
 
 const PreviousOsIdTooltip = ({ classes }) => {
     const [arrowRef, setArrowRef] = useState(null);
