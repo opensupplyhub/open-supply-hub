@@ -14,7 +14,6 @@ const SearchByOsIdSuccessResult = ({
     handleBackToSearchByNameAddress,
     classes,
 }) => {
-    console.log('historicalOsIds >>>', historicalOsIds);
     return (
         <>
             <Typography component="h2" className={classes.resultTitleStyles}>
