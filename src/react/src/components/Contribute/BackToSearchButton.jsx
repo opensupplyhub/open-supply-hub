@@ -1,22 +1,9 @@
 import React from 'react';
-import { string, func, object } from 'prop-types';
+import ArrowBack from '@material-ui/icons/ArrowBackIos';
 import { Button } from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
-import ArrowBack from '@material-ui/icons/ArrowBackIos';
-
-const makeBackToSearchButtonStyles = theme =>
-    Object.freeze({
-        backButtonRootStyles: Object.freeze({
-            textTransform: 'none',
-            fontSize: '18px',
-            fontWeight: theme.typography.fontWeightSemiBoldPlus,
-        }),
-        backButtonLabelStyles: Object.freeze({
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-        }),
-    });
+import { string, func, object } from 'prop-types';
+import { makeBackToSearchButtonStyles } from '../../util/styles';
 
 const BackToSearchButton = ({ label, handleBackToSearch, classes }) => (
     <Button

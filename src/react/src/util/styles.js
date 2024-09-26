@@ -463,3 +463,17 @@ export const makeSearchByOsIdResultStyles = theme =>
             marginTop: '12px',
         }),
     });
+
+export const makeBackToSearchButtonStyles = theme =>
+    Object.freeze({
+        backButtonRootStyles: Object.freeze({
+            textTransform: 'none',
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
+        }),
+        backButtonLabelStyles: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+        }),
+    });
