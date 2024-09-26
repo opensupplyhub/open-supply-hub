@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
-import Typography from '@material-ui/core/Typography';
-import TextField from '@material-ui/core/TextField';
-import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
-import Paper from '@material-ui/core/Paper';
 import Button from '@material-ui/core/Button';
+import Paper from '@material-ui/core/Paper';
+import TextField from '@material-ui/core/TextField';
+import Typography from '@material-ui/core/Typography';
+import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 
 import { makeSearchByOsIdTabStyles } from '../../util/styles';
-
-const OS_ID = 'OS ID';
 
 const SearchByOsIdTab = ({ classes }) => {
     const [value, setValue] = useState('');
@@ -53,7 +51,7 @@ const SearchByOsIdTab = ({ classes }) => {
                     tab.
                 </Typography>
                 <TextField
-                    id={OS_ID}
+                    id="os-id"
                     className={classes.textFieldStyles}
                     value={value}
                     onChange={handleChange}
