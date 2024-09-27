@@ -7,13 +7,12 @@ import renderWithProviders from '../../util/testUtils/renderWithProviders';
 jest.mock('../../components/Contribute/SearchByOsIdTab', () => () => <div>Mocked SearchByOsIdTab</div>);
 
 describe('ContributeProductionLocation component', () => {
-    const renderComponent = (initialEntries = ['/']) => {
-        return renderWithProviders(
+    const renderComponent = (initialEntries = ['/']) => 
+        renderWithProviders(
             <MemoryRouter initialEntries={initialEntries}>
                 <ContributeProductionLocation />
             </MemoryRouter>
         );
-    };
 
     it('renders with the correct title', () => {
         const { getByText } = renderComponent();
