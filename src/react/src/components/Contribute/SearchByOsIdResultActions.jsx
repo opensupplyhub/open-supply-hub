@@ -37,6 +37,10 @@ const SearchByOsIdResultActions = ({
 );
 
 SearchByOsIdResultActions.propTypes = {
+    defaultButtonLabel: string.isRequired,
+    defaultButtonAction: func.isRequired,
+    secondaryButtonLabel: string.isRequired,
+    secondaryButtonAction: func.isRequired,
     classes: object.isRequired,
 };
 
