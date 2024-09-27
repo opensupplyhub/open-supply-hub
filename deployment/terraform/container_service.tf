@@ -231,7 +231,6 @@ data "template_file" "app" {
     aws_region                       = var.aws_region
     project                          = var.project
     environment                      = var.environment
-    py_environment                   = var.py_environment
     CORS_ALLOWED_ORIGIN_REGEXES      = var.CORS_ALLOWED_ORIGIN_REGEXES
     batch_job_queue_name             = local.batch_job_queue_name
     batch_job_def_name               = local.batch_job_def_name
