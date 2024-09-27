@@ -18,7 +18,9 @@ const ContributeProductionLocation = ({ classes }) => {
     const queryParams = new URLSearchParams(location.search);
     const tabInQuery = queryParams.get('tab');
 
-    const [selectedTab, setSelectedTab] = useState(tabInQuery);
+    const [selectedTab, setSelectedTab] = useState(
+        VALID_TABS.includes(tabInQuery) ? tabInQuery : TAB_OS_ID,
+    );
 
     useEffect(() => {
         if (VALID_TABS.includes(tabInQuery)) {
@@ -68,7 +70,7 @@ const ContributeProductionLocation = ({ classes }) => {
                 </Tabs>
                 {selectedTab === TAB_OS_ID && <SearchByOsIdTab />}
                 {selectedTab === TAB_NAME_ADDRESS && (
-                    <div>Search by Name and Address</div>
+                    <div>Search by Name and Address Tab</div>
                 )}
             </div>
         </div>
