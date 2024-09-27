@@ -391,7 +391,7 @@ export const makeSearchByOsIdTabStyles = theme =>
             textTransform: 'none',
             backgroundColor: theme.palette.action.main,
             marginTop: '26px',
-            color: theme.palette.getContrastText(theme.palette.action.main),
+            color: theme.palette.common.black,
             '&:hover': {
                 backgroundColor: theme.palette.action.dark,
             },
@@ -587,11 +587,12 @@ export const makeSearchByOsIdResultActionsStyles = theme =>
             textTransform: 'none',
         }),
         defaultButtonStyles: Object.freeze({
+            color: theme.palette.common.black,
             borderColor: COLOURS.NEAR_BLACK,
         }),
         secondaryButtonStyles: Object.freeze({
             backgroundColor: theme.palette.action.main,
-            color: theme.palette.getContrastText(theme.palette.action.main),
+            color: theme.palette.common.black,
             '&:hover': {
                 backgroundColor: theme.palette.action.dark,
             },
