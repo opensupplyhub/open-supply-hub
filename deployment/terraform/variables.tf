@@ -470,9 +470,6 @@ variable "ec_memcached_max_item_size" {
   default = "1048576"
 }
 
-variable "py_environment" {
-  default = "Staging"
-}
 variable "CORS_ALLOWED_ORIGIN_REGEXES" {
   type = string
   default = "http://localhost, https://127.0.0.1"

@@ -7,7 +7,7 @@ from countries.lib.countries import COUNTRY_NAMES
 
 
 def make_oar_url(request):
-    if settings.ENVIRONMENT == 'Development':
+    if settings.DEBUG:
         protocol = 'http'
         host = 'localhost:6543'
     else:
