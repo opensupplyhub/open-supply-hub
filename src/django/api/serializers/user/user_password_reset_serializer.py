@@ -26,13 +26,13 @@ class UserPasswordResetSerializer(PasswordResetSerializer):
         request = self.context.get('request')
         # Set some values to trigger the send_email method.
 
-        if settings.ENVIRONMENT == 'Development':
+        if settings.DEBUG:
             domain_override = 'localhost:6543'
         else:
             domain_override = request.get_host()
 
         opts = {
-            'use_https': settings.ENVIRONMENT != 'Development',
+            'use_https': not settings.DEBUG,
             'domain_override': domain_override,
             'from_email': getattr(settings, 'DEFAULT_FROM_EMAIL'),
             'request': request,

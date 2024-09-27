@@ -22,9 +22,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Architecture/Environment changes
 * [OSDEV-1325](https://opensupplyhub.atlassian.net/browse/OSDEV-1325)
   * __Deploy to AWS__ pipeline will init from __[Release] Deploy__ pipeline and get deployment parameters, such as cleaning OpenSearch indexes, by trigger.
+* [OSDEV-1372](https://opensupplyhub.atlassian.net/browse/OSDEV-1372)
+  * Changed the base image in the Django app Dockerfile to use a Debian 11 instead of Debian 10 as the PostgreSQL 13 repository support for Debian 10 has been ended.
 
 ### Bugfix
-* *Describe bugfix here.*
+* Fixed a bug related to environment variable management:
+    * Removed the `py_environment` Terraform variable, as it appeared to be a duplicate of the `environment` variable.
+    * Passed the correct environment values to the ECS task definition for the Django containers in all environments, especially in the Preprod and Development environments, to avoid misunderstandings and incorrect interpretations of the values previously passed via `py_environment`.
+    * Introduced a *Local* environment specifically for local development to avoid duplicating variable values with the AWS-hosted *Development* environment.
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
