@@ -1,5 +1,5 @@
 import React from 'react';
-import { object } from 'prop-types';
+import { string, object, func } from 'prop-types';
 import { Button } from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
 import { makeSearchByOsIdResultActionsStyles } from '../../util/styles';
