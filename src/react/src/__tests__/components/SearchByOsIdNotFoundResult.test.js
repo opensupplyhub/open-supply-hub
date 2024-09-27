@@ -13,7 +13,7 @@ describe('SearchByOsIdNotFoundResult component', () => {
         handleBackToSearchByOsId,
     };
 
-    it('renders without crashing', () => {
+    it('renders the title and subtitle correctly', () => {
         const { getByText } = renderWithProviders(<SearchByOsIdNotFoundResult {...defaultProps}/>);
 
         expect(getByText("We didn't find a production location with that ID.")).toBeInTheDocument();
