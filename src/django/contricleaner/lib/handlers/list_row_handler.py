@@ -15,6 +15,7 @@ class ListRowHandler(ABC):
 
     @abstractmethod
     def handle(self, rows: List[Dict]) -> ListDTO:
+        raise HandlerNotSetError("Next Handler wasn't set.")
         if self._next:
             return self._next.handle(rows)
 

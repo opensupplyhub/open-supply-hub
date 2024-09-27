@@ -485,11 +485,7 @@ class FacilityListViewSet(ModelViewSet):
             facility_list=new_list)
         log.info(f'[List Upload] Source created. ID {source.id}.')
 
-        # Debug getting file in Django app. Remove it
-        new_file = new_list.file
-        print(new_file)
-
-        if ENVIRONMENT in ('Test', 'Staging', 'Production', 'Preprod'):
+        if not DEBUG:
             submit_parse_job(new_list)
 
         serializer = self.get_serializer(new_list)

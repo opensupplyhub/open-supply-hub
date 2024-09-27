@@ -185,34 +185,28 @@ def parse_production_location_list(location_list: FacilityList):
     parsing_started = str(timezone.now())
     logger.info('[List Upload] Started CC Parse process!')
 
-    print('Show DJANGO_ENV value >>>>')
-    value = os.getenv('DJANGO_ENV', 'default_value')
-    print(value)
     contri_cleaner = ContriCleaner(location_list.file, SectorCache())
-    try:
-        contri_cleaner_processed_data = contri_cleaner.process_data()
-        print(contri_cleaner_processed_data)
-    except ParsingError as err:
-        logger.error(f'[List Upload] Data Parsing Error: {err}')
-        report_error_to_rollbar(
-            message=str(err),
-            extra_data=f'List file: {str(location_list)}'
-            )
-        raise ValidationError(str(err))  # TODO: save it to the DB
-    except HandlerNotSetError as err:
-        logger.error(f'[List Upload] Internal ContriCleaner Error: {err}')
-        report_error_to_rollbar(
-            message=str(err),
-            extra_data=f'List file: {str(location_list)}'
-            )
-        raise Exception('Internal System Error. '
-                        'Please contact support.')  # TODO: save it to the DB
-
+    internal_errors = []
     processing_input = {
         'facility_list': location_list,
-        'contri_cleaner_processed_data': contri_cleaner_processed_data,
-        'parsing_started': parsing_started,
+        'parsing_started': parsing_started
     }
+    try:
+        contri_cleaner_processed_data = contri_cleaner.process_data()
+        processing_input['contri_cleaner_processed_data'] = \
+            contri_cleaner_processed_data
+    except HandlerNotSetError as err:
+        error_message = f'[List Upload] Internal ContriCleaner Error: {err}'
+        logger.error(error_message)
+        report_error_to_rollbar(
+            message=error_message,
+            extra_data=f'Affected uploaded list file: {location_list}'
+            )
+        internal_errors.append({
+            'message': 'Internal system error. Please contact support.',
+            'type': 'InternalError'
+        })
+        processing_input['internal_errors'] = internal_errors
 
     processing_facility_executor = ProcessingFacilityExecutor(
         ProcessingFacilityList(processing_input)

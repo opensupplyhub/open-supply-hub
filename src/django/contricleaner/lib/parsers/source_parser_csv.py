@@ -14,25 +14,18 @@ class SourceParserCSV(SourceParser, FileParser):
 
     @staticmethod
     def _parse(file: FieldFile) -> List[dict]:
-        rows = []
-
         try:
-            decoded_header = file.readline().decode(encoding='utf-8-sig') \
-                .rstrip()
+            decoded_content = file.read().decode(encoding='utf-8-sig') \
+                .splitlines()
         except UnicodeDecodeError:
             raise ParsingError('Unsupported file encoding. Please '
                                'submit a UTF-8 CSV.')
-        header = SourceParserCSV.__parse_csv_line(decoded_header)
 
-        for idx, line in enumerate(file):
-            if idx > 0:
-                try:
-                    decoded_row = line.decode(encoding='utf-8-sig').rstrip()
-                except UnicodeDecodeError:
-                    raise ParsingError('Unsupported file encoding. Please '
-                                       'submit a UTF-8 CSV.')
-                bare_row = SourceParserCSV.__parse_csv_line(decoded_row)
-                rows.append(dict(zip(header, bare_row)))
+        rows = []
+        header = SourceParserCSV.__parse_csv_line(decoded_content[0].rstrip())
+        for line in decoded_content[1:]:
+            bare_row = SourceParserCSV.__parse_csv_line(line.rstrip())
+            rows.append(dict(zip(header, bare_row)))
 
         return rows
 

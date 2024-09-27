@@ -47,7 +47,8 @@ class SourceParserXLSX(SourceParser, FileParser):
 
             return rows
         except Exception:
-            raise ParsingError('Error parsing Excel (.xlsx) file')
+            raise ParsingError('Error parsing Excel (.xlsx) file. '
+                               'Please contact support.')
 
     @staticmethod
     def __tidy_row(row: tuple) -> list:
@@ -75,7 +76,7 @@ class SourceParserXLSX(SourceParser, FileParser):
 
         except EntitiesForbidden:
             raise ParsingError('This file may be damaged and '
-                               'cannot be processed safely')
+                               'cannot be processed safely.')
 
     @staticmethod
     def __format_percent(value: Union[float, int, str, None]) -> str:

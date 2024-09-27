@@ -19,7 +19,7 @@ class RowRequiredFieldsSerializer(RowSerializer):
         if len(missing_fields) > 0:
             current["errors"].append(
                 {
-                    "message": "{} are missing".format(
+                    "message": "{} are missing.".format(
                         ', '.join(missing_fields)),
                     "type": "Error",
                 }

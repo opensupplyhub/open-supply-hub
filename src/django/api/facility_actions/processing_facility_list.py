@@ -1,6 +1,6 @@
 import logging
 import traceback
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, Optional, Set, List, Union
 
 from rest_framework.exceptions import ValidationError
 from django.contrib.gis.geos import Point
@@ -27,23 +27,21 @@ class ProcessingFacilityList(ProcessingFacility):
 
     def __init__(self, processing_input: Dict[str, Any]) -> None:
         self.__facility_list: FacilityList = processing_input['facility_list']
-        self.__contri_cleaner_processed_data: ListDTO = processing_input[
-            'contri_cleaner_processed_data'
-        ]
+        # It can be None if there are CC internal errors.
+        self.__contri_cleaner_processed_data: Union[ListDTO, None] = \
+            processing_input.get('contri_cleaner_processed_data')
         self.__parsing_started: str = processing_input['parsing_started']
+        # It can be None if there aren't CC internal errors.
+        self.__internal_errors: Union[List[Dict], None] = \
+            processing_input.get('internal_errors')
 
     def process_facility(self) -> None:
-        # Handle list-level errors.
+        if self.__internal_errors:
+            self.__handle_cc_internal_errors()
+            return
         if self.__contri_cleaner_processed_data.errors:
-            log.error(
-                '[List Upload] CC Validation Errors: '
-                f'{self.__contri_cleaner_processed_data.errors}'
-            )
-            error_messages = [
-                str(error['message'])
-                for error in self.__contri_cleaner_processed_data.errors
-            ]
-            raise ValidationError(error_messages)
+            self.__handle_list_level_errors()
+            return
 
         rows = self.__contri_cleaner_processed_data.rows
         header_row_keys = rows[0].raw_json.keys()
@@ -96,6 +94,23 @@ class ProcessingFacilityList(ProcessingFacility):
             raw_header=header_str,
             sector=[],
             source=source,
+        )
+
+    def __handle_cc_internal_errors(self) -> None:
+        self.__facility_list.parsing_errors = self.__internal_errors
+        self.__facility_list.save()
+        log.error(
+            '[List Upload] CC Internal Errors: '
+            f'{self.__internal_errors}'
+        )
+
+    def __handle_list_level_errors(self) -> None:
+        self.__facility_list.parsing_errors = \
+            self.__contri_cleaner_processed_data.errors
+        self.__facility_list.save()
+        log.error(
+            '[List Upload] CC List-Level Errors: '
+            f'{self.__contri_cleaner_processed_data.errors}'
         )
 
     def __handle_row_errors(self, item: FacilityListItem, row: RowDTO) -> None:

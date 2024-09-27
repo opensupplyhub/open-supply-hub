@@ -49,7 +49,14 @@ class ContriCleaner:
         self.__sector_cache = sector_cache
 
     def process_data(self) -> ListDTO:
-        parsed_rows = self.__parse_data()
+        try:
+            parsed_rows = self.__parse_data()
+        except ParsingError as err:
+            return ListDTO(errors=[{
+                'message': str(err),
+                'type': 'ParsingError',
+            }])
+
         entry_handler = self.__setup_handlers()
 
         processed_list = entry_handler.handle(parsed_rows)
@@ -68,12 +75,10 @@ class ContriCleaner:
         else:
             ext = os.path.splitext(self.__data.name)[1].lower()
             if ext == '.xlsx':
-                print("It is XLSX")
                 parsing_executor = ParsingExecutor(
                     SourceParserXLSX(self.__data)
                 )
             elif ext == '.csv':
-                print("It is CSV")
                 parsing_executor = ParsingExecutor(
                     SourceParserCSV(self.__data)
                 )
