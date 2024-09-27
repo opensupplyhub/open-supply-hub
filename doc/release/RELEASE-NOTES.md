@@ -22,6 +22,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Architecture/Environment changes
 * [OSDEV-1325](https://opensupplyhub.atlassian.net/browse/OSDEV-1325)
   * __Deploy to AWS__ pipeline will init from __[Release] Deploy__ pipeline and get deployment parameters, such as cleaning OpenSearch indexes, by trigger.
+* [OSDEV-1372](https://opensupplyhub.atlassian.net/browse/OSDEV-1372)
+  * Changed the base image in the Django app Dockerfile to use a Debian 11 instead of Debian 10 as the PostgreSQL 13 repository support for Debian 10 has been ended.
 
 ### Bugfix
 * Fixed a bug related to environment variable management:
