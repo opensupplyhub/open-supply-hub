@@ -40,7 +40,7 @@ const SearchByOsIdResult = ({
     }, [location.search, fetchProductionLocation]);
 
     const locationData = get(data, 'data[0]', {});
-    const isLocationDataAvailable = isEmpty(locationData);
+    const isLocationDataAvailable = !isEmpty(locationData);
     const {
         name,
         os_id: osId,
@@ -77,7 +77,7 @@ const SearchByOsIdResult = ({
             </Typography>
 
             <Paper className={classes.resultContainerStyles}>
-                {!isLocationDataAvailable ? (
+                {isLocationDataAvailable ? (
                     <SearchByOsIdSuccessResult
                         name={name}
                         osId={osId}
