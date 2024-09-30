@@ -1,48 +1,24 @@
 {% block content %}
 
-Hi there,
+Hello,
 
-Thank you for submitting {{ list_name }} to Open Supply Hub. This list has been approved by the OS Hub team and has completed processing. This means that all facilities from the list that did not generate errors or require additional verification by our team are now live on OS Hub. The admin view of your list is now available here: {{list_url}}.
+Thank you for submitting {{ list_name }} to OS Hub! The admin view of your list is now available
+here: {{list_url}}.
 
-One Last Step
+Your list has been approved and is live on OS Hub, however it’s possible a few facilities were
+removed due to errors and are not included in the current published list.
 
-Check for and Resolve Errors or Removed Items:
+But don’t worry! If you wish to add those facilities back in, follow the steps in <a href="https://info.opensupplyhub.org/resources/how-to-resolve-errors-in-your-list">this guide</a> to
+identify the removed facilities, resolve the errors, and reupload your list.
 
-Click on the list link above and then filter the facilities within your list to check for facilities with one of the possible “Error” or “Removed” statuses. Facilities with either of these statuses are not published in your list on OS Hub.
+<strong>Useful Resources:</strong>
 
-a. Errors: Some entries in your list may have generated an error message. You can review these entries to see whether the cause is:
+     - <strong>Need more help?</strong> Can’t find what you need? Email data@opensupplyhub.org.
+     - <strong>What’s next?</strong> Having your data live on OS Hub is just the start! Now that you have a live
+       list, check out this guide to learn how to <a href="https://info.opensupplyhub.org/resources/making-the-most-of-open-supply-hub">make the most of your data on OS Hub</a>.
 
-     - An error in data entry (such as a country name being mis-spelled)
 
-     - Our geo-coder being unable to plot the facility due to the address lacking sufficient details, or containing irrelevant information
-
-Check out our FAQs (http://info.opensupplyhub.org/faqs) for more information on error types and how to resolve them.
-
-b. Removed Items: Some facilities in your list may not have met quality standards for address information. This could be due to:
-
-     - Repeating or insufficient elements
-
-     - Incorrect formatting of additional data fields e.g. sector_product_type, faciliity_type_processing_type, etc.
-
-If you see any items with a “Removed” status, these are items that our team reviewed and removed before your list was processed.
-
-Once you have pin-pointed the cause of the error or removal, update your facility information in your Excel/CSV file and re-upload your FULL list to the OS Hub again (uploading one facility at a time results in multiple lists that are harder to manage in the future). You will be able to replace the previous version you uploaded, so only your most recent list is available for the public to see.
-
-Have questions or want to learn more about what’s happening when you upload your list? Check out this guide (https://info.opensupplyhub.org/resources/uploading-to-open-supply-hub).
-
-Once your list is finalized:
-
-1. See who else is connected with your facilities/suppliers: Once you have uploaded data to OS Hub, check out the profiles of the facilities you added, to see which other organizations are connected to them. What collaborations could you work on together?
-
-2. Share your OS Hub contribution: Link directly to your facility/supplier data on the OS Hub from your website, so your users can easily search and navigate through your list. These free graphics (https://info.opensupplyhub.org/resources/assets-for-stakeholders) are available for use to point users to your OS Hub contribution on your website, LinkedIn profile, and/or on social media. You can also display your facility/supplier data as an interactive map, embedded on your website (https://info.opensupplyhub.org/embedded-map).
-
-3. Encourage your facilities/suppliers to claim their profiles or claim your facility, if you are the owner: By claiming their facilities on OS Hub, facility owners or senior management can provide facility location data straight from the source, as well as add additional details to their profiles, including MOQs, lead times, certifications, and more.
-
-If you are a brand or organization uploading a facility list, you can use this suggested text for a message to your suppliers (https://info.opensupplyhub.org/resources/encourage-your-facilities-to-claim-their-profiles), to encourage them to claim their profiles.
-
-For any questions, feel free to reach out to the OS Hub team: data@opensupplyhub.org.
-
-All the best,
+Thank you for your contribution! Your data helps open doors to safe and sustainable supply chains.
 
 {% include "mail/data_team_signature_block.txt" %}
 {% endblock content %}

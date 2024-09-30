@@ -1,4 +1,4 @@
-FROM quay.io/azavea/django:3.2-python3.7-slim
+FROM python:3.7-slim-bullseye
 # FROM python:3.7-slim
 
 RUN mkdir -p /usr/local/src/static/static
@@ -8,13 +8,17 @@ COPY requirements.txt /usr/local/src/
 RUN set -ex \
     && buildDeps=" \
     build-essential \
+    libpq-dev \
     " \
     && deps=" \
+    gdal-bin \
+    gettext \
     postgresql-client-13 \
     " \
     && apt-get update && apt-get install -y $buildDeps $deps --no-install-recommends \
     && pip install --no-cache-dir -r requirements.txt \
-    && apt-get purge -y --auto-remove $buildDeps
+    && apt-get purge -y --auto-remove $buildDeps \
+    && rm -rf  /usr/local/src/requirements.txt /var/lib/apt/lists/*
 
 COPY . /usr/local/src
 
@@ -24,6 +28,8 @@ RUN GOOGLE_SERVER_SIDE_API_KEY="" \
     HUBSPOT_SUBSCRIPTION_ID="" \
     EXTERNAL_DOMAIN="" \
     python manage.py collectstatic --no-input
+
+ENTRYPOINT ["/usr/local/bin/gunicorn"]
 
 CMD ["-b :8080", \
     "--workers=1", \

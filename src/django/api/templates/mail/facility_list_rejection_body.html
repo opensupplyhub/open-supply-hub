@@ -2,17 +2,17 @@
 <html lang="en">
     <head>
         <title>
-            Your contribution to Open Supply Hub was rejected
+            Your List Is in the Feedback Phase — We’re Here to Help with the Next Steps
         </title>
     </head>
     <body>
         <p>
-            Hi there,
+            Hello,
         </p>
         <p>
-            We’re writing to let you know that your request to upload a data list to Open Supply Hub was rejected.
-            The details of your list are as follows:
+            Thank you for submitting {{ facility_list_name }} to OS Hub. Your list is almost ready!
         </p>
+        <p>Here are the details of your list:</p>
         <ul>
             <li>
                 Facility list: {{ facility_list_name }} created on {{ facility_list_created_at }}
@@ -24,22 +24,29 @@
                 Facility list URL: <a href="{{ facility_list_url }}">{{ facility_list_url }}</a>
             </li>
         </ul>
+        <p>In the Feedback Phase we will support you with a few data quality updates and then we can
+            continue processing your list.
+        </p>
+        <p>Make the updates listed below in your Excel/CSV file and <a href="https://info.opensupplyhub.org/resources/preparing-data">upload the FULL list again</a>.
+        </p>
+
         {% if rejection_reason|length %}
         <p>
-            Not to worry! Below are details on the reason for rejection, as well as guidance on next steps:
+            <strong>Here are the updates that need to be made:</strong>
         </p>
         <p>
             {{ rejection_reason }}
         </p>
         {% endif %}
-        <p>
-            For any questions, feel free to reach out to the OS Hub Data Team:
-            <a href="data@opensupplyhub.org">data@opensupplyhub.org</a>.
-            We appreciate your support as we work to maintain a high quality dataset that is open and beneficial to all who need it.
-            </p>
-            <p>
-                All the best,
-        </p>
+        <p>Useful Resources:</p>
+        <ul>
+            <li><a href="http://info.opensupplyhub.org/faqs">Frequently Asked Questions</a>: For more information on common upload issues and how to resolve them.</li>
+            <li><a href="https://info.opensupplyhub.org/resources/preparing-data">Preparing Data for Upload Guide</a>: For step-by-step instructions for preparing your Excel/CSV file. </li>
+            <li>
+                <strong>Need more help?</strong> Can’t find what you need? Email <a href="data@opensupplyhub.org">data@opensupplyhub.org</a>.
+            </li>
+        </ul>
+        <p>Thank you for your contribution! Your data helps open doors to safe and sustainable supply chains.</p>
         {% include "mail/data_team_signature_block.html" %}
     </body>
 </html>
