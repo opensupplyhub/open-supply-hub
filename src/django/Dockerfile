@@ -1,5 +1,4 @@
-FROM python:3.7-slim-bullseye
-# FROM python:3.7-slim
+FROM --platform=linux/amd64 python:3.7-slim-bullseye
 
 RUN mkdir -p /usr/local/src/static/static
 WORKDIR /usr/local/src
@@ -40,6 +39,3 @@ CMD ["-b :8080", \
     "--log-level=info", \
     "--capture-output", \
     "oar.wsgi"]
-
-
-    #   && pip install --no-cache-dir psycopg2-binary gdal-bin \
