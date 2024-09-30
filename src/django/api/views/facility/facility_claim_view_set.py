@@ -33,6 +33,7 @@ from ...models.facility.facility_claim import FacilityClaim
 from ...models.facility.facility_claim_review_note import (
     FacilityClaimReviewNote
 )
+from ...models.facility.facility import Facility
 from ...permissions import (
     IsRegisteredAndConfirmed,
     IsSuperuser
@@ -158,6 +159,7 @@ class FacilityClaimViewSet(ModelViewSet):
             claim.status_change_date = timezone.now()
             claim.status = FacilityClaimStatuses.APPROVED
             claim.save()
+            Facility.update_facility_updated_at_field(claim.facility_id)
 
             note = (
                 f'Status was updated to {FacilityClaimStatuses.APPROVED} '
@@ -208,6 +210,7 @@ class FacilityClaimViewSet(ModelViewSet):
             claim.status_change_date = timezone.now()
             claim.status = FacilityClaimStatuses.DENIED
             claim.save()
+            Facility.update_facility_updated_at_field(claim.facility_id)
 
             note = (
                 f'Status was updated to {FacilityClaimStatuses.DENIED} '
@@ -251,6 +254,7 @@ class FacilityClaimViewSet(ModelViewSet):
             claim.status_change_date = timezone.now()
             claim.status = FacilityClaimStatuses.REVOKED
             claim.save()
+            Facility.update_facility_updated_at_field(claim.facility_id)
 
             note = (
                 f'Status was updated to {FacilityClaimStatuses.REVOKED} '
@@ -428,6 +432,7 @@ class FacilityClaimViewSet(ModelViewSet):
                 setattr(claim, field_name, request.data.get(field_name))
 
             claim.save()
+            Facility.update_facility_updated_at_field(claim.facility_id)
 
             create_extendedfields_for_claim(claim)
 
