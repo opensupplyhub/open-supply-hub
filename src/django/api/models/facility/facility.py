@@ -293,3 +293,8 @@ class Facility(models.Model):
             tile_version = 0
 
         return f'{timestamp}-{tile_version}'
+
+    @staticmethod
+    def update_facility_updated_at_field(facility_id):
+        facility = Facility.objects.get(pk=facility_id)
+        facility.save(update_fields=['updated_at'])
