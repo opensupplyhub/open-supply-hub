@@ -16,7 +16,7 @@ from api.helpers.helpers import (
 )
 from oar.settings import (
     MAX_UPLOADED_FILE_SIZE_IN_BYTES,
-    ENVIRONMENT,
+    DEBUG
 )
 from oar.rollbar import report_error_to_rollbar
 from rest_framework.decorators import action
@@ -240,7 +240,7 @@ class FacilityListViewSet(ModelViewSet):
                  for idx, row in enumerate(rows)]
         FacilityListItem.objects.bulk_create(items)
 
-        if ENVIRONMENT in ('Test', 'Staging', 'Production', 'Preprod'):
+        if not DEBUG:
             submit_parse_job(new_list)
 
         serializer = self.get_serializer(new_list)
@@ -470,7 +470,7 @@ class FacilityListViewSet(ModelViewSet):
         facility_list.status = FacilityList.APPROVED
         facility_list.save()
 
-        if ENVIRONMENT in ('Test', 'Staging', 'Production', 'Preprod'):
+        if not DEBUG:
             submit_jobs(facility_list)
 
         return Response(

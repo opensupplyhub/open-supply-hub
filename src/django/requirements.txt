@@ -37,3 +37,7 @@ Unidecode==1.0.23
 django-slowtests
 django-allauth==0.54.0
 opensearch-py==2.5.0
+gunicorn==20.1.0
+django==3.2.17
+psycopg2==2.9.4
+gevent==22.8.0

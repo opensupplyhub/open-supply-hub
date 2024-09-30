@@ -49,14 +49,14 @@ class ProductionLocationsTest(BaseProductionLocationsTest):
 
         result = response.json()
         self.assertEqual(result['data'][0]['os_id'], 'BD2020052SV22HT')
-    
+
     def test_production_locations_country(self):
 
         response = requests.get(
                 f"{self.root_url}/api/v1/production-locations/",
                 headers=self.basic_headers,
             )
-        
+
         result = response.json()
         country = result['data'][0]['country']
 
@@ -64,3 +64,43 @@ class ProductionLocationsTest(BaseProductionLocationsTest):
         self.assertIsNotNone(country['alpha_2'])
         self.assertIsNotNone(country['alpha_3'])
         self.assertIsNotNone(country['numeric'])
+
+    def test_production_locations_history_os_id(self):
+        doc = {
+            "sector": [
+                "Apparel"
+            ],
+            "address": "Test Address",
+            "name": "Test Name",
+            "country": {
+                "alpha_2": "US"
+            },
+            "os_id": "US2020052SV22HT",
+            "historical_os_id": "US20203545HUE4L",
+            "coordinates": {
+                "lon": 90.378162,
+                "lat": 24.1166236
+            },
+        }
+        self.open_search_client.index(
+            index=self.index_name,
+            body=doc,
+            id=self.open_search_client.count()
+        )
+        self.open_search_client.indices.refresh(
+            index=self.index_name
+        )
+
+        search_os_id = "US2020052SV22HT"
+        query = f"?size=1&os_id={search_os_id}"
+
+        response = requests.get(
+                f"{self.root_url}/api/v1/production-locations/{query}",
+                headers=self.basic_headers,
+            )
+
+        result = response.json()
+        self.assertEqual(result['data'][0]['os_id'], 'US2020052SV22HT')
+        self.assertEqual(
+            result['data'][0]['historical_os_id'], 'US20203545HUE4L'
+        )

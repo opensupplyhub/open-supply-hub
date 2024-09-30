@@ -3,11 +3,11 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
-## Release 1.21.0
+## Release 1.22.0
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: September 21, 2024
+* Release date: October 05, 2024
 
 ### Database changes
 #### Migrations:
@@ -20,7 +20,41 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe code/API changes here.*
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* [OSDEV-1325](https://opensupplyhub.atlassian.net/browse/OSDEV-1325)
+  * __Deploy to AWS__ pipeline will init from __[Release] Deploy__ pipeline and get deployment parameters, such as cleaning OpenSearch indexes, by trigger.
+* [OSDEV-1372](https://opensupplyhub.atlassian.net/browse/OSDEV-1372)
+  * Changed the base image in the Django app Dockerfile to use a Debian 11 instead of Debian 10 as the PostgreSQL 13 repository support for Debian 10 has been ended.
+
+### Bugfix
+* Fixed a bug related to environment variable management:
+    * Removed the `py_environment` Terraform variable, as it appeared to be a duplicate of the `environment` variable.
+    * Passed the correct environment values to the ECS task definition for the Django containers in all environments, especially in the Preprod and Development environments, to avoid misunderstandings and incorrect interpretations of the values previously passed via `py_environment`.
+    * Introduced a *Local* environment specifically for local development to avoid duplicating variable values with the AWS-hosted *Development* environment.
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* *Provide release instructions here.*
+
+
+## Release 1.21.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: September 21, 2024
+
+### Code/API changes
+* [OSDEV-1126](https://opensupplyhub.atlassian.net/browse/OSDEV-1126) - Added the `historical_os_id` field to the response from the `v1/production-locations` endpoint if the searched production location contains this data. Modified the search query for `os_id` so that the search is conducted in both the `os_id` and `historical_os_id` fields in the OpenSearch production-locations index.
+To make this possible, the `sync_production_locations.sql` script, which generates data for the production-locations index, was modified to include the selection of `historical_os_id_value` from the `api_facilityalias` table.
+Additionally, a `historical_os_id` filter was added to the `sync_production_locations.conf`, ensuring that the `historical_os_id` is included in the index document only when the `historical_os_id_value` is not empty.
+
+### Architecture/Environment changes
+* [OSDEV-1177](https://opensupplyhub.atlassian.net/browse/OSDEV-1177)
+  * Improved OpenSearch indexes cleanup step in the `Deploy to AWS` and `DB - Apply Anonymized DB` pipelines to use script templates so that changes can be made in one place rather than in each pipeline separately
+  * Stop/start Logstash and clearing OpenSearch indexes moved to separate jobs of `Deploy to AWS` and `DB - Apply Anonymized DB` pipelines.
+  * Stop/start Logstash and clearing OpenSearch indexes now runs on ubuntu-latest runner.
+  * The automated deployment to AWS after creating tags for `sandbox` and `production` was temporarily prevented (until the implementation of [OSDEV-1325](https://opensupplyhub.atlassian.net/browse/OSDEV-1325)).
 
 ### Bugfix
 * [OSDEV-1177](https://opensupplyhub.atlassian.net/browse/OSDEV-1177) - The following changes have been made:
@@ -28,10 +62,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Corrected grammar mistakes in the description of the job steps for stopping Logstash and clearing OpenSearch for the `DB - Apply Anonymized DB` and `Deploy to AWS` GitHub workflows.
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* [OSDEV-1225](https://opensupplyhub.atlassian.net/browse/OSDEV-1225) - The auto email responses for `Approved` and `Rejected` statuses have been updated to improve user experience. A user receives an email updating them on the status of their list and the next steps they need to take.
 
 ### Release instructions:
-* *Provide release instructions here.*
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+* After running the `Release [Deploy]` workflow for both the `sandbox` and `production` environments, the responsible person must manually run the `Deploy to AWS` workflow, ensuring that the `Clear OpenSearch indexes` option is checked for each environment.
+Note: This instruction updates item 3 of the ['Release to Production and Sandbox'](https://github.com/opensupplyhub/open-supply-hub/blob/main/doc/release/RELEASE-PROTOCOL.md#release-to-production-and-sandbox) section of the RELEASE-PROTOCOL.
 
 
 ## Release 1.20.0

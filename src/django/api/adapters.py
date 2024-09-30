@@ -10,9 +10,7 @@ class OARUserAccountAdapter(DefaultAccountAdapter):
         return settings.DEFAULT_FROM_EMAIL
 
     def get_email_confirmation_url(self, request, emailconfirmation):
-        is_development = settings.ENVIRONMENT == 'Development'
-
-        if is_development:
+        if settings.DEBUG:
             protocol = 'http'
             domain = 'localhost:6543'
         else:
