@@ -1,4 +1,4 @@
-FROM python:3.7-slim-bullseye
+FROM --platform=linux/amd64 python:3.7-slim-bullseye
 # FROM python:3.7-slim
 
 RUN mkdir -p /usr/local/src/static/static
