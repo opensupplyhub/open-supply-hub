@@ -44,5 +44,4 @@ describe('SearchByOsIdSuccessResult component', () => {
         expect(getByText('Previous OS ID: US2020053ZH1RY5')).toBeInTheDocument();
         expect(tooltips).toHaveLength(2);
     });
-
 });
