@@ -9,6 +9,7 @@ import EmbeddedMapUnauthorized from './components/EmbeddedMapUnauthorized';
 import 'typeface-darker-grotesque';
 
 import './App.css';
+import COLOURS from './util/COLOURS';
 
 const configOrDefault = (configColor, defaultColor) =>
     !configColor || configColor === OARColor ? defaultColor : configColor;
@@ -69,7 +70,7 @@ function App({
                         ),
                     },
                     background: {
-                        grey: '#F9F7F7',
+                        grey: COLOURS.LIGHT_GREY,
                     },
                 },
             }),
