@@ -9,6 +9,15 @@ import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 
 import { makeSearchByOsIdTabStyles } from '../../util/styles';
 
+const HelperText = ({ classes }) => (
+    <span className={classes.helperTextContainerStyles}>
+        <InfoOutlinedIcon className={classes.infoIconStyles} />
+        <Typography component="span" className={classes.helperTextStyles}>
+            To search you need to enter the full ID production location
+        </Typography>
+    </span>
+);
+
 const SearchByOsIdTab = ({ classes }) => {
     const [value, setValue] = useState('');
     const history = useHistory();
@@ -55,7 +64,7 @@ const SearchByOsIdTab = ({ classes }) => {
                     className={classes.textFieldStyles}
                     value={value}
                     onChange={handleChange}
-                    helperText={helperText}
+                    helperText={<HelperText classes={classes} />}
                     placeholder="Enter the OS ID"
                     variant="outlined"
                     aria-label="Enter the OS ID"
