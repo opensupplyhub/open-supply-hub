@@ -36,7 +36,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
 
 ### Release instructions:
-* *Provide release instructions here.*
+* Before deploying to an existing environment, clear OpenSearch to ensure it can receive any missed changes and properly start the update process.
 
 
 ## Release 1.21.0
