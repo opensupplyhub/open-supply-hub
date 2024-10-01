@@ -464,3 +464,10 @@ export const filterOptionsPropType = shape({
     error: oneOfType([string, oneOf([null])]),
     fetching: bool.isRequired,
 });
+
+export const productionLocationPropType = shape({
+    os_id: string,
+    name: string,
+    address: string,
+    historical_os_id: arrayOf(string),
+});

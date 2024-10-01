@@ -1,6 +1,7 @@
 import React from 'react';
+import COLOURS from '../util/COLOURS';
 
-export default ({ color = '#6E707E' }) => (
+export default ({ color = COLOURS.DARK_GREY }) => (
     <svg
         width="18"
         height="18"
