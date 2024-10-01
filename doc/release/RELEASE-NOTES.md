@@ -50,13 +50,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe scheme changes here.*
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-1102](https://opensupplyhub.atlassian.net/browse/OSDEV-1102) - API. Propagate production location updates to OpenSearch data source via refreshing `updated_at` field in `api_facility` table.
 
 ### Architecture/Environment changes
 * [OSDEV-1325](https://opensupplyhub.atlassian.net/browse/OSDEV-1325)
   * __Deploy to AWS__ pipeline will init from __[Release] Deploy__ pipeline and get deployment parameters, such as cleaning OpenSearch indexes, by trigger.
 * [OSDEV-1372](https://opensupplyhub.atlassian.net/browse/OSDEV-1372)
   * Changed the base image in the Django app Dockerfile to use a Debian 11 instead of Debian 10 as the PostgreSQL 13 repository support for Debian 10 has been ended.
+  * Always build a docker image for the amd64 platform so that the image in the local environment fully corresponds to the one in production.
 
 ### Bugfix
 * Fixed a bug related to environment variable management:

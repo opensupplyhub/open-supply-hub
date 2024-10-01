@@ -6,13 +6,17 @@ Open Supply Hub (OS Hub) is a tool to identify every goods production facility w
 - [Setup](#setup)
   - [Google Maps Platform](#google-maps-platform)
 - [Development](#development)
+  - [Kick-off & start local development](#kick-off--start-local-development)
+  - [Restore the DB dump in the local Docker DB container](#restore-the-db-dump-in-the-local-docker-db-container)
+  - [Creation of Superusers](#creation-of-superusers)
   - [Upload a list and process it](#upload-a-list-and-process-it)
-  - [Hot Reloading 🔥](#hot-reloading-)
+  - [Hot Reloading 🔥](#hot-reloading-🔥)
   - [Debugging Django](#debugging-django)
+  - [Embedded Maps](#embedded-maps)
   - [Ports](#ports)
-- [Scripts 🧰](#scripts-)
-- [Management](#management)
-  - [Making Superusers](#making-superusers)
+- [Scripts 🧰](#scripts-🧰)
+- [Tools ⚒️](#tools-⚒️)
+
 
 ## Requirements
 
@@ -21,7 +25,9 @@ Open Supply Hub (OS Hub) is a tool to identify every goods production facility w
 - [Shellcheck](https://www.shellcheck.net)
   - `brew install shellcheck`
 
+
 ## Setup
+
 - Clone repo
 ```
 git clone git@github.com:opensupplyhub/open-supply-hub.git
@@ -53,6 +59,8 @@ See [Getting Started with Google Maps Platform](https://developers.google.com/ma
  _Note: Google Maps Platfom requires creation of a billing account, but [they offer](https://cloud.google.com/maps-platform/pricing/) $200 of free monthly usage, which is enough to support development._
 
 
+## Development
+
 ### Kick-off & start local development
 - Start up the local development environment with seeded data in the database.
 ```
@@ -68,7 +76,8 @@ open http://localhost:6543
 1. The project containers must be running locally.
 2. Download the prod dump file.
 3. Place it in the `./dumps/` folder.
-4. Connect to the local DB instance, delete all the tables, and recreate an empty DB schema to avoid conflicts during the restore using the SQL below:
+4. Destroy the Logstash and OpenSearch Docker containers along with their Docker images. It is necessary to refill OpenSearch with new data from the DB dump after it has been restored.
+5. Connect to the local DB instance, delete all the tables, and recreate an empty DB schema to avoid conflicts during the restore using the SQL below:
 ```
 DROP SCHEMA public CASCADE;
 CREATE SCHEMA public;
@@ -77,6 +86,10 @@ GRANT ALL ON SCHEMA public TO public;
 5. Then run the following command in the terminal of your machine to apply the production database dump:
 ```
 docker compose exec -T database pg_restore --verbose --clean --if-exists --no-acl --no-owner -d opensupplyhub -U opensupplyhub < ./dumps/[dump_name].dump
+```
+6. After successfully completing the DB restoration, start Logstash. It will automatically start OpenSearch, as it depends on it:
+```
+docker compose up logstash
 ```
 
 ### Creation of Superusers
@@ -118,7 +131,6 @@ Continue by accepting the list in the web browser dashboard. Then, in the django
 ./scripts/manage batch_process -a geocode -l 16
 ./scripts/manage batch_process -a match -l 16
 ```
-
 
 ### Hot Reloading 🔥
 
@@ -180,6 +192,7 @@ be available on their page, or you can visit http://localhost:6543/?embed=1&cont
 | React development server | [`6543`](http://localhost:6543) |
 | Gunicorn for Django app  | [`8081`](http://localhost:8081) |
 
+
 ## Scripts 🧰
 
 | Name | Description |
@@ -192,6 +205,7 @@ be available on their page, or you can visit http://localhost:6543/?embed=1&cont
 | `run_be_code_quality` | This script runs a linting check, tests, and also generates the unittest code coverage report for the Django app. The script performs the same code quality checks for the backend as those conducted during the CI pipeline, excluding code coverage comparison. |
 | `run_fe_code_quality` | This script performs linting and formatting checks, runs tests, and also generates the Jest code coverage report for the React app. The script performs the same code quality checks for the front-end as those conducted during the CI pipeline, excluding code coverage comparison. |
 | `run_bash_script_linter`| This script runs the shellcheck linter for files in the ./scripts folder. It requires the installation of the [shellcheck](https://www.shellcheck.net/) package. |
+
 
 ## Tools ⚒️
 

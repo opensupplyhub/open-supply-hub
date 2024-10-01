@@ -299,7 +299,7 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
 
         self.assertEqual(
             len(data),
-            4,
+            5,
         )
 
     @override_flag("can_get_facility_history", active=True)
@@ -353,7 +353,7 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
 
         self.assertEqual(
             len(data),
-            4,
+            5,
         )
 
     @override_flag("can_get_facility_history", active=True)
@@ -771,13 +771,13 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
         data = json.loads(history_response.content)
 
         self.assertEqual(
-            data[0]["action"],
+            data[1]["action"],
             "CLAIM",
         )
 
         self.assertEqual(
             len(data),
-            3,
+            5,
         )
 
     @override_flag("can_get_facility_history", active=True)
@@ -868,13 +868,13 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
         data = json.loads(history_response.content)
 
         self.assertEqual(
-            data[0]["action"],
+            data[2]["action"],
             "ASSOCIATE",
         )
 
         self.assertEqual(
             len(data),
-            2,
+            4,
         )
 
     @override_flag("can_get_facility_history", active=True)
@@ -947,13 +947,13 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
         data = json.loads(history_response.content)
 
         self.assertEqual(
-            data[0]["action"],
+            data[1]["action"],
             "CLAIM_REVOKE",
         )
 
         self.assertEqual(
             len(data),
-            4,
+            7,
         )
 
     @override_flag("can_get_facility_history", active=True)
@@ -1054,13 +1054,13 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
         data = json.loads(history_response.content)
 
         self.assertEqual(
-            data[0]["action"],
+            data[1]["action"],
             "CLAIM_UPDATE",
         )
 
         self.assertEqual(
             len(data),
-            4,
+            7,
         )
 
         non_public_keys = [
