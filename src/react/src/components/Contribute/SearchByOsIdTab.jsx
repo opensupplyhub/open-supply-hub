@@ -19,30 +19,21 @@ const HelperText = ({ classes }) => (
 );
 
 const SearchByOsIdTab = ({ classes }) => {
-    const [value, setValue] = useState('');
+    const [inputOsId, setInputOsId] = useState('');
     const history = useHistory();
 
     const handleChange = event => {
         const uppercaseValue = event.target.value.toUpperCase();
-        setValue(uppercaseValue);
+        setInputOsId(uppercaseValue);
     };
 
     const handleSearch = () => {
-        if (value.length === 15) {
+        if (inputOsId.length === 15) {
             history.push(
-                `/contribute/production-location/search/?os_id=${value}`,
+                `/contribute/production-location/search/?os_id=${inputOsId}`,
             );
         }
     };
-
-    const helperText = (
-        <span className={classes.helperTextContainerStyles}>
-            <InfoOutlinedIcon className={classes.infoIconStyles} />
-            <Typography component="span" className={classes.helperTextStyles}>
-                To search you need to enter the full ID production location
-            </Typography>
-        </span>
-    );
 
     return (
         <>
@@ -62,7 +53,7 @@ const SearchByOsIdTab = ({ classes }) => {
                 <TextField
                     id="os-id"
                     className={classes.textFieldStyles}
-                    value={value}
+                    value={inputOsId}
                     onChange={handleChange}
                     helperText={<HelperText classes={classes} />}
                     placeholder="Enter the OS ID"
@@ -86,7 +77,7 @@ const SearchByOsIdTab = ({ classes }) => {
                     classes={{
                         label: classes.buttonLabel,
                     }}
-                    disabled={value.length < 15}
+                    disabled={inputOsId.length < 15}
                 >
                     Search by ID
                 </Button>
