@@ -99,26 +99,6 @@ def clean(column):
     return column
 
 
-def value_is_in_range(range_value, range):
-    range_min = range.get('min', 0)
-    range_max = range.get('max', None)
-    value_min = range_value.get('min', 0)
-    value_max = range_value.get('max', value_min)
-    if value_min < range_min:
-        return value_max >= range_min
-    if value_min >= range_min:
-        return range_max is None or value_min <= range_max
-
-
-def convert_to_standard_ranges(number_of_workers, overlapping_ranges=None):
-    if overlapping_ranges is None:
-        overlapping_ranges = set()
-    for range in NumberOfWorkersRanges.STANDARD_RANGES:
-        if value_is_in_range(number_of_workers, range):
-            overlapping_ranges.add(range.get('label', ''))
-    return overlapping_ranges
-
-
 def format_custom_text(contributor_id, value):
     return '{}|{}'.format(contributor_id, value.strip().lower())
 

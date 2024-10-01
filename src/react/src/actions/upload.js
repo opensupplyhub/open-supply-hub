@@ -35,11 +35,6 @@ export function uploadFile(file = null, redirectToListDetail) {
             upload: {
                 form: { name, description, replaces },
             },
-            featureFlags: {
-                flags: {
-                    use_old_upload_list_endpoint: useOldUploadListEndpoint,
-                },
-            },
         } = getState();
 
         const requiredDataErrors = createUploadFormErrorMessages(name, file);
@@ -65,10 +60,7 @@ export function uploadFile(file = null, redirectToListDetail) {
         }
 
         return apiRequest
-            .post(
-                makeUploadFacilityListsURL(useOldUploadListEndpoint),
-                formData,
-            )
+            .post(makeUploadFacilityListsURL(), formData)
             .then(({ data: { id } }) => {
                 dispatch(completeUploadFile());
                 redirectToListDetail(id);

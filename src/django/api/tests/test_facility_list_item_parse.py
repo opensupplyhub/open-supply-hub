@@ -9,7 +9,7 @@ from api.models import (
     User,
 )
 from api.processing import ItemRemovedException, parse_facility_list_item
-from api.sector_product_type_parser import SectorProductTypeParser
+from django.api.sector_cache import SectorProductTypeParser
 from api.tests.processing_test_case import ProcessingTestCase
 
 

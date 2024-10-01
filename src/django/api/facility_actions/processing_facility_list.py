@@ -2,7 +2,6 @@ import logging
 import traceback
 from typing import Any, Dict, Optional, Set, List, Union
 
-from rest_framework.exceptions import ValidationError
 from django.contrib.gis.geos import Point
 from django.utils import timezone
 

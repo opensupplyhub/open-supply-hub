@@ -1,29 +1,16 @@
-import csv
 import operator
 import os
 import logging
-
 from functools import reduce
 
-from api.facility_actions.processing_facility_executor import (
-    ProcessingFacilityExecutor
-)
-from api.facility_actions.processing_facility_list import (
-    ProcessingFacilityList
-)
-from api.helpers.helpers import (
-    get_raw_json,
-)
 from oar.settings import (
     MAX_UPLOADED_FILE_SIZE_IN_BYTES,
     DEBUG
 )
-from oar.rollbar import report_error_to_rollbar
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
     NotFound,
-    ValidationError,
-    APIException
+    ValidationError
 )
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -37,11 +24,9 @@ from django.utils import timezone
 
 from ...aws_batch import submit_jobs, submit_parse_job
 from api.constants import (
-    CsvHeaderField,
     FacilityListItemsQueryParams,
     ProcessingAction,
 )
-from api.sector_product_type_parser import SectorCache
 from ...facility_history import create_dissociate_match_change_reason
 from ...mail import send_facility_list_rejection_email
 from ...models.contributor.contributor import Contributor
@@ -54,22 +39,11 @@ from ...permissions import (
     IsRegisteredAndConfirmed,
     IsSuperuser
 )
-from ...processing import (
-    clean_row,
-    parse_csv,
-    parse_csv_line,
-    parse_xlsx,
-)
 from ...serializers import (
     FacilityListSerializer,
     FacilityListItemSerializer,
     FacilityListItemsQueryParamsSerializer,
 )
-from ..fields.create_nonstandard_fields import create_nonstandard_fields
-from contricleaner.lib.contri_cleaner import ContriCleaner
-from contricleaner.lib.exceptions.parsing_error import ParsingError
-from contricleaner.lib.exceptions.handler_not_set_error \
-    import HandlerNotSetError
 
 log = logging.getLogger(__name__)
 
@@ -84,306 +58,8 @@ class FacilityListViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'head', 'options', 'trace']
     swagger_schema = None
 
-    def _validate_header(self, header):
-        if header is None or header == '':
-            raise ValidationError('Header cannot be blank.')
-        parsed_header = [i.lower() for i in parse_csv_line(header)]
-
-        needed_headers = (
-            CsvHeaderField.COUNTRY,
-            CsvHeaderField.NAME,
-            CsvHeaderField.ADDRESS
-        )
-        for needed_header in needed_headers:
-            if needed_header not in parsed_header:
-                raise ValidationError((
-                    f'Header must contain {CsvHeaderField.COUNTRY}, '
-                    f'{CsvHeaderField.NAME}, and '
-                    f'{CsvHeaderField.ADDRESS} fields.'
-                ))
-
-    def _extract_header_rows(self, file, request):
-        ext = file.name[-4:]
-
-        if ext == 'xlsx':
-            header, rows = parse_xlsx(file, request)
-        elif ext == '.csv':
-            header, rows = parse_csv(file, request)
-        else:
-            raise ValidationError(
-                'Unsupported file type. Please '
-                'submit Excel or UTF-8 CSV.'
-            )
-
-        self._validate_header(header)
-        rows = map(clean_row, rows)
-        return header, rows
-
-    # TODO: delete this method and all unused methods.
     @transaction.atomic
     def create(self, request):
-        """
-        Upload a new Facility List.
-
-        ## Request Body
-
-        *Required*
-
-        `file` (`file`): CSV file to upload.
-
-        *Optional*
-
-        `name` (`string`): Name of the uploaded file.
-
-        `description` (`string`): Description of the uploaded file.
-
-        `replaces` (`number`): An optional ID for an existing list to replace
-                   with the new list
-
-        ### Sample Response
-
-            {
-                "id": 1,
-                "name": "list name",
-                "description": "list description",
-                "file_name": "list-1.csv",
-                "is_active": true,
-                "is_public": true
-            }
-        """
-        if 'file' not in request.data:
-            raise ValidationError('No file specified.')
-        csv_file = request.data['file']
-        if type(csv_file) not in (InMemoryUploadedFile, TemporaryUploadedFile):
-            raise ValidationError('File not submitted properly.')
-        if csv_file.size > MAX_UPLOADED_FILE_SIZE_IN_BYTES:
-            mb = MAX_UPLOADED_FILE_SIZE_IN_BYTES / (1024*1024)
-            raise ValidationError(
-                'Uploaded file exceeds the maximum size of {:.1f}MB.'.format(
-                    mb))
-
-        try:
-            contributor = request.user.contributor
-        except Contributor.DoesNotExist as exc:
-            raise ValidationError(
-                'User contributor cannot be None'
-            ) from exc
-
-        if 'name' in request.data:
-            name = request.data['name']
-        else:
-            name = os.path.splitext(csv_file.name)[0]
-
-        if '|' in name:
-            raise ValidationError('Name cannot contain the "|" character.')
-
-        if 'description' in request.data:
-            description = request.data['description']
-        else:
-            description = None
-
-        if description is not None and '|' in description:
-            raise ValidationError(
-                'Description cannot contain the "|" character.'
-            )
-
-        replaces = None
-        if 'replaces' in request.data:
-            try:
-                replaces = int(request.data['replaces'])
-            except ValueError as exc:
-                raise ValidationError(
-                    '"replaces" must be an integer ID.'
-                ) from exc
-            old_list_qs = FacilityList.objects.filter(
-                source__contributor=contributor, pk=replaces)
-            if old_list_qs.count() == 0:
-                raise ValidationError(
-                    f'{replaces} is not a valid FacilityList ID.'
-                )
-            replaces = old_list_qs[0]
-            if FacilityList.objects.filter(replaces=replaces).count() > 0:
-                raise ValidationError(
-                    f'FacilityList {replaces.pk} has already been replaced.'
-                )
-
-        header, rows = self._extract_header_rows(csv_file, request)
-
-        new_list = FacilityList(
-            name=name,
-            description=description,
-            file_name=csv_file.name,
-            file=csv_file,
-            header=header,
-            replaces=replaces,
-            match_responsibility=contributor.match_responsibility)
-        new_list.save()
-
-        csvreader = csv.reader(header.split('\n'), delimiter=',')
-        for row in csvreader:
-            # TODO: remove create_nonstandard_fields function
-            # (api/views/fields/create_nonstandard_fields.py) after removing
-            # the create endpoint because this function is not used anywhere.
-            # It was moved to the ProcessingFacility class as a method.
-            create_nonstandard_fields(row, contributor)
-
-        source = Source.objects.create(
-            contributor=contributor,
-            source_type=Source.LIST,
-            facility_list=new_list)
-
-        items = [FacilityListItem(row_index=idx,
-                                  raw_data=row,
-                                  raw_json=get_raw_json(row, header),
-                                  raw_header=header,
-                                  sector=[],
-                                  source=source)
-                 for idx, row in enumerate(rows)]
-        FacilityListItem.objects.bulk_create(items)
-
-        if not DEBUG:
-            submit_parse_job(new_list)
-
-        serializer = self.get_serializer(new_list)
-        return Response(serializer.data)
-
-    # TODO: 1. Delete this method.
-    #       2. Delete all old unused methods that was partially or fully moved
-    #       to ContriCleaner or new list or API processing classes.
-    @action(detail=False, methods=['POST'],
-            url_path='createlist')
-    @transaction.atomic
-    def createlist(self, request):
-        """
-        Upload a new Facility List.
-
-        ## Request Body
-
-        *Required*
-
-        `file` (`file`): CSV file to upload.
-
-        *Optional*
-
-        `name` (`string`): Name of the uploaded file.
-
-        `description` (`string`): Description of the uploaded file.
-
-        `replaces` (`number`): An optional ID for an existing list to replace
-                   with the new list
-
-        ### Sample Response
-
-            {
-                "id": 1,
-                "name": "list name",
-                "description": "list description",
-                "file_name": "list-1.csv",
-                "is_active": true,
-                "is_public": true
-            }
-        """
-        if 'file' not in request.data:
-            raise ValidationError('No file specified.')
-        uploaded_file = request.data['file']
-        if type(uploaded_file) not in (
-                InMemoryUploadedFile, TemporaryUploadedFile):
-            raise ValidationError('File not submitted properly.')
-        if uploaded_file.size > MAX_UPLOADED_FILE_SIZE_IN_BYTES:
-            mb = MAX_UPLOADED_FILE_SIZE_IN_BYTES / (1024*1024)
-            raise ValidationError(
-                'Uploaded file exceeds the maximum size of {:.1f}MB.'.format(
-                    mb))
-
-        try:
-            contributor = request.user.contributor
-        except Contributor.DoesNotExist as exc:
-            raise ValidationError(
-                'User contributor cannot be None'
-            ) from exc
-
-        if 'name' in request.data:
-            name = request.data['name']
-        else:
-            name = os.path.splitext(uploaded_file.name)[0]
-
-        if '|' in name:
-            raise ValidationError('Name cannot contain the "|" character.')
-
-        if 'description' in request.data:
-            description = request.data['description']
-        else:
-            description = None
-
-        if description is not None and '|' in description:
-            raise ValidationError(
-                'Description cannot contain the "|" character.'
-            )
-
-        replaces = None
-        if 'replaces' in request.data:
-            try:
-                replaces = int(request.data['replaces'])
-            except ValueError as exc:
-                raise ValidationError(
-                    '"replaces" must be an integer ID.'
-                ) from exc
-            old_list_qs = FacilityList.objects.filter(
-                source__contributor=contributor, pk=replaces)
-            if old_list_qs.count() == 0:
-                raise ValidationError(
-                    f'{replaces} is not a valid FacilityList ID.'
-                )
-            replaces = old_list_qs[0]
-            if FacilityList.objects.filter(replaces=replaces).count() > 0:
-                raise ValidationError(
-                    f'FacilityList {replaces.pk} has already been replaced.'
-                )
-
-        parsing_started = str(timezone.now())
-        log.info('[List Upload] Started CC Parse process!')
-
-        contri_cleaner = ContriCleaner(uploaded_file, SectorCache())
-        try:
-            contri_cleaner_processed_data = contri_cleaner.process_data()
-        except ParsingError as err:
-            log.error(f'[List Upload] Data Parsing Error: {err}')
-            report_error_to_rollbar(request=request,
-                                    file=uploaded_file,
-                                    exception=err)
-            raise ValidationError(str(err))
-        except HandlerNotSetError as err:
-            log.error(f'[List Upload] Internal ContriCleaner Error: {err}')
-            report_error_to_rollbar(request=request,
-                                    file=uploaded_file,
-                                    exception=err)
-            raise APIException('Internal System Error. '
-                               'Please contact support.')
-
-        processing_input = {
-            'request': request,
-            'name': name,
-            'description': description,
-            'uploaded_file': uploaded_file,
-            'replaces': replaces,
-            'contri_cleaner_processed_data': contri_cleaner_processed_data,
-            'contributor': contributor,
-            'parsing_started': parsing_started,
-            'serializer_method': self.get_serializer,
-        }
-
-        processing_facility_executor = ProcessingFacilityExecutor(
-            ProcessingFacilityList(processing_input)
-        )
-
-        return processing_facility_executor.run_processing()
-
-    # TODO: Rename this method to `create`. A temporary duplicate was created
-    #       for testing purposes of the ContriCleaner parsing.
-    @action(detail=False, methods=['POST'],
-            url_path='createlistv2')
-    @transaction.atomic
-    def createlistv2(self, request):
         """
         Upload a new Facility List.
 
