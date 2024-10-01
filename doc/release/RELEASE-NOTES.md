@@ -7,7 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: October 05, 2024
+* Release date: October 19, 2024
 
 ### Database changes
 #### Migrations:
