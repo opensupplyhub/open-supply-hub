@@ -7,7 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: October 05, 2024
+* Release date: October 19, 2024
 
 ### Database changes
 #### Migrations:
@@ -40,7 +40,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     Each results screen also includes a "Back to ID search" button at the top.
 
 ### Release instructions:
-* *Provide release instructions here.*
+* Before deploying to an existing environment, clear OpenSearch to ensure it can receive any missed changes and properly start the update process.
 
 
 ## Release 1.21.0
