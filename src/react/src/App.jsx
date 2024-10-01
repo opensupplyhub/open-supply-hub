@@ -9,6 +9,7 @@ import EmbeddedMapUnauthorized from './components/EmbeddedMapUnauthorized';
 import 'typeface-darker-grotesque';
 
 import './App.css';
+import COLOURS from './util/COLOURS';
 
 const configOrDefault = (configColor, defaultColor) =>
     !configColor || configColor === OARColor ? defaultColor : configColor;
@@ -42,6 +43,10 @@ function App({
                 },
                 typography: {
                     fontFamily: config.font,
+                    fontWeightSemiBold: 600,
+                    fontWeightSemiBoldPlus: 700,
+                    fontWeightBold: 800,
+                    fontWeightExtraBold: 900,
                 },
                 palette: {
                     primary: {
@@ -63,6 +68,9 @@ function App({
                             config.color,
                             'rgb(255, 216, 101)',
                         ),
+                    },
+                    background: {
+                        grey: COLOURS.LIGHT_GREY,
                     },
                 },
             }),

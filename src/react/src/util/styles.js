@@ -1,4 +1,5 @@
 import { OARColor } from './constants';
+import COLOURS from './COLOURS';
 
 export const formValidationErrorMessageStyle = Object.freeze({
     color: 'red',
@@ -292,3 +293,308 @@ export const makeCustomDropdownIndicatorStyles = Object.freeze({
         marginRight: '0.5em',
     }),
 });
+
+export const makeContributeProductionLocationStyles = theme =>
+    Object.freeze({
+        mainContainerStyles: Object.freeze({
+            background: theme.palette.background.grey,
+            padding: '48px 5% 120px 5%',
+        }),
+        titleStyles: Object.freeze({
+            fontWeight: theme.typography.fontWeightExtraBold,
+            fontSize: '56px',
+            lineHeight: '60px',
+        }),
+        tabsContainerStyles: Object.freeze({
+            flexGrow: 1,
+            marginTop: '48px',
+        }),
+        tabsIndicatorStyles: Object.freeze({
+            backgroundColor: theme.palette.primary.main,
+            height: '4px',
+        }),
+        tabRootStyles: Object.freeze({
+            textTransform: 'initial',
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            width: '100%',
+            maxWidth: '300px',
+            borderBottom: `1px solid ${COLOURS.NEAR_BLACK}`,
+            paddingBottom: '16px',
+            '&$tabSelectedStyles': {
+                fontWeight: theme.typography.fontWeightExtraBold,
+            },
+        }),
+        tabLabelContainerStyles: Object.freeze({
+            padding: '0 24px',
+        }),
+        tabSelectedStyles: Object.freeze({}),
+    });
+
+export const makeSearchByOsIdTabStyles = theme =>
+    Object.freeze({
+        helperTextContainerStyles: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+        }),
+        infoIconStyles: Object.freeze({
+            fontSize: '16px',
+            verticalAlign: 'middle',
+        }),
+        helperTextStyles: Object.freeze({
+            fontSize: '16px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            color: COLOURS.DARK_GREY,
+        }),
+        instructionTextStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            margin: '24px 0 32px 0',
+        }),
+        searchContainerStyles: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '40px 110px',
+            borderRadius: '0',
+            boxShadow: 'none',
+        }),
+        mainTitleStyles: Object.freeze({
+            fontSize: '36px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
+        }),
+        subTitleStyles: Object.freeze({
+            fontSize: '21px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            margin: '8px 0 24px 0',
+        }),
+        textFieldStyles: Object.freeze({
+            maxWidth: '528px',
+        }),
+        searchInputStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            lineHeight: '22px',
+            padding: '16px',
+        }),
+        notchedOutlineStyles: Object.freeze({
+            borderRadius: 0,
+        }),
+        buttonLabel: Object.freeze({
+            fontSize: '18px',
+            lineHeight: '20px',
+            fontWeight: theme.typography.fontWeightExtraBold,
+        }),
+        buttonStyles: Object.freeze({
+            width: '200px',
+            borderRadius: '0',
+            textTransform: 'none',
+            backgroundColor: theme.palette.action.main,
+            marginTop: '26px',
+            color: theme.palette.common.black,
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
+        }),
+    });
+
+export const makeSearchByOsIdResultStyles = theme =>
+    Object.freeze({
+        circularProgressContainerStyles: Object.freeze({
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: 'calc(100vh - 116px)',
+        }),
+        mainContainerStyles: Object.freeze({
+            backgroundColor: theme.palette.background.grey,
+            padding: '48px 5% 120px 5%',
+        }),
+        mainTitleStyles: Object.freeze({
+            fontWeight: theme.typography.fontWeightExtraBold,
+            fontSize: '56px',
+            lineHeight: '60px',
+            margin: '40px 0 48px 0',
+        }),
+        resultContainerStyles: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '40px 110px',
+            borderRadius: '0',
+            boxShadow: 'none',
+        }),
+        resultTitleStyles: Object.freeze({
+            fontSize: '36px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
+            lineHeight: '44px',
+        }),
+        resultSubTitleStyles: Object.freeze({
+            fontSize: '18px',
+            lineHeight: '21px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            margin: '8px 0 24px 0',
+        }),
+        locationDetailsStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            margin: '24px 0',
+        }),
+        locationNameStyles: Object.freeze({
+            fontSize: '36px',
+            lineHeight: '44px',
+            fontWeight: theme.typography.fontWeightBold,
+        }),
+        locationCurrentOsIdStyles: Object.freeze({
+            fontSize: '16px',
+            lineHeight: '20px',
+            fontWeight: theme.typography.fontWeightBold,
+            margin: '8px 0',
+        }),
+        locationHistoricalOsIdStyles: Object.freeze({
+            fontSize: '14px',
+            lineHeight: '20px',
+            fontWeight: theme.typography.fontWeightBold,
+            color: COLOURS.DARK_GREY,
+        }),
+        locationAddressStyles: Object.freeze({
+            fontSize: '16px',
+            lineHeight: '20px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            marginTop: '12px',
+        }),
+    });
+
+export const makeBackToSearchButtonStyles = theme =>
+    Object.freeze({
+        backButtonRootStyles: Object.freeze({
+            textTransform: 'none',
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
+        }),
+        backButtonLabelStyles: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+        }),
+    });
+
+const arrowGenerator = color => ({
+    '&[x-placement*="bottom"] $arrowStyles': {
+        top: 0,
+        left: 0,
+        marginTop: '-0.95em',
+        width: '3em',
+        height: '1em',
+        '&::before': {
+            borderWidth: '0 1em 1em 1em',
+            borderColor: `transparent transparent ${color} transparent`,
+        },
+    },
+    '&[x-placement*="top"] $arrowStyles': {
+        bottom: 0,
+        left: 0,
+        marginBottom: '-0.95em',
+        width: '3em',
+        height: '1em',
+        '&::before': {
+            borderWidth: '1em 1em 0 1em',
+            borderColor: `${color} transparent transparent transparent`,
+        },
+    },
+    '&[x-placement*="right"] $arrowStyles': {
+        left: 0,
+        marginLeft: '-0.95em',
+        height: '3em',
+        width: '1em',
+        '&::before': {
+            borderWidth: '1em 1em 1em 0',
+            borderColor: `transparent ${color} transparent transparent`,
+        },
+    },
+    '&[x-placement*="left"] $arrowStyles': {
+        right: 0,
+        marginRight: '-0.95em',
+        height: '3em',
+        width: '1em',
+        '&::before': {
+            borderWidth: '1em 0 1em 1em',
+            borderColor: `transparent transparent transparent ${color}`,
+        },
+    },
+});
+
+export const makePreviousOsIdTooltipStyles = theme =>
+    Object.freeze({
+        arrowPopperStyles: arrowGenerator(COLOURS.DARK_SLATE_GRAY),
+        arrowStyles: Object.freeze({
+            position: 'absolute',
+            fontSize: 6,
+            width: '22px',
+            height: '12px',
+            '&::before': {
+                content: '""',
+                margin: 'auto',
+                display: 'block',
+                width: 0,
+                height: 0,
+                borderStyle: 'solid',
+            },
+        }),
+        tooltipStyles: Object.freeze({
+            backgroundColor: COLOURS.DARK_SLATE_GRAY,
+            color: COLOURS.WHITE,
+            maxWidth: '149px',
+            boxShadow: '0px 4px 4px 0px #00000040',
+        }),
+        placementLeftStyles: Object.freeze({
+            margin: '0 8px',
+        }),
+        placementRightStyles: Object.freeze({
+            margin: '0 8px',
+        }),
+        placementTopStyles: Object.freeze({
+            margin: '8px 0',
+        }),
+        placementBottomStyles: Object.freeze({
+            margin: '8px 0',
+        }),
+        tooltipTitleStyles: Object.freeze({
+            fontSize: '14px',
+            fontWeight: theme.typography.fontWeightMedium,
+        }),
+        infoOutlinedIconStyles: Object.freeze({
+            fontSize: '16px',
+            verticalAlign: 'middle',
+        }),
+    });
+
+export const makeSearchByOsIdResultActionsStyles = theme =>
+    Object.freeze({
+        actionsStyles: Object.freeze({
+            display: 'flex',
+            gap: '24px',
+        }),
+        buttonLabelStyles: Object.freeze({
+            fontSize: '18px',
+            lineHeight: '20px',
+            fontWeight: theme.typography.fontWeightExtraBold,
+            letterSpacing: '-0.05px',
+        }),
+        buttonBaseStyles: Object.freeze({
+            width: '265px',
+            height: '49px',
+            borderRadius: '0',
+            textTransform: 'none',
+        }),
+        defaultButtonStyles: Object.freeze({
+            color: theme.palette.common.black,
+            borderColor: COLOURS.NEAR_BLACK,
+        }),
+        secondaryButtonStyles: Object.freeze({
+            backgroundColor: theme.palette.action.main,
+            color: theme.palette.common.black,
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
+        }),
+    });
