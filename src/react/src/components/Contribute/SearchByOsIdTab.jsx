@@ -8,6 +8,7 @@ import Typography from '@material-ui/core/Typography';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 
 import { makeSearchByOsIdTabStyles } from '../../util/styles';
+import { OS_ID_LENGTH } from '../../util/constants';
 
 const HelperText = ({ classes }) => (
     <span className={classes.helperTextContainerStyles}>
@@ -21,6 +22,7 @@ const HelperText = ({ classes }) => (
 const SearchByOsIdTab = ({ classes }) => {
     const [inputOsId, setInputOsId] = useState('');
     const history = useHistory();
+    const isValidOsId = inputOsId.length === OS_ID_LENGTH;
 
     const handleChange = event => {
         const uppercaseValue = event.target.value.toUpperCase();
@@ -28,11 +30,9 @@ const SearchByOsIdTab = ({ classes }) => {
     };
 
     const handleSearch = () => {
-        if (inputOsId.length === 15) {
-            history.push(
-                `/contribute/production-location/search/?os_id=${inputOsId}`,
-            );
-        }
+        history.push(
+            `/contribute/production-location/search/?os_id=${inputOsId}`,
+        );
     };
 
     return (
@@ -65,7 +65,7 @@ const SearchByOsIdTab = ({ classes }) => {
                             notchedOutline: classes.notchedOutlineStyles,
                         },
                         inputProps: {
-                            maxLength: 15,
+                            maxLength: OS_ID_LENGTH,
                         },
                     }}
                 />
@@ -77,7 +77,7 @@ const SearchByOsIdTab = ({ classes }) => {
                     classes={{
                         label: classes.buttonLabel,
                     }}
-                    disabled={inputOsId.length < 15}
+                    disabled={!isValidOsId}
                 >
                     Search by ID
                 </Button>

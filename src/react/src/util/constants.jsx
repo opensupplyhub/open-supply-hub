@@ -1292,3 +1292,5 @@ export const componentsWithErrorMessage = Object.freeze({
     mustConsistOfLetters: 'Facility List Name must also consist of letters.',
     missingFile: 'Missing required Facility List File.',
 });
+
+export const OS_ID_LENGTH = 15;
