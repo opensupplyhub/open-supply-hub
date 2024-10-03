@@ -1,5 +1,4 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { useHistory } from 'react-router-dom';
 import get from 'lodash/get';
 import head from 'lodash/head';
 import last from 'lodash/last';
@@ -346,33 +345,24 @@ export const useFileUploadHandler = ({
     fetching,
     error,
     fetchLists,
-    listsRoute,
-    hasUploadErrorBeenHandled,
-    setHasUploadErrorBeenHandled,
     toast,
 }) => {
-    const [isFormReset, setIsFormReset] = useState(false);
     const fileInput = useRef(null);
     const prevFetchingRef = useRef(fetching);
-    const history = useHistory();
+    const prevFetching = prevFetchingRef.current;
 
     useEffect(() => {
-        const reset = async () => {
-            await resetForm();
-            setIsFormReset(true);
-        };
-        reset();
-    }, [resetForm]);
+        fetchLists();
+    }, []);
+
+    useEffect(() => resetForm, [resetForm]);
 
     useEffect(() => {
         prevFetchingRef.current = fetching;
     }, [fetching]);
 
-    const prevFetching = prevFetchingRef.current;
-
     useEffect(() => {
         if (prevFetching && !fetching && !error) {
-            fetchLists();
             const { current } = fileInput;
             if (current) {
                 current.value = null;
@@ -380,28 +370,7 @@ export const useFileUploadHandler = ({
 
             toast('Your facility list has been uploaded successfully!');
         }
-    }, [fetching, error, fetchLists, prevFetching, fileInput]);
-
-    useEffect(() => {
-        if (
-            isFormReset &&
-            error &&
-            error.length &&
-            !hasUploadErrorBeenHandled
-        ) {
-            console.log(`Error uploading is ${error}`);
-            const listID = 5345;
-            history.push(`${listsRoute}/${listID}`);
-            setHasUploadErrorBeenHandled(true);
-        }
-    }, [
-        error,
-        isFormReset,
-        hasUploadErrorBeenHandled,
-        history,
-        listsRoute,
-        setHasUploadErrorBeenHandled,
-    ]);
+    }, [fetching, error, prevFetching, fileInput]);
 
     return { fileInput };
 };

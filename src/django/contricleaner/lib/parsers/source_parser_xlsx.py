@@ -48,7 +48,8 @@ class SourceParserXLSX(SourceParser, FileParser):
             return rows
         except Exception:
             raise ParsingError('Error parsing Excel (.xlsx) file. '
-                               'Please contact support.')
+                               'Please send your file to '
+                               'support@opensupplyhub.org for diagnosis.')
 
     @staticmethod
     def __tidy_row(row: tuple) -> list:

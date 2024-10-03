@@ -1,5 +1,5 @@
 /* eslint no-unused-vars: 0 */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { arrayOf, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { Link, Route, useHistory } from 'react-router-dom';
@@ -18,6 +18,7 @@ import AppOverflow from './AppOverflow';
 import FacilityListItemsEmpty from './FacilityListItemsEmpty';
 import FacilityListItemsTable from './FacilityListItemsTable';
 import FacilityListControls from './FacilityListControls';
+import ListUploadErrors from './ListUploadErrors';
 
 import {
     createPaginationOptionsFromQueryString,
@@ -95,10 +96,6 @@ const facilityListItemsStyles = Object.freeze({
         fontSize: '0.875rem',
         fontWeight: '500',
     }),
-    postErrorHelp: Object.freeze({
-        margin: '1.5rem 0',
-        fontWeight: 500,
-    }),
 });
 
 const refreshListModalStyles = Object.freeze({
@@ -126,9 +123,8 @@ const FacilityListItems = ({
     list,
     fetchingList,
     error,
-    uploadError,
-    downloadCSVFetching,
     downloadingCSV,
+    downloadCSV,
     csvDownloadingError,
     userHasSignedIn,
     isAdminUser,
@@ -138,7 +134,6 @@ const FacilityListItems = ({
     clearListItems,
     adminSearch,
 }) => {
-    const [dialogIsOpen, setDialogIsOpen] = useState(true);
     const history = useHistory();
 
     useEffect(() => {
@@ -185,6 +180,9 @@ const FacilityListItems = ({
         );
     }
 
+    const listParsingErrorsExist =
+        list.parsing_errors && list.parsing_errors.length > 0;
+
     const csvDownloadErrorMessage = csvDownloadingError &&
         csvDownloadingError.length && (
             <p style={{ color: 'red', textAlign: 'right' }}>
@@ -208,7 +206,7 @@ const FacilityListItems = ({
             variant="outlined"
             color="primary"
             style={facilityListItemsStyles.buttonStyles}
-            onClick={downloadCSVFetching}
+            onClick={downloadCSV}
             disabled={downloadingCSV}
         >
             Download Formatted File
@@ -231,62 +229,8 @@ const FacilityListItems = ({
         ? `${dashboardListsRoute}${adminSearch || ''}`
         : listsRoute;
 
-    const renderUploadError = () => (
-        <Grid item style={facilityListItemsStyles.tableStyles}>
-            <ul>
-                {uploadError.map(err => (
-                    <li key={err} style={{ color: 'red' }}>
-                        {err}
-                    </li>
-                ))}
-            </ul>
-            <div style={facilityListItemsStyles.postErrorHelp}>
-                If you continue to have trouble submitting your list, please
-                check the <a href="#troubleshooting">troubleshooting</a> section
-                on this page or email{' '}
-                <a href="mailto:info@opensupplyhub.org">
-                    info@opensupplyhub.org
-                </a>
-                .
-            </div>
-        </Grid>
-    );
-
-    const renderDialog = () => (
-        <Dialog open={dialogIsOpen}>
-            <DialogTitle style={refreshListModalStyles.titleContentStyle}>
-                <Check style={refreshListModalStyles.icon} />
-                Thank you for submitting your list!
-            </DialogTitle>
-            <DialogContent>
-                <Typography
-                    variant="body1"
-                    style={refreshListModalStyles.dialogContentStyles}
-                >
-                    Your data has been successfully uploaded and is being
-                    processed.
-                    <br />
-                    Check back in a few minutes to review the status.
-                </Typography>
-                <hr style={refreshListModalStyles.separator} />
-            </DialogContent>
-            <DialogActions style={refreshListModalStyles.buttonContentStyle}>
-                <Button
-                    variant="outlined"
-                    color="secondary"
-                    onClick={() => history.push(mainRoute)}
-                >
-                    Go to the main page
-                </Button>
-                <Button variant="outlined" color="primary">
-                    Refresh
-                </Button>
-            </DialogActions>
-        </Dialog>
-    );
-
-    const renderFacilityList = () => (
-        <Grid item style={facilityListItemsStyles.tableStyles}>
+    const listHeader = (
+        <>
             <div style={facilityListItemsStyles.headerStyles}>
                 <div>
                     <h2 style={facilityListItemsStyles.titleStyles}>
@@ -316,9 +260,80 @@ const FacilityListItems = ({
                 </div>
             </div>
 
-            {list.status_counts.UPLOADED === 0 && (
-                <FacilityListControls isAdminUser={isAdminUser} id={list.id} />
-            )}
+            {(list.item_count > 0 || listParsingErrorsExist) &&
+                list.status_counts.UPLOADED === 0 && (
+                    <FacilityListControls
+                        isAdminUser={isAdminUser}
+                        id={list.id}
+                    />
+                )}
+        </>
+    );
+
+    const renderListParsingErrors = () => {
+        const extractedErrorMessages = list.parsing_errors.map(
+            parsingError => parsingError.message,
+        );
+
+        return (
+            <Grid item style={facilityListItemsStyles.tableStyles}>
+                {listHeader}
+                <Grid item style={facilityListItemsStyles.tableStyles}>
+                    <Typography
+                        variant="subheading"
+                        style={facilityListItemsStyles.descriptionStyles}
+                    >
+                        Errors occurred while parsing your list, blocking
+                        further processing:
+                    </Typography>
+                    <ListUploadErrors errors={extractedErrorMessages} />
+                </Grid>
+            </Grid>
+        );
+    };
+
+    const renderDialog = () => (
+        <Dialog open>
+            <DialogTitle style={refreshListModalStyles.titleContentStyle}>
+                <Check style={refreshListModalStyles.icon} />
+                Thank you for submitting your list!
+            </DialogTitle>
+            <DialogContent>
+                <Typography
+                    variant="body1"
+                    style={refreshListModalStyles.dialogContentStyles}
+                >
+                    Your data has been successfully uploaded and is being
+                    processed.
+                    <br />
+                    Check back in a few minutes to review the status.
+                </Typography>
+                <hr style={refreshListModalStyles.separator} />
+            </DialogContent>
+            <DialogActions style={refreshListModalStyles.buttonContentStyle}>
+                <Button
+                    variant="outlined"
+                    color="secondary"
+                    onClick={() => history.push(mainRoute)}
+                >
+                    Go to the main page
+                </Button>
+                <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={() => {
+                        window.location.reload();
+                    }}
+                >
+                    Refresh
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+
+    const renderFacilityList = () => (
+        <Grid item style={facilityListItemsStyles.tableStyles}>
+            {listHeader}
 
             <div style={facilityListItemsStyles.subheadStyles}>
                 The processing time may be longer for lists that include
@@ -338,15 +353,14 @@ const FacilityListItems = ({
         </Grid>
     );
 
-    const content =
-        uploadError && uploadError.length ? (
-            renderUploadError()
-        ) : (
-            <>
-                {renderDialog()}
-                {renderFacilityList()}
-            </>
-        );
+    const content = listParsingErrorsExist ? (
+        renderListParsingErrors()
+    ) : (
+        <>
+            {!list.item_count && renderDialog()}
+            {renderFacilityList()}
+        </>
+    );
 
     return (
         <AppOverflow>
@@ -372,7 +386,7 @@ FacilityListItems.propTypes = {
     fetchList: func.isRequired,
     fetchListItems: func.isRequired,
     clearListItems: func.isRequired,
-    downloadCSVFetching: func.isRequired,
+    downloadCSV: func.isRequired,
     downloadingCSV: bool.isRequired,
     csvDownloadingError: arrayOf(string),
     userHasSignedIn: bool.isRequired,
@@ -390,7 +404,6 @@ const mapStateToProps = ({
     auth: {
         user: { user },
     },
-    upload: { error },
 }) => {
     const isAdminUser =
         !user.isAnon &&
@@ -415,10 +428,9 @@ const mapStateToProps = ({
         list,
         fetchingList,
         error: listError || itemsError,
-        uploadError: error,
-        downloadCSVFetching: downloadingCSV,
+        downloadingCSV,
         csvDownloadingError,
-        userHasSignedIn: !!user,
+        userHasSignedIn: !user.isAnon,
         isAdminUser,
         readOnly,
     };
@@ -445,8 +457,7 @@ const mapDispatchToProps = (
         fetchListItems: () =>
             dispatch(fetchFacilityListItems(listID, page, rowsPerPage, params)),
         clearListItems: () => dispatch(resetFacilityListItems()),
-        downloadCSVFetching: () =>
-            dispatch(assembleAndDownloadFacilityListCSV()),
+        downloadCSV: () => dispatch(assembleAndDownloadFacilityListCSV()),
         adminSearch,
     };
 };

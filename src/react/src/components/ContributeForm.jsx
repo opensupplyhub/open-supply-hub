@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
     arrayOf,
     bool,
@@ -16,6 +16,7 @@ import { toast } from 'react-toastify';
 import ControlledTextInput from './ControlledTextInput';
 import Button from './Button';
 import ContributeFormSelectListToReplace from './ContributeFormSelectListToReplace';
+import ListUploadErrors from './ListUploadErrors';
 
 import COLOURS from '../util/COLOURS';
 
@@ -26,11 +27,7 @@ import {
     makeFacilityListItemsDetailLink,
 } from '../util/util';
 
-import {
-    contributeFormFields,
-    contributeFieldsEnum,
-    listsRoute,
-} from '../util/constants';
+import { contributeFormFields, contributeFieldsEnum } from '../util/constants';
 
 import { useFileUploadHandler } from '../util/hooks';
 
@@ -80,25 +77,21 @@ const ContributeForm = ({
     resetForm,
     facilityLists,
     fetchingFacilityLists,
-    fetchingFeatureFlags,
 }) => {
-    const [hasUploadErrorBeenHandled, setHasUploadErrorBeenHandled] = useState(
-        false,
-    );
     const { fileInput } = useFileUploadHandler({
         resetForm,
         fetching,
         error,
         fetchLists,
-        listsRoute,
-        hasUploadErrorBeenHandled,
-        setHasUploadErrorBeenHandled,
         toast,
     });
 
     const selectFile = () => fileInput.current.click();
     const updateSelectedFileName = () => updateFileName(fileInput);
     const handleUploadList = () => uploadList(fileInput);
+
+    const errorMessages =
+        error && error.length ? <ListUploadErrors errors={error} /> : null;
 
     const formInputs = contributeFormFields.map(field => (
         <div key={field.id} className="form__field">
@@ -159,7 +152,8 @@ const ContributeForm = ({
             </div>
             {replacesSection}
             <div className="form__field">
-                {fetching || fetchingFeatureFlags ? (
+                {errorMessages}
+                {fetching ? (
                     <CircularProgress size={30} />
                 ) : (
                     <Button
@@ -195,7 +189,6 @@ ContributeForm.propTypes = {
     fetchingFacilityLists: bool.isRequired,
     fetchLists: func.isRequired,
     resetForm: func.isRequired,
-    fetchingFeatureFlags: bool.isRequired,
 };
 
 const mapStateToProps = ({
@@ -205,7 +198,6 @@ const mapStateToProps = ({
         error,
     },
     facilityLists: { facilityLists, fetching: fetchingFacilityLists },
-    featureFlags: { fetching: fetchingFeatureFlags },
 }) => ({
     name,
     description,
@@ -215,7 +207,6 @@ const mapStateToProps = ({
     error,
     facilityLists,
     fetchingFacilityLists,
-    fetchingFeatureFlags,
 });
 
 const mapDispatchToProps = (dispatch, { history: { push } }) => ({

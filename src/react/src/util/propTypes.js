@@ -147,6 +147,11 @@ export const facilityListItemPropType = shape({
     ),
 });
 
+export const listParsingErrorPropType = shape({
+    message: string.isRequired,
+    type: string.isRequired,
+});
+
 export const facilityListPropType = shape({
     id: number.isRequired,
     name: string,
@@ -170,6 +175,7 @@ export const facilityListPropType = shape({
             () => number.isRequired,
         ),
     ).isRequired,
+    parsing_errors: arrayOf(listParsingErrorPropType),
     created_at: string.isRequired,
 });
 

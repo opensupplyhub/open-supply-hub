@@ -64,7 +64,7 @@ def parse_production_location_list(location_list: FacilityList):
             extra_data=f'Affected uploaded list file: {location_list}'
             )
         internal_errors.append({
-            'message': 'Internal system error. Please contact support.',
+            'message': 'Internal system error. Please wait and try again.',
             'type': 'InternalError'
         })
         processing_input['internal_errors'] = internal_errors

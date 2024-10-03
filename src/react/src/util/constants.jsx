@@ -489,6 +489,8 @@ export const facilityListSummaryStatusMessages = Object.freeze({
     REJECTED: 'This list was rejected and will not be processed.',
 });
 
+export const listUploadTroubleshootingEmail = 'support@opensupplyhub.org';
+
 export const DEFAULT_PAGE = 1;
 export const DEFAULT_ROWS_PER_PAGE = 20;
 export const rowsPerPageOptions = Object.freeze([
@@ -522,7 +524,7 @@ export const facilitiesListTableTooltipTitles = Object.freeze({
     uploaded: 'Total number of items that have been uploaded.',
     duplicates:
         'Number of items identified as a duplicate of another item in the same list.',
-    errors: 'Number of items that have encountered errors during processing',
+    errors: 'Number of errors that occurred during processing.',
     status: 'Processing status of this list.',
 });
 

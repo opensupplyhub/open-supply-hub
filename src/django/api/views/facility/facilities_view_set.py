@@ -604,8 +604,8 @@ class FacilitiesViewSet(ListModelMixin,
             contri_cleaner_processed_data = contri_cleaner.process_data()
         except HandlerNotSetError as err:
             log.error(f'[API Upload] Internal ContriCleaner Error: {err}')
-            raise APIException('Internal System Error. '
-                               'Please contact support.')
+            raise APIException('Internal system error. '
+                               'Please wait and try again.')
 
         processing_input = {
             'request': request,
