@@ -23,6 +23,7 @@ import ListUploadErrors from './ListUploadErrors';
 import {
     createPaginationOptionsFromQueryString,
     createParamsFromQueryString,
+    replaceListParsingErrorMessages,
 } from '../util/util';
 import COLOURS from '../util/COLOURS';
 import {
@@ -133,6 +134,8 @@ const FacilityListItems = ({
     fetchListItems,
     clearListItems,
     adminSearch,
+    isListOwner,
+    listParsingErrorsExist,
 }) => {
     const history = useHistory();
 
@@ -180,9 +183,6 @@ const FacilityListItems = ({
         );
     }
 
-    const listParsingErrorsExist =
-        list.parsing_errors && list.parsing_errors.length > 0;
-
     const csvDownloadErrorMessage = csvDownloadingError &&
         csvDownloadingError.length && (
             <p style={{ color: 'red', textAlign: 'right' }}>
@@ -219,7 +219,6 @@ const FacilityListItems = ({
             href={list.file}
             target="_blank"
             rel="noreferrer"
-            component={Button}
         >
             Download Submitted File
         </a>
@@ -271,8 +270,8 @@ const FacilityListItems = ({
     );
 
     const renderListParsingErrors = () => {
-        const extractedErrorMessages = list.parsing_errors.map(
-            parsingError => parsingError.message,
+        const extractedErrorMessages = replaceListParsingErrorMessages(
+            list.parsing_errors,
         );
 
         return (
@@ -296,15 +295,15 @@ const FacilityListItems = ({
         <Dialog open>
             <DialogTitle style={refreshListModalStyles.titleContentStyle}>
                 <Check style={refreshListModalStyles.icon} />
-                Thank you for submitting your list!
+                {isListOwner && 'Thank you for submitting your list!'}
             </DialogTitle>
             <DialogContent>
                 <Typography
                     variant="body1"
                     style={refreshListModalStyles.dialogContentStyles}
                 >
-                    Your data has been successfully uploaded and is being
-                    processed.
+                    {isListOwner ? 'Your data' : 'Data'} has been successfully
+                    uploaded and is being processed.
                     <br />
                     Check back in a few minutes to review the status.
                 </Typography>
@@ -393,6 +392,8 @@ FacilityListItems.propTypes = {
     isAdminUser: bool,
     readOnly: bool.isRequired,
     adminSearch: string,
+    isListOwner: bool.isRequired,
+    listParsingErrorsExist: bool.isRequired,
 };
 
 const mapStateToProps = ({
@@ -424,6 +425,13 @@ const mapStateToProps = ({
             isAdminUser) ||
             (list.match_responsibility === matchResponsibilityEnum.MODERATOR &&
                 !isAdminUser));
+
+    const isListOwner =
+        !user.isAnon && !!list && user.contributor_id === list.contributor_id;
+
+    const listParsingErrorsExist =
+        !!list && list.parsing_errors && list.parsing_errors.length > 0;
+
     return {
         list,
         fetchingList,
@@ -433,6 +441,8 @@ const mapStateToProps = ({
         userHasSignedIn: !user.isAnon,
         isAdminUser,
         readOnly,
+        isListOwner,
+        listParsingErrorsExist,
     };
 };
 

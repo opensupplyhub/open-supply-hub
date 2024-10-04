@@ -149,16 +149,16 @@ class ProcessingFacilityList(ProcessingFacility):
     def __handle_processing_exception(
         self, item: FacilityListItem, exception: Exception
     ) -> None:
-
-        log.error(
+        error_message = (
             f'[List Upload] Creation of ExtendedField error: {exception}'
         )
+        log.error(error_message)
         report_error_to_rollbar(
-            request=self.__request,
-            file=self.__uploaded_file,
-            exception=exception,
+            message=error_message,
+            extra_data={'affected_list': str(self.__facility_list)}
         )
         log.info(f'[List Upload] FacilityListItem Id: {item.id}')
+
         item.status = FacilityListItem.ERROR_PARSING
         item.processing_results.append(
             {

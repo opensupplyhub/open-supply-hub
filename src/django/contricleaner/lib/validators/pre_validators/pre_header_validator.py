@@ -18,10 +18,7 @@ class PreHeaderValidator(PreValidator):
                 return {}
 
         return {
-            "message": (
-                "Required Fields are missing: {}. "
-                "If trouble persists, please contact "
-                "support@opensupplyhub.org")
+            "message": "Required Fields are missing: {}"
             .format(', '.join(self.__required_fields)),
-            "type": "Error",
+            "type": "RequiredFieldsMissingError",
         }

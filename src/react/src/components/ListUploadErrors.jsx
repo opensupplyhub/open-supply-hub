@@ -24,8 +24,7 @@ const ListUploadErrors = ({ errors, classes }) => (
             ))}
         </ul>
         <div className={classes.postErrorHelp}>
-            If you continue to have trouble submitting your list, please email
-            our support team{' '}
+            If you continue to have trouble submitting your list, please email{' '}
             <a href={`mailto:${listUploadTroubleshootingEmail}`}>
                 {listUploadTroubleshootingEmail}
             </a>

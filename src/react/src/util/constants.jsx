@@ -1295,3 +1295,28 @@ export const componentsWithErrorMessage = Object.freeze({
 });
 
 export const OS_ID_LENGTH = 15;
+
+/*
+This object maps specific list parsing error types to user-friendly error
+messages.
+Each key in the object corresponds to an error type that may occur during
+the parsing of lists. The values are either React components or strings
+that provide detailed feedback to the user, including guidance on how to
+resolve the issue.
+ */
+export const listParsingErrorMappings = {
+    RequiredFieldsMissingError: (
+        <>
+            One or more required columns are missing or incorrectly formatted.
+            Please ensure you upload your data{' '}
+            <a
+                href="https://info.opensupplyhub.org/resources/preparing-data"
+                target="_blank"
+                rel="noreferrer"
+            >
+                using OS Hub’s template
+            </a>
+            , without altering the column headers.
+        </>
+    ),
+};

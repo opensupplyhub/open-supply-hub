@@ -84,8 +84,8 @@ class ContriCleaner:
                 )
             else:
                 raise ParsingError(
-                    'Unsupported file type. Please '
-                    'submit Excel or UTF-8 CSV.'
+                    'We cannot accept the type of file you submitted. Please '
+                    'change your file to an Excel or UTF-8 CSV and reupload.'
                 )
         return parsing_executor
 

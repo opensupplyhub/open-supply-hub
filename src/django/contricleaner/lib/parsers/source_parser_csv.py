@@ -18,8 +18,10 @@ class SourceParserCSV(SourceParser, FileParser):
             decoded_content = file.read().decode(encoding='utf-8-sig') \
                 .splitlines()
         except UnicodeDecodeError:
-            raise ParsingError('Unsupported file encoding. Please '
-                               'submit a UTF-8 CSV.')
+            raise ParsingError('Our system does not support the type of CSV '
+                               'file you submitted. Please save and export '
+                               'your file as a UTF-8 CSV or an Excel file and '
+                               'reupload.')
 
         rows = []
         header = SourceParserCSV.__parse_csv_line(decoded_content[0].rstrip())

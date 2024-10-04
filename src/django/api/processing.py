@@ -46,6 +46,8 @@ def parse_production_location_list(location_list: FacilityList):
     parsing_started = str(timezone.now())
     logger.info('[List Upload] Started CC Parse process!')
 
+    print(type(location_list.file))
+    print('>>> List file', location_list.file)
     contri_cleaner = ContriCleaner(location_list.file, SectorCache())
     internal_errors = []
     processing_input = {
@@ -61,10 +63,12 @@ def parse_production_location_list(location_list: FacilityList):
         logger.error(error_message)
         report_error_to_rollbar(
             message=error_message,
-            extra_data=f'Affected uploaded list file: {location_list}'
-            )
+            extra_data={'affected_list': str(location_list)}
+        )
         internal_errors.append({
-            'message': 'Internal system error. Please wait and try again.',
+            'message': ('We are currently experiencing an issue with our '
+                        'system and will address it as soon as we can. '
+                        'Please wait and try your upload again.'),
             'type': 'InternalError'
         })
         processing_input['internal_errors'] = internal_errors

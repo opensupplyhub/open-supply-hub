@@ -61,6 +61,7 @@ import {
     matchResponsibilityEnum,
     optionsForSortingResults,
     componentsWithErrorMessage,
+    listParsingErrorMappings,
 } from './constants';
 
 import { createListItemCSV } from './util.listItemCSV';
@@ -1251,3 +1252,8 @@ export function sort(array, comparator) {
 }
 
 export const formatDate = date => moment(date).format('LLL');
+
+export const replaceListParsingErrorMessages = errors =>
+    errors.map(
+        ({ message, type }) => listParsingErrorMappings[type] || message,
+    );
