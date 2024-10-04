@@ -17,7 +17,7 @@ const SearchByOsIdSuccessResult = ({
 }) => {
     const historicalOsIdsNotEmpty =
         Array.isArray(historicalOsIds) && historicalOsIds.length > 0;
-    console.log('countryName >>>', countryName);
+
     return (
         <>
             <Typography component="h2" className={classes.resultTitleStyles}>
@@ -75,7 +75,6 @@ SearchByOsIdSuccessResult.propTypes = {
     osId: string.isRequired,
     historicalOsIds: arrayOf(string),
     address: string.isRequired,
-    // country: object.isRequired,
     countryName: string.isRequired,
     handleBackToSearchByNameAddress: func.isRequired,
     classes: object.isRequired,
