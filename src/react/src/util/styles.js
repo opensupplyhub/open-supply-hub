@@ -435,8 +435,6 @@ export const makeSearchByOsIdResultStyles = theme =>
             margin: '8px 0 24px 0',
         }),
         locationDetailsStyles: Object.freeze({
-            fontSize: '18px',
-            fontWeight: theme.typography.fontWeightSemiBold,
             margin: '24px 0',
         }),
         locationNameStyles: Object.freeze({
@@ -448,19 +446,24 @@ export const makeSearchByOsIdResultStyles = theme =>
             fontSize: '16px',
             lineHeight: '20px',
             fontWeight: theme.typography.fontWeightBold,
-            margin: '8px 0',
+            marginTop: '8px',
         }),
         locationHistoricalOsIdStyles: Object.freeze({
             fontSize: '14px',
             lineHeight: '20px',
             fontWeight: theme.typography.fontWeightBold,
             color: COLOURS.DARK_GREY,
+            marginTop: '8px',
+        }),
+        locationAddressContainerStyles: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+            marginTop: '12px',
         }),
         locationAddressStyles: Object.freeze({
             fontSize: '16px',
             lineHeight: '20px',
             fontWeight: theme.typography.fontWeightSemiBold,
-            marginTop: '12px',
         }),
     });
 
