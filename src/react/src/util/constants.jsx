@@ -344,6 +344,9 @@ export const claimedFacilitiesRoute = '/claimed';
 export const claimedFacilitiesDetailRoute = '/claimed/:claimID';
 export const dashboardClaimsDetailsRoute = '/dashboard/claims/:claimID';
 export const aboutClaimedFacilitiesRoute = `${InfoLink}/${InfoPaths.claimedFacilities}`;
+export const contributeProductionLocationRoute =
+    '/contribute/production-location';
+export const searchByOsIdResultRoute = '/contribute/production-location/search';
 
 export const contributeFieldsEnum = Object.freeze({
     name: 'name',
@@ -1289,3 +1292,5 @@ export const componentsWithErrorMessage = Object.freeze({
     mustConsistOfLetters: 'Facility List Name must also consist of letters.',
     missingFile: 'Missing required Facility List File.',
 });
+
+export const OS_ID_LENGTH = 15;
