@@ -11,12 +11,13 @@ const SearchByOsIdSuccessResult = ({
     osId,
     historicalOsIds,
     address,
+    countryName,
     handleBackToSearchByNameAddress,
     classes,
 }) => {
     const historicalOsIdsNotEmpty =
         Array.isArray(historicalOsIds) && historicalOsIds.length > 0;
-
+    console.log('countryName >>>', countryName);
     return (
         <>
             <Typography component="h2" className={classes.resultTitleStyles}>
@@ -46,10 +47,14 @@ const SearchByOsIdSuccessResult = ({
                             <PreviousOsIdTooltip />
                         </Typography>
                     ))}
-
-                <Typography className={classes.locationAddressStyles}>
-                    {address}
-                </Typography>
+                <div className={classes.locationAddressContainerStyles}>
+                    <Typography className={classes.locationAddressStyles}>
+                        {address}
+                    </Typography>
+                    <Typography className={classes.locationAddressStyles}>
+                        {countryName}
+                    </Typography>
+                </div>
             </div>
             <SearchByOsIdResultActions
                 defaultButtonLabel="No, search by name and address"
@@ -70,6 +75,8 @@ SearchByOsIdSuccessResult.propTypes = {
     osId: string.isRequired,
     historicalOsIds: arrayOf(string),
     address: string.isRequired,
+    // country: object.isRequired,
+    countryName: string.isRequired,
     handleBackToSearchByNameAddress: func.isRequired,
     classes: object.isRequired,
 };
