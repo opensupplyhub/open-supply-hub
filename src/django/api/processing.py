@@ -46,8 +46,6 @@ def parse_production_location_list(location_list: FacilityList):
     parsing_started = str(timezone.now())
     logger.info('[List Upload] Started CC Parse process!')
 
-    print(type(location_list.file))
-    print('>>> List file', location_list.file)
     contri_cleaner = ContriCleaner(location_list.file, SectorCache())
     internal_errors = []
     processing_input = {
