@@ -9,13 +9,15 @@ describe('SearchByOsIdSuccessResult component', () => {
     const name = 'Production Location Name';
     const osId = 'US2021250D1DTN7';
     const historicalOsIds = ['US2020053ZH1RY4', 'US2020053ZH1RY5'];
-    const address = '1234 Production Location St. United States';
+    const address = '1234 Production Location St, City, State, 12345';
+    const countryName = 'United States';
     const handleBackToSearchByNameAddress = jest.fn();
 
     const defaultProps = {
         name,
         osId,
         address,
+        countryName,
         handleBackToSearchByNameAddress
     };
 
@@ -27,6 +29,7 @@ describe('SearchByOsIdSuccessResult component', () => {
         expect(getByText(`OS ID: ${osId}`)).toBeInTheDocument();
         expect(queryByText('Previous OS ID:')).not.toBeInTheDocument();
         expect(getByText(address)).toBeInTheDocument();
+        expect(getByText(countryName)).toBeInTheDocument();
     });
 
     it('renders SearchByOsIdResultActions', () => {
