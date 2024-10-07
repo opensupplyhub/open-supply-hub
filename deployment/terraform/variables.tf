@@ -199,6 +199,12 @@ variable "rds_deletion_protection" {
   default = true
 }
 
+variable "snapshot_identifier" {
+  default     = ""
+  type        = string
+  description = "The name of the snapshot (if any) the database should be created from"
+}
+
 variable "app_ecs_desired_count" {
   default = "1"
 }

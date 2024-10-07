@@ -25,6 +25,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1372](https://opensupplyhub.atlassian.net/browse/OSDEV-1372)
   * Changed the base image in the Django app Dockerfile to use a Debian 11 instead of Debian 10 as the PostgreSQL 13 repository support for Debian 10 has been ended.
   * Always build a docker image for the amd64 platform so that the image in the local environment fully corresponds to the one in production.
+* [OSDEV-1172](https://opensupplyhub.atlassian.net/browse/OSDEV-1172)
+  * Added the ability to restore a database from a snapshot.
 
 ### Bugfix
 * Fixed a bug related to environment variable management:
