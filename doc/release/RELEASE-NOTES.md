@@ -36,7 +36,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-1127](https://opensupplyhub.atlassian.net/browse/OSDEV-1127) - It was implemented the Production Location Search screen that has two tabs: "Search by OS ID" and "Search by Name and Address." Each tab adds a query parameter (`?tab=os-id` and `?tab=name-address`) to the URL when active, allowing for redirection to the selected tab. On the "Search by OS ID" tab, users see an input field where they can enter an OS ID. After entering the full OS ID (15 characters), the "Search By ID" button becomes clickable, allowing users to proceed to the results screen. There are two possible outcomes:
-    * Successful Search: If the search is successful, the results screen displays information about the production location, including its name, OS ID, previous OS ID (If they exist), and address. Users can then choose to either return to the search by name and address or add data and claim the location.
+    * Successful Search: If the search is successful, the results screen displays information about the production location, including its name, OS ID, previous OS ID (If they exist), address, and country name. Users can then choose to either return to the search by name and address or add data and claim the location.
     * Unsuccessful Search: If the search is unsuccessful, an explanation is provided, along with two options: return to the search by name and address or search for another OS ID.
 
     Each results screen also includes a "Back to ID search" button at the top.

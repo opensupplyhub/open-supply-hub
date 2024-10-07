@@ -46,6 +46,7 @@ const SearchByOsIdResult = ({
         os_id: osId,
         historical_os_id: historicalOsIds,
         address,
+        country: { name: countryName } = {},
     } = locationData;
 
     const handleBackToSearchByNameAddress = () => {
@@ -83,6 +84,7 @@ const SearchByOsIdResult = ({
                         osId={osId}
                         historicalOsIds={historicalOsIds}
                         address={address}
+                        countryName={countryName}
                         handleBackToSearchByNameAddress={
                             handleBackToSearchByNameAddress
                         }
