@@ -4,8 +4,6 @@ import csv
 import json
 from unidecode import unidecode
 
-from api.constants import NumberOfWorkersRanges
-
 CONSONANT_SOUND = re.compile(r'''
 one(![ir])
 ''', re.IGNORECASE | re.VERBOSE)

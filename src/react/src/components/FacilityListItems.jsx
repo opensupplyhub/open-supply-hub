@@ -1,4 +1,3 @@
-/* eslint no-unused-vars: 0 */
 import React, { useEffect } from 'react';
 import { arrayOf, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';

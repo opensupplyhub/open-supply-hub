@@ -69,13 +69,13 @@ class FacilityListViewTest(BaseFacilityListTest):
         f = open(file_path, "r")
 
         response_one = self.client.post(
-            "/api/facility-lists/createlist/",
+            "/api/facility-lists/",
             {'file': f, 'name': 'Test', 'description': 'Test'},
         )
         self.assertEqual(200, response_one.status_code)
 
         response_two = self.client.post(
-            "/api/facility-lists/createlist/",
+            "/api/facility-lists/",
             {'file': f, 'name': 'Test', 'description': 'Test | Test'},
         )
         self.assertEqual(
@@ -240,7 +240,7 @@ class FacilityListViewTest(BaseFacilityListTest):
         f = open(file_path, "r")
 
         response = self.client.post(
-            "/api/facility-lists/createlist/",
+            "/api/facility-lists/",
             {
                 'file': f,
                 'name': 'Test wide list',
