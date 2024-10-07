@@ -1,7 +1,7 @@
 import csv
 from typing import List
 
-from django.db.models.fields.files import FieldFile
+from django.core.files.base import File
 
 from contricleaner.lib.parsers.abstractions.source_parser import SourceParser
 from contricleaner.lib.parsers.abstractions.file_parser import FileParser
@@ -13,7 +13,7 @@ class SourceParserCSV(SourceParser, FileParser):
         return self._parse(self._file)
 
     @staticmethod
-    def _parse(file: FieldFile) -> List[dict]:
+    def _parse(file: File) -> List[dict]:
         try:
             decoded_content = file.read().decode(encoding='utf-8-sig') \
                 .splitlines()

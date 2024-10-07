@@ -3,7 +3,7 @@ from typing import List, Union
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
-from django.db.models.fields.files import FieldFile
+from django.core.files.base import File
 
 from contricleaner.lib.parsers.abstractions.source_parser import SourceParser
 from contricleaner.lib.parsers.abstractions.file_parser import FileParser
@@ -15,7 +15,7 @@ class SourceParserXLSX(SourceParser, FileParser):
         return self._parse(self._file)
 
     @staticmethod
-    def _parse(file: FieldFile) -> List[dict]:
+    def _parse(file: File) -> List[dict]:
         try:
             worksheet = SourceParserXLSX.__get_xlsx_sheet(file)
 
@@ -64,7 +64,7 @@ class SourceParserXLSX(SourceParser, FileParser):
         return formatted_row
 
     @staticmethod
-    def __get_xlsx_sheet(file: FieldFile) -> Worksheet:
+    def __get_xlsx_sheet(file: File) -> Worksheet:
         import defusedxml
         from defusedxml.common import EntitiesForbidden
 
