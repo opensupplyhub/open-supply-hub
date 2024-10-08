@@ -99,6 +99,7 @@ module "database_enc" {
   subnet_group               = aws_db_subnet_group.default.name
   parameter_group            = aws_db_parameter_group.default.name
   deletion_protection        = var.rds_deletion_protection
+  snapshot_identifier        = var.snapshot_identifier
 
   alarm_cpu_threshold                = var.rds_cpu_threshold_percent
   alarm_disk_queue_threshold         = var.rds_disk_queue_threshold

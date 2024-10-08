@@ -11,6 +11,7 @@ const SearchByOsIdSuccessResult = ({
     osId,
     historicalOsIds,
     address,
+    countryName,
     handleBackToSearchByNameAddress,
     classes,
 }) => {
@@ -46,10 +47,14 @@ const SearchByOsIdSuccessResult = ({
                             <PreviousOsIdTooltip />
                         </Typography>
                     ))}
-
-                <Typography className={classes.locationAddressStyles}>
-                    {address}
-                </Typography>
+                <div className={classes.locationAddressContainerStyles}>
+                    <Typography className={classes.locationAddressStyles}>
+                        {address}
+                    </Typography>
+                    <Typography className={classes.locationAddressStyles}>
+                        {countryName}
+                    </Typography>
+                </div>
             </div>
             <SearchByOsIdResultActions
                 defaultButtonLabel="No, search by name and address"
@@ -70,6 +75,7 @@ SearchByOsIdSuccessResult.propTypes = {
     osId: string.isRequired,
     historicalOsIds: arrayOf(string),
     address: string.isRequired,
+    countryName: string.isRequired,
     handleBackToSearchByNameAddress: func.isRequired,
     classes: object.isRequired,
 };

@@ -469,5 +469,11 @@ export const productionLocationPropType = shape({
     os_id: string,
     name: string,
     address: string,
+    country: shape({
+        alpha_2: string,
+        alpha_3: string,
+        name: string,
+        numeric: string,
+    }),
     historical_os_id: arrayOf(string),
 });
