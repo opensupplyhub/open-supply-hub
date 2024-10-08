@@ -1305,6 +1305,8 @@ class FacilitiesViewSet(ListModelMixin,
                 field.facility = new_facility
                 field.save()
 
+            Facility.update_facility_updated_at_field(new_facility.id)
+
             return Response({
                 'match_id': match.id,
                 'new_os_id': new_facility.id,
