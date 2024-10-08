@@ -11,10 +11,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Database changes
 #### Migrations:
-* *Describe migrations here.*
+* 0156_introduce_list_level_parsing_errors - This migration introduces the parsing_errors field for the FacilityList model to collect list-level and internal errors logged during the background parsing of the list.
+* 0157_delete_endpoint_switcher_for_list_uploads - This migration deletes the `use_old_upload_list_endpoint` switcher that was necessary to toggle between the old and new list upload endpoints.
 
 #### Scheme changes
-* *Describe scheme changes here.*
+* [OSDEV-1039](https://opensupplyhub.atlassian.net/browse/OSDEV-1039) - Since the `use_old_upload_list_endpoint` switcher is no longer necessary for the list upload, it has been deleted from the DB. Additionally, the `parsing_errors` field has been added to the FacilityList model.
 
 ### Code/API changes
 * [OSDEV-1102](https://opensupplyhub.atlassian.net/browse/OSDEV-1102) - API. Propagate production location updates to OpenSearch data source via refreshing `updated_at` field in `api_facility` table.
@@ -40,7 +41,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     4. Deleted redundant code from the previous implementation of the list item parsing.
     5. Adjusted Django, ContriCleaner, and integration tests. Regarding integration tests, the `facility_list_items.json` fixture was converted to concrete CSV lists, which were connected to the `facility_lists.json` fixture to upload them to the DB while creating the test DB for the integration tests. This is necessary because the parsing function that triggers ContriCleaner can only work with real files, not facility list items as it did previously.
     6. Refactored the ContributeForm component in the front-end app.
-    7. The list page was adjusted to work with asynchronous parsing, and a new dialog window was added to notify users about the list parsing process, indicating that they need to wait.
+    7. The list page has been adjusted to work with asynchronous parsing, and a new dialog window has been added to notify users about the list parsing process, indicating that they need to wait.
     8. Introduced a UI to display list parsing errors on the list page after the page refresh.
 
 ### What's new
@@ -52,6 +53,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Release instructions:
 * Before deploying to an existing environment, clear OpenSearch to ensure it can receive any missed changes and properly start the update process.
+* Ensure that the `migrate` command is included in the `post_deployment` command.
 
 
 ## Release 1.21.0
