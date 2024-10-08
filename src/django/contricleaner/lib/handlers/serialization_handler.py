@@ -23,8 +23,8 @@ from contricleaner.lib.serializers.row_serializers.row_sector_serializer \
 from contricleaner.lib.serializers.row_serializers \
     .row_required_fields_serializer \
     import RowRequiredFieldsSerializer
-from contricleaner.lib.serializers.row_serializers.row_coordinates_serializer \
-    import RowCoordinatesSerializer
+from contricleaner.lib.serializers.row_serializers.row_geolocation_serializer \
+    import RowGeolocationSerializer
 
 
 class SerializationHandler(ListRowHandler):
@@ -59,12 +59,11 @@ class SerializationHandler(ListRowHandler):
         composite_row_serializer = CompositeRowSerializer()
         leaf_serializers = (
             RowCleanFieldSerializer('name', 'clean_name'),
-            RowCleanFieldSerializer('address', 'clean_address'),
             RowSectorSerializer(self.__sector_cache, split_pattern),
             RowCountrySerializer(),
             RowRequiredFieldsSerializer(),
             RowFacilityTypeSerializer(split_pattern),
-            RowCoordinatesSerializer(),
+            RowGeolocationSerializer(),
             RowEmptySerializer(),
         )
 
