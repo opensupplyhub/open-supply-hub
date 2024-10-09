@@ -199,6 +199,11 @@ variable "rds_deletion_protection" {
   default = true
 }
 
+variable "rds_restore_anonymized" {
+  type    = bool
+  default = false
+}
+
 variable "snapshot_identifier" {
   default     = ""
   type        = string
