@@ -3,16 +3,14 @@ import csv
 from unittest.mock import MagicMock
 
 from django.test import TestCase
-from django.core.files.uploadedfile import (
-    SimpleUploadedFile, TemporaryUploadedFile
-)
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.files.base import File
 from openpyxl import Workbook
 
 from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.dto.list_dto import ListDTO
 from contricleaner.lib.dto.row_dto import RowDTO
 from contricleaner.tests.sector_cache_mock import SectorCacheMock
-from contricleaner.lib.exceptions.parsing_error import ParsingError
 
 
 class ContriCleanerTest(TestCase):
@@ -157,17 +155,24 @@ class ContriCleanerTest(TestCase):
         os.remove('test.csv')
 
     def test_submit_unsupported_file_type_throws_exception(self):
-        temp_uploaded_file_stub = MagicMock(spec=TemporaryUploadedFile)
+        expected_error_message = (
+            'We cannot accept the type of file you submitted. Please change '
+            'your file to an Excel or UTF-8 CSV and reupload.'
+        )
+        expected_error_type = 'ParsingError'
+
+        temp_uploaded_file_stub = MagicMock(spec=File)
         temp_uploaded_file_stub.name = 'mocked_file_name.txt'
 
         contri_cleaner = ContriCleaner(temp_uploaded_file_stub,
                                        SectorCacheMock())
+        contri_cleaner_processed_data = contri_cleaner.process_data()
+        error_dict = contri_cleaner_processed_data.errors[0]
+        error_message = error_dict['message']
+        error_type = error_dict['type']
 
-        with self.assertRaisesRegex(
-                ParsingError,
-                ('Unsupported file type. '
-                 'Please submit Excel or UTF-8 CSV.')):
-            contri_cleaner.process_data()
+        self.assertEqual(error_message, expected_error_message)
+        self.assertEqual(error_type, expected_error_type)
 
     def test_valid_json_processing(self):
         json_data = {

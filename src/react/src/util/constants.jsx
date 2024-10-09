@@ -489,6 +489,8 @@ export const facilityListSummaryStatusMessages = Object.freeze({
     REJECTED: 'This list was rejected and will not be processed.',
 });
 
+export const listUploadTroubleshootingEmail = 'support@opensupplyhub.org';
+
 export const DEFAULT_PAGE = 1;
 export const DEFAULT_ROWS_PER_PAGE = 20;
 export const rowsPerPageOptions = Object.freeze([
@@ -522,7 +524,7 @@ export const facilitiesListTableTooltipTitles = Object.freeze({
     uploaded: 'Total number of items that have been uploaded.',
     duplicates:
         'Number of items identified as a duplicate of another item in the same list.',
-    errors: 'Number of items that have encountered errors during processing',
+    errors: 'Number of errors that occurred during processing.',
     status: 'Processing status of this list.',
 });
 
@@ -537,7 +539,6 @@ export const userApiInfoTooltipTitles = Object.freeze({
 
 export const IS_NOT_SET = 'Is not set';
 export const ALLOW_LARGE_DOWNLOADS = 'allow_large_downloads';
-export const USE_OLD_UPLOAD_LIST_ENDPOINT = 'use_old_upload_list_endpoint';
 export const CLAIM_A_FACILITY = 'claim_a_facility';
 export const VECTOR_TILE = 'vector_tile';
 export const REPORT_A_FACILITY = 'report_a_facility';
@@ -1294,3 +1295,28 @@ export const componentsWithErrorMessage = Object.freeze({
 });
 
 export const OS_ID_LENGTH = 15;
+
+/*
+This object maps specific list parsing error types to user-friendly error
+messages.
+Each key in the object corresponds to an error type that may occur during
+the parsing of lists. The values are either React components or strings
+that provide detailed feedback to the user, including guidance on how to
+resolve the issue.
+ */
+export const listParsingErrorMappings = {
+    RequiredFieldsMissingError: (
+        <>
+            One or more required columns are missing or incorrectly formatted.
+            Please ensure you upload your data{' '}
+            <a
+                href="https://info.opensupplyhub.org/resources/preparing-data"
+                target="_blank"
+                rel="noreferrer"
+            >
+                using OS Hub’s template
+            </a>
+            , without altering the column headers.
+        </>
+    ),
+};

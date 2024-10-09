@@ -1,10 +1,7 @@
 import csv
-from typing import List, Union
+from typing import List
 
-from django.core.files.uploadedfile import (
-    InMemoryUploadedFile,
-    TemporaryUploadedFile
-)
+from django.core.files.base import File
 
 from contricleaner.lib.parsers.abstractions.source_parser import SourceParser
 from contricleaner.lib.parsers.abstractions.file_parser import FileParser
@@ -16,28 +13,21 @@ class SourceParserCSV(SourceParser, FileParser):
         return self._parse(self._file)
 
     @staticmethod
-    def _parse(
-            file: Union[InMemoryUploadedFile, TemporaryUploadedFile]
-            ) -> List[dict]:
-        rows = []
-
+    def _parse(file: File) -> List[dict]:
         try:
-            decoded_header = file.readline().decode(encoding='utf-8-sig') \
-                .rstrip()
+            decoded_content = file.read().decode(encoding='utf-8-sig') \
+                .splitlines()
         except UnicodeDecodeError:
-            raise ParsingError('Unsupported file encoding. Please '
-                               'submit a UTF-8 CSV.')
-        header = SourceParserCSV.__parse_csv_line(decoded_header)
+            raise ParsingError('Our system does not support the type of CSV '
+                               'file you submitted. Please save and export '
+                               'your file as a UTF-8 CSV or an Excel file and '
+                               'reupload.')
 
-        for idx, line in enumerate(file):
-            if idx > 0:
-                try:
-                    decoded_row = line.decode(encoding='utf-8-sig').rstrip()
-                except UnicodeDecodeError:
-                    raise ParsingError('Unsupported file encoding. Please '
-                                       'submit a UTF-8 CSV.')
-                bare_row = SourceParserCSV.__parse_csv_line(decoded_row)
-                rows.append(dict(zip(header, bare_row)))
+        rows = []
+        header = SourceParserCSV.__parse_csv_line(decoded_content[0].rstrip())
+        for line in decoded_content[1:]:
+            bare_row = SourceParserCSV.__parse_csv_line(line.rstrip())
+            rows.append(dict(zip(header, bare_row)))
 
         return rows
 

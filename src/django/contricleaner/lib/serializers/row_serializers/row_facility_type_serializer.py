@@ -39,7 +39,8 @@ class RowFacilityTypeSerializer(RowSerializer):
                 facility_type_errors.append(
                     {
                         "message": "Expected value for {} to be a string "
-                        "or a list of strings but got {}".format(field, value),
+                        "or a list of strings but "
+                        "got {}.".format(field, value),
                         "type": "ValueError",
                     }
                 )

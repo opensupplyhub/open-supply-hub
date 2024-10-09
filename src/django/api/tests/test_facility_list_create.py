@@ -1,15 +1,11 @@
 import json
-import os
 
 from api.models import (
     Contributor,
     FacilityList,
-    FacilityListItem,
-    NonstandardField,
     Source,
     User,
 )
-from openpyxl import load_workbook
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
@@ -45,24 +41,6 @@ class FacilityListCreateTest(APITestCase):
             b"\n".join([s.encode() for s in self.test_csv_rows]),
             content_type="text/csv",
         )
-        self.test_file_with_bom = SimpleUploadedFile(
-            "facilities_with_bom.csv",
-            b"\n".join(
-                [self.test_csv_rows[0].encode("utf-8-sig")]
-                + [s.encode() for s in self.test_csv_rows[1:]]
-            ),
-            content_type="text/csv",
-        )
-
-        lists_dir = "/usr/local/src/api/management/commands/facility_lists/"
-
-        with open(os.path.join(lists_dir, "12.xlsx"), "rb") as xlsx:
-            self.test_file_xlsx = SimpleUploadedFile(
-                "12.xlsx",
-                xlsx.read(),
-                content_type="application/vnd.openxmlformats-"
-                "officedocument.spreadsheetml.sheet",
-            )
 
     def post_header_only_file(self, **kwargs):
         if kwargs is None:
@@ -78,19 +56,9 @@ class FacilityListCreateTest(APITestCase):
             format="multipart",
         )
 
-    def test_can_post_file_with_bom(self):
-        response = self.client.post(
-            reverse("facility-list-list"),
-            {"file": self.test_file_with_bom},
-            format="multipart",
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        new_list = FacilityList.objects.last()
-        self.assertEqual(self.test_csv_rows[0], new_list.header)
-
-    def test_creates_list_and_items(self):
+    def test_creates_list_and_source(self):
         previous_list_count = FacilityList.objects.all().count()
-        previous_item_count = FacilityListItem.objects.all().count()
+        previous_source_count = Source.objects.all().count()
         response = self.client.post(
             reverse("facility-list-list"),
             {"file": self.test_file},
@@ -101,122 +69,13 @@ class FacilityListCreateTest(APITestCase):
             FacilityList.objects.all().count(), previous_list_count + 1
         )
         self.assertEqual(
-            FacilityListItem.objects.all().count(),
-            previous_item_count + len(self.test_csv_rows) - 1,
-        )
-
-    def test_creates_nonstandard_fields(self):
-        response = self.client.post(
-            reverse("facility-list-list"),
-            {"file": self.test_file},
-            format="multipart",
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        fields = NonstandardField.objects.filter(
-            contributor=self.user.contributor
-        ).values_list("column_name", flat=True)
-        self.assertEqual(1, len(fields))
-        self.assertIn("extra_1", fields)
-
-    def test_creates_source(self):
-        response = self.client.post(
-            reverse("facility-list-list"),
-            {"file": self.test_file},
-            format="multipart",
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        new_list = FacilityList.objects.last()
-        self.assertTrue(Source.objects.filter(facility_list=new_list).exists())
-        source = Source.objects.filter(facility_list=new_list).first()
-        items = list(FacilityListItem.objects.all())
-        self.assertEqual(items[0].raw_data, self.test_csv_rows[1])
-        for item in items:
-            self.assertEqual(source, item.source)
-
-    def test_creates_list_and_items_xlsx(self):
-        previous_list_count = FacilityList.objects.all().count()
-        previous_item_count = FacilityListItem.objects.all().count()
-        response = self.client.post(
-            reverse("facility-list-list"),
-            {
-                "name": "creates_list_and_items_xlsx",
-                "file": self.test_file_xlsx,
-            },
-            format="multipart",
-        )
-        self.test_file_xlsx.seek(0)
-        wb = load_workbook(filename=self.test_file_xlsx)
-        ws = wb[wb.sheetnames[0]]
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(
-            FacilityList.objects.all().count(), previous_list_count + 1
-        )
-        self.assertEqual(
-            FacilityListItem.objects.all().count(),
-            previous_item_count + ws.max_row - 1,
-        )
-        items = list(FacilityListItem.objects.all().order_by("row_index"))
-        self.assertEqual(
-            items[0].raw_data,
-            '"{}"'.format('","'.join([cell.value for cell in ws[2]])),
+            Source.objects.all().count(), previous_source_count + 1
         )
 
     def test_file_required(self):
         response = self.client.post(reverse("facility-list-list"))
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), ["No file specified."])
-
-    def test_empty_file_is_invalid(self):
-        csv_file = SimpleUploadedFile(
-            "facilities.csv", b"", content_type="text/csv"
-        )
-        response = self.client.post(
-            reverse("facility-list-list"),
-            {"file": csv_file},
-            format="multipart",
-        )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            json.loads(response.content), ["Header cannot be blank."]
-        )
-
-    def test_file_has_invalid_header(self):
-        previous_list_count = FacilityList.objects.all().count()
-        csv_file = SimpleUploadedFile(
-            "facilities.csv", b"foo,bar,baz\n", content_type="text/csv"
-        )
-        response = self.client.post(
-            reverse("facility-list-list"),
-            {"file": csv_file},
-            format="multipart",
-        )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            json.loads(response.content),
-            ["Header must contain country, name, and address fields."],
-        )
-        self.assertEqual(
-            FacilityList.objects.all().count(), previous_list_count
-        )
-
-    def test_file_has_missing_header_field(self):
-        previous_list_count = FacilityList.objects.all().count()
-        csv_file = SimpleUploadedFile(
-            "facilities.csv", b"country,address\n", content_type="text/csv"
-        )
-        response = self.client.post(
-            reverse("facility-list-list"),
-            {"file": csv_file},
-            format="multipart",
-        )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            json.loads(response.content),
-            ["Header must contain country, name, and address fields."],
-        )
-        self.assertEqual(
-            FacilityList.objects.all().count(), previous_list_count
-        )
 
     def test_file_and_name_specified(self):
         name = "A list of facilities"

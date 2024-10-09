@@ -1,6 +1,8 @@
-from api.facility_actions.processing_facility import ProcessingFacility
+from typing import Union
 
 from rest_framework.response import Response
+
+from api.facility_actions.processing_facility import ProcessingFacility
 
 
 class ProcessingFacilityExecutor:
@@ -12,7 +14,7 @@ class ProcessingFacilityExecutor:
     def __init__(self, strategy: ProcessingFacility) -> None:
         self._strategy = strategy
 
-    def run_processing(self) -> Response:
+    def run_processing(self) -> Union[Response, None]:
         result = self._strategy.process_facility()
 
         return result

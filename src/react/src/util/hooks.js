@@ -339,3 +339,38 @@ export const useExpandedGroups = optionsData => {
 
     return { expandedGroups, setExpandedGroups, handleInputChange };
 };
+
+export const useFileUploadHandler = ({
+    resetForm,
+    fetching,
+    error,
+    fetchLists,
+    toast,
+}) => {
+    const fileInput = useRef(null);
+    const prevFetchingRef = useRef(fetching);
+    const prevFetching = prevFetchingRef.current;
+
+    useEffect(() => {
+        fetchLists();
+    }, []);
+
+    useEffect(() => resetForm, [resetForm]);
+
+    useEffect(() => {
+        prevFetchingRef.current = fetching;
+    }, [fetching]);
+
+    useEffect(() => {
+        if (prevFetching && !fetching && !error) {
+            const { current } = fileInput;
+            if (current) {
+                current.value = null;
+            }
+
+            toast('Your facility list has been uploaded successfully!');
+        }
+    }, [fetching, error, prevFetching, fileInput]);
+
+    return { fileInput };
+};
