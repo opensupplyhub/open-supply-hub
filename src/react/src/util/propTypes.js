@@ -19,7 +19,6 @@ import {
     profileFieldsEnum,
     facilityListItemStatusChoicesEnum,
     ALLOW_LARGE_DOWNLOADS,
-    USE_OLD_UPLOAD_LIST_ENDPOINT,
     FEATURE,
     FEATURE_COLLECTION,
     POINT,
@@ -148,6 +147,11 @@ export const facilityListItemPropType = shape({
     ),
 });
 
+export const listParsingErrorPropType = shape({
+    message: string.isRequired,
+    type: string.isRequired,
+});
+
 export const facilityListPropType = shape({
     id: number.isRequired,
     name: string,
@@ -171,6 +175,7 @@ export const facilityListPropType = shape({
             () => number.isRequired,
         ),
     ).isRequired,
+    parsing_errors: arrayOf(listParsingErrorPropType),
     created_at: string.isRequired,
 });
 
@@ -335,7 +340,6 @@ export const featureFlagPropType = oneOf([
     EMBEDDED_MAP_FLAG,
     EXTENDED_PROFILE_FLAG,
     ALLOW_LARGE_DOWNLOADS,
-    USE_OLD_UPLOAD_LIST_ENDPOINT,
 ]);
 
 export const facilityClaimsListPropType = arrayOf(

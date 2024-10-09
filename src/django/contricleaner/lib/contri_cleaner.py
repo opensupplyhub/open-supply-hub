@@ -1,10 +1,7 @@
 import os
 from typing import Union, List, Dict
 
-from django.core.files.uploadedfile import (
-    InMemoryUploadedFile,
-    TemporaryUploadedFile
-)
+from django.core.files.base import File
 
 from contricleaner.lib.client_abstractions.sector_cache_interface import (
     SectorCacheInterface
@@ -34,18 +31,15 @@ class ContriCleaner:
     '''
 
     def __init__(self,
-                 data: Union[
-                     InMemoryUploadedFile, TemporaryUploadedFile, Dict],
+                 data: Union[File, Dict],
                  sector_cache: SectorCacheInterface) -> None:
         unsupported_data_value_type_message = ('The data value type should be '
-                                               'either dict, '
-                                               'InMemoryUploadedFile, or '
-                                               'TemporaryUploadedFile.')
+                                               'either dict or File.')
         unsupported_sector_cache_value_type_message = (
             'The sector_cache value type should be SectorCacheInterface.')
         assert isinstance(
             data,
-            (dict, InMemoryUploadedFile, TemporaryUploadedFile)
+            (dict, File)
         ), unsupported_data_value_type_message
         assert isinstance(
             sector_cache, SectorCacheInterface
@@ -55,7 +49,14 @@ class ContriCleaner:
         self.__sector_cache = sector_cache
 
     def process_data(self) -> ListDTO:
-        parsed_rows = self.__parse_data()
+        try:
+            parsed_rows = self.__parse_data()
+        except ParsingError as err:
+            return ListDTO(errors=[{
+                'message': str(err),
+                'type': 'ParsingError',
+            }])
+
         entry_handler = self.__setup_handlers()
 
         processed_list = entry_handler.handle(parsed_rows)
@@ -83,8 +84,8 @@ class ContriCleaner:
                 )
             else:
                 raise ParsingError(
-                    'Unsupported file type. Please '
-                    'submit Excel or UTF-8 CSV.'
+                    'We cannot accept the type of file you submitted. Please '
+                    'change your file to an Excel or UTF-8 CSV and reupload.'
                 )
         return parsing_executor
 

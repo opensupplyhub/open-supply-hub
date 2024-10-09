@@ -1,5 +1,5 @@
-import React, { Fragment } from 'react';
-import { bool, func, string } from 'prop-types';
+import React from 'react';
+import { bool, func, string, oneOfType, element } from 'prop-types';
 import noop from 'lodash/noop';
 
 import '../styles/css/specialStates.css';
@@ -17,7 +17,7 @@ export default function ControlledTextInput({
     onBlur,
 }) {
     return (
-        <Fragment>
+        <>
             <p className="form__hint">{hint}</p>
             <input
                 autoFocus={autoFocus} // eslint-disable-line jsx-a11y/no-autofocus
@@ -31,7 +31,7 @@ export default function ControlledTextInput({
                 onKeyPress={submitFormOnEnterKeyPress}
                 onBlur={onBlur}
             />
-        </Fragment>
+        </>
     );
 }
 
@@ -48,7 +48,7 @@ ControlledTextInput.propTypes = {
     id: string.isRequired,
     value: string.isRequired,
     type: string,
-    hint: string,
+    hint: oneOfType([string, element]),
     onChange: func.isRequired,
     placeholder: string,
     disabled: bool,
