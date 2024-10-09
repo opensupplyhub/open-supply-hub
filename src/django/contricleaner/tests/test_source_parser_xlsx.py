@@ -4,8 +4,9 @@ from unittest.mock import MagicMock, patch
 from defusedxml.common import EntitiesForbidden
 from django.test import TestCase
 from django.core.files.uploadedfile import (
-    SimpleUploadedFile, TemporaryUploadedFile
+    SimpleUploadedFile
 )
+from django.core.files.base import File
 from openpyxl import Workbook
 from openpyxl.styles import NamedStyle
 
@@ -25,7 +26,7 @@ from contricleaner.tests.sector_cache_mock import SectorCacheMock
 
 class SourceParserXLSXTest(TestCase):
     def test_class_inherits_required_classes(self):
-        temp_uploaded_file_stub = MagicMock(spec=TemporaryUploadedFile)
+        temp_uploaded_file_stub = MagicMock(spec=File)
         source_parser_xlsx = SourceParserXLSX(temp_uploaded_file_stub)
         self.assertIsInstance(source_parser_xlsx, SourceParser)
         self.assertIsInstance(source_parser_xlsx, FileParser)
@@ -117,7 +118,7 @@ class SourceParserXLSXTest(TestCase):
                     "number_of_workers": "1005",
                 },
                 errors=[
-                    {"message": "clean_name cannot be empty", "type": "Error"}
+                    {"message": "clean_name cannot be empty.", "type": "Error"}
                 ],
             ),
             RowDTO(
@@ -224,11 +225,13 @@ class SourceParserXLSXTest(TestCase):
         mock_load_workbook.side_effect = EntitiesForbidden(
             name='', value='', base='', sysid='', pubid='', notation_name=''
         )
-        temp_uploaded_file_stub = MagicMock(spec=TemporaryUploadedFile)
+        temp_uploaded_file_stub = MagicMock(spec=File)
         parser = SourceParserXLSX(temp_uploaded_file_stub)
 
         with self.assertRaisesRegex(
                 ParsingError,
-                (r'Error parsing Excel \(\.xlsx\) file')
+                ('There was an error within your file and our team needs to '
+                 'take a look. Please send your file to '
+                 'support@opensupplyhub.org for diagnosis.'),
                 ):
             parser.get_parsed_rows()

@@ -122,30 +122,6 @@ def create_extendedfields_for_single_item(item, raw_data):
         create_extendedfield(field, field_value, item, contributor)
 
 
-def create_extendedfields_for_listitem(item, fields, values):
-    if item.id is None:
-        return False
-    contributor = item.source.contributor
-
-    for field in RAW_DATA_FIELDS:
-        if field in fields:
-            field_value = values[fields.index(field)]
-            create_extendedfield(field, field_value, item, contributor)
-
-            # Add a facility_type extended field if the user only
-            # submitted a processing_type
-            if (field == 'processing_type' and
-               'facility_type' not in fields):
-                create_extendedfield('facility_type', field_value, item,
-                                     contributor)
-            # Add a processing_type extended field if the user only
-            # submitted a facility_type
-            elif (field == 'facility_type' and
-                  'processing_type' not in fields):
-                create_extendedfield('processing_type', field_value, item,
-                                     contributor)
-
-
 def update_extendedfields_for_list_item(list_item):
     for extended_field in ExtendedField.objects.filter(
             facility_list_item=list_item):

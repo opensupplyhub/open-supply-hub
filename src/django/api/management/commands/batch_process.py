@@ -10,18 +10,20 @@ from api.constants import ProcessingAction
 from api.models import (
     FacilityList, FacilityListItem, FacilityListItemTemp, Source
 )
-from api.processing import (parse_facility_list_item,
+from api.processing import (parse_production_location_list,
                             geocode_facility_list_item,
                             ItemRemovedException)
 from api.mail import notify_facility_list_complete
 from api.kafka_producer import produce_message_match_process
 
 LINE_ITEM_ACTIONS = {
-    ProcessingAction.PARSE: parse_facility_list_item,
-    ProcessingAction.GEOCODE: geocode_facility_list_item,
+    ProcessingAction.GEOCODE: geocode_facility_list_item
 }
 
-LIST_ACTIONS = set([ProcessingAction.MATCH, ProcessingAction.NOTIFY_COMPLETE])
+LIST_ACTIONS = set([
+    ProcessingAction.PARSE,
+    ProcessingAction.MATCH,
+    ProcessingAction.NOTIFY_COMPLETE])
 
 VALID_ACTIONS = list(LINE_ITEM_ACTIONS.keys()) + list(LIST_ACTIONS)
 
@@ -70,6 +72,8 @@ class Command(BaseCommand):
 
         if action in LINE_ITEM_ACTIONS.keys():
             self.process_items(facility_list, action, process)
+        elif action == ProcessingAction.PARSE:
+            parse_production_location_list(facility_list)
         elif action == ProcessingAction.MATCH:
             source = Source.objects.get(facility_list=list_id)
             logger.info((
@@ -101,41 +105,10 @@ class Command(BaseCommand):
             'failure': 0,
         }
 
-        # Process all items, save affected items, facilities, matches,
-        # and tally successes and failures
-        parsed_items = set()
         for item in items:
             try:
                 with transaction.atomic():
-                    if action == ProcessingAction.MATCH:
-                        matches = process(item)
-                        item.save()
-
-                        if len(matches) == 1:
-                            [match] = matches
-
-                            if match.facility.created_from == item:
-                                item.facility = match.facility
-                                item.save()
-                            elif match.confidence == 1.0:
-                                item.facility = match.facility
-                                item.save()
-                    elif action == ProcessingAction.PARSE:
-                        logger.info('[List Upload] Started Parse process!')
-                        logger.info(
-                            f'[List Upload] FacilityListItem Id: {item.id}'
-                        )
-                        process(item)
-                        if item.status != FacilityListItem.ERROR_PARSING:
-                            core_fields = '{}-{}-{}'.format(item.country_code,
-                                                            item.clean_name,
-                                                            item.clean_address)
-                            if core_fields in parsed_items:
-                                item.status = FacilityListItem.DUPLICATE
-                            else:
-                                parsed_items.add(core_fields)
-                        item.save()
-                    else:
+                    if action == ProcessingAction.GEOCODE:
                         logger.info('[List Upload] Started Geocode process!')
                         logger.info(
                             f'[List Upload] FacilityListItem Id: {item.id}'

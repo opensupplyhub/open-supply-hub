@@ -1,10 +1,7 @@
-from typing import List, Union
+from typing import List
 from abc import ABC, abstractmethod
 
-from django.core.files.uploadedfile import (
-    InMemoryUploadedFile,
-    TemporaryUploadedFile
-)
+from django.core.files.base import File
 
 
 class FileParser(ABC):
@@ -12,14 +9,10 @@ class FileParser(ABC):
     Abstract FileParser class for parsers related to file parsing.
     '''
 
-    def __init__(self,
-                 file: Union[InMemoryUploadedFile, TemporaryUploadedFile]
-                 ) -> None:
+    def __init__(self, file: File) -> None:
         self._file = file
 
     @staticmethod
     @abstractmethod
-    def _parse(
-            file: Union[InMemoryUploadedFile, TemporaryUploadedFile]
-            ) -> List[dict]:
+    def _parse(file: File) -> List[dict]:
         pass

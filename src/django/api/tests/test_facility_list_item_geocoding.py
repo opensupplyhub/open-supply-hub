@@ -6,7 +6,6 @@ from api.models import FacilityList, FacilityListItem, Source
 from api.processing import (
     ItemRemovedException,
     geocode_facility_list_item,
-    parse_facility_list_item,
 )
 from api.tests.processing_test_case import ProcessingTestCase
 from api.tests.test_data import listitem_geocode_data
@@ -48,26 +47,12 @@ class FacilityListItemGeocodingTest(ProcessingTestCase):
     def test_nested_correct_country_code_succeeds(self, mock_get):
         mock_get.return_value = Mock(ok=True, status_code=200)
         mock_get.return_value.json.return_value = listitem_geocode_data
-        facility_list = FacilityList.objects.create(
-            header="sector,address,country,name"
-        )
-        source = Source.objects.create(
-            source_type=Source.LIST, facility_list=facility_list
-        )
         item = FacilityListItem(
-            raw_data='Apparel,"Linjiacun Town, Zhucheng City Weifang, '
-            'Daman, Daman, 396210",IN,Shirts!',
-            raw_header=facility_list.header,
-            raw_json=get_raw_json(
-                (
-                    'Apparel,"Linjiacun Town, Zhucheng City Weifang, '
-                    'Daman, Daman, 396210",IN,Shirts!'
-                ),
-                facility_list.header,
-            ),
-            source=source,
+            address=('Linjiacun Town, Zhucheng City Weifang, Daman, '
+                     'Daman, 396210'),
+            country_code='IN',
+            status=FacilityListItem.PARSED
         )
-        parse_facility_list_item(item)
         geocode_facility_list_item(item)
 
         expected_result = listitem_geocode_data["results"][1]
@@ -81,26 +66,12 @@ class FacilityListItemGeocodingTest(ProcessingTestCase):
     def test_incorrect_country_code_has_error_status(self, mock_get):
         mock_get.return_value = Mock(ok=True, status_code=200)
         mock_get.return_value.json.return_value = listitem_geocode_data
-        facility_list = FacilityList.objects.create(
-            header="sector,address,country,name"
-        )
-        source = Source.objects.create(
-            source_type=Source.LIST, facility_list=facility_list
-        )
         item = FacilityListItem(
-            raw_data='Apparel,"Linjiacun Town, Zhucheng City Weifang, '
-            'Daman, Daman, 396210",BD,Shirts!',
-            raw_header=facility_list.header,
-            raw_json=get_raw_json(
-                (
-                    'Apparel,"Linjiacun Town, Zhucheng City Weifang, '
-                    'Daman, Daman, 396210",BD,Shirts!'
-                ),
-                facility_list.header,
-            ),
-            source=source,
+            address=('Linjiacun Town, Zhucheng City Weifang, Daman, '
+                     'Daman, 396210'),
+            country_code='BD',
+            status=FacilityListItem.PARSED
         )
-        parse_facility_list_item(item)
         geocode_facility_list_item(item)
 
         self.assertEqual(item.status, FacilityListItem.ERROR_GEOCODING)
@@ -108,23 +79,12 @@ class FacilityListItemGeocodingTest(ProcessingTestCase):
         self.assertIsNone(item.geocoded_point)
 
     def test_successfully_geocoded_item_has_correct_results(self):
-        facility_list = FacilityList.objects.create(
-            header="sector,address,country,name"
-        )
-        source = Source.objects.create(
-            source_type=Source.LIST, facility_list=facility_list
-        )
         item = FacilityListItem(
-            raw_data='Apparel,"City Hall, Philly, PA",us,Shirts!',
-            raw_header=facility_list.header,
-            raw_json=get_raw_json(
-                'Apparel,"City Hall, Philly, PA",us,Shirts!',
-                facility_list.header,
-            ),
-            source=source,
+            address='Apparel,"City Hall, Philly, PA',
+            country_code='US',
+            status=FacilityListItem.PARSED
         )
 
-        parse_facility_list_item(item)
         geocode_facility_list_item(item)
 
         self.assertIsNotNone(item.geocoded_address)
@@ -136,23 +96,13 @@ class FacilityListItemGeocodingTest(ProcessingTestCase):
         )
 
     def test_failed_geocoded_item_has_no_resuts_status(self):
-        facility_list = FacilityList.objects.create(
-            header="sector,address,country,name"
-        )
-        source = Source.objects.create(
-            source_type=Source.LIST, facility_list=facility_list
-        )
         item = FacilityListItem(
-            raw_data='Apparel,"hello, world, foo, bar, baz",us,Shirts!',
-            raw_header=facility_list.header,
-            raw_json=get_raw_json(
-                'Apparel,"hello, world, foo, bar, baz",us,Shirts!',
-                facility_list.header,
-            ),
-            source=source,
+            address='hello, world, foo, bar, baz',
+            country_code='US',
+            status=FacilityListItem.PARSED
         )
-        parse_facility_list_item(item)
         item.country_code = "$%"
+
         geocode_facility_list_item(item)
 
         self.assertEqual(item.status, FacilityListItem.GEOCODED_NO_RESULTS)
@@ -160,22 +110,11 @@ class FacilityListItemGeocodingTest(ProcessingTestCase):
         self.assertIsNone(item.geocoded_point)
 
     def test_removed_item_raises_exception(self):
-        facility_list = FacilityList.objects.create(
-            header="sector,address,country,name"
-        )
-        source = Source.objects.create(
-            source_type=Source.LIST, facility_list=facility_list
-        )
         item = FacilityListItem(
-            raw_data='Apparel,"hello, world, foo, bar, baz",us,Shirts!',
-            raw_header=facility_list.header,
-            raw_json=get_raw_json(
-                'Apparel,"hello, world, foo, bar, baz",us,Shirts!',
-                facility_list.header,
-            ),
-            source=source,
+            address='hello, world, foo, bar, baz',
+            country_code='US',
+            status=FacilityListItem.PARSED
         )
-        parse_facility_list_item(item)
 
         item.status = FacilityListItem.ITEM_REMOVED
 
