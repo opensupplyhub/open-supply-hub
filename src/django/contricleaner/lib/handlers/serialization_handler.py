@@ -20,9 +20,11 @@ from contricleaner.lib.serializers.row_serializers.\
     row_facility_type_serializer import RowFacilityTypeSerializer
 from contricleaner.lib.serializers.row_serializers.row_sector_serializer \
     import RowSectorSerializer
-from contricleaner.lib.serializers.row_serializers \
-    .row_required_fields_serializer \
-    import RowRequiredFieldsSerializer
+# from contricleaner.lib.serializers.row_serializers \
+#     .row_required_fields_serializer \
+#     import RowRequiredFieldsSerializer
+from contricleaner.lib.serializers.row_serializers.row_field_length_serializer\
+    import RowFieldLengthSerializer
 from contricleaner.lib.serializers.row_serializers.row_geolocation_serializer \
     import RowGeolocationSerializer
 
@@ -61,7 +63,8 @@ class SerializationHandler(ListRowHandler):
             RowCleanFieldSerializer('name', 'clean_name'),
             RowSectorSerializer(self.__sector_cache, split_pattern),
             RowCountrySerializer(),
-            RowRequiredFieldsSerializer(),
+            # RowRequiredFieldsSerializer(),
+            RowFieldLengthSerializer(),
             RowFacilityTypeSerializer(split_pattern),
             RowGeolocationSerializer(),
             RowEmptySerializer(),
