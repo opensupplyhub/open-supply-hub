@@ -19,9 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-1102](https://opensupplyhub.atlassian.net/browse/OSDEV-1102) - API. Propagate production location updates to OpenSearch data source via refreshing `updated_at` field in `api_facility` table. Triggered updated_at field in such actions: transfer to alternate facility, claim facility, approve, reject and deny claim, claim details, merge facilities.
-* [OSDEV-1039](https://opensupplyhub.atlassian.net/browse/OSDEV-1039) - Deleted the `facility_list_items.json` fixture from the Django app since it is no longer needed because it has been replaced with real CSV files. Along with that, several other improvements have been made to the Django application:
-    * Adjusted all the code that used the `facility_list_items.json` fixture, and deleted the unused matching logic from the Django app since it isn't necessary and was connected to that fixture.
-    * Removed Logstash and OpenSearch from the Django app dependencies in the `docker-compose.yml` file to ensure the correct startup sequence for utilizing parsed data during the `start_local_dev` and `start_code_quality_dev` scripts. These apps should start at the end of these scripts to consume the parsed, matched, and saved data.
+* [OSDEV-1039](https://opensupplyhub.atlassian.net/browse/OSDEV-1039) - Deleted the `facility_list_items.json` fixture from the Django app since it is no longer needed because it has been replaced with real CSV files. Adjusted all the code that used the `facility_list_items.json` fixture, and deleted the unused matching logic from the Django app since it isn't necessary and was connected to that fixture.
 
 ### Architecture/Environment changes
 * [OSDEV-1325](https://opensupplyhub.atlassian.net/browse/OSDEV-1325)
