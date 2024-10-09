@@ -78,7 +78,7 @@ from ...mail import send_claim_facility_confirmation_email
 
 from ...pagination import FacilitiesGeoJSONPagination
 from ...permissions import IsRegisteredAndConfirmed, IsSuperuser
-from ...sector_product_type_parser import SectorCache
+from ...sector_cache import SectorCache
 from ...serializers import (
     FacilityIndexSerializer,
     FacilityIndexDetailsSerializer,
@@ -1304,6 +1304,8 @@ class FacilitiesViewSet(ListModelMixin,
             for field in fields:
                 field.facility = new_facility
                 field.save()
+
+            Facility.update_facility_updated_at_field(new_facility.id)
 
             return Response({
                 'match_id': match.id,

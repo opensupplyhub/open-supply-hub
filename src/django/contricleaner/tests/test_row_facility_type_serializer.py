@@ -105,7 +105,7 @@ class RowFacilityTypeSerializerTest(TestCase):
                 'errors': [
                     {
                         'message': 'Expected value for facility_type to be a '
-                        'string or a list of strings but got 123',
+                        'string or a list of strings but got 123.',
                         'type': 'ValueError',
                     },
                 ],

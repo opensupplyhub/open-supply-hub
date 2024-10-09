@@ -1,31 +1,19 @@
 import logging
 import traceback
-from types import MethodType
-from typing import Any, Dict, Optional, Set, Union
+from typing import Any, Dict, Optional, Set, List, Union
+
+from django.contrib.gis.geos import Point
+from django.utils import timezone
 
 from api.constants import FileHeaderField, ProcessingAction
 from api.extended_fields import create_extendedfields_for_single_item
 from api.facility_actions.processing_facility import ProcessingFacility
-from api.models.contributor.contributor import Contributor
 from api.models.facility.facility_list import FacilityList
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.source import Source
-from api.serializers.facility.facility_list_serializer import (
-    FacilityListSerializer,
-)
 from contricleaner.lib.dto.list_dto import ListDTO
 from contricleaner.lib.dto.row_dto import RowDTO
 from oar.rollbar import report_error_to_rollbar
-from rest_framework.exceptions import ValidationError
-from rest_framework.response import Response
-from rest_framework.request import Request
-
-from django.contrib.gis.geos import Point
-from django.utils import timezone
-from django.core.files.uploadedfile import (
-    InMemoryUploadedFile,
-    TemporaryUploadedFile,
-)
 
 # Initialize logger.
 log = logging.getLogger(__name__)
@@ -37,48 +25,34 @@ class ProcessingFacilityList(ProcessingFacility):
     '''
 
     def __init__(self, processing_input: Dict[str, Any]) -> None:
-        self.__uploaded_file: Union[
-            InMemoryUploadedFile, TemporaryUploadedFile, Dict
-        ] = processing_input['uploaded_file']
-        self.__contri_cleaner_processed_data: ListDTO = processing_input[
-            'contri_cleaner_processed_data'
-        ]
-        self.__contributor: Contributor = processing_input['contributor']
+        self.__facility_list: FacilityList = processing_input['facility_list']
+        # It can be None if there are CC internal errors.
+        self.__contri_cleaner_processed_data: Union[ListDTO, None] = \
+            processing_input.get('contri_cleaner_processed_data')
         self.__parsing_started: str = processing_input['parsing_started']
-        self.__serializer_method: MethodType = processing_input[
-            'serializer_method'
-        ]
-        self.__name: str = processing_input['name']
-        self.__description: str = processing_input['description']
-        self.__replaces: Union[None, FacilityList] = processing_input[
-            'replaces'
-        ]
-        self.__request: Request = processing_input['request']
+        # It can be None if there aren't CC internal errors.
+        self.__internal_errors: Union[List[Dict], None] = \
+            processing_input.get('internal_errors')
 
-    def process_facility(self) -> Response:
-        # handle processing errors
+    def process_facility(self) -> None:
+        if self.__internal_errors:
+            self.__handle_cc_internal_errors()
+            return
         if self.__contri_cleaner_processed_data.errors:
-            log.error(
-                '[List Upload] CC Validation Errors: '
-                f'{self.__contri_cleaner_processed_data.errors}'
-            )
-            error_messages = [
-                str(error['message'])
-                for error in self.__contri_cleaner_processed_data.errors
-            ]
-            raise ValidationError(error_messages)
+            self.__handle_list_level_errors()
+            return
 
         rows = self.__contri_cleaner_processed_data.rows
         header_row_keys = rows[0].raw_json.keys()
         header_str = ','.join(header_row_keys)
 
-        new_list = self.__create_list(header_str)
-        log.info(f'[List Upload] FacilityList created. Id {new_list.id}!')
+        self.__facility_list.header = header_str
+        self.__facility_list.save()
 
-        self._create_nonstandard_fields(header_row_keys, self.__contributor)
-
-        source = self._create_source(new_list)
-        log.info(f'[List Upload] Source created. Id {source.id}!')
+        self._create_nonstandard_fields(
+            header_row_keys,
+            self.__facility_list.source.contributor
+        )
 
         is_geocoded: bool = False
         parsed_items: Set[str] = set()
@@ -88,7 +62,7 @@ class ProcessingFacilityList(ProcessingFacility):
             # and to provide an item for saving any errors that may exist
             # below.
             item = self._create_facility_list_item(
-                source, row, idx, header_str
+                self.__facility_list.source, row, idx, header_str
             )
             log.info(f'[List Upload] FacilityListItem created. Id {item.id}!')
 
@@ -108,27 +82,6 @@ class ProcessingFacilityList(ProcessingFacility):
 
             self.__finalize_item_processing(item, is_geocoded, parsed_items)
 
-        serializer: FacilityListSerializer = self.__serializer_method(new_list)
-        return Response(serializer.data)
-
-    def __create_list(self, header_str: str) -> FacilityList:
-        return FacilityList.objects.create(
-            name=self.__name,
-            description=self.__description,
-            file_name=self.__uploaded_file.name,
-            file=self.__uploaded_file,
-            header=header_str,
-            replaces=self.__replaces,
-            match_responsibility=self.__contributor.match_responsibility,
-        )
-
-    def _create_source(self, new_list: FacilityList) -> Source:
-        return Source.objects.create(
-            contributor=self.__contributor,
-            source_type=Source.LIST,
-            facility_list=new_list,
-        )
-
     @staticmethod
     def _create_facility_list_item(
         source: Source, row: RowDTO, idx: int, header_str: str
@@ -140,6 +93,23 @@ class ProcessingFacilityList(ProcessingFacility):
             raw_header=header_str,
             sector=[],
             source=source,
+        )
+
+    def __handle_cc_internal_errors(self) -> None:
+        self.__facility_list.parsing_errors = self.__internal_errors
+        self.__facility_list.save()
+        log.error(
+            '[List Upload] CC Internal Errors: '
+            f'{self.__internal_errors}'
+        )
+
+    def __handle_list_level_errors(self) -> None:
+        self.__facility_list.parsing_errors = \
+            self.__contri_cleaner_processed_data.errors
+        self.__facility_list.save()
+        log.error(
+            '[List Upload] CC List-Level Errors: '
+            f'{self.__contri_cleaner_processed_data.errors}'
         )
 
     def __handle_row_errors(self, item: FacilityListItem, row: RowDTO) -> None:
@@ -179,16 +149,16 @@ class ProcessingFacilityList(ProcessingFacility):
     def __handle_processing_exception(
         self, item: FacilityListItem, exception: Exception
     ) -> None:
-
-        log.error(
+        error_message = (
             f'[List Upload] Creation of ExtendedField error: {exception}'
         )
+        log.error(error_message)
         report_error_to_rollbar(
-            request=self.__request,
-            file=self.__uploaded_file,
-            exception=exception,
+            message=error_message,
+            extra_data={'affected_list': str(self.__facility_list)}
         )
         log.info(f'[List Upload] FacilityListItem Id: {item.id}')
+
         item.status = FacilityListItem.ERROR_PARSING
         item.processing_results.append(
             {

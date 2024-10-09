@@ -12,4 +12,5 @@ export default {
     DARK_GREY: '#6E707E',
     GREEN: '#E0F5E3',
     DARK_SLATE_GRAY: '#3D4153',
+    DARK_GREEN: '#4A9957',
 };

@@ -61,6 +61,7 @@ import {
     matchResponsibilityEnum,
     optionsForSortingResults,
     componentsWithErrorMessage,
+    listParsingErrorMappings,
 } from './constants';
 
 import { createListItemCSV } from './util.listItemCSV';
@@ -125,10 +126,7 @@ export const makeUserSignupURL = () => '/user-signup/';
 export const makeUserConfirmEmailURL = () =>
     '/rest-auth/registration/verify-email/';
 
-export const makeUploadFacilityListsURL = useOldUploadListEndpoint =>
-    useOldUploadListEndpoint
-        ? '/api/facility-lists/'
-        : '/api/facility-lists/createlist/'; // TODO: Remove this once testing of the parsing via ContriCleaner is complete.
+export const makeUploadFacilityListsURL = () => '/api/facility-lists/';
 export const makeFacilityListsURL = () => '/api/facility-lists/';
 export const makeSingleFacilityListURL = id => `/api/facility-lists/${id}/`;
 export const makeSingleFacilityListItemsURL = id =>
@@ -1254,3 +1252,8 @@ export function sort(array, comparator) {
 }
 
 export const formatDate = date => moment(date).format('LLL');
+
+export const replaceListParsingErrorMessages = errors =>
+    errors.map(
+        ({ message, type }) => listParsingErrorMappings[type] || message,
+    );

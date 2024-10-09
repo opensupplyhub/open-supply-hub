@@ -1,286 +1,80 @@
 import copy
-import csv
 import time
 import traceback
 import logging
 
-from api.constants import CsvHeaderField, ProcessingAction
+from django.contrib.gis.geos import Point
+from django.urls import reverse
+from django.utils import timezone
+from django.db import transaction
+
+from api.constants import ProcessingAction
 from api.extended_fields import (
-    create_extendedfields_for_listitem,
     update_extendedfields_for_list_item,
 )
 from api.geocoding import geocode_address
-from api.helpers.helpers import clean, cleanup_data, replace_invalid_data
+from api.helpers.helpers import clean
 from api.matching import normalize_extended_facility_id
-from api.models import (
-    Facility,
-    FacilityListItem,
-    FacilityListItemTemp,
-    FacilityMatch,
-    FacilityMatchTemp
-)
+from api.models.facility.facility import Facility
+from api.models.facility.facility_list_item import FacilityListItem
+from api.models.facility.facility_list_item_temp import FacilityListItemTemp
+from api.models.facility.facility_match import FacilityMatch
+from api.models.facility.facility_match_temp import FacilityMatchTemp
 from api.models.facility.facility_index import FacilityIndex
-from api.sector_product_type_parser import CsvRowSectorProductTypeParser
-from openpyxl import load_workbook
-from openpyxl.utils import get_column_letter
-
-from django.contrib.gis.geos import Point
-from django.core.exceptions import ValidationError
-from countries.lib.get_country_code import get_country_code
-from django.urls import reverse
-from django.utils import timezone
+from api.models.facility.facility_list import FacilityList
+from contricleaner.lib.contri_cleaner import ContriCleaner
+from contricleaner.lib.exceptions.handler_not_set_error \
+    import HandlerNotSetError
+from api.sector_cache import SectorCache
+from api.facility_actions.processing_facility_executor import (
+    ProcessingFacilityExecutor
+)
+from api.facility_actions.processing_facility_list import (
+    ProcessingFacilityList
+)
 from oar.rollbar import report_error_to_rollbar
 
 logger = logging.getLogger(__name__)
-
-
-def get_xlsx_sheet(file, request):
-    import defusedxml
-    from defusedxml.common import EntitiesForbidden
-
-    defusedxml.defuse_stdlib()
-
-    try:
-        wb = load_workbook(filename=file)
-        ws = wb[wb.sheetnames[0]]
-
-        return ws
-
-    except EntitiesForbidden as err:
-        report_error_to_rollbar(request=request, file=file, exception=err)
-        raise ValidationError('This file may be damaged and '
-                              'cannot be processed safely')
-
-
-def format_percent(value):
-    if value is None or isinstance(value, str):
-        return value
-    if value <= 1.0:
-        str_value = str(value * 100)
-    else:
-        str_value = str(value)
-    if str_value[-2:] == '.0':
-        str_value = str_value[0:len(str_value)-2]
-    return str_value + '%'
-
-
-def format_cell_value(value):
-    if value is None:
-        return ''
-    return str(value)
-
-
-def parse_array_values(values):
-    return title_array_values(
-        remove_empty_array_values(
-            strip_array_values(values)))
-
-
-def strip_array_values(values):
-    return [s.strip() for s in values]
-
-
-def remove_empty_array_values(values):
-    return [s for s in values if s]
-
-
-def title_array_values(values):
-    return [s.title() for s in values]
-
-
-def parse_xlsx(file, request):
-    try:
-        ws = get_xlsx_sheet(file, request)
-
-        # openpyxl package is 1-indexed
-        percent_col = [get_column_letter(cell.column)
-                       for cell in ws[2] if '%' in cell.number_format]
-
-        if percent_col:
-            for col in percent_col:
-                for cell in ws[col]:
-                    if cell.row != 1:
-                        cell.value = format_percent(cell.value)
-
-        ws_rows = ws.rows
-        # Useing `next` will consome the row so that iteration of the data rows
-        # will skipt the header row
-        first_row = next(ws_rows)
-        header = ','.join(
-            [format_cell_value(cell.value) for cell in first_row])
-
-        def format_row(row):
-            return '"{}"'.format(
-                '","'.join([format_cell_value(cell.value) for cell in row]))
-
-        rows = [format_row(row)
-                for row in ws_rows
-                if any(cell.value is not None for cell in row)]
-
-        return header, rows
-    except Exception as err:
-        report_error_to_rollbar(request=request, file=file, exception=err)
-        raise ValidationError('Error parsing Excel (.xlsx) file')
-
-
-def parse_csv(file, request):
-    rows = []
-
-    try:
-        header = file.readline().decode(encoding='utf-8-sig').rstrip()
-    except UnicodeDecodeError as err:
-        report_error_to_rollbar(request=request, file=file, exception=err)
-        raise ValidationError('Unsupported file encoding. Please '
-                              'submit a UTF-8 CSV.')
-
-    for idx, line in enumerate(file):
-        if idx > 0:
-            try:
-                rows.append(line.decode(encoding='utf-8-sig').rstrip())
-            except UnicodeDecodeError as err:
-                report_error_to_rollbar(request=request,
-                                        file=file,
-                                        exception=err)
-                raise ValidationError('Unsupported file encoding. Please '
-                                      'submit a UTF-8 CSV.')
-
-    return header, rows
-
-
-def clean_row(row):
-    invalid_keywords = ['N/A', 'n/a']
-    replaced_value = replace_invalid_data(row, invalid_keywords)
-    return cleanup_data(replaced_value)
-
-
-def parse_csv_line(line):
-    return list(csv.reader([line]))[0]
 
 
 class ItemRemovedException(Exception):
     pass
 
 
-def parse_facility_list_item(item):
-    started = str(timezone.now())
-    if type(item) != FacilityListItem:
-        raise ValueError('Argument must be a FacilityListItem')
-    if item.status == FacilityListItem.ITEM_REMOVED:
-        raise ItemRemovedException
-    if item.status != FacilityListItem.UPLOADED:
-        raise ValueError('Items to be parsed must be in the UPLOADED status')
+@transaction.atomic
+def parse_production_location_list(location_list: FacilityList):
+    parsing_started = str(timezone.now())
+    logger.info('[List Upload] Started CC Parse process!')
+
+    contri_cleaner = ContriCleaner(location_list.file, SectorCache())
+    internal_errors = []
+    processing_input = {
+        'facility_list': location_list,
+        'parsing_started': parsing_started
+    }
     try:
-        is_geocoded = False
-        fields = [f.lower()
-                  for f in parse_csv_line(item.source.facility_list.header)]
-        values = parse_csv_line(item.raw_data)
-
-        # facility_type_processing_type is a special "meta" field that attempts
-        # to simplify the submission process for contributors.
-        if 'facility_type_processing_type' in fields:
-            if 'facility_type' not in fields:
-                fields.append('facility_type')
-                values.append(
-                    values[fields.index('facility_type_processing_type')])
-            if 'processing_type' not in fields:
-                fields.append('processing_type')
-                values.append(
-                    values[fields.index('facility_type_processing_type')])
-
-        parser = CsvRowSectorProductTypeParser(fields, values)
-        item.sector = parser.sectors
-        if len(parser.product_types) > 0:
-            if 'product_type' in fields:
-                values[fields.index('product_type')] = parser.product_types
-            else:
-                fields.append('product_type')
-                values.append(parser.product_types)
-        else:
-            # In this case the parse found that all of the product_type values
-            # for the item were actually sectors. Setting None instead of an
-            # empty list ensures that we do not create an extended field for
-            # product_type
-            if 'product_type' in fields:
-                values[fields.index('product_type')] = None
-
-        if CsvHeaderField.COUNTRY in fields:
-            item.country_code = get_country_code(
-                values[fields.index(CsvHeaderField.COUNTRY)])
-        if CsvHeaderField.NAME in fields:
-            item.name = values[fields.index(CsvHeaderField.NAME)]
-            item.clean_name = clean(item.name)
-            if item.clean_name is None:
-                item.clean_name = ''
-        if CsvHeaderField.ADDRESS in fields:
-            item.address = values[fields.index(CsvHeaderField.ADDRESS)]
-            item.clean_address = clean(item.address)
-            if item.clean_address is None:
-                item.clean_address = ''
-        if CsvHeaderField.LAT in fields and CsvHeaderField.LNG in fields:
-            lat = float(values[fields.index(CsvHeaderField.LAT)])
-            lng = float(values[fields.index(CsvHeaderField.LNG)])
-            item.geocoded_point = Point(lng, lat)
-            is_geocoded = True
-
-        create_extendedfields_for_listitem(item, fields, values)
-
-        try:
-            item.full_clean(exclude=('processing_started_at',
-                                     'processing_completed_at',
-                                     'processing_results', 'geocoded_point',
-                                     'facility'))
-            item.status = FacilityListItem.PARSED
-            item.processing_results.append({
-                'action': ProcessingAction.PARSE,
-                'started_at': started,
-                'error': False,
-                'finished_at': str(timezone.now()),
-                'is_geocoded': is_geocoded,
-            })
-        except ValidationError as ve:
-            messages = []
-            for name, errors in ve.error_dict.items():
-                # We need to clear the invalid value so we can save the row
-                setattr(item, name, '')
-                error_str = ''.join(''.join(e.messages) for e in errors)
-                messages.append(
-                    'There is a problem with the {0}: {1}'.format(name,
-                                                                  error_str)
-                )
-
-            # If there is a validation error on an array field, `full_clean`
-            # appears to set it to an empty string which then causes `save`
-            # to raise an exception.
-            for field in {'sector'}:
-                field_is_valid = (
-                    getattr(item, field) is None
-                    or isinstance(getattr(item, field), list))
-                if not field_is_valid:
-                    setattr(item, field, [])
-
-            item.status = FacilityListItem.ERROR_PARSING
-            item.processing_results.append({
-                'action': ProcessingAction.PARSE,
-                'started_at': started,
-                'error': True,
-                'message': '\n'.join(messages),
-                'trace': traceback.format_exc(),
-                'finished_at': str(timezone.now()),
-            })
-            logger.error(f'[List Upload] Parsing Error: {str(ve)}')
-            logger.info(f'[List Upload] FacilityListItem Id: {item.id}')
-    except Exception as e:
-        item.status = FacilityListItem.ERROR_PARSING
-        item.processing_results.append({
-            'action': ProcessingAction.PARSE,
-            'started_at': started,
-            'error': True,
-            'message': str(e),
-            'trace': traceback.format_exc(),
-            'finished_at': str(timezone.now()),
+        contri_cleaner_processed_data = contri_cleaner.process_data()
+        processing_input['contri_cleaner_processed_data'] = \
+            contri_cleaner_processed_data
+    except HandlerNotSetError as err:
+        error_message = f'[List Upload] Internal ContriCleaner Error: {err}'
+        logger.error(error_message)
+        report_error_to_rollbar(
+            message=error_message,
+            extra_data={'affected_list': str(location_list)}
+        )
+        internal_errors.append({
+            'message': ('We are currently experiencing an issue with our '
+                        'system and will address it as soon as we can. '
+                        'Please wait and try your upload again.'),
+            'type': 'InternalError'
         })
-        logger.error(f'[List Upload] Parsing Error: {str(e)}')
-        logger.info(f'[List Upload] FacilityListItem Id: {item.id}')
+        processing_input['internal_errors'] = internal_errors
+
+    processing_facility_executor = ProcessingFacilityExecutor(
+        ProcessingFacilityList(processing_input)
+    )
+    processing_facility_executor.run_processing()
 
 
 def geocode_facility_list_item(item):

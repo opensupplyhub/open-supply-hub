@@ -38,5 +38,5 @@ class PreHeaderValidator(PreValidator):
             "message": "The following required fields are missing: {}".format(
                 ', '.join(missing_fields)
             ),
-            "type": "Error",
+            "type": "RequiredFieldsMissingError",
         }
