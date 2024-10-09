@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import KeysView
+from typing import KeysView, Union
 
 from api.models.contributor.contributor import Contributor
 from api.models.facility.facility_list_item import FacilityListItem
@@ -17,7 +17,7 @@ class ProcessingFacility(ABC):
     '''
 
     @abstractmethod
-    def process_facility(self) -> Response:
+    def process_facility(self) -> Union[Response, None]:
         pass
 
     @staticmethod

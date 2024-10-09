@@ -20,5 +20,5 @@ class PreHeaderValidator(PreValidator):
         return {
             "message": "Required Fields are missing: {}"
             .format(', '.join(self.__required_fields)),
-            "type": "Error",
+            "type": "RequiredFieldsMissingError",
         }

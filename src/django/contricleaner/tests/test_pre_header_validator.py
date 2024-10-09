@@ -41,4 +41,4 @@ class PreHeaderValidatorTest(TestCase):
             [facility_source_three, facility_source_two]
         )
 
-        self.assertEqual(res_two["type"], "Error")
+        self.assertEqual(res_two["type"], "RequiredFieldsMissingError")

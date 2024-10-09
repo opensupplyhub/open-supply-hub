@@ -21,7 +21,7 @@ class RowCleanFieldSerializerTest(TestCase):
 
         self.assertEqual(len(result["errors"]), 1)
         self.assertEqual(
-            result["errors"][0]["message"], "new_field cannot be empty"
+            result["errors"][0]["message"], "new_field cannot be empty."
         )
         self.assertEqual(result["errors"][0]["type"], "Error")
         self.assertNotIn("new_field", result)

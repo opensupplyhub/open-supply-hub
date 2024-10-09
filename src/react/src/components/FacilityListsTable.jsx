@@ -125,6 +125,7 @@ function FacilityListsTable({ facilityLists, history: { push } }) {
                                         facilitiesListTableTooltipTitles.errors
                                     }
                                     tableCellText={sum([
+                                        list.parsing_errors.length,
                                         list.status_counts.ERROR,
                                         list.status_counts.ERROR_PARSING,
                                         list.status_counts.ERROR_GEOCODING,
@@ -148,8 +149,13 @@ function FacilityListsTable({ facilityLists, history: { push } }) {
                                         let status;
                                         if (list.status === 'PENDING') {
                                             if (
-                                                list.item_count ===
-                                                list.status_counts.UPLOADED
+                                                (list.item_count === 0 &&
+                                                    list.parsing_errors
+                                                        .length === 0) ||
+                                                (list.item_count > 0 &&
+                                                    list.item_count ===
+                                                        list.status_counts
+                                                            .UPLOADED)
                                             ) {
                                                 status = 'Processing';
                                             } else {
