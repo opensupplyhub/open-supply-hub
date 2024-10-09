@@ -28,6 +28,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   * Always build a docker image for the amd64 platform so that the image in the local environment fully corresponds to the one in production.
 * [OSDEV-1172](https://opensupplyhub.atlassian.net/browse/OSDEV-1172)
   * Added the ability to restore a database from a snapshot.
+* [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388)
+  * Increased timeout to wait for copying anonymized shared snapshot.
 
 ### Bugfix
 * Fixed a bug related to environment variable management:
