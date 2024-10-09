@@ -1,6 +1,7 @@
 networks:
   proxynet:
     name: os-hub-development
+    # driver: bridge
 
 services:
   database:
@@ -228,5 +229,19 @@ services:
     depends_on:
       - opensearch-single-node
       - database
+    networks:
+      - proxynet
+
+  opensearch-query-service:
+    build:
+      context: ./src/opensearch-query
+      dockerfile: Dockerfile.local
+    container_name: opensearch-query-service
+    volumes:
+      - .:/usr/src/opensearch-query
+    depends_on:
+      - logstash
+    ports:
+      - "8077:8077"
     networks:
       - proxynet

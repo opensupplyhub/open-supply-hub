@@ -3,6 +3,9 @@ from api.views.v1.opensearch_query_builder. \
     opensearch_query_builder_interface import OpenSearchQueryBuilderInterface
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
     def __init__(self):
@@ -179,4 +182,5 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER].append(search_after)
 
     def get_final_query_body(self):
+        logger.info(f'@@@ self.query_body {self.query_body}')
         return self.query_body
