@@ -308,7 +308,7 @@ jobs:
         if: ${{ vars.ENV_NAME == 'Development' && inputs.restore-db == true}}
         run: |
           echo "Creating an S3 folder with production location lists to reset DB if it doesn't exist."
-          aws s3api put-object --bucket ${{ env.LIST_S3_BUCKET }} --key ${{ env.RESET_LISTS_S3_FOLDER }}
+          aws s3api put-object --bucket ${{ env.LIST_S3_BUCKET }} --key ${{ env.RESET_LISTS_FOLDER }}
           echo "Coping all production location files from the repo to S3 to ensure consistency between local and environment resets."
           aws s3 cp ./src/django/${{ env.RESET_LISTS_FOLDER }} s3://${{ env.LIST_S3_BUCKET }}/${{ env.RESET_LISTS_FOLDER }} --recursive
           echo "Triggering reset commands."
