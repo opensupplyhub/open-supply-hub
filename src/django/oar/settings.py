@@ -369,7 +369,6 @@ WATCHMAN_ERROR_CODE = 503
 WATCHMAN_CHECKS = (
     'watchman.checks.databases',
     'watchman.checks.caches',
-    'api.checks.gazetteercache',
 )
 
 # django-ecsmanage
