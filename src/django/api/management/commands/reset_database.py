@@ -4,8 +4,7 @@ from django.core.management import call_command
 
 class Command(BaseCommand):
     help = ('Usage: This management command resets the database and '
-            'repopulates it with fixture data, including facilities '
-            'and matches.')
+            'repopulates it with fixture data.')
 
     def handle(self, *args, **options):
         call_command('recreate_db_structure')
