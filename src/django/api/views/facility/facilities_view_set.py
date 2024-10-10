@@ -1246,6 +1246,9 @@ class FacilitiesViewSet(ListModelMixin,
                 field.facility = new_facility
                 field.save()
 
+            Facility.update_facility_updated_at_field(new_facility.id)
+            Facility.update_facility_updated_at_field(old_facility.id)
+
             index_facilities_new([new_facility.id, old_facility.id])
 
             return Response({
@@ -1306,6 +1309,7 @@ class FacilitiesViewSet(ListModelMixin,
                 field.save()
 
             Facility.update_facility_updated_at_field(new_facility.id)
+            Facility.update_facility_updated_at_field(old_facility.id)
 
             return Response({
                 'match_id': match.id,
