@@ -339,12 +339,12 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
         data = json.loads(response.content)
 
         self.assertEqual(
-            data[0]["action"],
+            data[1]["action"],
             "SPLIT",
         )
 
         self.assertEqual(
-            data[0]["detail"],
+            data[1]["detail"],
             "{} was split from {}".format(
                 self.match.facility.id,
                 self.facility_two.id,
@@ -353,7 +353,7 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
 
         self.assertEqual(
             len(data),
-            5,
+            6,
         )
 
     @override_flag("can_get_facility_history", active=True)
@@ -377,12 +377,12 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
         data = json.loads(response.content)
 
         self.assertEqual(
-            data[0]["action"],
+            data[1]["action"],
             "MOVE",
         )
 
         self.assertEqual(
-            data[0]["detail"],
+            data[1]["detail"],
             "Match {} was moved from {}".format(
                 self.match_two.id,
                 self.facility_two.id,
@@ -391,7 +391,7 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
 
         self.assertEqual(
             len(data),
-            3,
+            4,
         )
 
     @override_flag("can_get_facility_history", active=True)
