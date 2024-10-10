@@ -28,7 +28,7 @@ class FacilityListSerializer(ModelSerializer):
                   'is_public', 'item_count', 'items_url', 'statuses',
                   'status_counts', 'contributor_id', 'created_at',
                   'match_responsibility', 'status', 'status_change_reason',
-                  'file')
+                  'file', 'parsing_errors')
         read_only_fields = ('created_at', 'match_responsibility')
 
     def get_is_active(self, facility_list):

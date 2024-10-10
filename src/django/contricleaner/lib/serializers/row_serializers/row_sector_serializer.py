@@ -35,7 +35,7 @@ class RowSectorSerializer(RowSerializer):
                     sector_errors.append(
                         {
                             "message": "Expected value for {} to be a string "
-                            "or a list of strings but got {}".format(
+                            "or a list of strings but got {}.".format(
                                 field, value
                             ),
                             "type": "ValueError",
@@ -56,7 +56,7 @@ class RowSectorSerializer(RowSerializer):
             current["errors"].append(
                 {
                     "message": "You may submit a maximum of {} product types, "
-                    "not {}".format(
+                    "not {}.".format(
                         MAX_PRODUCT_TYPE_COUNT, len(product_types)
                     ),
                     "type": "ValidationError",

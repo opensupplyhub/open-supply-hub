@@ -113,7 +113,13 @@ response = source.copy_db_snapshot(
 )
 
 waiters = source.get_waiter('db_snapshot_completed')
-waiters.wait(DBSnapshotIdentifier=shared_snapshot_identifier)
+waiters.wait(
+    DBSnapshotIdentifier=shared_snapshot_identifier,
+    WaiterConfig={
+        'Delay': 15,
+        'MaxAttempts': 100
+    }
+)
 
 print("Share snapshot " + shared_snapshot_identifier + " with " + destination_aws_account + " AWS account")
 source.modify_db_snapshot_attribute(

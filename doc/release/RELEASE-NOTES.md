@@ -11,10 +11,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Database changes
 #### Migrations:
-* *Describe migrations here.*
+* 0156_introduce_list_level_parsing_errors - This migration introduces the parsing_errors field for the FacilityList model to collect list-level and internal errors logged during the background parsing of the list.
+* 0157_delete_endpoint_switcher_for_list_uploads - This migration deletes the `use_old_upload_list_endpoint` switcher that was necessary to toggle between the old and new list upload endpoints.
 
 #### Scheme changes
-* *Describe scheme changes here.*
+* [OSDEV-1039](https://opensupplyhub.atlassian.net/browse/OSDEV-1039) - Since the `use_old_upload_list_endpoint` switcher is no longer necessary for the list upload, it has been deleted from the DB. Additionally, the `parsing_errors` field has been added to the FacilityList model.
 
 ### Code/API changes
 * [OSDEV-1102](https://opensupplyhub.atlassian.net/browse/OSDEV-1102) - API. Propagate production location updates to OpenSearch data source via refreshing `updated_at` field in `api_facility` table. Triggered updated_at field in such actions: transfer to alternate facility, claim facility, approve, reject and deny claim, claim details, merge facilities, match facility(promote, split).
@@ -27,12 +28,23 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   * Always build a docker image for the amd64 platform so that the image in the local environment fully corresponds to the one in production.
 * [OSDEV-1172](https://opensupplyhub.atlassian.net/browse/OSDEV-1172)
   * Added the ability to restore a database from a snapshot.
+* [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388)
+  * Increased timeout to wait for copying anonymized shared snapshot.
 
 ### Bugfix
 * Fixed a bug related to environment variable management:
     * Removed the `py_environment` Terraform variable, as it appeared to be a duplicate of the `environment` variable.
     * Passed the correct environment values to the ECS task definition for the Django containers in all environments, especially in the Preprod and Development environments, to avoid misunderstandings and incorrect interpretations of the values previously passed via `py_environment`.
     * Introduced a *Local* environment specifically for local development to avoid duplicating variable values with the AWS-hosted *Development* environment.
+* [OSDEV-1039](https://opensupplyhub.atlassian.net/browse/OSDEV-1039) - Made the list parsing asynchronous and increased the list upload limit to 10,000 facilities per list to reduce manual work for moderators when they split large lists into smaller ones. The following architectural and code changes have been made:
+    1. Renamed the previously copied `api/facility-lists/createlist` POST endpoint to the `api/facility-lists` POST endpoint. Deleted the old implementation of the `api/facility-lists` POST endpoint along with the `use_old_upload_list_endpoint` switcher that was necessary to toggle between the old and new list upload endpoints.
+    2. Removed the triggering of ContriCleaner from the `api/facility-lists` POST endpoint and moved it to the async parse AWS batch job to reduce the load on the endpoint. Introduced a `parsing_errors` field for the FacilityList model to collect list-level and internal errors logged during the background parsing of the list.
+    3. Established a connection between the EC2 instance within the AWS batch job and the S3 bucket where all the uploaded list files are saved. This is necessary because the parse job retrieves a particular list from the S3 bucket via Django.
+    4. Deleted redundant code from the previous implementation of the list item parsing.
+    5. Adjusted Django, ContriCleaner, and integration tests. Regarding integration tests, the `facility_list_items.json` fixture was converted to concrete CSV lists, which were connected to the `facility_lists.json` fixture to upload them to the DB while creating the test DB for the integration tests. This is necessary because the parsing function that triggers ContriCleaner can only work with real files, not facility list items as it did previously.
+    6. Refactored the ContributeForm component in the front-end app.
+    7. The list page has been adjusted to work with asynchronous parsing, and a new dialog window has been added to notify users about the list parsing process, indicating that they need to wait.
+    8. Introduced a UI to display list parsing errors on the list page after the page refresh.
 
 ### What's new
 * [OSDEV-1127](https://opensupplyhub.atlassian.net/browse/OSDEV-1127) - It was implemented the Production Location Search screen that has two tabs: "Search by OS ID" and "Search by Name and Address." Each tab adds a query parameter (`?tab=os-id` and `?tab=name-address`) to the URL when active, allowing for redirection to the selected tab. On the "Search by OS ID" tab, users see an input field where they can enter an OS ID. After entering the full OS ID (15 characters), the "Search By ID" button becomes clickable, allowing users to proceed to the results screen. There are two possible outcomes:
@@ -43,6 +55,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Release instructions:
 * Before deploying to an existing environment, clear OpenSearch to ensure it can receive any missed changes and properly start the update process.
+* Ensure that the `migrate` command is included in the `post_deployment` command.
 
 
 ## Release 1.21.0

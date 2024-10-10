@@ -3,10 +3,7 @@ from typing import List, Union
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
-from django.core.files.uploadedfile import (
-    InMemoryUploadedFile,
-    TemporaryUploadedFile
-)
+from django.core.files.base import File
 
 from contricleaner.lib.parsers.abstractions.source_parser import SourceParser
 from contricleaner.lib.parsers.abstractions.file_parser import FileParser
@@ -18,9 +15,7 @@ class SourceParserXLSX(SourceParser, FileParser):
         return self._parse(self._file)
 
     @staticmethod
-    def _parse(
-            file: Union[InMemoryUploadedFile, TemporaryUploadedFile]
-            ) -> List[dict]:
+    def _parse(file: File) -> List[dict]:
         try:
             worksheet = SourceParserXLSX.__get_xlsx_sheet(file)
 
@@ -52,7 +47,10 @@ class SourceParserXLSX(SourceParser, FileParser):
 
             return rows
         except Exception:
-            raise ParsingError('Error parsing Excel (.xlsx) file')
+            raise ParsingError(
+                'There was an error within your file and our team needs to '
+                'take a look. Please send your file to '
+                'support@opensupplyhub.org for diagnosis.')
 
     @staticmethod
     def __tidy_row(row: tuple) -> list:
@@ -66,9 +64,7 @@ class SourceParserXLSX(SourceParser, FileParser):
         return formatted_row
 
     @staticmethod
-    def __get_xlsx_sheet(
-            file: Union[InMemoryUploadedFile, TemporaryUploadedFile]
-            ) -> Worksheet:
+    def __get_xlsx_sheet(file: File) -> Worksheet:
         import defusedxml
         from defusedxml.common import EntitiesForbidden
 
@@ -82,7 +78,7 @@ class SourceParserXLSX(SourceParser, FileParser):
 
         except EntitiesForbidden:
             raise ParsingError('This file may be damaged and '
-                               'cannot be processed safely')
+                               'cannot be processed safely.')
 
     @staticmethod
     def __format_percent(value: Union[float, int, str, None]) -> str:
