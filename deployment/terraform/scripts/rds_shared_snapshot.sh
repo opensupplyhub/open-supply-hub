@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -xv
 
 function error_exit() {
   echo "$1" 1>&2

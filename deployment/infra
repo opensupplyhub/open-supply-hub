@@ -37,7 +37,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     if [[ -n "${SETTINGS_BUCKET}" ]]; then
         pushd "${TERRAFORM_DIR}"
         git config --global --add safe.directory /usr/local/src
-    
+
         case "${1}" in
             plan)
                 echo "DEFAULT_BATCH_CE_DESIRED_CPU"
@@ -46,14 +46,14 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 # # Build Lambda function archives
                 make -sC lambda-functions/alert_batch_failures
                 make -sC lambda-functions/alert_sfn_failures
-
+                echo '{"db_instance_identifier" : "database-anonymizer"}' | ./scripts/rds_shared_snapshot.sh
                 # Clear stale modules & remote state, then re-initialize
                 echo "Terraform init"
                 rm -rf .terraform terraform.tfstate*
                 terraform init \
                   -backend-config="bucket=${SETTINGS_BUCKET}" \
                   -backend-config="key=terraform/state"
-                echo "Terraform plan"        
+                echo "Terraform plan"
                 terraform plan \
                           -var="image_tag=${GIT_COMMIT}" \
                           -var="batch_default_ce_desired_vcpus=${DEFAULT_BATCH_CE_DESIRED_CPU:-0}" \
