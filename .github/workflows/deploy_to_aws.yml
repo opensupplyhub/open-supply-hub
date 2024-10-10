@@ -73,6 +73,7 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
 
       - name: Copy planfile to S3 bucket for ${{ vars.ENV_NAME }}
