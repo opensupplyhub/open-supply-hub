@@ -84,6 +84,10 @@ data "external" "db_snapshot" {
   }
 }
 
+output "debug" {
+    value = data.external.db_snapshot
+}
+
 module "database_enc" {
   source = "github.com/opensupplyhub/terraform-aws-postgresql-rds?ref=3.0.3"
 
