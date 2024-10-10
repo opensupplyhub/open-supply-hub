@@ -46,9 +46,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 # # Build Lambda function archives
                 make -sC lambda-functions/alert_batch_failures
                 make -sC lambda-functions/alert_sfn_failures
-                ls -l
-                ls -l scripts/
-                echo '{"db_instance_identifier" : "database-anonymizer"}' | ./scripts/rds_shared_snapshot.sh
+
                 # Clear stale modules & remote state, then re-initialize
                 echo "Terraform init"
                 rm -rf .terraform terraform.tfstate*
