@@ -26,7 +26,7 @@ from .utils import (
     format_numeric,
     format_sectors,
     is_created_at_main_date,
-    get_facility_name_index_new,
+    get_facility_name,
     get_embed_contributor_id,
     get_efs_associated_with_contributor,
     create_name_field_from_facility_name,
@@ -92,7 +92,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         return facility.id
 
     def get_name(self, facility):
-        name = get_facility_name_index_new(self, facility)
+        name = get_facility_name(self, facility)
         return format_field(name)
 
     def get_contributor_fields(self, facility):
