@@ -100,7 +100,7 @@ module "database_enc" {
   backup_window              = var.rds_backup_window
   maintenance_window         = var.rds_maintenance_window
   auto_minor_version_upgrade = var.rds_auto_minor_version_upgrade
-  final_snapshot_identifier  = var.rds_final_snapshot_identifier
+  final_snapshot_identifier  = join("-", [var.rds_final_snapshot_identifier, formatdate("YYYYMMDDhhmmss", timestamp())])
   skip_final_snapshot        = var.rds_skip_final_snapshot
   copy_tags_to_snapshot      = var.rds_copy_tags_to_snapshot
   multi_availability_zone    = var.rds_multi_az
