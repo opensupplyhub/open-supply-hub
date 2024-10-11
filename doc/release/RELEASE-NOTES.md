@@ -19,7 +19,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-1102](https://opensupplyhub.atlassian.net/browse/OSDEV-1102) - API. Propagate production location updates to OpenSearch data source via refreshing `updated_at` field in `api_facility` table. Triggered updated_at field in such actions: transfer to alternate facility, claim facility, approve, reject and deny claim, claim details, merge facilities, match facility (promote, split).
-* [OSDEV-1039](https://opensupplyhub.atlassian.net/browse/OSDEV-1039) - Deleted the `facility_list_items.json` fixture from the Django app since it is no longer needed because it has been replaced with real CSV files. Adjusted all the code that used the `facility_list_items.json` fixture, and deleted the unused matching logic from the Django app since it isn't necessary and was connected to that fixture.
+* [OSDEV-1039](https://opensupplyhub.atlassian.net/browse/OSDEV-1039) - Deleted the `facility_list_items.json` fixture from the Django app since it is no longer needed, having been replaced with real CSV files. Additionally, other important changes have been implemented in the Django app and deployment:
+    * Adjusted all code that used the `facility_list_items.json` fixture and removed the unused matching logic from the Django app, as it is no longer necessary and was connected to that fixture.
+    * Updated the reset database step in the `restore_database` job of the Deploy to AWS GitHub workflow to upload CSV location list files to S3 for parsing during the DB reset.
 
 ### Architecture/Environment changes
 * [OSDEV-1325](https://opensupplyhub.atlassian.net/browse/OSDEV-1325)
