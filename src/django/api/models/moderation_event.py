@@ -1,11 +1,11 @@
 from django.db import models
-from django.contrib.postgres.fields import ArrayField
-from django.api.models.facility.facility_list_item import FacilityListItem
+from django.contrib.postgres import fields as postgres
+from api.models.facility.facility_list_item import FacilityListItem
 
 
-class ModerationQueue(models.Model):
+class ModerationEvent(models.Model):
     '''
-    Data that is needed for Moderation Queue.
+    Data that is needed for moderation queue.
     '''
 
     created_at = models.DateTimeField(
@@ -74,7 +74,7 @@ class ModerationQueue(models.Model):
         help_text='Moderation status of the production location.'
     )
 
-    record_type = ArrayField(
+    record_type = postgres.ArrayField(
         models.CharField(max_length=200, null=True),
         help_text='List of record types for the production location.',
         blank=True
