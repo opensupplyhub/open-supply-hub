@@ -32,6 +32,9 @@ import {
     startFetchClaimStatusOptions,
     failFetchClaimStatusOption,
     completeFetchClaimStatusOption,
+    startFetchRecordTypeOptions,
+    failFetchRecordTypeOptions,
+    completeFetchRecordTypeOptions,
     resetFilterOptions,
 } from '../actions/filterOptions';
 
@@ -87,6 +90,11 @@ const initialState = Object.freeze({
         error: null,
     }),
     claimStatuses: Object.freeze({
+        data: null,
+        fetching: false,
+        error: null,
+    }),
+    recordTypes: Object.freeze({
         data: null,
         fetching: false,
         error: null,
@@ -313,6 +321,28 @@ export default createReducer(
         [completeFetchClaimStatusOption]: (state, payload) =>
             update(state, {
                 claimStatuses: {
+                    fetching: { $set: false },
+                    error: { $set: null },
+                    data: { $set: payload },
+                },
+            }),
+        [startFetchRecordTypeOptions]: state =>
+            update(state, {
+                recordTypes: {
+                    fetching: { $set: true },
+                    error: { $set: null },
+                },
+            }),
+        [failFetchRecordTypeOptions]: (state, payload) =>
+            update(state, {
+                recordTypes: {
+                    fetching: { $set: false },
+                    error: { $set: payload },
+                },
+            }),
+        [completeFetchRecordTypeOptions]: (state, payload) =>
+            update(state, {
+                recordTypes: {
                     fetching: { $set: false },
                     error: { $set: null },
                     data: { $set: payload },
