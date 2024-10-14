@@ -1,7 +1,8 @@
-// import React, { useEffect } from 'react';
-import React from 'react';
-// import { connect } from 'react-redux';
+import React, { useEffect } from 'react';
+// import React from 'react';
+import { connect } from 'react-redux';
 // import { arrayOf, bool, func, shape, string } from 'prop-types';
+import { func } from 'prop-types';
 // import map from 'lodash/map';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
@@ -21,10 +22,11 @@ import ModerationStatusFilter from '../Filters/ModerationStatusFilter';
 //     sortFacilityClaims,
 // } from '../actions/claimFacilityDashboard';
 
-// import {
-//     fetchCountryOptions,
-//     fetchClaimStatusOptions,
-// } from '../actions/filterOptions';
+import {
+    fetchCountryOptions,
+    fetchRecordTypeOptions,
+    // fetchClaimStatusOptions,
+} from '../../actions/filterOptions';
 
 // import ClaimStatusFilter from './Filters/ClaimStatusFilter';
 // import CountryNameFilter from './Filters/CountryNameFilter';
@@ -47,26 +49,26 @@ import ModerationStatusFilter from '../Filters/ModerationStatusFilter';
 
 const dashboardModerationQueueStyles = () =>
     Object.freeze({
-        container: Object.freeze({
+        mainContainer: Object.freeze({
             marginBottom: '60px',
             width: '100%',
         }),
-        dashboardClaimsContainer: Object.freeze({
-            width: '100%',
-        }),
-        dashboardClaimsFilters: Object.freeze({
-            padding: '20px',
-        }),
-        filterRow: Object.freeze({
-            padding: '20px',
+        dashboardFilters: Object.freeze({
             display: 'flex',
             flexDirection: 'column',
-            gap: '20px',
+            gap: '8px',
+            padding: '20px',
         }),
-        filter: Object.freeze({
-            flex: 1,
-        }),
-        numberResults: { fontWeight: 800 },
+        // filterRow: Object.freeze({
+        //     padding: '20px',
+        //     display: 'flex',
+        //     flexDirection: 'column',
+        //     gap: '20px',
+        // }),
+        // filter: Object.freeze({
+        //     flex: 1,
+        // }),
+        // numberResults: { fontWeight: 800 },
     });
 
 const DashboardModerationQueue = ({
@@ -83,7 +85,8 @@ const DashboardModerationQueue = ({
     //     push,
     // },
     // fetchClaimStatus,
-    // fetchCountries,
+    fetchRecordTypes,
+    fetchCountries,
     // updateClaimStatus,
     // updateCountry,
     // clearCountry,
@@ -95,38 +98,39 @@ const DashboardModerationQueue = ({
     //     search,
     // );
 
-    // useEffect(() => {
-    //     fetchCountries();
-    //     fetchClaimStatus();
+    useEffect(() => {
+        fetchRecordTypes();
+        fetchCountries();
+        // fetchClaimStatus();
 
-    //     // Always keep default PENDING status in the search bar
-    //     if (statuses && statuses.length > 0) {
-    //         const statusesSerialized = map(statuses, status => ({
-    //             label: status,
-    //             value: status,
-    //         }));
-    //         updateClaimStatus(statusesSerialized);
-    //         push(
-    //             makeDashboardClaimListLink({
-    //                 statuses,
-    //                 countries,
-    //             }),
-    //         );
-    //     }
-    //     // If country code is present in URL, it should be set in filter field automatically
-    //     if (countries && countries.length > 0) {
-    //         const countriesSerialized = map(countries, country => ({
-    //             value: country,
-    //             label: country,
-    //         }));
-    //         updateCountry(countriesSerialized);
-    //     }
+        // // Always keep default PENDING status in the search bar
+        // if (statuses && statuses.length > 0) {
+        //     const statusesSerialized = map(statuses, status => ({
+        //         label: status,
+        //         value: status,
+        //     }));
+        //     updateClaimStatus(statusesSerialized);
+        //     push(
+        //         makeDashboardClaimListLink({
+        //             statuses,
+        //             countries,
+        //         }),
+        //     );
+        // }
+        // // If country code is present in URL, it should be set in filter field automatically
+        // if (countries && countries.length > 0) {
+        //     const countriesSerialized = map(countries, country => ({
+        //         value: country,
+        //         label: country,
+        //     }));
+        //     updateCountry(countriesSerialized);
+        // }
 
-    //     return () => {
-    //         clearCountry();
-    //         clearClaims();
-    //     };
-    // }, []);
+        // return () => {
+        //     clearCountry();
+        //     clearClaims();
+        // };
+    }, []);
 
     // useEffect(() => {
     //     const finalCountries = map(countriesData, 'value');
@@ -164,28 +168,26 @@ const DashboardModerationQueue = ({
     // const claimsCount = data && data.length;
 
     return (
-        <Paper className={classes.container}>
-            <div className={classes.dashboardClaimsContainer}>
-                Moderation Queue
-                <div className={classes.dashboardClaimsFilters}>
-                    <DownloadFacilityClaimsButton
-                        fetching={fetching}
-                        data={data || []}
-                    />
-                    {/* <ClaimStatusFilter
+        <Paper className={classes.mainContainer}>
+            <div className={classes.dashboardFilters}>
+                <DownloadFacilityClaimsButton
+                    fetching={fetching}
+                    data={data || []}
+                />
+                {/* <ClaimStatusFilter
                         countriesData={countriesData}
                         handleClaimStatusUpdate={onClaimStatusUpdate}
                         isDisabled={fetching}
                     /> */}
-                    <RecordTypeFilter />
-                    <MatchStatusFilter />
-                    <ModerationStatusFilter />
-                    <CountryNameFilter isDisabled={fetching} />
-                    {/* <Grid item className={classes.numberResults}>
+                <RecordTypeFilter />
+                <MatchStatusFilter />
+                <ModerationStatusFilter />
+                <CountryNameFilter isDisabled={fetching} />
+                {/* <Grid item className={classes.numberResults}>
                         {claimsCount} results
                     </Grid> */}
-                </div>
-                {/* <DashboardClaimsListTable
+            </div>
+            {/* <DashboardClaimsListTable
                     fetching={fetching}
                     data={data}
                     handleSortClaims={sortClaims}
@@ -195,7 +197,6 @@ const DashboardModerationQueue = ({
                     countriesData={countriesData}
                     clearClaims={clearClaims}
                 /> */}
-            </div>
         </Paper>
     );
 };
@@ -206,25 +207,26 @@ const DashboardModerationQueue = ({
 //     countriesData: null,
 // };
 
-// DashboardModerationQueue.propTypes = {
-//     data: facilityClaimsListPropType,
-//     fetching: bool.isRequired,
-//     fetchCountries: func.isRequired,
-//     countriesData: countryOptionsPropType,
-//     fetchClaimStatus: func.isRequired,
-//     error: arrayOf(string),
-//     getClaims: func.isRequired,
-//     clearClaims: func.isRequired,
-//     sortClaims: func.isRequired,
-//     history: shape({
-//         replace: func.isRequired,
-//         push: func.isRequired,
-//     }).isRequired,
-//     updateClaimStatus: func.isRequired,
-//     updateCountry: func.isRequired,
-//     claimStatuses: claimStatusOptionsPropType.isRequired,
-//     clearCountry: func.isRequired,
-// };
+DashboardModerationQueue.propTypes = {
+    // data: facilityClaimsListPropType,
+    // fetching: bool.isRequired,
+    fetchRecordTypes: func.isRequired,
+    fetchCountries: func.isRequired,
+    // countriesData: countryOptionsPropType,
+    // fetchClaimStatus: func.isRequired,
+    // error: arrayOf(string),
+    // getClaims: func.isRequired,
+    // clearClaims: func.isRequired,
+    // sortClaims: func.isRequired,
+    // history: shape({
+    //     replace: func.isRequired,
+    //     push: func.isRequired,
+    // }).isRequired,
+    // updateClaimStatus: func.isRequired,
+    // updateCountry: func.isRequired,
+    // claimStatuses: claimStatusOptionsPropType.isRequired,
+    // clearCountry: func.isRequired,
+};
 
 // function mapStateToProps({
 //     claimFacilityDashboard: {
@@ -241,25 +243,22 @@ const DashboardModerationQueue = ({
 //     };
 // }
 
-// function mapDispatchToProps(dispatch) {
-//     return {
-//         // getClaims: () => dispatch(fetchFacilityClaims()),
-//         // clearClaims: () => dispatch(clearFacilityClaims()),
-//         // sortClaims: sortedData => dispatch(sortFacilityClaims(sortedData)),
-//         // fetchCountries: () => dispatch(fetchCountryOptions()),
-//         // fetchClaimStatus: () => dispatch(fetchClaimStatusOptions()),
-//         // updateClaimStatus: claimStatuses =>
-//         //     dispatch(updateClaimStatusFilter(claimStatuses)),
-//         // updateCountry: v => dispatch(updateCountryFilter(v)),
-//         // clearCountry: () => dispatch(clearCountryFilter()),
-//     };
-// }
+const mapStateToProps = () => ({});
 
-// export default connect(
-//     mapStateToProps,
-//     mapDispatchToProps,
-// )(withStyles(dashboardModerationQueueStyles)(DashboardModerationQueue));\
+const mapDispatchToProps = dispatch => ({
+    // getClaims: () => dispatch(fetchFacilityClaims()),
+    // clearClaims: () => dispatch(clearFacilityClaims()),
+    // sortClaims: sortedData => dispatch(sortFacilityClaims(sortedData)),
+    fetchRecordTypes: () => dispatch(fetchRecordTypeOptions()),
+    fetchCountries: () => dispatch(fetchCountryOptions()),
+    // fetchClaimStatus: () => dispatch(fetchClaimStatusOptions()),
+    // updateClaimStatus: claimStatuses =>
+    //     dispatch(updateClaimStatusFilter(claimStatuses)),
+    // updateCountry: v => dispatch(updateCountryFilter(v)),
+    // clearCountry: () => dispatch(clearCountryFilter()),
+});
 
-export default withStyles(dashboardModerationQueueStyles)(
-    DashboardModerationQueue,
-);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps,
+)(withStyles(dashboardModerationQueueStyles)(DashboardModerationQueue));
