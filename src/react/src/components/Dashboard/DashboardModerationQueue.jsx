@@ -23,8 +23,9 @@ import ModerationStatusFilter from '../Filters/ModerationStatusFilter';
 // } from '../actions/claimFacilityDashboard';
 
 import {
-    fetchCountryOptions,
     fetchRecordTypeOptions,
+    fetchMatchStatusOptions,
+    fetchCountryOptions,
     // fetchClaimStatusOptions,
 } from '../../actions/filterOptions';
 
@@ -86,6 +87,7 @@ const DashboardModerationQueue = ({
     // },
     // fetchClaimStatus,
     fetchRecordTypes,
+    fetchMatchStatuses,
     fetchCountries,
     // updateClaimStatus,
     // updateCountry,
@@ -100,6 +102,7 @@ const DashboardModerationQueue = ({
 
     useEffect(() => {
         fetchRecordTypes();
+        fetchMatchStatuses();
         fetchCountries();
         // fetchClaimStatus();
 
@@ -211,6 +214,7 @@ DashboardModerationQueue.propTypes = {
     // data: facilityClaimsListPropType,
     // fetching: bool.isRequired,
     fetchRecordTypes: func.isRequired,
+    fetchMatchStatuses: func.isRequired,
     fetchCountries: func.isRequired,
     // countriesData: countryOptionsPropType,
     // fetchClaimStatus: func.isRequired,
@@ -250,6 +254,7 @@ const mapDispatchToProps = dispatch => ({
     // clearClaims: () => dispatch(clearFacilityClaims()),
     // sortClaims: sortedData => dispatch(sortFacilityClaims(sortedData)),
     fetchRecordTypes: () => dispatch(fetchRecordTypeOptions()),
+    fetchMatchStatuses: () => dispatch(fetchMatchStatusOptions()),
     fetchCountries: () => dispatch(fetchCountryOptions()),
     // fetchClaimStatus: () => dispatch(fetchClaimStatusOptions()),
     // updateClaimStatus: claimStatuses =>
