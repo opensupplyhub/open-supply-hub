@@ -1,31 +1,31 @@
 import React from 'react';
+import { connect } from 'react-redux';
+import { bool, arrayOf, shape, string } from 'prop-types';
 import StyledSelect from './StyledSelect';
 
 const MATCH_STATUS = 'MATCH_STATUS';
 
-const MatchStatusFilter = props => {
-    console.log('MatchStatusFilter props >>>', props);
-    const statuses = [
-        {
-            label: 'Matched',
-            value: 'Matched',
-        },
-        {
-            label: 'New Location',
-            value: 'New Location',
-        },
-        {
-            label: 'Potential Match',
-            value: 'Potential Match',
-        },
-    ];
+const MatchStatusFilter = ({
+    isDisabled,
+    matchStatusesOptions,
+    fetchingMatchStatuses,
+}) => {
+    console.log('MatchStatusFilter isDisabled >>>', isDisabled);
+    console.log(
+        'MatchStatusFilter matchStatusesOptions >>>',
+        matchStatusesOptions,
+    );
+    console.log(
+        'MatchStatusFilter fetchingMatchStatuses >>>',
+        fetchingMatchStatuses,
+    );
 
     return (
         <div className="form__field">
             <StyledSelect
                 label="Match Status"
                 name={MATCH_STATUS}
-                options={statuses || []}
+                options={matchStatusesOptions || []}
                 // value={countries}
                 // onChange={updateCountry}
                 // disabled={fetching}
@@ -35,4 +35,33 @@ const MatchStatusFilter = props => {
     );
 };
 
-export default MatchStatusFilter;
+MatchStatusFilter.defaultProps = {
+    isDisabled: false,
+    matchStatusesOptions: null,
+};
+
+MatchStatusFilter.propTypes = {
+    isDisabled: bool,
+    matchStatusesOptions: arrayOf(
+        shape({
+            value: string.isRequired,
+            label: string.isRequired,
+        }),
+    ),
+};
+
+const mapStateToProps = ({
+    filterOptions: {
+        matchStatuses: {
+            data: matchStatusesOptions,
+            fetching: fetchingMatchStatuses,
+        },
+    },
+}) => ({
+    matchStatusesOptions,
+    fetchingMatchStatuses,
+});
+
+const mapDispatchToProps = () => {};
+
+export default connect(mapStateToProps, mapDispatchToProps)(MatchStatusFilter);
