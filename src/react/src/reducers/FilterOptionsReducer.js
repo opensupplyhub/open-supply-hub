@@ -35,6 +35,9 @@ import {
     startFetchRecordTypeOptions,
     failFetchRecordTypeOptions,
     completeFetchRecordTypeOptions,
+    startFetchMatchStatusOptions,
+    failFetchMatchStatusOptions,
+    completeFetchMatchStatusOptions,
     resetFilterOptions,
 } from '../actions/filterOptions';
 
@@ -95,6 +98,11 @@ const initialState = Object.freeze({
         error: null,
     }),
     recordTypes: Object.freeze({
+        data: null,
+        fetching: false,
+        error: null,
+    }),
+    matchStatuses: Object.freeze({
         data: null,
         fetching: false,
         error: null,
@@ -343,6 +351,28 @@ export default createReducer(
         [completeFetchRecordTypeOptions]: (state, payload) =>
             update(state, {
                 recordTypes: {
+                    fetching: { $set: false },
+                    error: { $set: null },
+                    data: { $set: payload },
+                },
+            }),
+        [startFetchMatchStatusOptions]: state =>
+            update(state, {
+                matchStatuses: {
+                    fetching: { $set: true },
+                    error: { $set: null },
+                },
+            }),
+        [failFetchMatchStatusOptions]: (state, payload) =>
+            update(state, {
+                matchStatuses: {
+                    fetching: { $set: false },
+                    error: { $set: payload },
+                },
+            }),
+        [completeFetchMatchStatusOptions]: (state, payload) =>
+            update(state, {
+                matchStatuses: {
                     fetching: { $set: false },
                     error: { $set: null },
                     data: { $set: payload },
