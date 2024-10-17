@@ -7,7 +7,7 @@
       "analysis": {
         "analyzer": {
           "custom_asciifolding_analyzer": {
-            "tokenizer": "standard",
+            "tokenizer": "lowercase",
             "filter": [
               "custom_asciifolding_filter"
             ]
