@@ -14,7 +14,8 @@ const HelperText = ({ classes }) => (
     <span className={classes.helperTextContainerStyles}>
         <InfoOutlinedIcon className={classes.infoIconStyles} />
         <Typography component="span" className={classes.helperTextStyles}>
-            To search you need to enter the full ID production location
+            To search by ID, you need to enter the full OS ID of the production
+            location.
         </Typography>
     </span>
 );
