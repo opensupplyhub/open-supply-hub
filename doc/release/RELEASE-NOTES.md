@@ -17,7 +17,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1229](https://opensupplyhub.atlassian.net/browse/OSDEV-1229) - Create a Moderation Events Postgres table to track moderation events in the database.
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* Throttling has been introduced for tiles/* endpoints, limiting requests to 300 per minute.
 
 ### Architecture/Environment changes
 * *Describe architecture/environment changes here.*
