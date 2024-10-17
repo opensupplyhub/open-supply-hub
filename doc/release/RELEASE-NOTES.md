@@ -10,7 +10,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Release date: November 2, 2024
 
 ### Code/API changes
-* introduce throttling for tiles/* endpoins 300/minute 
+* Throttling has been introduced for tiles/* endpoints, limiting requests to 300 per minute. 
 
 ## Release 1.22.0
 
