@@ -1,0 +1,52 @@
+{
+    "query": {
+      "function_score": {
+        "query": {
+          "bool": {
+            "must": [
+              {
+                "term": {
+                  "country.alpha_2": "US"
+                }
+              },
+              {
+                "geo_distance": {
+                  "distance": "10km",
+                  "coordinates": {
+                    "lat": 41.371626,
+                    "lon": -82.102334
+                  }
+                }
+              }
+            ],
+            "should": [
+              {
+                "match": {
+                  "name": {
+                    "query": "BASF",
+                    "boost": 0.5
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "functions": [
+          {
+            "gauss": {
+              "coordinates": {
+                "origin": {
+                  "lat": 41.371626,
+                  "lon": -82.102334
+                },
+                "scale": "10km",
+                "offset": "0km",
+                "decay": 0.5
+              }
+            }
+          }
+        ]
+      }
+    },
+    "size": 50
+}
