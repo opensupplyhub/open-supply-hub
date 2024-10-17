@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.contrib.postgres import fields as postgres
 from api.models.facility.facility_list_item import FacilityListItem
@@ -7,16 +8,24 @@ class ModerationEvent(models.Model):
     '''
     Data that is needed for moderation queue.
     '''
+    uuid = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        unique=True
+    )
 
     created_at = models.DateTimeField(
         auto_now_add=True,
         help_text='Date when the moderation queue entry was created.'
     )
+
     updated_at = models.DateTimeField(
         auto_now=True,
-        help_text='Date when the moderation queue entry was last updated.'
+        help_text='Date when the moderation queue entry was last updated.',
+        db_index=True
     )
-    moderation_decision_date = models.DateTimeField(
+
+    status_change_date = models.DateTimeField(
         auto_now=True,
         help_text='Date when the moderation decision was made.'
     )
@@ -28,7 +37,34 @@ class ModerationEvent(models.Model):
         help_text='Linked facility list item for this moderation queue entry.'
     )
 
-    raw_json = models.JSONField(
+    CREATE = 'CREATE'
+    UPDATE = 'UPDATE'
+    CLAIM = 'CLAIM'
+
+    REQUEST_TYPE_CHOICES = [
+        (CREATE, 'Create'),
+        (UPDATE, 'Update'),
+        (CLAIM, 'Claim'),
+    ]
+
+    request_type = models.CharField(
+        max_length=200,
+        null=False,
+        choices=REQUEST_TYPE_CHOICES,
+        help_text='Type of moderation record type.'
+    )
+
+    raw_data = models.JSONField(
+        null=False,
+        blank=False,
+        default=dict,
+        help_text=(
+            'Key-value pairs of the non-parsed row and '
+            'header for the moderation data.'
+        )
+    )
+
+    cleaned_data = models.JSONField(
         null=False,
         blank=False,
         default=dict,
@@ -38,46 +74,43 @@ class ModerationEvent(models.Model):
         )
     )
 
-    MATCHED = 'MATCHED'
-    NEW_LOCATION = 'NEW_LOCATION'
-    POTENTIAL_MATCH = 'POTENTIAL_MATCH'
-
-    MATCH_STATUS_CHOICES = [
-        (MATCHED, 'Matched'),
-        (NEW_LOCATION, 'New Location'),
-        (POTENTIAL_MATCH, 'Potential Match'),
-    ]
-
-    match_status = models.CharField(
-        max_length=200,
-        null=True,
-        choices=MATCH_STATUS_CHOICES,
-        help_text='Match status of the production location.'
+    geocode_result = models.JSONField(
+        null=False,
+        blank=False,
+        default=dict,
+        help_text=(
+            'Result of the geocode operation.'
+        )
     )
 
-    APPROVED = 'APPROVED'
     PENDING = 'PENDING'
-    REJECTED = 'REJECTED'
-    REVOKED = 'REVOKED'
+    RESOLVED = 'RESOLVED'
 
-    MODERATION_STATUS_CHOICES = [
+    STATUS_CHOICES = [
         (PENDING, 'Pending'),
-        (APPROVED, 'Approved'),
-        (REJECTED, 'Rejected'),
-        (REVOKED, 'Revoked'),
+        (RESOLVED, 'RESOLVED'),
     ]
 
-    moderation_status = models.CharField(
+    status = models.CharField(
         max_length=200,
-        choices=MODERATION_STATUS_CHOICES,
+        choices=STATUS_CHOICES,
         default=PENDING,
         help_text='Moderation status of the production location.'
     )
 
-    record_type = postgres.ArrayField(
-        models.CharField(max_length=200, null=True),
-        help_text='List of record types for the production location.',
-        blank=True
+    API = 'API'
+    SLC = 'SLC'
+
+    SOURCE_CHOICES = [
+        (API, 'API'),
+        (SLC, 'SLC'),
+    ]
+
+    source = models.CharField(
+        max_length=200,
+        choices=SOURCE_CHOICES,
+        blank=False,
+        help_text='Source type of production location.'
     )
 
     def __str__(self):
