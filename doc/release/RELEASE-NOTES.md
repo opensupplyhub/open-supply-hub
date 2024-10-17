@@ -3,6 +3,15 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.23.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: November 2, 2024
+
+### Code/API changes
+* Throttling has been introduced for tiles/* endpoints, limiting requests to 300 per minute. 
+
 ## Release 1.22.0
 
 ## Introduction
