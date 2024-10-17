@@ -169,7 +169,8 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'burst': '100/minute',
         'sustained': '10000/day',
-        'data_upload': '30/minute'
+        'data_upload': '30/minute',
+        'tiles': '300/minute',
     }
 }
 
