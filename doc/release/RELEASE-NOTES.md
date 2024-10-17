@@ -17,6 +17,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe scheme changes here.*
 
 ### Code/API changes
+* Throttling has been introduced for tiles/* endpoints, limiting requests to 300 per minute.
 * [OSDEV-1328](https://opensupplyhub.atlassian.net/browse/OSDEV-1328) The OpenSearch tokenizer has been changed to `lowercase` to get better search results when querying the GET /v1/production-locations/ endpoint.
 
 ### Architecture/Environment changes
