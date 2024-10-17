@@ -184,7 +184,7 @@ services:
       - proxynet
 
   opensearch-single-node:
-    image: opensearchproject/opensearch:2.13.0
+    image: opensearchproject/opensearch:2.17.0
     environment:
       - cluster.name=opensearch-cluster # Name the cluster.
       - node.name=opensearch-single-node # Name the node that will run in this container.
@@ -224,6 +224,7 @@ services:
       - POSTGRES_PASSWORD=opensupplyhub
       - POSTGRES_DB=opensupplyhub
       - LOGSTASH_UPDATE_INTERVAL_MINUTES=1
+      - LOG_LEVEL=INFO
 
     depends_on:
       - opensearch-single-node
