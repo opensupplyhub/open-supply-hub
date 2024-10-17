@@ -1,6 +1,5 @@
 import uuid
 from django.db import models
-from django.contrib.postgres import fields as postgres
 from api.models.facility.facility_list_item import FacilityListItem
 
 
@@ -51,7 +50,7 @@ class ModerationEvent(models.Model):
         max_length=200,
         null=False,
         choices=REQUEST_TYPE_CHOICES,
-        help_text='Type of moderation record type.'
+        help_text='Type of moderation record.'
     )
 
     raw_data = models.JSONField(
@@ -88,7 +87,7 @@ class ModerationEvent(models.Model):
 
     STATUS_CHOICES = [
         (PENDING, 'Pending'),
-        (RESOLVED, 'RESOLVED'),
+        (RESOLVED, 'Resolved'),
     ]
 
     status = models.CharField(
