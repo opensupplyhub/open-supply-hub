@@ -7,7 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: October 19, 2024
+* Release date: November 2, 2024
 
 ### Code/API changes
 * introduce throttling for tiles/* endpoins 300/minute 
