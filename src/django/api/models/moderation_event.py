@@ -100,7 +100,7 @@ class ModerationEvent(models.Model):
         null=True,
         help_text=(
             'Source type of production location.'
-            ' If request_type is CLAIM, no source type'
+            ' If request_type is CLAIM, no source type.'
         )
     )
 
