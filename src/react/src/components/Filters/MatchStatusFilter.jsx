@@ -1,31 +1,20 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { bool, arrayOf, shape, string } from 'prop-types';
+import { bool } from 'prop-types';
 import StyledSelect from './StyledSelect';
+import { MATCH_STATUSES_OPTIONS } from '../../util/constants';
 
 const MATCH_STATUS = 'MATCH_STATUS';
 
-const MatchStatusFilter = ({
-    isDisabled,
-    matchStatusesOptions,
-    fetchingMatchStatuses,
-}) => {
+const MatchStatusFilter = ({ isDisabled }) => {
     console.log('MatchStatusFilter isDisabled >>>', isDisabled);
-    console.log(
-        'MatchStatusFilter matchStatusesOptions >>>',
-        matchStatusesOptions,
-    );
-    console.log(
-        'MatchStatusFilter fetchingMatchStatuses >>>',
-        fetchingMatchStatuses,
-    );
 
     return (
         <div className="form__field">
             <StyledSelect
                 label="Match Status"
                 name={MATCH_STATUS}
-                options={matchStatusesOptions || []}
+                options={MATCH_STATUSES_OPTIONS || []}
                 // value={countries}
                 // onChange={updateCountry}
                 // disabled={fetching}
@@ -37,30 +26,13 @@ const MatchStatusFilter = ({
 
 MatchStatusFilter.defaultProps = {
     isDisabled: false,
-    matchStatusesOptions: null,
 };
 
 MatchStatusFilter.propTypes = {
     isDisabled: bool,
-    matchStatusesOptions: arrayOf(
-        shape({
-            value: string.isRequired,
-            label: string.isRequired,
-        }),
-    ),
 };
 
-const mapStateToProps = ({
-    filterOptions: {
-        matchStatuses: {
-            data: matchStatusesOptions,
-            fetching: fetchingMatchStatuses,
-        },
-    },
-}) => ({
-    matchStatusesOptions,
-    fetchingMatchStatuses,
-});
+const mapStateToProps = () => {};
 
 const mapDispatchToProps = () => {};
 

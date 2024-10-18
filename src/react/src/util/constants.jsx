@@ -1321,3 +1321,52 @@ export const listParsingErrorMappings = {
         </>
     ),
 };
+
+export const RECORD_TYPES_OPTIONS = [
+    Object.freeze({
+        value: 'CLAIM',
+        label: 'Claim',
+    }),
+    Object.freeze({
+        value: 'SINGLE',
+        label: 'Single',
+    }),
+    Object.freeze({
+        value: 'API_RECORD',
+        label: 'API',
+    }),
+];
+
+export const MATCH_STATUSES_OPTIONS = [
+    Object.freeze({
+        value: 'MATCHED',
+        label: 'Matched',
+    }),
+    Object.freeze({
+        value: 'NEW_LOCATION',
+        label: 'New Location',
+    }),
+    Object.freeze({
+        value: 'POTENTIAL_MATCH',
+        label: 'Potential Match',
+    }),
+];
+
+export const MODERATION_STATUSES_OPTIONS = [
+    Object.freeze({
+        value: 'PENDING',
+        label: 'Pending',
+    }),
+    Object.freeze({
+        value: 'APPROVED',
+        label: 'Approved',
+    }),
+    Object.freeze({
+        value: 'REJECTED',
+        label: 'Rejected',
+    }),
+    Object.freeze({
+        value: 'REVOKED',
+        label: 'Revoked',
+    }),
+];
