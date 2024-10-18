@@ -16,7 +16,7 @@ export const REJECT_ACTION = 'reject';
 
 export const InfoLink = 'https://info.opensupplyhub.org';
 
-export const CLAIM_DECISION_EMPTY = 'N/A';
+export const EMPTY_PLACEHOLDER = 'N/A';
 
 export const InfoPaths = {
     storiesResources: 'stories-resources',
