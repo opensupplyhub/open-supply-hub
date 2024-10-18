@@ -25,6 +25,7 @@ class ModerationEvent(models.Model):
     )
 
     status_change_date = models.DateTimeField(
+        null=True,
         help_text='Date when the moderation decision was made.'
     )
 
@@ -35,20 +36,15 @@ class ModerationEvent(models.Model):
         help_text='Linked facility list item for this moderation queue entry.'
     )
 
-    CREATE = 'CREATE'
-    UPDATE = 'UPDATE'
-    CLAIM = 'CLAIM'
-
-    REQUEST_TYPE_CHOICES = [
-        (CREATE, 'Create'),
-        (UPDATE, 'Update'),
-        (CLAIM, 'Claim'),
-    ]
+    class RequestType(models.TextChoices):
+        CREATE = 'CREATE', 'Create'
+        UPDATE = 'UPDATE', 'Update'
+        CLAIM = 'CLAIM', 'Claim'
 
     request_type = models.CharField(
         max_length=200,
         null=False,
-        choices=REQUEST_TYPE_CHOICES,
+        choices=RequestType.choices,
         help_text='Type of moderation record.'
     )
 
