@@ -96,9 +96,12 @@ class ModerationEvent(models.Model):
     source = models.CharField(
         max_length=200,
         choices=Source.choices,
-        blank=False,
-        null=False,
-        help_text='Source type of production location.'
+        blank=True,
+        null=True,
+        help_text=(
+            'Source type of production location.'
+            ' If request_type is CLAIM, no source type'
+        )
     )
 
     def __str__(self):
