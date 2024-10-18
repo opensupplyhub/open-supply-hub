@@ -94,6 +94,7 @@ class ModerationEvent(models.Model):
         max_length=200,
         choices=STATUS_CHOICES,
         default=PENDING,
+        null=False,
         help_text='Moderation status of the production location.'
     )
 
@@ -109,6 +110,7 @@ class ModerationEvent(models.Model):
         max_length=200,
         choices=SOURCE_CHOICES,
         blank=False,
+        null=False,
         help_text='Source type of production location.'
     )
 
@@ -117,5 +119,5 @@ class ModerationEvent(models.Model):
             'ModerationQueue entry for ' +
             str(self.production_location_list_item) +
             ' with status ' +
-            self.moderation_status
+            self.status
         )
