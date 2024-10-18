@@ -481,3 +481,16 @@ export const productionLocationPropType = shape({
     }),
     historical_os_id: arrayOf(string),
 });
+
+export const moderationEventsPropType = arrayOf(
+    shape({
+        id: string.isRequired,
+        facility_name: string.isRequired,
+        contributor_name: string.isRequired,
+        facility_country_name: string.isRequired,
+        created_at: string.isRequired,
+        claim_decision: string,
+        status: string.isRequired,
+        updated_at: string.isRequired,
+    }),
+);
