@@ -116,24 +116,6 @@ export const failFetchClaimStatusOption = createAction(
 export const completeFetchClaimStatusOption = createAction(
     'COMPLETE_FETCH_CLAIM_STATUS_OPTIONS',
 );
-export const startFetchRecordTypeOptions = createAction(
-    'START_FETCH_RECORD_TYPE_OPTIONS',
-);
-export const failFetchRecordTypeOptions = createAction(
-    'FAIL_FETCH_RECORD_TYPE_OPTIONS',
-);
-export const completeFetchRecordTypeOptions = createAction(
-    'COMPLETE_FETCH_RECORD_TYPE_OPTIONS',
-);
-export const startFetchMatchStatusOptions = createAction(
-    'START_FETCH_MATCH_STATUS_OPTIONS',
-);
-export const failFetchMatchStatusOptions = createAction(
-    'FAIL_FETCH_MATCH_STATUS_OPTIONS',
-);
-export const completeFetchMatchStatusOptions = createAction(
-    'COMPLETE_FETCH_MATCH_STATUS_OPTIONS',
-);
 export const resetFilterOptions = createAction('RESET_FILTER_OPTIONS');
 
 export function fetchContributorOptions() {
@@ -357,56 +339,6 @@ export function fetchClaimStatusOptions() {
                         err,
                         'An error prevented fetching of claim status options',
                         failFetchClaimStatusOption,
-                    ),
-                ),
-            );
-    };
-}
-
-export function fetchRecordTypeOptions() {
-    return async dispatch => {
-        dispatch(startFetchRecordTypeOptions());
-
-        // TODO: replace with actual API call during implementation OSDEV-1175
-        return new Promise(resolve => {
-            const mockData = ['Claim', 'Single', 'API'];
-            const mappedData = mapDjangoChoiceTuplesValueToSelectOptions(
-                mockData,
-            );
-            setTimeout(() => resolve(mappedData), 1000);
-        })
-            .then(data => dispatch(completeFetchRecordTypeOptions(data)))
-            .catch(err =>
-                dispatch(
-                    logErrorAndDispatchFailure(
-                        err,
-                        'An error prevented fetching record type options',
-                        failFetchRecordTypeOptions,
-                    ),
-                ),
-            );
-    };
-}
-
-export function fetchMatchStatusOptions() {
-    return async dispatch => {
-        dispatch(startFetchMatchStatusOptions());
-
-        // TODO: replace with actual API call during implementation OSDEV-1175
-        return new Promise(resolve => {
-            const mockData = ['Matched', 'New Location', 'Potential Match'];
-            const mappedData = mapDjangoChoiceTuplesValueToSelectOptions(
-                mockData,
-            );
-            setTimeout(() => resolve(mappedData), 1000);
-        })
-            .then(data => dispatch(completeFetchMatchStatusOptions(data)))
-            .catch(err =>
-                dispatch(
-                    logErrorAndDispatchFailure(
-                        err,
-                        'An error prevented fetching match status options',
-                        failFetchMatchStatusOptions,
                     ),
                 ),
             );

@@ -32,12 +32,6 @@ import {
     startFetchClaimStatusOptions,
     failFetchClaimStatusOption,
     completeFetchClaimStatusOption,
-    startFetchRecordTypeOptions,
-    failFetchRecordTypeOptions,
-    completeFetchRecordTypeOptions,
-    startFetchMatchStatusOptions,
-    failFetchMatchStatusOptions,
-    completeFetchMatchStatusOptions,
     resetFilterOptions,
 } from '../actions/filterOptions';
 
@@ -93,16 +87,6 @@ const initialState = Object.freeze({
         error: null,
     }),
     claimStatuses: Object.freeze({
-        data: null,
-        fetching: false,
-        error: null,
-    }),
-    recordTypes: Object.freeze({
-        data: null,
-        fetching: false,
-        error: null,
-    }),
-    matchStatuses: Object.freeze({
         data: null,
         fetching: false,
         error: null,
@@ -329,50 +313,6 @@ export default createReducer(
         [completeFetchClaimStatusOption]: (state, payload) =>
             update(state, {
                 claimStatuses: {
-                    fetching: { $set: false },
-                    error: { $set: null },
-                    data: { $set: payload },
-                },
-            }),
-        [startFetchRecordTypeOptions]: state =>
-            update(state, {
-                recordTypes: {
-                    fetching: { $set: true },
-                    error: { $set: null },
-                },
-            }),
-        [failFetchRecordTypeOptions]: (state, payload) =>
-            update(state, {
-                recordTypes: {
-                    fetching: { $set: false },
-                    error: { $set: payload },
-                },
-            }),
-        [completeFetchRecordTypeOptions]: (state, payload) =>
-            update(state, {
-                recordTypes: {
-                    fetching: { $set: false },
-                    error: { $set: null },
-                    data: { $set: payload },
-                },
-            }),
-        [startFetchMatchStatusOptions]: state =>
-            update(state, {
-                matchStatuses: {
-                    fetching: { $set: true },
-                    error: { $set: null },
-                },
-            }),
-        [failFetchMatchStatusOptions]: (state, payload) =>
-            update(state, {
-                matchStatuses: {
-                    fetching: { $set: false },
-                    error: { $set: payload },
-                },
-            }),
-        [completeFetchMatchStatusOptions]: (state, payload) =>
-            update(state, {
-                matchStatuses: {
                     fetching: { $set: false },
                     error: { $set: null },
                     data: { $set: payload },
