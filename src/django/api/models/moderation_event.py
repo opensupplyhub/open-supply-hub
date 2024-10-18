@@ -106,8 +106,7 @@ class ModerationEvent(models.Model):
 
     def __str__(self):
         return (
-            'ModerationQueue entry for ' +
-            str(self.production_location_list_item) +
-            ' with status ' +
-            self.status
+            f'ModerationQueue entry {self.uuid} '
+            f'with request type {self.request_type} '
+            f'and status {self.status}'
         )
