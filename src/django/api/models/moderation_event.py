@@ -1,6 +1,6 @@
 import uuid
 from django.db import models
-from api.models.facility.facility_list_item import FacilityListItem
+from api.models.facility.facility_claim import FacilityClaim
 
 
 class ModerationEvent(models.Model):
@@ -27,6 +27,13 @@ class ModerationEvent(models.Model):
     status_change_date = models.DateTimeField(
         null=True,
         help_text='Date when the moderation decision was made.'
+    )
+
+    claim_id = models.OneToOneField(
+        FacilityClaim,
+        on_delete=models.CASCADE,
+        related_name='moderation_event',
+        help_text='Linked claim id for this production location.'
     )
 
     class RequestType(models.TextChoices):
