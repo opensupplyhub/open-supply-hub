@@ -77,33 +77,25 @@ class ModerationEvent(models.Model):
         )
     )
 
-    PENDING = 'PENDING'
-    RESOLVED = 'RESOLVED'
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Pending'
+        RESOLVED = 'RESOLVED', 'Resolved'
 
-    STATUS_CHOICES = [
-        (PENDING, 'Pending'),
-        (RESOLVED, 'Resolved'),
-    ]
+    class Source(models.TextChoices):
+        API = 'API', 'API'
+        SLC = 'SLC', 'SLC'
 
     status = models.CharField(
         max_length=200,
-        choices=STATUS_CHOICES,
-        default=PENDING,
+        choices=Status.choices,
+        default=Status.PENDING,
         null=False,
         help_text='Moderation status of the production location.'
     )
 
-    API = 'API'
-    SLC = 'SLC'
-
-    SOURCE_CHOICES = [
-        (API, 'API'),
-        (SLC, 'SLC'),
-    ]
-
     source = models.CharField(
         max_length=200,
-        choices=SOURCE_CHOICES,
+        choices=Source.choices,
         blank=False,
         null=False,
         help_text='Source type of production location.'
