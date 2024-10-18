@@ -469,28 +469,31 @@ export const filterOptionsPropType = shape({
     fetching: bool.isRequired,
 });
 
+export const productionLocationCountryPropType = shape({
+    alpha_2: string.isRequired,
+    alpha_3: string.isRequired,
+    name: string.isRequired,
+    numeric: string.isRequired,
+});
+
 export const productionLocationPropType = shape({
     os_id: string,
     name: string,
     address: string,
-    country: shape({
-        alpha_2: string,
-        alpha_3: string,
-        name: string,
-        numeric: string,
-    }),
+    country: productionLocationCountryPropType,
     historical_os_id: arrayOf(string),
 });
 
 export const moderationEventsPropType = arrayOf(
     shape({
-        id: string.isRequired,
-        facility_name: string.isRequired,
-        contributor_name: string.isRequired,
-        facility_country_name: string.isRequired,
+        moderation_id: number.isRequired,
         created_at: string.isRequired,
-        claim_decision: string,
-        status: string.isRequired,
+        name: string.isRequired,
+        country: productionLocationCountryPropType,
+        contributor_name: string.isRequired,
+        match_status: string.isRequired,
+        moderation_status: string.isRequired,
+        moderation_decision_date: string,
         updated_at: string.isRequired,
     }),
 );
