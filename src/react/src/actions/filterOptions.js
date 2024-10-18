@@ -116,6 +116,7 @@ export const failFetchClaimStatusOption = createAction(
 export const completeFetchClaimStatusOption = createAction(
     'COMPLETE_FETCH_CLAIM_STATUS_OPTIONS',
 );
+
 export const resetFilterOptions = createAction('RESET_FILTER_OPTIONS');
 
 export function fetchContributorOptions() {
