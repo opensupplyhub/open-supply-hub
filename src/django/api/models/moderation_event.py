@@ -25,7 +25,6 @@ class ModerationEvent(models.Model):
     )
 
     status_change_date = models.DateTimeField(
-        auto_now=True,
         help_text='Date when the moderation decision was made.'
     )
 
