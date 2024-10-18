@@ -29,13 +29,6 @@ class ModerationEvent(models.Model):
         help_text='Date when the moderation decision was made.'
     )
 
-    production_location_list_item = models.OneToOneField(
-        FacilityListItem,
-        on_delete=models.CASCADE,
-        related_name='moderation_queue',
-        help_text='Linked facility list item for this moderation queue entry.'
-    )
-
     class RequestType(models.TextChoices):
         CREATE = 'CREATE', 'Create'
         UPDATE = 'UPDATE', 'Update'
