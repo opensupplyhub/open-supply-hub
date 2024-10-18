@@ -29,7 +29,7 @@ class ModerationEvent(models.Model):
         help_text='Date when the moderation decision was made.'
     )
 
-    claim_id = models.OneToOneField(
+    claim = models.OneToOneField(
         FacilityClaim,
         on_delete=models.CASCADE,
         related_name='moderation_event',
