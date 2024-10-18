@@ -1332,7 +1332,7 @@ export const RECORD_TYPES_OPTIONS = [
         label: 'Single',
     }),
     Object.freeze({
-        value: 'API_RECORD',
+        value: 'API_POST',
         label: 'API',
     }),
 ];
