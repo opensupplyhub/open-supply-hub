@@ -1,16 +1,16 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { bool } from 'prop-types';
+import { bool, string } from 'prop-types';
 import StyledSelect from './StyledSelect';
 import { MODERATION_STATUSES_OPTIONS } from '../../util/constants';
 
 const MODERATION_STATUS = 'MODERATION_STATUS';
 
-const ModerationStatusFilter = ({ isDisabled }) => {
+const ModerationStatusFilter = ({ isDisabled, className }) => {
     console.log('ModerationStatusFilter isDisabled >>>', isDisabled);
 
     return (
-        <div className="form__field">
+        <div className={className}>
             <StyledSelect
                 label="Moderation Status"
                 name={MODERATION_STATUS}
@@ -26,10 +26,12 @@ const ModerationStatusFilter = ({ isDisabled }) => {
 
 ModerationStatusFilter.defaultProps = {
     isDisabled: false,
+    className: 'form__field',
 };
 
 ModerationStatusFilter.propTypes = {
     isDisabled: bool,
+    className: string,
 };
 
 const mapStateToProps = () => {};

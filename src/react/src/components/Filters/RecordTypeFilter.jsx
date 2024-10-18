@@ -1,16 +1,16 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { bool } from 'prop-types';
+import { bool, string } from 'prop-types';
 import StyledSelect from './StyledSelect';
 import { RECORD_TYPES_OPTIONS } from '../../util/constants';
 
 const RECORD_TYPE = 'RECORD_TYPE';
 
-const RecordTypeFilter = ({ isDisabled }) => {
+const RecordTypeFilter = ({ isDisabled, className }) => {
     console.log('isDisabled >>>', isDisabled);
 
     return (
-        <div className="form__field">
+        <div className={className}>
             <StyledSelect
                 label="Record Type"
                 name={RECORD_TYPE}
@@ -26,10 +26,12 @@ const RecordTypeFilter = ({ isDisabled }) => {
 
 RecordTypeFilter.defaultProps = {
     isDisabled: false,
+    className: 'form__field',
 };
 
 RecordTypeFilter.propTypes = {
     isDisabled: bool,
+    className: string,
 };
 
 const mapStateToProps = () => {};
