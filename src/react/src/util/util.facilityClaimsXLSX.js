@@ -1,6 +1,6 @@
 import moment from 'moment';
 
-import { CLAIM_DECISION_EMPTY } from '../util/constants';
+import { EMPTY_PLACEHOLDER } from '../util/constants';
 
 const xlsxHeaders = Object.freeze([
     'Claim ID',
@@ -23,7 +23,7 @@ const formatFacilityClaimsDataForXLSX = facilityClaims =>
             moment(facilityClaim.created_at).format('LL'),
             facilityClaim.claim_decision !== null
                 ? moment(facilityClaim.claim_decision).format('LL')
-                : CLAIM_DECISION_EMPTY,
+                : EMPTY_PLACEHOLDER,
             facilityClaim.status,
             moment(facilityClaim.updated_at).format('LL'),
         ]),
