@@ -16,7 +16,7 @@ export const REJECT_ACTION = 'reject';
 
 export const InfoLink = 'https://info.opensupplyhub.org';
 
-export const CLAIM_DECISION_EMPTY = 'N/A';
+export const EMPTY_PLACEHOLDER = 'N/A';
 
 export const InfoPaths = {
     storiesResources: 'stories-resources',
@@ -331,6 +331,7 @@ export const dashboardListsRoute = '/dashboard/lists';
 export const dashboardApiBlocksRoute = '/dashboard/apiblocks';
 export const dashboardApiBlockRoute = '/dashboard/apiblocks/:blockId';
 export const dashboardClaimsRoute = '/dashboard/claims';
+export const dashboardModerationQueueRoute = '/dashboard/moderation-queue';
 export const dashboardDeleteFacilityRoute = '/dashboard/deletefacility';
 export const dashboardMergeFacilitiesRoute = '/dashboard/mergefacilities';
 export const dashboardAdjustFacilityMatchesRoute =
@@ -1320,3 +1321,52 @@ export const listParsingErrorMappings = {
         </>
     ),
 };
+
+export const RECORD_TYPES_OPTIONS = [
+    Object.freeze({
+        value: 'CLAIM',
+        label: 'Claim',
+    }),
+    Object.freeze({
+        value: 'SINGLE',
+        label: 'Single',
+    }),
+    Object.freeze({
+        value: 'API_POST',
+        label: 'API',
+    }),
+];
+
+export const MATCH_STATUSES_OPTIONS = [
+    Object.freeze({
+        value: 'MATCHED',
+        label: 'Matched',
+    }),
+    Object.freeze({
+        value: 'NEW_LOCATION',
+        label: 'New Location',
+    }),
+    Object.freeze({
+        value: 'POTENTIAL_MATCH',
+        label: 'Potential Match',
+    }),
+];
+
+export const MODERATION_STATUSES_OPTIONS = [
+    Object.freeze({
+        value: 'PENDING',
+        label: 'Pending',
+    }),
+    Object.freeze({
+        value: 'APPROVED',
+        label: 'Approved',
+    }),
+    Object.freeze({
+        value: 'REJECTED',
+        label: 'Rejected',
+    }),
+    Object.freeze({
+        value: 'REVOKED',
+        label: 'Revoked',
+    }),
+];
