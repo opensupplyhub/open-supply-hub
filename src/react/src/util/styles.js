@@ -601,3 +601,23 @@ export const makeSearchByOsIdResultActionsStyles = theme =>
             },
         }),
     });
+
+export const makeDatePickerStyles = theme => ({
+    datePickerContainer: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '5px',
+    },
+    datePickerLabel: {
+        fontSize: '18px',
+        fontWeight: theme.typography.fontWeightSemiBoldPlus,
+    },
+    dateInputStyles: Object.freeze({
+        fontSize: '16px',
+        lineHeight: '20px',
+        padding: '8px',
+    }),
+    notchedOutlineStyles: Object.freeze({
+        borderRadius: 0,
+    }),
+});
