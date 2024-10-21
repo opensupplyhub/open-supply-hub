@@ -16,7 +16,8 @@
         { "name": "POSTGRES_PASSWORD", "value": "${postgres_password}" },
         { "name": "POSTGRES_DB", "value": "${postgres_db}" },
         { "name": "AWS_REGION", "value": "${aws_region}"},
-        { "name": "LOGSTASH_UPDATE_INTERVAL_MINUTES", "value": "${logstash_update_interval_minutes}"}
+        { "name": "PRODUCTION_LOCATIONS_PIPELINE_UPDATE_INTERVAL_MINUTES", "value": "${production_locations_pipeline_update_interval_minutes}"},
+        { "name": "MODERATION_EVENTS_PIPELINE_UPDATE_INTERVAL_MINUTES", "value": "${moderation_events_pipeline_update_interval_minutes}" }
       ],
       "logConfiguration": {
           "logDriver": "awslogs",
