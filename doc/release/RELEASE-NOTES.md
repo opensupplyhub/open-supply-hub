@@ -16,8 +16,16 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Scheme changes
 * [OSDEV-1229](https://opensupplyhub.atlassian.net/browse/OSDEV-1229) - Create a Moderation Events Postgres table to track moderation events in the database.
 
+### Database changes
+#### Migrations:
+* *Describe migrations here.*
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
 ### Code/API changes
 * Throttling has been introduced for tiles/* endpoints, limiting requests to 300 per minute.
+* [OSDEV-1328](https://opensupplyhub.atlassian.net/browse/OSDEV-1328) The OpenSearch tokenizer has been changed to `lowercase` to get better search results when querying the GET /v1/production-locations/ endpoint.
 
 ### Architecture/Environment changes
 * *Describe architecture/environment changes here.*
@@ -31,6 +39,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
+* Run `Deploy to AWS` pipeline for an existing environment with the flag clear OpenSearch set to true - to let the tokenizer parse full text into words with new configurations.
 
 
 ## Release 1.22.0
