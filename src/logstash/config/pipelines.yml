@@ -1,0 +1,8 @@
+# This file is where pipelines are defined.
+# For more information on multiple pipelines, see the documentation:
+#   https://www.elastic.co/guide/en/logstash/8.15/multiple-pipelines.html
+
+- pipeline.id: production_locations
+  path.config: "/usr/share/logstash/pipeline/sync_production_locations.conf"
+- pipeline.id: moderation_events
+  path.config: "/usr/share/logstash/pipeline/sync_moderation_events.conf"
