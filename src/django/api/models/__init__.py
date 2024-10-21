@@ -75,3 +75,4 @@ from .user import (
   User,
 )
 from .version import Version
+from .moderation_event import ModerationEvent
