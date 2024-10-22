@@ -113,7 +113,7 @@ class ModerationEvent(models.Model):
         max_length=3,
         choices=Source.choices,
         blank=True,
-        null=True,
+        default='',
         help_text=(
             'Source type of production location.'
             ' If request_type is CLAIM, no source type.'
