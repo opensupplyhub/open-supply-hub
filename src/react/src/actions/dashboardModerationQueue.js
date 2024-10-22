@@ -1,6 +1,8 @@
 import { createAction } from 'redux-act';
-
-import { logErrorAndDispatchFailure } from '../util/util';
+import {
+    logErrorAndDispatchFailure,
+    downloadModerationEventsXLSX,
+} from '../util/util';
 
 export const startFetchingModerationEvents = createAction(
     'START_FETCHING_MODERATION_EVENTS',
@@ -11,6 +13,15 @@ export const failFetchingModerationEvents = createAction(
 export const completeFetchingModerationEvents = createAction(
     'COMPLETE_FETCHING_MODERATION_EVENTS',
 );
+export const startDownloadingModerationEvents = createAction(
+    'START_DOWNLOADING_MODERATION_EVENTS',
+);
+export const failDownloadingModerationEvents = createAction(
+    'FAIL_DOWNLOADING_MODERATION_EVENTS',
+);
+export const completeDownloadingModerationEvents = createAction(
+    'COMPLETE_DOWNLOADING_MODERATION_EVENTS',
+);
 
 const mockData = [
     {
@@ -19,6 +30,9 @@ const mockData = [
         name: 'Generic Soft Inc',
         country: {
             name: 'United States',
+            alpha_2: 'US',
+            alpha_3: 'USA',
+            numeric: '840',
         },
         contributor_name: 'International Business Machines',
         match_status: 'MATCHED',
@@ -32,6 +46,9 @@ const mockData = [
         name: 'Sporting Goods Manufacturer',
         country: {
             name: 'United States',
+            alpha_2: 'US',
+            alpha_3: 'USA',
+            numeric: '840',
         },
         contributor_name: 'General Services',
         match_status: 'MATCHED',
@@ -45,6 +62,9 @@ const mockData = [
         name: 'Printing materials factory',
         country: {
             name: 'Italy',
+            alpha_2: 'IT',
+            alpha_3: 'ITA',
+            numeric: '380',
         },
         contributor_name: 'Global Printing',
         match_status: 'MATCHED',
@@ -58,6 +78,9 @@ const mockData = [
         name: 'Textile Machinery',
         country: {
             name: 'Canada',
+            alpha_2: 'CA',
+            alpha_3: 'CAN',
+            numeric: '124',
         },
         contributor_name: 'International Business Machines',
         match_status: 'MATCHED',
@@ -71,6 +94,9 @@ const mockData = [
         name: 'Sporting Goods and Equipment Inc',
         country: {
             name: 'United States',
+            alpha_2: 'US',
+            alpha_3: 'USA',
+            numeric: '840',
         },
         contributor_name: 'Sport Services',
         match_status: 'MATCHED',
@@ -84,6 +110,9 @@ const mockData = [
         name: 'Printing materials factory',
         country: {
             name: 'Italy',
+            alpha_2: 'IT',
+            alpha_3: 'ITA',
+            numeric: '380',
         },
         contributor_name: 'Global Printing',
         match_status: 'MATCHED',
@@ -113,5 +142,24 @@ export function fetchModerationEvents() {
                     ),
                 ),
             );
+    };
+}
+
+export function downloadModerationEvents(data) {
+    return dispatch => {
+        dispatch(startDownloadingModerationEvents());
+
+        try {
+            downloadModerationEventsXLSX(data);
+            dispatch(completeDownloadingModerationEvents());
+        } catch (err) {
+            dispatch(
+                logErrorAndDispatchFailure(
+                    err,
+                    'An error prevented downloading moderation events',
+                    failDownloadingModerationEvents,
+                ),
+            );
+        }
     };
 }
