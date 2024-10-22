@@ -271,6 +271,13 @@ export const numberOfWorkerOptionsPropType = arrayOf(
     }),
 );
 
+export const defaultOptionsPropType = arrayOf(
+    shape({
+        value: string.isRequired,
+        label: string.isRequired,
+    }),
+);
+
 export const facilityPropType = shape({
     id: string.isRequired,
     type: oneOf([FEATURE]).isRequired,
