@@ -491,7 +491,7 @@ export const moderationEventsPropType = arrayOf(
         name: string.isRequired,
         country: productionLocationCountryPropType,
         contributor_name: string.isRequired,
-        match_status: string.isRequired,
+        source: string.isRequired,
         moderation_status: string.isRequired,
         moderation_decision_date: string,
         updated_at: string.isRequired,
