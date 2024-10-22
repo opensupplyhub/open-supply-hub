@@ -46,6 +46,10 @@ export const updateNativeLanguageNameFilter = createAction(
 export const updateCombineContributorsFilterOption = createAction(
     'UPDATE_COMBINE_CONTRIBUTORS_FILTER_OPTION',
 );
+export const updateSourceTypeFilter = createAction('UPDATE_SOURCE_TYPE_FILTER');
+export const updateModerationStatusFilter = createAction(
+    'UPDATE_MODERATION_STATUS_FILTER',
+);
 export const updateBoundaryFilter = createAction('UPDATE_BOUNDARY_FILTER');
 export const updateSortAlgorithm = createAction('UPDATE_SORT_ALGORITHM');
 export const resetAllFilters = createAction('RESET_ALL_FILTERS');
