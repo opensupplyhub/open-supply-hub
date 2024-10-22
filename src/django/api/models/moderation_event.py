@@ -45,19 +45,21 @@ class ModerationEvent(models.Model):
 
     status_change_date = models.DateTimeField(
         blank=True,
+        null=True,
         help_text='Date when the moderation decision was made.'
     )
 
     contributor = models.ForeignKey(
         Contributor,
         on_delete=models.CASCADE,
-        related_name='moderation_event',
+        related_name='moderation_events',
         help_text='Linked contributor responsible for this moderation event.'
     )
 
     claim = models.OneToOneField(
         FacilityClaim,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name='moderation_event',
         help_text='Linked claim id for this production location.'
     )
@@ -110,6 +112,7 @@ class ModerationEvent(models.Model):
         max_length=3,
         choices=Source.choices,
         blank=True,
+        null=True,
         help_text=(
             'Source type of production location.'
             ' If request_type is CLAIM, no source type.'
