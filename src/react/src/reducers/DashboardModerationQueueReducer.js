@@ -5,6 +5,9 @@ import {
     startFetchingModerationEvents,
     failFetchingModerationEvents,
     completeFetchingModerationEvents,
+    startDownloadingModerationEvents,
+    failDownloadingModerationEvents,
+    completeDownloadingModerationEvents,
 } from '../actions/dashboardModerationQueue';
 
 const initialState = Object.freeze({
@@ -12,6 +15,10 @@ const initialState = Object.freeze({
         fetching: false,
         error: null,
         events: [],
+    }),
+    moderationEventsDownloadStatus: Object.freeze({
+        downloading: false,
+        error: null,
     }),
 });
 
@@ -37,6 +44,39 @@ export default createReducer(
                     fetching: { $set: initialState.moderationEvents.fetching },
                     error: { $set: initialState.moderationEvents.error },
                     events: { $set: data },
+                },
+            }),
+        [startDownloadingModerationEvents]: state =>
+            update(state, {
+                moderationEventsDownloadStatus: {
+                    downloading: { $set: true },
+                    error: {
+                        $set: initialState.moderationEventsDownloadStatus.error,
+                    },
+                },
+            }),
+        [failDownloadingModerationEvents]: (state, error) =>
+            update(state, {
+                moderationEventsDownloadStatus: {
+                    downloading: {
+                        $set:
+                            initialState.moderationEventsDownloadStatus
+                                .downloading,
+                    },
+                    error: { $set: error },
+                },
+            }),
+        [completeDownloadingModerationEvents]: state =>
+            update(state, {
+                moderationEventsDownloadStatus: {
+                    downloading: {
+                        $set:
+                            initialState.moderationEventsDownloadStatus
+                                .downloading,
+                    },
+                    error: {
+                        $set: initialState.moderationEventsDownloadStatus.error,
+                    },
                 },
             }),
     },
