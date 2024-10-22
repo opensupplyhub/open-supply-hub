@@ -51,7 +51,8 @@ class ModerationEvent(models.Model):
 
     contributor = models.ForeignKey(
         Contributor,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
+        null=True,
         related_name='moderation_events',
         help_text='Linked contributor responsible for this moderation event.'
     )
