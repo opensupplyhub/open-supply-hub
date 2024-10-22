@@ -28,11 +28,15 @@ const DashboardDownloadDataButton = ({
     );
 };
 
+DashboardDownloadDataButton.defaultProps = {
+    downloadError: null,
+};
+
 DashboardDownloadDataButton.propTypes = {
     fetching: bool.isRequired,
     downloadPayload: moderationEventsPropType.isRequired,
     downloadData: func.isRequired,
-    downloadError: arrayOf(string).isRequired,
+    downloadError: arrayOf(string),
 };
 
 export default DashboardDownloadDataButton;
