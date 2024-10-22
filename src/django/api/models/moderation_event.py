@@ -7,6 +7,19 @@ class ModerationEvent(models.Model):
     '''
     Data that is needed for moderation queue.
     '''
+    class RequestType(models.TextChoices):
+        CREATE = 'CREATE', 'Create'
+        UPDATE = 'UPDATE', 'Update'
+        CLAIM = 'CLAIM', 'Claim'
+
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Pending'
+        RESOLVED = 'RESOLVED', 'Resolved'
+
+    class Source(models.TextChoices):
+        API = 'API', 'API'
+        SLC = 'SLC', 'SLC'
+
     uuid = models.UUIDField(
         default=uuid.uuid4,
         editable=False,
@@ -40,11 +53,6 @@ class ModerationEvent(models.Model):
         related_name='moderation_event',
         help_text='Linked claim id for this production location.'
     )
-
-    class RequestType(models.TextChoices):
-        CREATE = 'CREATE', 'Create'
-        UPDATE = 'UPDATE', 'Update'
-        CLAIM = 'CLAIM', 'Claim'
 
     request_type = models.CharField(
         max_length=6,
@@ -81,14 +89,6 @@ class ModerationEvent(models.Model):
             'Result of the geocode operation.'
         )
     )
-
-    class Status(models.TextChoices):
-        PENDING = 'PENDING', 'Pending'
-        RESOLVED = 'RESOLVED', 'Resolved'
-
-    class Source(models.TextChoices):
-        API = 'API', 'API'
-        SLC = 'SLC', 'SLC'
 
     status = models.CharField(
         max_length=8,
