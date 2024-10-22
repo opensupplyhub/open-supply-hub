@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from api.models.contributor.contributor import Contributor
 from api.models.facility.facility_claim import FacilityClaim
 
 
@@ -43,8 +44,15 @@ class ModerationEvent(models.Model):
     )
 
     status_change_date = models.DateTimeField(
-        null=True,
+        blank=True,
         help_text='Date when the moderation decision was made.'
+    )
+
+    contributor = models.ForeignKey(
+        Contributor,
+        on_delete=models.CASCADE,
+        related_name='moderation_event',
+        help_text='Linked contributor responsible for this moderation event.'
     )
 
     claim = models.OneToOneField(
@@ -102,7 +110,6 @@ class ModerationEvent(models.Model):
         max_length=3,
         choices=Source.choices,
         blank=True,
-        null=True,
         help_text=(
             'Source type of production location.'
             ' If request_type is CLAIM, no source type.'
