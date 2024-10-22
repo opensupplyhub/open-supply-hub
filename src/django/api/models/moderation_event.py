@@ -12,7 +12,10 @@ class ModerationEvent(models.Model):
         editable=False,
         unique=True,
         db_index=True,
-        help_text='Unique identifier to make moderation event table more reusable across the app.'
+        help_text=(
+            'Unique identifier to make moderation '
+            'event table more reusable across the app.'
+        )
     )
 
     created_at = models.DateTimeField(
@@ -108,7 +111,7 @@ class ModerationEvent(models.Model):
 
     def __str__(self):
         return (
-            f'ModerationQueue entry {self.uuid} '
+            f'ModerationEvent entry {self.uuid} '
             f'with request type {self.request_type} '
             f'and status {self.status}'
         )
