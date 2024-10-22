@@ -621,3 +621,28 @@ export const makeDatePickerStyles = theme => ({
         borderRadius: 0,
     }),
 });
+
+export const makeDownloadExcelButtonStyles = theme =>
+    Object.freeze({
+        button: Object.freeze({
+            width: '200px',
+            marginBottom: '44px',
+            padding: '14px 13px',
+            color: theme.palette.getContrastText(theme.palette.action.main),
+            fontSize: '18px',
+            fontWeight: 900,
+            lineHeight: '20px',
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
+            backgroundColor: theme.palette.action.main,
+        }),
+        buttonContent: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            textTransform: 'none',
+        }),
+        buttonText: Object.freeze({
+            marginLeft: '0.2rem',
+        }),
+    });
