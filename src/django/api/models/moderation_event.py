@@ -10,7 +10,9 @@ class ModerationEvent(models.Model):
     uuid = models.UUIDField(
         default=uuid.uuid4,
         editable=False,
-        unique=True
+        unique=True,
+        db_index=True,
+        help_text='Unique identifier to make moderation event table more reusable across the app.'
     )
 
     created_at = models.DateTimeField(
@@ -42,7 +44,7 @@ class ModerationEvent(models.Model):
         CLAIM = 'CLAIM', 'Claim'
 
     request_type = models.CharField(
-        max_length=200,
+        max_length=6,
         null=False,
         choices=RequestType.choices,
         help_text='Type of moderation record.'
@@ -86,7 +88,7 @@ class ModerationEvent(models.Model):
         SLC = 'SLC', 'SLC'
 
     status = models.CharField(
-        max_length=200,
+        max_length=8,
         choices=Status.choices,
         default=Status.PENDING,
         null=False,
@@ -94,7 +96,7 @@ class ModerationEvent(models.Model):
     )
 
     source = models.CharField(
-        max_length=200,
+        max_length=3,
         choices=Source.choices,
         blank=True,
         null=True,

@@ -14,7 +14,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * 0158_create_moderation_events_table.py - This migration creates api_moderationevent table for Moderation Queue.
 
 #### Scheme changes
-* [OSDEV-1229](https://opensupplyhub.atlassian.net/browse/OSDEV-1229) - Create a Moderation Events Postgres table to track moderation events in the database.
+* [OSDEV-1229](https://opensupplyhub.atlassian.net/browse/OSDEV-1229) - Created Moderation Events Postgres table to track moderation events in the database.
 
 ### Database changes
 #### Migrations:
