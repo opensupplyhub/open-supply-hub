@@ -1,0 +1,38 @@
+import React, { useEffect } from 'react';
+import { arrayOf, string, func, bool } from 'prop-types';
+import { toast } from 'react-toastify';
+import DownloadExcelButton from './DownloadExcelButton';
+import { moderationEventsPropType } from '../../util/propTypes';
+
+const DashboardDownloadDataButton = ({
+    fetching,
+    downloadPayload,
+    downloadData,
+    downloadError,
+}) => {
+    useEffect(() => {
+        if (downloadError) {
+            toast('A problem prevented downloading the data');
+        }
+    }, [downloadError]);
+
+    const handleDownload = () => {
+        downloadData(downloadPayload);
+    };
+
+    return (
+        <DownloadExcelButton
+            fetching={fetching}
+            handleDownload={handleDownload}
+        />
+    );
+};
+
+DashboardDownloadDataButton.propTypes = {
+    fetching: bool.isRequired,
+    downloadPayload: moderationEventsPropType.isRequired,
+    downloadData: func.isRequired,
+    downloadError: arrayOf(string).isRequired,
+};
+
+export default DashboardDownloadDataButton;
