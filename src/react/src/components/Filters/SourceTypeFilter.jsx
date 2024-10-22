@@ -2,19 +2,19 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { bool, string } from 'prop-types';
 import StyledSelect from './StyledSelect';
-import { RECORD_TYPES_OPTIONS } from '../../util/constants';
+import { SOURCE_TYPES_OPTIONS } from '../../util/constants';
 
-const RECORD_TYPE = 'RECORD_TYPE';
+const SOURCE_TYPE = 'SOURCE_TYPE';
 
-const RecordTypeFilter = ({ isDisabled, className }) => {
+const SourceTypeFilter = ({ isDisabled, className }) => {
     console.log('isDisabled >>>', isDisabled);
 
     return (
         <div className={className}>
             <StyledSelect
-                label="Record Type"
-                name={RECORD_TYPE}
-                options={RECORD_TYPES_OPTIONS || []}
+                label="Source Type"
+                name={SOURCE_TYPE}
+                options={SOURCE_TYPES_OPTIONS || []}
                 // value={countries}
                 // onChange={updateCountry}
                 // disabled={fetching}
@@ -24,12 +24,12 @@ const RecordTypeFilter = ({ isDisabled, className }) => {
     );
 };
 
-RecordTypeFilter.defaultProps = {
+SourceTypeFilter.defaultProps = {
     isDisabled: false,
     className: 'form__field',
 };
 
-RecordTypeFilter.propTypes = {
+SourceTypeFilter.propTypes = {
     isDisabled: bool,
     className: string,
 };
@@ -38,4 +38,4 @@ const mapStateToProps = () => {};
 
 const mapDispatchToProps = () => {};
 
-export default connect(mapStateToProps, mapDispatchToProps)(RecordTypeFilter);
+export default connect(mapStateToProps, mapDispatchToProps)(SourceTypeFilter);

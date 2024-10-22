@@ -1322,33 +1322,14 @@ export const listParsingErrorMappings = {
     ),
 };
 
-export const RECORD_TYPES_OPTIONS = [
+export const SOURCE_TYPES_OPTIONS = [
     Object.freeze({
-        value: 'CLAIM',
-        label: 'Claim',
-    }),
-    Object.freeze({
-        value: 'SINGLE',
-        label: 'Single',
-    }),
-    Object.freeze({
-        value: 'API_POST',
+        value: 'API',
         label: 'API',
     }),
-];
-
-export const MATCH_STATUSES_OPTIONS = [
     Object.freeze({
-        value: 'MATCHED',
-        label: 'Matched',
-    }),
-    Object.freeze({
-        value: 'NEW_LOCATION',
-        label: 'New Location',
-    }),
-    Object.freeze({
-        value: 'POTENTIAL_MATCH',
-        label: 'Potential Match',
+        value: 'SLC',
+        label: 'SLC',
     }),
 ];
 
@@ -1358,15 +1339,7 @@ export const MODERATION_STATUSES_OPTIONS = [
         label: 'Pending',
     }),
     Object.freeze({
-        value: 'APPROVED',
-        label: 'Approved',
-    }),
-    Object.freeze({
-        value: 'REJECTED',
-        label: 'Rejected',
-    }),
-    Object.freeze({
-        value: 'REVOKED',
-        label: 'Revoked',
+        value: 'RESOLVED',
+        label: 'Resolved',
     }),
 ];
