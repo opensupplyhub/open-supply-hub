@@ -199,11 +199,6 @@ variable "rds_deletion_protection" {
   default = true
 }
 
-variable "rds_restore_anonymized" {
-  type    = bool
-  default = false
-}
-
 variable "snapshot_identifier" {
   default     = ""
   type        = string
@@ -593,6 +588,11 @@ variable "anonymizer_kms_key_admin_users" {
 }
 
 variable "database_anonymizer_enabled" {
+  type    = bool
+  default = false
+}
+
+variable "anonymized_database_dump_enabled" {
   type    = bool
   default = false
 }

@@ -75,15 +75,6 @@ resource "aws_db_parameter_group" "default" {
   }
 }
 
-data "external" "db_snapshot" {
-  count = var.rds_restore_anonymized ? 1 : 0
-  program = ["bash", "${path.root}/scripts/rds_shared_snapshot.sh"]
-
-  query = {
-    db_instance_identifier = var.anonymizer_db_identifier
-  }
-}
-
 module "database_enc" {
   source = "github.com/opensupplyhub/terraform-aws-postgresql-rds?ref=3.0.3"
 
@@ -108,7 +99,7 @@ module "database_enc" {
   subnet_group               = aws_db_subnet_group.default.name
   parameter_group            = aws_db_parameter_group.default.name
   deletion_protection        = var.rds_deletion_protection
-  snapshot_identifier        = var.environment == "Test" && var.rds_restore_anonymized ? data.external.db_snapshot[0].result.id : var.snapshot_identifier
+  snapshot_identifier        = var.snapshot_identifier
 
   alarm_cpu_threshold                = var.rds_cpu_threshold_percent
   alarm_disk_queue_threshold         = var.rds_disk_queue_threshold
