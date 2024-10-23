@@ -21,7 +21,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1328](https://opensupplyhub.atlassian.net/browse/OSDEV-1328) The OpenSearch tokenizer has been changed to `lowercase` to get better search results when querying the GET /v1/production-locations/ endpoint.
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* [OSDEV-1170](https://opensupplyhub.atlassian.net/browse/OSDEV-1170)
+  * Added the ability to automatically create a dump from the latest shared snapshot of the anonymized database.
 
 ### Bugfix
 * *Describe bugfix here.*
