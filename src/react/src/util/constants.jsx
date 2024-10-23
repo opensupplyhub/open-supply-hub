@@ -1331,3 +1331,14 @@ export const MODERATION_STATUSES = Object.freeze({
     PENDING: 'PENDING',
     RESOLVED: 'RESOLVED',
 });
+
+export const MODERATION_QUEUE_HEAD_CELLS = [
+    { id: 'created_at', label: 'Created Date' },
+    { id: 'name', label: 'Location Name' },
+    { id: 'country.name', label: 'Country' },
+    { id: 'contributor_name', label: 'Contributor' },
+    { id: 'source', label: 'Source Type' },
+    { id: 'moderation_status', label: 'Moderation Status' },
+    { id: 'moderation_decision_date', label: 'Moderation Decision Date' },
+    { id: 'updated_at', label: 'Last Updated' },
+];

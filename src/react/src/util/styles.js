@@ -657,3 +657,11 @@ export const makeDownloadExcelButtonStyles = theme =>
             marginLeft: '0.2rem',
         }),
     });
+
+export const makeDashboardModerationQueueTableHeaderStyles = theme =>
+    Object.freeze({
+        headerCellStyles: Object.freeze({
+            fontSize: '14px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
+        }),
+    });
