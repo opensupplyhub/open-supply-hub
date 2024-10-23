@@ -39,19 +39,21 @@ const makeDashboardModerationQueueListTableStyles = Object.freeze({
     }),
 });
 
+const ROWS_PER_PAGE_OPTIONS = [5, 10, 25];
+const DEFAULT_ROWS_PER_PAGE = 5;
 function DashboardModerationQueueListTable({ events, fetching, classes }) {
     const [order, setOrder] = useState('desc');
     const [orderBy, setOrderBy] = useState('created_at');
     const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
 
-    function handleChangePage(event, newPage) {
+    const handleChangePage = (event, newPage) => {
         setPage(newPage);
-    }
+    };
 
-    function handleChangeRowsPerPage(event) {
+    const handleChangeRowsPerPage = event => {
         setRowsPerPage(event.target.value);
-    }
+    };
 
     const handleRequestSort = (event, property) => {
         const isDesc = orderBy === property && order === 'desc';
@@ -142,7 +144,7 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                 </Table>
             </div>
             <TablePagination
-                rowsPerPageOptions={[5, 10, 25]}
+                rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
                 component="div"
                 count={events.length}
                 rowsPerPage={rowsPerPage}
