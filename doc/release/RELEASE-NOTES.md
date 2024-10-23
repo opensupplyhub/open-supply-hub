@@ -3,6 +3,36 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.23.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: November 2, 2024
+
+### Database changes
+#### Migrations:
+* *Describe migrations here.*
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
+### Code/API changes
+* Throttling has been introduced for tiles/* endpoints, limiting requests to 300 per minute.
+* [OSDEV-1328](https://opensupplyhub.atlassian.net/browse/OSDEV-1328) The OpenSearch tokenizer has been changed to `lowercase` to get better search results when querying the GET /v1/production-locations/ endpoint.
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* Run `Deploy to AWS` pipeline for an existing environment with the flag clear OpenSearch set to true - to let the tokenizer parse full text into words with new configurations.
+
+
 ## Release 1.22.0
 
 ## Introduction
@@ -18,7 +48,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1039](https://opensupplyhub.atlassian.net/browse/OSDEV-1039) - Since the `use_old_upload_list_endpoint` switcher is no longer necessary for the list upload, it has been deleted from the DB. Additionally, the `parsing_errors` field has been added to the FacilityList model.
 
 ### Code/API changes
-* [OSDEV-1102](https://opensupplyhub.atlassian.net/browse/OSDEV-1102) - API. Propagate production location updates to OpenSearch data source via refreshing `updated_at` field in `api_facility` table. Triggered updated_at field in such actions: transfer to alternate facility, claim facility, approve, reject and deny claim, claim details, merge facilities.
+* [OSDEV-1102](https://opensupplyhub.atlassian.net/browse/OSDEV-1102) - API. Propagate production location updates to OpenSearch data source via refreshing `updated_at` field in `api_facility` table. Triggered updated_at field in such actions: transfer to alternate facility, claim facility, approve, reject and deny claim, claim details, merge facilities, match facility (promote, split).
+* [OSDEV-1039](https://opensupplyhub.atlassian.net/browse/OSDEV-1039) - Deleted the `facility_list_items.json` fixture from the Django app since it is no longer needed, having been replaced with real CSV files. Additionally, other important changes have been implemented in the Django app and deployment:
+    * Adjusted all code that used the `facility_list_items.json` fixture and removed the unused matching logic from the Django app, as it is no longer necessary and was connected to that fixture.
+    * Updated the reset database step in the `restore_database` job of the Deploy to AWS GitHub workflow to upload CSV location list files to S3 for parsing during the DB reset.
 
 ### Architecture/Environment changes
 * [OSDEV-1325](https://opensupplyhub.atlassian.net/browse/OSDEV-1325)

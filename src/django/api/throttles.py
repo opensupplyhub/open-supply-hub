@@ -1,5 +1,6 @@
 from django.core.cache import caches
 from rest_framework.throttling import UserRateThrottle
+from rest_framework.throttling import ScopedRateThrottle
 
 
 class UserCustomRateThrottle(UserRateThrottle):
@@ -33,3 +34,8 @@ class SustainedRateThrottle(UserCustomRateThrottle):
 class DataUploadThrottle(UserCustomRateThrottle):
     scope = 'data_upload'
     model_rate_field = 'data_upload_rate'
+
+
+class TilesThrottle(ScopedRateThrottle):
+    scope = 'tiles'
+    model_rate_field = 'tiles_rate'

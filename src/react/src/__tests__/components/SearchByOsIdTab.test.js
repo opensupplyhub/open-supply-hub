@@ -25,7 +25,7 @@ describe('SearchByOsIdTab component', () => {
         ).toBeInTheDocument();
         expect(getByPlaceholderText('Enter the OS ID')).toBeInTheDocument();
         expect(getByText(
-            'To search you need to enter the full ID production location'
+            'To search by ID, you need to enter the full OS ID of the production location.'
         )).toBeInTheDocument();
         
         const button = getByRole('button', { name: /Search by ID/i });

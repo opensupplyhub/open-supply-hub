@@ -24,15 +24,9 @@ from .facility.facility_index_details_serializer import FacilityIndexDetailsSeri
 from .facility.facility_update_location_params_serializer import FacilityUpdateLocationParamsSerializer
 from .facility.utils import (
     _get_parent_company,
-    assign_contributor_field_values,
     can_user_see_detail,
-    create_address_field,
-    create_name_field,
     format_field,
     get_embed_contributor_id,
-    get_facility_name,
-    get_facility_names,
-    get_facility_addresses,
     is_created_at_main_date,
 )
 from .user.current_user_contributor import CurrentUserContributor
