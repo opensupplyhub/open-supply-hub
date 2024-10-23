@@ -1,4 +1,4 @@
-import { OARColor } from './constants';
+import { SOURCE_TYPES, OARColor } from './constants';
 import COLOURS from './COLOURS';
 
 export const formValidationErrorMessageStyle = Object.freeze({
@@ -204,19 +204,29 @@ export const claimAFacilitySupportDocsFormStyles = Object.freeze({
     }),
 });
 
-export const makeSelectFilterStyles = (windowWidth, color = OARColor) =>
-    Object.freeze({
-        multiValue: Object.freeze(provided => ({
-            ...provided,
-            background: '#C0EBC7',
-            borderRadius: '100px',
-            fontFamily: 'Darker Grotesque',
-            fontWeight: 700,
-            fontSize: '14px',
-            lineHeight: '16px',
-            paddingLeft: '5px',
-            paddingRight: '5px',
-        })),
+export const makeSelectFilterStyles = (windowWidth, color = OARColor) => {
+    const multiValueBackgroundHandler = value => {
+        if (value === SOURCE_TYPES.API) return COLOURS.LAVENDER_GREY;
+        if (value === SOURCE_TYPES.SLC) return COLOURS.PALE_BLUE;
+        return COLOURS.MINT_GREEN;
+    };
+    return Object.freeze({
+        multiValue: Object.freeze((provided, state) => {
+            const backgroundColor = multiValueBackgroundHandler(
+                state.data.value,
+            );
+            return {
+                ...provided,
+                background: backgroundColor,
+                borderRadius: '100px',
+                fontFamily: 'Darker Grotesque',
+                fontWeight: 700,
+                fontSize: '14px',
+                lineHeight: '16px',
+                paddingLeft: '5px',
+                paddingRight: '5px',
+            };
+        }),
         control: Object.freeze((provided, state) => {
             const isInUse = state.isFocused || state.menuIsOpen;
             return {
@@ -238,6 +248,7 @@ export const makeSelectFilterStyles = (windowWidth, color = OARColor) =>
                 windowWidth > 699 && windowWidth < 900 ? 0 : provided.padding,
         })),
     });
+};
 
 export const makeNestedSelectFilterStyles = Object.freeze({
     group: provided =>
