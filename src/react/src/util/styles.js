@@ -658,6 +658,25 @@ export const makeDownloadExcelButtonStyles = theme =>
         }),
     });
 
+export const makeDashboardModerationQueueStyles = theme =>
+    Object.freeze({
+        mainContainer: Object.freeze({
+            marginBottom: '60px',
+            width: '100%',
+        }),
+        dashboardFilters: Object.freeze({
+            padding: '20px',
+        }),
+        datePickersContainer: Object.freeze({
+            width: '100%',
+            marginTop: '5px',
+        }),
+        numberResults: Object.freeze({
+            fontWeight: theme.typography.fontWeightBold,
+            padding: '20px',
+        }),
+    });
+
 export const makeDashboardModerationQueueListTableStyles = Object.freeze({
     tableContainerStyles: Object.freeze({
         overflowX: 'auto',

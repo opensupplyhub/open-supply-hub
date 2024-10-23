@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
-import { arrayOf, bool, func, string } from 'prop-types';
+import { arrayOf, bool, func, string, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
@@ -17,30 +17,12 @@ import {
 } from '../../actions/dashboardModerationQueue';
 import { fetchCountryOptions } from '../../actions/filterOptions';
 import { moderationEventsPropType } from '../../util/propTypes';
-
-const makeDashboardModerationQueueStyles = theme =>
-    Object.freeze({
-        mainContainer: Object.freeze({
-            marginBottom: '60px',
-            width: '100%',
-        }),
-        dashboardFilters: Object.freeze({
-            padding: '20px',
-        }),
-        datePickersContainer: Object.freeze({
-            width: '100%',
-            marginTop: '5px',
-        }),
-        numberResults: Object.freeze({
-            fontWeight: theme.typography.fontWeightBold,
-            padding: '20px',
-        }),
-    });
+import { makeDashboardModerationQueueStyles } from '../../util/styles';
 
 const DashboardModerationQueue = ({
     events,
     fetching,
-    getModerationEvents,
+    fetchEvents,
     error,
     downloadEvents,
     downloadError,
@@ -51,15 +33,15 @@ const DashboardModerationQueue = ({
     const [beforeDate, setBeforeDate] = useState('');
 
     useEffect(() => {
-        getModerationEvents();
+        fetchEvents();
         fetchCountries();
-    }, []);
+    }, [fetchEvents, fetchCountries]);
 
     if (error) {
         return <Typography>{error}</Typography>;
     }
 
-    const eventsCount = events && events.length;
+    const eventsCount = events?.length || 0;
 
     return (
         <Paper className={classes.mainContainer}>
@@ -128,10 +110,12 @@ DashboardModerationQueue.defaultProps = {
 DashboardModerationQueue.propTypes = {
     events: moderationEventsPropType,
     fetching: bool.isRequired,
-    fetchCountries: func.isRequired,
     error: arrayOf(string),
-    downloadEvents: func.isRequired,
     downloadError: arrayOf(string),
+    fetchEvents: func.isRequired,
+    fetchCountries: func.isRequired,
+    downloadEvents: func.isRequired,
+    classes: object.isRequired,
 };
 
 const mapStateToProps = ({
@@ -147,7 +131,7 @@ const mapStateToProps = ({
 });
 
 const mapDispatchToProps = dispatch => ({
-    getModerationEvents: () => dispatch(fetchModerationEvents()),
+    fetchEvents: () => dispatch(fetchModerationEvents()),
     fetchCountries: () => dispatch(fetchCountryOptions()),
     downloadEvents: moderationEvents =>
         dispatch(downloadModerationEvents(moderationEvents)),
