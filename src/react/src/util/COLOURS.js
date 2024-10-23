@@ -1,16 +1,28 @@
 export default {
+    // Blues
     NAVY_BLUE: '#0427a4',
-    GREY: '#D2D2D2',
-    WHITE: '#fff',
     LIGHT_BLUE: '#009ee6',
+    PALE_BLUE: '#CFE2F3',
+
+    // Purples
+    LAVENDER_GREY: '#D9D1E9',
+
+    // Greens
+    GREEN: '#E0F5E3',
+    DARK_GREEN: '#4A9957',
+    MINT_GREEN: '#C0EBC7',
+
+    // Reds
     LIGHT_RED: '#FFEAEA',
-    CIRCLE_COLOR: '#0427a4',
-    CIRCLE_COLOR_SHADOW: 'rgba(61, 50, 138, 0.5)',
-    NAVIGATION: '#FCCF3F',
-    NEAR_BLACK: '#0D1128',
+
+    // Grays and Neutrals
+    WHITE: '#fff',
+    GREY: '#D2D2D2',
     LIGHT_GREY: '#F9F7F7',
     DARK_GREY: '#6E707E',
-    GREEN: '#E0F5E3',
     DARK_SLATE_GRAY: '#3D4153',
-    DARK_GREEN: '#4A9957',
+    NEAR_BLACK: '#0D1128',
+
+    // Special Colors
+    NAVIGATION: '#FCCF3F',
 };
