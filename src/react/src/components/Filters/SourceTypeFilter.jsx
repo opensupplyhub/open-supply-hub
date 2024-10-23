@@ -3,10 +3,14 @@ import { bool, string, func } from 'prop-types';
 import { connect } from 'react-redux';
 import { updateSourceTypeFilter } from '../../actions/filters';
 import { defaultOptionsPropType } from '../../util/propTypes';
-import { SOURCE_TYPES_OPTIONS } from '../../util/constants';
+import { SOURCE_TYPES } from '../../util/constants';
+import { createOptionsFromConstants } from '../../util/util';
 import StyledSelect from './StyledSelect';
 
 const SOURCE_TYPE = 'SOURCE_TYPE';
+const SOURCE_TYPES_OPTIONS = Object.freeze(
+    createOptionsFromConstants(SOURCE_TYPES),
+);
 
 const SourceTypeFilter = ({
     updateSource,
@@ -18,7 +22,7 @@ const SourceTypeFilter = ({
         <StyledSelect
             label="Source Type"
             name={SOURCE_TYPE}
-            options={SOURCE_TYPES_OPTIONS || []}
+            options={SOURCE_TYPES_OPTIONS}
             value={sourceTypes}
             onChange={updateSource}
             isDisabled={isDisabled}

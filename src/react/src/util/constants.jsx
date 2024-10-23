@@ -1322,24 +1322,12 @@ export const listParsingErrorMappings = {
     ),
 };
 
-export const SOURCE_TYPES_OPTIONS = [
-    Object.freeze({
-        value: 'API',
-        label: 'API',
-    }),
-    Object.freeze({
-        value: 'SLC',
-        label: 'SLC',
-    }),
-];
+export const SOURCE_TYPES = Object.freeze({
+    API: 'API',
+    SLC: 'SLC',
+});
 
-export const MODERATION_STATUSES_OPTIONS = [
-    Object.freeze({
-        value: 'PENDING',
-        label: 'Pending',
-    }),
-    Object.freeze({
-        value: 'RESOLVED',
-        label: 'Resolved',
-    }),
-];
+export const MODERATION_STATUSES = Object.freeze({
+    PENDING: 'PENDING',
+    RESOLVED: 'RESOLVED',
+});
