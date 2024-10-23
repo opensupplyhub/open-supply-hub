@@ -1,269 +1,159 @@
-import React, { useEffect } from 'react';
-// import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
-// import { arrayOf, bool, func, shape, string } from 'prop-types';
-import { func } from 'prop-types';
-// import map from 'lodash/map';
+import { arrayOf, bool, func, string } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
-// import Grid from '@material-ui/core/Grid';
-// import Typography from '@material-ui/core/Typography';
-
+import Grid from '@material-ui/core/Grid';
+import Typography from '@material-ui/core/Typography';
 import CountryNameFilter from '../Filters/CountryNameFilter';
-import DownloadFacilityClaimsButton from '../DownloadFacilityClaimsButton';
-import RecordTypeFilter from '../Filters/RecordTypeFilter';
-import MatchStatusFilter from '../Filters/MatchStatusFilter';
+import SourceTypeFilter from '../Filters/SourceTypeFilter';
 import ModerationStatusFilter from '../Filters/ModerationStatusFilter';
-// import DashboardClaimsListTable from '../../DashboardClaimsListTable';
-
-// import {
-//     fetchFacilityClaims,
-//     clearFacilityClaims,
-//     sortFacilityClaims,
-// } from '../actions/claimFacilityDashboard';
-
+import DashboardModerationQueueListTable from './DashboardModerationQueueListTable';
+import DashboardDownloadDataButton from './DashboardDownloadDataButton';
+import DatePicker from '../DatePicker';
 import {
-    fetchRecordTypeOptions,
-    fetchMatchStatusOptions,
-    fetchCountryOptions,
-    // fetchClaimStatusOptions,
-} from '../../actions/filterOptions';
+    fetchModerationEvents,
+    downloadModerationEvents,
+} from '../../actions/dashboardModerationQueue';
+import { fetchCountryOptions } from '../../actions/filterOptions';
+import { moderationEventsPropType } from '../../util/propTypes';
 
-// import ClaimStatusFilter from './Filters/ClaimStatusFilter';
-// import CountryNameFilter from './Filters/CountryNameFilter';
-// import {
-//     updateClaimStatusFilter,
-//     updateCountryFilter,
-//     clearCountryFilter,
-// } from './../actions/filters';
-
-// import {
-//     facilityClaimsListPropType,
-//     claimStatusOptionsPropType,
-//     countryOptionsPropType,
-// } from '../util/propTypes';
-
-// import {
-//     makeDashboardClaimListLink,
-//     getDashboardClaimsListParamsFromQueryString,
-// } from '../util/util';
-
-const dashboardModerationQueueStyles = () =>
+const makeDashboardModerationQueueStyles = theme =>
     Object.freeze({
         mainContainer: Object.freeze({
             marginBottom: '60px',
             width: '100%',
         }),
         dashboardFilters: Object.freeze({
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
             padding: '20px',
         }),
-        // filterRow: Object.freeze({
-        //     padding: '20px',
-        //     display: 'flex',
-        //     flexDirection: 'column',
-        //     gap: '20px',
-        // }),
-        // filter: Object.freeze({
-        //     flex: 1,
-        // }),
-        // numberResults: { fontWeight: 800 },
+        datePickersContainer: Object.freeze({
+            width: '100%',
+            marginTop: '5px',
+        }),
+        numberResults: Object.freeze({
+            fontWeight: theme.typography.fontWeightBold,
+            padding: '20px',
+        }),
     });
 
 const DashboardModerationQueue = ({
-    // data,
-    // claimStatuses,
-    fetching = false,
-    // error,
-    // getClaims,
-    // clearClaims,
-    // sortClaims,
-    classes,
-    // history: {
-    //     location: { search },
-    //     push,
-    // },
-    // fetchClaimStatus,
-    fetchRecordTypes,
-    fetchMatchStatuses,
+    events,
+    fetching,
+    getModerationEvents,
+    error,
+    downloadEvents,
+    downloadError,
     fetchCountries,
-    // updateClaimStatus,
-    // updateCountry,
-    // clearCountry,
-    // countriesData,
+    classes,
 }) => {
-    // console.log('DashboardModerationQueue');
-    const data = null;
-    // const { countries, statuses } = getDashboardClaimsListParamsFromQueryString(
-    //     search,
-    // );
+    const [afterDate, setAfterDate] = useState('');
+    const [beforeDate, setBeforeDate] = useState('');
 
     useEffect(() => {
-        fetchRecordTypes();
-        fetchMatchStatuses();
+        getModerationEvents();
         fetchCountries();
-        // fetchClaimStatus();
-
-        // // Always keep default PENDING status in the search bar
-        // if (statuses && statuses.length > 0) {
-        //     const statusesSerialized = map(statuses, status => ({
-        //         label: status,
-        //         value: status,
-        //     }));
-        //     updateClaimStatus(statusesSerialized);
-        //     push(
-        //         makeDashboardClaimListLink({
-        //             statuses,
-        //             countries,
-        //         }),
-        //     );
-        // }
-        // // If country code is present in URL, it should be set in filter field automatically
-        // if (countries && countries.length > 0) {
-        //     const countriesSerialized = map(countries, country => ({
-        //         value: country,
-        //         label: country,
-        //     }));
-        //     updateCountry(countriesSerialized);
-        // }
-
-        // return () => {
-        //     clearCountry();
-        //     clearClaims();
-        // };
     }, []);
 
-    // useEffect(() => {
-    //     const finalCountries = map(countriesData, 'value');
-    //     let finalStatuses = statuses;
+    if (error) {
+        return <Typography>{error}</Typography>;
+    }
 
-    //     if (countriesData.length > 0) {
-    //         if (!statuses && claimStatuses && claimStatuses.length > 0) {
-    //             finalStatuses = map(claimStatuses, 'value');
-    //         }
-    //     } else if (claimStatuses && claimStatuses.length > 0) {
-    //         finalStatuses = map(claimStatuses, 'value');
-    //     }
-
-    //     push(
-    //         makeDashboardClaimListLink({
-    //             statuses: finalStatuses,
-    //             countries: finalCountries,
-    //         }),
-    //     );
-    // }, [countriesData]);
-
-    // const onClaimStatusUpdate = (s, c) => {
-    //     push(
-    //         makeDashboardClaimListLink({
-    //             countries: map(c, 'value'),
-    //             statuses: map(s, 'value'),
-    //         }),
-    //     );
-    // };
-
-    // if (error) {
-    //     return <Typography>{error}</Typography>;
-    // }
-
-    // const claimsCount = data && data.length;
+    const eventsCount = events && events.length;
 
     return (
         <Paper className={classes.mainContainer}>
             <div className={classes.dashboardFilters}>
-                <DownloadFacilityClaimsButton
+                <DashboardDownloadDataButton
                     fetching={fetching}
-                    data={data || []}
+                    downloadPayload={events || []}
+                    downloadData={downloadEvents}
+                    downloadError={downloadError}
                 />
-                {/* <ClaimStatusFilter
-                        countriesData={countriesData}
-                        handleClaimStatusUpdate={onClaimStatusUpdate}
-                        isDisabled={fetching}
-                    /> */}
-                <RecordTypeFilter />
-                <MatchStatusFilter />
-                <ModerationStatusFilter />
-                <CountryNameFilter isDisabled={fetching} />
-                {/* <Grid item className={classes.numberResults}>
-                        {claimsCount} results
-                    </Grid> */}
+                <SourceTypeFilter
+                    isDisabled={fetching}
+                    className="form__field--dense"
+                />
+                <ModerationStatusFilter
+                    isDisabled={fetching}
+                    className="form__field--dense"
+                />
+                <CountryNameFilter
+                    isDisabled={fetching}
+                    className="form__field--dense"
+                />
+                <Grid
+                    container
+                    className={classes.datePickersContainer}
+                    spacing={16}
+                    alignItems="center"
+                >
+                    <Grid item>
+                        <DatePicker
+                            label="After Date:"
+                            value={afterDate}
+                            onChange={setAfterDate}
+                            name="after-date"
+                        />
+                    </Grid>
+                    <Grid item>
+                        <DatePicker
+                            label="Before Date:"
+                            value={beforeDate}
+                            onChange={setBeforeDate}
+                            name="before-date"
+                        />
+                    </Grid>
+                </Grid>
             </div>
-            {/* <DashboardClaimsListTable
-                    fetching={fetching}
-                    data={data}
-                    handleSortClaims={sortClaims}
-                    handleGetClaims={getClaims}
-                    handleGetCountries={fetchCountries}
-                    claimStatuses={claimStatuses}
-                    countriesData={countriesData}
-                    clearClaims={clearClaims}
-                /> */}
+
+            <Grid item className={classes.numberResults}>
+                {eventsCount} results
+            </Grid>
+
+            <DashboardModerationQueueListTable
+                fetching={fetching}
+                events={events}
+            />
         </Paper>
     );
 };
 
-// DashboardModerationQueue.defaultProps = {
-//     data: null,
-//     error: null,
-//     countriesData: null,
-// };
-
-DashboardModerationQueue.propTypes = {
-    // data: facilityClaimsListPropType,
-    // fetching: bool.isRequired,
-    fetchRecordTypes: func.isRequired,
-    fetchMatchStatuses: func.isRequired,
-    fetchCountries: func.isRequired,
-    // countriesData: countryOptionsPropType,
-    // fetchClaimStatus: func.isRequired,
-    // error: arrayOf(string),
-    // getClaims: func.isRequired,
-    // clearClaims: func.isRequired,
-    // sortClaims: func.isRequired,
-    // history: shape({
-    //     replace: func.isRequired,
-    //     push: func.isRequired,
-    // }).isRequired,
-    // updateClaimStatus: func.isRequired,
-    // updateCountry: func.isRequired,
-    // claimStatuses: claimStatusOptionsPropType.isRequired,
-    // clearCountry: func.isRequired,
+DashboardModerationQueue.defaultProps = {
+    events: null,
+    error: null,
+    downloadError: null,
 };
 
-// function mapStateToProps({
-//     claimFacilityDashboard: {
-//         list: { data, fetching, error },
-//     },
-//     filters: { claimStatuses, countries: countriesData },
-// }) {
-//     return {
-//         // data,
-//         // fetching,
-//         // error,
-//         // claimStatuses,
-//         // countriesData,
-//     };
-// }
+DashboardModerationQueue.propTypes = {
+    events: moderationEventsPropType,
+    fetching: bool.isRequired,
+    fetchCountries: func.isRequired,
+    error: arrayOf(string),
+    downloadEvents: func.isRequired,
+    downloadError: arrayOf(string),
+};
 
-const mapStateToProps = () => ({});
+const mapStateToProps = ({
+    dashboardModerationQueue: {
+        moderationEvents: { events, fetching, error },
+        moderationEventsDownloadStatus: { error: downloadError },
+    },
+}) => ({
+    events,
+    fetching,
+    error,
+    downloadError,
+});
 
 const mapDispatchToProps = dispatch => ({
-    // getClaims: () => dispatch(fetchFacilityClaims()),
-    // clearClaims: () => dispatch(clearFacilityClaims()),
-    // sortClaims: sortedData => dispatch(sortFacilityClaims(sortedData)),
-    fetchRecordTypes: () => dispatch(fetchRecordTypeOptions()),
-    fetchMatchStatuses: () => dispatch(fetchMatchStatusOptions()),
+    getModerationEvents: () => dispatch(fetchModerationEvents()),
     fetchCountries: () => dispatch(fetchCountryOptions()),
-    // fetchClaimStatus: () => dispatch(fetchClaimStatusOptions()),
-    // updateClaimStatus: claimStatuses =>
-    //     dispatch(updateClaimStatusFilter(claimStatuses)),
-    // updateCountry: v => dispatch(updateCountryFilter(v)),
-    // clearCountry: () => dispatch(clearCountryFilter()),
+    downloadEvents: moderationEvents =>
+        dispatch(downloadModerationEvents(moderationEvents)),
 });
 
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(withStyles(dashboardModerationQueueStyles)(DashboardModerationQueue));
+)(withStyles(makeDashboardModerationQueueStyles)(DashboardModerationQueue));
