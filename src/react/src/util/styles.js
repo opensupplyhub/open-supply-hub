@@ -658,6 +658,31 @@ export const makeDownloadExcelButtonStyles = theme =>
         }),
     });
 
+export const makeDashboardModerationQueueListTableStyles = Object.freeze({
+    tableContainerStyles: Object.freeze({
+        overflowX: 'auto',
+    }),
+    rowStyles: Object.freeze({
+        cursor: 'pointer',
+    }),
+    emptyRowStyles: Object.freeze({
+        height: '5px',
+    }),
+    loaderStyles: Object.freeze({
+        display: 'block',
+        margin: 'auto',
+    }),
+    slcRowStyles: Object.freeze({
+        backgroundColor: COLOURS.PALE_BLUE,
+    }),
+    apiRowStyles: Object.freeze({
+        backgroundColor: COLOURS.LAVENDER_GREY,
+    }),
+    defaultRowStyles: Object.freeze({
+        backgroundColor: 'inherit',
+    }),
+});
+
 export const makeDashboardModerationQueueTableHeaderStyles = theme =>
     Object.freeze({
         headerCellStyles: Object.freeze({

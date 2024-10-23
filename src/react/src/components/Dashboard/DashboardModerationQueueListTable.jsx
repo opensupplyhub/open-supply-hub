@@ -12,32 +12,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import DashboardModerationQueueListTableHeader from './DashboardModerationQueueListTableHeader';
 import { moderationEventsPropType } from '../../util/propTypes';
 import { SOURCE_TYPES, EMPTY_PLACEHOLDER } from '../../util/constants';
-import COLOURS from '../../util/COLOURS';
-
-const makeDashboardModerationQueueListTableStyles = Object.freeze({
-    tableContainerStyles: Object.freeze({
-        overflowX: 'auto',
-    }),
-    rowStyles: Object.freeze({
-        cursor: 'pointer',
-    }),
-    emptyRowStyles: Object.freeze({
-        height: '5px',
-    }),
-    loaderStyles: Object.freeze({
-        display: 'block',
-        margin: 'auto',
-    }),
-    slcRowStyles: Object.freeze({
-        backgroundColor: COLOURS.PALE_BLUE,
-    }),
-    apiRowStyles: Object.freeze({
-        backgroundColor: COLOURS.LAVENDER_GREY,
-    }),
-    defaultRowStyles: Object.freeze({
-        backgroundColor: 'inherit',
-    }),
-});
+import { makeDashboardModerationQueueListTableStyles } from '../../util/styles';
 
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 25];
 const DEFAULT_ROWS_PER_PAGE = 5;
@@ -47,28 +22,30 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
 
-    const handleChangePage = (event, newPage) => {
+    const handleChangePage = (_, newPage) => {
         setPage(newPage);
     };
 
     const handleChangeRowsPerPage = event => {
         setRowsPerPage(event.target.value);
+        setPage(0);
     };
 
-    const handleRequestSort = (event, property) => {
+    const handleRequestSort = (_, property) => {
         const isDesc = orderBy === property && order === 'desc';
         setOrder(isDesc ? 'asc' : 'desc');
         setOrderBy(property);
     };
 
     const getRowClassName = source => {
-        if (source === SOURCE_TYPES.SLC) {
-            return classes.slcRowStyles;
+        switch (source) {
+            case SOURCE_TYPES.SLC:
+                return classes.slcRowStyles;
+            case SOURCE_TYPES.API:
+                return classes.apiRowStyles;
+            default:
+                return classes.defaultRowStyles;
         }
-        if (source === SOURCE_TYPES.API) {
-            return classes.apiRowStyles;
-        }
-        return classes.defaultRowStyles;
     };
 
     return (
@@ -100,45 +77,52 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                                     page * rowsPerPage,
                                     page * rowsPerPage + rowsPerPage,
                                 )
-                                .map(event => (
-                                    <TableRow
-                                        hover
-                                        key={event.moderation_id}
-                                        className={`${
-                                            classes.rowStyles
-                                        } ${getRowClassName(event.source)}`}
-                                    >
-                                        <TableCell padding="dense">
-                                            {moment(event.created_at).format(
-                                                'LL',
-                                            )}
-                                        </TableCell>
-                                        <TableCell>{event.name}</TableCell>
-                                        <TableCell padding="dense">
-                                            {event.country.name}
-                                        </TableCell>
-                                        <TableCell>
-                                            {event.contributor_name}
-                                        </TableCell>
-                                        <TableCell>{event.source}</TableCell>
-                                        <TableCell>
-                                            {event.moderation_status}
-                                        </TableCell>
-                                        <TableCell padding="dense">
-                                            {event.moderation_decision_date !==
-                                            null
-                                                ? moment(
-                                                      event.moderation_decision_date,
-                                                  ).format('LL')
-                                                : EMPTY_PLACEHOLDER}
-                                        </TableCell>
-                                        <TableCell padding="dense">
-                                            {moment(event.updated_at).format(
-                                                'LL',
-                                            )}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                .map(
+                                    ({
+                                        moderation_id: moderationId,
+                                        created_at: createdAt,
+                                        name,
+                                        country,
+                                        contributor_name: contributorName,
+                                        source,
+                                        moderation_status: moderationStatus,
+                                        moderation_decision_date: moderationDecisionDate,
+                                        updated_at: updatedAt,
+                                    }) => (
+                                        <TableRow
+                                            hover
+                                            key={moderationId}
+                                            className={`${
+                                                classes.row
+                                            } ${getRowClassName(source)}`}
+                                        >
+                                            <TableCell padding="dense">
+                                                {moment(createdAt).format('LL')}
+                                            </TableCell>
+                                            <TableCell>{name}</TableCell>
+                                            <TableCell padding="dense">
+                                                {country.name}
+                                            </TableCell>
+                                            <TableCell>
+                                                {contributorName}
+                                            </TableCell>
+                                            <TableCell>{source}</TableCell>
+                                            <TableCell>
+                                                {moderationStatus}
+                                            </TableCell>
+                                            <TableCell padding="dense">
+                                                {moderationDecisionDate !== null
+                                                    ? moment(
+                                                          moderationDecisionDate,
+                                                      ).format('LL')
+                                                    : EMPTY_PLACEHOLDER}
+                                            </TableCell>
+                                            <TableCell padding="dense">
+                                                {moment(updatedAt).format('LL')}
+                                            </TableCell>
+                                        </TableRow>
+                                    ),
+                                )}
                         </TableBody>
                     )}
                 </Table>
