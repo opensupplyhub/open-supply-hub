@@ -7,7 +7,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: November 2, 2024
+* Release date: November 02, 2024
+
+### Database changes
+#### Migrations:
+* 0158_create_moderation_events_table.py - This migration creates api_moderationevent table for Moderation Queue.
+
+#### Scheme changes
+* [OSDEV-1229](https://opensupplyhub.atlassian.net/browse/OSDEV-1229) - Created Moderation Events Postgres table to track moderation events in the database.
 
 ### Database changes
 #### Migrations:
@@ -31,6 +38,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
 
 ### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
 * Run `Deploy to AWS` pipeline for an existing environment with the flag clear OpenSearch set to true - to let the tokenizer parse full text into words with new configurations.
 
 
