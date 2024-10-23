@@ -26,7 +26,7 @@ snapshot_identifier = "opensupplyhub-rds-tst"
 anonymized_database_kms_key_id = "arn:aws:kms:eu-west-1:249322298638:key/f311ecbd-a011-48a1-a676-8eeac63cd6d4"
 anonymized_database_instance_type = "db.t3.2xlarge"
 anonymized_database_identifier = "database-anonymizer"
-anonymized_database_schedule_expression = "cron(54 12 ? * TUE *)"
+anonymized_database_schedule_expression = "cron(0 5 ? * SAT *)"
 anonymized_database_dump_enabled = true
 
 app_ecs_desired_count = "2"
