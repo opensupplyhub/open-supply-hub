@@ -1268,3 +1268,11 @@ export const replaceListParsingErrorMessages = errors =>
     errors.map(
         ({ message, type }) => listParsingErrorMappings[type] || message,
     );
+
+export const createOptionsFromConstants = constants =>
+    Object.keys(constants).map(key =>
+        Object.freeze({
+            value: constants[key],
+            label: constants[key],
+        }),
+    );
