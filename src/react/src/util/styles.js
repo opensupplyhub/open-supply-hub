@@ -1,4 +1,4 @@
-import { OARColor } from './constants';
+import { SOURCE_TYPES, OARColor } from './constants';
 import COLOURS from './COLOURS';
 
 export const formValidationErrorMessageStyle = Object.freeze({
@@ -204,19 +204,29 @@ export const claimAFacilitySupportDocsFormStyles = Object.freeze({
     }),
 });
 
-export const makeSelectFilterStyles = (windowWidth, color = OARColor) =>
-    Object.freeze({
-        multiValue: Object.freeze(provided => ({
-            ...provided,
-            background: '#C0EBC7',
-            borderRadius: '100px',
-            fontFamily: 'Darker Grotesque',
-            fontWeight: 700,
-            fontSize: '14px',
-            lineHeight: '16px',
-            paddingLeft: '5px',
-            paddingRight: '5px',
-        })),
+export const makeSelectFilterStyles = (windowWidth, color = OARColor) => {
+    const multiValueBackgroundHandler = value => {
+        if (value === SOURCE_TYPES.API) return COLOURS.LAVENDER_GREY;
+        if (value === SOURCE_TYPES.SLC) return COLOURS.PALE_BLUE;
+        return COLOURS.MINT_GREEN;
+    };
+    return Object.freeze({
+        multiValue: Object.freeze((provided, state) => {
+            const backgroundColor = multiValueBackgroundHandler(
+                state.data.value,
+            );
+            return {
+                ...provided,
+                background: backgroundColor,
+                borderRadius: '100px',
+                fontFamily: 'Darker Grotesque',
+                fontWeight: 700,
+                fontSize: '14px',
+                lineHeight: '16px',
+                paddingLeft: '5px',
+                paddingRight: '5px',
+            };
+        }),
         control: Object.freeze((provided, state) => {
             const isInUse = state.isFocused || state.menuIsOpen;
             return {
@@ -238,6 +248,7 @@ export const makeSelectFilterStyles = (windowWidth, color = OARColor) =>
                 windowWidth > 699 && windowWidth < 900 ? 0 : provided.padding,
         })),
     });
+};
 
 export const makeNestedSelectFilterStyles = Object.freeze({
     group: provided =>
@@ -599,5 +610,102 @@ export const makeSearchByOsIdResultActionsStyles = theme =>
             '&:hover': {
                 backgroundColor: theme.palette.action.dark,
             },
+        }),
+    });
+
+export const makeDatePickerStyles = theme => ({
+    datePickerContainer: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '5px',
+    },
+    datePickerLabel: {
+        fontSize: '18px',
+        fontWeight: theme.typography.fontWeightSemiBoldPlus,
+    },
+    dateInputStyles: Object.freeze({
+        fontSize: '16px',
+        lineHeight: '20px',
+        padding: '8px',
+    }),
+    notchedOutlineStyles: Object.freeze({
+        borderRadius: 0,
+    }),
+});
+
+export const makeDownloadExcelButtonStyles = theme =>
+    Object.freeze({
+        button: Object.freeze({
+            width: '200px',
+            marginBottom: '44px',
+            padding: '14px 13px',
+            color: theme.palette.getContrastText(theme.palette.action.main),
+            fontSize: '18px',
+            fontWeight: 900,
+            lineHeight: '20px',
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
+            backgroundColor: theme.palette.action.main,
+        }),
+        buttonContent: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            textTransform: 'none',
+        }),
+        buttonText: Object.freeze({
+            marginLeft: '0.2rem',
+        }),
+    });
+
+export const makeDashboardModerationQueueStyles = theme =>
+    Object.freeze({
+        mainContainer: Object.freeze({
+            marginBottom: '60px',
+            width: '100%',
+        }),
+        dashboardFilters: Object.freeze({
+            padding: '20px',
+        }),
+        datePickersContainer: Object.freeze({
+            width: '100%',
+            marginTop: '5px',
+        }),
+        numberResults: Object.freeze({
+            fontWeight: theme.typography.fontWeightBold,
+            padding: '20px',
+        }),
+    });
+
+export const makeDashboardModerationQueueListTableStyles = Object.freeze({
+    tableContainerStyles: Object.freeze({
+        overflowX: 'auto',
+    }),
+    rowStyles: Object.freeze({
+        cursor: 'pointer',
+    }),
+    emptyRowStyles: Object.freeze({
+        height: '5px',
+    }),
+    loaderStyles: Object.freeze({
+        display: 'block',
+        margin: 'auto',
+    }),
+    slcRowStyles: Object.freeze({
+        backgroundColor: COLOURS.PALE_BLUE,
+    }),
+    apiRowStyles: Object.freeze({
+        backgroundColor: COLOURS.LAVENDER_GREY,
+    }),
+    defaultRowStyles: Object.freeze({
+        backgroundColor: 'inherit',
+    }),
+});
+
+export const makeDashboardModerationQueueTableHeaderStyles = theme =>
+    Object.freeze({
+        headerCellStyles: Object.freeze({
+            fontSize: '14px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
         }),
     });

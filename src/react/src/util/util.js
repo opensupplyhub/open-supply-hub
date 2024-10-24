@@ -68,6 +68,7 @@ import { createListItemCSV } from './util.listItemCSV';
 
 import { createFacilitiesCSV, formatDataForCSV } from './util.facilitiesCSV';
 import formatFacilityClaimsDataForXLSX from './util.facilityClaimsXLSX';
+import formatModerationEventsDataForXLSX from './util.moderationEventsXLSX';
 
 export function DownloadXLSX(data, fileName) {
     import('file-saver').then(({ saveAs }) => {
@@ -118,6 +119,16 @@ export const downloadFacilityClaimsXLSX = facilityClaims =>
             'Facility claims',
         ),
         'facility_claims.xlsx',
+    );
+
+export const downloadModerationEventsXLSX = moderationEvents =>
+    DownloadXLSX(
+        createXLSX(
+            moderationEvents,
+            formatModerationEventsDataForXLSX,
+            'Moderation events',
+        ),
+        'moderation_events.xlsx',
     );
 
 export const makeUserLoginURL = () => '/user-login/';
@@ -1256,4 +1267,12 @@ export const formatDate = date => moment(date).format('LLL');
 export const replaceListParsingErrorMessages = errors =>
     errors.map(
         ({ message, type }) => listParsingErrorMappings[type] || message,
+    );
+
+export const createOptionsFromConstants = constants =>
+    Object.keys(constants).map(key =>
+        Object.freeze({
+            value: constants[key],
+            label: constants[key],
+        }),
     );

@@ -16,6 +16,7 @@ import DashboardActivityReports from './DashboardActivityReports';
 import DashboardApiBlock from './DashboardApiBlock';
 import DashboardLinkToOsId from './DashboardLinkToOsId';
 import DashboardGeocoder from './DashboardGeocoder';
+import DashboardModerationQueue from './Dashboard/DashboardModerationQueue';
 import FeatureFlag from './FeatureFlag';
 import RouteNotFound from './RouteNotFound';
 
@@ -36,6 +37,7 @@ import {
     dashboardActivityReportsRoute,
     dashboardGeocoderRoute,
     dashboardLinkOsIdRoute,
+    dashboardModerationQueueRoute,
 } from '../util/constants';
 
 import AppGrid from './AppGrid';
@@ -103,6 +105,7 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
             <Link to={dashboardActivityReportsRoute}>View Status Reports</Link>
             <Link to={dashboardLinkOsIdRoute}>Link to New OS ID</Link>
             <Link to={dashboardGeocoderRoute}>Geocode</Link>
+            <Link to={dashboardModerationQueueRoute}>Moderation Queue</Link>
         </div>
     );
 
@@ -213,6 +216,13 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
                             path={dashboardRoute}
                             render={() => 'Dashboard'}
                         />
+                        <Route
+                            exact
+                            path={dashboardModerationQueueRoute}
+                            render={makeClickableDashboardLinkFn(
+                                'Moderation Queue',
+                            )}
+                        />
                     </Switch>
                 }
             >
@@ -241,6 +251,11 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
                         exact
                         path={dashboardUpdateFacilityLocationRoute}
                         component={DashboardUpdateFacilityLocation}
+                    />
+                    <Route
+                        exact
+                        path={dashboardModerationQueueRoute}
+                        component={DashboardModerationQueue}
                     />
                     <Route
                         exact

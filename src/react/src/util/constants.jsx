@@ -16,7 +16,7 @@ export const REJECT_ACTION = 'reject';
 
 export const InfoLink = 'https://info.opensupplyhub.org';
 
-export const CLAIM_DECISION_EMPTY = 'N/A';
+export const EMPTY_PLACEHOLDER = 'N/A';
 
 export const InfoPaths = {
     storiesResources: 'stories-resources',
@@ -331,6 +331,7 @@ export const dashboardListsRoute = '/dashboard/lists';
 export const dashboardApiBlocksRoute = '/dashboard/apiblocks';
 export const dashboardApiBlockRoute = '/dashboard/apiblocks/:blockId';
 export const dashboardClaimsRoute = '/dashboard/claims';
+export const dashboardModerationQueueRoute = '/dashboard/moderation-queue';
 export const dashboardDeleteFacilityRoute = '/dashboard/deletefacility';
 export const dashboardMergeFacilitiesRoute = '/dashboard/mergefacilities';
 export const dashboardAdjustFacilityMatchesRoute =
@@ -1320,3 +1321,24 @@ export const listParsingErrorMappings = {
         </>
     ),
 };
+
+export const SOURCE_TYPES = Object.freeze({
+    API: 'API',
+    SLC: 'SLC',
+});
+
+export const MODERATION_STATUSES = Object.freeze({
+    PENDING: 'PENDING',
+    RESOLVED: 'RESOLVED',
+});
+
+export const MODERATION_QUEUE_HEAD_CELLS = [
+    { id: 'created_at', label: 'Created Date' },
+    { id: 'name', label: 'Location Name' },
+    { id: 'country.name', label: 'Country' },
+    { id: 'contributor_name', label: 'Contributor' },
+    { id: 'source', label: 'Source Type' },
+    { id: 'moderation_status', label: 'Moderation Status' },
+    { id: 'moderation_decision_date', label: 'Moderation Decision Date' },
+    { id: 'updated_at', label: 'Last Updated' },
+];

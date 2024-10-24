@@ -1,5 +1,5 @@
 import React from 'react';
-import { bool, func } from 'prop-types';
+import { bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 
 import StyledSelect from './StyledSelect';
@@ -16,9 +16,10 @@ function CountryNameFilter({
     countries,
     updateCountry,
     fetching,
+    className,
 }) {
     return (
-        <div className="form__field">
+        <div className={className}>
             <StyledSelect
                 label="Country Name"
                 name={COUNTRIES}
@@ -35,6 +36,7 @@ function CountryNameFilter({
 CountryNameFilter.defaultProps = {
     isDisabled: false,
     countryOptions: null,
+    className: 'form__field',
 };
 
 CountryNameFilter.propTypes = {
@@ -43,6 +45,7 @@ CountryNameFilter.propTypes = {
     updateCountry: func.isRequired,
     countries: countryOptionsPropType.isRequired,
     fetching: bool.isRequired,
+    className: string,
 };
 
 function mapStateToProps({
