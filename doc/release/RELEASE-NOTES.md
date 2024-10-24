@@ -32,6 +32,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * *Describe bugfix here.*
+* [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388)
+  * The waiter from boto3 cannot wait more than half an hour so we replaced it with our own.
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
