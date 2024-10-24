@@ -58,7 +58,7 @@ class ModerationEvent(models.Model):
         help_text='Linked contributor responsible for this moderation event.'
     )
 
-    os = models.OneToOneField(
+    os = models.ForeignKey(
         Facility,
         on_delete=models.SET_NULL,
         null=True,
