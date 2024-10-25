@@ -9,7 +9,7 @@ import { formatDate } from '../../util/util';
 describe('DashboardModerationQueueListTable component', () => {
     const sampleModerationEvents = [
         {
-            moderation_id: 1,
+            moderation_id: 11,
             created_at: '2024-10-17T11:30:20.287Z',
             name: 'Eco Friendly Plastics',
             country: {
@@ -25,7 +25,7 @@ describe('DashboardModerationQueueListTable component', () => {
             source: 'SLC',
         },
         {
-            moderation_id: 2,
+            moderation_id: 12,
             created_at: '2024-10-10T12:45:30.297Z',
             name: 'Solar Energy Systems Ltd',
             country: {
@@ -45,8 +45,8 @@ describe('DashboardModerationQueueListTable component', () => {
     const paginatedModerationEvents = [
         ...sampleModerationEvents,
         {
-            moderation_id: 3,
-            created_at: '2024-10-19T09:15:50.307Z',
+            moderation_id: 13,
+            created_at: '2024-10-15T09:10:20.287Z',
             name: 'Organic Textiles',
             country: {
                 name: 'Spain',
@@ -56,13 +56,13 @@ describe('DashboardModerationQueueListTable component', () => {
             },
             contributor_name: 'Textile Innovations',
             moderation_status: 'RESOLVED',
-            moderation_decision_date: '2024-10-19T09:15:50.307Z',
-            updated_at: '2024-10-19T09:15:50.307Z',
+            moderation_decision_date: '2024-10-15T09:10:20.287Z',
+            updated_at: '2024-10-15T09:10:20.287Z',
             source: 'API',
         },
         {
-            moderation_id: 4,
-            created_at: '2024-10-20T14:05:10.317Z',
+            moderation_id: 14,
+            created_at: '2024-10-16T13:25:40.317Z',
             name: 'High Tech Components',
             country: {
                 name: 'Japan',
@@ -72,13 +72,13 @@ describe('DashboardModerationQueueListTable component', () => {
             },
             contributor_name: 'Advanced Manufacturing Co',
             moderation_status: 'RESOLVED',
-            moderation_decision_date: '2024-10-20T14:05:10.317Z',
-            updated_at: '2024-10-20T14:05:10.317Z',
+            moderation_decision_date: '2024-10-16T13:25:40.317Z',
+            updated_at: '2024-10-16T13:25:40.317Z',
             source: 'API',
         },
         {
-            moderation_id: 5,
-            created_at: '2024-10-21T08:22:40.327Z',
+            moderation_id: 15,
+            created_at: '2024-10-17T07:18:50.327Z',
             name: 'Bio-Textile Solutions',
             country: {
                 name: 'Sweden',
@@ -88,13 +88,13 @@ describe('DashboardModerationQueueListTable component', () => {
             },
             contributor_name: 'Eco-Friendly Fabrics',
             moderation_status: 'RESOLVED',
-            moderation_decision_date: '2024-10-21T08:22:40.327Z',
-            updated_at: '2024-10-21T08:22:40.327Z',
+            moderation_decision_date: '2024-10-17T07:18:50.327Z',
+            updated_at: '2024-10-17T07:18:50.327Z',
             source: 'SLC',
         },
         {
-            moderation_id: 6,
-            created_at: '2024-10-22T16:35:00.337Z',
+            moderation_id: 16,
+            created_at: '2024-10-18T15:45:00.337Z',
             name: 'CleanTech Machinery',
             country: {
                 name: 'Australia',
@@ -104,8 +104,8 @@ describe('DashboardModerationQueueListTable component', () => {
             },
             contributor_name: 'Sustainable Machines',
             moderation_status: 'RESOLVED',
-            moderation_decision_date: '2024-10-22T16:35:00.337Z',
-            updated_at: '2024-10-22T16:35:00.337Z',
+            moderation_decision_date: '2024-10-18T15:45:00.337Z',
+            updated_at: '2024-10-18T15:45:00.337Z',
             source: 'API',
         },
     ];
