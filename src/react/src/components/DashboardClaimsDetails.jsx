@@ -117,8 +117,8 @@ function DashboardClaimsDetails({
 
             <div style={dashboardClaimsDetailsStyles.dateStyles}>
                 <Typography variant="body2">
-                    Created on {formatDate(data.created_at)} / Last updated on{' '}
-                    {formatDate(data.updated_at)}
+                    Created on {formatDate(data.created_at, 'LLL')} / Last
+                    updated on {formatDate(data.updated_at, 'LLL')}
                 </Typography>
             </div>
 
