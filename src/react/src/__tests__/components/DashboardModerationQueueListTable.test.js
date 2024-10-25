@@ -147,13 +147,11 @@ describe('DashboardModerationQueueListTable component', () => {
         fetching: false,
     };
 
-    const renderComponent = (props = {}) => {
-        return renderWithProviders(
-            <Router>
-                <DashboardModerationQueueListTable {...defaultProps} {...props} />,
-            </Router>
-        );
-    }
+    const renderComponent = (props = {}) => renderWithProviders(
+        <Router>
+            <DashboardModerationQueueListTable {...defaultProps} {...props} />,
+        </Router>
+    );
 
     test('renders loading indicator when fetching', () => {
         const { getByRole } = renderComponent({ fetching: true });

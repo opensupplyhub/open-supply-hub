@@ -12,9 +12,10 @@ describe('DashboardDownloadDataButton component', () => {
     handleDownload: mockHandleDownload,
   };
 
-  const renderComponent = (props = {}) => {
-    return renderWithProviders(<DashboardDownloadDataButton {...defaultProps} {...props} />);
-  };
+  const renderComponent = (props = {}) => renderWithProviders(
+    <DashboardDownloadDataButton {...defaultProps} {...props} />
+  );
+  
 
   beforeEach(() => {
     jest.clearAllMocks();
