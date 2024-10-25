@@ -25,7 +25,7 @@ class V1_PARAMETERS_LIST:
     CONTRIBUTOR_ID = 'contributor_id'
     REQUEST_TYPE = 'request_type'
     SOURCE = 'source'
-    MODERATION_STATUS = 'moderation_status'
+    STATUS = 'status'
     MODERATION_ID = 'moderation_id'
     DATE_GTE = 'data_dte'
     DATE_LT = 'data_lt'
