@@ -639,7 +639,7 @@ export const makeDownloadExcelButtonStyles = theme =>
             width: '200px',
             marginBottom: '44px',
             padding: '14px 13px',
-            color: theme.palette.getContrastText(theme.palette.action.main),
+            color: theme.palette.common.black,
             fontSize: '18px',
             fontWeight: 900,
             lineHeight: '20px',
