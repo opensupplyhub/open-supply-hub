@@ -1,8 +1,8 @@
 import React from 'react';
 import { fireEvent } from '@testing-library/react';
+import { toast } from 'react-toastify';
 import DashboardDownloadDataButton from '../../components/Dashboard/DashboardDownloadDataButton';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
-import { toast } from 'react-toastify';
 
 jest.mock('react-toastify', () => ({
   toast: jest.fn(),
@@ -38,9 +38,7 @@ describe('DashboardDownloadDataButton component', () => {
     downloadError: null,
   };
 
-  const renderComponent = (props = {}) => {
-    return renderWithProviders(<DashboardDownloadDataButton {...defaultProps} {...props} />);
-  };
+  const renderComponent = (props = {}) => renderWithProviders(<DashboardDownloadDataButton {...defaultProps} {...props} />);
 
   beforeEach(() => {
     jest.clearAllMocks();
