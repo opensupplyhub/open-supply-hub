@@ -36,7 +36,7 @@ class ModerationEventsSerializer(Serializer):
         choices=['API', 'SLC'],
         required=False
     )
-    moderation_status = ChoiceField(
+    status = ChoiceField(
         choices=['PENDING', 'RESOLVED'],
         required=False
     )
