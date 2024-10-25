@@ -2,13 +2,14 @@ import React from 'react';
 import { fireEvent } from '@testing-library/react';
 import DashboardDownloadDataButton from '../../components/Dashboard/DashboardDownloadDataButton';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
+import { toast } from 'react-toastify';
 
 jest.mock('react-toastify', () => ({
   toast: jest.fn(),
 }));
 
 jest.mock('../../components/Dashboard/DownloadExcelButton', () => (props) => (
-  <button onClick={props.handleDownload}>Download Excel Button</button>
+  <button type="button" onClick={props.handleDownload}>Download Excel Button</button>
 ));
 
 describe('DashboardDownloadDataButton component', () => {
@@ -62,13 +63,13 @@ describe('DashboardDownloadDataButton component', () => {
   test('should show toast error message when downloadError is present', () => {
     renderComponent({ downloadError: ['Error message'] });
 
-    expect(require('react-toastify').toast).toHaveBeenCalledTimes(1);
-    expect(require('react-toastify').toast).toHaveBeenCalledWith('A problem prevented downloading the data');
+    expect(toast).toHaveBeenCalledTimes(1);
+    expect(toast).toHaveBeenCalledWith('A problem prevented downloading the data');
   });
 
   test('should not call toast when there is no downloadError', () => {
     renderComponent();
 
-    expect(require('react-toastify').toast).not.toHaveBeenCalled();
+    expect(toast).not.toHaveBeenCalled();
   });
 });
