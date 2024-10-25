@@ -105,7 +105,6 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
             <Link to={dashboardActivityReportsRoute}>View Status Reports</Link>
             <Link to={dashboardLinkOsIdRoute}>Link to New OS ID</Link>
             <Link to={dashboardGeocoderRoute}>Geocode</Link>
-            <Link to={dashboardModerationQueueRoute}>Moderation Queue</Link>
         </div>
     );
 
