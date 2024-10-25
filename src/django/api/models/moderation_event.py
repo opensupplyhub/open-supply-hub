@@ -1,6 +1,7 @@
 import uuid
 from django.db import models
 from api.models.contributor.contributor import Contributor
+from api.models.facility.facility import Facility
 from api.models.facility.facility_claim import FacilityClaim
 
 
@@ -53,15 +54,24 @@ class ModerationEvent(models.Model):
         Contributor,
         on_delete=models.PROTECT,
         null=True,
-        related_name='moderation_events',
+        related_name='moderation_event_contributor',
         help_text='Linked contributor responsible for this moderation event.'
+    )
+
+    os = models.ForeignKey(
+        Facility,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='moderation_event_os',
+        help_text='Linked facility OS ID for this moderation event.'
     )
 
     claim = models.OneToOneField(
         FacilityClaim,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='moderation_event',
+        related_name='moderation_event_claim',
         help_text='Linked claim id for this production location.'
     )
 
