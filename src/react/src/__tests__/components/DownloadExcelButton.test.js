@@ -1,11 +1,11 @@
 import React from 'react';
 import { fireEvent } from '@testing-library/react';
-import DashboardDownloadDataButton from '../../components/Dashboard/DashboardDownloadDataButton';
+import DownloadExcelButton from '../../components/Dashboard/DownloadExcelButton';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 
 jest.mock('../../components/DownloadIcon', () => () => <svg data-testid="download-icon" />);
 
-describe('DashboardDownloadDataButton component', () => {
+describe('DownloadExcelButton component', () => {
   const mockHandleDownload = jest.fn();
   const defaultProps = {
     fetching: false,
@@ -13,7 +13,7 @@ describe('DashboardDownloadDataButton component', () => {
   };
 
   const renderComponent = (props = {}) => renderWithProviders(
-    <DashboardDownloadDataButton {...defaultProps} {...props} />
+    <DownloadExcelButton {...defaultProps} {...props} />
   );
   
 
