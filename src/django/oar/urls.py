@@ -104,7 +104,7 @@ api_v1 = [
      ),
      path(
         'api/v1/moderation-events/<str:moderation_id>/',
-        ProductionLocations.as_view({'patch': 'update'}),
+        ModerationEvents.as_view({'patch': 'patch'}),
         name='moderation-event-update'
      ),
 ]

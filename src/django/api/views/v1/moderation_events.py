@@ -61,12 +61,12 @@ class ModerationEvents(ViewSet):
         return Response(response)
 
     @handle_errors_decorator
-    def update(self, request, uuid=None):
-        event = get_object_or_404(ModerationEvent, uuid=uuid)
+    def patch(self, request, moderation_id=None):
+        event = get_object_or_404(ModerationEvent, uuid=moderation_id)
         serializer = ModerationEventUpdateSerializer(event, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
