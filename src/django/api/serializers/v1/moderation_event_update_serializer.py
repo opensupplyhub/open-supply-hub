@@ -13,6 +13,6 @@ class ModerationEventUpdateSerializer(ModelSerializer):
         fields = ['status']
 
     def validate_status(self, value):
-        if value not in ModerationEvent.Status.choices:
+        if value not in [ModerationEvent.Status.PENDING, ModerationEvent.Status.RESOLVED]:
             raise ValidationError("Invalid status.")
         return value
