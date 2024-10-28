@@ -23,6 +23,7 @@ export const completeDownloadingModerationEvents = createAction(
     'COMPLETE_DOWNLOADING_MODERATION_EVENTS',
 );
 
+// TODO: remove mock data after creating the actual API call during implementation OSDEV-1175
 const mockData = [
     {
         moderation_id: 1,
