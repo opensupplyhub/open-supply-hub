@@ -1,6 +1,5 @@
-import moment from 'moment';
-
 import { EMPTY_PLACEHOLDER } from './constants';
+import { formatDate } from './util';
 
 const xlsxHeaders = Object.freeze([
     'Created Date',
@@ -13,20 +12,20 @@ const xlsxHeaders = Object.freeze([
     'Last Updated',
 ]);
 
-const formatFacilityClaimsDataForXLSX = moderationEvents =>
+const formatModerationEventsDataForXLSX = moderationEvents =>
     [xlsxHeaders].concat(
         moderationEvents.map(moderationEvent => [
-            moment(moderationEvent.created_at).format('LL'),
+            formatDate(moderationEvent.created_at, 'LL'),
             moderationEvent.name,
             moderationEvent.country.name,
             moderationEvent.contributor_name,
             moderationEvent.match_status,
             moderationEvent.moderation_status,
             moderationEvent.moderation_decision_date !== null
-                ? moment(moderationEvent.moderation_decision_date).format('LL')
+                ? formatDate(moderationEvent.moderation_decision_date, 'LL')
                 : EMPTY_PLACEHOLDER,
-            moment(moderationEvent.updated_at).format('LL'),
+            formatDate(moderationEvent.updated_at, 'LL'),
         ]),
     );
 
-export default formatFacilityClaimsDataForXLSX;
+export default formatModerationEventsDataForXLSX;
