@@ -14,7 +14,7 @@ from api.views.v1.opensearch_query_builder.opensearch_query_director \
     import OpenSearchQueryDirector
 from api.serializers.v1.moderation_events_serializer \
     import ModerationEventsSerializer
-# from api.views.v1.index_names import OpenSearchIndexNames
+from api.views.v1.index_names import OpenSearchIndexNames
 
 logger = logging.getLogger(__name__)
 
@@ -48,14 +48,8 @@ class ModerationEvents(ViewSet):
 
         logger.info(f'@@@ {query_body}')
 
-        # TODO: Apply moderation event Logstash index here
-        '''
         response = self.opensearch_service.search_index(
             OpenSearchIndexNames.MODERATION_EVENTS_INDEX,
             query_body
         )
         return Response(response)
-        '''
-        return Response({
-            'moderation_event': 'response'
-        })
