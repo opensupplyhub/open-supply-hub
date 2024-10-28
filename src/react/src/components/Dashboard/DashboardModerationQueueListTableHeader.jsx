@@ -1,5 +1,5 @@
 import React from 'react';
-import { bool, func, object, string } from 'prop-types';
+import { bool, func, object, oneOf, string } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
@@ -45,7 +45,7 @@ const DashboardModerationQueueListTableHeader = ({
 
 DashboardModerationQueueListTableHeader.propTypes = {
     fetching: bool.isRequired,
-    order: string.isRequired,
+    order: oneOf(['asc', 'desc']).isRequired,
     orderBy: string.isRequired,
     onRequestSort: func.isRequired,
     classes: object.isRequired,
