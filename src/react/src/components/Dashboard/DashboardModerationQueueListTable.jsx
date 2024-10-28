@@ -13,13 +13,15 @@ import DashboardModerationQueueListTableHeader from './DashboardModerationQueueL
 import { moderationEventsPropType } from '../../util/propTypes';
 import { SOURCE_TYPES, EMPTY_PLACEHOLDER } from '../../util/constants';
 import { makeDashboardModerationQueueListTableStyles } from '../../util/styles';
+import { formatDate } from '../../util/util';
 
+const INITIAL_PAGE_INDEX = 0;
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 25];
 const DEFAULT_ROWS_PER_PAGE = 5;
 function DashboardModerationQueueListTable({ events, fetching, classes }) {
     const [order, setOrder] = useState('desc');
     const [orderBy, setOrderBy] = useState('created_at');
-    const [page, setPage] = useState(0);
+    const [page, setPage] = useState(INITIAL_PAGE_INDEX);
     const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
 
     const handleChangePage = (_, newPage) => {
@@ -28,7 +30,7 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
 
     const handleChangeRowsPerPage = event => {
         setRowsPerPage(event.target.value);
-        setPage(0);
+        setPage(INITIAL_PAGE_INDEX);
     };
 
     const handleRequestSort = (_, property) => {
@@ -97,7 +99,7 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                                             } ${getRowClassName(source)}`}
                                         >
                                             <TableCell padding="dense">
-                                                {moment(createdAt).format('LL')}
+                                                {formatDate(createdAt, 'LL')}
                                             </TableCell>
                                             <TableCell>{name}</TableCell>
                                             <TableCell padding="dense">
@@ -112,9 +114,10 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                                             </TableCell>
                                             <TableCell padding="dense">
                                                 {moderationDecisionDate !== null
-                                                    ? moment(
+                                                    ? formatDate(
                                                           moderationDecisionDate,
-                                                      ).format('LL')
+                                                          'LL',
+                                                      )
                                                     : EMPTY_PLACEHOLDER}
                                             </TableCell>
                                             <TableCell padding="dense">
