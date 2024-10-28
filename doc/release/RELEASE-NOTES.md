@@ -22,6 +22,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * Resource allocation has been optimized for the staging environment. The number of ECS tasks for the Django app has been reduced from 6 to 4, while maintaining system stability.
+* [OSDEV-1387](https://opensupplyhub.atlassian.net/browse/OSDEV-1387) - Replaced the `db.t3.2xlarge` instance type with `db.m6in.4xlarge` for the database in the production and pre-prod environments, respectively, to be able to process more than 600,000 production locations without improving tile generation.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
@@ -59,7 +60,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   * Added the ability to restore a database from a snapshot.
 * [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388)
   * Increased timeout to wait for copying anonymized shared snapshot.
-* [OSDEV-1387](https://opensupplyhub.atlassian.net/browse/OSDEV-1387) - Replaced the `db.t3.2xlarge` instance type with `db.m6in.4xlarge` for the database in the production and pre-prod environments, respectively, to be able to process more than 600,000 production locations without improving tile generation.
 
 ### Bugfix
 * Fixed a bug related to environment variable management:
