@@ -271,7 +271,14 @@ export const numberOfWorkerOptionsPropType = arrayOf(
     }),
 );
 
-export const defaultOptionsPropType = arrayOf(
+export const moderationStatusesOptionsPropType = arrayOf(
+    shape({
+        value: string.isRequired,
+        label: string.isRequired,
+    }),
+);
+
+export const sourceTypesPropType = arrayOf(
     shape({
         value: string.isRequired,
         label: string.isRequired,

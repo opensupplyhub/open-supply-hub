@@ -2,7 +2,7 @@ import React from 'react';
 import { bool, string, func } from 'prop-types';
 import { connect } from 'react-redux';
 import { updateSourceTypeFilter } from '../../actions/filters';
-import { defaultOptionsPropType } from '../../util/propTypes';
+import { sourceTypesPropType } from '../../util/propTypes';
 import { SOURCE_TYPES } from '../../util/constants';
 import { createOptionsFromConstants } from '../../util/util';
 import StyledSelect from './StyledSelect';
@@ -37,7 +37,7 @@ SourceTypeFilter.defaultProps = {
 
 SourceTypeFilter.propTypes = {
     updateSource: func.isRequired,
-    sourceTypes: defaultOptionsPropType.isRequired,
+    sourceTypes: sourceTypesPropType.isRequired,
     isDisabled: bool,
     className: string,
 };

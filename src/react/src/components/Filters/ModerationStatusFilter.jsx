@@ -2,7 +2,7 @@ import React from 'react';
 import { bool, string, func } from 'prop-types';
 import { connect } from 'react-redux';
 import { updateModerationStatusFilter } from '../../actions/filters';
-import { defaultOptionsPropType } from '../../util/propTypes';
+import { moderationStatusesOptionsPropType } from '../../util/propTypes';
 import { MODERATION_STATUSES } from '../../util/constants';
 import { createOptionsFromConstants } from '../../util/util';
 
@@ -38,7 +38,7 @@ ModerationStatusFilter.defaultProps = {
 
 ModerationStatusFilter.propTypes = {
     updateStatus: func.isRequired,
-    moderationStatuses: defaultOptionsPropType.isRequired,
+    moderationStatuses: moderationStatusesOptionsPropType.isRequired,
     isDisabled: bool,
     className: string,
 };
