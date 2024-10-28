@@ -72,7 +72,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   * Added the ability to restore a database from a snapshot.
 * [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388)
   * Increased timeout to wait for copying anonymized shared snapshot.
-* [OSDEV-1387](https://opensupplyhub.atlassian.net/browse/OSDEV-1387) - Replaced the `db.t3.2xlarge` instance type with `db.m6in.2xlarge` for the database in the production and pre-prod environments, respectively, to be able to process more than 600,000 production locations without improving tile generation.
+* [OSDEV-1387](https://opensupplyhub.atlassian.net/browse/OSDEV-1387) - Replaced the `db.t3.2xlarge` instance type with `db.m6in.4xlarge` for the database in the production and pre-prod environments, respectively, to be able to process more than 600,000 production locations without improving tile generation.
 
 ### Bugfix
 * Fixed a bug related to environment variable management:
