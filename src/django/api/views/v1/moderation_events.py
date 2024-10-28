@@ -1,5 +1,6 @@
 import logging
 # from django.http import QueryDict
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
@@ -14,7 +15,12 @@ from api.views.v1.opensearch_query_builder.opensearch_query_director \
     import OpenSearchQueryDirector
 from api.serializers.v1.moderation_events_serializer \
     import ModerationEventsSerializer
+from api.serializers.v1.moderation_event_update_serializer \
+    import ModerationEventUpdateSerializer
 from api.views.v1.index_names import OpenSearchIndexNames
+
+from api.models.moderation_event \
+    import ModerationEvent
 
 logger = logging.getLogger(__name__)
 
@@ -53,3 +59,14 @@ class ModerationEvents(ViewSet):
             query_body
         )
         return Response(response)
+
+    @handle_errors_decorator
+    def update(self, request, uuid=None):
+        event = get_object_or_404(ModerationEvent, uuid=uuid)
+        serializer = ModerationEventUpdateSerializer(event, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
