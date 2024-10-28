@@ -16,13 +16,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Scheme changes
 * [OSDEV-1229](https://opensupplyhub.atlassian.net/browse/OSDEV-1229) - Created Moderation Events Postgres table to track moderation events in the database.
 
-### Database changes
-#### Migrations:
-* *Describe migrations here.*
-
-#### Scheme changes
-* *Describe scheme changes here.*
-
 ### Code/API changes
 * Throttling has been introduced for tiles/* endpoints, limiting requests to 300 per minute.
 * [OSDEV-1328](https://opensupplyhub.atlassian.net/browse/OSDEV-1328) The OpenSearch tokenizer has been changed to `lowercase` to get better search results when querying the GET /v1/production-locations/ endpoint.
@@ -30,12 +23,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Architecture/Environment changes
 * [OSDEV-1170](https://opensupplyhub.atlassian.net/browse/OSDEV-1170)
   * Added the ability to automatically create a dump from the latest shared snapshot of the anonymized database.
-
-### Bugfix
-* *Describe bugfix here.*
-
-### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* Resource allocation has been optimized for the staging environment. The number of ECS tasks for the Django app has been reduced from 6 to 4, while maintaining system stability.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
