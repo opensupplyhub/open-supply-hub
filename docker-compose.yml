@@ -224,7 +224,6 @@ services:
       - POSTGRES_PASSWORD=opensupplyhub
       - POSTGRES_DB=opensupplyhub
       - LOGSTASH_UPDATE_INTERVAL_MINUTES=1
-      - LOG_LEVEL=INFO
 
     depends_on:
       - opensearch-single-node
