@@ -671,6 +671,9 @@ export const makeDashboardModerationQueueStyles = theme =>
             width: '100%',
             marginTop: '5px',
         }),
+        errorText: Object.freeze({
+            marginTop: '5px',
+        }),
         numberResults: Object.freeze({
             fontWeight: theme.typography.fontWeightBold,
             padding: '20px',

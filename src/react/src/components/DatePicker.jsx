@@ -5,7 +5,7 @@ import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import { makeDatePickerStyles } from '../util/styles';
 
-function DatePicker({ label, value, onChange, name, classes }) {
+function DatePicker({ label, value, onChange, name, classes, ...rest }) {
     return (
         <div className={classes.datePickerContainer}>
             <Typography className={classes.datePickerLabel}>{label}</Typography>
@@ -21,6 +21,7 @@ function DatePicker({ label, value, onChange, name, classes }) {
                     },
                 }}
                 variant="outlined"
+                {...rest}
             />
         </div>
     );

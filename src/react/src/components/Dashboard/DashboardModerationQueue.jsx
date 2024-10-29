@@ -31,11 +31,33 @@ const DashboardModerationQueue = ({
 }) => {
     const [afterDate, setAfterDate] = useState('');
     const [beforeDate, setBeforeDate] = useState('');
+    const [afterDateError, setAfterDateError] = useState(false);
+    const [beforeDateError, setBeforeDateError] = useState(false);
 
     useEffect(() => {
         fetchEvents();
         fetchCountries();
     }, [fetchEvents, fetchCountries]);
+
+    const handleAfterDateChange = date => {
+        if (!beforeDate || date <= beforeDate) {
+            setAfterDate(date);
+            setAfterDateError(false);
+        } else {
+            setAfterDate('');
+            setAfterDateError(true);
+        }
+    };
+
+    const handleBeforeDateChange = date => {
+        if (!afterDate || date >= afterDate) {
+            setBeforeDate(date);
+            setBeforeDateError(false);
+        } else {
+            setBeforeDate('');
+            setBeforeDateError(true);
+        }
+    };
 
     if (error) {
         return <Typography>{error}</Typography>;
@@ -74,19 +96,28 @@ const DashboardModerationQueue = ({
                         <DatePicker
                             label="After Date:"
                             value={afterDate}
-                            onChange={setAfterDate}
+                            onChange={handleAfterDateChange}
                             name="after-date"
+                            error={afterDateError}
                         />
                     </Grid>
                     <Grid item>
                         <DatePicker
                             label="Before Date:"
                             value={beforeDate}
-                            onChange={setBeforeDate}
+                            onChange={handleBeforeDateChange}
                             name="before-date"
+                            error={beforeDateError}
                         />
                     </Grid>
                 </Grid>
+                {(afterDateError || beforeDateError) && (
+                    <Typography color="error" className={classes.errorText}>
+                        The &apos;After Date&apos; should be earlier than or the
+                        same as the &apos;Before Date&apos;. Please adjust the
+                        dates.
+                    </Typography>
+                )}
             </div>
 
             <Grid item className={classes.numberResults}>
