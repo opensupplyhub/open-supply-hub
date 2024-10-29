@@ -3,6 +3,16 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+
+## Release 1.23.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: November 16, 2024
+
+### Architecture/Environment changes
+* Open Search versoion has been increased to 2.17
+
 ## Release 1.23.0
 
 ## Introduction
