@@ -1,4 +1,4 @@
-import { EMPTY_PLACEHOLDER } from '../util/constants';
+import { EMPTY_PLACEHOLDER, DATE_FORMATS } from '../util/constants';
 import { formatDate } from '../util/util';
 
 const xlsxHeaders = Object.freeze([
@@ -19,12 +19,12 @@ const formatFacilityClaimsDataForXLSX = facilityClaims =>
             facilityClaim.facility_name,
             facilityClaim.contributor_name,
             facilityClaim.facility_country_name,
-            formatDate(facilityClaim.created_at, 'LL'),
+            formatDate(facilityClaim.created_at, DATE_FORMATS.LONG),
             facilityClaim.claim_decision !== null
-                ? formatDate(facilityClaim.claim_decision, 'LL')
+                ? formatDate(facilityClaim.claim_decision, DATE_FORMATS.LONG)
                 : EMPTY_PLACEHOLDER,
             facilityClaim.status,
-            formatDate(facilityClaim.updated_at, 'LL'),
+            formatDate(facilityClaim.updated_at, DATE_FORMATS.LONG),
         ]),
     );
 

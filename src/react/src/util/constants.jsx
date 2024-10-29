@@ -1342,3 +1342,10 @@ export const MODERATION_QUEUE_HEAD_CELLS = [
     { id: 'moderation_decision_date', label: 'Moderation Decision Date' },
     { id: 'updated_at', label: 'Last Updated' },
 ];
+
+export const DATE_FORMATS = {
+    SHORT: 'L',
+    LONG: 'LL',
+    LONG_WITH_TIME: 'LLL',
+    FULL: 'LLLL',
+};

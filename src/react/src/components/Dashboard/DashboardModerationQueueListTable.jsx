@@ -11,7 +11,11 @@ import TablePagination from '@material-ui/core/TablePagination';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import DashboardModerationQueueListTableHeader from './DashboardModerationQueueListTableHeader';
 import { moderationEventsPropType } from '../../util/propTypes';
-import { SOURCE_TYPES, EMPTY_PLACEHOLDER } from '../../util/constants';
+import {
+    SOURCE_TYPES,
+    EMPTY_PLACEHOLDER,
+    DATE_FORMATS,
+} from '../../util/constants';
 import { makeDashboardModerationQueueListTableStyles } from '../../util/styles';
 import { formatDate } from '../../util/util';
 
@@ -99,7 +103,10 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                                             } ${getRowClassName(source)}`}
                                         >
                                             <TableCell padding="dense">
-                                                {formatDate(createdAt, 'LL')}
+                                                {formatDate(
+                                                    createdAt,
+                                                    DATE_FORMATS.LONG,
+                                                )}
                                             </TableCell>
                                             <TableCell>{name}</TableCell>
                                             <TableCell padding="dense">
@@ -116,12 +123,14 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                                                 {moderationDecisionDate !== null
                                                     ? formatDate(
                                                           moderationDecisionDate,
-                                                          'LL',
+                                                          DATE_FORMATS.LONG,
                                                       )
                                                     : EMPTY_PLACEHOLDER}
                                             </TableCell>
                                             <TableCell padding="dense">
-                                                {moment(updatedAt).format('LL')}
+                                                {moment(updatedAt).format(
+                                                    DATE_FORMATS.LONG,
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ),

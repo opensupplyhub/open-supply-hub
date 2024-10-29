@@ -3,7 +3,7 @@ import { fireEvent } from '@testing-library/react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import DashboardModerationQueueListTable from '../../components/Dashboard/DashboardModerationQueueListTable';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
-import { EMPTY_PLACEHOLDER } from '../../util/constants';
+import { EMPTY_PLACEHOLDER, DATE_FORMATS } from '../../util/constants';
 import { formatDate } from '../../util/util';
 
 describe('DashboardModerationQueueListTable component', () => {
@@ -132,14 +132,14 @@ describe('DashboardModerationQueueListTable component', () => {
 
         sampleModerationEvents.forEach(event => {
             expect(getByText(event.name)).toBeInTheDocument();
-            expect(getByText(formatDate(event.created_at, 'LL'))).toBeInTheDocument();
+            expect(getByText(formatDate(event.created_at, DATE_FORMATS.LONG))).toBeInTheDocument();
             expect(getByText(event.country.name)).toBeInTheDocument();
             expect(getByText(event.contributor_name)).toBeInTheDocument();
             expect(getByText(event.source)).toBeInTheDocument();
             expect(getByText(event.moderation_status)).toBeInTheDocument();
 
             const decisionDate = event.moderation_decision_date
-            ? formatDate(event.moderation_decision_date, 'LL')
+            ? formatDate(event.moderation_decision_date, DATE_FORMATS.LONG)
             : EMPTY_PLACEHOLDER;
             expect(getByText(decisionDate)).toBeInTheDocument();
         });

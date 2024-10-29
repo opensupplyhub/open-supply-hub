@@ -17,7 +17,7 @@ import {
 } from '../actions/claimFacilityDashboard';
 
 import { facilityClaimPropType } from '../util/propTypes';
-
+import { DATE_FORMATS } from '../util/constants';
 import {
     makeProfileRouteLink,
     makeFacilityDetailLink,
@@ -117,8 +117,10 @@ function DashboardClaimsDetails({
 
             <div style={dashboardClaimsDetailsStyles.dateStyles}>
                 <Typography variant="body2">
-                    Created on {formatDate(data.created_at, 'LLL')} / Last
-                    updated on {formatDate(data.updated_at, 'LLL')}
+                    Created on{' '}
+                    {formatDate(data.created_at, DATE_FORMATS.LONG_WITH_TIME)} /
+                    Last updated on{' '}
+                    {formatDate(data.updated_at, DATE_FORMATS.LONG_WITH_TIME)}
                 </Typography>
             </div>
 
