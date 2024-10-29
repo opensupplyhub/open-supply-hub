@@ -29,6 +29,7 @@ const DashboardModerationQueueListTableHeader = ({
                         className={classes.headerCellStyles}
                     >
                         <TableSortLabel
+                            aria-label={`${label} sort`}
                             active={orderBy === id}
                             direction={orderBy === id ? order : 'asc'}
                             onClick={createSortHandler(id)}
