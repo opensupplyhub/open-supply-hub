@@ -4,4 +4,4 @@ COPY package.json package-lock.json playwright.config.ts ./
 COPY ./tests ./tests
 RUN npm ci
 
-ENTRYPOINT [ "" ]
+ENTRYPOINT [ "npx", "playwright", "test" ]

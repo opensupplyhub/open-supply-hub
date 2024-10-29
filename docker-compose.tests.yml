@@ -23,7 +23,8 @@ services:
     build:
       context: ./src/e2e
       dockerfile: Dockerfile
-    # environment:
+    environment:
+      - CI=$CI
       # - OPENSEARCH_HOST=opensearch-single-node
       # - OPENSEARCH_PORT=9200
       # - OPENSEARCH_INDEX_NAME=production-locations
