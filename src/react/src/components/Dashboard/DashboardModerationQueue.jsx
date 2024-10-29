@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
-import { arrayOf, bool, func, string, object } from 'prop-types';
+import { bool, func, string, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
@@ -110,8 +110,8 @@ DashboardModerationQueue.defaultProps = {
 DashboardModerationQueue.propTypes = {
     events: moderationEventsPropType,
     fetching: bool.isRequired,
-    error: arrayOf(string),
-    downloadEventsError: arrayOf(string),
+    error: string,
+    downloadEventsError: string,
     fetchEvents: func.isRequired,
     fetchCountries: func.isRequired,
     downloadEvents: func.isRequired,
