@@ -23,7 +23,7 @@ export const completeDownloadingModerationEvents = createAction(
     'COMPLETE_DOWNLOADING_MODERATION_EVENTS',
 );
 
-// TODO: remove mock data after creating the actual API call during implementation OSDEV-1175
+// TODO: Remove mock data and replace with actual API call as part of https://opensupplyhub.atlassian.net/browse/OSDEV-1175
 const mockData = [
     {
         moderation_id: 1,
@@ -127,7 +127,7 @@ export function fetchModerationEvents() {
     return async dispatch => {
         dispatch(startFetchingModerationEvents());
 
-        // TODO: replace with actual API call during implementation OSDEV-1175
+        // TODO: Replace the mock implementation with an actual API call as part of https://opensupplyhub.atlassian.net/browse/OSDEV-1175
         return new Promise(resolve => {
             setTimeout(() => resolve({ data: mockData }), 1000);
         })
