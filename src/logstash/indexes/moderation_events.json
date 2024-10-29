@@ -37,6 +37,26 @@
         },
         "updated_at": {
           "type": "date"
+        },
+        "cleaned_data": {
+          "properties": {
+            "country": {
+              "properties": {
+                "name": {
+                  "type": "keyword"
+                },
+                "alpha_2": {
+                  "type": "keyword"
+                },
+                "alpha_3": {
+                  "type": "keyword"
+                },
+                "numeric": {
+                  "type": "keyword"
+                }
+              }
+            }
+          }
         }
       }
     }
