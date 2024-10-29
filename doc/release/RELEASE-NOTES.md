@@ -7,29 +7,25 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: November 2, 2024
+* Release date: November 02, 2024
 
 ### Database changes
 #### Migrations:
-* *Describe migrations here.*
+* 0158_create_moderation_events_table.py - This migration creates api_moderationevent table for Moderation Queue.
 
 #### Scheme changes
-* *Describe scheme changes here.*
+* [OSDEV-1229](https://opensupplyhub.atlassian.net/browse/OSDEV-1229) - Created Moderation Events Postgres table to track moderation events in the database.
 
 ### Code/API changes
 * Throttling has been introduced for tiles/* endpoints, limiting requests to 300 per minute.
 * [OSDEV-1328](https://opensupplyhub.atlassian.net/browse/OSDEV-1328) The OpenSearch tokenizer has been changed to `lowercase` to get better search results when querying the GET /v1/production-locations/ endpoint.
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
-
-### Bugfix
-* *Describe bugfix here.*
-
-### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* Resource allocation has been optimized for the staging environment. The number of ECS tasks for the Django app has been reduced from 6 to 4, while maintaining system stability.
 
 ### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
 * Run `Deploy to AWS` pipeline for an existing environment with the flag clear OpenSearch set to true - to let the tokenizer parse full text into words with new configurations.
 
 
