@@ -1,7 +1,6 @@
 import React from 'react';
 import { fireEvent } from '@testing-library/react';
 import { toast } from 'react-toastify';
-import { func } from 'prop-types';
 import DashboardDownloadDataButton from '../../components/Dashboard/DashboardDownloadDataButton';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 
