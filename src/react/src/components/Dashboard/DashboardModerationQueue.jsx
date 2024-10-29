@@ -102,7 +102,7 @@ const DashboardModerationQueue = ({
 };
 
 DashboardModerationQueue.defaultProps = {
-    events: null,
+    events: [],
     error: null,
     downloadEventsError: null,
 };
