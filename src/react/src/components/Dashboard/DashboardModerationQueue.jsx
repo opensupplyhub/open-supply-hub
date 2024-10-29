@@ -25,7 +25,7 @@ const DashboardModerationQueue = ({
     fetchEvents,
     error,
     downloadEvents,
-    downloadError,
+    downloadEventsError,
     fetchCountries,
     classes,
 }) => {
@@ -50,7 +50,7 @@ const DashboardModerationQueue = ({
                     fetching={fetching}
                     downloadPayload={events || []}
                     downloadData={downloadEvents}
-                    downloadError={downloadError}
+                    downloadError={downloadEventsError}
                 />
                 <SourceTypeFilter
                     isDisabled={fetching}
@@ -104,14 +104,14 @@ const DashboardModerationQueue = ({
 DashboardModerationQueue.defaultProps = {
     events: null,
     error: null,
-    downloadError: null,
+    downloadEventsError: null,
 };
 
 DashboardModerationQueue.propTypes = {
     events: moderationEventsPropType,
     fetching: bool.isRequired,
     error: arrayOf(string),
-    downloadError: arrayOf(string),
+    downloadEventsError: arrayOf(string),
     fetchEvents: func.isRequired,
     fetchCountries: func.isRequired,
     downloadEvents: func.isRequired,
@@ -121,13 +121,13 @@ DashboardModerationQueue.propTypes = {
 const mapStateToProps = ({
     dashboardModerationQueue: {
         moderationEvents: { events, fetching, error },
-        moderationEventsDownloadStatus: { error: downloadError },
+        moderationEventsDownloadStatus: { error: downloadEventsError },
     },
 }) => ({
     events,
     fetching,
     error,
-    downloadError,
+    downloadEventsError,
 });
 
 const mapDispatchToProps = dispatch => ({
