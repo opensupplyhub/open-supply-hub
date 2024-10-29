@@ -148,23 +148,28 @@ describe('DashboardModerationQueueListTable component', () => {
     test('handles rows per page change', () => {
         const { getByText } = renderComponent({ events: paginatedModerationEvents });
 
-        expect(getByText(/1-5 of \d+/)).toBeInTheDocument();
+        expect(getByText(/1-5 of 6/)).toBeInTheDocument();
         expect(getByText(/rows per page/i)).toBeInTheDocument();
         
         fireEvent.click(getByText('5'));
         fireEvent.click(getByText('10'));
-        expect(getByText(/1-\d+ of \d+/)).toBeInTheDocument();
+        expect(getByText(/1-6 of 6/)).toBeInTheDocument();
     });
 
     test('handles page change', () => {
         const { getByText, getByRole} = renderComponent({ events: paginatedModerationEvents });
 
-        expect(getByText(/1-5 of \d+/)).toBeInTheDocument();
+        expect(getByText(/1-5 of 6/)).toBeInTheDocument();
         const nextPageButton = getByRole('button', { name: /next page/i });
         fireEvent.click(nextPageButton);
-        expect(getByText(/6-\d+ of \d+/)).toBeInTheDocument();
+        expect(getByText(/6-6 of 6/)).toBeInTheDocument();
         const previousPageButton = getByRole('button', { name: /previous page/i });
         fireEvent.click(previousPageButton);
-        expect(getByText(/1-5 of \d+/)).toBeInTheDocument();
+        expect(getByText(/1-5 of 6/)).toBeInTheDocument();
+    });
+
+    test('handles empty state pagination', () => {
+        const { getByText } = renderComponent({ events: [] });
+        expect(getByText(/0-0 of 0/)).toBeInTheDocument();
     });
 });
