@@ -9,7 +9,7 @@ jest.mock('react-toastify', () => ({
 }));
 
 jest.mock('../../components/Dashboard/DownloadExcelButton', () => {
-  const PropTypes = require('prop-types');
+  const PropTypes = jest.requireActual('prop-types');
 
   const DownloadExcelButtonMock = ({ handleDownload }) => (
     <button type="button" onClick={handleDownload}>
