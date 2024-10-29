@@ -85,7 +85,7 @@ const DashboardClaims = ({
     clearCountry,
     countriesData,
     downloadClaims,
-    downloadError,
+    downloadClaimsError,
 }) => {
     const { countries, statuses } = getDashboardClaimsListParamsFromQueryString(
         search,
@@ -167,7 +167,7 @@ const DashboardClaims = ({
                         fetching={fetching}
                         downloadPayload={data || []}
                         downloadData={downloadClaims}
-                        downloadError={downloadError}
+                        downloadError={downloadClaimsError}
                     />
                     <ClaimStatusFilter
                         countriesData={countriesData}
@@ -198,7 +198,7 @@ DashboardClaims.defaultProps = {
     data: null,
     error: null,
     countriesData: null,
-    downloadError: null,
+    downloadClaimsError: null,
 };
 
 DashboardClaims.propTypes = {
@@ -220,13 +220,13 @@ DashboardClaims.propTypes = {
     claimStatuses: claimStatusOptionsPropType.isRequired,
     clearCountry: func.isRequired,
     downloadClaims: func.isRequired,
-    downloadError: arrayOf(string),
+    downloadClaimsError: arrayOf(string),
 };
 
 function mapStateToProps({
     claimFacilityDashboard: {
         list: { data, fetching, error },
-        facilityClaimsDownloadStatus: { error: downloadError },
+        facilityClaimsDownloadStatus: { error: downloadClaimsError },
     },
     filters: { claimStatuses, countries: countriesData },
 }) {
@@ -236,7 +236,7 @@ function mapStateToProps({
         error,
         claimStatuses,
         countriesData,
-        downloadError,
+        downloadClaimsError,
     };
 }
 
