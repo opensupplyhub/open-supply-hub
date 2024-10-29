@@ -1,6 +1,7 @@
 import React from 'react';
 import { fireEvent } from '@testing-library/react';
 import { toast } from 'react-toastify';
+import { func } from 'prop-types';
 import DashboardDownloadDataButton from '../../components/Dashboard/DashboardDownloadDataButton';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 
@@ -8,9 +9,19 @@ jest.mock('react-toastify', () => ({
   toast: jest.fn(),
 }));
 
-jest.mock('../../components/Dashboard/DownloadExcelButton', () => (props) => (
-  <button type="button" onClick={props.handleDownload}>Download Excel Button</button>
-));
+jest.mock('../../components/Dashboard/DownloadExcelButton', () => (props) => {
+  const { handleDownload } = props;
+  
+  return (
+    <button type="button" onClick={handleDownload}>
+      Download Excel Button
+    </button>
+  );
+});
+
+jest.mock('../../components/Dashboard/DownloadExcelButton').propTypes = {
+  handleDownload: func.isRequired,
+}; 
 
 describe('DashboardDownloadDataButton component', () => {
   const mockDownloadData = jest.fn();
