@@ -1,12 +1,14 @@
 import logging
 # from django.http import QueryDict
-from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
 from api.views.v1.utils import (
     serialize_params,
-    handle_errors_decorator
+    handle_errors_decorator,
+    is_valid_uuid,
+    handle_path_error
 )
 from api.services.search import OpenSearchService
 from api.views.v1.opensearch_query_builder.opensearch_query_builder \
@@ -60,13 +62,40 @@ class ModerationEvents(ViewSet):
         )
         return Response(response)
 
-    @handle_errors_decorator
     def patch(self, request, moderation_id=None):
-        event = get_object_or_404(ModerationEvent, uuid=moderation_id)
+        # Validate permission
+        if not (request.user.is_superuser or request.user.is_staff):
+            raise PermissionDenied()
+
+        # Validate UUID.
+        if not is_valid_uuid(moderation_id):
+            return handle_path_error(
+                field="moderation_id",
+                message="Invalid UUID format.",
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Retrieve the moderation event.
+        try:
+            event = ModerationEvent.objects.get(uuid=moderation_id)
+        except ModerationEvent.DoesNotExist:
+            return handle_path_error(
+                field="moderation_id",
+                message="Moderation event not found.",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        # Serialize and validate data
         serializer = ModerationEventUpdateSerializer(event, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {
+                "message": "The request body contains invalid or missing fields.",
+                "error": serializer.errors
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
