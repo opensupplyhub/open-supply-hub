@@ -9,19 +9,22 @@ jest.mock('react-toastify', () => ({
   toast: jest.fn(),
 }));
 
-jest.mock('../../components/Dashboard/DownloadExcelButton', () => (props) => {
-  const { handleDownload } = props;
-  
-  return (
+jest.mock('../../components/Dashboard/DownloadExcelButton', () => {
+  const PropTypes = require('prop-types');
+
+  const DownloadExcelButtonMock = ({ handleDownload }) => (
     <button type="button" onClick={handleDownload}>
       Download Excel Button
     </button>
   );
+
+  DownloadExcelButtonMock.propTypes = {
+    handleDownload: PropTypes.func.isRequired,
+  };
+
+  return DownloadExcelButtonMock;
 });
 
-jest.mock('../../components/Dashboard/DownloadExcelButton').propTypes = {
-  handleDownload: func.isRequired,
-}; 
 
 describe('DashboardDownloadDataButton component', () => {
   const mockDownloadData = jest.fn();
