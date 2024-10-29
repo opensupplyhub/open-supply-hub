@@ -12,8 +12,6 @@ import { defineConfig, devices } from '@playwright/test';
  * See https://playwright.dev/docs/test-configuration.
  */
 
-console.log('process.env.CI', process.env.CI);
-
 export default defineConfig({
   testDir: './tests',
   /* Run tests in files in parallel */
