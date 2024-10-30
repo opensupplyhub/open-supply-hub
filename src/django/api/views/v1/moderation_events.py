@@ -98,8 +98,8 @@ class ModerationEvents(ViewSet):
 
         return Response(
             {
-                "message": 'The request body contains ' 
-                    'invalid or missing fields.',
+                "message": 'The request body contains '
+                'invalid or missing fields.',
                 "error": serializer.errors
             },
             status=status.HTTP_400_BAD_REQUEST
