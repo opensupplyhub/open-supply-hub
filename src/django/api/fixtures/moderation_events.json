@@ -1,0 +1,992 @@
+[
+    {
+       "model":"api.moderationevent",
+       "pk":1,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc67ec",
+          "created_at":"2024-10-01T10:00:00Z",
+          "updated_at":"2024-10-01T10:00:00Z",
+          "status_change_date":null,
+          "request_type":"CREATE",
+          "raw_data":{
+             "country":"USA",
+             "name":"Tech Innovations Inc.",
+             "address":"123 Silicon Valley, CA"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"USA",
+                "alpha_2":"US",
+                "alpha_3":"USA",
+                "numeric":"840"
+             },
+             "name":"Tech Innovations Inc.",
+             "address":"123 Silicon Valley, CA"
+          },
+          "geocode_result":{
+             "latitude":37.7749,
+             "longitude":-122.4194
+          },
+          "status":"RESOLVED",
+          "source":"API",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":2,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc67ed",
+          "created_at":"2024-10-01T11:00:00Z",
+          "updated_at":"2024-10-01T11:00:00Z",
+          "status_change_date":null,
+          "request_type":"UPDATE",
+          "raw_data":{
+             "country":"Canada",
+             "name":"Maple Leaf Corp.",
+             "address":"456 Maple St, Toronto, ON"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Canada",
+                "alpha_2":"CA",
+                "alpha_3":"CAN",
+                "numeric":"124"
+             },
+             "name":"Maple Leaf Corp.",
+             "address":"456 Maple St, Toronto, ON"
+          },
+          "geocode_result":{
+             "latitude":43.6532,
+             "longitude":-79.3832
+          },
+          "status":"PENDING",
+          "source":"SLC",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":3,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc67ee",
+          "created_at":"2024-10-02T12:00:00Z",
+          "updated_at":"2024-10-02T12:00:00Z",
+          "status_change_date":null,
+          "request_type":"CLAIM",
+          "raw_data":{
+             "country":"Mexico",
+             "name":"Mexican Textiles S.A.",
+             "address":"789 Textile Blvd, Mexico City"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Mexico",
+                "alpha_2":"MX",
+                "alpha_3":"MEX",
+                "numeric":"484"
+             },
+             "name":"Mexican Textiles S.A.",
+             "address":"789 Textile Blvd, Mexico City"
+          },
+          "geocode_result":{
+             "latitude":19.4326,
+             "longitude":-99.1332
+          },
+          "status":"RESOLVED",
+          "source":"API",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":4,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc67ff",
+          "created_at":"2024-10-03T13:00:00Z",
+          "updated_at":"2024-10-03T13:00:00Z",
+          "status_change_date":null,
+          "request_type":"CREATE",
+          "raw_data":{
+             "country":"Brazil",
+             "name":"Rio Coffee Co.",
+             "address":"321 Coffee Ave, Rio de Janeiro"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Brazil",
+                "alpha_2":"BR",
+                "alpha_3":"BRA",
+                "numeric":"76"
+             },
+             "name":"Rio Coffee Co.",
+             "address":"321 Coffee Ave, Rio de Janeiro"
+          },
+          "geocode_result":{
+             "latitude":-22.9068,
+             "longitude":-43.1729
+          },
+          "status":"PENDING",
+          "source":"SLC",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":5,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6800",
+          "created_at":"2024-10-04T14:00:00Z",
+          "updated_at":"2024-10-04T14:00:00Z",
+          "status_change_date":null,
+          "request_type":"UPDATE",
+          "raw_data":{
+             "country":"Argentina",
+             "name":"Buenos Aires Realty",
+             "address":"654 Realty St, Buenos Aires"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Argentina",
+                "alpha_2":"AR",
+                "alpha_3":"ARG",
+                "numeric":"32"
+             },
+             "name":"Buenos Aires Realty",
+             "address":"654 Realty St, Buenos Aires"
+          },
+          "geocode_result":{
+             "latitude":-34.6037,
+             "longitude":-58.3816
+          },
+          "status":"RESOLVED",
+          "source":"API",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":6,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6801",
+          "created_at":"2024-10-05T15:00:00Z",
+          "updated_at":"2024-10-05T15:00:00Z",
+          "status_change_date":null,
+          "request_type":"CLAIM",
+          "raw_data":{
+             "country":"Chile",
+             "name":"Santiago Ventures",
+             "address":"789 Business Rd, Santiago"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Chile",
+                "alpha_2":"CL",
+                "alpha_3":"CHL",
+                "numeric":"152"
+             },
+             "name":"Santiago Ventures",
+             "address":"789 Business Rd, Santiago"
+          },
+          "geocode_result":{
+             "latitude":-33.4489,
+             "longitude":-70.6693
+          },
+          "status":"PENDING",
+          "source":"SLC",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":7,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6802",
+          "created_at":"2024-10-06T16:00:00Z",
+          "updated_at":"2024-10-06T16:00:00Z",
+          "status_change_date":null,
+          "request_type":"CREATE",
+          "raw_data":{
+             "country":"Colombia",
+             "name":"Medellin Solutions",
+             "address":"101 Tech St, Medellin"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Colombia",
+                "alpha_2":"CO",
+                "alpha_3":"COL",
+                "numeric":"170"
+             },
+             "name":"Medellin Solutions",
+             "address":"101 Tech St, Medellin"
+          },
+          "geocode_result":{
+             "latitude":6.2442,
+             "longitude":-75.5812
+          },
+          "status":"RESOLVED",
+          "source":"API",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":8,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6806",
+          "created_at":"2024-10-10T20:00:00Z",
+          "updated_at":"2024-10-10T20:00:00Z",
+          "status_change_date":null,
+          "request_type":"CREATE",
+          "raw_data":{
+             "country":"Colombia",
+             "name":"Bogotá Tech Hub",
+             "address":"505 Tech Dr, Bogotá"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Colombia",
+                "alpha_2":"CO",
+                "alpha_3":"COL",
+                "numeric":"170"
+             },
+             "name":"Bogotá Tech Hub",
+             "address":"505 Tech Dr, Bogotá"
+          },
+          "geocode_result":{
+             "latitude":4.711,
+             "longitude":-74.0721
+          },
+          "status":"RESOLVED",
+          "source":"API",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":9,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6807",
+          "created_at":"2024-10-11T21:00:00Z",
+          "updated_at":"2024-10-11T21:00:00Z",
+          "status_change_date":null,
+          "request_type":"UPDATE",
+          "raw_data":{
+             "country":"Brazil",
+             "name":"São Paulo Innovations",
+             "address":"606 Innovation Rd, São Paulo"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Brazil",
+                "alpha_2":"BR",
+                "alpha_3":"BRA",
+                "numeric":"076"
+             },
+             "name":"São Paulo Innovations",
+             "address":"606 Innovation Rd, São Paulo"
+          },
+          "geocode_result":{
+             "latitude":-23.5505,
+             "longitude":-46.6333
+          },
+          "status":"PENDING",
+          "source":"SLC",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":10,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6808",
+          "created_at":"2024-10-12T22:00:00Z",
+          "updated_at":"2024-10-12T22:00:00Z",
+          "status_change_date":null,
+          "request_type":"CREATE",
+          "raw_data":{
+             "country":"Argentina",
+             "name":"Buenos Aires Manufacturing",
+             "address":"707 Manufacturing St, Buenos Aires"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Argentina",
+                "alpha_2":"AR",
+                "alpha_3":"ARG",
+                "numeric":"032"
+             },
+             "name":"Buenos Aires Manufacturing",
+             "address":"707 Manufacturing St, Buenos Aires"
+          },
+          "geocode_result":{
+             "latitude":-34.6037,
+             "longitude":-58.3816
+          },
+          "status":"RESOLVED",
+          "source":"API",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":11,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6809",
+          "created_at":"2024-10-13T23:00:00Z",
+          "updated_at":"2024-10-13T23:00:00Z",
+          "status_change_date":null,
+          "request_type":"UPDATE",
+          "raw_data":{
+             "country":"Chile",
+             "name":"Santiago Tech Park",
+             "address":"808 Technology Ave, Santiago"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Chile",
+                "alpha_2":"CL",
+                "alpha_3":"CHL",
+                "numeric":"152"
+             },
+             "name":"Santiago Tech Park",
+             "address":"808 Technology Ave, Santiago"
+          },
+          "geocode_result":{
+             "latitude":-33.4489,
+             "longitude":-70.6693
+          },
+          "status":"PENDING",
+          "source":"SLC",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":12,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6810",
+          "created_at":"2024-10-14T00:00:00Z",
+          "updated_at":"2024-10-14T00:00:00Z",
+          "status_change_date":null,
+          "request_type":"CREATE",
+          "raw_data":{
+             "country":"Uruguay",
+             "name":"Montevideo Ventures",
+             "address":"909 Venture Blvd, Montevideo"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Uruguay",
+                "alpha_2":"UY",
+                "alpha_3":"URY",
+                "numeric":"858"
+             },
+             "name":"Montevideo Ventures",
+             "address":"909 Venture Blvd, Montevideo"
+          },
+          "geocode_result":{
+             "latitude":-34.9011,
+             "longitude":-56.1645
+          },
+          "status":"RESOLVED",
+          "source":"API",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":13,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6811",
+          "created_at":"2024-10-15T00:00:00Z",
+          "updated_at":"2024-10-15T00:00:00Z",
+          "status_change_date":null,
+          "request_type":"UPDATE",
+          "raw_data":{
+             "country":"Peru",
+             "name":"Lima Innovation Center",
+             "address":"1010 Center St, Lima"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Peru",
+                "alpha_2":"PE",
+                "alpha_3":"PER",
+                "numeric":"604"
+             },
+             "name":"Lima Innovation Center",
+             "address":"1010 Center St, Lima"
+          },
+          "geocode_result":{
+             "latitude":-12.0464,
+             "longitude":-77.0428
+          },
+          "status":"PENDING",
+          "source":"SLC",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":14,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6812",
+          "created_at":"2024-10-16T01:00:00Z",
+          "updated_at":"2024-10-16T01:00:00Z",
+          "status_change_date":null,
+          "request_type":"CREATE",
+          "raw_data":{
+             "country":"Venezuela",
+             "name":"Caracas Solutions",
+             "address":"1111 Solution Rd, Caracas"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Venezuela",
+                "alpha_2":"VE",
+                "alpha_3":"VEN",
+                "numeric":"862"
+             },
+             "name":"Caracas Solutions",
+             "address":"1111 Solution Rd, Caracas"
+          },
+          "geocode_result":{
+             "latitude":10.4806,
+             "longitude":-66.9036
+          },
+          "status":"RESOLVED",
+          "source":"API",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":15,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6813",
+          "created_at":"2024-10-17T02:00:00Z",
+          "updated_at":"2024-10-17T02:00:00Z",
+          "status_change_date":null,
+          "request_type":"UPDATE",
+          "raw_data":{
+             "country":"Paraguay",
+             "name":"Asunción Tech Hub",
+             "address":"1212 Hub Rd, Asunción"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Paraguay",
+                "alpha_2":"PY",
+                "alpha_3":"PRY",
+                "numeric":"600"
+             },
+             "name":"Asunción Tech Hub",
+             "address":"1212 Hub Rd, Asunción"
+          },
+          "geocode_result":{
+             "latitude":-25.2637,
+             "longitude":-57.5759
+          },
+          "status":"PENDING",
+          "source":"SLC",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":16,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6814",
+          "created_at":"2024-10-18T03:00:00Z",
+          "updated_at":"2024-10-18T03:00:00Z",
+          "status_change_date":null,
+          "request_type":"CREATE",
+          "raw_data":{
+             "country":"Bolivia",
+             "name":"La Paz Manufacturing",
+             "address":"1313 Industry Rd, La Paz"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Bolivia",
+                "alpha_2":"BO",
+                "alpha_3":"BOL",
+                "numeric":"068"
+             },
+             "name":"La Paz Manufacturing",
+             "address":"1313 Industry Rd, La Paz"
+          },
+          "geocode_result":{
+             "latitude":-16.5000,
+             "longitude":-68.1500
+          },
+          "status":"RESOLVED",
+          "source":"API",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":17,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6815",
+          "created_at":"2024-10-19T04:00:00Z",
+          "updated_at":"2024-10-19T04:00:00Z",
+          "status_change_date":null,
+          "request_type":"UPDATE",
+          "raw_data":{
+             "country":"Ecuador",
+             "name":"Quito Solutions",
+             "address":"1414 Solution St, Quito"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Ecuador",
+                "alpha_2":"EC",
+                "alpha_3":"ECU",
+                "numeric":"218"
+             },
+             "name":"Quito Solutions",
+             "address":"1414 Solution St, Quito"
+          },
+          "geocode_result":{
+             "latitude":-0.1807,
+             "longitude":-78.4678
+          },
+          "status":"PENDING",
+          "source":"SLC",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":18,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6816",
+          "created_at":"2024-10-20T05:00:00Z",
+          "updated_at":"2024-10-20T05:00:00Z",
+          "status_change_date":null,
+          "request_type":"CREATE",
+          "raw_data":{
+             "country":"Cuba",
+             "name":"Havana Tech",
+             "address":"1515 Tech St, Havana"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Cuba",
+                "alpha_2":"CU",
+                "alpha_3":"CUB",
+                "numeric":"192"
+             },
+             "name":"Havana Tech",
+             "address":"1515 Tech St, Havana"
+          },
+          "geocode_result":{
+             "latitude":23.1136,
+             "longitude":-82.3666
+          },
+          "status":"RESOLVED",
+          "source":"API",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":19,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6817",
+          "created_at":"2024-10-21T06:00:00Z",
+          "updated_at":"2024-10-21T06:00:00Z",
+          "status_change_date":null,
+          "request_type":"UPDATE",
+          "raw_data":{
+             "country":"Guyana",
+             "name":"Georgetown Innovators",
+             "address":"1616 Innovator Blvd, Georgetown"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Guyana",
+                "alpha_2":"GY",
+                "alpha_3":"GUY",
+                "numeric":"328"
+             },
+             "name":"Georgetown Innovators",
+             "address":"1616 Innovator Blvd, Georgetown"
+          },
+          "geocode_result":{
+             "latitude":6.8013,
+             "longitude":-58.1551
+          },
+          "status":"PENDING",
+          "source":"SLC",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":20,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6818",
+          "created_at":"2024-10-22T07:00:00Z",
+          "updated_at":"2024-10-22T07:00:00Z",
+          "status_change_date":null,
+          "request_type":"CREATE",
+          "raw_data":{
+             "country":"Suriname",
+             "name":"Paramaribo Solutions",
+             "address":"1717 Solution St, Paramaribo"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Suriname",
+                "alpha_2":"SR",
+                "alpha_3":"SUR",
+                "numeric":"740"
+             },
+             "name":"Paramaribo Solutions",
+             "address":"1717 Solution St, Paramaribo"
+          },
+          "geocode_result":{
+             "latitude":5.852,
+             "longitude":-55.2038
+          },
+          "status":"RESOLVED",
+          "source":"API",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":21,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6819",
+          "created_at":"2024-10-23T08:00:00Z",
+          "updated_at":"2024-10-23T08:00:00Z",
+          "status_change_date":null,
+          "request_type":"UPDATE",
+          "raw_data":{
+             "country":"Jamaica",
+             "name":"Kingston Dynamics",
+             "address":"1818 Dynamics Blvd, Kingston"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Jamaica",
+                "alpha_2":"JM",
+                "alpha_3":"JAM",
+                "numeric":"388"
+             },
+             "name":"Kingston Dynamics",
+             "address":"1818 Dynamics Blvd, Kingston"
+          },
+          "geocode_result":{
+             "latitude":18.0179,
+             "longitude":-76.8099
+          },
+          "status":"PENDING",
+          "source":"SLC",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":22,
+       "fields":{
+          "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6820",
+          "created_at":"2024-10-24T09:00:00Z",
+          "updated_at":"2024-10-24T09:00:00Z",
+          "status_change_date":null,
+          "request_type":"CREATE",
+          "raw_data":{
+             "country":"Haiti",
+             "name":"Port-au-Prince Manufacturers",
+             "address":"1919 Manufacture St, Port-au-Prince"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Haiti",
+                "alpha_2":"HT",
+                "alpha_3":"HTI",
+                "numeric":"332"
+             },
+             "name":"Port-au-Prince Manufacturers",
+             "address":"1919 Manufacture St, Port-au-Prince"
+          },
+          "geocode_result":{
+             "latitude":18.5944,
+             "longitude":-72.3074
+          },
+          "status":"RESOLVED",
+          "source":"API",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":23,
+       "fields":{
+          "uuid":"3b50d60f-85b2-4a17-9f8d-5d3e1fc68191",
+          "created_at":"2024-10-25T10:00:00Z",
+          "updated_at":"2024-10-25T10:00:00Z",
+          "status_change_date":null,
+          "request_type":"CREATE",
+          "raw_data":{
+             "country":"Belize",
+             "name":"Belize Exports",
+             "address":"2020 Export Ave, Belmopan"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Belize",
+                "alpha_2":"BZ",
+                "alpha_3":"BLZ",
+                "numeric":"084"
+             },
+             "name":"Belize Exports",
+             "address":"2020 Export Ave, Belmopan"
+          },
+          "geocode_result":{
+             "latitude":17.2514,
+             "longitude":-88.759
+          },
+          "status":"PENDING",
+          "source":"API",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":24,
+       "fields":{
+          "uuid":"3b50d60f-85b2-4a17-9f8d-5d3e1fc68192",
+          "created_at":"2024-10-26T11:00:00Z",
+          "updated_at":"2024-10-26T11:00:00Z",
+          "status_change_date":null,
+          "request_type":"UPDATE",
+          "raw_data":{
+             "country":"Panama",
+             "name":"Panama Trade Partners",
+             "address":"2121 Trade Way, Panama City"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Panama",
+                "alpha_2":"PA",
+                "alpha_3":"PAN",
+                "numeric":"591"
+             },
+             "name":"Panama Trade Partners",
+             "address":"2121 Trade Way, Panama City"
+          },
+          "geocode_result":{
+             "latitude":8.9833,
+             "longitude":-79.5167
+          },
+          "status":"RESOLVED",
+          "source":"API",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":25,
+       "fields":{
+          "uuid":"3b50d60f-85b2-4a17-9f8d-5d3e1fc68193",
+          "created_at":"2024-10-27T12:00:00Z",
+          "updated_at":"2024-10-27T12:00:00Z",
+          "status_change_date":null,
+          "request_type":"CREATE",
+          "raw_data":{
+             "country":"Guyana",
+             "name":"Georgetown Suppliers",
+             "address":"2222 Supply Dr, Georgetown"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Guyana",
+                "alpha_2":"GY",
+                "alpha_3":"GUY",
+                "numeric":"328"
+             },
+             "name":"Georgetown Suppliers",
+             "address":"2222 Supply Dr, Georgetown"
+          },
+          "geocode_result":{
+             "latitude":6.8013,
+             "longitude":-58.1552
+          },
+          "status":"PENDING",
+          "source":"SLC",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":26,
+       "fields":{
+          "uuid":"3b50d60f-85b2-4a17-9f8d-5d3e1fc68194",
+          "created_at":"2024-10-28T13:00:00Z",
+          "updated_at":"2024-10-28T13:00:00Z",
+          "status_change_date":null,
+          "request_type":"UPDATE",
+          "raw_data":{
+             "country":"Dominica",
+             "name":"Roseau Imports",
+             "address":"2323 Import Blvd, Roseau"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Dominica",
+                "alpha_2":"DM",
+                "alpha_3":"DMA",
+                "numeric":"212"
+             },
+             "name":"Roseau Imports",
+             "address":"2323 Import Blvd, Roseau"
+          },
+          "geocode_result":{
+             "latitude":15.3014,
+             "longitude":-61.3883
+          },
+          "status":"RESOLVED",
+          "source":"API",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":27,
+       "fields":{
+          "uuid":"3b50d60f-85b2-4a17-9f8d-5d3e1fc68195",
+          "created_at":"2024-10-29T14:00:00Z",
+          "updated_at":"2024-10-29T14:00:00Z",
+          "status_change_date":null,
+          "request_type":"CREATE",
+          "raw_data":{
+             "country":"Saint Lucia",
+             "name":"Castries Ventures",
+             "address":"2424 Venture Ln, Castries"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Saint Lucia",
+                "alpha_2":"LC",
+                "alpha_3":"LCA",
+                "numeric":"662"
+             },
+             "name":"Castries Ventures",
+             "address":"2424 Venture Ln, Castries"
+          },
+          "geocode_result":{
+             "latitude":13.9094,
+             "longitude":-60.9789
+          },
+          "status":"PENDING",
+          "source":"SLC",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":28,
+       "fields":{
+          "uuid":"3b50d60f-85b2-4a17-9f8d-5d3e1fc68196",
+          "created_at":"2024-10-30T15:00:00Z",
+          "updated_at":"2024-10-30T15:00:00Z",
+          "status_change_date":null,
+          "request_type":"UPDATE",
+          "raw_data":{
+             "country":"Trinidad and Tobago",
+             "name":"Port of Spain Holdings",
+             "address":"2525 Holding St, Port of Spain"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Trinidad and Tobago",
+                "alpha_2":"TT",
+                "alpha_3":"TTO",
+                "numeric":"780"
+             },
+             "name":"Port of Spain Holdings",
+             "address":"2525 Holding St, Port of Spain"
+          },
+          "geocode_result":{
+             "latitude":10.6600,
+             "longitude":-61.5086
+          },
+          "status":"RESOLVED",
+          "source":"API",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":29,
+       "fields":{
+          "uuid":"3b50d60f-85b2-4a17-9f8d-5d3e1fc68197",
+          "created_at":"2024-10-31T16:00:00Z",
+          "updated_at":"2024-10-31T16:00:00Z",
+          "status_change_date":null,
+          "request_type":"CREATE",
+          "raw_data":{
+             "country":"Grenada",
+             "name":"St. George's Trading",
+             "address":"2626 Trade Rd, St. George's"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Grenada",
+                "alpha_2":"GD",
+                "alpha_3":"GRD",
+                "numeric":"308"
+             },
+             "name":"St. George's Trading",
+             "address":"2626 Trade Rd, St. George's"
+          },
+          "geocode_result":{
+             "latitude":12.0561,
+             "longitude":-61.7486
+          },
+          "status":"PENDING",
+          "source":"SLC",
+          "claim_id":null
+       }
+    },
+    {
+       "model":"api.moderationevent",
+       "pk":30,
+       "fields":{
+          "uuid":"3b50d60f-85b2-4a17-9f8d-5d3e1fc68198",
+          "created_at":"2024-11-01T17:00:00Z",
+          "updated_at":"2024-11-01T17:00:00Z",
+          "status_change_date":null,
+          "request_type":"UPDATE",
+          "raw_data":{
+             "country":"Antigua and Barbuda",
+             "name":"St. John's Imports",
+             "address":"2727 Import Pl, St. John's"
+          },
+          "cleaned_data":{
+             "country":{
+                "name":"Antigua and Barbuda",
+                "alpha_2":"AG",
+                "alpha_3":"ATG",
+                "numeric":"028"
+             },
+             "name":"St. John's Imports",
+             "address":"2727 Import Pl, St. John's"
+          },
+          "geocode_result":{
+             "latitude":17.1214,
+             "longitude":-61.8449
+          },
+          "status":"RESOLVED",
+          "source":"API",
+          "claim_id":null
+       }
+    }
+]
