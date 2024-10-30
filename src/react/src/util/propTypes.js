@@ -271,14 +271,14 @@ export const numberOfWorkerOptionsPropType = arrayOf(
     }),
 );
 
-export const moderationStatusesOptionsPropType = arrayOf(
+export const moderationStatusOptionsPropType = arrayOf(
     shape({
         value: string.isRequired,
         label: string.isRequired,
     }),
 );
 
-export const sourceTypesPropType = arrayOf(
+export const dataSourceOptionsPropType = arrayOf(
     shape({
         value: string.isRequired,
         label: string.isRequired,

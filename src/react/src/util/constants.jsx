@@ -1322,7 +1322,7 @@ export const listParsingErrorMappings = {
     ),
 };
 
-export const SOURCE_TYPES = Object.freeze({
+export const DATA_SOURCES = Object.freeze({
     API: 'API',
     SLC: 'SLC',
 });

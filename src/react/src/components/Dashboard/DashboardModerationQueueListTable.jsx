@@ -12,7 +12,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import DashboardModerationQueueListTableHeader from './DashboardModerationQueueListTableHeader';
 import { moderationEventsPropType } from '../../util/propTypes';
 import {
-    SOURCE_TYPES,
+    DATA_SOURCES,
     EMPTY_PLACEHOLDER,
     DATE_FORMATS,
 } from '../../util/constants';
@@ -45,9 +45,9 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
 
     const getRowClassName = source => {
         switch (source) {
-            case SOURCE_TYPES.SLC:
+            case DATA_SOURCES.SLC:
                 return classes.slcRowStyles;
-            case SOURCE_TYPES.API:
+            case DATA_SOURCES.API:
                 return classes.apiRowStyles;
             default:
                 return classes.defaultRowStyles;

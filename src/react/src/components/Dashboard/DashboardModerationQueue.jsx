@@ -6,7 +6,7 @@ import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import CountryNameFilter from '../Filters/CountryNameFilter';
-import SourceTypeFilter from '../Filters/SourceTypeFilter';
+import DataSourceFilter from '../Filters/DataSourceFilter';
 import ModerationStatusFilter from '../Filters/ModerationStatusFilter';
 import DashboardModerationQueueListTable from './DashboardModerationQueueListTable';
 import DashboardDownloadDataButton from './DashboardDownloadDataButton';
@@ -74,7 +74,7 @@ const DashboardModerationQueue = ({
                     downloadData={downloadEvents}
                     downloadError={downloadEventsError}
                 />
-                <SourceTypeFilter
+                <DataSourceFilter
                     isDisabled={fetching}
                     className="form__field--dense"
                 />
