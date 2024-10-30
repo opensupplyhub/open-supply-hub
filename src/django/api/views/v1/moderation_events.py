@@ -1,3 +1,4 @@
+import logging
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
@@ -13,6 +14,8 @@ from api.views.v1.opensearch_query_builder.opensearch_query_director \
 from api.serializers.v1.moderation_events_serializer \
     import ModerationEventsSerializer
 from api.views.v1.index_names import OpenSearchIndexNames
+
+logger = logging.getLogger(__name__)
 
 
 class ModerationEvents(ViewSet):
@@ -41,6 +44,8 @@ class ModerationEvents(ViewSet):
         query_body = self.opensearch_query_director.build_query(
             request.GET
         )
+
+        logger.info(f'@@@ {query_body}')
 
         response = self.opensearch_service.search_index(
             OpenSearchIndexNames.MODERATION_EVENTS_INDEX,
