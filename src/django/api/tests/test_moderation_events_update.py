@@ -71,7 +71,7 @@ class ModerationEventsUpdateTest(APITestCase):
         )
 
         self.assertEqual(200, response.status_code)
-    
+
     def test_moderation_event_not_found(self):
         self.client.login(
             email=self.superemail,
