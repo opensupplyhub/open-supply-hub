@@ -49,10 +49,14 @@ test 'country filter with valid country_code' do
     end
 
     expect('returns event object with country object inside') do |events|
-      events[0].get('cleaned_data')['country']['name'] == 'Yemen'
-      events[0].get('cleaned_data')['country']['alpha_2'] == 'YE'
-      events[0].get('cleaned_data')['country']['alpha_3'] == 'YEM'
-      events[0].get('cleaned_data')['country']['numeric'] == '887'
+        result = (
+            events[0].get('cleaned_data')['country']['name'] == 'Yemen' &&
+            events[0].get('cleaned_data')['country']['alpha_2'] == 'YE' &&
+            events[0].get('cleaned_data')['country']['alpha_3'] == 'YEM' &&
+            events[0].get('cleaned_data')['country']['numeric'] == '887'
+        )
+
+        result
     end
 
     expect('returns the event object with other non-country-related fields unchanged') do |events|
@@ -71,8 +75,12 @@ test 'country filter with an object that lacks country_code' do
     }
   
     expect('returns the same object') do |events|
-        events[0].get('cleaned_data').key?('name')
-        events[0].get('status') == 'RESOLVED'
-        !events[0].get('cleaned_data').key?('country')
+        result = (
+            events[0].get('cleaned_data').key?('name') &&
+            events[0].get('status') == 'RESOLVED' &&
+            !events[0].get('cleaned_data').key?('country')
+        )
+
+        result
     end
 end

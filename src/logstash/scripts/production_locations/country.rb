@@ -30,10 +30,14 @@ test 'country filter' do
     in_event { { 'country_value' => 'UA' } }
   
     expect('gets object data') do |events|
-      events.size == 1
-      events[0].get('country')['name'] == 'Ukraine'
-      events[0].get('country')['alpha_2'] == 'UA'
-      events[0].get('country')['alpha_3'] == 'UKR'
-      events[0].get('country')['numeric'] == '804'
+        result = (
+            events.size == 1 &&
+            events[0].get('country')['name'] == 'Ukraine' &&
+            events[0].get('country')['alpha_2'] == 'UA' &&
+            events[0].get('country')['alpha_3'] == 'UKR' &&
+            events[0].get('country')['numeric'] == '804'
+        )
+
+        result
     end
 end
