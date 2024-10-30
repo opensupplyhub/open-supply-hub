@@ -690,14 +690,11 @@ export const makeDashboardModerationQueueListTableStyles = Object.freeze({
         display: 'block',
         margin: 'auto',
     }),
-    slcRowStyles: Object.freeze({
-        backgroundColor: COLOURS.PALE_BLUE,
+    pendingStatusStyles: Object.freeze({
+        backgroundColor: COLOURS.PALE_LIGHT_YELLOW,
     }),
-    apiRowStyles: Object.freeze({
-        backgroundColor: COLOURS.LAVENDER_GREY,
-    }),
-    defaultRowStyles: Object.freeze({
-        backgroundColor: 'inherit',
+    resolvedStatusStyles: Object.freeze({
+        backgroundColor: COLOURS.MINT_GREEN,
     }),
 });
 

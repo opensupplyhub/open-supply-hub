@@ -2,10 +2,6 @@ export default {
     // Blues
     NAVY_BLUE: '#0427a4',
     LIGHT_BLUE: '#009ee6',
-    PALE_BLUE: '#CFE2F3',
-
-    // Purples
-    LAVENDER_GREY: '#D9D1E9',
 
     // Greens
     GREEN: '#E0F5E3',

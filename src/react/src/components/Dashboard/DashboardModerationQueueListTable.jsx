@@ -12,9 +12,9 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import DashboardModerationQueueListTableHeader from './DashboardModerationQueueListTableHeader';
 import { moderationEventsPropType } from '../../util/propTypes';
 import {
-    DATA_SOURCES,
     EMPTY_PLACEHOLDER,
     DATE_FORMATS,
+    MODERATION_STATUSES,
 } from '../../util/constants';
 import { makeDashboardModerationQueueListTableStyles } from '../../util/styles';
 import { formatDate } from '../../util/util';
@@ -43,14 +43,14 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
         setOrderBy(property);
     };
 
-    const getRowClassName = source => {
-        switch (source) {
-            case DATA_SOURCES.SLC:
-                return classes.slcRowStyles;
-            case DATA_SOURCES.API:
-                return classes.apiRowStyles;
+    const getStatusClassName = status => {
+        switch (status) {
+            case MODERATION_STATUSES.PENDING:
+                return classes.pendingStatusStyles;
+            case MODERATION_STATUSES.RESOLVED:
+                return classes.resolvedStatusStyles;
             default:
-                return classes.defaultRowStyles;
+                return '';
         }
     };
 
@@ -98,9 +98,7 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                                         <TableRow
                                             hover
                                             key={moderationId}
-                                            className={`${
-                                                classes.row
-                                            } ${getRowClassName(source)}`}
+                                            className={classes.rowStyles}
                                         >
                                             <TableCell padding="dense">
                                                 {formatDate(
@@ -116,7 +114,11 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                                                 {contributorName}
                                             </TableCell>
                                             <TableCell>{source}</TableCell>
-                                            <TableCell>
+                                            <TableCell
+                                                className={getStatusClassName(
+                                                    moderationStatus,
+                                                )}
+                                            >
                                                 {moderationStatus}
                                             </TableCell>
                                             <TableCell padding="dense">
