@@ -17,6 +17,7 @@ const DataSourceFilter = ({
     dataSources,
     isDisabled,
     className,
+    origin,
 }) => (
     <div className={className}>
         <StyledSelect
@@ -26,6 +27,7 @@ const DataSourceFilter = ({
             value={dataSources}
             onChange={updateSource}
             isDisabled={isDisabled}
+            origin={origin}
         />
     </div>
 );
@@ -33,6 +35,7 @@ const DataSourceFilter = ({
 DataSourceFilter.defaultProps = {
     isDisabled: false,
     className: 'form__field',
+    origin: null,
 };
 
 DataSourceFilter.propTypes = {
@@ -40,6 +43,7 @@ DataSourceFilter.propTypes = {
     dataSources: dataSourceOptionsPropType.isRequired,
     isDisabled: bool,
     className: string,
+    origin: string,
 };
 
 const mapStateToProps = ({ filters: { dataSources } }) => ({

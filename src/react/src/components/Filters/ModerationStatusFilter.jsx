@@ -18,6 +18,7 @@ const ModerationStatusFilter = ({
     moderationStatuses,
     isDisabled,
     className,
+    origin,
 }) => (
     <div className={className}>
         <StyledSelect
@@ -27,6 +28,7 @@ const ModerationStatusFilter = ({
             value={moderationStatuses}
             onChange={updateStatus}
             isDisabled={isDisabled}
+            origin={origin}
         />
     </div>
 );
@@ -34,6 +36,7 @@ const ModerationStatusFilter = ({
 ModerationStatusFilter.defaultProps = {
     isDisabled: false,
     className: 'form__field',
+    origin: null,
 };
 
 ModerationStatusFilter.propTypes = {
@@ -41,6 +44,7 @@ ModerationStatusFilter.propTypes = {
     moderationStatuses: moderationStatusOptionsPropType.isRequired,
     isDisabled: bool,
     className: string,
+    origin: string,
 };
 
 const mapStateToProps = ({ filters: { moderationStatuses } }) => ({

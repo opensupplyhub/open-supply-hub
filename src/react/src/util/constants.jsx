@@ -1349,3 +1349,5 @@ export const DATE_FORMATS = {
     LONG_WITH_TIME: 'LLL',
     FULL: 'LLLL',
 };
+
+export const MODERATION_QUEUE = 'ModerationQueue';

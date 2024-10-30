@@ -18,9 +18,14 @@ function StyledSelect({
     renderIcon,
     windowWidth,
     isSideBarSearch,
+    origin,
     ...rest
 }) {
-    const selectFilterStyles = makeSelectFilterStyles(windowWidth, color);
+    const selectFilterStyles = makeSelectFilterStyles(
+        windowWidth,
+        color,
+        origin,
+    );
     return (
         <>
             <InputLabel
@@ -91,6 +96,7 @@ function StyledSelect({
 StyledSelect.defaultProps = {
     creatable: false,
     renderIcon: () => {},
+    origin: null,
 };
 
 StyledSelect.propTypes = {
@@ -98,6 +104,7 @@ StyledSelect.propTypes = {
     label: string.isRequired,
     creatable: bool,
     renderIcon: func,
+    origin: string,
 };
 
 function mapStateToProps({

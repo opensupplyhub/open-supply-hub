@@ -23,6 +23,7 @@ export default {
     DARK_SLATE_GRAY: '#3D4153',
     NEAR_BLACK: '#0D1128',
 
-    // Special Colors
+    // Accent Colors
     NAVIGATION: '#FCCF3F',
+    PALE_LIGHT_YELLOW: '#FFF2CE',
 };
