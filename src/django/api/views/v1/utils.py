@@ -108,6 +108,7 @@ def handle_errors_decorator(view_func):
             return handle_opensearch_exception(e)
     return _wrapped_view
 
+
 def is_valid_uuid(uuid_string):
     # Check if the provided string is a valid UUID.
     try:
@@ -115,6 +116,7 @@ def is_valid_uuid(uuid_string):
         return True
     except ValueError:
         return False
+
 
 def handle_path_error(field, message, status_code):
     # Generate a structured error response.

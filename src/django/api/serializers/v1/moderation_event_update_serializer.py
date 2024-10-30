@@ -26,7 +26,7 @@ class ModerationEventUpdateSerializer(ModelSerializer):
             'status',
             'source'
         ]
-    
+
     def to_internal_value(self, data):
         # Ensure custom status validation is triggered.
         status = data.get('status')
@@ -44,7 +44,10 @@ class ModerationEventUpdateSerializer(ModelSerializer):
 
     def validate_status(self, value):
         # Validation for status field.
-        if value not in [ModerationEvent.Status.PENDING, ModerationEvent.Status.RESOLVED]:
+        if value not in [
+            ModerationEvent.Status.PENDING,
+            ModerationEvent.Status.RESOLVED
+        ]:
             raise ValidationError({
                 "field": "status",
                 "message": f"'{value}' is not a valid status."
