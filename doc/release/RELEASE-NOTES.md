@@ -21,7 +21,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe code/API changes here.*
 
 ### Architecture/Environment changes
-* Open Search version has been increased to 2.17
+* The OpenSearch version has been increased to 2.15.
 
 ### Bugfix
 * *Describe bugfix here.*
@@ -31,9 +31,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Moderation Events Table: Allows users to view and manage moderation events more effectively.
     * Filtering Options: Multiple filter fields enable users to customize the displayed events based on different criteria, making it easier to find specific events.
     * Download Excel Button: Provides the ability to export the list of displayed moderation events as an XLSX file for offline analysis and record-keeping.
-    
+
 ### Release instructions:
-* *Provide release instructions here.*
+* Run the `[Release] Deploy` pipeline for the Staging or Production environment with the flag 'Clear OpenSearch indexes' set to true. This will allow Logstash to refill OpenSearch since the OpenSearch instance will be recreated due to the version increase.
 
 
 ## Release 1.23.0
@@ -59,7 +59,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
-* Run `Deploy to AWS` pipeline for an existing environment with the flag clear OpenSearch set to true - to let the tokenizer parse full text into words with new configurations.
+* Run `[Release] Deploy` pipeline for an existing environment with the flag 'Clear OpenSearch indexes' set to true - to let the tokenizer parse full text into words with new configurations.
 
 
 ## Release 1.22.0
