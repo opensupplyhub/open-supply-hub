@@ -98,7 +98,7 @@ class ModerationEvents(ViewSet):
 
         return Response(
             {
-                "message": 'The request body contains' 
+                "message": 'The request body contains ' 
                     'invalid or missing fields.',
                 "error": serializer.errors
             },
