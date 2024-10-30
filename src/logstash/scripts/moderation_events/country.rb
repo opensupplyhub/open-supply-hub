@@ -5,7 +5,7 @@ def filter(event)
     cleaned_data_value = event.get('cleaned_data_value')
 
     # Check whether the 'country_code' key exists.
-    if !cleaned_data_value.nil? && cleaned_data_value.key?('country_code')
+    if cleaned_data_value.key?('country_code')
         # Country code Alpha-2 data.
         alpha_2_country_code = cleaned_data_value['country_code']
 
@@ -34,15 +34,45 @@ def filter(event)
     return [event]
 end
 
-# test "Country filter" do
-
-#     in_event { { 'country_value' => "UA" } }
+test 'country filter with valid country_code' do
+    in_event {
+        {
+            'cleaned_data_value' => {
+                'country_code' => 'YE'
+            },
+            'status' => 'RESOLVED'
+        }
+    }
   
-#     expect("Get object data") do |events|
-#       events.size == 1
-#       events[0].get('country')['name'] == "Ukraine"
-#       events[0].get('country')['alpha_2'] == "UA"
-#       events[0].get('country')['alpha_3'] == "UKR"
-#       events[0].get('country')['numeric'] == "804"
-#     end
-# end
+    expect('removes country_code key') do |events|
+        events.size == 1 && !events[0].get('cleaned_data').key?('country_code')
+    end
+
+    expect('returns event object with country object inside') do |events|
+      events[0].get('cleaned_data')['country']['name'] == 'Yemen'
+      events[0].get('cleaned_data')['country']['alpha_2'] == 'YE'
+      events[0].get('cleaned_data')['country']['alpha_3'] == 'YEM'
+      events[0].get('cleaned_data')['country']['numeric'] == '887'
+    end
+
+    expect('returns the event object with other non-country-related fields unchanged') do |events|
+        events[0].get('status') == 'RESOLVED'
+    end
+end
+
+test 'country filter with an object that lacks country_code' do
+    in_event {
+        {
+            'cleaned_data_value' => {
+                'name' => 'FUTURE FASHION'
+            },
+            'status' => 'RESOLVED'
+        }
+    }
+  
+    expect('returns the same object') do |events|
+        events[0].get('cleaned_data').key?('name')
+        events[0].get('status') == 'RESOLVED'
+        !events[0].get('cleaned_data').key?('country')
+    end
+end

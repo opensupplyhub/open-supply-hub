@@ -6,3 +6,20 @@ def filter(event)
 
     return [event]
 end
+
+test 'country filter with an object that lacks country_code' do
+    in_event {
+        {
+            'cleaned_data_value' => {
+                'name' => 'FUTURE FASHION'
+            },
+            'status' => 'RESOLVED'
+        }
+    }
+  
+    expect('returns the same object') do |events|
+        events[0].get('cleaned_data').key?('name')
+        events[0].get('status') == 'RESOLVED'
+        !events[0].get('cleaned_data').key?('country')
+    end
+end
