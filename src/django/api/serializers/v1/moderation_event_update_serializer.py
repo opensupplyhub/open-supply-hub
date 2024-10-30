@@ -1,6 +1,8 @@
 from rest_framework.serializers import (
     ModelSerializer,
-    ValidationError
+    ValidationError,
+    CharField,
+    IntegerField
 )
 from api.models.moderation_event \
     import ModerationEvent
@@ -9,22 +11,27 @@ from django.utils.timezone import now
 
 class ModerationEventUpdateSerializer(ModelSerializer):
 
+    # Add a custom field and provide naming for response
+    contributor_id = IntegerField(source='contributor.id', read_only=True)
+    contributor_name = CharField(source='contributor.name', read_only=True)
+    os_id = IntegerField(source='os.id', read_only=True)
+    claim_id = IntegerField(source='claim.id', read_only=True)
+
     class Meta:
         model = ModerationEvent
         fields = [
             'uuid',
             'created_at',
             'updated_at',
-            'status_change_date',
-            'contributor',
-            'os',
-            'claim',
-            'request_type',
-            'raw_data',
+            'os_id',
+            'contributor_id',
+            'contributor_name',
             'cleaned_data',
-            'geocode_result',
+            'request_type',
+            'source',
             'status',
-            'source'
+            'status_change_date',
+            'claim_id'
         ]
 
     def to_internal_value(self, data):
