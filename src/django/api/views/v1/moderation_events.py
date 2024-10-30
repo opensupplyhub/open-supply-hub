@@ -94,7 +94,7 @@ class ModerationEvents(ViewSet):
 
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response(
             {
