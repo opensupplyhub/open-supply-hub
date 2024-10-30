@@ -119,14 +119,16 @@ def is_valid_uuid(uuid_string):
 
 
 def handle_path_error(field, message, status_code):
-    # Generate a structured error response.
+    # Generate a structured error response for path.
     return Response(
         {
             "message": "The request path parameter is invalid.",
-            "error": {
-                "field": field,
-                "message": message
-            }
+            "errors": [
+                {
+                    "field": field,
+                    "message": message
+                }
+            ]
         },
         status=status_code
     )
