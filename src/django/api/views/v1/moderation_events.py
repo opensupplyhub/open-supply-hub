@@ -1,5 +1,3 @@
-import logging
-# from django.http import QueryDict
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
@@ -23,8 +21,6 @@ from api.views.v1.index_names import OpenSearchIndexNames
 
 from api.models.moderation_event \
     import ModerationEvent
-
-logger = logging.getLogger(__name__)
 
 
 class ModerationEvents(ViewSet):
@@ -53,8 +49,6 @@ class ModerationEvents(ViewSet):
         query_body = self.opensearch_query_director.build_query(
             request.GET
         )
-
-        logger.info(f'@@@ {query_body}')
 
         response = self.opensearch_service.search_index(
             OpenSearchIndexNames.MODERATION_EVENTS_INDEX,
