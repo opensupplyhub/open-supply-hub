@@ -170,7 +170,7 @@ REST_FRAMEWORK = {
         'burst': '100/minute',
         'sustained': '10000/day',
         'data_upload': '30/minute',
-        'tiles': '300/minute',
+        'tiles': '30/minute',
     }
 }
 
