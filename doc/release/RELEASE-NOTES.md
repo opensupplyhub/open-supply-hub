@@ -11,7 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Release date: November 16, 2024
 
 ### Architecture/Environment changes
-* Open Search versoion has been increased to 2.17
+* Open Search versoion has been increased to 2.15
 
 ## Release 1.23.0
 
