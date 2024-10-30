@@ -205,7 +205,7 @@ export const claimAFacilitySupportDocsFormStyles = Object.freeze({
     }),
 });
 
-export const makeSelectFilterStyles = (windowWidth, color = OARColor, origin) =>
+export const makeSelectFilterStyles = (windowWidth, origin, color = OARColor) =>
     Object.freeze({
         multiValue: Object.freeze((provided, state) => {
             const backgroundColor = multiValueBackgroundHandler(

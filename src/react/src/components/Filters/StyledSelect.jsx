@@ -23,8 +23,8 @@ function StyledSelect({
 }) {
     const selectFilterStyles = makeSelectFilterStyles(
         windowWidth,
-        color,
         origin,
+        color,
     );
     return (
         <>
