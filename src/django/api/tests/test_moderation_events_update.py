@@ -45,7 +45,7 @@ class ModerationEventsUpdateTest(APITestCase):
             contributor=self.contributor
         )
     
-    def test_requires_superuser(self):
+    def test_moderation_event_permission(self):
         self.client.login(
             email=self.email,
             password=self.password
@@ -64,7 +64,49 @@ class ModerationEventsUpdateTest(APITestCase):
         response = self.client.patch(
             "/api/v1/moderation-events/{}/".format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
             data=json.dumps({"status": "RESOLVED"}),
-            content_type="application/json" 
+            content_type="application/json"
         )
 
         self.assertEqual(200, response.status_code)
+    
+    def test_moderation_event_not_found(self):
+        self.client.login(
+            email=self.superemail,
+            password=self.superpassword
+        )
+        response = self.client.patch(
+            "/api/v1/moderation-events/{}/".format("f65ec710-f7b9-4f50-b960-135a7ab24ee1"),
+            data=json.dumps({"status": "RESOLVED"}),
+            content_type="application/json"
+        )
+
+        self.assertEqual(404, response.status_code)
+
+    def test_moderation_event_invalid_status(self):
+        self.client.login(
+            email=self.superemail,
+            password=self.superpassword
+        )
+        response = self.client.patch(
+            "/api/v1/moderation-events/{}/".format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
+            data=json.dumps({"status": "NEW"}),
+            content_type="application/json"
+        )
+
+        self.assertEqual(400, response.status_code)
+    
+    def test_moderation_event_status_changed(self):
+        self.client.login(
+            email=self.superemail,
+            password=self.superpassword
+        )
+        response = self.client.patch(
+            "/api/v1/moderation-events/{}/".format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
+            data=json.dumps({"status": "RESOLVED"}),
+            content_type="application/json"
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.moderation_event.refresh_from_db()
+        self.assertEqual(self.moderation_event.status, "RESOLVED")
+        self.assertIsNotNone(self.moderation_event.status_change_date)
