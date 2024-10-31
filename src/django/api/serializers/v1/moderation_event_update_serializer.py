@@ -57,7 +57,7 @@ class ModerationEventUpdateSerializer(ModelSerializer):
         ]:
             raise ValidationError({
                 "field": "status",
-                "message": f"'{value}' is not a valid status."
+                "message": "Moderation status must be one of PENDING or RESOLVED."
             })
         return value
 
