@@ -42,10 +42,10 @@ class ModerationEventUpdateSerializer(ModelSerializer):
                 "message": "This field is required."
             })
 
-        self.validate_status(status)
+        self.__validate_status(status)
         return super().to_internal_value(data)
 
-    def validate_status(self, value):
+    def __validate_status(self, value):
         if value not in [
             ModerationEvent.Status.PENDING,
             ModerationEvent.Status.RESOLVED
