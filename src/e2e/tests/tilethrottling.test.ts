@@ -1,10 +1,10 @@
 import { test, expect, APIResponse } from '@playwright/test';
 
-[...Array(10).keys()].forEach((i) => {
+[...Array(30).keys()].forEach((i) => {
 test.only(`Tile should  7*7*9=441 ${i}`, async ({ request }) => {
   test.setTimeout(900000);
-  const host = "http://django:8081";
-  //const host = "https://preprod.os-hub.net";
+  //const host = "http://django:8081";
+  const host = "https://preprod.os-hub.net";
 
   const hash =  Math.random().toString(36).substring(2, 10);
   
@@ -29,7 +29,7 @@ test.only(`Tile should  7*7*9=441 ${i}`, async ({ request }) => {
       await new Promise(resolve => setTimeout(resolve, 250));
     }  
   }
-  console.log(`Requesting ${urls.length} tiles`);
+  // console.log(`Requesting ${urls.length} tiles`);
   
 
   const titles = await Promise.all(requests);
