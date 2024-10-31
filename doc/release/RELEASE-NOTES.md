@@ -18,7 +18,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe scheme changes here.*
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-1332](https://opensupplyhub.atlassian.net/browse/OSDEV-1332) - Introduced new `PATCH api/v1/moderation-events/{moderation_id}` endpoint 
+to modify moderation event `status`.
 
 ### Architecture/Environment changes
 * The OpenSearch version has been increased to 2.15.
