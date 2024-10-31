@@ -49,4 +49,4 @@ class TilesThrottle(SimpleRateThrottle):
         return 'tiles_rate'
 
     def get_rate(self):
-        return '10/minute'
+        return '20/minute'
