@@ -1332,7 +1332,7 @@ export const MODERATION_STATUSES = Object.freeze({
     RESOLVED: 'RESOLVED',
 });
 
-export const MODERATION_QUEUE_HEAD_CELLS = [
+export const MODERATION_QUEUE_HEAD_CELLS = Object.freeze([
     { id: 'created_at', label: 'Created Date' },
     { id: 'name', label: 'Location Name' },
     { id: 'country.name', label: 'Country' },
@@ -1341,13 +1341,13 @@ export const MODERATION_QUEUE_HEAD_CELLS = [
     { id: 'moderation_status', label: 'Moderation Status' },
     { id: 'moderation_decision_date', label: 'Moderation Decision Date' },
     { id: 'updated_at', label: 'Last Updated' },
-];
+]);
 
-export const DATE_FORMATS = {
+export const DATE_FORMATS = Object.freeze({
     SHORT: 'L',
     LONG: 'LL',
     LONG_WITH_TIME: 'LLL',
     FULL: 'LLLL',
-};
+});
 
 export const MODERATION_QUEUE = 'ModerationQueue';
