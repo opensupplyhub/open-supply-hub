@@ -57,11 +57,9 @@ class ModerationEvents(ViewSet):
         return Response(response)
 
     def patch(self, request, moderation_id=None):
-        # Validate permission
         if not (request.user.is_superuser or request.user.is_staff):
             raise PermissionDenied()
 
-        # Validate UUID.
         if not is_valid_uuid(moderation_id):
             return handle_path_error(
                 field="moderation_id",
@@ -69,7 +67,6 @@ class ModerationEvents(ViewSet):
                 status_code=status.HTTP_400_BAD_REQUEST
             )
 
-        # Retrieve the moderation event.
         try:
             event = ModerationEvent.objects.get(uuid=moderation_id)
         except ModerationEvent.DoesNotExist:
@@ -79,7 +76,6 @@ class ModerationEvents(ViewSet):
                 status_code=status.HTTP_404_NOT_FOUND
             )
 
-        # Serialize and validate data
         serializer = ModerationEventUpdateSerializer(
             event,
             data=request.data,

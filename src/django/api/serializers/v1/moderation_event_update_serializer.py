@@ -11,7 +11,6 @@ from django.utils.timezone import now
 
 class ModerationEventUpdateSerializer(ModelSerializer):
 
-    # Add a custom field and provide naming for response
     contributor_id = IntegerField(source='contributor.id', read_only=True)
     contributor_name = CharField(source='contributor.name', read_only=True)
     os_id = IntegerField(source='os.id', read_only=True, allow_null=True)
@@ -35,22 +34,18 @@ class ModerationEventUpdateSerializer(ModelSerializer):
         ]
 
     def to_internal_value(self, data):
-        # Ensure custom status validation is triggered.
         status = data.get('status')
 
-        # Check if 'status' is provided, else raise validation error
         if status is None:
             raise ValidationError({
                 "field": "status",
                 "message": "This field is required."
             })
 
-        # Invoke validate_status to enforce custom validation
         self.validate_status(status)
         return super().to_internal_value(data)
 
     def validate_status(self, value):
-        # Validation for status field.
         if value not in [
             ModerationEvent.Status.PENDING,
             ModerationEvent.Status.RESOLVED
@@ -62,14 +57,10 @@ class ModerationEventUpdateSerializer(ModelSerializer):
         return value
 
     def update(self, instance, validated_data):
-        # Check if the status field is updated
         if 'status' in validated_data:
             value = validated_data['status']
-            # Update status value
             instance.status = value
-            # Automatically update status_change_date
             instance.status_change_date = now()
 
-        # Save the instance with the new values
         instance.save()
         return instance

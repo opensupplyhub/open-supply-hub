@@ -110,7 +110,6 @@ def handle_errors_decorator(view_func):
 
 
 def is_valid_uuid(uuid_string):
-    # Check if the provided string is a valid UUID.
     try:
         uuid.UUID(uuid_string)
         return True
@@ -119,7 +118,6 @@ def is_valid_uuid(uuid_string):
 
 
 def handle_path_error(field, message, status_code):
-    # Generate a structured error response for path.
     return Response(
         {
             "message": "The request path parameter is invalid.",
