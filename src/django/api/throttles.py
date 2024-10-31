@@ -40,11 +40,6 @@ class TilesThrottle(SimpleRateThrottle):
     scope = 'tiles'
     model_rate_field = 'tiles_rate'
 
-    def allow_request(self, request, view):
-        result = super(TilesThrottle, self).allow_request(request, view)
-        print(f'allow_request: {result} {self.scope}')
-        return result
-
     def get_cache_key(self, request, view):
         return 'tiles_rate'
 
