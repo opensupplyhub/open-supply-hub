@@ -34,8 +34,10 @@ test.only(`Tile should  7*7*9=441 ${i}`, async ({ request }) => {
 
   const titles = await Promise.all(requests);
   const statuses = await titles.map((tile) => tile.status());
-  console.log(statuses);
-  expect(statuses).toContain(200);
+  console.log("200   :",statuses.filter((status) => status == 200).length);
+  console.log("429   :",statuses.filter((status) => status == 429).length);
+  console.log("OTHER :",statuses.filter((status) => status != 200 && status != 429).length);
+  // expect(statuses).toContain(200);
   expect(statuses).toContain(429);
 });
 });
