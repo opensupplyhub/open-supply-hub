@@ -59,7 +59,9 @@ class ModerationEvents(ViewSet):
     @handle_errors_decorator
     def patch(self, request, moderation_id):
         if not (request.user.is_superuser or request.user.is_staff):
-            raise PermissionDenied()
+            raise PermissionDenied(
+                detail="Only Moderator could perform this action."
+            )
 
         if not is_valid_uuid(moderation_id):
             return handle_path_error(
