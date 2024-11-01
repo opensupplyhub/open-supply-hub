@@ -61,7 +61,8 @@ class ModerationEvents(ViewSet):
         )
         return Response(response)
 
-    def patch(self, request, moderation_id=None):
+    @handle_errors_decorator
+    def patch(self, request, moderation_id):
         if not (request.user.is_superuser or request.user.is_staff):
             raise PermissionDenied()
 
