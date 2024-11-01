@@ -18,7 +18,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe scheme changes here.*
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - Explicitly set the number of shards and the number of replicas for the "production locations" and "moderation events" OpenSearch indexes. Based on the OpenSearch documentation, a storage size of 10–30 GB is preferred for workloads that prioritize low search latency. Additionally, having too many small shards can unnecessarily exhaust memory by storing excessive metadata. Currently, the "production locations" index utilizes 651.9 MB, including replicas, while the "moderation events" index is empty. This indicates that one shard and one replica should be sufficient for the "production locations" and "moderation events" indexes.
 
 ### Architecture/Environment changes
 * The OpenSearch version has been increased to 2.15.
@@ -32,7 +32,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Release instructions:
 * The following steps should be completed while deploying to Staging or Production:
-    1. Run the `[Release] Deploy` pipeline for these environments with the flag 'Clear OpenSearch indexes' set to true. This will allow Logstash to refill OpenSearch since the OpenSearch instance will be recreated due to the version increase.
+    1. Run the `[Release] Deploy` pipeline for these environments with the flag 'Clear OpenSearch indexes' set to true. This will allow Logstash to refill OpenSearch since the OpenSearch instance will be recreated due to the version increase. It is also necessary due to changes in the OpenSearch index settings.
     2. Open the triggered `Deploy to AWS` workflow and ensure that the `apply` job is completed. **Right after** finishing the `apply` job, follow these instructions, which should be the last steps in setting up the recreated OpenSearch instance:
         - Copy the ARN of the `terraform_ci` user from the AWS IAM console.
             - Navigate to the AWS console's search input, type "IAM", and open the IAM console.
