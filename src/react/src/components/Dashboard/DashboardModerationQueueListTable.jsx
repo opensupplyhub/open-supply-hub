@@ -14,7 +14,7 @@ import { moderationEventsPropType } from '../../util/propTypes';
 import {
     EMPTY_PLACEHOLDER,
     DATE_FORMATS,
-    MODERATION_STATUSES,
+    MODERATION_STATUSES_ENUM,
 } from '../../util/constants';
 import { makeDashboardModerationQueueListTableStyles } from '../../util/styles';
 import { formatDate } from '../../util/util';
@@ -45,10 +45,12 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
 
     const getStatusClassName = status => {
         switch (status) {
-            case MODERATION_STATUSES.PENDING:
+            case MODERATION_STATUSES_ENUM.PENDING:
                 return classes.pendingStatusStyles;
-            case MODERATION_STATUSES.RESOLVED:
-                return classes.resolvedStatusStyles;
+            case MODERATION_STATUSES_ENUM.APPROVED:
+                return classes.approvedStatusStyles;
+            case MODERATION_STATUSES_ENUM.REJECTED:
+                return classes.rejectedStatusStyles;
             default:
                 return '';
         }

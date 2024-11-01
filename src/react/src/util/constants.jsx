@@ -1322,14 +1322,15 @@ export const listParsingErrorMappings = {
     ),
 };
 
-export const DATA_SOURCES = Object.freeze({
+export const DATA_SOURCES_ENUM = Object.freeze({
     API: 'API',
     SLC: 'SLC',
 });
 
-export const MODERATION_STATUSES = Object.freeze({
+export const MODERATION_STATUSES_ENUM = Object.freeze({
     PENDING: 'PENDING',
-    RESOLVED: 'RESOLVED',
+    APPROVED: 'APPROVED',
+    REJECTED: 'REJECTED',
 });
 
 export const MODERATION_QUEUE_HEAD_CELLS = Object.freeze([

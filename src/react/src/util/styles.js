@@ -693,8 +693,11 @@ export const makeDashboardModerationQueueListTableStyles = Object.freeze({
     pendingStatusStyles: Object.freeze({
         backgroundColor: COLOURS.PALE_LIGHT_YELLOW,
     }),
-    resolvedStatusStyles: Object.freeze({
+    approvedStatusStyles: Object.freeze({
         backgroundColor: COLOURS.MINT_GREEN,
+    }),
+    rejectedStatusStyles: Object.freeze({
+        backgroundColor: COLOURS.LIGHT_RED,
     }),
 });
 
