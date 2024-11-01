@@ -1,6 +1,7 @@
 import React from 'react';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
+import COLOURS from './COLOURS';
 
 export const OTHER = 'Other';
 export const FACILITIES_REQUEST_PAGE_SIZE = 50;
@@ -1352,3 +1353,9 @@ export const DATE_FORMATS = Object.freeze({
 });
 
 export const MODERATION_QUEUE = 'ModerationQueue';
+
+export const MODERATION_STATUS_COLORS = Object.freeze({
+    [MODERATION_STATUSES_ENUM.PENDING]: COLOURS.PALE_LIGHT_YELLOW,
+    [MODERATION_STATUSES_ENUM.APPROVED]: COLOURS.MINT_GREEN,
+    [MODERATION_STATUSES_ENUM.REJECTED]: COLOURS.LIGHT_RED,
+});

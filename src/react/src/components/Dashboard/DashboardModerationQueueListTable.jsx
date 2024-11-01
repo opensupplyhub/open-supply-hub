@@ -14,7 +14,7 @@ import { moderationEventsPropType } from '../../util/propTypes';
 import {
     EMPTY_PLACEHOLDER,
     DATE_FORMATS,
-    MODERATION_STATUSES_ENUM,
+    MODERATION_STATUS_COLORS,
 } from '../../util/constants';
 import { makeDashboardModerationQueueListTableStyles } from '../../util/styles';
 import { formatDate } from '../../util/util';
@@ -41,19 +41,6 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
         const isDesc = orderBy === property && order === 'desc';
         setOrder(isDesc ? 'asc' : 'desc');
         setOrderBy(property);
-    };
-
-    const getStatusClassName = status => {
-        switch (status) {
-            case MODERATION_STATUSES_ENUM.PENDING:
-                return classes.pendingStatusStyles;
-            case MODERATION_STATUSES_ENUM.APPROVED:
-                return classes.approvedStatusStyles;
-            case MODERATION_STATUSES_ENUM.REJECTED:
-                return classes.rejectedStatusStyles;
-            default:
-                return '';
-        }
     };
 
     return (
@@ -117,9 +104,12 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                                             </TableCell>
                                             <TableCell>{source}</TableCell>
                                             <TableCell
-                                                className={getStatusClassName(
-                                                    moderationStatus,
-                                                )}
+                                                style={{
+                                                    backgroundColor:
+                                                        MODERATION_STATUS_COLORS[
+                                                            moderationStatus
+                                                        ] || 'default',
+                                                }}
                                             >
                                                 {moderationStatus}
                                             </TableCell>

@@ -63,7 +63,7 @@ import {
     componentsWithErrorMessage,
     listParsingErrorMappings,
     MODERATION_QUEUE,
-    MODERATION_STATUSES_ENUM,
+    MODERATION_STATUS_COLORS,
 } from './constants';
 
 import { createListItemCSV } from './util.listItemCSV';
@@ -1282,16 +1282,7 @@ export const createOptionsFromConstants = constants =>
 
 export const multiValueBackgroundHandler = (value, origin) => {
     if (origin === MODERATION_QUEUE) {
-        switch (value) {
-            case MODERATION_STATUSES_ENUM.PENDING:
-                return COLOURS.PALE_LIGHT_YELLOW;
-            case MODERATION_STATUSES_ENUM.APPROVED:
-                return COLOURS.MINT_GREEN;
-            case MODERATION_STATUSES_ENUM.REJECTED:
-                return COLOURS.LIGHT_RED;
-            default:
-                return 'default';
-        }
+        return MODERATION_STATUS_COLORS[value] || 'default';
     }
     return COLOURS.MINT_GREEN;
 };
