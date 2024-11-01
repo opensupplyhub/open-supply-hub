@@ -17,7 +17,11 @@ import {
     DATE_FORMATS,
 } from '../../util/constants';
 import { makeDashboardModerationQueueListTableStyles } from '../../util/styles';
-import { formatDate } from '../../util/util';
+import {
+    formatDate,
+    makeContributionRecordLink,
+    openInNewTab,
+} from '../../util/util';
 
 const INITIAL_PAGE_INDEX = 0;
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 25];
@@ -98,6 +102,13 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                                         <TableRow
                                             hover
                                             key={moderationId}
+                                            onClick={() =>
+                                                openInNewTab(
+                                                    makeContributionRecordLink(
+                                                        moderationId,
+                                                    ),
+                                                )
+                                            }
                                             className={`${
                                                 classes.row
                                             } ${getRowClassName(source)}`}

@@ -658,6 +658,70 @@ export const makeDownloadExcelButtonStyles = theme =>
         }),
     });
 
+export const makeDashboardContributionRecordStyles = () =>
+    Object.freeze({
+        emptyBlockStyles: Object.freeze({
+            height: '100px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+        }),
+        emptyTextStyle: Object.freeze({ color: 'rgb(142 138 138 / 87%)' }),
+        buttonStyles: Object.freeze({
+            margin: '20px',
+            padding: '20px',
+            width: '100%',
+            fontWeight: 'bold',
+        }),
+        container: {
+            marginBottom: '25px',
+            width: '100%',
+            padding: '20px',
+        },
+        title: {
+            paddingBottom: '20px',
+        },
+        listItemStyle: {
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+        },
+        listItemTextStyle: {
+            padding: 0,
+        },
+        dividerStyle: {
+            height: '3px',
+            backgroundColor: 'rgb(0 0 0 / 55%)',
+        },
+        innerDividerStyle: {
+            backgroundColor: 'rgb(0 0 0 / 55%)',
+        },
+        prettyPrint: {
+            width: '100%',
+            maxHeight: '300px',
+            overflow: 'scroll',
+        },
+        potentialMatchesBlock: {
+            width: '100%',
+            marginBottom: '25px',
+        },
+        potentialMatchesInternalBlock: {
+            width: '100%',
+            overflow: 'scroll',
+            maxHeight: '450px',
+        },
+        buttonsContainerStyles: Object.freeze({
+            display: 'flex',
+            flexDirection: 'row',
+            width: '100%',
+        }),
+        confirmButtonStyles: Object.freeze({
+            backgroundColor: '#b1dbb1',
+            padding: '20px',
+            '&:hover': { backgroundColor: '#799679' },
+        }),
+    });
+
 export const makeDashboardModerationQueueStyles = theme =>
     Object.freeze({
         mainContainer: Object.freeze({

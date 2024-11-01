@@ -332,6 +332,8 @@ export const dashboardApiBlocksRoute = '/dashboard/apiblocks';
 export const dashboardApiBlockRoute = '/dashboard/apiblocks/:blockId';
 export const dashboardClaimsRoute = '/dashboard/claims';
 export const dashboardModerationQueueRoute = '/dashboard/moderation-queue';
+export const dashboardContributionRecordRoute =
+    '/dashboard/moderation-queue/contribution-record/:moderationID';
 export const dashboardDeleteFacilityRoute = '/dashboard/deletefacility';
 export const dashboardMergeFacilitiesRoute = '/dashboard/mergefacilities';
 export const dashboardAdjustFacilityMatchesRoute =
@@ -541,6 +543,7 @@ export const userApiInfoTooltipTitles = Object.freeze({
 export const IS_NOT_SET = 'Is not set';
 export const ALLOW_LARGE_DOWNLOADS = 'allow_large_downloads';
 export const CLAIM_A_FACILITY = 'claim_a_facility';
+export const MODERATION_QUEUE = 'moderation_queue';
 export const VECTOR_TILE = 'vector_tile';
 export const REPORT_A_FACILITY = 'report_a_facility';
 export const EMBEDDED_MAP_FLAG = 'embedded_map';
