@@ -384,20 +384,21 @@ data "template_file" "app_logstash" {
   template = file("task-definitions/app_logstash.json")
 
   vars = {
-    image                            = local.app_logstash_image
-    log_group_name                   = "log${local.short}AppLogstash"
-    opensearch_auth_type             = var.opensearch_auth_type
-    aws_region                       = var.aws_region
-    opensearch_ssl                   = var.opensearch_ssl
-    opensearch_ssl_cert_verification = var.opensearch_ssl_cert_verification
-    opensearch_host                  = aws_opensearch_domain.opensearch.endpoint
-    opensearch_port                  = var.opensearch_port
-    postgres_host                    = aws_route53_record.database.name
-    postgres_port                    = module.database_enc.port
-    postgres_user                    = var.rds_database_username
-    postgres_password                = var.rds_database_password
-    postgres_db                      = var.rds_database_name
-    logstash_update_interval_minutes = var.logstash_update_interval_minutes
+    image                                                 = local.app_logstash_image
+    log_group_name                                        = "log${local.short}AppLogstash"
+    opensearch_auth_type                                  = var.opensearch_auth_type
+    aws_region                                            = var.aws_region
+    opensearch_ssl                                        = var.opensearch_ssl
+    opensearch_ssl_cert_verification                      = var.opensearch_ssl_cert_verification
+    opensearch_host                                       = aws_opensearch_domain.opensearch.endpoint
+    opensearch_port                                       = var.opensearch_port
+    postgres_host                                         = aws_route53_record.database.name
+    postgres_port                                         = module.database_enc.port
+    postgres_user                                         = var.rds_database_username
+    postgres_password                                     = var.rds_database_password
+    postgres_db                                           = var.rds_database_name
+    production_locations_pipeline_update_interval_minutes = var.production_locations_pipeline_update_interval_minutes
+    moderation_events_pipeline_update_interval_minutes    = var.moderation_events_pipeline_update_interval_minutes
   }
 }
 
