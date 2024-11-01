@@ -9,6 +9,12 @@ from rest_framework.serializers import (
 )
 from api.serializers.v1.opensearch_common_validators.size_validator \
     import SizeValidator
+from api.serializers.v1.opensearch_common_validators.request_type_validator \
+    import RequestTypeValidator
+from api.serializers.v1.opensearch_common_validators.status_validator \
+    import StatusValidator
+from api.serializers.v1.opensearch_common_validators.source_validator \
+    import SourceValidator
 from api.serializers.v1.opensearch_error_list_builder  \
     import OpenSearchErrorListBuilder
 from api.serializers.v1.opensearch_common_validators. \
@@ -27,19 +33,6 @@ class ModerationEventsSerializer(Serializer):
     )
     contributor_id = IntegerField(required=False)
     os_id = CharField(required=False)
-    # TODO: add possibility to pass lowercase values?
-    request_type = ChoiceField(
-        choices=['CREATE', 'UPDATE', 'CLAIM'],
-        required=False
-    )
-    source = ChoiceField(
-        choices=['API', 'SLC'],
-        required=False
-    )
-    status = ChoiceField(
-        choices=['PENDING', 'RESOLVED'],
-        required=False
-    )
     moderation_id = CharField(required=False)
     data_dte = DateField(default='', required=False)
     data_lt = DateField(default='', required=False)
@@ -57,6 +50,9 @@ class ModerationEventsSerializer(Serializer):
             SizeValidator(),
             CountryValidator(),
             DateRangeValidator(),
+            RequestTypeValidator(),
+            StatusValidator(),
+            SourceValidator()
         ]
 
         error_list_builder = OpenSearchErrorListBuilder(validators)

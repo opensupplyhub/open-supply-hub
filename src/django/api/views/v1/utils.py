@@ -12,9 +12,6 @@ COMMON_ERROR_MESSAGE = 'The request query is invalid.'
 
 
 def serialize_params(serializer_class, query_params):
-
-    logger.info(f'@#@#@ query_params: {query_params}')
-
     flattened_query_params = {}
     for key, value in query_params.lists():
         # Convert deepObject params
