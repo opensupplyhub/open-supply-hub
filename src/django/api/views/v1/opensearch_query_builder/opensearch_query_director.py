@@ -3,6 +3,7 @@ from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 
 class OpenSearchQueryDirector:
     def __init__(self, builder):
+        #TODO: from now on it will be a builder per endpoint
         self.__builder = builder
         self.__opensearch_template_fields = {
             V1_PARAMETERS_LIST.DESCRIPTION: 'match',

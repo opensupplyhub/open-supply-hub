@@ -16,7 +16,7 @@ from api.serializers.v1.opensearch_common_validators. \
 from api.serializers.v1.opensearch_common_validators. \
     number_of_workers_validator import NumberOfWorkersValidator
 from api.serializers.v1.opensearch_common_validators. \
-    percent_of_female_workers import PercentOfFemaleWorkersValidator
+    percent_of_female_workers_validator import PercentOfFemaleWorkersValidator
 from api.serializers.v1.opensearch_common_validators. \
     coordinates_validator import CoordinatesValidator
 from api.views.v1.utils import COMMON_ERROR_MESSAGE

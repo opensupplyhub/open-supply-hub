@@ -1,3 +1,4 @@
+import logging
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
@@ -9,8 +10,8 @@ from api.views.v1.utils import (
     handle_path_error
 )
 from api.services.search import OpenSearchService
-from api.views.v1.opensearch_query_builder.opensearch_query_builder \
-    import OpenSearchQueryBuilder
+from api.views.v1.opensearch_query_builder.moderation_events_query_builder \
+    import ModerationEventsQueryBuilder
 from api.views.v1.opensearch_query_builder.opensearch_query_director \
     import OpenSearchQueryDirector
 from api.serializers.v1.moderation_events_serializer \
@@ -22,6 +23,8 @@ from api.views.v1.index_names import OpenSearchIndexNames
 from api.models.moderation_event \
     import ModerationEvent
 
+logger = logging.getLogger(__name__)
+
 
 class ModerationEvents(ViewSet):
     swagger_schema = None
@@ -29,9 +32,9 @@ class ModerationEvents(ViewSet):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.opensearch_service = OpenSearchService()
-        self.opensearch_query_builder = OpenSearchQueryBuilder()
+        self.moderation_events_query_builder = ModerationEventsQueryBuilder()
         self.opensearch_query_director = OpenSearchQueryDirector(
-                self.opensearch_query_builder
+                self.moderation_events_query_builder
             )
 
     @handle_errors_decorator
@@ -49,6 +52,8 @@ class ModerationEvents(ViewSet):
         query_body = self.opensearch_query_director.build_query(
             request.GET
         )
+
+        logger.info(f'@@@ {query_body}')
 
         response = self.opensearch_service.search_index(
             OpenSearchIndexNames.MODERATION_EVENTS_INDEX,
