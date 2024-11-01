@@ -54,7 +54,7 @@ class ModerationEventUpdateSerializer(ModelSerializer):
                 "field": "status",
                 "message": (
                     "Moderation status must be one of "
-                    "PENDING or RESOLVED."
+                    "PENDING, RESOLVED or REJECTED."
                 )
             })
         return value
