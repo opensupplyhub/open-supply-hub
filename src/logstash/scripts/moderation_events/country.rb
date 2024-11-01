@@ -4,15 +4,11 @@ require 'fileutils'
 def filter(event)
     cleaned_data_value = event.get('cleaned_data_value')
 
-    # Check whether the 'country_code' key exists.
     if cleaned_data_value.key?('country_code')
-        # Country code Alpha-2 data.
         alpha_2_country_code = cleaned_data_value['country_code']
 
-        # Define the path to the JSON file.
         json_countries_file_path = File.expand_path('../../../static_data/countries.json', __FILE__)
 
-        # Read and parse the JSON file.
         json_countries_data = File.read(json_countries_file_path)
         countries = JSON.parse(json_countries_data)
         exact_country = countries[alpha_2_country_code]
