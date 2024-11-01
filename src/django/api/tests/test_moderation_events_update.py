@@ -35,8 +35,8 @@ class ModerationEventsUpdateTest(APITestCase):
 
         self.moderation_event = ModerationEvent.objects.create(
             uuid='f65ec710-f7b9-4f50-b960-135a7ab24ee6',
-            created_at=now().date(),
-            updated_at=now().date(),
+            created_at=now(),
+            updated_at=now(),
             request_type='UPDATE',
             raw_data={"name": "raw_name", "country_code": "UK"},
             cleaned_data={"name": "cleaned_name", "country_code": "UK"},
