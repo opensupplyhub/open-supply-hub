@@ -19,4 +19,4 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
         }
 
     def _build_country(self, field):
-        return f'{field}.cleaned_data.country.alpha_2'
+        return f'cleaned_data.{field}.alpha_2'

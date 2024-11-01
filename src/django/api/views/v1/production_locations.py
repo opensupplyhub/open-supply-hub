@@ -7,8 +7,8 @@ from api.views.v1.utils import (
     handle_errors_decorator
 )
 from api.services.search import OpenSearchService
-from api.views.v1.opensearch_query_builder.opensearch_query_builder \
-    import OpenSearchQueryBuilder
+from api.views.v1.opensearch_query_builder.production_locations_query_builder \
+    import ProductionLocationsQueryBuilder
 from api.views.v1.opensearch_query_builder.opensearch_query_director \
     import OpenSearchQueryDirector
 from api.serializers.v1.production_locations_serializer \
@@ -22,7 +22,7 @@ class ProductionLocations(ViewSet):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.opensearch_service = OpenSearchService()
-        self.opensearch_query_builder = OpenSearchQueryBuilder()
+        self.opensearch_query_builder = ProductionLocationsQueryBuilder()
         self.opensearch_query_director = OpenSearchQueryDirector(
                 self.opensearch_query_builder
             )
