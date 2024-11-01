@@ -17,14 +17,14 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         self.default_sort = V1_PARAMETERS_LIST.NAME
         self.default_sort_order = 'asc'
         self.build_options = {
-            'country': self.__build_country,
-            'number_of_workers': self.__build_number_of_workers
+            'country': self._build_country,
+            'number_of_workers': self._build_number_of_workers
         }
 
     def reset(self):
         self.query_body = copy.deepcopy(self.default_query_body)
 
-    def __build_number_of_workers(self, field, range_query):
+    def _build_number_of_workers(self, field, range_query):
         self.query_body['query']['bool']['must'].append({
             'bool': {
                 'should': [
@@ -66,7 +66,7 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
             }
         })
 
-    def __build_country(self, field):
+    def _build_country(self, field):
         return f'{field}.alpha_2'
 
     def add_size(self, size):
@@ -99,7 +99,7 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
             return self.query_body
 
         if field == V1_PARAMETERS_LIST.OS_ID:
-            self.__build_os_id(values)
+            self._build_os_id(values)
 
         else:
             terms_field = self.build_options.get(
@@ -110,7 +110,7 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
                 {'terms': {terms_field: values}}
             )
 
-    def __build_os_id(self, values):
+    def _build_os_id(self, values):
         # Build a query to search in both os_id and historical_os_id.keyword
         self.query_body['query']['bool']['must'].append(
             {

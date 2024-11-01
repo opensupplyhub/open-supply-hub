@@ -1,9 +1,8 @@
 import copy
 from api.views.v1.opensearch_query_builder. \
     opensearch_query_builder import OpenSearchQueryBuilder
-from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 
-# TODO: Inherit OpenSearchQueryBuilder
+
 class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
     def __init__(self):
         self.default_query_body = {
@@ -13,9 +12,11 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
             'sort': []
         }
         self.query_body = copy.deepcopy(self.default_query_body)
-        self.default_fuzziness = 2
-        self.default_sort = V1_PARAMETERS_LIST.NAME
+        self.default_sort = ''
         self.default_sort_order = 'asc'
+        self.build_options = {
+            'country': self._build_country,
+        }
 
-    def get_final_query_body(self):
-        return self.query_body
+    def _build_country(self, field):
+        return f'{field}.cleaned_data.country.alpha_2'
