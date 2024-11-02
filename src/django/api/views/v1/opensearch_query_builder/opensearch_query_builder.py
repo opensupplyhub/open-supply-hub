@@ -128,6 +128,23 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
                     'range': {field: range_query}
                 })
 
+    # TODO: there should be multified query e.g you need to
+    # apply range to 'created_at', 'updated_at' and 'status_change_date'
+    def add_date_range(self, field, query_params):
+        date_start = query_params.get('date_gte')
+        date_end = query_params.get('date_lt')
+        range_query = {}
+
+        if date_start is not None:
+            range_query['gte'] = date_start
+        if date_end is not None:
+            range_query['lte'] = date_end
+            
+        if range_query:
+            self.query_body['query']['bool']['must'].append({
+                'range': {field: range_query}
+        })
+
     def add_geo_distance(self, field, lat, lng, distance):
         geo_distance_query = {
             'geo_distance': {
