@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 from api.models.facility.facility import Facility
 from api.models.facility.facility_index import FacilityIndex
 import mercantile
@@ -55,7 +54,7 @@ def get_facility_grid_vector_tile(params, layer, z, x, y):
         .query.sql_with_params()
     )
     where_clause = "TRUE"
- 
+
     if location_query.find("WHERE") >= 0:
         where_clause = location_query[
             location_query.find("WHERE")+len("WHERE"):
