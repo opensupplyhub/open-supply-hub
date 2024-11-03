@@ -1,6 +1,5 @@
 from django.core.cache import caches
 from rest_framework.throttling import UserRateThrottle
-from rest_framework.throttling import ScopedRateThrottle
 
 
 class UserCustomRateThrottle(UserRateThrottle):
