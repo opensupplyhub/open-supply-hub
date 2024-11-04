@@ -1,40 +1,40 @@
 import React from 'react';
-import { bool, func } from 'prop-types';
+import { bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
-
-import StyledSelect from './StyledSelect';
-
 import { updateCountryFilter } from '../../actions/filters';
-
 import { countryOptionsPropType } from '../../util/propTypes';
+import StyledSelect from './StyledSelect';
 
 const COUNTRIES = 'COUNTRIES';
 
-function CountryNameFilter({
+const CountryNameFilter = ({
     isDisabled,
     countryOptions,
     countries,
     updateCountry,
     fetching,
-}) {
-    return (
-        <div className="form__field">
-            <StyledSelect
-                label="Country Name"
-                name={COUNTRIES}
-                options={countryOptions || []}
-                value={countries}
-                onChange={updateCountry}
-                disabled={fetching}
-                isDisabled={isDisabled}
-            />
-        </div>
-    );
-}
+    className,
+    origin,
+}) => (
+    <div className={className}>
+        <StyledSelect
+            label="Country Name"
+            name={COUNTRIES}
+            options={countryOptions || []}
+            value={countries}
+            onChange={updateCountry}
+            disabled={fetching}
+            isDisabled={isDisabled}
+            origin={origin}
+        />
+    </div>
+);
 
 CountryNameFilter.defaultProps = {
     isDisabled: false,
     countryOptions: null,
+    className: 'form__field',
+    origin: null,
 };
 
 CountryNameFilter.propTypes = {
@@ -43,9 +43,11 @@ CountryNameFilter.propTypes = {
     updateCountry: func.isRequired,
     countries: countryOptionsPropType.isRequired,
     fetching: bool.isRequired,
+    className: string,
+    origin: string,
 };
 
-function mapStateToProps({
+const mapStateToProps = ({
     filterOptions: {
         countries: { data: countryOptions, fetching: fetchingCountries },
     },
@@ -53,18 +55,14 @@ function mapStateToProps({
     facilities: {
         facilities: { fetching: fetchingFacilities },
     },
-}) {
-    return {
-        countryOptions,
-        countries,
-        fetching: fetchingCountries || fetchingFacilities,
-    };
-}
+}) => ({
+    countryOptions,
+    countries,
+    fetching: fetchingCountries || fetchingFacilities,
+});
 
-function mapDispatchToProps(dispatch) {
-    return {
-        updateCountry: v => dispatch(updateCountryFilter(v)),
-    };
-}
+const mapDispatchToProps = dispatch => ({
+    updateCountry: v => dispatch(updateCountryFilter(v)),
+});
 
 export default connect(mapStateToProps, mapDispatchToProps)(CountryNameFilter);
