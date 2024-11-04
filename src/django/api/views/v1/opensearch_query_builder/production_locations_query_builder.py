@@ -8,7 +8,6 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
     def __init__(self):
         self.default_query_body = {
             'track_total_hits': 'true',
-            'size': 10,
             'query': {'bool': {'must': []}},
             'sort': []
         }
@@ -21,5 +20,27 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
             'number_of_workers': self._build_number_of_workers
         }
 
-    def get_final_query_body(self):
-        return self.query_body
+    def add_sort(self, field, order_by=None):
+        if order_by is None:
+            order_by = self.default_sort_order
+        self.query_body['sort'].append(
+            {f'{field}.keyword': {'order': order_by}}
+        )
+
+    def add_search_after(self, search_after):
+        # search_after can't be present as empty by default in query_body
+        if V1_PARAMETERS_LIST.SEARCH_AFTER not in self.query_body:
+            self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER] = []
+        '''
+        There should always be sort if there is a search_after field.
+        So if it is empty, sort by name by default
+        '''
+        if not self.query_body['sort']:
+            sort_criteria = {
+                f'{self.default_sort}.keyword': {
+                    'order': self.default_sort_order
+                }
+            }
+            self.query_body['sort'].append(sort_criteria)
+
+        self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER].append(search_after)

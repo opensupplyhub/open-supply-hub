@@ -24,7 +24,7 @@ class OpenSearchQueryBuilderInterface:
         pass
 
     @abstractmethod
-    def add_range(self, field, min_value, max_value):
+    def add_range(self, field, query):
         pass
 
     @abstractmethod

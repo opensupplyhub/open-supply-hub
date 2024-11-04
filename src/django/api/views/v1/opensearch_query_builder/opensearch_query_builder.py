@@ -1,8 +1,11 @@
+import logging
 import copy
+from abc import abstractmethod
 from api.views.v1.opensearch_query_builder. \
     opensearch_query_builder_interface import OpenSearchQueryBuilderInterface
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 
+logger = logging.getLogger(__name__)
 
 class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
     def reset(self):
@@ -107,26 +110,41 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
             }
         )
 
+    @abstractmethod
+    def _build_date_range(self, query_params):
+        pass
+
+    # This add_range invokes only for types 'range'
+    # You don't need to create a different function to handle range queries.
     def add_range(self, field, query_params):
-        min_value = query_params.get(f'{field}[min]')
-        max_value = query_params.get(f'{field}[max]')
-        min_value = int(min_value) if min_value else None
-        max_value = int(max_value) if max_value else None
+        logger.info(f'#### field in range is {field}')
+        # This works for values with [min] and [max]
+        if field == V1_PARAMETERS_LIST.NUMBER_OF_WORKERS or \
+        field == V1_PARAMETERS_LIST.PERCENT_FEMALE_WORKERS:
+            logger.info('@@@ Build range with number of workers or percent female workers')
+            min_value = query_params.get(f'{field}[min]')
+            max_value = query_params.get(f'{field}[max]')
+            min_value = int(min_value) if min_value else None
+            max_value = int(max_value) if max_value else None
 
-        range_query = {}
-        if min_value is not None:
-            range_query['gte'] = min_value
-        if max_value is not None:
-            range_query['lte'] = max_value
+            range_query = {}
+            if min_value is not None:
+                range_query['gte'] = min_value
+            if max_value is not None:
+                range_query['lte'] = max_value
 
-        if range_query:
-            build_action = self.build_options.get(field)
-            if build_action:
-                build_action(field, range_query)
-            else:
-                self.query_body['query']['bool']['must'].append({
-                    'range': {field: range_query}
-                })
+            if range_query:
+                build_action = self.build_options.get(field)
+                if build_action:
+                    build_action(field, range_query)
+                else:
+                    self.query_body['query']['bool']['must'].append({
+                        'range': {field: range_query}
+                    })
+        if field == V1_PARAMETERS_LIST.DATE_GTE or \
+        field == V1_PARAMETERS_LIST.DATE_LT:
+            logger.info('@@@ Build range for other variants')
+            self._build_date_range(query_params)
 
     def add_geo_distance(self, field, lat, lng, distance):
         geo_distance_query = {
@@ -137,30 +155,13 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         }
         self.query_body['query']['bool']['must'].append(geo_distance_query)
 
+    @abstractmethod
     def add_sort(self, field, order_by=None):
-        if order_by is None:
-            order_by = self.default_sort_order
-        self.query_body['sort'].append(
-            {f'{field}.keyword': {'order': order_by}}
-        )
+        pass
 
+    @abstractmethod
     def add_search_after(self, search_after):
-        # search_after can't be present as empty by default in query_body
-        if V1_PARAMETERS_LIST.SEARCH_AFTER not in self.query_body:
-            self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER] = []
-        '''
-        There should always be sort if there is a search_after field.
-        So if it is empty, sort by name by default
-        '''
-        if not self.query_body['sort']:
-            sort_criteria = {
-                f'{self.default_sort}.keyword': {
-                    'order': self.default_sort_order
-                }
-            }
-            self.query_body['sort'].append(sort_criteria)
-
-        self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER].append(search_after)
+        pass
 
     def get_final_query_body(self):
         return self.query_body
