@@ -1,0 +1,68 @@
+{
+  "index_patterns": [
+    "moderation-events*"
+  ],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 1
+    },
+    "mappings": {
+      "properties": {
+        "moderation_id": {
+          "type": "keyword"
+        },
+        "os_id": {
+          "type": "keyword"
+        },
+        "contributor_id": {
+          "type": "keyword"
+        },
+        "contributor_name": {
+          "type": "keyword"
+        },
+        "claim_id": {
+          "type": "keyword"
+        },
+        "request_type": {
+          "type": "keyword"
+        },
+        "source": {
+          "type": "keyword"
+        },
+        "status": {
+          "type": "keyword"
+        },
+        "status_change_date": {
+          "type": "date"
+        },
+        "created_at": {
+          "type": "date"
+        },
+        "updated_at": {
+          "type": "date"
+        },
+        "cleaned_data": {
+          "properties": {
+            "country": {
+              "properties": {
+                "name": {
+                  "type": "keyword"
+                },
+                "alpha_2": {
+                  "type": "keyword"
+                },
+                "alpha_3": {
+                  "type": "keyword"
+                },
+                "numeric": {
+                  "type": "keyword"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

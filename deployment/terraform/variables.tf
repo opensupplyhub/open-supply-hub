@@ -542,9 +542,14 @@ variable "opensearch_ssl_cert_verification" {
   default = true
 }
 
-variable "logstash_update_interval_minutes" {
+variable "production_locations_pipeline_update_interval_minutes" {
   type    = number
   default = 15
+}
+
+variable "moderation_events_pipeline_update_interval_minutes" {
+  type    = number
+  default = 1
 }
 
 variable "app_logstash_ecs_desired_count" {
