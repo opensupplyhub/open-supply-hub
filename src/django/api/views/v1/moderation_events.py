@@ -97,3 +97,43 @@ class ModerationEvents(ViewSet):
             },
             status=status.HTTP_400_BAD_REQUEST
         )
+
+    @handle_errors_decorator
+    def add_production_location(self, request, moderation_id):
+        if not (request.user.is_superuser or request.user.is_staff):
+            raise PermissionDenied(
+                detail="Only the Moderator can perform this action."
+            )
+
+        if not is_valid_uuid(moderation_id):
+            return handle_path_error(
+                field="moderation_id",
+                message="Invalid UUID format.",
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            event = ModerationEvent.objects.get(uuid=moderation_id)
+        except ModerationEvent.DoesNotExist:
+            return handle_path_error(
+                field="moderation_id",
+                message="Moderation event not found.",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        if event.status != ModerationEvent.Status.PENDING:
+            return Response(
+                {
+                    "message": "The request query is invalid.",
+                    "errors": [
+                        {
+                            "field": "status",
+                            "message": "Moderation status must be PENDING."
+                        }
+                    ]
+                },
+                status=status.HTTP_410_GONE
+            )
+
+        event.add_production_location(request.data)
+        return Response(status=status.HTTP_200_OK)
