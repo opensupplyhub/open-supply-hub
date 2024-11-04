@@ -1,5 +1,7 @@
+import logging
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 
+logger = logging.getLogger(__name__)
 
 class OpenSearchQueryDirector:
     def __init__(self, builder):
@@ -65,6 +67,7 @@ class OpenSearchQueryDirector:
                 continue
 
             if query_type == "range":
+                logger.info(f'#@#@ field that is passing to self.__add_range_query: {field}')
                 self.__add_range_query(field, query_params)
                 continue
 
@@ -74,8 +77,6 @@ class OpenSearchQueryDirector:
                 distance = query_params.get("distance", "10km")
                 self.__add_geo_distance_query(field, lat, lng,
                                               distance)
-            # TODO: Apply data range query
-                continue
 
         sort_by = query_params.get(V1_PARAMETERS_LIST.SORT_BY)
         if sort_by:
@@ -93,5 +94,7 @@ class OpenSearchQueryDirector:
         multi_match_query = query_params.get(V1_PARAMETERS_LIST.QUERY)
         if multi_match_query:
             self.__builder.add_multi_match(multi_match_query)
+
+        logging.info(f"builded query is {self.__builder.get_final_query_body()}")
 
         return self.__builder.get_final_query_body()
