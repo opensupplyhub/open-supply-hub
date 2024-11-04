@@ -107,6 +107,11 @@ api_v1 = [
         ModerationEvents.as_view({'patch': 'patch'}),
         name='moderation-event-update'
      ),
+     path(
+        'api/v1/moderation-events/<str:moderation_id>/production-locations',
+        ModerationEvents.as_view({'post': 'add_production_location'}),
+        name='moderation-event-add-production-location'
+     ),
 ]
 
 schema_view = get_schema_view(
