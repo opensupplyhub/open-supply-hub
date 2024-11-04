@@ -3,6 +3,49 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+
+## Release 1.24.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: November 16, 2024
+
+### Database changes
+#### Migrations:
+* *Describe migrations here.*
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
+### Code/API changes
+* [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - Explicitly set the number of shards and the number of replicas for the "production locations" and "moderation events" OpenSearch indexes. Based on the OpenSearch documentation, a storage size of 10–30 GB is preferred for workloads that prioritize low search latency. Additionally, having too many small shards can unnecessarily exhaust memory by storing excessive metadata. Currently, the "production locations" index utilizes 651.9 MB, including replicas, while the "moderation events" index is empty. This indicates that one shard and one replica should be sufficient for the "production locations" and "moderation events" indexes.
+
+### Architecture/Environment changes
+* The OpenSearch version has been increased to 2.15.
+* [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - The new "moderation events" Logstash pipeline has been configured and implemented to collect moderation event data from the current PostgreSQL database and save it to OpenSearch. This setup allows for fast searches on the moderation events data.
+* [OSDEV-1387](https://opensupplyhub.atlassian.net/browse/OSDEV-1387) - The SQL query for generating tiles from PostgreSQL+PostGIS has been reimplemented to avoid using the JOIN + GROUP BY clause. This change reduces the number of subqueries and their asymptotic complexity. Additionally, an option to set an upper limit on facility counts in the 'count' clause has been introduced, capped at 100, which doubles the query's performance. Throttling has been removed for tile generation endpoints.
+
+### Bugfix
+* [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388) - The waiter from boto3 cannot wait more than half an hour so we replaced it with our own.
+* [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - Fixed the assertion in the test for the `country.rb` filter of the "production locations" Logstash pipeline. The main issue was with the evaluation of statements in the Ruby block. Since only the last statement is evaluated in a Ruby block, all the checks were grouped into one chain of logical statements and returned as a `result` variable at the end.
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* The following steps should be completed while deploying to Staging or Production:
+    1. Run the `[Release] Deploy` pipeline for these environments with the flag 'Clear OpenSearch indexes' set to true. This will allow Logstash to refill OpenSearch since the OpenSearch instance will be recreated due to the version increase. It is also necessary due to changes in the OpenSearch index settings.
+    2. Open the triggered `Deploy to AWS` workflow and ensure that the `apply` job is completed. **Right after** finishing the `apply` job, follow these instructions, which should be the last steps in setting up the recreated OpenSearch instance:
+        - Copy the ARN of the `terraform_ci` user from the AWS IAM console.
+            - Navigate to the AWS console's search input, type "IAM", and open the IAM console.
+            - In the IAM console, find and click on the "Users" tab.
+            - In the list of available users, locate the `terraform_ci` user, click on it, and on that page, you will find its ARN.
+        - After copying this value, go to the AWS OpenSearch console in the same way you accessed the IAM console.
+        - Open the available domains and locate the domain for the corresponding environment. Open it, then navigate to the security configuration and click "Edit".
+        - Find the section titled "Fine-grained access control", and under this section, you will find an "IAM ARN" input field. Paste the copied ARN into this field and save the changes. It may take several minutes to apply. Make sure that the "Configuration change status" field has green status.
+    3. Then, return to the running `Deploy to AWS` workflow and ensure that the logs for `clear_opensearch` job do not contain errors related to access for deleting the OpenSearch index or lock files in EFS storage. In case of **an access error**, simply rerun the `Deploy to AWS` workflow manually from the appropriate release Git tag.
+
+
 ## Release 1.23.0
 
 ## Introduction
@@ -16,32 +59,17 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Scheme changes
 * [OSDEV-1229](https://opensupplyhub.atlassian.net/browse/OSDEV-1229) - Created Moderation Events Postgres table to track moderation events in the database.
 
-### Database changes
-#### Migrations:
-* *Describe migrations here.*
-
-#### Scheme changes
-* *Describe scheme changes here.*
-
 ### Code/API changes
 * Throttling has been introduced for tiles/* endpoints, limiting requests to 300 per minute.
 * [OSDEV-1328](https://opensupplyhub.atlassian.net/browse/OSDEV-1328) The OpenSearch tokenizer has been changed to `lowercase` to get better search results when querying the GET /v1/production-locations/ endpoint.
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
-
-### Bugfix
-* *Describe bugfix here.*
-* [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388)
-  * The waiter from boto3 cannot wait more than half an hour so we replaced it with our own.
-
-### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* Resource allocation has been optimized for the staging environment. The number of ECS tasks for the Django app has been reduced from 6 to 4, while maintaining system stability.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
-* Run `Deploy to AWS` pipeline for an existing environment with the flag clear OpenSearch set to true - to let the tokenizer parse full text into words with new configurations.
+* Run `[Release] Deploy` pipeline for an existing environment with the flag 'Clear OpenSearch indexes' set to true - to let the tokenizer parse full text into words with new configurations.
 
 
 ## Release 1.22.0
