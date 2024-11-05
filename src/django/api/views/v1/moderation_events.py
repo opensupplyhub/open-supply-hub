@@ -59,7 +59,15 @@ class ModerationEvents(ViewSet):
     def retrieve(self, request,  moderation_id):
 
         if not IsRegisteredAndConfirmed().has_permission(request, self):
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            return Response(
+                {
+                    "detail": (
+                        "Only an authorized user "
+                        "can perform this action."
+                    )
+                },
+                status=status.HTTP_401_UNAUTHORIZED
+            )
         
         # TODO: Will add when OSDEV-1332 will be merged.
         # if not is_valid_uuid(moderation_id):
