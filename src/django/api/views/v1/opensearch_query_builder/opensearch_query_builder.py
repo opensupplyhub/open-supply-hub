@@ -88,15 +88,19 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
 
         if field == V1_PARAMETERS_LIST.OS_ID:
             self._build_os_id(values)
+            return
+        
+        if field == V1_PARAMETERS_LIST.MODERATION_ID:
+            self._build_moderation_id(values)
+            return
 
-        else:
-            terms_field = self.build_options.get(
-                field, lambda x: f'{x}.keyword'
-            )(field)
+        terms_field = self.build_options.get(
+            field, lambda x: f'{x}.keyword'
+        )(field)
 
-            self.query_body['query']['bool']['must'].append(
-                {'terms': {terms_field: values}}
-            )
+        self.query_body['query']['bool']['must'].append(
+            {'terms': {terms_field: values}}
+        )
 
     def _build_os_id(self, values):
         # Build a query to search in both os_id and historical_os_id.keyword
@@ -106,6 +110,18 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
                     'should': [
                         {'terms': {'os_id': values}},
                         {'terms': {'historical_os_id.keyword': values}},
+                    ]
+                }
+            }
+        )
+    
+    def _build_moderation_id(self, values):
+        # Build a query to search in moderation_id
+        self.query_body['query']['bool']['must'].append(
+            {
+                'bool': {
+                    'should': [
+                        {'terms': {'moderation_id': values}},
                     ]
                 }
             }

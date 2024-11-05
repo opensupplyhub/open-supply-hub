@@ -56,8 +56,7 @@ class ModerationEvents(ViewSet):
         return Response(response)
     
     @handle_errors_decorator
-    def retrieve(self, request,  moderation_id):
-
+    def retrieve(self, request,  pk=None):
         if not IsRegisteredAndConfirmed().has_permission(request, self):
             return Response(
                 {
@@ -78,7 +77,7 @@ class ModerationEvents(ViewSet):
         #     )
 
         query_params = QueryDict('', mutable=True)
-        query_params.update({'uuid': moderation_id})
+        query_params.update({'moderation_id': pk})
         query_body = self.opensearch_query_director.build_query(
             query_params
         )
