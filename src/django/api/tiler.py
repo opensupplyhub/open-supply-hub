@@ -1,10 +1,12 @@
 from api.models.facility.facility import Facility
+from api.models.facility.facility_index import FacilityIndex
 import mercantile
 
 from django.contrib.gis.geos import Polygon
 from django.db import connection
 
 GRID_ZOOM_FACTOR = 3
+HI_LIMIT = 100
 
 
 def get_facility_grid_vector_tile(params, layer, z, x, y):
@@ -12,56 +14,51 @@ def get_facility_grid_vector_tile(params, layer, z, x, y):
     hex_width = abs(xy_bounds.right - xy_bounds.left) / (2**GRID_ZOOM_FACTOR)
 
     query = """
-        SELECT ST_AsMVT(q, 'facilitygrid') from (
+    SELECT ST_AsMVT(q, 'facilitygrid') FROM (
         SELECT ST_AsMVTGeom(
-            ST_Centroid(geom), ST_MakeEnvelope(
-            {xmin}, {ymin}, {xmax}, {ymax}
-            )) as mvt_geom,
-            count(location),
-            ST_XMin(ST_Envelope(ST_Transform (geom, 4326))) as xmin,
-            ST_YMin(ST_Envelope(ST_Transform (geom, 4326))) as ymin,
-            ST_XMax(ST_Envelope(ST_Transform (geom, 4326))) as xmax,
-            ST_YMax(ST_Envelope(ST_Transform (geom, 4326))) as ymax
-        FROM generate_hexgrid({width}, {xmin}, {ymin}, {xmax}, {ymax})
-        JOIN api_facility ON ST_Contains(ST_Transform (geom, 4326), location)
-        {where_clause}
-        GROUP BY
-            ST_AsMVTGeom(
-            ST_Centroid(geom), ST_MakeEnvelope(
-                {xmin}, {ymin}, {xmax}, {ymax}
-            ))
-            , ST_XMin(ST_Envelope(ST_Transform (geom, 4326)))
-            , ST_YMin(ST_Envelope(ST_Transform (geom, 4326)))
-            , ST_XMax(ST_Envelope(ST_Transform (geom, 4326)))
-            , ST_YMax(ST_Envelope(ST_Transform (geom, 4326)))
-            ) as q
+            ST_Centroid(geom),
+            ST_MakeEnvelope({xmin}, {ymin}, {xmax}, {ymax})
+        ) AS mvt_geom,
+        (SELECT COUNT(*) FROM (
+            SELECT * FROM api_facilityindex
+            WHERE
+                ST_Contains(ST_Transform(geom, 4326), location)
+                AND ({where_clause})
+            LIMIT {limit}
+            ) as ss
+        ) as count,
+        ST_XMin(ST_Envelope(ST_Transform(geom, 4326))) AS xmin,
+        ST_YMin(ST_Envelope(ST_Transform(geom, 4326))) AS ymin,
+        ST_XMax(ST_Envelope(ST_Transform(geom, 4326))) AS xmax,
+        ST_YMax(ST_Envelope(ST_Transform(geom, 4326))) AS ymax
+    FROM
+        generate_hexgrid({width}, {xmin}, {ymin}, {xmax}, {ymax})
+    WHERE
+        ST_AsMVTGeom(
+            ST_Centroid(geom),
+            ST_MakeEnvelope({xmin}, {ymin}, {xmax}, {ymax})
+        ) IS NOT NULL
+        AND ABS(ST_XMax(ST_Envelope(ST_Transform(geom, 4326))) -
+            ST_XMin(ST_Envelope(ST_Transform(geom, 4326)))) < 180
+            AND exists (
+            SELECT 1 FROM api_facilityindex
+            WHERE
+                ST_Contains(ST_Transform(geom, 4326), location)
+                AND ({where_clause})
+        )
+    ) AS q;
     """
 
     location_query, location_params = (
-        Facility.objects.filter_by_query_params(params)
-        .values("location")
+        FacilityIndex.objects.filter_by_query_params(params)
         .query.sql_with_params()
     )
-    wrap_filter = (
-        "ST_AsMVTGeom(ST_Centroid(geom), ST_MakeEnvelope("
-        "   {xmin}, {ymin}, {xmax}, {ymax}"
-        ")) is not null and "
-        "abs("
-        "   ST_XMax(ST_Envelope(ST_Transform (geom, 4326)))"
-        " - ST_XMin(ST_Envelope(ST_Transform (geom, 4326)))"
-        ") < 180".format(
-            xmin=xy_bounds.left,
-            ymin=xy_bounds.bottom,
-            xmax=xy_bounds.right,
-            ymax=xy_bounds.top,
-        )
-    )
+    where_clause = "TRUE"
+
     if location_query.find("WHERE") >= 0:
         where_clause = location_query[
-            location_query.find("WHERE"):
-        ] + " AND {} ".format(wrap_filter)
-    else:
-        where_clause = " WHERE {} ".format(wrap_filter)
+            location_query.find("WHERE")+len("WHERE"):
+        ]
 
     query = query.format(
         width=hex_width,
@@ -70,11 +67,14 @@ def get_facility_grid_vector_tile(params, layer, z, x, y):
         xmax=xy_bounds.right,
         ymax=xy_bounds.top,
         where_clause=where_clause,
+        limit=HI_LIMIT
     )
 
     with connection.cursor() as cursor:
-        cursor.execute(query, location_params)
+        cursor.execute(query, [location_params, location_params])
         rows = cursor.fetchall()
+        if len(rows) == 0 or len(rows[0]) == 0:
+            return None
         return rows[0][0]
 
 

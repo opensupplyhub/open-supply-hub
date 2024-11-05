@@ -271,14 +271,14 @@ export const numberOfWorkerOptionsPropType = arrayOf(
     }),
 );
 
-export const moderationStatusesOptionsPropType = arrayOf(
+export const moderationStatusOptionsPropType = arrayOf(
     shape({
         value: string.isRequired,
         label: string.isRequired,
     }),
 );
 
-export const sourceTypesPropType = arrayOf(
+export const dataSourceOptionsPropType = arrayOf(
     shape({
         value: string.isRequired,
         label: string.isRequired,
@@ -460,7 +460,7 @@ export const activityReportPropType = shape({
     closure_state: string.isRequired,
     created_at: string.isRequired,
     facility: string.isRequired,
-    facility_name: string.isReqired,
+    facility_name: string.isRequired,
     id: number.isRequired,
     reason_for_report: string.isRequired,
     reported_by_contributor: string.isRequired,

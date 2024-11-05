@@ -23,7 +23,7 @@ import {
     resetAllFilters,
     resetDrawerFilters,
     updateAllFilters,
-    updateSourceTypeFilter,
+    updateDataSourceFilter,
     updateModerationStatusFilter,
 } from '../actions/filters';
 
@@ -53,7 +53,7 @@ const initialState = Object.freeze({
     processingType: Object.freeze([]),
     productType: Object.freeze([]),
     numberOfWorkers: Object.freeze([]),
-    sourceTypes: Object.freeze([]),
+    dataSources: Object.freeze([]),
     moderationStatuses: Object.freeze([]),
     nativeLanguageName: '',
     combineContributors: '',
@@ -146,9 +146,9 @@ export default createReducer(
             update(state, {
                 lists: { $set: payload },
             }),
-        [updateSourceTypeFilter]: (state, payload) =>
+        [updateDataSourceFilter]: (state, payload) =>
             update(state, {
-                sourceTypes: { $set: payload },
+                dataSources: { $set: payload },
             }),
         [updateModerationStatusFilter]: (state, payload) =>
             update(state, {

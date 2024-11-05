@@ -2,15 +2,15 @@ import React from 'react';
 import { bool, string, func } from 'prop-types';
 import { connect } from 'react-redux';
 import { updateModerationStatusFilter } from '../../actions/filters';
-import { moderationStatusesOptionsPropType } from '../../util/propTypes';
-import { MODERATION_STATUSES } from '../../util/constants';
+import { moderationStatusOptionsPropType } from '../../util/propTypes';
+import { MODERATION_STATUSES_ENUM } from '../../util/constants';
 import { createOptionsFromConstants } from '../../util/util';
 
 import StyledSelect from './StyledSelect';
 
 const MODERATION_STATUS = 'MODERATION_STATUS';
 const MODERATION_STATUSES_OPTIONS = Object.freeze(
-    createOptionsFromConstants(MODERATION_STATUSES),
+    createOptionsFromConstants(MODERATION_STATUSES_ENUM),
 );
 
 const ModerationStatusFilter = ({
@@ -18,6 +18,7 @@ const ModerationStatusFilter = ({
     moderationStatuses,
     isDisabled,
     className,
+    origin,
 }) => (
     <div className={className}>
         <StyledSelect
@@ -27,6 +28,7 @@ const ModerationStatusFilter = ({
             value={moderationStatuses}
             onChange={updateStatus}
             isDisabled={isDisabled}
+            origin={origin}
         />
     </div>
 );
@@ -34,13 +36,15 @@ const ModerationStatusFilter = ({
 ModerationStatusFilter.defaultProps = {
     isDisabled: false,
     className: 'form__field',
+    origin: null,
 };
 
 ModerationStatusFilter.propTypes = {
     updateStatus: func.isRequired,
-    moderationStatuses: moderationStatusesOptionsPropType.isRequired,
+    moderationStatuses: moderationStatusOptionsPropType.isRequired,
     isDisabled: bool,
     className: string,
+    origin: string,
 };
 
 const mapStateToProps = ({ filters: { moderationStatuses } }) => ({

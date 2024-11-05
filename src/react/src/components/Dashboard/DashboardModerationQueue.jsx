@@ -6,7 +6,7 @@ import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import CountryNameFilter from '../Filters/CountryNameFilter';
-import SourceTypeFilter from '../Filters/SourceTypeFilter';
+import DataSourceFilter from '../Filters/DataSourceFilter';
 import ModerationStatusFilter from '../Filters/ModerationStatusFilter';
 import DashboardModerationQueueListTable from './DashboardModerationQueueListTable';
 import DashboardDownloadDataButton from './DashboardDownloadDataButton';
@@ -18,6 +18,7 @@ import {
 import { fetchCountryOptions } from '../../actions/filterOptions';
 import { moderationEventsPropType } from '../../util/propTypes';
 import { makeDashboardModerationQueueStyles } from '../../util/styles';
+import { MODERATION_QUEUE } from '../../util/constants';
 
 const DashboardModerationQueue = ({
     events,
@@ -65,6 +66,12 @@ const DashboardModerationQueue = ({
 
     const eventsCount = events?.length || 0;
 
+    const sharedFilterProps = {
+        isDisabled: fetching,
+        className: 'form__field--dense',
+        origin: MODERATION_QUEUE,
+    };
+
     return (
         <Paper className={classes.mainContainer}>
             <div className={classes.dashboardFilters}>
@@ -74,18 +81,9 @@ const DashboardModerationQueue = ({
                     downloadData={downloadEvents}
                     downloadError={downloadEventsError}
                 />
-                <SourceTypeFilter
-                    isDisabled={fetching}
-                    className="form__field--dense"
-                />
-                <ModerationStatusFilter
-                    isDisabled={fetching}
-                    className="form__field--dense"
-                />
-                <CountryNameFilter
-                    isDisabled={fetching}
-                    className="form__field--dense"
-                />
+                <DataSourceFilter {...sharedFilterProps} />
+                <ModerationStatusFilter {...sharedFilterProps} />
+                <CountryNameFilter {...sharedFilterProps} />
                 <Grid
                     container
                     className={classes.datePickersContainer}

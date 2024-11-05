@@ -323,6 +323,11 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
                     />
                     <Route
                         exact
+                        path={dashboardModerationQueueRoute}
+                        component={DashboardModerationQueue}
+                    />
+                    <Route
+                        exact
                         path={dashboardClaimsDetailsRoute}
                         render={() => (
                             <FeatureFlag

@@ -62,6 +62,8 @@ import {
     optionsForSortingResults,
     componentsWithErrorMessage,
     listParsingErrorMappings,
+    MODERATION_QUEUE,
+    MODERATION_STATUS_COLORS,
 } from './constants';
 
 import { createListItemCSV } from './util.listItemCSV';
@@ -69,6 +71,7 @@ import { createListItemCSV } from './util.listItemCSV';
 import { createFacilitiesCSV, formatDataForCSV } from './util.facilitiesCSV';
 import formatFacilityClaimsDataForXLSX from './util.facilityClaimsXLSX';
 import formatModerationEventsDataForXLSX from './util.moderationEventsXLSX';
+import COLOURS from './COLOURS';
 
 export function DownloadXLSX(data, fileName) {
     import('file-saver').then(({ saveAs }) => {
@@ -1284,3 +1287,10 @@ export const createOptionsFromConstants = constants =>
             label: constants[key],
         }),
     );
+
+export const multiValueBackgroundHandler = (value, origin) => {
+    if (origin === MODERATION_QUEUE) {
+        return MODERATION_STATUS_COLORS[value] || 'default';
+    }
+    return COLOURS.MINT_GREEN;
+};

@@ -2,10 +2,6 @@ export default {
     // Blues
     NAVY_BLUE: '#0427a4',
     LIGHT_BLUE: '#009ee6',
-    PALE_BLUE: '#CFE2F3',
-
-    // Purples
-    LAVENDER_GREY: '#D9D1E9',
 
     // Greens
     GREEN: '#E0F5E3',
@@ -23,6 +19,7 @@ export default {
     DARK_SLATE_GRAY: '#3D4153',
     NEAR_BLACK: '#0D1128',
 
-    // Special Colors
+    // Accent Colors
     NAVIGATION: '#FCCF3F',
+    PALE_LIGHT_YELLOW: '#FFF2CE',
 };

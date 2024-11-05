@@ -1,5 +1,6 @@
-import { SOURCE_TYPES, OARColor } from './constants';
+import { OARColor } from './constants';
 import COLOURS from './COLOURS';
+import { multiValueBackgroundHandler } from './util';
 
 export const formValidationErrorMessageStyle = Object.freeze({
     color: 'red',
@@ -204,16 +205,12 @@ export const claimAFacilitySupportDocsFormStyles = Object.freeze({
     }),
 });
 
-export const makeSelectFilterStyles = (windowWidth, color = OARColor) => {
-    const multiValueBackgroundHandler = value => {
-        if (value === SOURCE_TYPES.API) return COLOURS.LAVENDER_GREY;
-        if (value === SOURCE_TYPES.SLC) return COLOURS.PALE_BLUE;
-        return COLOURS.MINT_GREEN;
-    };
-    return Object.freeze({
+export const makeSelectFilterStyles = (windowWidth, origin, color = OARColor) =>
+    Object.freeze({
         multiValue: Object.freeze((provided, state) => {
             const backgroundColor = multiValueBackgroundHandler(
                 state.data.value,
+                origin,
             );
             return {
                 ...provided,
@@ -248,7 +245,6 @@ export const makeSelectFilterStyles = (windowWidth, color = OARColor) => {
                 windowWidth > 699 && windowWidth < 900 ? 0 : provided.padding,
         })),
     });
-};
 
 export const makeNestedSelectFilterStyles = Object.freeze({
     group: provided =>
@@ -766,14 +762,14 @@ export const makeDashboardModerationQueueListTableStyles = Object.freeze({
         display: 'block',
         margin: 'auto',
     }),
-    slcRowStyles: Object.freeze({
-        backgroundColor: COLOURS.PALE_BLUE,
+    pendingStatusStyles: Object.freeze({
+        backgroundColor: COLOURS.PALE_LIGHT_YELLOW,
     }),
-    apiRowStyles: Object.freeze({
-        backgroundColor: COLOURS.LAVENDER_GREY,
+    approvedStatusStyles: Object.freeze({
+        backgroundColor: COLOURS.MINT_GREEN,
     }),
-    defaultRowStyles: Object.freeze({
-        backgroundColor: 'inherit',
+    rejectedStatusStyles: Object.freeze({
+        backgroundColor: COLOURS.LIGHT_RED,
     }),
 });
 

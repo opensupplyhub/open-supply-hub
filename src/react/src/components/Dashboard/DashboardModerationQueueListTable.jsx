@@ -12,15 +12,15 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import DashboardModerationQueueListTableHeader from './DashboardModerationQueueListTableHeader';
 import { moderationEventsPropType } from '../../util/propTypes';
 import {
-    SOURCE_TYPES,
     EMPTY_PLACEHOLDER,
     DATE_FORMATS,
+    MODERATION_STATUS_COLORS,
 } from '../../util/constants';
 import { makeDashboardModerationQueueListTableStyles } from '../../util/styles';
 import {
     formatDate,
-    makeContributionRecordLink,
     openInNewTab,
+    makeContributionRecordLink,
 } from '../../util/util';
 
 const INITIAL_PAGE_INDEX = 0;
@@ -45,17 +45,6 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
         const isDesc = orderBy === property && order === 'desc';
         setOrder(isDesc ? 'asc' : 'desc');
         setOrderBy(property);
-    };
-
-    const getRowClassName = source => {
-        switch (source) {
-            case SOURCE_TYPES.SLC:
-                return classes.slcRowStyles;
-            case SOURCE_TYPES.API:
-                return classes.apiRowStyles;
-            default:
-                return classes.defaultRowStyles;
-        }
     };
 
     return (
@@ -102,6 +91,7 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                                         <TableRow
                                             hover
                                             key={moderationId}
+                                            className={classes.rowStyles}
                                             onClick={() =>
                                                 openInNewTab(
                                                     makeContributionRecordLink(
@@ -109,9 +99,6 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                                                     ),
                                                 )
                                             }
-                                            className={`${
-                                                classes.row
-                                            } ${getRowClassName(source)}`}
                                         >
                                             <TableCell padding="dense">
                                                 {formatDate(
@@ -127,7 +114,14 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                                                 {contributorName}
                                             </TableCell>
                                             <TableCell>{source}</TableCell>
-                                            <TableCell>
+                                            <TableCell
+                                                style={{
+                                                    backgroundColor:
+                                                        MODERATION_STATUS_COLORS[
+                                                            moderationStatus
+                                                        ] || 'default',
+                                                }}
+                                            >
                                                 {moderationStatus}
                                             </TableCell>
                                             <TableCell padding="dense">

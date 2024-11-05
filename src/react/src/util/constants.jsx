@@ -1,6 +1,7 @@
 import React from 'react';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
+import COLOURS from './COLOURS';
 
 export const OTHER = 'Other';
 export const FACILITIES_REQUEST_PAGE_SIZE = 50;
@@ -543,7 +544,6 @@ export const userApiInfoTooltipTitles = Object.freeze({
 export const IS_NOT_SET = 'Is not set';
 export const ALLOW_LARGE_DOWNLOADS = 'allow_large_downloads';
 export const CLAIM_A_FACILITY = 'claim_a_facility';
-export const MODERATION_QUEUE = 'moderation_queue';
 export const VECTOR_TILE = 'vector_tile';
 export const REPORT_A_FACILITY = 'report_a_facility';
 export const EMBEDDED_MAP_FLAG = 'embedded_map';
@@ -1325,17 +1325,18 @@ export const listParsingErrorMappings = {
     ),
 };
 
-export const SOURCE_TYPES = Object.freeze({
+export const DATA_SOURCES_ENUM = Object.freeze({
     API: 'API',
     SLC: 'SLC',
 });
 
-export const MODERATION_STATUSES = Object.freeze({
+export const MODERATION_STATUSES_ENUM = Object.freeze({
     PENDING: 'PENDING',
-    RESOLVED: 'RESOLVED',
+    APPROVED: 'APPROVED',
+    REJECTED: 'REJECTED',
 });
 
-export const MODERATION_QUEUE_HEAD_CELLS = [
+export const MODERATION_QUEUE_HEAD_CELLS = Object.freeze([
     { id: 'created_at', label: 'Created Date' },
     { id: 'name', label: 'Location Name' },
     { id: 'country.name', label: 'Country' },
@@ -1344,11 +1345,19 @@ export const MODERATION_QUEUE_HEAD_CELLS = [
     { id: 'moderation_status', label: 'Moderation Status' },
     { id: 'moderation_decision_date', label: 'Moderation Decision Date' },
     { id: 'updated_at', label: 'Last Updated' },
-];
+]);
 
-export const DATE_FORMATS = {
+export const DATE_FORMATS = Object.freeze({
     SHORT: 'L',
     LONG: 'LL',
     LONG_WITH_TIME: 'LLL',
     FULL: 'LLLL',
-};
+});
+
+export const MODERATION_QUEUE = 'ModerationQueue';
+
+export const MODERATION_STATUS_COLORS = Object.freeze({
+    [MODERATION_STATUSES_ENUM.PENDING]: COLOURS.PALE_LIGHT_YELLOW,
+    [MODERATION_STATUSES_ENUM.APPROVED]: COLOURS.MINT_GREEN,
+    [MODERATION_STATUSES_ENUM.REJECTED]: COLOURS.LIGHT_RED,
+});
