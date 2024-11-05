@@ -10,13 +10,13 @@ class StatusValidator(OpenSearchValidationInterface):
         if not status:
             return errors
 
-        status_types = {'PENDING', 'RESOLVED'}
+        status_types = {'PENDING', 'APPROVED', 'REJECTED'}
 
         if status not in status_types:
             errors.append({
                 "field": "status",
                 "message": f"'{status}' is not a valid status. \
-                    Allowed values are 'PENDING' or 'RESOLVED'."
+                    Allowed values are 'PENDING','APPROVED' or 'REJECTED'."
             })
 
         return errors

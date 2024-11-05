@@ -27,7 +27,7 @@
              "latitude":37.7749,
              "longitude":-122.4194
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -93,7 +93,7 @@
              "latitude":19.4326,
              "longitude":-99.1332
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -159,7 +159,7 @@
              "latitude":-34.6037,
              "longitude":-58.3816
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -225,7 +225,7 @@
              "latitude":6.2442,
              "longitude":-75.5812
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -258,7 +258,7 @@
              "latitude":4.711,
              "longitude":-74.0721
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -324,7 +324,7 @@
              "latitude":-34.6037,
              "longitude":-58.3816
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -390,7 +390,7 @@
              "latitude":-34.9011,
              "longitude":-56.1645
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -456,7 +456,7 @@
              "latitude":10.4806,
              "longitude":-66.9036
           },
-          "status":"RESOLVED",
+          "status":"REJECTED",
           "source":"API",
           "claim_id":null
        }
@@ -522,7 +522,7 @@
              "latitude":-16.5000,
              "longitude":-68.1500
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -588,7 +588,7 @@
              "latitude":23.1136,
              "longitude":-82.3666
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -654,7 +654,7 @@
              "latitude":5.852,
              "longitude":-55.2038
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -720,7 +720,7 @@
              "latitude":18.5944,
              "longitude":-72.3074
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -786,7 +786,7 @@
              "latitude":8.9833,
              "longitude":-79.5167
           },
-          "status":"RESOLVED",
+          "status":"REJECTED",
           "source":"API",
           "claim_id":null
        }
@@ -852,7 +852,7 @@
              "latitude":15.3014,
              "longitude":-61.3883
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -918,7 +918,7 @@
              "latitude":10.6600,
              "longitude":-61.5086
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -984,7 +984,7 @@
              "latitude":17.1214,
              "longitude":-61.8449
           },
-          "status":"RESOLVED",
+          "status":"REJECTED",
           "source":"API",
           "claim_id":null
        }
