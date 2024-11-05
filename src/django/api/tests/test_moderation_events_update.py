@@ -54,7 +54,7 @@ class ModerationEventsUpdateTest(APITestCase):
         response = self.client.patch(
             "/api/v1/moderation-events/{}/"
             .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
-            data=json.dumps({"status": "ACCEPTED"}),
+            data=json.dumps({"status": "APPROVED"}),
             content_type="application/json"
         )
         self.assertEqual(403, response.status_code)
@@ -66,10 +66,10 @@ class ModerationEventsUpdateTest(APITestCase):
         response = self.client.patch(
             "/api/v1/moderation-events/{}/"
             .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
-            data=json.dumps({"status": "ACCEPTED"}),
+            data=json.dumps({"status": "APPROVED"}),
             content_type="application/json"
         )
-
+        print(response.json())
         self.assertEqual(200, response.status_code)
 
     def test_moderation_event_not_found(self):
@@ -80,7 +80,7 @@ class ModerationEventsUpdateTest(APITestCase):
         response = self.client.patch(
             "/api/v1/moderation-events/{}/"
             .format("f65ec710-f7b9-4f50-b960-135a7ab24ee1"),
-            data=json.dumps({"status": "ACCEPTED"}),
+            data=json.dumps({"status": "APPROVED"}),
             content_type="application/json"
         )
 
@@ -108,11 +108,11 @@ class ModerationEventsUpdateTest(APITestCase):
         response = self.client.patch(
             "/api/v1/moderation-events/{}/"
             .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
-            data=json.dumps({"status": "ACCEPTED"}),
+            data=json.dumps({"status": "APPROVED"}),
             content_type="application/json"
         )
 
         self.assertEqual(200, response.status_code)
         self.moderation_event.refresh_from_db()
-        self.assertEqual(self.moderation_event.status, "ACCEPTED")
+        self.assertEqual(self.moderation_event.status, "APPROVED")
         self.assertIsNotNone(self.moderation_event.status_change_date)
