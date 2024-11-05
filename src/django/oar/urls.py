@@ -108,7 +108,7 @@ api_v1 = [
         name='moderation-event-update'
      ),
      path(
-        'api/v1/moderation-events/<str:moderation_id>/production-locations',
+        'api/v1/moderation-events/<str:moderation_id>/production-locations/',
         ModerationEvents.as_view({'post': 'add_production_location'}),
         name='moderation-event-add-production-location'
      ),
