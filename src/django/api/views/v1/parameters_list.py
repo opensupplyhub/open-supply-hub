@@ -1,4 +1,5 @@
 class V1_PARAMETERS_LIST:
+    FROM = 'from'
     SIZE = 'size'
     SEARCH_AFTER = 'search_after'
     QUERY = 'query'

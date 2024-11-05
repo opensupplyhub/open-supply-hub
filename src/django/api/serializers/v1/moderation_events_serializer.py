@@ -38,7 +38,7 @@ class ModerationEventsSerializer(Serializer):
     data_lt = DateField(default='', required=False)
     sort_by = ChoiceField(
         choices=[
-            'created_at', 
+            'created_at',
             'updated_at',
             'status_change_date',
             'contributor_name',
