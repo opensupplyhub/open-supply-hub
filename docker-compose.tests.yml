@@ -25,6 +25,5 @@ services:
       dockerfile: Dockerfile
     environment:
       - CI=$CI
-    #command: npm run test -- -c playwright123123.config.ts
     networks:
       - my-proxy-net
