@@ -3,6 +3,25 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.23.1
+
+
+### Architecture/Environment changes
+* [OSDEV-1387](https://opensupplyhub.atlassian.net/browse/OSDEV-1387) - The SQL query for generating tiles from PostgreSQL+PostGIS has been reimplemented to avoid using the JOIN + GROUP BY clause. This change reduces the number of subqueries and their asymptotic complexity. Additionally, an option to set an upper limit on facility counts in the 'count' clause has been introduced, capped at 100, which doubles the query's performance. Throttling has been removed for tile generation endpoints.
+
+### Release instructions:
+* The following steps should be completed while deploying to Staging or Production:
+    1. Run the `[Release] Deploy` pipeline for these environments with the flag 'Clear OpenSearch indexes' set to true. This will allow Logstash to refill OpenSearch since the OpenSearch instance will be recreated due to the version increase. It is also necessary due to changes in the OpenSearch index settings.
+    2. Open the triggered `Deploy to AWS` workflow and ensure that the `apply` job is completed. **Right after** finishing the `apply` job, follow these instructions, which should be the last steps in setting up the recreated OpenSearch instance:
+        - Copy the ARN of the `terraform_ci` user from the AWS IAM console.
+            - Navigate to the AWS console's search input, type "IAM", and open the IAM console.
+            - In the IAM console, find and click on the "Users" tab.
+            - In the list of available users, locate the `terraform_ci` user, click on it, and on that page, you will find its ARN.
+        - After copying this value, go to the AWS OpenSearch console in the same way you accessed the IAM console.
+        - Open the available domains and locate the domain for the corresponding environment. Open it, then navigate to the security configuration and click "Edit".
+        - Find the section titled "Fine-grained access control", and under this section, you will find an "IAM ARN" input field. Paste the copied ARN into this field and save the changes. It may take several minutes to apply. Make sure that the "Configuration change status" field has green status.
+    3. Then, return to the running `Deploy to AWS` workflow and ensure that the logs for `clear_opensearch` job do not contain errors related to access for deleting the OpenSearch index or lock files in EFS storage. In case of **an access error**, simply rerun the `Deploy to AWS` workflow manually from the appropriate release Git tag.
+
 ## Release 1.23.0
 
 ## Introduction
