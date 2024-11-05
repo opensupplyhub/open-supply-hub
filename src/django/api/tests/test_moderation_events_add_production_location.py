@@ -52,7 +52,7 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
             password=self.password
         )
         response = self.client.post(
-            "/api/v1/moderation-events/{}/add-production-location/"
+            "/api/v1/moderation-events/{}/production-locations/"
             .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
             data=json.dumps({}),
             content_type="application/json"
@@ -65,7 +65,7 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
             password=self.superuser_password
         )
         response = self.client.post(
-            "/api/v1/moderation-events/{}/add-production-location/"
+            "/api/v1/moderation-events/{}/production-locations/"
             .format("invalid_uuid"),
             data=json.dumps({}),
             content_type="application/json"
@@ -78,7 +78,7 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
             password=self.superuser_password
         )
         response = self.client.post(
-            "/api/v1/moderation-events/{}/add-production-location/"
+            "/api/v1/moderation-events/{}/production-locations/"
             .format("f65ec710-f7b9-4f50-b960-135a7ab24ee7"),
             data=json.dumps({}),
             content_type="application/json"
@@ -94,9 +94,9 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
             password=self.superuser_password
         )
         response = self.client.post(
-            "/api/v1/moderation-events/{}/add-production-location/"
+            "/api/v1/moderation-events/{}/production-locations/"
             .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
             data=json.dumps({}),
             content_type="application/json"
         )
-        self.assertEqual(400, response.status_code)
+        self.assertEqual(410, response.status_code)
