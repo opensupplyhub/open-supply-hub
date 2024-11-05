@@ -28,7 +28,7 @@ module "database_anonymizer" {
 module "anonymized_database_dump" {
   count = var.anonymized_database_dump_enabled == true ? 1 : 0
 
-  source = "./anonymized_database_dump_sheduled_task"
+  source = "./anonymized_database_dump_scheduled_task"
 
   anonymized_database_name                 = var.anonymized_database_name
   anonymized_database_username             = var.anonymized_database_username

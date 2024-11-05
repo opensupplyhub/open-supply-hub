@@ -24,6 +24,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * The OpenSearch version has been increased to 2.15.
 * [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - The new "moderation events" Logstash pipeline has been configured and implemented to collect moderation event data from the current PostgreSQL database and save it to OpenSearch. This setup allows for fast searches on the moderation events data.
 * [OSDEV-1387](https://opensupplyhub.atlassian.net/browse/OSDEV-1387) - The SQL query for generating tiles from PostgreSQL+PostGIS has been reimplemented to avoid using the JOIN + GROUP BY clause. This change reduces the number of subqueries and their asymptotic complexity. Additionally, an option to set an upper limit on facility counts in the 'count' clause has been introduced, capped at 100, which doubles the query's performance. Throttling has been removed for tile generation endpoints.
+* [OSDEV-1170](https://opensupplyhub.atlassian.net/browse/OSDEV-1170) - Added the ability to automatically create a dump from the latest shared snapshot of the anonymized database from Production environment for use in the Test and Pre-Prod environments.
 
 ### Bugfix
 * [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - Fixed the assertion in the test for the `country.rb` filter of the "production locations" Logstash pipeline. The main issue was with the evaluation of statements in the Ruby block. Since only the last statement is evaluated in a Ruby block, all the checks were grouped into one chain of logical statements and returned as a `result` variable at the end.
@@ -63,8 +64,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1328](https://opensupplyhub.atlassian.net/browse/OSDEV-1328) The OpenSearch tokenizer has been changed to `lowercase` to get better search results when querying the GET /v1/production-locations/ endpoint.
 
 ### Architecture/Environment changes
-* [OSDEV-1170](https://opensupplyhub.atlassian.net/browse/OSDEV-1170)
-  * Added the ability to automatically create a dump from the latest shared snapshot of the anonymized database.
 * Resource allocation has been optimized for the staging environment. The number of ECS tasks for the Django app has been reduced from 6 to 4, while maintaining system stability.
 
 ### Release instructions:

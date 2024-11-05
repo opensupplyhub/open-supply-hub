@@ -11,7 +11,6 @@ aws rds copy-db-snapshot \
     --source-db-snapshot-identifier $SNAPSHOT_ID \
     --target-db-snapshot-identifier $ANONYMIZED_SNAPSHOT_ID \
     --kms-key-id $KMS_KEY_ID --output text
-      #>/dev/null 2>&1
 
 echo "Waiting for snapshot $ANONYMIZED_SNAPSHOT_ID to enter 'available' state..."
 while true
