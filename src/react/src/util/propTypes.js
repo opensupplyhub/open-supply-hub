@@ -511,3 +511,54 @@ export const moderationEventsPropType = arrayOf(
         updated_at: string.isRequired,
     }),
 );
+
+export const moderationEventPropType = shape({
+    moderation_id: string.isRequired,
+    created_at: string.isRequired,
+    updated_at: string.isRequired,
+    os_id: string.isRequired,
+    cleaned_data: {
+        name: string.isRequired,
+        address: string.isRequired,
+        country: productionLocationCountryPropType,
+    },
+    contributor_id: number.isRequired,
+    contributor_name: string.isRequired,
+    request_type: string.isRequired,
+    source: string.isRequired,
+    status: string.isRequired,
+    status_change_date: string.isRequired,
+    claim_id: number.isRequired,
+});
+
+export const potentialMatchesPropType = arrayOf(
+    shape({
+        os_id: string.isRequired,
+        name: string.isRequired,
+        address: string.isRequired,
+        sector: arrayOf(string),
+        parent_company: string,
+        product_type: arrayOf(string),
+        location_type: arrayOf(string),
+        processing_type: arrayOf(string),
+        number_of_workers: {
+            min: number,
+            max: number,
+        },
+        coordinates: {
+            lat: number,
+            lng: number,
+        },
+        local_name: string,
+        description: string,
+        business_url: string,
+        minimum_order_quantity: string,
+        average_lead_time: string,
+        percent_female_workers: 0,
+        affiliations: arrayOf(string),
+        certifications_standards_regulations: arrayOf(string),
+        historical_os_id: arrayOf(string),
+        country: productionLocationCountryPropType,
+        claim_status: string,
+    }),
+);

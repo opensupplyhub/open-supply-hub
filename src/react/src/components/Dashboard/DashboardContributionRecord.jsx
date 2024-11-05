@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
-import { string } from 'prop-types';
+import { string, func, bool, object } from 'prop-types';
 import { withStyles, withTheme } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
@@ -8,11 +8,19 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import Divider from '@material-ui/core/Divider';
-
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 import ShowOnly from '../ShowOnly';
 
 import { makeDashboardContributionRecordStyles } from '../../util/styles';
+import {
+    moderationEventPropType,
+    potentialMatchesPropType,
+} from '../../util/propTypes';
+import {
+    fetchModerationEvent,
+    fetchPotentialMatches,
+} from '../../actions/dashboardContributionRecord';
 
 const styles = {
     recordList: {
@@ -25,114 +33,63 @@ const styles = {
         backgroundColor: 'background.paper',
     },
 };
-// const potentialMatchesData = [];
-const potentialMatchesData = [
-    {
-        name: 'Test name INC',
-        address: '435 Main St, Manhattan, NY - USA',
-        claim_status: 'unclaimed',
-    },
-    // {
-    //     name: 'Test name INC',
-    //     address: '435 Main St, Manhattan, NY - USA',
-    //     claim_status: 'unclaimed',
-    // },
-    // {
-    //     name: 'Test name INC',
-    //     address: '435 Main St, Manhattan, NY - USA',
-    //     claim_status: 'unclaimed',
-    // },
-    // {
-    //     name: 'Test name INC',
-    //     address: '435 Main St, Manhattan, NY - USA',
-    //     claim_status: 'unclaimed',
-    // },
-    // {
-    //     name: 'Test name INC',
-    //     address: '435 Main St, Manhattan, NY - USA',
-    //     claim_status: 'unclaimed',
-    // },
-    // {
-    //     name: 'Test name INC',
-    //     address: '435 Main St, Manhattan, NY - USA',
-    //     claim_status: 'unclaimed',
-    // },
-];
-const potentialMatchCount = potentialMatchesData.length;
-const eventData = {
-    moderation_id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-    created_at: '2024-10-17T11:30:20.287Z',
-    updated_at: '2024-10-18T11:30:20.287Z',
-    os_id: 'string',
-    cleaned_data: {
-        name: 'Eco Friendly Plastics',
-        address: 'string',
-        country: {
-            name: 'Germany',
-            alpha_2: 'DE',
-            alpha_3: 'DEU',
-            numeric: '276',
-        },
-    },
-    contributor_id: 0,
-    contributor_name: 'Green Solutions Corp',
-    request_type: 'CREATE',
-    source: 'API',
-    moderation_status: 'PENDING',
-    moderation_decision_date: null,
-    claim_id: 0,
-};
 
 const DashboardContributionRecord = ({
-    // events,
-    // fetching,
-    // fetchEvents,
+    event,
+    potentialMatches,
     error,
-    theme,
-    // downloadEvents,
-    // downloadEventsError,
-    // fetchCountries,
     classes,
+    fetchEvent,
+    fetchMatches,
+    fetching,
+    fetchPotentialMatchError,
 }) => {
-    const [results, setResults] = useState(null);
-    const fetchPotentialMatches = () => setResults(eventData);
-    // apiRequest
-    //     .get(makePotentialMatchURL(), {
-    //         params: {},
-    //     })
-    //     .then(({ data }) => {
-    //         setResults(potentialMatchesData);
-    //     })
-    //     .catch(err => setResults(err));
-
     useEffect(() => {
-        fetchPotentialMatches();
-    }, []);
-
-    const jsonResults = JSON.stringify(results, null, 2);
+        fetchEvent();
+        fetchMatches();
+    }, [fetchEvent, fetchMatches]);
 
     if (error) {
         return <Typography>{error}</Typography>;
     }
+
+    const jsonResults = JSON.stringify(event, null, 2);
+    const potentialMatchCount = potentialMatches?.length || 0;
 
     return (
         <>
             <Typography variant="title" className={classes.title}>
                 Moderation Event Data
             </Typography>
+
             <Paper className={classes.container}>
                 <div className={classes.prettyPrint}>
-                    {results && <pre>{jsonResults}</pre>}
+                    {fetching ? (
+                        <CircularProgress
+                            size={25}
+                            className={classes.loaderStyles}
+                        />
+                    ) : (
+                        <>{event && <pre>{jsonResults}</pre>}</>
+                    )}
                 </div>
             </Paper>
+
             <Typography variant="title" className={classes.title}>
                 Potential Matches ({potentialMatchCount})
             </Typography>
+
+            {fetchPotentialMatchError && (
+                <Typography>{fetchPotentialMatchError}</Typography>
+            )}
             <div className={classes.potentialMatchesBlock}>
                 <List styles={styles.recordList}>
                     <Divider className={classes.dividerStyle} component="li" />
                     <div className={classes.potentialMatchesInternalBlock}>
-                        <ShowOnly when={potentialMatchesData.length === 0}>
+                        <ShowOnly
+                            key="title"
+                            when={potentialMatches.length === 0}
+                        >
                             <div className={classes.emptyBlockStyles}>
                                 <Typography
                                     className={classes.emptyTextStyle}
@@ -143,17 +100,18 @@ const DashboardContributionRecord = ({
                             </div>
                         </ShowOnly>
                         <ShowOnly
+                            key="section"
                             when={
-                                potentialMatchesData &&
-                                potentialMatchesData.length > 0
+                                potentialMatches && potentialMatches.length > 0
                             }
                         >
-                            {potentialMatchesData &&
-                                potentialMatchesData.map(
+                            {potentialMatches &&
+                                potentialMatches.map(
                                     (potentialMatch, index) => (
                                         <>
                                             {' '}
                                             <ListItem
+                                                key={potentialMatch.os_id}
                                                 className={
                                                     classes.listItemStyle
                                                 }
@@ -192,9 +150,9 @@ const DashboardContributionRecord = ({
                                             </ListItem>
                                             <ShowOnly
                                                 when={
-                                                    potentialMatchesData.length >
+                                                    potentialMatches.length >
                                                         1 &&
-                                                    potentialMatchesData.length -
+                                                    potentialMatches.length -
                                                         1 !==
                                                         index
                                                 }
@@ -220,6 +178,7 @@ const DashboardContributionRecord = ({
                     variant="contained"
                     onClick={() => {}}
                     className={classes.buttonStyles}
+                    isDisabled={fetching}
                 >
                     Create New Location
                 </Button>{' '}
@@ -228,17 +187,16 @@ const DashboardContributionRecord = ({
                     variant="contained"
                     onClick={() => {}}
                     className={classes.buttonStyles}
+                    isDisabled={fetching}
                 >
                     Reject Contribution
                 </Button>{' '}
                 <Button
                     color="secondary"
                     variant="contained"
-                    className={classes.buttonStyles}
+                    className={`${classes.buttonStyles} ${classes.claimButtonStyles}`}
                     onClick={() => {}}
-                    style={{
-                        backgroundColor: theme.palette.action.main,
-                    }}
+                    isDisabled={fetching}
                 >
                     Go to Claim
                 </Button>
@@ -248,40 +206,49 @@ const DashboardContributionRecord = ({
 };
 
 DashboardContributionRecord.defaultProps = {
-    // event: {},
+    event: {},
+    potentialMatches: [],
     error: null,
-    // downloadEventsError: null,
-    // results: null,
-    // jsonResults: null,
+    fetchPotentialMatchError: null,
 };
 
 DashboardContributionRecord.propTypes = {
-    // event: moderationEventsPropType,
-    // fetching: bool.isRequired,
+    event: moderationEventPropType,
+    potentialMatches: potentialMatchesPropType,
+    fetching: bool.isRequired,
+    fetchEvent: func.isRequired,
+    fetchMatches: func.isRequired,
+    classes: object.isRequired,
     error: string,
-    // downloadEventsError: string,
-    // results: object.isRequired,
+    fetchPotentialMatchError: string,
 };
 
 const mapStateToProps = ({
-    dashboardModerationQueue: {
-        moderationEvents: { event, fetching, error },
-        moderationEventsDownloadStatus: { error: downloadEventsError },
+    dashboardContributionRecord: {
+        moderationEvent: { event, fetching, error },
+        potentialMatches: {
+            potentialMatches,
+            fetching: potentialMatchFetching,
+            error: fetchPotentialMatchError,
+        },
     },
 }) => ({
     event,
     fetching,
+    potentialMatches,
+    potentialMatchFetching,
     error,
-    downloadEventsError,
+    fetchPotentialMatchError,
 });
 
-// const mapDispatchToProps = dispatch => ({
-//     fetchPotentialMatches: () => dispatch(fetchPotentialMatches()),
-// });
+const mapDispatchToProps = dispatch => ({
+    fetchEvent: () => dispatch(fetchModerationEvent()),
+    fetchMatches: () => dispatch(fetchPotentialMatches()),
+});
 
 export default connect(
     mapStateToProps,
-    // mapDispatchToProps,
+    mapDispatchToProps,
 )(
     withTheme()(
         withStyles(makeDashboardContributionRecordStyles)(

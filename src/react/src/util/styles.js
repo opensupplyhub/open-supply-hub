@@ -658,8 +658,12 @@ export const makeDownloadExcelButtonStyles = theme =>
         }),
     });
 
-export const makeDashboardContributionRecordStyles = () =>
+export const makeDashboardContributionRecordStyles = theme =>
     Object.freeze({
+        loaderStyles: Object.freeze({
+            display: 'block',
+            margin: 'auto',
+        }),
         emptyBlockStyles: Object.freeze({
             height: '100px',
             display: 'flex',
@@ -719,6 +723,10 @@ export const makeDashboardContributionRecordStyles = () =>
             backgroundColor: '#b1dbb1',
             padding: '20px',
             '&:hover': { backgroundColor: '#799679' },
+        }),
+        claimButtonStyles: Object.freeze({
+            backgroundColor: theme.palette.action.main,
+            '&:hover': { backgroundColor: 'rgb(175 142 42)' },
         }),
     });
 
