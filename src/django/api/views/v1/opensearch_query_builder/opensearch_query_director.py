@@ -1,7 +1,5 @@
-import logging
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 
-logger = logging.getLogger(__name__)
 
 class OpenSearchQueryDirector:
     def __init__(self, builder):
@@ -67,7 +65,6 @@ class OpenSearchQueryDirector:
                 continue
 
             if query_type == "range":
-                logger.info(f'#@#@ field that is passing to self.__add_range_query: {field}')
                 self.__add_range_query(field, query_params)
                 continue
 
@@ -87,6 +84,10 @@ class OpenSearchQueryDirector:
         if search_after:
             self.__builder.add_search_after(search_after)
 
+        paginate_from = query_params.get(V1_PARAMETERS_LIST.FROM)
+        if paginate_from:
+            self.__builder.add_from(paginate_from)
+
         size = query_params.get(V1_PARAMETERS_LIST.SIZE)
         if size:
             self.__builder.add_size(size)
@@ -94,7 +95,5 @@ class OpenSearchQueryDirector:
         multi_match_query = query_params.get(V1_PARAMETERS_LIST.QUERY)
         if multi_match_query:
             self.__builder.add_multi_match(multi_match_query)
-
-        logging.info(f"builded query is {self.__builder.get_final_query_body()}")
 
         return self.__builder.get_final_query_body()

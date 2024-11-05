@@ -33,7 +33,8 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
 
         if range_query:
             existing_range = any(
-                query.get('range', {}).get('created_at') for query in self.query_body['query']['bool']['must']
+                query.get('range', {}).get('created_at')
+                for query in self.query_body['query']['bool']['must']
             )
             if not existing_range:
                 self.query_body['query']['bool']['must'].append({
@@ -44,8 +45,8 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
         if order_by is None:
             order_by = self.default_sort_order
         self.query_body['sort'].append(
-            {f'{field}': {'order': order_by}}
-    )
+            {field: {'order': order_by}}
+        )
 
     def add_search_after(self, search_after):
         # search_after can't be present as empty by default in query_body

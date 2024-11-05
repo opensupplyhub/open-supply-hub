@@ -1,11 +1,9 @@
-import logging
 import copy
 from abc import abstractmethod
 from api.views.v1.opensearch_query_builder. \
     opensearch_query_builder_interface import OpenSearchQueryBuilderInterface
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 
-logger = logging.getLogger(__name__)
 
 class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
     def reset(self):
@@ -55,6 +53,9 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
 
     def _build_country(self, field):
         return f'{field}.alpha_2'
+
+    def add_from(self, paginate_from):
+        self.query_body['from'] = paginate_from
 
     def add_size(self, size):
         self.query_body[V1_PARAMETERS_LIST.SIZE] = size
@@ -114,14 +115,11 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
     def _build_date_range(self, query_params):
         pass
 
-    # This add_range invokes only for types 'range'
-    # You don't need to create a different function to handle range queries.
     def add_range(self, field, query_params):
-        logger.info(f'#### field in range is {field}')
-        # This works for values with [min] and [max]
-        if field == V1_PARAMETERS_LIST.NUMBER_OF_WORKERS or \
-        field == V1_PARAMETERS_LIST.PERCENT_FEMALE_WORKERS:
-            logger.info('@@@ Build range with number of workers or percent female workers')
+        if field in {
+            V1_PARAMETERS_LIST.NUMBER_OF_WORKERS,
+            V1_PARAMETERS_LIST.PERCENT_FEMALE_WORKERS
+        }:
             min_value = query_params.get(f'{field}[min]')
             max_value = query_params.get(f'{field}[max]')
             min_value = int(min_value) if min_value else None
@@ -141,9 +139,11 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
                     self.query_body['query']['bool']['must'].append({
                         'range': {field: range_query}
                     })
-        if field == V1_PARAMETERS_LIST.DATE_GTE or \
-        field == V1_PARAMETERS_LIST.DATE_LT:
-            logger.info('@@@ Build range for other variants')
+
+        elif field in {
+            V1_PARAMETERS_LIST.DATE_GTE,
+            V1_PARAMETERS_LIST.DATE_LT
+        }:
             self._build_date_range(query_params)
 
     def add_geo_distance(self, field, lat, lng, distance):
