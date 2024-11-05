@@ -380,8 +380,8 @@ jobs:
       - name: Run Playwright Test
         run: |
           docker compose -f docker-compose.tests.yml run --rm --build \
-          --entrypoint "npx playwright test -c playwright.config.ts" \
-          playwright-test
+              --entrypoint "npx playwright test -c playwright.config.ts" \
+              playwright-test
 
   # code quality formatting
   run-bash-script-linter:
