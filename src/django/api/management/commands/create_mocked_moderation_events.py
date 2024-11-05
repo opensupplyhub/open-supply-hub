@@ -23,7 +23,8 @@ class Command(BaseCommand):
 
         statuses = [
             ModerationEvent.Status.PENDING,
-            ModerationEvent.Status.RESOLVED,
+            ModerationEvent.Status.APPROVED,
+            ModerationEvent.Status.REJECTED,
         ]
 
         sources = [
