@@ -3,6 +3,7 @@ from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 
 logger = logging.getLogger(__name__)
 
+
 class OpenSearchQueryDirector:
     def __init__(self, builder):
         self.__builder = builder
