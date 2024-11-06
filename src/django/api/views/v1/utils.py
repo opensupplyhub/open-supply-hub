@@ -1,3 +1,4 @@
+import uuid
 import logging
 from functools import wraps
 from rest_framework.response import Response
@@ -106,3 +107,26 @@ def handle_errors_decorator(view_func):
         except OpenSearchServiceException as e:
             return handle_opensearch_exception(e)
     return _wrapped_view
+
+
+def is_valid_uuid(uuid_string):
+    try:
+        uuid.UUID(uuid_string)
+        return True
+    except ValueError:
+        return False
+
+
+def handle_path_error(field, message, status_code):
+    return Response(
+        {
+            "message": "The request path parameter is invalid.",
+            "errors": [
+                {
+                    "field": field,
+                    "message": message
+                }
+            ]
+        },
+        status=status_code
+    )

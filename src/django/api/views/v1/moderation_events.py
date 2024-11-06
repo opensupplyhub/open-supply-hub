@@ -4,7 +4,9 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from api.views.v1.utils import (
     serialize_params,
-    handle_errors_decorator
+    handle_errors_decorator,
+    is_valid_uuid,
+    handle_path_error
 )
 from api.permissions import IsRegisteredAndConfirmed
 from api.services.search import OpenSearchService
@@ -62,14 +64,13 @@ class ModerationEvents(ViewSet):
                 },
                 status=status.HTTP_401_UNAUTHORIZED
             )
-        
-        # TODO: Will add when OSDEV-1332 will be merged.
-        # if not is_valid_uuid(moderation_id):
-        #     return handle_path_error(
-        #         field="moderation_id",
-        #         message="Invalid UUID format.",
-        #         status_code=status.HTTP_400_BAD_REQUEST
-        #     )
+
+        if not is_valid_uuid(pk):
+            return handle_path_error(
+                field="moderation_id",
+                message="Invalid UUID format.",
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
 
         query_params = QueryDict('', mutable=True)
         query_params.update({'moderation_id': pk})
