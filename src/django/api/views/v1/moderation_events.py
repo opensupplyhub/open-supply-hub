@@ -21,6 +21,10 @@ from api.views.v1.index_names import OpenSearchIndexNames
 
 from api.models.moderation_event \
     import ModerationEvent
+from api.models.source import Source
+from api.models.nonstandart_field import NonstandardField
+from api.models.facility.facility_list_item import FacilityListItem
+from api.extended_fields import create_extendedfields_for_single_item
 
 
 class ModerationEvents(ViewSet):
@@ -135,5 +139,78 @@ class ModerationEvents(ViewSet):
                 status=status.HTTP_410_GONE
             )
 
-        event.add_production_location(request.data)
-        return Response(status=status.HTTP_200_OK)
+        data = event.cleaned_data
+        contributor = event.contributor
+        header_row_keys = data["raw_json"].keys()
+        header_str = ','.join(header_row_keys)
+
+        source = self.__create_source(contributor)
+
+        self.__create_nonstandard_fields(header_row_keys, contributor)
+
+        item = self.__create_facility_list_item(source, data, header_str)
+
+        item.status = FacilityListItem.NEW_FACILITY
+        item.save()
+
+        create_extendedfields_for_single_item(item, data["fields"])
+
+        # if event.geocode_result:
+            
+
+    def __create_source(self, contributor) -> Source:
+        return Source.objects.create(
+            contributor=contributor,
+            source_type=Source.SINGLE,
+            is_public=True,
+            create=True,
+        )
+
+    @staticmethod
+    def __create_nonstandard_fields(
+        fields, contributor
+    ):
+        unique_fields = list(set(fields))
+
+        existing_fields = NonstandardField.objects.filter(
+            contributor=contributor
+        ).values_list('column_name', flat=True)
+        new_fields = filter(lambda f: f not in existing_fields, unique_fields)
+        standard_fields = [
+            'sector',
+            'country',
+            'name',
+            'address',
+            'lat',
+            'lng',
+        ]
+        nonstandard_fields = filter(
+            lambda f: f.lower() not in standard_fields, new_fields
+        )
+
+        for field in nonstandard_fields:
+            (
+                NonstandardField.objects.create(
+                    contributor=contributor, column_name=field
+                )
+            )
+
+    @staticmethod
+    def __create_facility_list_item(
+        source, data, header_str
+    ):
+        return FacilityListItem.objects.create(
+            source=source,
+            row_index=0,
+            raw_data=','.join(
+                f'"{value}"' for value in data["raw_json"].values()
+            ),
+            raw_json=data["raw_json"],
+            raw_header=header_str,
+            name=data["name"],
+            clean_name=data["clean_name"],
+            address=data["address"],
+            clean_address=data["clean_address"],
+            country_code=data["country_code"],
+            sector=data["sector"],
+        )
