@@ -3,6 +3,8 @@ from api.serializers.v1.opensearch_validation_interface \
 
 
 class SourceValidator(OpenSearchValidationInterface):
+    VALID_SOURCES = {'SLC', 'API'}
+
     def validate_opensearch_params(self, data):
         errors = []
         source = data.get('source')
@@ -10,13 +12,20 @@ class SourceValidator(OpenSearchValidationInterface):
         if not source:
             return errors
 
-        valid_sources = {'SLC', 'API'}
-
-        if source not in valid_sources:
+        if not isinstance(source, list):
             errors.append({
                 "field": "source",
-                "message": f"'{source}' is not a valid source. \
-                    Allowed values are 'SLC' or 'API'."
+                "message": "Source must be a list of values."
+            })
+        elif not all(item in self.VALID_SOURCES for item in source):
+            invalid_sources = [item for item in source if \
+                               item not in self.VALID_SOURCES]
+            errors.append({
+                "field": "source",
+                "message": (
+                    f"Invalid source(s) {invalid_sources}. "
+                    "Allowed values are 'SLC' or 'API'."
+                )
             })
 
         return errors

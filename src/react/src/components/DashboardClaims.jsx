@@ -7,13 +7,14 @@ import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 
-import DownloadFacilityClaimsButton from './DownloadFacilityClaimsButton';
 import DashboardClaimsListTable from './DashboardClaimsListTable';
+import DashboardDownloadDataButton from './Dashboard/DashboardDownloadDataButton';
 
 import {
     fetchFacilityClaims,
     clearFacilityClaims,
     sortFacilityClaims,
+    downloadFacilityClaims,
 } from '../actions/claimFacilityDashboard';
 
 import {
@@ -83,6 +84,8 @@ const DashboardClaims = ({
     updateCountry,
     clearCountry,
     countriesData,
+    downloadClaims,
+    downloadClaimsError,
 }) => {
     const { countries, statuses } = getDashboardClaimsListParamsFromQueryString(
         search,
@@ -160,9 +163,11 @@ const DashboardClaims = ({
         <Paper className={classes.container}>
             <div className={classes.dashboardClaimsContainer}>
                 <div className={classes.dashboardClaimsFilters}>
-                    <DownloadFacilityClaimsButton
+                    <DashboardDownloadDataButton
                         fetching={fetching}
-                        data={data || []}
+                        downloadPayload={data || []}
+                        downloadData={downloadClaims}
+                        downloadError={downloadClaimsError}
                     />
                     <ClaimStatusFilter
                         countriesData={countriesData}
@@ -193,6 +198,7 @@ DashboardClaims.defaultProps = {
     data: null,
     error: null,
     countriesData: null,
+    downloadClaimsError: null,
 };
 
 DashboardClaims.propTypes = {
@@ -213,11 +219,14 @@ DashboardClaims.propTypes = {
     updateCountry: func.isRequired,
     claimStatuses: claimStatusOptionsPropType.isRequired,
     clearCountry: func.isRequired,
+    downloadClaims: func.isRequired,
+    downloadClaimsError: arrayOf(string),
 };
 
 function mapStateToProps({
     claimFacilityDashboard: {
         list: { data, fetching, error },
+        facilityClaimsDownloadStatus: { error: downloadClaimsError },
     },
     filters: { claimStatuses, countries: countriesData },
 }) {
@@ -227,6 +236,7 @@ function mapStateToProps({
         error,
         claimStatuses,
         countriesData,
+        downloadClaimsError,
     };
 }
 
@@ -241,6 +251,8 @@ function mapDispatchToProps(dispatch) {
             dispatch(updateClaimStatusFilter(claimStatuses)),
         updateCountry: v => dispatch(updateCountryFilter(v)),
         clearCountry: () => dispatch(clearCountryFilter()),
+        downloadClaims: facilityClaims =>
+            dispatch(downloadFacilityClaims(facilityClaims)),
     };
 }
 

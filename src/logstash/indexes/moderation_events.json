@@ -44,6 +44,12 @@
         },
         "cleaned_data": {
           "properties": {
+            "name": {
+              "type": "keyword"
+            },
+            "address": {
+              "type": "keyword"
+            },
             "country": {
               "properties": {
                 "name": {
