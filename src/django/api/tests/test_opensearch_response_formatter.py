@@ -10,7 +10,7 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
         self.mock_client = MagicMock()
         self.service = OpenSearchService(client=self.mock_client)
 
-    @patch('api.services.search.logger')
+    @patch('api.services.opensearch.search.logger')
     def test_prepare_opensearch_response_valid_response(self, mock_logger):
         response = {
             "hits": {
@@ -34,7 +34,7 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
         self.assertEqual(result, expected_result)
         mock_logger.warning.assert_not_called()
 
-    @patch('api.services.search.logger')
+    @patch('api.services.opensearch.search.logger')
     def test_prepare_opensearch_response_missing_source(self, mock_logger):
         response = {
             "hits": {
@@ -59,7 +59,7 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
             "Missing '_source' in hit: {'other_field': {'field2': 'value2'}}"
         )
 
-    @patch('api.services.search.logger')
+    @patch('api.services.opensearch.search.logger')
     def test_prepare_opensearch_response_no_hits(self, mock_logger):
         response = {"hits": {"total": {"value": 0}, "hits": []}}
         expected_result = {"count": 0, "data": []}
@@ -69,7 +69,7 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
         self.assertEqual(result, expected_result)
         mock_logger.warning.assert_not_called()
 
-    @patch('api.services.search.logger')
+    @patch('api.services.opensearch.search.logger')
     def test_prepare_opensearch_response_invalid_response_format(
         self,
         mock_logger
@@ -82,7 +82,7 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
             "Invalid response format: {}"
             )
 
-    @patch('api.services.search.logger')
+    @patch('api.services.opensearch.search.logger')
     def test_prepare_opensearch_response_none_response(
         self,
         mock_logger
@@ -93,7 +93,7 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
         mock_logger.error.assert_called_once_with(
             "Invalid response format: None")
 
-    @patch('api.services.search.logger')
+    @patch('api.services.opensearch.search.logger')
     def test_prepare_opensearch_response_rename_lon_field(self, mock_logger):
         response = {
             "hits": {
