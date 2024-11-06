@@ -15,6 +15,8 @@ from api.serializers.v1.opensearch_common_validators.status_validator \
     import StatusValidator
 from api.serializers.v1.opensearch_common_validators.source_validator \
     import SourceValidator
+from api.serializers.v1.opensearch_common_validators.moderation_id_validator \
+    import ModerationIdValidator
 from api.serializers.v1.opensearch_error_list_builder  \
     import OpenSearchErrorListBuilder
 from api.serializers.v1.opensearch_common_validators. \
@@ -31,11 +33,22 @@ class ModerationEventsSerializer(Serializer):
         child=CharField(required=False),
         required=False
     )
+    moderation_id = ListField(
+        child=CharField(required=False),
+        required=False
+    )
     contributor_id = IntegerField(required=False)
     os_id = CharField(required=False)
-    moderation_id = CharField(required=False)
     data_dte = DateField(default='', required=False)
     data_lt = DateField(default='', required=False)
+    source = ListField(
+        child=CharField(required=False),
+        required=False
+    )
+    status = ListField(
+        child=CharField(required=False),
+        required=False
+    )
     sort_by = ChoiceField(
         choices=[
             'created_at',
@@ -62,7 +75,8 @@ class ModerationEventsSerializer(Serializer):
             DateRangeValidator(),
             RequestTypeValidator(),
             StatusValidator(),
-            SourceValidator()
+            SourceValidator(),
+            ModerationIdValidator()
         ]
 
         error_list_builder = OpenSearchErrorListBuilder(validators)
