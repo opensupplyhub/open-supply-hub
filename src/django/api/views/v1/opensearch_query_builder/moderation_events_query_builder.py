@@ -50,7 +50,7 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
             return
         else:
             terms_field = self.build_options.get(
-                field, lambda x: f'{x}.keyword'
+                field, lambda x: x
             )(field)
 
             self.query_body['query']['bool']['must'].append(
