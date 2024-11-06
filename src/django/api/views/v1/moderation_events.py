@@ -18,7 +18,6 @@ from api.serializers.v1.moderation_events_serializer \
 from api.serializers.v1.moderation_event_update_serializer \
     import ModerationEventUpdateSerializer
 from api.views.v1.index_names import OpenSearchIndexNames
-
 from api.models.moderation_event \
     import ModerationEvent
 

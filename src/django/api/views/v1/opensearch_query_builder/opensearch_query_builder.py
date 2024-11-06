@@ -82,21 +82,9 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
             }
         })
 
-    def add_terms(self, field, values):
-        if not values:
-            return self.query_body
-
-        if field == V1_PARAMETERS_LIST.OS_ID:
-            self._build_os_id(values)
-
-        else:
-            terms_field = self.build_options.get(
-                field, lambda x: f'{x}.keyword'
-            )(field)
-
-            self.query_body['query']['bool']['must'].append(
-                {'terms': {terms_field: values}}
-            )
+    @abstractmethod
+    def _add_terms(self, field, values):
+        pass
 
     def _build_os_id(self, values):
         # Build a query to search in both os_id and historical_os_id.keyword
@@ -156,11 +144,11 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         self.query_body['query']['bool']['must'].append(geo_distance_query)
 
     @abstractmethod
-    def add_sort(self, field, order_by=None):
+    def _add_sort(self, field, order_by=None):
         pass
 
     @abstractmethod
-    def add_search_after(self, search_after):
+    def _add_search_after(self, search_after):
         pass
 
     def get_final_query_body(self):
