@@ -4,8 +4,9 @@ from unittest.mock import MagicMock
 
 from django.test import TestCase
 from django.core.files.uploadedfile import (
-    SimpleUploadedFile, TemporaryUploadedFile
+    SimpleUploadedFile
 )
+from django.core.files.base import File
 
 from contricleaner.lib.parsers.source_parser_csv import SourceParserCSV
 from contricleaner.lib.parsers.abstractions.source_parser import (
@@ -14,7 +15,6 @@ from contricleaner.lib.parsers.abstractions.source_parser import (
 from contricleaner.lib.parsers.abstractions.file_parser import (
     FileParser
 )
-from contricleaner.lib.exceptions.parsing_error import ParsingError
 from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.dto.list_dto import ListDTO
 from contricleaner.lib.dto.row_dto import RowDTO
@@ -23,7 +23,7 @@ from contricleaner.tests.sector_cache_mock import SectorCacheMock
 
 class SourceParserCSVTest(TestCase):
     def test_class_inherits_required_classes(self):
-        temp_uploaded_file_stub = MagicMock(spec=TemporaryUploadedFile)
+        temp_uploaded_file_stub = MagicMock(spec=File)
         source_parser_csv = SourceParserCSV(temp_uploaded_file_stub)
         self.assertIsInstance(source_parser_csv, SourceParser)
         self.assertIsInstance(source_parser_csv, FileParser)
@@ -153,7 +153,13 @@ class SourceParserCSVTest(TestCase):
 
         os.remove('test.csv')
 
-    def test_header_utf8_encoding_validation(self):
+    def test_file_utf8_encoding_validation(self):
+        expected_error_message = (
+            'Our system does not support the type of CSV file you submitted. '
+            'Please save and export your file as a UTF-8 CSV or an Excel file '
+            'and reupload.')
+        expected_error_type = 'ParsingError'
+
         with open('test.csv', 'wb') as csv_file:
             csv_file.write(b'\xff\xfe')  # Non-UTF-8 data for the header.
         with open('test.csv', 'rb') as csv_file:
@@ -161,25 +167,13 @@ class SourceParserCSVTest(TestCase):
             uploaded_file = SimpleUploadedFile('test.csv', file_content)
 
         contri_cleaner = ContriCleaner(uploaded_file, SectorCacheMock())
-        with self.assertRaisesRegex(ParsingError,
-                                    (r'Unsupported file encoding\. '
-                                     r'Please submit a UTF-8 CSV\.')):
-            contri_cleaner.process_data()
+        processed_data = contri_cleaner.process_data()
 
-        os.remove('test.csv')
+        error_dict = processed_data.errors[0]
+        error_message = error_dict['message']
+        error_type = error_dict['type']
 
-    def test_row_utf8_encoding_validation(self):
-        with open('test.csv', 'wb') as csv_file:
-            csv_file.write(b'name\n')
-            csv_file.write(b'\xff\xfe')  # Non-UTF-8 data for the row.
-        with open('test.csv', 'rb') as csv_file:
-            file_content = csv_file.read()
-            uploaded_file = SimpleUploadedFile('test.csv', file_content)
-
-        contri_cleaner = ContriCleaner(uploaded_file, SectorCacheMock())
-        with self.assertRaisesRegex(ParsingError,
-                                    (r'Unsupported file encoding\. '
-                                     r'Please submit a UTF-8 CSV\.')):
-            contri_cleaner.process_data()
+        self.assertEqual(error_message, expected_error_message)
+        self.assertEqual(error_type, expected_error_type)
 
         os.remove('test.csv')

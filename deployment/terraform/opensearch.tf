@@ -15,7 +15,7 @@ resource "aws_cloudwatch_log_group" "opensearch" {
 
 resource "aws_opensearch_domain" "opensearch" {
   domain_name    = local.opensearch_domain_name
-  engine_version = "OpenSearch_2.13"
+  engine_version = "OpenSearch_2.15"
 
   cluster_config {
     instance_type          = var.opensearch_instance_type

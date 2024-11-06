@@ -3,11 +3,12 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
-## Release 1.22.0
+
+## Release 1.24.0
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: October 19, 2024
+* Release date: November 16, 2024
 
 ### Database changes
 #### Migrations:
@@ -17,7 +18,87 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe scheme changes here.*
 
 ### Code/API changes
-* [OSDEV-1102](https://opensupplyhub.atlassian.net/browse/OSDEV-1102) - API. Propagate production location updates to OpenSearch data source via refreshing `updated_at` field in `api_facility` table.
+* [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - Explicitly set the number of shards and the number of replicas for the "production locations" and "moderation events" OpenSearch indexes. Based on the OpenSearch documentation, a storage size of 10–30 GB is preferred for workloads that prioritize low search latency. Additionally, having too many small shards can unnecessarily exhaust memory by storing excessive metadata. Currently, the "production locations" index utilizes 651.9 MB, including replicas, while the "moderation events" index is empty. This indicates that one shard and one replica should be sufficient for the "production locations" and "moderation events" indexes.
+
+### Architecture/Environment changes
+* The OpenSearch version has been increased to 2.15.
+* [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - The new "moderation events" Logstash pipeline has been configured and implemented to collect moderation event data from the current PostgreSQL database and save it to OpenSearch. This setup allows for fast searches on the moderation events data.
+* [OSDEV-1387](https://opensupplyhub.atlassian.net/browse/OSDEV-1387) - The SQL query for generating tiles from PostgreSQL+PostGIS has been reimplemented to avoid using the JOIN + GROUP BY clause. This change reduces the number of subqueries and their asymptotic complexity. Additionally, an option to set an upper limit on facility counts in the 'count' clause has been introduced, capped at 100, which doubles the query's performance. Throttling has been removed for tile generation endpoints.
+* [OSDEV-1171](https://opensupplyhub.atlassian.net/browse/OSDEV-1171) - RDS instances for `staging` and `test` have beed decreased to `db.t3.large`
+* Playwright has been introduced as the main framework for end-to-end testing:
+    * Added a new Playwright testing service to the Docker configuration
+    * Implemented initial test cases to verify core functionality
+    * Integrated Playwright tests into the CI pipeline via GitHub Actions
+    * Added necessary configuration files and dependencies for the e2e testing project
+
+### Bugfix
+* [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - Fixed the assertion in the test for the `country.rb` filter of the "production locations" Logstash pipeline. The main issue was with the evaluation of statements in the Ruby block. Since only the last statement is evaluated in a Ruby block, all the checks were grouped into one chain of logical statements and returned as a `result` variable at the end.
+
+### What's new
+* [OSDEV-1120](https://opensupplyhub.atlassian.net/browse/OSDEV-1120) - A new Moderation Queue Dashboard page has been introduced, featuring three essential components:
+    * Moderation Events Table: Allows users to view and manage moderation events more effectively.
+    * Filtering Options: Multiple filter fields enable users to customize the displayed events based on different criteria, making it easier to find specific events.
+    * Download Excel Button: Provides the ability to export the list of displayed moderation events as an XLSX file for offline analysis and record-keeping.
+
+### Release instructions:
+* The following steps should be completed while deploying to Staging or Production:
+    1. Run the `[Release] Deploy` pipeline for these environments with the flag 'Clear OpenSearch indexes' set to true. This will allow Logstash to refill OpenSearch since the OpenSearch instance will be recreated due to the version increase. It is also necessary due to changes in the OpenSearch index settings.
+    2. Open the triggered `Deploy to AWS` workflow and ensure that the `apply` job is completed. **Right after** finishing the `apply` job, follow these instructions, which should be the last steps in setting up the recreated OpenSearch instance:
+        - Copy the ARN of the `terraform_ci` user from the AWS IAM console.
+            - Navigate to the AWS console's search input, type "IAM", and open the IAM console.
+            - In the IAM console, find and click on the "Users" tab.
+            - In the list of available users, locate the `terraform_ci` user, click on it, and on that page, you will find its ARN.
+        - After copying this value, go to the AWS OpenSearch console in the same way you accessed the IAM console.
+        - Open the available domains and locate the domain for the corresponding environment. Open it, then navigate to the security configuration and click "Edit".
+        - Find the section titled "Fine-grained access control", and under this section, you will find an "IAM ARN" input field. Paste the copied ARN into this field and save the changes. It may take several minutes to apply. Make sure that the "Configuration change status" field has green status.
+    3. Then, return to the running `Deploy to AWS` workflow and ensure that the logs for `clear_opensearch` job do not contain errors related to access for deleting the OpenSearch index or lock files in EFS storage. In case of **an access error**, simply rerun the `Deploy to AWS` workflow manually from the appropriate release Git tag.
+
+
+## Release 1.23.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: November 02, 2024
+
+### Database changes
+#### Migrations:
+* 0158_create_moderation_events_table.py - This migration creates api_moderationevent table for Moderation Queue.
+
+#### Scheme changes
+* [OSDEV-1229](https://opensupplyhub.atlassian.net/browse/OSDEV-1229) - Created Moderation Events Postgres table to track moderation events in the database.
+
+### Code/API changes
+* Throttling has been introduced for tiles/* endpoints, limiting requests to 300 per minute.
+* [OSDEV-1328](https://opensupplyhub.atlassian.net/browse/OSDEV-1328) The OpenSearch tokenizer has been changed to `lowercase` to get better search results when querying the GET /v1/production-locations/ endpoint.
+
+### Architecture/Environment changes
+* Resource allocation has been optimized for the staging environment. The number of ECS tasks for the Django app has been reduced from 6 to 4, while maintaining system stability.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+* Run `[Release] Deploy` pipeline for an existing environment with the flag 'Clear OpenSearch indexes' set to true - to let the tokenizer parse full text into words with new configurations.
+
+
+## Release 1.22.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: October 19, 2024
+
+### Database changes
+#### Migrations:
+* 0156_introduce_list_level_parsing_errors - This migration introduces the parsing_errors field for the FacilityList model to collect list-level and internal errors logged during the background parsing of the list.
+* 0157_delete_endpoint_switcher_for_list_uploads - This migration deletes the `use_old_upload_list_endpoint` switcher that was necessary to toggle between the old and new list upload endpoints.
+
+#### Scheme changes
+* [OSDEV-1039](https://opensupplyhub.atlassian.net/browse/OSDEV-1039) - Since the `use_old_upload_list_endpoint` switcher is no longer necessary for the list upload, it has been deleted from the DB. Additionally, the `parsing_errors` field has been added to the FacilityList model.
+
+### Code/API changes
+* [OSDEV-1102](https://opensupplyhub.atlassian.net/browse/OSDEV-1102) - API. Propagate production location updates to OpenSearch data source via refreshing `updated_at` field in `api_facility` table. Triggered updated_at field in such actions: transfer to alternate facility, claim facility, approve, reject and deny claim, claim details, merge facilities, match facility (promote, split).
+* [OSDEV-1039](https://opensupplyhub.atlassian.net/browse/OSDEV-1039) - Deleted the `facility_list_items.json` fixture from the Django app since it is no longer needed, having been replaced with real CSV files. Additionally, other important changes have been implemented in the Django app and deployment:
+    * Adjusted all code that used the `facility_list_items.json` fixture and removed the unused matching logic from the Django app, as it is no longer necessary and was connected to that fixture.
+    * Updated the reset database step in the `restore_database` job of the Deploy to AWS GitHub workflow to upload CSV location list files to S3 for parsing during the DB reset.
 
 ### Architecture/Environment changes
 * [OSDEV-1325](https://opensupplyhub.atlassian.net/browse/OSDEV-1325)
@@ -25,12 +106,25 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1372](https://opensupplyhub.atlassian.net/browse/OSDEV-1372)
   * Changed the base image in the Django app Dockerfile to use a Debian 11 instead of Debian 10 as the PostgreSQL 13 repository support for Debian 10 has been ended.
   * Always build a docker image for the amd64 platform so that the image in the local environment fully corresponds to the one in production.
+* [OSDEV-1172](https://opensupplyhub.atlassian.net/browse/OSDEV-1172)
+  * Added the ability to restore a database from a snapshot.
+* [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388)
+  * Increased timeout to wait for copying anonymized shared snapshot.
 
 ### Bugfix
 * Fixed a bug related to environment variable management:
     * Removed the `py_environment` Terraform variable, as it appeared to be a duplicate of the `environment` variable.
     * Passed the correct environment values to the ECS task definition for the Django containers in all environments, especially in the Preprod and Development environments, to avoid misunderstandings and incorrect interpretations of the values previously passed via `py_environment`.
     * Introduced a *Local* environment specifically for local development to avoid duplicating variable values with the AWS-hosted *Development* environment.
+* [OSDEV-1039](https://opensupplyhub.atlassian.net/browse/OSDEV-1039) - Made the list parsing asynchronous and increased the list upload limit to 10,000 facilities per list to reduce manual work for moderators when they split large lists into smaller ones. The following architectural and code changes have been made:
+    1. Renamed the previously copied `api/facility-lists/createlist` POST endpoint to the `api/facility-lists` POST endpoint. Deleted the old implementation of the `api/facility-lists` POST endpoint along with the `use_old_upload_list_endpoint` switcher that was necessary to toggle between the old and new list upload endpoints.
+    2. Removed the triggering of ContriCleaner from the `api/facility-lists` POST endpoint and moved it to the async parse AWS batch job to reduce the load on the endpoint. Introduced a `parsing_errors` field for the FacilityList model to collect list-level and internal errors logged during the background parsing of the list.
+    3. Established a connection between the EC2 instance within the AWS batch job and the S3 bucket where all the uploaded list files are saved. This is necessary because the parse job retrieves a particular list from the S3 bucket via Django.
+    4. Deleted redundant code from the previous implementation of the list item parsing.
+    5. Adjusted Django, ContriCleaner, and integration tests. Regarding integration tests, the `facility_list_items.json` fixture was converted to concrete CSV lists, which were connected to the `facility_lists.json` fixture to upload them to the DB while creating the test DB for the integration tests. This is necessary because the parsing function that triggers ContriCleaner can only work with real files, not facility list items as it did previously.
+    6. Refactored the ContributeForm component in the front-end app.
+    7. The list page has been adjusted to work with asynchronous parsing, and a new dialog window has been added to notify users about the list parsing process, indicating that they need to wait.
+    8. Introduced a UI to display list parsing errors on the list page after the page refresh.
 
 ### What's new
 * [OSDEV-1127](https://opensupplyhub.atlassian.net/browse/OSDEV-1127) - It was implemented the Production Location Search screen that has two tabs: "Search by OS ID" and "Search by Name and Address." Each tab adds a query parameter (`?tab=os-id` and `?tab=name-address`) to the URL when active, allowing for redirection to the selected tab. On the "Search by OS ID" tab, users see an input field where they can enter an OS ID. After entering the full OS ID (15 characters), the "Search By ID" button becomes clickable, allowing users to proceed to the results screen. There are two possible outcomes:
@@ -41,6 +135,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Release instructions:
 * Before deploying to an existing environment, clear OpenSearch to ensure it can receive any missed changes and properly start the update process.
+* Ensure that the `migrate` command is included in the `post_deployment` command.
 
 
 ## Release 1.21.0

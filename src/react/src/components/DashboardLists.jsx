@@ -336,6 +336,7 @@ function DashboardLists({
                                     facilitiesListTableTooltipTitles.error
                                 }
                                 tableCellText={sum([
+                                    list.parsing_errors.length,
                                     list.status_counts.ERROR,
                                     list.status_counts.ERROR_PARSING,
                                     list.status_counts.ERROR_GEOCODING,

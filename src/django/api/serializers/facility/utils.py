@@ -7,8 +7,6 @@ from django.utils import timezone
 
 from ...helpers.helpers import (
     cleanup_data,
-    get_single_contributor_field_values,
-    get_list_contributor_field_values,
     replace_invalid_data,
     prefix_a_an
 )
@@ -20,8 +18,6 @@ from ...models import (
 )
 from ..utils import (
     get_embed_contributor_id,
-    get_contributor_id,
-    get_contributor_name,
     prefer_contributor_name,
 )
 
@@ -63,54 +59,6 @@ def should_show_pending_claim_info(serializer):
 
 
 def get_facility_name(serializer, facility):
-    if prefer_contributor_name(serializer):
-        contributor = get_embed_contributor_id(serializer)
-        facility_list_item_matches = [
-            FacilityListItem.objects.get(pk=pk)
-            for (pk,)
-            in facility
-            .facilitymatch_set
-            .filter(status__in=[FacilityMatch.AUTOMATIC,
-                                FacilityMatch.CONFIRMED,
-                                FacilityMatch.MERGED],
-                    is_active=True,
-                    facility_list_item__source__is_active=True,
-                    facility_list_item__source__is_public=True,
-                    facility_list_item__source__contributor_id=contributor)
-            .order_by('-created_at')
-            .values_list('facility_list_item')
-        ]
-
-        valid_names = []
-        for item in facility_list_item_matches:
-            if len(item.name) != 0 and item.name is not None:
-                # If the contributor has submitted a name matching the
-                # assigned facility name, use the assigned facility name
-                if item.name == facility.name:
-                    return facility.name
-                valid_names.append(item.name)
-
-        # Return the first item with a valid name if it exists
-        if len(valid_names) > 0:
-            return valid_names[0]
-
-    names = (
-        ExtendedField
-        .objects
-        .filter(facility=facility,
-                field_name=ExtendedField.NAME,
-                facility_claim__status=FacilityClaimStatuses.APPROVED)
-        .order_by('-updated_at')
-        .values_list('value', flat=True)
-    )
-    if len(names) > 0:
-        return names[0]
-
-    # Return the assigned facility name
-    return facility.name
-
-
-def get_facility_name_index_new(serializer, facility):
     if prefer_contributor_name(serializer):
         contributor = get_embed_contributor_id(serializer)
         facility_list_item_matches = [
@@ -164,33 +112,6 @@ def format_field(value):
     return cleanup_data(replaced_value)
 
 
-def assign_contributor_field_values(list_item, fields):
-    contributor_fields = [{
-        'label': f.display_name, 'value': None, 'column_name': f.column_name
-    } for f in fields]
-
-    if list_item is None:
-        return contributor_fields
-
-    if list_item.source.source_type == 'SINGLE':
-        contributor_fields = get_single_contributor_field_values(
-            list_item, contributor_fields
-        )
-    else:
-        contributor_fields = get_list_contributor_field_values(
-            list_item, contributor_fields
-        )
-
-    return [
-        {
-            'value': f['value'],
-            'label': f['label'],
-            'fieldName': f['column_name'],
-        }
-        for f in contributor_fields
-    ]
-
-
 def can_user_see_detail(serializer):
     request = serializer.context.get('request') \
         if serializer.context is not None else None
@@ -200,79 +121,6 @@ def can_user_see_detail(serializer):
         return user.can_view_full_contrib_details
     else:
         return True
-
-
-def create_name_field(name, contributor, created_at,
-                      updated_at, user_can_see_detail):
-    field_data = {
-        'value': name,
-        'field_name': ExtendedField.NAME,
-        'contributor_id': get_contributor_id(contributor, user_can_see_detail),
-        'contributor_name':
-        get_contributor_name(contributor, user_can_see_detail),
-        'updated_at': updated_at,
-    }
-
-    if created_at:
-        field_data['created_at'] = created_at
-
-    return field_data
-
-
-def get_facility_names(facility):
-    facility_list_item_matches = [
-        FacilityListItem.objects.get(pk=pk)
-        for (pk,)
-        in facility
-        .facilitymatch_set
-        .filter(status__in=[FacilityMatch.AUTOMATIC,
-                            FacilityMatch.CONFIRMED,
-                            FacilityMatch.MERGED])
-        .filter(is_active=True)
-        .exclude(facility_list_item__source__is_active=False)
-        .exclude(facility_list_item__source__is_public=False)
-        .exclude(facility_list_item__name__isnull=True)
-        .values_list('facility_list_item')
-    ]
-
-    return facility_list_item_matches
-
-
-def create_address_field(address, contributor, created_at, updated_at,
-                         user_can_see_detail, is_from_claim=False):
-    field_data = {
-        'value': address,
-        'field_name': ExtendedField.ADDRESS,
-        'contributor_id': get_contributor_id(contributor, user_can_see_detail),
-        'contributor_name':
-        get_contributor_name(contributor, user_can_see_detail),
-        'updated_at': updated_at,
-        'is_from_claim': is_from_claim,
-    }
-
-    if created_at:
-        field_data['created_at'] = created_at
-
-    return field_data
-
-
-def get_facility_addresses(facility):
-    facility_list_item_matches = [
-        FacilityListItem.objects.get(pk=pk)
-        for (pk,)
-        in facility
-        .facilitymatch_set
-        .filter(status__in=[FacilityMatch.AUTOMATIC,
-                            FacilityMatch.CONFIRMED,
-                            FacilityMatch.MERGED])
-        .filter(is_active=True)
-        .exclude(facility_list_item__source__is_active=False)
-        .exclude(facility_list_item__source__is_public=False)
-        .exclude(facility_list_item__address__isnull=True)
-        .values_list('facility_list_item')
-    ]
-
-    return facility_list_item_matches
 
 
 def get_contributor_name_from_facilityindex(

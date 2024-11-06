@@ -5,7 +5,7 @@ set -e
 
 function usage() {
     echo -e \
-	"Usage: $(basename "$0")" \
+    "Usage: $(basename "$0")" \
     "\nThis script starts up the local development environment with seeded" \
     "data in the database."
 }
@@ -17,6 +17,12 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         # Build Docker images and create database structure.
         echo "Building Docker images and creating database structure..."
         ./scripts/update
+
+        # Fix permissions for the static folder before running collectstatic
+        echo "Fixing permissions for the static folder..."
+        docker compose run --rm --entrypoint sh django -c \
+            "mkdir -p /usr/local/src/static/static && \
+            chmod -R 755 /usr/local/src/static/static"
 
         # Collect Django static files
         echo "Collecting Django static files..."
@@ -47,9 +53,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         echo "Waiting 60 seconds for matching to finish..."
         sleep 60
 
-        # Launch the rest of the services, including Logstash and OpenSearch
-        # which should index the newly created facility data from the DB and
-        # save it to OpenSearch.
+        # Launch the rest of the services.
         echo "Launching the rest of the services..."
         docker compose up -d
         

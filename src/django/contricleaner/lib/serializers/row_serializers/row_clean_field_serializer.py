@@ -14,7 +14,7 @@ class RowCleanFieldSerializer(RowSerializer):
         if not clean_value:
             current["errors"].append(
                 {
-                    "message": "{} cannot be empty".format(self.new_field),
+                    "message": "{} cannot be empty.".format(self.new_field),
                     "type": "Error",
                 }
             )

@@ -40,9 +40,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         echo "Waiting 60 seconds for matching to finish..."
         sleep 60
 
-        # Launch the rest of the services, including Logstash and OpenSearch
-        # which should index the newly created facility data from the DB and
-        # save it to OpenSearch.
+        # Launch the rest of the services.
         echo "Launching the rest of the services..."
         docker compose up -d
         

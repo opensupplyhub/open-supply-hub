@@ -61,12 +61,17 @@ import {
     matchResponsibilityEnum,
     optionsForSortingResults,
     componentsWithErrorMessage,
+    listParsingErrorMappings,
+    MODERATION_QUEUE,
+    MODERATION_STATUS_COLORS,
 } from './constants';
 
 import { createListItemCSV } from './util.listItemCSV';
 
 import { createFacilitiesCSV, formatDataForCSV } from './util.facilitiesCSV';
 import formatFacilityClaimsDataForXLSX from './util.facilityClaimsXLSX';
+import formatModerationEventsDataForXLSX from './util.moderationEventsXLSX';
+import COLOURS from './COLOURS';
 
 export function DownloadXLSX(data, fileName) {
     import('file-saver').then(({ saveAs }) => {
@@ -119,16 +124,23 @@ export const downloadFacilityClaimsXLSX = facilityClaims =>
         'facility_claims.xlsx',
     );
 
+export const downloadModerationEventsXLSX = moderationEvents =>
+    DownloadXLSX(
+        createXLSX(
+            moderationEvents,
+            formatModerationEventsDataForXLSX,
+            'Moderation events',
+        ),
+        'moderation_events.xlsx',
+    );
+
 export const makeUserLoginURL = () => '/user-login/';
 export const makeUserLogoutURL = () => '/user-logout/';
 export const makeUserSignupURL = () => '/user-signup/';
 export const makeUserConfirmEmailURL = () =>
     '/rest-auth/registration/verify-email/';
 
-export const makeUploadFacilityListsURL = useOldUploadListEndpoint =>
-    useOldUploadListEndpoint
-        ? '/api/facility-lists/'
-        : '/api/facility-lists/createlist/'; // TODO: Remove this once testing of the parsing via ContriCleaner is complete.
+export const makeUploadFacilityListsURL = () => '/api/facility-lists/';
 export const makeFacilityListsURL = () => '/api/facility-lists/';
 export const makeSingleFacilityListURL = id => `/api/facility-lists/${id}/`;
 export const makeSingleFacilityListItemsURL = id =>
@@ -1253,4 +1265,24 @@ export function sort(array, comparator) {
     return stabilizedThis.map(el => el[0]);
 }
 
-export const formatDate = date => moment(date).format('LLL');
+export const formatDate = (date, format) => moment(date).format(format);
+
+export const replaceListParsingErrorMessages = errors =>
+    errors.map(
+        ({ message, type }) => listParsingErrorMappings[type] || message,
+    );
+
+export const createOptionsFromConstants = constants =>
+    Object.keys(constants).map(key =>
+        Object.freeze({
+            value: constants[key],
+            label: constants[key],
+        }),
+    );
+
+export const multiValueBackgroundHandler = (value, origin) => {
+    if (origin === MODERATION_QUEUE) {
+        return MODERATION_STATUS_COLORS[value] || 'default';
+    }
+    return COLOURS.MINT_GREEN;
+};

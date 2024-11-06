@@ -4,8 +4,6 @@ import csv
 import json
 from unidecode import unidecode
 
-from api.constants import NumberOfWorkersRanges
-
 CONSONANT_SOUND = re.compile(r'''
 one(![ir])
 ''', re.IGNORECASE | re.VERBOSE)
@@ -55,35 +53,10 @@ def try_parse_int_from_float(value):
         return value
 
 
-def get_single_contributor_field_values(item, fields):
-    data = parse_raw_data(item.raw_data)
-    for f in fields:
-        value = data.get(f['column_name'], None)
-        if value is not None:
-            f['value'] = try_parse_int_from_float(value)
-    return fields
-
-
-def get_list_contributor_field_values(item, fields):
-    data_values = get_csv_values(item.raw_data)
-    list_fields = get_csv_values(item.source.facility_list.header)
-    for f in fields:
-        if f['column_name'] in list_fields:
-            index = list_fields.index(f['column_name'])
-            if 0 <= index < len(data_values):
-                value = data_values[index]
-            else:
-                value = None
-            f['value'] = try_parse_int_from_float(value)
-
-    return fields
-
-
 def clean(column):
     """
     Remove punctuation and excess whitespace from a value before using it to
-    find matches. This should be the same function used when developing the
-    training data read from training.json as part of train_gazetteer.
+    find matches.
     """
     column = unidecode(column)
     column = re.sub('\n', ' ', column)
@@ -97,26 +70,6 @@ def clean(column):
     if not column:
         column = None
     return column
-
-
-def value_is_in_range(range_value, range):
-    range_min = range.get('min', 0)
-    range_max = range.get('max', None)
-    value_min = range_value.get('min', 0)
-    value_max = range_value.get('max', value_min)
-    if value_min < range_min:
-        return value_max >= range_min
-    if value_min >= range_min:
-        return range_max is None or value_min <= range_max
-
-
-def convert_to_standard_ranges(number_of_workers, overlapping_ranges=None):
-    if overlapping_ranges is None:
-        overlapping_ranges = set()
-    for range in NumberOfWorkersRanges.STANDARD_RANGES:
-        if value_is_in_range(number_of_workers, range):
-            overlapping_ranges.add(range.get('label', ''))
-    return overlapping_ranges
 
 
 def format_custom_text(contributor_id, value):

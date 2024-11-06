@@ -4,10 +4,12 @@
   ],
   "template": {
     "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 1,
       "analysis": {
         "analyzer": {
           "custom_asciifolding_analyzer": {
-            "tokenizer": "standard",
+            "tokenizer": "lowercase",
             "filter": [
               "custom_asciifolding_filter"
             ]

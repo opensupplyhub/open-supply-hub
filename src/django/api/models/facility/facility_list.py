@@ -1,6 +1,7 @@
 from django.db import models
+from django.db.models import JSONField
 
-from ...constants import MatchResponsibility
+from api.constants import MatchResponsibility
 
 
 class FacilityList(models.Model):
@@ -83,6 +84,11 @@ class FacilityList(models.Model):
         verbose_name='status changed by',
         help_text='The user who changed the status of this facility list',
         related_name='approver_of_list')
+    parsing_errors = JSONField(
+        default=list,
+        help_text=('List-level and internal errors logged during background '
+                   'parsing of the list.')
+    )
 
     def __str__(self):
         from ..source import Source

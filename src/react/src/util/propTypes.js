@@ -19,7 +19,6 @@ import {
     profileFieldsEnum,
     facilityListItemStatusChoicesEnum,
     ALLOW_LARGE_DOWNLOADS,
-    USE_OLD_UPLOAD_LIST_ENDPOINT,
     FEATURE,
     FEATURE_COLLECTION,
     POINT,
@@ -148,6 +147,11 @@ export const facilityListItemPropType = shape({
     ),
 });
 
+export const listParsingErrorPropType = shape({
+    message: string.isRequired,
+    type: string.isRequired,
+});
+
 export const facilityListPropType = shape({
     id: number.isRequired,
     name: string,
@@ -171,6 +175,7 @@ export const facilityListPropType = shape({
             () => number.isRequired,
         ),
     ).isRequired,
+    parsing_errors: arrayOf(listParsingErrorPropType),
     created_at: string.isRequired,
 });
 
@@ -266,6 +271,20 @@ export const numberOfWorkerOptionsPropType = arrayOf(
     }),
 );
 
+export const moderationStatusOptionsPropType = arrayOf(
+    shape({
+        value: string.isRequired,
+        label: string.isRequired,
+    }),
+);
+
+export const dataSourceOptionsPropType = arrayOf(
+    shape({
+        value: string.isRequired,
+        label: string.isRequired,
+    }),
+);
+
 export const facilityPropType = shape({
     id: string.isRequired,
     type: oneOf([FEATURE]).isRequired,
@@ -335,7 +354,6 @@ export const featureFlagPropType = oneOf([
     EMBEDDED_MAP_FLAG,
     EXTENDED_PROFILE_FLAG,
     ALLOW_LARGE_DOWNLOADS,
-    USE_OLD_UPLOAD_LIST_ENDPOINT,
 ]);
 
 export const facilityClaimsListPropType = arrayOf(
@@ -465,15 +483,31 @@ export const filterOptionsPropType = shape({
     fetching: bool.isRequired,
 });
 
+export const productionLocationCountryPropType = shape({
+    alpha_2: string.isRequired,
+    alpha_3: string.isRequired,
+    name: string.isRequired,
+    numeric: string.isRequired,
+});
+
 export const productionLocationPropType = shape({
     os_id: string,
     name: string,
     address: string,
-    country: shape({
-        alpha_2: string,
-        alpha_3: string,
-        name: string,
-        numeric: string,
-    }),
+    country: productionLocationCountryPropType,
     historical_os_id: arrayOf(string),
 });
+
+export const moderationEventsPropType = arrayOf(
+    shape({
+        moderation_id: number.isRequired,
+        created_at: string.isRequired,
+        name: string.isRequired,
+        country: productionLocationCountryPropType,
+        contributor_name: string.isRequired,
+        source: string.isRequired,
+        moderation_status: string.isRequired,
+        moderation_decision_date: string,
+        updated_at: string.isRequired,
+    }),
+);
