@@ -377,6 +377,11 @@ jobs:
           docker compose -f docker-compose.tests.yml \
               run --rm --entrypoint /bin/sh integration-test \
               -c "python -m unittest"
+      - name: Run Playwright Test
+        run: |
+          docker compose -f docker-compose.tests.yml run --rm --build \
+              --entrypoint "npx playwright test -c playwright.config.ts" \
+              playwright-test
 
   # code quality formatting
   run-bash-script-linter:
