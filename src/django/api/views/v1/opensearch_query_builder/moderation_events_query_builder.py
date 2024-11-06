@@ -65,7 +65,7 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
                 self.query_body['sort'].append(
                 {'cleaned_data.' + field[len('cleaned_'):]: {'order': order_by}}
             )
-        if field == V1_PARAMETERS_LIST.CLEANED_COUNTRY:
+        elif field == V1_PARAMETERS_LIST.CLEANED_COUNTRY:
             self.query_body['sort'].append(
                 {'cleaned_data.' + field[len('cleaned_'):] + '.alpha_2': {'order': order_by}}
             )
