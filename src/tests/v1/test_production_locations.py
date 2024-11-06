@@ -1,9 +1,9 @@
 import requests
-from .base_production_locations_test \
-    import BaseProductionLocationsTest
+from .base_api_test \
+    import BaseAPITest
 
 
-class ProductionLocationsTest(BaseProductionLocationsTest):
+class ProductionLocationsTest(BaseAPITest):
 
     def test_production_locations_status(self):
         response = requests.get(
