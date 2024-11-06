@@ -57,9 +57,9 @@ class ModerationEventsSerializer(Serializer):
             'contributor_name',
             'source',
             'status',
-            'country',
-            'name',
-            'address'
+            'cleaned_country',
+            'cleaned_name',
+            'cleaned_address'
         ],
         required=False
     )

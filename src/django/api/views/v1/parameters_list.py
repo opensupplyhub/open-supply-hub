@@ -30,3 +30,6 @@ class V1_PARAMETERS_LIST:
     MODERATION_ID = 'moderation_id'
     DATE_GTE = 'data_dte'
     DATE_LT = 'data_lt'
+    CLEANED_NAME = 'cleaned_name'
+    CLEANED_ADDRESS = 'cleaned_address'
+    CLEANED_COUNTRY = 'cleaned_country'

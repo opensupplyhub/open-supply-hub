@@ -60,8 +60,18 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
     def _add_sort(self, field, order_by=None):
         if order_by is None:
             order_by = self.default_sort_order
-        self.query_body['sort'].append(
-            {field: {'order': order_by}}
+        if field == V1_PARAMETERS_LIST.CLEANED_NAME or \
+            field == V1_PARAMETERS_LIST.CLEANED_ADDRESS:
+                self.query_body['sort'].append(
+                {'cleaned_data.' + field[len('cleaned_'):]: {'order': order_by}}
+            )
+        if field == V1_PARAMETERS_LIST.CLEANED_COUNTRY:
+            self.query_body['sort'].append(
+                {'cleaned_data.' + field[len('cleaned_'):] + '.alpha_2': {'order': order_by}}
+            )
+        else:
+            self.query_body['sort'].append(
+                {field: {'order': order_by}}
         )
 
     def _add_search_after(self, search_after):
