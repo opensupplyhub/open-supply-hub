@@ -1,4 +1,7 @@
+import logging
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
+
+logger = logging.getLogger(__name__)
 
 
 class OpenSearchQueryDirector:
@@ -36,7 +39,7 @@ class OpenSearchQueryDirector:
             self.__builder.add_match(field, value, fuzziness='2')
 
     def __add_terms_query(self, field, values):
-        self.__builder.add_terms(field, values)
+        self.__builder._add_terms(field, values)
 
     def __add_range_query(self, field, query_params):
         self.__builder.add_range(field, query_params)
@@ -78,11 +81,11 @@ class OpenSearchQueryDirector:
         sort_by = query_params.get(V1_PARAMETERS_LIST.SORT_BY)
         if sort_by:
             order_by = query_params.get(V1_PARAMETERS_LIST.ORDER_BY)
-            self.__builder.add_sort(sort_by, order_by)
+            self.__builder._add_sort(sort_by, order_by)
 
         search_after = query_params.get(V1_PARAMETERS_LIST.SEARCH_AFTER)
         if search_after:
-            self.__builder.add_search_after(search_after)
+            self.__builder._add_search_after(search_after)
 
         paginate_from = query_params.get(V1_PARAMETERS_LIST.FROM)
         if paginate_from:
@@ -95,5 +98,7 @@ class OpenSearchQueryDirector:
         multi_match_query = query_params.get(V1_PARAMETERS_LIST.QUERY)
         if multi_match_query:
             self.__builder.add_multi_match(multi_match_query)
+
+        logger.info(f'@@@ {self.__builder.get_final_query_body()}')
 
         return self.__builder.get_final_query_body()
