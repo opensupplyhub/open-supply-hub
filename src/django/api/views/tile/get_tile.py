@@ -1,4 +1,3 @@
-from api.throttles import TilesThrottle
 from rest_framework.exceptions import ValidationError
 from rest_framework.decorators import (
     api_view,
@@ -27,7 +26,7 @@ from ...tiler import (
 @permission_classes([IsAllowedHost])
 @renderer_classes([MvtRenderer])
 @cache_control(max_age=settings.TILE_CACHE_MAX_AGE_IN_SECONDS)
-@throttle_classes([TilesThrottle])
+@throttle_classes([])
 @waffle_switch('vector_tile')
 def get_tile(request, layer, cachekey, z, x, y, ext):
     if cachekey is None:

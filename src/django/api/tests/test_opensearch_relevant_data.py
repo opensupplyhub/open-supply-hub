@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from django.utils import timezone
-from api.services.search import \
+from api.services.opensearch.search import \
     OpenSearchService
 from api.models import (
     Contributor,
@@ -64,7 +64,7 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
         self.facility.updated_at = self.old_updated_at
         self.facility.save()
 
-    @patch('api.services.search.logger')
+    @patch('api.services.opensearch.search.logger')
     def test_update_facility_updated_at_field(self, mock_logger):
         current_time = timezone.now()
         Facility.update_facility_updated_at_field(self.facility.id)

@@ -25,6 +25,5 @@ services:
       dockerfile: Dockerfile
     environment:
       - CI=$CI
-    command: npm run test
     networks:
       - my-proxy-net
