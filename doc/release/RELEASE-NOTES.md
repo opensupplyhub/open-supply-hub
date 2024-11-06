@@ -25,6 +25,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - The new "moderation events" Logstash pipeline has been configured and implemented to collect moderation event data from the current PostgreSQL database and save it to OpenSearch. This setup allows for fast searches on the moderation events data.
 * [OSDEV-1387](https://opensupplyhub.atlassian.net/browse/OSDEV-1387) - The SQL query for generating tiles from PostgreSQL+PostGIS has been reimplemented to avoid using the JOIN + GROUP BY clause. This change reduces the number of subqueries and their asymptotic complexity. Additionally, an option to set an upper limit on facility counts in the 'count' clause has been introduced, capped at 100, which doubles the query's performance. Throttling has been removed for tile generation endpoints.
 * [OSDEV-1171](https://opensupplyhub.atlassian.net/browse/OSDEV-1171) - RDS instances for `staging` and `test` have beed decreased to `db.t3.large`
+* Playwright has been introduced as the main framework for end-to-end testing:
+    * Added a new Playwright testing service to the Docker configuration
+    * Implemented initial test cases to verify core functionality
+    * Integrated Playwright tests into the CI pipeline via GitHub Actions
+    * Added necessary configuration files and dependencies for the e2e testing project
 
 ### Bugfix
 * [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - Fixed the assertion in the test for the `country.rb` filter of the "production locations" Logstash pipeline. The main issue was with the evaluation of statements in the Ruby block. Since only the last statement is evaluated in a Ruby block, all the checks were grouped into one chain of logical statements and returned as a `result` variable at the end.

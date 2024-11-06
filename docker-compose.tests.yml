@@ -18,3 +18,12 @@ services:
     command: uvicorn main:app --host 0.0.0.0 --port 84
     networks:
       - my-proxy-net
+
+  playwright-test:
+    build:
+      context: ./src/e2e
+      dockerfile: Dockerfile
+    environment:
+      - CI=$CI
+    networks:
+      - my-proxy-net
