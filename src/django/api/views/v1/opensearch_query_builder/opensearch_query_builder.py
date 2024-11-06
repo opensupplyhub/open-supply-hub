@@ -98,7 +98,7 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
                 }
             }
         )
-    
+
     def _build_moderation_id(self, values):
         # Build a query to search in moderation_id
         self.query_body['query']['bool']['must'].append(

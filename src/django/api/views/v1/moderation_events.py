@@ -51,7 +51,7 @@ class ModerationEvents(ViewSet):
             query_body
         )
         return Response(response)
-    
+
     @handle_errors_decorator
     def retrieve(self, request,  pk=None):
         if not IsRegisteredAndConfirmed().has_permission(request, self):

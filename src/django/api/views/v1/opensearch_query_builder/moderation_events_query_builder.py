@@ -48,7 +48,7 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
         if field == V1_PARAMETERS_LIST.OS_ID:
             self._build_os_id(values)
             return
-        
+
         if field == V1_PARAMETERS_LIST.MODERATION_ID:
             self._build_moderation_id(values)
             return
