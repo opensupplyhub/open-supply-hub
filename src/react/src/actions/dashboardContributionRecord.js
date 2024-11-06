@@ -25,10 +25,10 @@ const eventMockData = {
     moderation_id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
     created_at: '2024-10-17T11:30:20.287Z',
     updated_at: '2024-10-18T11:30:20.287Z',
-    os_id: 'string',
+    os_id: 'CN2021250D1DTN7',
     cleaned_data: {
         name: 'Eco Friendly Plastics',
-        address: 'string',
+        address: '435 Main St, Manhattan, NY - USA',
         country: {
             name: 'Germany',
             alpha_2: 'DE',
@@ -48,38 +48,43 @@ const eventMockData = {
 // TODO: Remove mock data and replace with actual API call as part  of /v1/production-locations endpoint
 const potentialMatchesMockData = [
     {
+        os_id: 'CN2021250D1DTN7',
         name: 'Test name INC',
         address: '435 Main St, Manhattan, NY - USA',
-        claim_status: 'unclaimed',
-    },
-    {
-        name: 'Test name INC',
-        address: '435 Main St, Manhattan, NY - USA',
-        claim_status: 'unclaimed',
-    },
-    {
-        name: 'Test name INC',
-        address: '435 Main St, Manhattan, NY - USA',
-        claim_status: 'unclaimed',
-    },
-    {
-        name: 'Test name INC',
-        address: '435 Main St, Manhattan, NY - USA',
-        claim_status: 'unclaimed',
-    },
-    {
-        name: 'Test name INC',
-        address: '435 Main St, Manhattan, NY - USA',
-        claim_status: 'unclaimed',
-    },
-    {
-        name: 'Test name INC',
-        address: '435 Main St, Manhattan, NY - USA',
+        sector: ['Apparel'],
+        parent_company: 'ASI GLOBAL LIMITED',
+        product_type: ['Accessories'],
+        location_type: [],
+        processing_type: ['Final Product Assembly'],
+        number_of_workers: {
+            min: 0,
+            max: 0,
+        },
+        coordinates: {
+            lat: 0,
+            lng: 0,
+        },
+        local_name: '',
+        description: '',
+        business_url: '',
+        minimum_order_quantity: '',
+        average_lead_time: '',
+        percent_female_workers: 0,
+        affiliations: [],
+        certifications_standards_regulations: [],
+        historical_os_id: [],
+        country: {
+            name: 'Germany',
+            alpha_2: 'DE',
+            alpha_3: 'DEU',
+            numeric: '276',
+        },
         claim_status: 'unclaimed',
     },
 ];
 
-export function fetchModerationEvent() {
+// eslint-disable-next-line no-unused-vars
+export function fetchModerationEvent(moderationID) {
     return async dispatch => {
         dispatch(startFetchingModerationEvent());
 

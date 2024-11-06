@@ -516,7 +516,7 @@ export const moderationEventPropType = shape({
     moderation_id: string.isRequired,
     created_at: string.isRequired,
     updated_at: string.isRequired,
-    os_id: string.isRequired,
+    os_id: string,
     cleaned_data: {
         name: string.isRequired,
         address: string.isRequired,
@@ -527,8 +527,8 @@ export const moderationEventPropType = shape({
     request_type: string.isRequired,
     source: string.isRequired,
     status: string.isRequired,
-    status_change_date: string.isRequired,
-    claim_id: number.isRequired,
+    status_change_date: string,
+    claim_id: number,
 });
 
 export const potentialMatchesPropType = arrayOf(

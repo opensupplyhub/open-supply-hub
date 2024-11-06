@@ -121,19 +121,19 @@ const DashboardContributionRecord = ({
                                                         className={
                                                             classes.listItemTextStyle
                                                         }
-                                                        primary={`Name: ${potentialMatch.name}}`}
+                                                        primary={`Name: ${potentialMatch.name}`}
                                                     />
                                                     <ListItemText
                                                         className={
                                                             classes.listItemTextStyle
                                                         }
-                                                        primary={`Address: ${potentialMatch.address}}`}
+                                                        primary={`Address: ${potentialMatch.address}`}
                                                     />
                                                     <ListItemText
                                                         className={
                                                             classes.listItemTextStyle
                                                         }
-                                                        primary={`Claimed Status: ${potentialMatch.claim_status}}`}
+                                                        primary={`Claimed Status: ${potentialMatch.claim_status}`}
                                                     />
                                                 </div>
 
@@ -178,7 +178,7 @@ const DashboardContributionRecord = ({
                     variant="contained"
                     onClick={() => {}}
                     className={classes.buttonStyles}
-                    isDisabled={fetching}
+                    disabled={fetching}
                 >
                     Create New Location
                 </Button>{' '}
@@ -187,7 +187,7 @@ const DashboardContributionRecord = ({
                     variant="contained"
                     onClick={() => {}}
                     className={classes.buttonStyles}
-                    isDisabled={fetching}
+                    disabled={fetching}
                 >
                     Reject Contribution
                 </Button>{' '}
@@ -196,7 +196,7 @@ const DashboardContributionRecord = ({
                     variant="contained"
                     className={`${classes.buttonStyles} ${classes.claimButtonStyles}`}
                     onClick={() => {}}
-                    isDisabled={fetching}
+                    disabled={fetching}
                 >
                     Go to Claim
                 </Button>
@@ -241,8 +241,15 @@ const mapStateToProps = ({
     fetchPotentialMatchError,
 });
 
-const mapDispatchToProps = dispatch => ({
-    fetchEvent: () => dispatch(fetchModerationEvent()),
+const mapDispatchToProps = (
+    dispatch,
+    {
+        match: {
+            params: { moderationID },
+        },
+    },
+) => ({
+    fetchEvent: () => dispatch(fetchModerationEvent(moderationID)),
     fetchMatches: () => dispatch(fetchPotentialMatches()),
 });
 
