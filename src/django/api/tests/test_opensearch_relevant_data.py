@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from django.utils import timezone
-from api.services.search import \
+from api.services.opensearch.search import \
     OpenSearchService
 from api.models import (
     Contributor,
