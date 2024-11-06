@@ -47,6 +47,7 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
 
         if field == V1_PARAMETERS_LIST.OS_ID:
             self._build_os_id(values)
+
         else:
             terms_field = self.build_options.get(
                 field, lambda x: x
