@@ -1,6 +1,5 @@
-import moment from 'moment';
-
-import { CLAIM_DECISION_EMPTY } from '../util/constants';
+import { EMPTY_PLACEHOLDER, DATE_FORMATS } from '../util/constants';
+import { formatDate } from '../util/util';
 
 const xlsxHeaders = Object.freeze([
     'Claim ID',
@@ -20,12 +19,12 @@ const formatFacilityClaimsDataForXLSX = facilityClaims =>
             facilityClaim.facility_name,
             facilityClaim.contributor_name,
             facilityClaim.facility_country_name,
-            moment(facilityClaim.created_at).format('LL'),
+            formatDate(facilityClaim.created_at, DATE_FORMATS.LONG),
             facilityClaim.claim_decision !== null
-                ? moment(facilityClaim.claim_decision).format('LL')
-                : CLAIM_DECISION_EMPTY,
+                ? formatDate(facilityClaim.claim_decision, DATE_FORMATS.LONG)
+                : EMPTY_PLACEHOLDER,
             facilityClaim.status,
-            moment(facilityClaim.updated_at).format('LL'),
+            formatDate(facilityClaim.updated_at, DATE_FORMATS.LONG),
         ]),
     );
 
