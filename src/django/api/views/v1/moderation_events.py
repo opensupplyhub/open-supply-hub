@@ -25,6 +25,11 @@ from api.models.source import Source
 from api.models.nonstandart_field import NonstandardField
 from api.models.facility.facility_list_item import FacilityListItem
 from api.extended_fields import create_extendedfields_for_single_item
+from django.contrib.gis.geos import Point
+from api.models.facility.facility_list_item_temp import FacilityListItemTemp
+from api.models.facility.facility import Facility
+from datetime import datetime
+from api.os_id import make_os_id
 
 
 class ModerationEvents(ViewSet):
@@ -104,10 +109,8 @@ class ModerationEvents(ViewSet):
 
     @handle_errors_decorator
     def add_production_location(self, request, moderation_id):
-        if not (request.user.is_superuser or request.user.is_staff):
-            raise PermissionDenied(
-                detail="Only the Moderator can perform this action."
-            )
+
+        self.__validate_user_permissions(request)
 
         if not is_valid_uuid(moderation_id):
             return handle_path_error(
@@ -126,17 +129,10 @@ class ModerationEvents(ViewSet):
             )
 
         if event.status != ModerationEvent.Status.PENDING:
-            return Response(
-                {
-                    "message": "The request query is invalid.",
-                    "errors": [
-                        {
-                            "field": "status",
-                            "message": "Moderation status must be PENDING."
-                        }
-                    ]
-                },
-                status=status.HTTP_410_GONE
+            return handle_path_error(
+                field="status",
+                message="Moderation status must be PENDING.",
+                status_code=status.HTTP_410_GONE
             )
 
         data = event.cleaned_data
@@ -148,17 +144,35 @@ class ModerationEvents(ViewSet):
 
         self.__create_nonstandard_fields(header_row_keys, contributor)
 
-        item = self.__create_facility_list_item(source, data, header_str)
-
-        item.status = FacilityListItem.NEW_FACILITY
-        item.save()
+        item = self.__create_facility_list_item(
+            source, data, header_str, FacilityListItem.MATCHED
+        )
 
         create_extendedfields_for_single_item(item, data["fields"])
 
-        # if event.geocode_result:
-            
+        self.__set_geocoded_location(item, data, event)
 
-    def __create_source(self, contributor) -> Source:
+        facility_id = make_os_id(item.country_code)
+
+        self.__create_new_facility(item, facility_id)
+        self.__update_item_with_facility_id(item, facility_id)
+
+        FacilityListItemTemp.copy(item)
+        self.__update_event(event, item)
+
+        return Response(
+            {"os_id": item.facility_id}, status=status.HTTP_201_CREATED
+        )
+
+    @staticmethod
+    def __validate_user_permissions(request):
+        if not (request.user.is_superuser or request.user.is_staff):
+            raise PermissionDenied(
+                detail="Only the Moderator can perform this action."
+            )
+
+    @staticmethod
+    def __create_source(contributor) -> Source:
         return Source.objects.create(
             contributor=contributor,
             source_type=Source.SINGLE,
@@ -196,8 +210,23 @@ class ModerationEvents(ViewSet):
             )
 
     @staticmethod
+    def __set_geocoded_location(item, data, event):
+        if event.geocode_result:
+            item.geocoded_point = Point(
+                event.geocode_result["longitude"],
+                event.geocode_result["latitude"]
+            )
+            item.geocoded_address = event.geocode_result["geocoded_address"]
+        else:
+            item.geocoded_point = Point(
+                data["fields"]["lng"],
+                data["fields"]["lat"]
+            )
+        item.save()
+
+    @staticmethod
     def __create_facility_list_item(
-        source, data, header_str
+        source, data, header_str, status
     ):
         return FacilityListItem.objects.create(
             source=source,
@@ -213,4 +242,29 @@ class ModerationEvents(ViewSet):
             clean_address=data["clean_address"],
             country_code=data["country_code"],
             sector=data["sector"],
+            status=status,
         )
+
+    @staticmethod
+    def __create_new_facility(item, facility_id):
+        return Facility.objects.create(
+            id=facility_id,
+            name=item.name,
+            address=item.address,
+            country_code=item.country_code,
+            location=item.geocoded_point,
+            created_from_id=item.id,
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+        )
+
+    @staticmethod
+    def __update_item_with_facility_id(item, facility_id):
+        item.facility_id = facility_id
+        item.save()
+
+    @staticmethod
+    def __update_event(event, item):
+        event.status = ModerationEvent.Status.RESOLVED
+        event.os_id = item.facility_id
+        event.save()
