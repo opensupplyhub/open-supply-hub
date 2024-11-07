@@ -22,7 +22,7 @@ from api.views.v1.index_names import OpenSearchIndexNames
 from api.models.moderation_event \
     import ModerationEvent
 from api.models.source import Source
-from api.models.nonstandart_field import NonstandardField
+from api.models.nonstandard_field import NonstandardField
 from api.models.facility.facility_list_item import FacilityListItem
 from api.extended_fields import create_extendedfields_for_single_item
 from django.contrib.gis.geos import Point
