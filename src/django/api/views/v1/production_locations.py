@@ -8,7 +8,7 @@ from api.views.v1.utils import (
     handle_errors_decorator
 )
 
-from api.services.search import OpenSearchService
+from api.services.opensearch.search import OpenSearchService
 from api.views.v1.opensearch_query_builder.production_locations_query_builder \
     import ProductionLocationsQueryBuilder
 from api.views.v1.opensearch_query_builder.opensearch_query_director \
