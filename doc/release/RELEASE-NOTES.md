@@ -30,6 +30,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - Fixed the assertion in the test for the `country.rb` filter of the "production locations" Logstash pipeline. The main issue was with the evaluation of statements in the Ruby block. Since only the last statement is evaluated in a Ruby block, all the checks were grouped into one chain of logical statements and returned as a `result` variable at the end.
 
 ### What's new
+* [OSDEV-1116](https://opensupplyhub.atlassian.net/browse/OSDEV-1116) - A new Contribution Record Page has been developed to enable quick identification and moderation of contributions. This page includes two main sections: Moderation Event Data and Potential Matches, along with a set of buttons designed to facilitate the moderation process.
 * [OSDEV-1120](https://opensupplyhub.atlassian.net/browse/OSDEV-1120) - A new Moderation Queue Dashboard page has been introduced, featuring three essential components:
     * Moderation Events Table: Allows users to view and manage moderation events more effectively.
     * Filtering Options: Multiple filter fields enable users to customize the displayed events based on different criteria, making it easier to find specific events.
