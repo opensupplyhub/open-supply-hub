@@ -25,7 +25,6 @@ import { checkWhetherUserHasDashboardAccess } from '../util/util';
 
 import {
     CLAIM_A_FACILITY,
-    // MODERATION_QUEUE,
     dashboardRoute,
     dashboardListsRoute,
     dashboardClaimsRoute,
@@ -98,10 +97,7 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
             </FeatureFlag>
             <Link to={dashboardDeleteFacilityRoute}>Delete a Facility</Link>
             <Link to={dashboardMergeFacilitiesRoute}>Merge Two Facilities</Link>
-            <FeatureFlag flag={CLAIM_A_FACILITY}>
-                <Link to={dashboardModerationQueueRoute}>Moderation Queue</Link>
-            </FeatureFlag>
-            {/* <Link to={dashboardModerationQueueRoute}>Moderation Queue</Link> */}
+            <Link to={dashboardModerationQueueRoute}>Moderation Queue</Link>
             <Link to={dashboardAdjustFacilityMatchesRoute}>
                 Adjust Facility Matches
             </Link>
@@ -222,43 +218,18 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
                             path={dashboardRoute}
                             render={() => 'Dashboard'}
                         />
-                        {/* <Route
+                        <Route
                             exact
                             path={dashboardModerationQueueRoute}
                             render={makeClickableDashboardLinkFn(
                                 'Moderation Queue',
                             )}
-                        /> */}
-                        <Route
-                            exact
-                            path={dashboardContributionRecordRoute}
-                            render={() => (
-                                <FeatureFlag
-                                    flag={CLAIM_A_FACILITY}
-                                    alternative={DASHBOARD_TITLE}
-                                >
-                                    {makeClickableDashboardLinkFn(
-                                        'Contribution Record',
-                                        {
-                                            route: dashboardModerationQueueRoute,
-                                            screenTitle: 'Moderation Queue',
-                                        },
-                                    )()}
-                                </FeatureFlag>
-                            )}
                         />
                         <Route
                             exact
-                            path={dashboardModerationQueueRoute}
-                            render={() => (
-                                <FeatureFlag
-                                    flag={CLAIM_A_FACILITY}
-                                    alternative={DASHBOARD_TITLE}
-                                >
-                                    {makeClickableDashboardLinkFn(
-                                        'Moderation Queue',
-                                    )()}
-                                </FeatureFlag>
+                            path={dashboardContributionRecordRoute}
+                            render={makeClickableDashboardLinkFn(
+                                'Contribution Record',
                             )}
                         />
                     </Switch>
@@ -290,36 +261,15 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
                         path={dashboardUpdateFacilityLocationRoute}
                         component={DashboardUpdateFacilityLocation}
                     />
-                    {/* <Route
+                    <Route
                         exact
                         path={dashboardModerationQueueRoute}
                         component={DashboardModerationQueue}
-                    /> */}
-                    <Route
-                        exact
-                        path={dashboardContributionRecordRoute}
-                        render={() => (
-                            <FeatureFlag
-                                flag={CLAIM_A_FACILITY}
-                                alternative={linkSection}
-                            >
-                                <Route
-                                    component={DashboardContributionRecord}
-                                />
-                            </FeatureFlag>
-                        )}
                     />
                     <Route
                         exact
-                        path={dashboardModerationQueueRoute}
-                        render={() => (
-                            <FeatureFlag
-                                flag={CLAIM_A_FACILITY}
-                                alternative={linkSection}
-                            >
-                                <Route component={DashboardModerationQueue} />
-                            </FeatureFlag>
-                        )}
+                        path={dashboardContributionRecordRoute}
+                        component={DashboardContributionRecord}
                     />
                     <Route
                         exact
