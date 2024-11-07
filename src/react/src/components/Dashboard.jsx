@@ -16,8 +16,8 @@ import DashboardActivityReports from './DashboardActivityReports';
 import DashboardApiBlock from './DashboardApiBlock';
 import DashboardLinkToOsId from './DashboardLinkToOsId';
 import DashboardGeocoder from './DashboardGeocoder';
-import DashboardModerationQueue from './Dashboard/DashboardModerationQueue';
-import DashboardContributionRecord from './Dashboard/DashboardContributionRecord';
+// import DashboardModerationQueue from './Dashboard/DashboardModerationQueue';
+// import DashboardContributionRecord from './Dashboard/DashboardContributionRecord';
 import FeatureFlag from './FeatureFlag';
 import RouteNotFound from './RouteNotFound';
 
@@ -38,8 +38,8 @@ import {
     dashboardActivityReportsRoute,
     dashboardGeocoderRoute,
     dashboardLinkOsIdRoute,
-    dashboardModerationQueueRoute,
-    dashboardContributionRecordRoute,
+    // dashboardModerationQueueRoute,
+    // dashboardContributionRecordRoute,
 } from '../util/constants';
 
 import AppGrid from './AppGrid';
@@ -97,7 +97,7 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
             </FeatureFlag>
             <Link to={dashboardDeleteFacilityRoute}>Delete a Facility</Link>
             <Link to={dashboardMergeFacilitiesRoute}>Merge Two Facilities</Link>
-            <Link to={dashboardModerationQueueRoute}>Moderation Queue</Link>
+            {/* <Link to={dashboardModerationQueueRoute}>Moderation Queue</Link> */}
             <Link to={dashboardAdjustFacilityMatchesRoute}>
                 Adjust Facility Matches
             </Link>
@@ -218,20 +218,20 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
                             path={dashboardRoute}
                             render={() => 'Dashboard'}
                         />
-                        <Route
+                        {/* <Route
                             exact
                             path={dashboardModerationQueueRoute}
                             render={makeClickableDashboardLinkFn(
                                 'Moderation Queue',
                             )}
-                        />
-                        <Route
+                        /> */}
+                        {/* <Route
                             exact
                             path={dashboardContributionRecordRoute}
                             render={makeClickableDashboardLinkFn(
                                 'Contribution Record',
                             )}
-                        />
+                        /> */}
                     </Switch>
                 }
             >
@@ -261,7 +261,7 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
                         path={dashboardUpdateFacilityLocationRoute}
                         component={DashboardUpdateFacilityLocation}
                     />
-                    <Route
+                    {/* <Route
                         exact
                         path={dashboardModerationQueueRoute}
                         component={DashboardModerationQueue}
@@ -270,12 +270,7 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
                         exact
                         path={dashboardContributionRecordRoute}
                         component={DashboardContributionRecord}
-                    />
-                    <Route
-                        exact
-                        path={dashboardModerationQueueRoute}
-                        component={DashboardModerationQueue}
-                    />
+                    /> */}
                     <Route
                         exact
                         path={dashboardClaimsDetailsRoute}
