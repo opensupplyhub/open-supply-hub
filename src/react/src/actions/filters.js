@@ -47,7 +47,6 @@ export const updateCombineContributorsFilterOption = createAction(
     'UPDATE_COMBINE_CONTRIBUTORS_FILTER_OPTION',
 );
 export const updateDataSourceFilter = createAction('UPDATE_DATA_SOURCE_FILTER');
-
 export const updateModerationStatusFilter = createAction(
     'UPDATE_MODERATION_STATUS_FILTER',
 );
