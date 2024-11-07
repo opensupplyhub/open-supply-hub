@@ -9,7 +9,7 @@ from api.views.v1.utils import (
     handle_path_error
 )
 from api.permissions import IsRegisteredAndConfirmed
-from api.services.search import OpenSearchService
+from api.services.opensearch.search import OpenSearchService
 from api.views.v1.opensearch_query_builder.moderation_events_query_builder \
     import ModerationEventsQueryBuilder
 from api.views.v1.opensearch_query_builder.opensearch_query_director \
