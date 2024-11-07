@@ -14,7 +14,7 @@ from api.views.v1.utils import (
     handle_value_error,
     handle_opensearch_exception
 )
-from api.services.search import OpenSearchServiceException
+from api.services.opensearch.search import OpenSearchServiceException
 
 
 class TestProductionLocationsSerializer(Serializer):

@@ -4,7 +4,7 @@ from functools import wraps
 from rest_framework.response import Response
 from rest_framework import status
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
-from api.services.search import OpenSearchServiceException
+from api.services.opensearch.search import OpenSearchServiceException
 
 logger = logging.getLogger(__name__)
 
