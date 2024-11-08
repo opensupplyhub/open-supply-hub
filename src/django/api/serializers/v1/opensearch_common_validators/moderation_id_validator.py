@@ -5,7 +5,8 @@ from api.serializers.v1.opensearch_validation_interface \
 
 class ModerationIdValidator(OpenSearchValidationInterface):
     UUID_REGEX = (
-        r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+        r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-'
+        r'[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
     )
 
     def validate_opensearch_params(self, data):
