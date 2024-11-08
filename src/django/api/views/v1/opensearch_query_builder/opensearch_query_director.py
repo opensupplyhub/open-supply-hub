@@ -1,7 +1,5 @@
-import logging
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 
-logger = logging.getLogger(__name__)
 
 
 class OpenSearchQueryDirector:
@@ -98,7 +96,5 @@ class OpenSearchQueryDirector:
         multi_match_query = query_params.get(V1_PARAMETERS_LIST.QUERY)
         if multi_match_query:
             self.__builder.add_multi_match(multi_match_query)
-
-        logger.info(f'@@@ {self.__builder.get_final_query_body()}')
 
         return self.__builder.get_final_query_body()
