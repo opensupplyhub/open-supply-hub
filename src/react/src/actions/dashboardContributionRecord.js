@@ -19,6 +19,9 @@ export const failFetchingPotentialMatches = createAction(
 export const completeFetchingPotentialMatches = createAction(
     'COMPLETE_FETCHING_POTENTIAL_MATCHES',
 );
+export const cleanupContributionRecord = createAction(
+    'CLEANUP_CONTRIBUTION_RECORD',
+);
 
 // TODO: Remove mock data and replace with actual API call as part of https://opensupplyhub.atlassian.net/browse/OSDEV-1347
 const eventMockData = {

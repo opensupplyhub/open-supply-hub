@@ -8,6 +8,7 @@ import {
     startFetchingPotentialMatches,
     failFetchingPotentialMatches,
     completeFetchingPotentialMatches,
+    cleanupContributionRecord,
 } from '../actions/dashboardContributionRecord';
 
 const initialState = Object.freeze({
@@ -69,6 +70,7 @@ export default createReducer(
                     potentialMatches: { $set: payload },
                 },
             }),
+        [cleanupContributionRecord]: () => initialState,
     },
     initialState,
 );

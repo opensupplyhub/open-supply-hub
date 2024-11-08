@@ -50,7 +50,11 @@ const DashboardContributionRecord = ({
     }, [fetchEvent, fetchMatches]);
 
     if (error) {
-        return <Typography>{error}</Typography>;
+        return (
+            <Typography variant="body2" style={{ color: 'red' }}>
+                {error}
+            </Typography>
+        );
     }
 
     const jsonResults = JSON.stringify(event, null, 2);
@@ -100,7 +104,6 @@ const DashboardContributionRecord = ({
                             </div>
                         </ShowOnly>
                         <ShowOnly
-                            key="section"
                             when={
                                 potentialMatches && potentialMatches.length > 0
                             }
@@ -108,7 +111,9 @@ const DashboardContributionRecord = ({
                             {potentialMatches &&
                                 potentialMatches.map(
                                     (potentialMatch, index) => (
-                                        <>
+                                        <React.Fragment
+                                            key={potentialMatch.os_id}
+                                        >
                                             {' '}
                                             <ListItem
                                                 key={potentialMatch.os_id}
@@ -164,7 +169,7 @@ const DashboardContributionRecord = ({
                                                     component="li"
                                                 />
                                             </ShowOnly>
-                                        </>
+                                        </React.Fragment>
                                     ),
                                 )}
                         </ShowOnly>
