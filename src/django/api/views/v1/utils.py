@@ -40,8 +40,6 @@ def serialize_params(serializer_class, query_params):
 
     params = serializer_class(data=flattened_query_params)
 
-    logger.info(f'$$$$ params are {params}')
-
     if not params.is_valid():
         error_response = {'message': None, 'errors': []}
         # Handle common validation errors.

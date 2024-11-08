@@ -18,8 +18,8 @@ class StatusValidator(OpenSearchValidationInterface):
                 "message": "Status must be a list of values."
             })
         elif not all(item in self.VALID_STATUSES for item in status):
-            invalid_statuses = [item for item in status if \
-                               item not in self.VALID_STATUSES]
+            invalid_statuses = [item for item in status if
+                                item not in self.VALID_STATUSES]
             errors.append({
                 "field": "status",
                 "message": (

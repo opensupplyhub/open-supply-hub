@@ -5,7 +5,7 @@ from api.views.v1.utils import (
     serialize_params,
     handle_errors_decorator
 )
-from api.services.search import OpenSearchService
+from api.services.opensearch.search import OpenSearchService
 from api.views.v1.opensearch_query_builder.moderation_events_query_builder \
     import ModerationEventsQueryBuilder
 from api.views.v1.opensearch_query_builder.opensearch_query_director \
