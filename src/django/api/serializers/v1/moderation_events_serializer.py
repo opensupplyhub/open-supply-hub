@@ -37,8 +37,6 @@ class ModerationEventsSerializer(Serializer):
         child=CharField(required=False),
         required=False
     )
-    contributor_id = IntegerField(required=False)
-    os_id = CharField(required=False)
     data_dte = DateField(default='', required=False)
     data_lt = DateField(default='', required=False)
     source = ListField(
