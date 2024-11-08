@@ -716,11 +716,6 @@ export const makeFacilityClaimDetailsLink = claimID =>
 export const makeContributionRecordLink = moderationID =>
     `/dashboard/moderation-queue/contribution-record/${moderationID}`;
 
-export const openInNewTab = url => {
-    const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
-    if (newWindow) newWindow.opener = null;
-};
-
 export const makeDashboardContributorListLink = ({
     contributorID,
     matchResponsibility,
@@ -1293,4 +1288,9 @@ export const multiValueBackgroundHandler = (value, origin) => {
         return MODERATION_STATUS_COLORS[value] || 'default';
     }
     return COLOURS.MINT_GREEN;
+};
+
+export const openInNewTab = url => {
+    const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+    if (newWindow) newWindow.opener = null;
 };

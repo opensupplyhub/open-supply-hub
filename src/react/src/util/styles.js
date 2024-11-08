@@ -691,15 +691,15 @@ export const makeDashboardContributionRecordStyles = theme =>
         },
         dividerStyle: {
             height: '3px',
-            backgroundColor: 'rgb(0 0 0 / 55%)',
+            backgroundColor: COLOURS.DARK_GREY,
         },
         innerDividerStyle: {
-            backgroundColor: 'rgb(0 0 0 / 55%)',
+            backgroundColor: COLOURS.DARK_GREY,
         },
         prettyPrint: {
             width: '100%',
             maxHeight: '300px',
-            overflow: 'scroll',
+            overflow: 'auto',
         },
         potentialMatchesBlock: {
             width: '100%',
@@ -707,7 +707,7 @@ export const makeDashboardContributionRecordStyles = theme =>
         },
         potentialMatchesInternalBlock: {
             width: '100%',
-            overflow: 'scroll',
+            overflow: 'auto',
             maxHeight: '450px',
         },
         buttonsContainerStyles: Object.freeze({

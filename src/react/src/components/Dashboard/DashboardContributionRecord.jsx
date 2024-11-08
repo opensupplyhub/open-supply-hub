@@ -37,11 +37,11 @@ const styles = {
 const DashboardContributionRecord = ({
     event,
     potentialMatches,
-    error,
+    fetchEventError,
     classes,
     fetchEvent,
     fetchMatches,
-    fetching,
+    eventFetching,
     fetchPotentialMatchError,
 }) => {
     useEffect(() => {
@@ -49,10 +49,10 @@ const DashboardContributionRecord = ({
         fetchMatches();
     }, [fetchEvent, fetchMatches]);
 
-    if (error) {
+    if (fetchEventError) {
         return (
             <Typography variant="body2" style={{ color: 'red' }}>
-                {error}
+                {fetchEventError}
             </Typography>
         );
     }
@@ -68,13 +68,13 @@ const DashboardContributionRecord = ({
 
             <Paper className={classes.container}>
                 <div className={classes.prettyPrint}>
-                    {fetching ? (
+                    {eventFetching ? (
                         <CircularProgress
                             size={25}
                             className={classes.loaderStyles}
                         />
                     ) : (
-                        <>{event && <pre>{jsonResults}</pre>}</>
+                        <pre>{jsonResults}</pre>
                     )}
                 </div>
             </Paper>
@@ -103,75 +103,66 @@ const DashboardContributionRecord = ({
                                 </Typography>
                             </div>
                         </ShowOnly>
-                        <ShowOnly
-                            when={
-                                potentialMatches && potentialMatches.length > 0
-                            }
-                        >
-                            {potentialMatches &&
-                                potentialMatches.map(
-                                    (potentialMatch, index) => (
-                                        <React.Fragment
-                                            key={potentialMatch.os_id}
+                        <ShowOnly when={potentialMatches?.length > 0}>
+                            {potentialMatches.map(
+                                (
+                                    { osId, name, address, claimStatus },
+                                    index,
+                                ) => (
+                                    <React.Fragment key={osId}>
+                                        <ListItem
+                                            key={osId}
+                                            className={classes.listItemStyle}
                                         >
-                                            {' '}
-                                            <ListItem
-                                                key={potentialMatch.os_id}
-                                                className={
-                                                    classes.listItemStyle
-                                                }
-                                            >
-                                                <div>
-                                                    <ListItemText
-                                                        className={
-                                                            classes.listItemTextStyle
-                                                        }
-                                                        primary={`Name: ${potentialMatch.name}`}
-                                                    />
-                                                    <ListItemText
-                                                        className={
-                                                            classes.listItemTextStyle
-                                                        }
-                                                        primary={`Address: ${potentialMatch.address}`}
-                                                    />
-                                                    <ListItemText
-                                                        className={
-                                                            classes.listItemTextStyle
-                                                        }
-                                                        primary={`Claimed Status: ${potentialMatch.claim_status}`}
-                                                    />
-                                                </div>
-
-                                                <Button
-                                                    color="secondary"
-                                                    variant="contained"
+                                            <div>
+                                                <ListItemText
                                                     className={
-                                                        classes.confirmButtonStyles
+                                                        classes.listItemTextStyle
                                                     }
-                                                    onClick={() => {}}
-                                                >
-                                                    Confirm
-                                                </Button>
-                                            </ListItem>
-                                            <ShowOnly
-                                                when={
-                                                    potentialMatches.length >
-                                                        1 &&
-                                                    potentialMatches.length -
-                                                        1 !==
-                                                        index
-                                                }
-                                            >
-                                                <Divider
-                                                    className={
-                                                        classes.innerDividerStyle
-                                                    }
-                                                    component="li"
+                                                    primary={`Name: ${name}`}
                                                 />
-                                            </ShowOnly>
-                                        </React.Fragment>
-                                    ),
-                                )}
+                                                <ListItemText
+                                                    className={
+                                                        classes.listItemTextStyle
+                                                    }
+                                                    primary={`Address: ${address}`}
+                                                />
+                                                <ListItemText
+                                                    className={
+                                                        classes.listItemTextStyle
+                                                    }
+                                                    primary={`Claimed Status: ${claimStatus}`}
+                                                />
+                                            </div>
+
+                                            <Button
+                                                color="secondary"
+                                                variant="contained"
+                                                className={
+                                                    classes.confirmButtonStyles
+                                                }
+                                                onClick={() => {}}
+                                            >
+                                                Confirm
+                                            </Button>
+                                        </ListItem>
+                                        <ShowOnly
+                                            when={
+                                                potentialMatches.length > 1 &&
+                                                potentialMatches.length - 1 !==
+                                                    index
+                                            }
+                                        >
+                                            <Divider
+                                                className={
+                                                    classes.innerDividerStyle
+                                                }
+                                                component="li"
+                                            />
+                                        </ShowOnly>
+                                    </React.Fragment>
+                                ),
+                            )}
                         </ShowOnly>
                     </div>
                     <Divider className={classes.dividerStyle} component="li" />
@@ -183,25 +174,25 @@ const DashboardContributionRecord = ({
                     variant="contained"
                     onClick={() => {}}
                     className={classes.buttonStyles}
-                    disabled={fetching}
+                    disabled={eventFetching}
                 >
                     Create New Location
-                </Button>{' '}
+                </Button>
                 <Button
                     color="secondary"
                     variant="contained"
                     onClick={() => {}}
                     className={classes.buttonStyles}
-                    disabled={fetching}
+                    disabled={eventFetching}
                 >
                     Reject Contribution
-                </Button>{' '}
+                </Button>
                 <Button
                     color="secondary"
                     variant="contained"
                     className={`${classes.buttonStyles} ${classes.claimButtonStyles}`}
                     onClick={() => {}}
-                    disabled={fetching}
+                    disabled={eventFetching}
                 >
                     Go to Claim
                 </Button>
@@ -213,24 +204,24 @@ const DashboardContributionRecord = ({
 DashboardContributionRecord.defaultProps = {
     event: {},
     potentialMatches: [],
-    error: null,
+    fetchEventError: null,
     fetchPotentialMatchError: null,
 };
 
 DashboardContributionRecord.propTypes = {
     event: moderationEventPropType,
     potentialMatches: potentialMatchesPropType,
-    fetching: bool.isRequired,
+    eventFetching: bool.isRequired,
     fetchEvent: func.isRequired,
     fetchMatches: func.isRequired,
     classes: object.isRequired,
-    error: string,
+    fetchEventError: string,
     fetchPotentialMatchError: string,
 };
 
 const mapStateToProps = ({
     dashboardContributionRecord: {
-        moderationEvent: { event, fetching, error },
+        moderationEvent: { event, eventFetching, error: fetchEventError },
         potentialMatches: {
             potentialMatches,
             fetching: potentialMatchFetching,
@@ -239,10 +230,10 @@ const mapStateToProps = ({
     },
 }) => ({
     event,
-    fetching,
+    eventFetching,
     potentialMatches,
     potentialMatchFetching,
-    error,
+    fetchEventError,
     fetchPotentialMatchError,
 });
 

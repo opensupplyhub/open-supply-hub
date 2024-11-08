@@ -35,7 +35,9 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
     const handleChangePage = (_, newPage) => {
         setPage(newPage);
     };
-
+    const handleRowClick = moderationId => {
+        openInNewTab(makeContributionRecordLink(moderationId));
+    };
     const handleChangeRowsPerPage = event => {
         setRowsPerPage(event.target.value);
         setPage(INITIAL_PAGE_INDEX);
@@ -93,11 +95,7 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                                             key={moderationId}
                                             className={classes.rowStyles}
                                             onClick={() =>
-                                                openInNewTab(
-                                                    makeContributionRecordLink(
-                                                        moderationId,
-                                                    ),
-                                                )
+                                                handleRowClick(moderationId)
                                             }
                                         >
                                             <TableCell padding="dense">

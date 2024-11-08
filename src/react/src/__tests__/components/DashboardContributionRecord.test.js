@@ -14,7 +14,7 @@ describe('DashboardContributionRecord component', () => {
   const defaultProps = {
     event: {},
     potentialMatches: [],
-    error: null,
+    fetchEventError: null,
     fetchPotentialMatchError: null,
   };
 
@@ -45,7 +45,7 @@ describe('DashboardContributionRecord component', () => {
   });
 
   test('should disable button when fetching is true', () => {
-    const {getByRole} = renderComponent({ fetching: true });
+    const {getByRole} = renderComponent({ eventFetching: true });
     const createButton = getByRole('button', { name: /Create New Location/i });
     const rejectButton = getByRole('button', { name: /Reject Contribution/i });
     const claimButton = getByRole('button', { name: /Go to Claim/i });
@@ -56,7 +56,7 @@ describe('DashboardContributionRecord component', () => {
   });
 
   test('should enable button when fetching is false', async () => {
-    const {getByRole} = renderComponent({fetching: false});
+    const {getByRole} = renderComponent({eventFetching: false});
     const createButton = getByRole('button', { name: /Create New Location/i });
     const rejectButton = getByRole('button', { name: /Reject Contribution/i  });
     const claimButton = getByRole('button', { name: /Go to Claim/i });
