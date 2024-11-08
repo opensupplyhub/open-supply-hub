@@ -62,7 +62,7 @@ data "template_file" "default_job_definition" {
     environment                      = var.environment
     django_secret_key                = var.django_secret_key
     google_server_side_api_key       = var.google_server_side_api_key
-    oar_client_key                   = var.oar_client_key
+    oar_client_key                   = local.oar_client_key
     external_domain                  = local.domain_name
     hubspot_api_key                  = var.hubspot_api_key
     hubspot_subscription_id          = var.hubspot_subscription_id
@@ -159,7 +159,7 @@ data "template_file" "notifications_job_definition" {
     environment                      = var.environment
     django_secret_key                = var.django_secret_key
     google_server_side_api_key       = var.google_server_side_api_key
-    oar_client_key                   = var.oar_client_key
+    oar_client_key                   = local.oar_client_key
     external_domain                  = local.domain_name
     hubspot_api_key                  = var.hubspot_api_key
     hubspot_subscription_id          = var.hubspot_subscription_id
