@@ -541,20 +541,20 @@ export const potentialMatchesPropType = arrayOf(
         product_type: arrayOf(string),
         location_type: arrayOf(string),
         processing_type: arrayOf(string),
-        number_of_workers: {
+        number_of_workers: shape({
             min: number,
             max: number,
-        },
-        coordinates: {
+        }),
+        coordinates: shape({
             lat: number,
             lng: number,
-        },
+        }),
         local_name: string,
         description: string,
         business_url: string,
         minimum_order_quantity: string,
         average_lead_time: string,
-        percent_female_workers: 0,
+        percent_female_workers: number,
         affiliations: arrayOf(string),
         certifications_standards_regulations: arrayOf(string),
         historical_os_id: arrayOf(string),

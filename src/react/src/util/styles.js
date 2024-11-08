@@ -673,43 +673,43 @@ export const makeDashboardContributionRecordStyles = theme =>
             width: '100%',
             fontWeight: 'bold',
         }),
-        container: {
+        container: Object.freeze({
             marginBottom: '25px',
             width: '100%',
             padding: '20px',
-        },
-        title: {
+        }),
+        title: Object.freeze({
             paddingBottom: '20px',
-        },
-        listItemStyle: {
+        }),
+        listItemStyle: Object.freeze({
             display: 'flex',
             flexDirection: 'row',
             justifyContent: 'space-between',
-        },
-        listItemTextStyle: {
+        }),
+        listItemTextStyle: Object.freeze({
             padding: 0,
-        },
-        dividerStyle: {
+        }),
+        dividerStyle: Object.freeze({
             height: '3px',
             backgroundColor: COLOURS.DARK_GREY,
-        },
-        innerDividerStyle: {
+        }),
+        innerDividerStyle: Object.freeze({
             backgroundColor: COLOURS.DARK_GREY,
-        },
-        prettyPrint: {
+        }),
+        prettyPrint: Object.freeze({
             width: '100%',
             maxHeight: '300px',
             overflow: 'auto',
-        },
-        potentialMatchesBlock: {
+        }),
+        potentialMatchesBlock: Object.freeze({
             width: '100%',
             marginBottom: '25px',
-        },
-        potentialMatchesInternalBlock: {
+        }),
+        potentialMatchesInternalBlock: Object.freeze({
             width: '100%',
             overflow: 'auto',
             maxHeight: '450px',
-        },
+        }),
         buttonsContainerStyles: Object.freeze({
             display: 'flex',
             flexDirection: 'row',

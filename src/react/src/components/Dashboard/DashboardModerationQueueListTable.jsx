@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { bool, object } from 'prop-types';
 import { withRouter } from 'react-router-dom';
 import moment from 'moment';
@@ -35,9 +35,20 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
     const handleChangePage = (_, newPage) => {
         setPage(newPage);
     };
-    const handleRowClick = moderationId => {
-        openInNewTab(makeContributionRecordLink(moderationId));
-    };
+    const handleRowClick = useCallback(
+        id => () => {
+            try {
+                const url = makeContributionRecordLink(id);
+                openInNewTab(url);
+            } catch (error) {
+                console.error(
+                    `Failed to open contribution record: ${error.message}`,
+                );
+            }
+        },
+        [],
+    );
+
     const handleChangeRowsPerPage = event => {
         setRowsPerPage(event.target.value);
         setPage(INITIAL_PAGE_INDEX);
@@ -94,9 +105,12 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                                             hover
                                             key={moderationId}
                                             className={classes.rowStyles}
-                                            onClick={() =>
-                                                handleRowClick(moderationId)
-                                            }
+                                            role="button"
+                                            aria-label={`View contribution record for ${name}`}
+                                            style={{ cursor: 'pointer' }}
+                                            onClick={handleRowClick(
+                                                moderationId,
+                                            )}
                                         >
                                             <TableCell padding="dense">
                                                 {formatDate(
