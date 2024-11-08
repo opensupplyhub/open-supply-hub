@@ -40,7 +40,8 @@ services:
       - DJANGO_SECRET_KEY=secret
       - DJANGO_LOG_LEVEL=INFO
       - AWS_PROFILE=${AWS_PROFILE:-default}
-      - OAR_CLIENT_KEY=
+      # Set a random client key.
+      - OAR_CLIENT_KEY=8350e5a3e24c153df2275c9f80692773
       - NOTIFICATION_EMAIL_TO=notification@example.com
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - KAFKA_TOPIC_DEDUPE_BASIC_NAME=dedupe.hub.topic

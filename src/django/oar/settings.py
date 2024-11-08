@@ -157,7 +157,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'api.permissions.IsAuthenticatedOrWebClient',
+        'api.permissions.IsAPIUserOrWebClient',
     ),
     'DEFAULT_PAGINATION_CLASS': 'api.pagination.PageAndSizePagination',
     'PAGE_SIZE': 20,
@@ -518,12 +518,9 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://\w+\.openapparel\.org$",
     r"^https://\w+\.opensupplyhub\.org$",
     r"^https://oar\.niceandserious\.com$",
-    r"^https://dev\.os-hub\.net$",
-    r"^https://a\.os-hub\.net$",
     r"^http://localhost",
     r"http://127.0.0.1",
 ]
-# CORS_ALLOWED_ORIGIN_REGEXES = json.loads(os.getenv('CORS_ALLOWED_ORIGIN_REGEXES'))
 
 CORS_REPLACE_HTTPS_REFERER = True
 

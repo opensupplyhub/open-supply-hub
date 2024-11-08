@@ -24,12 +24,10 @@ def referring_host_is_allowed(host):
     return False
 
 
-class IsAuthenticatedOrWebClient(permissions.BasePermission):
+class IsAPIUserOrWebClient(permissions.BasePermission):
     def has_permission(self, request, view):
-        if request.user and request.user.is_authenticated:
-            return True
-
-        if settings.OAR_CLIENT_KEY == '':
+        user = request.user
+        if user and user.is_authenticated and user.has_groups:
             return True
 
         if request.path.startswith("/api/info"):
