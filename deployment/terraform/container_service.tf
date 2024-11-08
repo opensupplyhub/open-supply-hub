@@ -220,7 +220,7 @@ data "template_file" "app" {
     rollbar_server_side_access_token = var.rollbar_server_side_access_token
     rollbar_client_side_access_token = var.rollbar_client_side_access_token
     django_secret_key                = var.django_secret_key
-    oar_client_key                   = local.oar_client_key
+    oar_client_key                   = var.oar_client_key
     external_domain                  = local.domain_name
     default_from_email               = var.default_from_email
     data_from_email                  = var.data_from_email
@@ -277,7 +277,7 @@ data "template_file" "app_cli" {
     rollbar_server_side_access_token = var.rollbar_server_side_access_token
     rollbar_client_side_access_token = var.rollbar_client_side_access_token
     django_secret_key                = var.django_secret_key
-    oar_client_key                   = local.oar_client_key
+    oar_client_key                   = var.oar_client_key
     external_domain                  = local.domain_name
     default_from_email               = var.default_from_email
     data_from_email                  = var.data_from_email

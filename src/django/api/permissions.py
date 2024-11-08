@@ -30,6 +30,9 @@ class IsAPIUserOrWebClient(permissions.BasePermission):
         if user and user.is_authenticated and user.has_groups:
             return True
 
+        if settings.OAR_CLIENT_KEY == '':
+            return True
+
         if request.path.startswith("/api/info"):
             return True
 
