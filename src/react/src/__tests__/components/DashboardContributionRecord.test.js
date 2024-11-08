@@ -1,7 +1,7 @@
 import React from 'react';
 import DashboardContributionRecord from '../../components/Dashboard/DashboardContributionRecord';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
-import { waitFor, fireEvent } from '@testing-library/react';
+import { waitFor } from '@testing-library/react';
 
 describe('DashboardContributionRecord component', () => {
   const routeProps = {
@@ -44,7 +44,7 @@ describe('DashboardContributionRecord component', () => {
     expect(getByText('Go to Claim')).toBeInTheDocument();
   });
 
-  test('should disable button when fetching is true', () => {
+  test('should disable button when eventFetching is true', () => {
     const {getByRole} = renderComponent({ eventFetching: true });
     const createButton = getByRole('button', { name: /Create New Location/i });
     const rejectButton = getByRole('button', { name: /Reject Contribution/i });
@@ -76,7 +76,7 @@ describe('DashboardContributionRecord component', () => {
   });
 
   test('renders the loading spinner', () => {
-    const {getByRole} = renderComponent({ fetching: true });
+    const {getByRole} = renderComponent({ eventFetching: true });
 
     expect(getByRole('progressbar')).toBeInTheDocument();
   });
@@ -106,10 +106,10 @@ describe('DashboardContributionRecord component', () => {
       claim_id: 0,
     };
     const { container } = renderComponent({ event });
-    const preElement = container.querySelector("pre")
 
     await waitFor(() => {
-        expect(preElement).toBeInTheDocument;
+      const preElement = container.querySelector("pre");
+      expect(preElement).toBeInTheDocument();
     });
   });
 

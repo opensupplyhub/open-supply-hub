@@ -106,7 +106,12 @@ const DashboardContributionRecord = ({
                         <ShowOnly when={potentialMatches?.length > 0}>
                             {potentialMatches.map(
                                 (
-                                    { osId, name, address, claimStatus },
+                                    {
+                                        osId,
+                                        name,
+                                        address,
+                                        claim_status: claimStatus,
+                                    },
                                     index,
                                 ) => (
                                     <React.Fragment key={osId}>
@@ -221,7 +226,11 @@ DashboardContributionRecord.propTypes = {
 
 const mapStateToProps = ({
     dashboardContributionRecord: {
-        moderationEvent: { event, eventFetching, error: fetchEventError },
+        moderationEvent: {
+            event,
+            fetching: eventFetching,
+            error: fetchEventError,
+        },
         potentialMatches: {
             potentialMatches,
             fetching: potentialMatchFetching,

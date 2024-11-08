@@ -41,7 +41,6 @@ describe('DashboardModerationQueueListTable component', () => {
             source: 'API',
         },
     ];
-
     const paginatedModerationEvents = [
         ...sampleModerationEvents,
         {
@@ -150,7 +149,6 @@ describe('DashboardModerationQueueListTable component', () => {
 
         expect(getByText(/1-5 of 6/)).toBeInTheDocument();
         expect(getByText(/rows per page/i)).toBeInTheDocument();
-
         fireEvent.click(getByText('5'));
         fireEvent.click(getByText('10'));
         expect(getByText(/1-6 of 6/)).toBeInTheDocument();
