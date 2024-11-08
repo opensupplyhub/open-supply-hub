@@ -138,12 +138,12 @@ class ModerationEvents(ViewSet):
         data = event.cleaned_data
         contributor = event.contributor
         header_row_keys = data["raw_json"].keys()
-        header_str = ','.join(header_row_keys)
 
         source = self.__create_source(contributor)
 
         self.__create_nonstandard_fields(header_row_keys, contributor)
 
+        header_str = ','.join(header_row_keys)
         item = self.__create_facility_list_item(
             source, data, header_str, FacilityListItem.MATCHED
         )
