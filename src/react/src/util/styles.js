@@ -666,7 +666,7 @@ export const makeDashboardContributionRecordStyles = theme =>
             justifyContent: 'center',
             alignItems: 'center',
         }),
-        emptyTextStyle: Object.freeze({ color: 'rgb(142 138 138 / 87%)' }),
+        emptyTextStyle: Object.freeze({ color: theme.palette.text.hint }),
         buttonStyles: Object.freeze({
             margin: '20px',
             padding: '20px',
@@ -716,13 +716,13 @@ export const makeDashboardContributionRecordStyles = theme =>
             width: '100%',
         }),
         confirmButtonStyles: Object.freeze({
-            backgroundColor: '#b1dbb1',
+            backgroundColor: COLOURS.MINT_GREEN,
             padding: '20px',
-            '&:hover': { backgroundColor: '#799679' },
+            '&:hover': { backgroundColor: COLOURS.OLIVA_GREEN },
         }),
         claimButtonStyles: Object.freeze({
             backgroundColor: theme.palette.action.main,
-            '&:hover': { backgroundColor: 'rgb(175 142 42)' },
+            '&:hover': { backgroundColor: theme.palette.action.dark },
         }),
     });
 
