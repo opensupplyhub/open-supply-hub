@@ -10,7 +10,6 @@ import ListItemText from '@material-ui/core/ListItemText';
 import Divider from '@material-ui/core/Divider';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
-import ShowOnly from '../ShowOnly';
 
 import { makeDashboardContributionRecordStyles } from '../../util/styles';
 import {
@@ -87,23 +86,20 @@ const DashboardContributionRecord = ({
                 <Typography>{fetchPotentialMatchError}</Typography>
             )}
             <div className={classes.potentialMatchesBlock}>
-                <List styles={styles.recordList}>
-                    <Divider className={classes.dividerStyle} component="li" />
-                    <div className={classes.potentialMatchesInternalBlock}>
-                        <ShowOnly
-                            key="title"
-                            when={potentialMatches.length === 0}
-                        >
-                            <div className={classes.emptyBlockStyles}>
-                                <Typography
-                                    className={classes.emptyTextStyle}
-                                    variant="title"
-                                >
-                                    No potential matches found
-                                </Typography>
-                            </div>
-                        </ShowOnly>
-                        <ShowOnly when={potentialMatches?.length > 0}>
+                <Divider className={classes.dividerStyle} />
+
+                <div className={classes.potentialMatchesInternalBlock}>
+                    {potentialMatches.length === 0 ? (
+                        <div className={classes.emptyBlockStyles}>
+                            <Typography
+                                className={classes.emptyTextStyle}
+                                variant="title"
+                            >
+                                No potential matches found
+                            </Typography>
+                        </div>
+                    ) : (
+                        <List styles={styles.recordList}>
                             {potentialMatches.map(
                                 (
                                     {
@@ -116,7 +112,6 @@ const DashboardContributionRecord = ({
                                 ) => (
                                     <React.Fragment key={osId}>
                                         <ListItem
-                                            key={osId}
                                             className={classes.listItemStyle}
                                         >
                                             <div>
@@ -151,28 +146,25 @@ const DashboardContributionRecord = ({
                                                 Confirm
                                             </Button>
                                         </ListItem>
-                                        <ShowOnly
-                                            when={
-                                                potentialMatches.length > 1 &&
-                                                potentialMatches.length - 1 !==
-                                                    index
-                                            }
-                                        >
+
+                                        {index <
+                                            potentialMatches.length - 1 && (
                                             <Divider
                                                 className={
                                                     classes.innerDividerStyle
                                                 }
                                                 component="li"
                                             />
-                                        </ShowOnly>
+                                        )}
                                     </React.Fragment>
                                 ),
                             )}
-                        </ShowOnly>
-                    </div>
-                    <Divider className={classes.dividerStyle} component="li" />
-                </List>
+                        </List>
+                    )}
+                </div>
+                <Divider className={classes.dividerStyle} />
             </div>
+
             <div className={classes.buttonsContainerStyles}>
                 <Button
                     color="primary"
