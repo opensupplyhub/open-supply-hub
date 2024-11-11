@@ -22,7 +22,7 @@ export const completeFetchingPotentialMatches = createAction(
 export const cleanupContributionRecord = createAction(
     'CLEANUP_CONTRIBUTION_RECORD',
 );
-
+// NOSONAR: justification for ignoring specific code
 // TODO: Remove mock data and replace with actual API call as part of https://opensupplyhub.atlassian.net/browse/OSDEV-1347
 const eventMockData = {
     moderation_id: 1,
@@ -48,6 +48,7 @@ const eventMockData = {
     claim_id: 0,
 };
 
+// NOSONAR: justification for ignoring specific code
 // TODO: Remove mock data and replace with actual API call as part  of /v1/production-locations endpoint
 const potentialMatchesMockData = [
     {
@@ -90,7 +91,6 @@ const potentialMatchesMockData = [
 export function fetchModerationEvent(moderationID) {
     return async dispatch => {
         dispatch(startFetchingModerationEvent());
-
         // TODO: Replace the mock implementation with an actual API call as part of https://opensupplyhub.atlassian.net/browse/OSDEV-1347
         return new Promise(resolve => {
             setTimeout(() => resolve({ data: eventMockData }), 1000);
