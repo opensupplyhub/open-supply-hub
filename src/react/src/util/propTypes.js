@@ -520,13 +520,13 @@ export const moderationEventPropType = shape({
     cleaned_data: shape({
         name: string.isRequired,
         address: string.isRequired,
-        country: productionLocationCountryPropType,
+        country: productionLocationCountryPropType.isRequired,
     }),
     contributor_id: number.isRequired,
     contributor_name: string.isRequired,
     request_type: string.isRequired,
     source: string.isRequired,
-    moderation_status: string.isRequired,
+    moderation_status: oneOf(['PENDING', 'APPROVED', 'REJECTED']).isRequired,
     status_change_date: string,
     claim_id: number,
 });
@@ -542,12 +542,12 @@ export const potentialMatchesPropType = arrayOf(
         location_type: arrayOf(string),
         processing_type: arrayOf(string),
         number_of_workers: shape({
-            min: number,
-            max: number,
+            min: number.isRequired,
+            max: number.isRequired,
         }),
         coordinates: shape({
-            lat: number,
-            lng: number,
+            lat: number.isRequired,
+            lng: number.isRequired,
         }),
         local_name: string,
         description: string,
@@ -558,7 +558,7 @@ export const potentialMatchesPropType = arrayOf(
         affiliations: arrayOf(string),
         certifications_standards_regulations: arrayOf(string),
         historical_os_id: arrayOf(string),
-        country: productionLocationCountryPropType,
+        country: productionLocationCountryPropType.isRequired,
         claim_status: string,
     }),
 );
