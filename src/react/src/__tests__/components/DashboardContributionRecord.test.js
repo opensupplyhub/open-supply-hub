@@ -83,22 +83,22 @@ describe('DashboardContributionRecord component', () => {
 
   test('should render event data when provided', async () => {
     const event = {
-      moderation_id: 1,
-      created_at: '2024-10-17T11:30:20.287Z',
-      updated_at: '2024-10-18T11:30:20.287Z',
-      os_id: 'CN2021250D1DTN7',
+      moderation_id: 14,
+      created_at: '2024-11-17T11:33:20.287Z',
+      updated_at: '2024-12-18T21:30:20.187Z',
+      os_id: 'CN2021250D1DTU7',
       cleaned_data: {
-          name: 'Eco Friendly Plastics',
-          address: '435 Main St, Manhattan, NY - USA',
+          name: 'Eco Friendly Plastics Test',
+          address: '764 Main St, Manhattan, NY - USA',
           country: {
               name: 'Germany',
               alpha_2: 'DE',
               alpha_3: 'DEU',
-              numeric: '276',
+              numeric: '286',
           },
       },
       contributor_id: 0,
-      contributor_name: 'Green Solutions Corp',
+      contributor_name: 'Green Solutions Corp Test',
       request_type: 'CREATE',
       source: 'API',
       moderation_status: 'PENDING',
@@ -117,9 +117,9 @@ describe('DashboardContributionRecord component', () => {
   test('should render potential matches when available', async () => {
     const potentialMatches = [
       {
-          os_id: 'CN2021250D1DTN7',
-          name: 'Test name INC',
-          address: '435 Main St, Manhattan, NY - USA',
+          os_id: 'CN2031250H1DTN7',
+          name: 'Test name INC Test',
+          address: '495 Main St, Manhattan, NY - US',
           sector: ['Apparel'],
           parent_company: 'ASI GLOBAL LIMITED',
           product_type: ['Accessories'],
@@ -155,8 +155,8 @@ describe('DashboardContributionRecord component', () => {
     const { getByText } = renderComponent({ potentialMatches });
 
     await waitFor(() => {
-      expect(getByText('Name: Test name INC')).toBeInTheDocument();
-      expect(getByText('Address: 435 Main St, Manhattan, NY - USA')).toBeInTheDocument();
+      expect(getByText('Test name INC Test')).toBeInTheDocument();
+      expect(getByText('495 Main St, Manhattan, NY - US')).toBeInTheDocument();
       expect(getByText('Claimed Status: unclaimed')).toBeInTheDocument();
       expect(getByText('Potential Matches (1)')).toBeInTheDocument();
     });

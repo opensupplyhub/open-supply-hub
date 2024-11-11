@@ -22,16 +22,16 @@ export const completeFetchingPotentialMatches = createAction(
 export const cleanupContributionRecord = createAction(
     'CLEANUP_CONTRIBUTION_RECORD',
 );
-// NOSONAR: justification for ignoring specific code
+
 // TODO: Remove mock data and replace with actual API call as part of https://opensupplyhub.atlassian.net/browse/OSDEV-1347
 const eventMockData = {
-    moderation_id: 1,
-    created_at: '2024-10-17T11:30:20.287Z',
-    updated_at: '2024-10-18T11:30:20.287Z',
-    os_id: 'CN2021250D1DTN7',
+    moderation_id: 12,
+    created_at: '2024-06-13T15:30:20.287Z',
+    updated_at: '2024-09-20T11:35:20.287Z',
+    os_id: 'FN2071250D1DTN7',
     cleaned_data: {
-        name: 'Eco Friendly Plastics',
-        address: '435 Main St, Manhattan, NY - USA',
+        name: 'Eco Test Friendly Plastics',
+        address: '4999 Main St, Manhattan, NY - USA',
         country: {
             name: 'Germany',
             alpha_2: 'DE',
@@ -40,26 +40,24 @@ const eventMockData = {
         },
     },
     contributor_id: 0,
-    contributor_name: 'Green Solutions Corp',
+    contributor_name: 'Green Test Solutions Corp',
     request_type: 'CREATE',
     source: 'API',
     moderation_status: 'PENDING',
     moderation_decision_date: null,
     claim_id: 0,
 };
-
-// NOSONAR: justification for ignoring specific code
 // TODO: Remove mock data and replace with actual API call as part  of /v1/production-locations endpoint
 const potentialMatchesMockData = [
     {
-        os_id: 'CN2021250D1DTN7',
-        name: 'Test name INC',
-        address: '435 Main St, Manhattan, NY - USA',
+        os_id: 'CY2021280D1DTN7',
+        name: 'Test name INC NEW',
+        address: '1523 Main St, Manhattan, NY - USA',
         sector: ['Apparel'],
-        parent_company: 'ASI GLOBAL LIMITED',
+        parent_company: 'ASI TEST GLOBAL LIMITED',
         product_type: ['Accessories'],
         location_type: [],
-        processing_type: ['Final Product Assembly'],
+        processing_type: ['Product Assembly'],
         number_of_workers: {
             min: 0,
             max: 0,
