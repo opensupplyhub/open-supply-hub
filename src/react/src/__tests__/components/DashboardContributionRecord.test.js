@@ -151,12 +151,11 @@ describe('DashboardContributionRecord component', () => {
           claim_status: 'unclaimed',
       },
     ];
-
-    const { getByText } = renderComponent({ potentialMatches });
+    const {getByText}= renderComponent({potentialMatches});
 
     await waitFor(() => {
-      expect(getByText('Test name INC Test')).toBeInTheDocument();
-      expect(getByText('495 Main St, Manhattan, NY - US')).toBeInTheDocument();
+      expect(getByText('Name: Test name INC NEW')).toBeInTheDocument();
+      expect(getByText('Address: 1523 Main St, Manhattan, NY - USA')).toBeInTheDocument();
       expect(getByText('Claimed Status: unclaimed')).toBeInTheDocument();
       expect(getByText('Potential Matches (1)')).toBeInTheDocument();
     });

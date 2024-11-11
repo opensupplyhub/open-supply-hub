@@ -656,6 +656,7 @@ export const makeDownloadExcelButtonStyles = theme =>
 
 export const makeDashboardContributionRecordStyles = theme =>
     Object.freeze({
+        errorStyle: Object.freeze({ color: 'red' }),
         loaderStyles: Object.freeze({
             display: 'block',
             margin: 'auto',

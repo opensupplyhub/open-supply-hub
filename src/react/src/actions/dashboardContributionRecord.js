@@ -1,14 +1,14 @@
 import { createAction } from 'redux-act';
 import { logErrorAndDispatchFailure } from '../util/util';
 
-export const startFetchingModerationEvent = createAction(
-    'START_FETCHING_MODERATION_EVENT',
+export const startFetchingSingleModerationEvent = createAction(
+    'START_FETCHING_SINGLE_MODERATION_EVENT',
 );
-export const failFetchingModerationEvent = createAction(
-    'FAIL_FETCHING_MODERATION_EVENT',
+export const failFetchingSingleModerationEvent = createAction(
+    'FAIL_FETCHING_SINGLE_MODERATION_EVENT',
 );
-export const completeFetchingModerationEvent = createAction(
-    'COMPLETE_FETCHING_MODERATION_EVENT',
+export const completeFetchingSingleModerationEvent = createAction(
+    'COMPLETE_FETCHING_SINGLE_MODERATION_EVENT',
 );
 export const startFetchingPotentialMatches = createAction(
     'START_FETCHING_POTENTIAL_MATCHES',
@@ -86,20 +86,22 @@ const potentialMatchesMockData = [
 ];
 
 // eslint-disable-next-line no-unused-vars
-export function fetchModerationEvent(moderationID) {
+export function fetchSingleModerationEvent(moderationID) {
     return async dispatch => {
-        dispatch(startFetchingModerationEvent());
+        dispatch(startFetchingSingleModerationEvent());
         // TODO: Replace the mock implementation with an actual API call as part of https://opensupplyhub.atlassian.net/browse/OSDEV-1347
         return new Promise(resolve => {
             setTimeout(() => resolve({ data: eventMockData }), 1000);
         })
-            .then(({ data }) => dispatch(completeFetchingModerationEvent(data)))
+            .then(({ data }) =>
+                dispatch(completeFetchingSingleModerationEvent(data)),
+            )
             .catch(err =>
                 dispatch(
                     logErrorAndDispatchFailure(
                         err,
                         'An error prevented fetching moderation event',
-                        failFetchingModerationEvent,
+                        failFetchingSingleModerationEvent,
                     ),
                 ),
             );

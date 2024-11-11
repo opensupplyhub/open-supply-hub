@@ -17,21 +17,9 @@ import {
     potentialMatchesPropType,
 } from '../../util/propTypes';
 import {
-    fetchModerationEvent,
+    fetchSingleModerationEvent,
     fetchPotentialMatches,
 } from '../../actions/dashboardContributionRecord';
-
-const styles = {
-    recordList: {
-        py: 0,
-        width: '100%',
-        maxHeight: 360,
-        borderRadius: 2,
-        border: '3px solid',
-        borderColor: 'divider',
-        backgroundColor: 'background.paper',
-    },
-};
 
 const DashboardContributionRecord = ({
     event,
@@ -50,7 +38,7 @@ const DashboardContributionRecord = ({
 
     if (fetchEventError) {
         return (
-            <Typography variant="body2" style={{ color: 'red' }}>
+            <Typography variant="body2" className={classes.errorStyle}>
                 {fetchEventError}
             </Typography>
         );
@@ -99,7 +87,7 @@ const DashboardContributionRecord = ({
                             </Typography>
                         </div>
                     ) : (
-                        <List styles={styles.recordList}>
+                        <List>
                             {potentialMatches.map(
                                 (
                                     {
@@ -218,7 +206,7 @@ DashboardContributionRecord.propTypes = {
 
 const mapStateToProps = ({
     dashboardContributionRecord: {
-        moderationEvent: {
+        singleModerationEvent: {
             event,
             fetching: eventFetching,
             error: fetchEventError,
@@ -246,7 +234,7 @@ const mapDispatchToProps = (
         },
     },
 ) => ({
-    fetchEvent: () => dispatch(fetchModerationEvent(moderationID)),
+    fetchEvent: () => dispatch(fetchSingleModerationEvent(moderationID)),
     fetchMatches: () => dispatch(fetchPotentialMatches()),
 });
 

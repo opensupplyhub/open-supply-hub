@@ -2,9 +2,9 @@ import { createReducer } from 'redux-act';
 import update from 'immutability-helper';
 
 import {
-    startFetchingModerationEvent,
-    failFetchingModerationEvent,
-    completeFetchingModerationEvent,
+    startFetchingSingleModerationEvent,
+    failFetchingSingleModerationEvent,
+    completeFetchingSingleModerationEvent,
     startFetchingPotentialMatches,
     failFetchingPotentialMatches,
     completeFetchingPotentialMatches,
@@ -12,7 +12,7 @@ import {
 } from '../actions/dashboardContributionRecord';
 
 const initialState = Object.freeze({
-    moderationEvent: Object.freeze({
+    singleModerationEvent: Object.freeze({
         fetching: false,
         error: null,
         event: Object.freeze({}),
@@ -26,25 +26,29 @@ const initialState = Object.freeze({
 
 export default createReducer(
     {
-        [startFetchingModerationEvent]: state =>
+        [startFetchingSingleModerationEvent]: state =>
             update(state, {
-                moderationEvent: {
+                singleModerationEvent: {
                     fetching: { $set: true },
-                    error: { $set: initialState.moderationEvent.error },
+                    error: { $set: initialState.singleModerationEvent.error },
                 },
             }),
-        [failFetchingModerationEvent]: (state, error) =>
+        [failFetchingSingleModerationEvent]: (state, error) =>
             update(state, {
-                moderationEvent: {
-                    fetching: { $set: initialState.moderationEvent.fetching },
+                singleModerationEvent: {
+                    fetching: {
+                        $set: initialState.singleModerationEvent.fetching,
+                    },
                     error: { $set: error },
                 },
             }),
-        [completeFetchingModerationEvent]: (state, payload) =>
+        [completeFetchingSingleModerationEvent]: (state, payload) =>
             update(state, {
-                moderationEvent: {
-                    fetching: { $set: initialState.moderationEvent.fetching },
-                    error: { $set: initialState.moderationEvent.error },
+                singleModerationEvent: {
+                    fetching: {
+                        $set: initialState.singleModerationEvent.fetching,
+                    },
+                    error: { $set: initialState.singleModerationEvent.error },
                     event: { $set: payload },
                 },
             }),

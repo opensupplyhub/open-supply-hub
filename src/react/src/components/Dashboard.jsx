@@ -265,12 +265,12 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
                         exact
                         path={dashboardModerationQueueRoute}
                         component={DashboardModerationQueue}
-                    />{' '}
+                    />
                     <Route
                         exact
                         path={dashboardContributionRecordRoute}
                         component={DashboardContributionRecord}
-                    />{' '}
+                    />
                     <Route
                         exact
                         path={dashboardClaimsDetailsRoute}
