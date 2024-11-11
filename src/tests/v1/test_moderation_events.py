@@ -1,17 +1,73 @@
 import requests
-from .base_production_locations_test \
-    import BaseProductionLocationsTest
+from .base_moderation_events_test \
+    import BaseModerationEventsTest
 
 
-class ProductionLocationsTest(BaseProductionLocationsTest):
+class ModerationEventsTest(BaseModerationEventsTest):
 
-    def test_production_locations_status(self):
+    def test_moderation_events_status(self):
         response = requests.get(
-            f"{self.root_url}/api/v1/production-locations/",
+            f"{self.root_url}/api/v1/moderation-events/",
             headers=self.basic_headers,
         )
         self.assertEqual(response.status_code, 200)
 
+
+    def test_moderation_events_exact(self):
+        # Index a document
+        doc = {
+            "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6806",
+            "created_at":"2024-10-10T20:00:00Z",
+            "updated_at":"2024-10-10T20:00:00Z",
+            "status_change_date":"2024-10-10T21:00:00Z",
+            "request_type":"CREATE",
+            "os_id": "null",
+            "contributor_id": 8,
+            "raw_data":{
+                "country":"Colombia",
+                "name":"Bogotá Tech Hub",
+                "address":"505 Tech Dr, Bogotá"
+            },
+            "cleaned_data":{
+                "country":{
+                "name":"Colombia",
+                "alpha_2":"CO",
+                "alpha_3":"COL",
+                "numeric":"170"
+                },
+                "name":"Bogotá Tech Hub",
+                "address":"505 Tech Dr, Bogotá"
+            },
+            "geocode_result":{
+                "latitude":4.711,
+                "longitude":-74.0721
+            },
+            "status":"APPROVED",
+            "source":"API",
+            "claim_id": "null"
+        }
+
+        self.open_search_client.index(
+            index=self.index_name,
+            body=doc,
+            id=self.open_search_client.count()
+        )
+        self.open_search_client.indices.refresh(
+            index=self.index_name
+        )
+
+        search_name = "Silver Composite Textile Mills Ltd."
+        query = f"?size=1&name={search_name}"
+
+        response = requests.get(
+                f"{self.root_url}/api/v1/production-locations/{query}",
+                headers=self.basic_headers,
+            )
+
+        result = response.json()
+        self.assertEqual(result['data'][0]['os_id'], 'BD2020052SV22HT')
+
+    '''
     def test_production_locations_exact(self):
         # Index a document
         doc = {
@@ -31,13 +87,12 @@ class ProductionLocationsTest(BaseProductionLocationsTest):
             "claim_status": "unclaimed"
         }
         self.open_search_client.index(
-            # index=self.production_locations_index_name,
-            index="production-locations",
+            index=self.index_name,
             body=doc,
             id=self.open_search_client.count()
         )
         self.open_search_client.indices.refresh(
-            index=self.production_locations_index_name
+            index=self.index_name
         )
 
         search_name = "Silver Composite Textile Mills Ltd."
@@ -84,13 +139,12 @@ class ProductionLocationsTest(BaseProductionLocationsTest):
             },
         }
         self.open_search_client.index(
-            # index=self.production_locations_index_name,
-            index="production-locations",
+            index=self.index_name,
             body=doc,
             id=self.open_search_client.count()
         )
         self.open_search_client.indices.refresh(
-            index=self.production_locations_index_name
+            index=self.index_name
         )
 
         search_os_id = "US2020052SV22HT"
@@ -106,3 +160,4 @@ class ProductionLocationsTest(BaseProductionLocationsTest):
         self.assertEqual(
             result['data'][0]['historical_os_id'], 'US20203545HUE4L'
         )
+    '''
