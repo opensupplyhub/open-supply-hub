@@ -25,7 +25,7 @@ export const cleanupContributionRecord = createAction(
 
 // TODO: Remove mock data and replace with actual API call as part of https://opensupplyhub.atlassian.net/browse/OSDEV-1347
 const eventMockData = {
-    moderation_id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+    moderation_id: 1,
     created_at: '2024-10-17T11:30:20.287Z',
     updated_at: '2024-10-18T11:30:20.287Z',
     os_id: 'CN2021250D1DTN7',
