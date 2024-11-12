@@ -227,7 +227,7 @@ class ModerationEventsTest(BaseAPITest):
         self.assertEqual(response.status_code, 200)
 
     def test_invalid_moderation_id(self):
-        invalid_moderation_id = '123!'  # Invalid, contains a special character
+        invalid_moderation_id = '123!'
         query = f"?moderation_id={invalid_moderation_id}"
         response = requests.get(
             f"{self.root_url}/api/v1/moderation-events/{query}",
@@ -235,7 +235,7 @@ class ModerationEventsTest(BaseAPITest):
         )
         result = response.json()
 
-        self.assertEqual(response.status_code, 400)  # Bad request for invalid moderation_id
+        self.assertEqual(response.status_code, 400)
         self.assertIn('errors', result)
         self.assertEqual(len(result['errors']), 1)
 
