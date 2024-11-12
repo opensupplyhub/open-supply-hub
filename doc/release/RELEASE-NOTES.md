@@ -10,6 +10,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: November 16, 2024
 
+### Database changes
+#### Migrations:
+* 0159_alter_status_of_moderation_events_table.py - This migration alters status of api_moderationevent table.
+
 ### Code/API changes
 * [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - Explicitly set the number of shards and the number of replicas for the "production locations" and "moderation events" OpenSearch indexes. Based on the OpenSearch documentation, a storage size of 10–30 GB is preferred for workloads that prioritize low search latency. Additionally, having too many small shards can unnecessarily exhaust memory by storing excessive metadata. Currently, the "production locations" index utilizes 651.9 MB, including replicas, while the "moderation events" index is empty. This indicates that one shard and one replica should be sufficient for the "production locations" and "moderation events" indexes.
 * Moved all the files related to the OpenSearch service to the existing `src/django/api/services/opensearch` folder within the `api` app of the Django application. This should make it easier to navigate through the files and clarify the location of all OpenSearch service-related files in one place within the `api` app in Django.
@@ -48,6 +52,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
         - Open the available domains and locate the domain for the corresponding environment. Open it, then navigate to the security configuration and click "Edit".
         - Find the section titled "Fine-grained access control", and under this section, you will find an "IAM ARN" input field. Paste the copied ARN into this field and save the changes. It may take several minutes to apply. Make sure that the "Configuration change status" field has green status.
     3. Then, return to the running `Deploy to AWS` workflow and ensure that the logs for `clear_opensearch` job do not contain errors related to access for deleting the OpenSearch index or lock files in EFS storage. In case of **an access error**, simply rerun the `Deploy to AWS` workflow manually from the appropriate release Git tag.
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
 
 
 ## Release 1.23.0
