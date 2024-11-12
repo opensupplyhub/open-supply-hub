@@ -1,13 +1,13 @@
 import unittest
 from django.test import TestCase
 from api.views.v1.opensearch_query_builder. \
-    opensearch_query_builder import OpenSearchQueryBuilder
+    production_locations_query_builder import ProductionLocationsQueryBuilder
 
 
 class TestOpenSearchQueryBuilder(TestCase):
 
     def setUp(self):
-        self.builder = OpenSearchQueryBuilder()
+        self.builder = ProductionLocationsQueryBuilder()
 
     def test_reset(self):
         self.builder.query_body['size'] = 20
