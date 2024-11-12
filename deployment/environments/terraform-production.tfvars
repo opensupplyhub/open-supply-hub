@@ -15,10 +15,10 @@ bastion_instance_type = "t3.nano"
 rds_allocated_storage = "128"
 rds_engine_version = "12"
 rds_parameter_group_family = "postgres12"
-rds_instance_type = "db.t3.2xlarge"
+rds_instance_type = "db.m6in.4xlarge"
 rds_database_identifier = "opensupplyhub-enc-prd"
 rds_database_name = "opensupplyhub"
-rds_multi_az = true
+rds_multi_az = false
 rds_storage_encrypted = true
 
 app_ecs_desired_count = "12"

@@ -3,8 +3,8 @@ from api.serializers.v1.opensearch_validation_interface \
 
 
 class SizeValidator(OpenSearchValidationInterface):
-    def validate_opensearch_params(self, data):
-        errors = []
+    def validate_opensearch_params(self, data) -> list[dict]:
+        errors: list[dict] = []
         size = data.get('size')
         size_limit = 250
 

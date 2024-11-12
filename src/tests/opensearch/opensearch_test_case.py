@@ -15,7 +15,7 @@ class OpenSearchIntegrationTestCase(unittest.TestCase):
             connection_class=RequestsHttpConnection,
         )
 
-        self.index_name = os.getenv('OPENSEARCH_INDEX_NAME')
+        self.production_locations_index_name = os.getenv('OPENSEARCH_PRODUCTION_LOCATIONS_INDEX')
 
     def getClient(self) -> OpenSearch:
         return self.__client
