@@ -158,6 +158,10 @@ class ModerationEvents(ViewSet):
         self.__update_item_with_facility_id(item, facility_id)
 
         FacilityListItemTemp.copy(item)
+
+        self.__create_facility_match_temp(item)
+        self.__create_facility_match(item)
+
         self.__update_event(event, item)
 
         return Response(
@@ -262,6 +266,30 @@ class ModerationEvents(ViewSet):
     def __update_item_with_facility_id(item, facility_id):
         item.facility_id = facility_id
         item.save()
+
+    @staticmethod
+    def __create_facility_match_temp(item):
+        return FacilityMatchTemp.objects.create(
+            facility_id=item.facility_id,
+            confidence=1.0,
+            facility_list_item_id=item.id,
+            status=FacilityMatchTemp.AUTOMATIC,
+            results={"match_type": "moderation_event"},
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+        )
+
+    @staticmethod
+    def __create_facility_match(item):
+        return FacilityMatch.objects.create(
+            facility_id=item.facility_id,
+            confidence=1.0,
+            facility_list_item_id=item.id,
+            status=FacilityMatch.AUTOMATIC,
+            results={"match_type": "moderation_event"},
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+        )
 
     @staticmethod
     def __update_event(event, item):
