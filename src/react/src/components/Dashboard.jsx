@@ -17,6 +17,7 @@ import DashboardApiBlock from './DashboardApiBlock';
 import DashboardLinkToOsId from './DashboardLinkToOsId';
 import DashboardGeocoder from './DashboardGeocoder';
 import DashboardModerationQueue from './Dashboard/DashboardModerationQueue';
+import DashboardContributionRecord from './Dashboard/DashboardContributionRecord';
 import FeatureFlag from './FeatureFlag';
 import RouteNotFound from './RouteNotFound';
 
@@ -38,6 +39,7 @@ import {
     dashboardGeocoderRoute,
     dashboardLinkOsIdRoute,
     dashboardModerationQueueRoute,
+    dashboardContributionRecordRoute,
 } from '../util/constants';
 
 import AppGrid from './AppGrid';
@@ -95,6 +97,7 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
             </FeatureFlag>
             <Link to={dashboardDeleteFacilityRoute}>Delete a Facility</Link>
             <Link to={dashboardMergeFacilitiesRoute}>Merge Two Facilities</Link>
+            {/* <Link to={dashboardModerationQueueRoute}>Moderation Queue</Link> */}
             <Link to={dashboardAdjustFacilityMatchesRoute}>
                 Adjust Facility Matches
             </Link>
@@ -222,6 +225,13 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
                                 'Moderation Queue',
                             )}
                         />
+                        <Route
+                            exact
+                            path={dashboardContributionRecordRoute}
+                            render={makeClickableDashboardLinkFn(
+                                'Contribution Record',
+                            )}
+                        />
                     </Switch>
                 }
             >
@@ -255,6 +265,11 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
                         exact
                         path={dashboardModerationQueueRoute}
                         component={DashboardModerationQueue}
+                    />
+                    <Route
+                        exact
+                        path={dashboardContributionRecordRoute}
+                        component={DashboardContributionRecord}
                     />
                     <Route
                         exact
