@@ -105,11 +105,12 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
 
     def add_range(self, field, query_params):
         if field in {
-            V1_PARAMETERS_LIST.NUMBER_OF_WORKERS,
-            V1_PARAMETERS_LIST.PERCENT_FEMALE_WORKERS
+                V1_PARAMETERS_LIST.NUMBER_OF_WORKERS,
+                V1_PARAMETERS_LIST.PERCENT_FEMALE_WORKERS
         }:
             min_value = query_params.get(f'{field}[min]')
             max_value = query_params.get(f'{field}[max]')
+
             min_value = int(min_value) if min_value else None
             max_value = int(max_value) if max_value else None
 
@@ -121,6 +122,7 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
 
             if range_query:
                 build_action = self.build_options.get(field)
+
                 if build_action:
                     build_action(field, range_query)
                 else:

@@ -196,7 +196,6 @@ class ModerationEventsTest(BaseAPITest):
             f"{self.root_url}/api/v1/moderation-events/{query}",
             headers=self.basic_headers,
         )
-        result = response.json()
 
         self.assertEqual(response.status_code, 200)
 
@@ -224,7 +223,6 @@ class ModerationEventsTest(BaseAPITest):
             f"{self.root_url}/api/v1/moderation-events/{query}",
             headers=self.basic_headers,
         )
-        result = response.json()
 
         self.assertEqual(response.status_code, 200)
 

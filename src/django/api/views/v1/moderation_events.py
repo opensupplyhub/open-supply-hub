@@ -28,7 +28,7 @@ class ModerationEvents(ViewSet):
 
     @handle_errors_decorator
     def list(self, request):
-        params, error_response = serialize_params(
+        _, error_response = serialize_params(
             ModerationEventsSerializer,
             request.GET
         )
