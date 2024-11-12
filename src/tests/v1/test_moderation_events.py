@@ -1,4 +1,4 @@
-from datetime import datetime
+from ...django.api.models.moderation_event import ModerationEvent
 import requests
 from .base_api_test \
     import BaseAPITest
@@ -14,7 +14,7 @@ class ModerationEventsTest(BaseAPITest):
         self.assertEqual(response.status_code, 200)
 
     def test_filter_by_status(self):
-        status = "APPROVED"
+        status = ModerationEvent.Status.APPROVED
         query = f"?status={status}"
         response = requests.get(
             f"{self.root_url}/api/v1/moderation-events/{query}",
@@ -26,7 +26,7 @@ class ModerationEventsTest(BaseAPITest):
         self.assertEqual(response.status_code, 200)
 
     def test_filter_by_request_type(self):
-        request_type = "CREATE"
+        request_type = ModerationEvent.RequestType.CREATE
         query = f"?request_type={request_type}"
         response = requests.get(
             f"{self.root_url}/api/v1/moderation-events/{query}",
@@ -50,8 +50,8 @@ class ModerationEventsTest(BaseAPITest):
         self.assertEqual(response.status_code, 200)
 
     def test_combined_filters(self):
-        status = "PENDING"
-        request_type = "CLAIM"
+        status = ModerationEvent.Status.PENDING
+        request_type = ModerationEvent.RequestType.CLAIM
         query = f"?status={status}&request_type={request_type}"
         response = requests.get(
             f"{self.root_url}/api/v1/moderation-events/{query}",
