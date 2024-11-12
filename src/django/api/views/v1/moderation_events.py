@@ -22,7 +22,9 @@ class ModerationEvents(ViewSet):
 
     opensearch_service = OpenSearchService()
     moderation_events_query_builder = ModerationEventsQueryBuilder()
-    opensearch_query_director = OpenSearchQueryDirector(moderation_events_query_builder)
+    opensearch_query_director = OpenSearchQueryDirector(
+        moderation_events_query_builder
+    )
 
     @handle_errors_decorator
     def list(self, request):
