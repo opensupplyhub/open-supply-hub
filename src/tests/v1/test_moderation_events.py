@@ -1,4 +1,4 @@
-from ...django.api.models.moderation_event import ModerationEvent
+from django.api.models.moderation_event import ModerationEvent
 import requests
 from .base_api_test \
     import BaseAPITest
@@ -38,7 +38,7 @@ class ModerationEventsTest(BaseAPITest):
         self.assertEqual(response.status_code, 200)
 
     def test_filter_by_source(self):
-        source = "API"
+        source = ModerationEvent.Source.API
         query = f"?source={source}"
         response = requests.get(
             f"{self.root_url}/api/v1/moderation-events/{query}",
