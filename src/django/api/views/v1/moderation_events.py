@@ -5,6 +5,7 @@ from api.views.v1.utils import (
     serialize_params,
     handle_errors_decorator
 )
+from api.permissions import IsRegisteredAndConfirmed
 from api.services.opensearch.search import OpenSearchService
 from api.views.v1.opensearch_query_builder.moderation_events_query_builder \
     import ModerationEventsQueryBuilder
@@ -28,6 +29,16 @@ class ModerationEvents(ViewSet):
 
     @handle_errors_decorator
     def list(self, request):
+        if not IsRegisteredAndConfirmed().has_permission(request, self):
+            return Response(
+                {
+                    "detail": (
+                        "Only an authorized user "
+                        "can perform this action."
+                    )
+                },
+                status=status.HTTP_401_UNAUTHORIZED
+            )
         params, error_response = serialize_params(
             ModerationEventsSerializer,
             request.GET
