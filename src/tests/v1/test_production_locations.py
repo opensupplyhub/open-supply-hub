@@ -22,7 +22,7 @@ class ProductionLocationsTest(BaseAPITest):
             )
 
         result = response.json()
-        self.assertEqual(result['data'][0]['os_id'], 'BD2020052SV22HT')
+        self.assertEqual(result['data'][0]['os_id'], 'BD2024317QZTH4Y')
 
     def test_production_locations_country(self):
 
