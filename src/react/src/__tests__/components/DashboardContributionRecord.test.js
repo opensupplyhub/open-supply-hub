@@ -1,8 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
+import { waitFor } from '@testing-library/react';
 import DashboardContributionRecord from '../../components/Dashboard/DashboardContributionRecord';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
-import { waitFor } from '@testing-library/react';
 import {
   completeFetchingPotentialMatches,
   completeFetchingSingleModerationEvent,
