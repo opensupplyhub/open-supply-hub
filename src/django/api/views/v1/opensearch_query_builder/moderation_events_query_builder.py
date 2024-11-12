@@ -90,7 +90,7 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
             self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER] = []
         '''
         There should always be sort if there is a search_after field.
-        So if it is empty, sort by name by default
+        So if it is empty, sort by created_at by default
         '''
         if not self.query_body['sort']:
             sort_criteria = {

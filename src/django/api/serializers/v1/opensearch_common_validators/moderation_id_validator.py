@@ -9,8 +9,8 @@ class ModerationIdValidator(OpenSearchValidationInterface):
         r'[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
     )
 
-    def validate_opensearch_params(self, data):
-        errors = []
+    def validate_opensearch_params(self, data) -> list[dict]:
+        errors: list[dict] = []
         moderation_id = data.get('moderation_id')
 
         if moderation_id is None:

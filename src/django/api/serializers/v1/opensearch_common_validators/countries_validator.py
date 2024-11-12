@@ -4,8 +4,8 @@ from api.serializers.v1.opensearch_validation_interface \
 
 
 class CountryValidator(OpenSearchValidationInterface):
-    def validate_opensearch_params(self, data):
-        errors = []
+    def validate_opensearch_params(self, data) -> list[dict]:
+        errors: list[dict] = []
         countries = data.get('country')
         valid_country_value_regexp = r'^[A-Z]{2}$'
 

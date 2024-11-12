@@ -5,8 +5,8 @@ from api.serializers.v1.opensearch_validation_interface \
 class SourceValidator(OpenSearchValidationInterface):
     VALID_SOURCES = {'SLC', 'API'}
 
-    def validate_opensearch_params(self, data):
-        errors = []
+    def validate_opensearch_params(self, data) -> list[dict]:
+        errors: list[dict] = []
         source = data.get('source')
 
         if not source:
