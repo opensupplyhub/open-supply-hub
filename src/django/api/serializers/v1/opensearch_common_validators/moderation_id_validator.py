@@ -1,3 +1,4 @@
+from typing import List
 import re
 from api.serializers.v1.opensearch_validation_interface \
     import OpenSearchValidationInterface
@@ -9,8 +10,8 @@ class ModerationIdValidator(OpenSearchValidationInterface):
         r'[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
     )
 
-    def validate_opensearch_params(self, data) -> list[dict]:
-        errors: list[dict] = []
+    def validate_opensearch_params(self, data) -> List[dict]:
+        errors: List[dict] = []
         moderation_id = data.get('moderation_id')
 
         if moderation_id is None:

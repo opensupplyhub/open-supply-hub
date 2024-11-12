@@ -1,10 +1,11 @@
+from typing import List
 from api.serializers.v1.opensearch_validation_interface \
     import OpenSearchValidationInterface
 
 
 class PercentOfFemaleWorkersValidator(OpenSearchValidationInterface):
-    def validate_opensearch_params(self, data) -> list[dict]:
-        errors: list[dict] = []
+    def validate_opensearch_params(self, data) -> List[dict]:
+        errors: List[dict] = []
 
         percent_female_workers_min = data.get('percent_female_workers_min')
         percent_female_workers_max = data.get('percent_female_workers_max')
