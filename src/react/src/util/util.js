@@ -713,6 +713,9 @@ export const makeApprovedClaimDetailsLink = claimID => `/claimed/${claimID}`;
 export const makeFacilityClaimDetailsLink = claimID =>
     `/dashboard/claims/${claimID}`;
 
+export const makeContributionRecordLink = moderationID =>
+    `/dashboard/moderation-queue/contribution-record/${moderationID}`;
+
 export const makeDashboardContributorListLink = ({
     contributorID,
     matchResponsibility,
@@ -1285,4 +1288,9 @@ export const multiValueBackgroundHandler = (value, origin) => {
         return MODERATION_STATUS_COLORS[value] || 'default';
     }
     return COLOURS.MINT_GREEN;
+};
+
+export const openInNewTab = url => {
+    const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+    if (newWindow) newWindow.opener = null;
 };
