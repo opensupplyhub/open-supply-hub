@@ -20,11 +20,13 @@ class ModerationEvents(ViewSet):
     swagger_schema = None
     permission_classes = [IsRegisteredAndConfirmed]
 
-    opensearch_service = OpenSearchService()
-    moderation_events_query_builder = ModerationEventsQueryBuilder()
-    opensearch_query_director = OpenSearchQueryDirector(
-        moderation_events_query_builder
-    )
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.opensearch_service = OpenSearchService()
+        self.moderation_events_query_builder = ModerationEventsQueryBuilder()
+        self.opensearch_query_director = OpenSearchQueryDirector(
+                self.moderation_events_query_builder
+            )
 
     @handle_errors_decorator
     def list(self, request):
