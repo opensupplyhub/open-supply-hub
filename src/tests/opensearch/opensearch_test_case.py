@@ -16,7 +16,6 @@ class OpenSearchIntegrationTestCase(unittest.TestCase):
         )
 
         self.production_locations_index_name = os.getenv('OPENSEARCH_PRODUCTION_LOCATIONS_INDEX')
-        self.moderation_events_index_name = os.getenv('OPENSEARCH_MODERATION_EVENTS_INDEX')
 
     def getClient(self) -> OpenSearch:
         return self.__client

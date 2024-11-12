@@ -12,7 +12,6 @@ services:
       - OPENSEARCH_HOST=opensearch-single-node
       - OPENSEARCH_PORT=9200
       - OPENSEARCH_PRODUCTION_LOCATIONS_INDEX=production-locations
-      - OPENSEARCH_MODERATION_EVENTS_INDEX=moderation-events
       - REACT_HOST=react
       - REACT_PORT=6543
       - USER_API_TOKEN=1d18b962d6f976b0b7e8fcf9fcc39b56cf278051
