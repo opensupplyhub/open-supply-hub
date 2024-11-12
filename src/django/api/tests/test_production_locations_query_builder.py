@@ -4,7 +4,7 @@ from api.views.v1.opensearch_query_builder. \
     production_locations_query_builder import ProductionLocationsQueryBuilder
 
 
-class TestOpenSearchQueryBuilder(TestCase):
+class TestProductionLocationsQueryBuilder(TestCase):
 
     def setUp(self):
         self.builder = ProductionLocationsQueryBuilder()
@@ -187,7 +187,6 @@ class TestOpenSearchQueryBuilder(TestCase):
         final_query = self.builder.get_final_query_body()
         expected = {
             'track_total_hits': 'true',
-            'size': 10,
             'query': {'bool': {'must': []}},
             'sort': []
         }
