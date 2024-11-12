@@ -11,6 +11,7 @@ services:
     environment:
       - OPENSEARCH_HOST=opensearch-single-node
       - OPENSEARCH_PORT=9200
+      - OPENSEARCH_MODERATION_EVENTS_INDEX=moderation-events
       - OPENSEARCH_PRODUCTION_LOCATIONS_INDEX=production-locations
       - REACT_HOST=react
       - REACT_PORT=6543

@@ -105,8 +105,8 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
 
     def add_range(self, field, query_params):
         if field in {
-                V1_PARAMETERS_LIST.NUMBER_OF_WORKERS,
-                V1_PARAMETERS_LIST.PERCENT_FEMALE_WORKERS
+            V1_PARAMETERS_LIST.NUMBER_OF_WORKERS,
+            V1_PARAMETERS_LIST.PERCENT_FEMALE_WORKERS
         }:
             min_value = query_params.get(f'{field}[min]')
             max_value = query_params.get(f'{field}[max]')
@@ -119,7 +119,6 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
                 range_query['gte'] = min_value
             if max_value is not None:
                 range_query['lte'] = max_value
-
             if range_query:
                 build_action = self.build_options.get(field)
 
