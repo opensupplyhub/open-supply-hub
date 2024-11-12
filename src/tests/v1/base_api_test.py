@@ -3,7 +3,7 @@ from opensearch.opensearch_test_case \
     import OpenSearchIntegrationTestCase
 
 
-class BaseProductionLocationsTest(OpenSearchIntegrationTestCase):
+class BaseAPITest(OpenSearchIntegrationTestCase):
 
     def setUp(self):
         super().setUp()

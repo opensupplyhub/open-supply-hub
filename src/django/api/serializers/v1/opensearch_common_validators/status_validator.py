@@ -5,8 +5,8 @@ from api.serializers.v1.opensearch_validation_interface \
 class StatusValidator(OpenSearchValidationInterface):
     VALID_STATUSES = {'PENDING', 'APPROVED', 'REJECTED'}
 
-    def validate_opensearch_params(self, data):
-        errors = []
+    def validate_opensearch_params(self, data) -> list[dict]:
+        errors: list[dict] = []
         status = data.get('status')
 
         if not status:

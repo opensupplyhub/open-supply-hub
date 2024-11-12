@@ -3,8 +3,8 @@ from api.serializers.v1.opensearch_validation_interface \
 
 
 class RequestTypeValidator(OpenSearchValidationInterface):
-    def validate_opensearch_params(self, data):
-        errors = []
+    def validate_opensearch_params(self, data) -> list[dict]:
+        errors: list[dict] = []
         request_type = data.get('request_type')
 
         if not request_type:
