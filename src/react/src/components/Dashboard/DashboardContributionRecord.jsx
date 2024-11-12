@@ -23,7 +23,7 @@ import {
 
 const DashboardContributionRecord = ({
     event,
-    potentialMatches,
+    matches,
     fetchEventError,
     classes,
     fetchEvent,
@@ -45,7 +45,7 @@ const DashboardContributionRecord = ({
     }
 
     const jsonResults = JSON.stringify(event, null, 2);
-    const potentialMatchCount = potentialMatches?.length || 0;
+    const potentialMatchCount = matches?.length || 0;
 
     return (
         <>
@@ -77,7 +77,7 @@ const DashboardContributionRecord = ({
                 <Divider className={classes.dividerStyle} />
 
                 <div className={classes.potentialMatchesInternalBlock}>
-                    {potentialMatches.length === 0 ? (
+                    {matches.length === 0 ? (
                         <div className={classes.emptyBlockStyles}>
                             <Typography
                                 className={classes.emptyTextStyle}
@@ -88,10 +88,10 @@ const DashboardContributionRecord = ({
                         </div>
                     ) : (
                         <List>
-                            {potentialMatches.map(
+                            {matches.map(
                                 (
                                     {
-                                        osId,
+                                        os_id: osId,
                                         name,
                                         address,
                                         claim_status: claimStatus,
@@ -135,8 +135,7 @@ const DashboardContributionRecord = ({
                                             </Button>
                                         </ListItem>
 
-                                        {index <
-                                            potentialMatches.length - 1 && (
+                                        {index < matches.length - 1 && (
                                             <Divider
                                                 className={
                                                     classes.innerDividerStyle
@@ -188,14 +187,14 @@ const DashboardContributionRecord = ({
 
 DashboardContributionRecord.defaultProps = {
     event: {},
-    potentialMatches: [],
+    matches: [],
     fetchEventError: null,
     fetchPotentialMatchError: null,
 };
 
 DashboardContributionRecord.propTypes = {
     event: moderationEventPropType,
-    potentialMatches: potentialMatchesPropType,
+    matches: potentialMatchesPropType,
     eventFetching: bool.isRequired,
     fetchEvent: func.isRequired,
     fetchMatches: func.isRequired,
@@ -212,7 +211,7 @@ const mapStateToProps = ({
             error: fetchEventError,
         },
         potentialMatches: {
-            potentialMatches,
+            matches,
             fetching: potentialMatchFetching,
             error: fetchPotentialMatchError,
         },
@@ -220,7 +219,7 @@ const mapStateToProps = ({
 }) => ({
     event,
     eventFetching,
-    potentialMatches,
+    matches,
     potentialMatchFetching,
     fetchEventError,
     fetchPotentialMatchError,

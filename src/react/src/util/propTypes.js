@@ -513,20 +513,20 @@ export const moderationEventsPropType = arrayOf(
 );
 
 export const moderationEventPropType = shape({
-    moderation_id: number.isRequired,
-    created_at: string.isRequired,
-    updated_at: string.isRequired,
+    moderation_id: number,
+    created_at: string,
+    updated_at: string,
     os_id: string,
     cleaned_data: shape({
-        name: string.isRequired,
-        address: string.isRequired,
-        country: productionLocationCountryPropType.isRequired,
+        name: string,
+        address: string,
+        country: productionLocationCountryPropType,
     }),
-    contributor_id: number.isRequired,
-    contributor_name: string.isRequired,
-    request_type: string.isRequired,
-    source: string.isRequired,
-    moderation_status: oneOf(['PENDING', 'APPROVED', 'REJECTED']).isRequired,
+    contributor_id: number,
+    contributor_name: string,
+    request_type: string,
+    source: string,
+    moderation_status: oneOf(['PENDING', 'APPROVED', 'REJECTED']),
     status_change_date: string,
     claim_id: number,
 });

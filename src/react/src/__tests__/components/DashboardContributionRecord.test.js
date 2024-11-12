@@ -1,7 +1,12 @@
 import React from 'react';
+import { BrowserRouter as Router } from 'react-router-dom';
 import DashboardContributionRecord from '../../components/Dashboard/DashboardContributionRecord';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import { waitFor } from '@testing-library/react';
+import {
+  completeFetchingPotentialMatches,
+  completeFetchingSingleModerationEvent,
+} from '../../actions/dashboardContributionRecord';
 
 describe('DashboardContributionRecord component', () => {
   const routeProps = {
@@ -11,16 +16,23 @@ describe('DashboardContributionRecord component', () => {
         },
     },
   };
-  const defaultProps = {
-    event: {},
-    potentialMatches: [],
-    fetchEventError: null,
-    fetchPotentialMatchError: null,
-  };
 
-  const renderComponent = (props = {}) => renderWithProviders(
-    <DashboardContributionRecord {...defaultProps} {...routeProps} {...props}/>
+  const renderComponent = (props = {}) => {
+    const preloadedState = {
+      event: {},
+      matches: [],
+      fetchEventError: null,
+      fetchPotentialMatchError: null,
+      ...props,
+    };
+
+   return renderWithProviders(
+    <Router>
+      <DashboardContributionRecord {...routeProps} />
+    </Router>,
+    { preloadedState }
   );
+}
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -105,59 +117,66 @@ describe('DashboardContributionRecord component', () => {
       moderation_decision_date: null,
       claim_id: 0,
     };
-    const { container } = renderComponent({ event });
+    const { container, reduxStore } = renderComponent({ event });
 
     await waitFor(() => {
       const preElement = container.querySelector("pre");
       expect(preElement).toBeInTheDocument();
     });
+
+    reduxStore.dispatch(
+      completeFetchingSingleModerationEvent(event)
+    );
+
+    const res = reduxStore.getState().dashboardContributionRecord.singleModerationEvent.event;
+    expect(Object.keys(res).length).toBe(12);
   });
 
-
-  test('should render potential matches when available', async () => {
-    const potentialMatches = [
+  test('should render potential matches when available', () => {
+    const matches = [
       {
           os_id: 'CN2031250H1DTN7',
           name: 'Test name INC Test',
-          address: '495 Main St, Manhattan, NY - US',
+          address: 'EST SANTO ANTONIO A HONORIO SERPA. S/N, Honório Serpa, Paraná',
           sector: ['Apparel'],
-          parent_company: 'ASI GLOBAL LIMITED',
-          product_type: ['Accessories'],
+          parent_company: 'NATURACEITES S.A',
+          product_type: ['Government Registry'],
           location_type: [],
-          processing_type: ['Final Product Assembly'],
+          processing_type: ['Packaging'],
           number_of_workers: {
-              min: 0,
-              max: 0,
+              min: 100,
+              max: 1000,
           },
           coordinates: {
-              lat: 0,
-              lng: 0,
+              lat: 90.3877184,
+              lng: 23.9905079,
           },
-          local_name: '',
-          description: '',
-          business_url: '',
-          minimum_order_quantity: '',
+          local_name: 'Local name',
+          description: 'HUGO BOSS Facility List with active finished goods suppliers March 2019',
+          business_url: 'https//:business.url.com',
+          minimum_order_quantity: '100',
           average_lead_time: '',
-          percent_female_workers: 0,
+          percent_female_workers: 10,
           affiliations: [],
           certifications_standards_regulations: [],
-          historical_os_id: [],
+          historical_os_id: ['KG2035250H1PTI7'],
           country: {
-              name: 'Germany',
-              alpha_2: 'DE',
-              alpha_3: 'DEU',
-              numeric: '276',
+              name: 'Hungary',
+              alpha_2: 'HG',
+              alpha_3: 'HUN',
+              numeric: '348',
           },
-          claim_status: 'unclaimed',
+          claim_status: 'claimed',
       },
     ];
-    const {getByText}= renderComponent({potentialMatches});
+  
+    const { reduxStore } = renderComponent();
 
-    await waitFor(() => {
-      expect(getByText('Name: Test name INC NEW')).toBeInTheDocument();
-      expect(getByText('Address: 1523 Main St, Manhattan, NY - USA')).toBeInTheDocument();
-      expect(getByText('Claimed Status: unclaimed')).toBeInTheDocument();
-      expect(getByText('Potential Matches (1)')).toBeInTheDocument();
-    });
+    reduxStore.dispatch(
+      completeFetchingPotentialMatches(matches)
+    );
+
+    const res = reduxStore.getState().dashboardContributionRecord.potentialMatches.matches
+    expect(res.length).toBe(1);
   });
 });

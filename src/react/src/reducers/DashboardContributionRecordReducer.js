@@ -18,7 +18,7 @@ const initialState = Object.freeze({
         event: Object.freeze({}),
     }),
     potentialMatches: Object.freeze({
-        potentialMatches: Object.freeze([]),
+        matches: Object.freeze([]),
         fetching: false,
         error: null,
     }),
@@ -71,7 +71,7 @@ export default createReducer(
                 potentialMatches: {
                     fetching: { $set: initialState.potentialMatches.fetching },
                     error: { $set: initialState.potentialMatches.error },
-                    potentialMatches: { $set: payload },
+                    matches: { $set: payload },
                 },
             }),
         [cleanupContributionRecord]: () => initialState,
