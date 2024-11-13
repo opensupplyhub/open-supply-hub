@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
 
+## Release 1.25.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: November 30, 2024
+
+### Database changes
+#### Migrations:
+* 0159_create_disable_list_uploading_switch.py - This migration creates disable_list_uploading switch in the Django admin panel and record in the waffle_switch table.
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
+### Code/API changes
+* [OSDEV-1429](https://opensupplyhub.atlassian.net/browse/OSDEV-1429) - The list upload switcher has been created to toggle the `Submit` button on the List Contribute page through the Switch page in the Django admin panel during the release process.
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* Ensure that the `migrate` command is included in the `post_deployment` command.
+
 ## Release 1.24.0
 
 ## Introduction
