@@ -12,9 +12,11 @@ import { connect } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import MaterialButton from '@material-ui/core/Button';
 import { toast } from 'react-toastify';
-
+import { withStyles } from '@material-ui/core/styles';
+import Tooltip from '@material-ui/core/Tooltip';
 import ControlledTextInput from './ControlledTextInput';
 import Button from './Button';
+import FeatureFlag from './FeatureFlag';
 import ContributeFormSelectListToReplace from './ContributeFormSelectListToReplace';
 import ListUploadErrors from './ListUploadErrors';
 
@@ -27,7 +29,11 @@ import {
     makeFacilityListItemsDetailLink,
 } from '../util/util';
 
-import { contributeFormFields, contributeFieldsEnum } from '../util/constants';
+import {
+    contributeFormFields,
+    contributeFieldsEnum,
+    DISABLE_LIST_UPLOADING,
+} from '../util/constants';
 
 import { useFileUploadHandler } from '../util/hooks';
 
@@ -46,6 +52,18 @@ import {
 } from '../actions/facilityLists';
 
 import { facilityListPropType } from '../util/propTypes';
+
+const StyledTooltip = withStyles({
+    tooltip: {
+        color: 'rgba(0, 0, 0, 0.8)',
+        fontSize: '0.875rem',
+        backgroundColor: 'white',
+        border: 'solid rgba(0, 0, 0, 0.25)',
+        borderRadius: '10px',
+        padding: '10px',
+        lineHeight: '1',
+    },
+})(Tooltip);
 
 const contributeFormStyles = Object.freeze({
     fileNameText: Object.freeze({
@@ -151,18 +169,38 @@ const ContributeForm = ({
                 />
             </div>
             {replacesSection}
-            <div className="form__field">
+            <div className="form__field cursor">
                 {errorMessages}
                 {fetching ? (
                     <CircularProgress size={30} />
                 ) : (
-                    <Button
-                        onClick={handleUploadList}
-                        disabled={submitButtonIsDisabled}
-                        text="SUBMIT"
-                        variant="contained"
-                        disableRipple
-                    />
+                    <FeatureFlag
+                        flag={DISABLE_LIST_UPLOADING}
+                        alternative={
+                            <StyledTooltip
+                                title="The Submit button is temporarily disabled during the release process."
+                                placement="right"
+                            >
+                                <span>
+                                    <Button
+                                        disabled={DISABLE_LIST_UPLOADING}
+                                        text="SUBMIT"
+                                        variant="contained"
+                                        disableRipple
+                                        onClick={() => {}}
+                                    />
+                                </span>
+                            </StyledTooltip>
+                        }
+                    >
+                        <Button
+                            onClick={handleUploadList}
+                            disabled={submitButtonIsDisabled}
+                            text="SUBMIT"
+                            variant="contained"
+                            disableRipple
+                        />
+                    </FeatureFlag>
                 )}
             </div>
         </div>

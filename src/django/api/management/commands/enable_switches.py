@@ -12,3 +12,4 @@ class Command(BaseCommand):
         call_command('waffle_switch', 'report_a_facility', 'on')
         call_command('waffle_switch', 'embedded_map', 'on')
         call_command('waffle_switch', 'extended_profile', 'on')
+        call_command('waffle_switch', 'disable_list_uploading', 'off')
