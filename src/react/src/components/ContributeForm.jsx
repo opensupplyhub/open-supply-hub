@@ -177,29 +177,29 @@ const ContributeForm = ({
                     <FeatureFlag
                         flag={DISABLE_LIST_UPLOADING}
                         alternative={
-                            <StyledTooltip
-                                title="The Submit button is temporarily disabled during the release process."
-                                placement="right"
-                            >
-                                <span>
-                                    <Button
-                                        disabled={DISABLE_LIST_UPLOADING}
-                                        text="SUBMIT"
-                                        variant="contained"
-                                        disableRipple
-                                        onClick={() => {}}
-                                    />
-                                </span>
-                            </StyledTooltip>
+                            <Button
+                                onClick={handleUploadList}
+                                disabled={submitButtonIsDisabled}
+                                text="SUBMIT"
+                                variant="contained"
+                                disableRipple
+                            />
                         }
                     >
-                        <Button
-                            onClick={handleUploadList}
-                            disabled={submitButtonIsDisabled}
-                            text="SUBMIT"
-                            variant="contained"
-                            disableRipple
-                        />
+                        <StyledTooltip
+                            title="The Submit button is temporarily disabled during the release process."
+                            placement="right"
+                        >
+                            <span>
+                                <Button
+                                    disabled
+                                    text="SUBMIT"
+                                    variant="contained"
+                                    disableRipple
+                                    onClick={() => {}}
+                                />
+                            </span>
+                        </StyledTooltip>
                     </FeatureFlag>
                 )}
             </div>
