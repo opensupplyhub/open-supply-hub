@@ -99,7 +99,7 @@ class TestModerationEventsQueryBuilder(TestCase):
     def test_get_final_query_body(self):
         final_query = self.builder.get_final_query_body()
         expected = {
-            'track_total_hits': 'true',
+            'track_total_hits': True,
             'query': {'bool': {'must': []}},
             'sort': []
         }
