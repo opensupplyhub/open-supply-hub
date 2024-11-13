@@ -2,6 +2,7 @@ import operator
 import os
 import logging
 from functools import reduce
+from waffle import switch_is_active
 
 from oar.settings import (
     MAX_UPLOADED_FILE_SIZE_IN_BYTES,
@@ -89,6 +90,8 @@ class FacilityListViewSet(ModelViewSet):
                 "is_public": true
             }
         """
+        if switch_is_active('disable_list_uploading'):
+            return None
         if 'file' not in request.data:
             raise ValidationError('No file specified.')
         uploaded_file = request.data['file']
