@@ -7,6 +7,7 @@ export default {
     GREEN: '#E0F5E3',
     DARK_GREEN: '#4A9957',
     MINT_GREEN: '#C0EBC7',
+    OLIVA_GREEN: '#799679',
 
     // Reds
     LIGHT_RED: '#FFEAEA',
