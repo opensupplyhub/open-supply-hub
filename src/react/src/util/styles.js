@@ -654,6 +654,79 @@ export const makeDownloadExcelButtonStyles = theme =>
         }),
     });
 
+export const makeDashboardContributionRecordStyles = theme =>
+    Object.freeze({
+        errorStyle: Object.freeze({ color: 'red' }),
+        loaderStyles: Object.freeze({
+            display: 'block',
+            margin: 'auto',
+        }),
+        emptyBlockStyles: Object.freeze({
+            height: '100px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+        }),
+        emptyTextStyle: Object.freeze({ color: theme.palette.text.hint }),
+        buttonStyles: Object.freeze({
+            margin: '20px',
+            padding: '20px',
+            width: '100%',
+            fontWeight: 'bold',
+        }),
+        container: Object.freeze({
+            marginBottom: '25px',
+            width: '100%',
+            padding: '20px',
+        }),
+        title: Object.freeze({
+            paddingBottom: '20px',
+        }),
+        listItemStyle: Object.freeze({
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+        }),
+        listItemTextStyle: Object.freeze({
+            padding: 0,
+        }),
+        dividerStyle: Object.freeze({
+            height: '3px',
+            backgroundColor: COLOURS.DARK_GREY,
+        }),
+        innerDividerStyle: Object.freeze({
+            backgroundColor: COLOURS.DARK_GREY,
+        }),
+        prettyPrint: Object.freeze({
+            width: '100%',
+            maxHeight: '300px',
+            overflow: 'auto',
+        }),
+        potentialMatchesBlock: Object.freeze({
+            width: '100%',
+            marginBottom: '25px',
+        }),
+        potentialMatchesInternalBlock: Object.freeze({
+            width: '100%',
+            overflow: 'auto',
+            maxHeight: '450px',
+        }),
+        buttonsContainerStyles: Object.freeze({
+            display: 'flex',
+            flexDirection: 'row',
+            width: '100%',
+        }),
+        confirmButtonStyles: Object.freeze({
+            backgroundColor: COLOURS.MINT_GREEN,
+            padding: '20px',
+            '&:hover': { backgroundColor: COLOURS.OLIVA_GREEN },
+        }),
+        claimButtonStyles: Object.freeze({
+            backgroundColor: theme.palette.action.main,
+            '&:hover': { backgroundColor: theme.palette.action.dark },
+        }),
+    });
+
 export const makeDashboardModerationQueueStyles = theme =>
     Object.freeze({
         mainContainer: Object.freeze({

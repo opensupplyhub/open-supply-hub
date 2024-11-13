@@ -7,7 +7,7 @@ from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
     def __init__(self):
         self.default_query_body = {
-            'track_total_hits': 'true',
+            'track_total_hits': True,
             'query': {'bool': {'must': []}},
             'sort': []
         }

@@ -57,7 +57,7 @@ class ProductionLocationsSerializer(Serializer):
         errors = error_list_builder.build_error_list(data)
 
         if errors:
-            # TODO: Pass error msg to the Rollbar here
+            # [OSDEV-1441] Pass error msg to the Rollbar here
             raise ValidationError({
                 "message": COMMON_ERROR_MESSAGE,
                 "errors": errors

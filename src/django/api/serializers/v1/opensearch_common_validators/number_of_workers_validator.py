@@ -1,10 +1,11 @@
+from typing import List
 from api.serializers.v1.opensearch_validation_interface \
     import OpenSearchValidationInterface
 
 
 class NumberOfWorkersValidator(OpenSearchValidationInterface):
-    def validate_opensearch_params(self, data) -> list[dict]:
-        errors: list[dict] = []
+    def validate_opensearch_params(self, data) -> List[dict]:
+        errors: List[dict] = []
 
         min_value = data.get('number_of_workers_min')
         max_value = data.get('number_of_workers_max')

@@ -110,6 +110,7 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         }:
             min_value = query_params.get(f'{field}[min]')
             max_value = query_params.get(f'{field}[max]')
+
             min_value = int(min_value) if min_value else None
             max_value = int(max_value) if max_value else None
 
@@ -118,9 +119,9 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
                 range_query['gte'] = min_value
             if max_value is not None:
                 range_query['lte'] = max_value
-
             if range_query:
                 build_action = self.build_options.get(field)
+
                 if build_action:
                     build_action(field, range_query)
                 else:

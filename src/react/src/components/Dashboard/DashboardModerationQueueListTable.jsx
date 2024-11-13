@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { bool, object } from 'prop-types';
 import { withRouter } from 'react-router-dom';
 import moment from 'moment';
@@ -17,7 +17,11 @@ import {
     MODERATION_STATUS_COLORS,
 } from '../../util/constants';
 import { makeDashboardModerationQueueListTableStyles } from '../../util/styles';
-import { formatDate } from '../../util/util';
+import {
+    formatDate,
+    openInNewTab,
+    makeContributionRecordLink,
+} from '../../util/util';
 
 const INITIAL_PAGE_INDEX = 0;
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 25];
@@ -31,6 +35,19 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
     const handleChangePage = (_, newPage) => {
         setPage(newPage);
     };
+    const handleRowClick = useCallback(
+        id => () => {
+            try {
+                const url = makeContributionRecordLink(id);
+                openInNewTab(url);
+            } catch (error) {
+                console.error(
+                    `Failed to open contribution record: ${error.message}`,
+                );
+            }
+        },
+        [],
+    );
 
     const handleChangeRowsPerPage = event => {
         setRowsPerPage(event.target.value);
@@ -88,6 +105,12 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                                             hover
                                             key={moderationId}
                                             className={classes.rowStyles}
+                                            role="button"
+                                            aria-label={`View contribution record for ${name}`}
+                                            style={{ cursor: 'pointer' }}
+                                            onClick={handleRowClick(
+                                                moderationId,
+                                            )}
                                         >
                                             <TableCell padding="dense">
                                                 {formatDate(
