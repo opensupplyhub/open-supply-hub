@@ -10,7 +10,10 @@ class ModerationEventsTest(BaseAPITest):
             f"{self.root_url}/api/v1/moderation-events/",
             headers=self.basic_headers,
         )
+        result = response.json()
         self.assertEqual(response.status_code, 200)
+        self.assertIn('data', result)
+        self.assertIsInstance(result['data'], list)
 
     def test_filter_by_status(self):
         status = "APPROVED"
