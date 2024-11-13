@@ -1,16 +1,20 @@
-import re
+from typing import List
+import uuid
 from api.serializers.v1.opensearch_validation_interface \
     import OpenSearchValidationInterface
 
 
 class ModerationIdValidator(OpenSearchValidationInterface):
-    UUID_REGEX = (
-        r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-'
-        r'[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
-    )
+    @staticmethod
+    def is_valid_uuid(value):
+        try:
+            uuid.UUID(str(value))
+            return True
+        except ValueError:
+            return False
 
-    def validate_opensearch_params(self, data) -> list[dict]:
-        errors: list[dict] = []
+    def validate_opensearch_params(self, data) -> List[dict]:
+        errors: List[dict] = []
         moderation_id = data.get('moderation_id')
 
         if moderation_id is None:
@@ -18,27 +22,26 @@ class ModerationIdValidator(OpenSearchValidationInterface):
 
         if isinstance(moderation_id, list):
             invalid_ids = [
-                mid for mid in moderation_id
-                if not re.match(self.UUID_REGEX, mid)
+                id_value for id_value in moderation_id
+                if not self.is_valid_uuid(id_value)
             ]
             if invalid_ids:
                 errors.append({
                     "field": "moderation_id",
-                    "message": (
-                        f"Invalid UUID(s): {invalid_ids}."
-                        "Each ID must be a valid UUID."
-                    )
+                    "message": f"Invalid UUID(s): {', '.join(invalid_ids)}.",
                 })
         elif isinstance(moderation_id, str):
-            if not re.match(self.UUID_REGEX, moderation_id):
+            if not self.is_valid_uuid(moderation_id):
                 errors.append({
                     "field": "moderation_id",
-                    "message": "Must be a valid UUID."
+                    "message": f"Invalid UUID: {moderation_id}.",
                 })
         else:
             errors.append({
                 "field": "moderation_id",
-                "message": "Must be a valid UUID or a list of UUIDs."
+                "message": (
+                    "moderation_id must be a valid UUID or a list of UUIDs."
+                )
             })
 
         return errors

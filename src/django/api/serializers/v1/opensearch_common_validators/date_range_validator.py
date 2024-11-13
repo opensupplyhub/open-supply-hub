@@ -1,10 +1,11 @@
+from typing import List
 from api.serializers.v1.opensearch_validation_interface \
     import OpenSearchValidationInterface
 
 
 class DateRangeValidator(OpenSearchValidationInterface):
-    def validate_opensearch_params(self, data) -> list[dict]:
-        errors: list[dict] = []
+    def validate_opensearch_params(self, data) -> List[dict]:
+        errors: List[dict] = []
 
         date_gte = data.get('date_gte')
         date_lt = data.get('date_lt')
