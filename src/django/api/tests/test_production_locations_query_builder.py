@@ -10,9 +10,9 @@ class TestProductionLocationsQueryBuilder(TestCase):
         self.builder = ProductionLocationsQueryBuilder()
 
     def test_reset(self):
-        self.builder.query_body['size'] = 20
+        self.builder.query_body['sort'] = [{"name.keyword": {"order": "asc"}}]
         self.builder.reset()
-        self.assertEqual(self.builder.query_body['size'], 10)
+        self.assertEqual(self.builder.query_body['sort'], [])
 
     def test_add_size(self):
         self.builder.add_size(20)
@@ -41,7 +41,7 @@ class TestProductionLocationsQueryBuilder(TestCase):
             )
 
     def test_add_terms_for_standard_field(self):
-        self.builder.add_terms('country', ['US', 'CA'])
+        self.builder._add_terms('country', ['US', 'CA'])
         expected = {'terms': {'country.alpha_2': ['US', 'CA']}}
         self.assertIn(
             expected,
@@ -49,13 +49,19 @@ class TestProductionLocationsQueryBuilder(TestCase):
         )
 
     def test_add_terms_for_os_id(self):
-        self.builder.add_terms('os_id', ['CN2021250D1DTN7', 'BD2020021QK28YZ'])
+        self.builder._add_terms(
+            'os_id',
+            ['CN2021250D1DTN7', 'BD2020021QK28YZ']
+        )
         expected = {
             'bool': {
                 'should': [
                     {
                         'terms': {
-                            'os_id': ['CN2021250D1DTN7', 'BD2020021QK28YZ']
+                            'os_id': [
+                                'CN2021250D1DTN7',
+                                'BD2020021QK28YZ'
+                            ]
                         }
                     },
                     {
@@ -82,8 +88,8 @@ class TestProductionLocationsQueryBuilder(TestCase):
         )
 
     def test_add_terms_with_different_field(self):
-        self.builder.add_terms('country', ['US', 'CA'])
-        self.builder.add_terms('sector', ['Agriculture', 'Apparel'])
+        self.builder._add_terms('country', ['US', 'CA'])
+        self.builder._add_terms('sector', ['Agriculture', 'Apparel'])
         expected_country_terms = {'terms': {'country.alpha_2': ['US', 'CA']}}
         expected_sector_terms = {
             'terms': {'sector.keyword': ['Agriculture', 'Apparel']}
@@ -171,12 +177,12 @@ class TestProductionLocationsQueryBuilder(TestCase):
             )
 
     def test_add_sort(self):
-        self.builder.add_sort('name', 'desc')
+        self.builder._add_sort('name', 'desc')
         expected = {'name.keyword': {'order': 'desc'}}
         self.assertIn(expected, self.builder.query_body['sort'])
 
     def test_add_search_after(self):
-        self.builder.add_search_after('test')
+        self.builder._add_search_after('test')
         self.assertIn('test', self.builder.query_body['search_after'])
         self.assertIn(
             {'name.keyword': {'order': 'asc'}},
