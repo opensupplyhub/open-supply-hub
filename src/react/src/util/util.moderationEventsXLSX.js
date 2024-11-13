@@ -6,7 +6,7 @@ const xlsxHeaders = Object.freeze([
     'Location Name',
     'Country',
     'Contributor',
-    'Match Status',
+    'Source Type',
     'Moderation Status',
     'Moderation Decision Date',
     'Last Updated',
@@ -19,7 +19,7 @@ const formatModerationEventsDataForXLSX = moderationEvents =>
             moderationEvent.name,
             moderationEvent.country.name,
             moderationEvent.contributor_name,
-            moderationEvent.match_status,
+            moderationEvent.source,
             moderationEvent.moderation_status,
             moderationEvent.moderation_decision_date !== null
                 ? formatDate(
