@@ -240,4 +240,4 @@ class ModerationEventsTest(BaseAPITest):
 
         error = result['errors'][0]
         self.assertEqual(error['field'], 'Moderation_Id')
-        self.assertEqual(error['message'], "Invalid Uuid(S): ['123!'].Each Id Must Be A Valid Uuid.")
+        self.assertEqual(error['message'], "Invalid Uuid(S): '123!'.")
