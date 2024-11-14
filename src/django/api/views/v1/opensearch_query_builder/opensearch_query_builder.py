@@ -9,51 +9,6 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
     def reset(self):
         self.query_body = copy.deepcopy(self.default_query_body)
 
-    def _build_number_of_workers(self, field, range_query):
-        self.query_body['query']['bool']['must'].append({
-            'bool': {
-                'should': [
-                    {
-                        'bool': {
-                            'must': [
-                                {
-                                    'range': {
-                                        f'{field}.min': {
-                                            'lte': range_query.get(
-                                                'lte',
-                                                float('inf')
-                                            ),
-                                            'gte': range_query.get(
-                                                'gte',
-                                                float('-inf')
-                                            )
-                                        }
-                                    }
-                                },
-                                {
-                                    'range': {
-                                        f'{field}.max': {
-                                            'gte': range_query.get(
-                                                'gte',
-                                                float('-inf')
-                                            ),
-                                            'lte': range_query.get(
-                                                'lte',
-                                                float('inf')
-                                            )
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-        })
-
-    def _build_country(self, field):
-        return f'{field}.alpha_2'
-
     def add_from(self, paginate_from):
         self.query_body['from'] = paginate_from
 
@@ -82,11 +37,15 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
             }
         })
 
+    def add_terms(self, field, values):
+        self._add_terms(field, values)
+
     @abstractmethod
     def _add_terms(self, field, values):
         pass
 
-    def _build_os_id(self, values):
+    # Call this method in child classes
+    def __build_os_id(self, values):
         # Build a query to search in both os_id and historical_os_id.keyword
         self.query_body['query']['bool']['must'].append(
             {
@@ -99,9 +58,25 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
             }
         )
 
-    @abstractmethod
-    def _build_date_range(self, query_params):
-        pass
+    def __build_date_range(self, query_params):
+        date_start = query_params.get('date_gte')
+        date_end = query_params.get('date_lt')
+        range_query = {}
+
+        if date_start is not None:
+            range_query['gte'] = date_start
+        if date_end is not None:
+            range_query['lte'] = date_end
+
+        if range_query:
+            existing_range = any(
+                query.get('range', {}).get('created_at')
+                for query in self.query_body['query']['bool']['must']
+            )
+            if not existing_range:
+                self.query_body['query']['bool']['must'].append({
+                    'range': {'created_at': range_query}
+                })
 
     def add_range(self, field, query_params):
         if field in {
@@ -133,7 +108,7 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
             V1_PARAMETERS_LIST.DATE_GTE,
             V1_PARAMETERS_LIST.DATE_LT
         }:
-            self._build_date_range(query_params)
+            self.__build_date_range(query_params)
 
     def add_geo_distance(self, field, lat, lng, distance):
         geo_distance_query = {
@@ -144,9 +119,15 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         }
         self.query_body['query']['bool']['must'].append(geo_distance_query)
 
+    def add_sort(self, field, order_by=None):
+        self._add_sort(field, order_by)
+
     @abstractmethod
     def _add_sort(self, field, order_by=None):
         pass
+
+    def add_search_after(self, search_after):
+        self._add_search_after(search_after)
 
     @abstractmethod
     def _add_search_after(self, search_after):
