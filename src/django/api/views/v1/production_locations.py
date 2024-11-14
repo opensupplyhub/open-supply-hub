@@ -50,7 +50,7 @@ class ProductionLocations(ViewSet):
         return Response(response)
 
     @handle_errors_decorator
-    def retrieve(self, request,  pk=None):
+    def retrieve(self, request, pk=None):
         query_params = QueryDict('', mutable=True)
         query_params.update({'os_id': pk})
         query_body = self.opensearch_query_director.build_query(
@@ -60,5 +60,13 @@ class ProductionLocations(ViewSet):
             OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
             query_body
         )
-        location = response.get('data', []).pop()
+        locations = response.get('data', [])
+
+        if len(locations) == 0:
+            return Response(
+                data={'message': 'Production location not found!'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        location = locations.pop()
         return Response(location)
