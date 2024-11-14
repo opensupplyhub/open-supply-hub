@@ -111,8 +111,7 @@ class OpenSearchQueryBuilder(ABC):
     def get_final_query_body(self):
         return self.query_body
 
-    # Call this method in child classes
-    def __build_os_id(self, values):
+    def _build_os_id(self, values):
         # Build a query to search in both os_id and historical_os_id.keyword
         self.query_body['query']['bool']['must'].append(
             {

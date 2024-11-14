@@ -70,7 +70,7 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
             return self.query_body
 
         if field == V1_PARAMETERS_LIST.OS_ID:
-            self._OpenSearchQueryBuilder__build_os_id(values)
+            self._build_os_id(values)
 
         else:
             terms_field = self.build_options.get(
