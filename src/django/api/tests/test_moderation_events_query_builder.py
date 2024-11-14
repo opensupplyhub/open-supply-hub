@@ -66,7 +66,7 @@ class TestModerationEventsQueryBuilder(TestCase):
         )
 
     def test_add_date_range(self):
-        self.builder._build_date_range({
+        self.builder.__build_date_range({
             'date_gte': '2023-01-01',
             'date_lt': '2023-12-31'
         })

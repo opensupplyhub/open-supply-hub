@@ -99,9 +99,25 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
             }
         )
 
-    @abstractmethod
-    def _build_date_range(self, query_params):
-        pass
+    def __build_date_range(self, query_params):
+        date_start = query_params.get('date_gte')
+        date_end = query_params.get('date_lt')
+        range_query = {}
+
+        if date_start is not None:
+            range_query['gte'] = date_start
+        if date_end is not None:
+            range_query['lte'] = date_end
+
+        if range_query:
+            existing_range = any(
+                query.get('range', {}).get('created_at')
+                for query in self.query_body['query']['bool']['must']
+            )
+            if not existing_range:
+                self.query_body['query']['bool']['must'].append({
+                    'range': {'created_at': range_query}
+                })
 
     def add_range(self, field, query_params):
         if field in {
@@ -133,7 +149,7 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
             V1_PARAMETERS_LIST.DATE_GTE,
             V1_PARAMETERS_LIST.DATE_LT
         }:
-            self._build_date_range(query_params)
+            self.__build_date_range(query_params)
 
     def add_geo_distance(self, field, lat, lng, distance):
         geo_distance_query = {
