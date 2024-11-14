@@ -69,5 +69,4 @@ class ProductionLocations(ViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        location = locations.pop()
-        return Response(location)
+        return Response(locations[0])
