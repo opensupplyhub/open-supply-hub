@@ -1,7 +1,7 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
 
-class OpenSearchQueryBuilderInterface:
+class OpenSearchQueryBuilderInterface(ABC):
     '''
     Interface for query build methods that will be
     used for the OpenSearchQueryBuilder

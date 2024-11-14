@@ -19,7 +19,7 @@ class TestModerationEventsQueryBuilder(TestCase):
         self.assertEqual(self.builder.query_body['size'], 10)
 
     def test_add_terms_for_standard_field(self):
-        self.builder._add_terms('country', ['US', 'CA'])
+        self.builder.add_terms('country', ['US', 'CA'])
         expected = {'terms': {'cleaned_data.country.alpha_2': ['US', 'CA']}}
         self.assertIn(
             expected,
@@ -27,7 +27,7 @@ class TestModerationEventsQueryBuilder(TestCase):
         )
 
     def test_add_terms_for_os_id(self):
-        self.builder._add_terms(
+        self.builder.add_terms(
             'os_id',
             ['CN2021250D1DTN7', 'BD2020021QK28YZ']
         )
@@ -66,7 +66,7 @@ class TestModerationEventsQueryBuilder(TestCase):
         )
 
     def test_add_date_range(self):
-        self.builder._build_date_range({
+        self.builder._OpenSearchQueryBuilder__build_date_range({
             'date_gte': '2023-01-01',
             'date_lt': '2023-12-31'
         })
@@ -84,12 +84,12 @@ class TestModerationEventsQueryBuilder(TestCase):
         )
 
     def test_add_sort(self):
-        self.builder._add_sort('created_at', 'asc')
+        self.builder.add_sort('created_at', 'asc')
         expected = {'created_at': {'order': 'asc'}}
         self.assertIn(expected, self.builder.query_body['sort'])
 
     def test_add_search_after(self):
-        self.builder._add_search_after('test')
+        self.builder.add_search_after('test')
         self.assertIn('test', self.builder.query_body['search_after'])
         self.assertIn(
             {'created_at': {'order': 'desc'}},

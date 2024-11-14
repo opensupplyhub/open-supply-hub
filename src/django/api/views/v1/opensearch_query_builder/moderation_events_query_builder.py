@@ -15,38 +15,18 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
         self.default_sort = 'created_at'
         self.default_sort_order = 'desc'
         self.build_options = {
-            'country': self._build_country,
+            'country': self.__build_country,
         }
 
-    def _build_country(self, field):
+    def __build_country(self, field):
         return f'cleaned_data.{field}.alpha_2'
-
-    def _build_date_range(self, query_params):
-        date_start = query_params.get('date_gte')
-        date_end = query_params.get('date_lt')
-        range_query = {}
-
-        if date_start is not None:
-            range_query['gte'] = date_start
-        if date_end is not None:
-            range_query['lte'] = date_end
-
-        if range_query:
-            existing_range = any(
-                query.get('range', {}).get('created_at')
-                for query in self.query_body['query']['bool']['must']
-            )
-            if not existing_range:
-                self.query_body['query']['bool']['must'].append({
-                    'range': {'created_at': range_query}
-                })
 
     def _add_terms(self, field, values):
         if not values:
             return self.query_body
 
         if field == V1_PARAMETERS_LIST.OS_ID:
-            self._build_os_id(values)
+            self._OpenSearchQueryBuilder__build_os_id(values)
 
         else:
             terms_field = self.build_options.get(
