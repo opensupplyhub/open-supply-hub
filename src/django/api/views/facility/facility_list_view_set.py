@@ -91,7 +91,8 @@ class FacilityListViewSet(ModelViewSet):
             }
         """
         if switch_is_active('disable_list_uploading'):
-            return None
+            raise ValidationError('List uploading is temporarily disabled \
+                                  during the release process')
         if 'file' not in request.data:
             raise ValidationError('No file specified.')
         uploaded_file = request.data['file']

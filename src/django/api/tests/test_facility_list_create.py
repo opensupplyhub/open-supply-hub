@@ -6,9 +6,11 @@ from api.models import (
     Source,
     User,
 )
+import re
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
+from waffle.testutils import override_switch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
@@ -245,3 +247,28 @@ class FacilityListCreateTest(APITestCase):
         Contributor.objects.all().delete()
         response = self.client.get(reverse("facility-list-list"))
         self.assertEqual(response.status_code, 400)
+
+    @override_switch("disable_list_uploading", active=True)
+    def test_no_upload_when_disable_list_uploading_switch_active(self):
+        previous_list_count = FacilityList.objects.all().count()
+        previous_source_count = Source.objects.all().count()
+        expected = ["List uploading is temporarily disabled during \
+            the release process"]
+
+        response = self.client.post(
+            reverse("facility-list-list"),
+            {"file": self.test_file},
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        result = ["".join(json.loads(response.content))]
+        # Collapse multiple spaces into one
+        expected = [re.sub(r"\s+", " ", item) for item in expected]
+        result = [re.sub(r"\s+", " ", item) for item in result]
+        self.assertEqual(result, expected)
+        self.assertEqual(
+            FacilityList.objects.all().count(), previous_list_count
+        )
+        self.assertEqual(
+            Source.objects.all().count(), previous_source_count
+        )

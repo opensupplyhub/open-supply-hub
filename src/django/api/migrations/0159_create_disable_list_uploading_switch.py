@@ -2,14 +2,14 @@
 from django.db import migrations
 
 
-def delete_disable_list_uploading_switch(apps, schema_editor):
-    Switch = apps.get_model('waffle', 'Switch')
-    Switch.objects.get(name='disable_list_uploading').delete()
-
-
 def create_disable_list_uploading_switch(apps, schema_editor):
     Switch = apps.get_model('waffle', 'Switch')
     Switch.objects.create(name='disable_list_uploading', active=False)
+
+
+def delete_disable_list_uploading_switch(apps, schema_editor):
+    Switch = apps.get_model('waffle', 'Switch')
+    Switch.objects.get(name='disable_list_uploading').delete()
 
 
 class Migration(migrations.Migration):
@@ -20,6 +20,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(
-            delete_disable_list_uploading_switch,
-            create_disable_list_uploading_switch)
+            create_disable_list_uploading_switch,
+            delete_disable_list_uploading_switch,)
     ]

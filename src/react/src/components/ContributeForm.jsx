@@ -187,7 +187,7 @@ const ContributeForm = ({
                         }
                     >
                         <StyledTooltip
-                            title="The Submit button is temporarily disabled during the release process."
+                            title="List uploading is temporarily disabled during the release process"
                             placement="right"
                         >
                             <span>

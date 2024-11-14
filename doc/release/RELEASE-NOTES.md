@@ -18,7 +18,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe scheme changes here.*
 
 ### Code/API changes
-* [OSDEV-1429](https://opensupplyhub.atlassian.net/browse/OSDEV-1429) - The list upload switcher has been created to toggle the `Submit` button on the List Contribute page through the Switch page in the Django admin panel during the release process.
+* [OSDEV-1429](https://opensupplyhub.atlassian.net/browse/OSDEV-1429) - The list upload switcher has been created to disable the `Submit` button on the List Contribute page through the Switch page in the Django admin panel during the release process. Implemented a check on the list upload endpoint.
 
 ### Architecture/Environment changes
 * *Describe architecture/environment changes here.*
