@@ -17,8 +17,50 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
         self.default_sort_order = 'asc'
         self.build_options = {
             'country': self._build_country,
-            'number_of_workers': self._build_number_of_workers
+            'number_of_workers': self.__build_number_of_workers
         }
+
+    def __build_number_of_workers(self, field, range_query):
+        self.query_body['query']['bool']['must'].append({
+            'bool': {
+                'should': [
+                    {
+                        'bool': {
+                            'must': [
+                                {
+                                    'range': {
+                                        f'{field}.min': {
+                                            'lte': range_query.get(
+                                                'lte',
+                                                float('inf')
+                                            ),
+                                            'gte': range_query.get(
+                                                'gte',
+                                                float('-inf')
+                                            )
+                                        }
+                                    }
+                                },
+                                {
+                                    'range': {
+                                        f'{field}.max': {
+                                            'gte': range_query.get(
+                                                'gte',
+                                                float('-inf')
+                                            ),
+                                            'lte': range_query.get(
+                                                'lte',
+                                                float('inf')
+                                            )
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        })
 
     def _add_terms(self, field, values):
         if not values:

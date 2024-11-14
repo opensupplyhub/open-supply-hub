@@ -9,48 +9,6 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
     def reset(self):
         self.query_body = copy.deepcopy(self.default_query_body)
 
-    def _build_number_of_workers(self, field, range_query):
-        self.query_body['query']['bool']['must'].append({
-            'bool': {
-                'should': [
-                    {
-                        'bool': {
-                            'must': [
-                                {
-                                    'range': {
-                                        f'{field}.min': {
-                                            'lte': range_query.get(
-                                                'lte',
-                                                float('inf')
-                                            ),
-                                            'gte': range_query.get(
-                                                'gte',
-                                                float('-inf')
-                                            )
-                                        }
-                                    }
-                                },
-                                {
-                                    'range': {
-                                        f'{field}.max': {
-                                            'gte': range_query.get(
-                                                'gte',
-                                                float('-inf')
-                                            ),
-                                            'lte': range_query.get(
-                                                'lte',
-                                                float('inf')
-                                            )
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-        })
-
     def _build_country(self, field):
         return f'{field}.alpha_2'
 
