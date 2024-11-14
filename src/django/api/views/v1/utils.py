@@ -1,4 +1,3 @@
-import uuid
 import logging
 from functools import wraps
 from rest_framework.response import Response
