@@ -1,11 +1,9 @@
 import copy
-from abc import abstractmethod
-from api.views.v1.opensearch_query_builder. \
-    opensearch_query_builder_interface import OpenSearchQueryBuilderInterface
+from abc import ABC, abstractmethod
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 
 
-class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
+class OpenSearchQueryBuilder(ABC):
     def reset(self):
         self.query_body = copy.deepcopy(self.default_query_body)
 
@@ -36,47 +34,6 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
                 'fuzziness': self.default_fuzziness
             }
         })
-
-    def add_terms(self, field, values):
-        self._add_terms(field, values)
-
-    @abstractmethod
-    def _add_terms(self, field, values):
-        pass
-
-    # Call this method in child classes
-    def __build_os_id(self, values):
-        # Build a query to search in both os_id and historical_os_id.keyword
-        self.query_body['query']['bool']['must'].append(
-            {
-                'bool': {
-                    'should': [
-                        {'terms': {'os_id': values}},
-                        {'terms': {'historical_os_id.keyword': values}},
-                    ]
-                }
-            }
-        )
-
-    def __build_date_range(self, query_params):
-        date_start = query_params.get('date_gte')
-        date_end = query_params.get('date_lt')
-        range_query = {}
-
-        if date_start is not None:
-            range_query['gte'] = date_start
-        if date_end is not None:
-            range_query['lte'] = date_end
-
-        if range_query:
-            existing_range = any(
-                query.get('range', {}).get('created_at')
-                for query in self.query_body['query']['bool']['must']
-            )
-            if not existing_range:
-                self.query_body['query']['bool']['must'].append({
-                    'range': {'created_at': range_query}
-                })
 
     def add_range(self, field, query_params):
         if field in {
@@ -110,6 +67,26 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         }:
             self.__build_date_range(query_params)
 
+    def __build_date_range(self, query_params):
+        date_start = query_params.get('date_gte')
+        date_end = query_params.get('date_lt')
+        range_query = {}
+
+        if date_start is not None:
+            range_query['gte'] = date_start
+        if date_end is not None:
+            range_query['lte'] = date_end
+
+        if range_query:
+            existing_range = any(
+                query.get('range', {}).get('created_at')
+                for query in self.query_body['query']['bool']['must']
+            )
+            if not existing_range:
+                self.query_body['query']['bool']['must'].append({
+                    'range': {'created_at': range_query}
+                })
+
     def add_geo_distance(self, field, lat, lng, distance):
         geo_distance_query = {
             'geo_distance': {
@@ -119,19 +96,30 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         }
         self.query_body['query']['bool']['must'].append(geo_distance_query)
 
-    def add_sort(self, field, order_by=None):
-        self._add_sort(field, order_by)
-
     @abstractmethod
-    def _add_sort(self, field, order_by=None):
+    def add_sort(self, field, order_by=None):
         pass
 
+    @abstractmethod
     def add_search_after(self, search_after):
-        self._add_search_after(search_after)
+        pass
 
     @abstractmethod
-    def _add_search_after(self, search_after):
+    def add_terms(self, field, values):
         pass
 
     def get_final_query_body(self):
         return self.query_body
+
+    def _build_os_id(self, values):
+        # Build a query to search in both os_id and historical_os_id.keyword
+        self.query_body['query']['bool']['must'].append(
+            {
+                'bool': {
+                    'should': [
+                        {'terms': {'os_id': values}},
+                        {'terms': {'historical_os_id.keyword': values}},
+                    ]
+                }
+            }
+        )
