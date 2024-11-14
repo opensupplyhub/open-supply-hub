@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
 
+## Release 1.25.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: November 30, 2024
+
+### Database changes
+#### Migrations:
+* 0159_alter_status_of_moderation_events_table.py - This migration alters status of api_moderationevent table.
+
+#### Scheme changes
+* [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Alter status options for api_moderationevent table.
+
+### Code/API changes
+* [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Create GET request for `v1/moderation-events` endpoint.
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+
+
 ## Release 1.24.0
 
 ## Introduction

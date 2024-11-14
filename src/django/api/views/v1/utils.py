@@ -32,7 +32,9 @@ def serialize_params(serializer_class, query_params):
             V1_PARAMETERS_LIST.SEARCH_AFTER,
             V1_PARAMETERS_LIST.SORT_BY,
             V1_PARAMETERS_LIST.ORDER_BY,
-            V1_PARAMETERS_LIST.SIZE
+            V1_PARAMETERS_LIST.SIZE,
+            V1_PARAMETERS_LIST.DATE_GTE,
+            V1_PARAMETERS_LIST.DATE_LT
         ]:
             flattened_query_params[key] = value[0]
         else:
