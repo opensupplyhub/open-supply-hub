@@ -9,9 +9,6 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
     def reset(self):
         self.query_body = copy.deepcopy(self.default_query_body)
 
-    def _build_country(self, field):
-        return f'{field}.alpha_2'
-
     def add_from(self, paginate_from):
         self.query_body['from'] = paginate_from
 
@@ -40,11 +37,15 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
             }
         })
 
+    def add_terms(self, field, values):
+        self._add_terms(field, values)
+
     @abstractmethod
     def _add_terms(self, field, values):
         pass
 
-    def _build_os_id(self, values):
+    # Call this method in child classes
+    def __build_os_id(self, values):
         # Build a query to search in both os_id and historical_os_id.keyword
         self.query_body['query']['bool']['must'].append(
             {
@@ -118,9 +119,15 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         }
         self.query_body['query']['bool']['must'].append(geo_distance_query)
 
+    def add_sort(self, field, order_by=None):
+        self._add_sort(field, order_by)
+
     @abstractmethod
     def _add_sort(self, field, order_by=None):
         pass
+
+    def add_search_after(self, search_after):
+        self._add_search_after(search_after)
 
     @abstractmethod
     def _add_search_after(self, search_after):

@@ -16,9 +16,12 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
         self.default_sort = V1_PARAMETERS_LIST.NAME
         self.default_sort_order = 'asc'
         self.build_options = {
-            'country': self._build_country,
+            'country': self.__build_country,
             'number_of_workers': self.__build_number_of_workers
         }
+
+    def __build_country(self, field):
+        return f'{field}.alpha_2'
 
     def __build_number_of_workers(self, field, range_query):
         self.query_body['query']['bool']['must'].append({
@@ -67,7 +70,7 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
             return self.query_body
 
         if field == V1_PARAMETERS_LIST.OS_ID:
-            self._build_os_id(values)
+            self._OpenSearchQueryBuilder__build_os_id(values)
 
         else:
             terms_field = self.build_options.get(
