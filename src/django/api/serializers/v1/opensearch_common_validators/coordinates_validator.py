@@ -1,10 +1,11 @@
+from typing import List
 from api.serializers.v1.opensearch_validation_interface \
     import OpenSearchValidationInterface
 
 
 class CoordinatesValidator(OpenSearchValidationInterface):
-    def validate_opensearch_params(self, data):
-        errors = []
+    def validate_opensearch_params(self, data) -> List[dict]:
+        errors: List[dict] = []
 
         lat = data.get('coordinates_lat')
         lng = data.get('coordinates_lng')

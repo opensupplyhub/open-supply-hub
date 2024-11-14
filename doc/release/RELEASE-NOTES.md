@@ -12,12 +12,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Database changes
 #### Migrations:
+* 0159_alter_status_of_moderation_events_table.py - This migration alters status of api_moderationevent table.
 * 0159_create_disable_list_uploading_switch.py - This migration creates disable_list_uploading switch in the Django admin panel and record in the waffle_switch table.
 
 #### Scheme changes
-* *Describe scheme changes here.*
+* [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Alter status options for api_moderationevent table.
 
 ### Code/API changes
+* [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Create GET request for `v1/moderation-events` endpoint.
 * [OSDEV-1429](https://opensupplyhub.atlassian.net/browse/OSDEV-1429) - The list upload switcher has been created to disable the `Submit` button on the List Contribute page through the Switch page in the Django admin panel during the release process. Implemented a check on the list upload endpoint.
 
 ### Architecture/Environment changes
@@ -30,7 +32,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
 
 ### Release instructions:
-* Ensure that the `migrate` command is included in the `post_deployment` command.
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+
 
 ## Release 1.24.0
 
