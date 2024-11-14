@@ -5,7 +5,6 @@ from rest_framework.response import Response
 from api.views.v1.utils import (
     serialize_params,
     handle_errors_decorator,
-    is_valid_uuid,
     handle_path_error
 )
 from api.permissions import IsRegisteredAndConfirmed
@@ -16,6 +15,8 @@ from api.views.v1.opensearch_query_builder.opensearch_query_director \
     import OpenSearchQueryDirector
 from api.serializers.v1.moderation_events_serializer \
     import ModerationEventsSerializer
+from api.serializers.v1.opensearch_common_validators.moderation_id_validator \
+    import ModerationIdValidator
 from api.views.v1.index_names import OpenSearchIndexNames
 
 
@@ -54,19 +55,8 @@ class ModerationEvents(ViewSet):
         return Response(response)
 
     @handle_errors_decorator
-    def retrieve(self, request,  pk=None):
-        if not IsRegisteredAndConfirmed().has_permission(request, self):
-            return Response(
-                {
-                    "detail": (
-                        "Only an authorized user "
-                        "can perform this action."
-                    )
-                },
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-
-        if not is_valid_uuid(pk):
+    def retrieve(self, _,  pk=None):
+        if not ModerationIdValidator.is_valid_uuid(pk):
             return handle_path_error(
                 field="moderation_id",
                 message="Invalid UUID format.",
