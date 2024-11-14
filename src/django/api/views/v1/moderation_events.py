@@ -5,7 +5,6 @@ from rest_framework.exceptions import PermissionDenied
 from api.views.v1.utils import (
     serialize_params,
     handle_errors_decorator,
-    is_valid_uuid,
     handle_path_error
 )
 from api.permissions import IsRegisteredAndConfirmed
@@ -16,6 +15,8 @@ from api.views.v1.opensearch_query_builder.opensearch_query_director \
     import OpenSearchQueryDirector
 from api.serializers.v1.moderation_events_serializer \
     import ModerationEventsSerializer
+from api.serializers.v1.opensearch_common_validators.moderation_id_validator \
+    import ModerationIdValidator
 from api.serializers.v1.moderation_event_update_serializer \
     import ModerationEventUpdateSerializer
 from api.views.v1.index_names import OpenSearchIndexNames
@@ -64,7 +65,7 @@ class ModerationEvents(ViewSet):
                 detail="Only the Moderator can perform this action."
             )
 
-        if not is_valid_uuid(moderation_id):
+        if not ModerationIdValidator.is_valid_uuid(moderation_id):
             return handle_path_error(
                 field="moderation_id",
                 message="Invalid UUID format.",

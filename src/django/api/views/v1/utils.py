@@ -111,14 +111,6 @@ def handle_errors_decorator(view_func):
     return _wrapped_view
 
 
-def is_valid_uuid(uuid_string):
-    try:
-        uuid.UUID(uuid_string)
-        return True
-    except ValueError:
-        return False
-
-
 def handle_path_error(field, message, status_code):
     return Response(
         {
