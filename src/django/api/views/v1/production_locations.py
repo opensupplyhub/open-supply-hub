@@ -60,5 +60,5 @@ class ProductionLocations(ViewSet):
             OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
             query_body
         )
-        location = response.get('data', {}).pop()
+        location = response.get('data', []).pop()
         return Response(location)
