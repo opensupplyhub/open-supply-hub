@@ -21,12 +21,12 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
     def __build_country(self, field):
         return f'cleaned_data.{field}.alpha_2'
 
-    def _add_terms(self, field, values):
+    def add_terms(self, field, values):
         if not values:
             return self.query_body
 
         if field == V1_PARAMETERS_LIST.OS_ID:
-            self._OpenSearchQueryBuilder__build_os_id(values)
+            self._build_os_id(values)
 
         else:
             terms_field = self.build_options.get(
@@ -37,7 +37,7 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
                 {'terms': {terms_field: values}}
             )
 
-    def _add_sort(self, field, order_by=None):
+    def add_sort(self, field, order_by=None):
         if order_by is None:
             order_by = self.default_sort_order
         if (
@@ -64,7 +64,7 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
                 }
             )
 
-    def _add_search_after(self, search_after):
+    def add_search_after(self, search_after):
         # search_after can't be present as empty by default in query_body
         if V1_PARAMETERS_LIST.SEARCH_AFTER not in self.query_body:
             self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER] = []
