@@ -16,6 +16,7 @@ class Command(BaseCommand):
                          'contributors.json',
                          'sources.json',
                          'facility_lists.json',
-                         'sectors.json')
+                         'sectors.json',
+                         'moderation_events.json')
         except CommandError as e:
             self.stderr.write("Error loading fixture data: {}".format(e))

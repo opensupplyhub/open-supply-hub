@@ -1,73 +1,14 @@
 import copy
-from api.views.v1.opensearch_query_builder. \
-    opensearch_query_builder_interface import OpenSearchQueryBuilderInterface
+from abc import ABC, abstractmethod
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 
 
-class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
-    def __init__(self):
-        self.default_query_body = {
-            'track_total_hits': 'true',
-            'size': 10,
-            'query': {'bool': {'must': []}},
-            'sort': []
-        }
-        self.query_body = copy.deepcopy(self.default_query_body)
-        self.default_fuzziness = 2
-        self.default_sort = V1_PARAMETERS_LIST.NAME
-        self.default_sort_order = 'asc'
-        self.build_options = {
-            'country': self.__build_country,
-            'number_of_workers': self.__build_number_of_workers
-        }
-
+class OpenSearchQueryBuilder(ABC):
     def reset(self):
         self.query_body = copy.deepcopy(self.default_query_body)
 
-    def __build_number_of_workers(self, field, range_query):
-        self.query_body['query']['bool']['must'].append({
-            'bool': {
-                'should': [
-                    {
-                        'bool': {
-                            'must': [
-                                {
-                                    'range': {
-                                        f'{field}.min': {
-                                            'lte': range_query.get(
-                                                'lte',
-                                                float('inf')
-                                            ),
-                                            'gte': range_query.get(
-                                                'gte',
-                                                float('-inf')
-                                            )
-                                        }
-                                    }
-                                },
-                                {
-                                    'range': {
-                                        f'{field}.max': {
-                                            'gte': range_query.get(
-                                                'gte',
-                                                float('-inf')
-                                            ),
-                                            'lte': range_query.get(
-                                                'lte',
-                                                float('inf')
-                                            )
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-        })
-
-    def __build_country(self, field):
-        return f'{field}.alpha_2'
+    def add_from(self, paginate_from):
+        self.query_body['from'] = paginate_from
 
     def add_size(self, size):
         self.query_body[V1_PARAMETERS_LIST.SIZE] = size
@@ -94,54 +35,56 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
             }
         })
 
-    def add_terms(self, field, values):
-        if not values:
-            return self.query_body
-
-        if field == V1_PARAMETERS_LIST.OS_ID:
-            self.__build_os_id(values)
-
-        else:
-            terms_field = self.build_options.get(
-                field, lambda x: f'{x}.keyword'
-            )(field)
-
-            self.query_body['query']['bool']['must'].append(
-                {'terms': {terms_field: values}}
-            )
-
-    def __build_os_id(self, values):
-        # Build a query to search in both os_id and historical_os_id.keyword
-        self.query_body['query']['bool']['must'].append(
-            {
-                'bool': {
-                    'should': [
-                        {'terms': {'os_id': values}},
-                        {'terms': {'historical_os_id.keyword': values}},
-                    ]
-                }
-            }
-        )
-
     def add_range(self, field, query_params):
-        min_value = query_params.get(f'{field}[min]')
-        max_value = query_params.get(f'{field}[max]')
-        min_value = int(min_value) if min_value else None
-        max_value = int(max_value) if max_value else None
+        if field in {
+            V1_PARAMETERS_LIST.NUMBER_OF_WORKERS,
+            V1_PARAMETERS_LIST.PERCENT_FEMALE_WORKERS
+        }:
+            min_value = query_params.get(f'{field}[min]')
+            max_value = query_params.get(f'{field}[max]')
 
+            min_value = int(min_value) if min_value else None
+            max_value = int(max_value) if max_value else None
+
+            range_query = {}
+            if min_value is not None:
+                range_query['gte'] = min_value
+            if max_value is not None:
+                range_query['lte'] = max_value
+            if range_query:
+                build_action = self.build_options.get(field)
+
+                if build_action:
+                    build_action(field, range_query)
+                else:
+                    self.query_body['query']['bool']['must'].append({
+                        'range': {field: range_query}
+                    })
+
+        elif field in {
+            V1_PARAMETERS_LIST.DATE_GTE,
+            V1_PARAMETERS_LIST.DATE_LT
+        }:
+            self.__build_date_range(query_params)
+
+    def __build_date_range(self, query_params):
+        date_start = query_params.get('date_gte')
+        date_end = query_params.get('date_lt')
         range_query = {}
-        if min_value is not None:
-            range_query['gte'] = min_value
-        if max_value is not None:
-            range_query['lte'] = max_value
+
+        if date_start is not None:
+            range_query['gte'] = date_start
+        if date_end is not None:
+            range_query['lte'] = date_end
 
         if range_query:
-            build_action = self.build_options.get(field)
-            if build_action:
-                build_action(field, range_query)
-            else:
+            existing_range = any(
+                query.get('range', {}).get('created_at')
+                for query in self.query_body['query']['bool']['must']
+            )
+            if not existing_range:
                 self.query_body['query']['bool']['must'].append({
-                    'range': {field: range_query}
+                    'range': {'created_at': range_query}
                 })
 
     def add_geo_distance(self, field, lat, lng, distance):
@@ -153,30 +96,30 @@ class OpenSearchQueryBuilder(OpenSearchQueryBuilderInterface):
         }
         self.query_body['query']['bool']['must'].append(geo_distance_query)
 
+    @abstractmethod
     def add_sort(self, field, order_by=None):
-        if order_by is None:
-            order_by = self.default_sort_order
-        self.query_body['sort'].append(
-            {f'{field}.keyword': {'order': order_by}}
-        )
+        pass
 
+    @abstractmethod
     def add_search_after(self, search_after):
-        # search_after can't be present as empty by default in query_body
-        if V1_PARAMETERS_LIST.SEARCH_AFTER not in self.query_body:
-            self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER] = []
-        '''
-        There should always be sort if there is a search_after field.
-        So if it is empty, sort by name by default
-        '''
-        if not self.query_body['sort']:
-            sort_criteria = {
-                f'{self.default_sort}.keyword': {
-                    'order': self.default_sort_order
-                }
-            }
-            self.query_body['sort'].append(sort_criteria)
+        pass
 
-        self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER].append(search_after)
+    @abstractmethod
+    def add_terms(self, field, values):
+        pass
 
     def get_final_query_body(self):
         return self.query_body
+
+    def _build_os_id(self, values):
+        # Build a query to search in both os_id and historical_os_id.keyword
+        self.query_body['query']['bool']['must'].append(
+            {
+                'bool': {
+                    'should': [
+                        {'terms': {'os_id': values}},
+                        {'terms': {'historical_os_id.keyword': values}},
+                    ]
+                }
+            }
+        )
