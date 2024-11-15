@@ -10,8 +10,6 @@ from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.response import Response
-from rest_framework.viewsets import ViewSet
 
 from api.constants import ProcessingAction
 from api.extended_fields import create_extendedfields_for_single_item
@@ -403,6 +401,6 @@ class ModerationEvents(ViewSet):
 
     @staticmethod
     def __update_event(event, item):
-        event.status = ModerationEvent.Status.RESOLVED
+        event.status = ModerationEvent.Status.APPROVED
         event.os_id = item.facility_id
         event.save()
