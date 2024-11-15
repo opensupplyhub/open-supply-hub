@@ -169,73 +169,12 @@ class ModerationEvents(ViewSet):
                 status_code=status.HTTP_410_GONE,
             )
 
-        data = event.cleaned_data
-        contributor = event.contributor
-        header_row_keys = data["raw_json"].keys()
-
         with transaction.atomic():
             try:
-                source = self.__create_source(contributor)
-                log.info(f'[Moderation Event] Source created. Id: {source.id}')
-
-                self.__create_nonstandard_fields(header_row_keys, contributor)
-                log.info('[Moderation Event] Nonstandard fields created.')
-
-                header_str = ','.join(header_row_keys)
-                item = self.__create_facility_list_item(
-                    source, data, header_str, FacilityListItem.MATCHED
-                )
-                log.info(
-                    f'[Moderation Event] FacilityListItem created. Id: '
-                    f'{item.id}'
-                )
-
-                create_extendedfields_for_single_item(item, data["fields"])
-                log.info('[Moderation Event] Extended fields created.')
-
-                self.__set_geocoded_location(item, data, event)
-                log.info('[Moderation Event] Geocoded location set.')
-
-                facility_id = make_os_id(item.country_code)
-                log.info(
-                    f'[Moderation Event] Facility ID created: {facility_id}'
-                )
-
-                self.__create_new_facility(item, facility_id)
-                log.info(
-                    f'[Moderation Event] Facility created. Id: {facility_id}'
-                )
-
-                self.__update_item_with_facility_id(item, facility_id)
-                log.info(
-                    '[Moderation Event] FacilityListItem updated with '
-                    'facility ID.'
-                )
-
-                FacilityListItemTemp.copy(item)
-                log.info('[Moderation Event] FacilityListItemTemp created.')
-
-                self.__create_facility_match_temp(item)
-                log.info('[Moderation Event] FacilityMatchTemp created.')
-
-                self.__create_facility_match(item)
-                log.info('[Moderation Event] FacilityMatch created.')
-
-                self.__update_event(event, item)
-                log.info(
-                    '[Moderation Event] Status and os_id of Moderation Event '
-                    'updated.'
-                )
+                item = self.__process_moderation_event(event)
 
             except Exception as e:
-                log.error(f'[Moderation Event] Error: {str(e)}')
-                return Response(
-                    {
-                        "message": "An unexpected error occurred while "
-                        "processing the request."
-                    },
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
+                self.__handle_processing_error(e)
 
         return Response(
             {"os_id": item.facility_id}, status=status.HTTP_201_CREATED
@@ -247,6 +186,70 @@ class ModerationEvents(ViewSet):
             raise PermissionDenied(
                 detail="Only the Moderator can perform this action."
             )
+
+    def __process_moderation_event(self, event):
+        data = event.cleaned_data
+        log.info(f'[Moderation Event] Processing event with data: {data}')
+
+        contributor = event.contributor
+        log.info(f'[Moderation Event] Contributor: {contributor}')
+
+        source = self.__create_source(contributor)
+        log.info(f'[Moderation Event] Source created. Id: {source.id}')
+
+        header_row_keys = data["raw_json"].keys()
+        self.__create_nonstandard_fields(header_row_keys, contributor)
+        log.info('[Moderation Event] Nonstandard fields created.')
+
+        header_str = ','.join(header_row_keys)
+        item = self.__create_facility_list_item(
+            source, data, header_str, FacilityListItem.MATCHED
+        )
+        log.info(
+            f'[Moderation Event] FacilityListItem created. Id: '
+            f'{item.id}'
+        )
+
+        create_extendedfields_for_single_item(item, data["fields"])
+        log.info('[Moderation Event] Extended fields created.')
+
+        self.__set_geocoded_location(item, data, event)
+        log.info('[Moderation Event] Geocoded location set.')
+
+        facility_id = make_os_id(item.country_code)
+        log.info(
+            f'[Moderation Event] Facility ID created: {facility_id}'
+        )
+
+        self.__create_new_facility(item, facility_id)
+        log.info(
+            f'[Moderation Event] Facility created. Id: {facility_id}'
+        )
+
+        self.__update_item_with_facility_id_and_processing_results(
+            item, facility_id
+        )
+        log.info(
+            '[Moderation Event] FacilityListItem updated with '
+            'facility ID.'
+        )
+
+        FacilityListItemTemp.copy(item)
+        log.info('[Moderation Event] FacilityListItemTemp created.')
+
+        self.__create_facility_match_temp(item)
+        log.info('[Moderation Event] FacilityMatchTemp created.')
+
+        self.__create_facility_match(item)
+        log.info('[Moderation Event] FacilityMatch created.')
+
+        self.__update_event(event, item)
+        log.info(
+            '[Moderation Event] Status and os_id of Moderation Event '
+            'updated.'
+        )
+
+        return item
 
     @staticmethod
     def __create_source(contributor) -> Source:
@@ -363,7 +366,9 @@ class ModerationEvents(ViewSet):
         )
 
     @staticmethod
-    def __update_item_with_facility_id(item, facility_id):
+    def __update_item_with_facility_id_and_processing_results(
+        item, facility_id
+    ):
         item.facility_id = facility_id
         item.processing_results.append(
             {
@@ -404,3 +409,14 @@ class ModerationEvents(ViewSet):
         event.status = ModerationEvent.Status.APPROVED
         event.os_id = item.facility_id
         event.save()
+
+    @staticmethod
+    def __handle_processing_error(error_message):
+        log.error(f'[Moderation Event] Error: {str(error_message)}')
+        return Response(
+            {
+                "message": "An unexpected error occurred while "
+                "processing the request."
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
