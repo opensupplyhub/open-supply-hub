@@ -44,8 +44,6 @@ to modify moderation event `status`.
 * Release date: November 16, 2024
 
 ### Code/API changes
-* [OSDEV-1332](https://opensupplyhub.atlassian.net/browse/OSDEV-1332) - Introduced new `PATCH api/v1/moderation-events/{moderation_id}` endpoint 
-to modify moderation event `status`.
 * [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - Explicitly set the number of shards and the number of replicas for the "production locations" and "moderation events" OpenSearch indexes. Based on the OpenSearch documentation, a storage size of 10–30 GB is preferred for workloads that prioritize low search latency. Additionally, having too many small shards can unnecessarily exhaust memory by storing excessive metadata. Currently, the "production locations" index utilizes 651.9 MB, including replicas, while the "moderation events" index is empty. This indicates that one shard and one replica should be sufficient for the "production locations" and "moderation events" indexes.
 * Moved all the files related to the OpenSearch service to the existing `src/django/api/services/opensearch` folder within the `api` app of the Django application. This should make it easier to navigate through the files and clarify the location of all OpenSearch service-related files in one place within the `api` app in Django.
 
