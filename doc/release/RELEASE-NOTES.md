@@ -19,6 +19,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Create GET request for `v1/moderation-events` endpoint.
+* [OSDEV-1332](https://opensupplyhub.atlassian.net/browse/OSDEV-1332) - Introduced new `PATCH api/v1/moderation-events/{moderation_id}` endpoint 
+to modify moderation event `status`.
 
 ### Architecture/Environment changes
 * *Describe architecture/environment changes here.*
