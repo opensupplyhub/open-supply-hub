@@ -1,3 +1,5 @@
+import logging
+from api.constants import ProcessingAction
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
@@ -28,8 +30,15 @@ from api.extended_fields import create_extendedfields_for_single_item
 from django.contrib.gis.geos import Point
 from api.models.facility.facility_list_item_temp import FacilityListItemTemp
 from api.models.facility.facility import Facility
+from api.models.facility.facility_match import FacilityMatch
+from api.models.facility.facility_match_temp import FacilityMatchTemp
 from datetime import datetime
+from django.db import transaction
 from api.os_id import make_os_id
+from django.utils import timezone
+
+# Initialize logger.
+log = logging.getLogger(__name__)
 
 
 class ModerationEvents(ViewSet):
@@ -139,30 +148,53 @@ class ModerationEvents(ViewSet):
         contributor = event.contributor
         header_row_keys = data["raw_json"].keys()
 
-        source = self.__create_source(contributor)
+        with transaction.atomic():
+            try:
+                source = self.__create_source(contributor)
+                log.info(f'[Moderation Event] Source created. Id: {source.id}')
 
-        self.__create_nonstandard_fields(header_row_keys, contributor)
+                self.__create_nonstandard_fields(header_row_keys, contributor)
+                log.info(f'[Moderation Event] Nonstandard fields created.')
 
-        header_str = ','.join(header_row_keys)
-        item = self.__create_facility_list_item(
-            source, data, header_str, FacilityListItem.MATCHED
-        )
+                header_str = ','.join(header_row_keys)
+                item = self.__create_facility_list_item(
+                    source, data, header_str, FacilityListItem.MATCHED
+                )
+                log.info(f'[Moderation Event] FacilityListItem created. Id: {item.id}')
 
-        create_extendedfields_for_single_item(item, data["fields"])
+                create_extendedfields_for_single_item(item, data["fields"])
+                log.info(f'[Moderation Event] Extended fields created.')
 
-        self.__set_geocoded_location(item, data, event)
+                self.__set_geocoded_location(item, data, event)
+                log.info(f'[Moderation Event] Geocoded location set.')
 
-        facility_id = make_os_id(item.country_code)
+                facility_id = make_os_id(item.country_code)
+                log.info(f'[Moderation Event] Facility ID created: {facility_id}')
 
-        self.__create_new_facility(item, facility_id)
-        self.__update_item_with_facility_id(item, facility_id)
+                self.__create_new_facility(item, facility_id)
+                log.info(f'[Moderation Event] Facility created. Id: {facility_id}')
+                
+                self.__update_item_with_facility_id(item, facility_id)
+                log.info(f'[Moderation Event] FacilityListItem updated with facility ID.')
 
-        FacilityListItemTemp.copy(item)
+                FacilityListItemTemp.copy(item)
+                log.info(f'[Moderation Event] FacilityListItemTemp created.')
 
-        self.__create_facility_match_temp(item)
-        self.__create_facility_match(item)
+                self.__create_facility_match_temp(item)
+                log.info(f'[Moderation Event] FacilityMatchTemp created.')
+                
+                self.__create_facility_match(item)
+                log.info(f'[Moderation Event] FacilityMatch created.')
 
-        self.__update_event(event, item)
+                self.__update_event(event, item)
+                log.info(f'[Moderation Event] Status and os_id of Moderation Event updated.')
+
+            except Exception as e:
+                log.error(f'[Moderation Event] Error: {str(e)}')
+                return Response(
+                    {"message": "An unexpected error occurred while processing the request."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
         return Response(
             {"os_id": item.facility_id}, status=status.HTTP_201_CREATED
@@ -213,6 +245,8 @@ class ModerationEvents(ViewSet):
                 )
             )
 
+        log.info(f'[Moderation Event] Nonstandard fields: {nonstandard_fields}')
+
     @staticmethod
     def __set_geocoded_location(item, data, event):
         if event.geocode_result:
@@ -221,10 +255,29 @@ class ModerationEvents(ViewSet):
                 event.geocode_result["latitude"]
             )
             item.geocoded_address = event.geocode_result["geocoded_address"]
+            item.processing_results.append(
+                {
+                    'action': ProcessingAction.GEOCODE,
+                    'started_at': str(timezone.now()),
+                    'error': False,
+                    'skipped_geocoder': False,
+                    'data': event.geocode_result['full_response'],
+                    'finished_at': str(timezone.now()),
+                }
+            )
         else:
             item.geocoded_point = Point(
                 data["fields"]["lng"],
                 data["fields"]["lat"]
+            )
+            item.processing_results.append(
+                {
+                    'action': ProcessingAction.GEOCODE,
+                    'started_at': str(timezone.now()),
+                    'error': False,
+                    'skipped_geocoder': True,
+                    'finished_at': str(timezone.now()),
+                }
             )
         item.save()
 
@@ -247,6 +300,15 @@ class ModerationEvents(ViewSet):
             country_code=data["country_code"],
             sector=data["sector"],
             status=status,
+            processing_results=[
+                {
+                    'action': ProcessingAction.PARSE,
+                    'started_at': str(timezone.now()),
+                    'error': False,
+                    'finished_at': str(timezone.now()),
+                    'is_geocoded': False,
+                }
+            ],
         )
 
     @staticmethod
@@ -265,6 +327,14 @@ class ModerationEvents(ViewSet):
     @staticmethod
     def __update_item_with_facility_id(item, facility_id):
         item.facility_id = facility_id
+        item.processing_results.append(
+            {
+                'action': ProcessingAction.MATCH,
+                'started_at': str(timezone.now()),
+                'error': False,
+                'finished_at': str(timezone.now())
+            }
+        )
         item.save()
 
     @staticmethod
