@@ -104,13 +104,13 @@ api_v1 = [
      ),
      path(
         'api/v1/moderation-events/<str:moderation_id>/',
-        ModerationEvents.as_view({'patch': 'patch'}),
-        name='moderation-event-update'
+        ModerationEvents.as_view({'get': 'retrieve'}),
+        name='moderation-events-details'
      ),
      path(
         'api/v1/moderation-events/<str:moderation_id>/',
-        ModerationEvents.as_view({'get': 'retrieve'}),
-        name='moderation-events-details'
+        ModerationEvents.as_view({'patch': 'patch'}),
+        name='moderation-event-update'
      ),
      path(
         'api/v1/moderation-events/<str:moderation_id>/production-locations/',
