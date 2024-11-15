@@ -2,11 +2,13 @@ from django.http import QueryDict
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
+
 from api.views.v1.utils import (
     serialize_params,
     handle_errors_decorator
 )
-from api.services.search import OpenSearchService
+
+from api.services.opensearch.search import OpenSearchService
 from api.views.v1.opensearch_query_builder.production_locations_query_builder \
     import ProductionLocationsQueryBuilder
 from api.views.v1.opensearch_query_builder.opensearch_query_director \
@@ -29,7 +31,7 @@ class ProductionLocations(ViewSet):
 
     @handle_errors_decorator
     def list(self, request):
-        params, error_response = serialize_params(
+        _, error_response = serialize_params(
             ProductionLocationsSerializer,
             request.GET
         )

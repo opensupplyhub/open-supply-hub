@@ -6,7 +6,7 @@ from django.dispatch import receiver
 from opensearchpy.exceptions import ConnectionError
 
 from api.models.facility.facility import Facility
-from api.services.opensearch import OpenSearchServiceConnection
+from api.services.opensearch.opensearch import OpenSearchServiceConnection
 from oar.rollbar import report_error_to_rollbar
 from api.views.v1.index_names import OpenSearchIndexNames
 

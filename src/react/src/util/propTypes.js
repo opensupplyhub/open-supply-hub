@@ -271,6 +271,20 @@ export const numberOfWorkerOptionsPropType = arrayOf(
     }),
 );
 
+export const moderationStatusOptionsPropType = arrayOf(
+    shape({
+        value: string.isRequired,
+        label: string.isRequired,
+    }),
+);
+
+export const dataSourceOptionsPropType = arrayOf(
+    shape({
+        value: string.isRequired,
+        label: string.isRequired,
+    }),
+);
+
 export const facilityPropType = shape({
     id: string.isRequired,
     type: oneOf([FEATURE]).isRequired,
@@ -446,7 +460,7 @@ export const activityReportPropType = shape({
     closure_state: string.isRequired,
     created_at: string.isRequired,
     facility: string.isRequired,
-    facility_name: string.isReqired,
+    facility_name: string.isRequired,
     id: number.isRequired,
     reason_for_report: string.isRequired,
     reported_by_contributor: string.isRequired,
@@ -469,15 +483,82 @@ export const filterOptionsPropType = shape({
     fetching: bool.isRequired,
 });
 
+export const productionLocationCountryPropType = shape({
+    alpha_2: string.isRequired,
+    alpha_3: string.isRequired,
+    name: string.isRequired,
+    numeric: string.isRequired,
+});
+
 export const productionLocationPropType = shape({
     os_id: string,
     name: string,
     address: string,
-    country: shape({
-        alpha_2: string,
-        alpha_3: string,
-        name: string,
-        numeric: string,
-    }),
+    country: productionLocationCountryPropType,
     historical_os_id: arrayOf(string),
 });
+
+export const moderationEventsPropType = arrayOf(
+    shape({
+        moderation_id: number.isRequired,
+        created_at: string.isRequired,
+        name: string.isRequired,
+        country: productionLocationCountryPropType,
+        contributor_name: string.isRequired,
+        source: string.isRequired,
+        moderation_status: string.isRequired,
+        moderation_decision_date: string,
+        updated_at: string.isRequired,
+    }),
+);
+
+export const moderationEventPropType = shape({
+    moderation_id: number,
+    created_at: string,
+    updated_at: string,
+    os_id: string,
+    cleaned_data: shape({
+        name: string,
+        address: string,
+        country: productionLocationCountryPropType,
+    }),
+    contributor_id: number,
+    contributor_name: string,
+    request_type: string,
+    source: string,
+    moderation_status: oneOf(['PENDING', 'APPROVED', 'REJECTED']),
+    status_change_date: string,
+    claim_id: number,
+});
+
+export const potentialMatchesPropType = arrayOf(
+    shape({
+        os_id: string.isRequired,
+        name: string.isRequired,
+        address: string.isRequired,
+        sector: arrayOf(string),
+        parent_company: string,
+        product_type: arrayOf(string),
+        location_type: arrayOf(string),
+        processing_type: arrayOf(string),
+        number_of_workers: shape({
+            min: number.isRequired,
+            max: number.isRequired,
+        }),
+        coordinates: shape({
+            lat: number.isRequired,
+            lng: number.isRequired,
+        }),
+        local_name: string,
+        description: string,
+        business_url: string,
+        minimum_order_quantity: string,
+        average_lead_time: string,
+        percent_female_workers: number,
+        affiliations: arrayOf(string),
+        certifications_standards_regulations: arrayOf(string),
+        historical_os_id: arrayOf(string),
+        country: productionLocationCountryPropType.isRequired,
+        claim_status: string,
+    }),
+);

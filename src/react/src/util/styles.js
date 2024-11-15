@@ -1,5 +1,6 @@
 import { OARColor } from './constants';
 import COLOURS from './COLOURS';
+import { multiValueBackgroundHandler } from './util';
 
 export const formValidationErrorMessageStyle = Object.freeze({
     color: 'red',
@@ -204,19 +205,25 @@ export const claimAFacilitySupportDocsFormStyles = Object.freeze({
     }),
 });
 
-export const makeSelectFilterStyles = (windowWidth, color = OARColor) =>
+export const makeSelectFilterStyles = (windowWidth, origin, color = OARColor) =>
     Object.freeze({
-        multiValue: Object.freeze(provided => ({
-            ...provided,
-            background: '#C0EBC7',
-            borderRadius: '100px',
-            fontFamily: 'Darker Grotesque',
-            fontWeight: 700,
-            fontSize: '14px',
-            lineHeight: '16px',
-            paddingLeft: '5px',
-            paddingRight: '5px',
-        })),
+        multiValue: Object.freeze((provided, state) => {
+            const backgroundColor = multiValueBackgroundHandler(
+                state.data.value,
+                origin,
+            );
+            return {
+                ...provided,
+                background: backgroundColor,
+                borderRadius: '100px',
+                fontFamily: 'Darker Grotesque',
+                fontWeight: 700,
+                fontSize: '14px',
+                lineHeight: '16px',
+                paddingLeft: '5px',
+                paddingRight: '5px',
+            };
+        }),
         control: Object.freeze((provided, state) => {
             const isInUse = state.isFocused || state.menuIsOpen;
             return {
@@ -599,5 +606,178 @@ export const makeSearchByOsIdResultActionsStyles = theme =>
             '&:hover': {
                 backgroundColor: theme.palette.action.dark,
             },
+        }),
+    });
+
+export const makeDatePickerStyles = theme => ({
+    datePickerContainer: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '5px',
+    },
+    datePickerLabel: {
+        fontSize: '18px',
+        fontWeight: theme.typography.fontWeightSemiBoldPlus,
+    },
+    dateInputStyles: Object.freeze({
+        fontSize: '16px',
+        lineHeight: '20px',
+        padding: '8px',
+    }),
+    notchedOutlineStyles: Object.freeze({
+        borderRadius: 0,
+    }),
+});
+
+export const makeDownloadExcelButtonStyles = theme =>
+    Object.freeze({
+        button: Object.freeze({
+            width: '200px',
+            marginBottom: '44px',
+            padding: '14px 13px',
+            color: theme.palette.common.black,
+            fontSize: '18px',
+            fontWeight: 900,
+            lineHeight: '20px',
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
+            backgroundColor: theme.palette.action.main,
+        }),
+        buttonContent: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            textTransform: 'none',
+        }),
+        buttonText: Object.freeze({
+            marginLeft: '0.2rem',
+        }),
+    });
+
+export const makeDashboardContributionRecordStyles = theme =>
+    Object.freeze({
+        errorStyle: Object.freeze({ color: 'red' }),
+        loaderStyles: Object.freeze({
+            display: 'block',
+            margin: 'auto',
+        }),
+        emptyBlockStyles: Object.freeze({
+            height: '100px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+        }),
+        emptyTextStyle: Object.freeze({ color: theme.palette.text.hint }),
+        buttonStyles: Object.freeze({
+            margin: '20px',
+            padding: '20px',
+            width: '100%',
+            fontWeight: 'bold',
+        }),
+        container: Object.freeze({
+            marginBottom: '25px',
+            width: '100%',
+            padding: '20px',
+        }),
+        title: Object.freeze({
+            paddingBottom: '20px',
+        }),
+        listItemStyle: Object.freeze({
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+        }),
+        listItemTextStyle: Object.freeze({
+            padding: 0,
+        }),
+        dividerStyle: Object.freeze({
+            height: '3px',
+            backgroundColor: COLOURS.DARK_GREY,
+        }),
+        innerDividerStyle: Object.freeze({
+            backgroundColor: COLOURS.DARK_GREY,
+        }),
+        prettyPrint: Object.freeze({
+            width: '100%',
+            maxHeight: '300px',
+            overflow: 'auto',
+        }),
+        potentialMatchesBlock: Object.freeze({
+            width: '100%',
+            marginBottom: '25px',
+        }),
+        potentialMatchesInternalBlock: Object.freeze({
+            width: '100%',
+            overflow: 'auto',
+            maxHeight: '450px',
+        }),
+        buttonsContainerStyles: Object.freeze({
+            display: 'flex',
+            flexDirection: 'row',
+            width: '100%',
+        }),
+        confirmButtonStyles: Object.freeze({
+            backgroundColor: COLOURS.MINT_GREEN,
+            padding: '20px',
+            '&:hover': { backgroundColor: COLOURS.OLIVA_GREEN },
+        }),
+        claimButtonStyles: Object.freeze({
+            backgroundColor: theme.palette.action.main,
+            '&:hover': { backgroundColor: theme.palette.action.dark },
+        }),
+    });
+
+export const makeDashboardModerationQueueStyles = theme =>
+    Object.freeze({
+        mainContainer: Object.freeze({
+            marginBottom: '60px',
+            width: '100%',
+        }),
+        dashboardFilters: Object.freeze({
+            padding: '20px',
+        }),
+        datePickersContainer: Object.freeze({
+            width: '100%',
+            marginTop: '5px',
+        }),
+        errorText: Object.freeze({
+            marginTop: '5px',
+        }),
+        numberResults: Object.freeze({
+            fontWeight: theme.typography.fontWeightBold,
+            padding: '20px',
+        }),
+    });
+
+export const makeDashboardModerationQueueListTableStyles = Object.freeze({
+    tableContainerStyles: Object.freeze({
+        overflowX: 'auto',
+    }),
+    rowStyles: Object.freeze({
+        cursor: 'pointer',
+    }),
+    emptyRowStyles: Object.freeze({
+        height: '5px',
+    }),
+    loaderStyles: Object.freeze({
+        display: 'block',
+        margin: 'auto',
+    }),
+    pendingStatusStyles: Object.freeze({
+        backgroundColor: COLOURS.PALE_LIGHT_YELLOW,
+    }),
+    approvedStatusStyles: Object.freeze({
+        backgroundColor: COLOURS.MINT_GREEN,
+    }),
+    rejectedStatusStyles: Object.freeze({
+        backgroundColor: COLOURS.LIGHT_RED,
+    }),
+});
+
+export const makeDashboardModerationQueueTableHeaderStyles = theme =>
+    Object.freeze({
+        headerCellStyles: Object.freeze({
+            fontSize: '14px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
         }),
     });

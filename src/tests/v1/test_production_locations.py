@@ -1,9 +1,9 @@
 import requests
-from .base_production_locations_test \
-    import BaseProductionLocationsTest
+from .base_api_test \
+    import BaseAPITest
 
 
-class ProductionLocationsTest(BaseProductionLocationsTest):
+class ProductionLocationsTest(BaseAPITest):
 
     def test_production_locations_status(self):
         response = requests.get(
@@ -31,12 +31,12 @@ class ProductionLocationsTest(BaseProductionLocationsTest):
             "claim_status": "unclaimed"
         }
         self.open_search_client.index(
-            index=self.index_name,
+            index=self.production_locations_index_name,
             body=doc,
             id=self.open_search_client.count()
         )
         self.open_search_client.indices.refresh(
-            index=self.index_name
+            index=self.production_locations_index_name
         )
 
         search_name = "Silver Composite Textile Mills Ltd."
@@ -83,12 +83,12 @@ class ProductionLocationsTest(BaseProductionLocationsTest):
             },
         }
         self.open_search_client.index(
-            index=self.index_name,
+            index=self.production_locations_index_name,
             body=doc,
             id=self.open_search_client.count()
         )
         self.open_search_client.indices.refresh(
-            index=self.index_name
+            index=self.production_locations_index_name
         )
 
         search_os_id = "US2020052SV22HT"

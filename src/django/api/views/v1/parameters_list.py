@@ -1,4 +1,5 @@
 class V1_PARAMETERS_LIST:
+    FROM = 'from'
     SIZE = 'size'
     SEARCH_AFTER = 'search_after'
     QUERY = 'query'
@@ -27,5 +28,8 @@ class V1_PARAMETERS_LIST:
     SOURCE = 'source'
     STATUS = 'status'
     MODERATION_ID = 'moderation_id'
-    DATE_GTE = 'data_dte'
-    DATE_LT = 'data_lt'
+    DATE_GTE = 'date_gte'
+    DATE_LT = 'date_lt'
+    CLEANED_NAME = 'cleaned_name'
+    CLEANED_ADDRESS = 'cleaned_address'
+    CLEANED_COUNTRY = 'cleaned_country'

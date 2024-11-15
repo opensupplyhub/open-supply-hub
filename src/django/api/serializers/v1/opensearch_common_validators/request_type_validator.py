@@ -1,10 +1,11 @@
+from typing import List
 from api.serializers.v1.opensearch_validation_interface \
     import OpenSearchValidationInterface
 
 
 class RequestTypeValidator(OpenSearchValidationInterface):
-    def validate_opensearch_params(self, data):
-        errors = []
+    def validate_opensearch_params(self, data) -> List[dict]:
+        errors: List[dict] = []
         request_type = data.get('request_type')
 
         if not request_type:

@@ -48,13 +48,14 @@ class ModerationEventUpdateSerializer(ModelSerializer):
     def __validate_status(self, value):
         if value not in [
             ModerationEvent.Status.PENDING,
-            ModerationEvent.Status.RESOLVED
+            ModerationEvent.Status.APPROVED,
+            ModerationEvent.Status.REJECTED
         ]:
             raise ValidationError({
                 "field": "status",
                 "message": (
                     "Moderation status must be one of "
-                    "PENDING, RESOLVED or REJECTED."
+                    "PENDING, APPROVED or REJECTED."
                 )
             })
         return value

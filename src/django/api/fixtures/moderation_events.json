@@ -6,8 +6,10 @@
           "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc67ec",
           "created_at":"2024-10-01T10:00:00Z",
           "updated_at":"2024-10-01T10:00:00Z",
-          "status_change_date":null,
+          "status_change_date":"2024-10-01T11:00:00Z",
           "request_type":"CREATE",
+          "os_id": null,
+          "contributor_id": 1,
           "raw_data":{
              "country":"USA",
              "name":"Tech Innovations Inc.",
@@ -27,7 +29,7 @@
              "latitude":37.7749,
              "longitude":-122.4194
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -41,6 +43,8 @@
           "updated_at":"2024-10-01T11:00:00Z",
           "status_change_date":null,
           "request_type":"UPDATE",
+          "os_id": null,
+          "contributor_id": 2,
           "raw_data":{
              "country":"Canada",
              "name":"Maple Leaf Corp.",
@@ -72,8 +76,10 @@
           "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc67ee",
           "created_at":"2024-10-02T12:00:00Z",
           "updated_at":"2024-10-02T12:00:00Z",
-          "status_change_date":null,
+          "status_change_date":"2024-10-02T13:00:00Z",
           "request_type":"CLAIM",
+          "os_id": null,
+          "contributor_id": 3,
           "raw_data":{
              "country":"Mexico",
              "name":"Mexican Textiles S.A.",
@@ -93,7 +99,7 @@
              "latitude":19.4326,
              "longitude":-99.1332
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -107,6 +113,8 @@
           "updated_at":"2024-10-03T13:00:00Z",
           "status_change_date":null,
           "request_type":"CREATE",
+          "os_id": null,
+          "contributor_id": 4,
           "raw_data":{
              "country":"Brazil",
              "name":"Rio Coffee Co.",
@@ -138,8 +146,10 @@
           "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6800",
           "created_at":"2024-10-04T14:00:00Z",
           "updated_at":"2024-10-04T14:00:00Z",
-          "status_change_date":null,
+          "status_change_date":"2024-10-04T15:00:00Z",
           "request_type":"UPDATE",
+          "os_id": null,
+          "contributor_id": 5,
           "raw_data":{
              "country":"Argentina",
              "name":"Buenos Aires Realty",
@@ -159,7 +169,7 @@
              "latitude":-34.6037,
              "longitude":-58.3816
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -173,6 +183,8 @@
           "updated_at":"2024-10-05T15:00:00Z",
           "status_change_date":null,
           "request_type":"CLAIM",
+          "os_id": null,
+          "contributor_id": 6,
           "raw_data":{
              "country":"Chile",
              "name":"Santiago Ventures",
@@ -204,8 +216,10 @@
           "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6802",
           "created_at":"2024-10-06T16:00:00Z",
           "updated_at":"2024-10-06T16:00:00Z",
-          "status_change_date":null,
+          "status_change_date":"2024-10-06T17:00:00Z",
           "request_type":"CREATE",
+          "os_id": null,
+          "contributor_id": 7,
           "raw_data":{
              "country":"Colombia",
              "name":"Medellin Solutions",
@@ -225,7 +239,7 @@
              "latitude":6.2442,
              "longitude":-75.5812
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -237,8 +251,10 @@
           "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6806",
           "created_at":"2024-10-10T20:00:00Z",
           "updated_at":"2024-10-10T20:00:00Z",
-          "status_change_date":null,
+          "status_change_date":"2024-10-10T21:00:00Z",
           "request_type":"CREATE",
+          "os_id": null,
+          "contributor_id": 8,
           "raw_data":{
              "country":"Colombia",
              "name":"Bogotá Tech Hub",
@@ -258,7 +274,7 @@
              "latitude":4.711,
              "longitude":-74.0721
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -272,6 +288,8 @@
           "updated_at":"2024-10-11T21:00:00Z",
           "status_change_date":null,
           "request_type":"UPDATE",
+          "os_id": null,
+          "contributor_id": 9,
           "raw_data":{
              "country":"Brazil",
              "name":"São Paulo Innovations",
@@ -303,8 +321,10 @@
           "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6808",
           "created_at":"2024-10-12T22:00:00Z",
           "updated_at":"2024-10-12T22:00:00Z",
-          "status_change_date":null,
+          "status_change_date":"2024-10-12T23:00:00Z",
           "request_type":"CREATE",
+          "os_id": null,
+          "contributor_id": 10,
           "raw_data":{
              "country":"Argentina",
              "name":"Buenos Aires Manufacturing",
@@ -324,7 +344,7 @@
              "latitude":-34.6037,
              "longitude":-58.3816
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -338,6 +358,8 @@
           "updated_at":"2024-10-13T23:00:00Z",
           "status_change_date":null,
           "request_type":"UPDATE",
+          "os_id": null,
+          "contributor_id": 11,
           "raw_data":{
              "country":"Chile",
              "name":"Santiago Tech Park",
@@ -369,8 +391,10 @@
           "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6810",
           "created_at":"2024-10-14T00:00:00Z",
           "updated_at":"2024-10-14T00:00:00Z",
-          "status_change_date":null,
+          "status_change_date":"2024-10-14T01:00:00Z",
           "request_type":"CREATE",
+          "os_id": null,
+          "contributor_id": 12,
           "raw_data":{
              "country":"Uruguay",
              "name":"Montevideo Ventures",
@@ -390,7 +414,7 @@
              "latitude":-34.9011,
              "longitude":-56.1645
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -404,6 +428,8 @@
           "updated_at":"2024-10-15T00:00:00Z",
           "status_change_date":null,
           "request_type":"UPDATE",
+          "os_id": null,
+          "contributor_id": 13,
           "raw_data":{
              "country":"Peru",
              "name":"Lima Innovation Center",
@@ -435,8 +461,10 @@
           "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6812",
           "created_at":"2024-10-16T01:00:00Z",
           "updated_at":"2024-10-16T01:00:00Z",
-          "status_change_date":null,
+          "status_change_date":"2024-10-16T02:00:00Z",
           "request_type":"CREATE",
+          "os_id": null,
+          "contributor_id": 14,
           "raw_data":{
              "country":"Venezuela",
              "name":"Caracas Solutions",
@@ -456,7 +484,7 @@
              "latitude":10.4806,
              "longitude":-66.9036
           },
-          "status":"RESOLVED",
+          "status":"REJECTED",
           "source":"API",
           "claim_id":null
        }
@@ -470,6 +498,8 @@
           "updated_at":"2024-10-17T02:00:00Z",
           "status_change_date":null,
           "request_type":"UPDATE",
+          "os_id": null,
+          "contributor_id": 15,
           "raw_data":{
              "country":"Paraguay",
              "name":"Asunción Tech Hub",
@@ -501,8 +531,10 @@
           "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6814",
           "created_at":"2024-10-18T03:00:00Z",
           "updated_at":"2024-10-18T03:00:00Z",
-          "status_change_date":null,
+          "status_change_date":"2024-10-18T04:00:00Z",
           "request_type":"CREATE",
+          "os_id": null,
+          "contributor_id": 16,
           "raw_data":{
              "country":"Bolivia",
              "name":"La Paz Manufacturing",
@@ -522,7 +554,7 @@
              "latitude":-16.5000,
              "longitude":-68.1500
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -536,6 +568,8 @@
           "updated_at":"2024-10-19T04:00:00Z",
           "status_change_date":null,
           "request_type":"UPDATE",
+          "os_id": null,
+          "contributor_id": 17,
           "raw_data":{
              "country":"Ecuador",
              "name":"Quito Solutions",
@@ -567,7 +601,9 @@
           "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6816",
           "created_at":"2024-10-20T05:00:00Z",
           "updated_at":"2024-10-20T05:00:00Z",
-          "status_change_date":null,
+          "status_change_date":"2024-10-20T06:00:00Z",
+          "os_id": null,
+          "contributor_id": 18,
           "request_type":"CREATE",
           "raw_data":{
              "country":"Cuba",
@@ -588,7 +624,7 @@
              "latitude":23.1136,
              "longitude":-82.3666
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -602,6 +638,8 @@
           "updated_at":"2024-10-21T06:00:00Z",
           "status_change_date":null,
           "request_type":"UPDATE",
+          "os_id": null,
+          "contributor_id": 19,
           "raw_data":{
              "country":"Guyana",
              "name":"Georgetown Innovators",
@@ -633,8 +671,10 @@
           "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6818",
           "created_at":"2024-10-22T07:00:00Z",
           "updated_at":"2024-10-22T07:00:00Z",
-          "status_change_date":null,
+          "status_change_date":"2024-10-22T08:00:00Z",
           "request_type":"CREATE",
+          "os_id": null,
+          "contributor_id": 20,
           "raw_data":{
              "country":"Suriname",
              "name":"Paramaribo Solutions",
@@ -654,7 +694,7 @@
              "latitude":5.852,
              "longitude":-55.2038
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -668,6 +708,8 @@
           "updated_at":"2024-10-23T08:00:00Z",
           "status_change_date":null,
           "request_type":"UPDATE",
+          "os_id": null,
+          "contributor_id": 21,
           "raw_data":{
              "country":"Jamaica",
              "name":"Kingston Dynamics",
@@ -699,8 +741,10 @@
           "uuid":"1f35a90f-70a0-4c3e-8e06-2ed8e1fc6820",
           "created_at":"2024-10-24T09:00:00Z",
           "updated_at":"2024-10-24T09:00:00Z",
-          "status_change_date":null,
+          "status_change_date":"2024-10-24T10:00:00Z",
           "request_type":"CREATE",
+          "os_id": null,
+          "contributor_id": 22,
           "raw_data":{
              "country":"Haiti",
              "name":"Port-au-Prince Manufacturers",
@@ -720,7 +764,7 @@
              "latitude":18.5944,
              "longitude":-72.3074
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -734,6 +778,8 @@
           "updated_at":"2024-10-25T10:00:00Z",
           "status_change_date":null,
           "request_type":"CREATE",
+          "os_id": null,
+          "contributor_id": 23,
           "raw_data":{
              "country":"Belize",
              "name":"Belize Exports",
@@ -765,8 +811,10 @@
           "uuid":"3b50d60f-85b2-4a17-9f8d-5d3e1fc68192",
           "created_at":"2024-10-26T11:00:00Z",
           "updated_at":"2024-10-26T11:00:00Z",
-          "status_change_date":null,
+          "status_change_date":"2024-10-26T12:00:00Z",
           "request_type":"UPDATE",
+          "os_id": null,
+          "contributor_id": 24,
           "raw_data":{
              "country":"Panama",
              "name":"Panama Trade Partners",
@@ -786,7 +834,7 @@
              "latitude":8.9833,
              "longitude":-79.5167
           },
-          "status":"RESOLVED",
+          "status":"REJECTED",
           "source":"API",
           "claim_id":null
        }
@@ -800,6 +848,8 @@
           "updated_at":"2024-10-27T12:00:00Z",
           "status_change_date":null,
           "request_type":"CREATE",
+          "os_id": null,
+          "contributor_id": 25,
           "raw_data":{
              "country":"Guyana",
              "name":"Georgetown Suppliers",
@@ -831,8 +881,10 @@
           "uuid":"3b50d60f-85b2-4a17-9f8d-5d3e1fc68194",
           "created_at":"2024-10-28T13:00:00Z",
           "updated_at":"2024-10-28T13:00:00Z",
-          "status_change_date":null,
+          "status_change_date":"2024-10-28T14:00:00Z",
           "request_type":"UPDATE",
+          "os_id": null,
+          "contributor_id": 26,
           "raw_data":{
              "country":"Dominica",
              "name":"Roseau Imports",
@@ -852,7 +904,7 @@
              "latitude":15.3014,
              "longitude":-61.3883
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -866,6 +918,8 @@
           "updated_at":"2024-10-29T14:00:00Z",
           "status_change_date":null,
           "request_type":"CREATE",
+          "os_id": null,
+          "contributor_id": 27,
           "raw_data":{
              "country":"Saint Lucia",
              "name":"Castries Ventures",
@@ -897,8 +951,10 @@
           "uuid":"3b50d60f-85b2-4a17-9f8d-5d3e1fc68196",
           "created_at":"2024-10-30T15:00:00Z",
           "updated_at":"2024-10-30T15:00:00Z",
-          "status_change_date":null,
+          "status_change_date":"2024-10-30T16:00:00Z",
           "request_type":"UPDATE",
+          "os_id": null,
+          "contributor_id": 28,
           "raw_data":{
              "country":"Trinidad and Tobago",
              "name":"Port of Spain Holdings",
@@ -918,7 +974,7 @@
              "latitude":10.6600,
              "longitude":-61.5086
           },
-          "status":"RESOLVED",
+          "status":"APPROVED",
           "source":"API",
           "claim_id":null
        }
@@ -932,6 +988,8 @@
           "updated_at":"2024-10-31T16:00:00Z",
           "status_change_date":null,
           "request_type":"CREATE",
+          "os_id": null,
+          "contributor_id": 29,
           "raw_data":{
              "country":"Grenada",
              "name":"St. George's Trading",
@@ -963,8 +1021,10 @@
           "uuid":"3b50d60f-85b2-4a17-9f8d-5d3e1fc68198",
           "created_at":"2024-11-01T17:00:00Z",
           "updated_at":"2024-11-01T17:00:00Z",
-          "status_change_date":null,
+          "status_change_date":"2024-11-01T18:00:00Z",
           "request_type":"UPDATE",
+          "os_id": null,
+          "contributor_id": 30,
           "raw_data":{
              "country":"Antigua and Barbuda",
              "name":"St. John's Imports",
@@ -984,7 +1044,7 @@
              "latitude":17.1214,
              "longitude":-61.8449
           },
-          "status":"RESOLVED",
+          "status":"REJECTED",
           "source":"API",
           "claim_id":null
        }

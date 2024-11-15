@@ -74,8 +74,6 @@ class OpenSearchQueryDirector:
                 distance = query_params.get("distance", "10km")
                 self.__add_geo_distance_query(field, lat, lng,
                                               distance)
-            # TODO: Apply data range query
-                continue
 
         sort_by = query_params.get(V1_PARAMETERS_LIST.SORT_BY)
         if sort_by:
@@ -85,6 +83,10 @@ class OpenSearchQueryDirector:
         search_after = query_params.get(V1_PARAMETERS_LIST.SEARCH_AFTER)
         if search_after:
             self.__builder.add_search_after(search_after)
+
+        paginate_from = query_params.get(V1_PARAMETERS_LIST.FROM)
+        if paginate_from:
+            self.__builder.add_from(paginate_from)
 
         size = query_params.get(V1_PARAMETERS_LIST.SIZE)
         if size:

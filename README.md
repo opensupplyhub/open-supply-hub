@@ -214,3 +214,14 @@ be available on their page, or you can visit http://localhost:6543/?embed=1&cont
 | `batch_process`        | Given a list id argument run parse, geocode, and match via the batch_process Django management command |
 | `devhealthcheck.sh`    | Simulate application load balancer health checks in development                                        |
 | `postfacilitiescsv.py` | POST the rows of a CSV containing facility information to the facilities API                           |
+
+
+## Running e2e (Playwright) and integration tests
+
+### Playwright Tests
+
+To run the Playwright tests, use the following command:
+```
+docker compose -f docker-compose.tests.yml run --rm --build --entrypoint "npx playwright test -c playwright.config.ts" playwright-test
+```
+

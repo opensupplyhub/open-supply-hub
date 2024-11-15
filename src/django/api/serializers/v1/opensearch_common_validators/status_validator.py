@@ -1,22 +1,32 @@
+from typing import List
 from api.serializers.v1.opensearch_validation_interface \
     import OpenSearchValidationInterface
 
 
 class StatusValidator(OpenSearchValidationInterface):
-    def validate_opensearch_params(self, data):
-        errors = []
+    VALID_STATUSES = {'PENDING', 'APPROVED', 'REJECTED'}
+
+    def validate_opensearch_params(self, data) -> List[dict]:
+        errors: list[dict] = []
         status = data.get('status')
 
         if not status:
             return errors
 
-        status_types = {'PENDING', 'RESOLVED'}
-
-        if status not in status_types:
+        if not isinstance(status, list):
             errors.append({
                 "field": "status",
-                "message": f"'{status}' is not a valid status. \
-                    Allowed values are 'PENDING' or 'RESOLVED'."
+                "message": "Status must be a list of values."
+            })
+        elif not all(item in self.VALID_STATUSES for item in status):
+            invalid_statuses = [item for item in status if
+                                item not in self.VALID_STATUSES]
+            errors.append({
+                "field": "status",
+                "message": (
+                    f"Invalid source(s) {invalid_statuses}. "
+                    "Allowed values are 'PENDING','APPROVED' or 'REJECTED'."
+                )
             })
 
         return errors

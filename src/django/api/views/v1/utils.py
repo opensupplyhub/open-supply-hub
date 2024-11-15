@@ -4,7 +4,7 @@ from functools import wraps
 from rest_framework.response import Response
 from rest_framework import status
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
-from api.services.search import OpenSearchServiceException
+from api.services.opensearch.search import OpenSearchServiceException
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,9 @@ def serialize_params(serializer_class, query_params):
             V1_PARAMETERS_LIST.SEARCH_AFTER,
             V1_PARAMETERS_LIST.SORT_BY,
             V1_PARAMETERS_LIST.ORDER_BY,
-            V1_PARAMETERS_LIST.SIZE
+            V1_PARAMETERS_LIST.SIZE,
+            V1_PARAMETERS_LIST.DATE_GTE,
+            V1_PARAMETERS_LIST.DATE_LT
         ]:
             flattened_query_params[key] = value[0]
         else:
@@ -107,14 +109,6 @@ def handle_errors_decorator(view_func):
         except OpenSearchServiceException as e:
             return handle_opensearch_exception(e)
     return _wrapped_view
-
-
-def is_valid_uuid(uuid_string):
-    try:
-        uuid.UUID(uuid_string)
-        return True
-    except ValueError:
-        return False
 
 
 def handle_path_error(field, message, status_code):
