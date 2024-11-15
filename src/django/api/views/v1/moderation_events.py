@@ -80,13 +80,13 @@ class ModerationEvents(ViewSet):
         return Response(response)
 
     @handle_errors_decorator
-    def patch(self, request, moderation_id):
+    def patch(self, request, pk=None):
         if not (request.user.is_superuser or request.user.is_staff):
             raise PermissionDenied(
                 detail="Only the Moderator can perform this action."
             )
 
-        if not ModerationIdValidator.is_valid_uuid(moderation_id):
+        if not ModerationIdValidator.is_valid_uuid(pk):
             return handle_path_error(
                 field="moderation_id",
                 message="Invalid UUID format.",
@@ -94,7 +94,7 @@ class ModerationEvents(ViewSet):
             )
 
         try:
-            event = ModerationEvent.objects.get(uuid=moderation_id)
+            event = ModerationEvent.objects.get(uuid=pk)
         except ModerationEvent.DoesNotExist:
             return handle_path_error(
                 field="moderation_id",
