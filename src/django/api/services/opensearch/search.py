@@ -39,7 +39,10 @@ class OpenSearchService(SearchInterface):
 
         def remove_null_values(obj):
             if isinstance(obj, dict):
-                return {k: remove_null_values(v) for k, v in obj.items() if v is not None}
+                return {
+                    k: remove_null_values(v) for k, v in obj.items()
+                    if v is not None
+                }
             elif isinstance(obj, list):
                 return [remove_null_values(item) for item in obj]
             else:
