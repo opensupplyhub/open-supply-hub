@@ -35,6 +35,67 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
         mock_logger.warning.assert_not_called()
 
     @patch('api.services.opensearch.search.logger')
+    def test_prepare_opensearch_response_with_varied_null_cases(self, mock_logger):
+        response = {
+            "hits": {
+                "total": {"value": 10},
+                "hits": [
+                    {"_source": {"field1": {
+                        "os_id": "CN2024216VGFN6R",
+                        "claim_id": 123,
+                        "moderation_id": "1f35a90f-70a0-4c3e-8e06-2ed8e1fc6801",
+                        "nested_field": {
+                            "key1": None,
+                            "key2": "valid_value"
+                        }
+                    }}},
+                    {"_source": {
+                        "field2": {
+                            "os_id": None,
+                            "claim_id": None,
+                            "moderation_id": "1f35a90f-70a0-4c3e-8e06-2ed8e1fc6817"
+                        }
+                    }},
+                    {"_source": {
+                        "field3": {
+                            "os_id": "TW2024336G2W87T",
+                            "claim_id": None,
+                            "moderation_id": "1f35a90f-70a0-4c3e-8e06-2ed8e1fc67ee",
+                            "empty_field": None
+                        }
+                    }},
+                    {"other_field": "irrelevant"}
+                ]
+            }
+        }
+        expected_result = {
+            "count": 10,
+            "data": [
+                {"field1": {
+                    "os_id": "CN2024216VGFN6R",
+                    "claim_id": 123,
+                    "moderation_id": "1f35a90f-70a0-4c3e-8e06-2ed8e1fc6801",
+                    "nested_field": {
+                        "key2": "valid_value"
+                    }
+                }},
+                {"field2": {
+                    "moderation_id": "1f35a90f-70a0-4c3e-8e06-2ed8e1fc6817"
+                }},
+                {"field3": {
+                    "os_id": "TW2024336G2W87T",
+                    "moderation_id": "1f35a90f-70a0-4c3e-8e06-2ed8e1fc67ee"
+                }}
+            ]
+        }
+
+        result = self.service._OpenSearchService__prepare_opensearch_response(response)
+        self.assertEqual(result, expected_result)
+        mock_logger.warning.assert_called_once_with(
+            "Missing '_source' in hit: {'other_field': 'irrelevant'}"
+        )
+
+    @patch('api.services.opensearch.search.logger')
     def test_prepare_opensearch_response_missing_source(self, mock_logger):
         response = {
             "hits": {
