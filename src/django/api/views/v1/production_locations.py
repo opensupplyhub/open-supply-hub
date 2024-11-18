@@ -47,8 +47,8 @@ class ProductionLocations(ViewSet):
         # set via the DEFAULT_PERMISSION_CLASSES setting.
         combined_permission_classes = \
             permission_classes + self.permission_classes
-        print(combined_permission_classes)
-        return [permission() for permission in permission_classes]
+
+        return [permission() for permission in combined_permission_classes]
 
     @handle_errors_decorator
     def list(self, request):
