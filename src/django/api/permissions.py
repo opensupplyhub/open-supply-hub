@@ -64,7 +64,8 @@ class IsAllowedHost(permissions.BasePermission):
 
 
 class IsRegisteredAndConfirmed(permissions.BasePermission):
-    message = 'Insufficient permissions'
+    message = ('User must be registered, active, and have confirmed '
+               'their email to access this endpoint.')
 
     def has_permission(self, request, view):
         if not request.user.is_authenticated:

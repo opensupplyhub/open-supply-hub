@@ -3,8 +3,6 @@ from django.db import transaction
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied
-from waffle import flag_is_active
 
 from api.views.v1.utils import (
     serialize_params,
@@ -20,7 +18,10 @@ from api.serializers.v1.production_locations_serializer \
     import ProductionLocationsSerializer
 from api.views.v1.index_names import OpenSearchIndexNames
 from api.permissions import IsRegisteredAndConfirmed
-from api.constants import FeatureGroups
+from api.moderation_event_actions.creation.moderation_event_creator \
+    import ModerationEventCreator
+from api.moderation_event_actions.creation.location_contribution \
+    .location_contribution import LocationContribution
 
 
 class ProductionLocations(ViewSet):
@@ -33,6 +34,21 @@ class ProductionLocations(ViewSet):
         self.opensearch_query_director = OpenSearchQueryDirector(
                 self.opensearch_query_builder
             )
+
+    def get_permissions(self):
+        '''
+        Redefines the parent method and returns the list of permissions for
+        the ViewSet action methods.
+        '''
+        if self.action == 'create':
+            permission_classes = [IsRegisteredAndConfirmed]
+
+        # Combine custom permissions with global application-level permissions
+        # set via the DEFAULT_PERMISSION_CLASSES setting.
+        combined_permission_classes = \
+            permission_classes + self.permission_classes
+        print(combined_permission_classes)
+        return [permission() for permission in permission_classes]
 
     @handle_errors_decorator
     def list(self, request):
@@ -68,28 +84,26 @@ class ProductionLocations(ViewSet):
         )
         return Response(response)
 
-    # @transaction.atomic
-    # def create(self, request):
-    #     if not IsRegisteredAndConfirmed().has_permission(request, self):
-    #         return Response(status=status.HTTP_401_UNAUTHORIZED)
-    #     if not flag_is_active(request._request,
-    #                           FeatureGroups.CAN_SUBMIT_FACILITY):
-    #         raise PermissionDenied()
+    @transaction.atomic
+    def create(self, request):
+        location_contribution_strategy = LocationContribution()
+        moderation_event_creator = ModerationEventCreator(
+            location_contribution_strategy
+        )
+        result = moderation_event_creator.perform_event_creation(
+            request.data
+        )
 
-    #     log.info(f'[API Upload] Uploading data: {request.data}')
+        # log.info(f'[API Upload] Uploading data: {request.data}')
 
-    #     log.info('[API Upload] Started CC Parse process!')
+        # log.info('[API Upload] Started CC Parse process!')
 
-    #     params_serializer = FacilityCreateQueryParamsSerializer(
-    #         data=request.query_params)
-    #     params_serializer.is_valid(raise_exception=True)
+        # contri_cleaner = ContriCleaner(request.data, SectorCache())
+        # try:
+        #     contri_cleaner_processed_data = contri_cleaner.process_data()
+        # except HandlerNotSetError as err:
+        #     log.error(f'[API Upload] Internal ContriCleaner Error: {err}')
+        #     raise APIException('Internal System Error. '
+        #                        'Please contact support.')
 
-    #     contri_cleaner = ContriCleaner(request.data, SectorCache())
-    #     try:
-    #         contri_cleaner_processed_data = contri_cleaner.process_data()
-    #     except HandlerNotSetError as err:
-    #         log.error(f'[API Upload] Internal ContriCleaner Error: {err}')
-    #         raise APIException('Internal System Error. '
-    #                            'Please contact support.')
-
-    #     return None
+        return Response(result)
