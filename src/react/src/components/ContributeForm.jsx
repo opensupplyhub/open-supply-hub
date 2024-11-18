@@ -187,7 +187,7 @@ const ContributeForm = ({
                         }
                     >
                         <StyledTooltip
-                            title="List uploading is temporarily disabled during the release process"
+                            title="Open Supply Hub is undergoing maintenance and not accepting new data at the moment. Please try again in a few minutes."
                             placement="right"
                         >
                             <span>

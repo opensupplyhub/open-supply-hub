@@ -252,8 +252,9 @@ class FacilityListCreateTest(APITestCase):
     def test_no_upload_when_disable_list_uploading_switch_active(self):
         previous_list_count = FacilityList.objects.all().count()
         previous_source_count = Source.objects.all().count()
-        expected = ["List uploading is temporarily disabled during \
-            the release process"]
+        expected = ["Open Supply Hub is undergoing maintenance and not \
+                    accepting new data at the moment. Please try again in a \
+                    few minutes."]
 
         response = self.client.post(
             reverse("facility-list-list"),
