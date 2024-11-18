@@ -108,3 +108,18 @@ def handle_errors_decorator(view_func):
         except OpenSearchServiceException as e:
             return handle_opensearch_exception(e)
     return _wrapped_view
+
+
+def handle_path_error(field, message, status_code):
+    return Response(
+        {
+            "message": "The request path parameter is invalid.",
+            "errors": [
+                {
+                    "field": field,
+                    "message": message
+                }
+            ]
+        },
+        status=status_code
+    )
