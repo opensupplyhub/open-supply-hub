@@ -13,9 +13,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 #### Migrations:
 * 0159_alter_status_of_moderation_events_table.py - This migration alters status of api_moderationevent table.
+* 0160_allow_null_parsing_errors_in_facilitylist.py - This migration allows empty parsing_errors in api_facilitylist.
 
 #### Scheme changes
 * [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Alter status options for api_moderationevent table.
+* [OSDEV-1411](https://opensupplyhub.atlassian.net/browse/OSDEV-1411) - Allows empty parsing_errors in api_facilitylist.
 
 ### Code/API changes
 * [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Create GET request for `v1/moderation-events` endpoint.
@@ -27,7 +29,7 @@ to modify moderation event `status`.
 * *Describe architecture/environment changes here.*
 
 ### Bugfix
-* *Describe bugfix here.*
+* [OSDEV-1411](https://opensupplyhub.atlassian.net/browse/OSDEV-1411) - Django admin: fixed issue when update facility list with empty array `Parsing errors` field.
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
