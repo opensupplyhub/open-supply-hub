@@ -18,7 +18,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Alter status options for api_moderationevent table.
 
 ### Code/API changes
-* [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Create GET request for `v1/moderation-events` endpoint. Disabled null values from the response of the OpenSearch.
+* [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Create GET request for `v1/moderation-events` endpoint. Disabled null values from the response of the OpenSearch. Disabled possible null `os_id` and `claim_id` from PATCH response.
 * [OSDEV-1332](https://opensupplyhub.atlassian.net/browse/OSDEV-1332) - Introduced new `PATCH api/v1/moderation-events/{moderation_id}` endpoint 
 to modify moderation event `status`.
 * [OSDEV-1347](https://opensupplyhub.atlassian.net/browse/OSDEV-1347) - Create GET request for `v1/moderation-events/{moderation_id}` endpoint.
