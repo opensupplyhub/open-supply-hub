@@ -93,11 +93,10 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                                     ({
                                         moderation_id: moderationId,
                                         created_at: createdAt,
-                                        name,
-                                        country,
+                                        cleaned_data: cleanedData,
                                         contributor_name: contributorName,
                                         source,
-                                        moderation_status: moderationStatus,
+                                        status: moderationStatus,
                                         moderation_decision_date: moderationDecisionDate,
                                         updated_at: updatedAt,
                                     }) => (
@@ -106,7 +105,7 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                                             key={moderationId}
                                             className={classes.rowStyles}
                                             role="button"
-                                            aria-label={`View contribution record for ${name}`}
+                                            aria-label={`View contribution record for ${cleanedData.name}`}
                                             style={{ cursor: 'pointer' }}
                                             onClick={handleRowClick(
                                                 moderationId,
@@ -118,9 +117,11 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                                                     DATE_FORMATS.LONG,
                                                 )}
                                             </TableCell>
-                                            <TableCell>{name}</TableCell>
+                                            <TableCell>
+                                                {cleanedData.name}
+                                            </TableCell>
                                             <TableCell padding="dense">
-                                                {country.name}
+                                                {cleanedData.country.name}
                                             </TableCell>
                                             <TableCell>
                                                 {contributorName}

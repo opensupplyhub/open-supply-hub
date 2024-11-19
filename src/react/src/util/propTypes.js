@@ -498,20 +498,6 @@ export const productionLocationPropType = shape({
     historical_os_id: arrayOf(string),
 });
 
-export const moderationEventsPropType = arrayOf(
-    shape({
-        moderation_id: number.isRequired,
-        created_at: string.isRequired,
-        name: string.isRequired,
-        country: productionLocationCountryPropType,
-        contributor_name: string.isRequired,
-        source: string.isRequired,
-        moderation_status: string.isRequired,
-        moderation_decision_date: string,
-        updated_at: string.isRequired,
-    }),
-);
-
 export const moderationEventPropType = shape({
     moderation_id: number,
     created_at: string,
@@ -526,10 +512,12 @@ export const moderationEventPropType = shape({
     contributor_name: string,
     request_type: string,
     source: string,
-    moderation_status: oneOf(['PENDING', 'APPROVED', 'REJECTED']),
+    status: oneOf(['PENDING', 'APPROVED', 'REJECTED']),
     status_change_date: string,
     claim_id: number,
 });
+
+export const moderationEventsPropType = arrayOf(() => moderationEventPropType);
 
 export const potentialMatchesPropType = arrayOf(
     shape({
