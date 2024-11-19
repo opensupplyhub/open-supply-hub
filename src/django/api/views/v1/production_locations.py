@@ -106,4 +106,6 @@ class ProductionLocations(ViewSet):
         #     raise APIException('Internal System Error. '
         #                        'Please contact support.')
 
-        return Response(result)
+        if result.errors:
+            return Response(result.errors)
+        return Response(result.raw_data)

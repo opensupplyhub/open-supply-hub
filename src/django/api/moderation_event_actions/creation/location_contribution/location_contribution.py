@@ -4,6 +4,8 @@ from api.moderation_event_actions.creation.location_contribution \
     .processors.contribution_processor import ContributionProcessor
 from api.moderation_event_actions.creation.location_contribution \
     .processors.source_processor import SourceProcessor
+from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
+    import CreateModerationEventDTO
 
 
 class LocationContribution(EventCreationStrategy):
@@ -13,16 +15,19 @@ class LocationContribution(EventCreationStrategy):
     a moderation event.
     '''
 
-    def serialize(self, moderation_event_data):
+    def serialize(
+            self,
+            event_dto: CreateModerationEventDTO) -> CreateModerationEventDTO:
         entry_location_data_processor = self.__setup_location_data_processors()
-        processed_location_data = entry_location_data_processor.handle(
-            moderation_event_data
+
+        processed_location_data = entry_location_data_processor.process(
+            event_dto
         )
 
         return processed_location_data
 
-    @classmethod
-    def __setup_location_data_processors(cls) -> ContributionProcessor:
+    @staticmethod
+    def __setup_location_data_processors() -> ContributionProcessor:
         location_data_processors = (
             SourceProcessor(),
         )

@@ -1,8 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict
+
+from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
+    import CreateModerationEventDTO
 
 
 class EventCreationStrategy(ABC):
     @abstractmethod
-    def serialize(self, moderation_event_data) -> List[Dict]:
+    def serialize(
+            self,
+            event_dto: CreateModerationEventDTO) -> CreateModerationEventDTO:
         pass

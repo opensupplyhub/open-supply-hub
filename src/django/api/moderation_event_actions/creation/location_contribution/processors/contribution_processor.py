@@ -1,6 +1,9 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 
+from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
+    import CreateModerationEventDTO
+
 
 class ContributionProcessor(ABC):
     '''
@@ -17,8 +20,13 @@ class ContributionProcessor(ABC):
         self._next = next
 
     @abstractmethod
-    def handle(self, event) -> None:
+    def process(
+            self,
+            event_dto: CreateModerationEventDTO) -> CreateModerationEventDTO:
         if self._next:
-            return self._next.handle(event)
+            return self._next.process(event_dto)
 
-        return None
+        # TODO: return object with the error. I think it is better error
+        #       object in DTO which keeps both error code and object
+        #       with errors itself
+        raise None
