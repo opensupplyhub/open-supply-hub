@@ -13,8 +13,8 @@ class ModerationEventUpdateSerializer(ModelSerializer):
 
     contributor_id = IntegerField(source='contributor.id', read_only=True)
     contributor_name = CharField(source='contributor.name', read_only=True)
-    os_id = IntegerField(source='os.id', read_only=True, allow_null=True)
-    claim_id = IntegerField(source='claim.id', read_only=True, allow_null=True)
+    os_id = IntegerField(source='os.id', read_only=True)
+    claim_id = IntegerField(source='claim.id', read_only=True)
 
     class Meta:
         model = ModerationEvent
