@@ -23,7 +23,6 @@ from api.moderation_event_actions.approval.event_approval_strategy import (
 )
 from api.os_id import make_os_id
 
-
 log = logging.getLogger(__name__)
 
 
