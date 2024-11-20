@@ -24,7 +24,7 @@ to modify moderation event `status`.
 * [OSDEV-1347](https://opensupplyhub.atlassian.net/browse/OSDEV-1347) - Create GET request for `v1/moderation-events/{moderation_id}` endpoint.
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* Increased memory for the Dedupe Hub instance from 8GB to 12GB in `production` & `pre-prod` environments.
 
 ### Bugfix
 * *Describe bugfix here.*
