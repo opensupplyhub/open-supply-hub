@@ -28,9 +28,11 @@ const StyledTooltip = withStyles({
   },
 })(Tooltip);
 
+const disabledMessage = 'List uploads are disabled during the release process';
+
 const TestComponent = () => (
   <StyledTooltip
-    title="Test"
+    title={disabledMessage}
     placement="right"
     id="submit_tooltip"
   >
@@ -55,7 +57,8 @@ test('shows tooltip on hover', async () => {
   expect(button).toHaveTextContent('SUBMIT');
   expect(button).toBeDisabled();
 
-  const noTooltipElement = document.querySelector('[title="Test"]');
+  const noTooltipElement = document.querySelector(`[title="${
+    disabledMessage}"]`);
 
   expect(noTooltipElement).toBeInTheDocument();
   fireEvent.mouseOver(button);
@@ -65,7 +68,8 @@ test('shows tooltip on hover', async () => {
   expect(tooltip).toBeInTheDocument();
   fireEvent.mouseOut(button);
 
-  const noTooltipElementAfter = document.querySelector('[title="Test"]');
+  const noTooltipElementAfter = document.querySelector(`[title="${
+    disabledMessage}"]`);
 
   expect(noTooltipElementAfter).toBeInTheDocument();
 });

@@ -13,7 +13,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 #### Migrations:
 * 0159_alter_status_of_moderation_events_table.py - This migration alters status of api_moderationevent table.
-* 0159_create_disable_list_uploading_switch.py - This migration creates disable_list_uploading switch in the Django admin panel and record in the waffle_switch table.
+* 0160_create_disable_list_uploading_switch.py - This migration creates disable_list_uploading switch in the Django admin panel and record in the waffle_switch table.
 
 #### Scheme changes
 * [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Alter status options for api_moderationevent table.

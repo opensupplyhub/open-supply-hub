@@ -1362,3 +1362,6 @@ export const MODERATION_STATUS_COLORS = Object.freeze({
     [MODERATION_STATUSES_ENUM.APPROVED]: COLOURS.MINT_GREEN,
     [MODERATION_STATUSES_ENUM.REJECTED]: COLOURS.LIGHT_RED,
 });
+
+export const MAINTENANCE_MESSAGE =
+    'Open Supply Hub is undergoing maintenance and not accepting new data at the moment. Please try again in a few minutes.';

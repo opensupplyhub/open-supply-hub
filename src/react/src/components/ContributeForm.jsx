@@ -33,6 +33,7 @@ import {
     contributeFormFields,
     contributeFieldsEnum,
     DISABLE_LIST_UPLOADING,
+    MAINTENANCE_MESSAGE,
 } from '../util/constants';
 
 import { useFileUploadHandler } from '../util/hooks';
@@ -190,7 +191,7 @@ const ContributeForm = ({
                         }
                     >
                         <StyledTooltip
-                            title="Open Supply Hub is undergoing maintenance and not accepting new data at the moment. Please try again in a few minutes."
+                            title={MAINTENANCE_MESSAGE}
                             placement="right"
                         >
                             <div style={contributeFormStyles.inline}>
@@ -200,6 +201,7 @@ const ContributeForm = ({
                                     variant="contained"
                                     disableRipple
                                     onClick={() => {}}
+                                    aria-label="Submit button disabled during maintenance"
                                 />
                             </div>
                         </StyledTooltip>

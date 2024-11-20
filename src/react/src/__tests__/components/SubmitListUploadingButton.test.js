@@ -1,17 +1,31 @@
 import React from 'react';
 import ContributeList from '../../components/Contribute';
 import { render} from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { Provider } from "react-redux";
 import configureMockStore from 'redux-mock-store'
 import thunk from 'redux-thunk'
 
-describe('SubmitListUploadingButton component without DISABLE_LIST_UPLOADING', () => {
+const createMockStore = (featureFlags, baseState) => {
     const middlewares = [thunk];
     const mockStore = configureMockStore(middlewares);
+
+    return mockStore({
+      ...baseState,
+      featureFlags: {
+        flags: featureFlags,
+        fetching: false,
+        fetchingFeatureFlags: false
+      }
+    });
+  };
+
+describe('SubmitListUploadingButton component without DISABLE_LIST_UPLOADING', () => {
     const features = {
         disable_list_uploading: false,
     };
+
     const user = {
         id: 57658,
         email: '',
@@ -72,7 +86,6 @@ describe('SubmitListUploadingButton component without DISABLE_LIST_UPLOADING', (
                 "parsing_errors": []
             },],
             fetchingFacilityLists: false,},
-        featureFlags: { flags:features,fetching:false, fetchingFeatureFlags:false },
         embeddedMap: { isEmbeded:false },
         fetching:false,
         error: null,
@@ -82,7 +95,7 @@ describe('SubmitListUploadingButton component without DISABLE_LIST_UPLOADING', (
         userHasSignedIn: true,
         fetchingSessionSignIn: false,
       };
-    const store = mockStore(initialState);
+    const store = createMockStore(features, initialState);
 
     const renderComponent = (props = {}) =>
         render(
@@ -113,8 +126,6 @@ describe('SubmitListUploadingButton component without DISABLE_LIST_UPLOADING', (
 });
 
 describe('SubmitListUploadingButton component with DISABLE_LIST_UPLOADING', () => {
-    const middlewares = [thunk];
-    const mockStore = configureMockStore(middlewares);
     const features = {
         extended_profile: true,
         disable_list_uploading: true,
@@ -179,7 +190,6 @@ describe('SubmitListUploadingButton component with DISABLE_LIST_UPLOADING', () =
                 "parsing_errors": []
             },],
             fetchingFacilityLists: false,},
-        featureFlags: { flags:features,fetching:false, fetchingFeatureFlags:false },
         embeddedMap: { isEmbeded:false },
         fetching:false,
         error: null,
@@ -189,7 +199,7 @@ describe('SubmitListUploadingButton component with DISABLE_LIST_UPLOADING', () =
         userHasSignedIn: true,
         fetchingSessionSignIn: false,
       };
-    const store = mockStore(initialState);
+    const store = createMockStore(features, initialState);
 
     const renderComponent = (props = {}) =>
         render(
@@ -205,12 +215,12 @@ describe('SubmitListUploadingButton component with DISABLE_LIST_UPLOADING', () =
     });
 
     test('should render the disabled SUBMIT Button when activeFeatureFlags include DISABLE_LIST_UPLOADING', () => {
-        const {getByText} = renderComponent();
-        const button = getByText('SUBMIT').closest('button');
+        const {getByRole} = renderComponent();
+        const submitButton = getByRole('button', { name: 'SUBMIT' });
 
-        expect(button).toBeInTheDocument();
-        expect(button).toHaveAttribute('disabled');
-        expect(button).toBeDisabled();
+        expect(submitButton).toBeInTheDocument();
+        expect(submitButton).toHaveAttribute('disabled');
+        expect(submitButton).toBeDisabled();
     });
 });
 
