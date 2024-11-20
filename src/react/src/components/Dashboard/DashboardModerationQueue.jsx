@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
-import { bool, func, string, object } from 'prop-types';
+import { bool, func, string, object, number } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
@@ -22,6 +22,7 @@ import { MODERATION_QUEUE } from '../../util/constants';
 
 const DashboardModerationQueue = ({
     events,
+    count,
     fetching,
     fetchEvents,
     error,
@@ -64,7 +65,7 @@ const DashboardModerationQueue = ({
         return <Typography>{error}</Typography>;
     }
 
-    const eventsCount = events?.length || 0;
+    const eventsCount = count;
 
     const sharedFilterProps = {
         isDisabled: fetching,
@@ -125,6 +126,7 @@ const DashboardModerationQueue = ({
             <DashboardModerationQueueListTable
                 fetching={fetching}
                 events={events}
+                count={count}
             />
         </Paper>
     );
@@ -132,12 +134,14 @@ const DashboardModerationQueue = ({
 
 DashboardModerationQueue.defaultProps = {
     events: [],
+    count: 0,
     error: null,
     downloadEventsError: null,
 };
 
 DashboardModerationQueue.propTypes = {
     events: moderationEventsPropType,
+    count: number,
     fetching: bool.isRequired,
     error: string,
     downloadEventsError: string,
@@ -149,11 +153,12 @@ DashboardModerationQueue.propTypes = {
 
 const mapStateToProps = ({
     dashboardModerationQueue: {
-        moderationEvents: { events, fetching, error },
+        moderationEvents: { events, count, fetching, error },
         moderationEventsDownloadStatus: { error: downloadEventsError },
     },
 }) => ({
     events,
+    count,
     fetching,
     error,
     downloadEventsError,

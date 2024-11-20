@@ -133,7 +133,7 @@ export function fetchModerationEvents() {
             .get(makeGetModerationEventsWithQueryString())
             .then(({ data }) => {
                 console.log(data);
-                dispatch(completeFetchingModerationEvents(data.data));
+                dispatch(completeFetchingModerationEvents(data));
             })
             .catch(err =>
                 dispatch(

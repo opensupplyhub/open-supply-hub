@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { bool, object } from 'prop-types';
+import { bool, object, number } from 'prop-types';
 import { withRouter } from 'react-router-dom';
 import moment from 'moment';
 import { withStyles } from '@material-ui/core/styles';
@@ -26,7 +26,12 @@ import {
 const INITIAL_PAGE_INDEX = 0;
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 25];
 const DEFAULT_ROWS_PER_PAGE = 5;
-function DashboardModerationQueueListTable({ events, fetching, classes }) {
+function DashboardModerationQueueListTable({
+    events,
+    count,
+    fetching,
+    classes,
+}) {
     const [order, setOrder] = useState('desc');
     const [orderBy, setOrderBy] = useState('created_at');
     const [page, setPage] = useState(INITIAL_PAGE_INDEX);
@@ -160,7 +165,7 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
             <TablePagination
                 rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
                 component="div"
-                count={events.length}
+                count={count}
                 rowsPerPage={rowsPerPage}
                 page={page}
                 backIconButtonProps={{
@@ -178,10 +183,12 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
 
 DashboardModerationQueueListTable.defaultProps = {
     events: null,
+    count: 0,
 };
 
 DashboardModerationQueueListTable.propTypes = {
     events: moderationEventsPropType,
+    count: number,
     fetching: bool.isRequired,
     classes: object.isRequired,
 };

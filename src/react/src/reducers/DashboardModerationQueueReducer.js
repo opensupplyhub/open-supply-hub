@@ -43,7 +43,8 @@ export default createReducer(
                 moderationEvents: {
                     fetching: { $set: initialState.moderationEvents.fetching },
                     error: { $set: initialState.moderationEvents.error },
-                    events: { $set: data },
+                    events: { $set: data.data },
+                    count: { $set: data.count },
                 },
             }),
         [startDownloadingModerationEvents]: state =>
