@@ -12,9 +12,6 @@ from api.moderation_event_actions.approval.add_production_location_strategy \
 from api.moderation_event_actions.approval.event_approval_context \
     import EventApprovalContext
 from api.models.moderation_event import ModerationEvent
-from api.models.nonstandard_field import NonstandardField
-from api.models.source import Source
-from api.os_id import make_os_id
 from api.permissions import IsRegisteredAndConfirmed
 from api.serializers.v1.moderation_event_update_serializer \
     import ModerationEventUpdateSerializer
