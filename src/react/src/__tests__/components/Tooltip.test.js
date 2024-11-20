@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import { Button } from '@material-ui/core';
 import Tooltip from '@material-ui/core/Tooltip';
 import { withStyles } from '@material-ui/core/styles';
@@ -49,27 +49,28 @@ const TestComponent = () => (
     </div>
   </StyledTooltip>
 );
+describe('Tooltip', () => {
+  test('shows tooltip on hover', async () => {
+    const {getByRole} = render(<TestComponent />);
+    const button = getByRole('button', { name:'SUBMIT' });
 
-test('shows tooltip on hover', async () => {
-  const {getByRole} = render(<TestComponent />);
-  const button = getByRole('button', { name:'SUBMIT' });
+    expect(button).toHaveTextContent('SUBMIT');
+    expect(button).toBeDisabled();
 
-  expect(button).toHaveTextContent('SUBMIT');
-  expect(button).toBeDisabled();
+    const noTooltipElement = document.querySelector(`[title="${
+      disabledMessage}"]`);
 
-  const noTooltipElement = document.querySelector(`[title="${
-    disabledMessage}"]`);
+    expect(noTooltipElement).toBeInTheDocument();
+    fireEvent.mouseOver(button);
 
-  expect(noTooltipElement).toBeInTheDocument();
-  fireEvent.mouseOver(button);
+    const tooltip = document.querySelector('[aria-describedby="submit_tooltip"]');
 
-  const tooltip = document.querySelector('[aria-describedby="submit_tooltip"]');
+    expect(tooltip).toBeInTheDocument();
+    fireEvent.mouseOut(button);
 
-  expect(tooltip).toBeInTheDocument();
-  fireEvent.mouseOut(button);
+    const noTooltipElementAfter = document.querySelector(`[title="${
+      disabledMessage}"]`);
 
-  const noTooltipElementAfter = document.querySelector(`[title="${
-    disabledMessage}"]`);
-
-  expect(noTooltipElementAfter).toBeInTheDocument();
+    expect(noTooltipElementAfter).toBeInTheDocument();
+  });
 });
