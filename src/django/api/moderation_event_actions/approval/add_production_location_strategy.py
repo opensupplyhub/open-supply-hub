@@ -1,25 +1,27 @@
 import logging
 from datetime import datetime
 
+from typing import Dict, List, Type, Union
+
+from django.contrib.gis.geos import Point
+from django.db import transaction
+from django.utils import timezone
+
+from api.constants import ProcessingAction
+from api.extended_fields import create_extendedfields_for_single_item
+from api.models.contributor.contributor import Contributor
+from api.models.facility.facility import Facility
+from api.models.facility.facility_list_item import FacilityListItem
+from api.models.facility.facility_list_item_temp import FacilityListItemTemp
+from api.models.facility.facility_match import FacilityMatch
+from api.models.facility.facility_match_temp import FacilityMatchTemp
 from api.models.moderation_event import ModerationEvent
+from api.models.nonstandard_field import NonstandardField
+from api.models.source import Source
 from api.moderation_event_actions.approval.event_approval_strategy import (
     EventApprovalStrategy,
 )
-from api.models.source import Source
-from api.models.facility.facility_list_item import FacilityListItem
-from api.models.nonstandard_field import NonstandardField
-from api.models.facility.facility import Facility
-from api.models.facility.facility_match_temp import FacilityMatchTemp
-from api.models.facility.facility_match import FacilityMatch
-from api.models.facility.facility_list_item_temp import FacilityListItemTemp
-from api.constants import ProcessingAction
-from api.extended_fields import create_extendedfields_for_single_item
 from api.os_id import make_os_id
-from django.utils import timezone
-from django.contrib.gis.geos import Point
-from rest_framework.response import Response
-from django.db import transaction
-from rest_framework import status
 
 
 log = logging.getLogger(__name__)
@@ -27,16 +29,16 @@ log = logging.getLogger(__name__)
 
 class AddProductionLocationStrategy(EventApprovalStrategy):
     '''
-    Class defines the strategy for processing a moderation event for adding a production location.
+    Class defines the strategy for processing a moderation event for adding a
+    production location.
     '''
 
     def __init__(self, moderation_event: ModerationEvent) -> None:
-        # self.__moderation_event = moderation_event
         self.__event = moderation_event
 
-    def process_moderation_event(self) -> Response:
+    def process_moderation_event(self) -> FacilityListItem:
         with transaction.atomic():
-            data = self.__event.cleaned_data
+            data: Dict = self.__event.cleaned_data
             log.info(f'[Moderation Event] Processing event with data: {data}')
 
             contributor = self.__event.contributor
@@ -74,8 +76,7 @@ class AddProductionLocationStrategy(EventApprovalStrategy):
                 item, facility_id
             )
             log.info(
-                '[Moderation Event] FacilityListItem updated with '
-                'facility ID.'
+                '[Moderation Event] FacilityListItem updated with facility ID.'
             )
 
             FacilityListItemTemp.copy(item)
@@ -93,12 +94,10 @@ class AddProductionLocationStrategy(EventApprovalStrategy):
                 'updated.'
             )
 
-            return Response(
-                {"os_id": item.facility_id}, status=status.HTTP_201_CREATED
-            )
+            return item
 
     @staticmethod
-    def __create_source(contributor) -> Source:
+    def __create_source(contributor: Contributor) -> Source:
         return Source.objects.create(
             contributor=contributor,
             source_type=Source.SINGLE,
@@ -107,7 +106,9 @@ class AddProductionLocationStrategy(EventApprovalStrategy):
         )
 
     @staticmethod
-    def __create_nonstandard_fields(fields, contributor):
+    def __create_nonstandard_fields(
+        fields: List[str], contributor: Contributor
+    ) -> None:
         unique_fields = list(set(fields))
 
         existing_fields = NonstandardField.objects.filter(
@@ -134,40 +135,9 @@ class AddProductionLocationStrategy(EventApprovalStrategy):
             )
 
     @staticmethod
-    def __set_geocoded_location(item, data, event):
-        if event.geocode_result:
-            item.geocoded_point = Point(
-                event.geocode_result["longitude"],
-                event.geocode_result["latitude"],
-            )
-            item.geocoded_address = event.geocode_result["geocoded_address"]
-            item.processing_results.append(
-                {
-                    'action': ProcessingAction.GEOCODE,
-                    'started_at': str(timezone.now()),
-                    'error': False,
-                    'skipped_geocoder': False,
-                    'data': event.geocode_result['full_response'],
-                    'finished_at': str(timezone.now()),
-                }
-            )
-        else:
-            item.geocoded_point = Point(
-                data["fields"]["lng"], data["fields"]["lat"]
-            )
-            item.processing_results.append(
-                {
-                    'action': ProcessingAction.GEOCODE,
-                    'started_at': str(timezone.now()),
-                    'error': False,
-                    'skipped_geocoder': True,
-                    'finished_at': str(timezone.now()),
-                }
-            )
-        item.save()
-
-    @staticmethod
-    def __create_facility_list_item(source, data, header_str, status):
+    def __create_facility_list_item(
+        source: Source, data: Dict, header_str: str, status: str
+    ) -> FacilityListItem:
         return FacilityListItem.objects.create(
             source=source,
             row_index=0,
@@ -194,8 +164,56 @@ class AddProductionLocationStrategy(EventApprovalStrategy):
             ],
         )
 
+    def __set_geocoded_location(
+        self, item: FacilityListItem, data: Dict, event: ModerationEvent
+    ) -> None:
+        geocode_result = event.geocode_result
+        fields = data["fields"]
+
+        if geocode_result:
+            self.__apply_geocode_result(item, geocode_result)
+
+        else:
+            self.__apply_manual_location(item, fields)
+
+        item.save()
+
     @staticmethod
-    def __create_new_facility(item, facility_id):
+    def __apply_geocode_result(
+        item: FacilityListItem, geocode_result: Dict
+    ) -> None:
+        item.geocoded_point = Point(
+            geocode_result["longitude"], geocode_result["latitude"]
+        )
+        item.geocoded_address = geocode_result["geocoded_address"]
+        item.processing_results.append(
+            {
+                "action": ProcessingAction.GEOCODE,
+                "started_at": str(timezone.now()),
+                "error": False,
+                "skipped_geocoder": False,
+                "data": geocode_result["full_response"],
+                "finished_at": str(timezone.now()),
+            }
+        )
+
+    @staticmethod
+    def __apply_manual_location(item: FacilityListItem, fields: Dict) -> None:
+        item.geocoded_point = Point(fields["lng"], fields["lat"])
+        item.processing_results.append(
+            {
+                "action": ProcessingAction.GEOCODE,
+                "started_at": str(timezone.now()),
+                "error": False,
+                "skipped_geocoder": True,
+                "finished_at": str(timezone.now()),
+            }
+        )
+
+    @staticmethod
+    def __create_new_facility(
+        item: FacilityListItem, facility_id: str
+    ) -> Facility:
         return Facility.objects.create(
             id=facility_id,
             name=item.name,
@@ -209,8 +227,8 @@ class AddProductionLocationStrategy(EventApprovalStrategy):
 
     @staticmethod
     def __update_item_with_facility_id_and_processing_results(
-        item, facility_id
-    ):
+        item: FacilityListItem, facility_id: str
+    ) -> None:
         item.facility_id = facility_id
         item.processing_results.append(
             {
@@ -222,32 +240,40 @@ class AddProductionLocationStrategy(EventApprovalStrategy):
         )
         item.save()
 
-    @staticmethod
-    def __create_facility_match_temp(item):
-        return FacilityMatchTemp.objects.create(
-            facility_id=item.facility_id,
-            confidence=1.0,
-            facility_list_item_id=item.id,
+    def __create_facility_match_temp(
+        self, item: FacilityListItem
+    ) -> FacilityMatchTemp:
+        return self.__create_facility_match_record(
+            model=FacilityMatchTemp,
+            item=item,
             status=FacilityMatchTemp.AUTOMATIC,
-            results={"match_type": "moderation_event"},
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
+        )
+
+    def __create_facility_match(self, item: FacilityListItem) -> FacilityMatch:
+        return self.__create_facility_match_record(
+            model=FacilityMatch,
+            item=item,
+            status=FacilityMatch.AUTOMATIC,
         )
 
     @staticmethod
-    def __create_facility_match(item):
-        return FacilityMatch.objects.create(
+    def __create_facility_match_record(
+        model: Union[Type[FacilityMatchTemp], Type[FacilityMatch]],
+        item: FacilityListItem,
+        status: str,
+    ) -> Union[FacilityMatchTemp, FacilityMatch]:
+        return model.objects.create(
             facility_id=item.facility_id,
             confidence=1.0,
             facility_list_item_id=item.id,
-            status=FacilityMatch.AUTOMATIC,
+            status=status,
             results={"match_type": "moderation_event"},
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
+            created_at=timezone.now(),
+            updated_at=timezone.now(),
         )
 
     @staticmethod
-    def __update_event(event, item):
+    def __update_event(event: ModerationEvent, item: FacilityListItem) -> None:
         event.status = ModerationEvent.Status.APPROVED
         event.os_id = item.facility_id
         event.save()
