@@ -29,7 +29,7 @@ to modify moderation event `status`.
 * *Describe architecture/environment changes here.*
 
 ### Bugfix
-* [OSDEV-1411](https://opensupplyhub.atlassian.net/browse/OSDEV-1411) - Django admin: fixed issue when update facility list with empty array `Parsing errors` field.
+* [OSDEV-1411](https://opensupplyhub.atlassian.net/browse/OSDEV-1411) - Django Admin: Fixed an issue when updating the facility list with an empty array in the `parsing errors` field.
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
