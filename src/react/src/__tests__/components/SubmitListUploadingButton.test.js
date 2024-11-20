@@ -116,20 +116,21 @@ describe('SubmitListUploadingButton component with DISABLE_LIST_UPLOADING', () =
     const middlewares = [thunk];
     const mockStore = configureMockStore(middlewares);
     const features = {
+        extended_profile: true,
         disable_list_uploading: true,
     };
     const user = {
-        id: 57658,
-        email: '',
-        isModerationMode: false,
-        name: '',
-        description: '',
-        website: '',
-        contributorType: '',
-        otherContributorType: '',
-        currentPassword: '',
-        newPassword: '',
-        confirmNewPassword: '',
+        id: 96565,
+        email: 'test@gmail.com',
+        isModerationMode: true,
+        name: 'TestName',
+        description: 'test description',
+        website: 'https://test.pl',
+        contributorType: 'test type',
+        otherContributorType: 'new type',
+        currentPassword: 'pass',
+        newPassword: 'pass1',
+        confirmNewPassword: 'pass1',
         facilityLists: [],
     };
     const initialState = {
@@ -138,7 +139,7 @@ describe('SubmitListUploadingButton component with DISABLE_LIST_UPLOADING', () =
             session: { fetching: false },
         },
         upload: {
-            form: { name:'', description:'', filename:'', replaces:0 },
+            form: { name:'List name', description:'List description', filename:'file name', replaces:1 },
             fetching: false,
             error: null,
         },

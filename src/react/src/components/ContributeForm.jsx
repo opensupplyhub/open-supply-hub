@@ -77,6 +77,9 @@ const contributeFormStyles = Object.freeze({
         display: 'none',
         visibility: 'hidden',
     }),
+    inline: Object.freeze({
+        display: 'inline-block',
+    }),
 });
 
 const ContributeForm = ({
@@ -190,7 +193,7 @@ const ContributeForm = ({
                             title="Open Supply Hub is undergoing maintenance and not accepting new data at the moment. Please try again in a few minutes."
                             placement="right"
                         >
-                            <span>
+                            <div style={contributeFormStyles.inline}>
                                 <Button
                                     disabled
                                     text="SUBMIT"
@@ -198,7 +201,7 @@ const ContributeForm = ({
                                     disableRipple
                                     onClick={() => {}}
                                 />
-                            </span>
+                            </div>
                         </StyledTooltip>
                     </FeatureFlag>
                 )}
