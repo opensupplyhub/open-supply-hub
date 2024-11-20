@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from api.models.facility.facility_list_item import FacilityListItem
+
 
 class EventApprovalStrategy(ABC):
     '''
@@ -7,5 +9,5 @@ class EventApprovalStrategy(ABC):
     '''
 
     @abstractmethod
-    def process_moderation_event(self) -> None:
+    def process_moderation_event(self) -> FacilityListItem:
         pass
