@@ -1,22 +1,18 @@
 import json
+from unittest.mock import patch
 
-# from django.db import transaction
 from django.test import override_settings
-from api.models import ModerationEvent, User, Contributor
 from django.utils.timezone import now
+
 from rest_framework.test import APITestCase
 
-# from unittest.mock import patch
-
+from api.models import ModerationEvent, User, Contributor
 from api.models.facility.facility import Facility
+from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_match import FacilityMatch
 from api.models.facility.facility_match_temp import FacilityMatchTemp
-from api.models.facility.facility_list_item import FacilityListItem
-
-from api.models.source import Source
 from api.models.nonstandard_field import NonstandardField
-
-# from django.contrib.gis.geos import Point
+from api.models.source import Source
 
 
 @override_settings(DEBUG=True)
@@ -54,26 +50,12 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
                 "country": "United Kingdom",
                 "name": "Test Name",
                 "address": "Test Address, United Kingdom",
-                # "lat": self.latitude,
-                # "lng": self.longitude,
-                # "sector_product_type": "Apparel",
-                # "number_of_workers": 100,
-                # "facility_type_processing_type": "Test Facility Type",
-                # "native_language_name": "Native Language Name",
-                # "custom_field": "Test custom field",
             },
             cleaned_data={
                 "raw_json": {
                     "country": "United Kingdom",
                     "name": "Test Name",
                     "address": "Test Address, United Kingdom",
-                    # "lat": self.latitude,
-                    # "lng": self.longitude,
-                    # "sector_product_type": "Apparel",
-                    # "number_of_workers": 100,
-                    # "facility_type_processing_type": "Test Facility Type",
-                    # "native_language_name": "Native Language Name",
-                    # "custom_field": "Test custom field"
                 },
                 "name": "Test Name",
                 "clean_name": "test name",
@@ -82,26 +64,7 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
                 "country_code": "GB",
                 "sector": ["Apparel"],
                 "fields": {
-                    # "facility_type": {
-                    #     "raw_values": "Test Facility Type",
-                    #     "processed_values": [
-                    #         "Test Facility Type"
-                    #     ]
-                    # },
-                    # "processing_type": {
-                    #     "raw_values": "Test Facility Type",
-                    #     "processed_values": [
-                    #         "Test Facility Type"
-                    #     ]
-                    # },
-                    # "lat": self.latitude,
-                    # "lng": self.longitude,
                     "country": "United Kingdom",
-                    # "native_language_name": "Native Language Name",
-                    # "custom_field": "Test custom field",
-                    # "sector_product_type": "Apparel",
-                    # "facility_type_processing_type": "Test Facility Type",
-                    # "number_of_workers": 100
                 },
                 "errors": [],
             },
@@ -119,60 +82,8 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
                                     "short_name": "Geocoded Address",
                                     "types": ["street_address"],
                                 },
-                                # {
-                                #     "long_name": "Geocoded City",
-                                #     "short_name": "Geocoded City",
-                                #     "types": [
-                                #         "locality",
-                                #         "political"
-                                #     ]
-                                # },
-                                # {
-                                #     "long_name": "Geocoded County",
-                                #     "short_name": "Geocoded County",
-                                #     "types": [
-                                #         "administrative_area_level_2",
-                                #         "political"
-                                #     ]
-                                # },
-                                # {
-                                #     "long_name": "Geocoded Country",
-                                #     "short_name": "Geocoded Country",
-                                #     "types": [
-                                #         "country",
-                                #         "political"
-                                #     ]
-                                # },
-                                # {
-                                #     "long_name": "Geocoded Postal Code",
-                                #     "short_name": "Geocoded Postal Code",
-                                #     "types": [
-                                #         "postal_code"
-                                #     ]
-                                # }
                             ],
                             "formatted_address": "Geocoded Address",
-                            # "geometry": {
-                            #     "location": {
-                            #         "lat": self.latitude,
-                            #         "lng": self.longitude
-                            #     },
-                            #     "location_type": "ROOFTOP",
-                            #     "viewport": {
-                            #         "northeast": {
-                            #             "lat": self.latitude,
-                            #             "lng": self.longitude
-                            #         },
-                            #         "southwest": {
-                            #             "lat": self.latitude,
-                            #             "lng": self.longitude
-                            #         }
-                            #     }
-                            # },
-                            # "place_id": "Geocoded Place ID",
-                            # "types": [
-                            #     "street_address"
-                            # ]
                         }
                     ],
                 },
@@ -275,26 +186,6 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
         )
 
         self.assertEqual(201, response.status_code)
-
-    # def test_error_handling_during_processing(self):
-    #     self.client.login(
-    #         email=self.superuser_email,
-    #         password=self.superuser_password
-    #     )
-
-    #     with patch(
-    #         'api.views.v1.moderation_events.ModerationEvents.__process_moderation_event',
-    #         side_effect=Exception("Test exception during processing")
-    #     ):
-    #         response = self.client.post(
-    #             "/api/v1/moderation-events/{}/production-locations/"
-    #             .format(self.moderation_event_id),
-    #             data=json.dumps({}),
-    #             content_type="application/json"
-    #         )
-    #     self.assertEqual(500, response.status_code)
-    #     self.assertIn("message", response.data)
-    #     self.assertEqual(response.data["message"], "An unexpected error occurred while processing the request.")
 
     def test_creation_of_source(self):
         self.client.login(
@@ -405,6 +296,16 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
 
         facility = Facility.objects.get(id=response.data["os_id"])
         self.assertIsNotNone(facility)
+        self.assertEqual(
+            facility.name, self.moderation_event.cleaned_data["name"]
+        )
+        self.assertEqual(
+            facility.address, self.moderation_event.cleaned_data["address"]
+        )
+        self.assertEqual(
+            facility.country_code,
+            self.moderation_event.cleaned_data["country_code"],
+        )
 
     def test_creation_of_facilitymatch(self):
         self.client.login(
@@ -470,36 +371,38 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
             },
         )
 
-    # def test_process_moderation_event(self):
-    #     self.client.login(
-    #         email=self.superuser_email, password=self.superuser_password
-    #     )
-    #     response = self.client.post(
-    #         "/api/v1/moderation-events/{}/production-locations/".format(
-    #             self.moderation_event.uuid
-    #         ),
-    #         data=json.dumps({}),
-    #         content_type="application/json",
-    #     )
-    #     self.assertEqual(201, response.status_code)
+    @patch(
+        'api.moderation_event_actions.approval.'
+        'add_production_location_strategy.AddProductionLocationStrategy.'
+        'process_moderation_event'
+    )
+    def test_error_handling_during_processing(
+        self, mock_process_moderation_event
+    ):
+        mock_process_moderation_event.side_effect = Exception(
+            "Mocked processing error"
+        )
 
-    #     facility = Facility.objects.get(id=response.data["os_id"])
-    #     self.assertIsNotNone(facility)
+        self.client.login(
+            email=self.superuser_email, password=self.superuser_password
+        )
 
-    # facility_list_item = FacilityListItem.objects.get(facility=facility.id)
-    # self.assertIsNotNone(facility_list_item)
-    # self.assertEqual(facility_list_item.status, FacilityListItem.MATCHED)
+        response = self.client.post(
+            f"/api/v1/moderation-events/{self.moderation_event_id}/"
+            "production-locations/",
+            data=json.dumps({}),
+            content_type="application/json",
+        )
 
-    # facility_match = FacilityMatch.objects.get(
-    #     facility_list_item=facility_list_item.id
-    # )
-    # self.assertIsNotNone(facility_match)
-    # self.assertEqual(facility_match.status, FacilityMatch.AUTOMATIC)
-    # self.assertEqual(facility_match.facility_id, facility.id)
-    # self.assertEqual(facility_match.confidence, 1)
-    # self.assertEqual(
-    #     facility_match.results,
-    #     {
-    #         "match_type": "moderation_event",
-    #     },
-    # )
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(
+            response.data,
+            {
+                "message": "An unexpected error occurred while processing the "
+                "request."
+            },
+        )
+        self.assertEqual(
+            ModerationEvent.objects.get(uuid=self.moderation_event_id).status,
+            ModerationEvent.Status.PENDING,
+        )
