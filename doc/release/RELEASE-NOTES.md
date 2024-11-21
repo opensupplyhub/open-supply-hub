@@ -24,6 +24,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1332](https://opensupplyhub.atlassian.net/browse/OSDEV-1332) - Introduced new `PATCH api/v1/moderation-events/{moderation_id}` endpoint 
 to modify moderation event `status`.
 * [OSDEV-1347](https://opensupplyhub.atlassian.net/browse/OSDEV-1347) - Create GET request for `v1/moderation-events/{moderation_id}` endpoint.
+* [OSDEV-1410](https://opensupplyhub.atlassian.net/browse/OSDEV-1410) - Introduced new POST `/api/moderation-events/{moderation_id}/production-locations` endpoint
 
 ### Architecture/Environment changes
 * Increased the memory for the Dedupe Hub instance from 8GB to 12GB in the `production` and `pre-prod` environments to reduce the risk of container overload and minimize the need for reindexing in the future.
