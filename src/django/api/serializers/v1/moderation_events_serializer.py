@@ -53,14 +53,15 @@ class ModerationEventsSerializer(Serializer):
     sort_by = ChoiceField(
         choices=[
             'created_at',
-            'updated_at',
             'status_change_date',
+            'updated_at',
+            'contributor_id',
             'contributor_name',
+            'country',
+            'name',
+            'address'
             'source',
             'status',
-            'cleaned_country',
-            'cleaned_name',
-            'cleaned_address'
         ],
         required=False
     )
