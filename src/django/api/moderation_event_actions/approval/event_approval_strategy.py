@@ -10,4 +10,7 @@ class EventApprovalStrategy(ABC):
 
     @abstractmethod
     def process_moderation_event(self) -> FacilityListItem:
+        '''
+        Abstract method to process a moderation event.
+        '''
         pass
