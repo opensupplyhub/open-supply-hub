@@ -398,7 +398,7 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
         self.assertEqual(
             response.data,
             {
-                "message": "An unexpected error occurred while processing the "
+                "detail": "An unexpected error occurred while processing the "
                 "request."
             },
         )
