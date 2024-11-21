@@ -1,23 +1,19 @@
 import React from 'react';
-import ContributeList from '../../components/Contribute';
 import { render, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { Provider } from "react-redux";
 import configureMockStore from 'redux-mock-store'
 import thunk from 'redux-thunk'
+
+import ContributeList from '../../components/Contribute';
 import { MAINTENANCE_MESSAGE } from '../../util/constants';
 
-jest.mock('@material-ui/core/Popper', () => {
-    return ({ children }) => children;
-});
-
-jest.mock('@material-ui/core/Portal', () => {
-return ({ children }) => children;
-});
+jest.mock('@material-ui/core/Popper', () => ({ children }) => children);
+jest.mock('@material-ui/core/Portal', () => ({ children }) => children);
 
 afterEach(() => {
-jest.resetAllMocks();
+    jest.resetAllMocks();
 });
 
 const createMockStore = (featureFlags, baseState) => {
@@ -91,20 +87,20 @@ describe('SubmitListUploadingButton component without DISABLE_LIST_UPLOADING', (
                     "ITEM_REMOVED": 1
                 },
                 "contributor_id": 2371,
-                "created_at": "2023-02-24T11:12:05.895943Z",
+                "created_at": "2024-01-13T10:12:05.895143Z",
                 "match_responsibility": "moderator",
-                "status": "REJECTED",
+                "status": "AUTOMATIC",
                 "status_change_reason": "test",
                 "file": "/Template_Excel_KdIAiX9.xlsx",
                 "parsing_errors": []
             },],
             fetchingFacilityLists: false,},
-        embeddedMap: { isEmbeded:false },
-        fetching:false,
-        error: null,
-        fetchingFacilityLists:false,
-    };
-    const preloadedState = {
+            embeddedMap: { isEmbeded:true },
+            fetching:false,
+            error: null,
+            fetchingFacilityLists:false,
+        };
+    const newPreloadedState = {
         userHasSignedIn: true,
         fetchingSessionSignIn: false,
       };
@@ -114,7 +110,7 @@ describe('SubmitListUploadingButton component without DISABLE_LIST_UPLOADING', (
         render(
         <Provider store={store}>
             <Router>
-                <ContributeList {...preloadedState} {...props}/>
+                <ContributeList {...newPreloadedState} {...props}/>
             </Router>,
         </Provider>
     );
