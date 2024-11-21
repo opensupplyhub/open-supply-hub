@@ -40,18 +40,18 @@ class AddProductionLocationStrategy(EventApprovalStrategy):
             data: Dict = self.__event.cleaned_data
             log.info(f'[Moderation Event] Processing event with data: {data}')
 
-            contributor = self.__event.contributor
+            contributor: Contributor = self.__event.contributor
             log.info(f'[Moderation Event] Contributor: {contributor}')
 
-            source = self.__create_source(contributor)
+            source: Source = self.__create_source(contributor)
             log.info(f'[Moderation Event] Source created. Id: {source.id}')
 
-            header_row_keys = data["raw_json"].keys()
+            header_row_keys: List[str] = data["raw_json"].keys()
             self.__create_nonstandard_fields(header_row_keys, contributor)
             log.info('[Moderation Event] Nonstandard fields created.')
 
-            header_str = ','.join(header_row_keys)
-            item = self.__create_facility_list_item(
+            header_str: str = ','.join(header_row_keys)
+            item: FacilityListItem = self.__create_facility_list_item(
                 source, data, header_str, FacilityListItem.MATCHED
             )
             log.info(
