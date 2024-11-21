@@ -5,6 +5,7 @@ import {
     startFetchingModerationEvents,
     failFetchingModerationEvents,
     completeFetchingModerationEvents,
+    clearModerationEvents,
     startDownloadingModerationEvents,
     failDownloadingModerationEvents,
     completeDownloadingModerationEvents,
@@ -43,8 +44,16 @@ export default createReducer(
                 moderationEvents: {
                     fetching: { $set: initialState.moderationEvents.fetching },
                     error: { $set: initialState.moderationEvents.error },
-                    events: { $set: data.data },
+                    events: {
+                        $set: [...state.moderationEvents.events, ...data.data],
+                    },
                     count: { $set: data.count },
+                },
+            }),
+        [clearModerationEvents]: state =>
+            update(state, {
+                moderationEvents: {
+                    events: { $set: [] },
                 },
             }),
         [startDownloadingModerationEvents]: state =>

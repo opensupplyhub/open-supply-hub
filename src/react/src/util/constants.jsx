@@ -1338,12 +1338,12 @@ export const MODERATION_STATUSES_ENUM = Object.freeze({
 
 export const MODERATION_QUEUE_HEAD_CELLS = Object.freeze([
     { id: 'created_at', label: 'Created Date' },
-    { id: 'name', label: 'Location Name' },
-    { id: 'country.name', label: 'Country' },
+    { id: 'cleaned_name', label: 'Location Name' },
+    { id: 'cleaned_country', label: 'Country' },
     { id: 'contributor_name', label: 'Contributor' },
     { id: 'source', label: 'Source Type' },
-    { id: 'moderation_status', label: 'Moderation Status' },
-    { id: 'moderation_decision_date', label: 'Moderation Decision Date' },
+    { id: 'status', label: 'Moderation Status' },
+    { id: 'status_change_date', label: 'Moderation Decision Date' },
     { id: 'updated_at', label: 'Last Updated' },
 ]);
 

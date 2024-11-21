@@ -15,6 +15,7 @@ export const failFetchingModerationEvents = createAction(
 export const completeFetchingModerationEvents = createAction(
     'COMPLETE_FETCHING_MODERATION_EVENTS',
 );
+export const clearModerationEvents = createAction('CLEAR_MODERATION_EVENTS');
 export const startDownloadingModerationEvents = createAction(
     'START_DOWNLOADING_MODERATION_EVENTS',
 );
@@ -125,12 +126,25 @@ export const completeDownloadingModerationEvents = createAction(
 //     },
 // ];
 
-export function fetchModerationEvents() {
+export function fetchModerationEvents(
+    page = 0,
+    pageSize = 5,
+    sortBy = 'created_at',
+    orderBy = 'desc',
+) {
     return async dispatch => {
         dispatch(startFetchingModerationEvents());
 
         return apiRequest
-            .get(makeGetModerationEventsWithQueryString())
+            .get(
+                makeGetModerationEventsWithQueryString(
+                    '',
+                    page,
+                    pageSize,
+                    sortBy,
+                    orderBy,
+                ),
+            )
             .then(({ data }) => {
                 console.log(data);
                 dispatch(completeFetchingModerationEvents(data));

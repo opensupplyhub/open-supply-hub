@@ -127,6 +127,7 @@ const DashboardModerationQueue = ({
                 fetching={fetching}
                 events={events}
                 count={count}
+                fetchEvents={fetchEvents}
             />
         </Paper>
     );
@@ -165,7 +166,8 @@ const mapStateToProps = ({
 });
 
 const mapDispatchToProps = dispatch => ({
-    fetchEvents: () => dispatch(fetchModerationEvents()),
+    fetchEvents: (page, pageSize, sortBy, orderBy) =>
+        dispatch(fetchModerationEvents(page, pageSize, sortBy, orderBy)),
     fetchCountries: () => dispatch(fetchCountryOptions()),
     downloadEvents: moderationEvents =>
         dispatch(downloadModerationEvents(moderationEvents)),

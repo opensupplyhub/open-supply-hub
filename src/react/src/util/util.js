@@ -260,8 +260,16 @@ export const makeNonStandardFieldsURL = () => '/api/nonstandard-fields/';
 export const makeGetProductionLocationByOsIdURL = osID =>
     `/api/v1/production-locations/${osID}/`;
 
-export const makeGetModerationEventsWithQueryString = () =>
-    `/api/v1/moderation-events/`;
+export const makeGetModerationEventsWithQueryString = (
+    qs,
+    page,
+    pageSize,
+    sortBy,
+    orderBy,
+) =>
+    `/api/v1/moderation-events/?${qs}&sort_by=${sortBy}&order_by=${orderBy}&from=${
+        page * pageSize
+    }&size=${pageSize}`;
 
 export const getValueFromObject = ({ value }) => value;
 

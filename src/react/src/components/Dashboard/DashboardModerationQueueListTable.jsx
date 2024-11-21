@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useDispatch } from 'react-redux';
 import { bool, object, number } from 'prop-types';
 import { withRouter } from 'react-router-dom';
 import moment from 'moment';
@@ -10,6 +11,7 @@ import TableCell from '@material-ui/core/TableCell';
 import TablePagination from '@material-ui/core/TablePagination';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import DashboardModerationQueueListTableHeader from './DashboardModerationQueueListTableHeader';
+import { clearModerationEvents } from '../../actions/dashboardModerationQueue';
 import { moderationEventsPropType } from '../../util/propTypes';
 import {
     EMPTY_PLACEHOLDER,
@@ -24,21 +26,29 @@ import {
 } from '../../util/util';
 
 const INITIAL_PAGE_INDEX = 0;
-const ROWS_PER_PAGE_OPTIONS = [5, 10, 25];
+const ROWS_PER_PAGE_OPTIONS = [5, 10, 25]; // 25, 50, 100
 const DEFAULT_ROWS_PER_PAGE = 5;
 function DashboardModerationQueueListTable({
     events,
     count,
     fetching,
+    fetchEvents,
     classes,
 }) {
     const [order, setOrder] = useState('desc');
     const [orderBy, setOrderBy] = useState('created_at');
     const [page, setPage] = useState(INITIAL_PAGE_INDEX);
+    const [maxPage, setMaxPage] = useState(INITIAL_PAGE_INDEX);
     const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
+
+    const dispatch = useDispatch();
 
     const handleChangePage = (_, newPage) => {
         setPage(newPage);
+        if (newPage > page && newPage > maxPage) {
+            setMaxPage(newPage);
+            fetchEvents(newPage, rowsPerPage, orderBy, order);
+        }
     };
     const handleRowClick = useCallback(
         id => () => {
@@ -55,14 +65,23 @@ function DashboardModerationQueueListTable({
     );
 
     const handleChangeRowsPerPage = event => {
-        setRowsPerPage(event.target.value);
+        const newRowsPerPage = event.target.value;
+        setRowsPerPage(newRowsPerPage);
         setPage(INITIAL_PAGE_INDEX);
+        setMaxPage(INITIAL_PAGE_INDEX);
+        fetchEvents(INITIAL_PAGE_INDEX, newRowsPerPage, orderBy, order);
     };
 
     const handleRequestSort = (_, property) => {
         const isDesc = orderBy === property && order === 'desc';
-        setOrder(isDesc ? 'asc' : 'desc');
+        const newOrder = isDesc ? 'asc' : 'desc';
+        console.log(property);
+        setOrder(newOrder);
         setOrderBy(property);
+        setPage(INITIAL_PAGE_INDEX);
+        setMaxPage(INITIAL_PAGE_INDEX);
+        dispatch(clearModerationEvents());
+        fetchEvents(INITIAL_PAGE_INDEX, rowsPerPage, property, newOrder);
     };
 
     return (
