@@ -28,6 +28,7 @@ from api.constants import (
     FacilityListItemsQueryParams,
     ProcessingAction,
 )
+from api.exceptions import ServiceUnavailableException
 from ...facility_history import create_dissociate_match_change_reason
 from ...mail import send_facility_list_rejection_email
 from ...models.contributor.contributor import Contributor
@@ -91,9 +92,10 @@ class FacilityListViewSet(ModelViewSet):
             }
         """
         if switch_is_active('disable_list_uploading'):
-            raise ValidationError('Open Supply Hub is undergoing maintenance \
-                                  and not accepting new data at the moment. \
-                                  Please try again in a few minutes.')
+            raise ServiceUnavailableException('Open Supply Hub is undergoing \
+                                     maintenance and not accepting new \
+                                     data at the moment. Please try again \
+                                     in a few minutes.')
         if 'file' not in request.data:
             raise ValidationError('No file specified.')
         uploaded_file = request.data['file']

@@ -261,12 +261,20 @@ class FacilityListCreateTest(APITestCase):
             {"file": self.test_file},
             format="multipart",
         )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        result = ["".join(json.loads(response.content))]
+
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.status_code,
+                         status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        result = ["".join(json.loads(response.content)['detail'])]
         # Collapse multiple spaces into one
         expected = [re.sub(r"\s+", " ", item) for item in expected]
-        result = [re.sub(r"\s+", " ", item) for item in result]
-        self.assertEqual(result, expected)
+        stringResult = [re.sub(r"\s+", " ", item) for item in result]
+
+        self.assertEqual(
+            stringResult,
+            expected,
+        )
         self.assertEqual(
             FacilityList.objects.all().count(), previous_list_count
         )
