@@ -90,10 +90,7 @@ class ModerationEvents(ViewSet):
 
     @handle_errors_decorator
     def patch(self, request, pk=None):
-        if not (request.user.is_superuser or request.user.is_staff):
-            raise PermissionDenied(
-                detail="Only the Moderator can perform this action."
-            )
+        self.__validate_user_permissions(request)
 
         if not ModerationIdValidator.is_valid_uuid(pk):
             return handle_path_error(
@@ -131,8 +128,7 @@ class ModerationEvents(ViewSet):
         )
 
     @handle_errors_decorator
-    def add_production_location(self, request, moderation_id):
-
+    def add_production_location(self, request, moderation_id=None):
         self.__validate_user_permissions(request)
 
         if not ModerationIdValidator.is_valid_uuid(moderation_id):
