@@ -22,6 +22,8 @@ def serialize_params(serializer_class, query_params):
             f'{V1_PARAMETERS_LIST.PERCENT_FEMALE_WORKERS}[max]',
             f'{V1_PARAMETERS_LIST.COORDINATES}[lat]',
             f'{V1_PARAMETERS_LIST.COORDINATES}[lng]',
+            f'{V1_PARAMETERS_LIST.SEARCH_AFTER}[id]',
+            f'{V1_PARAMETERS_LIST.SEARCH_AFTER}[value]'
         ]:
             new_key = key.replace(']', '').replace('[', '_')
             flattened_query_params[new_key] = value[0]
@@ -29,8 +31,6 @@ def serialize_params(serializer_class, query_params):
         elif key in [
             V1_PARAMETERS_LIST.ADDRESS,
             V1_PARAMETERS_LIST.DESCRIPTION,
-            # SEARCH_AFTER contains comma separated values
-            V1_PARAMETERS_LIST.SEARCH_AFTER,
             V1_PARAMETERS_LIST.SORT_BY,
             V1_PARAMETERS_LIST.ORDER_BY,
             V1_PARAMETERS_LIST.SIZE,

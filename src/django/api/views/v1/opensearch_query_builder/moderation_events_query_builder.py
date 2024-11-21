@@ -64,22 +64,10 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
                 }
             )
 
-    def add_search_after(self, search_after):
-        # search_after can't be present as empty by default in query_body
-        if V1_PARAMETERS_LIST.SEARCH_AFTER not in self.query_body:
-            self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER] = []
-
-        if not self.query_body.get('sort'):
-            self.query_body['sort'] = [
-                { self.default_sort: self.default_sort_order },
-                { "moderation_id": self.default_sort_order }
-            ]
-        else:
-            if not any("moderation_id" in criterion for criterion in self.query_body['sort']):
-                self.query_body['sort'].append({ "moderation_id": self.default_sort_order })
-
-        if isinstance(search_after, str) and ',' in search_after:
-            search_after = search_after.split(',')
-
-        self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER] = search_after
-
+    def add_search_after(
+        self,
+        search_after_value,
+        search_after_id,
+        id_type='moderation_id'
+    ):
+        super().add_search_after(search_after_value, search_after_id, id_type)

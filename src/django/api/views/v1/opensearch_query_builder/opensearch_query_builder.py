@@ -96,12 +96,36 @@ class OpenSearchQueryBuilder(ABC):
         }
         self.query_body['query']['bool']['must'].append(geo_distance_query)
 
-    @abstractmethod
-    def add_sort(self, field, order_by=None):
-        pass
+    def add_search_after(self, search_after_value, search_after_id, id_type):
+        # search_after can't be present as empty by default in query_body
+        if 'search_after' not in self.query_body:
+            self.query_body['search_after'] = []
+
+        if not self.query_body.get('sort'):
+            self.query_body['sort'] = [
+                {self.default_sort: self.default_sort_order},
+                {id_type: self.default_sort_order}
+            ]
+        else:
+            # Check if id_type is already in the sort criteria
+            if not any(
+                id_type in criterion for criterion in self.query_body['sort']
+            ):
+                self.query_body['sort'].append({
+                    id_type: self.default_sort_order
+                })
+        ''''
+        Order of search_after_value and
+        search_after_id should be the same
+        as for the sort field
+        '''
+        self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER] = [
+            search_after_value,
+            search_after_id
+        ]
 
     @abstractmethod
-    def add_search_after(self, search_after):
+    def add_sort(self, field, order_by=None):
         pass
 
     @abstractmethod
