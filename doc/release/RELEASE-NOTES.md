@@ -13,10 +13,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 #### Migrations:
 * 0159_alter_status_of_moderation_events_table.py - This migration alters status of api_moderationevent table.
-* 0160_create_disable_list_uploading_switch.py - This migration creates disable_list_uploading switch in the Django admin panel and record in the waffle_switch table.
+* 0160_allow_null_parsing_errors_in_facilitylist.py - This migration allows empty parsing_errors in api_facilitylist.
+* 0161_create_disable_list_uploading_switch.py - This migration creates disable_list_uploading switch in the Django admin panel and record in the waffle_switch table.
 
 #### Scheme changes
 * [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Alter status options for api_moderationevent table.
+* [OSDEV-1411](https://opensupplyhub.atlassian.net/browse/OSDEV-1411) - Allows empty parsing_errors in api_facilitylist.
 
 ### Code/API changes
 * [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Create GET request for `v1/moderation-events` endpoint.
@@ -29,7 +31,7 @@ to modify moderation event `status`.
 * Increased the memory for the Dedupe Hub instance from 8GB to 12GB in the `production` and `pre-prod` environments to reduce the risk of container overload and minimize the need for reindexing in the future.
 
 ### Bugfix
-* *Describe bugfix here.*
+* [OSDEV-1411](https://opensupplyhub.atlassian.net/browse/OSDEV-1411) - Django Admin: Fixed an issue when updating the facility list with an empty array in the `parsing errors` field.
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*

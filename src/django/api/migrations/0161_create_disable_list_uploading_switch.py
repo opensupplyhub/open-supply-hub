@@ -15,7 +15,7 @@ def delete_disable_list_uploading_switch(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0159_alter_status_of_moderation_event_table'),
+        ('api', '0160_allow_null_parsing_errors_in_facilitylist'),
     ]
 
     operations = [
