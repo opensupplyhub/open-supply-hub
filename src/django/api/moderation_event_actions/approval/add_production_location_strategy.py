@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from typing import Dict, List, Type, Union
+from typing import Dict, KeysView, Type, Union
 
 from django.contrib.gis.geos import Point
 from django.db import transaction
@@ -49,7 +49,7 @@ class AddProductionLocationStrategy(EventApprovalStrategy):
             source: Source = self.__create_source(contributor)
             log.info(f'[Moderation Event] Source created. Id: {source.id}')
 
-            header_row_keys: List[str] = data["raw_json"].keys()
+            header_row_keys: KeysView[str] = data["raw_json"].keys()
             create_nonstandard_fields(header_row_keys, contributor)
             log.info('[Moderation Event] Nonstandard fields created.')
 
@@ -106,35 +106,6 @@ class AddProductionLocationStrategy(EventApprovalStrategy):
             is_public=True,
             create=True,
         )
-
-    @staticmethod
-    def __create_nonstandard_fields(
-        fields: List[str], contributor: Contributor
-    ) -> None:
-        unique_fields = list(set(fields))
-
-        existing_fields = NonstandardField.objects.filter(
-            contributor=contributor
-        ).values_list('column_name', flat=True)
-        new_fields = filter(lambda f: f not in existing_fields, unique_fields)
-        standard_fields = [
-            'sector',
-            'country',
-            'name',
-            'address',
-            'lat',
-            'lng',
-        ]
-        nonstandard_fields = filter(
-            lambda f: f.lower() not in standard_fields, new_fields
-        )
-
-        for field in nonstandard_fields:
-            (
-                NonstandardField.objects.create(
-                    contributor=contributor, column_name=field
-                )
-            )
 
     @staticmethod
     def __create_facility_list_item(
