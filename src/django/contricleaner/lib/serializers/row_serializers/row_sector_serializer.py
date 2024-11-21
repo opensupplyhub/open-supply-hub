@@ -34,18 +34,19 @@ class RowSectorSerializer(RowSerializer):
                 if not is_valid_type(value):
                     sector_errors.append(
                         {
-                            "message": "Expected value for {} to be a string "
-                            "or a list of strings but got {}.".format(
+                            'message': 'Expected value for {} to be a string '
+                            'or a list of strings but got {}.'.format(
                                 field, value
                             ),
-                            "type": "ValueError",
+                            'field': field,
+                            'type': 'ValueError',
                         }
                     )
                 elif value:
                     values.append(value)
 
         if sector_errors:
-            current["errors"].extend(sector_errors)
+            current['errors'].extend(sector_errors)
             return current
 
         splitted_values = split_values(values, self.split_pattern)
@@ -53,13 +54,14 @@ class RowSectorSerializer(RowSerializer):
         sectors, product_types = self.parse_all_values(splitted_values)
 
         if len(product_types) > MAX_PRODUCT_TYPE_COUNT:
-            current["errors"].append(
+            current['errors'].append(
                 {
-                    "message": "You may submit a maximum of {} product types, "
-                    "not {}.".format(
+                    'message': 'You may submit a maximum of {} product types, '
+                    'not {}.'.format(
                         MAX_PRODUCT_TYPE_COUNT, len(product_types)
                     ),
-                    "type": "ValidationError",
+                    'field': 'product_type',
+                    'type': 'ValidationError',
                 }
             )
             return current
@@ -104,6 +106,7 @@ class RowSectorSerializer(RowSerializer):
                     'message': ('There is a problem with the sector values: '
                                 'Ensure that each value has at most 50 '
                                 'characters.'),
+                    'field': 'sector',
                     'type': 'ValidationError',
                 }
             ]

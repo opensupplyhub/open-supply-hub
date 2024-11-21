@@ -54,6 +54,7 @@ class ContriCleaner:
         except ParsingError as err:
             return ListDTO(errors=[{
                 'message': str(err),
+                'field': 'multiple_field_errors',
                 'type': 'ParsingError',
             }])
 

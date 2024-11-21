@@ -94,18 +94,6 @@ class ProductionLocations(ViewSet):
             request.data
         )
 
-        # log.info(f'[API Upload] Uploading data: {request.data}')
-
-        # log.info('[API Upload] Started CC Parse process!')
-
-        # contri_cleaner = ContriCleaner(request.data, SectorCache())
-        # try:
-        #     contri_cleaner_processed_data = contri_cleaner.process_data()
-        # except HandlerNotSetError as err:
-        #     log.error(f'[API Upload] Internal ContriCleaner Error: {err}')
-        #     raise APIException('Internal System Error. '
-        #                        'Please contact support.')
-
         if result.errors:
             return Response(result.errors)
         return Response(result.raw_data)

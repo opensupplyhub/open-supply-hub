@@ -5,9 +5,9 @@ from contricleaner.lib.validators.pre_validators \
 
 
 class PreHeaderValidator(PreValidator):
-    __required_fields = {"name",
-                         "address",
-                         "country"}
+    __required_fields = {'name',
+                         'address',
+                         'country'}
 
     def validate(self, rows: List[dict]) -> dict:
         for row in rows:
@@ -18,7 +18,8 @@ class PreHeaderValidator(PreValidator):
                 return {}
 
         return {
-            "message": "Required Fields are missing: {}."
+            'message': 'Required Fields are missing: {}.'
             .format(', '.join(self.__required_fields)),
-            "type": "RequiredFieldsMissingError",
+            'field': 'multiple_field_errors',
+            'type': 'RequiredFieldsMissingError',
         }

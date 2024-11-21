@@ -7,9 +7,9 @@ from contricleaner.lib.serializers.row_serializers.row_serializer \
 
 class RowRequiredFieldsSerializer(RowSerializer):
     __required_fields = {
-        "name",
-        "address",
-        "country"
+        'name',
+        'address',
+        'country'
     }
     __valid_field_value_lengths = {'name': 200, 'address': 200}
 
@@ -17,11 +17,12 @@ class RowRequiredFieldsSerializer(RowSerializer):
         missing_fields = self.__required_fields.difference(row.keys())
 
         if len(missing_fields) > 0:
-            current["errors"].append(
+            current['errors'].append(
                 {
-                    "message": "{} are missing.".format(
+                    'message': '{} are missing.'.format(
                         ', '.join(missing_fields)),
-                    "type": "Error",
+                    'field': 'multiple_field_errors',
+                    'type': 'Error',
                 }
             )
 
@@ -48,6 +49,7 @@ class RowRequiredFieldsSerializer(RowSerializer):
                                         'Ensure this value has at most 200 '
                                         'characters. (it has {1})').format(
                                             field, value_len),
+                            'field': field,
                             'type': 'ValidationError',
                         }
                     )

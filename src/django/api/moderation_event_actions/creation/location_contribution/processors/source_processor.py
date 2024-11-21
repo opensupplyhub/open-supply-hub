@@ -26,8 +26,7 @@ class SourceProcessor(ContributionProcessor):
 
         event_dto.source = event_dto.raw_data['source']
 
-        return event_dto
-        # return super().process(event_dto)
+        return super().process(event_dto)
 
     @staticmethod
     def __transform_serializer_errors(serializer_errors: Dict) -> Dict:
