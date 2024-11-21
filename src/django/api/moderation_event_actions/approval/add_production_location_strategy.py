@@ -16,7 +16,6 @@ from api.models.facility.facility_list_item_temp import FacilityListItemTemp
 from api.models.facility.facility_match import FacilityMatch
 from api.models.facility.facility_match_temp import FacilityMatchTemp
 from api.models.moderation_event import ModerationEvent
-from api.models.nonstandard_field import NonstandardField
 from api.models.source import Source
 from api.moderation_event_actions.approval.event_approval_strategy import (
     EventApprovalStrategy,
