@@ -29,6 +29,7 @@ def serialize_params(serializer_class, query_params):
         elif key in [
             V1_PARAMETERS_LIST.ADDRESS,
             V1_PARAMETERS_LIST.DESCRIPTION,
+            # SEARCH_AFTER contains comma separated values
             V1_PARAMETERS_LIST.SEARCH_AFTER,
             V1_PARAMETERS_LIST.SORT_BY,
             V1_PARAMETERS_LIST.ORDER_BY,

@@ -9,6 +9,8 @@ from rest_framework.serializers import (
 )
 from api.serializers.v1.opensearch_common_validators.size_validator \
     import SizeValidator
+from api.serializers.v1.opensearch_common_validators.search_after_validator \
+    import SearchAfterValidator
 from api.serializers.v1.opensearch_error_list_builder  \
     import OpenSearchErrorListBuilder
 from api.serializers.v1.opensearch_common_validators. \
@@ -47,6 +49,7 @@ class ProductionLocationsSerializer(Serializer):
     def validate(self, data):
         validators = [
             SizeValidator(),
+            SearchAfterValidator(),
             NumberOfWorkersValidator(),
             PercentOfFemaleWorkersValidator(),
             CoordinatesValidator(),

@@ -9,6 +9,8 @@ from rest_framework.serializers import (
 )
 from api.serializers.v1.opensearch_common_validators.size_validator \
     import SizeValidator
+from api.serializers.v1.opensearch_common_validators.search_after_validator \
+    import SearchAfterValidator
 from api.serializers.v1.opensearch_common_validators.request_type_validator \
     import RequestTypeValidator
 from api.serializers.v1.opensearch_common_validators.status_validator \
@@ -29,6 +31,7 @@ from api.views.v1.utils import COMMON_ERROR_MESSAGE
 class ModerationEventsSerializer(Serializer):
     # These params are checking considering serialize_params output
     size = IntegerField(required=False)
+    search_after = CharField(required=False)
     country = ListField(
         child=CharField(required=False),
         required=False
@@ -69,6 +72,7 @@ class ModerationEventsSerializer(Serializer):
     def validate(self, data):
         validators = [
             SizeValidator(),
+            SearchAfterValidator(),
             CountryValidator(),
             DateRangeValidator(),
             RequestTypeValidator(),

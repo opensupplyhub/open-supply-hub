@@ -68,16 +68,18 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
         # search_after can't be present as empty by default in query_body
         if V1_PARAMETERS_LIST.SEARCH_AFTER not in self.query_body:
             self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER] = []
-        '''
-        There should always be sort if there is a search_after field.
-        So if it is empty, sort by created_at by default
-        '''
-        if not self.query_body['sort']:
-            sort_criteria = {
-                self.default_sort: {
-                    'order': self.default_sort_order
-                }
-            }
-            self.query_body['sort'].append(sort_criteria)
 
-        self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER].append(search_after)
+        if not self.query_body.get('sort'):
+            self.query_body['sort'] = [
+                { self.default_sort: self.default_sort_order },
+                { "moderation_id": self.default_sort_order }
+            ]
+        else:
+            if not any("moderation_id" in criterion for criterion in self.query_body['sort']):
+                self.query_body['sort'].append({ "moderation_id": self.default_sort_order })
+
+        if isinstance(search_after, str) and ',' in search_after:
+            search_after = search_after.split(',')
+
+        self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER] = search_after
+
