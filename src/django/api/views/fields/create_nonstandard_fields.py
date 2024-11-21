@@ -1,11 +1,11 @@
-from typing import List
+from typing import KeysView
 
 from api.models.contributor.contributor import Contributor
 from api.models.nonstandard_field import NonstandardField
 
 
 def create_nonstandard_fields(
-    fields: List[str], contributor: Contributor
+    fields: KeysView[str], contributor: Contributor
 ) -> None:
     unique_fields = list(set(fields))
 
