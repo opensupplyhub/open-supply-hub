@@ -1,11 +1,24 @@
 import React from 'react';
 import ContributeList from '../../components/Contribute';
-import { render} from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { Provider } from "react-redux";
 import configureMockStore from 'redux-mock-store'
 import thunk from 'redux-thunk'
+import { MAINTENANCE_MESSAGE } from '../../util/constants';
+
+jest.mock('@material-ui/core/Popper', () => {
+    return ({ children }) => children;
+});
+
+jest.mock('@material-ui/core/Portal', () => {
+return ({ children }) => children;
+});
+
+afterEach(() => {
+jest.resetAllMocks();
+});
 
 const createMockStore = (featureFlags, baseState) => {
     const middlewares = [thunk];
@@ -19,7 +32,7 @@ const createMockStore = (featureFlags, baseState) => {
         fetchingFeatureFlags: false
       }
     });
-  };
+};
 
 describe('SubmitListUploadingButton component without DISABLE_LIST_UPLOADING', () => {
     const features = {
@@ -222,5 +235,28 @@ describe('SubmitListUploadingButton component with DISABLE_LIST_UPLOADING', () =
         expect(submitButton).toHaveAttribute('disabled');
         expect(submitButton).toBeDisabled();
     });
-});
 
+    test('shows tooltip on hover SUBMIT Button', async () => {
+        const {getByRole} = renderComponent();
+        const button = getByRole('button', { name:'SUBMIT' });
+
+        expect(button).toHaveTextContent('SUBMIT');
+        expect(button).toBeDisabled();
+
+        const noTooltipElement = document.querySelector(`[title="${
+            MAINTENANCE_MESSAGE}"]`);
+
+        expect(noTooltipElement).toBeInTheDocument();
+        fireEvent.mouseOver(button);
+
+        const tooltip = document.querySelector('[aria-describedby^="mui-tooltip-"]');
+
+        expect(tooltip).toBeInTheDocument();
+        fireEvent.mouseOut(button);
+
+        const noTooltipElementAfter = document.querySelector(`[title="${
+            MAINTENANCE_MESSAGE}"]`);
+
+        expect(noTooltipElementAfter).toBeInTheDocument();
+      });
+});

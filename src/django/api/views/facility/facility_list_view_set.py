@@ -28,7 +28,7 @@ from api.constants import (
     FacilityListItemsQueryParams,
     ProcessingAction,
 )
-from api.exceptions import ServiceUnavailableException
+from ...exceptions import ServiceUnavailableException
 from ...facility_history import create_dissociate_match_change_reason
 from ...mail import send_facility_list_rejection_email
 from ...models.contributor.contributor import Contributor
