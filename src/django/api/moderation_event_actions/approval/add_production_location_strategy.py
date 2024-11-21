@@ -21,6 +21,9 @@ from api.models.source import Source
 from api.moderation_event_actions.approval.event_approval_strategy import (
     EventApprovalStrategy,
 )
+from api.views.fields.create_nonstandard_fields import (
+    create_nonstandard_fields,
+)
 from api.os_id import make_os_id
 
 log = logging.getLogger(__name__)
@@ -47,7 +50,7 @@ class AddProductionLocationStrategy(EventApprovalStrategy):
             log.info(f'[Moderation Event] Source created. Id: {source.id}')
 
             header_row_keys: List[str] = data["raw_json"].keys()
-            self.__create_nonstandard_fields(header_row_keys, contributor)
+            create_nonstandard_fields(header_row_keys, contributor)
             log.info('[Moderation Event] Nonstandard fields created.')
 
             header_str: str = ','.join(header_row_keys)
