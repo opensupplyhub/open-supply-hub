@@ -30,7 +30,7 @@ to modify moderation event `status`.
 
 ### Bugfix
 * [OSDEV-1411](https://opensupplyhub.atlassian.net/browse/OSDEV-1411) - Django Admin: Fixed an issue when updating the facility list with an empty array in the `parsing errors` field.
-* [OSDEV-1449](https://opensupplyhub.atlassian.net/browse/OSDEV-1449) - OpenSearch: Refactored `sort_by` parameter; `search_after` has been split to `search_after_value` and `search_after_id`
+* [OSDEV-1449](https://opensupplyhub.atlassian.net/browse/OSDEV-1449) - OpenSearch: Refactored `sort_by` parameter; `search_after` has been split to `search_after_value` and `search_after_id`. Test files and query builders have been updated to reflect these changes.
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*

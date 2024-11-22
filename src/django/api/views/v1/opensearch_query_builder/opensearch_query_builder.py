@@ -114,7 +114,7 @@ class OpenSearchQueryBuilder(ABC):
                 self.query_body['sort'].append({
                     id_type: self.default_sort_order
                 })
-        ''''
+        '''
         Order of search_after_value and
         search_after_id should be the same
         as for the sort field
