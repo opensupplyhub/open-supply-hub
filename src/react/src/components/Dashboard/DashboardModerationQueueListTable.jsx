@@ -72,6 +72,9 @@ function DashboardModerationQueueListTable({
         setRowsPerPage(newRowsPerPage);
         setPage(INITIAL_PAGE_INDEX);
         setMaxPage(INITIAL_PAGE_INDEX);
+
+        dispatch(clearModerationEvents());
+
         fetchEvents(INITIAL_PAGE_INDEX, newRowsPerPage);
     };
 
