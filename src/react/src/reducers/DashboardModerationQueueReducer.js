@@ -6,6 +6,7 @@ import {
     failFetchingModerationEvents,
     completeFetchingModerationEvents,
     clearModerationEvents,
+    updateModerationEventsOrder,
     startDownloadingModerationEvents,
     failDownloadingModerationEvents,
     completeDownloadingModerationEvents,
@@ -16,6 +17,11 @@ const initialState = Object.freeze({
         fetching: false,
         error: null,
         events: [],
+        count: 0,
+        sort: {
+            sortBy: 'created_at',
+            orderBy: 'desc',
+        },
     }),
     moderationEventsDownloadStatus: Object.freeze({
         downloading: false,
@@ -54,6 +60,15 @@ export default createReducer(
             update(state, {
                 moderationEvents: {
                     events: { $set: [] },
+                },
+            }),
+        [updateModerationEventsOrder]: (state, { sortBy, orderBy }) =>
+            update(state, {
+                moderationEvents: {
+                    sort: {
+                        sortBy: { $set: sortBy },
+                        orderBy: { $set: orderBy },
+                    },
                 },
             }),
         [startDownloadingModerationEvents]: state =>

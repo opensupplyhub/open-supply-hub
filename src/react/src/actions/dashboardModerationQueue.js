@@ -16,6 +16,9 @@ export const completeFetchingModerationEvents = createAction(
     'COMPLETE_FETCHING_MODERATION_EVENTS',
 );
 export const clearModerationEvents = createAction('CLEAR_MODERATION_EVENTS');
+export const updateModerationEventsOrder = createAction(
+    'UPDATE_MODERATION_EVENTS_ORDER',
+);
 export const startDownloadingModerationEvents = createAction(
     'START_DOWNLOADING_MODERATION_EVENTS',
 );
@@ -26,14 +29,17 @@ export const completeDownloadingModerationEvents = createAction(
     'COMPLETE_DOWNLOADING_MODERATION_EVENTS',
 );
 
-export function fetchModerationEvents(
-    page = 0,
-    pageSize = 5,
-    sortBy = 'created_at',
-    orderBy = 'desc',
-) {
-    return async dispatch => {
+export function fetchModerationEvents(page = 0, pageSize = 5) {
+    return async (dispatch, getState) => {
         dispatch(startFetchingModerationEvents());
+
+        const {
+            dashboardModerationQueue: {
+                moderationEvents: {
+                    sort: { sortBy, orderBy },
+                },
+            },
+        } = getState();
 
         return apiRequest
             .get(

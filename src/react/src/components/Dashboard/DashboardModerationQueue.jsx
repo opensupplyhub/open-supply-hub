@@ -166,8 +166,8 @@ const mapStateToProps = ({
 });
 
 const mapDispatchToProps = dispatch => ({
-    fetchEvents: (page, pageSize, sortBy, orderBy) =>
-        dispatch(fetchModerationEvents(page, pageSize, sortBy, orderBy)),
+    fetchEvents: (page, pageSize) =>
+        dispatch(fetchModerationEvents(page, pageSize)),
     fetchCountries: () => dispatch(fetchCountryOptions()),
     downloadEvents: moderationEvents =>
         dispatch(downloadModerationEvents(moderationEvents)),
