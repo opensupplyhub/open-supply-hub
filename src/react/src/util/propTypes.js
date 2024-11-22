@@ -28,6 +28,7 @@ import {
     REPORT_A_FACILITY,
     EMBEDDED_MAP_FLAG,
     EXTENDED_PROFILE_FLAG,
+    DISABLE_LIST_UPLOADING,
     facilityClaimStatusChoicesEnum,
 } from './constants';
 
@@ -354,6 +355,7 @@ export const featureFlagPropType = oneOf([
     EMBEDDED_MAP_FLAG,
     EXTENDED_PROFILE_FLAG,
     ALLOW_LARGE_DOWNLOADS,
+    DISABLE_LIST_UPLOADING,
 ]);
 
 export const facilityClaimsListPropType = arrayOf(
