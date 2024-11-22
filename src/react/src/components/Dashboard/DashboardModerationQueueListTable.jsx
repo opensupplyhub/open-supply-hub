@@ -29,7 +29,7 @@ import {
 } from '../../util/util';
 
 const INITIAL_PAGE_INDEX = 0;
-const ROWS_PER_PAGE_OPTIONS = [5, 10, 25]; // 25, 50, 100
+const ROWS_PER_PAGE_OPTIONS = [5, 10, 25]; // TODO: 25, 50, 100
 const DEFAULT_ROWS_PER_PAGE = 5;
 function DashboardModerationQueueListTable({
     events,
