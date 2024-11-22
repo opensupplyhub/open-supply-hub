@@ -75,7 +75,6 @@ function DashboardModerationQueueListTable({
     const handleRequestSort = (_, property) => {
         const isDesc = orderBy === property && order === 'desc';
         const newOrder = isDesc ? 'asc' : 'desc';
-        console.log(property);
         setOrder(newOrder);
         setOrderBy(property);
         setPage(INITIAL_PAGE_INDEX);

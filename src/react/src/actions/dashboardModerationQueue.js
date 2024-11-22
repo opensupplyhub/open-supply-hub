@@ -26,106 +26,6 @@ export const completeDownloadingModerationEvents = createAction(
     'COMPLETE_DOWNLOADING_MODERATION_EVENTS',
 );
 
-// TODO: Remove mock data and replace with actual API call as part of https://opensupplyhub.atlassian.net/browse/OSDEV-1175
-// const mockData = [
-//     {
-//         moderation_id: 1,
-//         created_at: '2024-10-17T10:26:10.277Z',
-//         name: 'Generic Soft Inc',
-//         country: {
-//             name: 'United States',
-//             alpha_2: 'US',
-//             alpha_3: 'USA',
-//             numeric: '840',
-//         },
-//         contributor_name: 'International Business Machines',
-//         moderation_status: 'PENDING',
-//         moderation_decision_date: '2024-10-17T10:26:10.277Z',
-//         updated_at: '2024-10-17T10:26:10.277Z',
-//         source: 'API',
-//     },
-//     {
-//         moderation_id: 2,
-//         created_at: '2024-10-17T10:26:10.277Z',
-//         name: 'Sporting Goods Manufacturer',
-//         country: {
-//             name: 'United States',
-//             alpha_2: 'US',
-//             alpha_3: 'USA',
-//             numeric: '840',
-//         },
-//         contributor_name: 'General Services',
-//         moderation_status: 'APPROVED',
-//         moderation_decision_date: '2024-10-17T10:26:10.277Z',
-//         updated_at: '2024-10-17T10:26:10.277Z',
-//         source: 'SLC',
-//     },
-//     {
-//         moderation_id: 3,
-//         created_at: '2024-10-17T10:26:10.277Z',
-//         name: 'Printing materials factory',
-//         country: {
-//             name: 'Italy',
-//             alpha_2: 'IT',
-//             alpha_3: 'ITA',
-//             numeric: '380',
-//         },
-//         contributor_name: 'Global Printing',
-//         moderation_status: 'REJECTED',
-//         moderation_decision_date: '2024-10-17T10:26:10.277Z',
-//         updated_at: '2024-10-17T10:26:10.277Z',
-//         source: 'API',
-//     },
-//     {
-//         moderation_id: 4,
-//         created_at: '2024-10-17T10:26:10.277Z',
-//         name: 'Textile Machinery',
-//         country: {
-//             name: 'Canada',
-//             alpha_2: 'CA',
-//             alpha_3: 'CAN',
-//             numeric: '124',
-//         },
-//         contributor_name: 'International Business Machines',
-//         moderation_status: 'APPROVED',
-//         moderation_decision_date: '2024-10-17T10:26:10.277Z',
-//         updated_at: '2024-10-17T10:26:10.277Z',
-//         source: 'SLC',
-//     },
-//     {
-//         moderation_id: 5,
-//         created_at: '2024-10-17T10:26:10.277Z',
-//         name: 'Sporting Goods and Equipment Inc',
-//         country: {
-//             name: 'United States',
-//             alpha_2: 'US',
-//             alpha_3: 'USA',
-//             numeric: '840',
-//         },
-//         contributor_name: 'Sport Services',
-//         moderation_status: 'PENDING',
-//         moderation_decision_date: '2024-10-17T10:26:10.277Z',
-//         updated_at: '2024-10-17T10:26:10.277Z',
-//         source: 'API',
-//     },
-//     {
-//         moderation_id: 6,
-//         created_at: '2024-10-17T10:26:10.277Z',
-//         name: 'Printing materials factory',
-//         country: {
-//             name: 'Italy',
-//             alpha_2: 'IT',
-//             alpha_3: 'ITA',
-//             numeric: '380',
-//         },
-//         contributor_name: 'Global Printing',
-//         moderation_status: 'REJECTED',
-//         moderation_decision_date: '2024-10-17T10:26:10.277Z',
-//         updated_at: '2024-10-17T10:26:10.277Z',
-//         source: 'SLC',
-//     },
-// ];
-
 export function fetchModerationEvents(
     page = 0,
     pageSize = 5,
@@ -146,7 +46,6 @@ export function fetchModerationEvents(
                 ),
             )
             .then(({ data }) => {
-                console.log(data);
                 dispatch(completeFetchingModerationEvents(data));
             })
             .catch(err =>
