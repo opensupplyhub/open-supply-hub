@@ -3,6 +3,7 @@ from typing import List, Set, Dict
 
 from contricleaner.lib.serializers.row_serializers.row_serializer \
     import RowSerializer
+from contricleaner.constants import NON_FIELD_ERRORS_KEY
 
 
 class RowRequiredFieldsSerializer(RowSerializer):
@@ -21,7 +22,7 @@ class RowRequiredFieldsSerializer(RowSerializer):
                 {
                     'message': '{} are missing.'.format(
                         ', '.join(missing_fields)),
-                    'field': 'multiple_field_errors',
+                    'field': NON_FIELD_ERRORS_KEY,
                     'type': 'Error',
                 }
             )

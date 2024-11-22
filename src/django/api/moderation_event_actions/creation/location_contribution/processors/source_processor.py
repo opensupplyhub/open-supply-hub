@@ -4,7 +4,7 @@ from api.moderation_event_actions.creation.location_contribution \
     .processors.contribution_processor import ContributionProcessor
 from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
     import CreateModerationEventDTO
-from api.moderation_event_actions.constants import COMMON_REQ_BODY_ERROR
+from api.constants import APIV1CommonErrorMessages
 from api.serializers.v1.contribution_moderation_event_source_field_serializer \
     import ContributionModerationEventSourceFieldSerializer
 
@@ -31,7 +31,7 @@ class SourceProcessor(ContributionProcessor):
     @staticmethod
     def __transform_serializer_errors(serializer_errors: Dict) -> Dict:
         validation_errors = {
-            'detail': COMMON_REQ_BODY_ERROR,
+            'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
             'errors': []
         }
 

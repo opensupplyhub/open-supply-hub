@@ -2,6 +2,7 @@ from typing import List
 
 from contricleaner.lib.validators.pre_validators \
     .pre_validator import PreValidator
+from contricleaner.constants import NON_FIELD_ERRORS_KEY
 
 
 class PreHeaderValidator(PreValidator):
@@ -20,6 +21,6 @@ class PreHeaderValidator(PreValidator):
         return {
             'message': 'Required Fields are missing: {}.'
             .format(', '.join(self.__required_fields)),
-            'field': 'multiple_field_errors',
+            'field': NON_FIELD_ERRORS_KEY,
             'type': 'RequiredFieldsMissingError',
         }

@@ -192,9 +192,39 @@ class NumberOfWorkersRanges:
     }]
 
 
-class ErrorMessages:
-    GEOCODED_NO_RESULTS = "The address you submitted can not be geocoded."
+class APIErrorMessages:
+    GEOCODED_NO_RESULTS = ('The address you submitted can not be geocoded.')
 
 
 class FacilitiesDownloadSettings:
     DEFAULT_LIMIT = 10000
+
+
+# API v1
+class APIV1CommonErrorMessages:
+    COMMON_REQ_BODY_ERROR = 'The request body is invalid.'
+    COMMON_INTERNAL_ERROR = (
+        'An unexpected error occurred while processing the request. Please '
+        'try again.'
+    )
+    COMMON_REQ_QUERY_ERROR = 'The request query is invalid.'
+
+
+class APIV1LocationContributionErrorMessages:
+    GEOCODED_NO_RESULTS = (
+        'A valid address could not be found for the provided country and '
+        'address. This may be due to incorrect, incomplete, or ambiguous '
+        'information. Please verify and try again.'
+    )
+
+
+# Validation errors will include field names as keys in the response.
+# If the error isn’t field-specific, the non_field_errors key will be used
+# for issues spanning multiple fields or related to the overall data
+# object.
+NON_FIELD_ERRORS_KEY = 'non_field_errors'
+
+
+class APIV1LocationContributionKeys:
+    LNG = 'lng'
+    LAT = 'lat'

@@ -10,10 +10,7 @@ from api.moderation_event_actions.creation.location_contribution \
     .processors.contribution_processor import ContributionProcessor
 from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
     import CreateModerationEventDTO
-from api.moderation_event_actions.constants import (
-    COMMON_INTERNAL_ERROR,
-    COMMON_REQ_BODY_ERROR
-)
+from api.constants import APIV1CommonErrorMessages
 
 
 # Initialize logger.
@@ -34,9 +31,11 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         try:
             cc_processed_data = contri_cleaner.process_data()
         except HandlerNotSetError as err:
-            log.error(f'[API Upload] Internal ContriCleaner Error: {err}')
+            log.error(
+                f'[API V1 Location Upload] Internal ContriCleaner Error: {err}'
+            )
             event_dto.errors = {
-                'detail': COMMON_INTERNAL_ERROR
+                'detail': APIV1CommonErrorMessages.COMMON_INTERNAL_ERROR
             }
             return event_dto
 
@@ -113,7 +112,7 @@ class ProductionLocationDataProcessor(ContributionProcessor):
     def __trasform_cc_errors_to_api_v1_format(cc_errors: List[Dict]) -> Dict:
         # Initialize the new structure.
         transformed_errors = {
-            'detail': COMMON_REQ_BODY_ERROR,
+            'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
             'errors': []
         }
 

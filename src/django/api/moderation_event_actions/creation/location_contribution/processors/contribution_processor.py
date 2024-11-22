@@ -29,4 +29,4 @@ class ContributionProcessor(ABC):
         # TODO: return object with the error. I think it is better error
         #       object in DTO which keeps both error code and object
         #       with errors itself
-        raise None
+        return None

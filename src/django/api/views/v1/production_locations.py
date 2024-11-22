@@ -96,4 +96,4 @@ class ProductionLocations(ViewSet):
 
         if result.errors:
             return Response(result.errors)
-        return Response(result.raw_data)
+        return Response(result.geocode_result)

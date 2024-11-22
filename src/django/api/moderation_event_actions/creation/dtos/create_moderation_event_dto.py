@@ -8,3 +8,4 @@ class CreateModerationEventDTO:
     raw_data: Dict = field(default_factory=dict)
     source: str = ''
     errors: Dict = field(default_factory=dict)
+    geocode_result: Dict = field(default_factory=dict)
