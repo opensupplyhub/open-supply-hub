@@ -266,14 +266,11 @@ class FacilityListCreateTest(APITestCase):
         self.assertEqual(response.status_code,
                          status.HTTP_503_SERVICE_UNAVAILABLE)
 
-        result = ["".join(json.loads(response.content)['detail'])]
-        # Collapse multiple spaces into one
-        expected = [re.sub(r"\s+", " ", item) for item in expected]
-        stringResult = [re.sub(r"\s+", " ", item) for item in result]
-
+        error_message = json.loads(response.content)['detail']
+        expected_message = " ".join(expected[0].split())
         self.assertEqual(
-            stringResult,
-            expected,
+            " ".join(error_message.split()),
+            expected_message
         )
         self.assertEqual(
             FacilityList.objects.all().count(), previous_list_count
