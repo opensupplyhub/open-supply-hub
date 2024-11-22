@@ -214,6 +214,7 @@ const ContributeForm = ({
 
 ContributeForm.defaultProps = {
     error: null,
+    uploadList: () => {},
 };
 
 ContributeForm.propTypes = {
@@ -227,7 +228,7 @@ ContributeForm.propTypes = {
     updateDescription: func.isRequired,
     updateFileName: func.isRequired,
     updateListToReplace: func.isRequired,
-    uploadList: func.isRequired,
+    uploadList: func,
     facilityLists: arrayOf(facilityListPropType).isRequired,
     fetchingFacilityLists: bool.isRequired,
     fetchLists: func.isRequired,
