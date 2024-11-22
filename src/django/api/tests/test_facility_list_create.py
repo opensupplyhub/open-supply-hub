@@ -262,7 +262,6 @@ class FacilityListCreateTest(APITestCase):
             format="multipart",
         )
 
-        self.assertEqual(response.status_code, 503)
         self.assertEqual(response.status_code,
                          status.HTTP_503_SERVICE_UNAVAILABLE)
 
