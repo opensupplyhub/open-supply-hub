@@ -200,7 +200,6 @@ const ContributeForm = ({
                                     text="SUBMIT"
                                     variant="contained"
                                     disableRipple
-                                    onClick={() => {}}
                                     aria-label="Submit button disabled during maintenance"
                                 />
                             </div>
@@ -214,7 +213,6 @@ const ContributeForm = ({
 
 ContributeForm.defaultProps = {
     error: null,
-    uploadList: () => {},
 };
 
 ContributeForm.propTypes = {
@@ -228,7 +226,7 @@ ContributeForm.propTypes = {
     updateDescription: func.isRequired,
     updateFileName: func.isRequired,
     updateListToReplace: func.isRequired,
-    uploadList: func,
+    uploadList: func.isRequired,
     facilityLists: arrayOf(facilityListPropType).isRequired,
     fetchingFacilityLists: bool.isRequired,
     fetchLists: func.isRequired,
