@@ -1,11 +1,12 @@
+from typing import List
 import re
 from api.serializers.v1.opensearch_validation_interface \
     import OpenSearchValidationInterface
 
 
 class CountryValidator(OpenSearchValidationInterface):
-    def validate_opensearch_params(self, data):
-        errors = []
+    def validate_opensearch_params(self, data) -> List[dict]:
+        errors: List[dict] = []
         countries = data.get('country')
         valid_country_value_regexp = r'^[A-Z]{2}$'
 
