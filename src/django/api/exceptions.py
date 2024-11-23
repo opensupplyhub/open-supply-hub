@@ -20,3 +20,10 @@ class InternalServerErrorException(APIException):
         "An unexpected error occurred while processing the request."
     )
     default_code = "internal_server_error"
+
+
+class ServiceUnavailableException(APIException):
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    default_detail = 'Service is temporarily unavailable due to maintenance \
+        work. Please try again later.'
+    default_code = 'service_unavailable'
