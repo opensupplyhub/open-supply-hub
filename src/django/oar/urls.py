@@ -19,6 +19,8 @@ from django.urls import path, include
 from api import views
 from api.views.v1.production_locations \
      import ProductionLocations
+from api.views.v1.moderation_events \
+     import ModerationEvents
 from api.admin import admin_site
 from api.facilities_download_view_set import FacilitiesDownloadViewSet
 from web.views import environment
@@ -55,6 +57,11 @@ v1_router.register(
     OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
     ProductionLocations,
     basename=OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX
+)
+v1_router.register(
+    OpenSearchIndexNames.MODERATION_EVENTS_INDEX,
+    ModerationEvents,
+    basename=OpenSearchIndexNames.MODERATION_EVENTS_INDEX
 )
 
 public_apis = [
@@ -94,6 +101,16 @@ api_v1 = [
         'api/v1/production-locations/<str:os_id>/',
         ProductionLocations.as_view({'get': 'retrieve'}),
         name='production-locations-details'
+     ),
+     path(
+        'api/v1/moderation-events/<str:moderation_id>/',
+        ModerationEvents.as_view({'get': 'retrieve'}),
+        name='moderation-events-details'
+     ),
+     path(
+        'api/v1/moderation-events/<str:moderation_id>/',
+        ModerationEvents.as_view({'patch': 'patch'}),
+        name='moderation-event-update'
      ),
 ]
 

@@ -40,7 +40,7 @@ class Button extends PureComponent {
 
 Button.propTypes = {
     Icon: PropTypes.func,
-    onClick: PropTypes.func.isRequired,
+    onClick: PropTypes.func,
     text: PropTypes.string.isRequired,
     disabled: PropTypes.bool,
     style: PropTypes.object, // eslint-disable-line react/forbid-prop-types
@@ -50,6 +50,7 @@ Button.defaultProps = {
     Icon: null,
     disabled: false,
     style: {},
+    onClick: () => {},
 };
 
 export default Button;

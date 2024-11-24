@@ -16,7 +16,8 @@ class ModerationEvent(models.Model):
 
     class Status(models.TextChoices):
         PENDING = 'PENDING', 'Pending'
-        RESOLVED = 'RESOLVED', 'Resolved'
+        APPROVED = 'APPROVED', 'Approved'
+        REJECTED = 'REJECTED', 'Rejected'
 
     class Source(models.TextChoices):
         API = 'API', 'API'
