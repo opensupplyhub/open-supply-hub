@@ -36,7 +36,7 @@ to modify moderation event `status`.
 * [OSDEV-1411](https://opensupplyhub.atlassian.net/browse/OSDEV-1411) - Django Admin: Fixed an issue when updating the facility list with an empty array in the `parsing errors` field.
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* Changes into emial template were introduced.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
