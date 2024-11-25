@@ -35,12 +35,10 @@ to modify moderation event `status`.
 * [OSDEV-1448](https://opensupplyhub.atlassian.net/browse/OSDEV-1448) - The map on the production location’s profile and the production location marker have been fixed. Improved the handling of SQL query parameters for better execution accuracy.
 * [OSDEV-1411](https://opensupplyhub.atlassian.net/browse/OSDEV-1411) - Django Admin: Fixed an issue when updating the facility list with an empty array in the `parsing errors` field.
 
-### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
-
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
+    * `reindex_database`
 
 
 ## Release 1.24.0
