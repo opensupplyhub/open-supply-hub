@@ -2,7 +2,7 @@
 Hi,
 
 {% if grace_limit %}
-You're receiving this email because {{ contributor_name }} has exceeded
+You're receiving this email because {{ contributor_name }} has exceeded new change
 their limit of {{ grace_limit }} OS Hub API requests for this year.
 {% else %}
 You're receiving this email because {{ contributor_name }} has exceeded
