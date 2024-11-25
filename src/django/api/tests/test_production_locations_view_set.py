@@ -42,6 +42,6 @@ class TestProductionLocationsViewSet(APITestCase):
         self.search_index_mock.return_value = {}
         url = f"/api/v1/production-locations/{self.os_id}/"
         api_res = self.client.get(url)
-        message = {"message": "Production location not found!"}
+        message = {"detail": "Production location not found!"}
         self.assertEqual(api_res.data, message)
         self.assertEqual(api_res.status_code, status.HTTP_404_NOT_FOUND)
