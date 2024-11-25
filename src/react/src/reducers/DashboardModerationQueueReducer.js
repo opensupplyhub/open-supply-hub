@@ -7,6 +7,8 @@ import {
     completeFetchingModerationEvents,
     clearModerationEvents,
     updateModerationEventsOrder,
+    updateAfterDate,
+    updateBeforeDate,
     startDownloadingModerationEvents,
     failDownloadingModerationEvents,
     completeDownloadingModerationEvents,
@@ -22,6 +24,8 @@ const initialState = Object.freeze({
             sortBy: 'created_at',
             orderBy: 'desc',
         },
+        afterDate: null,
+        beforeDate: null,
     }),
     moderationEventsDownloadStatus: Object.freeze({
         downloading: false,
@@ -69,6 +73,18 @@ export default createReducer(
                         sortBy: { $set: sortBy },
                         orderBy: { $set: orderBy },
                     },
+                },
+            }),
+        [updateAfterDate]: (state, afterDate) =>
+            update(state, {
+                moderationEvents: {
+                    afterDate: { $set: afterDate },
+                },
+            }),
+        [updateBeforeDate]: (state, beforeDate) =>
+            update(state, {
+                moderationEvents: {
+                    beforeDate: { $set: beforeDate },
                 },
             }),
         [startDownloadingModerationEvents]: state =>

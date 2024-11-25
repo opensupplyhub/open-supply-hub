@@ -19,6 +19,8 @@ export const clearModerationEvents = createAction('CLEAR_MODERATION_EVENTS');
 export const updateModerationEventsOrder = createAction(
     'UPDATE_MODERATION_EVENTS_ORDER',
 );
+export const updateAfterDate = createAction('UPDATE_AFTER_DATE');
+export const updateBeforeDate = createAction('UPDATE_BEFORE_DATE');
 export const startDownloadingModerationEvents = createAction(
     'START_DOWNLOADING_MODERATION_EVENTS',
 );
@@ -37,9 +39,18 @@ export function fetchModerationEvents(page = 0, pageSize = 5) {
             dashboardModerationQueue: {
                 moderationEvents: {
                     sort: { sortBy, orderBy },
+                    afterDate,
+                    beforeDate,
                 },
             },
+            filters: { dataSources, moderationStatuses, countries },
         } = getState();
+
+        console.log(dataSources);
+        console.log(moderationStatuses);
+        console.log(countries);
+        console.log(afterDate);
+        console.log(beforeDate);
 
         return apiRequest
             .get(

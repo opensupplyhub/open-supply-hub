@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
+import { connect, useDispatch } from 'react-redux';
 import { bool, func, string, object, number } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
@@ -14,6 +14,8 @@ import DatePicker from '../DatePicker';
 import {
     fetchModerationEvents,
     downloadModerationEvents,
+    updateAfterDate,
+    updateBeforeDate,
 } from '../../actions/dashboardModerationQueue';
 import { fetchCountryOptions } from '../../actions/filterOptions';
 import { moderationEventsPropType } from '../../util/propTypes';
@@ -36,6 +38,8 @@ const DashboardModerationQueue = ({
     const [afterDateError, setAfterDateError] = useState(false);
     const [beforeDateError, setBeforeDateError] = useState(false);
 
+    const dispatch = useDispatch();
+
     useEffect(() => {
         fetchEvents();
         fetchCountries();
@@ -45,6 +49,7 @@ const DashboardModerationQueue = ({
         if (!beforeDate || date <= beforeDate) {
             setAfterDate(date);
             setAfterDateError(false);
+            dispatch(updateAfterDate(date));
         } else {
             setAfterDate('');
             setAfterDateError(true);
@@ -55,6 +60,7 @@ const DashboardModerationQueue = ({
         if (!afterDate || date >= afterDate) {
             setBeforeDate(date);
             setBeforeDateError(false);
+            dispatch(updateBeforeDate(date));
         } else {
             setBeforeDate('');
             setBeforeDateError(true);
