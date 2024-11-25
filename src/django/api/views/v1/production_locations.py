@@ -61,7 +61,9 @@ class ProductionLocations(ViewSet):
 
         if len(locations) == 0:
             return Response(
-                data={"detail": "The location with the given id was not found."},
+                data={
+                    "detail": "The location with the given id was not found.",
+                },
                 status=status.HTTP_404_NOT_FOUND,
             )
 
