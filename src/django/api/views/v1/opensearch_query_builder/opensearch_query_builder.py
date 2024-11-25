@@ -103,10 +103,11 @@ class OpenSearchQueryBuilder(ABC):
         '''
         for sort_item in self.query_body.get('sort', []):
             for key, value in sort_item.items():
-                if isinstance(value, dict) and 'order' in value:
-                    currentSorting = value['order']
-                elif key == 'order':
-                    currentSorting = value['order']
+                if (
+                    (isinstance(value, dict) and 'order' in value)
+                    or key == 'order'
+                ):
+                    current_sorting = value['order']
 
         # search_after can't be present as empty by default in query_body
         if 'search_after' not in self.query_body:
@@ -122,7 +123,7 @@ class OpenSearchQueryBuilder(ABC):
                 id_type in criterion for criterion in self.query_body['sort']
             ):
                 self.query_body['sort'].append({
-                    id_type: currentSorting
+                    id_type: current_sorting
                 })
         '''
         Order of search_after_value and
