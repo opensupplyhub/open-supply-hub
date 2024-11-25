@@ -96,35 +96,51 @@ class OpenSearchQueryBuilder(ABC):
         }
         self.query_body['query']['bool']['must'].append(geo_distance_query)
 
-    def add_search_after(self, search_after_value, search_after_id, id_type):
+    def __ensure_sort_criteria(self, id_type, current_sorting):
         '''
-        We need to get current order (asc/desc)
-        from already built OpenSearch query.
+        Ensure proper sort criteria exists with id_type
+        for consistent pagination.
         '''
-        for sort_item in self.query_body.get('sort', []):
-            for key, value in sort_item.items():
-                if (
-                    (isinstance(value, dict) and 'order' in value)
-                    or key == 'order'
-                ):
-                    current_sorting = value['order']
-
-        # search_after can't be present as empty by default in query_body
-        if 'search_after' not in self.query_body:
-            self.query_body['search_after'] = []
-
         if not self.query_body.get('sort'):
             self.query_body['sort'] = [
                 {self.default_sort: self.default_sort_order},
                 {id_type: self.default_sort_order}
             ]
-        else:
-            if not any(
-                id_type in criterion for criterion in self.query_body['sort']
-            ):
-                self.query_body['sort'].append({
-                    id_type: current_sorting
-                })
+            return
+
+        if not any(
+            id_type in criterion for criterion in self.query_body['sort']
+        ):
+            self.query_body['sort'].append({id_type: current_sorting})
+
+    def add_search_after(self, search_after_value, search_after_id, id_type):
+        '''
+        Add search_after pagination with proper sort criteria.
+
+        Args:
+            search_after_value: The value to search after
+            for the primary sort field.
+            search_after_id: The ID to search after for
+            consistent pagination.
+            id_type: The type of ID field to
+            use in sort criteria.
+        '''
+        current_sorting = self.default_sort_order
+        for sort_item in self.query_body.get('sort', []):
+            for key, value in sort_item.items():
+                if isinstance(value, dict) and 'order' in value:
+                    current_sorting = value['order']
+                    break
+                elif key == 'order':
+                    current_sorting = value
+                    break
+
+        # search_after can't be present as empty by default in query_body
+        if 'search_after' not in self.query_body:
+            self.query_body['search_after'] = []
+
+        self.__ensure_sort_criteria(id_type, current_sorting)
+
         '''
         Order of search_after_value and
         search_after_id should be the same
