@@ -26,6 +26,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1332](https://opensupplyhub.atlassian.net/browse/OSDEV-1332) - Introduced new `PATCH api/v1/moderation-events/{moderation_id}` endpoint
 to modify moderation event `status`.
 * [OSDEV-1347](https://opensupplyhub.atlassian.net/browse/OSDEV-1347) - Create GET request for `v1/moderation-events/{moderation_id}` endpoint.
+* The RDS instance has been upgraded as follows: for `production` and `preprod`, it is now `db.m6in.8xlarge`, and for `test`, it has been upgraded to `db.t3.xlarge`.
 
 ### Architecture/Environment changes
 * Increased the memory for the Dedupe Hub instance from 8GB to 12GB in the `production` and `pre-prod` environments to reduce the risk of container overload and minimize the need for reindexing in the future.
