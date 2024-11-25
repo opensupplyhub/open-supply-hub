@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
 
+## Release 1.26.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: December 14, 2024
+
+### Database changes
+#### Migrations:
+* *Describe migrations here.*
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
+### Code/API changes
+* [OSDEV-1410](https://opensupplyhub.atlassian.net/browse/OSDEV-1410) - Introduced new POST `/api/moderation-events/{moderation_id}/production-locations` endpoint
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* *Provide release instructions here.*
+
+
 ## Release 1.25.0
 
 ## Introduction
@@ -26,7 +55,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1332](https://opensupplyhub.atlassian.net/browse/OSDEV-1332) - Introduced new `PATCH api/v1/moderation-events/{moderation_id}` endpoint
 to modify moderation event `status`.
 * [OSDEV-1347](https://opensupplyhub.atlassian.net/browse/OSDEV-1347) - Create GET request for `v1/moderation-events/{moderation_id}` endpoint.
-* [OSDEV-1410](https://opensupplyhub.atlassian.net/browse/OSDEV-1410) - Introduced new POST `/api/moderation-events/{moderation_id}/production-locations` endpoint
 * The RDS instance has been upgraded as follows: for `production` and `preprod`, it is now `db.m6in.8xlarge`, and for `test`, it has been upgraded to `db.t3.xlarge`.
 
 ### Architecture/Environment changes
