@@ -31,6 +31,7 @@ to modify moderation event `status`.
 * Increased the memory for the Dedupe Hub instance from 8GB to 12GB in the `production` and `pre-prod` environments to reduce the risk of container overload and minimize the need for reindexing in the future.
 
 ### Bugfix
+* [OSDEV-1448](https://opensupplyhub.atlassian.net/browse/OSDEV-1448) - The map on the production location’s profile and the production location marker have been fixed. Improved the handling of SQL query parameters for better execution accuracy.
 * [OSDEV-1411](https://opensupplyhub.atlassian.net/browse/OSDEV-1411) - Django Admin: Fixed an issue when updating the facility list with an empty array in the `parsing errors` field.
 * [OSDEV-1449](https://opensupplyhub.atlassian.net/browse/OSDEV-1449) - OpenSearch: Refactored `sort_by` parameter; `search_after` has been split to `search_after_value` and `search_after_id`. Test files and query builders have been updated to reflect these changes.
 
