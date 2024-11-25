@@ -3,6 +3,7 @@ import {
     logErrorAndDispatchFailure,
     downloadModerationEventsXLSX,
     makeGetModerationEventsWithQueryString,
+    createQueryStringFromModerationQueueFilters,
 } from '../util/util';
 import apiRequest from '../util/apiRequest';
 
@@ -43,19 +44,19 @@ export function fetchModerationEvents(page = 0, pageSize = 5) {
                     beforeDate,
                 },
             },
-            filters: { dataSources, moderationStatuses, countries },
+            filters,
         } = getState();
 
-        console.log(dataSources);
-        console.log(moderationStatuses);
-        console.log(countries);
-        console.log(afterDate);
-        console.log(beforeDate);
+        const qs = createQueryStringFromModerationQueueFilters(
+            filters,
+            afterDate,
+            beforeDate,
+        );
 
         return apiRequest
             .get(
                 makeGetModerationEventsWithQueryString(
-                    '',
+                    qs,
                     page,
                     pageSize,
                     sortBy,

@@ -276,6 +276,27 @@ export const getValueFromObject = ({ value }) => value;
 const createCompactSortedQuerystringInputObject = (inputObject = []) =>
     compact(inputObject.map(getValueFromObject).slice().sort());
 
+const createCompactSortedQuerystringInputArray = (inputArray = []) =>
+    compact(inputArray.map(getValueFromObject).sort()).join('&');
+
+export const createQueryStringFromModerationQueueFilters = (
+    { dataSources = [], moderationStatuses = [], countries = [] },
+    afterDate = '',
+    beforeDate = '',
+) => {
+    const inputForQueryString = Object.freeze({
+        source: createCompactSortedQuerystringInputArray(dataSources),
+        status: createCompactSortedQuerystringInputArray(moderationStatuses),
+        country: createCompactSortedQuerystringInputArray(countries),
+        date_gte: afterDate,
+        date_lt: beforeDate,
+    });
+
+    return Object.entries(omitBy(inputForQueryString, isEmpty))
+        .map(([key, value]) => `${key}=${value}`)
+        .join('&');
+};
+
 export const createQueryStringFromSearchFilters = (
     {
         facilityFreeTextQuery = '',
