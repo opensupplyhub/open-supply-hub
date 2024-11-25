@@ -86,6 +86,8 @@ class FacilityList(models.Model):
         related_name='approver_of_list')
     parsing_errors = JSONField(
         default=list,
+        null=True,
+        blank=True,
         help_text=('List-level and internal errors logged during background '
                    'parsing of the list.')
     )

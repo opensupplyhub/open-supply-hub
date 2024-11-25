@@ -9,6 +9,7 @@ from api.models import (
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
+from waffle.testutils import override_switch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
@@ -245,3 +246,33 @@ class FacilityListCreateTest(APITestCase):
         Contributor.objects.all().delete()
         response = self.client.get(reverse("facility-list-list"))
         self.assertEqual(response.status_code, 400)
+
+    @override_switch("disable_list_uploading", active=True)
+    def test_no_upload_when_disable_list_uploading_switch_active(self):
+        previous_list_count = FacilityList.objects.all().count()
+        previous_source_count = Source.objects.all().count()
+        expected = ["Open Supply Hub is undergoing maintenance and not \
+                    accepting new data at the moment. Please try again in a \
+                    few minutes."]
+
+        response = self.client.post(
+            reverse("facility-list-list"),
+            {"file": self.test_file},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code,
+                         status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        error_message = json.loads(response.content)['detail']
+        expected_message = " ".join(expected[0].split())
+        self.assertEqual(
+            " ".join(error_message.split()),
+            expected_message
+        )
+        self.assertEqual(
+            FacilityList.objects.all().count(), previous_list_count
+        )
+        self.assertEqual(
+            Source.objects.all().count(), previous_source_count
+        )
