@@ -1,18 +1,18 @@
 import unittest
 from django.test import TestCase
 from api.views.v1.opensearch_query_builder. \
-    opensearch_query_builder import OpenSearchQueryBuilder
+    production_locations_query_builder import ProductionLocationsQueryBuilder
 
 
-class TestOpenSearchQueryBuilder(TestCase):
+class TestProductionLocationsQueryBuilder(TestCase):
 
     def setUp(self):
-        self.builder = OpenSearchQueryBuilder()
+        self.builder = ProductionLocationsQueryBuilder()
 
     def test_reset(self):
-        self.builder.query_body['size'] = 20
+        self.builder.query_body['sort'] = [{"name.keyword": {"order": "asc"}}]
         self.builder.reset()
-        self.assertEqual(self.builder.query_body['size'], 10)
+        self.assertEqual(self.builder.query_body['sort'], [])
 
     def test_add_size(self):
         self.builder.add_size(20)
@@ -49,13 +49,19 @@ class TestOpenSearchQueryBuilder(TestCase):
         )
 
     def test_add_terms_for_os_id(self):
-        self.builder.add_terms('os_id', ['CN2021250D1DTN7', 'BD2020021QK28YZ'])
+        self.builder.add_terms(
+            'os_id',
+            ['CN2021250D1DTN7', 'BD2020021QK28YZ']
+        )
         expected = {
             'bool': {
                 'should': [
                     {
                         'terms': {
-                            'os_id': ['CN2021250D1DTN7', 'BD2020021QK28YZ']
+                            'os_id': [
+                                'CN2021250D1DTN7',
+                                'BD2020021QK28YZ'
+                            ]
                         }
                     },
                     {
@@ -186,8 +192,7 @@ class TestOpenSearchQueryBuilder(TestCase):
     def test_get_final_query_body(self):
         final_query = self.builder.get_final_query_body()
         expected = {
-            'track_total_hits': 'true',
-            'size': 10,
+            'track_total_hits': True,
             'query': {'bool': {'must': []}},
             'sort': []
         }
