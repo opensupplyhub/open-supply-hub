@@ -97,6 +97,14 @@ class OpenSearchQueryBuilder(ABC):
         self.query_body['query']['bool']['must'].append(geo_distance_query)
 
     def add_search_after(self, search_after_value, search_after_id, id_type):
+        # We need to get current order (asc / desc) from already built OpenSearch query
+        for sort_item in self.query_body.get('sort', []):
+            for key, value in sort_item.items():
+                if isinstance(value, dict) and 'order' in value:
+                    currentSorting = value['order']
+                elif key == 'order':
+                    currentSorting = value['order']
+
         # search_after can't be present as empty by default in query_body
         if 'search_after' not in self.query_body:
             self.query_body['search_after'] = []
@@ -107,12 +115,11 @@ class OpenSearchQueryBuilder(ABC):
                 {id_type: self.default_sort_order}
             ]
         else:
-            # Check if id_type is already in the sort criteria
             if not any(
                 id_type in criterion for criterion in self.query_body['sort']
             ):
                 self.query_body['sort'].append({
-                    id_type: self.default_sort_order
+                    id_type: currentSorting
                 })
         '''
         Order of search_after_value and
