@@ -68,7 +68,8 @@ from ...constants import (
     FacilityMergeQueryParams,
     ProcessingAction,
     UpdateLocationParams,
-    FacilityClaimStatuses
+    FacilityClaimStatuses,
+    ErrorMessages,
 )
 from ...exceptions import BadRequestException
 from ...facility_history import (
@@ -578,7 +579,7 @@ class FacilitiesViewSet(ListModelMixin,
         # Adding the @permission_classes decorator was not working so we
         # explicitly invoke our custom permission class.
         if switch_is_active('disable_list_uploading'):
-            raise ServiceUnavailableException()
+            raise ServiceUnavailableException(ErrorMessages.MAINTENANCE_MODE)
         if not IsRegisteredAndConfirmed().has_permission(request, self):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
         if not flag_is_active(request._request,

@@ -27,6 +27,7 @@ from ...aws_batch import submit_jobs, submit_parse_job
 from api.constants import (
     FacilityListItemsQueryParams,
     ProcessingAction,
+    ErrorMessages,
 )
 from api.exceptions import ServiceUnavailableException
 from ...facility_history import create_dissociate_match_change_reason
@@ -92,7 +93,7 @@ class FacilityListViewSet(ModelViewSet):
             }
         """
         if switch_is_active('disable_list_uploading'):
-            raise ServiceUnavailableException()
+            raise ServiceUnavailableException(ErrorMessages.MAINTENANCE_MODE)
         if 'file' not in request.data:
             raise ValidationError('No file specified.')
         uploaded_file = request.data['file']
