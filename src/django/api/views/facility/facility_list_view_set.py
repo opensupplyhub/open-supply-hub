@@ -92,10 +92,7 @@ class FacilityListViewSet(ModelViewSet):
             }
         """
         if switch_is_active('disable_list_uploading'):
-            raise ServiceUnavailableException('Open Supply Hub is undergoing \
-                                     maintenance and not accepting new \
-                                     data at the moment. Please try again \
-                                     in a few minutes.')
+            raise ServiceUnavailableException()
         if 'file' not in request.data:
             raise ValidationError('No file specified.')
         uploaded_file = request.data['file']

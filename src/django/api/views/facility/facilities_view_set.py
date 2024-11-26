@@ -578,10 +578,7 @@ class FacilitiesViewSet(ListModelMixin,
         # Adding the @permission_classes decorator was not working so we
         # explicitly invoke our custom permission class.
         if switch_is_active('disable_list_uploading'):
-            block_message = ('Open Supply Hub is undergoing maintenance and '
-                             'not accepting new data at the moment. Please '
-                             'try again in a few minutes.')
-            raise ServiceUnavailableException(block_message)
+            raise ServiceUnavailableException()
         if not IsRegisteredAndConfirmed().has_permission(request, self):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
         if not flag_is_active(request._request,
