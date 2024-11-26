@@ -2,6 +2,7 @@ import boto3
 from botocore.exceptions import ClientError
 import pg8000.native
 import os
+import time
 
 try:
     db_instance_identifier = os.environ['SOURCE_DATABASE_IDENTIFIER']
@@ -112,14 +113,19 @@ response = source.copy_db_snapshot(
     SourceRegion=aws_region
 )
 
-waiters = source.get_waiter('db_snapshot_completed')
-waiters.wait(
-    DBSnapshotIdentifier=shared_snapshot_identifier,
-    WaiterConfig={
-        'Delay': 15,
-        'MaxAttempts': 100
-    }
-)
+attempt = 0
+while attempt < 300:
+    response = source.describe_db_snapshots(DBSnapshotIdentifier=shared_snapshot_identifier)
+    snapshot_status = response['DBSnapshots'][0]['Status']
+
+    if snapshot_status == 'available':
+        print(f"Snapshot {shared_snapshot_identifier} is now available.")
+        break
+    else:
+        print(f"Snapshot {shared_snapshot_identifier} status: {snapshot_status}. Waiting...")
+
+    time.sleep(60)
+    attempt += 1
 
 print("Share snapshot " + shared_snapshot_identifier + " with " + destination_aws_account + " AWS account")
 source.modify_db_snapshot_attribute(
