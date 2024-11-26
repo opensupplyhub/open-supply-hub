@@ -1,5 +1,7 @@
 import logging
 
+from rest_framework import status
+
 from api.moderation_event_actions.creation.location_contribution \
     .processors.contribution_processor import ContributionProcessor
 from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
@@ -52,6 +54,8 @@ class GeocodingProcessor(ContributionProcessor):
                             }
                         ]
                     }
+                    event_dto.status_code = \
+                        status.HTTP_422_UNPROCESSABLE_ENTITY
 
                     return event_dto
             except ValueError as value_err:
@@ -62,7 +66,8 @@ class GeocodingProcessor(ContributionProcessor):
                 event_dto.errors = {
                     'detail': APIV1CommonErrorMessages.COMMON_INTERNAL_ERROR
                 }
+                event_dto.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
 
                 return event_dto
 
-        return super().process(event_dto)
+        return event_dto

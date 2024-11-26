@@ -1,8 +1,15 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
+import logging
+
+from rest_framework import status
 
 from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
     import CreateModerationEventDTO
+from api.constants import APIV1CommonErrorMessages
+
+# Initialize logger.
+log = logging.getLogger(__name__)
 
 
 class ContributionProcessor(ABC):
@@ -26,7 +33,15 @@ class ContributionProcessor(ABC):
         if self._next:
             return self._next.process(event_dto)
 
-        # TODO: return object with the error. I think it is better error
-        #       object in DTO which keeps both error code and object
-        #       with errors itself
-        return None
+        log.error(
+            ('[API V1 Location Upload] Internal Moderation Event Creation '
+             'Error: The non-existing next handler for processing the '
+             'moderation event creation related to location contribution was '
+             'called in the last handler of the chain.')
+        )
+        event_dto.errors = {
+            'detail': APIV1CommonErrorMessages.COMMON_INTERNAL_ERROR
+        }
+        event_dto.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+
+        return event_dto

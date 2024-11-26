@@ -9,7 +9,7 @@ from api.models.moderation_event import ModerationEvent
 
 class ContributionModerationEventSourceFieldSerializer(Serializer):
     source = CharField(
-        required=True,
+        default=ModerationEvent.Source.API,
         max_length=3,
         min_length=1,
         trim_whitespace=False

@@ -1,5 +1,7 @@
 from typing import Dict
 
+from rest_framework import status
+
 from api.moderation_event_actions.creation.location_contribution \
     .processors.contribution_processor import ContributionProcessor
 from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
@@ -22,9 +24,11 @@ class SourceProcessor(ContributionProcessor):
                 serializer.errors
             )
             event_dto.errors = transformed_errors
+            event_dto.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+
             return event_dto
 
-        event_dto.source = event_dto.raw_data['source']
+        event_dto.source = serializer.data['source']
 
         return super().process(event_dto)
 

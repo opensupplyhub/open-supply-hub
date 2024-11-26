@@ -204,8 +204,7 @@ class FacilitiesDownloadSettings:
 class APIV1CommonErrorMessages:
     COMMON_REQ_BODY_ERROR = 'The request body is invalid.'
     COMMON_INTERNAL_ERROR = (
-        'An unexpected error occurred while processing the request. Please '
-        'try again.'
+        'An unexpected error occurred while processing the request.'
     )
     COMMON_REQ_QUERY_ERROR = 'The request query is invalid.'
 
@@ -216,6 +215,11 @@ class APIV1LocationContributionErrorMessages:
         'address. This may be due to incorrect, incomplete, or ambiguous '
         'information. Please verify and try again.'
     )
+
+    @staticmethod
+    def invalid_data_type_error(data_type: str) -> str:
+        return ('Invalid data. Expected a dictionary (object), '
+                f'but got {data_type}.')
 
 
 # Validation errors will include field names as keys in the response.

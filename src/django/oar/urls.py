@@ -95,9 +95,7 @@ public_apis = [
     path('api/sectors/', views.sectors, name='sectors'),
 ]
 
-api_v1 = [
-     path('api/v1/', include(v1_router.urls)),
-]
+api_v1 = [path('api/v1/', include(v1_router.urls))]
 
 schema_view = get_schema_view(
     openapi.Info(

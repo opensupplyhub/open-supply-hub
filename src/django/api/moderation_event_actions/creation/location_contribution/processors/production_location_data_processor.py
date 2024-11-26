@@ -2,6 +2,8 @@ import logging
 import copy
 from typing import Dict, List
 
+from rest_framework import status
+
 from api.sector_cache import SectorCache
 from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.exceptions.handler_not_set_error \
@@ -37,6 +39,8 @@ class ProductionLocationDataProcessor(ContributionProcessor):
             event_dto.errors = {
                 'detail': APIV1CommonErrorMessages.COMMON_INTERNAL_ERROR
             }
+            event_dto.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+
             return event_dto
 
         list_level_errors = cc_processed_data.errors
@@ -46,6 +50,8 @@ class ProductionLocationDataProcessor(ContributionProcessor):
                     list_level_errors
                 )
             event_dto.errors = transformed_list_level_errors
+            event_dto.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+
             return event_dto
 
         processed_location_object = cc_processed_data.rows[0]
@@ -56,6 +62,8 @@ class ProductionLocationDataProcessor(ContributionProcessor):
                     location_object_validation_errors
                 )
             event_dto.errors = transformed_location_object_validation_errors
+            event_dto.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+
             return event_dto
 
         # Save the cleaned data in case of successful ContriCleaner
@@ -71,7 +79,8 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         # passed to ContriCleaner. The source has been verified and assigned
         # to the appropriate property of the CreateModerationEventDTO
         # within SourceProcessor.
-        del copied_raw_data['source']
+        if 'source' in copied_raw_data:
+            del copied_raw_data['source']
 
         return copied_raw_data
 
