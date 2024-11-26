@@ -73,6 +73,7 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
 
       - name: Copy planfile to S3 bucket for ${{ vars.ENV_NAME }}
@@ -228,6 +229,14 @@ jobs:
           push: true
           tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-database-anonymizer-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
 
+      - name: Build and push Anonymize Database Dump Docker image to ECR for ${{ vars.ENV_NAME }}
+        uses: docker/build-push-action@v2
+        if: ${{ steps.get_env_name.outputs.lowercase == 'test' }}
+        with:
+          context: deployment/terraform/anonymized_database_dump_scheduled_task/docker
+          file: deployment/terraform/anonymized_database_dump_scheduled_task/docker/Dockerfile
+          push: true
+          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-anonymized-database-dump-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
 
   create_kafka_topic:
     needs: build_and_push_docker_image
