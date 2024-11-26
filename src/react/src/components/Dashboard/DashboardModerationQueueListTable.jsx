@@ -13,6 +13,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import DashboardModerationQueueListTableHeader from './DashboardModerationQueueListTableHeader';
 import {
     clearModerationEvents,
+    updateModerationEventsPage,
     updateModerationEventsOrder,
 } from '../../actions/dashboardModerationQueue';
 import { moderationEventsPropType } from '../../util/propTypes';
@@ -50,7 +51,13 @@ function DashboardModerationQueueListTable({
         setPage(newPage);
         if (newPage > page && newPage > maxPage) {
             setMaxPage(newPage);
-            fetchEvents(newPage, rowsPerPage);
+            dispatch(
+                updateModerationEventsPage({
+                    page: newPage,
+                    pageSize: rowsPerPage,
+                }),
+            );
+            fetchEvents();
         }
     };
     const handleRowClick = useCallback(
@@ -74,8 +81,13 @@ function DashboardModerationQueueListTable({
         setMaxPage(INITIAL_PAGE_INDEX);
 
         dispatch(clearModerationEvents());
-
-        fetchEvents(INITIAL_PAGE_INDEX, newRowsPerPage);
+        dispatch(
+            updateModerationEventsPage({
+                page: INITIAL_PAGE_INDEX,
+                pageSize: newRowsPerPage,
+            }),
+        );
+        fetchEvents();
     };
 
     const handleRequestSort = (_, property) => {
@@ -93,8 +105,13 @@ function DashboardModerationQueueListTable({
                 orderBy: newOrder,
             }),
         );
-
-        fetchEvents(INITIAL_PAGE_INDEX, rowsPerPage);
+        dispatch(
+            updateModerationEventsPage({
+                page: INITIAL_PAGE_INDEX,
+                pageSize: rowsPerPage,
+            }),
+        );
+        fetchEvents();
     };
 
     return (

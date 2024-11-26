@@ -6,6 +6,7 @@ import {
     failFetchingModerationEvents,
     completeFetchingModerationEvents,
     clearModerationEvents,
+    updateModerationEventsPage,
     updateModerationEventsOrder,
     updateAfterDate,
     updateBeforeDate,
@@ -20,6 +21,8 @@ const initialState = Object.freeze({
         error: null,
         events: [],
         count: 0,
+        page: 0,
+        pageSize: 5,
         sort: {
             sortBy: 'created_at',
             orderBy: 'desc',
@@ -64,6 +67,13 @@ export default createReducer(
             update(state, {
                 moderationEvents: {
                     events: { $set: [] },
+                },
+            }),
+        [updateModerationEventsPage]: (state, { page, pageSize }) =>
+            update(state, {
+                moderationEvents: {
+                    page: { $set: page },
+                    pageSize: { $set: pageSize },
                 },
             }),
         [updateModerationEventsOrder]: (state, { sortBy, orderBy }) =>
