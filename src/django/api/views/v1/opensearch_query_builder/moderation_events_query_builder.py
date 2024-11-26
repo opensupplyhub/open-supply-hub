@@ -12,9 +12,9 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
             'sort': []
         }
         self.query_body = copy.deepcopy(self.default_query_body)
-        # Default sorting and order are needed for search_after
+        # Both default sorting and order are needed for add_search_after()
+        # Default order is needed for add_sort() and add_search_after()
         self.default_sort = 'created_at'
-        # Default order is needed for search_after
         self.default_sort_order = 'desc'
         self.build_options = {
             'country': self.__build_country,

@@ -13,9 +13,9 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
         }
         self.query_body = copy.deepcopy(self.default_query_body)
         self.default_fuzziness = 2
-        # Default sorting and order are needed for search_after
+        # Both default sorting and order are needed for add_search_after()
+        # Default order is needed for add_sort() and add_search_after()
         self.default_sort = V1_PARAMETERS_LIST.NAME
-        # Default order is needed for search_after
         self.default_sort_order = 'asc'
         self.build_options = {
             'country': self.__build_country,
