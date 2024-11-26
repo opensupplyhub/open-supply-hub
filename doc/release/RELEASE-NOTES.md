@@ -28,7 +28,7 @@ to modify moderation event `status`.
 * [OSDEV-1347](https://opensupplyhub.atlassian.net/browse/OSDEV-1347) - Create GET request for `v1/moderation-events/{moderation_id}` endpoint.
 * Update `/v1/production-locations/{os_id}` endpoint to return a single object instead of multiple objects. Also, add unit tests for the `ProductionLocationsViewSet`.
 * The RDS instance has been upgraded as follows: for `production` and `preprod`, it is now `db.m6in.8xlarge`, and for `test`, it has been upgraded to `db.t3.xlarge`.
-* [OSDEV-1467](https://opensupplyhub.atlassian.net/browse/OSDEV-1467) - Implemented disabling endpoint `POST /api/facilities/` during the release process . It is raising an error message with status code 503.
+* [OSDEV-1467](https://opensupplyhub.atlassian.net/browse/OSDEV-1467) - Implemented disabling endpoint `POST /api/facilities/` during the release process. It is raising an error message with status code 503.
 
 ### Architecture/Environment changes
 * Increased the memory for the Dedupe Hub instance from 8GB to 12GB in the `production` and `pre-prod` environments to reduce the risk of container overload and minimize the need for reindexing in the future.
