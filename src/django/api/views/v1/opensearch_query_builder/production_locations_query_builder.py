@@ -13,7 +13,9 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
         }
         self.query_body = copy.deepcopy(self.default_query_body)
         self.default_fuzziness = 2
+        # Default sorting and order are needed for search_after
         self.default_sort = V1_PARAMETERS_LIST.NAME
+        # Default order is needed for search_after
         self.default_sort_order = 'asc'
         self.build_options = {
             'country': self.__build_country,
@@ -82,6 +84,7 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
             )
 
     def add_sort(self, field, order_by=None):
+        # If there is sorting, then there should be an order.
         if order_by is None:
             order_by = self.default_sort_order
         self.query_body['sort'].append(
