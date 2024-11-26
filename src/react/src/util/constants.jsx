@@ -333,6 +333,8 @@ export const dashboardApiBlocksRoute = '/dashboard/apiblocks';
 export const dashboardApiBlockRoute = '/dashboard/apiblocks/:blockId';
 export const dashboardClaimsRoute = '/dashboard/claims';
 export const dashboardModerationQueueRoute = '/dashboard/moderation-queue';
+export const dashboardContributionRecordRoute =
+    '/dashboard/moderation-queue/contribution-record/:moderationID';
 export const dashboardDeleteFacilityRoute = '/dashboard/deletefacility';
 export const dashboardMergeFacilitiesRoute = '/dashboard/mergefacilities';
 export const dashboardAdjustFacilityMatchesRoute =
@@ -547,6 +549,7 @@ export const REPORT_A_FACILITY = 'report_a_facility';
 export const EMBEDDED_MAP_FLAG = 'embedded_map';
 export const EXTENDED_PROFILE_FLAG = 'extended_profile';
 export const DEFAULT_SEARCH_TEXT = 'Facility Name or OS ID';
+export const DISABLE_LIST_UPLOADING = 'disable_list_uploading';
 
 export const DEFAULT_COUNTRY_CODE = 'IE';
 
@@ -1359,3 +1362,6 @@ export const MODERATION_STATUS_COLORS = Object.freeze({
     [MODERATION_STATUSES_ENUM.APPROVED]: COLOURS.MINT_GREEN,
     [MODERATION_STATUSES_ENUM.REJECTED]: COLOURS.LIGHT_RED,
 });
+
+export const MAINTENANCE_MESSAGE =
+    'Open Supply Hub is undergoing maintenance and not accepting new data at the moment. Please try again in a few minutes.';

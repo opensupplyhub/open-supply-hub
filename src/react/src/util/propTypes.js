@@ -28,6 +28,7 @@ import {
     REPORT_A_FACILITY,
     EMBEDDED_MAP_FLAG,
     EXTENDED_PROFILE_FLAG,
+    DISABLE_LIST_UPLOADING,
     facilityClaimStatusChoicesEnum,
 } from './constants';
 
@@ -354,6 +355,7 @@ export const featureFlagPropType = oneOf([
     EMBEDDED_MAP_FLAG,
     EXTENDED_PROFILE_FLAG,
     ALLOW_LARGE_DOWNLOADS,
+    DISABLE_LIST_UPLOADING,
 ]);
 
 export const facilityClaimsListPropType = arrayOf(
@@ -460,7 +462,7 @@ export const activityReportPropType = shape({
     closure_state: string.isRequired,
     created_at: string.isRequired,
     facility: string.isRequired,
-    facility_name: string.isReqired,
+    facility_name: string.isRequired,
     id: number.isRequired,
     reason_for_report: string.isRequired,
     reported_by_contributor: string.isRequired,
@@ -509,5 +511,56 @@ export const moderationEventsPropType = arrayOf(
         moderation_status: string.isRequired,
         moderation_decision_date: string,
         updated_at: string.isRequired,
+    }),
+);
+
+export const moderationEventPropType = shape({
+    moderation_id: number,
+    created_at: string,
+    updated_at: string,
+    os_id: string,
+    cleaned_data: shape({
+        name: string,
+        address: string,
+        country: productionLocationCountryPropType,
+    }),
+    contributor_id: number,
+    contributor_name: string,
+    request_type: string,
+    source: string,
+    moderation_status: oneOf(['PENDING', 'APPROVED', 'REJECTED']),
+    status_change_date: string,
+    claim_id: number,
+});
+
+export const potentialMatchesPropType = arrayOf(
+    shape({
+        os_id: string.isRequired,
+        name: string.isRequired,
+        address: string.isRequired,
+        sector: arrayOf(string),
+        parent_company: string,
+        product_type: arrayOf(string),
+        location_type: arrayOf(string),
+        processing_type: arrayOf(string),
+        number_of_workers: shape({
+            min: number.isRequired,
+            max: number.isRequired,
+        }),
+        coordinates: shape({
+            lat: number.isRequired,
+            lng: number.isRequired,
+        }),
+        local_name: string,
+        description: string,
+        business_url: string,
+        minimum_order_quantity: string,
+        average_lead_time: string,
+        percent_female_workers: number,
+        affiliations: arrayOf(string),
+        certifications_standards_regulations: arrayOf(string),
+        historical_os_id: arrayOf(string),
+        country: productionLocationCountryPropType.isRequired,
+        claim_status: string,
     }),
 );
