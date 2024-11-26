@@ -14,6 +14,7 @@ import DatePicker from '../DatePicker';
 import {
     fetchModerationEvents,
     downloadModerationEvents,
+    clearModerationEvents,
     updateAfterDate,
     updateBeforeDate,
 } from '../../actions/dashboardModerationQueue';
@@ -50,6 +51,8 @@ const DashboardModerationQueue = ({
             setAfterDate(date);
             setAfterDateError(false);
             dispatch(updateAfterDate(date));
+            dispatch(clearModerationEvents());
+            fetchEvents();
         } else {
             setAfterDate('');
             setAfterDateError(true);
@@ -61,6 +64,8 @@ const DashboardModerationQueue = ({
             setBeforeDate(date);
             setBeforeDateError(false);
             dispatch(updateBeforeDate(date));
+            dispatch(clearModerationEvents());
+            fetchEvents();
         } else {
             setBeforeDate('');
             setBeforeDateError(true);
