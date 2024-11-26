@@ -16,7 +16,7 @@ bastion_instance_type = "t3.nano"
 rds_allocated_storage = "128"
 rds_engine_version = "12"
 rds_parameter_group_family = "postgres12"
-rds_instance_type = "db.t3.2xlarge"
+rds_instance_type = "db.m6in.8xlarge"
 rds_database_identifier = "opensupplyhub-enc-pp"
 rds_database_name = "opensupplyhub"
 rds_multi_az = false
@@ -52,7 +52,7 @@ dedupe_hub_name = "deduplicate"
 dedupe_hub_version = 1
 app_cc_ecs_desired_count = 0
 app_dd_fargate_cpu = 4096
-app_dd_fargate_memory = 8192
+app_dd_fargate_memory = 12288
 app_dd_ecs_desired_count = 1
 
 opensearch_instance_type = "m6g.large.search"

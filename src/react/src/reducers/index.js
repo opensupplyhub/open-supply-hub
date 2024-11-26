@@ -34,6 +34,8 @@ import UpdateFacilityLocationReducer from './UpdateFacilityLocationReducer';
 import EmbeddedMapReducer from './EmbeddedMapReducer';
 import FacilityCardsReducer from './FacilityCardsReducer';
 import ContributeProductionLocationReducer from './ContributeProductionLocationReducer';
+import DashboardModerationQueueReducer from './DashboardModerationQueueReducer';
+import DashboardContributionRecordReducer from './DashboardContributionRecordReducer';
 
 export default combineReducers({
     auth: AuthReducer,
@@ -64,4 +66,6 @@ export default combineReducers({
     embeddedMap: EmbeddedMapReducer,
     facilityCards: FacilityCardsReducer,
     contributeProductionLocation: ContributeProductionLocationReducer,
+    dashboardModerationQueue: DashboardModerationQueueReducer,
+    dashboardContributionRecord: DashboardContributionRecordReducer,
 });

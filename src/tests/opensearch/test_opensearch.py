@@ -15,7 +15,7 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
     def test_create_and_index_document(self):
         doc = {'title': 'Test Document'}
         response = self.client.index(
-            index=self.index_name,
+            index=self.production_locations_index_name,
             body=doc,
             id=self.client.count()
         )
@@ -40,11 +40,11 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
             "claim_status": "unclaimed"
         }
         self.client.index(
-            index=self.index_name,
+            index=self.production_locations_index_name,
             body=doc,
             id=self.client.count()
         )
-        self.client.indices.refresh(index=self.index_name)
+        self.client.indices.refresh(index=self.production_locations_index_name)
 
         # Search for the document
         query = {
@@ -55,7 +55,7 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
             }
         }
         response = self.client.search(
-            index=self.index_name,
+            index=self.production_locations_index_name,
             body=query
         )
         self.assertGreater(response['hits']['total']['value'], 0)

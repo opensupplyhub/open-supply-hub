@@ -1,6 +1,7 @@
 import React from 'react';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
+import COLOURS from './COLOURS';
 
 export const OTHER = 'Other';
 export const FACILITIES_REQUEST_PAGE_SIZE = 50;
@@ -16,7 +17,7 @@ export const REJECT_ACTION = 'reject';
 
 export const InfoLink = 'https://info.opensupplyhub.org';
 
-export const CLAIM_DECISION_EMPTY = 'N/A';
+export const EMPTY_PLACEHOLDER = 'N/A';
 
 export const InfoPaths = {
     storiesResources: 'stories-resources',
@@ -331,6 +332,9 @@ export const dashboardListsRoute = '/dashboard/lists';
 export const dashboardApiBlocksRoute = '/dashboard/apiblocks';
 export const dashboardApiBlockRoute = '/dashboard/apiblocks/:blockId';
 export const dashboardClaimsRoute = '/dashboard/claims';
+export const dashboardModerationQueueRoute = '/dashboard/moderation-queue';
+export const dashboardContributionRecordRoute =
+    '/dashboard/moderation-queue/contribution-record/:moderationID';
 export const dashboardDeleteFacilityRoute = '/dashboard/deletefacility';
 export const dashboardMergeFacilitiesRoute = '/dashboard/mergefacilities';
 export const dashboardAdjustFacilityMatchesRoute =
@@ -545,6 +549,7 @@ export const REPORT_A_FACILITY = 'report_a_facility';
 export const EMBEDDED_MAP_FLAG = 'embedded_map';
 export const EXTENDED_PROFILE_FLAG = 'extended_profile';
 export const DEFAULT_SEARCH_TEXT = 'Facility Name or OS ID';
+export const DISABLE_LIST_UPLOADING = 'disable_list_uploading';
 
 export const DEFAULT_COUNTRY_CODE = 'IE';
 
@@ -1320,3 +1325,43 @@ export const listParsingErrorMappings = {
         </>
     ),
 };
+
+export const DATA_SOURCES_ENUM = Object.freeze({
+    API: 'API',
+    SLC: 'SLC',
+});
+
+export const MODERATION_STATUSES_ENUM = Object.freeze({
+    PENDING: 'PENDING',
+    APPROVED: 'APPROVED',
+    REJECTED: 'REJECTED',
+});
+
+export const MODERATION_QUEUE_HEAD_CELLS = Object.freeze([
+    { id: 'created_at', label: 'Created Date' },
+    { id: 'name', label: 'Location Name' },
+    { id: 'country.name', label: 'Country' },
+    { id: 'contributor_name', label: 'Contributor' },
+    { id: 'source', label: 'Source Type' },
+    { id: 'moderation_status', label: 'Moderation Status' },
+    { id: 'moderation_decision_date', label: 'Moderation Decision Date' },
+    { id: 'updated_at', label: 'Last Updated' },
+]);
+
+export const DATE_FORMATS = Object.freeze({
+    SHORT: 'L',
+    LONG: 'LL',
+    LONG_WITH_TIME: 'LLL',
+    FULL: 'LLLL',
+});
+
+export const MODERATION_QUEUE = 'ModerationQueue';
+
+export const MODERATION_STATUS_COLORS = Object.freeze({
+    [MODERATION_STATUSES_ENUM.PENDING]: COLOURS.PALE_LIGHT_YELLOW,
+    [MODERATION_STATUSES_ENUM.APPROVED]: COLOURS.MINT_GREEN,
+    [MODERATION_STATUSES_ENUM.REJECTED]: COLOURS.LIGHT_RED,
+});
+
+export const MAINTENANCE_MESSAGE =
+    'Open Supply Hub is undergoing maintenance and not accepting new data at the moment. Please try again in a few minutes.';

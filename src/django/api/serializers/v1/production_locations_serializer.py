@@ -16,7 +16,7 @@ from api.serializers.v1.opensearch_common_validators. \
 from api.serializers.v1.opensearch_common_validators. \
     number_of_workers_validator import NumberOfWorkersValidator
 from api.serializers.v1.opensearch_common_validators. \
-    percent_of_female_workers import PercentOfFemaleWorkersValidator
+    percent_of_female_workers_validator import PercentOfFemaleWorkersValidator
 from api.serializers.v1.opensearch_common_validators. \
     coordinates_validator import CoordinatesValidator
 from api.views.v1.utils import COMMON_ERROR_MESSAGE
@@ -57,7 +57,7 @@ class ProductionLocationsSerializer(Serializer):
         errors = error_list_builder.build_error_list(data)
 
         if errors:
-            # TODO: Pass error msg to the Rollbar here
+            # [OSDEV-1441] Pass error msg to the Rollbar here
             raise ValidationError({
                 "message": COMMON_ERROR_MESSAGE,
                 "errors": errors

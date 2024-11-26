@@ -4,33 +4,76 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
 
+## Release 1.25.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: November 30, 2024
+
+### Database changes
+#### Migrations:
+* 0159_alter_status_of_moderation_events_table.py - This migration alters status of api_moderationevent table.
+* 0160_allow_null_parsing_errors_in_facilitylist.py - This migration allows empty parsing_errors in api_facilitylist.
+* 0161_create_disable_list_uploading_switch.py - This migration creates disable_list_uploading switch in the Django admin panel and record in the waffle_switch table.
+
+#### Scheme changes
+* [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Alter status options for api_moderationevent table.
+* [OSDEV-1411](https://opensupplyhub.atlassian.net/browse/OSDEV-1411) - Allows empty parsing_errors in api_facilitylist.
+
+### Code/API changes
+* [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Create GET request for `v1/moderation-events` endpoint.
+* [OSDEV-1429](https://opensupplyhub.atlassian.net/browse/OSDEV-1429) - The list upload switcher has been created to disable the `Submit` button on the List Contribute page through the Switch page in the Django admin panel during the release process. Implemented a check on the list upload endpoint.
+* [OSDEV-1332](https://opensupplyhub.atlassian.net/browse/OSDEV-1332) - Introduced new `PATCH api/v1/moderation-events/{moderation_id}` endpoint
+to modify moderation event `status`.
+* [OSDEV-1347](https://opensupplyhub.atlassian.net/browse/OSDEV-1347) - Create GET request for `v1/moderation-events/{moderation_id}` endpoint.
+* Update `/v1/production-locations/{os_id}` endpoint to return a single object instead of multiple objects. Also, add unit tests for the `ProductionLocationsViewSet`.
+* The RDS instance has been upgraded as follows: for `production` and `preprod`, it is now `db.m6in.8xlarge`, and for `test`, it has been upgraded to `db.t3.xlarge`.
+
+### Architecture/Environment changes
+* Increased the memory for the Dedupe Hub instance from 8GB to 12GB in the `production` and `pre-prod` environments to reduce the risk of container overload and minimize the need for reindexing in the future.
+
+### Bugfix
+* [OSDEV-1448](https://opensupplyhub.atlassian.net/browse/OSDEV-1448) - The map on the production location’s profile and the production location marker have been fixed. Improved the handling of SQL query parameters for better execution accuracy.
+* [OSDEV-1411](https://opensupplyhub.atlassian.net/browse/OSDEV-1411) - Django Admin: Fixed an issue when updating the facility list with an empty array in the `parsing errors` field.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 1.24.0
 
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: November 16, 2024
 
-### Database changes
-#### Migrations:
-* *Describe migrations here.*
-
-#### Scheme changes
-* *Describe scheme changes here.*
-
 ### Code/API changes
 * [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - Explicitly set the number of shards and the number of replicas for the "production locations" and "moderation events" OpenSearch indexes. Based on the OpenSearch documentation, a storage size of 10–30 GB is preferred for workloads that prioritize low search latency. Additionally, having too many small shards can unnecessarily exhaust memory by storing excessive metadata. Currently, the "production locations" index utilizes 651.9 MB, including replicas, while the "moderation events" index is empty. This indicates that one shard and one replica should be sufficient for the "production locations" and "moderation events" indexes.
+* Moved all the files related to the OpenSearch service to the existing `src/django/api/services/opensearch` folder within the `api` app of the Django application. This should make it easier to navigate through the files and clarify the location of all OpenSearch service-related files in one place within the `api` app in Django.
 
 ### Architecture/Environment changes
 * The OpenSearch version has been increased to 2.15.
 * [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - The new "moderation events" Logstash pipeline has been configured and implemented to collect moderation event data from the current PostgreSQL database and save it to OpenSearch. This setup allows for fast searches on the moderation events data.
 * [OSDEV-1387](https://opensupplyhub.atlassian.net/browse/OSDEV-1387) - The SQL query for generating tiles from PostgreSQL+PostGIS has been reimplemented to avoid using the JOIN + GROUP BY clause. This change reduces the number of subqueries and their asymptotic complexity. Additionally, an option to set an upper limit on facility counts in the 'count' clause has been introduced, capped at 100, which doubles the query's performance. Throttling has been removed for tile generation endpoints.
+* [OSDEV-1171](https://opensupplyhub.atlassian.net/browse/OSDEV-1171) - RDS instances for `staging` and `test` have beed decreased to `db.t3.large`
+* Playwright has been introduced as the main framework for end-to-end testing:
+    * Added a new Playwright testing service to the Docker configuration
+    * Implemented initial test cases to verify core functionality
+    * Integrated Playwright tests into the CI pipeline via GitHub Actions
+    * Added necessary configuration files and dependencies for the e2e testing project
+* The RDS instance for `production` has been upgraded to `db.m6in.4xlarge` and configured to operate in a single Availability Zone.
 
 ### Bugfix
 * [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388) - The waiter from boto3 cannot wait more than half an hour so we replaced it with our own.
 * [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - Fixed the assertion in the test for the `country.rb` filter of the "production locations" Logstash pipeline. The main issue was with the evaluation of statements in the Ruby block. Since only the last statement is evaluated in a Ruby block, all the checks were grouped into one chain of logical statements and returned as a `result` variable at the end.
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* [OSDEV-1116](https://opensupplyhub.atlassian.net/browse/OSDEV-1116) - A new Contribution Record Page has been developed to enable quick identification and moderation of contributions. This page includes two main sections: Moderation Event Data and Potential Matches, along with a set of buttons designed to facilitate the moderation process.
+* [OSDEV-1120](https://opensupplyhub.atlassian.net/browse/OSDEV-1120) - A new Moderation Queue Dashboard page has been introduced, featuring three essential components:
+    * Moderation Events Table: Allows users to view and manage moderation events more effectively.
+    * Filtering Options: Multiple filter fields enable users to customize the displayed events based on different criteria, making it easier to find specific events.
+    * Download Excel Button: Provides the ability to export the list of displayed moderation events as an XLSX file for offline analysis and record-keeping.
 
 ### Release instructions:
 * The following steps should be completed while deploying to Staging or Production:
