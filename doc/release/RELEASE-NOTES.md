@@ -28,6 +28,13 @@ to modify moderation event `status`.
 * [OSDEV-1347](https://opensupplyhub.atlassian.net/browse/OSDEV-1347) - Create GET request for `v1/moderation-events/{moderation_id}` endpoint.
 * Update `/v1/production-locations/{os_id}` endpoint to return a single object instead of multiple objects. Also, add unit tests for the `ProductionLocationsViewSet`.
 * The RDS instance has been upgraded as follows: for `production` and `preprod`, it is now `db.m6in.8xlarge`, and for `test`, it has been upgraded to `db.t3.xlarge`.
+* [OSDEV-1449](https://opensupplyhub.atlassian.net/browse/OSDEV-1449) - **Breaking changes** to the following endpoints:
+  - GET `v1/moderation-events`
+  - GET `v1/production-locations`
+
+  **Changes include:**
+  - Refactored `sort_by` parameter to improve sorting functionality.
+  - Split `search_after` parameter into `search_after_value` and `search_after_id` for better pagination control.
 
 ### Architecture/Environment changes
 * Increased the memory for the Dedupe Hub instance from 8GB to 12GB in the `production` and `pre-prod` environments to reduce the risk of container overload and minimize the need for reindexing in the future.
@@ -35,7 +42,6 @@ to modify moderation event `status`.
 ### Bugfix
 * [OSDEV-1448](https://opensupplyhub.atlassian.net/browse/OSDEV-1448) - The map on the production location’s profile and the production location marker have been fixed. Improved the handling of SQL query parameters for better execution accuracy.
 * [OSDEV-1411](https://opensupplyhub.atlassian.net/browse/OSDEV-1411) - Django Admin: Fixed an issue when updating the facility list with an empty array in the `parsing errors` field.
-* [OSDEV-1449](https://opensupplyhub.atlassian.net/browse/OSDEV-1449) - OpenSearch: Refactored `sort_by` parameter; `search_after` has been split to `search_after_value` and `search_after_id`. Test files and query builders have been updated to reflect these changes.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
