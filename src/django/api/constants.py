@@ -194,6 +194,9 @@ class NumberOfWorkersRanges:
 
 class ErrorMessages:
     GEOCODED_NO_RESULTS = "The address you submitted can not be geocoded."
+    MAINTENANCE_MODE = ('Open Supply Hub is undergoing maintenance and '
+                        'not accepting new data at the moment. Please '
+                        'try again in a few minutes.')
 
 
 class FacilitiesDownloadSettings:
