@@ -7,7 +7,7 @@ from rest_framework.parsers import JSONParser
 
 from api.views.v1.utils import (
     serialize_params,
-    handle_errors_decorator
+    handle_errors_decorator,
 )
 from api.services.opensearch.search import OpenSearchService
 from api.views.v1.opensearch_query_builder.production_locations_query_builder \
@@ -41,8 +41,8 @@ class ProductionLocations(ViewSet):
         self.opensearch_service = OpenSearchService()
         self.opensearch_query_builder = ProductionLocationsQueryBuilder()
         self.opensearch_query_director = OpenSearchQueryDirector(
-                self.opensearch_query_builder
-            )
+            self.opensearch_query_builder
+        )
 
     def get_permissions(self):
         '''
@@ -87,35 +87,41 @@ class ProductionLocations(ViewSet):
     def list(self, request):
         _, error_response = serialize_params(
             ProductionLocationsSerializer,
-            request.GET
+            request.GET,
         )
+
         if error_response:
-            return Response(
-                error_response,
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response(error_response, status=status.HTTP_400_BAD_REQUEST)
 
         query_body = self.opensearch_query_director.build_query(
-            request.GET
+            request.GET,
         )
         response = self.opensearch_service.search_index(
             OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
-            query_body
+            query_body,
         )
         return Response(response)
 
     @handle_errors_decorator
-    def retrieve(self, request,  pk=None):
-        query_params = QueryDict('', mutable=True)
-        query_params.update({'os_id': pk})
-        query_body = self.opensearch_query_director.build_query(
-            query_params
-        )
+    def retrieve(self, _, pk=None):
+        query_params = QueryDict("", mutable=True)
+        query_params.update({"os_id": pk})
+        query_body = self.opensearch_query_director.build_query(query_params)
         response = self.opensearch_service.search_index(
             OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
-            query_body
+            query_body,
         )
-        return Response(response)
+        locations = response.get("data", [])
+
+        if len(locations) == 0:
+            return Response(
+                data={
+                    "detail": "The location with the given id was not found.",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(locations[0])
 
     @transaction.atomic
     def create(self, request):

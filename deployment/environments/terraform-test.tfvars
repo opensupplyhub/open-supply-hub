@@ -16,11 +16,17 @@ bastion_instance_type = "t3.nano"
 rds_allocated_storage = "128"
 rds_engine_version = "12"
 rds_parameter_group_family = "postgres12"
-rds_instance_type = "db.t3.large"
+rds_instance_type = "db.t3.xlarge"
 rds_database_identifier = "opensupplyhub-enc-tst"
 rds_database_name = "opensupplyhub"
 rds_multi_az = false
 rds_storage_encrypted = true
+snapshot_identifier = "opensupplyhub-rds-tst"
+
+anonymized_database_instance_type = "db.t3.2xlarge"
+anonymized_database_identifier = "database-anonymizer"
+anonymized_database_schedule_expression = "cron(0 5 ? * SAT *)"
+anonymized_database_dump_enabled = true
 
 app_ecs_desired_count = "2"
 app_ecs_deployment_min_percent = "100"
