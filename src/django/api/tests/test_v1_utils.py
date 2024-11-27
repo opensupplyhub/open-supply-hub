@@ -106,20 +106,20 @@ class V1UtilsTests(TestCase):
             serialize_params(TestProductionLocationsSerializer, query_dict)
         self.assertIsNotNone(error_response)
         self.assertEqual(
-            error_response['message'],
+            error_response['detail'],
             "The request query is invalid."
         )
         self.assertIn(
             {
                 'field': 'number_of_workers_min',
-                'message': 'A Valid Integer Is Required.'
+                'detail': 'A Valid Integer Is Required.'
             },
             error_response['errors']
         )
         self.assertIn(
             {
                 'field': 'size',
-                'message': 'A Valid Integer Is Required.'
+                'detail': 'A Valid Integer Is Required.'
             },
             error_response['errors']
         )
@@ -130,13 +130,13 @@ class V1UtilsTests(TestCase):
         self.assertIsInstance(response, Response)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
-            response.data['message'],
+            response.data['detail'],
             "The request query is invalid."
         )
         self.assertEqual(response.data['errors'][0]['field'], "general")
         self.assertIn(
             "There was a problem processing your request.",
-            response.data['errors'][0]['message']
+            response.data['errors'][0]['detail']
         )
 
     def test_handle_opensearch_exception(self):

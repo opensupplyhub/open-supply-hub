@@ -8,7 +8,7 @@ from api.services.opensearch.search import OpenSearchServiceException
 logger = logging.getLogger(__name__)
 
 
-COMMON_ERROR_MESSAGE = 'The request query is invalid.'
+COMMON_ERROR_DETAIL = 'The request query is invalid.'
 
 
 def serialize_params(serializer_class, query_params):
@@ -43,25 +43,25 @@ def serialize_params(serializer_class, query_params):
     params = serializer_class(data=flattened_query_params)
 
     if not params.is_valid():
-        error_response = {'message': None, 'errors': []}
+        error_response = {'detail': None, 'errors': []}
         # Handle common validation errors.
-        if 'message' not in params.errors and 'errors' not in params.errors:
-            error_response['message'] = COMMON_ERROR_MESSAGE
+        if 'detail' not in params.errors and 'errors' not in params.errors:
+            error_response['detail'] = COMMON_ERROR_DETAIL
             for field, error_list in params.errors.items():
                 error_response['errors'].append({
                     'field': field,
-                    'message': error_list[0].title()
+                    'detail': error_list[0].title()
                 })
 
         # Handle errors that come from serializers
-        message_errors = params.errors.get('message')
-        if message_errors:
-            error_response['message'] = message_errors[0].title()
-        if 'message' in params.errors and 'errors' in params.errors:
+        detail_errors = params.errors.get('detail')
+        if detail_errors:
+            error_response['detail'] = detail_errors[0].title()
+        if 'detail' in params.errors and 'errors' in params.errors:
             for error_item in params.errors.get('errors', []):
                 error_response['errors'].append({
                     'field': error_item.get('field', '').title(),
-                    'message': error_item.get('message', '').title()
+                    'detail': error_item.get('detail', '').title()
                 })
 
         return None, error_response
@@ -73,11 +73,11 @@ def handle_value_error(e):
     logger.error(f'Error processing request: {e}')
     return Response(
         {
-            "message": COMMON_ERROR_MESSAGE,
+            "detail": COMMON_ERROR_DETAIL,
             "errors": [
                 {
                     "field": "general",
-                    "message": (
+                    "detail": (
                         "There was a problem processing your request. "
                         "Please check your input."
                     )
@@ -92,7 +92,7 @@ def handle_opensearch_exception(e):
     logger.error(f'Internal server error: {e}')
     return Response(
         {
-            "message": f"{e}"
+            "detail": f"{e}"
         },
         status=status.HTTP_500_INTERNAL_SERVER_ERROR
     )
@@ -110,14 +110,14 @@ def handle_errors_decorator(view_func):
     return _wrapped_view
 
 
-def handle_path_error(field, message, status_code):
+def handle_path_error(field, detail, status_code):
     return Response(
         {
-            "message": "The request path parameter is invalid.",
+            "detail": "The request path parameter is invalid.",
             "errors": [
                 {
                     "field": field,
-                    "message": message
+                    "detail": detail
                 }
             ]
         },
