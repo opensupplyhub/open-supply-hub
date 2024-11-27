@@ -22,6 +22,7 @@ const initialState = Object.freeze({
         events: [],
         count: 0,
         page: 0,
+        maxPage: 0,
         pageSize: 5,
         sort: {
             sortBy: 'created_at',
@@ -69,10 +70,11 @@ export default createReducer(
                     events: { $set: [] },
                 },
             }),
-        [updateModerationEventsPage]: (state, { page, pageSize }) =>
+        [updateModerationEventsPage]: (state, { page, maxPage, pageSize }) =>
             update(state, {
                 moderationEvents: {
                     page: { $set: page },
+                    maxPage: { $set: maxPage },
                     pageSize: { $set: pageSize },
                 },
             }),

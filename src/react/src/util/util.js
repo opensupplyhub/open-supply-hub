@@ -276,24 +276,35 @@ export const getValueFromObject = ({ value }) => value;
 const createCompactSortedQuerystringInputObject = (inputObject = []) =>
     compact(inputObject.map(getValueFromObject).slice().sort());
 
-const createCompactSortedQuerystringInputArray = (inputArray = []) =>
-    compact(inputArray.map(getValueFromObject).sort()).join('&');
-
 export const createQueryStringFromModerationQueueFilters = (
     { dataSources = [], moderationStatuses = [], countries = [] },
     afterDate = '',
     beforeDate = '',
 ) => {
+    const createRepeatedKeys = (key, valueArr) =>
+        valueArr.map(value => `${key}=${encodeURIComponent(value)}`).join('&');
+
     const inputForQueryString = Object.freeze({
-        source: createCompactSortedQuerystringInputArray(dataSources),
-        status: createCompactSortedQuerystringInputArray(moderationStatuses),
-        country: createCompactSortedQuerystringInputArray(countries),
+        source: dataSources,
+        status: moderationStatuses,
+        country: countries,
         date_gte: afterDate,
         date_lt: beforeDate,
     });
 
-    return Object.entries(omitBy(inputForQueryString, isEmpty))
-        .map(([key, value]) => `${key}=${value}`)
+    return Object.entries(inputForQueryString)
+        .filter(([, value]) =>
+            Array.isArray(value) ? value.length > 0 : value,
+        )
+        .map(([key, value]) => {
+            if (Array.isArray(value)) {
+                return createRepeatedKeys(
+                    key,
+                    createCompactSortedQuerystringInputObject(value),
+                );
+            }
+            return `${key}=${encodeURIComponent(value)}`;
+        })
         .join('&');
 };
 

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { bool, object, number } from 'prop-types';
 import { withRouter } from 'react-router-dom';
@@ -35,6 +35,8 @@ const DEFAULT_ROWS_PER_PAGE = 5;
 function DashboardModerationQueueListTable({
     events,
     count,
+    index,
+    maxIndex,
     fetching,
     fetchEvents,
     classes,
@@ -47,17 +49,23 @@ function DashboardModerationQueueListTable({
 
     const dispatch = useDispatch();
 
+    useEffect(() => {
+        setPage(index);
+        setMaxPage(maxIndex);
+    }, [index, maxIndex]);
+
     const handleChangePage = (_, newPage) => {
-        setPage(newPage);
         if (newPage > page && newPage > maxPage) {
-            setMaxPage(newPage);
             dispatch(
                 updateModerationEventsPage({
                     page: newPage,
+                    maxPage: newPage,
                     pageSize: rowsPerPage,
                 }),
             );
             fetchEvents();
+        } else {
+            setPage(newPage);
         }
     };
     const handleRowClick = useCallback(
@@ -77,13 +85,12 @@ function DashboardModerationQueueListTable({
     const handleChangeRowsPerPage = event => {
         const newRowsPerPage = event.target.value;
         setRowsPerPage(newRowsPerPage);
-        setPage(INITIAL_PAGE_INDEX);
-        setMaxPage(INITIAL_PAGE_INDEX);
 
         dispatch(clearModerationEvents());
         dispatch(
             updateModerationEventsPage({
                 page: INITIAL_PAGE_INDEX,
+                maxPage: INITIAL_PAGE_INDEX,
                 pageSize: newRowsPerPage,
             }),
         );
@@ -95,8 +102,6 @@ function DashboardModerationQueueListTable({
         const newOrder = isDesc ? 'asc' : 'desc';
         setOrder(newOrder);
         setOrderBy(property);
-        setPage(INITIAL_PAGE_INDEX);
-        setMaxPage(INITIAL_PAGE_INDEX);
 
         dispatch(clearModerationEvents());
         dispatch(
@@ -108,6 +113,7 @@ function DashboardModerationQueueListTable({
         dispatch(
             updateModerationEventsPage({
                 page: INITIAL_PAGE_INDEX,
+                maxPage: INITIAL_PAGE_INDEX,
                 pageSize: rowsPerPage,
             }),
         );

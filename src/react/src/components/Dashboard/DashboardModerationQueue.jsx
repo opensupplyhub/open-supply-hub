@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { connect, useDispatch } from 'react-redux';
 import { bool, func, string, object, number } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -15,6 +15,7 @@ import {
     fetchModerationEvents,
     downloadModerationEvents,
     clearModerationEvents,
+    updateModerationEventsPage,
     updateAfterDate,
     updateBeforeDate,
 } from '../../actions/dashboardModerationQueue';
@@ -23,9 +24,17 @@ import { moderationEventsPropType } from '../../util/propTypes';
 import { makeDashboardModerationQueueStyles } from '../../util/styles';
 import { MODERATION_QUEUE } from '../../util/constants';
 
+const INITIAL_PAGE_INDEX = 0;
+
 const DashboardModerationQueue = ({
     events,
     count,
+    page,
+    maxPage,
+    pageSize,
+    dataSources,
+    moderationStatuses,
+    countries,
     fetching,
     fetchEvents,
     error,
@@ -38,6 +47,10 @@ const DashboardModerationQueue = ({
     const [beforeDate, setBeforeDate] = useState('');
     const [afterDateError, setAfterDateError] = useState(false);
     const [beforeDateError, setBeforeDateError] = useState(false);
+    const isFirstRender = useRef(true);
+    const prevDataSources = useRef(dataSources);
+    const prevModerationStatuses = useRef(moderationStatuses);
+    const prevCountries = useRef(countries);
 
     const dispatch = useDispatch();
 
@@ -46,12 +59,68 @@ const DashboardModerationQueue = ({
         fetchCountries();
     }, [fetchEvents, fetchCountries]);
 
+    const wasNotEmptyAndNowEmpty = (prev, current) =>
+        prev?.current?.length > 0 && current?.length === 0;
+
+    useEffect(() => {
+        /*
+         Fetch data if prev filters were not empty but 
+         become empty after user click on select field.
+         This will resolve conflict of when we want to fetch data
+         when filters are removing in UI at the moment
+        */
+        const wasNotEmptyAndNowEmptyDataSources = wasNotEmptyAndNowEmpty(
+            prevDataSources,
+            dataSources,
+        );
+        const wasNotEmptyAndNowEmptyModerationStatuses = wasNotEmptyAndNowEmpty(
+            prevModerationStatuses,
+            moderationStatuses,
+        );
+        const wasNotEmptyAndNowEmptyCountries = wasNotEmptyAndNowEmpty(
+            prevCountries,
+            countries,
+        );
+
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+        } else if (
+            dataSources?.length > 0 ||
+            wasNotEmptyAndNowEmptyDataSources ||
+            moderationStatuses?.length > 0 ||
+            wasNotEmptyAndNowEmptyModerationStatuses ||
+            countries?.length > 0 ||
+            wasNotEmptyAndNowEmptyCountries
+        ) {
+            dispatch(clearModerationEvents());
+            dispatch(
+                updateModerationEventsPage({
+                    page: INITIAL_PAGE_INDEX,
+                    maxPage: INITIAL_PAGE_INDEX,
+                    pageSize,
+                }),
+            );
+            fetchEvents();
+        }
+
+        prevDataSources.current = dataSources;
+        prevModerationStatuses.current = moderationStatuses;
+        prevCountries.current = countries;
+    }, [dataSources, moderationStatuses, countries]);
+
     const handleAfterDateChange = date => {
-        if (!beforeDate || date <= beforeDate) {
+        if (!beforeDate || !date || date <= beforeDate) {
             setAfterDate(date);
             setAfterDateError(false);
             dispatch(updateAfterDate(date));
             dispatch(clearModerationEvents());
+            dispatch(
+                updateModerationEventsPage({
+                    page: INITIAL_PAGE_INDEX,
+                    maxPage: INITIAL_PAGE_INDEX,
+                    pageSize,
+                }),
+            );
             fetchEvents();
         } else {
             setAfterDate('');
@@ -60,11 +129,18 @@ const DashboardModerationQueue = ({
     };
 
     const handleBeforeDateChange = date => {
-        if (!afterDate || date >= afterDate) {
+        if (!afterDate || !date || date >= afterDate) {
             setBeforeDate(date);
             setBeforeDateError(false);
             dispatch(updateBeforeDate(date));
             dispatch(clearModerationEvents());
+            dispatch(
+                updateModerationEventsPage({
+                    page: INITIAL_PAGE_INDEX,
+                    maxPage: INITIAL_PAGE_INDEX,
+                    pageSize,
+                }),
+            );
             fetchEvents();
         } else {
             setBeforeDate('');
@@ -138,6 +214,8 @@ const DashboardModerationQueue = ({
                 fetching={fetching}
                 events={events}
                 count={count}
+                index={page}
+                maxIndex={maxPage}
                 fetchEvents={fetchEvents}
             />
         </Paper>
@@ -165,12 +243,27 @@ DashboardModerationQueue.propTypes = {
 
 const mapStateToProps = ({
     dashboardModerationQueue: {
-        moderationEvents: { events, count, fetching, error },
+        moderationEvents: {
+            events,
+            count,
+            page,
+            maxPage,
+            pageSize,
+            fetching,
+            error,
+        },
         moderationEventsDownloadStatus: { error: downloadEventsError },
     },
+    filters: { dataSources, moderationStatuses, countries },
 }) => ({
     events,
     count,
+    page,
+    maxPage,
+    pageSize,
+    dataSources,
+    moderationStatuses,
+    countries,
     fetching,
     error,
     downloadEventsError,
