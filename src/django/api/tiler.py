@@ -71,7 +71,7 @@ def get_facility_grid_vector_tile(params, layer, z, x, y):
     )
 
     with connection.cursor() as cursor:
-        cursor.execute(query, [location_params, location_params])
+        cursor.execute(query, location_params + location_params)
         rows = cursor.fetchall()
         if len(rows) == 0 or len(rows[0]) == 0:
             return None

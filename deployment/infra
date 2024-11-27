@@ -37,7 +37,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     if [[ -n "${SETTINGS_BUCKET}" ]]; then
         pushd "${TERRAFORM_DIR}"
         git config --global --add safe.directory /usr/local/src
-    
+
         case "${1}" in
             plan)
                 echo "DEFAULT_BATCH_CE_DESIRED_CPU"
@@ -53,7 +53,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 terraform init \
                   -backend-config="bucket=${SETTINGS_BUCKET}" \
                   -backend-config="key=terraform/state"
-                echo "Terraform plan"        
+                echo "Terraform plan"
                 terraform plan \
                           -var="image_tag=${GIT_COMMIT}" \
                           -var="batch_default_ce_desired_vcpus=${DEFAULT_BATCH_CE_DESIRED_CPU:-0}" \
