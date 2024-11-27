@@ -11,6 +11,7 @@ from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.exceptions.handler_not_set_error \
     import HandlerNotSetError
 
+from api.exceptions import ServiceUnavailableException
 from api.helpers.helpers import validate_workers_count
 from oar.settings import (
     MAX_ATTACHMENT_SIZE_IN_BYTES,
@@ -67,7 +68,8 @@ from ...constants import (
     FacilityMergeQueryParams,
     ProcessingAction,
     UpdateLocationParams,
-    FacilityClaimStatuses
+    FacilityClaimStatuses,
+    ErrorMessages,
 )
 from ...exceptions import BadRequestException
 from ...facility_history import (
@@ -576,6 +578,8 @@ class FacilitiesViewSet(ListModelMixin,
         """  # noqa
         # Adding the @permission_classes decorator was not working so we
         # explicitly invoke our custom permission class.
+        if switch_is_active('disable_list_uploading'):
+            raise ServiceUnavailableException(ErrorMessages.MAINTENANCE_MODE)
         if not IsRegisteredAndConfirmed().has_permission(request, self):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
         if not flag_is_active(request._request,
