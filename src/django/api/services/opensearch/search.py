@@ -37,22 +37,11 @@ class OpenSearchService(SearchInterface):
         total_hits = response.get("hits", {}).get("total", {}).get("value", 0)
         hits = response.get("hits", {}).get("hits", [])
 
-        def remove_null_values(obj):
-            if isinstance(obj, dict):
-                return {
-                    k: remove_null_values(v) for k, v in obj.items()
-                    if v is not None
-                }
-            elif isinstance(obj, list):
-                return [remove_null_values(item) for item in obj]
-            else:
-                return obj
-
         data = []
         for hit in hits:
             if "_source" in hit:
                 source = self.__rename_lon_field(hit["_source"])
-                clean_source = remove_null_values(source)
+                clean_source = OpenSearchService._remove_null_values(source)
                 data.append(clean_source)
             else:
                 logger.warning(f"Missing '_source' in hit: {hit}")
@@ -61,6 +50,21 @@ class OpenSearchService(SearchInterface):
             "count": total_hits,
             "data": data
         }
+
+    @staticmethod
+    def _remove_null_values(obj):
+        if isinstance(obj, dict):
+            return {
+                k: OpenSearchService._remove_null_values(v)
+                for k, v in obj.items()
+                if v is not None
+            }
+        elif isinstance(obj, list):
+            return [
+                OpenSearchService._remove_null_values(item) for item in obj
+            ]
+        else:
+            return obj
 
     def search_index(self, index_name, query_body):
         try:
