@@ -89,11 +89,23 @@ class TestModerationEventsQueryBuilder(TestCase):
         self.assertIn(expected, self.builder.query_body['sort'])
 
     def test_add_search_after(self):
-        self.builder.add_search_after('test')
-        self.assertIn('test', self.builder.query_body['search_after'])
-        self.assertIn(
-            {'created_at': {'order': 'desc'}},
+        search_after_value = '2023-11-21T10:00:00'
+        search_after_id = '123e4567-e89b-12d3-a456-426614174000'
+        id_type = 'moderation_id'
+
+        self.builder.add_search_after(
+            search_after_value,
+            search_after_id, id_type
+        )
+
+        self.assertEqual(
+            [{'created_at': 'desc'}, {'moderation_id': 'desc'}],
             self.builder.query_body['sort']
+        )
+
+        self.assertEqual(
+            self.builder.query_body['search_after'],
+            [search_after_value, search_after_id]
         )
 
     def test_get_final_query_body(self):
