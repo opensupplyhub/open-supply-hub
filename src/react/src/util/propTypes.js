@@ -519,7 +519,7 @@ export const moderationEventPropType = shape({
     claim_id: number,
 });
 
-export const moderationEventsPropType = arrayOf(() => moderationEventPropType);
+export const moderationEventsPropType = arrayOf(moderationEventPropType);
 
 export const potentialMatchesPropType = arrayOf(
     shape({
