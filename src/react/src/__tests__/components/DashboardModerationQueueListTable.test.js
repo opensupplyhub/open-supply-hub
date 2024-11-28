@@ -11,7 +11,7 @@ describe('DashboardModerationQueueListTable component', () => {
         {
             moderation_id: 11,
             created_at: '2024-10-17T11:30:20.287Z',
-            cleanedData: {
+            cleaned_data: {
                 name: 'Eco Friendly Plastics',
                 country: {
                     name: 'Germany',
@@ -29,7 +29,7 @@ describe('DashboardModerationQueueListTable component', () => {
         {
             moderation_id: 12,
             created_at: '2024-10-10T12:45:30.297Z',
-            cleanedData: {
+            cleaned_data: {
                 name: 'Solar Energy Systems Ltd',
                 country: {
                     name: 'France',
@@ -51,7 +51,7 @@ describe('DashboardModerationQueueListTable component', () => {
         {
             moderation_id: 13,
             created_at: '2024-10-15T09:10:20.287Z',
-            cleanedData: {
+            cleaned_data: {
                 name: 'Organic Textiles',
                 country: {
                     name: 'Spain',
@@ -69,7 +69,7 @@ describe('DashboardModerationQueueListTable component', () => {
         {
             moderation_id: 14,
             created_at: '2024-10-16T13:25:40.317Z',
-            cleanedData: {
+            cleaned_data: {
                 name: 'High Tech Components',
                 country: {
                     name: 'Japan',
@@ -87,7 +87,7 @@ describe('DashboardModerationQueueListTable component', () => {
         {
             moderation_id: 15,
             created_at: '2024-10-17T07:18:50.327Z',
-            cleanedData: {
+            cleaned_data: {
                 name: 'Bio-Textile Solutions',
                 country: {
                     name: 'Sweden',
@@ -105,7 +105,7 @@ describe('DashboardModerationQueueListTable component', () => {
         {
             moderation_id: 16,
             created_at: '2024-10-18T15:45:00.337Z',
-            cleanedData: {
+            cleaned_data: {
                 name: 'CleanTech Machinery',
                 country: {
                     name: 'Australia',
@@ -143,15 +143,15 @@ describe('DashboardModerationQueueListTable component', () => {
         const { getByText } = renderComponent({ events: sampleModerationEvents });
 
         sampleModerationEvents.forEach(event => {
-            expect(getByText(event.name)).toBeInTheDocument();
+            expect(getByText(event.cleaned_data.name)).toBeInTheDocument();
             expect(getByText(formatDate(event.created_at, DATE_FORMATS.LONG))).toBeInTheDocument();
-            expect(getByText(event.country.name)).toBeInTheDocument();
+            expect(getByText(event.cleaned_data.country.name)).toBeInTheDocument();
             expect(getByText(event.contributor_name)).toBeInTheDocument();
             expect(getByText(event.source)).toBeInTheDocument();
-            expect(getByText(event.moderation_status)).toBeInTheDocument();
+            expect(getByText(event.status)).toBeInTheDocument();
 
-            const decisionDate = event.moderation_decision_date
-            ? formatDate(event.moderation_decision_date, DATE_FORMATS.LONG)
+            const decisionDate = event.status_change_date
+            ? formatDate(event.status_change_date, DATE_FORMATS.LONG)
             : EMPTY_PLACEHOLDER;
             expect(getByText(decisionDate)).toBeInTheDocument();
         });
