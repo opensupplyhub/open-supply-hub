@@ -222,7 +222,6 @@ class APIV1LocationContributionErrorMessages:
                 f'but got {data_type}.')
 
 
-# Validation errors will include field names as keys in the response.
 # If the error isn’t field-specific, the non_field_errors key will be used
 # for issues spanning multiple fields or related to the overall data
 # object.

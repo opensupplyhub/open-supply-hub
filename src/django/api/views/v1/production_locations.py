@@ -147,7 +147,7 @@ class ProductionLocations(ViewSet):
         event_dto = CreateModerationEventDTO(
             contributor_id=request.user.contributor,
             raw_data=request.data,
-            request_type=ModerationEvent.RequestType.CREATE
+            request_type=ModerationEvent.RequestType.CREATE.value
         )
         result = moderation_event_creator.perform_event_creation(event_dto)
 

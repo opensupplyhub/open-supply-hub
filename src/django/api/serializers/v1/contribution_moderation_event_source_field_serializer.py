@@ -9,13 +9,13 @@ from api.models.moderation_event import ModerationEvent
 
 class ContributionModerationEventSourceFieldSerializer(Serializer):
     source = CharField(
-        default=ModerationEvent.Source.API,
+        default=ModerationEvent.Source.API.value,
         max_length=3,
         min_length=1,
         trim_whitespace=False
     )
 
-    def validate_source(self, value):
+    def validate_source(self, value: str) -> str:
         '''
         Check that the source value is valid according to the source field
         in the ModerationEvent model.

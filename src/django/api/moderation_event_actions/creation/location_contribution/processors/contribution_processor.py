@@ -23,7 +23,7 @@ class ContributionProcessor(ABC):
 
     _next: ContributionProcessor = None
 
-    def set_next(self, next: ContributionProcessor):
+    def set_next(self, next: ContributionProcessor) -> None:
         self._next = next
 
     @abstractmethod
