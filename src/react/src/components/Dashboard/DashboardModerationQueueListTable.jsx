@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { bool, object, number } from 'prop-types';
+import { bool, object, number, func } from 'prop-types';
 import { withRouter } from 'react-router-dom';
 import moment from 'moment';
 import { withStyles } from '@material-ui/core/styles';
@@ -30,8 +30,8 @@ import {
 } from '../../util/util';
 
 const INITIAL_PAGE_INDEX = 0;
-const ROWS_PER_PAGE_OPTIONS = [5, 10, 25]; // TODO: 25, 50, 100
-const DEFAULT_ROWS_PER_PAGE = 5;
+const ROWS_PER_PAGE_OPTIONS = [25, 50, 100];
+const DEFAULT_ROWS_PER_PAGE = 25;
 function DashboardModerationQueueListTable({
     events,
     count,
@@ -239,12 +239,17 @@ function DashboardModerationQueueListTable({
 DashboardModerationQueueListTable.defaultProps = {
     events: null,
     count: 0,
+    index: INITIAL_PAGE_INDEX,
+    maxIndex: INITIAL_PAGE_INDEX,
 };
 
 DashboardModerationQueueListTable.propTypes = {
     events: moderationEventsPropType,
     count: number,
+    index: number,
+    maxIndex: number,
     fetching: bool.isRequired,
+    fetchEvents: func.isRequired,
     classes: object.isRequired,
 };
 

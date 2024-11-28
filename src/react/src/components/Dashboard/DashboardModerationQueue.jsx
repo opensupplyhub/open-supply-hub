@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { connect, useDispatch } from 'react-redux';
-import { bool, func, string, object, number } from 'prop-types';
+import { bool, func, string, object, number, array } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
@@ -85,11 +85,11 @@ const DashboardModerationQueue = ({
         if (isFirstRender.current) {
             isFirstRender.current = false;
         } else if (
-            dataSources?.length > 0 ||
+            dataSources.length > 0 ||
             wasNotEmptyAndNowEmptyDataSources ||
-            moderationStatuses?.length > 0 ||
+            moderationStatuses.length > 0 ||
             wasNotEmptyAndNowEmptyModerationStatuses ||
-            countries?.length > 0 ||
+            countries.length > 0 ||
             wasNotEmptyAndNowEmptyCountries
         ) {
             dispatch(clearModerationEvents());
@@ -225,6 +225,12 @@ const DashboardModerationQueue = ({
 DashboardModerationQueue.defaultProps = {
     events: [],
     count: 0,
+    page: INITIAL_PAGE_INDEX,
+    maxPage: INITIAL_PAGE_INDEX,
+    pageSize: 25,
+    dataSources: [],
+    moderationStatuses: [],
+    countries: [],
     error: null,
     downloadEventsError: null,
 };
@@ -232,6 +238,12 @@ DashboardModerationQueue.defaultProps = {
 DashboardModerationQueue.propTypes = {
     events: moderationEventsPropType,
     count: number,
+    page: number,
+    maxPage: number,
+    pageSize: number,
+    dataSources: array,
+    moderationStatuses: array,
+    countries: array,
     fetching: bool.isRequired,
     error: string,
     downloadEventsError: string,
