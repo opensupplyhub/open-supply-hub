@@ -9,10 +9,10 @@ logger = logging.getLogger(__name__)
 class OpenSearchServiceException(Exception):
     def __init__(
         self,
-        message="An unexpected error occurred while processing the request."
+        detail="An unexpected error occurred while processing the request."
     ):
-        self.message = message
-        super().__init__(self.message)
+        self.detail = detail
+        super().__init__(self.detail)
 
 
 class OpenSearchService(SearchInterface):

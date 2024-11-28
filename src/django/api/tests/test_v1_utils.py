@@ -144,4 +144,4 @@ class V1UtilsTests(TestCase):
         response = handle_opensearch_exception(exception)
         self.assertIsInstance(response, Response)
         self.assertEqual(response.status_code, 500)
-        self.assertEqual(response.data['message'], "OpenSearch error")
+        self.assertEqual(response.data['detail'], "OpenSearch error")
