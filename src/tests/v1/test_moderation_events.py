@@ -165,7 +165,11 @@ class ModerationEventsTest(BaseAPITest):
         # Step 2: Use the last item in the initial response for search_after
         last_event = result['data'][-1]
         search_after_value = last_event['created_at']
-        search_after_query = f"?size={initial_size}&sort_by=created_at&order_by=asc&search_after={search_after_value}"
+        search_after_id = last_event['moderation_id']
+        search_after_query = (
+            f"?size={initial_size}&sort_by=created_at&order_by=asc"
+            f"&search_after[value]={search_after_value}&search_after[id]={search_after_id}"
+        )
 
         # Step 3: Fetch the next page using search_after
         response = requests.get(
@@ -174,15 +178,23 @@ class ModerationEventsTest(BaseAPITest):
         )
         next_page_result = response.json()
         self.assertEqual(response.status_code, 200)
-        
+
         # Check that the first item of the next page is indeed after the last item of the previous page
         self.assertTrue(
-            all(event['created_at'] > search_after_value for event in next_page_result['data'])
+            all(
+                (event['created_at'] > search_after_value or
+                (event['created_at'] == search_after_value and event['moderation_id'] > search_after_id))
+                for event in next_page_result['data']
+            )
         )
 
     def test_late_search_after(self):
         invalid_search_after_value = 999999999999999
-        query = f"?sort_by=created_at&order_by=asc&search_after={invalid_search_after_value}"
+        invalid_search_after_id = "invalid-id"
+        query = (
+            f"?sort_by=created_at&order_by=asc"
+            f"&search_after[value]={invalid_search_after_value}&search_after[id]={invalid_search_after_id}"
+        )
         
         response = requests.get(
             f"{self.root_url}/api/v1/moderation-events/{query}",
