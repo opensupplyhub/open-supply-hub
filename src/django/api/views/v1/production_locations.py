@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
+from waffle import switch_is_active
 
 from api.views.v1.utils import (
     serialize_params,
@@ -31,6 +32,7 @@ from api.constants import (
     NON_FIELD_ERRORS_KEY,
     APIV1LocationContributionErrorMessages
 )
+from api.exceptions import ServiceUnavailableException
 
 
 class ProductionLocations(ViewSet):
@@ -125,6 +127,10 @@ class ProductionLocations(ViewSet):
 
     @transaction.atomic
     def create(self, request):
+        if switch_is_active('disable_list_uploading'):
+            raise ServiceUnavailableException(
+                APIV1CommonErrorMessages.MAINTENANCE_MODE
+            )
         if not isinstance(request.data, dict):
             data_type = type(request.data).__name__
             specific_error = APIV1LocationContributionErrorMessages \

@@ -193,7 +193,10 @@ class NumberOfWorkersRanges:
 
 
 class APIErrorMessages:
-    GEOCODED_NO_RESULTS = ('The address you submitted can not be geocoded.')
+    GEOCODED_NO_RESULTS = 'The address you submitted can not be geocoded.'
+    MAINTENANCE_MODE = ('Open Supply Hub is undergoing maintenance and '
+                        'not accepting new data at the moment. Please '
+                        'try again in a few minutes.')
 
 
 class FacilitiesDownloadSettings:
@@ -207,6 +210,10 @@ class APIV1CommonErrorMessages:
         'An unexpected error occurred while processing the request.'
     )
     COMMON_REQ_QUERY_ERROR = 'The request query is invalid.'
+    MAINTENANCE_MODE = (
+        'Open Supply Hub is undergoing maintenance and not accepting new data '
+        'at the moment. Please try again in a few minutes.'
+    )
 
 
 class APIV1LocationContributionErrorMessages:
