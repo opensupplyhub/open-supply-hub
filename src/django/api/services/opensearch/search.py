@@ -41,7 +41,7 @@ class OpenSearchService(SearchInterface):
         for hit in hits:
             if "_source" in hit:
                 source = self.__rename_lon_field(hit["_source"])
-                clean_source = OpenSearchService._remove_null_values(source)
+                clean_source = self.__remove_null_values(source)
                 data.append(clean_source)
             else:
                 logger.warning(f"Missing '_source' in hit: {hit}")
@@ -52,16 +52,16 @@ class OpenSearchService(SearchInterface):
         }
 
     @staticmethod
-    def _remove_null_values(obj):
+    def __remove_null_values(obj):
         if isinstance(obj, dict):
             return {
-                k: OpenSearchService._remove_null_values(v)
+                k: OpenSearchService.__remove_null_values(v)
                 for k, v in obj.items()
                 if v is not None
             }
         elif isinstance(obj, list):
             return [
-                OpenSearchService._remove_null_values(item) for item in obj
+                OpenSearchService.__remove_null_values(item) for item in obj
             ]
         else:
             return obj
