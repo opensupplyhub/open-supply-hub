@@ -157,7 +157,7 @@ function DashboardModerationQueueListTable({
                                         contributor_name: contributorName,
                                         source,
                                         status: moderationStatus,
-                                        moderation_decision_date: moderationDecisionDate,
+                                        status_change_date: moderationDecisionDate,
                                         updated_at: updatedAt,
                                     }) => (
                                         <TableRow

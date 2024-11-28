@@ -160,11 +160,11 @@ describe('DashboardModerationQueueListTable component', () => {
     test('handles rows per page change', () => {
         const { getByText } = renderComponent({ events: paginatedModerationEvents });
 
-        expect(getByText(/1-5 of 6/)).toBeInTheDocument();
+        expect(getByText(/1-6 of 6/)).toBeInTheDocument();
         expect(getByText(/rows per page/i)).toBeInTheDocument();
         
-        fireEvent.click(getByText('5'));
-        fireEvent.click(getByText('10'));
+        fireEvent.click(getByText('25'));
+        fireEvent.click(getByText('50'));
         expect(getByText(/1-6 of 6/)).toBeInTheDocument();
     });
 

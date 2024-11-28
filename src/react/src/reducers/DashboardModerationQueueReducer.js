@@ -23,7 +23,7 @@ const initialState = Object.freeze({
         count: 0,
         page: 0,
         maxPage: 0,
-        pageSize: 5,
+        pageSize: 25,
         sort: {
             sortBy: 'created_at',
             orderBy: 'desc',
