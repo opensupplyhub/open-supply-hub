@@ -2,6 +2,7 @@ import operator
 import os
 import logging
 from functools import reduce
+from waffle import switch_is_active
 
 from oar.settings import (
     MAX_UPLOADED_FILE_SIZE_IN_BYTES,
@@ -26,7 +27,9 @@ from ...aws_batch import submit_jobs, submit_parse_job
 from api.constants import (
     FacilityListItemsQueryParams,
     ProcessingAction,
+    ErrorMessages,
 )
+from api.exceptions import ServiceUnavailableException
 from ...facility_history import create_dissociate_match_change_reason
 from ...mail import send_facility_list_rejection_email
 from ...models.contributor.contributor import Contributor
@@ -89,6 +92,8 @@ class FacilityListViewSet(ModelViewSet):
                 "is_public": true
             }
         """
+        if switch_is_active('disable_list_uploading'):
+            raise ServiceUnavailableException(ErrorMessages.MAINTENANCE_MODE)
         if 'file' not in request.data:
             raise ValidationError('No file specified.')
         uploaded_file = request.data['file']
