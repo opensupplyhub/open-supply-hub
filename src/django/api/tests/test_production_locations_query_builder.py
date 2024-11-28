@@ -182,12 +182,28 @@ class TestProductionLocationsQueryBuilder(TestCase):
         self.assertIn(expected, self.builder.query_body['sort'])
 
     def test_add_search_after(self):
-        self.builder.add_search_after('test')
-        self.assertIn('test', self.builder.query_body['search_after'])
+        search_after_value = 'test_value'
+        search_after_id = 'test_id'
+        id_type = 'name.keyword'
+
+        self.builder.add_search_after(
+            search_after_value,
+            search_after_id, id_type
+        )
+
+        self.assertEqual(
+            self.builder.query_body['search_after'],
+            [search_after_value, search_after_id]
+        )
+
         self.assertIn(
-            {'name.keyword': {'order': 'asc'}},
+            {self.builder.default_sort: self.builder.default_sort_order},
             self.builder.query_body['sort']
-            )
+        )
+        self.assertIn(
+            {id_type: self.builder.default_sort_order},
+            self.builder.query_body['sort']
+        )
 
     def test_get_final_query_body(self):
         final_query = self.builder.get_final_query_body()

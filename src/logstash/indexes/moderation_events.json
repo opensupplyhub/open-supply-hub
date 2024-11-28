@@ -16,7 +16,7 @@
           "type": "keyword"
         },
         "contributor_id": {
-          "type": "keyword"
+          "type": "integer"
         },
         "contributor_name": {
           "type": "keyword"
