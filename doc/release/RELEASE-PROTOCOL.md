@@ -24,6 +24,7 @@ This document outlines the SDLC pillars of the opensupplyhub monorepo, as well a
   - [Shut down the pre-prod environment](#shut-down-the-pre-prod-environment)
   - [Post Release Notes](#post-release-notes)
   - [Reloading the DedupeHub](#reloading-the-dedupehub)
+  - [Block loading of new production locations](#block-loading-production-locations)
 
 
 ## Release Schedule
@@ -155,22 +156,24 @@ Make sure that:
 
 1. To enhance communication within the team, the responsible person for the release must notify all stakeholders about the release two working days before its scheduled date and in 1-2 hours to prevent any actions on the environment on which the deployment is carried out.
 2. The responsible person have to take db snapshot manually via Amazon RDS in the `Snapshots` tab with name `env-db-date` (examples: `stg-db-05-18-2024` and `prd-db-05-18-2024`).
-3. On the designated time and day, the responsible person runs the `Release [Deploy]` workflow for the sandbox and production environments from the release branch. They need to fill in the full release tag version (`X.Y.Z`) and choose the environment. If the responsible person need to clear OpenSearch indexes during deployment, they must select the Clear OpenSearch indexes checkbox.
+3. On the designated time and day, before triggering workflow on Production environment the responsible person have manually make active the `disable_list_uploading` switch, as mentioned in [Block loading of new production locations](#block-loading-production-locations).
+4. Then the responsible person runs the `Release [Deploy]` workflow for the sandbox and production environments from the release branch. They need to fill in the full release tag version (`X.Y.Z`) and choose the environment. If the responsible person need to clear OpenSearch indexes during deployment, they must select the Clear OpenSearch indexes checkbox.
 ℹ️ Note, that `Deploy to AWS` workflow will be triggered <strong>automatically</strong> for the sandbox and production environments respectively.
-4. After completing the triggered workflows, the responsible person must open the AWS console and verify that all tasks of the `OpenSupplyHubStagingAppDD`, `OpenSupplyHubStagingApp`, `OpenSupplyHubStagingAppLogstash`, `OpenSupplyHubProductionAppDD`, `OpenSupplyHubProductionApp` and `OpenSupplyHubProductionAppLogstash` services in the `ecsOpenSupplyHubStagingCluster` and `ecsOpenSupplyHubProductionCluster` Amazon ECS clusters, respectively, have been restarted.
-5. Additionally, it is necessary to check the OpenSearch domains and their statuses, such as Domain Processing Status, Configuration Change Status, and Cluster Health, to ensure they are green (which indicates that everything is fine). Use the Amazon OpenSearch Service console to check this.
-6. The responsible person also needs to check that DedupeHub is up and running. To do this, they should open CloudWatch via the AWS console, navigate to the Log groups section in the menu, open logOpenSupplyHubProductionAppDD and logOpenSupplyHubStagingAppDD, then open the latest log stream of each log group. Ensure that there is a recent message: `INFO: Application startup complete.`
+5. After completing the triggered workflows, the responsible person must open the AWS console and verify that all tasks of the `OpenSupplyHubStagingAppDD`, `OpenSupplyHubStagingApp`, `OpenSupplyHubStagingAppLogstash`, `OpenSupplyHubProductionAppDD`, `OpenSupplyHubProductionApp` and `OpenSupplyHubProductionAppLogstash` services in the `ecsOpenSupplyHubStagingCluster` and `ecsOpenSupplyHubProductionCluster` Amazon ECS clusters, respectively, have been restarted.
+6. Additionally, it is necessary to check the OpenSearch domains and their statuses, such as Domain Processing Status, Configuration Change Status, and Cluster Health, to ensure they are green (which indicates that everything is fine). Use the Amazon OpenSearch Service console to check this.
+7. The responsible person also needs to check that DedupeHub is up and running. To do this, they should open CloudWatch via the AWS console, navigate to the Log groups section in the menu, open logOpenSupplyHubProductionAppDD and logOpenSupplyHubStagingAppDD, then open the latest log stream of each log group. Ensure that there is a recent message: `INFO: Application startup complete.`
 If there is no such message and DedupeHub hangs, you need to reload it (perhaps several times), as mentioned in [Reloading the DedupeHub](#reloading-the-dedupehub).
-7. Once the aforementioned steps are successfully completed, the person responsible for the release should also verify that all actions included in the post_deployment command have been successfully executed. Here is the [instructions](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/280788993/Checking+successful+application+of+post-deployment+actions+in+the+test+environment).
+8. Once the aforementioned steps are successfully completed, the person responsible for the release should also verify that all actions included in the post_deployment command have been successfully executed. Here is the [instructions](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/280788993/Checking+successful+application+of+post-deployment+actions+in+the+test+environment).
 In case there is a need to run additional command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Migration+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5DHow-to-correctly-run-migrations-for-our-four-environments%3F---Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
-8. Notify the QA Engineer that the new version has been released, and they can commence testing the items listed under the *prod* column in [the QA Checklist sheet](https://docs.google.com/spreadsheets/d/1uinHJOPpGfrUNkewBxPVsDeDXnNx4dJnnX94LoBA_zk/edit?usp=sharing).
-9. The QA Engineer must notify stakeholders in the *#data_x_product* Slack channel when testing is complete in the sandbox and in the production, as well as issues, if any encountered during testing.
-10. Upon completing the release, the responsible person must notify stakeholders in the *#data_x_product* Slack channel that the releases to sandbox and production have concluded. Additionally, update the *Unreleased* version's status in Jira.
+9. Make inactive the `disable_list_uploading` switch (on Production).
+10. Notify the QA Engineer that the new version has been released, and they can commence testing the items listed under the *prod* column in [the QA Checklist sheet](https://docs.google.com/spreadsheets/d/1uinHJOPpGfrUNkewBxPVsDeDXnNx4dJnnX94LoBA_zk/edit?usp=sharing).
+11. The QA Engineer must notify stakeholders in the *#data_x_product* Slack channel when testing is complete in the sandbox and in the production, as well as issues, if any encountered during testing.
+12. Upon completing the release, the responsible person must notify stakeholders in the *#data_x_product* Slack channel that the releases to sandbox and production have concluded. Additionally, update the *Unreleased* version's status in Jira.
 
 ### Hotfixes
 
 - To deploy a hotfix to pre-prod, you should fork from the latest release branch, and after preparing the fix, merge it back. Merging will trigger the `Deploy to AWS` workflow that will deploy the hotfix to the **running** pre-prod environment.
-- To release a hotfix to production and staging, you should fork from the latest release branch, and after preparing the fix, merge it back. The last step is to execute the `Release [Deploy]` workflow for each environment separately, which will deploy the fix to these two environments. If you need to clear OpenSearch indexes during deployment, you must select the Clear OpenSearch indexes checkbox.
+- To release a hotfix to production and staging, you should fork from the latest release branch, and after preparing the fix, merge it back. For production you have to make active the `disable_list_uploading` switch. The last step is to execute the `Release [Deploy]` workflow for each environment separately, which will deploy the fix to these two environments. If you need to clear OpenSearch indexes during deployment, you must select the Clear OpenSearch indexes checkbox. At the end for production make inactive the `disable_list_uploading` switch.
 
 ### Quick-fixes
 
@@ -196,3 +199,11 @@ On Monday after each release, current metrics should be checked by QA engineer.
 
 ### Reloading the DedupeHub
 - To restart DedupeHub the responsible person have to find `ecsOpenSupplyHubProductionCluster` in Amazon Elastic Container Service (ECS), select `OpenSupplyHubProductionAppDD` and press update. Then select `Force New Deployment` and press update button.
+
+### Block loading of new production locations
+- To manage the `disable_list_uploading` toggle, follow these steps:
+    1. Navigate to [the Switch page in the Django admin panel](https://opensupplyhub.org/admin/login/?next=/admin/waffle/switch/).
+    2. Locate the `disable_list_uploading` switch and update its status:
+        Active: Disables the ability to upload new production locations.
+        Inactive: Enables the functionality for uploading production locations.
+    3. To verify whether uploading has been disabled, visit [the List Contribute page](https://opensupplyhub.org/contribute). When the toggle is active, the Submit button will be disabled. Hovering over the disabled button will display a tooltip indicating that the site is under maintenance.
