@@ -17,7 +17,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe scheme changes here.*
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-1453](https://opensupplyhub.atlassian.net/browse/OSDEV-1453) - The `detail` keyword instead of `message` has been applied in error response objects for V1 endpoints.
 
 ### Architecture/Environment changes
 * [OSDEV-1170](https://opensupplyhub.atlassian.net/browse/OSDEV-1170) - Added the ability to automatically create a dump from the latest shared snapshot of the anonymized database from Production environment for use in the Test and Pre-Prod environments.
