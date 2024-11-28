@@ -64,9 +64,8 @@ function DashboardModerationQueueListTable({
                 }),
             );
             fetchEvents();
-        } else {
-            setPage(newPage);
         }
+        setPage(newPage);
     };
     const handleRowClick = useCallback(
         id => () => {

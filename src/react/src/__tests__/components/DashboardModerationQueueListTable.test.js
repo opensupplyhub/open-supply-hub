@@ -120,11 +120,373 @@ describe('DashboardModerationQueueListTable component', () => {
             updated_at: '2024-10-18T15:45:00.337Z',
             source: 'API',
         },
+        {
+            moderation_id: 17,
+            created_at: '2024-10-20T06:03:00',
+            cleaned_data: {
+                name: 'Green Solutions 17',
+                country: {
+                    name: 'United States',
+                    alpha_2: 'US',
+                    alpha_3: 'USA',
+                    numeric: '840',
+                },
+            },
+            contributor_name: 'Green Manufacturing Ltd',
+            status: 'APPROVED',
+            status_change_date: '2024-10-20T06:03:00',
+            updated_at: '2024-10-20T06:03:00',
+            source: 'SLC',
+        },
+        {
+            moderation_id: 18,
+            created_at: '2024-10-20T10:51:00',
+            cleaned_data: {
+                name: 'AI-Driven Solutions 18',
+                country: {
+                    name: 'France',
+                    alpha_2: 'FR',
+                    alpha_3: 'FRA',
+                    numeric: '250',
+                },
+            },
+            contributor_name: 'AI-Driven Systems',
+            status: 'REJECTED',
+            status_change_date: '2024-10-20T10:51:00',
+            updated_at: '2024-10-20T10:51:00',
+            source: 'WEB',
+        },
+        {
+            moderation_id: 19,
+            created_at: '2024-10-21T22:51:00',
+            cleaned_data: {
+                name: 'AI-Driven Solutions 19',
+                country: {
+                    name: 'Canada',
+                    alpha_2: 'CA',
+                    alpha_3: 'CAN',
+                    numeric: '124',
+                },
+            },
+            contributor_name: 'AI-Driven Systems',
+            status: 'REJECTED',
+            status_change_date: '2024-10-21T22:51:00',
+            updated_at: '2024-10-21T22:51:00',
+            source: 'SLC',
+        },
+        {
+            moderation_id: 20,
+            created_at: '2024-10-23T04:04:00',
+            cleaned_data: {
+                name: 'Organic Solutions 20',
+                country: {
+                    name: 'India',
+                    alpha_2: 'IN',
+                    alpha_3: 'IND',
+                    numeric: '356',
+                },
+            },
+            contributor_name: 'Organic Innovations',
+            status: 'APPROVED',
+            status_change_date: '2024-10-23T04:04:00',
+            updated_at: '2024-10-23T04:04:00',
+            source: 'API',
+        },
+        {
+            moderation_id: 21,
+            created_at: '2024-10-23T12:34:00',
+            cleaned_data: {
+                name: 'Green Solutions 21',
+                country: {
+                    name: 'Germany',
+                    alpha_2: 'DE',
+                    alpha_3: 'DEU',
+                    numeric: '276',
+                },
+            },
+            contributor_name: 'Green Manufacturing Ltd',
+            status: 'PENDING',
+            status_change_date: '2024-10-23T12:34:00',
+            updated_at: '2024-10-23T12:34:00',
+            source: 'API',
+        },
+        {
+            moderation_id: 22,
+            created_at: '2024-10-24T08:12:00',
+            cleaned_data: {
+                name: 'Futuristic Solutions 22',
+                country: {
+                    name: 'China',
+                    alpha_2: 'CN',
+                    alpha_3: 'CHN',
+                    numeric: '156',
+                },
+            },
+            contributor_name: 'Futuristic Textiles',
+            status: 'APPROVED',
+            status_change_date: '2024-10-24T08:12:00',
+            updated_at: '2024-10-24T08:12:00',
+            source: 'WEB',
+        },
+        {
+            moderation_id: 23,
+            created_at: '2024-10-25T09:45:00',
+            cleaned_data: {
+                name: 'Eco Solutions 23',
+                country: {
+                    name: 'Brazil',
+                    alpha_2: 'BR',
+                    alpha_3: 'BRA',
+                    numeric: '076',
+                },
+            },
+            contributor_name: 'Eco Innovations',
+            status: 'REJECTED',
+            status_change_date: '2024-10-25T09:45:00',
+            updated_at: '2024-10-25T09:45:00',
+            source: 'API',
+        },
+        {
+            moderation_id: 24,
+            created_at: '2024-10-26T11:33:00',
+            cleaned_data: {
+                name: 'Smart Solutions 24',
+                country: {
+                    name: 'South Korea',
+                    alpha_2: 'KR',
+                    alpha_3: 'KOR',
+                    numeric: '410',
+                },
+            },
+            contributor_name: 'Smart Machinery Inc',
+            status: 'PENDING',
+            status_change_date: '2024-10-26T11:33:00',
+            updated_at: '2024-10-26T11:33:00',
+            source: 'SLC',
+        },
+        {
+            moderation_id: 25,
+            created_at: '2024-11-01T09:30:00',
+            cleaned_data: {
+                name: 'Eco Growth 25',
+                country: {
+                    name: 'Japan',
+                    alpha_2: 'JP',
+                    alpha_3: 'JPN',
+                    numeric: '392',
+                },
+            },
+            contributor_name: 'Eco-Friendly Fabrics',
+            status: 'APPROVED',
+            status_change_date: '2024-11-01T09:30:00',
+            updated_at: '2024-11-01T09:30:00',
+            source: 'API',
+        },
+        {
+            moderation_id: 26,
+            created_at: '2024-11-02T11:45:00',
+            cleaned_data: {
+                name: 'Green Tech 26',
+                country: {
+                    name: 'Germany',
+                    alpha_2: 'DE',
+                    alpha_3: 'DEU',
+                    numeric: '276',
+                },
+            },
+            contributor_name: 'Green Manufacturing Ltd',
+            status: 'REJECTED',
+            status_change_date: '2024-11-02T11:45:00',
+            updated_at: '2024-11-02T11:45:00',
+            source: 'WEB',
+        },
+        {
+            moderation_id: 27,
+            created_at: '2024-11-03T13:20:00',
+            cleaned_data: {
+                name: 'Tech Innovations 27',
+                country: {
+                    name: 'United Kingdom',
+                    alpha_2: 'GB',
+                    alpha_3: 'GBR',
+                    numeric: '826',
+                },
+            },
+            contributor_name: 'NextGen Components',
+            status: 'PENDING',
+            status_change_date: '2024-11-03T13:20:00',
+            updated_at: '2024-11-03T13:20:00',
+            source: 'SLC',
+        },
+        {
+            moderation_id: 28,
+            created_at: '2024-11-04T15:00:00',
+            cleaned_data: {
+                name: 'Solar Tech 28',
+                country: {
+                    name: 'China',
+                    alpha_2: 'CN',
+                    alpha_3: 'CHN',
+                    numeric: '156',
+                },
+            },
+            contributor_name: 'SolarTech Solutions',
+            status: 'APPROVED',
+            status_change_date: '2024-11-04T15:00:00',
+            updated_at: '2024-11-04T15:00:00',
+            source: 'API',
+        },
+        {
+            moderation_id: 29,
+            created_at: '2024-11-05T18:25:00',
+            cleaned_data: {
+                name: 'Futuristic Tech 29',
+                country: {
+                    name: 'Brazil',
+                    alpha_2: 'BR',
+                    alpha_3: 'BRA',
+                    numeric: '076',
+                },
+            },
+            contributor_name: 'Futuristic Textiles',
+            status: 'REJECTED',
+            status_change_date: '2024-11-05T18:25:00',
+            updated_at: '2024-11-05T18:25:00',
+            source: 'SLC',
+        },
+        {
+            moderation_id: 30,
+            created_at: '2024-11-06T08:40:00',
+            cleaned_data: {
+                name: 'CleanTech Machines 30',
+                country: {
+                    name: 'Australia',
+                    alpha_2: 'AU',
+                    alpha_3: 'AUS',
+                    numeric: '036',
+                },
+            },
+            contributor_name: 'Sustainable Machines',
+            status: 'PENDING',
+            status_change_date: '2024-11-06T08:40:00',
+            updated_at: '2024-11-06T08:40:00',
+            source: 'WEB',
+        },
+        {
+            moderation_id: 31,
+            created_at: '2024-11-07T10:00:00',
+            cleaned_data: {
+                name: 'Next Level Growth 31',
+                country: {
+                    name: 'United States',
+                    alpha_2: 'US',
+                    alpha_3: 'USA',
+                    numeric: '840',
+                },
+            },
+            contributor_name: 'Green Manufacturing Ltd',
+            status: 'APPROVED',
+            status_change_date: '2024-11-07T10:00:00',
+            updated_at: '2024-11-07T10:00:00',
+            source: 'API',
+        },
+        {
+            moderation_id: 32,
+            created_at: '2024-11-08T12:15:00',
+            cleaned_data: {
+                name: 'Advanced Tech 32',
+                country: {
+                    name: 'Canada',
+                    alpha_2: 'CA',
+                    alpha_3: 'CAN',
+                    numeric: '124',
+                },
+            },
+            contributor_name: 'Advanced Manufacturing Co',
+            status: 'PENDING',
+            status_change_date: '2024-11-08T12:15:00',
+            updated_at: '2024-11-08T12:15:00',
+            source: 'SLC',
+        },
+        {
+            moderation_id: 33,
+            created_at: '2024-11-09T14:50:00',
+            cleaned_data: {
+                name: 'Future Innovations 33',
+                country: {
+                    name: 'India',
+                    alpha_2: 'IN',
+                    alpha_3: 'IND',
+                    numeric: '356',
+                },
+            },
+            contributor_name: 'AI-Driven Systems',
+            status: 'REJECTED',
+            status_change_date: '2024-11-09T14:50:00',
+            updated_at: '2024-11-09T14:50:00',
+            source: 'WEB',
+        },
+        {
+            moderation_id: 34,
+            created_at: '2024-11-10T16:05:00',
+            cleaned_data: {
+                name: 'Eco Innovations 34',
+                country: {
+                    name: 'South Korea',
+                    alpha_2: 'KR',
+                    alpha_3: 'KOR',
+                    numeric: '410',
+                },
+            },
+            contributor_name: 'Eco Innovations',
+            status: 'APPROVED',
+            status_change_date: '2024-11-10T16:05:00',
+            updated_at: '2024-11-10T16:05:00',
+            source: 'API',
+        },
+        {
+            moderation_id: 35,
+            created_at: '2024-11-11T18:45:00',
+            cleaned_data: {
+                name: 'Tech Forward 35',
+                country: {
+                    name: 'France',
+                    alpha_2: 'FR',
+                    alpha_3: 'FRA',
+                    numeric: '250',
+                },
+            },
+            contributor_name: 'Futuristic Textiles',
+            status: 'REJECTED',
+            status_change_date: '2024-11-11T18:45:00',
+            updated_at: '2024-11-11T18:45:00',
+            source: 'SLC',
+        },
+        {
+            moderation_id: 36,
+            created_at: '2024-11-11T18:45:00',
+            cleaned_data: {
+                name: 'Tech Forward 36',
+                country: {
+                    name: 'France',
+                    alpha_2: 'FR',
+                    alpha_3: 'FRA',
+                    numeric: '250',
+                },
+            },
+            contributor_name: 'Futuristic Textiles',
+            status: 'REJECTED',
+            status_change_date: '2024-11-11T18:45:00',
+            updated_at: '2024-11-11T18:45:00',
+            source: 'SLC',
+        }
     ];
 
     const defaultProps = {
         events: [],
+        count: 0,
         fetching: false,
+        fetchEvents: jest.fn(),
     };
 
     const renderComponent = (props = {}) => renderWithProviders(
@@ -140,7 +502,7 @@ describe('DashboardModerationQueueListTable component', () => {
     });
 
     test('renders event data in rows', () => {
-        const { getByText } = renderComponent({ events: sampleModerationEvents });
+        const { getByText } = renderComponent({ events: sampleModerationEvents, count: 2 });
 
         sampleModerationEvents.forEach(event => {
             expect(getByText(event.cleaned_data.name)).toBeInTheDocument();
@@ -158,26 +520,33 @@ describe('DashboardModerationQueueListTable component', () => {
     });
 
     test('handles rows per page change', () => {
-        const { getByText } = renderComponent({ events: paginatedModerationEvents });
+        const { getByText } = renderComponent({ events: paginatedModerationEvents, count: 26 });
 
-        expect(getByText(/1-6 of 6/)).toBeInTheDocument();
+        expect(getByText(/1-25 of 26/)).toBeInTheDocument();
         expect(getByText(/rows per page/i)).toBeInTheDocument();
         
         fireEvent.click(getByText('25'));
         fireEvent.click(getByText('50'));
-        expect(getByText(/1-6 of 6/)).toBeInTheDocument();
+        expect(getByText(/1-26 of 26/)).toBeInTheDocument();
     });
 
     test('handles page change', () => {
-        const { getByText, getByRole} = renderComponent({ events: paginatedModerationEvents });
+        const { getByText, getByRole, rerender } = renderComponent({ events: paginatedModerationEvents.slice(0, 25), count: 26});
+        expect(getByText(/1-25 of 26/)).toBeInTheDocument();
 
-        expect(getByText(/1-5 of 6/)).toBeInTheDocument();
         const nextPageButton = getByRole('button', { name: /next page/i });
         fireEvent.click(nextPageButton);
-        expect(getByText(/6-6 of 6/)).toBeInTheDocument();
+
+        rerender(
+            <Router>
+                <DashboardModerationQueueListTable events={paginatedModerationEvents} count={26} fetchEvents={jest.fn()}/>,
+            </Router>
+        )
+        expect(getByText(/26-26 of 26/)).toBeInTheDocument();
+
         const previousPageButton = getByRole('button', { name: /previous page/i });
         fireEvent.click(previousPageButton);
-        expect(getByText(/1-5 of 6/)).toBeInTheDocument();
+        expect(getByText(/1-25 of 26/)).toBeInTheDocument();
     });
 
     test('handles empty state pagination', () => {
