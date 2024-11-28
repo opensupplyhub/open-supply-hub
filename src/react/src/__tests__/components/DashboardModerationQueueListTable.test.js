@@ -11,32 +11,36 @@ describe('DashboardModerationQueueListTable component', () => {
         {
             moderation_id: 11,
             created_at: '2024-10-17T11:30:20.287Z',
-            name: 'Eco Friendly Plastics',
-            country: {
-                name: 'Germany',
-                alpha_2: 'DE',
-                alpha_3: 'DEU',
-                numeric: '276',
+            cleanedData: {
+                name: 'Eco Friendly Plastics',
+                country: {
+                    name: 'Germany',
+                    alpha_2: 'DE',
+                    alpha_3: 'DEU',
+                    numeric: '276',
+                }
             },
             contributor_name: 'Green Solutions Corp',
-            moderation_status: 'PENDING',
-            moderation_decision_date: null,
+            status: 'PENDING',
+            status_change_date: null,
             updated_at: '2024-10-18T11:30:20.287Z',
             source: 'SLC',
         },
         {
             moderation_id: 12,
             created_at: '2024-10-10T12:45:30.297Z',
-            name: 'Solar Energy Systems Ltd',
-            country: {
-                name: 'France',
-                alpha_2: 'FR',
-                alpha_3: 'FRA',
-                numeric: '250',
+            cleanedData: {
+                name: 'Solar Energy Systems Ltd',
+                country: {
+                    name: 'France',
+                    alpha_2: 'FR',
+                    alpha_3: 'FRA',
+                    numeric: '250',
+                }
             },
             contributor_name: 'Renewable Resources Inc',
-            moderation_status: 'APPROVED',
-            moderation_decision_date: '2024-10-12T12:45:30.297Z',
+            status: 'APPROVED',
+            status_change_date: '2024-10-12T12:45:30.297Z',
             updated_at: '2024-10-13T12:45:30.297Z',
             source: 'API',
         },
@@ -47,64 +51,72 @@ describe('DashboardModerationQueueListTable component', () => {
         {
             moderation_id: 13,
             created_at: '2024-10-15T09:10:20.287Z',
-            name: 'Organic Textiles',
-            country: {
-                name: 'Spain',
-                alpha_2: 'ES',
-                alpha_3: 'ESP',
-                numeric: '724',
+            cleanedData: {
+                name: 'Organic Textiles',
+                country: {
+                    name: 'Spain',
+                    alpha_2: 'ES',
+                    alpha_3: 'ESP',
+                    numeric: '724',
+                }
             },
             contributor_name: 'Textile Innovations',
-            moderation_status: 'REJECTED',
-            moderation_decision_date: '2024-10-15T09:10:20.287Z',
+            status: 'REJECTED',
+            status_change_date: '2024-10-15T09:10:20.287Z',
             updated_at: '2024-10-15T09:10:20.287Z',
             source: 'API',
         },
         {
             moderation_id: 14,
             created_at: '2024-10-16T13:25:40.317Z',
-            name: 'High Tech Components',
-            country: {
-                name: 'Japan',
-                alpha_2: 'JP',
-                alpha_3: 'JPN',
-                numeric: '392',
+            cleanedData: {
+                name: 'High Tech Components',
+                country: {
+                    name: 'Japan',
+                    alpha_2: 'JP',
+                    alpha_3: 'JPN',
+                    numeric: '392',
+                }
             },
             contributor_name: 'Advanced Manufacturing Co',
-            moderation_status: 'APPROVED',
-            moderation_decision_date: '2024-10-16T13:25:40.317Z',
+            status: 'APPROVED',
+            status_change_date: '2024-10-16T13:25:40.317Z',
             updated_at: '2024-10-16T13:25:40.317Z',
             source: 'API',
         },
         {
             moderation_id: 15,
             created_at: '2024-10-17T07:18:50.327Z',
-            name: 'Bio-Textile Solutions',
-            country: {
-                name: 'Sweden',
-                alpha_2: 'SE',
-                alpha_3: 'SWE',
-                numeric: '752',
+            cleanedData: {
+                name: 'Bio-Textile Solutions',
+                country: {
+                    name: 'Sweden',
+                    alpha_2: 'SE',
+                    alpha_3: 'SWE',
+                    numeric: '752',
+                }
             },
             contributor_name: 'Eco-Friendly Fabrics',
-            moderation_status: 'PENDING',
-            moderation_decision_date: '2024-10-17T07:18:50.327Z',
+            status: 'PENDING',
+            status_change_date: '2024-10-17T07:18:50.327Z',
             updated_at: '2024-10-17T07:18:50.327Z',
             source: 'SLC',
         },
         {
             moderation_id: 16,
             created_at: '2024-10-18T15:45:00.337Z',
-            name: 'CleanTech Machinery',
-            country: {
-                name: 'Australia',
-                alpha_2: 'AU',
-                alpha_3: 'AUS',
-                numeric: '036',
+            cleanedData: {
+                name: 'CleanTech Machinery',
+                country: {
+                    name: 'Australia',
+                    alpha_2: 'AU',
+                    alpha_3: 'AUS',
+                    numeric: '036',
+                }
             },
             contributor_name: 'Sustainable Machines',
-            moderation_status: 'APPROVED',
-            moderation_decision_date: '2024-10-18T15:45:00.337Z',
+            status: 'APPROVED',
+            status_change_date: '2024-10-18T15:45:00.337Z',
             updated_at: '2024-10-18T15:45:00.337Z',
             source: 'API',
         },
