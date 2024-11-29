@@ -520,13 +520,19 @@ describe('DashboardModerationQueueListTable component', () => {
     });
 
     test('handles rows per page change', () => {
-        const { getByText } = renderComponent({ events: paginatedModerationEvents, count: 26 });
+        const { getByText, rerender } = renderComponent({ events: paginatedModerationEvents, count: 26 });
 
         expect(getByText(/1-25 of 26/)).toBeInTheDocument();
         expect(getByText(/rows per page/i)).toBeInTheDocument();
         
         fireEvent.click(getByText('25'));
         fireEvent.click(getByText('50'));
+
+        rerender(
+            <Router>
+                <DashboardModerationQueueListTable events={paginatedModerationEvents} count={26} pageSize={50}/>,
+            </Router>
+        )
         expect(getByText(/1-26 of 26/)).toBeInTheDocument();
     });
 
@@ -539,13 +545,19 @@ describe('DashboardModerationQueueListTable component', () => {
 
         rerender(
             <Router>
-                <DashboardModerationQueueListTable events={paginatedModerationEvents} count={26} fetchEvents={jest.fn()}/>,
+                <DashboardModerationQueueListTable events={paginatedModerationEvents} count={26} page={1} fetchEvents={jest.fn()}/>,
             </Router>
         )
         expect(getByText(/26-26 of 26/)).toBeInTheDocument();
 
         const previousPageButton = getByRole('button', { name: /previous page/i });
         fireEvent.click(previousPageButton);
+
+        rerender(
+            <Router>
+                <DashboardModerationQueueListTable events={paginatedModerationEvents} count={26} page={0} fetchEvents={jest.fn()}/>,
+            </Router>
+        )
         expect(getByText(/1-25 of 26/)).toBeInTheDocument();
     });
 
