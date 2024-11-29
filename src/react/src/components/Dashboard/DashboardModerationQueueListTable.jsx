@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { bool, object, number, func } from 'prop-types';
 import { withRouter } from 'react-router-dom';
@@ -35,37 +35,29 @@ const DEFAULT_ROWS_PER_PAGE = 25;
 function DashboardModerationQueueListTable({
     events,
     count,
-    index,
-    maxIndex,
+    page,
+    maxPage,
+    pageSize,
     fetching,
     fetchEvents,
     classes,
 }) {
     const [order, setOrder] = useState('desc');
     const [orderBy, setOrderBy] = useState('created_at');
-    const [page, setPage] = useState(INITIAL_PAGE_INDEX);
-    const [maxPage, setMaxPage] = useState(INITIAL_PAGE_INDEX);
-    const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
 
     const dispatch = useDispatch();
 
-    useEffect(() => {
-        setPage(index);
-        setMaxPage(maxIndex);
-    }, [index, maxIndex]);
-
     const handleChangePage = (_, newPage) => {
+        dispatch(
+            updateModerationEventsPage({
+                page: newPage,
+                maxPage: newPage > maxPage ? newPage : maxPage,
+                pageSize,
+            }),
+        );
         if (newPage > page && newPage > maxPage) {
-            dispatch(
-                updateModerationEventsPage({
-                    page: newPage,
-                    maxPage: newPage,
-                    pageSize: rowsPerPage,
-                }),
-            );
             fetchEvents();
         }
-        setPage(newPage);
     };
     const handleRowClick = useCallback(
         id => () => {
@@ -83,7 +75,6 @@ function DashboardModerationQueueListTable({
 
     const handleChangeRowsPerPage = event => {
         const newRowsPerPage = event.target.value;
-        setRowsPerPage(newRowsPerPage);
 
         dispatch(clearModerationEvents());
         dispatch(
@@ -113,7 +104,7 @@ function DashboardModerationQueueListTable({
             updateModerationEventsPage({
                 page: INITIAL_PAGE_INDEX,
                 maxPage: INITIAL_PAGE_INDEX,
-                pageSize: rowsPerPage,
+                pageSize,
             }),
         );
         fetchEvents();
@@ -145,8 +136,8 @@ function DashboardModerationQueueListTable({
                             <TableRow className={classes.emptyRowStyles} />
                             {events
                                 .slice(
-                                    page * rowsPerPage,
-                                    page * rowsPerPage + rowsPerPage,
+                                    page * pageSize,
+                                    page * pageSize + pageSize,
                                 )
                                 .map(
                                     ({
@@ -220,7 +211,7 @@ function DashboardModerationQueueListTable({
                 rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
                 component="div"
                 count={count}
-                rowsPerPage={rowsPerPage}
+                rowsPerPage={pageSize}
                 page={page}
                 backIconButtonProps={{
                     'aria-label': 'Previous Page',
@@ -238,15 +229,17 @@ function DashboardModerationQueueListTable({
 DashboardModerationQueueListTable.defaultProps = {
     events: null,
     count: 0,
-    index: INITIAL_PAGE_INDEX,
-    maxIndex: INITIAL_PAGE_INDEX,
+    page: INITIAL_PAGE_INDEX,
+    maxPage: INITIAL_PAGE_INDEX,
+    pageSize: DEFAULT_ROWS_PER_PAGE,
 };
 
 DashboardModerationQueueListTable.propTypes = {
     events: moderationEventsPropType,
     count: number,
-    index: number,
-    maxIndex: number,
+    page: number,
+    maxPage: number,
+    pageSize: number,
     fetching: bool.isRequired,
     fetchEvents: func.isRequired,
     classes: object.isRequired,

@@ -214,8 +214,9 @@ const DashboardModerationQueue = ({
                 fetching={fetching}
                 events={events}
                 count={count}
-                index={page}
-                maxIndex={maxPage}
+                page={page}
+                maxPage={maxPage}
+                pageSize={pageSize}
                 fetchEvents={fetchEvents}
             />
         </Paper>
