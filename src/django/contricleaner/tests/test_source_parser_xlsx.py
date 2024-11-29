@@ -69,11 +69,11 @@ class SourceParserXLSXTest(TestCase):
                     "product_type": ["Jeans"],
                     "facility_type": {
                         "raw_values": "Embellishment",
-                        "processed_values": {"Embellishment"},
+                        "processed_values": ["Embellishment"],
                     },
                     "processing_type": {
                         "raw_values": "Embellishment",
-                        "processed_values": {"Embellishment"},
+                        "processed_values": ["Embellishment"],
                     },
                     "country": "United States",
                     "facility_type_processing_type": "Embellishment",
@@ -104,11 +104,11 @@ class SourceParserXLSXTest(TestCase):
                 fields={
                     "facility_type": {
                         "raw_values": "Embossing",
-                        "processed_values": {"Embossing"},
+                        "processed_values": ["Embossing"],
                     },
                     "processing_type": {
                         "raw_values": "Embossing",
-                        "processed_values": {"Embossing"},
+                        "processed_values": ["Embossing"],
                     },
                     "percentage_of_male_workers": "3.5%",
                     "parent_company": "",
@@ -118,7 +118,14 @@ class SourceParserXLSXTest(TestCase):
                     "number_of_workers": "1005",
                 },
                 errors=[
-                    {"message": "clean_name cannot be empty.", "type": "Error"}
+                    {
+                        "message": (
+                            "name cannot consist solely of punctuation "
+                            "or whitespace."
+                        ),
+                        "field": "name",
+                        "type": "Error"
+                    }
                 ],
             ),
             RowDTO(
@@ -169,11 +176,11 @@ class SourceParserXLSXTest(TestCase):
                 fields={
                     "facility_type": {
                         "raw_values": "Embossing",
-                        "processed_values": {"Embossing"},
+                        "processed_values": ["Embossing"],
                     },
                     "processing_type": {
                         "raw_values": "Embossing",
-                        "processed_values": {"Embossing"},
+                        "processed_values": ["Embossing"],
                     },
                     "country": "Italy",
                     "facility_type_processing_type": "Embossing",
