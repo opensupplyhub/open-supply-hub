@@ -26,7 +26,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388) - The waiter from boto3 cannot wait more than half an hour so we replaced it with our own.
 
 ### What's new
-* [OSDEV-1175]() - New Moderation Queue Page was integrated with `GET api/v1/moderation-events/` endpoint that include pagination, sorting and filtering.
+* [OSDEV-1175](https://opensupplyhub.atlassian.net/browse/OSDEV-1175) - New Moderation Queue Page was integrated with `GET api/v1/moderation-events/` endpoint that include pagination, sorting and filtering.
 
 ### Release instructions:
 * *Provide release instructions here.*
