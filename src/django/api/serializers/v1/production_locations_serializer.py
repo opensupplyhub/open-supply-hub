@@ -29,6 +29,8 @@ class ProductionLocationsSerializer(Serializer):
     number_of_workers_max = IntegerField(required=False)
     percent_female_workers_min = FloatField(required=False)
     percent_female_workers_max = FloatField(required=False)
+    search_after_id = CharField(required=False)
+    search_after_value = CharField(required=False)
     coordinates_lat = FloatField(required=False)
     coordinates_lng = FloatField(required=False)
     country = ListField(

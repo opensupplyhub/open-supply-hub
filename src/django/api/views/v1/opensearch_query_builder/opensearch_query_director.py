@@ -80,9 +80,15 @@ class OpenSearchQueryDirector:
             order_by = query_params.get(V1_PARAMETERS_LIST.ORDER_BY)
             self.__builder.add_sort(sort_by, order_by)
 
-        search_after = query_params.get(V1_PARAMETERS_LIST.SEARCH_AFTER)
-        if search_after:
-            self.__builder.add_search_after(search_after)
+        search_after_id = query_params. \
+            get(V1_PARAMETERS_LIST.SEARCH_AFTER + "[id]")
+        search_after_value = query_params. \
+            get(V1_PARAMETERS_LIST.SEARCH_AFTER + "[value]")
+        if search_after_id and search_after_value:
+            self.__builder.add_search_after(
+                search_after_value,
+                search_after_id
+            )
 
         paginate_from = query_params.get(V1_PARAMETERS_LIST.FROM)
         if paginate_from:

@@ -29,6 +29,8 @@ from api.views.v1.utils import COMMON_ERROR_DETAIL
 class ModerationEventsSerializer(Serializer):
     # These params are checking considering serialize_params output
     size = IntegerField(required=False)
+    search_after_id = CharField(required=False)
+    search_after_value = CharField(required=False)
     country = ListField(
         child=CharField(required=False),
         required=False
@@ -50,14 +52,15 @@ class ModerationEventsSerializer(Serializer):
     sort_by = ChoiceField(
         choices=[
             'created_at',
-            'updated_at',
             'status_change_date',
+            'updated_at',
+            'contributor_id',
             'contributor_name',
+            'country',
+            'name',
+            'address',
             'source',
             'status',
-            'cleaned_country',
-            'cleaned_name',
-            'cleaned_address'
         ],
         required=False
     )
