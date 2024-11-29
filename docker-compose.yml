@@ -40,10 +40,7 @@ services:
       - DJANGO_SECRET_KEY=secret
       - DJANGO_LOG_LEVEL=INFO
       - AWS_PROFILE=${AWS_PROFILE:-default}
-      # Set Set a random value for OAR_CLIENT_KEY so that it does not pass
-      # the API permission check in cases where it is purposely passed as
-      # an empty value, such as during a Django CLI operation.
-      - OAR_CLIENT_KEY=f3b88ca5-6c08-4cd3-a6c3-09e741b28eba
+      - OAR_CLIENT_KEY=
       - NOTIFICATION_EMAIL_TO=notification@example.com
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - KAFKA_TOPIC_DEDUPE_BASIC_NAME=dedupe.hub.topic
