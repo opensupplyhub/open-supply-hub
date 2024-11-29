@@ -41,6 +41,10 @@ class ModerationEventsSerializer(Serializer):
     )
     date_gte = DateField(input_formats=['%Y-%m-%d'], required=False)
     date_lt = DateField(input_formats=['%Y-%m-%d'], required=False)
+    request_type = ListField(
+        child=CharField(required=False),
+        required=False
+    )
     source = ListField(
         child=CharField(required=False),
         required=False
