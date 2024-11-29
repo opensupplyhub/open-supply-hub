@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { bool, object, number, func } from 'prop-types';
 import { withRouter } from 'react-router-dom';
@@ -38,24 +38,24 @@ function DashboardModerationQueueListTable({
     page,
     maxPage,
     pageSize,
+    sort: { sortBy, orderBy },
     fetching,
     fetchEvents,
     classes,
 }) {
-    const [order, setOrder] = useState('desc');
-    const [orderBy, setOrderBy] = useState('created_at');
-
     const dispatch = useDispatch();
 
     const handleChangePage = (_, newPage) => {
+        const isNewMaxPage = newPage > maxPage;
+
         dispatch(
             updateModerationEventsPage({
                 page: newPage,
-                maxPage: newPage > maxPage ? newPage : maxPage,
+                maxPage: isNewMaxPage ? newPage : maxPage,
                 pageSize,
             }),
         );
-        if (newPage > page && newPage > maxPage) {
+        if (isNewMaxPage) {
             fetchEvents();
         }
     };
@@ -88,10 +88,8 @@ function DashboardModerationQueueListTable({
     };
 
     const handleRequestSort = (_, property) => {
-        const isDesc = orderBy === property && order === 'desc';
+        const isDesc = sortBy === property && orderBy === 'desc';
         const newOrder = isDesc ? 'asc' : 'desc';
-        setOrder(newOrder);
-        setOrderBy(property);
 
         dispatch(clearModerationEvents());
         dispatch(
@@ -115,8 +113,8 @@ function DashboardModerationQueueListTable({
             <div className={classes.tableContainerStyles}>
                 <Table>
                     <DashboardModerationQueueListTableHeader
-                        order={order}
-                        orderBy={orderBy}
+                        order={orderBy}
+                        orderBy={sortBy}
                         onRequestSort={handleRequestSort}
                         fetching={fetching}
                     />
@@ -232,6 +230,10 @@ DashboardModerationQueueListTable.defaultProps = {
     page: INITIAL_PAGE_INDEX,
     maxPage: INITIAL_PAGE_INDEX,
     pageSize: DEFAULT_ROWS_PER_PAGE,
+    sort: {
+        sortBy: 'created_at',
+        orderBy: 'desc',
+    },
 };
 
 DashboardModerationQueueListTable.propTypes = {
@@ -240,6 +242,7 @@ DashboardModerationQueueListTable.propTypes = {
     page: number,
     maxPage: number,
     pageSize: number,
+    sort: object,
     fetching: bool.isRequired,
     fetchEvents: func.isRequired,
     classes: object.isRequired,

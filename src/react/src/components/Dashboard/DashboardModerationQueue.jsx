@@ -32,6 +32,7 @@ const DashboardModerationQueue = ({
     page,
     maxPage,
     pageSize,
+    sort,
     dataSources,
     moderationStatuses,
     countries,
@@ -217,6 +218,7 @@ const DashboardModerationQueue = ({
                 page={page}
                 maxPage={maxPage}
                 pageSize={pageSize}
+                sort={sort}
                 fetchEvents={fetchEvents}
             />
         </Paper>
@@ -229,6 +231,10 @@ DashboardModerationQueue.defaultProps = {
     page: INITIAL_PAGE_INDEX,
     maxPage: INITIAL_PAGE_INDEX,
     pageSize: 25,
+    sort: {
+        sortBy: 'created_at',
+        orderBy: 'desc',
+    },
     dataSources: [],
     moderationStatuses: [],
     countries: [],
@@ -242,6 +248,7 @@ DashboardModerationQueue.propTypes = {
     page: number,
     maxPage: number,
     pageSize: number,
+    sort: object,
     dataSources: array,
     moderationStatuses: array,
     countries: array,
@@ -262,6 +269,7 @@ const mapStateToProps = ({
             page,
             maxPage,
             pageSize,
+            sort,
             fetching,
             error,
         },
@@ -274,6 +282,7 @@ const mapStateToProps = ({
     page,
     maxPage,
     pageSize,
+    sort,
     dataSources,
     moderationStatuses,
     countries,
