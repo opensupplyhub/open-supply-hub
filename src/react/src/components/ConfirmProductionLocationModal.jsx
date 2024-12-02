@@ -73,8 +73,19 @@ const styles = () => ({
         fontWeight: 900,
     },
     titleContentStyle: {
+        fontSize: '32px',
         textAlign: 'center',
-        textTransform: 'uppercase',
+        fontWeight: 800,
+        lineHeight: 1,
+    },
+    primaryText: {
+        marginBottom: '20px',
+    },
+    leftContainerColumn: {
+        paddingRight: '10px',
+    },
+    rightContainerColumn: {
+        paddingRight: '10px',
     },
     icon: {
         color: COLOURS.DARK_GREEN,
@@ -88,12 +99,24 @@ const styles = () => ({
     dialogContentStyles: {
         textAlign: 'center',
         fontSize: '16px',
+        fontWeight: 600,
     },
     buttonContentStyle: {
         justifyContent: 'space-between',
         alignItems: 'center',
-        spacing: 2,
         padding: '0 15px',
+    },
+    osIdStatusBadge: {
+        backgroundColor: '#E7E8EA',
+        marginLeft: '10px',
+        fontWeight: 'bold',
+    },
+    osIdStatusBadgeIcon: {
+        color: COLOURS.DARK_GREY,
+        marginRight: '5px',
+    },
+    disabled: {
+        cursor: 'not-allowed',
     },
     arrow: {
         position: 'absolute',
@@ -109,10 +132,10 @@ const styles = () => ({
             borderStyle: 'solid',
         },
     },
-    bootstrapPopper: arrowGenerator(COLOURS.DARK_SLATE_GRAY),
+    bootstrapPopper: arrowGenerator(COLOURS.DARK_SLATE_GREY),
     bootstrapTooltip: {
         fontSize: '14px',
-        backgroundColor: COLOURS.DARK_SLATE_GRAY,
+        backgroundColor: COLOURS.DARK_SLATE_GREY,
     },
     bootstrapPlacementLeft: {
         margin: '0 8px',
@@ -126,6 +149,20 @@ const styles = () => ({
     bootstrapPlacementBottom: {
         margin: '8px 0',
     },
+    button: {
+        fontWeight: 'bold',
+        textTransform: 'none',
+        paddingLeft: '30px',
+        paddingRight: '30px',
+        boxShadow: 'none',
+    },
+    claimTooltipWrapper: {
+        display: 'block',
+        cursor: 'not-allowed',
+    },
+    claimButton: {
+        backgroundColor: COLOURS.NAVIGATION,
+    },
 });
 
 const ConfirmProductionLocationModal = ({ classes }) => {
@@ -133,8 +170,13 @@ const ConfirmProductionLocationModal = ({ classes }) => {
     return (
         <Dialog open>
             <div className={classes.modalContainerWrapper}>
-                <DialogTitle className={classes.titleContentStyle}>
-                    Thanks for adding data for this production location!
+                <DialogTitle>
+                    <Typography
+                        variant="h2"
+                        className={classes.titleContentStyle}
+                    >
+                        Thanks for adding data for this production location!
+                    </Typography>
                 </DialogTitle>
                 <DialogContent>
                     <Typography
@@ -150,7 +192,12 @@ const ConfirmProductionLocationModal = ({ classes }) => {
                     </Typography>
                     <hr className={classes.separator} />
                     <Grid container className={classes.contentContainer}>
-                        <Grid item xs={12} md={6}>
+                        <Grid
+                            item
+                            xs={12}
+                            md={6}
+                            className={classes.leftContainerColumn}
+                        >
                             <Typography className={classes.label}>
                                 Facility name
                             </Typography>
@@ -180,7 +227,12 @@ const ConfirmProductionLocationModal = ({ classes }) => {
                                 1,000 - 5,000
                             </Typography>
                         </Grid>
-                        <Grid item xs={12} md={6}>
+                        <Grid
+                            item
+                            xs={12}
+                            md={6}
+                            className={classes.rightContainerColumn}
+                        >
                             <Typography className={classes.label}>
                                 OS ID
                             </Typography>
@@ -189,6 +241,7 @@ const ConfirmProductionLocationModal = ({ classes }) => {
                                 <Chip
                                     label="Pending"
                                     onDelete={() => {}}
+                                    className={classes.osIdStatusBadge}
                                     deleteIcon={
                                         <Tooltip
                                             title={
@@ -234,7 +287,11 @@ const ConfirmProductionLocationModal = ({ classes }) => {
                                                 },
                                             }}
                                         >
-                                            <InfoOutlinedIcon />
+                                            <InfoOutlinedIcon
+                                                className={
+                                                    classes.osIdStatusBadgeIcon
+                                                }
+                                            />
                                         </Tooltip>
                                     }
                                 />
@@ -264,36 +321,76 @@ const ConfirmProductionLocationModal = ({ classes }) => {
                     <Grid container className={classes.buttonContentStyle}>
                         <Grid item>
                             <Button
-                                variant="outlined"
-                                color="secondary"
+                                variant="contained"
+                                color="accented"
                                 onClick={() => {
-                                    console.log('Init click 1');
+                                    console.log('prompt to the main page');
                                 }}
+                                className={classes.button}
                             >
                                 Search OS Hub
                             </Button>
                         </Grid>
                         <Grid item>
                             <Button
-                                variant="outlined"
-                                color="primary"
+                                variant="contained"
+                                color="secondary"
                                 onClick={() => {
-                                    console.log('Init click 2');
+                                    console.log('submit another location');
                                 }}
+                                className={classes.button}
                             >
                                 Submit another Location
                             </Button>
                         </Grid>
                         <Grid item>
-                            <Button
-                                variant="outlined"
-                                color="primary"
-                                onClick={() => {
-                                    console.log('Init click 3');
+                            <Tooltip
+                                title={
+                                    <>
+                                        You&lsquo;ll be able to claim the
+                                        location after the moderation is done
+                                        <span
+                                            className={classes.arrow}
+                                            ref={setArrowRef}
+                                        />
+                                    </>
+                                }
+                                classes={{
+                                    tooltip: classes.bootstrapTooltip,
+                                    popper: classes.bootstrapPopper,
+                                    tooltipPlacementLeft:
+                                        classes.bootstrapPlacementLeft,
+                                    tooltipPlacementRight:
+                                        classes.bootstrapPlacementRight,
+                                    tooltipPlacementTop:
+                                        classes.bootstrapPlacementTop,
+                                    tooltipPlacementBottom:
+                                        classes.bootstrapPlacementBottom,
+                                }}
+                                PopperProps={{
+                                    popperOptions: {
+                                        modifiers: {
+                                            arrow: {
+                                                enabled: Boolean(arrowRef),
+                                                element: arrowRef,
+                                            },
+                                        },
+                                    },
                                 }}
                             >
-                                Continue to Claim
-                            </Button>
+                                <span
+                                    className={`${classes.claimTooltipWrapper}`}
+                                >
+                                    <Button
+                                        variant="contained"
+                                        disabled
+                                        cursor="disabled"
+                                        className={`${classes.button} ${classes.claimButton}`}
+                                    >
+                                        Continue to Claim
+                                    </Button>
+                                </span>
+                            </Tooltip>
                         </Grid>
                     </Grid>
                 </DialogActions>
