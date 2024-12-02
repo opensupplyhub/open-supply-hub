@@ -26,7 +26,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388) - The waiter from boto3 cannot wait more than half an hour so we replaced it with our own.
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* [OSDEV-1132](https://opensupplyhub.atlassian.net/browse/OSDEV-1132) - Added FE for the "thanks for submitting" screen when user submits production location's data.
 
 ### Release instructions:
 * *Provide release instructions here.*

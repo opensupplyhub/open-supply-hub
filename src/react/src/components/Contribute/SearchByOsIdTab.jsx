@@ -10,8 +10,6 @@ import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 import { makeSearchByOsIdTabStyles } from '../../util/styles';
 import { OS_ID_LENGTH } from '../../util/constants';
 
-import ProductionLocationDialog from './../ProductionLocationDialog';
-
 const HelperText = ({ classes }) => (
     <span className={classes.helperTextContainerStyles}>
         <InfoOutlinedIcon className={classes.infoIconStyles} />
@@ -84,8 +82,6 @@ const SearchByOsIdTab = ({ classes }) => {
                 >
                     Search by ID
                 </Button>
-                {/** TODO: move this modal somewhere else later */}
-                <ProductionLocationDialog classes={classes} />
             </Paper>
         </>
     );

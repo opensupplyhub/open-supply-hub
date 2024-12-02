@@ -40,6 +40,9 @@ const styles = theme =>
         primaryText: Object.freeze({
             marginBottom: '20px',
         }),
+        osIDText: Object.freeze({
+            lineHeight: '2.3',
+        }),
         leftContainerColumn: Object.freeze({
             paddingRight: '10px',
         }),
@@ -117,13 +120,8 @@ const ProductionLocationDialog = ({ classes }) => {
     return (
         <Dialog open>
             <div className={classes.modalContainerWrapper}>
-                <DialogTitle>
-                    <Typography
-                        variant="title"
-                        className={classes.titleContentStyle}
-                    >
-                        Thanks for adding data for this production location!
-                    </Typography>
+                <DialogTitle className={classes.titleContentStyle}>
+                    Thanks for adding data for this production location!
                 </DialogTitle>
                 <DialogContent>
                     <Typography
@@ -183,26 +181,34 @@ const ProductionLocationDialog = ({ classes }) => {
                             <Typography className={classes.label}>
                                 OS ID
                             </Typography>
-                            <Typography className={classes.primaryText}>
-                                US20243236AZ1R0
-                                <Chip
-                                    label="Pending"
-                                    onDelete={() => {}}
-                                    className={classes.osIdStatusBadge}
-                                    deleteIcon={
-                                        <DialogTooltip
-                                            text="Your submission is under
-                                                    review. You will receive a
-                                                    notification once the
-                                                    production location is live
-                                                    on OS Hub. You can proceed
-                                                    to submit a claim while your
-                                                    request is pending."
-                                            childComponent={infoIcon(classes)}
-                                        />
-                                    }
-                                />
-                            </Typography>
+                            <Grid container className={classes.primaryText}>
+                                <Grid item>
+                                    <Typography className={classes.osIDText}>
+                                        US20243236AZ1R0
+                                    </Typography>
+                                </Grid>
+                                <Grid item>
+                                    <Chip
+                                        label="Pending"
+                                        onDelete={() => {}}
+                                        className={classes.osIdStatusBadge}
+                                        deleteIcon={
+                                            <DialogTooltip
+                                                text="Your submission is under
+                                                        review. You will receive a
+                                                        notification once the
+                                                        production location is live
+                                                        on OS Hub. You can proceed
+                                                        to submit a claim while your
+                                                        request is pending."
+                                                childComponent={infoIcon(
+                                                    classes,
+                                                )}
+                                            />
+                                        }
+                                    />
+                                </Grid>
+                            </Grid>
                             <Typography className={classes.label}>
                                 Product type
                             </Typography>
@@ -228,7 +234,7 @@ const ProductionLocationDialog = ({ classes }) => {
                     <Grid container className={classes.buttonContentStyle}>
                         <Button
                             variant="contained"
-                            color="accented"
+                            color="default"
                             onClick={() => history.push(mainRoute)}
                             className={classes.button}
                         >
