@@ -1,3 +1,5 @@
+from typing import Tuple
+
 from django.http import QueryDict
 from django.db import transaction
 from rest_framework import status
@@ -38,13 +40,15 @@ from api.exceptions import ServiceUnavailableException
 class ProductionLocations(ViewSet):
     swagger_schema = None
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.opensearch_service = OpenSearchService()
-        self.opensearch_query_builder = ProductionLocationsQueryBuilder()
-        self.opensearch_query_director = OpenSearchQueryDirector(
-            self.opensearch_query_builder
+    @staticmethod
+    def init_opensearch() -> Tuple[OpenSearchService, OpenSearchQueryDirector]:
+        opensearch_service = OpenSearchService()
+        opensearch_query_builder = ProductionLocationsQueryBuilder()
+        opensearch_query_director = OpenSearchQueryDirector(
+            opensearch_query_builder
         )
+
+        return (opensearch_service, opensearch_query_director)
 
     def get_permissions(self):
         '''
@@ -95,10 +99,11 @@ class ProductionLocations(ViewSet):
         if error_response:
             return Response(error_response, status=status.HTTP_400_BAD_REQUEST)
 
-        query_body = self.opensearch_query_director.build_query(
+        opensearch_service, opensearch_query_director = self.init_opensearch()
+        query_body = opensearch_query_director.build_query(
             request.GET,
         )
-        response = self.opensearch_service.search_index(
+        response = opensearch_service.search_index(
             OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
             query_body,
         )
@@ -108,8 +113,10 @@ class ProductionLocations(ViewSet):
     def retrieve(self, _, pk=None):
         query_params = QueryDict("", mutable=True)
         query_params.update({"os_id": pk})
-        query_body = self.opensearch_query_director.build_query(query_params)
-        response = self.opensearch_service.search_index(
+
+        opensearch_service, opensearch_query_director = self.init_opensearch()
+        query_body = opensearch_query_director.build_query(query_params)
+        response = opensearch_service.search_index(
             OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
             query_body,
         )
