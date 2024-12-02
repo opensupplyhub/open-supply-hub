@@ -21,6 +21,8 @@ import {
     EMPTY_PLACEHOLDER,
     DATE_FORMATS,
     MODERATION_STATUS_COLORS,
+    MODERATION_INITIAL_PAGE_INDEX,
+    MODERATION_DEFAULT_ROWS_PER_PAGE,
 } from '../../util/constants';
 import { makeDashboardModerationQueueListTableStyles } from '../../util/styles';
 import {
@@ -29,9 +31,7 @@ import {
     makeContributionRecordLink,
 } from '../../util/util';
 
-const INITIAL_PAGE_INDEX = 0;
 const ROWS_PER_PAGE_OPTIONS = [25, 50, 100];
-const DEFAULT_ROWS_PER_PAGE = 25;
 function DashboardModerationQueueListTable({
     events,
     count,
@@ -79,8 +79,8 @@ function DashboardModerationQueueListTable({
         dispatch(clearModerationEvents());
         dispatch(
             updateModerationEventsPage({
-                page: INITIAL_PAGE_INDEX,
-                maxPage: INITIAL_PAGE_INDEX,
+                page: MODERATION_INITIAL_PAGE_INDEX,
+                maxPage: MODERATION_INITIAL_PAGE_INDEX,
                 pageSize: newRowsPerPage,
             }),
         );
@@ -100,8 +100,8 @@ function DashboardModerationQueueListTable({
         );
         dispatch(
             updateModerationEventsPage({
-                page: INITIAL_PAGE_INDEX,
-                maxPage: INITIAL_PAGE_INDEX,
+                page: MODERATION_INITIAL_PAGE_INDEX,
+                maxPage: MODERATION_INITIAL_PAGE_INDEX,
                 pageSize,
             }),
         );
@@ -227,9 +227,9 @@ function DashboardModerationQueueListTable({
 DashboardModerationQueueListTable.defaultProps = {
     events: null,
     count: 0,
-    page: INITIAL_PAGE_INDEX,
-    maxPage: INITIAL_PAGE_INDEX,
-    pageSize: DEFAULT_ROWS_PER_PAGE,
+    page: MODERATION_INITIAL_PAGE_INDEX,
+    maxPage: MODERATION_INITIAL_PAGE_INDEX,
+    pageSize: MODERATION_DEFAULT_ROWS_PER_PAGE,
     sort: {
         sortBy: 'created_at',
         orderBy: 'desc',

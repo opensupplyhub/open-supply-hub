@@ -22,9 +22,11 @@ import {
 import { fetchCountryOptions } from '../../actions/filterOptions';
 import { moderationEventsPropType } from '../../util/propTypes';
 import { makeDashboardModerationQueueStyles } from '../../util/styles';
-import { MODERATION_QUEUE } from '../../util/constants';
-
-const INITIAL_PAGE_INDEX = 0;
+import {
+    MODERATION_QUEUE,
+    MODERATION_INITIAL_PAGE_INDEX,
+    MODERATION_DEFAULT_ROWS_PER_PAGE,
+} from '../../util/constants';
 
 const DashboardModerationQueue = ({
     events,
@@ -96,8 +98,8 @@ const DashboardModerationQueue = ({
             dispatch(clearModerationEvents());
             dispatch(
                 updateModerationEventsPage({
-                    page: INITIAL_PAGE_INDEX,
-                    maxPage: INITIAL_PAGE_INDEX,
+                    page: MODERATION_INITIAL_PAGE_INDEX,
+                    maxPage: MODERATION_INITIAL_PAGE_INDEX,
                     pageSize,
                 }),
             );
@@ -117,8 +119,8 @@ const DashboardModerationQueue = ({
             dispatch(clearModerationEvents());
             dispatch(
                 updateModerationEventsPage({
-                    page: INITIAL_PAGE_INDEX,
-                    maxPage: INITIAL_PAGE_INDEX,
+                    page: MODERATION_INITIAL_PAGE_INDEX,
+                    maxPage: MODERATION_INITIAL_PAGE_INDEX,
                     pageSize,
                 }),
             );
@@ -137,8 +139,8 @@ const DashboardModerationQueue = ({
             dispatch(clearModerationEvents());
             dispatch(
                 updateModerationEventsPage({
-                    page: INITIAL_PAGE_INDEX,
-                    maxPage: INITIAL_PAGE_INDEX,
+                    page: MODERATION_INITIAL_PAGE_INDEX,
+                    maxPage: MODERATION_INITIAL_PAGE_INDEX,
                     pageSize,
                 }),
             );
@@ -228,9 +230,9 @@ const DashboardModerationQueue = ({
 DashboardModerationQueue.defaultProps = {
     events: [],
     count: 0,
-    page: INITIAL_PAGE_INDEX,
-    maxPage: INITIAL_PAGE_INDEX,
-    pageSize: 25,
+    page: MODERATION_INITIAL_PAGE_INDEX,
+    maxPage: MODERATION_INITIAL_PAGE_INDEX,
+    pageSize: MODERATION_DEFAULT_ROWS_PER_PAGE,
     sort: {
         sortBy: 'created_at',
         orderBy: 'desc',
