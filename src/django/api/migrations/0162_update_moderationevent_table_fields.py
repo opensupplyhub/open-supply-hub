@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
     '''
 
     dependencies = [
-        ('api', '0161_create_bdisable_list_uploading'),
+        ('api', '0161_create_disable_list_uploading'),
     ]
 
     operations = [
