@@ -3,6 +3,79 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.26.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: December 14, 2024
+
+### Database changes
+#### Migrations:
+* *Describe migrations here.*
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
+### Code/API changes
+* [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Disabled null values from the response of the OpenSearch. Disabled possible null `os_id`, `claim_id` and `source` from `PATCH api/v1/moderation-events/{moderation_id}` response.
+
+### Architecture/Environment changes
+* [OSDEV-1170](https://opensupplyhub.atlassian.net/browse/OSDEV-1170) - Added the ability to automatically create a dump from the latest shared snapshot of the anonymized database from Production environment for use in the Test and Pre-Prod environments.
+
+### Bugfix
+* [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388) - The waiter from boto3 cannot wait more than half an hour so we replaced it with our own.
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* *Provide release instructions here.*
+
+## Release 1.26.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: December 14, 2024
+
+### Database changes
+#### Migrations:
+* *Describe migrations here.*
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
+### Code/API changes
+* [OSDEV-1449](https://opensupplyhub.atlassian.net/browse/OSDEV-1449) - **Breaking changes** to the following endpoints:
+  - GET `v1/moderation-events`
+  - GET `v1/production-locations`
+
+  **Changes include:**
+  - Refactored `sort_by` parameter to improve sorting functionality.
+  - Split `search_after` parameter into `search_after_value` and `search_after_id` for better pagination control.
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* Run `[Release] Deploy` pipeline for an existing environment with the flag 'Clear OpenSearch indexes' set to true - to let the tokenizer parse full text into words with new configurations.
+* The following steps should be completed while deploying to Staging or Production:
+    1. Run the `[Release] Deploy` pipeline for these environments with the flag 'Clear OpenSearch indexes' set to true. This will allow Logstash to refill OpenSearch since the OpenSearch instance will be recreated due to the version increase. It is also necessary due to changes in the OpenSearch index settings.
+    2. Open the triggered `Deploy to AWS` workflow and ensure that the `apply` job is completed. **Right after** finishing the `apply` job, follow these instructions, which should be the last steps in setting up the recreated OpenSearch instance:
+        - Copy the ARN of the `terraform_ci` user from the AWS IAM console.
+            - Navigate to the AWS console's search input, type "IAM", and open the IAM console.
+            - In the IAM console, find and click on the "Users" tab.
+            - In the list of available users, locate the `terraform_ci` user, click on it, and on that page, you will find its ARN.
+        - After copying this value, go to the AWS OpenSearch console in the same way you accessed the IAM console.
+        - Open the available domains and locate the domain for the corresponding environment. Open it, then navigate to the security configuration and click "Edit".
+        - Find the section titled "Fine-grained access control", and under this section, you will find an "IAM ARN" input field. Paste the copied ARN into this field and save the changes. It may take several minutes to apply. Make sure that the "Configuration change status" field has green status.
+    3. Then, return to the running `Deploy to AWS` workflow and ensure that the logs for `clear_opensearch` job do not contain errors related to access for deleting the OpenSearch index or lock files in EFS storage. In case of **an access error**, simply rerun the `Deploy to AWS` workflow manually from the appropriate release Git tag.
+
 
 ## Release 1.25.0
 
@@ -26,7 +99,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1332](https://opensupplyhub.atlassian.net/browse/OSDEV-1332) - Introduced new `PATCH api/v1/moderation-events/{moderation_id}` endpoint
 to modify moderation event `status`.
 * [OSDEV-1347](https://opensupplyhub.atlassian.net/browse/OSDEV-1347) - Create GET request for `v1/moderation-events/{moderation_id}` endpoint.
+* Update `/v1/production-locations/{os_id}` endpoint to return a single object instead of multiple objects. Also, add unit tests for the `ProductionLocationsViewSet`.
 * The RDS instance has been upgraded as follows: for `production` and `preprod`, it is now `db.m6in.8xlarge`, and for `test`, it has been upgraded to `db.t3.xlarge`.
+* [OSDEV-1467](https://opensupplyhub.atlassian.net/browse/OSDEV-1467) - Implemented disabling endpoint `POST /api/facilities/` during the release process. It is raising an error message with status code 503.
 
 ### Architecture/Environment changes
 * Increased the memory for the Dedupe Hub instance from 8GB to 12GB in the `production` and `pre-prod` environments to reduce the risk of container overload and minimize the need for reindexing in the future.
@@ -41,6 +116,7 @@ to modify moderation event `status`.
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
+    * `reindex_database`
 
 
 ## Release 1.24.0

@@ -32,7 +32,7 @@ class OpenSearchService(SearchInterface):
             logger.error(f"Invalid response format: {response}")
             raise OpenSearchServiceException(
                 "Invalid response format from OpenSearch."
-                )
+            )
 
         total_hits = response.get("hits", {}).get("total", {}).get("value", 0)
         hits = response.get("hits", {}).get("hits", [])
@@ -40,7 +40,9 @@ class OpenSearchService(SearchInterface):
         data = []
         for hit in hits:
             if "_source" in hit:
-                data.append(self.__rename_lon_field(hit["_source"]))
+                source = self.__rename_lon_field(hit["_source"])
+                clean_source = self.__remove_null_values(source)
+                data.append(clean_source)
             else:
                 logger.warning(f"Missing '_source' in hit: {hit}")
 
@@ -48,6 +50,21 @@ class OpenSearchService(SearchInterface):
             "count": total_hits,
             "data": data
         }
+
+    @staticmethod
+    def __remove_null_values(obj):
+        if isinstance(obj, dict):
+            return {
+                k: OpenSearchService.__remove_null_values(v)
+                for k, v in obj.items()
+                if v is not None
+            }
+        elif isinstance(obj, list):
+            return [
+                OpenSearchService.__remove_null_values(item) for item in obj
+            ]
+        else:
+            return obj
 
     def search_index(self, index_name, query_body):
         try:
