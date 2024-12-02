@@ -28,13 +28,15 @@ function StyledSelect({
     );
     return (
         <>
-            <InputLabel
-                shrink={false}
-                htmlFor={name}
-                className={classes.inputLabelStyle}
-            >
-                {label} {renderIcon()}
-            </InputLabel>
+            {label && (
+                <InputLabel
+                    shrink={false}
+                    htmlFor={name}
+                    className={classes.inputLabelStyle}
+                >
+                    {label} {renderIcon()}
+                </InputLabel>
+            )}
             {(() => {
                 if (creatable)
                     return (

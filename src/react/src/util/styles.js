@@ -781,3 +781,81 @@ export const makeDashboardModerationQueueTableHeaderStyles = theme =>
             fontWeight: theme.typography.fontWeightSemiBoldPlus,
         }),
     });
+
+export const makeSearchByNameAddressTabStyles = theme =>
+    Object.freeze({
+        errorPlaceholder: Object.freeze({
+            color: COLOURS.RED,
+        }),
+        helperTextContainerStyles: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+        }),
+        infoIconStyles: Object.freeze({
+            fontSize: '16px',
+            verticalAlign: 'middle',
+        }),
+        helperTextStyles: Object.freeze({
+            fontSize: '16px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            color: COLOURS.RED,
+        }),
+        instructionTextStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            margin: '24px 0 32px 0',
+        }),
+        searchContainerStyles: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '40px 110px',
+            borderRadius: '0',
+            boxShadow: 'none',
+        }),
+        mainTitleStyles: Object.freeze({
+            fontSize: '36px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
+        }),
+        subTitleStyles: Object.freeze({
+            fontSize: '21px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            margin: '8px 0 8px 0',
+        }),
+        textFieldStyles: Object.freeze({
+            maxWidth: '528px',
+            marginBottom: '21px',
+        }),
+        selectStyles: Object.freeze({
+            fontSize: '18px',
+            lineHeight: '22px',
+            maxWidth: '528px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+        }),
+        searchInputStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            lineHeight: '22px',
+            padding: '16px',
+        }),
+        notchedOutlineStyles: Object.freeze({
+            borderRadius: 0,
+        }),
+        buttonLabel: Object.freeze({
+            fontSize: '18px',
+            lineHeight: '20px',
+            fontWeight: theme.typography.fontWeightExtraBold,
+        }),
+        buttonStyles: Object.freeze({
+            width: '200px',
+            height: '49px',
+            borderRadius: '0',
+            textTransform: 'none',
+            backgroundColor: theme.palette.action.main,
+            marginTop: '26px',
+            color: theme.palette.common.black,
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
+        }),
+    });

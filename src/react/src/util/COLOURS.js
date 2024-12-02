@@ -11,6 +11,7 @@ export default {
 
     // Reds
     LIGHT_RED: '#FFEAEA',
+    RED: '#f44336',
 
     // Grays and Neutrals
     WHITE: '#fff',
