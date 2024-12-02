@@ -112,7 +112,7 @@ class TestProductionLocationsCreate(APITestCase):
 
     def test_endpoint_supports_only_dictionary_structure(self):
         expected_general_error = (
-            'Invalid data. Expected a dictionary (object), but got list.'
+            'The request body is invalid.'
         )
         expected_specific_error = (
             'Invalid data. Expected a dictionary (object), but got list.'
