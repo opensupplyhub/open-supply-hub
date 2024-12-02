@@ -64,7 +64,7 @@ const SearchByNameAndAddressTab = ({ classes }) => {
     const isDisabled =
         validate(inputName) &&
         validate(inputAddress) &&
-        validate(inputCountry.label);
+        validate(inputCountry.label || '');
     const mockCountries = [
         {
             name: 'United Kingdom of Great Britain and Northern Ireland',
