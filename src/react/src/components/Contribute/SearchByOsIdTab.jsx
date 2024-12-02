@@ -10,7 +10,7 @@ import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 import { makeSearchByOsIdTabStyles } from '../../util/styles';
 import { OS_ID_LENGTH } from '../../util/constants';
 
-import ProductionLocationDialog from './../ConfirmProductionLocationModal';
+import ProductionLocationDialog from './../ProductionLocationDialog';
 
 const HelperText = ({ classes }) => (
     <span className={classes.helperTextContainerStyles}>
