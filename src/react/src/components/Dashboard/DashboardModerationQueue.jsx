@@ -35,6 +35,8 @@ const DashboardModerationQueue = ({
     maxPage,
     pageSize,
     sort,
+    afterDate,
+    beforeDate,
     dataSources,
     moderationStatuses,
     countries,
@@ -46,8 +48,6 @@ const DashboardModerationQueue = ({
     fetchCountries,
     classes,
 }) => {
-    const [afterDate, setAfterDate] = useState('');
-    const [beforeDate, setBeforeDate] = useState('');
     const [afterDateError, setAfterDateError] = useState(false);
     const [beforeDateError, setBeforeDateError] = useState(false);
     const isFirstRender = useRef(true);
@@ -113,7 +113,6 @@ const DashboardModerationQueue = ({
 
     const handleAfterDateChange = date => {
         if (!beforeDate || !date || date <= beforeDate) {
-            setAfterDate(date);
             setAfterDateError(false);
             dispatch(updateAfterDate(date));
             dispatch(clearModerationEvents());
@@ -126,14 +125,13 @@ const DashboardModerationQueue = ({
             );
             fetchEvents();
         } else {
-            setAfterDate('');
+            dispatch(updateAfterDate(''));
             setAfterDateError(true);
         }
     };
 
     const handleBeforeDateChange = date => {
         if (!afterDate || !date || date >= afterDate) {
-            setBeforeDate(date);
             setBeforeDateError(false);
             dispatch(updateBeforeDate(date));
             dispatch(clearModerationEvents());
@@ -146,7 +144,7 @@ const DashboardModerationQueue = ({
             );
             fetchEvents();
         } else {
-            setBeforeDate('');
+            dispatch(updateBeforeDate(''));
             setBeforeDateError(true);
         }
     };
@@ -237,6 +235,8 @@ DashboardModerationQueue.defaultProps = {
         sortBy: 'created_at',
         orderBy: 'desc',
     },
+    afterDate: null,
+    beforeDate: null,
     dataSources: [],
     moderationStatuses: [],
     countries: [],
@@ -251,6 +251,8 @@ DashboardModerationQueue.propTypes = {
     maxPage: number,
     pageSize: number,
     sort: object,
+    afterDate: string,
+    beforeDate: string,
     dataSources: array,
     moderationStatuses: array,
     countries: array,
@@ -272,6 +274,8 @@ const mapStateToProps = ({
             maxPage,
             pageSize,
             sort,
+            afterDate,
+            beforeDate,
             fetching,
             error,
         },
@@ -285,6 +289,8 @@ const mapStateToProps = ({
     maxPage,
     pageSize,
     sort,
+    afterDate,
+    beforeDate,
     dataSources,
     moderationStatuses,
     countries,
