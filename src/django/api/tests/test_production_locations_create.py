@@ -73,6 +73,8 @@ class TestProductionLocationsCreate(APITestCase):
                 self.common_valid_req_body,
                 content_type='application/json'
             )
+            print('>>> content in test_default_throttling_is_applied',
+                  response.content)
             self.assertEqual(response.status_code, 202)
 
             response_body_dict = json.loads(response.content)
