@@ -66,7 +66,7 @@ function DashboardModerationQueueListTable({
                 openInNewTab(url);
             } catch (error) {
                 console.error(
-                    `Failed to open contribution record: ${error.message}`,
+                    `Failed to open contribution record: ${error.detail}`,
                 );
             }
         },

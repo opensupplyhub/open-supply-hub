@@ -16,14 +16,14 @@ class SourceValidator(OpenSearchValidationInterface):
         if not isinstance(source, list):
             errors.append({
                 "field": "source",
-                "message": "Source must be a list of values."
+                "detail": "Source must be a list of values."
             })
         elif not all(item in self.VALID_SOURCES for item in source):
             invalid_sources = [item for item in source if
                                item not in self.VALID_SOURCES]
             errors.append({
                 "field": "source",
-                "message": (
+                "detail": (
                     f"Invalid source(s) {invalid_sources}. "
                     "Allowed values are 'SLC' or 'API'."
                 )
