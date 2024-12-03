@@ -43,35 +43,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `reindex_database`
 
 
-## Release 1.26.0
-
-## Introduction
-* Product name: Open Supply Hub
-* Release date: December 14, 2024
-
-### Database changes
-#### Migrations:
-* *Describe migrations here.*
-
-#### Scheme changes
-* *Describe scheme changes here.*
-
-### Code/API changes
-* [OSDEV-1410](https://opensupplyhub.atlassian.net/browse/OSDEV-1410) - Introduced new POST `/api/moderation-events/{moderation_id}/production-locations` endpoint
-
-### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
-
-### Bugfix
-* *Describe bugfix here.*
-
-### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
-
-### Release instructions:
-* *Provide release instructions here.*
-
-
 ## Release 1.25.0
 
 ## Introduction
