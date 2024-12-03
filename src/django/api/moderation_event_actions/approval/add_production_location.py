@@ -29,7 +29,7 @@ from api.os_id import make_os_id
 log = logging.getLogger(__name__)
 
 
-class AddProductionLocationStrategy(EventApprovalStrategy):
+class AddProductionLocation(EventApprovalStrategy):
     '''
     Class defines the strategy for processing a moderation event for adding a
     production location.

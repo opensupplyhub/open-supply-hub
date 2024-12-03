@@ -6,8 +6,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
-from api.moderation_event_actions.approval.add_production_location_strategy \
-    import AddProductionLocationStrategy
+from django.api.moderation_event_actions.approval.add_production_location \
+    import AddProductionLocation
 from api.moderation_event_actions.approval.event_approval_context \
     import EventApprovalContext
 from api.permissions import IsRegisteredAndConfirmed
@@ -122,7 +122,7 @@ class ModerationEvents(ViewSet):
         self.moderation_events_service.validate_moderation_status(event.status)
 
         add_production_location = EventApprovalContext(
-            AddProductionLocationStrategy(event)
+            AddProductionLocation(event)
         )
 
         try:
