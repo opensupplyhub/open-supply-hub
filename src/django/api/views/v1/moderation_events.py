@@ -1,11 +1,15 @@
 from django.http import QueryDict
 
+from api.os_id import validate_os_id
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
+from rest_framework.exceptions import ParseError
 
 from api.moderation_event_actions.approval.add_production_location \
     import AddProductionLocation
+from api.moderation_event_actions.approval.update_production_location \
+    import UpdateProductionLocation
 from api.moderation_event_actions.approval.event_approval_context \
     import EventApprovalContext
 from api.permissions import IsRegisteredAndConfirmed
@@ -22,7 +26,8 @@ from api.views.v1.opensearch_query_builder.opensearch_query_director import \
     OpenSearchQueryDirector
 from api.views.v1.utils import (
     handle_errors_decorator,
-    serialize_params
+    serialize_params,
+    create_error_detail
 )
 
 
@@ -130,4 +135,49 @@ class ModerationEvents(ViewSet):
 
         return Response(
             {"os_id": item.facility_id}, status=status.HTTP_201_CREATED
+        )
+
+    @handle_errors_decorator
+    def update_production_location(
+        self, request, moderation_id=None, os_id=None
+    ):
+        self.moderation_events_service.validate_user_permissions(request)
+
+        self.moderation_events_service.validate_uuid(moderation_id)
+
+        if not os_id:
+            raise ParseError(
+                create_error_detail(
+                    field="os_id",
+                    detail="os_id is required."
+                )
+            )
+
+        if not validate_os_id(os_id):
+            raise ParseError(
+                create_error_detail(
+                    field="os_id",
+                    detail="Invalid os_id format."
+                )
+            )
+
+        event = self.moderation_events_service.fetch_moderation_event_by_uuid(
+            moderation_id
+        )
+
+        self.moderation_events_service.validate_moderation_status(event.status)
+
+        add_production_location = EventApprovalContext(
+            UpdateProductionLocation(event, os_id)
+        )
+
+        try:
+            item = add_production_location.run_processing()
+        except Exception as error:
+            return self.moderation_events_service.handle_processing_error(
+                error
+            )
+
+        return Response(
+            {"os_id": item.facility_id}, status=status.HTTP_200_OK
         )

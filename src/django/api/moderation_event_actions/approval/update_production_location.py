@@ -20,7 +20,7 @@ from api.views.fields.create_nonstandard_fields import (
 log = logging.getLogger(__name__)
 
 
-class UpdateProductionLocationStrategy(EventApprovalStrategy):
+class UpdateProductionLocation(EventApprovalStrategy):
     def __init__(self, moderation_event: ModerationEvent, os_id: str) -> None:
         self.__event = moderation_event
         self.__os_id = os_id
