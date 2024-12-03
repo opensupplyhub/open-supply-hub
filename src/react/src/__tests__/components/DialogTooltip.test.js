@@ -11,12 +11,6 @@ jest.mock('@popperjs/core', () => jest.fn(() => ({
     enableEventListeners: jest.fn(),
     disableEventListeners: jest.fn(),
     setOptions: jest.fn(),
-    state: {
-        elements: {
-            popper: document.createElement('div'),
-            reference: document.createElement('div')
-        }
-    }
 })));
 
 beforeAll(() => {
