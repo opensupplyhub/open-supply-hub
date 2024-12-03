@@ -64,7 +64,7 @@ class ModerationEvents(ViewSet):
         if not ModerationIdValidator.is_valid_uuid(pk):
             return handle_path_error(
                 field="moderation_id",
-                message="Invalid UUID format.",
+                detail="Invalid UUID format.",
                 status_code=status.HTTP_400_BAD_REQUEST
             )
 
@@ -89,7 +89,7 @@ class ModerationEvents(ViewSet):
         if not ModerationIdValidator.is_valid_uuid(pk):
             return handle_path_error(
                 field="moderation_id",
-                message="Invalid UUID format.",
+                detail="Invalid UUID format.",
                 status_code=status.HTTP_400_BAD_REQUEST
             )
 
@@ -98,7 +98,7 @@ class ModerationEvents(ViewSet):
         except ModerationEvent.DoesNotExist:
             return handle_path_error(
                 field="moderation_id",
-                message="Moderation event not found.",
+                detail="Moderation event not found.",
                 status_code=status.HTTP_404_NOT_FOUND
             )
 
@@ -114,7 +114,7 @@ class ModerationEvents(ViewSet):
 
         return Response(
             {
-                "message": 'The request body contains '
+                "detail": 'The request body contains '
                 'invalid or missing fields.',
                 "error": [serializer.errors]
             },
