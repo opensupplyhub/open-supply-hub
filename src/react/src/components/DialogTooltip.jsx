@@ -131,9 +131,9 @@ DialogTooltip.propTypes = {
         bootstrapTooltip: shape({}).isRequired,
         bootstrapPopper: shape({}).isRequired,
         bootstrapPlacementLeft: shape({}).isRequired,
-        tooltipPlacementRight: shape({}).isRequired,
-        tooltipPlacementTop: shape({}).isRequired,
-        tooltipPlacementBottom: shape({}).isRequired,
+        bootstrapPlacementRight: shape({}).isRequired,
+        bootstrapPlacementTop: shape({}).isRequired,
+        bootstrapPlacementBottom: shape({}).isRequired,
     }).isRequired,
 };
 
