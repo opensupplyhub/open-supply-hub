@@ -1,5 +1,3 @@
-import logging
-
 from django.http import QueryDict
 
 from rest_framework import status
@@ -26,8 +24,6 @@ from api.views.v1.utils import (
     handle_errors_decorator,
     serialize_params
 )
-
-log = logging.getLogger(__name__)
 
 
 class ModerationEvents(ViewSet):
