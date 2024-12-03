@@ -1,5 +1,6 @@
 import json
 
+from unittest.mock import Mock, patch
 from rest_framework.test import APITestCase
 from django.urls import reverse
 from allauth.account.models import EmailAddress
@@ -9,6 +10,7 @@ from api.models.moderation_event import ModerationEvent
 from api.models.contributor.contributor import Contributor
 from api.models.user import User
 from api.views.v1.url_names import URLNames
+from api.tests.test_data import geocoding_data
 
 
 class TestProductionLocationsCreate(APITestCase):
@@ -16,8 +18,8 @@ class TestProductionLocationsCreate(APITestCase):
         self.url = reverse(URLNames.PRODUCTION_LOCATIONS + '-list')
         self.common_valid_req_body = json.dumps({
             'name': 'Germany',
-            'address': 'Random street, 124',
-            'country': 'DE'
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US'
         })
 
         user_email = 'test@example.com'
@@ -65,7 +67,11 @@ class TestProductionLocationsCreate(APITestCase):
             expected_response_body
         )
 
-    def test_default_throttling_is_applied(self):
+    @patch('api.geocoding.requests.get')
+    def test_default_throttling_is_applied(self, mock_get):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
         # Simulate 30 requests.
         for _ in range(30):
             response = self.client.post(
@@ -73,8 +79,6 @@ class TestProductionLocationsCreate(APITestCase):
                 self.common_valid_req_body,
                 content_type='application/json'
             )
-            print('>>> content in test_default_throttling_is_applied',
-                  response.content)
             self.assertEqual(response.status_code, 202)
 
             response_body_dict = json.loads(response.content)
