@@ -391,3 +391,8 @@ listitem_geocode_data = {
     ],
     "status": "OK",
 }
+
+geocoding_no_results = {
+    'results': [],
+    'status': 'ZERO_RESULTS'
+}

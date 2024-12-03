@@ -98,11 +98,6 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         if 'location_type' in data_to_map:
             mapped_data['facility_type'] = data_to_map['location_type']
 
-        if 'location_type_processing_type' in data_to_map:
-            mapped_data['facility_type_processing_type'] = data_to_map[
-                'location_type_processing_type'
-            ]
-
         if 'coordinates' in data_to_map:
             if 'lat' in data_to_map['coordinates']:
                 mapped_data['lat'] = data_to_map['coordinates']['lat']
@@ -111,8 +106,7 @@ class ProductionLocationDataProcessor(ContributionProcessor):
 
         # Add fields that don't require mapping.
         for key, value in data_to_map.items():
-            if key not in ['location_type', 'location_type_processing_type',
-                           'coordinates']:
+            if key not in ['location_type', 'coordinates']:
                 mapped_data[key] = value
 
         return mapped_data
@@ -127,8 +121,7 @@ class ProductionLocationDataProcessor(ContributionProcessor):
 
         # Iterate through the errors and convert them.
         for cc_error in cc_errors:
-            if (cc_error['field'] == 'facility_type'
-                    or cc_error['field'] == 'facility_type_processing_type'):
+            if (cc_error['field'] == 'facility_type'):
                 location_type_error = \
                     ProductionLocationDataProcessor\
                     .__substitute_facility_type_in_error_message(cc_error)
@@ -152,7 +145,6 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         '''
 
         field_mapping_config = {
-            'facility_type_processing_type': 'location_type_processing_type',
             'facility_type': 'location_type'
         }
         field_to_replace = facility_type_error['field']
