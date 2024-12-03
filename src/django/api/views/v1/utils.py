@@ -111,16 +111,17 @@ def handle_errors_decorator(view_func):
     return _wrapped_view
 
 
-def handle_path_error(field, detail, status_code):
-    return Response(
-        {
-            "detail": "The request path parameter is invalid.",
-            "errors": [
-                {
-                    "field": field,
-                    "detail": detail
-                }
-            ]
-        },
-        status=status_code
-    )
+def create_error_detail(
+        field,
+        detail,
+        general_detail="The request path parameter is invalid."
+):
+    return {
+        "detail": general_detail,
+        "errors": [
+            {
+                "field": field,
+                "detail": detail,
+            }
+        ]
+    }

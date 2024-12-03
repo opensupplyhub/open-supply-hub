@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+
 ## Release 1.26.0
 
 ## Introduction
@@ -19,6 +20,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Code/API changes
 * [OSDEV-1453](https://opensupplyhub.atlassian.net/browse/OSDEV-1453) - The `detail` keyword instead of `message` has been applied in error response objects for V1 endpoints.
 * [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Disabled null values from the response of the OpenSearch. Disabled possible null `os_id`, `claim_id` and `source` from `PATCH api/v1/moderation-events/{moderation_id}` response.
+* [OSDEV-1410](https://opensupplyhub.atlassian.net/browse/OSDEV-1410) - Introduced new POST `/api/moderation-events/{moderation_id}/production-locations` endpoint
 * [OSDEV-1449](https://opensupplyhub.atlassian.net/browse/OSDEV-1449) - **Breaking changes** to the following endpoints:
   - GET `v1/moderation-events`
   - GET `v1/production-locations`
