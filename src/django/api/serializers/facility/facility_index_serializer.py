@@ -14,7 +14,7 @@ from ...models.facility.facility_index import FacilityIndex
 from ...models.embed_config import EmbedConfig
 from ...models.embed_field import EmbedField
 from ...models.extended_field import ExtendedField
-from ...models.nonstandart_field import NonstandardField
+from ...models.nonstandard_field import NonstandardField
 from ...helpers.helpers import parse_raw_data, get_csv_values
 from ..utils import is_embed_mode_active
 from .facility_index_extended_field_list_serializer import (
