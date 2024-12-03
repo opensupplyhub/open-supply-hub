@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { string, node, object } from 'prop-types';
+import { shape, string, node } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Tooltip from '@material-ui/core/Tooltip';
 import COLOURS from '../util/COLOURS';
@@ -126,7 +126,15 @@ const DialogTooltip = ({ text, childComponent, classes }) => {
 DialogTooltip.propTypes = {
     text: string.isRequired,
     childComponent: node.isRequired,
-    classes: object.isRequired,
+    classes: shape({
+        arrow: shape({}).isRequired,
+        bootstrapTooltip: shape({}).isRequired,
+        bootstrapPopper: shape({}).isRequired,
+        bootstrapPlacementLeft: shape({}).isRequired,
+        tooltipPlacementRight: shape({}).isRequired,
+        tooltipPlacementTop: shape({}).isRequired,
+        tooltipPlacementBottom: shape({}).isRequired,
+    }).isRequired,
 };
 
 export default withStyles(styles)(DialogTooltip);
