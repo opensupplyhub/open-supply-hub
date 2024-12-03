@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { string, node, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Tooltip from '@material-ui/core/Tooltip';
 import COLOURS from '../util/COLOURS';
@@ -117,6 +118,12 @@ const DialogTooltip = ({ text, childComponent, classes }) => {
             {childComponent}
         </Tooltip>
     );
+};
+
+DialogTooltip.propTypes = {
+    text: string.isRequired,
+    childComponent: node.isRequired,
+    classes: object.isRequired,
 };
 
 export default withStyles(styles)(DialogTooltip);

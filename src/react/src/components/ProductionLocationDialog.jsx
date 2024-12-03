@@ -37,6 +37,12 @@ const styles = theme =>
             fontWeight: 800,
             lineHeight: 1,
         }),
+        titleInnerContentStyle: Object.freeze({
+            fontSize: '32px',
+            margin: 0,
+            lineHeight: '1.1',
+            fontWeight: 'bold',
+        }),
         primaryText: Object.freeze({
             marginBottom: '20px',
         }),
@@ -117,11 +123,14 @@ const claimButton = classes => (
 
 const ProductionLocationDialog = ({ classes }) => {
     const history = useHistory();
+
     return (
         <Dialog open>
             <div className={classes.modalContainerWrapper}>
                 <DialogTitle className={classes.titleContentStyle}>
-                    Thanks for adding data for this production location!
+                    <p className={classes.titleInnerContentStyle}>
+                        Thanks for adding data for this production location!
+                    </p>
                 </DialogTitle>
                 <DialogContent>
                     <Typography

@@ -1,9 +1,8 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { BrowserRouter as Router } from 'react-router-dom';
-import ProductionLocationDialog from '../../components/ProductionLocationDialog';
+import { BrowserRouter as Router, useHistory } from 'react-router-dom';
 import UserEvent from "user-event";
-import { useHistory } from 'react-router-dom';
+import ProductionLocationDialog from '../../components/ProductionLocationDialog';
 
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),

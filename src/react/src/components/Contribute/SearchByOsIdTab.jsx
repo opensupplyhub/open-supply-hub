@@ -1,4 +1,3 @@
-/* eslint no-unused-vars: 0 */
 import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
@@ -7,6 +6,7 @@ import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
+
 import { makeSearchByOsIdTabStyles } from '../../util/styles';
 import { OS_ID_LENGTH } from '../../util/constants';
 
