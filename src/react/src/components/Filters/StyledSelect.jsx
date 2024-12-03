@@ -99,11 +99,12 @@ StyledSelect.defaultProps = {
     creatable: false,
     renderIcon: () => {},
     origin: null,
+    label: '',
 };
 
 StyledSelect.propTypes = {
     name: string.isRequired,
-    label: string.isRequired,
+    label: string,
     creatable: bool,
     renderIcon: func,
     origin: string,

@@ -1,15 +1,20 @@
-import React, { useState } from 'react';
-// import { useHistory } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { bool, string, func, object } from 'prop-types';
+import { useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
+import { connect } from 'react-redux';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
-
+import CircularProgress from '@material-ui/core/CircularProgress';
 import StyledSelect from '../Filters/StyledSelect';
 
 import { makeSearchByNameAddressTabStyles } from '../../util/styles';
+
+import { countryOptionsPropType } from '../../util/propTypes';
+import { fetchCountryOptions } from '../../actions/filterOptions';
 
 const NameHelperText = ({ classes }) => (
     <span className={classes.helperTextContainerStyles}>
@@ -20,13 +25,6 @@ const NameHelperText = ({ classes }) => (
     </span>
 );
 
-const createCountriesChoicesFromParams = params => {
-    if (params.length) {
-        return params.map(x => ({ label: x.name, value: x.alpha_2 }));
-    }
-    return null;
-};
-
 const selectStyles = {
     control: provided => ({
         ...provided,
@@ -34,14 +32,20 @@ const selectStyles = {
     }),
 };
 
-const SearchByNameAndAddressTab = ({ classes }) => {
+const SearchByNameAndAddressTab = ({
+    classes,
+    countriesData,
+    fetchCountries,
+    fetching,
+    error,
+}) => {
     const [inputName, setInputName] = useState('');
     const [inputAddress, setInputAddress] = useState('');
     const [inputCountry, setInputCountry] = useState('');
     const [nameTouched, setNameTouched] = useState(false);
     const [addressTouched, setAddressTouched] = useState(false);
 
-    // const history = useHistory();
+    const history = useHistory();
     const validate = val => val.length > 0;
 
     const handleNameChange = event => {
@@ -57,28 +61,37 @@ const SearchByNameAndAddressTab = ({ classes }) => {
     };
 
     const handleSearch = () => {
-        // history.push(
-        //     `/contribute/production-location/search/?name=${inputName}&address=${inputAddress}&country=${inputCountry.value}`,
-        // );
+        const baseUrl = '/contribute/production-location/search/';
+        const url = `${baseUrl}?name=${encodeURIComponent(
+            inputName,
+        )}&address=${encodeURIComponent(
+            inputAddress,
+        )}&country=${encodeURIComponent(inputCountry.value ?? '')}`;
+        history.push(url);
     };
-    const isDisabled =
+    const isFormValid =
         validate(inputName) &&
         validate(inputAddress) &&
-        validate(inputCountry.label || '');
-    const mockCountries = [
-        {
-            name: 'United Kingdom of Great Britain and Northern Ireland',
-            alpha_2: 'GB',
-            alpha_3: 'GBR',
-            numeric: '826',
-        },
-        {
-            name: 'United States of America',
-            alpha_2: 'US',
-            alpha_3: 'USA',
-            numeric: '840',
-        },
-    ];
+        validate(inputCountry.label ?? '');
+
+    /* eslint-disable react-hooks/exhaustive-deps */
+    useEffect(() => {
+        if (!countriesData) {
+            fetchCountries();
+        }
+    }, []);
+
+    if (fetching) {
+        return <CircularProgress />;
+    }
+
+    if (error) {
+        return (
+            <Typography variant="body2" style={{ color: 'red' }}>
+                {error}
+            </Typography>
+        );
+    }
 
     return (
         <>
@@ -155,9 +168,7 @@ const SearchByNameAndAddressTab = ({ classes }) => {
                     name="What's the country?"
                     aria-label="Select country"
                     label={null}
-                    options={
-                        createCountriesChoicesFromParams(mockCountries) || []
-                    }
+                    options={countriesData || []}
                     value={inputCountry}
                     onChange={handleCountryChange}
                     className={`basic-multi-select notranslate ${classes.selectStyles}`}
@@ -174,7 +185,7 @@ const SearchByNameAndAddressTab = ({ classes }) => {
                     classes={{
                         label: classes.buttonLabel,
                     }}
-                    disabled={!isDisabled}
+                    disabled={!isFormValid}
                 >
                     Search
                 </Button>
@@ -183,6 +194,34 @@ const SearchByNameAndAddressTab = ({ classes }) => {
     );
 };
 
-export default withStyles(makeSearchByNameAddressTabStyles)(
-    SearchByNameAndAddressTab,
-);
+SearchByNameAndAddressTab.defaultProps = {
+    countriesData: null,
+    error: null,
+};
+
+SearchByNameAndAddressTab.propTypes = {
+    countriesData: countryOptionsPropType,
+    fetching: bool.isRequired,
+    error: string,
+    fetchCountries: func.isRequired,
+    classes: object.isRequired,
+};
+
+const mapStateToProps = ({
+    filterOptions: {
+        countries: { data: countriesData, error, fetching },
+    },
+}) => ({
+    countriesData,
+    fetching,
+    error,
+});
+
+const mapDispatchToProps = dispatch => ({
+    fetchCountries: () => dispatch(fetchCountryOptions()),
+});
+
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps,
+)(withStyles(makeSearchByNameAddressTabStyles)(SearchByNameAndAddressTab));
