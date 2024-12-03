@@ -293,18 +293,21 @@ export const createQueryStringFromModerationQueueFilters = (
     });
 
     return Object.entries(inputForQueryString)
-        .filter(([, value]) =>
-            Array.isArray(value) ? value.length > 0 : value,
-        )
-        .map(([key, value]) => {
-            if (Array.isArray(value)) {
-                return createRepeatedKeys(
-                    key,
-                    createCompactSortedQuerystringInputObject(value),
-                );
+        .reduce((acc, [key, value]) => {
+            if (value && (Array.isArray(value) ? value.length > 0 : true)) {
+                if (Array.isArray(value)) {
+                    acc.push(
+                        createRepeatedKeys(
+                            key,
+                            createCompactSortedQuerystringInputObject(value),
+                        ),
+                    );
+                } else {
+                    acc.push(`${key}=${encodeURIComponent(value)}`);
+                }
             }
-            return `${key}=${encodeURIComponent(value)}`;
-        })
+            return acc;
+        }, [])
         .join('&');
 };
 
