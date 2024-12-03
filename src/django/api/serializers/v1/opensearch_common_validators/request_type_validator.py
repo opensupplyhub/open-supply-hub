@@ -15,7 +15,7 @@ class RequestTypeValidator(OpenSearchValidationInterface):
         if not isinstance(request_type, list):
             errors.append({
                 "field": "request_type",
-                "message": "Request type must be a list of values."
+                "detail": "Request type must be a list of values."
             })
         elif not all(
             item in self.VALID_REQUEST_TYPES
@@ -29,7 +29,7 @@ class RequestTypeValidator(OpenSearchValidationInterface):
             )
             errors.append({
                 "field": "request_type",
-                "message": (
+                "detail": (
                     f"Invalid request type(s) {invalid_request_types}. "
                     f"Allowed values are {allowed_values}."
                 )
