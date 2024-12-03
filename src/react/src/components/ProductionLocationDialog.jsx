@@ -1,5 +1,4 @@
 import React from 'react';
-import { shape } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { useHistory } from 'react-router-dom';
 import Button from '@material-ui/core/Button';
@@ -271,27 +270,5 @@ const ProductionLocationDialog = ({ classes }) => {
         </Dialog>
     );
 };
-
-ProductionLocationDialog.propTypes = {
-    classes: shape({
-        modalContainerWrapper: shape({}).isRequired,
-        contentContainer: shape({}).isRequired,
-        label: shape({}).isRequired,
-        titleContentStyle: shape({}).isRequired,
-        titleInnerContentStyle: shape({}).isRequired,
-        primaryText: shape({}).isRequired,
-        osIDText: shape({}).isRequired,
-        leftContainerColumn: shape({}).isRequired,
-        rightContainerColumn: shape({}).isRequired,
-        separator: shape({}).isRequired,
-        dialogContentStyles: shape({}).isRequired,
-        buttonContentStyle: shape({}).isRequired,
-        osIdStatusBadge: shape({}).isRequired,
-        osIdStatusBadgeIcon: shape({}).isRequired,
-        button: shape({}).isRequired,
-        claimTooltipWrapper: shape({}).isRequired,
-        claimButton: shape({}).isRequired,
-    }).isRequired,
-}
 
 export default withStyles(styles)(ProductionLocationDialog);
