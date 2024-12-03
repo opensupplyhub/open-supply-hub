@@ -4,6 +4,45 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
 
+## Release 1.26.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: December 14, 2024
+
+### Database changes
+#### Migrations:
+* *Describe migrations here.*
+
+#### Scheme changes
+* *Describe scheme changes here.*
+
+### Code/API changes
+* [OSDEV-1453](https://opensupplyhub.atlassian.net/browse/OSDEV-1453) - The `detail` keyword instead of `message` has been applied in error response objects for V1 endpoints.
+* [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Disabled null values from the response of the OpenSearch. Disabled possible null `os_id`, `claim_id` and `source` from `PATCH api/v1/moderation-events/{moderation_id}` response.
+* [OSDEV-1410](https://opensupplyhub.atlassian.net/browse/OSDEV-1410) - Introduced new POST `/api/moderation-events/{moderation_id}/production-locations` endpoint
+* [OSDEV-1449](https://opensupplyhub.atlassian.net/browse/OSDEV-1449) - **Breaking changes** to the following endpoints:
+  - GET `v1/moderation-events`
+  - GET `v1/production-locations`
+
+  **Changes include:**
+  - Refactored `sort_by` parameter to improve sorting functionality.
+  - Split `search_after` parameter into `search_after_value` and `search_after_id` for better pagination control.
+
+### Architecture/Environment changes
+* [OSDEV-1170](https://opensupplyhub.atlassian.net/browse/OSDEV-1170) - Added the ability to automatically create a dump from the latest shared snapshot of the anonymized database from Production environment for use in the Test and Pre-Prod environments.
+
+### Bugfix
+* [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388) - The waiter from boto3 cannot wait more than half an hour so we replaced it with our own.
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `reindex_database`
+
+
 ## Release 1.25.0
 
 ## Introduction
@@ -26,7 +65,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1332](https://opensupplyhub.atlassian.net/browse/OSDEV-1332) - Introduced new `PATCH api/v1/moderation-events/{moderation_id}` endpoint
 to modify moderation event `status`.
 * [OSDEV-1347](https://opensupplyhub.atlassian.net/browse/OSDEV-1347) - Create GET request for `v1/moderation-events/{moderation_id}` endpoint.
+* Update `/v1/production-locations/{os_id}` endpoint to return a single object instead of multiple objects. Also, add unit tests for the `ProductionLocationsViewSet`.
 * The RDS instance has been upgraded as follows: for `production` and `preprod`, it is now `db.m6in.8xlarge`, and for `test`, it has been upgraded to `db.t3.xlarge`.
+* [OSDEV-1467](https://opensupplyhub.atlassian.net/browse/OSDEV-1467) - Implemented disabling endpoint `POST /api/facilities/` during the release process. It is raising an error message with status code 503.
 
 ### Architecture/Environment changes
 * Increased the memory for the Dedupe Hub instance from 8GB to 12GB in the `production` and `pre-prod` environments to reduce the risk of container overload and minimize the need for reindexing in the future.
@@ -35,12 +76,10 @@ to modify moderation event `status`.
 * [OSDEV-1448](https://opensupplyhub.atlassian.net/browse/OSDEV-1448) - The map on the production location’s profile and the production location marker have been fixed. Improved the handling of SQL query parameters for better execution accuracy.
 * [OSDEV-1411](https://opensupplyhub.atlassian.net/browse/OSDEV-1411) - Django Admin: Fixed an issue when updating the facility list with an empty array in the `parsing errors` field.
 
-### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
-
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
+    * `reindex_database`
 
 
 ## Release 1.24.0

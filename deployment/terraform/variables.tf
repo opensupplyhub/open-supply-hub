@@ -596,3 +596,44 @@ variable "database_anonymizer_enabled" {
   type    = bool
   default = false
 }
+
+variable "anonymized_database_dump_enabled" {
+  type    = bool
+  default = false
+}
+
+variable "anonymized_database_kms_key_id" {
+  type    = string
+  default = ""
+}
+
+variable "anonymized_database_instance_type" {
+  type    = string
+  default = "db.t3.micro"
+}
+
+variable "anonymized_database_identifier" {
+  type = string
+  default = "database-anonymizer"
+}
+
+variable "anonymized_database_schedule_expression" {
+  type    = string
+  default = "cron(0 5 ? * SAT *)"
+}
+
+variable "anonymized_database_name" {
+  type = string
+  default = ""
+}
+
+variable "anonymized_database_username" {
+  type = string
+  default = ""
+}
+
+variable "anonymized_database_password" {
+  type = string
+  default = ""
+  sensitive = true
+}

@@ -19,7 +19,7 @@ from api.serializers.v1.opensearch_common_validators. \
     percent_of_female_workers_validator import PercentOfFemaleWorkersValidator
 from api.serializers.v1.opensearch_common_validators. \
     coordinates_validator import CoordinatesValidator
-from api.views.v1.utils import COMMON_ERROR_MESSAGE
+from api.views.v1.utils import COMMON_ERROR_DETAIL
 
 
 class ProductionLocationsSerializer(Serializer):
@@ -29,6 +29,8 @@ class ProductionLocationsSerializer(Serializer):
     number_of_workers_max = IntegerField(required=False)
     percent_female_workers_min = FloatField(required=False)
     percent_female_workers_max = FloatField(required=False)
+    search_after_id = CharField(required=False)
+    search_after_value = CharField(required=False)
     coordinates_lat = FloatField(required=False)
     coordinates_lng = FloatField(required=False)
     country = ListField(
@@ -59,7 +61,7 @@ class ProductionLocationsSerializer(Serializer):
         if errors:
             # [OSDEV-1441] Pass error msg to the Rollbar here
             raise ValidationError({
-                "message": COMMON_ERROR_MESSAGE,
+                "detail": COMMON_ERROR_DETAIL,
                 "errors": errors
             })
 

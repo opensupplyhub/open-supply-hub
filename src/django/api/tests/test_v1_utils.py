@@ -21,7 +21,8 @@ class TestProductionLocationsSerializer(Serializer):
     size = IntegerField(required=False)
     address = CharField(required=False)
     description = CharField(required=False)
-    search_after = CharField(required=False)
+    search_after_value = CharField(required=False)
+    search_after_id = CharField(required=False)
     number_of_workers_min = IntegerField(required=False)
     number_of_workers_max = IntegerField(required=False)
     percent_female_workers_min = FloatField(required=False)
@@ -68,8 +69,9 @@ class V1UtilsTests(TestCase):
         query_dict = QueryDict('', mutable=True)
         query_dict.update({
             'address': '123 Main St',
-            'description': 'A great place',
-            'search_after': 'abc123',
+            'description': 'Production location description',
+            'search_after[id]': 'TR2209172HY45SD',
+            'search_after[value]': 'abc123',
             'sort_by': 'name',
             'order_by': 'asc',
             'size': 10
@@ -78,8 +80,15 @@ class V1UtilsTests(TestCase):
             serialize_params(TestProductionLocationsSerializer, query_dict)
         self.assertIsNone(error_response)
         self.assertEqual(serialized_params['address'], '123 Main St')
-        self.assertEqual(serialized_params['description'], 'A great place')
-        self.assertEqual(serialized_params['search_after'], 'abc123')
+        self.assertEqual(
+            serialized_params['description'],
+            'Production location description'
+        )
+        self.assertEqual(serialized_params['search_after_value'], 'abc123')
+        self.assertEqual(
+            serialized_params['search_after_id'],
+            'TR2209172HY45SD'
+        )
         self.assertEqual(serialized_params['sort_by'], 'name')
         self.assertEqual(serialized_params['order_by'], 'asc')
         self.assertEqual(serialized_params['size'], 10)
@@ -106,20 +115,20 @@ class V1UtilsTests(TestCase):
             serialize_params(TestProductionLocationsSerializer, query_dict)
         self.assertIsNotNone(error_response)
         self.assertEqual(
-            error_response['message'],
+            error_response['detail'],
             "The request query is invalid."
         )
         self.assertIn(
             {
                 'field': 'number_of_workers_min',
-                'message': 'A Valid Integer Is Required.'
+                'detail': 'A Valid Integer Is Required.'
             },
             error_response['errors']
         )
         self.assertIn(
             {
                 'field': 'size',
-                'message': 'A Valid Integer Is Required.'
+                'detail': 'A Valid Integer Is Required.'
             },
             error_response['errors']
         )
@@ -130,13 +139,13 @@ class V1UtilsTests(TestCase):
         self.assertIsInstance(response, Response)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
-            response.data['message'],
+            response.data['detail'],
             "The request query is invalid."
         )
         self.assertEqual(response.data['errors'][0]['field'], "general")
         self.assertIn(
             "There was a problem processing your request.",
-            response.data['errors'][0]['message']
+            response.data['errors'][0]['detail']
         )
 
     def test_handle_opensearch_exception(self):
@@ -144,4 +153,4 @@ class V1UtilsTests(TestCase):
         response = handle_opensearch_exception(exception)
         self.assertIsInstance(response, Response)
         self.assertEqual(response.status_code, 500)
-        self.assertEqual(response.data['message'], "OpenSearch error")
+        self.assertEqual(response.data['detail'], "OpenSearch error")

@@ -13,8 +13,9 @@ class ModerationEventUpdateSerializer(ModelSerializer):
 
     contributor_id = IntegerField(source='contributor.id', read_only=True)
     contributor_name = CharField(source='contributor.name', read_only=True)
-    os_id = IntegerField(source='os.id', read_only=True, allow_null=True)
-    claim_id = IntegerField(source='claim.id', read_only=True, allow_null=True)
+    source = CharField(read_only=True)
+    os_id = IntegerField(source='os.id', read_only=True)
+    claim_id = IntegerField(source='claim.id', read_only=True)
 
     class Meta:
         model = ModerationEvent
@@ -39,7 +40,7 @@ class ModerationEventUpdateSerializer(ModelSerializer):
         if status is None:
             raise ValidationError({
                 "field": "status",
-                "message": "This field is required."
+                "detail": "This field is required."
             })
 
         self.__validate_status(status)
@@ -53,7 +54,7 @@ class ModerationEventUpdateSerializer(ModelSerializer):
         ]:
             raise ValidationError({
                 "field": "status",
-                "message": (
+                "detail": (
                     "Moderation status must be one of "
                     "PENDING, APPROVED or REJECTED."
                 )

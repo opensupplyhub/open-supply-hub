@@ -13,6 +13,8 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
         }
         self.query_body = copy.deepcopy(self.default_query_body)
         self.default_fuzziness = 2
+        # Both default sorting and order are needed for add_search_after()
+        # Default order is needed for add_sort() and add_search_after()
         self.default_sort = V1_PARAMETERS_LIST.NAME
         self.default_sort_order = 'asc'
         self.build_options = {
@@ -82,26 +84,17 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
             )
 
     def add_sort(self, field, order_by=None):
+        # If there is sorting, then there should be an order.
         if order_by is None:
             order_by = self.default_sort_order
         self.query_body['sort'].append(
             {f'{field}.keyword': {'order': order_by}}
         )
 
-    def add_search_after(self, search_after):
-        # search_after can't be present as empty by default in query_body
-        if V1_PARAMETERS_LIST.SEARCH_AFTER not in self.query_body:
-            self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER] = []
-        '''
-        There should always be sort if there is a search_after field.
-        So if it is empty, sort by name by default
-        '''
-        if not self.query_body['sort']:
-            sort_criteria = {
-                f'{self.default_sort}.keyword': {
-                    'order': self.default_sort_order
-                }
-            }
-            self.query_body['sort'].append(sort_criteria)
-
-        self.query_body[V1_PARAMETERS_LIST.SEARCH_AFTER].append(search_after)
+    def add_search_after(
+        self,
+        search_after_value,
+        search_after_id,
+        id_type='os_id'
+    ):
+        super().add_search_after(search_after_value, search_after_id, id_type)
