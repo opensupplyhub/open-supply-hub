@@ -1,53 +1,60 @@
 import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import DialogTooltip from '../../components/DialogTooltip';
 
 global.cancelAnimationFrame = jest.fn();
 
-jest.mock('@popperjs/core', () => jest.fn(() => ({
-    destroy: jest.fn(),
-    update: jest.fn(),
-    scheduleUpdate: jest.fn(),
-    enableEventListeners: jest.fn(),
-    disableEventListeners: jest.fn(),
-    setOptions: jest.fn(),
-})));
+jest.mock('@popperjs/core', () => ({
+    __esModule: true,
+    default: jest.fn(() => ({
+        destroy: jest.fn(),
+        update: jest.fn(),
+        scheduleUpdate: jest.fn(),
+        enableEventListeners: jest.fn(),
+        disableEventListeners: jest.fn(),
+        setOptions: jest.fn(),
+    })),
+}));
 
 beforeAll(() => {
     global.Node = global.Node || {};
 });
 
-test('renders tooltip on hover', async () => {
-    const mockChildComponent = <span>Hover over this element</span>;
-    const mockText = "You'll be able to claim the location after the moderation is done";
+describe('DialogTooltip Component', () => {
+    test('renders tooltip on hover', async () => {
+        const mockChildComponent = <span>Hover over this element</span>;
+        const mockText = "You'll be able to claim the location after the moderation is done";
 
-    render(
-        <DialogTooltip text={mockText} childComponent={mockChildComponent} classes={{}} />
-    );
+        render(
+            <DialogTooltip text={mockText} childComponent={mockChildComponent} classes={{}} />
+        );
 
-    expect(screen.queryByText(mockText)).not.toBeInTheDocument();
+        expect(screen.queryByText(mockText)).not.toBeInTheDocument();
 
-    fireEvent.mouseEnter(screen.getByText('Hover over this element'));
+        fireEvent.mouseEnter(screen.getByText('Hover over this element'));
+        await waitFor(() => {
+            expect(screen.getByText(mockText)).toBeInTheDocument();
+        });
+    });
 
-    await act(async () => {});
+    test('hides tooltip on mouse leave', async () => {
+        const mockChildComponent = <span>Hover over this element</span>;
+        const mockText = "Test tooltip";
 
-    expect(screen.getByText(mockText)).toBeInTheDocument();
-});
+        render(
+            <DialogTooltip text={mockText} childComponent={mockChildComponent} classes={{}} />
+        );
 
-test('hides tooltip on mouse leave', async () => {
-    const mockChildComponent = <span>Hover over this element</span>;
-    const mockText = "Test tooltip";
+        const element = screen.getByText('Hover over this element');
 
-    render(
-        <DialogTooltip text={mockText} childComponent={mockChildComponent} classes={{}} />
-    );
+        fireEvent.mouseEnter(element);
+        await waitFor(() => {
+            expect(screen.getByText(mockText)).toBeInTheDocument();
+        });
 
-    const element = screen.getByText('Hover over this element');
-    fireEvent.mouseEnter(element);
-    await act(async () => {});
-    expect(screen.getByText(mockText)).toBeInTheDocument();
-
-    fireEvent.mouseLeave(element);
-    await act(async () => {});
-    expect(screen.queryByText(mockText)).not.toBeInTheDocument();
+        fireEvent.mouseLeave(element);
+        await waitFor(() => {
+            expect(screen.queryByText(mockText)).not.toBeInTheDocument();
+        });
+    });
 });
