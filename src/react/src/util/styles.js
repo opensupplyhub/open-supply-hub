@@ -838,6 +838,9 @@ export const makeSearchByNameAddressTabStyles = theme =>
             lineHeight: '22px',
             padding: '16px',
         }),
+        placeholder: {
+            color: COLOURS.RED,
+        },
         notchedOutlineStyles: Object.freeze({
             borderRadius: 0,
         }),

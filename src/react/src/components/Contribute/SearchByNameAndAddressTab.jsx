@@ -117,7 +117,12 @@ const SearchByNameAndAddressTab = ({
                     aria-label="Type a name"
                     InputProps={{
                         classes: {
-                            input: classes.searchInputStyles,
+                            input: `${classes.searchInputStyles}
+                                ${
+                                    nameTouched &&
+                                    !validate(inputName) &&
+                                    classes.placeholder
+                                }`,
                             notchedOutline: classes.notchedOutlineStyles,
                         },
                         inputProps: {
@@ -145,7 +150,12 @@ const SearchByNameAndAddressTab = ({
                     aria-label="Address"
                     InputProps={{
                         classes: {
-                            input: classes.searchInputStyles,
+                            input: `${classes.searchInputStyles}
+                            ${
+                                addressTouched &&
+                                !validate(inputAddress) &&
+                                classes.placeholder
+                            }`,
                             notchedOutline: classes.notchedOutlineStyles,
                         },
                         inputProps: {
