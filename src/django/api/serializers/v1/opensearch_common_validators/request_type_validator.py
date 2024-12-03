@@ -16,7 +16,7 @@ class RequestTypeValidator(OpenSearchValidationInterface):
         if request_type not in valid_request_types:
             errors.append({
                 "field": "request_type",
-                "message": f"'{request_type}' is not a valid request_type. \
+                "detail": f"'{request_type}' is not a valid request_type. \
                     Allowed values are 'CREATE', 'UPDATE' or 'CLAIM'."
             })
 

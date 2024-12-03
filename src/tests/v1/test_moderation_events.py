@@ -148,7 +148,7 @@ class ModerationEventsTest(BaseAPITest):
         )
         self.assertEqual(response.status_code, 400)
         result = response.json()
-        self.assertEqual(result['message'], 'The Request Query Is Invalid.')
+        self.assertEqual(result['detail'], 'The Request Query Is Invalid.')
 
     def test_search_after_pagination(self):
         # Step 1: Get the first set of results
@@ -165,7 +165,11 @@ class ModerationEventsTest(BaseAPITest):
         # Step 2: Use the last item in the initial response for search_after
         last_event = result['data'][-1]
         search_after_value = last_event['created_at']
-        search_after_query = f"?size={initial_size}&sort_by=created_at&order_by=asc&search_after={search_after_value}"
+        search_after_id = last_event['moderation_id']
+        search_after_query = (
+            f"?size={initial_size}&sort_by=created_at&order_by=asc"
+            f"&search_after[value]={search_after_value}&search_after[id]={search_after_id}"
+        )
 
         # Step 3: Fetch the next page using search_after
         response = requests.get(
@@ -174,16 +178,24 @@ class ModerationEventsTest(BaseAPITest):
         )
         next_page_result = response.json()
         self.assertEqual(response.status_code, 200)
-        
+
         # Check that the first item of the next page is indeed after the last item of the previous page
         self.assertTrue(
-            all(event['created_at'] > search_after_value for event in next_page_result['data'])
+            all(
+                (event['created_at'] > search_after_value or
+                (event['created_at'] == search_after_value and event['moderation_id'] > search_after_id))
+                for event in next_page_result['data']
+            )
         )
 
     def test_late_search_after(self):
         invalid_search_after_value = 999999999999999
-        query = f"?sort_by=created_at&order_by=asc&search_after={invalid_search_after_value}"
-        
+        invalid_search_after_id = "invalid-id"
+        query = (
+            f"?sort_by=created_at&order_by=asc"
+            f"&search_after[value]={invalid_search_after_value}&search_after[id]={invalid_search_after_id}"
+        )
+
         response = requests.get(
             f"{self.root_url}/api/v1/moderation-events/{query}",
             headers=self.basic_headers,
@@ -207,7 +219,7 @@ class ModerationEventsTest(BaseAPITest):
         error = result['errors'][0]
         self.assertEqual(error['field'], 'Date_Gte')
         self.assertEqual(
-            error['message'],
+            error['detail'],
             "The 'Date_Gte' Must Be Less Than Or Equal To 'Date_Lt'."
         )
 
@@ -236,7 +248,7 @@ class ModerationEventsTest(BaseAPITest):
 
         error = result['errors'][0]
         self.assertEqual(error['field'], 'Country')
-        self.assertEqual(error['message'], "'Usa' Is Not A Valid Alpha-2 Country Code.")
+        self.assertEqual(error['detail'], "'Usa' Is Not A Valid Alpha-2 Country Code.")
 
     def test_valid_moderation_id(self):
         valid_moderation_id = '3b50d60f-85b2-4a17-9f8d-5d3e1fc68198'
@@ -263,4 +275,4 @@ class ModerationEventsTest(BaseAPITest):
 
         error = result['errors'][0]
         self.assertEqual(error['field'], 'Moderation_Id')
-        self.assertEqual(error['message'], "Invalid Uuid(S): 123!.")
+        self.assertEqual(error['detail'], "Invalid Uuid(S): 123!.")

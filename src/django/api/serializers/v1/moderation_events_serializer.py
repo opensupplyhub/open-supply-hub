@@ -23,12 +23,14 @@ from api.serializers.v1.opensearch_common_validators. \
     countries_validator import CountryValidator
 from api.serializers.v1.opensearch_common_validators. \
     date_range_validator import DateRangeValidator
-from api.views.v1.utils import COMMON_ERROR_MESSAGE
+from api.views.v1.utils import COMMON_ERROR_DETAIL
 
 
 class ModerationEventsSerializer(Serializer):
     # These params are checking considering serialize_params output
     size = IntegerField(required=False)
+    search_after_id = CharField(required=False)
+    search_after_value = CharField(required=False)
     country = ListField(
         child=CharField(required=False),
         required=False
@@ -50,14 +52,15 @@ class ModerationEventsSerializer(Serializer):
     sort_by = ChoiceField(
         choices=[
             'created_at',
-            'updated_at',
             'status_change_date',
+            'updated_at',
+            'contributor_id',
             'contributor_name',
+            'country',
+            'name',
+            'address',
             'source',
             'status',
-            'cleaned_country',
-            'cleaned_name',
-            'cleaned_address'
         ],
         required=False
     )
@@ -83,7 +86,7 @@ class ModerationEventsSerializer(Serializer):
         if errors:
             # [OSDEV-1441] Pass error msg to the Rollbar here
             raise ValidationError({
-                "message": COMMON_ERROR_MESSAGE,
+                "detail": COMMON_ERROR_DETAIL,
                 "errors": errors
             })
 

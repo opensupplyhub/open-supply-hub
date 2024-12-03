@@ -373,7 +373,7 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
 
     @patch(
         'api.moderation_event_actions.approval.'
-        'add_production_location_strategy.AddProductionLocationStrategy.'
+        'add_production_location.AddProductionLocation.'
         'process_moderation_event'
     )
     def test_error_handling_during_processing(

@@ -16,15 +16,15 @@ class StatusValidator(OpenSearchValidationInterface):
         if not isinstance(status, list):
             errors.append({
                 "field": "status",
-                "message": "Status must be a list of values."
+                "detail": "Status must be a list of values."
             })
         elif not all(item in self.VALID_STATUSES for item in status):
             invalid_statuses = [item for item in status if
                                 item not in self.VALID_STATUSES]
             errors.append({
                 "field": "status",
-                "message": (
-                    f"Invalid source(s) {invalid_statuses}. "
+                "detail": (
+                    f"Invalid status(es) {invalid_statuses}. "
                     "Allowed values are 'PENDING','APPROVED' or 'REJECTED'."
                 )
             })

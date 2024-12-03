@@ -1,16 +1,11 @@
-import logging
-
 from django.http import QueryDict
 
 from rest_framework import status
-from rest_framework.exceptions import PermissionDenied, ParseError, NotFound
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
-from api.exceptions import GoneException, InternalServerErrorException
-from api.models.moderation_event import ModerationEvent
-from api.moderation_event_actions.approval.add_production_location_strategy \
-    import AddProductionLocationStrategy
+from api.moderation_event_actions.approval.add_production_location \
+    import AddProductionLocation
 from api.moderation_event_actions.approval.event_approval_context \
     import EventApprovalContext
 from api.permissions import IsRegisteredAndConfirmed
@@ -18,8 +13,7 @@ from api.serializers.v1.moderation_event_update_serializer \
     import ModerationEventUpdateSerializer
 from api.serializers.v1.moderation_events_serializer \
     import ModerationEventsSerializer
-from api.serializers.v1.opensearch_common_validators.moderation_id_validator \
-    import ModerationIdValidator
+from api.services.moderation_events_service import ModerationEventsService
 from api.services.opensearch.search import OpenSearchService
 from api.views.v1.index_names import OpenSearchIndexNames
 from api.views.v1.opensearch_query_builder.moderation_events_query_builder \
@@ -27,13 +21,9 @@ from api.views.v1.opensearch_query_builder.moderation_events_query_builder \
 from api.views.v1.opensearch_query_builder.opensearch_query_director import \
     OpenSearchQueryDirector
 from api.views.v1.utils import (
-    create_error_detail,
     handle_errors_decorator,
     serialize_params
 )
-
-
-log = logging.getLogger(__name__)
 
 
 class ModerationEvents(ViewSet):
@@ -43,6 +33,7 @@ class ModerationEvents(ViewSet):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.opensearch_service = OpenSearchService()
+        self.moderation_events_service = ModerationEventsService()
         self.moderation_events_query_builder = ModerationEventsQueryBuilder()
         self.opensearch_query_director = OpenSearchQueryDirector(
                 self.moderation_events_query_builder
@@ -72,7 +63,7 @@ class ModerationEvents(ViewSet):
 
     @handle_errors_decorator
     def retrieve(self, _,  pk=None):
-        self.__validate_uuid(pk)
+        self.moderation_events_service.validate_uuid(pk)
 
         query_params = QueryDict('', mutable=True)
         query_params.update({'moderation_id': pk})
@@ -87,11 +78,13 @@ class ModerationEvents(ViewSet):
 
     @handle_errors_decorator
     def patch(self, request, pk=None):
-        self.__validate_user_permissions(request)
+        self.moderation_events_service.validate_user_permissions(request)
 
-        self.__validate_uuid(pk)
+        self.moderation_events_service.validate_uuid(pk)
 
-        event = self.__fetch_moderation_event_by_uuid(pk)
+        event = self.moderation_events_service.fetch_moderation_event_by_uuid(
+            pk
+        )
 
         serializer = ModerationEventUpdateSerializer(
             event,
@@ -114,76 +107,27 @@ class ModerationEvents(ViewSet):
 
     @handle_errors_decorator
     def add_production_location(self, request, moderation_id=None):
-        self.__validate_user_permissions(request)
+        self.moderation_events_service.validate_user_permissions(request)
 
-        self.__validate_uuid(moderation_id)
+        self.moderation_events_service.validate_uuid(moderation_id)
 
-        event = self.__fetch_moderation_event_by_uuid(moderation_id)
+        event = self.moderation_events_service.fetch_moderation_event_by_uuid(
+            moderation_id
+        )
 
-        self.__validate_moderation_status(event.status)
+        self.moderation_events_service.validate_moderation_status(event.status)
 
         add_production_location = EventApprovalContext(
-            AddProductionLocationStrategy(event)
+            AddProductionLocation(event)
         )
 
         try:
             item = add_production_location.run_processing()
         except Exception as error:
-            return self.__handle_processing_error(error)
+            return self.moderation_events_service.handle_processing_error(
+                error
+            )
 
         return Response(
             {"os_id": item.facility_id}, status=status.HTTP_201_CREATED
         )
-
-    @staticmethod
-    def __validate_user_permissions(request):
-        if not (request.user.is_superuser or request.user.is_staff):
-            raise PermissionDenied(
-                detail="Only the Moderator can perform this action."
-            )
-
-    def __validate_uuid(self, value):
-        if not ModerationIdValidator.is_valid_uuid(value):
-            self.__raise_invalid_uuid_error()
-
-    @staticmethod
-    def __raise_invalid_uuid_error():
-        raise ParseError(
-            create_error_detail(
-                field="moderation_id",
-                detail="Invalid UUID format."
-            )
-        )
-
-    def __fetch_moderation_event_by_uuid(self, uuid):
-        try:
-            return ModerationEvent.objects.get(uuid=uuid)
-        except ModerationEvent.DoesNotExist:
-            self.__raise_not_found_error()
-
-    @staticmethod
-    def __raise_not_found_error():
-        raise NotFound(
-            create_error_detail(
-                field="moderation_id",
-                detail="Moderation event not found."
-            )
-        )
-
-    def __validate_moderation_status(self, status):
-        if status != ModerationEvent.Status.PENDING:
-            self.__raise_status_not_pending_error()
-
-    @staticmethod
-    def __raise_status_not_pending_error():
-        raise GoneException(
-            create_error_detail(
-                field="status",
-                detail="The moderation event should be in PENDING status."
-            )
-        )
-
-    @staticmethod
-    def __handle_processing_error(error_message):
-        log.error(f'[Moderation Event] Error: {str(error_message)}')
-        raise InternalServerErrorException()
