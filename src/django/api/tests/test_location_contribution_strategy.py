@@ -1,4 +1,7 @@
-import unittest
+import re
+from uuid import UUID
+from copy import deepcopy
+
 from unittest.mock import Mock, patch
 from rest_framework.test import APITestCase
 
@@ -44,6 +47,20 @@ class TestLocationContributionStrategy(APITestCase):
         self.moderation_event_creator = ModerationEventCreator(
             location_contribution_strategy
         )
+
+    def is_valid_uuid(self, value: UUID) -> bool:
+        try:
+            UUID(str(value), version=4)
+            return True
+        except ValueError:
+            return False
+
+    def is_valid_date_with_microseconds(self, value: str) -> bool:
+        # Regular expression to match datetime with microseconds and
+        # 'Z' at the end.
+        pattern = r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$'
+
+        return bool(re.match(pattern, value))
 
     @patch('api.geocoding.requests.get')
     def test_source_set_as_api_regardless_of_whether_passed(self, mock_get):
@@ -390,3 +407,255 @@ class TestLocationContributionStrategy(APITestCase):
         self.assertEqual(result.status_code, 500)
         self.assertIsNone(result.moderation_event)
         self.assertEqual(result.errors, expected_error_result)
+
+    def test_moderation_event_is_created_with_coordinates_properly(self):
+
+        input_data = {
+            'source': 'SLC',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'sector': ['Apparel', 'Equipment'],
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            },
+            'product_type': ['Random product type']
+        }
+
+        expected_raw_data = deepcopy(input_data)
+        expected_cleaned_data = {
+            'raw_json': {
+                'lat': 51.078389,
+                'lng': 16.978477,
+                'name': 'Blue Horizon Facility',
+                'address': '990 Spring Garden St., Philadelphia PA 19123',
+                'country': 'US',
+                'sector': ['Apparel', 'Equipment'],
+                'product_type': ['Random product type']
+            },
+            'name': 'Blue Horizon Facility',
+            'clean_name': 'blue horizon facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'clean_address': '990 spring garden st. philadelphia pa 19123',
+            'country_code': 'US',
+            'sector': ['Unspecified'],
+            'fields': {
+                'product_type': [
+                    'Apparel',
+                    'Equipment',
+                    'Random product type'
+                ],
+                'lat': 51.078389,
+                'lng': 16.978477,
+                'country': 'US'
+            },
+            'errors': []
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor_id=self.contributor,
+            raw_data=input_data,
+            request_type=ModerationEvent.RequestType.CREATE.value
+        )
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+        self.assertEqual(result.status_code, 202)
+
+        moderation_event = result.moderation_event
+
+        self.assertIsNotNone(moderation_event)
+        self.assertTrue(self.is_valid_uuid(moderation_event.uuid))
+
+        stringified_created_at = moderation_event.created_at.strftime(
+            '%Y-%m-%dT%H:%M:%S.%f'
+        ) + 'Z'
+        self.assertTrue(
+            self.is_valid_date_with_microseconds(stringified_created_at)
+        )
+
+        stringified_updated_at = moderation_event.updated_at.strftime(
+            '%Y-%m-%dT%H:%M:%S.%f'
+        ) + 'Z'
+        self.assertTrue(
+            self.is_valid_date_with_microseconds(stringified_updated_at)
+        )
+
+        self.assertIsNone(moderation_event.status_change_date)
+        self.assertEqual(moderation_event.request_type, 'CREATE')
+        self.assertEqual(moderation_event.raw_data, expected_raw_data)
+        self.assertEqual(moderation_event.cleaned_data, expected_cleaned_data)
+        # The geocode result should be empty because the coordinates provided
+        # did not trigger the Google API geocoding.
+        self.assertEqual(moderation_event.geocode_result, {})
+        self.assertEqual(moderation_event.status, 'PENDING')
+        self.assertEqual(moderation_event.source, 'SLC')
+        # The claim field should be None because no claim relation was
+        # provided during the creation of the moderation event.
+        self.assertIsNone(moderation_event.claim)
+        self.assertEqual(moderation_event.contributor, self.contributor)
+        # The os field should be None because no production location relation
+        # was provided during the creation of the moderation event.
+        self.assertIsNone(moderation_event.os)
+
+    @patch('api.geocoding.requests.get')
+    def test_moderation_event_is_created_without_coordinates_properly(
+            self, mock_get):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        input_data = {
+            'source': 'SLC',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'sector': ['Apparel', 'Equipment'],
+            'product_type': ['Random product type']
+        }
+
+        expected_raw_data = deepcopy(input_data)
+        expected_cleaned_data = {
+            'raw_json': {
+                'name': 'Blue Horizon Facility',
+                'address': '990 Spring Garden St., Philadelphia PA 19123',
+                'country': 'US',
+                'sector': ['Apparel', 'Equipment'],
+                'product_type': ['Random product type']
+            },
+            'name': 'Blue Horizon Facility',
+            'clean_name': 'blue horizon facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'clean_address': '990 spring garden st. philadelphia pa 19123',
+            'country_code': 'US',
+            'sector': ['Unspecified'],
+            'fields': {
+                'product_type': [
+                    'Apparel',
+                    'Equipment',
+                    'Random product type'
+                ],
+                'country': 'US'
+            },
+            'errors': []
+        }
+        expected_geocode_results = {
+            'result_count': 1,
+            'geocoded_point': {'lat': 39.961265, 'lng': -75.15412760000001},
+            'geocoded_address': '990 Spring Garden St, Philadelphia, PA 19123, USA',
+            'full_response': {
+                'results': [
+                    {
+                        'address_components': [
+                            {
+                                'long_name': '990',
+                                'short_name': '990',
+                                'types': ['street_number'],
+                            },
+                            {
+                                'long_name': 'Spring Garden Street',
+                                'short_name': 'Spring Garden St',
+                                'types': ['route'],
+                            },
+                            {
+                                'long_name': 'Center City',
+                                'short_name': 'Center City',
+                                'types': ['neighborhood', 'political'],
+                            },
+                            {
+                                'long_name': 'Philadelphia',
+                                'short_name': 'Philadelphia',
+                                'types': ['locality', 'political'],
+                            },
+                            {
+                                'long_name': 'Philadelphia County',
+                                'short_name': 'Philadelphia County',
+                                'types': ['administrative_area_level_2', 'political'],
+                            },
+                            {
+                                'long_name': 'Pennsylvania',
+                                'short_name': 'PA',
+                                'types': ['administrative_area_level_1', 'political'],
+                            },
+                            {
+                                'long_name': 'United States',
+                                'short_name': 'US',
+                                'types': ['country', 'political'],
+                            },
+                            {
+                                'long_name': '19123',
+                                'short_name': '19123',
+                                'types': ['postal_code'],
+                            },
+                        ],
+                        'formatted_address': '990 Spring Garden St, Philadelphia, PA 19123, USA',
+                        'geometry': {
+                            'bounds': {
+                                'northeast': {'lat': 39.9614743, 'lng': -75.15379639999999},
+                                'southwest': {'lat': 39.9611391, 'lng': -75.1545269},
+                            },
+                            'location': {'lat': 39.961265, 'lng': -75.15412760000001},
+                            'location_type': 'ROOFTOP',
+                            'viewport': {
+                                'northeast': {
+                                    'lat': 39.9626556802915,
+                                    'lng': -75.1528126697085,
+                                },
+                                'southwest': {
+                                    'lat': 39.9599577197085,
+                                    'lng': -75.1555106302915,
+                                },
+                            },
+                        },
+                        'place_id': 'ChIJ8cV_ZH_IxokRA_ETpdB5R3Y',
+                        'types': ['premise'],
+                    }
+                ],
+                'status': 'OK',
+            },
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor_id=self.contributor,
+            raw_data=input_data,
+            request_type=ModerationEvent.RequestType.CREATE.value
+        )
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+        self.assertEqual(result.status_code, 202)
+
+        moderation_event = result.moderation_event
+
+        self.assertIsNotNone(moderation_event)
+        self.assertTrue(self.is_valid_uuid(moderation_event.uuid))
+
+        stringified_created_at = moderation_event.created_at.strftime(
+            '%Y-%m-%dT%H:%M:%S.%f'
+        ) + 'Z'
+        self.assertTrue(
+            self.is_valid_date_with_microseconds(stringified_created_at)
+        )
+
+        stringified_updated_at = moderation_event.updated_at.strftime(
+            '%Y-%m-%dT%H:%M:%S.%f'
+        ) + 'Z'
+        self.assertTrue(
+            self.is_valid_date_with_microseconds(stringified_updated_at)
+        )
+
+        self.assertIsNone(moderation_event.status_change_date)
+        self.assertEqual(moderation_event.request_type, 'CREATE')
+        self.assertEqual(moderation_event.raw_data, expected_raw_data)
+        self.assertEqual(moderation_event.cleaned_data, expected_cleaned_data)
+        self.assertEqual(moderation_event.geocode_result,
+                         expected_geocode_results)
+        self.assertEqual(moderation_event.status, 'PENDING')
+        self.assertEqual(moderation_event.source, 'SLC')
+        # The claim field should be None because no claim relation was
+        # provided during the creation of the moderation event.
+        self.assertIsNone(moderation_event.claim)
+        self.assertEqual(moderation_event.contributor, self.contributor)
+        # The os field should be None because no production location relation
+        # was provided during the creation of the moderation event.
+        self.assertIsNone(moderation_event.os)

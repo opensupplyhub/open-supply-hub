@@ -208,7 +208,7 @@ class TestProductionLocationsCreate(APITestCase):
         self.assertEqual(len(response_body_dict), 3)
 
     @patch('api.geocoding.requests.get')
-    def test_moderation_event_created_with_invalid_data(
+    def test_moderation_event_not_created_with_invalid_data(
             self,
             mock_get):
         mock_get.return_value = Mock(ok=True, status_code=200)
