@@ -16,15 +16,15 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Scheme changes
 * [OSDEV-1158](https://opensupplyhub.atlassian.net/browse/OSDEV-1158) - The following updates to the ModerationEvent table have been made:
-    1. Set uuid as the primary key.
-    2. Make geocode_result field optional. It can be blank if lat and lng
+    1. Set `uuid` as the primary key.
+    2. Make `geocode_result` field optional. It can be blank if lat and lng
     have been provided by user.
-    3. Remove redundant blank=False and null=False constraints, as these are
+    3. Remove redundant `blank=False` and `null=False` constraints, as these are
     the default values for model fields in Django and do not need to be
     explicitly set.
-    4. Make contributor field non-nullable, as the field should not be left
+    4. Make `contributor` field non-nullable, as the field should not be left
     empty. It is required to have information about the contributor.
-    5. Allow claim field to be blank. This change reflects the fact that
+    5. Allow `claim` field to be blank. This change reflects the fact that
     a moderation event may not always be related to a claim, so the field can
     be left empty.
 
