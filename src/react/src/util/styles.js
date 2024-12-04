@@ -787,33 +787,33 @@ export const makeSearchByNameAddressTabStyles = theme =>
         errorPlaceholder: Object.freeze({
             color: COLOURS.RED,
         }),
-        helperTextContainerStyles: Object.freeze({
+        helperTextWrapStyles: Object.freeze({
             display: 'flex',
             alignItems: 'center',
             gap: '4px',
         }),
-        infoIconStyles: Object.freeze({
+        iconInfoStyles: Object.freeze({
             fontSize: '16px',
             verticalAlign: 'middle',
         }),
-        helperTextStyles: Object.freeze({
+        inputHelperTextStyles: Object.freeze({
             fontSize: '16px',
             fontWeight: theme.typography.fontWeightSemiBold,
             color: COLOURS.RED,
         }),
-        instructionTextStyles: Object.freeze({
+        instructionStyles: Object.freeze({
             fontSize: '18px',
             fontWeight: theme.typography.fontWeightSemiBold,
             margin: '24px 0 32px 0',
         }),
-        searchContainerStyles: Object.freeze({
+        searchWrapStyles: Object.freeze({
             display: 'flex',
             flexDirection: 'column',
             padding: '40px 110px',
             borderRadius: '0',
             boxShadow: 'none',
         }),
-        mainTitleStyles: Object.freeze({
+        titleStyles: Object.freeze({
             fontSize: '36px',
             fontWeight: theme.typography.fontWeightSemiBoldPlus,
         }),
@@ -822,7 +822,7 @@ export const makeSearchByNameAddressTabStyles = theme =>
             fontWeight: theme.typography.fontWeightSemiBold,
             margin: '8px 0 8px 0',
         }),
-        textFieldStyles: Object.freeze({
+        textInputStyles: Object.freeze({
             maxWidth: '528px',
             marginBottom: '21px',
         }),
@@ -849,10 +849,10 @@ export const makeSearchByNameAddressTabStyles = theme =>
             lineHeight: '20px',
             fontWeight: theme.typography.fontWeightExtraBold,
         }),
-        buttonStyles: Object.freeze({
+        searchButtonStyles: Object.freeze({
             width: '200px',
             height: '49px',
-            borderRadius: '0',
+            borderRadius: 0,
             textTransform: 'none',
             backgroundColor: theme.palette.action.main,
             marginTop: '26px',

@@ -16,10 +16,10 @@ import { makeSearchByNameAddressTabStyles } from '../../util/styles';
 import { countryOptionsPropType } from '../../util/propTypes';
 import { fetchCountryOptions } from '../../actions/filterOptions';
 
-const NameHelperText = ({ classes }) => (
-    <span className={classes.helperTextContainerStyles}>
-        <InfoOutlinedIcon className={classes.infoIconStyles} />
-        <Typography component="span" className={classes.helperTextStyles}>
+const InputHelperText = ({ classes }) => (
+    <span className={classes.helperTextWrapStyles}>
+        <InfoOutlinedIcon className={classes.iconInfoStyles} />
+        <Typography component="span" className={classes.inputHelperTextStyles}>
             This field is required.
         </Typography>
     </span>
@@ -95,13 +95,13 @@ const SearchByNameAndAddressTab = ({
 
     return (
         <>
-            <Typography className={classes.instructionTextStyles}>
+            <Typography className={classes.instructionStyles}>
                 Check if the production location is already on OS Hub. Enter the
                 production location’s name, address and country in the fields
                 below and click “Search”.
             </Typography>
-            <Paper className={classes.searchContainerStyles}>
-                <Typography component="h2" className={classes.mainTitleStyles}>
+            <Paper className={classes.searchWrapStyles}>
+                <Typography component="h2" className={classes.titleStyles}>
                     Production Location Details
                 </Typography>
                 <Typography component="h4" className={classes.subTitleStyles}>
@@ -109,7 +109,7 @@ const SearchByNameAndAddressTab = ({
                 </Typography>
                 <TextField
                     id="name"
-                    className={classes.textFieldStyles}
+                    className={classes.textInputStyles}
                     value={inputName}
                     onChange={handleNameChange}
                     placeholder="Type a name"
@@ -132,7 +132,7 @@ const SearchByNameAndAddressTab = ({
                     helperText={
                         nameTouched &&
                         !validate(inputName) && (
-                            <NameHelperText classes={classes} />
+                            <InputHelperText classes={classes} />
                         )
                     }
                     error={nameTouched && !validate(inputName)}
@@ -142,7 +142,7 @@ const SearchByNameAndAddressTab = ({
                 </Typography>
                 <TextField
                     id="address"
-                    className={classes.textFieldStyles}
+                    className={classes.textInputStyles}
                     value={inputAddress}
                     onChange={handleAddressChange}
                     placeholder="Address"
@@ -165,7 +165,7 @@ const SearchByNameAndAddressTab = ({
                     helperText={
                         addressTouched &&
                         !validate(inputAddress) && (
-                            <NameHelperText classes={classes} />
+                            <InputHelperText classes={classes} />
                         )
                     }
                     error={addressTouched && !validate(inputAddress)}
@@ -191,7 +191,7 @@ const SearchByNameAndAddressTab = ({
                     color="secondary"
                     variant="contained"
                     onClick={handleSearch}
-                    className={classes.buttonStyles}
+                    className={classes.searchButtonStyles}
                     classes={{
                         label: classes.buttonLabel,
                     }}
