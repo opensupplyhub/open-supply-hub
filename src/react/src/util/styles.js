@@ -831,6 +831,7 @@ export const makeSearchByNameAddressTabStyles = theme =>
             lineHeight: '22px',
             maxWidth: '528px',
             fontWeight: theme.typography.fontWeightSemiBold,
+            opacity: '0.7',
         }),
         searchInputStyles: Object.freeze({
             fontSize: '18px',
@@ -838,7 +839,7 @@ export const makeSearchByNameAddressTabStyles = theme =>
             lineHeight: '22px',
             padding: '16px',
         }),
-        placeholder: {
+        errorStyle: {
             color: COLOURS.RED,
         },
         notchedOutlineStyles: Object.freeze({

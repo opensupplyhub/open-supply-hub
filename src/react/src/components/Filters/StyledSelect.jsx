@@ -28,15 +28,14 @@ function StyledSelect({
     );
     return (
         <>
-            {label && (
-                <InputLabel
-                    shrink={false}
-                    htmlFor={name}
-                    className={classes.inputLabelStyle}
-                >
-                    {label} {renderIcon()}
-                </InputLabel>
-            )}
+            <InputLabel
+                shrink={false}
+                htmlFor={name}
+                className={classes.inputLabelStyle}
+            >
+                {label} {renderIcon()}
+            </InputLabel>
+
             {(() => {
                 if (creatable)
                     return (
@@ -99,12 +98,11 @@ StyledSelect.defaultProps = {
     creatable: false,
     renderIcon: () => {},
     origin: null,
-    label: '',
 };
 
 StyledSelect.propTypes = {
     name: string.isRequired,
-    label: string,
+    label: string.isRequired,
     creatable: bool,
     renderIcon: func,
     origin: string,

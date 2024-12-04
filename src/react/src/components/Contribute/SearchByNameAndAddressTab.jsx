@@ -25,6 +25,11 @@ const InputHelperText = ({ classes }) => (
     </span>
 );
 
+const defaultCountryOption = {
+    label: "What's the country?",
+    value: '',
+};
+
 const selectStyles = {
     control: provided => ({
         ...provided,
@@ -41,13 +46,12 @@ const SearchByNameAndAddressTab = ({
 }) => {
     const [inputName, setInputName] = useState('');
     const [inputAddress, setInputAddress] = useState('');
-    const [inputCountry, setInputCountry] = useState('');
+    const [inputCountry, setInputCountry] = useState(defaultCountryOption);
     const [nameTouched, setNameTouched] = useState(false);
     const [addressTouched, setAddressTouched] = useState(false);
 
     const history = useHistory();
     const validate = val => val.length > 0;
-
     const handleNameChange = event => {
         setNameTouched(true);
         setInputName(event.target.value);
@@ -57,7 +61,7 @@ const SearchByNameAndAddressTab = ({
         setInputAddress(event.target.value);
     };
     const handleCountryChange = event => {
-        setInputCountry(event || '');
+        setInputCountry(event || defaultCountryOption);
     };
 
     const handleSearch = () => {
@@ -72,9 +76,8 @@ const SearchByNameAndAddressTab = ({
     const isFormValid =
         validate(inputName) &&
         validate(inputAddress) &&
-        validate(inputCountry.label ?? '');
+        validate(inputCountry.value);
 
-    /* eslint-disable react-hooks/exhaustive-deps */
     useEffect(() => {
         if (!countriesData) {
             fetchCountries();
@@ -87,7 +90,7 @@ const SearchByNameAndAddressTab = ({
 
     if (error) {
         return (
-            <Typography variant="body2" style={{ color: 'red' }}>
+            <Typography variant="body2" className={classes.errorStyle}>
                 {error}
             </Typography>
         );
@@ -121,7 +124,7 @@ const SearchByNameAndAddressTab = ({
                                 ${
                                     nameTouched &&
                                     !validate(inputName) &&
-                                    classes.placeholder
+                                    classes.errorStyle
                                 }`,
                             notchedOutline: classes.notchedOutlineStyles,
                         },
