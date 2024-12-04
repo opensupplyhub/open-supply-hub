@@ -107,14 +107,14 @@ class ModerationEvents(ViewSet):
         )
 
     @handle_errors_decorator
-    @action(detail=False, methods=['POST'])
-    def add_production_location(self, request, moderation_id=None):
+    @action(detail=True, methods=['POST'], url_path='production-locations')
+    def add_production_location(self, request, pk=None):
         self.moderation_events_service.validate_user_permissions(request)
 
-        self.moderation_events_service.validate_uuid(moderation_id)
+        self.moderation_events_service.validate_uuid(pk)
 
         event = self.moderation_events_service.fetch_moderation_event_by_uuid(
-            moderation_id
+            pk
         )
 
         self.moderation_events_service.validate_moderation_status(event.status)
