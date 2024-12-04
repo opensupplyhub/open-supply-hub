@@ -1727,4 +1727,3 @@ class FacilitiesViewSet(ListModelMixin,
 
         except Facility.DoesNotExist as exc:
             raise NotFound() from exc
-        
