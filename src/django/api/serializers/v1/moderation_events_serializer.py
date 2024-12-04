@@ -86,7 +86,7 @@ class ModerationEventsSerializer(Serializer):
         if errors:
             # [OSDEV-1441] Pass error msg to the Rollbar here
             raise ValidationError({
-                "message": APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR,
+                "detail": APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR,
                 "errors": errors
             })
 

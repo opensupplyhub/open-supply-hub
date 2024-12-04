@@ -1,28 +1,30 @@
 from django.http import QueryDict
+
 from rest_framework import status
-from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied
-from api.views.v1.utils import (
-    serialize_params,
-    handle_errors_decorator,
-    handle_path_error
-)
+from rest_framework.viewsets import ViewSet
+from rest_framework.decorators import action
+
+from api.moderation_event_actions.approval.add_production_location \
+    import AddProductionLocation
+from api.moderation_event_actions.approval.event_approval_context \
+    import EventApprovalContext
 from api.permissions import IsRegisteredAndConfirmed
-from api.services.opensearch.search import OpenSearchService
-from api.views.v1.opensearch_query_builder.moderation_events_query_builder \
-    import ModerationEventsQueryBuilder
-from api.views.v1.opensearch_query_builder.opensearch_query_director \
-    import OpenSearchQueryDirector
-from api.serializers.v1.moderation_events_serializer \
-    import ModerationEventsSerializer
-from api.serializers.v1.opensearch_common_validators.moderation_id_validator \
-    import ModerationIdValidator
 from api.serializers.v1.moderation_event_update_serializer \
     import ModerationEventUpdateSerializer
+from api.serializers.v1.moderation_events_serializer \
+    import ModerationEventsSerializer
+from api.services.moderation_events_service import ModerationEventsService
+from api.services.opensearch.search import OpenSearchService
 from api.views.v1.index_names import OpenSearchIndexNames
-from api.models.moderation_event \
-    import ModerationEvent
+from api.views.v1.opensearch_query_builder.moderation_events_query_builder \
+    import ModerationEventsQueryBuilder
+from api.views.v1.opensearch_query_builder.opensearch_query_director import \
+    OpenSearchQueryDirector
+from api.views.v1.utils import (
+    handle_errors_decorator,
+    serialize_params
+)
 
 
 class ModerationEvents(ViewSet):
@@ -32,6 +34,7 @@ class ModerationEvents(ViewSet):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.opensearch_service = OpenSearchService()
+        self.moderation_events_service = ModerationEventsService()
         self.moderation_events_query_builder = ModerationEventsQueryBuilder()
         self.opensearch_query_director = OpenSearchQueryDirector(
                 self.moderation_events_query_builder
@@ -61,12 +64,7 @@ class ModerationEvents(ViewSet):
 
     @handle_errors_decorator
     def retrieve(self, _,  pk=None):
-        if not ModerationIdValidator.is_valid_uuid(pk):
-            return handle_path_error(
-                field="moderation_id",
-                message="Invalid UUID format.",
-                status_code=status.HTTP_400_BAD_REQUEST
-            )
+        self.moderation_events_service.validate_uuid(pk)
 
         query_params = QueryDict('', mutable=True)
         query_params.update({'moderation_id': pk})
@@ -80,27 +78,14 @@ class ModerationEvents(ViewSet):
         return Response(response)
 
     @handle_errors_decorator
-    def patch(self, request, pk=None):
-        if not (request.user.is_superuser or request.user.is_staff):
-            raise PermissionDenied(
-                detail="Only the Moderator can perform this action."
-            )
+    def partial_update(self, request, pk=None):
+        self.moderation_events_service.validate_user_permissions(request)
 
-        if not ModerationIdValidator.is_valid_uuid(pk):
-            return handle_path_error(
-                field="moderation_id",
-                message="Invalid UUID format.",
-                status_code=status.HTTP_400_BAD_REQUEST
-            )
+        self.moderation_events_service.validate_uuid(pk)
 
-        try:
-            event = ModerationEvent.objects.get(uuid=pk)
-        except ModerationEvent.DoesNotExist:
-            return handle_path_error(
-                field="moderation_id",
-                message="Moderation event not found.",
-                status_code=status.HTTP_404_NOT_FOUND
-            )
+        event = self.moderation_events_service.fetch_moderation_event_by_uuid(
+            pk
+        )
 
         serializer = ModerationEventUpdateSerializer(
             event,
@@ -114,9 +99,37 @@ class ModerationEvents(ViewSet):
 
         return Response(
             {
-                "message": 'The request body contains '
+                "detail": 'The request body contains '
                 'invalid or missing fields.',
                 "error": [serializer.errors]
             },
             status=status.HTTP_400_BAD_REQUEST
+        )
+
+    @handle_errors_decorator
+    @action(detail=False, methods=['POST'])
+    def add_production_location(self, request, moderation_id=None):
+        self.moderation_events_service.validate_user_permissions(request)
+
+        self.moderation_events_service.validate_uuid(moderation_id)
+
+        event = self.moderation_events_service.fetch_moderation_event_by_uuid(
+            moderation_id
+        )
+
+        self.moderation_events_service.validate_moderation_status(event.status)
+
+        add_production_location = EventApprovalContext(
+            AddProductionLocation(event)
+        )
+
+        try:
+            item = add_production_location.run_processing()
+        except Exception as error:
+            return self.moderation_events_service.handle_processing_error(
+                error
+            )
+
+        return Response(
+            {"os_id": item.facility_id}, status=status.HTTP_201_CREATED
         )

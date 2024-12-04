@@ -13,6 +13,9 @@ from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_list_item_temp import FacilityListItemTemp
 from api.models.source import Source
 from api.processing import handle_external_match_process_result
+from api.views.fields.create_nonstandard_fields import (
+    create_nonstandard_fields,
+)
 from contricleaner.lib.dto.list_dto import ListDTO
 from contricleaner.lib.dto.row_dto import RowDTO
 from rest_framework import status
@@ -59,7 +62,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
 
         source = self._create_source()
 
-        self._create_nonstandard_fields(header_row_keys, self.__contributor)
+        create_nonstandard_fields(header_row_keys, self.__contributor)
 
         row_index = 0
         item = self._create_facility_list_item(
