@@ -226,6 +226,15 @@ class FacilitiesViewSet(ListModelMixin,
         if not params.is_valid():
             raise ValidationError(params.errors)
 
+        if ('page' in request.query_params
+                and int(request.query_params['page']) > 100):
+            return Response(
+                data={
+                    "detail": "API limit exceeded.",
+                },
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+
         queryset = (
                 FacilityIndex
                 .objects
@@ -1718,3 +1727,4 @@ class FacilitiesViewSet(ListModelMixin,
 
         except Facility.DoesNotExist as exc:
             raise NotFound() from exc
+        
