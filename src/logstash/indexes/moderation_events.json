@@ -45,10 +45,20 @@
         "cleaned_data": {
           "properties": {
             "name": {
-              "type": "keyword"
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                }
+              }
             },
             "address": {
-              "type": "keyword"
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                }
+              }
             },
             "country": {
               "properties": {
