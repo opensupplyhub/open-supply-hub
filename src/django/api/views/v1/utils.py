@@ -47,7 +47,8 @@ def serialize_params(serializer_class, query_params):
         error_response = {'detail': None, 'errors': []}
         # Handle common validation errors.
         if 'detail' not in params.errors and 'errors' not in params.errors:
-            error_response['detail'] = APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR
+            error_response['detail'] = \
+                APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR
             for field, error_list in params.errors.items():
                 error_response['errors'].append({
                     'field': field,

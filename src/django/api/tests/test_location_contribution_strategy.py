@@ -542,7 +542,8 @@ class TestLocationContributionStrategy(APITestCase):
         expected_geocode_results = {
             'result_count': 1,
             'geocoded_point': {'lat': 39.961265, 'lng': -75.15412760000001},
-            'geocoded_address': '990 Spring Garden St, Philadelphia, PA 19123, USA',
+            'geocoded_address': ('990 Spring Garden St, Philadelphia, '
+                                 'PA 19123, USA'),
             'full_response': {
                 'results': [
                     {
@@ -570,12 +571,14 @@ class TestLocationContributionStrategy(APITestCase):
                             {
                                 'long_name': 'Philadelphia County',
                                 'short_name': 'Philadelphia County',
-                                'types': ['administrative_area_level_2', 'political'],
+                                'types': ['administrative_area_level_2',
+                                          'political'],
                             },
                             {
                                 'long_name': 'Pennsylvania',
                                 'short_name': 'PA',
-                                'types': ['administrative_area_level_1', 'political'],
+                                'types': ['administrative_area_level_1',
+                                          'political'],
                             },
                             {
                                 'long_name': 'United States',
@@ -588,13 +591,23 @@ class TestLocationContributionStrategy(APITestCase):
                                 'types': ['postal_code'],
                             },
                         ],
-                        'formatted_address': '990 Spring Garden St, Philadelphia, PA 19123, USA',
+                        'formatted_address': ('990 Spring Garden St, '
+                                              'Philadelphia, PA 19123, USA'),
                         'geometry': {
                             'bounds': {
-                                'northeast': {'lat': 39.9614743, 'lng': -75.15379639999999},
-                                'southwest': {'lat': 39.9611391, 'lng': -75.1545269},
+                                'northeast': {
+                                    'lat': 39.9614743,
+                                    'lng': -75.15379639999999
+                                },
+                                'southwest': {
+                                    'lat': 39.9611391,
+                                    'lng': -75.1545269
+                                },
                             },
-                            'location': {'lat': 39.961265, 'lng': -75.15412760000001},
+                            'location': {
+                                'lat': 39.961265,
+                                'lng': -75.15412760000001
+                            },
                             'location_type': 'ROOFTOP',
                             'viewport': {
                                 'northeast': {
