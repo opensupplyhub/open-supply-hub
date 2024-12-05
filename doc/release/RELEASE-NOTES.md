@@ -19,7 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-1453](https://opensupplyhub.atlassian.net/browse/OSDEV-1453) - The `detail` keyword instead of `message` has been applied in error response objects for V1 endpoints.
-* [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Disabled null values from the response of the OpenSearch. Disabled possible null `os_id`, `claim_id` and `source` from `PATCH api/v1/moderation-events/{moderation_id}` response. Updated index mapping for `cleaned_data.name` and `cleaned_data.address` for `GET api/v1/moderation-events`.
+* [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Disabled null values from the response of the OpenSearch. Disabled possible null `os_id`, `claim_id` and `source` from `PATCH api/v1/moderation-events/{moderation_id}` response. Updated index mapping for `cleaned_data.name` and `cleaned_data.address` for `GET api/v1/moderation-events`. This change fixes the OpenSearch error while sorting by `cleaned_data.name` and `cleaned_data.address`: `Text fields are not optimised for operations that require per-document field data like aggregations and sorting, so these operations are disabled by default. Please use a keyword field instead.`.
 * [OSDEV-1410](https://opensupplyhub.atlassian.net/browse/OSDEV-1410) - Introduced new POST `/api/moderation-events/{moderation_id}/production-locations` endpoint
 * [OSDEV-1449](https://opensupplyhub.atlassian.net/browse/OSDEV-1449) - **Breaking changes** to the following endpoints:
   - GET `v1/moderation-events`
