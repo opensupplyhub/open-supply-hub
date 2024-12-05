@@ -11,10 +11,10 @@ export default {
 
     // Reds
     LIGHT_RED: '#FFEAEA',
-    RED: '#f44336',
+    RED: '#F44336',
 
     // Grays and Neutrals
-    WHITE: '#fff',
+    WHITE: '#FFF',
     GREY: '#D2D2D2',
     LIGHT_GREY: '#F9F7F7',
     DARK_GREY: '#6E707E',

@@ -838,9 +838,9 @@ export const makeSearchByNameAddressTabStyles = theme =>
             lineHeight: '22px',
             padding: '16px',
         }),
-        errorStyle: {
+        errorStyle: Object.freeze({
             color: COLOURS.RED,
-        },
+        }),
         notchedOutlineStyles: Object.freeze({
             borderRadius: 0,
         }),
