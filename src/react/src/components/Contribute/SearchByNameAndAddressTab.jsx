@@ -157,7 +157,7 @@ const SearchByNameAndAddressTab = ({
                             ${
                                 addressTouched &&
                                 !validate(inputAddress) &&
-                                classes.placeholder
+                                classes.errorStyle
                             }`,
                             notchedOutline: classes.notchedOutlineStyles,
                         },
