@@ -5,6 +5,11 @@ import {
     startFetchingModerationEvents,
     failFetchingModerationEvents,
     completeFetchingModerationEvents,
+    clearModerationEvents,
+    updateModerationEventsPage,
+    updateModerationEventsOrder,
+    updateAfterDate,
+    updateBeforeDate,
     startDownloadingModerationEvents,
     failDownloadingModerationEvents,
     completeDownloadingModerationEvents,
@@ -15,6 +20,16 @@ const initialState = Object.freeze({
         fetching: false,
         error: null,
         events: [],
+        count: 0,
+        page: 0,
+        maxPage: 0,
+        pageSize: 25,
+        sort: {
+            sortBy: 'created_at',
+            orderBy: 'desc',
+        },
+        afterDate: null,
+        beforeDate: null,
     }),
     moderationEventsDownloadStatus: Object.freeze({
         downloading: false,
@@ -43,7 +58,45 @@ export default createReducer(
                 moderationEvents: {
                     fetching: { $set: initialState.moderationEvents.fetching },
                     error: { $set: initialState.moderationEvents.error },
-                    events: { $set: data },
+                    events: {
+                        $set: [...state.moderationEvents.events, ...data.data],
+                    },
+                    count: { $set: data.count },
+                },
+            }),
+        [clearModerationEvents]: state =>
+            update(state, {
+                moderationEvents: {
+                    events: { $set: [] },
+                },
+            }),
+        [updateModerationEventsPage]: (state, { page, maxPage, pageSize }) =>
+            update(state, {
+                moderationEvents: {
+                    page: { $set: page },
+                    maxPage: { $set: maxPage },
+                    pageSize: { $set: pageSize },
+                },
+            }),
+        [updateModerationEventsOrder]: (state, { sortBy, orderBy }) =>
+            update(state, {
+                moderationEvents: {
+                    sort: {
+                        sortBy: { $set: sortBy },
+                        orderBy: { $set: orderBy },
+                    },
+                },
+            }),
+        [updateAfterDate]: (state, afterDate) =>
+            update(state, {
+                moderationEvents: {
+                    afterDate: { $set: afterDate },
+                },
+            }),
+        [updateBeforeDate]: (state, beforeDate) =>
+            update(state, {
+                moderationEvents: {
+                    beforeDate: { $set: beforeDate },
                 },
             }),
         [startDownloadingModerationEvents]: state =>
