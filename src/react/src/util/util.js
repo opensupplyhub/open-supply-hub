@@ -260,10 +260,56 @@ export const makeNonStandardFieldsURL = () => '/api/nonstandard-fields/';
 export const makeGetProductionLocationByOsIdURL = osID =>
     `/api/v1/production-locations/${osID}/`;
 
+export const makeGetModerationEventsWithQueryString = (
+    qs,
+    page,
+    pageSize,
+    sortBy,
+    orderBy,
+) =>
+    `/api/v1/moderation-events/?${qs}&sort_by=${sortBy}&order_by=${orderBy}&from=${
+        page * pageSize
+    }&size=${pageSize}`;
+
 export const getValueFromObject = ({ value }) => value;
 
 const createCompactSortedQuerystringInputObject = (inputObject = []) =>
     compact(inputObject.map(getValueFromObject).slice().sort());
+
+export const createQueryStringFromModerationQueueFilters = (
+    { dataSources = [], moderationStatuses = [], countries = [] },
+    afterDate = '',
+    beforeDate = '',
+) => {
+    const createRepeatedKeys = (key, valueArr) =>
+        valueArr.map(value => `${key}=${encodeURIComponent(value)}`).join('&');
+
+    const inputForQueryString = Object.freeze({
+        source: dataSources,
+        status: moderationStatuses,
+        country: countries,
+        date_gte: afterDate,
+        date_lt: beforeDate,
+    });
+
+    return Object.entries(inputForQueryString)
+        .reduce((acc, [key, value]) => {
+            if (value && (Array.isArray(value) ? value.length > 0 : true)) {
+                if (Array.isArray(value)) {
+                    acc.push(
+                        createRepeatedKeys(
+                            key,
+                            createCompactSortedQuerystringInputObject(value),
+                        ),
+                    );
+                } else {
+                    acc.push(`${key}=${encodeURIComponent(value)}`);
+                }
+            }
+            return acc;
+        }, [])
+        .join('&');
+};
 
 export const createQueryStringFromSearchFilters = (
     {

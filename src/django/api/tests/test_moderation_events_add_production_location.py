@@ -69,8 +69,10 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
                 "errors": [],
             },
             geocode_result={
-                "latitude": self.latitude,
-                "longitude": self.longitude,
+                "geocoded_point": {
+                    "lat": self.latitude,
+                    "lng": self.longitude,
+                },
                 "geocoded_address": "Geocoded Address",
                 "full_response": {
                     "status": "OK",

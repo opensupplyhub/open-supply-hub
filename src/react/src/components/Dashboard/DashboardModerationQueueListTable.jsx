@@ -1,5 +1,6 @@
-import React, { useState, useCallback } from 'react';
-import { bool, object } from 'prop-types';
+import React, { useCallback } from 'react';
+import { useDispatch } from 'react-redux';
+import { bool, object, number, func } from 'prop-types';
 import { withRouter } from 'react-router-dom';
 import moment from 'moment';
 import { withStyles } from '@material-ui/core/styles';
@@ -10,11 +11,18 @@ import TableCell from '@material-ui/core/TableCell';
 import TablePagination from '@material-ui/core/TablePagination';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import DashboardModerationQueueListTableHeader from './DashboardModerationQueueListTableHeader';
+import {
+    clearModerationEvents,
+    updateModerationEventsPage,
+    updateModerationEventsOrder,
+} from '../../actions/dashboardModerationQueue';
 import { moderationEventsPropType } from '../../util/propTypes';
 import {
     EMPTY_PLACEHOLDER,
     DATE_FORMATS,
     MODERATION_STATUS_COLORS,
+    MODERATION_INITIAL_PAGE_INDEX,
+    MODERATION_DEFAULT_ROWS_PER_PAGE,
 } from '../../util/constants';
 import { makeDashboardModerationQueueListTableStyles } from '../../util/styles';
 import {
@@ -23,17 +31,33 @@ import {
     makeContributionRecordLink,
 } from '../../util/util';
 
-const INITIAL_PAGE_INDEX = 0;
-const ROWS_PER_PAGE_OPTIONS = [5, 10, 25];
-const DEFAULT_ROWS_PER_PAGE = 5;
-function DashboardModerationQueueListTable({ events, fetching, classes }) {
-    const [order, setOrder] = useState('desc');
-    const [orderBy, setOrderBy] = useState('created_at');
-    const [page, setPage] = useState(INITIAL_PAGE_INDEX);
-    const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
+const ROWS_PER_PAGE_OPTIONS = [25, 50, 100];
+function DashboardModerationQueueListTable({
+    events,
+    count,
+    page,
+    maxPage,
+    pageSize,
+    sort: { sortBy, orderBy },
+    fetching,
+    fetchEvents,
+    classes,
+}) {
+    const dispatch = useDispatch();
 
     const handleChangePage = (_, newPage) => {
-        setPage(newPage);
+        const isNewMaxPage = newPage > maxPage;
+
+        dispatch(
+            updateModerationEventsPage({
+                page: newPage,
+                maxPage: isNewMaxPage ? newPage : maxPage,
+                pageSize,
+            }),
+        );
+        if (isNewMaxPage) {
+            fetchEvents();
+        }
     };
     const handleRowClick = useCallback(
         id => () => {
@@ -50,14 +74,38 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
     );
 
     const handleChangeRowsPerPage = event => {
-        setRowsPerPage(event.target.value);
-        setPage(INITIAL_PAGE_INDEX);
+        const newRowsPerPage = event.target.value;
+
+        dispatch(clearModerationEvents());
+        dispatch(
+            updateModerationEventsPage({
+                page: MODERATION_INITIAL_PAGE_INDEX,
+                maxPage: MODERATION_INITIAL_PAGE_INDEX,
+                pageSize: newRowsPerPage,
+            }),
+        );
+        fetchEvents();
     };
 
     const handleRequestSort = (_, property) => {
-        const isDesc = orderBy === property && order === 'desc';
-        setOrder(isDesc ? 'asc' : 'desc');
-        setOrderBy(property);
+        const isDesc = sortBy === property && orderBy === 'desc';
+        const newOrder = isDesc ? 'asc' : 'desc';
+
+        dispatch(clearModerationEvents());
+        dispatch(
+            updateModerationEventsOrder({
+                sortBy: property,
+                orderBy: newOrder,
+            }),
+        );
+        dispatch(
+            updateModerationEventsPage({
+                page: MODERATION_INITIAL_PAGE_INDEX,
+                maxPage: MODERATION_INITIAL_PAGE_INDEX,
+                pageSize,
+            }),
+        );
+        fetchEvents();
     };
 
     return (
@@ -65,8 +113,8 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
             <div className={classes.tableContainerStyles}>
                 <Table>
                     <DashboardModerationQueueListTableHeader
-                        order={order}
-                        orderBy={orderBy}
+                        order={orderBy}
+                        orderBy={sortBy}
                         onRequestSort={handleRequestSort}
                         fetching={fetching}
                     />
@@ -86,19 +134,18 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                             <TableRow className={classes.emptyRowStyles} />
                             {events
                                 .slice(
-                                    page * rowsPerPage,
-                                    page * rowsPerPage + rowsPerPage,
+                                    page * pageSize,
+                                    page * pageSize + pageSize,
                                 )
                                 .map(
                                     ({
                                         moderation_id: moderationId,
                                         created_at: createdAt,
-                                        name,
-                                        country,
+                                        cleaned_data: cleanedData,
                                         contributor_name: contributorName,
                                         source,
-                                        moderation_status: moderationStatus,
-                                        moderation_decision_date: moderationDecisionDate,
+                                        status: moderationStatus,
+                                        status_change_date: moderationDecisionDate,
                                         updated_at: updatedAt,
                                     }) => (
                                         <TableRow
@@ -106,7 +153,7 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                                             key={moderationId}
                                             className={classes.rowStyles}
                                             role="button"
-                                            aria-label={`View contribution record for ${name}`}
+                                            aria-label={`View contribution record for ${cleanedData.name}`}
                                             style={{ cursor: 'pointer' }}
                                             onClick={handleRowClick(
                                                 moderationId,
@@ -118,9 +165,11 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
                                                     DATE_FORMATS.LONG,
                                                 )}
                                             </TableCell>
-                                            <TableCell>{name}</TableCell>
+                                            <TableCell>
+                                                {cleanedData.name}
+                                            </TableCell>
                                             <TableCell padding="dense">
-                                                {country.name}
+                                                {cleanedData.country.name}
                                             </TableCell>
                                             <TableCell>
                                                 {contributorName}
@@ -159,8 +208,8 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
             <TablePagination
                 rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
                 component="div"
-                count={events.length}
-                rowsPerPage={rowsPerPage}
+                count={count}
+                rowsPerPage={pageSize}
                 page={page}
                 backIconButtonProps={{
                     'aria-label': 'Previous Page',
@@ -177,11 +226,25 @@ function DashboardModerationQueueListTable({ events, fetching, classes }) {
 
 DashboardModerationQueueListTable.defaultProps = {
     events: null,
+    count: 0,
+    page: MODERATION_INITIAL_PAGE_INDEX,
+    maxPage: MODERATION_INITIAL_PAGE_INDEX,
+    pageSize: MODERATION_DEFAULT_ROWS_PER_PAGE,
+    sort: {
+        sortBy: 'created_at',
+        orderBy: 'desc',
+    },
 };
 
 DashboardModerationQueueListTable.propTypes = {
     events: moderationEventsPropType,
+    count: number,
+    page: number,
+    maxPage: number,
+    pageSize: number,
+    sort: object,
     fetching: bool.isRequired,
+    fetchEvents: func.isRequired,
     classes: object.isRequired,
 };
 
