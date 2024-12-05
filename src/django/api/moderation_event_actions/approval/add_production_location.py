@@ -161,7 +161,8 @@ class AddProductionLocation(EventApprovalStrategy):
         item: FacilityListItem, geocode_result: Dict
     ) -> None:
         item.geocoded_point = Point(
-            geocode_result["longitude"], geocode_result["latitude"]
+            geocode_result["geocoded_point"]["lng"],
+            geocode_result["geocoded_point"]["lat"],
         )
         item.geocoded_address = geocode_result["geocoded_address"]
         item.processing_results.append(

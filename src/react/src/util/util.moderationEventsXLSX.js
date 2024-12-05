@@ -16,14 +16,14 @@ const formatModerationEventsDataForXLSX = moderationEvents =>
     [xlsxHeaders].concat(
         moderationEvents.map(moderationEvent => [
             formatDate(moderationEvent.created_at, DATE_FORMATS.LONG),
-            moderationEvent.name,
-            moderationEvent.country.name,
+            moderationEvent.cleaned_data.name,
+            moderationEvent.cleaned_data.country.name,
             moderationEvent.contributor_name,
             moderationEvent.source,
-            moderationEvent.moderation_status,
-            moderationEvent.moderation_decision_date !== null
+            moderationEvent.status,
+            moderationEvent.status_change_date !== null
                 ? formatDate(
-                      moderationEvent.moderation_decision_date,
+                      moderationEvent.status_change_date,
                       DATE_FORMATS.LONG,
                   )
                 : EMPTY_PLACEHOLDER,
