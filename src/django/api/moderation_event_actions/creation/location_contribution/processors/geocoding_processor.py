@@ -29,7 +29,7 @@ class GeocodingProcessor(ContributionProcessor):
             APIV1LocationContributionKeys.LNG
         )
 
-        if not (lat and lng):
+        if lat is None or lng is None:
             try:
                 geocode_result = geocode_address(
                     event_dto.cleaned_data['address'],

@@ -45,7 +45,7 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         list_level_errors = cc_processed_data.errors
         if list_level_errors:
             transformed_list_level_errors = \
-                self.__trasform_cc_errors_to_api_v1_format(
+                self.__transform_cc_errors_to_api_v1_format(
                     list_level_errors
                 )
             event_dto.errors = transformed_list_level_errors
@@ -57,7 +57,7 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         location_object_validation_errors = processed_location_object.errors
         if location_object_validation_errors:
             transformed_location_object_validation_errors = \
-                self.__trasform_cc_errors_to_api_v1_format(
+                self.__transform_cc_errors_to_api_v1_format(
                     location_object_validation_errors
                 )
             event_dto.errors = transformed_location_object_validation_errors
@@ -111,7 +111,7 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         return mapped_data
 
     @staticmethod
-    def __trasform_cc_errors_to_api_v1_format(cc_errors: List[Dict]) -> Dict:
+    def __transform_cc_errors_to_api_v1_format(cc_errors: List[Dict]) -> Dict:
         # Initialize the new structure.
         transformed_errors = {
             'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
