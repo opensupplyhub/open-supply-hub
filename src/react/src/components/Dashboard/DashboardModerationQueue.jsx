@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
-import { bool, func, string, object } from 'prop-types';
+import React, { useState, useEffect, useRef } from 'react';
+import { connect, useDispatch } from 'react-redux';
+import { bool, func, string, object, number, array } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
@@ -14,14 +14,32 @@ import DatePicker from '../DatePicker';
 import {
     fetchModerationEvents,
     downloadModerationEvents,
+    clearModerationEvents,
+    updateModerationEventsPage,
+    updateAfterDate,
+    updateBeforeDate,
 } from '../../actions/dashboardModerationQueue';
 import { fetchCountryOptions } from '../../actions/filterOptions';
 import { moderationEventsPropType } from '../../util/propTypes';
 import { makeDashboardModerationQueueStyles } from '../../util/styles';
-import { MODERATION_QUEUE } from '../../util/constants';
+import {
+    MODERATION_QUEUE,
+    MODERATION_INITIAL_PAGE_INDEX,
+    MODERATION_DEFAULT_ROWS_PER_PAGE,
+} from '../../util/constants';
 
 const DashboardModerationQueue = ({
     events,
+    count,
+    page,
+    maxPage,
+    pageSize,
+    sort,
+    afterDate,
+    beforeDate,
+    dataSources,
+    moderationStatuses,
+    countries,
     fetching,
     fetchEvents,
     error,
@@ -30,32 +48,103 @@ const DashboardModerationQueue = ({
     fetchCountries,
     classes,
 }) => {
-    const [afterDate, setAfterDate] = useState('');
-    const [beforeDate, setBeforeDate] = useState('');
     const [afterDateError, setAfterDateError] = useState(false);
     const [beforeDateError, setBeforeDateError] = useState(false);
+    const isFirstRender = useRef(true);
+    const prevDataSources = useRef(dataSources);
+    const prevModerationStatuses = useRef(moderationStatuses);
+    const prevCountries = useRef(countries);
+
+    const dispatch = useDispatch();
 
     useEffect(() => {
         fetchEvents();
         fetchCountries();
     }, [fetchEvents, fetchCountries]);
 
+    const wasNotEmptyAndNowEmpty = (prev, current) =>
+        prev?.current?.length > 0 && current?.length === 0;
+
+    useEffect(() => {
+        /*
+         Fetch data if prev filters were not empty but 
+         become empty after user click on select field.
+         This will resolve conflict of when we want to fetch data
+         when filters are removing in UI at the moment
+        */
+        const wasNotEmptyAndNowEmptyDataSources = wasNotEmptyAndNowEmpty(
+            prevDataSources,
+            dataSources,
+        );
+        const wasNotEmptyAndNowEmptyModerationStatuses = wasNotEmptyAndNowEmpty(
+            prevModerationStatuses,
+            moderationStatuses,
+        );
+        const wasNotEmptyAndNowEmptyCountries = wasNotEmptyAndNowEmpty(
+            prevCountries,
+            countries,
+        );
+
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+        } else if (
+            dataSources.length > 0 ||
+            wasNotEmptyAndNowEmptyDataSources ||
+            moderationStatuses.length > 0 ||
+            wasNotEmptyAndNowEmptyModerationStatuses ||
+            countries.length > 0 ||
+            wasNotEmptyAndNowEmptyCountries
+        ) {
+            dispatch(clearModerationEvents());
+            dispatch(
+                updateModerationEventsPage({
+                    page: MODERATION_INITIAL_PAGE_INDEX,
+                    maxPage: MODERATION_INITIAL_PAGE_INDEX,
+                    pageSize,
+                }),
+            );
+            fetchEvents();
+        }
+
+        prevDataSources.current = dataSources;
+        prevModerationStatuses.current = moderationStatuses;
+        prevCountries.current = countries;
+    }, [dataSources, moderationStatuses, countries]);
+
     const handleAfterDateChange = date => {
-        if (!beforeDate || date <= beforeDate) {
-            setAfterDate(date);
+        if (!beforeDate || !date || date <= beforeDate) {
             setAfterDateError(false);
+            dispatch(updateAfterDate(date));
+            dispatch(clearModerationEvents());
+            dispatch(
+                updateModerationEventsPage({
+                    page: MODERATION_INITIAL_PAGE_INDEX,
+                    maxPage: MODERATION_INITIAL_PAGE_INDEX,
+                    pageSize,
+                }),
+            );
+            fetchEvents();
         } else {
-            setAfterDate('');
+            dispatch(updateAfterDate(''));
             setAfterDateError(true);
         }
     };
 
     const handleBeforeDateChange = date => {
-        if (!afterDate || date >= afterDate) {
-            setBeforeDate(date);
+        if (!afterDate || !date || date >= afterDate) {
             setBeforeDateError(false);
+            dispatch(updateBeforeDate(date));
+            dispatch(clearModerationEvents());
+            dispatch(
+                updateModerationEventsPage({
+                    page: MODERATION_INITIAL_PAGE_INDEX,
+                    maxPage: MODERATION_INITIAL_PAGE_INDEX,
+                    pageSize,
+                }),
+            );
+            fetchEvents();
         } else {
-            setBeforeDate('');
+            dispatch(updateBeforeDate(''));
             setBeforeDateError(true);
         }
     };
@@ -64,7 +153,7 @@ const DashboardModerationQueue = ({
         return <Typography>{error}</Typography>;
     }
 
-    const eventsCount = events?.length || 0;
+    const eventsCount = count;
 
     const sharedFilterProps = {
         isDisabled: fetching,
@@ -125,6 +214,12 @@ const DashboardModerationQueue = ({
             <DashboardModerationQueueListTable
                 fetching={fetching}
                 events={events}
+                count={count}
+                page={page}
+                maxPage={maxPage}
+                pageSize={pageSize}
+                sort={sort}
+                fetchEvents={fetchEvents}
             />
         </Paper>
     );
@@ -132,12 +227,35 @@ const DashboardModerationQueue = ({
 
 DashboardModerationQueue.defaultProps = {
     events: [],
+    count: 0,
+    page: MODERATION_INITIAL_PAGE_INDEX,
+    maxPage: MODERATION_INITIAL_PAGE_INDEX,
+    pageSize: MODERATION_DEFAULT_ROWS_PER_PAGE,
+    sort: {
+        sortBy: 'created_at',
+        orderBy: 'desc',
+    },
+    afterDate: null,
+    beforeDate: null,
+    dataSources: [],
+    moderationStatuses: [],
+    countries: [],
     error: null,
     downloadEventsError: null,
 };
 
 DashboardModerationQueue.propTypes = {
     events: moderationEventsPropType,
+    count: number,
+    page: number,
+    maxPage: number,
+    pageSize: number,
+    sort: object,
+    afterDate: string,
+    beforeDate: string,
+    dataSources: array,
+    moderationStatuses: array,
+    countries: array,
     fetching: bool.isRequired,
     error: string,
     downloadEventsError: string,
@@ -149,11 +267,33 @@ DashboardModerationQueue.propTypes = {
 
 const mapStateToProps = ({
     dashboardModerationQueue: {
-        moderationEvents: { events, fetching, error },
+        moderationEvents: {
+            events,
+            count,
+            page,
+            maxPage,
+            pageSize,
+            sort,
+            afterDate,
+            beforeDate,
+            fetching,
+            error,
+        },
         moderationEventsDownloadStatus: { error: downloadEventsError },
     },
+    filters: { dataSources, moderationStatuses, countries },
 }) => ({
     events,
+    count,
+    page,
+    maxPage,
+    pageSize,
+    sort,
+    afterDate,
+    beforeDate,
+    dataSources,
+    moderationStatuses,
+    countries,
     fetching,
     error,
     downloadEventsError,
