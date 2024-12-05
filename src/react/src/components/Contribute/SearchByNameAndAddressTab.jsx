@@ -66,11 +66,13 @@ const SearchByNameAndAddressTab = ({
 
     const handleSearch = () => {
         const baseUrl = '/contribute/production-location/search/';
-        const url = `${baseUrl}?name=${encodeURIComponent(
-            inputName,
-        )}&address=${encodeURIComponent(
-            inputAddress,
-        )}&country=${encodeURIComponent(inputCountry.value ?? '')}`;
+        const params = new URLSearchParams({
+            name: inputName,
+            address: inputAddress,
+            country: inputCountry.value ?? '',
+        });
+        const url = `${baseUrl}?${params.toString()}`;
+
         history.push(url);
     };
     const isFormValid =
@@ -82,7 +84,7 @@ const SearchByNameAndAddressTab = ({
         if (!countriesData) {
             fetchCountries();
         }
-    }, []);
+    }, [countriesData, fetchCountries]);
 
     if (fetching) {
         return <CircularProgress />;
