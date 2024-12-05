@@ -38,7 +38,7 @@ class LocationContribution(EventCreationStrategy):
             ProductionLocationDataProcessor(),
             GeocodingProcessor()
         )
-        # Link each processor to the next one
+        # Link each processor to the next one.
         for current_processor, next_processor in zip(
                 location_data_processors, location_data_processors[1:]):
             current_processor.set_next(next_processor)
