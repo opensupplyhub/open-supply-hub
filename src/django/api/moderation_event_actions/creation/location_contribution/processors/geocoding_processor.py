@@ -14,7 +14,6 @@ from api.constants import (
 )
 from api.geocoding import geocode_address
 
-# Initialize logger.
 log = logging.getLogger(__name__)
 
 

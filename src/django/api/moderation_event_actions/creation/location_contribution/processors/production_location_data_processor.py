@@ -15,7 +15,6 @@ from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
 from api.constants import APIV1CommonErrorMessages
 
 
-# Initialize logger.
 log = logging.getLogger(__name__)
 
 

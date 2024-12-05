@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, List
 
 from django.http import QueryDict
 from django.db import transaction
@@ -41,7 +41,8 @@ class ProductionLocations(ViewSet):
     swagger_schema = None
 
     @staticmethod
-    def init_opensearch() -> Tuple[OpenSearchService, OpenSearchQueryDirector]:
+    def __init_opensearch() -> Tuple[OpenSearchService,
+                                     OpenSearchQueryDirector]:
         opensearch_service = OpenSearchService()
         opensearch_query_builder = ProductionLocationsQueryBuilder()
         opensearch_query_director = OpenSearchQueryDirector(
@@ -55,18 +56,22 @@ class ProductionLocations(ViewSet):
         Redefines the parent method and returns the list of permissions for
         the ViewSet action methods.
         '''
-        permission_classes = []
-        if self.action == 'create':
-            permission_classes.append(
-                IsRegisteredAndConfirmed
-            )
+        action_permissions = self.__get_action_permissions()
 
         # Combine custom permissions with global application-level permissions
         # set via the DEFAULT_PERMISSION_CLASSES setting.
         combined_permission_classes = \
-            permission_classes + self.permission_classes
+            action_permissions + self.permission_classes
 
         return [permission() for permission in combined_permission_classes]
+
+    def __get_action_permissions(self) -> List:
+        '''
+        Returns the list of permissions specific to the current action.
+        '''
+        if self.action == 'create':
+            return [IsRegisteredAndConfirmed]
+        return []
 
     def get_throttles(self):
         if self.action == 'create':
@@ -99,7 +104,8 @@ class ProductionLocations(ViewSet):
         if error_response:
             return Response(error_response, status=status.HTTP_400_BAD_REQUEST)
 
-        opensearch_service, opensearch_query_director = self.init_opensearch()
+        opensearch_service, opensearch_query_director = \
+            self.__init_opensearch()
         query_body = opensearch_query_director.build_query(
             request.GET,
         )
@@ -114,7 +120,8 @@ class ProductionLocations(ViewSet):
         query_params = QueryDict("", mutable=True)
         query_params.update({"os_id": pk})
 
-        opensearch_service, opensearch_query_director = self.init_opensearch()
+        opensearch_service, opensearch_query_director = \
+            self.__init_opensearch()
         query_body = opensearch_query_director.build_query(query_params)
         response = opensearch_service.search_index(
             OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,

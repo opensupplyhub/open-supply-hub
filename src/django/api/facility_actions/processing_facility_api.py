@@ -27,7 +27,6 @@ from django.core import exceptions as core_exceptions
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
-# Initialize logger.
 log = logging.getLogger(__name__)
 
 

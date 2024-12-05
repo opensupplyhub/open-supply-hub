@@ -101,7 +101,6 @@ from .facility_parameters import (
     facilities_create_parameters,
 )
 
-# Initialize logger.
 log = logging.getLogger(__name__)
 
 

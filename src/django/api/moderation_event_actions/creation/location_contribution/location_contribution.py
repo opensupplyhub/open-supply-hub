@@ -38,11 +38,9 @@ class LocationContribution(EventCreationStrategy):
             ProductionLocationDataProcessor(),
             GeocodingProcessor()
         )
-        for index in range(len(location_data_processors) - 1):
-            location_data_processors[index].set_next(
-                location_data_processors[index + 1]
-            )
+        # Link each processor to the next one
+        for current_processor, next_processor in zip(
+                location_data_processors, location_data_processors[1:]):
+            current_processor.set_next(next_processor)
 
-        entry_location_data_processor = location_data_processors[0]
-
-        return entry_location_data_processor
+        return location_data_processors[0]
