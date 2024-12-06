@@ -131,75 +131,53 @@ class ModerationEvents(ViewSet):
         )
 
     @handle_errors_decorator
-    @action(detail=True, methods=['POST'], url_path='production-locations')
-    def add_production_location(self, request, pk=None):
+    @action(
+        detail=True, methods=['POST', 'PATCH'], url_path='production-locations'
+    )
+    def manage_production_location(self, request, pk=None):
         ModerationEventsService.validate_user_permissions(request)
 
         ModerationEventsService.validate_uuid(pk)
 
-        event = ModerationEventsService.fetch_moderation_event_by_uuid(
-            pk
-        )
-
+        event = ModerationEventsService.fetch_moderation_event_by_uuid(pk)
         ModerationEventsService.validate_moderation_status(event.status)
 
-        add_production_location = EventApprovalContext(
-            AddProductionLocation(event)
-        )
+        if request.method == 'POST':
+            manage_production_location_context = EventApprovalContext(
+                AddProductionLocation(event)
+            )
+            status_code = status.HTTP_201_CREATED
 
-        try:
-            item = add_production_location.run_processing()
-        except Exception as error:
-            return ModerationEventsService.handle_processing_error(
-                error
+        else:
+            serializer = UpdateProductionLocationSerializer(data=request.data)
+
+            if not serializer.is_valid():
+                errors = [
+                    {"field": field, "message": message}
+                    for field, messages in serializer.errors.items()
+                    for message in messages
+                ]
+
+                raise ValidationError({
+                    "detail": 'The request body contains '
+                    'invalid or missing fields.',
+                    "errors": errors
+                })
+
+            os_id = serializer.validated_data.get('os_id')
+
+            manage_production_location_context = EventApprovalContext(
+                UpdateProductionLocation(event, os_id)
             )
 
-        return Response(
-            {"os_id": item.facility_id}, status=status.HTTP_201_CREATED
-        )
-
-    @handle_errors_decorator
-    def update_production_location(self, request, moderation_id):
-        self.moderation_events_service.validate_user_permissions(request)
-
-        self.moderation_events_service.validate_uuid(moderation_id)
-
-        serializer = UpdateProductionLocationSerializer(
-            data=request.data,
-        )
-
-        if not serializer.is_valid():
-            errors = [
-                {"field": field, "message": message}
-                for field, messages in serializer.errors.items()
-                for message in messages
-            ]
-
-            raise ValidationError({
-                "detail": 'The request body contains '
-                'invalid or missing fields.',
-                "errors": errors
-            })
-
-        os_id = serializer.validated_data.get('os_id')
-
-        event = self.moderation_events_service.fetch_moderation_event_by_uuid(
-            moderation_id
-        )
-
-        self.moderation_events_service.validate_moderation_status(event.status)
-
-        update_production_location = EventApprovalContext(
-            UpdateProductionLocation(event, os_id)
-        )
+            status_code = status.HTTP_200_OK
 
         try:
-            item = update_production_location.run_processing()
+            item = manage_production_location_context.run_processing()
         except Exception as error:
-            return self.moderation_events_service.handle_processing_error(
-                error
-            )
+            return ModerationEventsService.handle_processing_error(error)
 
         return Response(
-            {"os_id": item.facility_id}, status=status.HTTP_200_OK
+            {"os_id": item.facility_id},
+            status=status_code
         )
