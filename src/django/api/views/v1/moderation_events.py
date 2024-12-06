@@ -88,7 +88,8 @@ class ModerationEvents(ViewSet):
         if len(events) == 0:
             return Response(
                 data={
-                    "detail": "The moderation event with the given uuid was not found.",
+                    "detail": 'The moderation event with the '
+                    'given uuid was not found.',
                 },
                 status=status.HTTP_404_NOT_FOUND,
             )
