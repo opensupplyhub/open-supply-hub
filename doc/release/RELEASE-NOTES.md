@@ -46,6 +46,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [OSDEV-1170](https://opensupplyhub.atlassian.net/browse/OSDEV-1170) - Added the ability to automatically create a dump from the latest shared snapshot of the anonymized database from Production environment for use in the Test and Pre-Prod environments.
+* In light of recent instances(on 12/03/2024 UTC and 12/04/2024 UTC) where the current RDS disk storage space limit was reached in Production, the RDS storage size has been increased to `256 GB` in the Production, Test, and Pre-prod environments to accommodate the processing of larger volumes of data. The configurations for the Test and Pre-prod environments have also been updated to maintain parity with the Production environment.
 
 ### Bugfix
 * [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388) - The waiter from boto3 cannot wait more than half an hour so we replaced it with our own.
