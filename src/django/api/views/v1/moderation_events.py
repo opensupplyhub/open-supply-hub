@@ -3,11 +3,14 @@ from typing import Tuple
 from django.http import QueryDict
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from rest_framework.viewsets import ViewSet
 from rest_framework.decorators import action
 
 from api.moderation_event_actions.approval.add_production_location \
     import AddProductionLocation
+from api.moderation_event_actions.approval.update_production_location \
+    import UpdateProductionLocation
 from api.moderation_event_actions.approval.event_approval_context \
     import EventApprovalContext
 from api.permissions import IsRegisteredAndConfirmed
@@ -15,6 +18,8 @@ from api.serializers.v1.moderation_event_update_serializer \
     import ModerationEventUpdateSerializer
 from api.serializers.v1.moderation_events_serializer \
     import ModerationEventsSerializer
+from api.serializers.v1.update_production_location_serializer \
+    import UpdateProductionLocationSerializer
 from api.services.moderation_events_service import ModerationEventsService
 from api.services.opensearch.search import OpenSearchService
 from api.views.v1.index_names import OpenSearchIndexNames
@@ -24,7 +29,7 @@ from api.views.v1.opensearch_query_builder.opensearch_query_director import \
     OpenSearchQueryDirector
 from api.views.v1.utils import (
     handle_errors_decorator,
-    serialize_params
+    serialize_params,
 )
 
 
@@ -126,29 +131,53 @@ class ModerationEvents(ViewSet):
         )
 
     @handle_errors_decorator
-    @action(detail=True, methods=['POST'], url_path='production-locations')
-    def add_production_location(self, request, pk=None):
+    @action(
+        detail=True, methods=['POST', 'PATCH'], url_path='production-locations'
+    )
+    def manage_production_location(self, request, pk=None):
         ModerationEventsService.validate_user_permissions(request)
 
         ModerationEventsService.validate_uuid(pk)
 
-        event = ModerationEventsService.fetch_moderation_event_by_uuid(
-            pk
-        )
-
+        event = ModerationEventsService.fetch_moderation_event_by_uuid(pk)
         ModerationEventsService.validate_moderation_status(event.status)
 
-        add_production_location = EventApprovalContext(
-            AddProductionLocation(event)
-        )
+        if request.method == 'POST':
+            manage_production_location_context = EventApprovalContext(
+                AddProductionLocation(event)
+            )
+            status_code = status.HTTP_201_CREATED
 
-        try:
-            item = add_production_location.run_processing()
-        except Exception as error:
-            return ModerationEventsService.handle_processing_error(
-                error
+        else:
+            serializer = UpdateProductionLocationSerializer(data=request.data)
+
+            if not serializer.is_valid():
+                errors = [
+                    {"field": field, "message": message}
+                    for field, messages in serializer.errors.items()
+                    for message in messages
+                ]
+
+                raise ValidationError({
+                    "detail": 'The request body contains '
+                    'invalid or missing fields.',
+                    "errors": errors
+                })
+
+            os_id = serializer.validated_data.get('os_id')
+
+            manage_production_location_context = EventApprovalContext(
+                UpdateProductionLocation(event, os_id)
             )
 
+            status_code = status.HTTP_200_OK
+
+        try:
+            item = manage_production_location_context.run_processing()
+        except Exception as error:
+            return ModerationEventsService.handle_processing_error(error)
+
         return Response(
-            {"os_id": item.facility_id}, status=status.HTTP_201_CREATED
+            {"os_id": item.facility_id},
+            status=status_code
         )
