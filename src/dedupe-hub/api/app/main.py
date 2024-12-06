@@ -22,7 +22,6 @@ app = FastAPI()
 consumer_task = None
 consumer = None
 
-# initialize logger
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 log = logging.getLogger(__name__)

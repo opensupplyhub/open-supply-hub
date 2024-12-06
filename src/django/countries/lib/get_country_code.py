@@ -16,4 +16,4 @@ def get_country_code(country):
         return COUNTRY_CODES[country.lower()]
     else:
         raise ValueError(
-            'Could not find a country code for "{0}".'.format(country))
+            "Could not find a country code for '{0}'.".format(country))

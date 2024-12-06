@@ -12,22 +12,37 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Database changes
 #### Migrations:
-* *Describe migrations here.*
+* 0162_update_moderationevent_table_fields.py - This migration updates the ModerationEvent table and its constraints.
 
 #### Scheme changes
-* *Describe scheme changes here.*
+* [OSDEV-1158](https://opensupplyhub.atlassian.net/browse/OSDEV-1158) - The following updates to the ModerationEvent table have been made:
+    1. Set `uuid` as the primary key.
+    2. Make `geocode_result` field optional. It can be blank if lat and lng
+    have been provided by user.
+    3. Remove redundant `blank=False` and `null=False` constraints, as these are
+    the default values for model fields in Django and do not need to be
+    explicitly set.
+    4. Make `contributor` field non-nullable, as the field should not be left
+    empty. It is required to have information about the contributor.
+    5. Allow `claim` field to be blank. This change reflects the fact that
+    a moderation event may not always be related to a claim, so the field can
+    be left empty.
 
 ### Code/API changes
 * [OSDEV-1453](https://opensupplyhub.atlassian.net/browse/OSDEV-1453) - The `detail` keyword instead of `message` has been applied in error response objects for V1 endpoints.
-* [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Disabled null values from the response of the OpenSearch. Disabled possible null `os_id`, `claim_id` and `source` from `PATCH api/v1/moderation-events/{moderation_id}` response.
-* [OSDEV-1410](https://opensupplyhub.atlassian.net/browse/OSDEV-1410) - Introduced new POST `/api/moderation-events/{moderation_id}/production-locations` endpoint
+* [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Disabled null values from the response of the OpenSearch. Disabled possible null `os_id`, `claim_id` and `source` from `PATCH /api/v1/moderation-events/{moderation_id}/` response.
+* [OSDEV-1410](https://opensupplyhub.atlassian.net/browse/OSDEV-1410) - Introduced a new POST `/api/v1/moderation-events/{moderation_id}/production-locations/` endpoint
 * [OSDEV-1449](https://opensupplyhub.atlassian.net/browse/OSDEV-1449) - **Breaking changes** to the following endpoints:
-  - GET `v1/moderation-events`
-  - GET `v1/production-locations`
+  - GET `v1/moderation-events/`
+  - GET `v1/production-locations/`
 
   **Changes include:**
   - Refactored `sort_by` parameter to improve sorting functionality.
   - Split `search_after` parameter into `search_after_value` and `search_after_id` for better pagination control.
+
+* [OSDEV-1158](https://opensupplyhub.atlassian.net/browse/OSDEV-1158) - The following features and improvements have been made:
+    1. Introduced a new POST `/api/v1/production-locations/` endpoint based on the API v1 specification. This endpoint allows the creation of a new moderation event for the production location creation with the given details.
+    2. Removed redundant redefinition of paths via the `as_view` method for all the v1 API endpoints since they are already defined via `DefaultRouter`.
 
 ### Architecture/Environment changes
 * [OSDEV-1170](https://opensupplyhub.atlassian.net/browse/OSDEV-1170) - Added the ability to automatically create a dump from the latest shared snapshot of the anonymized database from Production environment for use in the Test and Pre-Prod environments.
@@ -41,6 +56,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
     * `reindex_database`
 
 
