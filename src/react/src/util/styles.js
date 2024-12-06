@@ -535,7 +535,7 @@ const arrowGenerator = color => ({
 
 export const makePreviousOsIdTooltipStyles = theme =>
     Object.freeze({
-        arrowPopperStyles: arrowGenerator(COLOURS.DARK_SLATE_GRAY),
+        arrowPopperStyles: arrowGenerator(COLOURS.DARK_SLATE_GREY),
         arrowStyles: Object.freeze({
             position: 'absolute',
             fontSize: 6,
@@ -551,7 +551,7 @@ export const makePreviousOsIdTooltipStyles = theme =>
             },
         }),
         tooltipStyles: Object.freeze({
-            backgroundColor: COLOURS.DARK_SLATE_GRAY,
+            backgroundColor: COLOURS.DARK_SLATE_GREY,
             color: COLOURS.WHITE,
             maxWidth: '149px',
             boxShadow: '0px 4px 4px 0px #00000040',
