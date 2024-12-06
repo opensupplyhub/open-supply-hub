@@ -1,10 +1,9 @@
 from django.http import QueryDict
 
-from api.os_id import validate_os_id
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from rest_framework.viewsets import ViewSet
-from rest_framework.exceptions import ParseError
 
 from api.moderation_event_actions.approval.add_production_location \
     import AddProductionLocation
@@ -17,6 +16,8 @@ from api.serializers.v1.moderation_event_update_serializer \
     import ModerationEventUpdateSerializer
 from api.serializers.v1.moderation_events_serializer \
     import ModerationEventsSerializer
+from api.serializers.v1.update_production_location_serializer \
+    import UpdateProductionLocationSerializer
 from api.services.moderation_events_service import ModerationEventsService
 from api.services.opensearch.search import OpenSearchService
 from api.views.v1.index_names import OpenSearchIndexNames
@@ -27,7 +28,6 @@ from api.views.v1.opensearch_query_builder.opensearch_query_director import \
 from api.views.v1.utils import (
     handle_errors_decorator,
     serialize_params,
-    create_error_detail
 )
 
 
@@ -138,28 +138,29 @@ class ModerationEvents(ViewSet):
         )
 
     @handle_errors_decorator
-    def update_production_location(
-        self, request, moderation_id=None, os_id=None
-    ):
+    def update_production_location(self, request, moderation_id):
         self.moderation_events_service.validate_user_permissions(request)
 
         self.moderation_events_service.validate_uuid(moderation_id)
 
-        if not os_id:
-            raise ParseError(
-                create_error_detail(
-                    field="os_id",
-                    detail="os_id is required."
-                )
-            )
+        serializer = UpdateProductionLocationSerializer(
+            data=request.data,
+        )
 
-        if not validate_os_id(os_id):
-            raise ParseError(
-                create_error_detail(
-                    field="os_id",
-                    detail="Invalid os_id format."
-                )
-            )
+        if not serializer.is_valid():
+            errors = [
+                {"field": field, "message": message}
+                for field, messages in serializer.errors.items()
+                for message in messages
+            ]
+
+            raise ValidationError({
+                "detail": 'The request body contains '
+                'invalid or missing fields.',
+                "errors": errors
+            })
+
+        os_id = serializer.validated_data.get('os_id')
 
         event = self.moderation_events_service.fetch_moderation_event_by_uuid(
             moderation_id
@@ -167,12 +168,12 @@ class ModerationEvents(ViewSet):
 
         self.moderation_events_service.validate_moderation_status(event.status)
 
-        add_production_location = EventApprovalContext(
+        update_production_location = EventApprovalContext(
             UpdateProductionLocation(event, os_id)
         )
 
         try:
-            item = add_production_location.run_processing()
+            item = update_production_location.run_processing()
         except Exception as error:
             return self.moderation_events_service.handle_processing_error(
                 error
