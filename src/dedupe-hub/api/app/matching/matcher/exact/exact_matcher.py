@@ -9,7 +9,6 @@ from app.matching.matcher.base_matcher import BaseMatcher
 from app.matching.matcher.exact.exact_item_match import ExactItemMatch
 from app.database.sqlalchemy import get_session
 
-# initialize logger
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 log = logging.getLogger(__name__)
