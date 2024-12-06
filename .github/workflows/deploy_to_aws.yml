@@ -30,7 +30,7 @@ on:
         type: boolean
         default: false
       clear-opensearch:
-        description: 'Clear OpenSearch indexes'
+        description: 'Clear custom OpenSearch indexes and templates'
         required: false
         type: boolean
         default: false
