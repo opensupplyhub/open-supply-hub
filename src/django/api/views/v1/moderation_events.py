@@ -1,9 +1,11 @@
-from django.http import QueryDict
+from typing import Tuple
 
+from django.http import QueryDict
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from rest_framework.viewsets import ViewSet
+from rest_framework.decorators import action
 
 from api.moderation_event_actions.approval.add_production_location \
     import AddProductionLocation
@@ -35,14 +37,16 @@ class ModerationEvents(ViewSet):
     swagger_schema = None
     permission_classes = [IsRegisteredAndConfirmed]
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.opensearch_service = OpenSearchService()
-        self.moderation_events_service = ModerationEventsService()
-        self.moderation_events_query_builder = ModerationEventsQueryBuilder()
-        self.opensearch_query_director = OpenSearchQueryDirector(
-                self.moderation_events_query_builder
-            )
+    @staticmethod
+    def __init_opensearch() -> Tuple[OpenSearchService,
+                                     OpenSearchQueryDirector]:
+        opensearch_service = OpenSearchService()
+        moderation_events_query_builder = ModerationEventsQueryBuilder()
+        opensearch_query_director = OpenSearchQueryDirector(
+            moderation_events_query_builder
+        )
+
+        return (opensearch_service, opensearch_query_director)
 
     @handle_errors_decorator
     def list(self, request):
@@ -56,11 +60,13 @@ class ModerationEvents(ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        query_body = self.opensearch_query_director.build_query(
+        opensearch_service, opensearch_query_director = \
+            self.__init_opensearch()
+        query_body = opensearch_query_director.build_query(
             request.GET
         )
 
-        response = self.opensearch_service.search_index(
+        response = opensearch_service.search_index(
             OpenSearchIndexNames.MODERATION_EVENTS_INDEX,
             query_body
         )
@@ -68,26 +74,40 @@ class ModerationEvents(ViewSet):
 
     @handle_errors_decorator
     def retrieve(self, _,  pk=None):
-        self.moderation_events_service.validate_uuid(pk)
+        ModerationEventsService.validate_uuid(pk)
 
+        opensearch_service, opensearch_query_director = \
+            self.__init_opensearch()
         query_params = QueryDict('', mutable=True)
         query_params.update({'moderation_id': pk})
-        query_body = self.opensearch_query_director.build_query(
+        query_body = opensearch_query_director.build_query(
             query_params
         )
-        response = self.opensearch_service.search_index(
+        response = opensearch_service.search_index(
             OpenSearchIndexNames.MODERATION_EVENTS_INDEX,
             query_body
         )
-        return Response(response)
+
+        events = response.get("data", [])
+
+        if len(events) == 0:
+            return Response(
+                data={
+                    "detail": 'The moderation event with the '
+                    'given uuid was not found.',
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(events[0])
 
     @handle_errors_decorator
-    def patch(self, request, pk=None):
-        self.moderation_events_service.validate_user_permissions(request)
+    def partial_update(self, request, pk=None):
+        ModerationEventsService.validate_user_permissions(request)
 
-        self.moderation_events_service.validate_uuid(pk)
+        ModerationEventsService.validate_uuid(pk)
 
-        event = self.moderation_events_service.fetch_moderation_event_by_uuid(
+        event = ModerationEventsService.fetch_moderation_event_by_uuid(
             pk
         )
 
@@ -111,16 +131,17 @@ class ModerationEvents(ViewSet):
         )
 
     @handle_errors_decorator
-    def add_production_location(self, request, moderation_id=None):
-        self.moderation_events_service.validate_user_permissions(request)
+    @action(detail=True, methods=['POST'], url_path='production-locations')
+    def add_production_location(self, request, pk=None):
+        ModerationEventsService.validate_user_permissions(request)
 
-        self.moderation_events_service.validate_uuid(moderation_id)
+        ModerationEventsService.validate_uuid(pk)
 
-        event = self.moderation_events_service.fetch_moderation_event_by_uuid(
-            moderation_id
+        event = ModerationEventsService.fetch_moderation_event_by_uuid(
+            pk
         )
 
-        self.moderation_events_service.validate_moderation_status(event.status)
+        ModerationEventsService.validate_moderation_status(event.status)
 
         add_production_location = EventApprovalContext(
             AddProductionLocation(event)
@@ -129,7 +150,7 @@ class ModerationEvents(ViewSet):
         try:
             item = add_production_location.run_processing()
         except Exception as error:
-            return self.moderation_events_service.handle_processing_error(
+            return ModerationEventsService.handle_processing_error(
                 error
             )
 

@@ -22,7 +22,6 @@ from app.matching.matcher.gazeteer.gazetteer_match_defaults import GazetteerMatc
 from app.matching.matcher.gazeteer.gazetteer_helper import normalize_extended_facility_id
 from app.database.sqlalchemy import get_session
 
-# initialize logger
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 log = logging.getLogger(__name__)

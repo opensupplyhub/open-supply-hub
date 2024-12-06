@@ -27,6 +27,10 @@ class RowCountrySerializerTest(TestCase):
         self.assertEqual(result["errors"][0]["type"], "Error")
         self.assertEqual(
             result["errors"][0]["message"],
-            "Could not find a country code for \"Invalid Country\".",
+            "Could not find a country code for 'Invalid Country'.",
+        )
+        self.assertEqual(
+            result["errors"][0]["field"],
+            "country",
         )
         self.assertNotIn("country_code", result)

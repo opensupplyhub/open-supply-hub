@@ -26,5 +26,5 @@ class CountryCodeParserTest(TestCase):
             get_country_code("Invalid Country")
         self.assertEqual(
             str(context.exception),
-            'Could not find a country code for "Invalid Country".'
+            "Could not find a country code for 'Invalid Country'."
         )

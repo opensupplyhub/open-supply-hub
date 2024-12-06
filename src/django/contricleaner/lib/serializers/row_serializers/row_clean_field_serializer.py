@@ -12,10 +12,14 @@ class RowCleanFieldSerializer(RowSerializer):
         clean_value = clean(row.get(self.field, ''))
 
         if not clean_value:
-            current["errors"].append(
+            current['errors'].append(
                 {
-                    "message": "{} cannot be empty.".format(self.new_field),
-                    "type": "Error",
+                    'message': (
+                        '{} cannot consist solely of '
+                        'punctuation or whitespace.'
+                        ).format(self.field),
+                    'field': self.field,
+                    'type': 'Error',
                 }
             )
             return current

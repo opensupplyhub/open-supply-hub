@@ -16,6 +16,8 @@ import requests
 from django.core.exceptions import ImproperlyConfigured
 from corsheaders.defaults import default_headers
 
+from api.constants import NON_FIELD_ERRORS_KEY
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -171,7 +173,11 @@ REST_FRAMEWORK = {
         'sustained': '10000/day',
         'data_upload': '30/minute',
         'tiles': '300/minute',
-    }
+    },
+    # By default, the value of NON_FIELD_ERRORS_KEY is 'non_field_errors'.
+    # It is being redefined to ensure 100% consistency between custom error
+    # messages and Django's built-in ones.
+    'NON_FIELD_ERRORS_KEY': NON_FIELD_ERRORS_KEY
 }
 
 SWAGGER_SETTINGS = {

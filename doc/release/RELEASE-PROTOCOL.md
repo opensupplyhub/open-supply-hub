@@ -49,6 +49,8 @@ This document outlines the SDLC pillars of the opensupplyhub monorepo, as well a
 | v1.23.0 | November 02, 2024  | October 29, 2024 | @Vadim Kovalenko |
 | v1.24.0 | November 16, 2024  | November 12, 2024 | @Oleksandr Mazur |
 | v1.25.0 | November 30, 2024  | November 26, 2024 | @Oleksandr Mazur |
+| v1.26.0 | December 14, 2024  | December 10, 2024 | @Nessa Drew |
+| v1.27.0 | December 28, 2024  | December 24, 2024 | @Nessa Drew |
 
 ## General Information
 
@@ -110,12 +112,12 @@ Each new feature should reside in its own branch, which can be pushed to the cen
 Once `main` has acquired enough features for a release (or a predetermined release date is approaching), you run the `Release [Init]` GitHub workflow that creates a new release branch with a version number for the release. The release version number for release branches includes only the major and minor versions.
 
 When the release branch is ready for release, the `Release [Deploy]` workflow should be run for each environment, such as sandbox and production. This workflow will create two Git tags, each with a version number.
-This workflow will also initiate the Deploy to AWS workflow and pass it the necessary parameters. If you need to clear OpenSearch indexes during deployment, you need to select the Clear OpenSearch indexes checkbox.
+This workflow will also initiate the Deploy to AWS workflow and pass it the necessary parameters. If you need to clear the custom OpenSearch indexes and tenplates during deployment, you need to select the `Clear the custom OpenSearch indexes and templates` checkbox.
 
 #### Hotfix branches
 
 Hotfix branches are utilized to quickly patch production and sandbox releases. They resemble release branches and feature branches, except they are based on a release branch instead of `main`. This is the branch that should fork directly from a release branch. As soon as the fix is complete, it should be merged into the release branch and, if the fix isn't dirty, into `main` as well. After manually running the `Release [Deploy]` workflow, two new tags with increased patch versions will be created, and the new version will be shipped to sandbox and production environments.
-This workflow will also initiate the Deploy to AWS workflow and pass it the necessary parameters. If you need to clear OpenSearch indexes during deployment, you need to select the Clear OpenSearch indexes checkbox.
+This workflow will also initiate the Deploy to AWS workflow and pass it the necessary parameters. If you need to clear the custom OpenSearch indexes and templates during deployment, you need to select the `Clear the custom OpenSearch indexes and templates` checkbox.
 
 #### Quick-fix branches
 
@@ -143,7 +145,7 @@ Make sure that:
 2. Before initiating the code freeze process, ensure that all commands required for the deployment process (e.g., `index_facilities_new`) are included in the `post_deployment` command.
 3. On the day of the code freeze, the responsible person has to run the `Release [Init]` workflow from the `main` branch, specifying the major and minor versions of the release. Subsequently, the `releases/v.X.Y` branch will be created and automatically deployed to the running pre-prod environment via the `Deploy to AWS` workflow.
 4. After a successful deployment, you should copy the ARN of the `terraform` user from the AWS IAM console. Navigate to the AWS console's search input, type "IAM", and open the IAM console. In the IAM console, find and click on the "Users" tab. In the list of available users, locate the `terraform` user, click on it, and on that page, you will find its ARN. After copying this value, go to the AWS OpenSearch console in the same way you accessed the IAM console. Open the available domains and locate the domain for the preprod environment. Open it, then navigate to the security configuration and click "Edit". Find the section titled "Fine-grained access control", and under this section, you will find an "IAM ARN" input field. Paste the copied ARN into this field and save the changes. It may take several minutes to apply. Make sure that the "Configuration change status" field has green status.
-5. You need to run the `DB - Save Anonymized DB` workflow (if this job did not run on the same or the previous day). Once the Anonymized DB is successfully saved, run the `DB - Apply Anonymized DB` workflow to ensure that testing will be conducted with up-to-date data.
+5. You need to run the `DB - Save Anonymized DB` workflow (if this job did not run on the same or the previous day). Once the Anonymized DB is successfully saved, run the `DB - Apply Anonymized DB` workflow to ensure that testing will be conducted with up-to-date data. Be sure to select the `Pre-prod` environment and the `releases/v.X.Y` branch before running the `DB - Apply Anonymized DB` workflow.
 6. In case there is a need to run a command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Migration+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5DHow-to-correctly-run-migrations-for-our-four-environments%3F---Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
 
 ### QA process
@@ -157,7 +159,7 @@ Make sure that:
 1. To enhance communication within the team, the responsible person for the release must notify all stakeholders about the release two working days before its scheduled date and in 1-2 hours to prevent any actions on the environment on which the deployment is carried out.
 2. The responsible person have to take db snapshot manually via Amazon RDS in the `Snapshots` tab with name `env-db-date` (examples: `stg-db-05-18-2024` and `prd-db-05-18-2024`).
 3. On the designated time and day, before triggering workflow on Production environment the responsible person have manually make active the `disable_list_uploading` switch, as mentioned in [Block loading of new production locations](#block-loading-production-locations).
-4. Then the responsible person runs the `Release [Deploy]` workflow for the sandbox and production environments from the release branch. They need to fill in the full release tag version (`X.Y.Z`) and choose the environment. If the responsible person need to clear OpenSearch indexes during deployment, they must select the Clear OpenSearch indexes checkbox.
+4. Then the responsible person runs the `Release [Deploy]` workflow for the sandbox and production environments from the release branch. They need to fill in the full release tag version (`X.Y.Z`) and choose the environment. If the responsible person need to clear the custom OpenSearch indexes and templates during deployment, they must select the `Clear the custom OpenSearch indexes and templates` checkbox.
 ℹ️ Note, that `Deploy to AWS` workflow will be triggered <strong>automatically</strong> for the sandbox and production environments respectively.
 5. After completing the triggered workflows, the responsible person must open the AWS console and verify that all tasks of the `OpenSupplyHubStagingAppDD`, `OpenSupplyHubStagingApp`, `OpenSupplyHubStagingAppLogstash`, `OpenSupplyHubProductionAppDD`, `OpenSupplyHubProductionApp` and `OpenSupplyHubProductionAppLogstash` services in the `ecsOpenSupplyHubStagingCluster` and `ecsOpenSupplyHubProductionCluster` Amazon ECS clusters, respectively, have been restarted.
 6. Additionally, it is necessary to check the OpenSearch domains and their statuses, such as Domain Processing Status, Configuration Change Status, and Cluster Health, to ensure they are green (which indicates that everything is fine). Use the Amazon OpenSearch Service console to check this.
@@ -173,7 +175,7 @@ In case there is a need to run additional command in the terminal of the Django 
 ### Hotfixes
 
 - To deploy a hotfix to pre-prod, you should fork from the latest release branch, and after preparing the fix, merge it back. Merging will trigger the `Deploy to AWS` workflow that will deploy the hotfix to the **running** pre-prod environment.
-- To release a hotfix to production and staging, you should fork from the latest release branch, and after preparing the fix, merge it back. For production you have to make active the `disable_list_uploading` switch. The last step is to execute the `Release [Deploy]` workflow for each environment separately, which will deploy the fix to these two environments. If you need to clear OpenSearch indexes during deployment, you must select the Clear OpenSearch indexes checkbox. At the end for production make inactive the `disable_list_uploading` switch.
+- To release a hotfix to production and staging, you should fork from the latest release branch, and after preparing the fix, merge it back. For production you have to make active the `disable_list_uploading` switch. The last step is to execute the `Release [Deploy]` workflow for each environment separately, which will deploy the fix to these two environments. If you need to clear the custom OpenSearch indexes and templates during deployment, you must select the `Clear the custom OpenSearch indexes and templates` checkbox. At the end for production make inactive the `disable_list_uploading` switch.
 
 ### Quick-fixes
 
