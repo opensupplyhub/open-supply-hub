@@ -91,6 +91,8 @@ from ...serializers import (
     FacilityQueryParamsSerializer,
     FacilityUpdateLocationParamsSerializer,
 )
+from api.serializers.facility.facility_get_list_page_serializer \
+    import FacilityGetListPageSerializer
 from ...throttles import DataUploadThrottle
 
 from ..disabled_pagination_inspector import DisabledPaginationInspector
@@ -220,6 +222,17 @@ class FacilitiesViewSet(ListModelMixin,
                 ]
             }
         """
+        page_serializer = FacilityGetListPageSerializer(
+            data=request.query_params
+        )
+        if not page_serializer.is_valid():
+            return Response(
+                data={
+                    "detail": "API limit exceeded.",
+                },
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+
         params = FacilityQueryParamsSerializer(data=request.query_params)
 
         if not params.is_valid():
