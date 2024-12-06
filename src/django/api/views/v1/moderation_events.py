@@ -83,7 +83,18 @@ class ModerationEvents(ViewSet):
             query_body
         )
 
-        return Response(response)
+        events = response.get("data", [])
+
+        if len(events) == 0:
+            return Response(
+                data={
+                    "detail": 'The moderation event with the '
+                    'given uuid was not found.',
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(events[0])
 
     @handle_errors_decorator
     def partial_update(self, request, pk=None):

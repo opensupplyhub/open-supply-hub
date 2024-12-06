@@ -52,6 +52,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388) - The waiter from boto3 cannot wait more than half an hour so we replaced it with our own.
 * It was found that clearing OpenSearch indexes didn’t work properly because the templates weren’t cleared. After updating the index mappings within the index template files, the index template remained unchanged because only the indexes were deleted during deployment, not both the indexes and their templates. This caused conflicts and prevented developers' updates from being applied to the OpenSearch indexes.
 This issue has been fixed by adding additional requests to delete the appropriate index templates to the `clear_opensearch.sh.tpl` script, which is triggered when clearing OpenSearch during deployment to any environment.
+* [OSDEV-1482](https://opensupplyhub.atlassian.net/browse/OSDEV-1482) - The `GET api/v1/moderation-events/{moderation_id}` endpoint returns a single response instead of an array containing one item.
 
 ### What's new
 * [OSDEV-1175](https://opensupplyhub.atlassian.net/browse/OSDEV-1175) - New Moderation Queue Page was integrated with `GET api/v1/moderation-events/` endpoint that include pagination, sorting and filtering.
