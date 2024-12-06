@@ -30,7 +30,7 @@ on:
         type: boolean
         default: false
       clear-opensearch:
-        description: 'Clear OpenSearch indexes'
+        description: 'Clear the custom OpenSearch indexes and templates'
         required: false
         type: boolean
         default: false
@@ -413,7 +413,7 @@ jobs:
           echo "EFS_ID=$EFS_ID" >> $GITHUB_OUTPUT
           echo "EFS_AP_ID=$EFS_AP_ID" >> $GITHUB_OUTPUT
           echo "OPENSEARCH_DOMAIN=$OPENSEARCH_DOMAIN" >> $GITHUB_OUTPUT
-      - name: Clear the OpenSearch indexes for ${{ vars.ENV_NAME }}
+      - name: Clear the custom OpenSearch indexes and templates for ${{ vars.ENV_NAME }}
         if: ${{ inputs.restore-db == true || inputs.clear-opensearch == true}}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
