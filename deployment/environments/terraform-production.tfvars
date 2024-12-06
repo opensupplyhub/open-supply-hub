@@ -12,7 +12,7 @@ cloudfront_price_class = "PriceClass_All"
 bastion_ami = "ami-0bb3fad3c0286ebd5"
 bastion_instance_type = "t3.nano"
 
-rds_allocated_storage = "128"
+rds_allocated_storage = "256"
 rds_engine_version = "12"
 rds_parameter_group_family = "postgres12"
 rds_instance_type = "db.m6in.8xlarge"
