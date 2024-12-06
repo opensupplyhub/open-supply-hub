@@ -12,8 +12,7 @@ class ModerationEventsTest(BaseAPITest):
                 headers=self.basic_headers,
             )
 
-        result = response.json()
-        self.assertEqual(result['count'], 0)
+        self.assertEqual(response.status_code, 404)
 
         moderation_id = '1f35a90f-70a0-4c3e-8e06-2ed8e1fc6800'
         response = requests.get(
@@ -22,8 +21,7 @@ class ModerationEventsTest(BaseAPITest):
             )
 
         result = response.json()
-        self.assertEqual(result['count'], 1)
-        self.assertEqual(result['data'][0]['moderation_id'], moderation_id)
+        self.assertEqual(result['moderation_id'], moderation_id)
 
     def test_moderation_events_status(self):
         response = requests.get(
