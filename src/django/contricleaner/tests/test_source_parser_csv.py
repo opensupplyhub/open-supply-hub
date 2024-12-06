@@ -50,11 +50,11 @@ class SourceParserCSVTest(TestCase):
                     'product_type': ['Jeans'],
                     'facility_type': {
                         'raw_values': 'Embellishment',
-                        'processed_values': {'Embellishment'},
+                        'processed_values': ['Embellishment'],
                     },
                     'processing_type': {
                         'raw_values': 'Embellishment',
-                        'processed_values': {'Embellishment'},
+                        'processed_values': ['Embellishment'],
                     },
                     'country': 'United States',
                     'parent_company': '',
@@ -109,11 +109,11 @@ class SourceParserCSVTest(TestCase):
                 fields={
                     'facility_type': {
                         'raw_values': 'Embossing',
-                        'processed_values': {'Embossing'},
+                        'processed_values': ['Embossing'],
                     },
                     'processing_type': {
                         'raw_values': 'Embossing',
-                        'processed_values': {'Embossing'},
+                        'processed_values': ['Embossing'],
                     },
                     'country': 'Italy',
                     'parent_company': '',
@@ -159,6 +159,7 @@ class SourceParserCSVTest(TestCase):
             'Please save and export your file as a UTF-8 CSV or an Excel file '
             'and reupload.')
         expected_error_type = 'ParsingError'
+        expected_error_field = 'non_field_errors'
 
         with open('test.csv', 'wb') as csv_file:
             csv_file.write(b'\xff\xfe')  # Non-UTF-8 data for the header.
@@ -172,8 +173,10 @@ class SourceParserCSVTest(TestCase):
         error_dict = processed_data.errors[0]
         error_message = error_dict['message']
         error_type = error_dict['type']
+        error_field = error_dict['field']
 
         self.assertEqual(error_message, expected_error_message)
         self.assertEqual(error_type, expected_error_type)
+        self.assertEqual(error_field, expected_error_field)
 
         os.remove('test.csv')
