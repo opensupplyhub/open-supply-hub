@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script is necessary to delete custom OpenSearch indexes,
+# This script is necessary to delete the custom OpenSearch indexes,
 # templates, and Logstash pipeline lock files in order to apply
 # new index mappings or to refresh the OpenSearch cluster after
 # restarting Logstash, with the lock files deleted from EFS
@@ -11,11 +11,11 @@
 # targeted refresh without affecting the entire OpenSearch cluster.
 # This can help speed up the deployment process of new changes.
 
-echo -e "\nDelete custom OpenSearch indexes\n"
+echo -e "\nDelete the custom OpenSearch indexes\n"
 curl -X DELETE https://$OPENSEARCH_DOMAIN/production-locations --aws-sigv4 "aws:amz:eu-west-1:es" --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY"
 curl -X DELETE https://$OPENSEARCH_DOMAIN/moderation-events --aws-sigv4 "aws:amz:eu-west-1:es" --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY"
 
-echo -e "\nDelete custom OpenSearch templates\n"
+echo -e "\nDelete the custom OpenSearch templates\n"
 curl -X DELETE https://$OPENSEARCH_DOMAIN/_index_template/production_locations_template --aws-sigv4 "aws:amz:eu-west-1:es" --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY"
 curl -X DELETE https://$OPENSEARCH_DOMAIN/_index_template/moderation_events_template --aws-sigv4 "aws:amz:eu-west-1:es" --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY"
 

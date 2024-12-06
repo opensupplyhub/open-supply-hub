@@ -112,12 +112,12 @@ Each new feature should reside in its own branch, which can be pushed to the cen
 Once `main` has acquired enough features for a release (or a predetermined release date is approaching), you run the `Release [Init]` GitHub workflow that creates a new release branch with a version number for the release. The release version number for release branches includes only the major and minor versions.
 
 When the release branch is ready for release, the `Release [Deploy]` workflow should be run for each environment, such as sandbox and production. This workflow will create two Git tags, each with a version number.
-This workflow will also initiate the Deploy to AWS workflow and pass it the necessary parameters. If you need to clear custom OpenSearch indexes and tenplates during deployment, you need to select the `Clear custom OpenSearch indexes and templates` checkbox.
+This workflow will also initiate the Deploy to AWS workflow and pass it the necessary parameters. If you need to clear the custom OpenSearch indexes and tenplates during deployment, you need to select the `Clear the custom OpenSearch indexes and templates` checkbox.
 
 #### Hotfix branches
 
 Hotfix branches are utilized to quickly patch production and sandbox releases. They resemble release branches and feature branches, except they are based on a release branch instead of `main`. This is the branch that should fork directly from a release branch. As soon as the fix is complete, it should be merged into the release branch and, if the fix isn't dirty, into `main` as well. After manually running the `Release [Deploy]` workflow, two new tags with increased patch versions will be created, and the new version will be shipped to sandbox and production environments.
-This workflow will also initiate the Deploy to AWS workflow and pass it the necessary parameters. If you need to clear custom OpenSearch indexes and templates during deployment, you need to select the `Clear custom OpenSearch indexes and templates` checkbox.
+This workflow will also initiate the Deploy to AWS workflow and pass it the necessary parameters. If you need to clear the custom OpenSearch indexes and templates during deployment, you need to select the `Clear the custom OpenSearch indexes and templates` checkbox.
 
 #### Quick-fix branches
 
@@ -159,7 +159,7 @@ Make sure that:
 1. To enhance communication within the team, the responsible person for the release must notify all stakeholders about the release two working days before its scheduled date and in 1-2 hours to prevent any actions on the environment on which the deployment is carried out.
 2. The responsible person have to take db snapshot manually via Amazon RDS in the `Snapshots` tab with name `env-db-date` (examples: `stg-db-05-18-2024` and `prd-db-05-18-2024`).
 3. On the designated time and day, before triggering workflow on Production environment the responsible person have manually make active the `disable_list_uploading` switch, as mentioned in [Block loading of new production locations](#block-loading-production-locations).
-4. Then the responsible person runs the `Release [Deploy]` workflow for the sandbox and production environments from the release branch. They need to fill in the full release tag version (`X.Y.Z`) and choose the environment. If the responsible person need to clear custom OpenSearch indexes and templates during deployment, they must select the `Clear custom OpenSearch indexes and templates` checkbox.
+4. Then the responsible person runs the `Release [Deploy]` workflow for the sandbox and production environments from the release branch. They need to fill in the full release tag version (`X.Y.Z`) and choose the environment. If the responsible person need to clear the custom OpenSearch indexes and templates during deployment, they must select the `Clear the custom OpenSearch indexes and templates` checkbox.
 ℹ️ Note, that `Deploy to AWS` workflow will be triggered <strong>automatically</strong> for the sandbox and production environments respectively.
 5. After completing the triggered workflows, the responsible person must open the AWS console and verify that all tasks of the `OpenSupplyHubStagingAppDD`, `OpenSupplyHubStagingApp`, `OpenSupplyHubStagingAppLogstash`, `OpenSupplyHubProductionAppDD`, `OpenSupplyHubProductionApp` and `OpenSupplyHubProductionAppLogstash` services in the `ecsOpenSupplyHubStagingCluster` and `ecsOpenSupplyHubProductionCluster` Amazon ECS clusters, respectively, have been restarted.
 6. Additionally, it is necessary to check the OpenSearch domains and their statuses, such as Domain Processing Status, Configuration Change Status, and Cluster Health, to ensure they are green (which indicates that everything is fine). Use the Amazon OpenSearch Service console to check this.
@@ -175,7 +175,7 @@ In case there is a need to run additional command in the terminal of the Django 
 ### Hotfixes
 
 - To deploy a hotfix to pre-prod, you should fork from the latest release branch, and after preparing the fix, merge it back. Merging will trigger the `Deploy to AWS` workflow that will deploy the hotfix to the **running** pre-prod environment.
-- To release a hotfix to production and staging, you should fork from the latest release branch, and after preparing the fix, merge it back. For production you have to make active the `disable_list_uploading` switch. The last step is to execute the `Release [Deploy]` workflow for each environment separately, which will deploy the fix to these two environments. If you need to clear custom OpenSearch indexes and templates during deployment, you must select the `Clear custom OpenSearch indexes and templates` checkbox. At the end for production make inactive the `disable_list_uploading` switch.
+- To release a hotfix to production and staging, you should fork from the latest release branch, and after preparing the fix, merge it back. For production you have to make active the `disable_list_uploading` switch. The last step is to execute the `Release [Deploy]` workflow for each environment separately, which will deploy the fix to these two environments. If you need to clear the custom OpenSearch indexes and templates during deployment, you must select the `Clear the custom OpenSearch indexes and templates` checkbox. At the end for production make inactive the `disable_list_uploading` switch.
 
 ### Quick-fixes
 
