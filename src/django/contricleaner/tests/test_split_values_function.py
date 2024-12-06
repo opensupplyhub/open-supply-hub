@@ -7,17 +7,17 @@ class SplitValuesFunctionTest(TestCase):
     def test_string_split(self):
         # Test splitting a string
         result = split_values("Apparel,Toys,Food", ",")
-        self.assertEqual(result, {"Apparel", "Toys", "Food"})
+        self.assertCountEqual(result, ["Apparel", "Toys", "Food"])
 
     def test_list_split(self):
         # Test splitting a list of strings
         result = split_values(["Apparel,Toys", "Food,Coal"], ",")
-        self.assertEqual(result, {"Apparel", "Toys", "Food", "Coal"})
+        self.assertCountEqual(result, ["Apparel", "Toys", "Food", "Coal"])
 
     def test_set_split(self):
         # Test splitting a set of strings
         result = split_values({"Apparel,Toys", "Food,Coal"}, ",")
-        self.assertEqual(result, {"Apparel", "Toys", "Food", "Coal"})
+        self.assertCountEqual(result, ["Apparel", "Toys", "Food", "Coal"])
 
     def test_mixed_type_split(self):
         # Test splitting a mix of string, list, and set
@@ -25,9 +25,9 @@ class SplitValuesFunctionTest(TestCase):
             ["Apparel", "Toys,Coal", ["Books, Energy"], {"Food|Gas"}],
             r", |,|\|",
         )
-        self.assertEqual(
+        self.assertCountEqual(
             result,
-            {
+            [
                 "Apparel",
                 "Toys",
                 "Coal",
@@ -35,5 +35,5 @@ class SplitValuesFunctionTest(TestCase):
                 "Energy",
                 "Food",
                 "Gas",
-            },
+            ],
         )

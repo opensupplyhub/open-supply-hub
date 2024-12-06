@@ -23,7 +23,7 @@ from api.serializers.v1.opensearch_common_validators. \
     countries_validator import CountryValidator
 from api.serializers.v1.opensearch_common_validators. \
     date_range_validator import DateRangeValidator
-from api.views.v1.utils import COMMON_ERROR_DETAIL
+from api.constants import APIV1CommonErrorMessages
 
 
 class ModerationEventsSerializer(Serializer):
@@ -86,7 +86,7 @@ class ModerationEventsSerializer(Serializer):
         if errors:
             # [OSDEV-1441] Pass error msg to the Rollbar here
             raise ValidationError({
-                "detail": COMMON_ERROR_DETAIL,
+                "detail": APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR,
                 "errors": errors
             })
 
