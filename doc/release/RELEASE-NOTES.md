@@ -49,7 +49,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388) - The waiter from boto3 cannot wait more than half an hour so we replaced it with our own.
-* [OSDEV-1482](https://opensupplyhub.atlassian.net/browse/OSDEV-1482) - The `GET api/v1/moderation-events/{moderation_id}` endpoint return single response instead of array with one item.
+* [OSDEV-1482](https://opensupplyhub.atlassian.net/browse/OSDEV-1482) - The `GET api/v1/moderation-events/{moderation_id}` endpoint returns a single response instead of an array containing one item.
 
 ### What's new
 * [OSDEV-1175](https://opensupplyhub.atlassian.net/browse/OSDEV-1175) - New Moderation Queue Page was integrated with `GET api/v1/moderation-events/` endpoint that include pagination, sorting and filtering.
