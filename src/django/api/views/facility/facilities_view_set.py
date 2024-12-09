@@ -91,6 +91,8 @@ from ...serializers import (
     FacilityQueryParamsSerializer,
     FacilityUpdateLocationParamsSerializer,
 )
+from api.serializers.facility.facility_list_page_parameter_serializer \
+    import FacilityListPageParameterSerializer
 from ...throttles import DataUploadThrottle
 
 from ..disabled_pagination_inspector import DisabledPaginationInspector
@@ -220,6 +222,12 @@ class FacilitiesViewSet(ListModelMixin,
                 ]
             }
         """
+        page_serializer = FacilityListPageParameterSerializer(
+            data=request.query_params
+        )
+        if not page_serializer.is_valid():
+            raise ValidationError(page_serializer.errors)
+
         params = FacilityQueryParamsSerializer(data=request.query_params)
 
         if not params.is_valid():
