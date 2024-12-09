@@ -5,6 +5,7 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
 import SearchByOsIdTab from './SearchByOsIdTab';
+import SearchByNameAndAddressTab from './SearchByNameAndAddressTab';
 import { makeContributeProductionLocationStyles } from '../../util/styles';
 
 const TAB_OS_ID = 'os-id';
@@ -55,8 +56,8 @@ const ContributeProductionLocation = ({ classes }) => {
                             selected: classes.tabSelectedStyles,
                             labelContainer: classes.tabLabelContainerStyles,
                         }}
-                        label="Search by OS ID"
-                        value={TAB_OS_ID}
+                        label="Search by Name and Address"
+                        value={TAB_NAME_ADDRESS}
                     />
                     <Tab
                         classes={{
@@ -64,13 +65,13 @@ const ContributeProductionLocation = ({ classes }) => {
                             selected: classes.tabSelectedStyles,
                             labelContainer: classes.tabLabelContainerStyles,
                         }}
-                        label="Search by Name and Address"
-                        value={TAB_NAME_ADDRESS}
+                        label="Search by OS ID"
+                        value={TAB_OS_ID}
                     />
                 </Tabs>
                 {selectedTab === TAB_OS_ID && <SearchByOsIdTab />}
                 {selectedTab === TAB_NAME_ADDRESS && (
-                    <div>Search by Name and Address Tab</div>
+                    <SearchByNameAndAddressTab />
                 )}
             </div>
         </div>
