@@ -6,6 +6,7 @@ from django.utils.timezone import now
 
 from rest_framework.test import APITestCase
 
+from api.constants import APIV1MatchTypes
 from api.models import ModerationEvent, User, Contributor
 from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
@@ -337,7 +338,7 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
         self.assertEqual(
             facility_match.results,
             {
-                "match_type": "moderation_event",
+                "match_type": APIV1MatchTypes.NEW_PRODUCTION_LOCATION,
             },
         )
 
@@ -369,7 +370,7 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
         self.assertEqual(
             facility_match_temp.results,
             {
-                "match_type": "moderation_event",
+                "match_type": APIV1MatchTypes.NEW_PRODUCTION_LOCATION,
             },
         )
 
