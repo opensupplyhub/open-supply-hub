@@ -116,7 +116,7 @@ jobs:
           echo "EFS_ID=$EFS_ID" >> $GITHUB_OUTPUT
           echo "EFS_AP_ID=$EFS_AP_ID" >> $GITHUB_OUTPUT
           echo "OPENSEARCH_DOMAIN=$OPENSEARCH_DOMAIN" >> $GITHUB_OUTPUT
-      - name: Clear the OpenSearch indexes for ${{ vars.ENV_NAME }}
+      - name: Clear the custom OpenSearch indexes and templates for ${{ vars.ENV_NAME }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

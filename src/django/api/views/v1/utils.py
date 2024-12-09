@@ -1,14 +1,14 @@
 import logging
 from functools import wraps
+
 from rest_framework.response import Response
 from rest_framework import status
+
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 from api.services.opensearch.search import OpenSearchServiceException
+from api.constants import APIV1CommonErrorMessages, NON_FIELD_ERRORS_KEY
 
 logger = logging.getLogger(__name__)
-
-
-COMMON_ERROR_DETAIL = 'The request query is invalid.'
 
 
 def serialize_params(serializer_class, query_params):
@@ -47,7 +47,8 @@ def serialize_params(serializer_class, query_params):
         error_response = {'detail': None, 'errors': []}
         # Handle common validation errors.
         if 'detail' not in params.errors and 'errors' not in params.errors:
-            error_response['detail'] = COMMON_ERROR_DETAIL
+            error_response['detail'] = \
+                APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR
             for field, error_list in params.errors.items():
                 error_response['errors'].append({
                     'field': field,
@@ -74,10 +75,10 @@ def handle_value_error(e):
     logger.error(f'Error processing request: {e}')
     return Response(
         {
-            "detail": COMMON_ERROR_DETAIL,
+            "detail": APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR,
             "errors": [
                 {
-                    "field": "general",
+                    "field": NON_FIELD_ERRORS_KEY,
                     "detail": (
                         "There was a problem processing your request. "
                         "Please check your input."

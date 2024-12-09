@@ -18,7 +18,6 @@ from contricleaner.lib.dto.list_dto import ListDTO
 from contricleaner.lib.dto.row_dto import RowDTO
 from oar.rollbar import report_error_to_rollbar
 
-# Initialize logger.
 log = logging.getLogger(__name__)
 
 
