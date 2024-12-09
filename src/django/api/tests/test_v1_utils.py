@@ -142,7 +142,8 @@ class V1UtilsTests(TestCase):
             response.data['detail'],
             "The request query is invalid."
         )
-        self.assertEqual(response.data['errors'][0]['field'], "general")
+        self.assertEqual(response.data['errors'][0]['field'],
+                         "non_field_errors")
         self.assertIn(
             "There was a problem processing your request.",
             response.data['errors'][0]['detail']

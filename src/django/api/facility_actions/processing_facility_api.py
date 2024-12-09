@@ -3,7 +3,7 @@ import logging
 import traceback
 from typing import Any, Dict, List, Union
 
-from api.constants import ErrorMessages, ProcessingAction
+from api.constants import APIErrorMessages, ProcessingAction
 from api.extended_fields import create_extendedfields_for_single_item
 from api.facility_actions.processing_facility import ProcessingFacility
 from api.geocoding import geocode_address
@@ -27,7 +27,6 @@ from django.core import exceptions as core_exceptions
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
-# Initialize logger.
 log = logging.getLogger(__name__)
 
 
@@ -246,7 +245,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
         else:
             item.status = FacilityListItem.GEOCODED_NO_RESULTS
             result['status'] = item.status
-            result['message'] = ErrorMessages.GEOCODED_NO_RESULTS
+            result['message'] = APIErrorMessages.GEOCODED_NO_RESULTS
 
         item.processing_results.append(
             {
