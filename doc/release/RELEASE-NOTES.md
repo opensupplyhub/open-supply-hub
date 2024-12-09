@@ -56,6 +56,7 @@ This issue has been fixed by adding additional requests to delete the appropriat
 
 ### What's new
 * [OSDEV-1132](https://opensupplyhub.atlassian.net/browse/OSDEV-1132) - Added FE for the "thanks for submitting" screen when user submits production location's data.
+* [OSDEV-1373](https://opensupplyhub.atlassian.net/browse/OSDEV-1373) - The tab `Search by Name and Address.` on the Production Location Search screen has been implemented. There are three required properties (name, address, country). The "Search" button becomes clickable after filling out inputs, creates a link with parameters, and allows users to proceed to the results screen.
 * [OSDEV-1175](https://opensupplyhub.atlassian.net/browse/OSDEV-1175) - New Moderation Queue Page was integrated with `GET api/v1/moderation-events/` endpoint that include pagination, sorting and filtering.
 
 ### Release instructions:
