@@ -153,9 +153,9 @@ class ModerationEvents(ViewSet):
 
             if not serializer.is_valid():
                 errors = [
-                    {"field": field, "message": message}
-                    for field, messages in serializer.errors.items()
-                    for message in messages
+                    {"field": field, "detail": detail}
+                    for field, details in serializer.errors.items()
+                    for detail in details
                 ]
 
                 raise ValidationError({
