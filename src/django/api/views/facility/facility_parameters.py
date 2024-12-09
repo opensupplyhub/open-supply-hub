@@ -6,6 +6,8 @@ from drf_yasg.openapi import (
   TYPE_INTEGER
 )
 
+from api.constants import FacilitiesListSettings
+
 facility_parameters = [
     Parameter(
         'created_at_of_data_points',
@@ -31,6 +33,17 @@ facility_parameters = [
 ]
 
 facilities_list_parameters = [
+    Parameter(
+        'page',
+        IN_QUERY,
+        type=TYPE_INTEGER,
+        required=False,
+        description=(
+            'A page number within the paginated result set. As of now, the '
+            'last page that can be accessed is '
+            f'{FacilitiesListSettings.DEFAULT_PAGE_LIMIT}. To access more '
+            'data, please contact support@opensupplyhub.org.'),
+    ),
     Parameter(
         'q',
         IN_QUERY,
