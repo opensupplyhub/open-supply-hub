@@ -3,6 +3,7 @@ from typing import Dict, KeysView
 
 from django.db import transaction
 
+from api.constants import APIV1MatchTypes
 from api.extended_fields import create_extendedfields_for_single_item
 from api.models.contributor.contributor import Contributor
 from api.models.facility.facility_list_item import FacilityListItem
@@ -71,11 +72,11 @@ class UpdateProductionLocation(EventApprovalStrategy):
             )
 
             self._create_facility_match_temp(
-                item, FacilityListItem.CONFIRMED_MATCH
+                item, APIV1MatchTypes.CONFIRMED_MATCH
             )
             log.info('[Moderation Event] FacilityMatchTemp created.')
 
-            self._create_facility_match(item, FacilityListItem.CONFIRMED_MATCH)
+            self._create_facility_match(item, APIV1MatchTypes.CONFIRMED_MATCH)
             log.info('[Moderation Event] FacilityMatch created.')
 
             self._update_event(self.__event, item)
