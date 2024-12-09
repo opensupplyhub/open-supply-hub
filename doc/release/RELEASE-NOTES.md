@@ -43,6 +43,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1158](https://opensupplyhub.atlassian.net/browse/OSDEV-1158) - The following features and improvements have been made:
     1. Introduced a new POST `/api/v1/production-locations/` endpoint based on the API v1 specification. This endpoint allows the creation of a new moderation event for the production location creation with the given details.
     2. Removed redundant redefinition of paths via the `as_view` method for all the v1 API endpoints since they are already defined via `DefaultRouter`.
+* [OSDEV-1468](https://opensupplyhub.atlassian.net/browse/OSDEV-1468) - Limit the `page` parameter to `100` for the GET `/api/facilities/` endpoint. This will help prevent system downtimes, as larger pages (OFFSET) make it harder for the database to retrieve data, especially considering the large amount of data we have.
 
 ### Architecture/Environment changes
 * [OSDEV-1170](https://opensupplyhub.atlassian.net/browse/OSDEV-1170) - Added the ability to automatically create a dump from the latest shared snapshot of the anonymized database from Production environment for use in the Test and Pre-Prod environments.
@@ -55,6 +56,7 @@ This issue has been fixed by adding additional requests to delete the appropriat
 * [OSDEV-1482](https://opensupplyhub.atlassian.net/browse/OSDEV-1482) - The `GET api/v1/moderation-events/{moderation_id}` endpoint returns a single response instead of an array containing one item.
 
 ### What's new
+* [OSDEV-1373](https://opensupplyhub.atlassian.net/browse/OSDEV-1373) - The tab `Search by Name and Address.` on the Production Location Search screen has been implemented. There are three required properties (name, address, country). The "Search" button becomes clickable after filling out inputs, creates a link with parameters, and allows users to proceed to the results screen.
 * [OSDEV-1175](https://opensupplyhub.atlassian.net/browse/OSDEV-1175) - New Moderation Queue Page was integrated with `GET api/v1/moderation-events/` endpoint that include pagination, sorting and filtering.
 
 ### Release instructions:

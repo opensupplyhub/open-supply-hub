@@ -150,9 +150,26 @@ Make sure that:
 
 ### QA process
 
-- The Test environment can be updated manually by running the `Deploy to AWS` workflow from the `main` branch at any convenient time. Be sure to select 'Test' in the 'Environment to deploy' field. This allows QA engineers to test the most recent changes on a copy of the live database. To identify the tasks that should be tested, QA engineers can refer to the Jira release page for the developing version, where all feature and bug-fix tickets intended for the release are displayed.
-- Five working days before the release, which always takes place on Saturday, the QA engineer creates a new tab in [the QA Checklist sheet](https://docs.google.com/spreadsheets/d/1uinHJOPpGfrUNkewBxPVsDeDXnNx4dJnnX94LoBA_zk/edit?usp=sharing) for the new release version. They add all the features that will be shipped with the release on Saturday to the Change List section. Then, the QA engineer goes through all the items in the list. If a regression bug is found, it should be immediately documented as a Jira bug ticket and rated depending on whether it is a P1-P3 bug. If the bug has a P1 level, the entire team should be notified, and the bug ticket should be assigned to the software development team for fixing as quickly as possible. After the bug is fixed and the fix is deployed to the pre-prod environment, the entire QA checklist should be verified from the very beginning before the release.
-- The QA Engineer should also test the items listed under the *prod* column in [the QA Checklist sheet](https://docs.google.com/spreadsheets/d/1uinHJOPpGfrUNkewBxPVsDeDXnNx4dJnnX94LoBA_zk/edit?usp=sharing) on the production site once the new version is released on the designated date.
+The Test environment can be updated manually by running the `Deploy to AWS` workflow from the `main` branch at any convenient time. Ensure you select `Test` in the `Environment to deploy` field. This allows QA engineers to test the latest changes on a copy of the live database.
+
+To identify the tasks that need testing, QA engineers should refer to the Jira release page for the developing version, which lists all feature and bug-fix tickets intended for the release.
+
+**Preparation for Release Testing**
+1. Creating a Test Run Cycle:
+    - Five working days before the release (scheduled for Saturday), the QA engineer creates a new test run cycle in QAlity.
+    - The QA team adds tickets implemented in the current release to the test run cycle.
+2. Executing the Test Run:
+    - The QA engineer tests all items in the test run.
+    - If a regression bug is found, it must be immediately documented as a Jira bug ticket and rated according to severity (P1, P2, or P3):
+        * `P1 bugs:` Notify the entire team immediately. Assign the bug ticket to the software development team for prompt resolution.
+    - After the bug is fixed and the fix is deployed to the pre-production environment:
+        * `Re-create the Test Run Cycle` and verify all test items from the beginning before the release.
+
+**Smoke Testing on Release Day**
+
+On Saturday (release day), the QA team should create two additional test cycles for conducting Smoke Testing:
+1.`Staging Environment:` Verify the release changes before deployment to production.
+2.`Production Environment:` Ensure the release is successfully deployed and functions as expected in the live environment.
 
 ### Release to production and sandbox
 

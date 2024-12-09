@@ -203,6 +203,10 @@ class FacilitiesDownloadSettings:
     DEFAULT_LIMIT = 10000
 
 
+class FacilitiesListSettings:
+    DEFAULT_PAGE_LIMIT = 100
+
+
 # API v1
 class APIV1CommonErrorMessages:
     COMMON_REQ_BODY_ERROR = 'The request body is invalid.'
