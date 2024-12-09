@@ -14,10 +14,11 @@ from api.models.facility.facility_match import FacilityMatch
 from api.models.facility.facility_match_temp import FacilityMatchTemp
 from api.models.nonstandard_field import NonstandardField
 from api.models.source import Source
+from django.contrib.gis.geos import Point
 
 
 @override_settings(DEBUG=True)
-class ModerationEventsAddProductionLocationTest(APITestCase):
+class ModerationEventsUpdateProductionLocationTest(APITestCase):
     def setUp(self):
         super().setUp()
 
@@ -96,9 +97,37 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
             contributor=self.contributor,
         )
 
+        self.source = Source.objects.create(
+            source_type=Source.SINGLE,
+            is_active=True,
+            is_public=True,
+            contributor=self.contributor,
+        )
+
+        self.list_item = FacilityListItem.objects.create(
+            name="Item",
+            address="Address",
+            country_code="GB",
+            sector=["Apparel"],
+            row_index=1,
+            geocoded_point=Point(0, 0),
+            status=FacilityListItem.MATCHED,
+            source=self.source,
+        )
+
+        self.os_id = "GB2024338H7FA8R"
+        self.facility_one = Facility.objects.create(
+            id=self.os_id,
+            name="Name",
+            address="Address",
+            country_code="GB",
+            location=Point(0, 0),
+            created_from=self.list_item,
+        )
+
     def test_permission_denied(self):
         self.client.login(email=self.email, password=self.password)
-        response = self.client.post(
+        response = self.client.patch(
             "/api/v1/moderation-events/{}/production-locations/".format(
                 self.moderation_event_id
             ),
@@ -106,12 +135,16 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(403, response.status_code)
+        self.assertEqual(
+            "Only the Moderator can perform this action.",
+            response.data["detail"],
+        )
 
     def test_invalid_uuid_format(self):
         self.client.login(
             email=self.superuser_email, password=self.superuser_password
         )
-        response = self.client.post(
+        response = self.client.patch(
             "/api/v1/moderation-events/{}/production-locations/".format(
                 "invalid_uuid"
             ),
@@ -119,12 +152,24 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(400, response.status_code)
+        self.assertEqual(
+            "The request path parameter is invalid.",
+            response.data["detail"]
+        )
+        self.assertEqual(
+            "moderation_id",
+            response.data["errors"][0]["field"]
+        )
+        self.assertEqual(
+            "Invalid UUID format.",
+            response.data["errors"][0]["detail"]
+        )
 
     def test_moderation_event_not_found(self):
         self.client.login(
             email=self.superuser_email, password=self.superuser_password
         )
-        response = self.client.post(
+        response = self.client.patch(
             "/api/v1/moderation-events/{}/production-locations/".format(
                 "f65ec710-f7b9-4f50-b960-135a7ab24ee7"
             ),
@@ -132,6 +177,18 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(404, response.status_code)
+        self.assertEqual(
+            "The request path parameter is invalid.",
+            response.data["detail"]
+        )
+        self.assertEqual(
+            "moderation_id",
+            response.data["errors"][0]["field"]
+        )
+        self.assertEqual(
+            "Moderation event not found.",
+            response.data["errors"][0]["detail"]
+        )
 
     def test_moderation_event_not_pending(self):
         self.moderation_event.status = 'RESOLVED'
@@ -140,7 +197,7 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
         self.client.login(
             email=self.superuser_email, password=self.superuser_password
         )
-        response = self.client.post(
+        response = self.client.patch(
             "/api/v1/moderation-events/{}/production-locations/".format(
                 self.moderation_event_id
             ),
@@ -148,21 +205,101 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
             content_type="application/json",
         )
         self.assertEqual(410, response.status_code)
+        self.assertEqual(
+            "The moderation event should be in PENDING status.",
+            response.data["detail"]
+        )
 
-    def test_successful_add_production_location(self):
+    def test_empty_request_body(self):
         self.client.login(
             email=self.superuser_email, password=self.superuser_password
         )
-        response = self.client.post(
+        response = self.client.patch(
             "/api/v1/moderation-events/{}/production-locations/".format(
                 self.moderation_event_id
             ),
             data=json.dumps({}),
             content_type="application/json",
         )
+        self.assertEqual(400, response.status_code)
+        self.assertEqual(
+            "The request body contains invalid or missing fields.",
+            response.data["detail"]
+        )
+        self.assertEqual(
+            "os_id",
+            response.data["errors"][0]["field"]
+        )
+        self.assertEqual(
+            "This field is required.",
+            response.data["errors"][0]["detail"]
+        )
 
-        self.assertEqual(201, response.status_code)
+    def test_invalid_os_id_format(self):
+        self.client.login(
+            email=self.superuser_email, password=self.superuser_password
+        )
+        response = self.client.patch(
+            "/api/v1/moderation-events/{}/production-locations/".format(
+                self.moderation_event_id
+            ),
+            data=json.dumps({"os_id": "invalid_os_id"}),
+            content_type="application/json",
+        )
+        self.assertEqual(400, response.status_code)
+        self.assertEqual(
+            "The request body contains invalid or missing fields.",
+            response.data["detail"]
+        )
+        self.assertEqual(
+            "os_id",
+            response.data["errors"][0]["field"]
+        )
+        self.assertEqual(
+            "The format of the os_id is invalid.",
+            response.data["errors"][0]["detail"]
+        )
+
+    def test_no_production_location_found_with_os_id(self):
+        self.client.login(
+            email=self.superuser_email, password=self.superuser_password
+        )
+        response = self.client.patch(
+            "/api/v1/moderation-events/{}/production-locations/".format(
+                self.moderation_event_id
+            ),
+            data=json.dumps({"os_id": "UA2024341550R5D"}),
+            content_type="application/json",
+        )
+        self.assertEqual(400, response.status_code)
+        self.assertEqual(
+            "The request body contains invalid or missing fields.",
+            response.data["detail"]
+        )
+        self.assertEqual(
+            "os_id",
+            response.data["errors"][0]["field"]
+        )
+        self.assertEqual(
+            "No production location found with the provided os_id.",
+            response.data["errors"][0]["detail"]
+        )
+
+    def test_successful_update_production_location(self):
+        self.client.login(
+            email=self.superuser_email, password=self.superuser_password
+        )
+        response = self.client.patch(
+            "/api/v1/moderation-events/{}/production-locations/".format(
+                self.moderation_event_id
+            ),
+            data=json.dumps({"os_id": self.os_id}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(200, response.status_code)
         self.assertIn("os_id", response.data)
+        self.assertEqual(self.os_id, response.data["os_id"])
 
         moderation_event = ModerationEvent.objects.get(
             uuid=self.moderation_event_id
@@ -180,30 +317,35 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
         self.client.login(
             email=self.superuser_email, password=self.superuser_password
         )
-        response = self.client.post(
+        response = self.client.patch(
             "/api/v1/moderation-events/{}/production-locations/".format(
                 self.moderation_event_id
             ),
-            data=json.dumps({}),
+            data=json.dumps({"os_id": self.os_id}),
             content_type="application/json",
         )
 
-        self.assertEqual(201, response.status_code)
+        self.assertEqual(200, response.status_code)
 
     def test_creation_of_source(self):
         self.client.login(
             email=self.superuser_email, password=self.superuser_password
         )
-        response = self.client.post(
+        response = self.client.patch(
             "/api/v1/moderation-events/{}/production-locations/".format(
                 self.moderation_event.uuid
             ),
-            data=json.dumps({}),
+            data=json.dumps({"os_id": self.os_id}),
             content_type="application/json",
         )
-        self.assertEqual(201, response.status_code)
+        self.assertEqual(200, response.status_code)
 
-        source = Source.objects.get(contributor=self.contributor)
+        sources = Source.objects.filter(contributor=self.contributor).order_by(
+            "-created_at"
+        )
+        self.assertEqual(sources.count(), 2)
+
+        source = sources.first()
         self.assertIsNotNone(source)
         self.assertEqual(source.source_type, Source.SINGLE)
         self.assertEqual(source.is_active, True)
@@ -223,14 +365,14 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
         self.client.login(
             email=self.superuser_email, password=self.superuser_password
         )
-        response = self.client.post(
+        response = self.client.patch(
             "/api/v1/moderation-events/{}/production-locations/".format(
                 self.moderation_event.uuid
             ),
-            data=json.dumps({}),
+            data=json.dumps({"os_id": self.os_id}),
             content_type="application/json",
         )
-        self.assertEqual(201, response.status_code)
+        self.assertEqual(200, response.status_code)
 
         nonstandard_fields = NonstandardField.objects.filter(
             contributor=self.contributor
@@ -249,14 +391,14 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
         self.client.login(
             email=self.superuser_email, password=self.superuser_password
         )
-        response = self.client.post(
+        response = self.client.patch(
             "/api/v1/moderation-events/{}/production-locations/".format(
                 self.moderation_event.uuid
             ),
-            data=json.dumps({}),
+            data=json.dumps({"os_id": self.os_id}),
             content_type="application/json",
         )
-        self.assertEqual(201, response.status_code)
+        self.assertEqual(200, response.status_code)
 
         facility_list_item = FacilityListItem.objects.get(
             facility_id=response.data["os_id"]
@@ -284,44 +426,18 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
             self.moderation_event.cleaned_data["clean_address"],
         )
 
-    def test_creation_of_facility(self):
-        self.client.login(
-            email=self.superuser_email, password=self.superuser_password
-        )
-        response = self.client.post(
-            "/api/v1/moderation-events/{}/production-locations/".format(
-                self.moderation_event.uuid
-            ),
-            data=json.dumps({}),
-            content_type="application/json",
-        )
-        self.assertEqual(201, response.status_code)
-
-        facility = Facility.objects.get(id=response.data["os_id"])
-        self.assertIsNotNone(facility)
-        self.assertEqual(
-            facility.name, self.moderation_event.cleaned_data["name"]
-        )
-        self.assertEqual(
-            facility.address, self.moderation_event.cleaned_data["address"]
-        )
-        self.assertEqual(
-            facility.country_code,
-            self.moderation_event.cleaned_data["country_code"],
-        )
-
     def test_creation_of_facilitymatch(self):
         self.client.login(
             email=self.superuser_email, password=self.superuser_password
         )
-        response = self.client.post(
+        response = self.client.patch(
             "/api/v1/moderation-events/{}/production-locations/".format(
                 self.moderation_event.uuid
             ),
-            data=json.dumps({}),
+            data=json.dumps({"os_id": self.os_id}),
             content_type="application/json",
         )
-        self.assertEqual(201, response.status_code)
+        self.assertEqual(200, response.status_code)
 
         facility_list_item = FacilityListItem.objects.get(
             facility_id=response.data["os_id"]
@@ -338,7 +454,7 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
         self.assertEqual(
             facility_match.results,
             {
-                "match_type": APIV1MatchTypes.NEW_PRODUCTION_LOCATION,
+                "match_type": APIV1MatchTypes.CONFIRMED_MATCH,
             },
         )
 
@@ -346,14 +462,14 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
         self.client.login(
             email=self.superuser_email, password=self.superuser_password
         )
-        response = self.client.post(
+        response = self.client.patch(
             "/api/v1/moderation-events/{}/production-locations/".format(
                 self.moderation_event.uuid
             ),
-            data=json.dumps({}),
+            data=json.dumps({"os_id": self.os_id}),
             content_type="application/json",
         )
-        self.assertEqual(201, response.status_code)
+        self.assertEqual(200, response.status_code)
 
         facility_list_item = FacilityListItem.objects.get(
             facility_id=response.data["os_id"]
@@ -370,13 +486,13 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
         self.assertEqual(
             facility_match_temp.results,
             {
-                "match_type": APIV1MatchTypes.NEW_PRODUCTION_LOCATION,
+                "match_type": APIV1MatchTypes.CONFIRMED_MATCH,
             },
         )
 
     @patch(
         'api.moderation_event_actions.approval.'
-        'add_production_location.AddProductionLocation.'
+        'update_production_location.UpdateProductionLocation.'
         'process_moderation_event'
     )
     def test_error_handling_during_processing(
@@ -390,10 +506,10 @@ class ModerationEventsAddProductionLocationTest(APITestCase):
             email=self.superuser_email, password=self.superuser_password
         )
 
-        response = self.client.post(
+        response = self.client.patch(
             f"/api/v1/moderation-events/{self.moderation_event_id}/"
             "production-locations/",
-            data=json.dumps({}),
+            data=json.dumps({"os_id": self.os_id}),
             content_type="application/json",
         )
 
