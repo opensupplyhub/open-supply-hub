@@ -557,7 +557,6 @@ export const makeDialogTooltipStyles = () =>
     });
 
 export const makeProductionLocationDialogStyles = theme => {
-    console.log(theme);
     return Object.freeze({
         modalContainerWrapper: Object.freeze({
             padding: '20px 60px',
