@@ -29,7 +29,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
-* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear custom OpenSearch indexes and templates` set to true - to refresh the index mappings for the `production-locations` and `moderation-events` indexes after fixing the process of clearing the custom OpenSearch indexes.
 
 
 ## Release 1.26.0
