@@ -45,10 +45,7 @@ class ModerationEventsService:
     def validate_moderation_status(status):
         if status != ModerationEvent.Status.PENDING:
             raise GoneException(
-                create_error_detail(
-                    field="status",
-                    detail="The moderation event should be in PENDING status."
-                )
+                detail="The moderation event should be in PENDING status."
             )
 
     @staticmethod
