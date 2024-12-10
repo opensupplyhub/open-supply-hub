@@ -2,7 +2,6 @@ import React, { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { bool, object, number, func } from 'prop-types';
 import { withRouter } from 'react-router-dom';
-import moment from 'moment';
 import { withStyles } from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
