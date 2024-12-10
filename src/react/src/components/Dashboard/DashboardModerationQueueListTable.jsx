@@ -26,7 +26,7 @@ import {
 } from '../../util/constants';
 import { makeDashboardModerationQueueListTableStyles } from '../../util/styles';
 import {
-    formatDate,
+    formatUTCDate,
     openInNewTab,
     makeContributionRecordLink,
 } from '../../util/util';
@@ -160,7 +160,7 @@ function DashboardModerationQueueListTable({
                                             )}
                                         >
                                             <TableCell padding="dense">
-                                                {formatDate(
+                                                {formatUTCDate(
                                                     createdAt,
                                                     DATE_FORMATS.LONG,
                                                 )}
@@ -187,14 +187,15 @@ function DashboardModerationQueueListTable({
                                             </TableCell>
                                             <TableCell padding="dense">
                                                 {moderationDecisionDate !== null
-                                                    ? formatDate(
+                                                    ? formatUTCDate(
                                                           moderationDecisionDate,
                                                           DATE_FORMATS.LONG,
                                                       )
                                                     : EMPTY_PLACEHOLDER}
                                             </TableCell>
                                             <TableCell padding="dense">
-                                                {moment(updatedAt).format(
+                                                {formatUTCDate(
+                                                    updatedAt,
                                                     DATE_FORMATS.LONG,
                                                 )}
                                             </TableCell>
