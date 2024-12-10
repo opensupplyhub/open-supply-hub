@@ -474,6 +474,177 @@ export const makeSearchByOsIdResultStyles = theme =>
         }),
     });
 
+const arrowGenerator = (color, selector) => ({
+    [`&[x-placement*="bottom"] ${selector}`]: Object.freeze({
+        top: 0,
+        left: 0,
+        marginTop: '-0.95em',
+        width: '3em',
+        height: '1em',
+        '&::before': Object.freeze({
+            borderWidth: '0 1em 1em 1em',
+            borderColor: `transparent transparent ${color} transparent`,
+        }),
+    }),
+    [`&[x-placement*="top"] ${selector}`]: Object.freeze({
+        bottom: 0,
+        left: 0,
+        marginBottom: '-0.95em',
+        width: '3em',
+        height: '1em',
+        '&::before': Object.freeze({
+            borderWidth: '1em 1em 0 1em',
+            borderColor: `${color} transparent transparent transparent`,
+        }),
+    }),
+    [`&[x-placement*="right"] ${selector}`]: Object.freeze({
+        left: 0,
+        marginLeft: '-0.95em',
+        height: '3em',
+        width: '1em',
+        '&::before': Object.freeze({
+            borderWidth: '1em 1em 1em 0',
+            borderColor: `transparent ${color} transparent transparent`,
+        }),
+    }),
+    [`&[x-placement*="left"] ${selector}`]: Object.freeze({
+        right: 0,
+        marginRight: '-0.95em',
+        height: '3em',
+        width: '1em',
+        '&::before': Object.freeze({
+            borderWidth: '1em 0 1em 1em',
+            borderColor: `transparent transparent transparent ${color}`,
+        }),
+    }),
+});
+
+export const makeDialogTooltipStyles = () =>
+    Object.freeze({
+        arrow: Object.freeze({
+            position: 'absolute',
+            fontSize: 6,
+            width: '3em',
+            height: '3em',
+            '&::before': Object.freeze({
+                content: '""',
+                margin: 'auto',
+                display: 'block',
+                width: 0,
+                height: 0,
+                borderStyle: 'solid',
+            }),
+        }),
+        popperStyles: Object.freeze(
+            arrowGenerator(COLOURS.DARK_SLATE_GREY, '$arrow'),
+        ),
+        tooltipStyles: Object.freeze({
+            fontSize: '14px',
+            backgroundColor: COLOURS.DARK_SLATE_GREY,
+        }),
+        placementLeft: Object.freeze({
+            margin: '0 8px',
+        }),
+        placementRight: Object.freeze({
+            margin: '0 8px',
+        }),
+        placementTop: Object.freeze({
+            margin: '8px 0',
+        }),
+        placementBottom: Object.freeze({
+            margin: '8px 0',
+        }),
+    });
+
+export const makeProductionLocationDialogStyles = theme => {
+    console.log(theme);
+    return Object.freeze({
+        modalContainerWrapper: Object.freeze({
+            padding: '20px 60px',
+            [theme.breakpoints.down('md')]: {
+                padding: 0,
+            },
+        }),
+        label: Object.freeze({
+            fontSize: '14px',
+            textTransform: 'uppercase',
+            fontWeight: theme.typography.fontWeightExtraBold,
+        }),
+        titleContentStyle: Object.freeze({
+            fontSize: '32px',
+            textAlign: 'center',
+            fontWeight: theme.typography.fontWeightBold,
+            lineHeight: 1,
+        }),
+        titleInnerContentStyle: Object.freeze({
+            fontSize: '32px',
+            margin: 0,
+            lineHeight: '1.1',
+            fontWeight: 'bold',
+        }),
+        primaryText: Object.freeze({
+            marginBottom: '20px',
+        }),
+        osIDText: Object.freeze({
+            lineHeight: '2.3',
+        }),
+        leftContainerColumn: Object.freeze({
+            paddingRight: '10px',
+        }),
+        rightContainerColumn: Object.freeze({
+            paddingRight: '10px',
+        }),
+        separator: Object.freeze({
+            margin: '20px 0',
+            color: COLOURS.GREY,
+        }),
+        dialogContentStyles: Object.freeze({
+            textAlign: 'center',
+            fontSize: '16px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+        }),
+        buttonContentStyle: Object.freeze({
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '0 15px',
+            [theme.breakpoints.down('md')]: {
+                justifyContent: 'initial',
+                flexDirection: 'column',
+            },
+        }),
+        osIdStatusBadge: Object.freeze({
+            backgroundColor: '#E7E8EA',
+            marginLeft: '10px',
+            fontWeight: 'bold',
+        }),
+        osIdStatusBadgeIcon: Object.freeze({
+            color: COLOURS.DARK_GREY,
+            marginRight: '5px',
+        }),
+        button: Object.freeze({
+            fontWeight: 'bold',
+            textTransform: 'none',
+            paddingLeft: '30px',
+            paddingRight: '30px',
+            boxShadow: 'none',
+            [theme.breakpoints.down('md')]: {
+                width: '100%',
+                marginBottom: '16px',
+            },
+        }),
+        claimTooltipWrapper: Object.freeze({
+            display: 'block',
+            cursor: 'not-allowed',
+            [theme.breakpoints.down('md')]: {
+                width: '100%',
+            },
+        }),
+        claimButton: Object.freeze({
+            backgroundColor: COLOURS.NAVIGATION,
+        }),
+    });
+};
+
 export const makeBackToSearchButtonStyles = theme =>
     Object.freeze({
         backButtonRootStyles: Object.freeze({
@@ -488,54 +659,12 @@ export const makeBackToSearchButtonStyles = theme =>
         }),
     });
 
-const arrowGenerator = color => ({
-    '&[x-placement*="bottom"] $arrowStyles': {
-        top: 0,
-        left: 0,
-        marginTop: '-0.95em',
-        width: '3em',
-        height: '1em',
-        '&::before': {
-            borderWidth: '0 1em 1em 1em',
-            borderColor: `transparent transparent ${color} transparent`,
-        },
-    },
-    '&[x-placement*="top"] $arrowStyles': {
-        bottom: 0,
-        left: 0,
-        marginBottom: '-0.95em',
-        width: '3em',
-        height: '1em',
-        '&::before': {
-            borderWidth: '1em 1em 0 1em',
-            borderColor: `${color} transparent transparent transparent`,
-        },
-    },
-    '&[x-placement*="right"] $arrowStyles': {
-        left: 0,
-        marginLeft: '-0.95em',
-        height: '3em',
-        width: '1em',
-        '&::before': {
-            borderWidth: '1em 1em 1em 0',
-            borderColor: `transparent ${color} transparent transparent`,
-        },
-    },
-    '&[x-placement*="left"] $arrowStyles': {
-        right: 0,
-        marginRight: '-0.95em',
-        height: '3em',
-        width: '1em',
-        '&::before': {
-            borderWidth: '1em 0 1em 1em',
-            borderColor: `transparent transparent transparent ${color}`,
-        },
-    },
-});
-
 export const makePreviousOsIdTooltipStyles = theme =>
     Object.freeze({
-        arrowPopperStyles: arrowGenerator(COLOURS.DARK_SLATE_GREY),
+        arrowPopperStyles: arrowGenerator(
+            COLOURS.DARK_SLATE_GREY,
+            '$arrowStyles',
+        ),
         arrowStyles: Object.freeze({
             position: 'absolute',
             fontSize: 6,

@@ -10,100 +10,9 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogActions from '@material-ui/core/DialogActions';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
-import COLOURS from '../util/COLOURS';
-import DialogTooltip from './DialogTooltip';
-import { mainRoute } from '../util/constants';
-
-const styles = theme =>
-    Object.freeze({
-        modalContainerWrapper: Object.freeze({
-            padding: '20px 60px',
-            [theme.breakpoints.down('md')]: {
-                padding: 0,
-            },
-        }),
-        contentContainer: Object.freeze({
-            width: '100%',
-            maxWidth: '1072px',
-        }),
-        label: Object.freeze({
-            fontSize: '14px',
-            textTransform: 'uppercase',
-            fontWeight: 900,
-        }),
-        titleContentStyle: Object.freeze({
-            fontSize: '32px',
-            textAlign: 'center',
-            fontWeight: 800,
-            lineHeight: 1,
-        }),
-        titleInnerContentStyle: Object.freeze({
-            fontSize: '32px',
-            margin: 0,
-            lineHeight: '1.1',
-            fontWeight: 'bold',
-        }),
-        primaryText: Object.freeze({
-            marginBottom: '20px',
-        }),
-        osIDText: Object.freeze({
-            lineHeight: '2.3',
-        }),
-        leftContainerColumn: Object.freeze({
-            paddingRight: '10px',
-        }),
-        rightContainerColumn: Object.freeze({
-            paddingRight: '10px',
-        }),
-        separator: Object.freeze({
-            margin: '20px 0',
-            color: COLOURS.GREY,
-        }),
-        dialogContentStyles: Object.freeze({
-            textAlign: 'center',
-            fontSize: '16px',
-            fontWeight: 600,
-        }),
-        buttonContentStyle: Object.freeze({
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '0 15px',
-            [theme.breakpoints.down('md')]: {
-                justifyContent: 'initial',
-                flexDirection: 'column',
-            },
-        }),
-        osIdStatusBadge: Object.freeze({
-            backgroundColor: '#E7E8EA',
-            marginLeft: '10px',
-            fontWeight: 'bold',
-        }),
-        osIdStatusBadgeIcon: Object.freeze({
-            color: COLOURS.DARK_GREY,
-            marginRight: '5px',
-        }),
-        button: Object.freeze({
-            fontWeight: 'bold',
-            textTransform: 'none',
-            paddingLeft: '30px',
-            paddingRight: '30px',
-            boxShadow: 'none',
-            [theme.breakpoints.down('md')]: {
-                width: '100%',
-                marginBottom: '16px',
-            },
-        }),
-        claimTooltipWrapper: Object.freeze({
-            display: 'block',
-            cursor: 'not-allowed',
-            [theme.breakpoints.down('md')]: {
-                width: '100%',
-            },
-        }),
-        claimButton: Object.freeze({
-            backgroundColor: COLOURS.NAVIGATION,
-        }),
-    });
+import DialogTooltip from '../DialogTooltip';
+import { mainRoute } from '../../util/constants';
+import { makeProductionLocationDialogStyles } from '../../util/styles';
 
 const infoIcon = classes => (
     <InfoOutlinedIcon className={classes.osIdStatusBadgeIcon} />
@@ -145,7 +54,7 @@ const ProductionLocationDialog = ({ classes }) => {
                         name, and more.
                     </Typography>
                     <hr className={classes.separator} />
-                    <Grid container className={classes.contentContainer}>
+                    <Grid container>
                         <Grid
                             item
                             xs={12}
@@ -271,4 +180,6 @@ const ProductionLocationDialog = ({ classes }) => {
     );
 };
 
-export default withStyles(styles)(ProductionLocationDialog);
+export default withStyles(makeProductionLocationDialogStyles)(
+    ProductionLocationDialog,
+);
