@@ -3,6 +3,31 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.27.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: December 28, 2024
+
+### Database changes
+#### Migrations:
+
+#### Scheme changes
+
+### Code/API changes
+
+### Architecture/Environment changes
+
+### Bugfix
+* [OSDEV-1492](https://opensupplyhub.atlassian.net/browse/OSDEV-1492) - Fixed an issue where invalid manually entered dates were not validated on the UI, resulting in API errors with message “The request query is invalid.” on `Moderation Queue` page. Invalid dates are now trimmed and properly handled.
+
+### What's new
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
 
 ## Release 1.26.0
 

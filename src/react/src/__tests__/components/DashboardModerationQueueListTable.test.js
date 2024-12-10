@@ -4,7 +4,7 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import DashboardModerationQueueListTable from '../../components/Dashboard/DashboardModerationQueueListTable';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import { EMPTY_PLACEHOLDER, DATE_FORMATS } from '../../util/constants';
-import { formatDate } from '../../util/util';
+import { formatUTCDate } from '../../util/util';
 
 describe('DashboardModerationQueueListTable component', () => {
     const sampleModerationEvents = [
@@ -506,14 +506,14 @@ describe('DashboardModerationQueueListTable component', () => {
 
         sampleModerationEvents.forEach(event => {
             expect(getByText(event.cleaned_data.name)).toBeInTheDocument();
-            expect(getByText(formatDate(event.created_at, DATE_FORMATS.LONG))).toBeInTheDocument();
+            expect(getByText(formatUTCDate(event.created_at, DATE_FORMATS.LONG))).toBeInTheDocument();
             expect(getByText(event.cleaned_data.country.name)).toBeInTheDocument();
             expect(getByText(event.contributor_name)).toBeInTheDocument();
             expect(getByText(event.source)).toBeInTheDocument();
             expect(getByText(event.status)).toBeInTheDocument();
 
             const decisionDate = event.status_change_date
-            ? formatDate(event.status_change_date, DATE_FORMATS.LONG)
+            ? formatUTCDate(event.status_change_date, DATE_FORMATS.LONG)
             : EMPTY_PLACEHOLDER;
             expect(getByText(decisionDate)).toBeInTheDocument();
         });
