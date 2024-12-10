@@ -1,6 +1,6 @@
 import React from 'react';
 import { string } from 'prop-types';
-import { ACCENT_GREY } from '../util/COLOURS';
+import COLOURS from '../util/COLOURS';
 
 const facilityListSummaryStyles = Object.freeze({
     nameStyles: Object.freeze({
@@ -44,7 +44,7 @@ function FacilityListSummary({ name, description, id, contributor }) {
             <p style={facilityListSummaryStyles.descriptionStyles}>
                 {description}
             </p>
-            <hr color={ACCENT_GREY} />
+            <hr color={COLOURS.ACCENT_GREY} />
         </div>
     );
 }

@@ -7,7 +7,7 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import { useMergeButtonClickHandler } from './../util/hooks';
 import { CONFIRM_ACTION, MERGE_ACTION, REJECT_ACTION } from '../util/constants';
-import { ACCENT_GREY } from '../util/COLOURS';
+import COLOURS from '../util/COLOURS';
 
 const actionDialogStates = Object.freeze({
     none: 'none',
@@ -152,7 +152,7 @@ const ConfirmActionButton = ({
                         <div key={facilityMatchToReject.id}>
                             <li>name: {facilityMatchToReject?.name}</li>
                             <li>address: {facilityMatchToReject?.address}</li>
-                            <hr color={ACCENT_GREY} />
+                            <hr color={COLOURS.ACCENT_GREY} />
                         </div>
                     ))}
                 </ul>
