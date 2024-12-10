@@ -34,9 +34,16 @@ const ProductionLocationDialog = ({ classes }) => {
     const history = useHistory();
 
     return (
-        <Dialog open>
+        <Dialog
+            open
+            aria-labelledby="production-location-dialog-title"
+            aria-describedby="production-location-dialog-description"
+        >
             <div className={classes.modalContainerWrapper}>
-                <DialogTitle className={classes.titleContentStyle}>
+                <DialogTitle
+                    id="production-location-dialog-title"
+                    className={classes.titleContentStyle}
+                >
                     <p className={classes.titleInnerContentStyle}>
                         Thanks for adding data for this production location!
                     </p>
@@ -171,6 +178,7 @@ const ProductionLocationDialog = ({ classes }) => {
                         <DialogTooltip
                             text="You'll be able to claim the
                                         location after the moderation is done"
+                            aria-label="Claim button tooltip"
                             childComponent={claimButton(classes)}
                         />
                     </Grid>
