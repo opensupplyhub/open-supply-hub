@@ -556,8 +556,8 @@ export const makeDialogTooltipStyles = () =>
         }),
     });
 
-export const makeProductionLocationDialogStyles = theme => {
-    return Object.freeze({
+export const makeProductionLocationDialogStyles = theme =>
+    Object.freeze({
         modalContainerWrapper: Object.freeze({
             padding: '20px 60px',
             [theme.breakpoints.down('md')]: {
@@ -642,7 +642,6 @@ export const makeProductionLocationDialogStyles = theme => {
             backgroundColor: COLOURS.NAVIGATION,
         }),
     });
-};
 
 export const makeBackToSearchButtonStyles = theme =>
     Object.freeze({
