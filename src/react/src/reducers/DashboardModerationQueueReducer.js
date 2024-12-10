@@ -28,8 +28,8 @@ const initialState = Object.freeze({
             sortBy: 'created_at',
             orderBy: 'desc',
         },
-        afterDate: null,
-        beforeDate: null,
+        afterDate: '',
+        beforeDate: '',
     }),
     moderationEventsDownloadStatus: Object.freeze({
         downloading: false,

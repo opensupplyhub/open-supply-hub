@@ -75,7 +75,13 @@ const DashboardModerationQueue = ({
     const wasNotEmptyAndNowEmpty = (prev, current) =>
         prev?.current?.length > 0 && current?.length === 0;
 
-    const isValidDate = date => !date || dateRegexFormat.test(date);
+    const isValidDate = date =>
+        typeof date === 'string' &&
+        (date.length === 0 || dateRegexFormat.test(date));
+    const isValidDateRange = (firstDate, secondDate) =>
+        firstDate.length === 0 ||
+        secondDate.length === 0 ||
+        firstDate >= secondDate;
 
     useEffect(() => {
         /*
@@ -125,13 +131,13 @@ const DashboardModerationQueue = ({
 
     const handleAfterDateChange = date => {
         if (!isValidDate(date)) {
-            dispatch(updateAfterDate(''));
+            dispatch(updateAfterDate(null));
             setErrorDateText(DATE_FORMAT_ERROR);
             setAfterDateError(true);
             return;
         }
-        if (date && beforeDate && date > beforeDate) {
-            dispatch(updateAfterDate(''));
+        if (!isValidDateRange(beforeDate, date)) {
+            dispatch(updateAfterDate(null));
             setErrorDateText(DATE_RANGE_ERROR);
             setAfterDateError(true);
             return;
@@ -152,13 +158,13 @@ const DashboardModerationQueue = ({
 
     const handleBeforeDateChange = date => {
         if (!isValidDate(date)) {
-            dispatch(updateBeforeDate(''));
+            dispatch(updateBeforeDate(null));
             setErrorDateText(DATE_FORMAT_ERROR);
             setBeforeDateError(true);
             return;
         }
-        if (date && afterDate && date < afterDate) {
-            dispatch(updateBeforeDate(''));
+        if (!isValidDateRange(date, afterDate)) {
+            dispatch(updateBeforeDate(null));
             setErrorDateText(DATE_RANGE_ERROR);
             setBeforeDateError(true);
             return;
@@ -261,8 +267,8 @@ DashboardModerationQueue.defaultProps = {
         sortBy: 'created_at',
         orderBy: 'desc',
     },
-    afterDate: null,
-    beforeDate: null,
+    afterDate: '',
+    beforeDate: '',
     dataSources: [],
     moderationStatuses: [],
     countries: [],

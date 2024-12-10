@@ -1314,7 +1314,7 @@ export function sort(array, comparator) {
     return stabilizedThis.map(el => el[0]);
 }
 
-export const formatDate = (date, format) => moment(date).format(format);
+export const formatDate = (date, format) => moment.utc(date).format(format);
 
 export const replaceListParsingErrorMessages = errors =>
     errors.map(
