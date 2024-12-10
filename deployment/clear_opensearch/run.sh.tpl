@@ -1,3 +1,5 @@
+#!/bin/bash
+
 chmod 700 /root/.ssh
 chmod 600 /root/.ssh/id_rsa
 chmod 600 /root/.ssh/config

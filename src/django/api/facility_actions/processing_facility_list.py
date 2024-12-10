@@ -11,11 +11,13 @@ from api.facility_actions.processing_facility import ProcessingFacility
 from api.models.facility.facility_list import FacilityList
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.source import Source
+from api.views.fields.create_nonstandard_fields import (
+    create_nonstandard_fields
+)
 from contricleaner.lib.dto.list_dto import ListDTO
 from contricleaner.lib.dto.row_dto import RowDTO
 from oar.rollbar import report_error_to_rollbar
 
-# Initialize logger.
 log = logging.getLogger(__name__)
 
 
@@ -49,7 +51,7 @@ class ProcessingFacilityList(ProcessingFacility):
         self.__facility_list.header = header_str
         self.__facility_list.save()
 
-        self._create_nonstandard_fields(
+        create_nonstandard_fields(
             header_row_keys,
             self.__facility_list.source.contributor
         )

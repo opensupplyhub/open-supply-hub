@@ -1340,11 +1340,11 @@ export const MODERATION_STATUSES_ENUM = Object.freeze({
 export const MODERATION_QUEUE_HEAD_CELLS = Object.freeze([
     { id: 'created_at', label: 'Created Date' },
     { id: 'name', label: 'Location Name' },
-    { id: 'country.name', label: 'Country' },
+    { id: 'country', label: 'Country' },
     { id: 'contributor_name', label: 'Contributor' },
     { id: 'source', label: 'Source Type' },
-    { id: 'moderation_status', label: 'Moderation Status' },
-    { id: 'moderation_decision_date', label: 'Moderation Decision Date' },
+    { id: 'status', label: 'Moderation Status' },
+    { id: 'status_change_date', label: 'Moderation Decision Date' },
     { id: 'updated_at', label: 'Last Updated' },
 ]);
 
@@ -1362,6 +1362,9 @@ export const MODERATION_STATUS_COLORS = Object.freeze({
     [MODERATION_STATUSES_ENUM.APPROVED]: COLOURS.MINT_GREEN,
     [MODERATION_STATUSES_ENUM.REJECTED]: COLOURS.LIGHT_RED,
 });
+
+export const MODERATION_INITIAL_PAGE_INDEX = 0;
+export const MODERATION_DEFAULT_ROWS_PER_PAGE = 25;
 
 export const MAINTENANCE_MESSAGE =
     'Open Supply Hub is undergoing maintenance and not accepting new data at the moment. Please try again in a few minutes.';

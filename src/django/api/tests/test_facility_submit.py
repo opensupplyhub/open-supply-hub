@@ -1,7 +1,7 @@
 import json
 
 from api.models import FacilityListItem, NonstandardField
-from api.constants import ErrorMessages
+from api.constants import APIErrorMessages
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 
 from django.http import QueryDict
@@ -229,4 +229,4 @@ class FacilitySubmitTest(FacilityAPITestCaseBase):
 
         data = json.loads(response.content)
         self.assertEqual(data["status"], FacilityListItem.GEOCODED_NO_RESULTS)
-        self.assertEqual(data["message"], ErrorMessages.GEOCODED_NO_RESULTS)
+        self.assertEqual(data["message"], APIErrorMessages.GEOCODED_NO_RESULTS)

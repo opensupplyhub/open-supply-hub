@@ -2,12 +2,13 @@ from typing import List
 
 from contricleaner.lib.validators.pre_validators \
     .pre_validator import PreValidator
+from contricleaner.constants import NON_FIELD_ERRORS_KEY
 
 
 class PreHeaderValidator(PreValidator):
-    __required_fields = {"name",
-                         "address",
-                         "country"}
+    __required_fields = {'name',
+                         'address',
+                         'country'}
 
     def validate(self, rows: List[dict]) -> dict:
         for row in rows:
@@ -18,7 +19,8 @@ class PreHeaderValidator(PreValidator):
                 return {}
 
         return {
-            "message": "Required Fields are missing: {}"
+            'message': 'Required Fields are missing: {}.'
             .format(', '.join(self.__required_fields)),
-            "type": "RequiredFieldsMissingError",
+            'field': NON_FIELD_ERRORS_KEY,
+            'type': 'RequiredFieldsMissingError',
         }

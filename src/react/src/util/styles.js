@@ -474,6 +474,175 @@ export const makeSearchByOsIdResultStyles = theme =>
         }),
     });
 
+const arrowGenerator = (color, selector) => ({
+    [`&[x-placement*="bottom"] ${selector}`]: Object.freeze({
+        top: 0,
+        left: 0,
+        marginTop: '-0.95em',
+        width: '3em',
+        height: '1em',
+        '&::before': Object.freeze({
+            borderWidth: '0 1em 1em 1em',
+            borderColor: `transparent transparent ${color} transparent`,
+        }),
+    }),
+    [`&[x-placement*="top"] ${selector}`]: Object.freeze({
+        bottom: 0,
+        left: 0,
+        marginBottom: '-0.95em',
+        width: '3em',
+        height: '1em',
+        '&::before': Object.freeze({
+            borderWidth: '1em 1em 0 1em',
+            borderColor: `${color} transparent transparent transparent`,
+        }),
+    }),
+    [`&[x-placement*="right"] ${selector}`]: Object.freeze({
+        left: 0,
+        marginLeft: '-0.95em',
+        height: '3em',
+        width: '1em',
+        '&::before': Object.freeze({
+            borderWidth: '1em 1em 1em 0',
+            borderColor: `transparent ${color} transparent transparent`,
+        }),
+    }),
+    [`&[x-placement*="left"] ${selector}`]: Object.freeze({
+        right: 0,
+        marginRight: '-0.95em',
+        height: '3em',
+        width: '1em',
+        '&::before': Object.freeze({
+            borderWidth: '1em 0 1em 1em',
+            borderColor: `transparent transparent transparent ${color}`,
+        }),
+    }),
+});
+
+export const makeDialogTooltipStyles = () =>
+    Object.freeze({
+        arrow: Object.freeze({
+            position: 'absolute',
+            fontSize: 6,
+            width: '3em',
+            height: '3em',
+            '&::before': Object.freeze({
+                content: '""',
+                margin: 'auto',
+                display: 'block',
+                width: 0,
+                height: 0,
+                borderStyle: 'solid',
+            }),
+        }),
+        popperStyles: Object.freeze(
+            arrowGenerator(COLOURS.DARK_SLATE_GREY, '$arrow'),
+        ),
+        tooltipStyles: Object.freeze({
+            fontSize: '14px',
+            backgroundColor: COLOURS.DARK_SLATE_GREY,
+        }),
+        placementLeft: Object.freeze({
+            margin: '0 8px',
+        }),
+        placementRight: Object.freeze({
+            margin: '0 8px',
+        }),
+        placementTop: Object.freeze({
+            margin: '8px 0',
+        }),
+        placementBottom: Object.freeze({
+            margin: '8px 0',
+        }),
+    });
+
+export const makeProductionLocationDialogStyles = theme =>
+    Object.freeze({
+        modalContainerWrapper: Object.freeze({
+            padding: '20px 60px',
+            [theme.breakpoints.down('md')]: {
+                padding: 0,
+            },
+        }),
+        label: Object.freeze({
+            fontSize: '14px',
+            textTransform: 'uppercase',
+            fontWeight: theme.typography.fontWeightExtraBold,
+        }),
+        titleContentStyle: Object.freeze({
+            fontSize: '32px',
+            textAlign: 'center',
+            fontWeight: theme.typography.fontWeightBold,
+            lineHeight: 1,
+        }),
+        titleInnerContentStyle: Object.freeze({
+            fontSize: '32px',
+            margin: 0,
+            lineHeight: '1.1',
+            fontWeight: theme.typography.fontWeightBold,
+        }),
+        primaryText: Object.freeze({
+            marginBottom: '20px',
+        }),
+        osIDText: Object.freeze({
+            lineHeight: '2.3',
+        }),
+        leftContainerColumn: Object.freeze({
+            paddingRight: '10px',
+        }),
+        rightContainerColumn: Object.freeze({
+            paddingRight: '10px',
+        }),
+        separator: Object.freeze({
+            margin: '20px 0',
+            color: COLOURS.GREY,
+        }),
+        dialogContentStyles: Object.freeze({
+            textAlign: 'center',
+            fontSize: '16px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+        }),
+        buttonContentStyle: Object.freeze({
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '0 15px',
+            [theme.breakpoints.down('md')]: {
+                justifyContent: 'initial',
+                flexDirection: 'column',
+            },
+        }),
+        osIdStatusBadge: Object.freeze({
+            backgroundColor: COLOURS.ACCENT_GREY,
+            marginLeft: '10px',
+            fontWeight: theme.typography.fontWeightBold,
+        }),
+        osIdStatusBadgeIcon: Object.freeze({
+            color: COLOURS.DARK_GREY,
+            marginRight: '5px',
+        }),
+        button: Object.freeze({
+            fontWeight: theme.typography.fontWeightBold,
+            textTransform: 'none',
+            paddingLeft: '30px',
+            paddingRight: '30px',
+            boxShadow: 'none',
+            [theme.breakpoints.down('md')]: {
+                width: '100%',
+                marginBottom: '16px',
+            },
+        }),
+        claimTooltipWrapper: Object.freeze({
+            display: 'block',
+            cursor: 'not-allowed',
+            [theme.breakpoints.down('md')]: {
+                width: '100%',
+            },
+        }),
+        claimButton: Object.freeze({
+            backgroundColor: COLOURS.NAVIGATION,
+        }),
+    });
+
 export const makeBackToSearchButtonStyles = theme =>
     Object.freeze({
         backButtonRootStyles: Object.freeze({
@@ -488,54 +657,12 @@ export const makeBackToSearchButtonStyles = theme =>
         }),
     });
 
-const arrowGenerator = color => ({
-    '&[x-placement*="bottom"] $arrowStyles': {
-        top: 0,
-        left: 0,
-        marginTop: '-0.95em',
-        width: '3em',
-        height: '1em',
-        '&::before': {
-            borderWidth: '0 1em 1em 1em',
-            borderColor: `transparent transparent ${color} transparent`,
-        },
-    },
-    '&[x-placement*="top"] $arrowStyles': {
-        bottom: 0,
-        left: 0,
-        marginBottom: '-0.95em',
-        width: '3em',
-        height: '1em',
-        '&::before': {
-            borderWidth: '1em 1em 0 1em',
-            borderColor: `${color} transparent transparent transparent`,
-        },
-    },
-    '&[x-placement*="right"] $arrowStyles': {
-        left: 0,
-        marginLeft: '-0.95em',
-        height: '3em',
-        width: '1em',
-        '&::before': {
-            borderWidth: '1em 1em 1em 0',
-            borderColor: `transparent ${color} transparent transparent`,
-        },
-    },
-    '&[x-placement*="left"] $arrowStyles': {
-        right: 0,
-        marginRight: '-0.95em',
-        height: '3em',
-        width: '1em',
-        '&::before': {
-            borderWidth: '1em 0 1em 1em',
-            borderColor: `transparent transparent transparent ${color}`,
-        },
-    },
-});
-
 export const makePreviousOsIdTooltipStyles = theme =>
     Object.freeze({
-        arrowPopperStyles: arrowGenerator(COLOURS.DARK_SLATE_GRAY),
+        arrowPopperStyles: arrowGenerator(
+            COLOURS.DARK_SLATE_GREY,
+            '$arrowStyles',
+        ),
         arrowStyles: Object.freeze({
             position: 'absolute',
             fontSize: 6,
@@ -551,7 +678,7 @@ export const makePreviousOsIdTooltipStyles = theme =>
             },
         }),
         tooltipStyles: Object.freeze({
-            backgroundColor: COLOURS.DARK_SLATE_GRAY,
+            backgroundColor: COLOURS.DARK_SLATE_GREY,
             color: COLOURS.WHITE,
             maxWidth: '149px',
             boxShadow: '0px 4px 4px 0px #00000040',
@@ -779,5 +906,86 @@ export const makeDashboardModerationQueueTableHeaderStyles = theme =>
         headerCellStyles: Object.freeze({
             fontSize: '14px',
             fontWeight: theme.typography.fontWeightSemiBoldPlus,
+        }),
+    });
+
+export const makeSearchByNameAddressTabStyles = theme =>
+    Object.freeze({
+        errorPlaceholder: Object.freeze({
+            color: COLOURS.RED,
+        }),
+        helperTextWrapStyles: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+        }),
+        iconInfoStyles: Object.freeze({
+            fontSize: '16px',
+            verticalAlign: 'middle',
+        }),
+        inputHelperTextStyles: Object.freeze({
+            fontSize: '16px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            color: COLOURS.RED,
+        }),
+        instructionStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            margin: '24px 0 32px 0',
+        }),
+        searchWrapStyles: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '40px 110px',
+            borderRadius: '0',
+            boxShadow: 'none',
+        }),
+        titleStyles: Object.freeze({
+            fontSize: '36px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
+        }),
+        subTitleStyles: Object.freeze({
+            fontSize: '21px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            margin: '8px 0 8px 0',
+        }),
+        textInputStyles: Object.freeze({
+            maxWidth: '528px',
+            marginBottom: '21px',
+        }),
+        selectStyles: Object.freeze({
+            fontSize: '18px',
+            lineHeight: '22px',
+            maxWidth: '528px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+        }),
+        searchInputStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            lineHeight: '22px',
+            padding: '16px',
+        }),
+        errorStyle: Object.freeze({
+            color: COLOURS.RED,
+        }),
+        notchedOutlineStyles: Object.freeze({
+            borderRadius: 0,
+        }),
+        buttonLabel: Object.freeze({
+            fontSize: '18px',
+            lineHeight: '20px',
+            fontWeight: theme.typography.fontWeightExtraBold,
+        }),
+        searchButtonStyles: Object.freeze({
+            width: '200px',
+            height: '49px',
+            borderRadius: 0,
+            textTransform: 'none',
+            backgroundColor: theme.palette.action.main,
+            marginTop: '26px',
+            color: theme.palette.common.black,
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
         }),
     });

@@ -24,6 +24,7 @@ class ModerationEvent(models.Model):
         SLC = 'SLC', 'SLC'
 
     uuid = models.UUIDField(
+        primary_key=True,
         default=uuid.uuid4,
         editable=False,
         unique=True,
@@ -54,7 +55,6 @@ class ModerationEvent(models.Model):
     contributor = models.ForeignKey(
         Contributor,
         on_delete=models.PROTECT,
-        null=True,
         related_name='moderation_event_contributor',
         help_text='Linked contributor responsible for this moderation event.'
     )
@@ -72,20 +72,18 @@ class ModerationEvent(models.Model):
         FacilityClaim,
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
         related_name='moderation_event_claim',
         help_text='Linked claim id for this production location.'
     )
 
     request_type = models.CharField(
         max_length=6,
-        null=False,
         choices=RequestType.choices,
         help_text='Type of moderation record.'
     )
 
     raw_data = models.JSONField(
-        null=False,
-        blank=False,
         default=dict,
         help_text=(
             'Key-value pairs of the non-parsed row and '
@@ -94,8 +92,6 @@ class ModerationEvent(models.Model):
     )
 
     cleaned_data = models.JSONField(
-        null=False,
-        blank=False,
         default=dict,
         help_text=(
             'Key-value pairs of the parsed row and '
@@ -104,8 +100,7 @@ class ModerationEvent(models.Model):
     )
 
     geocode_result = models.JSONField(
-        null=False,
-        blank=False,
+        blank=True,
         default=dict,
         help_text=(
             'Result of the geocode operation.'
@@ -116,7 +111,6 @@ class ModerationEvent(models.Model):
         max_length=8,
         choices=Status.choices,
         default=Status.PENDING,
-        null=False,
         help_text='Moderation status of the production location.'
     )
 

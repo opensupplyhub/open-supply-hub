@@ -40,7 +40,7 @@ class ModerationEventUpdateSerializer(ModelSerializer):
         if status is None:
             raise ValidationError({
                 "field": "status",
-                "message": "This field is required."
+                "detail": "This field is required."
             })
 
         self.__validate_status(status)
@@ -54,7 +54,7 @@ class ModerationEventUpdateSerializer(ModelSerializer):
         ]:
             raise ValidationError({
                 "field": "status",
-                "message": (
+                "detail": (
                     "Moderation status must be one of "
                     "PENDING, APPROVED or REJECTED."
                 )

@@ -2,7 +2,6 @@ import os
 import logging
 from django.db import transaction, connection
 
-# Initialize logger.
 logger = logging.getLogger(__name__)
 
 

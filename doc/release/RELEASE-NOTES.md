@@ -3,33 +3,6 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
-## Release 1.26.0
-
-## Introduction
-* Product name: Open Supply Hub
-* Release date: December 14, 2024
-
-### Database changes
-#### Migrations:
-* *Describe migrations here.*
-
-#### Scheme changes
-* *Describe scheme changes here.*
-
-### Code/API changes
-* [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Disabled null values from the response of the OpenSearch. Disabled possible null `os_id`, `claim_id` and `source` from `PATCH api/v1/moderation-events/{moderation_id}` response.
-
-### Architecture/Environment changes
-* [OSDEV-1170](https://opensupplyhub.atlassian.net/browse/OSDEV-1170) - Added the ability to automatically create a dump from the latest shared snapshot of the anonymized database from Production environment for use in the Test and Pre-Prod environments.
-
-### Bugfix
-* [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388) - The waiter from boto3 cannot wait more than half an hour so we replaced it with our own.
-
-### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
-
-### Release instructions:
-* *Provide release instructions here.*
 
 ## Release 1.26.0
 
@@ -39,42 +12,59 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Database changes
 #### Migrations:
-* *Describe migrations here.*
+* 0162_update_moderationevent_table_fields.py - This migration updates the ModerationEvent table and its constraints.
 
 #### Scheme changes
-* *Describe scheme changes here.*
+* [OSDEV-1158](https://opensupplyhub.atlassian.net/browse/OSDEV-1158) - The following updates to the ModerationEvent table have been made:
+    1. Set `uuid` as the primary key.
+    2. Make `geocode_result` field optional. It can be blank if lat and lng
+    have been provided by user.
+    3. Remove redundant `blank=False` and `null=False` constraints, as these are
+    the default values for model fields in Django and do not need to be
+    explicitly set.
+    4. Make `contributor` field non-nullable, as the field should not be left
+    empty. It is required to have information about the contributor.
+    5. Allow `claim` field to be blank. This change reflects the fact that
+    a moderation event may not always be related to a claim, so the field can
+    be left empty.
 
 ### Code/API changes
+* [OSDEV-1453](https://opensupplyhub.atlassian.net/browse/OSDEV-1453) - The `detail` keyword instead of `message` has been applied in error response objects for V1 endpoints.
+* [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Disabled null values from the response of the OpenSearch. Disabled possible null `os_id`, `claim_id` and `source` from `PATCH /api/v1/moderation-events/{moderation_id}/` response.
+* [OSDEV-1410](https://opensupplyhub.atlassian.net/browse/OSDEV-1410) - Introduced a new POST `/api/v1/moderation-events/{moderation_id}/production-locations/` endpoint
 * [OSDEV-1449](https://opensupplyhub.atlassian.net/browse/OSDEV-1449) - **Breaking changes** to the following endpoints:
-  - GET `v1/moderation-events`
-  - GET `v1/production-locations`
+  - GET `v1/moderation-events/`
+  - GET `v1/production-locations/`
 
   **Changes include:**
   - Refactored `sort_by` parameter to improve sorting functionality.
   - Split `search_after` parameter into `search_after_value` and `search_after_id` for better pagination control.
 
+* [OSDEV-1158](https://opensupplyhub.atlassian.net/browse/OSDEV-1158) - The following features and improvements have been made:
+    1. Introduced a new POST `/api/v1/production-locations/` endpoint based on the API v1 specification. This endpoint allows the creation of a new moderation event for the production location creation with the given details.
+    2. Removed redundant redefinition of paths via the `as_view` method for all the v1 API endpoints since they are already defined via `DefaultRouter`.
+* [OSDEV-1468](https://opensupplyhub.atlassian.net/browse/OSDEV-1468) - Limit the `page` parameter to `100` for the GET `/api/facilities/` endpoint. This will help prevent system downtimes, as larger pages (OFFSET) make it harder for the database to retrieve data, especially considering the large amount of data we have.
+
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* [OSDEV-1170](https://opensupplyhub.atlassian.net/browse/OSDEV-1170) - Added the ability to automatically create a dump from the latest shared snapshot of the anonymized database from Production environment for use in the Test and Pre-Prod environments.
+* In light of recent instances(on 12/03/2024 UTC and 12/04/2024 UTC) where the current RDS disk storage space limit was reached in Production, the RDS storage size has been increased to `256 GB` in the Production, Test, and Pre-prod environments to accommodate the processing of larger volumes of data. The configurations for the Test and Pre-prod environments have also been updated to maintain parity with the Production environment.
 
 ### Bugfix
-* *Describe bugfix here.*
+* [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388) - The waiter from boto3 cannot wait more than half an hour so we replaced it with our own.
+* It was found that clearing OpenSearch indexes didn’t work properly because the templates weren’t cleared. After updating the index mappings within the index template files, the index template remained unchanged because only the indexes were deleted during deployment, not both the indexes and their templates. This caused conflicts and prevented developers' updates from being applied to the OpenSearch indexes.
+This issue has been fixed by adding additional requests to delete the appropriate index templates to the `clear_opensearch.sh.tpl` script, which is triggered when clearing OpenSearch during deployment to any environment.
+* [OSDEV-1482](https://opensupplyhub.atlassian.net/browse/OSDEV-1482) - The `GET api/v1/moderation-events/{moderation_id}` endpoint returns a single response instead of an array containing one item.
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* [OSDEV-1132](https://opensupplyhub.atlassian.net/browse/OSDEV-1132) - Added FE for the "thanks for submitting" screen when user submits production location's data.
+* [OSDEV-1373](https://opensupplyhub.atlassian.net/browse/OSDEV-1373) - The tab `Search by Name and Address.` on the Production Location Search screen has been implemented. There are three required properties (name, address, country). The "Search" button becomes clickable after filling out inputs, creates a link with parameters, and allows users to proceed to the results screen.
+* [OSDEV-1175](https://opensupplyhub.atlassian.net/browse/OSDEV-1175) - New Moderation Queue Page was integrated with `GET api/v1/moderation-events/` endpoint that include pagination, sorting and filtering.
 
 ### Release instructions:
-* Run `[Release] Deploy` pipeline for an existing environment with the flag 'Clear OpenSearch indexes' set to true - to let the tokenizer parse full text into words with new configurations.
-* The following steps should be completed while deploying to Staging or Production:
-    1. Run the `[Release] Deploy` pipeline for these environments with the flag 'Clear OpenSearch indexes' set to true. This will allow Logstash to refill OpenSearch since the OpenSearch instance will be recreated due to the version increase. It is also necessary due to changes in the OpenSearch index settings.
-    2. Open the triggered `Deploy to AWS` workflow and ensure that the `apply` job is completed. **Right after** finishing the `apply` job, follow these instructions, which should be the last steps in setting up the recreated OpenSearch instance:
-        - Copy the ARN of the `terraform_ci` user from the AWS IAM console.
-            - Navigate to the AWS console's search input, type "IAM", and open the IAM console.
-            - In the IAM console, find and click on the "Users" tab.
-            - In the list of available users, locate the `terraform_ci` user, click on it, and on that page, you will find its ARN.
-        - After copying this value, go to the AWS OpenSearch console in the same way you accessed the IAM console.
-        - Open the available domains and locate the domain for the corresponding environment. Open it, then navigate to the security configuration and click "Edit".
-        - Find the section titled "Fine-grained access control", and under this section, you will find an "IAM ARN" input field. Paste the copied ARN into this field and save the changes. It may take several minutes to apply. Make sure that the "Configuration change status" field has green status.
-    3. Then, return to the running `Deploy to AWS` workflow and ensure that the logs for `clear_opensearch` job do not contain errors related to access for deleting the OpenSearch index or lock files in EFS storage. In case of **an access error**, simply rerun the `Deploy to AWS` workflow manually from the appropriate release Git tag.
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear custom OpenSearch indexes and templates` set to true - to refresh the index mappings for the `production-locations` and `moderation-events` indexes after fixing the process of clearing the custom OpenSearch indexes.
 
 
 ## Release 1.25.0

@@ -69,7 +69,7 @@ from ...constants import (
     ProcessingAction,
     UpdateLocationParams,
     FacilityClaimStatuses,
-    ErrorMessages,
+    APIErrorMessages,
 )
 from ...exceptions import BadRequestException
 from ...facility_history import (
@@ -91,6 +91,8 @@ from ...serializers import (
     FacilityQueryParamsSerializer,
     FacilityUpdateLocationParamsSerializer,
 )
+from api.serializers.facility.facility_list_page_parameter_serializer \
+    import FacilityListPageParameterSerializer
 from ...throttles import DataUploadThrottle
 
 from ..disabled_pagination_inspector import DisabledPaginationInspector
@@ -101,7 +103,6 @@ from .facility_parameters import (
     facilities_create_parameters,
 )
 
-# Initialize logger.
 log = logging.getLogger(__name__)
 
 
@@ -221,6 +222,12 @@ class FacilitiesViewSet(ListModelMixin,
                 ]
             }
         """
+        page_serializer = FacilityListPageParameterSerializer(
+            data=request.query_params
+        )
+        if not page_serializer.is_valid():
+            raise ValidationError(page_serializer.errors)
+
         params = FacilityQueryParamsSerializer(data=request.query_params)
 
         if not params.is_valid():
@@ -579,7 +586,9 @@ class FacilitiesViewSet(ListModelMixin,
         # Adding the @permission_classes decorator was not working so we
         # explicitly invoke our custom permission class.
         if switch_is_active('disable_list_uploading'):
-            raise ServiceUnavailableException(ErrorMessages.MAINTENANCE_MODE)
+            raise ServiceUnavailableException(
+                APIErrorMessages.MAINTENANCE_MODE
+            )
         if not IsRegisteredAndConfirmed().has_permission(request, self):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
         if not flag_is_active(request._request,
