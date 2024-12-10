@@ -13,8 +13,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Migrations:
 
 #### Scheme changes
-    a moderation event may not always be related to a claim, so the field can
-    be left empty.
 
 ### Code/API changes
 
