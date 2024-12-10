@@ -11,8 +11,6 @@ from api.moderation_event_actions.approval.add_production_location \
     import AddProductionLocation
 from api.moderation_event_actions.approval.update_production_location \
     import UpdateProductionLocation
-from api.moderation_event_actions.approval.event_approval_context \
-    import EventApprovalContext
 from api.permissions import IsRegisteredAndConfirmed
 from api.serializers.v1.moderation_event_update_serializer \
     import ModerationEventUpdateSerializer
@@ -27,6 +25,7 @@ from api.views.v1.opensearch_query_builder.moderation_events_query_builder \
     import ModerationEventsQueryBuilder
 from api.views.v1.opensearch_query_builder.opensearch_query_director import \
     OpenSearchQueryDirector
+
 from api.views.v1.utils import (
     handle_errors_decorator,
     serialize_params,
@@ -143,9 +142,7 @@ class ModerationEvents(ViewSet):
         ModerationEventsService.validate_moderation_status(event.status)
 
         if request.method == 'POST':
-            manage_production_location_context = EventApprovalContext(
-                AddProductionLocation(event)
-            )
+            production_location_processor = AddProductionLocation(event)
             status_code = status.HTTP_201_CREATED
 
         else:
@@ -166,14 +163,13 @@ class ModerationEvents(ViewSet):
 
             os_id = serializer.validated_data.get('os_id')
 
-            manage_production_location_context = EventApprovalContext(
-                UpdateProductionLocation(event, os_id)
+            production_location_processor = UpdateProductionLocation(
+                event, os_id
             )
-
             status_code = status.HTTP_200_OK
 
         try:
-            item = manage_production_location_context.run_processing()
+            item = production_location_processor.process_moderation_event()
         except Exception as error:
             return ModerationEventsService.handle_processing_error(error)
 
