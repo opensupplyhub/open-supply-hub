@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import DialogTooltip from '../../components/DialogTooltip';
+import DialogTooltip from '../../components/Contribute/DialogTooltip';
 
 global.cancelAnimationFrame = jest.fn();
 

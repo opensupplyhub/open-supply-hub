@@ -579,7 +579,7 @@ export const makeProductionLocationDialogStyles = theme =>
             fontSize: '32px',
             margin: 0,
             lineHeight: '1.1',
-            fontWeight: 'bold',
+            fontWeight: theme.typography.fontWeightBold,
         }),
         primaryText: Object.freeze({
             marginBottom: '20px',
@@ -612,16 +612,16 @@ export const makeProductionLocationDialogStyles = theme =>
             },
         }),
         osIdStatusBadge: Object.freeze({
-            backgroundColor: '#E7E8EA',
+            backgroundColor: COLOURS.ACCENT_GREY,
             marginLeft: '10px',
-            fontWeight: 'bold',
+            fontWeight: theme.typography.fontWeightBold,
         }),
         osIdStatusBadgeIcon: Object.freeze({
             color: COLOURS.DARK_GREY,
             marginRight: '5px',
         }),
         button: Object.freeze({
-            fontWeight: 'bold',
+            fontWeight: theme.typography.fontWeightBold,
             textTransform: 'none',
             paddingLeft: '30px',
             paddingRight: '30px',

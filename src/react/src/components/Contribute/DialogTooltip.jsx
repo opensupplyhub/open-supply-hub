@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { shape, string, node } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Tooltip from '@material-ui/core/Tooltip';
-import { makeDialogTooltipStyles } from '../util/styles';
+import { makeDialogTooltipStyles } from '../../util/styles';
 
 const DialogTooltip = ({ text, childComponent, classes }) => {
     const [arrowRef, setArrowRef] = useState(null);

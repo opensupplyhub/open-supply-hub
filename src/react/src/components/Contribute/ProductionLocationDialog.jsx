@@ -10,7 +10,7 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogActions from '@material-ui/core/DialogActions';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
-import DialogTooltip from '../DialogTooltip';
+import DialogTooltip from './DialogTooltip';
 import { mainRoute } from '../../util/constants';
 import { makeProductionLocationDialogStyles } from '../../util/styles';
 
