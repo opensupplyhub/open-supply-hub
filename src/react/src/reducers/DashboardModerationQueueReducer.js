@@ -19,7 +19,7 @@ const initialState = Object.freeze({
     moderationEvents: Object.freeze({
         fetching: false,
         error: null,
-        events: [],
+        moderationEventsList: [],
         count: 0,
         page: 0,
         maxPage: 0,
@@ -58,8 +58,11 @@ export default createReducer(
                 moderationEvents: {
                     fetching: { $set: initialState.moderationEvents.fetching },
                     error: { $set: initialState.moderationEvents.error },
-                    events: {
-                        $set: [...state.moderationEvents.events, ...data.data],
+                    moderationEventsList: {
+                        $set: [
+                            ...state.moderationEvents.moderationEventsList,
+                            ...data.data,
+                        ],
                     },
                     count: { $set: data.count },
                 },
@@ -67,7 +70,7 @@ export default createReducer(
         [clearModerationEvents]: state =>
             update(state, {
                 moderationEvents: {
-                    events: { $set: [] },
+                    moderationEventsList: { $set: [] },
                 },
             }),
         [updateModerationEventsPage]: (state, { page, maxPage, pageSize }) =>

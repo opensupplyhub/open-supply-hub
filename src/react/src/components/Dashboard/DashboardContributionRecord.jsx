@@ -13,7 +13,7 @@ import Typography from '@material-ui/core/Typography';
 
 import { makeDashboardContributionRecordStyles } from '../../util/styles';
 import {
-    moderationEventPropType,
+    moderationEventsListItemPropType,
     potentialMatchesPropType,
 } from '../../util/propTypes';
 import {
@@ -22,29 +22,29 @@ import {
 } from '../../actions/dashboardContributionRecord';
 
 const DashboardContributionRecord = ({
-    event,
+    moderationEventsListItem,
     matches,
-    fetchEventError,
+    fetchModerationEventError,
     classes,
-    fetchEvent,
+    fetchModerationEvent,
     fetchMatches,
-    eventFetching,
+    moderationEventFetching,
     fetchPotentialMatchError,
 }) => {
     useEffect(() => {
-        fetchEvent();
+        fetchModerationEvent();
         fetchMatches();
-    }, [fetchEvent, fetchMatches]);
+    }, [fetchModerationEvent, fetchMatches]);
 
-    if (fetchEventError) {
+    if (fetchModerationEventError) {
         return (
             <Typography variant="body2" className={classes.errorStyle}>
-                {fetchEventError}
+                {fetchModerationEventError}
             </Typography>
         );
     }
 
-    const jsonResults = JSON.stringify(event, null, 2);
+    const jsonResults = JSON.stringify(moderationEventsListItem, null, 2);
     const potentialMatchCount = matches?.length || 0;
 
     return (
@@ -55,7 +55,7 @@ const DashboardContributionRecord = ({
 
             <Paper className={classes.container}>
                 <div className={classes.prettyPrint}>
-                    {eventFetching ? (
+                    {moderationEventFetching ? (
                         <CircularProgress
                             size={25}
                             className={classes.loaderStyles}
@@ -158,7 +158,7 @@ const DashboardContributionRecord = ({
                     variant="contained"
                     onClick={() => {}}
                     className={classes.buttonStyles}
-                    disabled={eventFetching}
+                    disabled={moderationEventFetching}
                 >
                     Create New Location
                 </Button>
@@ -167,7 +167,7 @@ const DashboardContributionRecord = ({
                     variant="contained"
                     onClick={() => {}}
                     className={classes.buttonStyles}
-                    disabled={eventFetching}
+                    disabled={moderationEventFetching}
                 >
                     Reject Contribution
                 </Button>
@@ -176,7 +176,7 @@ const DashboardContributionRecord = ({
                     variant="contained"
                     className={`${classes.buttonStyles} ${classes.claimButtonStyles}`}
                     onClick={() => {}}
-                    disabled={eventFetching}
+                    disabled={moderationEventFetching}
                 >
                     Go to Claim
                 </Button>
@@ -186,29 +186,29 @@ const DashboardContributionRecord = ({
 };
 
 DashboardContributionRecord.defaultProps = {
-    event: {},
+    moderationEventsListItem: {},
     matches: [],
-    fetchEventError: null,
+    fetchModerationEventError: null,
     fetchPotentialMatchError: null,
 };
 
 DashboardContributionRecord.propTypes = {
-    event: moderationEventPropType,
+    moderationEventsListItem: moderationEventsListItemPropType,
     matches: potentialMatchesPropType,
-    eventFetching: bool.isRequired,
-    fetchEvent: func.isRequired,
+    moderationEventFetching: bool.isRequired,
+    fetchModerationEvent: func.isRequired,
     fetchMatches: func.isRequired,
     classes: object.isRequired,
-    fetchEventError: string,
+    fetchModerationEventError: string,
     fetchPotentialMatchError: string,
 };
 
 const mapStateToProps = ({
     dashboardContributionRecord: {
         singleModerationEvent: {
-            event,
-            fetching: eventFetching,
-            error: fetchEventError,
+            moderationEventsListItem,
+            fetching: moderationEventFetching,
+            error: fetchModerationEventError,
         },
         potentialMatches: {
             matches,
@@ -217,11 +217,11 @@ const mapStateToProps = ({
         },
     },
 }) => ({
-    event,
-    eventFetching,
+    moderationEventsListItem,
+    moderationEventFetching,
     matches,
     potentialMatchFetching,
-    fetchEventError,
+    fetchModerationEventError,
     fetchPotentialMatchError,
 });
 
@@ -233,7 +233,8 @@ const mapDispatchToProps = (
         },
     },
 ) => ({
-    fetchEvent: () => dispatch(fetchSingleModerationEvent(moderationID)),
+    fetchModerationEvent: () =>
+        dispatch(fetchSingleModerationEvent(moderationID)),
     fetchMatches: () => dispatch(fetchPotentialMatches()),
 });
 
