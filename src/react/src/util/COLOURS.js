@@ -18,10 +18,11 @@ export default {
     GREY: '#D2D2D2',
     LIGHT_GREY: '#F9F7F7',
     DARK_GREY: '#6E707E',
-    DARK_SLATE_GRAY: '#3D4153',
+    DARK_SLATE_GREY: '#3D4153',
     NEAR_BLACK: '#0D1128',
 
     // Accent Colors
     NAVIGATION: '#FCCF3F',
     PALE_LIGHT_YELLOW: '#FFF2CE',
+    ACCENT_GREY: '#E7E8EA',
 };
