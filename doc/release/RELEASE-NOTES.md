@@ -3,6 +3,31 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.27.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: December 28, 2024
+
+### Database changes
+#### Migrations:
+
+#### Scheme changes
+
+### Code/API changes
+
+### Architecture/Environment changes
+
+### Bugfix
+* [OSDEV-1493](https://opensupplyhub.atlassian.net/browse/OSDEV-1493) - Fixed an issue where the backend sorts countries not by `name` but by their `alpha-2 codes` in `GET /api/v1/moderation-events/` endpoint.
+
+### What's new
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
 
 ## Release 1.26.0
 
