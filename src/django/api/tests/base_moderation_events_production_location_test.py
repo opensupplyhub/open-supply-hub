@@ -3,11 +3,11 @@ from django.utils.timezone import now
 
 from rest_framework.test import APITestCase
 
-from api.models import ModerationEvent, User, Contributor
-from api.models.source import Source
-from api.models.nonstandard_field import NonstandardField
-from api.models.facility.facility_list_item import FacilityListItem
+from api.models import Contributor, ModerationEvent, User
 from api.models.extended_field import ExtendedField
+from api.models.facility.facility_list_item import FacilityListItem
+from api.models.nonstandard_field import NonstandardField
+from api.models.source import Source
 
 
 @override_settings(DEBUG=True)
@@ -97,6 +97,11 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
 
     def login_as_regular_user(self):
         self.client.login(email=self.email, password=self.password)
+
+    def get_url(self):
+        return "/api/v1/moderation-events/{}/production-locations/".format(
+            self.moderation_event_id
+        )
 
     def assertPermissionDenied(self, response):
         self.assertEqual(403, response.status_code)
