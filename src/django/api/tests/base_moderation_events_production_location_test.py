@@ -154,6 +154,14 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
         self.assertEqual(source.is_public, True)
         self.assertEqual(source.create, True)
 
+    def add_nonstandard_fields_data(self):
+        self.moderation_event.cleaned_data["raw_json"][
+            "nonstandard_field_one"
+        ] = "Nonstandard Field One"
+        self.moderation_event.cleaned_data["raw_json"][
+            "nonstandard_field_two"
+        ] = "Nonstandard Field Two"
+
     def assert_creation_of_nonstandard_fields(self, response, status_code):
         self.assertEqual(status_code, response.status_code)
 
@@ -198,6 +206,28 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
             facility_list_item.clean_address,
             self.moderation_event.cleaned_data["clean_address"],
         )
+
+    def add_extended_fields_data(self):
+        self.moderation_event.cleaned_data['fields'][
+            'number_of_workers'
+        ] = '100'
+        self.moderation_event.cleaned_data['fields'][
+            'native_language_name'
+        ] = 'Native Language Name'
+        self.moderation_event.cleaned_data['fields'][
+            'parent_company'
+        ] = 'Parent Company'
+        self.moderation_event.cleaned_data['fields']['product_type'] = [
+            "Product Type"
+        ]
+        self.moderation_event.cleaned_data['fields']['facility_type'] = {
+            "raw_values": "Facility Type",
+            "processed_values": ["Facility Type"],
+        }
+        self.moderation_event.cleaned_data['fields']['processing_type'] = {
+            "raw_values": "Processing Type",
+            "processed_values": ["Processing Type"],
+        }
 
     def assert_extended_fields_creation(self, response, status_code):
         self.assertEqual(status_code, response.status_code)

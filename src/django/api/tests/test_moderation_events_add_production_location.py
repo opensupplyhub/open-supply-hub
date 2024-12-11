@@ -103,13 +103,7 @@ class ModerationEventsAddProductionLocationTest(
         self.assert_source_creation(source)
 
     def test_creation_of_nonstandard_fields(self):
-        self.moderation_event.cleaned_data["raw_json"][
-            "nonstandard_field_one"
-        ] = "Nonstandard Field One"
-        self.moderation_event.cleaned_data["raw_json"][
-            "nonstandard_field_two"
-        ] = "Nonstandard Field Two"
-
+        self.add_nonstandard_fields_data()
         self.moderation_event.save()
 
         self.login_as_superuser()
@@ -156,27 +150,7 @@ class ModerationEventsAddProductionLocationTest(
         )
 
     def test_creation_of_extended_fields(self):
-        self.moderation_event.cleaned_data['fields'][
-            'number_of_workers'
-        ] = '100'
-        self.moderation_event.cleaned_data['fields'][
-            'native_language_name'
-        ] = 'Native Language Name'
-        self.moderation_event.cleaned_data['fields'][
-            'parent_company'
-        ] = 'Parent Company'
-        self.moderation_event.cleaned_data['fields']['product_type'] = [
-            "Product Type"
-        ]
-        self.moderation_event.cleaned_data['fields']['facility_type'] = {
-            "raw_values": "Facility Type",
-            "processed_values": ["Facility Type"],
-        }
-        self.moderation_event.cleaned_data['fields']['processing_type'] = {
-            "raw_values": "Processing Type",
-            "processed_values": ["Processing Type"],
-        }
-
+        self.add_extended_fields_data()
         self.moderation_event.save()
 
         self.login_as_superuser()
