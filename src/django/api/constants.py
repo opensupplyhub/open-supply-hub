@@ -218,6 +218,7 @@ class APIV1CommonErrorMessages:
         'Open Supply Hub is undergoing maintenance and not accepting new data '
         'at the moment. Please try again in a few minutes.'
     )
+    MODERATION_EVENT_NOT_FOUND = 'Moderation event not found.'
 
 
 class APIV1LocationContributionErrorMessages:
