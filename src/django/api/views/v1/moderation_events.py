@@ -92,7 +92,7 @@ class ModerationEvents(ViewSet):
 
         if len(events) == 0:
             raise NotFound(
-                APIV1CommonErrorMessages.MODERATION_EVENT_NOT_FOUND
+                detail=APIV1CommonErrorMessages.MODERATION_EVENT_NOT_FOUND
             )
 
         return Response(events[0])
