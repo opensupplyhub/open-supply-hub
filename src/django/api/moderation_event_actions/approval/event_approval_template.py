@@ -7,9 +7,11 @@ from django.db import transaction
 from django.utils import timezone
 
 from api.constants import ProcessingAction
-from api.extended_fields import create_extendedfields_for_single_item
+from api.extended_fields import (
+    create_extendedfields_for_single_item,
+    update_extendedfields_for_list_item,
+)
 from api.models.contributor.contributor import Contributor
-from api.models.extended_field import ExtendedField
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_list_item_temp import FacilityListItemTemp
 from api.models.facility.facility_match import FacilityMatch
@@ -77,7 +79,7 @@ class EventApprovalTemplate(ABC):
             self.__create_list_item_temp(item)
             log.info('[Moderation Event] FacilityListItemTemp created.')
 
-            self.__update_extended_fields(item)
+            update_extendedfields_for_list_item(item)
             log.info(
                 '[Moderation Event] Extended fields updated with facility ID.'
             )
@@ -200,15 +202,6 @@ class EventApprovalTemplate(ABC):
     @staticmethod
     def __create_list_item_temp(item: FacilityListItem) -> None:
         FacilityListItemTemp.copy(item)
-
-    @staticmethod
-    def __update_extended_fields(item: FacilityListItem) -> None:
-        extended_fields = ExtendedField.objects.filter(
-            facility_list_item=item.id
-        )
-        for field in extended_fields:
-            field.facility_id = item.facility_id
-            field.save()
 
     def __create_facility_match_temp(self, item: FacilityListItem) -> None:
         self.__create_facility_match_record(
