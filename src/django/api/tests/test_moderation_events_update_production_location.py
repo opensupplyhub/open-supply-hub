@@ -241,7 +241,11 @@ class ModerationEventsUpdateProductionLocationTest(
         )
 
         self.assert_facilitymatch_creation(
-            response, 200, APIV1MatchTypes.CONFIRMED_MATCH, FacilityMatch
+            response,
+            200,
+            APIV1MatchTypes.CONFIRMED_MATCH,
+            FacilityMatch.CONFIRMED,
+            FacilityMatch,
         )
 
     def test_creation_of_facilitymatchtemp(self):
@@ -252,7 +256,11 @@ class ModerationEventsUpdateProductionLocationTest(
             content_type="application/json",
         )
         self.assert_facilitymatch_creation(
-            response, 200, APIV1MatchTypes.CONFIRMED_MATCH, FacilityMatchTemp
+            response,
+            200,
+            APIV1MatchTypes.CONFIRMED_MATCH,
+            FacilityMatch.CONFIRMED,
+            FacilityMatchTemp,
         )
 
     @patch(
