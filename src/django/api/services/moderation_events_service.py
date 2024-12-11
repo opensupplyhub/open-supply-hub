@@ -2,6 +2,7 @@ import logging
 
 from rest_framework.exceptions import PermissionDenied, ParseError, NotFound
 
+from api.constants import APIV1CommonErrorMessages
 from api.exceptions import GoneException, InternalServerErrorException
 from api.models.moderation_event import ModerationEvent
 from api.serializers.v1.opensearch_common_validators.moderation_id_validator \
@@ -37,7 +38,7 @@ class ModerationEventsService:
             raise NotFound(
                 create_error_detail(
                     field="moderation_id",
-                    detail="Moderation event not found."
+                    detail=APIV1CommonErrorMessages.MODERATION_EVENT_NOT_FOUND
                 )
             )
 
