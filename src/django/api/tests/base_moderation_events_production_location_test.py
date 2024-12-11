@@ -36,30 +36,33 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
         self.moderation_event_id = 'f65ec710-f7b9-4f50-b960-135a7ab24ee6'
         self.latitude = -53
         self.longitude = 142
+        self.country = "United Kingdom"
+        self.name = "Test Name"
+        self.address = "Test Address, United Kingdom"
         self.moderation_event = ModerationEvent.objects.create(
             uuid=self.moderation_event_id,
             created_at=now(),
             updated_at=now(),
             request_type='UPDATE',
             raw_data={
-                "country": "United Kingdom",
-                "name": "Test Name",
-                "address": "Test Address, United Kingdom",
+                "country": self.country,
+                "name": self.name,
+                "address": self.address,
             },
             cleaned_data={
                 "raw_json": {
-                    "country": "United Kingdom",
-                    "name": "Test Name",
-                    "address": "Test Address, United Kingdom",
+                    "country": self.country,
+                    "name": self.name,
+                    "address": self.address,
                 },
-                "name": "Test Name",
+                "name": self.name,
                 "clean_name": "test name",
-                "address": "Test Address, United Kingdom",
+                "address": self.address,
                 "clean_address": "test address united kingdom",
                 "country_code": "GB",
                 "sector": ["Apparel"],
                 "fields": {
-                    "country": "United Kingdom",
+                    "country": self.country,
                 },
                 "errors": [],
             },
@@ -75,12 +78,12 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
                         {
                             "address_components": [
                                 {
-                                    "long_name": "Geocoded Address",
-                                    "short_name": "Geocoded Address",
+                                    "long_name": "Long Geocoded Address",
+                                    "short_name": "Short Geocoded Address",
                                     "types": ["street_address"],
                                 },
                             ],
-                            "formatted_address": "Geocoded Address",
+                            "formatted_address": "Formatted Geocoded Address",
                         }
                     ],
                 },
