@@ -4,7 +4,7 @@ from unittest.mock import patch
 from django.contrib.gis.geos import Point
 from django.test import override_settings
 
-from api.constants import APIV1MatchTypes
+from api.constants import APIV1CommonErrorMessages, APIV1MatchTypes
 from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_match import FacilityMatch
@@ -106,7 +106,7 @@ class ModerationEventsUpdateProductionLocationTest(
 
         self.assertEqual(400, response.status_code)
         self.assertEqual(
-            "The request body contains invalid or missing fields.",
+            APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
             response.data["detail"],
         )
         self.assertEqual("os_id", response.data["errors"][0]["field"])
@@ -124,7 +124,7 @@ class ModerationEventsUpdateProductionLocationTest(
 
         self.assertEqual(400, response.status_code)
         self.assertEqual(
-            "The request body contains invalid or missing fields.",
+            APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
             response.data["detail"],
         )
         self.assertEqual("os_id", response.data["errors"][0]["field"])
@@ -143,7 +143,7 @@ class ModerationEventsUpdateProductionLocationTest(
 
         self.assertEqual(400, response.status_code)
         self.assertEqual(
-            "The request body contains invalid or missing fields.",
+            APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
             response.data["detail"],
         )
         self.assertEqual("os_id", response.data["errors"][0]["field"])

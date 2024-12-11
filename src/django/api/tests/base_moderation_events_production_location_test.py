@@ -3,6 +3,7 @@ from django.utils.timezone import now
 
 from rest_framework.test import APITestCase
 
+from api.constants import APIV1CommonErrorMessages
 from api.models import Contributor, ModerationEvent, User
 from api.models.extended_field import ExtendedField
 from api.models.facility.facility_list_item import FacilityListItem
@@ -130,7 +131,8 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
         )
         self.assertEqual("moderation_id", response.data["errors"][0]["field"])
         self.assertEqual(
-            "Moderation event not found.", response.data["errors"][0]["detail"]
+            APIV1CommonErrorMessages.MODERATION_EVENT_NOT_FOUND,
+            response.data["errors"][0]["detail"],
         )
 
     def assertModerationEventNotPending(self, response):
