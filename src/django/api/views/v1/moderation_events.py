@@ -3,10 +3,11 @@ from typing import Tuple
 from django.http import QueryDict
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.viewsets import ViewSet
 from rest_framework.decorators import action
 
+from api.constants import APIV1CommonErrorMessages
 from api.moderation_event_actions.approval.add_production_location \
     import AddProductionLocation
 from api.moderation_event_actions.approval.update_production_location \
@@ -90,12 +91,8 @@ class ModerationEvents(ViewSet):
         events = response.get("data", [])
 
         if len(events) == 0:
-            return Response(
-                data={
-                    "detail": 'The moderation event with the '
-                    'given uuid was not found.',
-                },
-                status=status.HTTP_404_NOT_FOUND,
+            raise NotFound(
+                APIV1CommonErrorMessages.MODERATION_EVENT_NOT_FOUND
             )
 
         return Response(events[0])
@@ -116,18 +113,15 @@ class ModerationEvents(ViewSet):
             partial=True
         )
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        if not serializer.is_valid():
+            raise ValidationError({
+                "detail": APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
+                "errors": [serializer.errors]
+            })
 
-        return Response(
-            {
-                "detail": 'The request body contains '
-                'invalid or missing fields.',
-                "error": [serializer.errors]
-            },
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @handle_errors_decorator
     @action(
@@ -156,8 +150,7 @@ class ModerationEvents(ViewSet):
                 ]
 
                 raise ValidationError({
-                    "detail": 'The request body contains '
-                    'invalid or missing fields.',
+                    "detail": APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
                     "errors": errors
                 })
 
