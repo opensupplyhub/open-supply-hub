@@ -28,6 +28,13 @@ import {
     MODERATION_DEFAULT_ROWS_PER_PAGE,
 } from '../../util/constants';
 
+const DATE_RANGE_ERROR =
+    "The 'After Date' should be earlier than or the same as " +
+    "the 'Before Date'. Please adjust the dates.";
+
+const DATE_FORMAT_ERROR =
+    "The date format is invalid. Please use the format 'DD-MM-YYYY'.";
+
 const DashboardModerationQueue = ({
     moderationEventsList,
     count,
@@ -50,12 +57,15 @@ const DashboardModerationQueue = ({
 }) => {
     const [afterDateError, setAfterDateError] = useState(false);
     const [beforeDateError, setBeforeDateError] = useState(false);
+    const [errorDateText, setErrorDateText] = useState('');
     const isFirstRender = useRef(true);
     const prevDataSources = useRef(dataSources);
     const prevModerationStatuses = useRef(moderationStatuses);
     const prevCountries = useRef(countries);
 
     const dispatch = useDispatch();
+
+    const dateRegexFormat = /^\d{4}-\d{2}-\d{2}$/;
 
     useEffect(() => {
         handleFetchModerationEvents();
@@ -64,6 +74,14 @@ const DashboardModerationQueue = ({
 
     const wasNotEmptyAndNowEmpty = (prev, current) =>
         prev?.current?.length > 0 && current?.length === 0;
+
+    const isValidDate = date =>
+        typeof date === 'string' &&
+        (date.length === 0 || dateRegexFormat.test(date));
+    const isValidDateRange = (firstDate, secondDate) =>
+        firstDate.length === 0 ||
+        secondDate.length === 0 ||
+        firstDate >= secondDate;
 
     useEffect(() => {
         /*
@@ -112,41 +130,57 @@ const DashboardModerationQueue = ({
     }, [dataSources, moderationStatuses, countries]);
 
     const handleAfterDateChange = date => {
-        if (!beforeDate || !date || date <= beforeDate) {
-            setAfterDateError(false);
-            dispatch(updateAfterDate(date));
-            dispatch(clearModerationEvents());
-            dispatch(
-                updateModerationEventsPage({
-                    page: MODERATION_INITIAL_PAGE_INDEX,
-                    maxPage: MODERATION_INITIAL_PAGE_INDEX,
-                    pageSize,
-                }),
-            );
-            handleFetchModerationEvents();
-        } else {
-            dispatch(updateAfterDate(''));
+        if (!isValidDate(date)) {
+            dispatch(updateAfterDate(null));
+            setErrorDateText(DATE_FORMAT_ERROR);
             setAfterDateError(true);
+            return;
         }
+        if (!isValidDateRange(beforeDate, date)) {
+            dispatch(updateAfterDate(null));
+            setErrorDateText(DATE_RANGE_ERROR);
+            setAfterDateError(true);
+            return;
+        }
+
+        setAfterDateError(false);
+        dispatch(updateAfterDate(date));
+        dispatch(clearModerationEvents());
+        dispatch(
+            updateModerationEventsPage({
+                page: MODERATION_INITIAL_PAGE_INDEX,
+                maxPage: MODERATION_INITIAL_PAGE_INDEX,
+                pageSize,
+            }),
+        );
+        fetchEvents();
     };
 
     const handleBeforeDateChange = date => {
-        if (!afterDate || !date || date >= afterDate) {
-            setBeforeDateError(false);
-            dispatch(updateBeforeDate(date));
-            dispatch(clearModerationEvents());
-            dispatch(
-                updateModerationEventsPage({
-                    page: MODERATION_INITIAL_PAGE_INDEX,
-                    maxPage: MODERATION_INITIAL_PAGE_INDEX,
-                    pageSize,
-                }),
-            );
-            handleFetchModerationEvents();
-        } else {
-            dispatch(updateBeforeDate(''));
+        if (!isValidDate(date)) {
+            dispatch(updateBeforeDate(null));
+            setErrorDateText(DATE_FORMAT_ERROR);
             setBeforeDateError(true);
+            return;
         }
+        if (!isValidDateRange(date, afterDate)) {
+            dispatch(updateBeforeDate(null));
+            setErrorDateText(DATE_RANGE_ERROR);
+            setBeforeDateError(true);
+            return;
+        }
+
+        setBeforeDateError(false);
+        dispatch(updateBeforeDate(date));
+        dispatch(clearModerationEvents());
+        dispatch(
+            updateModerationEventsPage({
+                page: MODERATION_INITIAL_PAGE_INDEX,
+                maxPage: MODERATION_INITIAL_PAGE_INDEX,
+                pageSize,
+            }),
+        );
+        fetchEvents();
     };
 
     if (error) {
@@ -200,9 +234,7 @@ const DashboardModerationQueue = ({
                 </Grid>
                 {(afterDateError || beforeDateError) && (
                     <Typography color="error" className={classes.errorText}>
-                        The &apos;After Date&apos; should be earlier than or the
-                        same as the &apos;Before Date&apos;. Please adjust the
-                        dates.
+                        {errorDateText}
                     </Typography>
                 )}
             </div>
@@ -235,8 +267,8 @@ DashboardModerationQueue.defaultProps = {
         sortBy: 'created_at',
         orderBy: 'desc',
     },
-    afterDate: null,
-    beforeDate: null,
+    afterDate: '',
+    beforeDate: '',
     dataSources: [],
     moderationStatuses: [],
     countries: [],
