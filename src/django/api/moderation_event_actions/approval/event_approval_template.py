@@ -210,7 +210,10 @@ class EventApprovalTemplate(ABC):
         )
 
     def __create_facility_match(self, item: FacilityListItem) -> None:
-        self.__create_facility_match_record(model=FacilityMatch, item=item)
+        self.__create_facility_match_record(
+            model=FacilityMatch,
+            item=item,
+        )
 
     def __create_facility_match_record(
         self,
@@ -218,13 +221,12 @@ class EventApprovalTemplate(ABC):
         item: FacilityListItem,
     ) -> None:
         match_type = self._get_match_type()
-        status = self._get_match_status()
 
         model.objects.create(
             facility_id=item.facility_id,
             confidence=1.0,
             facility_list_item_id=item.id,
-            status=status,
+            status=FacilityMatch.AUTOMATIC,
             results={"match_type": match_type},
             created_at=timezone.now(),
             updated_at=timezone.now(),
@@ -245,14 +247,6 @@ class EventApprovalTemplate(ABC):
     def _get_match_type(self) -> str:
         """
         Return the match_type that should be used when creating
-        facility matches.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def _get_match_status(self) -> str:
-        """
-        Return the status that should be used when creating
         facility matches.
         """
         raise NotImplementedError

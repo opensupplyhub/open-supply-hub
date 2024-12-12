@@ -1,7 +1,6 @@
 import logging
 
 from api.constants import APIV1MatchTypes
-from api.models.facility.facility_match import FacilityMatch
 from api.models.moderation_event import ModerationEvent
 from api.moderation_event_actions.approval.event_approval_template import (
     EventApprovalTemplate,
@@ -23,6 +22,3 @@ class UpdateProductionLocation(EventApprovalTemplate):
 
     def _get_match_type(self) -> str:
         return APIV1MatchTypes.CONFIRMED_MATCH
-
-    def _get_match_status(self) -> str:
-        return FacilityMatch.CONFIRMED
