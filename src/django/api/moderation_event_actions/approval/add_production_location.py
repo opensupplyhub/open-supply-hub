@@ -1,5 +1,6 @@
 import logging
-from datetime import datetime
+
+from django.utils import timezone
 
 from api.constants import APIV1MatchTypes
 from api.models.facility.facility import Facility
@@ -35,7 +36,7 @@ class AddProductionLocation(EventApprovalTemplate):
             country_code=item.country_code,
             location=item.geocoded_point,
             created_from_id=item.id,
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
+            created_at=timezone.now(),
+            updated_at=timezone.now(),
         )
         log.info(f'[Moderation Event] Facility created. Id: {facility_id}')
