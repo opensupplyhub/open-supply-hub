@@ -153,7 +153,7 @@ const DashboardModerationQueue = ({
                 pageSize,
             }),
         );
-        fetchEvents();
+        handleFetchModerationEvents();
     };
 
     const handleBeforeDateChange = date => {
@@ -180,7 +180,7 @@ const DashboardModerationQueue = ({
                 pageSize,
             }),
         );
-        fetchEvents();
+        handleFetchModerationEvents();
     };
 
     if (error) {
