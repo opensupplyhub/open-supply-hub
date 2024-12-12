@@ -1315,6 +1315,7 @@ export function sort(array, comparator) {
 }
 
 export const formatDate = (date, format) => moment(date).format(format);
+export const formatUTCDate = (date, format) => moment.utc(date).format(format);
 
 export const replaceListParsingErrorMessages = errors =>
     errors.map(
