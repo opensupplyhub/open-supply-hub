@@ -52,7 +52,7 @@ class EventApprovalTemplate(ABC):
 
             header_str: str = ','.join(header_row_keys)
             item: FacilityListItem = self.__create_facility_list_item(
-                source, data, header_str, FacilityListItem.MATCHED
+                source, data, header_str
             )
             log.info(
                 '[Moderation Event] FacilityListItem created. Id: '
@@ -107,10 +107,11 @@ class EventApprovalTemplate(ABC):
             create=True,
         )
 
-    @staticmethod
     def __create_facility_list_item(
-        source: Source, data: Dict, header_str: str, status: str
+        self, source: Source, data: Dict, header_str: str
     ) -> FacilityListItem:
+        status = self._get_facilitylistitem_status()
+
         return FacilityListItem.objects.create(
             source=source,
             row_index=0,
@@ -239,6 +240,12 @@ class EventApprovalTemplate(ABC):
     @abstractmethod
     def _get_os_id(self, country_code: str) -> str:
         """Return the os_id."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def _get_facilitylistitem_status(self) -> str:
+        """Return the status that should be used when creating
+        facility list items."""
         raise NotImplementedError
 
     @abstractmethod

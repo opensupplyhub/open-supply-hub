@@ -5,6 +5,7 @@ from django.test import override_settings
 
 from api.constants import APIV1MatchTypes
 from api.models.facility.facility import Facility
+from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_match import FacilityMatch
 from api.models.facility.facility_match_temp import FacilityMatchTemp
 from api.models.source import Source
@@ -123,7 +124,9 @@ class ModerationEventsAddProductionLocationTest(
             content_type="application/json",
         )
 
-        self.assert_facilitylistitem_creation(response, 201)
+        self.assert_facilitylistitem_creation(
+            response, 201, FacilityListItem.MATCHED
+        )
 
     def test_creation_of_facility(self):
         self.login_as_superuser()

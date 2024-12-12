@@ -217,7 +217,9 @@ class ModerationEventsUpdateProductionLocationTest(
             content_type="application/json",
         )
 
-        self.assert_facilitylistitem_creation(response, 200)
+        self.assert_facilitylistitem_creation(
+            response, 200, FacilityListItem.CONFIRMED_MATCH
+        )
 
     def test_creation_of_extended_fields(self):
         self.add_extended_fields_data()

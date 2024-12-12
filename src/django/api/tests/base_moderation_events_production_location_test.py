@@ -183,7 +183,7 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
         self.assertNotIn('name', created_fields)
         self.assertNotIn('address', created_fields)
 
-    def assert_facilitylistitem_creation(self, response, status_code):
+    def assert_facilitylistitem_creation(self, response, status_code, status):
         self.assertEqual(status_code, response.status_code)
 
         facility_list_item = FacilityListItem.objects.get(
@@ -191,7 +191,7 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
         )
         self.assertIsNotNone(facility_list_item)
         self.assertEqual(facility_list_item.row_index, 0)
-        self.assertEqual(facility_list_item.status, FacilityListItem.MATCHED)
+        self.assertEqual(facility_list_item.status, status)
         self.assertEqual(
             facility_list_item.name, self.moderation_event.cleaned_data["name"]
         )

@@ -1,6 +1,7 @@
 import logging
 
 from api.constants import APIV1MatchTypes
+from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_match import FacilityMatch
 from api.models.moderation_event import ModerationEvent
 from api.moderation_event_actions.approval.event_approval_template import (
@@ -20,6 +21,9 @@ class UpdateProductionLocation(EventApprovalTemplate):
             f'[Moderation Event] OS ID received from request: {self.__os_id}'
         )
         return self.__os_id
+
+    def _get_facilitylistitem_status(self) -> str:
+        return FacilityListItem.CONFIRMED_MATCH
 
     def _get_match_type(self) -> str:
         return APIV1MatchTypes.CONFIRMED_MATCH

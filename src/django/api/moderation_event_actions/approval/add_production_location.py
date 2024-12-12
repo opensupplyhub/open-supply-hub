@@ -25,6 +25,9 @@ class AddProductionLocation(EventApprovalTemplate):
 
         return os_id
 
+    def _get_facilitylistitem_status(self) -> str:
+        return FacilityListItem.MATCHED
+
     def _get_match_type(self) -> str:
         return APIV1MatchTypes.NEW_PRODUCTION_LOCATION
 
