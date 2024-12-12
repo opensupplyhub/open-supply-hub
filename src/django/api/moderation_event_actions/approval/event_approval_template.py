@@ -142,13 +142,14 @@ class EventApprovalTemplate(ABC):
         self, item: FacilityListItem, data: Dict, event: ModerationEvent
     ) -> None:
         geocode_result = event.geocode_result
-        fields = data["fields"]
 
         if geocode_result:
             self.__apply_geocode_result(item, geocode_result)
 
         else:
-            self.__apply_manual_location(item, fields)
+            lat = data["fields"]["lat"]
+            lng = data["fields"]["lng"]
+            self.__apply_manual_location(item, lat, lng)
 
         item.save()
 
@@ -173,8 +174,10 @@ class EventApprovalTemplate(ABC):
         )
 
     @staticmethod
-    def __apply_manual_location(item: FacilityListItem, fields: Dict) -> None:
-        item.geocoded_point = Point(fields["lng"], fields["lat"])
+    def __apply_manual_location(
+        item: FacilityListItem, lat: float, lng: float
+    ) -> None:
+        item.geocoded_point = Point(lng, lat)
         item.processing_results.append(
             {
                 "action": ProcessingAction.GEOCODE,
