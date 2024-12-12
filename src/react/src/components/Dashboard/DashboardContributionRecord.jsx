@@ -1,3 +1,4 @@
+/* eslint no-unused-vars: 0 */
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { string, func, bool, object } from 'prop-types';
@@ -22,7 +23,7 @@ import {
 } from '../../actions/dashboardContributionRecord';
 
 const DashboardContributionRecord = ({
-    moderationEventsListItem,
+    singleModerationEventItem,
     matches,
     fetchModerationEventError,
     classes,
@@ -32,8 +33,18 @@ const DashboardContributionRecord = ({
     fetchPotentialMatchError,
 }) => {
     useEffect(() => {
+        console.log('moderationEventFetching:', moderationEventFetching);
+    }, []);
+
+    useEffect(() => {
+        console.log('moderationEventFetching:', moderationEventFetching);
+        // TODO: run this effect only if moderationEventsListItem is null
+        // If you have the link and paste it to the browser, you get this in Redux state:
+        // dashboardModerationQueue.moderationEvents.moderationEventsList: []
+        // So by default this is an empty array.
         fetchModerationEvent();
         fetchMatches();
+        console.log(singleModerationEventItem);
     }, [fetchModerationEvent, fetchMatches]);
 
     if (fetchModerationEventError) {
@@ -44,7 +55,7 @@ const DashboardContributionRecord = ({
         );
     }
 
-    const jsonResults = JSON.stringify(moderationEventsListItem, null, 2);
+    const jsonResults = JSON.stringify(singleModerationEventItem, null, 2);
     const potentialMatchCount = matches?.length || 0;
 
     return (
@@ -186,14 +197,14 @@ const DashboardContributionRecord = ({
 };
 
 DashboardContributionRecord.defaultProps = {
-    moderationEventsListItem: {},
+    singleModerationEventItem: {},
     matches: [],
     fetchModerationEventError: null,
     fetchPotentialMatchError: null,
 };
 
 DashboardContributionRecord.propTypes = {
-    moderationEventsListItem: moderationEventsListItemPropType,
+    singleModerationEventItem: moderationEventsListItemPropType,
     matches: potentialMatchesPropType,
     moderationEventFetching: bool.isRequired,
     fetchModerationEvent: func.isRequired,
@@ -206,9 +217,9 @@ DashboardContributionRecord.propTypes = {
 const mapStateToProps = ({
     dashboardContributionRecord: {
         singleModerationEvent: {
-            moderationEventsListItem,
             fetching: moderationEventFetching,
             error: fetchModerationEventError,
+            data: singleModerationEventItem,
         },
         potentialMatches: {
             matches,
@@ -217,7 +228,7 @@ const mapStateToProps = ({
         },
     },
 }) => ({
-    moderationEventsListItem,
+    singleModerationEventItem,
     moderationEventFetching,
     matches,
     potentialMatchFetching,

@@ -1,3 +1,4 @@
+/* eslint no-unused-vars: 0 */
 import { createReducer } from 'redux-act';
 import update from 'immutability-helper';
 
@@ -15,7 +16,7 @@ const initialState = Object.freeze({
     singleModerationEvent: Object.freeze({
         fetching: false,
         error: null,
-        event: Object.freeze({}),
+        data: Object.freeze({}),
     }),
     potentialMatches: Object.freeze({
         matches: Object.freeze([]),
@@ -49,7 +50,7 @@ export default createReducer(
                         $set: initialState.singleModerationEvent.fetching,
                     },
                     error: { $set: initialState.singleModerationEvent.error },
-                    event: { $set: payload },
+                    data: { $set: payload },
                 },
             }),
         [startFetchingPotentialMatches]: state =>

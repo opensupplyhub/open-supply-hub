@@ -33,7 +33,7 @@ import {
 
 const ROWS_PER_PAGE_OPTIONS = [25, 50, 100];
 function DashboardModerationQueueListTable({
-    moderationEvents,
+    moderationEventsList,
     count,
     page,
     maxPage,
@@ -132,7 +132,7 @@ function DashboardModerationQueueListTable({
                     ) : (
                         <TableBody>
                             <TableRow className={classes.emptyRowStyles} />
-                            {moderationEvents
+                            {moderationEventsList
                                 .slice(
                                     page * pageSize,
                                     page * pageSize + pageSize,
@@ -225,7 +225,7 @@ function DashboardModerationQueueListTable({
 }
 
 DashboardModerationQueueListTable.defaultProps = {
-    moderationEvents: null,
+    moderationEventsList: [],
     count: 0,
     page: MODERATION_INITIAL_PAGE_INDEX,
     maxPage: MODERATION_INITIAL_PAGE_INDEX,
@@ -237,7 +237,7 @@ DashboardModerationQueueListTable.defaultProps = {
 };
 
 DashboardModerationQueueListTable.propTypes = {
-    moderationEvents: moderationEventsListPropType,
+    moderationEventsList: moderationEventsListPropType,
     count: number,
     page: number,
     maxPage: number,

@@ -1,5 +1,9 @@
 import { createAction } from 'redux-act';
-import { logErrorAndDispatchFailure } from '../util/util';
+import apiRequest from '../util/apiRequest';
+import {
+    makeGetModerationEvent,
+    logErrorAndDispatchFailure,
+} from '../util/util';
 
 export const startFetchingSingleModerationEvent = createAction(
     'START_FETCHING_SINGLE_MODERATION_EVENT',
@@ -23,30 +27,6 @@ export const cleanupContributionRecord = createAction(
     'CLEANUP_CONTRIBUTION_RECORD',
 );
 
-// TODO: Remove mock data and replace with actual API call as part of https://opensupplyhub.atlassian.net/browse/OSDEV-1347
-const eventMockData = {
-    moderation_id: 28,
-    created_at: '2024-06-13T15:30:20.287Z',
-    updated_at: '2024-09-20T11:35:20.287Z',
-    os_id: 'FN2071250D1DTN7',
-    cleaned_data: {
-        name: 'Benetton 6784',
-        address: 'Bangladesh,Salman Adnan (Pvt) Ltd,35-B/I',
-        country: {
-            name: 'Haiti',
-            alpha_2: 'HT',
-            alpha_3: 'HTI',
-            numeric: '332',
-        },
-    },
-    contributor_id: 0,
-    contributor_name: 'SALIM & BROTHERS LTD',
-    request_type: 'CREATE',
-    source: 'API',
-    moderation_status: 'PENDING',
-    moderation_decision_date: null,
-    claim_id: 56,
-};
 // TODO: Remove mock data and replace with actual API call as part  of /v1/production-locations endpoint
 const potentialMatchesMockData = [
     {
@@ -86,29 +66,28 @@ const potentialMatchesMockData = [
     },
 ];
 
-// eslint-disable-next-line no-unused-vars
 export function fetchSingleModerationEvent(moderationID) {
     return async dispatch => {
         dispatch(startFetchingSingleModerationEvent());
-        // TODO: Replace the mock implementation with an actual API call as part of https://opensupplyhub.atlassian.net/browse/OSDEV-1347
-        return new Promise(resolve => {
-            setTimeout(() => resolve({ data: eventMockData }), 1000);
-        })
-            .then(({ data }) =>
-                dispatch(completeFetchingSingleModerationEvent(data)),
-            )
-            .catch(err =>
+
+        return apiRequest
+            .get(makeGetModerationEvent(moderationID))
+            .then(({ data }) => {
+                dispatch(completeFetchingSingleModerationEvent(data));
+            })
+            .catch(err => {
                 dispatch(
                     logErrorAndDispatchFailure(
                         err,
                         'An error prevented fetching moderation event',
                         failFetchingSingleModerationEvent,
                     ),
-                ),
-            );
+                );
+            });
     };
 }
 
+// TODO: Apply OpenSearch results here
 export function fetchPotentialMatches() {
     return async dispatch => {
         dispatch(startFetchingPotentialMatches());
