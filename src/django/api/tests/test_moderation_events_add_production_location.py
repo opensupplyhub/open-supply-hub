@@ -174,6 +174,7 @@ class ModerationEventsAddProductionLocationTest(
             response,
             201,
             APIV1MatchTypes.NEW_PRODUCTION_LOCATION,
+            FacilityMatch.AUTOMATIC,
             FacilityMatch,
         )
 
@@ -189,6 +190,7 @@ class ModerationEventsAddProductionLocationTest(
             response,
             201,
             APIV1MatchTypes.NEW_PRODUCTION_LOCATION,
+            FacilityMatch.AUTOMATIC,
             FacilityMatchTemp,
         )
 

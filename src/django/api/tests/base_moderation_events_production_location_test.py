@@ -255,7 +255,7 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
             self.assertEqual(extended_field.facility_id, item.facility_id)
 
     def assert_facilitymatch_creation(
-        self, response, status_code, match_type, model
+        self, response, status_code, match_type, match_status, model
     ):
         self.assertEqual(status_code, response.status_code)
 
@@ -266,7 +266,7 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
             facility_list_item=facility_list_item.id
         )
         self.assertIsNotNone(facility_match)
-        self.assertEqual(facility_match.status, model.AUTOMATIC)
+        self.assertEqual(facility_match.status, match_status)
         self.assertEqual(
             facility_match.facility_id, facility_list_item.facility_id
         )

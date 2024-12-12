@@ -5,6 +5,7 @@ from django.utils import timezone
 from api.constants import APIV1MatchTypes
 from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
+from api.models.facility.facility_match import FacilityMatch
 from api.models.moderation_event import ModerationEvent
 from api.moderation_event_actions.approval.event_approval_template import (
     EventApprovalTemplate,
@@ -26,6 +27,9 @@ class AddProductionLocation(EventApprovalTemplate):
 
     def _get_match_type(self) -> str:
         return APIV1MatchTypes.NEW_PRODUCTION_LOCATION
+
+    def _get_match_status(self) -> str:
+        return FacilityMatch.AUTOMATIC
 
     @staticmethod
     def _create_new_facility(item: FacilityListItem, facility_id: str) -> None:
