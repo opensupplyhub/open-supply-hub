@@ -501,7 +501,7 @@ export const productionLocationPropType = shape({
 });
 
 export const moderationEventsListItemPropType = shape({
-    moderation_id: number,
+    moderation_id: string,
     created_at: string,
     updated_at: string,
     os_id: string,

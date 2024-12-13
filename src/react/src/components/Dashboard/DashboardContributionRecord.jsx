@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { string, func, bool, object } from 'prop-types';
 import { withStyles, withTheme } from '@material-ui/core/styles';
+import isEmpty from 'lodash/isEmpty';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import List from '@material-ui/core/List';
@@ -33,19 +34,23 @@ const DashboardContributionRecord = ({
     fetchPotentialMatchError,
 }) => {
     useEffect(() => {
-        console.log('moderationEventFetching:', moderationEventFetching);
-    }, []);
+        if (isEmpty(singleModerationEventItem)) {
+            fetchModerationEvent();
+        }
+    }, [fetchModerationEvent]);
 
     useEffect(() => {
-        console.log('moderationEventFetching:', moderationEventFetching);
-        // TODO: run this effect only if moderationEventsListItem is null
-        // If you have the link and paste it to the browser, you get this in Redux state:
-        // dashboardModerationQueue.moderationEvents.moderationEventsList: []
-        // So by default this is an empty array.
-        fetchModerationEvent();
-        fetchMatches();
-        console.log(singleModerationEventItem);
-    }, [fetchModerationEvent, fetchMatches]);
+        if (!isEmpty(singleModerationEventItem)) {
+            const {
+                cleaned_data: {
+                    name: productionLocationName = '',
+                    country: { alpha_2: countryCode = '' } = {},
+                    address = '',
+                } = {},
+            } = singleModerationEventItem || {};
+            fetchMatches({ productionLocationName, countryCode, address });
+        }
+    }, [singleModerationEventItem, fetchMatches]);
 
     if (fetchModerationEventError) {
         return (
@@ -246,7 +251,7 @@ const mapDispatchToProps = (
 ) => ({
     fetchModerationEvent: () =>
         dispatch(fetchSingleModerationEvent(moderationID)),
-    fetchMatches: () => dispatch(fetchPotentialMatches()),
+    fetchMatches: data => dispatch(fetchPotentialMatches(data)),
 });
 
 export default connect(

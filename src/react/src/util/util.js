@@ -257,6 +257,20 @@ export const makeContributorEmbedConfigURL = contributorId =>
     `/api/contributor-embed-configs/${contributorId}/`;
 export const makeNonStandardFieldsURL = () => '/api/nonstandard-fields/';
 
+export const makeGetProductionLocationsForPotentialMatches = (
+    productionLocationName,
+    countryCode,
+    address,
+) => {
+    const params = new URLSearchParams();
+
+    if (productionLocationName) params.append('name', productionLocationName);
+    if (countryCode) params.append('country', countryCode);
+    if (address) params.append('address', address);
+
+    return `/api/v1/production-locations/?${params.toString()}/`;
+};
+
 export const makeGetProductionLocationByOsIdURL = osID =>
     `/api/v1/production-locations/${osID}/`;
 
