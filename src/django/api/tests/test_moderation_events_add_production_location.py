@@ -18,6 +18,15 @@ from api.tests.base_moderation_events_production_location_test import (
 class ModerationEventsAddProductionLocationTest(
     BaseModerationEventsProductionLocationTest
 ):
+    def test_not_authenticated(self):
+        response = self.client.post(
+            self.get_url(),
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+
+        self.assert_not_authenticated(response)
+
     def test_permission_denied(self):
         self.login_as_regular_user()
         response = self.client.post(
@@ -26,7 +35,7 @@ class ModerationEventsAddProductionLocationTest(
             content_type="application/json",
         )
 
-        self.assertPermissionDenied(response)
+        self.assert_permission_denied(response)
 
     def test_invalid_uuid_format(self):
         self.login_as_superuser()
@@ -36,7 +45,7 @@ class ModerationEventsAddProductionLocationTest(
             content_type="application/json",
         )
 
-        self.assertInvalidUUIDError(response)
+        self.assert_invalid_uuid_error(response)
 
     def test_moderation_event_not_found(self):
         self.login_as_superuser()
@@ -49,7 +58,7 @@ class ModerationEventsAddProductionLocationTest(
             content_type="application/json",
         )
 
-        self.assertModerationEventNotFound(response)
+        self.assert_moderation_event_not_found(response)
 
     def test_moderation_event_not_pending(self):
         self.moderation_event.status = 'RESOLVED'
@@ -62,7 +71,7 @@ class ModerationEventsAddProductionLocationTest(
             content_type="application/json",
         )
 
-        self.assertModerationEventNotPending(response)
+        self.assert_moderation_event_not_pending(response)
 
     def test_successful_add_production_location(self):
         self.login_as_superuser()

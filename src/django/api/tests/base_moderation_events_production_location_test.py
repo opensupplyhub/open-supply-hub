@@ -107,14 +107,21 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
             self.moderation_event_id
         )
 
-    def assertPermissionDenied(self, response):
+    def assert_not_authenticated(self, response):
+        self.assertEqual(401, response.status_code)
+        self.assertEqual(
+            "Authentication credentials were not provided.",
+            response.data["detail"],
+        )
+
+    def assert_permission_denied(self, response):
         self.assertEqual(403, response.status_code)
         self.assertEqual(
             "Only the Moderator can perform this action.",
             response.data["detail"],
         )
 
-    def assertInvalidUUIDError(self, response):
+    def assert_invalid_uuid_error(self, response):
         self.assertEqual(400, response.status_code)
         self.assertEqual(
             "The request path parameter is invalid.", response.data["detail"]
@@ -124,7 +131,7 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
             "Invalid UUID format.", response.data["errors"][0]["detail"]
         )
 
-    def assertModerationEventNotFound(self, response):
+    def assert_moderation_event_not_found(self, response):
         self.assertEqual(404, response.status_code)
         self.assertEqual(
             "The request path parameter is invalid.", response.data["detail"]
@@ -135,7 +142,7 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
             response.data["errors"][0]["detail"],
         )
 
-    def assertModerationEventNotPending(self, response):
+    def assert_moderation_event_not_pending(self, response):
         self.assertEqual(410, response.status_code)
         self.assertEqual(
             "The moderation event should be in PENDING status.",

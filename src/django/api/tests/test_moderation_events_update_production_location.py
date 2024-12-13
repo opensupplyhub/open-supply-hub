@@ -50,6 +50,15 @@ class ModerationEventsUpdateProductionLocationTest(
             created_from=self.list_item,
         )
 
+    def test_not_authenticated(self):
+        response = self.client.post(
+            self.get_url(),
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+
+        self.assert_not_authenticated(response)
+
     def test_permission_denied(self):
         self.client.login(email=self.email, password=self.password)
         response = self.client.patch(
@@ -58,7 +67,7 @@ class ModerationEventsUpdateProductionLocationTest(
             content_type="application/json",
         )
 
-        self.assertPermissionDenied(response)
+        self.assert_permission_denied(response)
 
     def test_invalid_uuid_format(self):
         self.login_as_superuser()
@@ -68,7 +77,7 @@ class ModerationEventsUpdateProductionLocationTest(
             content_type="application/json",
         )
 
-        self.assertInvalidUUIDError(response)
+        self.assert_invalid_uuid_error(response)
 
     def test_moderation_event_not_found(self):
         self.login_as_superuser()
@@ -81,7 +90,7 @@ class ModerationEventsUpdateProductionLocationTest(
             content_type="application/json",
         )
 
-        self.assertModerationEventNotFound(response)
+        self.assert_moderation_event_not_found(response)
 
     def test_moderation_event_not_pending(self):
         self.moderation_event.status = 'RESOLVED'
@@ -94,7 +103,7 @@ class ModerationEventsUpdateProductionLocationTest(
             content_type="application/json",
         )
 
-        self.assertModerationEventNotPending(response)
+        self.assert_moderation_event_not_pending(response)
 
     def test_empty_request_body(self):
         self.login_as_superuser()
