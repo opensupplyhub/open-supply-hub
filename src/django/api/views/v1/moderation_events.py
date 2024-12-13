@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.viewsets import ViewSet
-from rest_framework.decorators import action, permission_classes
+from rest_framework.decorators import action
 
 from api.constants import APIV1CommonErrorMessages
 from api.moderation_event_actions.approval.add_production_location \
@@ -36,6 +36,14 @@ from api.views.v1.utils import (
 class ModerationEvents(ViewSet):
     swagger_schema = None
 
+    permission_classes = [IsRegisteredAndConfirmed]
+
+    def get_permissions(self):
+        if self.action == 'partial_update':
+            self.permission_classes = [IsSuperuser]
+
+        return super().get_permissions()
+
     @staticmethod
     def __init_opensearch() -> Tuple[OpenSearchService,
                                      OpenSearchQueryDirector]:
@@ -48,7 +56,6 @@ class ModerationEvents(ViewSet):
         return (opensearch_service, opensearch_query_director)
 
     @handle_errors_decorator
-    @permission_classes([IsRegisteredAndConfirmed])
     def list(self, request):
         _, error_response = serialize_params(
             ModerationEventsSerializer,
@@ -73,7 +80,6 @@ class ModerationEvents(ViewSet):
         return Response(response)
 
     @handle_errors_decorator
-    @permission_classes([IsRegisteredAndConfirmed])
     def retrieve(self, _,  pk=None):
         ModerationEventsService.validate_uuid(pk)
 
@@ -99,8 +105,7 @@ class ModerationEvents(ViewSet):
         return Response(events[0])
 
     @handle_errors_decorator
-    @permission_classes([IsSuperuser])
-    def update_moderation_event(self, request, pk=None):
+    def partial_update(self, request, pk=None):
         ModerationEventsService.validate_uuid(pk)
 
         event = ModerationEventsService.fetch_moderation_event_by_uuid(pk)
