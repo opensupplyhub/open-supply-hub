@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { connect } from 'react-redux';
 import { string, func, bool, object } from 'prop-types';
 import { withStyles, withTheme } from '@material-ui/core/styles';
 import isEmpty from 'lodash/isEmpty';
+import Grid from '@material-ui/core/Grid';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import List from '@material-ui/core/List';
@@ -21,8 +22,26 @@ import {
     fetchSingleModerationEvent,
     fetchPotentialMatches,
 } from '../../actions/dashboardContributionRecord';
+import { makeClaimFacilityLink } from '../../util/util';
+import DialogTooltip from './../Contribute/DialogTooltip';
+
+const claimButtonTitle = 'Go to Claim';
+
+const claimButtonDisabled = classes => (
+    <span className={`${classes.claimTooltipWrapper}`}>
+        <Button
+            color="secondary"
+            variant="contained"
+            className={`${classes.buttonStyles} ${classes.claimButtonStyles}`}
+            disabled
+        >
+            {claimButtonTitle}
+        </Button>
+    </span>
+);
 
 const DashboardContributionRecord = ({
+    push,
     singleModerationEventItem,
     matches,
     fetchModerationEventError,
@@ -32,24 +51,54 @@ const DashboardContributionRecord = ({
     moderationEventFetching,
     fetchPotentialMatchError,
 }) => {
+    const {
+        productionLocationName,
+        countryCode,
+        productionLocationAddress,
+    } = useMemo(() => {
+        if (!singleModerationEventItem || isEmpty(singleModerationEventItem)) {
+            return {};
+        }
+
+        const {
+            cleaned_data: {
+                name: locationName = '',
+                country: { alpha_2: code = '' } = {},
+                address: locationAddress = '',
+            } = {},
+        } = singleModerationEventItem || {};
+
+        return {
+            productionLocationName: locationName,
+            countryCode: code,
+            productionLocationAddress: locationAddress,
+        };
+    }, [singleModerationEventItem]);
+
     useEffect(() => {
-        if (isEmpty(singleModerationEventItem)) {
+        if (!singleModerationEventItem || isEmpty(singleModerationEventItem)) {
             fetchModerationEvent();
         }
     }, [fetchModerationEvent]);
 
     useEffect(() => {
-        if (!isEmpty(singleModerationEventItem)) {
-            const {
-                cleaned_data: {
-                    name: productionLocationName = '',
-                    country: { alpha_2: countryCode = '' } = {},
-                    address = '',
-                } = {},
-            } = singleModerationEventItem || {};
-            fetchMatches({ productionLocationName, countryCode, address });
+        if (
+            productionLocationName ||
+            countryCode ||
+            productionLocationAddress
+        ) {
+            fetchMatches({
+                productionLocationName,
+                countryCode,
+                productionLocationAddress,
+            });
         }
-    }, [singleModerationEventItem, fetchMatches]);
+    }, [
+        productionLocationName,
+        countryCode,
+        productionLocationAddress,
+        fetchMatches,
+    ]);
 
     if (fetchModerationEventError) {
         return (
@@ -61,6 +110,7 @@ const DashboardContributionRecord = ({
 
     const jsonResults = JSON.stringify(singleModerationEventItem, null, 2);
     const potentialMatchCount = matches.length || 0;
+    const hasOSID = singleModerationEventItem.os_id;
 
     return (
         <>
@@ -166,8 +216,7 @@ const DashboardContributionRecord = ({
                 </div>
                 <Divider className={classes.dividerStyle} />
             </div>
-
-            <div className={classes.buttonsContainerStyles}>
+            <Grid container className={classes.buttonContentStyle}>
                 <Button
                     color="primary"
                     variant="contained"
@@ -186,16 +235,32 @@ const DashboardContributionRecord = ({
                 >
                     Reject Contribution
                 </Button>
-                <Button
-                    color="secondary"
-                    variant="contained"
-                    className={`${classes.buttonStyles} ${classes.claimButtonStyles}`}
-                    onClick={() => {}}
-                    disabled={moderationEventFetching}
-                >
-                    Go to Claim
-                </Button>
-            </div>
+                <Grid item>
+                    {hasOSID ? (
+                        <Button
+                            color="secondary"
+                            variant="contained"
+                            className={`${classes.buttonStyles} ${classes.claimButtonStyles}`}
+                            onClick={() => {
+                                push(
+                                    makeClaimFacilityLink(
+                                        singleModerationEventItem.os_id,
+                                    ),
+                                );
+                            }}
+                            disabled={moderationEventFetching}
+                        >
+                            {claimButtonTitle}
+                        </Button>
+                    ) : (
+                        <DialogTooltip
+                            text="You can't claim this production location because it hasn't received OS ID yet."
+                            aria-label="Claim button tooltip"
+                            childComponent={claimButtonDisabled(classes)}
+                        />
+                    )}
+                </Grid>
+            </Grid>
         </>
     );
 };
@@ -246,8 +311,10 @@ const mapDispatchToProps = (
         match: {
             params: { moderationID },
         },
+        history: { push },
     },
 ) => ({
+    push,
     fetchModerationEvent: () =>
         dispatch(fetchSingleModerationEvent(moderationID)),
     fetchMatches: data => dispatch(fetchPotentialMatches(data)),

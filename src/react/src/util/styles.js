@@ -797,9 +797,10 @@ export const makeDashboardContributionRecordStyles = theme =>
         emptyTextStyle: Object.freeze({ color: theme.palette.text.hint }),
         buttonStyles: Object.freeze({
             margin: '20px',
-            padding: '20px',
-            width: '100%',
+            padding: '15px 20px',
+            minWidth: '250px',
             fontWeight: 'bold',
+            boxShadow: 'none',
         }),
         container: Object.freeze({
             marginBottom: '25px',
@@ -838,19 +839,27 @@ export const makeDashboardContributionRecordStyles = theme =>
             overflow: 'auto',
             maxHeight: '450px',
         }),
-        buttonsContainerStyles: Object.freeze({
-            display: 'flex',
-            flexDirection: 'row',
-            width: '100%',
+        buttonContentStyle: Object.freeze({
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '0 15px',
+            [theme.breakpoints.down('md')]: {
+                justifyContent: 'initial',
+                flexDirection: 'column',
+            },
         }),
         confirmButtonStyles: Object.freeze({
             backgroundColor: COLOURS.MINT_GREEN,
             padding: '15px 25px',
+            boxShadow: 'none',
             '&:hover': { backgroundColor: COLOURS.OLIVA_GREEN },
         }),
         claimButtonStyles: Object.freeze({
             backgroundColor: theme.palette.action.main,
             '&:hover': { backgroundColor: theme.palette.action.dark },
+        }),
+        claimTooltipWrapper: Object.freeze({
+            cursor: 'not-allowed',
         }),
     });
 

@@ -53,14 +53,18 @@ export function fetchPotentialMatches(data) {
     return async dispatch => {
         dispatch(startFetchingPotentialMatches());
 
-        const { productionLocationName, countryCode, address } = data;
+        const {
+            productionLocationName,
+            countryCode,
+            productionLocationAddress,
+        } = data;
 
         return apiRequest
             .get(
                 makeGetProductionLocationsForPotentialMatches(
                     productionLocationName,
                     countryCode,
-                    address,
+                    productionLocationAddress,
                 ),
             )
             .then(potentialMatches => {
