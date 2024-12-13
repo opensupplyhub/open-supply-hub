@@ -74,6 +74,20 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Architecture/Environment changes
 * [OSDEV-1170](https://opensupplyhub.atlassian.net/browse/OSDEV-1170) - Added the ability to automatically create a dump from the latest shared snapshot of the anonymized database from Production environment for use in the Test and Pre-Prod environments.
 * In light of recent instances(on 12/03/2024 UTC and 12/04/2024 UTC) where the current RDS disk storage space limit was reached in Production, the RDS storage size has been increased to `256 GB` in the Production, Test, and Pre-prod environments to accommodate the processing of larger volumes of data. The configurations for the Test and Pre-prod environments have also been updated to maintain parity with the Production environment.
+* Right-sized the resources for Django containers across all environments and the RDS instance in the Production and Preprod environments. This will result in a savings of approximately $2,481. The following changes have been made:
+    - Production:
+        - RDS instance type was changed from `db.m6in.8xlarge` to `db.m6in.4xlarge`.
+        - ECS tasks for Django containers: the number was reduced from `12` to `10`, and memory was reduced from `8GB` to `4GB`.
+    - Preprod:
+        - RDS instance type was changed from `db.m6in.8xlarge` to `db.m6in.4xlarge`.
+        - ECS tasks for Django containers: the number was reduced from `12` to `10`, and memory was reduced from `8GB` to `4GB`.
+        - These changes were made to maintain parity with the Production environment, as it is a copy of that environment.
+    - Staging:
+        - ECS tasks for Django containers: memory was reduced from `8GB` to `2GB`.
+    - Test:
+        - ECS tasks for Django containers: memory was reduced from `8GB` to `4GB`.
+    - Development:
+        - ECS tasks for Django containers: memory was reduced from `8GB` to `1GB`, and CPU was reduced from `1 vCPU` to `0.5 vCPU`.
 
 ### Bugfix
 * [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388) - The waiter from boto3 cannot wait more than half an hour so we replaced it with our own.
