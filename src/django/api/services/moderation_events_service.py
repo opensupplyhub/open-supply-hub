@@ -14,13 +14,6 @@ log = logging.getLogger(__name__)
 
 class ModerationEventsService:
     @staticmethod
-    def validate_user_permissions(request):
-        if not (request.user.is_superuser or request.user.is_staff):
-            raise PermissionDenied(
-                detail="Only the Moderator can perform this action."
-            )
-
-    @staticmethod
     def validate_uuid(value):
         if not ModerationIdValidator.is_valid_uuid(value):
             raise ParseError(
