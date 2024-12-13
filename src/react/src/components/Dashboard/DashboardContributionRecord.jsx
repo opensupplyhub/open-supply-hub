@@ -1,4 +1,3 @@
-/* eslint no-unused-vars: 0 */
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { string, func, bool, object } from 'prop-types';
@@ -61,7 +60,7 @@ const DashboardContributionRecord = ({
     }
 
     const jsonResults = JSON.stringify(singleModerationEventItem, null, 2);
-    const potentialMatchCount = matches?.length || 0;
+    const potentialMatchCount = matches.length || 0;
 
     return (
         <>
@@ -93,7 +92,7 @@ const DashboardContributionRecord = ({
                 <Divider className={classes.dividerStyle} />
 
                 <div className={classes.potentialMatchesInternalBlock}>
-                    {matches.length === 0 ? (
+                    {!potentialMatchCount ? (
                         <div className={classes.emptyBlockStyles}>
                             <Typography
                                 className={classes.emptyTextStyle}

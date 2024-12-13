@@ -72,7 +72,9 @@ export default createReducer(
                 potentialMatches: {
                     fetching: { $set: initialState.potentialMatches.fetching },
                     error: { $set: initialState.potentialMatches.error },
-                    matches: { $set: payload },
+                    matches: {
+                        $set: Array.isArray(payload?.data) ? payload.data : [],
+                    },
                 },
             }),
         [cleanupContributionRecord]: () => initialState,

@@ -63,8 +63,12 @@ export function fetchPotentialMatches(data) {
                     address,
                 ),
             )
-            .then(({ potentialMatches }) => {
-                dispatch(completeFetchingPotentialMatches(potentialMatches));
+            .then(potentialMatches => {
+                if (potentialMatches.data) {
+                    dispatch(
+                        completeFetchingPotentialMatches(potentialMatches.data),
+                    );
+                }
             })
             .catch(err =>
                 dispatch(
