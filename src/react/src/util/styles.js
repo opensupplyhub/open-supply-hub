@@ -806,6 +806,23 @@ export const makeDashboardContributionRecordStyles = theme =>
             marginBottom: '25px',
             width: '100%',
             padding: '20px',
+            backgroundColor: COLOURS.LIGHT_GREY,
+            boxShadow: 'none',
+            border: `1px solid ${COLOURS.DARK_GREY}`,
+            borderRadius: 0,
+        }),
+        moderationEventStatus: Object.freeze({
+            color: COLOURS.NEAR_BLACK,
+            boxShadow: 'none',
+        }),
+        moderationEventStatus_pending: Object.freeze({
+            backgroundColor: COLOURS.PALE_LIGHT_YELLOW,
+        }),
+        moderationEventStatus_approved: Object.freeze({
+            backgroundColor: COLOURS.MINT_GREEN,
+        }),
+        moderationEventStatus_rejected: Object.freeze({
+            backgroundColor: COLOURS.LIGHT_RED,
         }),
         title: Object.freeze({
             paddingBottom: '20px',

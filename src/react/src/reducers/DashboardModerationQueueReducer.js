@@ -2,17 +2,17 @@ import { createReducer } from 'redux-act';
 import update from 'immutability-helper';
 
 import {
-    startFetchingModerationEvents,
-    failFetchingModerationEvents,
-    completeFetchingModerationEvents,
+    startFetchModerationEvents,
+    failFetchModerationEvents,
+    completeFetchModerationEvents,
     clearModerationEvents,
     updateModerationEventsPage,
     updateModerationEventsOrder,
     updateAfterDate,
     updateBeforeDate,
-    startDownloadingModerationEvents,
-    failDownloadingModerationEvents,
-    completeDownloadingModerationEvents,
+    startDownloadModerationEvents,
+    failDownloadModerationEvents,
+    completeDownloadModerationEvents,
 } from '../actions/dashboardModerationQueue';
 
 const initialState = Object.freeze({
@@ -39,21 +39,21 @@ const initialState = Object.freeze({
 
 export default createReducer(
     {
-        [startFetchingModerationEvents]: state =>
+        [startFetchModerationEvents]: state =>
             update(state, {
                 moderationEvents: {
                     fetching: { $set: true },
                     error: { $set: initialState.moderationEvents.error },
                 },
             }),
-        [failFetchingModerationEvents]: (state, error) =>
+        [failFetchModerationEvents]: (state, error) =>
             update(state, {
                 moderationEvents: {
                     fetching: { $set: initialState.moderationEvents.fetching },
                     error: { $set: error },
                 },
             }),
-        [completeFetchingModerationEvents]: (state, data) =>
+        [completeFetchModerationEvents]: (state, data) =>
             update(state, {
                 moderationEvents: {
                     fetching: { $set: initialState.moderationEvents.fetching },
@@ -102,7 +102,7 @@ export default createReducer(
                     beforeDate: { $set: beforeDate },
                 },
             }),
-        [startDownloadingModerationEvents]: state =>
+        [startDownloadModerationEvents]: state =>
             update(state, {
                 moderationEventsDownloadStatus: {
                     downloading: { $set: true },
@@ -111,7 +111,7 @@ export default createReducer(
                     },
                 },
             }),
-        [failDownloadingModerationEvents]: (state, error) =>
+        [failDownloadModerationEvents]: (state, error) =>
             update(state, {
                 moderationEventsDownloadStatus: {
                     downloading: {
@@ -122,7 +122,7 @@ export default createReducer(
                     error: { $set: error },
                 },
             }),
-        [completeDownloadingModerationEvents]: state =>
+        [completeDownloadModerationEvents]: state =>
             update(state, {
                 moderationEventsDownloadStatus: {
                     downloading: {

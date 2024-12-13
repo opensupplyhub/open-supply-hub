@@ -3,12 +3,15 @@ import { createReducer } from 'redux-act';
 import update from 'immutability-helper';
 
 import {
-    startFetchingSingleModerationEvent,
-    failFetchingSingleModerationEvent,
-    completeFetchingSingleModerationEvent,
-    startFetchingPotentialMatches,
-    failFetchingPotentialMatches,
-    completeFetchingPotentialMatches,
+    startFetchSingleModerationEvent,
+    failFetchSingleModerationEvent,
+    completeFetchSingleModerationEvent,
+    startFetchPotentialMatches,
+    failFetchPotentialMatches,
+    completeFetchPotentialMatches,
+    startUpdateModerationEventRecord,
+    completeUpdateModerationEventRecord,
+    failUpdateModerationEventRecord,
     cleanupContributionRecord,
 } from '../actions/dashboardContributionRecord';
 
@@ -27,14 +30,14 @@ const initialState = Object.freeze({
 
 export default createReducer(
     {
-        [startFetchingSingleModerationEvent]: state =>
+        [startFetchSingleModerationEvent]: state =>
             update(state, {
                 singleModerationEvent: {
                     fetching: { $set: true },
                     error: { $set: initialState.singleModerationEvent.error },
                 },
             }),
-        [failFetchingSingleModerationEvent]: (state, error) =>
+        [failFetchSingleModerationEvent]: (state, error) =>
             update(state, {
                 singleModerationEvent: {
                     fetching: {
@@ -43,7 +46,7 @@ export default createReducer(
                     error: { $set: error },
                 },
             }),
-        [completeFetchingSingleModerationEvent]: (state, payload) =>
+        [completeFetchSingleModerationEvent]: (state, payload) =>
             update(state, {
                 singleModerationEvent: {
                     fetching: {
@@ -53,21 +56,21 @@ export default createReducer(
                     data: { $set: payload },
                 },
             }),
-        [startFetchingPotentialMatches]: state =>
+        [startFetchPotentialMatches]: state =>
             update(state, {
                 potentialMatches: {
                     fetching: { $set: true },
                     error: { $set: initialState.potentialMatches.error },
                 },
             }),
-        [failFetchingPotentialMatches]: (state, error) =>
+        [failFetchPotentialMatches]: (state, error) =>
             update(state, {
                 potentialMatches: {
                     fetching: { $set: initialState.potentialMatches.fetching },
                     error: { $set: error },
                 },
             }),
-        [completeFetchingPotentialMatches]: (state, payload) =>
+        [completeFetchPotentialMatches]: (state, payload) =>
             update(state, {
                 potentialMatches: {
                     fetching: { $set: initialState.potentialMatches.fetching },
@@ -77,6 +80,14 @@ export default createReducer(
                     },
                 },
             }),
+        // TODO:
+        [startUpdateModerationEventRecord]: state => update(state, {}),
+        // TODO:
+        [completeUpdateModerationEventRecord]: (state, error) =>
+            update(state, {}),
+        // TODO:
+        [failUpdateModerationEventRecord]: (state, payload) =>
+            update(state, {}),
         [cleanupContributionRecord]: () => initialState,
     },
     initialState,

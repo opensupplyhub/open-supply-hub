@@ -11,6 +11,8 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import Divider from '@material-ui/core/Divider';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import AppBar from '@material-ui/core/AppBar';
+import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 
 import { makeDashboardContributionRecordStyles } from '../../util/styles';
@@ -108,6 +110,7 @@ const DashboardContributionRecord = ({
         );
     }
 
+    const moderationEventStatus = singleModerationEventItem.status || '';
     const jsonResults = JSON.stringify(singleModerationEventItem, null, 2);
     const potentialMatchCount = matches.length || 0;
     const hasOSID = singleModerationEventItem.os_id;
@@ -118,6 +121,23 @@ const DashboardContributionRecord = ({
                 Moderation Event Data
             </Typography>
 
+            <AppBar
+                position="static"
+                className={`
+                        ${classes.moderationEventStatus}
+                        ${
+                            classes[
+                                `moderationEventStatus_${moderationEventStatus.toLowerCase()}`
+                            ]
+                        }
+                        `}
+            >
+                <Toolbar>
+                    <Typography variant="h6">
+                        {moderationEventStatus}
+                    </Typography>
+                </Toolbar>
+            </AppBar>
             <Paper className={classes.container}>
                 <div className={classes.prettyPrint}>
                     {moderationEventFetching ? (
@@ -187,7 +207,7 @@ const DashboardContributionRecord = ({
                                                     primary={`Claimed Status: ${claimStatus}`}
                                                 />
                                             </div>
-
+                                            {/* TODO: PATCH /v1/moderation-events/{moderation_id}/production-locations/ */}
                                             <Button
                                                 color="secondary"
                                                 variant="contained"
@@ -217,6 +237,7 @@ const DashboardContributionRecord = ({
                 <Divider className={classes.dividerStyle} />
             </div>
             <Grid container className={classes.buttonContentStyle}>
+                {/* TODO: POST /v1/moderation-events/{moderation_id}/production-locations/ */}
                 <Button
                     color="primary"
                     variant="contained"
@@ -226,6 +247,7 @@ const DashboardContributionRecord = ({
                 >
                     Create New Location
                 </Button>
+                {/* TODO: PATCH /v1/moderation-events/{moderation_id}/) */}
                 <Button
                     color="secondary"
                     variant="contained"

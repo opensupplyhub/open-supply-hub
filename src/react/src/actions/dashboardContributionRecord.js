@@ -1,48 +1,57 @@
 import { createAction } from 'redux-act';
 import apiRequest from '../util/apiRequest';
 import {
-    makeGetModerationEvent,
+    makeModerationEventRecordURL,
     makeGetProductionLocationsForPotentialMatches,
     logErrorAndDispatchFailure,
 } from '../util/util';
 
-export const startFetchingSingleModerationEvent = createAction(
-    'START_FETCHING_SINGLE_MODERATION_EVENT',
+export const startFetchSingleModerationEvent = createAction(
+    'START_FETCH_SINGLE_MODERATION_EVENT',
 );
-export const failFetchingSingleModerationEvent = createAction(
-    'FAIL_FETCHING_SINGLE_MODERATION_EVENT',
+export const failFetchSingleModerationEvent = createAction(
+    'FAIL_FETCH_SINGLE_MODERATION_EVENT',
 );
-export const completeFetchingSingleModerationEvent = createAction(
-    'COMPLETE_FETCHING_SINGLE_MODERATION_EVENT',
+export const completeFetchSingleModerationEvent = createAction(
+    'COMPLETE_FETCH_SINGLE_MODERATION_EVENT',
 );
-export const startFetchingPotentialMatches = createAction(
-    'START_FETCHING_POTENTIAL_MATCHES',
+export const startFetchPotentialMatches = createAction(
+    'START_FETCH_POTENTIAL_MATCHES',
 );
-export const failFetchingPotentialMatches = createAction(
-    'FAIL_FETCHING_POTENTIAL_MATCHES',
+export const failFetchPotentialMatches = createAction(
+    'FAIL_FETCH_POTENTIAL_MATCHES',
 );
-export const completeFetchingPotentialMatches = createAction(
-    'COMPLETE_FETCHING_POTENTIAL_MATCHES',
+export const completeFetchPotentialMatches = createAction(
+    'COMPLETE_FETCH_POTENTIAL_MATCHES',
 );
 export const cleanupContributionRecord = createAction(
     'CLEANUP_CONTRIBUTION_RECORD',
 );
+export const startUpdateModerationEventRecord = createAction(
+    'START_UPDATE_MODERATION_EVENT',
+);
+export const completeUpdateModerationEventRecord = createAction(
+    'COMPLETE_UPDATE_MODERATION_EVENT',
+);
+export const failUpdateModerationEventRecord = createAction(
+    'FAIL_UPDATE_MODERATION_EVENT',
+);
 
 export function fetchSingleModerationEvent(moderationID) {
     return async dispatch => {
-        dispatch(startFetchingSingleModerationEvent());
+        dispatch(startFetchSingleModerationEvent());
 
         return apiRequest
-            .get(makeGetModerationEvent(moderationID))
+            .get(makeModerationEventRecordURL(moderationID))
             .then(({ data }) => {
-                dispatch(completeFetchingSingleModerationEvent(data));
+                dispatch(completeFetchSingleModerationEvent(data));
             })
             .catch(err => {
                 dispatch(
                     logErrorAndDispatchFailure(
                         err,
                         'An error prevented fetching moderation event',
-                        failFetchingSingleModerationEvent,
+                        failFetchSingleModerationEvent,
                     ),
                 );
             });
@@ -51,7 +60,7 @@ export function fetchSingleModerationEvent(moderationID) {
 
 export function fetchPotentialMatches(data) {
     return async dispatch => {
-        dispatch(startFetchingPotentialMatches());
+        dispatch(startFetchPotentialMatches());
 
         const {
             productionLocationName,
@@ -70,7 +79,7 @@ export function fetchPotentialMatches(data) {
             .then(potentialMatches => {
                 if (potentialMatches.data) {
                     dispatch(
-                        completeFetchingPotentialMatches(potentialMatches.data),
+                        completeFetchPotentialMatches(potentialMatches.data),
                     );
                 }
             })
@@ -79,7 +88,28 @@ export function fetchPotentialMatches(data) {
                     logErrorAndDispatchFailure(
                         err,
                         'An error prevented fetching potential matches',
-                        failFetchingPotentialMatches,
+                        failFetchPotentialMatches,
+                    ),
+                ),
+            );
+    };
+}
+
+export function updateModerationEvent(moderationID) {
+    return async dispatch => {
+        dispatch(startUpdateModerationEventRecord());
+
+        return apiRequest
+            .patch(makeModerationEventRecordURL(moderationID))
+            .then(data => {
+                dispatch(completeUpdateModerationEventRecord(data));
+            })
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented updating moderation event record',
+                        failUpdateModerationEventRecord,
                     ),
                 ),
             );
