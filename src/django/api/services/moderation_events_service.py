@@ -1,6 +1,6 @@
 import logging
 
-from rest_framework.exceptions import PermissionDenied, ParseError, NotFound
+from rest_framework.exceptions import ParseError, NotFound
 
 from api.constants import APIV1CommonErrorMessages
 from api.exceptions import GoneException, InternalServerErrorException
