@@ -5,14 +5,14 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.viewsets import ViewSet
-from rest_framework.decorators import action
+from rest_framework.decorators import action, permission_classes
 
 from api.constants import APIV1CommonErrorMessages
 from api.moderation_event_actions.approval.add_production_location \
     import AddProductionLocation
 from api.moderation_event_actions.approval.update_production_location \
     import UpdateProductionLocation
-from api.permissions import IsRegisteredAndConfirmed
+from api.permissions import IsRegisteredAndConfirmed, IsSuperuser
 from api.serializers.v1.moderation_event_update_serializer \
     import ModerationEventUpdateSerializer
 from api.serializers.v1.moderation_events_serializer \
@@ -35,7 +35,6 @@ from api.views.v1.utils import (
 
 class ModerationEvents(ViewSet):
     swagger_schema = None
-    permission_classes = [IsRegisteredAndConfirmed]
 
     @staticmethod
     def __init_opensearch() -> Tuple[OpenSearchService,
@@ -49,6 +48,7 @@ class ModerationEvents(ViewSet):
         return (opensearch_service, opensearch_query_director)
 
     @handle_errors_decorator
+    @permission_classes([IsRegisteredAndConfirmed])
     def list(self, request):
         _, error_response = serialize_params(
             ModerationEventsSerializer,
@@ -73,6 +73,7 @@ class ModerationEvents(ViewSet):
         return Response(response)
 
     @handle_errors_decorator
+    @permission_classes([IsRegisteredAndConfirmed])
     def retrieve(self, _,  pk=None):
         ModerationEventsService.validate_uuid(pk)
 
@@ -98,26 +99,23 @@ class ModerationEvents(ViewSet):
         return Response(events[0])
 
     @handle_errors_decorator
-    def partial_update(self, request, pk=None):
-        ModerationEventsService.validate_user_permissions(request)
-
+    @permission_classes([IsSuperuser])
+    def update_moderation_event(self, request, pk=None):
         ModerationEventsService.validate_uuid(pk)
 
-        event = ModerationEventsService.fetch_moderation_event_by_uuid(
-            pk
-        )
+        event = ModerationEventsService.fetch_moderation_event_by_uuid(pk)
 
         serializer = ModerationEventUpdateSerializer(
-            event,
-            data=request.data,
-            partial=True
+            event, data=request.data, partial=True
         )
 
         if not serializer.is_valid():
-            raise ValidationError({
-                "detail": APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
-                "errors": [serializer.errors]
-            })
+            raise ValidationError(
+                {
+                    "detail": APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
+                    "errors": [serializer.errors],
+                }
+            )
 
         serializer.save()
 
@@ -125,48 +123,63 @@ class ModerationEvents(ViewSet):
 
     @handle_errors_decorator
     @action(
-        detail=True, methods=['POST', 'PATCH'], url_path='production-locations'
+        detail=True,
+        methods=['POST'],
+        url_path='production-locations',
+        url_name='add_production_location',
+        permission_classes=[IsSuperuser],
     )
-    def manage_production_location(self, request, pk=None):
-        ModerationEventsService.validate_user_permissions(request)
-
+    def add_production_location(self, _, pk=None):
         ModerationEventsService.validate_uuid(pk)
 
         event = ModerationEventsService.fetch_moderation_event_by_uuid(pk)
         ModerationEventsService.validate_moderation_status(event.status)
 
-        if request.method == 'POST':
-            production_location_processor = AddProductionLocation(event)
-            status_code = status.HTTP_201_CREATED
-
-        else:
-            serializer = UpdateProductionLocationSerializer(data=request.data)
-
-            if not serializer.is_valid():
-                errors = [
-                    {"field": field, "detail": detail}
-                    for field, details in serializer.errors.items()
-                    for detail in details
-                ]
-
-                raise ValidationError({
-                    "detail": APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
-                    "errors": errors
-                })
-
-            os_id = serializer.validated_data.get('os_id')
-
-            production_location_processor = UpdateProductionLocation(
-                event, os_id
-            )
-            status_code = status.HTTP_200_OK
+        add_production_location_processor = AddProductionLocation(event)
 
         try:
-            item = production_location_processor.process_moderation_event()
+            item = add_production_location_processor.process_moderation_event()
         except Exception as error:
             return ModerationEventsService.handle_processing_error(error)
 
         return Response(
-            {"os_id": item.facility_id},
-            status=status_code
+            {"os_id": item.facility_id}, status=status.HTTP_201_CREATED
         )
+
+    @add_production_location.mapping.patch
+    def update_production_location(self, request, pk=None):
+        ModerationEventsService.validate_uuid(pk)
+
+        event = ModerationEventsService.fetch_moderation_event_by_uuid(pk)
+        ModerationEventsService.validate_moderation_status(event.status)
+
+        serializer = UpdateProductionLocationSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            errors = [
+                {"field": field, "detail": detail}
+                for field, details in serializer.errors.items()
+                for detail in details
+            ]
+
+            raise ValidationError(
+                {
+                    "detail": APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
+                    "errors": errors,
+                }
+            )
+
+        os_id = serializer.validated_data.get('os_id')
+
+        update_production_location_processor = UpdateProductionLocation(
+            event, os_id
+        )
+
+        try:
+            item = (
+                update_production_location_processor.process_moderation_event()
+            )
+        except Exception as error:
+            return ModerationEventsService.handle_processing_error(error)
+
+        return Response({"os_id": item.facility_id}, status=status.HTTP_200_OK)
