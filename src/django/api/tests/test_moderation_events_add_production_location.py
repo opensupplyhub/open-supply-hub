@@ -88,7 +88,9 @@ class ModerationEventsAddProductionLocationTest(
             content_type="application/json",
         )
 
-        self.assertEqual(201, response.status_code)
+        self.assert_successful_add_production_location_without_geocode_result(
+            response, 201
+        )
 
     def test_creation_of_source(self):
         self.login_as_superuser()

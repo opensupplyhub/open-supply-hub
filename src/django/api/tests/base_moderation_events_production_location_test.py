@@ -159,6 +159,20 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
         self.assertEqual(source.is_public, True)
         self.assertEqual(source.create, True)
 
+    def assert_successful_add_production_location_without_geocode_result(
+        self, response, status_code
+    ):
+        self.assertEqual(status_code, response.status_code)
+
+        facility_list_item = FacilityListItem.objects.get(
+            facility_id=response.data["os_id"]
+        )
+        self.assertEqual(facility_list_item.geocoded_point.x, self.longitude)
+        self.assertEqual(facility_list_item.geocoded_point.y, self.latitude)
+        self.assertIsNone(
+            facility_list_item.geocoded_address
+        )
+
     def add_nonstandard_fields_data(self):
         self.moderation_event.cleaned_data["raw_json"][
             "nonstandard_field_one"
@@ -210,6 +224,12 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
         self.assertEqual(
             facility_list_item.clean_address,
             self.moderation_event.cleaned_data["clean_address"],
+        )
+        self.assertEqual(facility_list_item.geocoded_point.x, self.longitude)
+        self.assertEqual(facility_list_item.geocoded_point.y, self.latitude)
+        self.assertEqual(
+            facility_list_item.geocoded_address,
+            self.moderation_event.geocode_result["geocoded_address"]
         )
 
     def add_extended_fields_data(self):
