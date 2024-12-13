@@ -851,6 +851,7 @@ export const makeDashboardContributionRecordStyles = theme =>
         confirmButtonStyles: Object.freeze({
             backgroundColor: COLOURS.MINT_GREEN,
             padding: '15px 25px',
+            fontWeight: theme.typography.fontWeightBold,
             boxShadow: 'none',
             '&:hover': { backgroundColor: COLOURS.OLIVA_GREEN },
         }),
