@@ -97,7 +97,7 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
             </FeatureFlag>
             <Link to={dashboardDeleteFacilityRoute}>Delete a Facility</Link>
             <Link to={dashboardMergeFacilitiesRoute}>Merge Two Facilities</Link>
-            {/* <Link to={dashboardModerationQueueRoute}>Moderation Queue</Link> */}
+            <Link to={dashboardModerationQueueRoute}>Moderation Queue</Link>
             <Link to={dashboardAdjustFacilityMatchesRoute}>
                 Adjust Facility Matches
             </Link>
@@ -230,6 +230,10 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
                             path={dashboardContributionRecordRoute}
                             render={makeClickableDashboardLinkFn(
                                 'Contribution Record',
+                                {
+                                    route: dashboardModerationQueueRoute,
+                                    screenTitle: 'Moderation Queue',
+                                },
                             )}
                         />
                     </Switch>

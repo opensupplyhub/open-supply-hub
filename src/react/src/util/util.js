@@ -777,7 +777,7 @@ export const makeFacilityClaimDetailsLink = claimID =>
     `/dashboard/claims/${claimID}`;
 
 export const makeContributionRecordLink = moderationID =>
-    `/dashboard/moderation-queue/contribution-record/${moderationID}`;
+    `/dashboard/moderation-queue/${moderationID}`;
 
 export const makeDashboardContributorListLink = ({
     contributorID,
