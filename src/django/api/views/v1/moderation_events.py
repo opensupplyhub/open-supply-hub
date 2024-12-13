@@ -126,7 +126,6 @@ class ModerationEvents(ViewSet):
         detail=True,
         methods=['POST'],
         url_path='production-locations',
-        url_name='add_production_location',
         permission_classes=[IsSuperuser],
     )
     def add_production_location(self, _, pk=None):
