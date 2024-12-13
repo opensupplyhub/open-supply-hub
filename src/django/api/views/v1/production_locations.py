@@ -28,6 +28,7 @@ from api.moderation_event_actions.creation.location_contribution \
 from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
     import CreateModerationEventDTO
 from api.models.moderation_event import ModerationEvent
+from api.models.facility.facility import Facility
 from api.throttles import DataUploadThrottle
 from api.constants import (
     APIV1CommonErrorMessages,
@@ -69,12 +70,14 @@ class ProductionLocations(ViewSet):
         '''
         Returns the list of permissions specific to the current action.
         '''
-        if self.action == 'create':
+        if (self.action == 'create'
+                or self.action == 'partial_update'):
             return [IsRegisteredAndConfirmed]
         return []
 
     def get_throttles(self):
-        if self.action == 'create':
+        if (self.action == 'create'
+                or self.action == 'partial_update'):
             return [DataUploadThrottle()]
 
         # Call the parent method to use the default throttling setup in the
@@ -85,9 +88,10 @@ class ProductionLocations(ViewSet):
         '''
         Override the default parser classes for specific actions.
         '''
-        if self.request.method == 'POST':
-            # Use JSONParser for the 'create' action to restrict all media
-            # types except 'application/json'.
+        if (self.request.method == 'POST'
+                or self.request.method == 'PATCH'):
+            # Use JSONParser for the 'create' and 'partial_update' actions to
+            # restrict all media types except 'application/json'.
             return [JSONParser()]
 
         # Call the parent method to use the default parsers setup in the
@@ -165,9 +169,63 @@ class ProductionLocations(ViewSet):
             location_contribution_strategy
         )
         event_dto = CreateModerationEventDTO(
-            contributor_id=request.user.contributor,
+            contributor=request.user.contributor,
             raw_data=request.data,
             request_type=ModerationEvent.RequestType.CREATE.value
+        )
+        result = moderation_event_creator.perform_event_creation(event_dto)
+
+        if result.errors:
+            return Response(
+                result.errors,
+                status=result.status_code)
+
+        return Response(
+            {
+                'moderation_id': result.moderation_event.uuid,
+                'moderation_status': result.moderation_event.status,
+                'created_at': result.moderation_event.created_at
+            },
+            status=result.status_code
+        )
+
+    @transaction.atomic
+    def partial_update(self, request, pk=None):
+        if switch_is_active('disable_list_uploading'):
+            raise ServiceUnavailableException(
+                APIV1CommonErrorMessages.MAINTENANCE_MODE
+            )
+        if not Facility.objects.filter(id=pk).exists():
+            specific_error = APIV1LocationContributionErrorMessages \
+                .LOCATION_NOT_FOUND
+            return Response(
+                {'detail': specific_error},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        if not isinstance(request.data, dict):
+            data_type = type(request.data).__name__
+            specific_error = APIV1LocationContributionErrorMessages \
+                .invalid_data_type_error(data_type)
+            return Response(
+                {
+                    'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
+                    'errors': [{
+                        'field': NON_FIELD_ERRORS_KEY,
+                        'detail': specific_error
+                    }]
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        location_contribution_strategy = LocationContribution()
+        moderation_event_creator = ModerationEventCreator(
+            location_contribution_strategy
+        )
+        event_dto = CreateModerationEventDTO(
+            contributor=request.user.contributor,
+            os=Facility.objects.get(id=pk),
+            raw_data=request.data,
+            request_type=ModerationEvent.RequestType.UPDATE.value
         )
         result = moderation_event_creator.perform_event_creation(event_dto)
 
