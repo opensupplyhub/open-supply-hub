@@ -78,6 +78,8 @@ class IsRegisteredAndConfirmed(permissions.BasePermission):
 
 
 class IsSuperuser(IsRegisteredAndConfirmed):
+    message = 'Only the Moderator can perform this action.'
+
     def has_permission(self, request, view):
         is_registered = super().has_permission(request, view)
         return is_registered and request.user.is_superuser
