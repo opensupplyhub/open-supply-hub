@@ -79,7 +79,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * It was found that clearing OpenSearch indexes didn’t work properly because the templates weren’t cleared. After updating the index mappings within the index template files, the index template remained unchanged because only the indexes were deleted during deployment, not both the indexes and their templates. This caused conflicts and prevented developers' updates from being applied to the OpenSearch indexes.
 This issue has been fixed by adding additional requests to delete the appropriate index templates to the `clear_opensearch.sh.tpl` script, which is triggered when clearing OpenSearch during deployment to any environment.
 * [OSDEV-1482](https://opensupplyhub.atlassian.net/browse/OSDEV-1482) - The `GET api/v1/moderation-events/{moderation_id}` endpoint returns a single response instead of an array containing one item.
-* [OSDEV-1511](https://opensupplyhub.atlassian.net/browse/OSDEV-1511) - Updated google maps api version to 3.59 for ReactLeafletGoogleLayer component (3.51 not supported).
+* [OSDEV-1511](https://opensupplyhub.atlassian.net/browse/OSDEV-1511) - Updated google maps api version to 3.57 for ReactLeafletGoogleLayer component (3.51 not supported).
 
 ### What's new
 * [OSDEV-1132](https://opensupplyhub.atlassian.net/browse/OSDEV-1132) - Added FE for the "thanks for submitting" screen when user submits production location's data.
