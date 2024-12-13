@@ -88,6 +88,11 @@ class TestModerationEventsQueryBuilder(TestCase):
         expected = {'created_at': {'order': 'asc'}}
         self.assertIn(expected, self.builder.query_body['sort'])
 
+    def test_add_sort_country(self):
+        self.builder.add_sort('country', 'asc')
+        expected = {'cleaned_data.country.name': {'order': 'asc'}}
+        self.assertIn(expected, self.builder.query_body['sort'])
+
     def test_add_search_after(self):
         search_after_value = '2023-11-21T10:00:00'
         search_after_id = '123e4567-e89b-12d3-a456-426614174000'
