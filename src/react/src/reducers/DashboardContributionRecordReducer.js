@@ -9,9 +9,6 @@ import {
     startFetchPotentialMatches,
     failFetchPotentialMatches,
     completeFetchPotentialMatches,
-    startUpdateModerationEventRecord,
-    completeUpdateModerationEventRecord,
-    failUpdateModerationEventRecord,
     cleanupContributionRecord,
 } from '../actions/dashboardContributionRecord';
 
@@ -80,14 +77,6 @@ export default createReducer(
                     },
                 },
             }),
-        // TODO:
-        [startUpdateModerationEventRecord]: state => update(state, {}),
-        // TODO:
-        [completeUpdateModerationEventRecord]: (state, error) =>
-            update(state, {}),
-        // TODO:
-        [failUpdateModerationEventRecord]: (state, payload) =>
-            update(state, {}),
         [cleanupContributionRecord]: () => initialState,
     },
     initialState,

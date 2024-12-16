@@ -808,7 +808,7 @@ export const makeDashboardContributionRecordStyles = theme =>
             padding: '20px',
             backgroundColor: COLOURS.LIGHT_GREY,
             boxShadow: 'none',
-            border: `1px solid ${COLOURS.DARK_GREY}`,
+            border: `1px solid ${COLOURS.GREY}`,
             borderRadius: 0,
         }),
         moderationEventStatus: Object.freeze({

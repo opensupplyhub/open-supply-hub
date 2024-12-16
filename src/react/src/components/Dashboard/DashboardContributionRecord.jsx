@@ -23,6 +23,7 @@ import {
 import {
     fetchSingleModerationEvent,
     fetchPotentialMatches,
+    updateSingleModerationEvent,
 } from '../../actions/dashboardContributionRecord';
 import { makeClaimFacilityLink } from '../../util/util';
 import DialogTooltip from './../Contribute/DialogTooltip';
@@ -47,6 +48,7 @@ const DashboardContributionRecord = ({
     singleModerationEventItem,
     matches,
     fetchModerationEventError,
+    updateModerationEvent,
     classes,
     fetchModerationEvent,
     fetchMatches,
@@ -81,7 +83,7 @@ const DashboardContributionRecord = ({
         if (!singleModerationEventItem || isEmpty(singleModerationEventItem)) {
             fetchModerationEvent();
         }
-    }, [fetchModerationEvent]);
+    }, [fetchModerationEvent, updateModerationEvent]);
 
     useEffect(() => {
         if (
@@ -113,7 +115,7 @@ const DashboardContributionRecord = ({
     const moderationEventStatus = singleModerationEventItem.status || '';
     const jsonResults = JSON.stringify(singleModerationEventItem, null, 2);
     const potentialMatchCount = matches.length || 0;
-    const hasOSID = singleModerationEventItem.os_id;
+    const hasClaimID = singleModerationEventItem.claim_id;
 
     return (
         <>
@@ -133,7 +135,7 @@ const DashboardContributionRecord = ({
                         `}
             >
                 <Toolbar>
-                    <Typography variant="h6">
+                    <Typography variant="title">
                         {moderationEventStatus}
                     </Typography>
                 </Toolbar>
@@ -243,22 +245,29 @@ const DashboardContributionRecord = ({
                     variant="contained"
                     onClick={() => {}}
                     className={classes.buttonStyles}
-                    disabled={moderationEventFetching}
+                    disabled={
+                        moderationEventFetching ||
+                        moderationEventStatus === 'REJECTED'
+                    }
                 >
                     Create New Location
                 </Button>
-                {/* TODO: PATCH /v1/moderation-events/{moderation_id}/) */}
                 <Button
                     color="secondary"
                     variant="contained"
-                    onClick={() => {}}
+                    onClick={() => {
+                        updateModerationEvent('REJECTED');
+                    }}
                     className={classes.buttonStyles}
-                    disabled={moderationEventFetching}
+                    disabled={
+                        moderationEventFetching ||
+                        moderationEventStatus === 'REJECTED'
+                    }
                 >
                     Reject Contribution
                 </Button>
                 <Grid item>
-                    {hasOSID ? (
+                    {hasClaimID ? (
                         <Button
                             color="secondary"
                             variant="contained"
@@ -276,7 +285,7 @@ const DashboardContributionRecord = ({
                         </Button>
                     ) : (
                         <DialogTooltip
-                            text="You can't claim this production location because it hasn't received OS ID yet."
+                            text="A production location must be created before it can receive a claim request."
                             aria-label="Claim button tooltip"
                             childComponent={claimButtonDisabled(classes)}
                         />
@@ -339,6 +348,8 @@ const mapDispatchToProps = (
     push,
     fetchModerationEvent: () =>
         dispatch(fetchSingleModerationEvent(moderationID)),
+    updateModerationEvent: status =>
+        dispatch(updateSingleModerationEvent(moderationID, status)),
     fetchMatches: data => dispatch(fetchPotentialMatches(data)),
 });
 

@@ -27,15 +27,6 @@ export const completeFetchPotentialMatches = createAction(
 export const cleanupContributionRecord = createAction(
     'CLEANUP_CONTRIBUTION_RECORD',
 );
-export const startUpdateModerationEventRecord = createAction(
-    'START_UPDATE_MODERATION_EVENT',
-);
-export const completeUpdateModerationEventRecord = createAction(
-    'COMPLETE_UPDATE_MODERATION_EVENT',
-);
-export const failUpdateModerationEventRecord = createAction(
-    'FAIL_UPDATE_MODERATION_EVENT',
-);
 
 export function fetchSingleModerationEvent(moderationID) {
     return async dispatch => {
@@ -95,21 +86,21 @@ export function fetchPotentialMatches(data) {
     };
 }
 
-export function updateModerationEvent(moderationID) {
+export function updateSingleModerationEvent(moderationID, status) {
     return async dispatch => {
-        dispatch(startUpdateModerationEventRecord());
+        dispatch(startFetchSingleModerationEvent());
 
         return apiRequest
-            .patch(makeModerationEventRecordURL(moderationID))
-            .then(data => {
-                dispatch(completeUpdateModerationEventRecord(data));
+            .patch(makeModerationEventRecordURL(moderationID), { status })
+            .then(({ data }) => {
+                dispatch(completeFetchSingleModerationEvent(data));
             })
             .catch(err =>
                 dispatch(
                     logErrorAndDispatchFailure(
                         err,
                         'An error prevented updating moderation event record',
-                        failUpdateModerationEventRecord,
+                        failFetchSingleModerationEvent,
                     ),
                 ),
             );
