@@ -4,7 +4,7 @@ from unittest.mock import patch
 from django.contrib.gis.geos import Point
 from django.test import override_settings
 
-from api.constants import APIV1CommonErrorMessages, APIV1MatchTypes
+from api.constants import APIV1MatchTypes
 from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_match import FacilityMatch
@@ -48,6 +48,11 @@ class ModerationEventsUpdateProductionLocationTest(
             country_code="GB",
             location=Point(0, 0),
             created_from=self.list_item,
+        )
+
+    def get_url(self):
+        return "/api/v1/moderation-events/{}/production-locations/{}/".format(
+            self.moderation_event_id, self.os_id
         )
 
     def test_not_authenticated(self):
@@ -105,36 +110,17 @@ class ModerationEventsUpdateProductionLocationTest(
 
         self.assert_moderation_event_not_pending(response)
 
-    def test_empty_request_body(self):
+    def test_invalid_os_id_format(self):
         self.login_as_superuser()
         response = self.client.patch(
-            self.get_url(),
+            self.get_url().replace(self.os_id, "invalid_os_id"),
             data=json.dumps({}),
             content_type="application/json",
         )
 
         self.assertEqual(400, response.status_code)
         self.assertEqual(
-            APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
-            response.data["detail"],
-        )
-        self.assertEqual("os_id", response.data["errors"][0]["field"])
-        self.assertEqual(
-            "This field is required.", response.data["errors"][0]["detail"]
-        )
-
-    def test_invalid_os_id_format(self):
-        self.login_as_superuser()
-        response = self.client.patch(
-            self.get_url(),
-            data=json.dumps({"os_id": "invalid_os_id"}),
-            content_type="application/json",
-        )
-
-        self.assertEqual(400, response.status_code)
-        self.assertEqual(
-            APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
-            response.data["detail"],
+            "The request path parameter is invalid.", response.data["detail"]
         )
         self.assertEqual("os_id", response.data["errors"][0]["field"])
         self.assertEqual(
@@ -145,15 +131,14 @@ class ModerationEventsUpdateProductionLocationTest(
     def test_no_production_location_found_with_os_id(self):
         self.login_as_superuser()
         response = self.client.patch(
-            self.get_url(),
-            data=json.dumps({"os_id": "UA2024341550R5D"}),
+            self.get_url().replace(self.os_id, "UA2024341550R5D"),
+            data=json.dumps({}),
             content_type="application/json",
         )
 
         self.assertEqual(400, response.status_code)
         self.assertEqual(
-            APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
-            response.data["detail"],
+            "The request path parameter is invalid.", response.data["detail"]
         )
         self.assertEqual("os_id", response.data["errors"][0]["field"])
         self.assertEqual(

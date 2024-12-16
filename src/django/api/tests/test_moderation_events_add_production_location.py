@@ -18,6 +18,11 @@ from api.tests.base_moderation_events_production_location_test import (
 class ModerationEventsAddProductionLocationTest(
     BaseModerationEventsProductionLocationTest
 ):
+    def get_url(self):
+        return "/api/v1/moderation-events/{}/production-locations/".format(
+            self.moderation_event_id
+        )
+
     def test_not_authenticated(self):
         response = self.client.post(
             self.get_url(),

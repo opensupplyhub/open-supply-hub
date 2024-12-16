@@ -102,11 +102,6 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
     def login_as_regular_user(self):
         self.client.login(email=self.email, password=self.password)
 
-    def get_url(self):
-        return "/api/v1/moderation-events/{}/production-locations/".format(
-            self.moderation_event_id
-        )
-
     def assert_not_authenticated(self, response):
         self.assertEqual(401, response.status_code)
         self.assertEqual(
@@ -176,9 +171,7 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
         )
         self.assertEqual(facility_list_item.geocoded_point.x, self.longitude)
         self.assertEqual(facility_list_item.geocoded_point.y, self.latitude)
-        self.assertIsNone(
-            facility_list_item.geocoded_address
-        )
+        self.assertIsNone(facility_list_item.geocoded_address)
 
     def add_nonstandard_fields_data(self):
         self.moderation_event.cleaned_data["raw_json"][
@@ -236,7 +229,7 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
         self.assertEqual(facility_list_item.geocoded_point.y, self.latitude)
         self.assertEqual(
             facility_list_item.geocoded_address,
-            self.moderation_event.geocode_result["geocoded_address"]
+            self.moderation_event.geocode_result["geocoded_address"],
         )
 
     def add_extended_fields_data(self):
