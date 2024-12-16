@@ -8,6 +8,8 @@ from api.models.moderation_event import ModerationEvent
 from api.serializers.v1.opensearch_common_validators.moderation_id_validator \
     import ModerationIdValidator
 from api.views.v1.utils import create_error_detail
+from api.models.facility.facility import Facility
+from api.os_id import validate_os_id
 
 log = logging.getLogger(__name__)
 
@@ -40,6 +42,26 @@ class ModerationEventsService:
         if status != ModerationEvent.Status.PENDING:
             raise GoneException(
                 detail="The moderation event should be in PENDING status."
+            )
+
+    @staticmethod
+    def validate_location_os_id(os_id):
+        if not validate_os_id(os_id, raise_on_invalid=False):
+            raise ParseError(
+                create_error_detail(
+                    field="os_id",
+                    detail="The format of the os_id is invalid."
+                )
+            )
+
+        if not Facility.objects.filter(id=os_id).exists():
+            raise ParseError(
+                create_error_detail(
+                    field="os_id",
+                    detail="No production location found with the provided "
+                    "os_id."
+
+                )
             )
 
     @staticmethod
