@@ -136,7 +136,7 @@ class ModerationEventsUpdateProductionLocationTest(
             content_type="application/json",
         )
 
-        self.assertEqual(400, response.status_code)
+        self.assertEqual(404, response.status_code)
         self.assertEqual(
             "The request path parameter is invalid.", response.data["detail"]
         )

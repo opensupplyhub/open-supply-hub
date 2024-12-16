@@ -55,7 +55,7 @@ class ModerationEventsService:
             )
 
         if not Facility.objects.filter(id=os_id).exists():
-            raise ParseError(
+            raise NotFound(
                 create_error_detail(
                     field="os_id",
                     detail=(
