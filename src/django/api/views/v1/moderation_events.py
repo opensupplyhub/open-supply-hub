@@ -155,14 +155,10 @@ class ModerationEvents(ViewSet):
         url_path='production-locations/(?P<os_id>[^/.]+)',
         permission_classes=[IsSuperuser],
     )
-    def update_production_location(
-        self, _, pk=None, os_id=None
-    ):
+    def update_production_location(self, _, pk=None, os_id=None):
         ModerationEventsService.validate_uuid(pk)
 
-        event = ModerationEventsService.fetch_moderation_event_by_uuid(
-            pk
-        )
+        event = ModerationEventsService.fetch_moderation_event_by_uuid(pk)
 
         ModerationEventsService.validate_moderation_status(event.status)
 
