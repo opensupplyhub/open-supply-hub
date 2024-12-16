@@ -17,8 +17,6 @@ from api.serializers.v1.moderation_event_update_serializer \
     import ModerationEventUpdateSerializer
 from api.serializers.v1.moderation_events_serializer \
     import ModerationEventsSerializer
-from api.serializers.v1.update_production_location_serializer \
-    import UpdateProductionLocationSerializer
 from api.services.moderation_events_service import ModerationEventsService
 from api.services.opensearch.search import OpenSearchService
 from api.views.v1.index_names import OpenSearchIndexNames
@@ -150,30 +148,25 @@ class ModerationEvents(ViewSet):
             {"os_id": item.facility_id}, status=status.HTTP_201_CREATED
         )
 
-    @add_production_location.mapping.patch
-    def update_production_location(self, request, pk=None):
+    @handle_errors_decorator
+    @action(
+        detail=True,
+        methods=['PATCH'],
+        url_path='production-locations/(?P<os_id>[^/.]+)',
+        permission_classes=[IsSuperuser],
+    )
+    def update_production_location(
+        self, _, pk=None, os_id=None
+    ):
         ModerationEventsService.validate_uuid(pk)
 
-        event = ModerationEventsService.fetch_moderation_event_by_uuid(pk)
+        event = ModerationEventsService.fetch_moderation_event_by_uuid(
+            pk
+        )
+
         ModerationEventsService.validate_moderation_status(event.status)
 
-        serializer = UpdateProductionLocationSerializer(data=request.data)
-
-        if not serializer.is_valid():
-            errors = [
-                {"field": field, "detail": detail}
-                for field, details in serializer.errors.items()
-                for detail in details
-            ]
-
-            raise ValidationError(
-                {
-                    "detail": APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
-                    "errors": errors,
-                }
-            )
-
-        os_id = serializer.validated_data.get('os_id')
+        ModerationEventsService.validate_location_os_id(os_id)
 
         update_production_location_processor = UpdateProductionLocation(
             event, os_id
