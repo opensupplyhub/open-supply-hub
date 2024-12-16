@@ -8,7 +8,8 @@ from .active_contributors import active_contributors
 @throttle_classes([])
 def all_contributors(_):
     """
-    Returns list contributors as a list of tuples of contributor IDs, names and types.
+    Returns list contributors as a list of tuples of 
+    contributor IDs, names and types.
 
     ## Sample Response
 
@@ -21,8 +22,8 @@ def all_contributors(_):
         (
             contributor.id,
             contributor.name,
-            contributor.other_contrib_type 
-            if contributor.contrib_type == "Other" 
+            contributor.other_contrib_type
+            if contributor.contrib_type == "Other"
             else contributor.contrib_type
         )
         for contributor in active_contributors().order_by('name')
