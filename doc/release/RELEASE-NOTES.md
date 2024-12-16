@@ -23,6 +23,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1493](https://opensupplyhub.atlassian.net/browse/OSDEV-1493) - Fixed an issue where the backend sorts countries not by `name` but by their `alpha-2 codes` in `GET /api/v1/moderation-events/` endpoint.
 
 ### What's new
+* [OSDEV-1474](https://opensupplyhub.atlassian.net/browse/OSDEV-1474) - Added contributor type value to response of `/api/contributors/` endpoint.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
