@@ -25,6 +25,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### What's new
 * [OSDEV-1376](https://opensupplyhub.atlassian.net/browse/OSDEV-1376) - Updated automated emails for closure reports (report_result) to remove the term "Rejected" for an improved user experience. Added link to Closure Policy and instructions for submitting a Reopening Report to make the process easier to understand for users.
 
+* [OSDEV-1383](https://opensupplyhub.atlassian.net/browse/OSDEV-1383) - Edited text of the automated email that notifies a contributor when one of their facilities has been claimed. The new text provides more information to the contributor to understand the claim process and how they can encourage more of their facilities to claim their profile.
+
+
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
