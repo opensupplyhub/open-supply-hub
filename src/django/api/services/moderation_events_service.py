@@ -58,8 +58,9 @@ class ModerationEventsService:
             raise ParseError(
                 create_error_detail(
                     field="os_id",
-                    detail="No production location found with the provided "
-                    "os_id."
+                    detail=(
+                        "No production location found with the provided os_id."
+                    )
                 )
             )
 
