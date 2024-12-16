@@ -70,7 +70,7 @@ class TestLocationContributionStrategy(APITestCase):
         self.assertNotIn('source', self.common_valid_input_data)
 
         event_dto = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=self.common_valid_input_data,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -137,7 +137,7 @@ class TestLocationContributionStrategy(APITestCase):
 
         # Check the length validation.
         event_dto_1 = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=invalid_input_data_1,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -150,7 +150,7 @@ class TestLocationContributionStrategy(APITestCase):
 
         # Check validation of accepted values.
         event_dto_2 = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=invalid_input_data_2,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -163,7 +163,7 @@ class TestLocationContributionStrategy(APITestCase):
 
         # Check the accepted data type validation for the source field.
         event_dto_3 = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=invalid_input_data_3,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -189,7 +189,7 @@ class TestLocationContributionStrategy(APITestCase):
         }
 
         event_dto = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=input_data,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -256,7 +256,7 @@ class TestLocationContributionStrategy(APITestCase):
         }
 
         event_dto = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=input_data,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -289,7 +289,7 @@ class TestLocationContributionStrategy(APITestCase):
         }
 
         event_dto = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=input_data,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -332,7 +332,7 @@ class TestLocationContributionStrategy(APITestCase):
         }
 
         event_dto = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=input_data,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -368,7 +368,7 @@ class TestLocationContributionStrategy(APITestCase):
         }
 
         event_dto = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=input_data,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -397,7 +397,7 @@ class TestLocationContributionStrategy(APITestCase):
         }
 
         event_dto = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=input_data,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -454,7 +454,7 @@ class TestLocationContributionStrategy(APITestCase):
         }
 
         event_dto = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=input_data,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -629,7 +629,7 @@ class TestLocationContributionStrategy(APITestCase):
         }
 
         event_dto = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=input_data,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
