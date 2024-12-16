@@ -236,6 +236,7 @@ class ProductionLocations(ViewSet):
 
         return Response(
             {
+                'os_id': result.os.id,
                 'moderation_id': result.moderation_event.uuid,
                 'moderation_status': result.moderation_event.status,
                 'created_at': result.moderation_event.created_at
