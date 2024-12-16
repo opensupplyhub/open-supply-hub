@@ -40,7 +40,7 @@ class TestProductionLocationsPartialUpdate(APITestCase):
         self.login(user_email, user_password)
 
         # Create a valid Facility entry specifically for this test, to be used
-        # for making PATCH requests for it.
+        # for making PATCH requests for this production location.
         list = FacilityList.objects.create(
             header='header', file_name='one', name='New List Test'
         )
