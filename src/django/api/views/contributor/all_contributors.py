@@ -8,7 +8,7 @@ from .active_contributors import active_contributors
 @throttle_classes([])
 def all_contributors(_):
     """
-    Returns list contributors as a list of tuples of 
+    Returns list contributors as a list of tuples of
     contributor IDs, names and types.
 
     ## Sample Response
