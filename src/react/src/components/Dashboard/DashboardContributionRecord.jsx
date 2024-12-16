@@ -1,8 +1,11 @@
-import React, { useEffect, useMemo } from 'react';
+/* eslint no-unused-vars: 0 */
+import React, { useEffect, useMemo, useRef } from 'react';
 import { connect } from 'react-redux';
+import { toast } from 'react-toastify';
 import { string, func, bool, object } from 'prop-types';
 import { withStyles, withTheme } from '@material-ui/core/styles';
 import isEmpty from 'lodash/isEmpty';
+import isEqual from 'lodash/isEqual';
 import Grid from '@material-ui/core/Grid';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
@@ -24,6 +27,7 @@ import {
     fetchSingleModerationEvent,
     fetchPotentialMatches,
     updateSingleModerationEvent,
+    createProductionLocationFromModerationEvent,
 } from '../../actions/dashboardContributionRecord';
 import { makeClaimFacilityLink } from '../../util/util';
 import DialogTooltip from './../Contribute/DialogTooltip';
@@ -49,12 +53,14 @@ const DashboardContributionRecord = ({
     matches,
     fetchModerationEventError,
     updateModerationEvent,
+    createProductionLocation,
     classes,
     fetchModerationEvent,
     fetchMatches,
     moderationEventFetching,
     fetchPotentialMatchError,
 }) => {
+    const prevSingleModerationEventItemRef = useRef();
     const {
         productionLocationName,
         countryCode,
@@ -83,7 +89,20 @@ const DashboardContributionRecord = ({
         if (!singleModerationEventItem || isEmpty(singleModerationEventItem)) {
             fetchModerationEvent();
         }
-    }, [fetchModerationEvent, updateModerationEvent]);
+    }, [fetchModerationEvent]);
+
+    useEffect(() => {
+        const prevSingleModerationEventItem =
+            prevSingleModerationEventItemRef.current;
+
+        if (
+            !isEqual(prevSingleModerationEventItem, singleModerationEventItem)
+        ) {
+            fetchModerationEvent();
+        }
+
+        prevSingleModerationEventItemRef.current = singleModerationEventItem;
+    }, [singleModerationEventItem, fetchModerationEvent]);
 
     useEffect(() => {
         if (
@@ -115,7 +134,29 @@ const DashboardContributionRecord = ({
     const moderationEventStatus = singleModerationEventItem.status || '';
     const jsonResults = JSON.stringify(singleModerationEventItem, null, 2);
     const potentialMatchCount = matches.length || 0;
+    // TODO: automatic write claim into moderation-events table to be done in Q1
     const hasClaimID = singleModerationEventItem.claim_id;
+    const isDisabled =
+        moderationEventStatus === 'REJECTED' ||
+        moderationEventStatus === 'APPROVED';
+    let claimButtonTooltipText = '';
+
+    switch (moderationEventStatus) {
+        case 'PENDING':
+            claimButtonTooltipText =
+                'A production location must be created before it can receive a claim request.';
+            break;
+        case 'APPROVED':
+            claimButtonTooltipText =
+                "Production location hasn't received a claim yet";
+            break;
+        case 'REJECTED':
+            claimButtonTooltipText =
+                'Moderation event has been rejected, no claim request available';
+            break;
+        default:
+            break;
+    }
 
     return (
         <>
@@ -209,13 +250,13 @@ const DashboardContributionRecord = ({
                                                     primary={`Claimed Status: ${claimStatus}`}
                                                 />
                                             </div>
-                                            {/* TODO: PATCH /v1/moderation-events/{moderation_id}/production-locations/ */}
                                             <Button
                                                 color="secondary"
                                                 variant="contained"
                                                 className={
                                                     classes.confirmButtonStyles
                                                 }
+                                                disabled={isDisabled}
                                                 onClick={() => {}}
                                             >
                                                 Confirm
@@ -239,16 +280,14 @@ const DashboardContributionRecord = ({
                 <Divider className={classes.dividerStyle} />
             </div>
             <Grid container className={classes.buttonContentStyle}>
-                {/* TODO: POST /v1/moderation-events/{moderation_id}/production-locations/ */}
                 <Button
                     color="primary"
                     variant="contained"
-                    onClick={() => {}}
+                    onClick={() => {
+                        createProductionLocation();
+                    }}
                     className={classes.buttonStyles}
-                    disabled={
-                        moderationEventFetching ||
-                        moderationEventStatus === 'REJECTED'
-                    }
+                    disabled={isDisabled}
                 >
                     Create New Location
                 </Button>
@@ -259,10 +298,7 @@ const DashboardContributionRecord = ({
                         updateModerationEvent('REJECTED');
                     }}
                     className={classes.buttonStyles}
-                    disabled={
-                        moderationEventFetching ||
-                        moderationEventStatus === 'REJECTED'
-                    }
+                    disabled={moderationEventFetching || isDisabled}
                 >
                     Reject Contribution
                 </Button>
@@ -285,7 +321,7 @@ const DashboardContributionRecord = ({
                         </Button>
                     ) : (
                         <DialogTooltip
-                            text="A production location must be created before it can receive a claim request."
+                            text={claimButtonTooltipText}
                             aria-label="Claim button tooltip"
                             childComponent={claimButtonDisabled(classes)}
                         />
@@ -350,6 +386,8 @@ const mapDispatchToProps = (
         dispatch(fetchSingleModerationEvent(moderationID)),
     updateModerationEvent: status =>
         dispatch(updateSingleModerationEvent(moderationID, status)),
+    createProductionLocation: () =>
+        dispatch(createProductionLocationFromModerationEvent(moderationID)),
     fetchMatches: data => dispatch(fetchPotentialMatches(data)),
 });
 

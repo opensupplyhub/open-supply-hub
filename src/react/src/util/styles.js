@@ -910,9 +910,6 @@ export const makeDashboardModerationQueueListTableStyles = Object.freeze({
     rowStyles: Object.freeze({
         cursor: 'pointer',
     }),
-    emptyRowStyles: Object.freeze({
-        height: '5px',
-    }),
     loaderStyles: Object.freeze({
         display: 'block',
         margin: 'auto',

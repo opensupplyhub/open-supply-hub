@@ -3,6 +3,7 @@ import apiRequest from '../util/apiRequest';
 import {
     makeModerationEventRecordURL,
     makeGetProductionLocationsForPotentialMatches,
+    makeProductionLocationFromModerationEventURL,
     logErrorAndDispatchFailure,
 } from '../util/util';
 
@@ -26,6 +27,24 @@ export const completeFetchPotentialMatches = createAction(
 );
 export const cleanupContributionRecord = createAction(
     'CLEANUP_CONTRIBUTION_RECORD',
+);
+export const startUpdateSingleModerationEvent = createAction(
+    'START_UPDATE_SINGLE_MODERATION_EVENT',
+);
+export const completeUpdateSingleModerationEvent = createAction(
+    'COMPLETE_UPDATE_SINGLE_MODERATION_EVENT',
+);
+export const failUpdateSingleModerationEvent = createAction(
+    'FAIL_UPDATE_SINGLE_MODERATION_EVENT',
+);
+export const startCreateProductionLocationFromModerationEvent = createAction(
+    'START_CREATE_PRODUCTION_LOCATION_FROM_MODERATION_EVENT',
+);
+export const completeCreateProductionLocationFromModerationEvent = createAction(
+    'COMPLETE_CREATE_PRODUCTION_LOCATION_FROM_MODERATION_EVENT',
+);
+export const failCreateProductionLocationFromModerationEvent = createAction(
+    'FAIL_CREATE_PRODUCTION_LOCATION_FROM_MODERATION_EVENT',
 );
 
 export function fetchSingleModerationEvent(moderationID) {
@@ -88,19 +107,45 @@ export function fetchPotentialMatches(data) {
 
 export function updateSingleModerationEvent(moderationID, status) {
     return async dispatch => {
-        dispatch(startFetchSingleModerationEvent());
+        dispatch(startUpdateSingleModerationEvent());
 
         return apiRequest
             .patch(makeModerationEventRecordURL(moderationID), { status })
             .then(({ data }) => {
-                dispatch(completeFetchSingleModerationEvent(data));
+                dispatch(completeUpdateSingleModerationEvent(data));
             })
             .catch(err =>
                 dispatch(
                     logErrorAndDispatchFailure(
                         err,
                         'An error prevented updating moderation event record',
-                        failFetchSingleModerationEvent,
+                        failUpdateSingleModerationEvent,
+                    ),
+                ),
+            );
+    };
+}
+
+// TODO: Refactor actions. You always invoke fetch of moderation events
+// See this as a reference: src/react/src/actions/dashboardActivityReports.js
+// There will be a separate actions but with the same purpose of updating Redux State.
+export function createProductionLocationFromModerationEvent(moderationID) {
+    return async dispatch => {
+        dispatch(startCreateProductionLocationFromModerationEvent());
+
+        return apiRequest
+            .post(makeProductionLocationFromModerationEventURL(moderationID))
+            .then(({ data }) => {
+                dispatch(
+                    completeCreateProductionLocationFromModerationEvent(data),
+                );
+            })
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented creating production location from moderation event record',
+                        failCreateProductionLocationFromModerationEvent,
                     ),
                 ),
             );

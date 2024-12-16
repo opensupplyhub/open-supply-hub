@@ -130,7 +130,6 @@ function DashboardModerationQueueListTable({
                         </TableBody>
                     ) : (
                         <TableBody>
-                            <TableRow className={classes.emptyRowStyles} />
                             {moderationEventsList
                                 .slice(
                                     page * pageSize,
