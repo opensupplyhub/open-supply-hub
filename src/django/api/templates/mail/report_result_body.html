@@ -7,11 +7,14 @@
     </head>
     <body>
         <p>
-            Hi there,
+            Hello,
         </p>
         <p>
-            Thanks for reporting {{ facility_name }} facility as {{ closure_state|lower }}.
-            {% if is_closure and is_rejected %}We have rejected this report and the facility's profile in OS Hub has not been changed.{% endif %}{% if is_closure and is_confirmed %}The facility profile in Open Supply Hub has now been updated and the facility is marked as closed.{% endif %}{% if is_reopening and is_rejected %}We have rejected this report and the facility's profile in OS Hub has not been changed.{% endif %}{% if is_reopening and is_confirmed %}The facility profile in Open Supply Hub has now been updated and the facility is no longer marked as closed.{% endif %}
+            Thank you for reporting the facility {{ facility_name }} as {{ closure_state|lower }}.
+            {% if is_closure and is_rejected %}We did not approve this report and the facility's profile on OS Hub has not been changed. For more details, view our <a href="https://info.opensupplyhub.org/governance-policies">Facility Closure Policy</a>.{% endif %}
+            {% if is_closure and is_confirmed %}The facility profile on OS Hub has now been updated and the facility is marked as closed.{% endif %}
+            {% if is_reopening and is_rejected %}We did not approve this report and the facility's profile on OS Hub has not been changed.{% endif %}
+            {% if is_reopening and is_confirmed %}The facility profile on OS Hub has now been updated and the facility is no longer marked as closed.{% endif %}
         </p>
         {% if status_change_reason|length %}
         <p>
@@ -20,17 +23,17 @@
         {% endif %}
         {% if is_rejected %}
         <p>
-            If you have additional evidence that can be used to verify the facility has {{ closure_state|lower }}, this can be shared with: data@opensupplyhub.org
+            If you have additional evidence that can be used to verify that the facility is {{ closure_state|lower }}, email the relevant documents to: data@opensupplyhub.org
         </p>
         {% endif %}
         {% if is_closure and is_confirmed %}
         <p>
-            Should you receive reports that the facility is re-opened in the future, you can share this update with the OS Hub Team.
+            Should you receive reports that the facility is re-opened in the future, please send us an report clicking the “Report” button (flag icon) on the facility profile and choosing “Report as Reopened”
         </p>
         {% endif %}
 
         <p>
-            Best wishes,
+            Best Regards,
         </p>
         {% include "mail/signature_block.html" %}
     </body>
