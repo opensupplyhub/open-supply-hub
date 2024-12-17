@@ -104,7 +104,6 @@ class ModerationEvents(ViewSet):
 
         return Response(events[0])
 
-    @handle_errors_decorator
     def partial_update(self, request, pk=None):
         ModerationEventsService.validate_uuid(pk)
 
@@ -126,7 +125,6 @@ class ModerationEvents(ViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @handle_errors_decorator
     @action(
         detail=True,
         methods=['POST'],
@@ -149,7 +147,6 @@ class ModerationEvents(ViewSet):
             {"os_id": item.facility_id}, status=status.HTTP_201_CREATED
         )
 
-    @handle_errors_decorator
     @action(
         detail=True,
         methods=['PATCH'],
