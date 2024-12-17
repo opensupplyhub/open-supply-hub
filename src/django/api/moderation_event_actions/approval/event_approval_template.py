@@ -28,75 +28,77 @@ log = logging.getLogger(__name__)
 class EventApprovalTemplate(ABC):
     """
     A template method class that defines the overall steps for processing
-    a moderation event. Subclasses provide the specifics by overriding
+    approval-type moderation event actions. It could be applied only for
+    creating a new production location or adding an additional contribution to
+    an existing production location.
+    Subclasses provide the specifics by overriding
     abstract methods and hooks.
     """
 
     def __init__(self, moderation_event: ModerationEvent) -> None:
         self.__event = moderation_event
 
+    @transaction.atomic
     def process_moderation_event(self) -> FacilityListItem:
-        with transaction.atomic():
-            data: Dict = self.__event.cleaned_data
-            log.info(f'[Moderation Event] Processing event with data: {data}')
+        data: Dict = self.__event.cleaned_data
+        log.info(f'[Moderation Event] Processing event with data: {data}')
 
-            contributor: Contributor = self.__event.contributor
-            log.info(f'[Moderation Event] Contributor: {contributor}')
+        contributor: Contributor = self.__event.contributor
+        log.info(f'[Moderation Event] Contributor: {contributor}')
 
-            source: Source = self.__create_source(contributor)
-            log.info(f'[Moderation Event] Source created. Id: {source.id}')
+        source: Source = self.__create_source(contributor)
+        log.info(f'[Moderation Event] Source created. Id: {source.id}')
 
-            header_row_keys: KeysView[str] = data["raw_json"].keys()
-            create_nonstandard_fields(header_row_keys, contributor)
-            log.info('[Moderation Event] Nonstandard fields created.')
+        header_row_keys: KeysView[str] = data["raw_json"].keys()
+        create_nonstandard_fields(header_row_keys, contributor)
+        log.info('[Moderation Event] Nonstandard fields created.')
 
-            header_str: str = ','.join(header_row_keys)
-            item: FacilityListItem = self.__create_facility_list_item(
-                source, data, header_str
-            )
-            log.info(
-                '[Moderation Event] FacilityListItem created. Id: '
-                f'{item.id}'
-            )
+        header_str: str = ','.join(header_row_keys)
+        item: FacilityListItem = self.__create_facility_list_item(
+            source, data, header_str
+        )
+        log.info(
+            '[Moderation Event] FacilityListItem created. Id: ' f'{item.id}'
+        )
 
-            create_extendedfields_for_single_item(item, data["fields"])
-            log.info('[Moderation Event] Extended fields created.')
+        create_extendedfields_for_single_item(item, data["fields"])
+        log.info('[Moderation Event] Extended fields created.')
 
-            self.__set_geocoded_location(item, data, self.__event)
-            log.info('[Moderation Event] Geocoded location set.')
+        self.__set_geocoded_location(item, data, self.__event)
+        log.info('[Moderation Event] Geocoded location set.')
 
-            facility_id = self._get_os_id(item.country_code)
+        facility_id = self._get_os_id(item.country_code)
 
-            self._create_new_facility(item, facility_id)
+        self._create_new_facility(item, facility_id)
 
-            self.__update_item_with_facility_id_and_processing_results(
-                item, facility_id
-            )
-            log.info(
-                '[Moderation Event] FacilityListItem updated with facility ID.'
-            )
+        self.__update_item_with_facility_id_and_processing_results(
+            item, facility_id
+        )
+        log.info(
+            '[Moderation Event] FacilityListItem updated with facility ID.'
+        )
 
-            self.__create_list_item_temp(item)
-            log.info('[Moderation Event] FacilityListItemTemp created.')
+        self.__create_list_item_temp(item)
+        log.info('[Moderation Event] FacilityListItemTemp created.')
 
-            update_extendedfields_for_list_item(item)
-            log.info(
-                '[Moderation Event] Extended fields updated with facility ID.'
-            )
+        update_extendedfields_for_list_item(item)
+        log.info(
+            '[Moderation Event] Extended fields updated with facility ID.'
+        )
 
-            self.__create_facility_match_temp(item)
-            log.info('[Moderation Event] FacilityMatchTemp created.')
+        self.__create_facility_match_temp(item)
+        log.info('[Moderation Event] FacilityMatchTemp created.')
 
-            self.__create_facility_match(item)
-            log.info('[Moderation Event] FacilityMatch created.')
+        self.__create_facility_match(item)
+        log.info('[Moderation Event] FacilityMatch created.')
 
-            self._update_event(self.__event, item)
-            log.info(
-                '[Moderation Event] Status and os_id of Moderation Event '
-                'updated.'
-            )
+        self._update_event(self.__event, item)
+        log.info(
+            '[Moderation Event] Status and os_id of Moderation Event '
+            'updated.'
+        )
 
-            return item
+        return item
 
     @staticmethod
     def __create_source(contributor: Contributor) -> Source:
@@ -145,7 +147,6 @@ class EventApprovalTemplate(ABC):
 
         if geocode_result:
             self.__apply_geocode_result(item, geocode_result)
-
         else:
             lat = data["fields"]["lat"]
             lng = data["fields"]["lng"]
@@ -247,8 +248,10 @@ class EventApprovalTemplate(ABC):
 
     @abstractmethod
     def _get_facilitylistitem_status(self) -> str:
-        """Return the status that should be used when creating
-        facility list items."""
+        """
+        Return the status that should be used when creating
+        facility list items.
+        """
         raise NotImplementedError
 
     @abstractmethod
