@@ -36,11 +36,18 @@ class ModerationEvents(ViewSet):
 
     permission_classes = [IsRegisteredAndConfirmed]
 
-    def get_permissions(self):
-        if self.action == 'partial_update':
-            self.permission_classes = [IsSuperuser]
+    action_permissions = {
+        'partial_update': [IsSuperuser],
+        'add_production_location': [IsSuperuser],
+        'update_production_location': [IsSuperuser],
+    }
 
-        return super().get_permissions()
+    def get_permissions(self):
+        permission_classes = self.action_permissions.get(
+            self.action,
+            self.permission_classes
+        )
+        return [permission() for permission in permission_classes]
 
     @staticmethod
     def __init_opensearch() -> Tuple[OpenSearchService,
@@ -129,7 +136,6 @@ class ModerationEvents(ViewSet):
         detail=True,
         methods=['POST'],
         url_path='production-locations',
-        permission_classes=[IsSuperuser],
     )
     def add_production_location(self, _, pk=None):
         ModerationEventsService.validate_uuid(pk)
@@ -153,7 +159,6 @@ class ModerationEvents(ViewSet):
         detail=True,
         methods=['PATCH'],
         url_path='production-locations/(?P<os_id>[^/.]+)',
-        permission_classes=[IsSuperuser],
     )
     def update_production_location(self, _, pk=None, os_id=None):
         ModerationEventsService.validate_uuid(pk)
