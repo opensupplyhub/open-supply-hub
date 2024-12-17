@@ -52,7 +52,7 @@ class ModerationEventsAddProductionLocationTest(
 
         self.assert_invalid_uuid_error(response)
 
-    def test_EVENT_NOT_FOUND(self):
+    def test_moderation_event_not_found(self):
         self.login_as_superuser()
         response = self.client.post(
             self.get_url().replace(
@@ -63,7 +63,7 @@ class ModerationEventsAddProductionLocationTest(
             content_type="application/json",
         )
 
-        self.assert_EVENT_NOT_FOUND(response)
+        self.assert_moderation_event_not_found(response)
 
     def test_moderation_event_not_pending(self):
         self.moderation_event.status = 'RESOLVED'

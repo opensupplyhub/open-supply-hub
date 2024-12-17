@@ -127,7 +127,7 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
             response.data["errors"][0]["detail"]
         )
 
-    def assert_EVENT_NOT_FOUND(self, response):
+    def assert_moderation_event_not_found(self, response):
         self.assertEqual(404, response.status_code)
         self.assertEqual(
             "The request path parameter is invalid.", response.data["detail"]
