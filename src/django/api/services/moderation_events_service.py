@@ -24,7 +24,9 @@ class ModerationEventsService:
             raise ParseError(
                 create_error_detail(
                     field="moderation_id",
-                    detail="Invalid UUID format."
+                    detail=(
+                        APIV1ModerationEventErrorMessages.INVALID_UUID_FORMAT
+                    ),
                 )
             )
 
@@ -44,7 +46,7 @@ class ModerationEventsService:
     def validate_moderation_status(status):
         if status != ModerationEvent.Status.PENDING:
             raise GoneException(
-                detail="The moderation event should be in PENDING status."
+                detail=APIV1ModerationEventErrorMessages.EVENT_NOT_PENDING
             )
 
     @staticmethod

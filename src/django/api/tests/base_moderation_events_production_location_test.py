@@ -3,7 +3,7 @@ from django.utils.timezone import now
 
 from rest_framework.test import APITestCase
 
-from api.constants import APIV1CommonErrorMessages
+from api.constants import APIV1ModerationEventErrorMessages
 from api.models import Contributor, ModerationEvent, User
 from api.models.extended_field import ExtendedField
 from api.models.facility.facility_list_item import FacilityListItem
@@ -112,7 +112,7 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
     def assert_permission_denied(self, response):
         self.assertEqual(403, response.status_code)
         self.assertEqual(
-            "Only the Moderator can perform this action.",
+            "Only the moderator can perform this action.",
             response.data["detail"],
         )
 
@@ -123,7 +123,8 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
         )
         self.assertEqual("moderation_id", response.data["errors"][0]["field"])
         self.assertEqual(
-            "Invalid UUID format.", response.data["errors"][0]["detail"]
+            APIV1ModerationEventErrorMessages.INVALID_UUID_FORMAT,
+            response.data["errors"][0]["detail"]
         )
 
     def assert_EVENT_NOT_FOUND(self, response):
@@ -140,7 +141,7 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
     def assert_moderation_event_not_pending(self, response):
         self.assertEqual(410, response.status_code)
         self.assertEqual(
-            "The moderation event should be in PENDING status.",
+            APIV1ModerationEventErrorMessages.EVENT_NOT_PENDING,
             response.data["detail"],
         )
 

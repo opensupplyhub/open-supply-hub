@@ -4,7 +4,7 @@ from unittest.mock import patch
 from django.contrib.gis.geos import Point
 from django.test import override_settings
 
-from api.constants import APIV1MatchTypes
+from api.constants import APIV1CommonErrorMessages, APIV1MatchTypes
 from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_match import FacilityMatch
@@ -124,7 +124,7 @@ class ModerationEventsUpdateProductionLocationTest(
         )
         self.assertEqual("os_id", response.data["errors"][0]["field"])
         self.assertEqual(
-            "The value must be a valid id.",
+            APIV1CommonErrorMessages.LOCATION_ID_NOT_VALID,
             response.data["errors"][0]["detail"],
         )
 
@@ -142,7 +142,7 @@ class ModerationEventsUpdateProductionLocationTest(
         )
         self.assertEqual("os_id", response.data["errors"][0]["field"])
         self.assertEqual(
-            "The location with the given id was not found.",
+            APIV1CommonErrorMessages.LOCATION_NOT_FOUND,
             response.data["errors"][0]["detail"],
         )
 
