@@ -125,9 +125,8 @@ class Certifications:
     GREEN_SCREEN = 'Green Screen for Safer Chemicals'
     HIGG_INDEX = 'Higg Index'
     IMO_CONTROL = 'IMO Control'
-    INTERNATIONAL_WOOL_TEXTILE = (
-        'International Wool Textile Organisation' ' (IWTO)'
-    )
+    INTERNATIONAL_WOOL_TEXTILE = ('International Wool Textile Organisation'
+                                  ' (IWTO)')
     ISO_9000 = 'ISO 9000'
     IVN_LEATHER = 'IVN leather'
     LEATHER_WORKING_GROUP = 'Leather Working Group'
@@ -175,21 +174,29 @@ class MatchResponsibility:
 
 
 class NumberOfWorkersRanges:
-    STANDARD_RANGES = [
-        {'min': 0, 'max': 1000, 'label': 'Less than 1000'},
-        {'min': 1001, 'max': 5000, 'label': '1001-5000'},
-        {'min': 5001, 'max': 10000, 'label': '5001-10000'},
-        {'min': 10001, 'label': 'More than 10000'},
-    ]
+    STANDARD_RANGES = [{
+        'min': 0,
+        'max': 1000,
+        'label': 'Less than 1000'
+    }, {
+        'min': 1001,
+        'max': 5000,
+        'label': '1001-5000'
+    }, {
+        'min': 5001,
+        'max': 10000,
+        'label': '5001-10000'
+    }, {
+        'min': 10001,
+        'label': 'More than 10000'
+    }]
 
 
 class APIErrorMessages:
     GEOCODED_NO_RESULTS = 'The address you submitted can not be geocoded.'
-    MAINTENANCE_MODE = (
-        'Open Supply Hub is undergoing maintenance and '
-        'not accepting new data at the moment. Please '
-        'try again in a few minutes.'
-    )
+    MAINTENANCE_MODE = ('Open Supply Hub is undergoing maintenance and '
+                        'not accepting new data at the moment. Please '
+                        'try again in a few minutes.')
 
 
 class FacilitiesDownloadSettings:
@@ -224,10 +231,8 @@ class APIV1LocationContributionErrorMessages:
 
     @staticmethod
     def invalid_data_type_error(data_type: str) -> str:
-        return (
-            'Invalid data. Expected a dictionary (object), '
-            f'but got {data_type}.'
-        )
+        return ('Invalid data. Expected a dictionary (object), '
+                f'but got {data_type}.')
 
 
 class APIV1ModerationEventErrorMessages:
@@ -245,8 +250,3 @@ NON_FIELD_ERRORS_KEY = 'non_field_errors'
 class APIV1LocationContributionKeys:
     LNG = 'lng'
     LAT = 'lat'
-
-
-class APIV1MatchTypes:
-    NEW_PRODUCTION_LOCATION = 'moderation_event_new_production_location'
-    CONFIRMED_MATCH = 'moderation_event_confirmed_match'
