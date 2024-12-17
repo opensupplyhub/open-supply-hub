@@ -1,5 +1,5 @@
 /* eslint no-unused-vars: 0 */
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 import { string, func, bool, object } from 'prop-types';
@@ -47,6 +47,7 @@ const claimButtonDisabled = classes => (
     </span>
 );
 
+let hasPrefetchedData = false;
 const DashboardContributionRecord = ({
     push,
     singleModerationEventItem,
@@ -86,23 +87,48 @@ const DashboardContributionRecord = ({
     }, [singleModerationEventItem]);
 
     useEffect(() => {
-        if (!singleModerationEventItem || isEmpty(singleModerationEventItem)) {
-            fetchModerationEvent();
-        }
-    }, [fetchModerationEvent]);
-
-    useEffect(() => {
         const prevSingleModerationEventItem =
             prevSingleModerationEventItemRef.current;
+        // TODO: refactor if necessary, apply overflow that will disable output and disable buttons while applying changes
+        async function preFetch() {
+            try {
+                if (
+                    !isEqual(
+                        prevSingleModerationEventItem,
+                        singleModerationEventItem,
+                    )
+                ) {
+                    console.log(
+                        'Init moderation event fetch, and item is ',
+                        singleModerationEventItem,
+                    );
+                    await fetchModerationEvent();
+                    hasPrefetchedData = true;
+                }
+
+                prevSingleModerationEventItemRef.current = singleModerationEventItem;
+            } catch (error) {
+                console.log('error: ', error);
+            }
+        }
 
         if (
             !isEqual(prevSingleModerationEventItem, singleModerationEventItem)
         ) {
-            fetchModerationEvent();
+            preFetch();
         }
+    }, []);
 
-        prevSingleModerationEventItemRef.current = singleModerationEventItem;
-    }, [singleModerationEventItem, fetchModerationEvent]);
+    useEffect(() => {
+        if (!isEmpty(singleModerationEventItem) && hasPrefetchedData) {
+            if (moderationEventFetching) {
+                toast('Updating moderation event...');
+            }
+            if (fetchModerationEventError) {
+                toast('Error while updating moderation event...');
+            }
+        }
+    }, [moderationEventFetching, fetchModerationEventError]);
 
     useEffect(() => {
         if (
