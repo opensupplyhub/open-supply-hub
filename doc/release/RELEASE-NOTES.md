@@ -15,7 +15,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Scheme changes
 
 ### Code/API changes
-* [OSDEV-1409](https://opensupplyhub.atlassian.net/browse/OSDEV-1409) - Introduced a new PATCH `/api/v1/moderation-events/{moderation_id}/production-locations/` endpoint.
+* [OSDEV-1409](https://opensupplyhub.atlassian.net/browse/OSDEV-1409) - Introduced a new PATCH `/api/v1/moderation-events/{moderation_id}/production-locations/{os_id}/` endpoint. This endpoint allows the creation of a new contribution for an existing production location based on the provided moderation event.
 
 ### Architecture/Environment changes
 
