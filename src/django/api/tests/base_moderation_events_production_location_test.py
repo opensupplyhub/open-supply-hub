@@ -126,14 +126,14 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
             "Invalid UUID format.", response.data["errors"][0]["detail"]
         )
 
-    def assert_moderation_event_not_found(self, response):
+    def assert_EVENT_NOT_FOUND(self, response):
         self.assertEqual(404, response.status_code)
         self.assertEqual(
             "The request path parameter is invalid.", response.data["detail"]
         )
         self.assertEqual("moderation_id", response.data["errors"][0]["field"])
         self.assertEqual(
-            APIV1CommonErrorMessages.MODERATION_EVENT_NOT_FOUND,
+            APIV1ModerationEventErrorMessages.EVENT_NOT_FOUND,
             response.data["errors"][0]["detail"],
         )
 

@@ -2,7 +2,10 @@ import logging
 
 from rest_framework.exceptions import NotFound, ParseError
 
-from api.constants import APIV1CommonErrorMessages
+from api.constants import (
+    APIV1CommonErrorMessages,
+    APIV1ModerationEventErrorMessages,
+)
 from api.exceptions import GoneException, InternalServerErrorException
 from api.models.facility.facility import Facility
 from api.models.moderation_event import ModerationEvent
@@ -33,7 +36,7 @@ class ModerationEventsService:
             raise NotFound(
                 create_error_detail(
                     field="moderation_id",
-                    detail=APIV1CommonErrorMessages.MODERATION_EVENT_NOT_FOUND
+                    detail=APIV1ModerationEventErrorMessages.EVENT_NOT_FOUND,
                 )
             )
 
@@ -50,7 +53,7 @@ class ModerationEventsService:
             raise ParseError(
                 create_error_detail(
                     field="os_id",
-                    detail=APIV1CommonErrorMessages.LOCATION_ID_NOT_VALID
+                    detail=APIV1CommonErrorMessages.LOCATION_ID_NOT_VALID,
                 )
             )
 
@@ -58,7 +61,7 @@ class ModerationEventsService:
             raise NotFound(
                 create_error_detail(
                     field="os_id",
-                    detail=APIV1CommonErrorMessages.LOCATION_NOT_FOUND
+                    detail=APIV1CommonErrorMessages.LOCATION_NOT_FOUND,
                 )
             )
 

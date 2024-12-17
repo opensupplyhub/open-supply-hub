@@ -1,10 +1,6 @@
 import json
 from django.test import override_settings
-from api.models import (
-    ModerationEvent,
-    User,
-    Contributor
-)
+from api.models import ModerationEvent, User, Contributor
 from django.utils.timezone import now
 from rest_framework.test import APITestCase
 
@@ -29,8 +25,7 @@ class ModerationEventsUpdateTest(APITestCase):
         self.superemail = "admin@example.com"
         self.superpassword = "example123"
         self.superuser = User.objects.create_superuser(
-            email=self.superemail,
-            password=self.superpassword
+            email=self.superemail, password=self.superpassword
         )
 
         self.moderation_event = ModerationEvent.objects.create(
@@ -43,73 +38,63 @@ class ModerationEventsUpdateTest(APITestCase):
             geocode_result={"latitude": -53, "longitude": 142},
             status='PENDING',
             source='API',
-            contributor=self.contributor
+            contributor=self.contributor,
         )
 
     def test_moderation_event_permission(self):
-        self.client.login(
-            email=self.email,
-            password=self.password
-        )
+        self.client.login(email=self.email, password=self.password)
         response = self.client.patch(
-            "/api/v1/moderation-events/{}/"
-            .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
+            "/api/v1/moderation-events/{}/".format(
+                "f65ec710-f7b9-4f50-b960-135a7ab24ee6"
+            ),
             data=json.dumps({"status": "APPROVED"}),
-            content_type="application/json"
+            content_type="application/json",
         )
         self.assertEqual(403, response.status_code)
 
-        self.client.login(
-            email=self.superemail,
-            password=self.superpassword
-        )
+        self.client.login(email=self.superemail, password=self.superpassword)
         response = self.client.patch(
-            "/api/v1/moderation-events/{}/"
-            .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
+            "/api/v1/moderation-events/{}/".format(
+                "f65ec710-f7b9-4f50-b960-135a7ab24ee6"
+            ),
             data=json.dumps({"status": "APPROVED"}),
-            content_type="application/json"
+            content_type="application/json",
         )
         print(response.json())
         self.assertEqual(200, response.status_code)
 
-    def test_moderation_event_not_found(self):
-        self.client.login(
-            email=self.superemail,
-            password=self.superpassword
-        )
+    def test_EVENT_NOT_FOUND(self):
+        self.client.login(email=self.superemail, password=self.superpassword)
         response = self.client.patch(
-            "/api/v1/moderation-events/{}/"
-            .format("f65ec710-f7b9-4f50-b960-135a7ab24ee1"),
+            "/api/v1/moderation-events/{}/".format(
+                "f65ec710-f7b9-4f50-b960-135a7ab24ee1"
+            ),
             data=json.dumps({"status": "APPROVED"}),
-            content_type="application/json"
+            content_type="application/json",
         )
 
         self.assertEqual(404, response.status_code)
 
     def test_moderation_event_invalid_status(self):
-        self.client.login(
-            email=self.superemail,
-            password=self.superpassword
-        )
+        self.client.login(email=self.superemail, password=self.superpassword)
         response = self.client.patch(
-            "/api/v1/moderation-events/{}/"
-            .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
+            "/api/v1/moderation-events/{}/".format(
+                "f65ec710-f7b9-4f50-b960-135a7ab24ee6"
+            ),
             data=json.dumps({"status": "NEW"}),
-            content_type="application/json"
+            content_type="application/json",
         )
 
         self.assertEqual(400, response.status_code)
 
     def test_moderation_event_status_changed(self):
-        self.client.login(
-            email=self.superemail,
-            password=self.superpassword
-        )
+        self.client.login(email=self.superemail, password=self.superpassword)
         response = self.client.patch(
-            "/api/v1/moderation-events/{}/"
-            .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
+            "/api/v1/moderation-events/{}/".format(
+                "f65ec710-f7b9-4f50-b960-135a7ab24ee6"
+            ),
             data=json.dumps({"status": "APPROVED"}),
-            content_type="application/json"
+            content_type="application/json",
         )
 
         self.assertEqual(200, response.status_code)

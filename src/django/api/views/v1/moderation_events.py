@@ -8,22 +8,28 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.decorators import action
 
 from api.constants import APIV1CommonErrorMessages
-from api.moderation_event_actions.approval.add_production_location \
-    import AddProductionLocation
-from api.moderation_event_actions.approval.update_production_location \
-    import UpdateProductionLocation
+from api.moderation_event_actions.approval.add_production_location import (
+    AddProductionLocation,
+)
+from api.moderation_event_actions.approval.update_production_location import (
+    UpdateProductionLocation,
+)
 from api.permissions import IsRegisteredAndConfirmed, IsSuperuser
-from api.serializers.v1.moderation_event_update_serializer \
-    import ModerationEventUpdateSerializer
-from api.serializers.v1.moderation_events_serializer \
-    import ModerationEventsSerializer
+from api.serializers.v1.moderation_event_update_serializer import (
+    ModerationEventUpdateSerializer,
+)
+from api.serializers.v1.moderation_events_serializer import (
+    ModerationEventsSerializer,
+)
 from api.services.moderation_events_service import ModerationEventsService
 from api.services.opensearch.search import OpenSearchService
 from api.views.v1.index_names import OpenSearchIndexNames
-from api.views.v1.opensearch_query_builder.moderation_events_query_builder \
-    import ModerationEventsQueryBuilder
-from api.views.v1.opensearch_query_builder.opensearch_query_director import \
-    OpenSearchQueryDirector
+from api.views.v1.opensearch_query_builder.moderation_events_query_builder import (
+    ModerationEventsQueryBuilder,
+)
+from api.views.v1.opensearch_query_builder.opensearch_query_director import (
+    OpenSearchQueryDirector,
+)
 
 from api.views.v1.utils import (
     handle_errors_decorator,
@@ -44,14 +50,14 @@ class ModerationEvents(ViewSet):
 
     def get_permissions(self):
         permission_classes = self.action_permissions.get(
-            self.action,
-            self.permission_classes
+            self.action, self.permission_classes
         )
         return [permission() for permission in permission_classes]
 
     @staticmethod
-    def __init_opensearch() -> Tuple[OpenSearchService,
-                                     OpenSearchQueryDirector]:
+    def __init_opensearch() -> (
+        Tuple[OpenSearchService, OpenSearchQueryDirector]
+    ):
         opensearch_service = OpenSearchService()
         moderation_events_query_builder = ModerationEventsQueryBuilder()
         opensearch_query_director = OpenSearchQueryDirector(
@@ -63,48 +69,40 @@ class ModerationEvents(ViewSet):
     @handle_errors_decorator
     def list(self, request):
         _, error_response = serialize_params(
-            ModerationEventsSerializer,
-            request.GET
+            ModerationEventsSerializer, request.GET
         )
         if error_response:
-            return Response(
-                error_response,
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response(error_response, status=status.HTTP_400_BAD_REQUEST)
 
-        opensearch_service, opensearch_query_director = \
+        opensearch_service, opensearch_query_director = (
             self.__init_opensearch()
-        query_body = opensearch_query_director.build_query(
-            request.GET
         )
+        query_body = opensearch_query_director.build_query(request.GET)
 
         response = opensearch_service.search_index(
-            OpenSearchIndexNames.MODERATION_EVENTS_INDEX,
-            query_body
+            OpenSearchIndexNames.MODERATION_EVENTS_INDEX, query_body
         )
         return Response(response)
 
     @handle_errors_decorator
-    def retrieve(self, _,  pk=None):
+    def retrieve(self, _, pk=None):
         ModerationEventsService.validate_uuid(pk)
 
-        opensearch_service, opensearch_query_director = \
+        opensearch_service, opensearch_query_director = (
             self.__init_opensearch()
+        )
         query_params = QueryDict('', mutable=True)
         query_params.update({'moderation_id': pk})
-        query_body = opensearch_query_director.build_query(
-            query_params
-        )
+        query_body = opensearch_query_director.build_query(query_params)
         response = opensearch_service.search_index(
-            OpenSearchIndexNames.MODERATION_EVENTS_INDEX,
-            query_body
+            OpenSearchIndexNames.MODERATION_EVENTS_INDEX, query_body
         )
 
         events = response.get("data", [])
 
         if len(events) == 0:
             raise NotFound(
-                detail=APIV1CommonErrorMessages.MODERATION_EVENT_NOT_FOUND
+                detail=APIV1ModerationEventErrorMessages.EVENT_NOT_FOUND
             )
 
         return Response(events[0])
