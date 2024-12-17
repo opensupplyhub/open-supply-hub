@@ -50,7 +50,7 @@ class ModerationEventsService:
             raise ParseError(
                 create_error_detail(
                     field="os_id",
-                    detail="The format of the os_id is invalid."
+                    detail=APIV1CommonErrorMessages.LOCATION_ID_NOT_VALID
                 )
             )
 
@@ -58,9 +58,7 @@ class ModerationEventsService:
             raise NotFound(
                 create_error_detail(
                     field="os_id",
-                    detail=(
-                        "No production location found with the provided os_id."
-                    )
+                    detail=APIV1CommonErrorMessages.LOCATION_NOT_FOUND
                 )
             )
 

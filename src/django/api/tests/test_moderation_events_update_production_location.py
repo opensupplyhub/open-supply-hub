@@ -124,7 +124,7 @@ class ModerationEventsUpdateProductionLocationTest(
         )
         self.assertEqual("os_id", response.data["errors"][0]["field"])
         self.assertEqual(
-            "The format of the os_id is invalid.",
+            "The value must be a valid id.",
             response.data["errors"][0]["detail"],
         )
 
@@ -142,7 +142,7 @@ class ModerationEventsUpdateProductionLocationTest(
         )
         self.assertEqual("os_id", response.data["errors"][0]["field"])
         self.assertEqual(
-            "No production location found with the provided os_id.",
+            "The location with the given id was not found.",
             response.data["errors"][0]["detail"],
         )
 

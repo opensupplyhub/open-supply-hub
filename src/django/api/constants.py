@@ -219,6 +219,8 @@ class APIV1CommonErrorMessages:
         'at the moment. Please try again in a few minutes.'
     )
     MODERATION_EVENT_NOT_FOUND = 'Moderation event not found.'
+    LOCATION_NOT_FOUND = 'The location with the given id was not found.'
+    LOCATION_ID_NOT_VALID = 'The value must be a valid id.'
 
 
 class APIV1LocationContributionErrorMessages:
