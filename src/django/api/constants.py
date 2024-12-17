@@ -250,3 +250,8 @@ NON_FIELD_ERRORS_KEY = 'non_field_errors'
 class APIV1LocationContributionKeys:
     LNG = 'lng'
     LAT = 'lat'
+
+
+class APIV1MatchTypes:
+    NEW_PRODUCTION_LOCATION = 'moderation_event_new_production_location'
+    CONFIRMED_MATCH = 'moderation_event_confirmed_match'
