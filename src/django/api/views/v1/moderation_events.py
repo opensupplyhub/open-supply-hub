@@ -39,14 +39,14 @@ class ModerationEvents(ViewSet):
 
     permission_classes = [IsRegisteredAndConfirmed]
 
-    action_permissions = {
-        'partial_update': [IsSuperuser],
-        'add_production_location': [IsSuperuser],
-        'update_production_location': [IsSuperuser],
-    }
-
     def get_permissions(self):
-        permission_classes = self.action_permissions.get(
+        action_permissions = {
+            'partial_update': [IsSuperuser],
+            'add_production_location': [IsSuperuser],
+            'update_production_location': [IsSuperuser],
+        }
+
+        permission_classes = action_permissions.get(
             self.action, self.permission_classes
         )
         return [permission() for permission in permission_classes]
