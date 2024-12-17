@@ -125,8 +125,9 @@ class Certifications:
     GREEN_SCREEN = 'Green Screen for Safer Chemicals'
     HIGG_INDEX = 'Higg Index'
     IMO_CONTROL = 'IMO Control'
-    INTERNATIONAL_WOOL_TEXTILE = ('International Wool Textile Organisation'
-                                  ' (IWTO)')
+    INTERNATIONAL_WOOL_TEXTILE = (
+        'International Wool Textile Organisation' ' (IWTO)'
+    )
     ISO_9000 = 'ISO 9000'
     IVN_LEATHER = 'IVN leather'
     LEATHER_WORKING_GROUP = 'Leather Working Group'
@@ -255,3 +256,8 @@ class APIV1LocationContributionKeys:
 class APIV1MatchTypes:
     NEW_PRODUCTION_LOCATION = 'moderation_event_new_production_location'
     CONFIRMED_MATCH = 'moderation_event_confirmed_match'
+
+
+LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX = (
+    '[API V1 Location Contribution Approval]'
+)

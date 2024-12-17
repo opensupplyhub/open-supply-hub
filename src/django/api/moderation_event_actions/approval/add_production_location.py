@@ -2,7 +2,10 @@ import logging
 
 from django.utils import timezone
 
-from api.constants import APIV1MatchTypes
+from api.constants import (
+    LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX,
+    APIV1MatchTypes,
+)
 from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_match import FacilityMatch
@@ -21,7 +24,10 @@ class AddProductionLocation(EventApprovalTemplate):
 
     def _get_os_id(self, country_code: str) -> str:
         os_id = make_os_id(country_code)
-        log.info(f'[Moderation Event] OS ID was generated: {os_id}')
+        log.info(
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} OS ID was '
+            f'generated: {os_id}'
+        )
 
         return os_id
 
@@ -46,4 +52,7 @@ class AddProductionLocation(EventApprovalTemplate):
             created_at=timezone.now(),
             updated_at=timezone.now(),
         )
-        log.info(f'[Moderation Event] Facility created. Id: {facility_id}')
+        log.info(
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Facility created. '
+            'Id: {facility_id}'
+        )

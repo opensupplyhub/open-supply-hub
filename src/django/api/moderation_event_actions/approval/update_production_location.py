@@ -1,6 +1,9 @@
 import logging
 
-from api.constants import APIV1MatchTypes
+from api.constants import (
+    LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX,
+    APIV1MatchTypes,
+)
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_match import FacilityMatch
 from api.models.moderation_event import ModerationEvent
@@ -18,7 +21,8 @@ class UpdateProductionLocation(EventApprovalTemplate):
 
     def _get_os_id(self, _) -> str:
         log.info(
-            f'[Moderation Event] OS ID received from request: {self.__os_id}'
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} OS ID received from '
+            f'request: {self.__os_id}'
         )
         return self.__os_id
 

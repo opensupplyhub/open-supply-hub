@@ -3,6 +3,7 @@ import logging
 from rest_framework.exceptions import NotFound, ParseError
 
 from api.constants import (
+    LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX,
     APIV1CommonErrorMessages,
     APIV1ModerationEventErrorMessages,
 )
@@ -69,5 +70,8 @@ class ModerationEventsService:
 
     @staticmethod
     def handle_processing_error(error_message):
-        log.error(f'[Moderation Event] Error: {str(error_message)}')
+        log.error(
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} '
+            f'Error: {str(error_message)}'
+        )
         raise InternalServerErrorException()

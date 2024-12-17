@@ -6,7 +6,10 @@ from django.contrib.gis.geos import Point
 from django.db import transaction
 from django.utils import timezone
 
-from api.constants import ProcessingAction
+from api.constants import (
+    LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX,
+    ProcessingAction,
+)
 from api.extended_fields import (
     create_extendedfields_for_single_item,
     update_extendedfields_for_list_item,
@@ -41,31 +44,50 @@ class EventApprovalTemplate(ABC):
     @transaction.atomic
     def process_moderation_event(self) -> FacilityListItem:
         data: Dict = self.__event.cleaned_data
-        log.info(f'[Moderation Event] Processing event with data: {data}')
+        log.info(
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Processing event '
+            f'with data: {data}'
+        )
 
         contributor: Contributor = self.__event.contributor
-        log.info(f'[Moderation Event] Contributor: {contributor}')
+        log.info(
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Contributor: '
+            f'{contributor}'
+        )
 
         source: Source = self.__create_source(contributor)
-        log.info(f'[Moderation Event] Source created. Id: {source.id}')
+        log.info(
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Source created. '
+            f'Id: {source.id}'
+        )
 
         header_row_keys: KeysView[str] = data["raw_json"].keys()
         create_nonstandard_fields(header_row_keys, contributor)
-        log.info('[Moderation Event] Nonstandard fields created.')
+        log.info(
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Nonstandard fields '
+            f'created.'
+        )
 
         header_str: str = ','.join(header_row_keys)
         item: FacilityListItem = self.__create_facility_list_item(
             source, data, header_str
         )
         log.info(
-            '[Moderation Event] FacilityListItem created. Id: ' f'{item.id}'
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} FacilityListItem '
+            f'created. Id: {item.id}'
         )
 
         create_extendedfields_for_single_item(item, data["fields"])
-        log.info('[Moderation Event] Extended fields created.')
+        log.info(
+            '{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Extended fields '
+            'created.'
+        )
 
         self.__set_geocoded_location(item, data, self.__event)
-        log.info('[Moderation Event] Geocoded location set.')
+        log.info(
+            '{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Geocoded '
+            'location set.'
+        )
 
         facility_id = self._get_os_id(item.country_code)
 
@@ -75,27 +97,38 @@ class EventApprovalTemplate(ABC):
             item, facility_id
         )
         log.info(
-            '[Moderation Event] FacilityListItem updated with facility ID.'
+            '{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} FacilityListItem '
+            'updated with facility ID.'
         )
 
         self.__create_list_item_temp(item)
-        log.info('[Moderation Event] FacilityListItemTemp created.')
+        log.info(
+            '{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} FacilityListItemTemp '
+            'created.'
+        )
 
         update_extendedfields_for_list_item(item)
         log.info(
-            '[Moderation Event] Extended fields updated with facility ID.'
+            '{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Extended fields '
+            'updated with facility ID.'
         )
 
         self.__create_facility_match_temp(item)
-        log.info('[Moderation Event] FacilityMatchTemp created.')
+        log.info(
+            '{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} FacilityMatchTemp '
+            'created.'
+        )
 
         self.__create_facility_match(item)
-        log.info('[Moderation Event] FacilityMatch created.')
+        log.info(
+            '{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} FacilityMatch '
+            'created.'
+        )
 
         self._update_event(self.__event, item)
         log.info(
-            '[Moderation Event] Status and os_id of Moderation Event '
-            'updated.'
+            '{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Status and os_id of '
+            'Moderation Event updated.'
         )
 
         return item
