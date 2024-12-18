@@ -95,8 +95,9 @@ function AddLocationData({ classes }) {
             maxWidth: '75%',
         },
         secondaryButton: {
-            backgroundColor: '#333',
-            color: '#fff',
+            backgroundColor: COLOURS.WHITE,
+            color: COLOURS.NEAR_BLACK,
+            fontWeight: 'bold',
             border: 'none',
             padding: '0.5rem 1rem',
             cursor: 'pointer',
