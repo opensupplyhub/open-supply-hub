@@ -196,8 +196,7 @@ class ProductionLocations(ViewSet):
                 APIV1CommonErrorMessages.MAINTENANCE_MODE
             )
         if not Facility.objects.filter(id=pk).exists():
-            specific_error = APIV1LocationContributionErrorMessages \
-                .LOCATION_NOT_FOUND
+            specific_error = APIV1CommonErrorMessages.LOCATION_NOT_FOUND
             return Response(
                 {'detail': specific_error},
                 status=status.HTTP_404_NOT_FOUND
