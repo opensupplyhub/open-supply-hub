@@ -1,9 +1,10 @@
 import json
 from unittest.mock import patch
 
+from django.contrib.gis.geos import Point
 from django.test import override_settings
 
-from api.constants import APIV1MatchTypes
+from api.constants import APIV1CommonErrorMessages, APIV1MatchTypes
 from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_match import FacilityMatch
@@ -15,12 +16,43 @@ from api.tests.base_moderation_events_production_location_test import (
 
 
 @override_settings(DEBUG=True)
-class ModerationEventsAddProductionLocationTest(
+class ModerationEventsUpdateProductionLocationTest(
     BaseModerationEventsProductionLocationTest
 ):
+    def setUp(self):
+        super().setUp()
+
+        self.source = Source.objects.create(
+            source_type=Source.SINGLE,
+            is_active=True,
+            is_public=True,
+            contributor=self.contributor,
+        )
+
+        self.list_item = FacilityListItem.objects.create(
+            name="Item",
+            address="Address",
+            country_code="GB",
+            sector=["Apparel"],
+            row_index=1,
+            geocoded_point=Point(0, 0),
+            status=FacilityListItem.MATCHED,
+            source=self.source,
+        )
+
+        self.os_id = "GB2024338H7FA8R"
+        self.facility_one = Facility.objects.create(
+            id=self.os_id,
+            name="Name",
+            address="Address",
+            country_code="GB",
+            location=Point(0, 0),
+            created_from=self.list_item,
+        )
+
     def get_url(self):
-        return "/api/v1/moderation-events/{}/production-locations/".format(
-            self.moderation_event_id
+        return "/api/v1/moderation-events/{}/production-locations/{}/".format(
+            self.moderation_event_id, self.os_id
         )
 
     def test_not_authenticated(self):
@@ -33,8 +65,8 @@ class ModerationEventsAddProductionLocationTest(
         self.assert_not_authenticated(response)
 
     def test_permission_denied(self):
-        self.login_as_regular_user()
-        response = self.client.post(
+        self.client.login(email=self.email, password=self.password)
+        response = self.client.patch(
             self.get_url(),
             data=json.dumps({}),
             content_type="application/json",
@@ -44,7 +76,7 @@ class ModerationEventsAddProductionLocationTest(
 
     def test_invalid_uuid_format(self):
         self.login_as_superuser()
-        response = self.client.post(
+        response = self.client.patch(
             self.get_url().replace(self.moderation_event_id, "invalid_uuid"),
             data=json.dumps({}),
             content_type="application/json",
@@ -54,7 +86,7 @@ class ModerationEventsAddProductionLocationTest(
 
     def test_moderation_event_not_found(self):
         self.login_as_superuser()
-        response = self.client.post(
+        response = self.client.patch(
             self.get_url().replace(
                 self.moderation_event_id,
                 "f65ec710-f7b9-4f50-b960-135a7ab24ee7",
@@ -70,7 +102,7 @@ class ModerationEventsAddProductionLocationTest(
         self.moderation_event.save()
 
         self.login_as_superuser()
-        response = self.client.post(
+        response = self.client.patch(
             self.get_url(),
             data=json.dumps({}),
             content_type="application/json",
@@ -78,15 +110,51 @@ class ModerationEventsAddProductionLocationTest(
 
         self.assert_moderation_event_not_pending(response)
 
-    def test_successful_add_production_location(self):
+    def test_invalid_os_id_format(self):
         self.login_as_superuser()
-        response = self.client.post(
-            self.get_url(),
+        response = self.client.patch(
+            self.get_url().replace(self.os_id, "invalid_os_id"),
             data=json.dumps({}),
             content_type="application/json",
         )
 
-        self.assert_success_response(response, 201)
+        self.assertEqual(400, response.status_code)
+        self.assertEqual(
+            "The request path parameter is invalid.", response.data["detail"]
+        )
+        self.assertEqual("os_id", response.data["errors"][0]["field"])
+        self.assertEqual(
+            APIV1CommonErrorMessages.LOCATION_ID_NOT_VALID,
+            response.data["errors"][0]["detail"],
+        )
+
+    def test_no_production_location_found_with_os_id(self):
+        self.login_as_superuser()
+        response = self.client.patch(
+            self.get_url().replace(self.os_id, "UA2024341550R5D"),
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(404, response.status_code)
+        self.assertEqual(
+            "The request path parameter is invalid.", response.data["detail"]
+        )
+        self.assertEqual("os_id", response.data["errors"][0]["field"])
+        self.assertEqual(
+            APIV1CommonErrorMessages.LOCATION_NOT_FOUND,
+            response.data["errors"][0]["detail"],
+        )
+
+    def test_successful_update_production_location(self):
+        self.login_as_superuser()
+        response = self.client.patch(
+            self.get_url(),
+            data=json.dumps({"os_id": self.os_id}),
+            content_type="application/json",
+        )
+
+        self.assert_success_response(response, 200)
 
     def test_successful_add_production_location_without_geocode_result(self):
         self.moderation_event.cleaned_data["fields"]["lat"] = self.latitude
@@ -96,26 +164,31 @@ class ModerationEventsAddProductionLocationTest(
         self.moderation_event.save()
 
         self.login_as_superuser()
-        response = self.client.post(
+        response = self.client.patch(
             self.get_url(),
-            data=json.dumps({}),
+            data=json.dumps({"os_id": self.os_id}),
             content_type="application/json",
         )
 
         self.assert_successful_add_production_location_without_geocode_result(
-            response, 201
+            response, 200
         )
 
     def test_creation_of_source(self):
         self.login_as_superuser()
-        response = self.client.post(
+        response = self.client.patch(
             self.get_url(),
-            data=json.dumps({}),
+            data=json.dumps({"os_id": self.os_id}),
             content_type="application/json",
         )
-        self.assertEqual(201, response.status_code)
+        self.assertEqual(200, response.status_code)
 
-        source = Source.objects.get(contributor=self.contributor)
+        sources = Source.objects.filter(contributor=self.contributor).order_by(
+            "-created_at"
+        )
+        self.assertEqual(sources.count(), 2)
+
+        source = sources.first()
 
         self.assert_source_creation(source)
 
@@ -124,48 +197,24 @@ class ModerationEventsAddProductionLocationTest(
         self.moderation_event.save()
 
         self.login_as_superuser()
-        response = self.client.post(
+        response = self.client.patch(
             self.get_url(),
-            data=json.dumps({}),
+            data=json.dumps({"os_id": self.os_id}),
             content_type="application/json",
         )
 
-        self.assert_creation_of_nonstandard_fields(response, 201)
+        self.assert_creation_of_nonstandard_fields(response, 200)
 
     def test_creation_of_facilitylistitem(self):
         self.login_as_superuser()
-        response = self.client.post(
+        response = self.client.patch(
             self.get_url(),
-            data=json.dumps({}),
+            data=json.dumps({"os_id": self.os_id}),
             content_type="application/json",
         )
 
         self.assert_facilitylistitem_creation(
-            response, 201, FacilityListItem.MATCHED
-        )
-
-    def test_creation_of_facility(self):
-        self.login_as_superuser()
-        response = self.client.post(
-            self.get_url(),
-            data=json.dumps({}),
-            content_type="application/json",
-        )
-
-        self.assertEqual(201, response.status_code)
-
-        facility = Facility.objects.get(id=response.data["os_id"])
-
-        self.assertIsNotNone(facility)
-        self.assertEqual(
-            facility.name, self.moderation_event.cleaned_data["name"]
-        )
-        self.assertEqual(
-            facility.address, self.moderation_event.cleaned_data["address"]
-        )
-        self.assertEqual(
-            facility.country_code,
-            self.moderation_event.cleaned_data["country_code"],
+            response, 200, FacilityListItem.CONFIRMED_MATCH
         )
 
     def test_creation_of_extended_fields(self):
@@ -173,49 +222,48 @@ class ModerationEventsAddProductionLocationTest(
         self.moderation_event.save()
 
         self.login_as_superuser()
-        response = self.client.post(
+        response = self.client.patch(
             self.get_url(),
-            data=json.dumps({}),
+            data=json.dumps({"os_id": self.os_id}),
             content_type="application/json",
         )
 
-        self.assert_extended_fields_creation(response, 201)
+        self.assert_extended_fields_creation(response, 200)
 
     def test_creation_of_facilitymatch(self):
         self.login_as_superuser()
-        response = self.client.post(
+        response = self.client.patch(
             self.get_url(),
-            data=json.dumps({}),
+            data=json.dumps({"os_id": self.os_id}),
             content_type="application/json",
         )
 
         self.assert_facilitymatch_creation(
             response,
-            201,
-            APIV1MatchTypes.NEW_PRODUCTION_LOCATION,
-            FacilityMatch.AUTOMATIC,
+            200,
+            APIV1MatchTypes.CONFIRMED_MATCH,
+            FacilityMatch.CONFIRMED,
             FacilityMatch,
         )
 
     def test_creation_of_facilitymatchtemp(self):
         self.login_as_superuser()
-        response = self.client.post(
+        response = self.client.patch(
             self.get_url(),
-            data=json.dumps({}),
+            data=json.dumps({"os_id": self.os_id}),
             content_type="application/json",
         )
-
         self.assert_facilitymatch_creation(
             response,
-            201,
-            APIV1MatchTypes.NEW_PRODUCTION_LOCATION,
-            FacilityMatch.AUTOMATIC,
+            200,
+            APIV1MatchTypes.CONFIRMED_MATCH,
+            FacilityMatch.CONFIRMED,
             FacilityMatchTemp,
         )
 
     @patch(
         'api.moderation_event_actions.approval.'
-        'add_production_location.AddProductionLocation.'
+        'update_production_location.UpdateProductionLocation.'
         'process_moderation_event'
     )
     def test_error_handling_during_processing(
@@ -226,9 +274,10 @@ class ModerationEventsAddProductionLocationTest(
         )
 
         self.login_as_superuser()
-        response = self.client.post(
+
+        response = self.client.patch(
             self.get_url(),
-            data=json.dumps({}),
+            data=json.dumps({"os_id": self.os_id}),
             content_type="application/json",
         )
 
