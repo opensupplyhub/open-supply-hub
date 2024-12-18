@@ -280,6 +280,11 @@ export const makeModerationEventRecordURL = moderationID =>
 export const makeProductionLocationFromModerationEventURL = moderationID =>
     `/api/v1/moderation-events/${moderationID}/production-locations/`;
 
+// TODO: For confirm button from moderation event record
+// PATCH /v1/moderation-events/{moderation_id}/production-locations/{os_id}
+// {os_id} to be implemented https://github.com/opensupplyhub/open-supply-hub/pull/438
+// Shall the status of moderation event be APPROVED after this change?
+
 export const makeGetModerationEventsWithQueryString = (
     qs,
     page,

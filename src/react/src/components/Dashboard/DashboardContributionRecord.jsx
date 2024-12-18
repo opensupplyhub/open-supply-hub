@@ -6,6 +6,7 @@ import { string, func, bool, object } from 'prop-types';
 import { withStyles, withTheme } from '@material-ui/core/styles';
 import isEmpty from 'lodash/isEmpty';
 import isEqual from 'lodash/isEqual';
+import Backdrop from '@material-ui/core/Backdrop';
 import Grid from '@material-ui/core/Grid';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
@@ -62,6 +63,10 @@ const DashboardContributionRecord = ({
     fetchPotentialMatchError,
 }) => {
     const prevSingleModerationEventItemRef = useRef();
+    const [
+        shouldDisabledWhileRequest,
+        setShouldDisabledWhileRequest,
+    ] = useState(false);
     const {
         productionLocationName,
         countryCode,
@@ -89,42 +94,24 @@ const DashboardContributionRecord = ({
     useEffect(() => {
         const prevSingleModerationEventItem =
             prevSingleModerationEventItemRef.current;
-        // TODO: refactor if necessary, apply overflow that will disable output and disable buttons while applying changes
-        async function preFetch() {
-            try {
-                if (
-                    !isEqual(
-                        prevSingleModerationEventItem,
-                        singleModerationEventItem,
-                    )
-                ) {
-                    console.log(
-                        'Init moderation event fetch, and item is ',
-                        singleModerationEventItem,
-                    );
-                    await fetchModerationEvent();
-                    hasPrefetchedData = true;
-                }
-
-                prevSingleModerationEventItemRef.current = singleModerationEventItem;
-            } catch (error) {
-                console.log('error: ', error);
-            }
-        }
-
         if (
             !isEqual(prevSingleModerationEventItem, singleModerationEventItem)
         ) {
-            preFetch();
+            fetchModerationEvent();
+            hasPrefetchedData = true;
         }
+
+        prevSingleModerationEventItemRef.current = singleModerationEventItem;
     }, []);
 
     useEffect(() => {
         if (!isEmpty(singleModerationEventItem) && hasPrefetchedData) {
             if (moderationEventFetching) {
+                setShouldDisabledWhileRequest(true);
                 toast('Updating moderation event...');
             }
             if (fetchModerationEventError) {
+                setShouldDisabledWhileRequest(true);
                 toast('Error while updating moderation event...');
             }
         }
@@ -282,7 +269,10 @@ const DashboardContributionRecord = ({
                                                 className={
                                                     classes.confirmButtonStyles
                                                 }
-                                                disabled={isDisabled}
+                                                disabled={
+                                                    isDisabled ||
+                                                    shouldDisabledWhileRequest
+                                                }
                                                 onClick={() => {}}
                                             >
                                                 Confirm
@@ -313,7 +303,7 @@ const DashboardContributionRecord = ({
                         createProductionLocation();
                     }}
                     className={classes.buttonStyles}
-                    disabled={isDisabled}
+                    disabled={isDisabled || shouldDisabledWhileRequest}
                 >
                     Create New Location
                 </Button>
@@ -324,7 +314,11 @@ const DashboardContributionRecord = ({
                         updateModerationEvent('REJECTED');
                     }}
                     className={classes.buttonStyles}
-                    disabled={moderationEventFetching || isDisabled}
+                    disabled={
+                        moderationEventFetching ||
+                        isDisabled ||
+                        shouldDisabledWhileRequest
+                    }
                 >
                     Reject Contribution
                 </Button>
