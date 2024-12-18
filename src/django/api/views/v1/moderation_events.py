@@ -36,7 +36,6 @@ from api.views.v1.utils import (
 
 class ModerationEvents(ViewSet):
     swagger_schema = None
-
     permission_classes = [IsRegisteredAndConfirmed]
 
     def get_permissions(self):
