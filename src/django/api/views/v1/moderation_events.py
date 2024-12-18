@@ -52,9 +52,8 @@ class ModerationEvents(ViewSet):
         return [permission() for permission in permission_classes]
 
     @staticmethod
-    def __init_opensearch() -> (
-        Tuple[OpenSearchService, OpenSearchQueryDirector]
-    ):
+    def __init_opensearch() -> Tuple[OpenSearchService,
+                                     OpenSearchQueryDirector]:
         opensearch_service = OpenSearchService()
         moderation_events_query_builder = ModerationEventsQueryBuilder()
         opensearch_query_director = OpenSearchQueryDirector(
@@ -66,33 +65,41 @@ class ModerationEvents(ViewSet):
     @handle_errors_decorator
     def list(self, request):
         _, error_response = serialize_params(
-            ModerationEventsSerializer, request.GET
+            ModerationEventsSerializer,
+            request.GET
         )
         if error_response:
-            return Response(error_response, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                error_response,
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        opensearch_service, opensearch_query_director = (
+        opensearch_service, opensearch_query_director = \
             self.__init_opensearch()
+        query_body = opensearch_query_director.build_query(
+            request.GET
         )
-        query_body = opensearch_query_director.build_query(request.GET)
 
         response = opensearch_service.search_index(
-            OpenSearchIndexNames.MODERATION_EVENTS_INDEX, query_body
+            OpenSearchIndexNames.MODERATION_EVENTS_INDEX,
+            query_body
         )
         return Response(response)
 
     @handle_errors_decorator
-    def retrieve(self, _, pk=None):
+    def retrieve(self, _,  pk=None):
         ModerationEventsService.validate_uuid(pk)
 
-        opensearch_service, opensearch_query_director = (
+        opensearch_service, opensearch_query_director = \
             self.__init_opensearch()
-        )
         query_params = QueryDict('', mutable=True)
         query_params.update({'moderation_id': pk})
-        query_body = opensearch_query_director.build_query(query_params)
+        query_body = opensearch_query_director.build_query(
+            query_params
+        )
         response = opensearch_service.search_index(
-            OpenSearchIndexNames.MODERATION_EVENTS_INDEX, query_body
+            OpenSearchIndexNames.MODERATION_EVENTS_INDEX,
+            query_body
         )
 
         events = response.get("data", [])
