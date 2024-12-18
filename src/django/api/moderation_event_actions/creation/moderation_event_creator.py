@@ -20,12 +20,13 @@ class ModerationEventCreator:
             return event_dto
 
         event_dto.moderation_event = ModerationEvent.objects.create(
-            contributor=processed_event.contributor_id,
+            contributor=processed_event.contributor,
             request_type=processed_event.request_type,
             raw_data=processed_event.raw_data,
             cleaned_data=processed_event.cleaned_data,
             geocode_result=processed_event.geocode_result,
-            source=processed_event.source
+            source=processed_event.source,
+            os=processed_event.os
         )
 
         return event_dto

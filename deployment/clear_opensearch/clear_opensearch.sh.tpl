@@ -5,11 +5,6 @@
 # new index mappings or to refresh the OpenSearch cluster after
 # restarting Logstash, with the lock files deleted from EFS
 # storage for each pipeline.
-#
-# The script can be modified to delete only specific templates,
-# indexes, and Logstash pipeline lock files, allowing for a more
-# targeted refresh without affecting the entire OpenSearch cluster.
-# This can help speed up the deployment process of new changes.
 
 echo -e "\nDelete the custom OpenSearch indexes\n"
 curl -X DELETE https://$OPENSEARCH_DOMAIN/production-locations --aws-sigv4 "aws:amz:eu-west-1:es" --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY"
