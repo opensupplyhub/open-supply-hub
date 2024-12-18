@@ -16,7 +16,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-1336](https://opensupplyhub.atlassian.net/browse/OSDEV-1336) - Introduced a new PATCH `/api/v1/production-locations/{os_id}/` endpoint based on the API v1 specification. This endpoint allows the creation of a new moderation event for updating the production location with the given details. Basically, the endpoint can be used to contribute to an existing location.
-* [OSDEV-1336](https://opensupplyhub.atlassian.net/browse/OSDEV-1336) - Dynamic mapping for the new fields in the `moderation-events` index has been disabled for those that don't have an explicit mapping defined. This change helps avoid indexing conflicts, such as when a field is initially indexed with one data type (e.g., long), but later an entry with a different data type for the same field is indexed, causing the entire entry to fail indexing. After this change, fields with an explicit mapping will be indexed, while other fields will not be indexed or searchable, but will still be displayed in the document. The `clear_opensearch.sh.tpl` script has been edited to clear only resources related to the `moderation-events` index, so there will be no need to wait for the production-locations index to be refilled during deployment, as it will not be deleted.
+* [OSDEV-1336](https://opensupplyhub.atlassian.net/browse/OSDEV-1336) - Dynamic mapping for the new fields in the `moderation-events` index has been disabled for those that don't have an explicit mapping defined. This change helps avoid indexing conflicts, such as when a field is initially indexed with one data type (e.g., long), but later an entry with a different data type for the same field is indexed, causing the entire entry to fail indexing. After this change, fields with an explicit mapping will be indexed, while other fields will not be indexed or searchable, but will still be displayed in the document.
 
 ### Architecture/Environment changes
 
@@ -33,7 +33,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
-* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to refresh the index mappings for the `moderation-events` index after disabling dynamic mapping for the new fields that don't have an explicit mapping defined. Note that the `clear_opensearch.sh.tpl` script has been edited to clear only resources related to the `moderation-events` index, so there will be no need to wait for the `production-locations` index to be refilled, as it will not be deleted.
+* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to refresh the index mappings for the `moderation-events` index after disabling dynamic mapping for the new fields that don't have an explicit mapping defined.
 
 
 ## Release 1.26.0
