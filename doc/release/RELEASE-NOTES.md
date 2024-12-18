@@ -16,6 +16,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-1409](https://opensupplyhub.atlassian.net/browse/OSDEV-1409) - Introduced a new PATCH `/api/v1/moderation-events/{moderation_id}/production-locations/{os_id}/` endpoint. This endpoint allows the creation of a new contribution for an existing production location based on the provided moderation event.
+* [OSDEV-1336](https://opensupplyhub.atlassian.net/browse/OSDEV-1336) - Introduced a new PATCH `/api/v1/production-locations/{os_id}/` endpoint based on the API v1 specification. This endpoint allows the creation of a new moderation event for updating the production location with the given details. Basically, the endpoint can be used to contribute to an existing location.
+* [OSDEV-1336](https://opensupplyhub.atlassian.net/browse/OSDEV-1336) - Dynamic mapping for the new fields in the `moderation-events` index has been disabled for those that don't have an explicit mapping defined. This change helps avoid indexing conflicts, such as when a field is initially indexed with one data type (e.g., long), but later an entry with a different data type for the same field is indexed, causing the entire entry to fail indexing. After this change, fields with an explicit mapping will be indexed, while other fields will not be indexed or searchable, but will still be displayed in the document.
 
 ### Architecture/Environment changes
 
@@ -32,6 +34,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
+* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to refresh the index mappings for the `moderation-events` index after disabling dynamic mapping for the new fields that don't have an explicit mapping defined. The `production-locations` will also be affected since it will clean all of our custom indexes and templates within the OpenSearch cluster
 
 
 ## Release 1.26.0
@@ -109,7 +112,7 @@ This issue has been fixed by adding additional requests to delete the appropriat
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
-* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear custom OpenSearch indexes and templates` set to true - to refresh the index mappings for the `production-locations` and `moderation-events` indexes after fixing the process of clearing the custom OpenSearch indexes.
+* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to refresh the index mappings for the `production-locations` and `moderation-events` indexes after fixing the process of clearing the custom OpenSearch indexes. It will clean all of our custom indexes and templates within the OpenSearch cluster.
 
 
 ## Release 1.25.0

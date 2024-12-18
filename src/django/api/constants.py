@@ -228,6 +228,7 @@ class APIV1LocationContributionErrorMessages:
         'address. This may be due to incorrect, incomplete, or ambiguous '
         'information. Please verify and try again.'
     )
+    LOCATION_NOT_FOUND = ('The location with the given id was not found.')
 
     @staticmethod
     def invalid_data_type_error(data_type: str) -> str:

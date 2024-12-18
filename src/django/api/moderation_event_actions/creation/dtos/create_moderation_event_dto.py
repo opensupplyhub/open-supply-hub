@@ -4,13 +4,16 @@ from typing import Dict
 from rest_framework import status
 
 from api.models.moderation_event import ModerationEvent
+from api.models.contributor.contributor import Contributor
+from api.models.facility.facility import Facility
 
 
 @dataclass
 class CreateModerationEventDTO:
-    contributor_id: int
+    contributor: Contributor
     raw_data: Dict
     request_type: str
+    os: Facility = None
     cleaned_data: Dict = field(default_factory=dict)
     source: str = ''
     geocode_result: Dict = field(default_factory=dict)
