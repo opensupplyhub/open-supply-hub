@@ -103,8 +103,8 @@ class EventApprovalTemplate(ABC):
 
         self.__create_list_item_temp(item)
         log.info(
-            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} FacilityListItemTemp '
-            'created.'
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} '
+            'FacilityListItemTemp created.'
         )
 
         update_extendedfields_for_list_item(item)
