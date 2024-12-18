@@ -65,7 +65,7 @@ class EventApprovalTemplate(ABC):
         create_nonstandard_fields(header_row_keys, contributor)
         log.info(
             f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Nonstandard fields '
-            f'created.'
+            'created.'
         )
 
         header_str: str = ','.join(header_row_keys)
@@ -79,13 +79,13 @@ class EventApprovalTemplate(ABC):
 
         create_extendedfields_for_single_item(item, data["fields"])
         log.info(
-            '{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Extended fields '
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Extended fields '
             'created.'
         )
 
         self.__set_geocoded_location(item, data, self.__event)
         log.info(
-            '{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Geocoded '
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Geocoded '
             'location set.'
         )
 
@@ -97,37 +97,37 @@ class EventApprovalTemplate(ABC):
             item, facility_id
         )
         log.info(
-            '{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} FacilityListItem '
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} FacilityListItem '
             'updated with facility ID.'
         )
 
         self.__create_list_item_temp(item)
         log.info(
-            '{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} FacilityListItemTemp '
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} FacilityListItemTemp '
             'created.'
         )
 
         update_extendedfields_for_list_item(item)
         log.info(
-            '{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Extended fields '
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Extended fields '
             'updated with facility ID.'
         )
 
         self.__create_facility_match_temp(item)
         log.info(
-            '{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} FacilityMatchTemp '
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} FacilityMatchTemp '
             'created.'
         )
 
         self.__create_facility_match(item)
         log.info(
-            '{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} FacilityMatch '
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} FacilityMatch '
             'created.'
         )
 
         self._update_event(self.__event, item)
         log.info(
-            '{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Status and os_id of '
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Status and os_id of '
             'Moderation Event updated.'
         )
 

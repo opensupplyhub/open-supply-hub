@@ -54,5 +54,5 @@ class AddProductionLocation(EventApprovalTemplate):
         )
         log.info(
             f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Facility created. '
-            'Id: {facility_id}'
+            f'Id: {facility_id}'
         )
