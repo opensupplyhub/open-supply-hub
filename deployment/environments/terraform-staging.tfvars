@@ -24,7 +24,7 @@ app_ecs_desired_count = "4"
 app_ecs_deployment_min_percent = "100"
 app_ecs_deployment_max_percent = "400"
 app_fargate_cpu = "1024"
-app_fargate_memory = "8192"
+app_fargate_memory = "2048"
 
 cli_fargate_cpu = "1024"
 cli_fargate_memory = "8192"

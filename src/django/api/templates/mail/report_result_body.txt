@@ -1,15 +1,15 @@
 {% block content %}
-Hi there,
+Hello,
 
-Thanks for reporting {{ facility_name }} facility as {{ closure_state|lower }}.
+Thank you for reporting the facility {{ facility_name }} as {{ closure_state|lower }} on Open Supply Hub (OS Hub).
 
-{% if is_closure and is_rejected %}We have rejected this report and the facility's profile in OS Hub has not been changed.{% endif %}{% if is_closure and is_confirmed %}The facility profile in the Open Supply Hub has now been updated and the facility is marked as closed.{% endif %}{% if is_reopening and is_rejected %}We have rejected this report and the facility's profile in OS Hub has not been changed.{% endif %}{% if is_reopening and is_confirmed %}The facility profile in the Open Supply Hub has now been updated and the facility is no longer marked as closed.{% endif %}
+{% if is_closure and is_rejected %}We did not approve this report and the facility's profile in OS Hub has not been changed. For more details, view our Facility Closure Policy: https://info.opensupplyhub.org/governance-policies.{% endif %}{% if is_closure and is_confirmed %}The facility profile on OS Hub has now been updated and the facility is marked as closed.{% endif %}{% if is_reopening and is_rejected %}We did not approve this report and the facility's profile on OS Hub has not been changed.{% endif %}{% if is_reopening and is_confirmed %}The facility profile on OS Hub has now been updated and the facility is no longer marked as closed.{% endif %}
 
 {% if status_change_reason|length %}OS Hub Team review notes: {{ status_change_reason }}{% endif %}
 
-{% if is_rejected %}If you have additional evidence that can be used to verify the facility has {{ closure_state|lower }}, this can be shared with: data@opensupplyhub.org{% endif %}{% if is_closure and is_confirmed %}Should you receive reports that the facility is re-opened in the future, you can share this update with the OS Hub Team.{% endif %}
+{% if is_rejected %}If you have additional evidence that can be used to verify that the facility is {{ closure_state|lower }}, email the relevant documents to: data@opensupplyhub.org{% endif %}{% if is_closure and is_confirmed %}Should you receive reports that the facility is re-opened in the future, please send us an report clicking the “Report” button (flag icon) on the facility profile and choosing “Report as Reopened”.{% endif %}
 
-Best wishes,
+Best Regards,
 
 {% include "mail/signature_block.txt" %}
 {% endblock content %}

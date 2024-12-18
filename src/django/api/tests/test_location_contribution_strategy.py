@@ -4,10 +4,16 @@ from copy import deepcopy
 
 from unittest.mock import Mock, patch
 from rest_framework.test import APITestCase
+from allauth.account.models import EmailAddress
+from django.contrib.gis.geos import Point
 
 from api.models.moderation_event import ModerationEvent
 from api.models.contributor.contributor import Contributor
 from api.models.user import User
+from api.models.facility.facility_list import FacilityList
+from api.models.facility.facility_list_item import FacilityListItem
+from api.models.facility.facility import Facility
+from api.models.source import Source
 from api.tests.test_data import (
     geocoding_data,
     geocoding_no_results
@@ -70,7 +76,7 @@ class TestLocationContributionStrategy(APITestCase):
         self.assertNotIn('source', self.common_valid_input_data)
 
         event_dto = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=self.common_valid_input_data,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -137,7 +143,7 @@ class TestLocationContributionStrategy(APITestCase):
 
         # Check the length validation.
         event_dto_1 = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=invalid_input_data_1,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -150,7 +156,7 @@ class TestLocationContributionStrategy(APITestCase):
 
         # Check validation of accepted values.
         event_dto_2 = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=invalid_input_data_2,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -163,7 +169,7 @@ class TestLocationContributionStrategy(APITestCase):
 
         # Check the accepted data type validation for the source field.
         event_dto_3 = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=invalid_input_data_3,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -189,7 +195,7 @@ class TestLocationContributionStrategy(APITestCase):
         }
 
         event_dto = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=input_data,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -256,7 +262,7 @@ class TestLocationContributionStrategy(APITestCase):
         }
 
         event_dto = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=input_data,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -289,7 +295,7 @@ class TestLocationContributionStrategy(APITestCase):
         }
 
         event_dto = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=input_data,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -332,7 +338,7 @@ class TestLocationContributionStrategy(APITestCase):
         }
 
         event_dto = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=input_data,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -368,7 +374,7 @@ class TestLocationContributionStrategy(APITestCase):
         }
 
         event_dto = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=input_data,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -397,7 +403,7 @@ class TestLocationContributionStrategy(APITestCase):
         }
 
         event_dto = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=input_data,
             request_type=ModerationEvent.RequestType.CREATE.value
         )
@@ -408,7 +414,148 @@ class TestLocationContributionStrategy(APITestCase):
         self.assertIsNone(result.moderation_event)
         self.assertEqual(result.errors, expected_error_result)
 
-    def test_moderation_event_is_created_with_coordinates_properly(self):
+    def test_moderation_event_creation_with_coordinates_for_create(self):
+        input_data = {
+            'source': 'SLC',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'sector': ['Apparel', 'Equipment'],
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            },
+            'product_type': ['Random product type']
+        }
+
+        expected_raw_data = deepcopy(input_data)
+        expected_cleaned_data = {
+            'raw_json': {
+                'lat': 51.078389,
+                'lng': 16.978477,
+                'name': 'Blue Horizon Facility',
+                'address': '990 Spring Garden St., Philadelphia PA 19123',
+                'country': 'US',
+                'sector': ['Apparel', 'Equipment'],
+                'product_type': ['Random product type']
+            },
+            'name': 'Blue Horizon Facility',
+            'clean_name': 'blue horizon facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'clean_address': '990 spring garden st. philadelphia pa 19123',
+            'country_code': 'US',
+            'sector': ['Unspecified'],
+            'fields': {
+                'product_type': [
+                    'Apparel',
+                    'Equipment',
+                    'Random product type'
+                ],
+                'lat': 51.078389,
+                'lng': 16.978477,
+                'country': 'US'
+            },
+            'errors': []
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data=input_data,
+            request_type=ModerationEvent.RequestType.CREATE.value
+        )
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+        self.assertEqual(result.status_code, 202)
+
+        moderation_event = result.moderation_event
+
+        self.assertIsNotNone(moderation_event)
+        self.assertTrue(self.is_valid_uuid(moderation_event.uuid))
+
+        stringified_created_at = moderation_event.created_at.strftime(
+            '%Y-%m-%dT%H:%M:%S.%f'
+        ) + 'Z'
+        self.assertTrue(
+            self.is_valid_date_with_microseconds(stringified_created_at)
+        )
+
+        stringified_updated_at = moderation_event.updated_at.strftime(
+            '%Y-%m-%dT%H:%M:%S.%f'
+        ) + 'Z'
+        self.assertTrue(
+            self.is_valid_date_with_microseconds(stringified_updated_at)
+        )
+
+        self.assertIsNone(moderation_event.status_change_date)
+        self.assertEqual(moderation_event.request_type, 'CREATE')
+        self.assertEqual(moderation_event.raw_data, expected_raw_data)
+        self.assertEqual(moderation_event.cleaned_data, expected_cleaned_data)
+        # The geocode result should be empty because the coordinates provided
+        # did not trigger the Google API geocoding.
+        self.assertEqual(moderation_event.geocode_result, {})
+        self.assertEqual(moderation_event.status, 'PENDING')
+        self.assertEqual(moderation_event.source, 'SLC')
+        # The claim field should be None because no claim relation was
+        # provided during the creation of the moderation event.
+        self.assertIsNone(moderation_event.claim)
+        self.assertEqual(moderation_event.contributor, self.contributor)
+        # The os field should be None because no production location relation
+        # was provided during the creation of the moderation event.
+        self.assertIsNone(moderation_event.os)
+
+    def test_moderation_event_creation_with_valid_data_for_update(self):
+        # Create a new user and contributor for the production location that
+        # already exists in the system while processing the location
+        # contribution.
+        existing_location_user_email = 'test2@example.com'
+        existing_location_user_password = '4567test'
+        existing_location_user = User.objects.create(
+            email=existing_location_user_email
+        )
+        existing_location_user.set_password(
+            existing_location_user_password
+        )
+        existing_location_user.save()
+        EmailAddress.objects.create(
+            user=existing_location_user,
+            email=existing_location_user_email,
+            verified=True,
+            primary=True
+        )
+
+        existing_location_contributor = Contributor.objects.create(
+            admin=existing_location_user,
+            name='test contributor 2',
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+
+        # Create the production location to ensure the existing location is in
+        # place before processing the contribution.
+        list = FacilityList.objects.create(
+            header='header', file_name='one', name='New List Test'
+        )
+        source = Source.objects.create(
+            source_type=Source.LIST,
+            facility_list=list,
+            contributor=existing_location_contributor
+        )
+        list_item = FacilityListItem.objects.create(
+            name='Gamma Tech Manufacturing Plant',
+            address='1574 Quantum Avenue, Building 4B, Technopolis',
+            country_code='YT',
+            sector=['Apparel'],
+            row_index=1,
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=source
+        )
+        production_location = Facility.objects.create(
+            name=list_item.name,
+            address=list_item.address,
+            country_code=list_item.country_code,
+            location=Point(0, 0),
+            created_from=list_item
+        )
 
         input_data = {
             'source': 'SLC',
@@ -454,9 +601,10 @@ class TestLocationContributionStrategy(APITestCase):
         }
 
         event_dto = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=input_data,
-            request_type=ModerationEvent.RequestType.CREATE.value
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=production_location
         )
         result = self.moderation_event_creator.perform_event_creation(
             event_dto
@@ -483,7 +631,7 @@ class TestLocationContributionStrategy(APITestCase):
         )
 
         self.assertIsNone(moderation_event.status_change_date)
-        self.assertEqual(moderation_event.request_type, 'CREATE')
+        self.assertEqual(moderation_event.request_type, 'UPDATE')
         self.assertEqual(moderation_event.raw_data, expected_raw_data)
         self.assertEqual(moderation_event.cleaned_data, expected_cleaned_data)
         # The geocode result should be empty because the coordinates provided
@@ -495,13 +643,14 @@ class TestLocationContributionStrategy(APITestCase):
         # provided during the creation of the moderation event.
         self.assertIsNone(moderation_event.claim)
         self.assertEqual(moderation_event.contributor, self.contributor)
-        # The os field should be None because no production location relation
-        # was provided during the creation of the moderation event.
-        self.assertIsNone(moderation_event.os)
+        self.assertEqual(moderation_event.os.id, production_location.id)
 
     @patch('api.geocoding.requests.get')
     def test_moderation_event_is_created_without_coordinates_properly(
             self, mock_get):
+        # This test focuses on testing the case when the coordinates were not
+        # passed, and geocoding should be performed for the particular
+        # contribution.
         mock_get.return_value = Mock(ok=True, status_code=200)
         mock_get.return_value.json.return_value = geocoding_data
 
@@ -629,7 +778,7 @@ class TestLocationContributionStrategy(APITestCase):
         }
 
         event_dto = CreateModerationEventDTO(
-            contributor_id=self.contributor,
+            contributor=self.contributor,
             raw_data=input_data,
             request_type=ModerationEvent.RequestType.CREATE.value
         )

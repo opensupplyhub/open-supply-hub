@@ -69,7 +69,6 @@ class ModerationEventsUpdateTest(APITestCase):
             data=json.dumps({"status": "APPROVED"}),
             content_type="application/json"
         )
-        print(response.json())
         self.assertEqual(200, response.status_code)
 
     def test_moderation_event_not_found(self):

@@ -8,6 +8,7 @@
       "number_of_replicas": 1
     },
     "mappings": {
+      "dynamic": false,
       "properties": {
         "moderation_id": {
           "type": "keyword"
