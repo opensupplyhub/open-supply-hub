@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { bool, string, func, object } from 'prop-types';
+import { bool, string, func, object, arrayOf } from 'prop-types';
 import { useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
@@ -7,23 +7,15 @@ import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
-import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import StyledSelect from '../Filters/StyledSelect';
+import InputHelperText from './InputHelperText';
+import { productionLocationInfoRoute } from '../../util/constants';
 
 import { makeSearchByNameAddressTabStyles } from '../../util/styles';
 
 import { countryOptionsPropType } from '../../util/propTypes';
 import { fetchCountryOptions } from '../../actions/filterOptions';
-
-const InputHelperText = ({ classes }) => (
-    <span className={classes.helperTextWrapStyles}>
-        <InfoOutlinedIcon className={classes.iconInfoStyles} />
-        <Typography component="span" className={classes.inputHelperTextStyles}>
-            This field is required.
-        </Typography>
-    </span>
-);
 
 const defaultCountryOption = {
     label: "What's the country?",
@@ -65,7 +57,8 @@ const SearchByNameAndAddressTab = ({
     };
 
     const handleSearch = () => {
-        const baseUrl = '/contribute/production-location/search/';
+        // const baseUrl = '/contribute/production-location/search/';
+        const baseUrl = productionLocationInfoRoute;
         const params = new URLSearchParams({
             name: inputName,
             address: inputAddress,
@@ -136,9 +129,7 @@ const SearchByNameAndAddressTab = ({
                     }}
                     helperText={
                         nameTouched &&
-                        !validate(inputName) && (
-                            <InputHelperText classes={classes} />
-                        )
+                        !validate(inputName) && <InputHelperText />
                     }
                     error={nameTouched && !validate(inputName)}
                 />
@@ -169,9 +160,7 @@ const SearchByNameAndAddressTab = ({
                     }}
                     helperText={
                         addressTouched &&
-                        !validate(inputAddress) && (
-                            <InputHelperText classes={classes} />
-                        )
+                        !validate(inputAddress) && <InputHelperText />
                     }
                     error={addressTouched && !validate(inputAddress)}
                 />
@@ -217,7 +206,7 @@ SearchByNameAndAddressTab.defaultProps = {
 SearchByNameAndAddressTab.propTypes = {
     countriesData: countryOptionsPropType,
     fetching: bool.isRequired,
-    error: string,
+    error: arrayOf(string),
     fetchCountries: func.isRequired,
     classes: object.isRequired,
 };

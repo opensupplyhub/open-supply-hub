@@ -735,6 +735,42 @@ const mapSingleChoiceValueToSelectOption = value =>
 export const mapDjangoChoiceTuplesValueToSelectOptions = data =>
     Object.freeze(data.map(mapSingleChoiceValueToSelectOption));
 
+export const mapProcessingTypeOptions = (fPTypes, fTypes) => {
+    let pTypes = [];
+    if (fTypes.length === 0) {
+        pTypes = fPTypes.map(type => type.processingTypes).flat();
+    } else {
+        // When there are facility types, only return the
+        // processing types that are under those facility types
+        fTypes.forEach(fType => {
+            fPTypes.forEach(fPType => {
+                if (fType.value === fPType.facilityType) {
+                    pTypes = pTypes.concat(fPType.processingTypes);
+                }
+            });
+        });
+    }
+    return mapDjangoChoiceTuplesValueToSelectOptions(uniq(pTypes.sort()));
+};
+
+export const mapFacilityTypeOptions = (fPTypes, pTypes) => {
+    let fTypes = [];
+    if (pTypes.length === 0) {
+        fTypes = fPTypes.map(type => type.facilityType);
+    } else {
+        // When there are processing types, only return the
+        // facility types that have those processing types
+        pTypes.forEach(pType => {
+            fPTypes.forEach(fPType => {
+                if (fPType.processingTypes.includes(pType.value)) {
+                    fTypes = fTypes.concat(fPType.facilityType);
+                }
+            });
+        });
+    }
+    return mapDjangoChoiceTuplesValueToSelectOptions(uniq(fTypes.sort()));
+};
+
 export const mapSectorGroupsToSelectOptions = data =>
     Object.freeze(
         data.map(group => ({

@@ -31,6 +31,7 @@ import ExternalRedirect from './components/ExternalRedirect';
 import Facilities from './components/Facilities';
 import ContributeProductionLocation from './components/Contribute/ContributeProductionLocation';
 import SearchByOsIdResult from './components/Contribute/SearchByOsIdResult';
+import ProductionLocationInfo from './components/Contribute/ProductionLocationInfo';
 
 import { sessionLogin } from './actions/auth';
 import { fetchFeatureFlags } from './actions/featureFlags';
@@ -57,6 +58,7 @@ import {
     InfoPaths,
     contributeProductionLocationRoute,
     searchByOsIdResultRoute,
+    productionLocationInfoRoute,
 } from './util/constants';
 
 class Routes extends Component {
@@ -169,6 +171,12 @@ class Routes extends Component {
                                     path={searchByOsIdResultRoute}
                                     component={SearchByOsIdResult}
                                 />
+                                <Route
+                                    exact
+                                    path={productionLocationInfoRoute}
+                                    component={ProductionLocationInfo}
+                                />
+
                                 <Route exact path="/about/processing">
                                     <ExternalRedirect
                                         to={`${InfoLink}/${InfoPaths.dataQuality}`}
