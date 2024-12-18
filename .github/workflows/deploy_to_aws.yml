@@ -156,6 +156,29 @@ jobs:
         working-directory: src/react
         run: yarn run build
 
+      - id: project
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
+        with:
+          string: ${{ vars.PROJECT }}
+
+      - name: Move static
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          FRONTEND_BUCKET: ${{ steps.project.outputs.lowercase }}-${{ steps.get_env_name.outputs.lowercase }}-frontend
+          AWS_DEFAULT_REGION: "eu-west-1"
+          CLOUDFRONT_DOMAIN: ${{ vars.CLOUDFRONT_DOMAIN }}
+        run: |
+          for id in $(aws cloudfront list-distributions --query "DistributionList.Items[*].Id" --output text); do
+              domains=$(aws cloudfront get-distribution-config --id $id --query "DistributionConfig.Aliases.Items" --output text)
+              if [[ "$domains" == "$CLOUDFRONT_DOMAIN" ]]; then
+                  echo "Found Distribution ID: $id for Domain: $CLOUDFRONT_DOMAIN"
+                  CLOUDFRONT_DISTRIBUTION_ID=$id
+              fi
+          done
+          aws s3 sync src/react/build/ s3://$FRONTEND_BUCKET-$AWS_DEFAULT_REGION/ --delete --acl public-read
+          aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
+
       - name: Move static
         run: mv src/react/build src/django/static
 
