@@ -2,10 +2,13 @@ import { createReducer } from 'redux-act';
 import update from 'immutability-helper';
 
 import {
-    startFetchingSingleProductionLocation,
-    failFetchingSingleProductionLocation,
-    completeFetchingSingleProductionLocation,
+    startFetchSingleProductionLocation,
+    failFetchSingleProductionLocation,
+    completeFetchSingleProductionLocation,
     resetSingleProductionLocation,
+    startFetchProductionLocations,
+    failFetchProductionLocations,
+    completeFetchProductionLocations,
 } from '../actions/contributeProductionLocation';
 
 const initialState = Object.freeze({
@@ -14,11 +17,16 @@ const initialState = Object.freeze({
         fetching: false,
         error: null,
     }),
+    productionLocations: Object.freeze({
+        data: null,
+        fetching: false,
+        error: null,
+    }),
 });
 
 export default createReducer(
     {
-        [startFetchingSingleProductionLocation]: state =>
+        [startFetchSingleProductionLocation]: state =>
             update(state, {
                 singleProductionLocation: {
                     fetching: { $set: true },
@@ -26,14 +34,14 @@ export default createReducer(
                     data: { $set: null },
                 },
             }),
-        [failFetchingSingleProductionLocation]: (state, payload) =>
+        [failFetchSingleProductionLocation]: (state, payload) =>
             update(state, {
                 singleProductionLocation: {
                     fetching: { $set: false },
                     error: { $set: payload },
                 },
             }),
-        [completeFetchingSingleProductionLocation]: (state, payload) =>
+        [completeFetchSingleProductionLocation]: (state, payload) =>
             update(state, {
                 singleProductionLocation: {
                     fetching: { $set: false },
@@ -45,6 +53,29 @@ export default createReducer(
             update(state, {
                 singleProductionLocation: {
                     $set: initialState.singleProductionLocation,
+                },
+            }),
+        [startFetchProductionLocations]: state =>
+            update(state, {
+                productionLocations: {
+                    fetching: { $set: true },
+                    error: { $set: null },
+                    data: { $set: null },
+                },
+            }),
+        [failFetchProductionLocations]: (state, payload) =>
+            update(state, {
+                productionLocations: {
+                    fetching: { $set: false },
+                    error: { $set: payload },
+                },
+            }),
+        [completeFetchProductionLocations]: (state, payload) =>
+            update(state, {
+                productionLocations: {
+                    fetching: { $set: false },
+                    error: { $set: null },
+                    data: { $set: payload },
                 },
             }),
     },
