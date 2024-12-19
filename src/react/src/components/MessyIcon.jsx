@@ -3,13 +3,7 @@ import SvgIcon from '@material-ui/core/SvgIcon';
 
 export default function MessyIcon() {
     return (
-        <SvgIcon
-            width="36"
-            height="36"
-            viewBox="0 0 48 48"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-        >
+        <SvgIcon viewBox="0 0 48 48" style={{ width: '48', height: '48' }}>
             <path
                 fillRule="evenodd"
                 clipRule="evenodd"

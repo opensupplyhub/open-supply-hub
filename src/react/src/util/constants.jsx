@@ -905,7 +905,7 @@ export const NavbarItems = [
     { type: 'auth' },
     {
         type: 'button',
-        label: 'Upload Data',
+        label: 'Add Data',
         href: '/contribute',
         internal: true,
     },
