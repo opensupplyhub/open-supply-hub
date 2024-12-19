@@ -287,9 +287,9 @@ export function fetchFacilityProcessingTypeOptions() {
 
         return apiRequest
             .get(makeGetFacilitiesTypeProcessingTypeURL())
-            .then(({ data }) => {
-                dispatch(completeFetchFacilityProcessingTypeOptions(data));
-            })
+            .then(({ data }) =>
+                dispatch(completeFetchFacilityProcessingTypeOptions(data)),
+            )
             .catch(err =>
                 dispatch(
                     logErrorAndDispatchFailure(

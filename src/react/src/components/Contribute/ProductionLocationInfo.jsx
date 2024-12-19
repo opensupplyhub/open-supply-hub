@@ -13,16 +13,16 @@ import CustomDropdownIndicator from '../../components/Filters/CustomReactSelectC
 import { productionLocationInfoStyles } from '../../util/styles';
 import {
     countryOptionsPropType,
-    processingTypeOptionsPropType,
-    facilityTypeOptionsPropType,
+    // processingTypeOptionsPropType,
+    facilityProcessingTypeOptionsPropType,
+    numberOfWorkerOptionsPropType,
+    parentCompanyOptionsPropType,
 } from '../../util/propTypes';
-import {
-    updateFacilityTypeFilter,
-    updateProcessingTypeFilter,
-} from '../../actions/filters';
 import {
     fetchCountryOptions,
     fetchFacilityProcessingTypeOptions,
+    fetchNumberOfWorkersOptions,
+    fetchParentCompanyOptions,
 } from '../../actions/filterOptions';
 import InputHelperText from './InputHelperText';
 import {
@@ -173,12 +173,13 @@ const ProductionLocationInfo = ({
     fetching,
     error,
     fetchFacilityProcessingType,
-    processingTypeOptions,
-    processingType,
-    locationType,
+    facilityType,
+    numberOfWorkersOptions,
+    fetchNumberOfWorkers,
+    parentCompanyOptions,
+    fetchParentCompanies,
 }) => {
     const location = useLocation();
-    // const history = useHistory();
     const defaultCountryOption = {
         label: 'Country',
         value: '',
@@ -196,6 +197,10 @@ const ProductionLocationInfo = ({
     const [addressTouched, setAddressTouched] = useState(false);
     const [sector, setSector] = useState('');
     const [productType, setProductType] = useState([]);
+    const [locationType, setLocationType] = useState(null);
+    const [processingType, setProcessingType] = useState(null);
+    const [numberOfWorkers, setNumberOfWorkers] = useState(null);
+    const [parentCompany, setParentCompany] = useState([{}]);
 
     const selectStyles = {
         control: provided => ({
@@ -222,16 +227,22 @@ const ProductionLocationInfo = ({
         setSector(event);
     };
     const handleProductType = event => {
-        console.log('!!!', event);
         setProductType(event);
     };
     const handleProcessingType = event => {
-        console.log('!!!', event);
-        // setProductType(event);
+        console.log('Processing', event);
+        setProcessingType(event);
     };
     const handleLocationType = event => {
-        console.log('!!!', event);
-        // setProductType(event);
+        console.log('setLocationType', event);
+        setLocationType(event);
+    };
+    const handleParentCompany = event => {
+        console.log('Parent', event, setParentCompany);
+        setParentCompany(event[0]);
+    };
+    const handleNumberOfWorkers = event => {
+        setNumberOfWorkers(event);
     };
 
     useEffect(() => {
@@ -251,16 +262,22 @@ const ProductionLocationInfo = ({
     }, [countriesOptions]);
 
     useEffect(() => {
-        if (processingTypeOptions.length === 0) {
-            fetchFacilityProcessingTypeOptions();
+        if (!facilityProcessingTypeOptions) {
+            fetchFacilityProcessingType();
         }
-    }, [processingTypeOptions, fetchFacilityProcessingType]);
+    }, [facilityProcessingTypeOptions, fetchFacilityProcessingType]);
 
-    // useEffect(() => {
-    //     if (!numberOfWorkersOptions) {
-    //         fetchNumberOfWorkers();
-    //     }
-    // }, [numberOfWorkersOptions, fetchNumberOfWorkers]);
+    useEffect(() => {
+        if (!numberOfWorkersOptions) {
+            fetchNumberOfWorkers();
+        }
+    }, [numberOfWorkersOptions, fetchNumberOfWorkers]);
+
+    useEffect(() => {
+        if (!parentCompanyOptions) {
+            fetchParentCompanies();
+        }
+    }, [parentCompanyOptions, fetchParentCompanies]);
 
     if (fetching) {
         return <CircularProgress />;
@@ -472,7 +489,8 @@ const ProductionLocationInfo = ({
                                     onChange={handleProductType}
                                     placeholder="Enter product type(s)"
                                     aria-label="Enter product type(s)"
-                                    s
+                                    className={`basic-multi-select notranslate ${classes.selectStyles}`}
+                                    styles={selectStyles}
                                 />
                             </div>
                             <div className={classes.inputSectionWrapStyles}>
@@ -498,14 +516,13 @@ const ProductionLocationInfo = ({
                                     label={null}
                                     options={mapFacilityTypeOptions(
                                         facilityProcessingTypeOptions || [],
-                                        processingType,
+                                        processingType || [],
                                     )}
                                     value={locationType}
                                     onChange={handleLocationType}
                                     className={`basic-multi-select notranslate ${classes.selectStyles}`}
                                     styles={selectStyles}
                                     placeholder="Select"
-                                    isMulti={false}
                                 />
                             </div>
                             <div className={classes.inputSectionWrapStyles}>
@@ -530,25 +547,13 @@ const ProductionLocationInfo = ({
                                     label={null}
                                     options={mapProcessingTypeOptions(
                                         facilityProcessingTypeOptions || [],
-                                        locationType,
+                                        facilityType || [],
                                     )}
                                     value={processingType}
                                     onChange={handleProcessingType}
+                                    className={`basic-multi-select notranslate ${classes.selectStyles}`}
+                                    styles={selectStyles}
                                 />
-                                {/* <StyledSelect
-                                    label="Processing Type"
-                                    id="processing_type"
-                                    placeholder="Enter processing type(s)"
-                                    variant="outlined"
-                                    aria-label="Processing type"
-                                    className={classes.textInputStyles}
-                                    options={mapProcessingTypeOptions(
-                                        facilityProcessingTypeOptions || [],
-                                        facilityType,
-                                    )}
-                                    value={processingType}
-                                    onChange={() => {}}
-                                /> */}
                             </div>
                             <div className={classes.inputSectionWrapStyles}>
                                 <Typography
@@ -565,14 +570,18 @@ const ProductionLocationInfo = ({
                                     people employed at the location. For
                                     example: 100, 100-150.
                                 </Typography>
-                                <TextField
+                                <StyledSelect
                                     id="number_of_workers"
-                                    className={classes.textInputStyles}
-                                    value={nameInQuery ?? ''}
-                                    onChange={() => {}}
+                                    label={null}
+                                    name="Number of Workers"
+                                    options={numberOfWorkersOptions || []}
+                                    value={numberOfWorkers}
+                                    onChange={handleNumberOfWorkers}
                                     placeholder="Enter the number of workers as a number or range"
-                                    variant="outlined"
                                     aria-label="Number of workers"
+                                    isMulti={false}
+                                    className={`basic-multi-select notranslate ${classes.selectStyles}`}
+                                    styles={selectStyles}
                                 />
                             </div>
                             <div className={classes.inputSectionWrapStyles}>
@@ -590,17 +599,17 @@ const ProductionLocationInfo = ({
                                     majority ownership for this production.
                                 </Typography>
                                 <StyledSelect
+                                    creatable
                                     id="parent_company"
-                                    name="Parent company"
-                                    aria-label="Parent company"
                                     label={null}
-                                    options={countriesOptions || []}
-                                    value={countryInQuery}
-                                    onChange={() => {}}
+                                    name="Parent company"
+                                    options={parentCompanyOptions || []}
+                                    value={parentCompany}
+                                    onChange={handleParentCompany}
+                                    placeholder="Select"
+                                    aria-label="Parent company"
                                     className={`basic-multi-select notranslate ${classes.selectStyles}`}
                                     styles={selectStyles}
-                                    placeholder="Select"
-                                    isMulti={false}
                                 />
                             </div>
                         </>
@@ -638,36 +647,51 @@ const ProductionLocationInfo = ({
 
 ProductionLocationInfo.defaultProps = {
     countriesOptions: null,
+    facilityProcessingTypeOptions: null,
+    numberOfWorkersOptions: null,
+    parentCompanyOptions: null,
     error: null,
-    processingTypeOptions: [],
 };
 
 ProductionLocationInfo.propTypes = {
     countriesOptions: countryOptionsPropType,
+    fetchCountries: func.isRequired,
+    fetchFacilityProcessingType: func.isRequired,
+    facilityProcessingTypeOptions: facilityProcessingTypeOptionsPropType,
+    numberOfWorkersOptions: numberOfWorkerOptionsPropType,
+    parentCompanyOptions: parentCompanyOptionsPropType,
+    fetchParentCompanies: func.isRequired,
     fetching: bool.isRequired,
     error: string,
-    fetchCountries: func.isRequired,
     classes: object.isRequired,
-    processingTypeOptions: processingTypeOptionsPropType,
-    fetchFacilityProcessingType: func.isRequired,
-    processingType: processingTypeOptionsPropType.isRequired,
-    locationType: facilityTypeOptionsPropType.isRequired,
 };
 
 const mapStateToProps = ({
-    productionLocationInfo: {
-        countries: { data: countriesOptions, error, fetching },
-        processingTypeOptions: { data: processingTypeOptions },
-        processingType: { data: processingType },
-        locationType: { data: locationType },
+    filterOptions: {
+        countries: { data: countriesOptions, fetching, error },
+        parentCompanies: {
+            data: parentCompanyOptions,
+            // fetching: fetchingParentCompanies,
+        },
+        facilityProcessingType: {
+            data: facilityProcessingTypeOptions,
+            // fetching: fetchingFacilityProcessingType,
+        },
+        numberOfWorkers: {
+            data: numberOfWorkersOptions,
+            // fetching: fetchingNumberofWorkers,
+        },
     },
+    filters: { facilityType, processingType },
 }) => ({
     countriesOptions,
-    processingTypeOptions,
+    facilityProcessingTypeOptions,
+    numberOfWorkersOptions,
+    parentCompanyOptions,
     fetching,
     error,
     processingType,
-    locationType,
+    facilityType,
 });
 
 function mapDispatchToProps(dispatch) {
@@ -675,8 +699,8 @@ function mapDispatchToProps(dispatch) {
         fetchCountries: () => dispatch(fetchCountryOptions()),
         fetchFacilityProcessingType: () =>
             dispatch(fetchFacilityProcessingTypeOptions()),
-        updateLocationType: v => dispatch(updateFacilityTypeFilter(v)),
-        updateProcessingType: v => dispatch(updateProcessingTypeFilter(v)),
+        fetchNumberOfWorkers: () => dispatch(fetchNumberOfWorkersOptions()),
+        fetchParentCompanies: () => dispatch(fetchParentCompanyOptions()),
     };
 }
 
