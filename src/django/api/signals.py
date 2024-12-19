@@ -62,6 +62,7 @@ def moderation_event_update_handler_for_opensearch(
                 'doc': {
                     'uuid': str(instance.uuid),
                     'status': str(instance.status),
+                    'os': instance.os.id if instance.os else None
                 }
             },
         )

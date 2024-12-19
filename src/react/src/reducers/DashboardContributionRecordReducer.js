@@ -1,4 +1,3 @@
-/* eslint no-unused-vars: 0 */
 import { createReducer } from 'redux-act';
 import update from 'immutability-helper';
 
@@ -9,13 +8,16 @@ import {
     startFetchPotentialMatches,
     failFetchPotentialMatches,
     completeFetchPotentialMatches,
-    cleanupContributionRecord,
     startUpdateSingleModerationEvent,
-    completeUpdateSingleModerationEvent,
     failUpdateSingleModerationEvent,
+    completeUpdateSingleModerationEvent,
     startCreateProductionLocationFromModerationEvent,
-    completeCreateProductionLocationFromModerationEvent,
     failCreateProductionLocationFromModerationEvent,
+    completeCreateProductionLocationFromModerationEvent,
+    startConfirmPotentialMatchFromModerationEvent,
+    failConfirmPotentialMatchFromModerationEvent,
+    completeConfirmPotentialMatchFromModerationEvent,
+    cleanupContributionRecord,
 } from '../actions/dashboardContributionRecord';
 
 const initialState = Object.freeze({
@@ -129,6 +131,34 @@ export default createReducer(
             state,
             payload,
         ) =>
+            update(state, {
+                singleModerationEvent: {
+                    fetching: {
+                        $set: initialState.singleModerationEvent.fetching,
+                    },
+                    error: { $set: initialState.singleModerationEvent.error },
+                    data: {
+                        $merge: payload,
+                    },
+                },
+            }),
+        [startConfirmPotentialMatchFromModerationEvent]: state =>
+            update(state, {
+                singleModerationEvent: {
+                    fetching: { $set: true },
+                    error: { $set: initialState.singleModerationEvent.error },
+                },
+            }),
+        [failConfirmPotentialMatchFromModerationEvent]: (state, error) =>
+            update(state, {
+                singleModerationEvent: {
+                    fetching: {
+                        $set: initialState.singleModerationEvent.fetching,
+                    },
+                    error: { $set: error },
+                },
+            }),
+        [completeConfirmPotentialMatchFromModerationEvent]: (state, payload) =>
             update(state, {
                 singleModerationEvent: {
                     fetching: {

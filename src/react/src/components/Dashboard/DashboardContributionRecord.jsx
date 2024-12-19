@@ -1,4 +1,3 @@
-/* eslint no-unused-vars: 0 */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
@@ -29,11 +28,14 @@ import {
     fetchPotentialMatches,
     updateSingleModerationEvent,
     createProductionLocationFromModerationEvent,
+    confirmPotentialMatchFromModerationEvent,
 } from '../../actions/dashboardContributionRecord';
 import { makeClaimFacilityLink } from '../../util/util';
 import DialogTooltip from './../Contribute/DialogTooltip';
+import { MODERATION_STATUSES_ENUM } from '../../util/constants';
 
 const claimButtonTitle = 'Go to Claim';
+const confirmPotentialMatchButtonTitle = 'Confirm';
 
 const claimButtonDisabled = classes => (
     <span className={`${classes.claimTooltipWrapper}`}>
@@ -48,6 +50,19 @@ const claimButtonDisabled = classes => (
     </span>
 );
 
+const confirmPotentialMatchButtonDisabled = classes => (
+    <span className={`${classes.claimTooltipWrapper}`}>
+        <Button
+            color="secondary"
+            variant="contained"
+            className={classes.confirmButtonStyles}
+            disabled
+        >
+            {confirmPotentialMatchButtonTitle}
+        </Button>
+    </span>
+);
+
 let hasPrefetchedData = false;
 const DashboardContributionRecord = ({
     push,
@@ -56,6 +71,7 @@ const DashboardContributionRecord = ({
     fetchModerationEventError,
     updateModerationEvent,
     createProductionLocation,
+    confirmPotentialMatch,
     classes,
     fetchModerationEvent,
     fetchMatches,
@@ -67,10 +83,12 @@ const DashboardContributionRecord = ({
         shouldDisabledWhileRequest,
         setShouldDisabledWhileRequest,
     ] = useState(false);
+    const [showBackdrop, setShowBackdrop] = useState(false);
     const {
         productionLocationName,
         countryCode,
         productionLocationAddress,
+        osId,
     } = useMemo(() => {
         if (!singleModerationEventItem || isEmpty(singleModerationEventItem)) {
             return {};
@@ -82,12 +100,14 @@ const DashboardContributionRecord = ({
                 country: { alpha_2: code = '' } = {},
                 address: locationAddress = '',
             } = {},
+            os_id: locationOsId = null,
         } = singleModerationEventItem || {};
 
         return {
             productionLocationName: locationName,
             countryCode: code,
             productionLocationAddress: locationAddress,
+            osId: locationOsId,
         };
     }, [singleModerationEventItem]);
 
@@ -107,12 +127,21 @@ const DashboardContributionRecord = ({
     useEffect(() => {
         if (!isEmpty(singleModerationEventItem) && hasPrefetchedData) {
             if (moderationEventFetching) {
+                setShowBackdrop(true);
                 setShouldDisabledWhileRequest(true);
-                toast('Updating moderation event...');
+                toast('Updating moderation event...', {
+                    onClose: () => setShowBackdrop(false),
+                });
             }
-            if (fetchModerationEventError) {
+            if (
+                fetchModerationEventError &&
+                fetchModerationEventError.length > 1
+            ) {
                 setShouldDisabledWhileRequest(true);
-                toast('Error while updating moderation event...');
+                setShowBackdrop(true);
+                toast(fetchModerationEventError[0], {
+                    onClose: () => setShowBackdrop(false),
+                });
             }
         }
     }, [moderationEventFetching, fetchModerationEventError]);
@@ -121,7 +150,8 @@ const DashboardContributionRecord = ({
         if (
             productionLocationName ||
             countryCode ||
-            productionLocationAddress
+            productionLocationAddress ||
+            osId
         ) {
             fetchMatches({
                 productionLocationName,
@@ -129,12 +159,7 @@ const DashboardContributionRecord = ({
                 productionLocationAddress,
             });
         }
-    }, [
-        productionLocationName,
-        countryCode,
-        productionLocationAddress,
-        fetchMatches,
-    ]);
+    }, [productionLocationName, countryCode, productionLocationAddress, osId]);
 
     if (fetchModerationEventError) {
         return (
@@ -150,22 +175,22 @@ const DashboardContributionRecord = ({
     // TODO: automatic write claim into moderation-events table to be done in Q1
     const hasClaimID = singleModerationEventItem.claim_id;
     const isDisabled =
-        moderationEventStatus === 'REJECTED' ||
-        moderationEventStatus === 'APPROVED';
+        moderationEventStatus === MODERATION_STATUSES_ENUM.REJECTED ||
+        moderationEventStatus === MODERATION_STATUSES_ENUM.APPROVED;
     let claimButtonTooltipText = '';
 
     switch (moderationEventStatus) {
-        case 'PENDING':
+        case MODERATION_STATUSES_ENUM.PENDING:
             claimButtonTooltipText =
                 'A production location must be created before it can receive a claim request.';
             break;
-        case 'APPROVED':
+        case MODERATION_STATUSES_ENUM.APPROVED:
             claimButtonTooltipText =
-                "Production location hasn't received a claim yet";
+                "Production location hasn't received a claim yet.";
             break;
-        case 'REJECTED':
+        case MODERATION_STATUSES_ENUM.REJECTED:
             claimButtonTooltipText =
-                'Moderation event has been rejected, no claim request available';
+                'Moderation event has been rejected, no claim request available.';
             break;
         default:
             break;
@@ -173,6 +198,14 @@ const DashboardContributionRecord = ({
 
     return (
         <>
+            <Backdrop
+                className={
+                    showBackdrop
+                        ? classes.backdrop_open
+                        : classes.backdrop_closed
+                }
+                open={showBackdrop}
+            />
             <Typography variant="title" className={classes.title}>
                 Moderation Event Data
             </Typography>
@@ -232,14 +265,14 @@ const DashboardContributionRecord = ({
                             {matches.map(
                                 (
                                     {
-                                        os_id: osId,
+                                        os_id: matchOsId,
                                         name,
                                         address,
                                         claim_status: claimStatus,
                                     },
                                     index,
                                 ) => (
-                                    <React.Fragment key={osId}>
+                                    <React.Fragment key={matchOsId}>
                                         <ListItem
                                             className={classes.listItemStyle}
                                         >
@@ -263,20 +296,35 @@ const DashboardContributionRecord = ({
                                                     primary={`Claimed Status: ${claimStatus}`}
                                                 />
                                             </div>
-                                            <Button
-                                                color="secondary"
-                                                variant="contained"
-                                                className={
-                                                    classes.confirmButtonStyles
-                                                }
-                                                disabled={
-                                                    isDisabled ||
-                                                    shouldDisabledWhileRequest
-                                                }
-                                                onClick={() => {}}
-                                            >
-                                                Confirm
-                                            </Button>
+                                            {!isDisabled ? (
+                                                <Button
+                                                    color="secondary"
+                                                    variant="contained"
+                                                    className={
+                                                        classes.confirmButtonStyles
+                                                    }
+                                                    disabled={
+                                                        shouldDisabledWhileRequest
+                                                    }
+                                                    onClick={() => {
+                                                        confirmPotentialMatch(
+                                                            matchOsId,
+                                                        );
+                                                    }}
+                                                >
+                                                    {
+                                                        confirmPotentialMatchButtonTitle
+                                                    }
+                                                </Button>
+                                            ) : (
+                                                <DialogTooltip
+                                                    text={`You can't confirm potential match when moderation event is ${moderationEventStatus.toLowerCase()}.`}
+                                                    aria-label="Confirm potential match button tooltip"
+                                                    childComponent={confirmPotentialMatchButtonDisabled(
+                                                        classes,
+                                                    )}
+                                                />
+                                            )}
                                         </ListItem>
 
                                         {index < matches.length - 1 && (
@@ -311,7 +359,9 @@ const DashboardContributionRecord = ({
                     color="secondary"
                     variant="contained"
                     onClick={() => {
-                        updateModerationEvent('REJECTED');
+                        updateModerationEvent(
+                            MODERATION_STATUSES_ENUM.REJECTED,
+                        );
                     }}
                     className={classes.buttonStyles}
                     disabled={
@@ -408,6 +458,8 @@ const mapDispatchToProps = (
         dispatch(updateSingleModerationEvent(moderationID, status)),
     createProductionLocation: () =>
         dispatch(createProductionLocationFromModerationEvent(moderationID)),
+    confirmPotentialMatch: osId =>
+        dispatch(confirmPotentialMatchFromModerationEvent(moderationID, osId)),
     fetchMatches: data => dispatch(fetchPotentialMatches(data)),
 });
 
