@@ -280,7 +280,10 @@ export const makeModerationEventRecordURL = moderationID =>
 export const makeProductionLocationFromModerationEventURL = (
     moderationID,
     osID = '',
-) => `/api/v1/moderation-events/${moderationID}/production-locations/${osID}/`;
+) => {
+    const osIDPathParameter = osID ? `${osID}/` : '';
+    return `/api/v1/moderation-events/${moderationID}/production-locations/${osIDPathParameter}`;
+};
 
 export const makeGetModerationEventsWithQueryString = (
     qs,

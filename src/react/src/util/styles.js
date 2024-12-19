@@ -784,6 +784,8 @@ export const makeDownloadExcelButtonStyles = theme =>
 export const makeDashboardContributionRecordStyles = theme =>
     Object.freeze({
         errorStyle: Object.freeze({ color: 'red' }),
+        backdrop_open: Object.freeze({ zIndex: '100' }),
+        backdrop_closed: Object.freeze({ zIndex: '-1' }),
         loaderStyles: Object.freeze({
             display: 'block',
             margin: 'auto',
@@ -814,6 +816,7 @@ export const makeDashboardContributionRecordStyles = theme =>
         moderationEventStatus: Object.freeze({
             color: COLOURS.NEAR_BLACK,
             boxShadow: 'none',
+            zIndex: '1',
         }),
         moderationEventStatus_pending: Object.freeze({
             backgroundColor: COLOURS.PALE_LIGHT_YELLOW,

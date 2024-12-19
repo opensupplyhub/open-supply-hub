@@ -291,7 +291,7 @@ DashboardModerationQueue.propTypes = {
     fetching: bool.isRequired,
     error: string,
     downloadEventsError: string,
-    fetchModerationEvents: func.isRequired,
+    handleFetchModerationEvents: func.isRequired,
     fetchCountries: func.isRequired,
     downloadEvents: func.isRequired,
     classes: object.isRequired,

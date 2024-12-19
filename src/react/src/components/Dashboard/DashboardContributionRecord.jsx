@@ -1,4 +1,3 @@
-/* eslint no-unused-vars: 0 */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
@@ -84,6 +83,7 @@ const DashboardContributionRecord = ({
         shouldDisabledWhileRequest,
         setShouldDisabledWhileRequest,
     ] = useState(false);
+    const [showBackdrop, setShowBackdrop] = useState(false);
     const {
         productionLocationName,
         countryCode,
@@ -127,15 +127,21 @@ const DashboardContributionRecord = ({
     useEffect(() => {
         if (!isEmpty(singleModerationEventItem) && hasPrefetchedData) {
             if (moderationEventFetching) {
+                setShowBackdrop(true);
                 setShouldDisabledWhileRequest(true);
-                toast('Updating moderation event...');
+                toast('Updating moderation event...', {
+                    onClose: () => setShowBackdrop(false),
+                });
             }
             if (
                 fetchModerationEventError &&
                 fetchModerationEventError.length > 1
             ) {
                 setShouldDisabledWhileRequest(true);
-                toast(fetchModerationEventError[0]);
+                setShowBackdrop(true);
+                toast(fetchModerationEventError[0], {
+                    onClose: () => setShowBackdrop(false),
+                });
             }
         }
     }, [moderationEventFetching, fetchModerationEventError]);
@@ -192,6 +198,14 @@ const DashboardContributionRecord = ({
 
     return (
         <>
+            <Backdrop
+                className={
+                    showBackdrop
+                        ? classes.backdrop_open
+                        : classes.backdrop_closed
+                }
+                open={showBackdrop}
+            />
             <Typography variant="title" className={classes.title}>
                 Moderation Event Data
             </Typography>

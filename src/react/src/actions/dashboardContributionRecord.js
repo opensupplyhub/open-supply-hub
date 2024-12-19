@@ -43,6 +43,12 @@ export const startCreateProductionLocationFromModerationEvent = createAction(
 );
 export const completeCreateProductionLocationFromModerationEvent = createAction(
     'COMPLETE_CREATE_PRODUCTION_LOCATION_FROM_MODERATION_EVENT',
+    // We need to explicitly update the status for proper UI handling
+    // The status property doesn't exist in 'POST /v1/moderation-events/{moderation_id}/production-locations/' response
+    payload => ({
+        ...payload,
+        status: MODERATION_STATUSES_ENUM.APPROVED,
+    }),
 );
 export const failCreateProductionLocationFromModerationEvent = createAction(
     'FAIL_CREATE_PRODUCTION_LOCATION_FROM_MODERATION_EVENT',
@@ -53,7 +59,7 @@ export const startConfirmPotentialMatchFromModerationEvent = createAction(
 export const completeConfirmPotentialMatchFromModerationEvent = createAction(
     'COMPLETE_CONFIRM_POTENTIAL_MATCH_FROM_MODERATION_EVENT',
     // We need to explicitly update the status for proper UI handling
-    // The status property doesn't exist in PATCH /v1/moderation-events/{moderation_id}/production-locations/{os_id}/
+    // The status property doesn't exist in 'PATCH /v1/moderation-events/{moderation_id}/production-locations/{os_id}/' response
     payload => ({
         ...payload,
         status: MODERATION_STATUSES_ENUM.APPROVED,
