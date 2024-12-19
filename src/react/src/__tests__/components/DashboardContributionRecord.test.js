@@ -4,8 +4,8 @@ import { waitFor } from '@testing-library/react';
 import DashboardContributionRecord from '../../components/Dashboard/DashboardContributionRecord';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import {
-  completeFetchingPotentialMatches,
-  completeFetchingSingleModerationEvent,
+  completeFetchPotentialMatches,
+  completeFetchSingleModerationEvent,
 } from '../../actions/dashboardContributionRecord';
 
 describe('DashboardContributionRecord component', () => {
@@ -125,7 +125,7 @@ describe('DashboardContributionRecord component', () => {
     });
 
     reduxStore.dispatch(
-      completeFetchingSingleModerationEvent(event)
+      completeFetchSingleModerationEvent(event)
     );
 
     const res = reduxStore.getState().dashboardContributionRecord.singleModerationEvent.event;
@@ -173,7 +173,7 @@ describe('DashboardContributionRecord component', () => {
     const { reduxStore } = renderComponent();
 
     reduxStore.dispatch(
-      completeFetchingPotentialMatches(matches)
+      completeFetchPotentialMatches(matches)
     );
 
     const res = reduxStore.getState().dashboardContributionRecord.potentialMatches.matches
