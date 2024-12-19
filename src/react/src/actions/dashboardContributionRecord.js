@@ -46,6 +46,21 @@ export const completeCreateProductionLocationFromModerationEvent = createAction(
 export const failCreateProductionLocationFromModerationEvent = createAction(
     'FAIL_CREATE_PRODUCTION_LOCATION_FROM_MODERATION_EVENT',
 );
+export const startConfirmPotentialMatchFromModerationEvent = createAction(
+    'START_CONFIRM_POTENTIAL_MATCH_FROM_MODERATION_EVENT',
+);
+export const completeConfirmPotentialMatchFromModerationEvent = createAction(
+    'COMPLETE_CONFIRM_POTENTIAL_MATCH_FROM_MODERATION_EVENT',
+    // We need to explicitly update the status for proper UI handling
+    // The status property doesn't exist in PATCH /v1/moderation-events/{moderation_id}/production-locations/{os_id}/
+    payload => ({
+        ...payload,
+        status: 'APPROVED',
+    }),
+);
+export const failConfirmPotentialMatchFromModerationEvent = createAction(
+    'FAIL_CONFIRM_POTENTIAL_MATCH_FROM_MODERATION_EVENT',
+);
 
 export function fetchSingleModerationEvent(moderationID) {
     return async dispatch => {
@@ -126,9 +141,6 @@ export function updateSingleModerationEvent(moderationID, status) {
     };
 }
 
-// TODO: Refactor actions. You always invoke fetch of moderation events
-// See this as a reference: src/react/src/actions/dashboardActivityReports.js
-// There will be a separate actions but with the same purpose of updating Redux State.
 export function createProductionLocationFromModerationEvent(moderationID) {
     return async dispatch => {
         dispatch(startCreateProductionLocationFromModerationEvent());
@@ -146,6 +158,34 @@ export function createProductionLocationFromModerationEvent(moderationID) {
                         err,
                         'An error prevented creating production location from moderation event record',
                         failCreateProductionLocationFromModerationEvent,
+                    ),
+                ),
+            );
+    };
+}
+
+export function confirmPotentialMatchFromModerationEvent(moderationID, osID) {
+    return async dispatch => {
+        dispatch(startConfirmPotentialMatchFromModerationEvent());
+
+        return apiRequest
+            .patch(
+                makeProductionLocationFromModerationEventURL(
+                    moderationID,
+                    osID,
+                ),
+            )
+            .then(({ data }) => {
+                dispatch(
+                    completeConfirmPotentialMatchFromModerationEvent(data),
+                );
+            })
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented confirming potential match from moderation event record',
+                        failConfirmPotentialMatchFromModerationEvent,
                     ),
                 ),
             );

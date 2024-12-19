@@ -29,6 +29,7 @@ import {
     fetchPotentialMatches,
     updateSingleModerationEvent,
     createProductionLocationFromModerationEvent,
+    confirmPotentialMatchFromModerationEvent,
 } from '../../actions/dashboardContributionRecord';
 import { makeClaimFacilityLink } from '../../util/util';
 import DialogTooltip from './../Contribute/DialogTooltip';
@@ -56,6 +57,7 @@ const DashboardContributionRecord = ({
     fetchModerationEventError,
     updateModerationEvent,
     createProductionLocation,
+    confirmPotentialMatch,
     classes,
     fetchModerationEvent,
     fetchMatches,
@@ -71,6 +73,7 @@ const DashboardContributionRecord = ({
         productionLocationName,
         countryCode,
         productionLocationAddress,
+        osId,
     } = useMemo(() => {
         if (!singleModerationEventItem || isEmpty(singleModerationEventItem)) {
             return {};
@@ -82,12 +85,14 @@ const DashboardContributionRecord = ({
                 country: { alpha_2: code = '' } = {},
                 address: locationAddress = '',
             } = {},
+            os_id: locationOsId = null,
         } = singleModerationEventItem || {};
 
         return {
             productionLocationName: locationName,
             countryCode: code,
             productionLocationAddress: locationAddress,
+            osId: locationOsId,
         };
     }, [singleModerationEventItem]);
 
@@ -110,9 +115,12 @@ const DashboardContributionRecord = ({
                 setShouldDisabledWhileRequest(true);
                 toast('Updating moderation event...');
             }
-            if (fetchModerationEventError) {
+            if (
+                fetchModerationEventError &&
+                fetchModerationEventError.length > 1
+            ) {
                 setShouldDisabledWhileRequest(true);
-                toast('Error while updating moderation event...');
+                toast(fetchModerationEventError[0]);
             }
         }
     }, [moderationEventFetching, fetchModerationEventError]);
@@ -121,7 +129,8 @@ const DashboardContributionRecord = ({
         if (
             productionLocationName ||
             countryCode ||
-            productionLocationAddress
+            productionLocationAddress ||
+            osId
         ) {
             fetchMatches({
                 productionLocationName,
@@ -129,12 +138,7 @@ const DashboardContributionRecord = ({
                 productionLocationAddress,
             });
         }
-    }, [
-        productionLocationName,
-        countryCode,
-        productionLocationAddress,
-        fetchMatches,
-    ]);
+    }, [productionLocationName, countryCode, productionLocationAddress, osId]);
 
     if (fetchModerationEventError) {
         return (
@@ -232,14 +236,14 @@ const DashboardContributionRecord = ({
                             {matches.map(
                                 (
                                     {
-                                        os_id: osId,
+                                        os_id: matchOsId,
                                         name,
                                         address,
                                         claim_status: claimStatus,
                                     },
                                     index,
                                 ) => (
-                                    <React.Fragment key={osId}>
+                                    <React.Fragment key={matchOsId}>
                                         <ListItem
                                             className={classes.listItemStyle}
                                         >
@@ -273,7 +277,11 @@ const DashboardContributionRecord = ({
                                                     isDisabled ||
                                                     shouldDisabledWhileRequest
                                                 }
-                                                onClick={() => {}}
+                                                onClick={() => {
+                                                    confirmPotentialMatch(
+                                                        matchOsId,
+                                                    );
+                                                }}
                                             >
                                                 Confirm
                                             </Button>
@@ -408,6 +416,8 @@ const mapDispatchToProps = (
         dispatch(updateSingleModerationEvent(moderationID, status)),
     createProductionLocation: () =>
         dispatch(createProductionLocationFromModerationEvent(moderationID)),
+    confirmPotentialMatch: osId =>
+        dispatch(confirmPotentialMatchFromModerationEvent(moderationID, osId)),
     fetchMatches: data => dispatch(fetchPotentialMatches(data)),
 });
 
