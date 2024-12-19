@@ -36,6 +36,7 @@ import DialogTooltip from './../Contribute/DialogTooltip';
 import { MODERATION_STATUSES_ENUM } from '../../util/constants';
 
 const claimButtonTitle = 'Go to Claim';
+const confirmPotentialMatchButtonTitle = 'Confirm';
 
 const claimButtonDisabled = classes => (
     <span className={`${classes.claimTooltipWrapper}`}>
@@ -46,6 +47,19 @@ const claimButtonDisabled = classes => (
             disabled
         >
             {claimButtonTitle}
+        </Button>
+    </span>
+);
+
+const confirmPotentialMatchButtonDisabled = classes => (
+    <span className={`${classes.claimTooltipWrapper}`}>
+        <Button
+            color="secondary"
+            variant="contained"
+            className={classes.confirmButtonStyles}
+            disabled
+        >
+            {confirmPotentialMatchButtonTitle}
         </Button>
     </span>
 );
@@ -166,11 +180,11 @@ const DashboardContributionRecord = ({
             break;
         case MODERATION_STATUSES_ENUM.APPROVED:
             claimButtonTooltipText =
-                "Production location hasn't received a claim yet";
+                "Production location hasn't received a claim yet.";
             break;
         case MODERATION_STATUSES_ENUM.REJECTED:
             claimButtonTooltipText =
-                'Moderation event has been rejected, no claim request available';
+                'Moderation event has been rejected, no claim request available.';
             break;
         default:
             break;
@@ -268,24 +282,35 @@ const DashboardContributionRecord = ({
                                                     primary={`Claimed Status: ${claimStatus}`}
                                                 />
                                             </div>
-                                            <Button
-                                                color="secondary"
-                                                variant="contained"
-                                                className={
-                                                    classes.confirmButtonStyles
-                                                }
-                                                disabled={
-                                                    isDisabled ||
-                                                    shouldDisabledWhileRequest
-                                                }
-                                                onClick={() => {
-                                                    confirmPotentialMatch(
-                                                        matchOsId,
-                                                    );
-                                                }}
-                                            >
-                                                Confirm
-                                            </Button>
+                                            {!isDisabled ? (
+                                                <Button
+                                                    color="secondary"
+                                                    variant="contained"
+                                                    className={
+                                                        classes.confirmButtonStyles
+                                                    }
+                                                    disabled={
+                                                        shouldDisabledWhileRequest
+                                                    }
+                                                    onClick={() => {
+                                                        confirmPotentialMatch(
+                                                            matchOsId,
+                                                        );
+                                                    }}
+                                                >
+                                                    {
+                                                        confirmPotentialMatchButtonTitle
+                                                    }
+                                                </Button>
+                                            ) : (
+                                                <DialogTooltip
+                                                    text={`You can't confirm potential match when moderation event is ${moderationEventStatus.toLowerCase()}.`}
+                                                    aria-label="Confirm potential match button tooltip"
+                                                    childComponent={confirmPotentialMatchButtonDisabled(
+                                                        classes,
+                                                    )}
+                                                />
+                                            )}
                                         </ListItem>
 
                                         {index < matches.length - 1 && (
