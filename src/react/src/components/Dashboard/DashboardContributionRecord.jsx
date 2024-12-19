@@ -33,6 +33,7 @@ import {
 } from '../../actions/dashboardContributionRecord';
 import { makeClaimFacilityLink } from '../../util/util';
 import DialogTooltip from './../Contribute/DialogTooltip';
+import { MODERATION_STATUSES_ENUM } from '../../util/constants';
 
 const claimButtonTitle = 'Go to Claim';
 
@@ -154,20 +155,20 @@ const DashboardContributionRecord = ({
     // TODO: automatic write claim into moderation-events table to be done in Q1
     const hasClaimID = singleModerationEventItem.claim_id;
     const isDisabled =
-        moderationEventStatus === 'REJECTED' ||
-        moderationEventStatus === 'APPROVED';
+        moderationEventStatus === MODERATION_STATUSES_ENUM.REJECTED ||
+        moderationEventStatus === MODERATION_STATUSES_ENUM.APPROVED;
     let claimButtonTooltipText = '';
 
     switch (moderationEventStatus) {
-        case 'PENDING':
+        case MODERATION_STATUSES_ENUM.PENDING:
             claimButtonTooltipText =
                 'A production location must be created before it can receive a claim request.';
             break;
-        case 'APPROVED':
+        case MODERATION_STATUSES_ENUM.APPROVED:
             claimButtonTooltipText =
                 "Production location hasn't received a claim yet";
             break;
-        case 'REJECTED':
+        case MODERATION_STATUSES_ENUM.REJECTED:
             claimButtonTooltipText =
                 'Moderation event has been rejected, no claim request available';
             break;
@@ -319,7 +320,9 @@ const DashboardContributionRecord = ({
                     color="secondary"
                     variant="contained"
                     onClick={() => {
-                        updateModerationEvent('REJECTED');
+                        updateModerationEvent(
+                            MODERATION_STATUSES_ENUM.REJECTED,
+                        );
                     }}
                     className={classes.buttonStyles}
                     disabled={

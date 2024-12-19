@@ -6,6 +6,7 @@ import {
     makeProductionLocationFromModerationEventURL,
     logErrorAndDispatchFailure,
 } from '../util/util';
+import { MODERATION_STATUSES_ENUM } from '../util/constants';
 
 export const startFetchSingleModerationEvent = createAction(
     'START_FETCH_SINGLE_MODERATION_EVENT',
@@ -55,7 +56,7 @@ export const completeConfirmPotentialMatchFromModerationEvent = createAction(
     // The status property doesn't exist in PATCH /v1/moderation-events/{moderation_id}/production-locations/{os_id}/
     payload => ({
         ...payload,
-        status: 'APPROVED',
+        status: MODERATION_STATUSES_ENUM.APPROVED,
     }),
 );
 export const failConfirmPotentialMatchFromModerationEvent = createAction(
