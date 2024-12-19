@@ -351,6 +351,8 @@ export const aboutClaimedFacilitiesRoute = `${InfoLink}/${InfoPaths.claimedFacil
 export const contributeProductionLocationRoute =
     '/contribute/production-location';
 export const searchByOsIdResultRoute = '/contribute/production-location/search';
+export const productionLocationInfoRoute =
+    '/contribute/production-location/info';
 
 export const contributeFieldsEnum = Object.freeze({
     name: 'name',

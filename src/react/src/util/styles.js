@@ -914,20 +914,6 @@ export const makeSearchByNameAddressTabStyles = theme =>
         errorPlaceholder: Object.freeze({
             color: COLOURS.RED,
         }),
-        helperTextWrapStyles: Object.freeze({
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-        }),
-        iconInfoStyles: Object.freeze({
-            fontSize: '16px',
-            verticalAlign: 'middle',
-        }),
-        inputHelperTextStyles: Object.freeze({
-            fontSize: '16px',
-            fontWeight: theme.typography.fontWeightSemiBold,
-            color: COLOURS.RED,
-        }),
         instructionStyles: Object.freeze({
             fontSize: '18px',
             fontWeight: theme.typography.fontWeightSemiBold,
@@ -987,5 +973,114 @@ export const makeSearchByNameAddressTabStyles = theme =>
             '&:hover': {
                 backgroundColor: theme.palette.action.dark,
             },
+        }),
+    });
+
+export const productionLocationInfoStyles = theme =>
+    Object.freeze({
+        errorStyle: Object.freeze({
+            color: COLOURS.RED,
+        }),
+        rowContainerStyles: Object.freeze({
+            display: 'flex',
+            flexDirection: 'row',
+            width: '100%',
+            alignItems: 'center',
+        }),
+        marginRight: Object.freeze({
+            marginRight: '20px',
+        }),
+        buttonsContainerStyles: Object.freeze({
+            display: 'flex',
+            flexDirection: 'row',
+            width: '100%',
+            justifyContent: 'center',
+        }),
+        selectStyles: Object.freeze({
+            maxWidth: '528px',
+        }),
+        textInputStyles: Object.freeze({
+            maxWidth: '528px',
+        }),
+        instructionStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            margin: '24px 0 32px 0',
+        }),
+        inputSectionWrapStyles: Object.freeze({
+            display: 'inline-flex',
+            flexDirection: 'column',
+            padding: '24px 0 32px 0',
+        }),
+        infoWrapStyles: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '0 110px',
+            borderRadius: '0',
+            boxShadow: 'none',
+        }),
+        mainContainerStyles: Object.freeze({
+            background: theme.palette.background.grey,
+            padding: '48px 5% 120px 5%',
+        }),
+        headerStyles: Object.freeze({
+            fontWeight: theme.typography.fontWeightExtraBold,
+            fontSize: '56px',
+            lineHeight: '60px',
+        }),
+        titleStyles: Object.freeze({
+            fontSize: '36px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
+        }),
+        subTitleStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            margin: '0 0 20px 0',
+        }),
+        separator: Object.freeze({
+            margin: '1px 0',
+            color: COLOURS.GREY,
+        }),
+        goBackButtonStyles: Object.freeze({
+            width: '200px',
+            height: '49px',
+            borderRadius: 0,
+            textTransform: 'none',
+            margin: '26px 20px 26px 0',
+            // boxShadow:
+            //     '0px 1px 5px 0px rgba(0, 0, 0, 0.2), 0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 3px 1px -2px rgba(0, 0, 0, 0.12)',
+            // '&:hover': {
+            //     backgroundColor: theme.palette.action.dark,
+            // },
+        }),
+        submitButtonStyles: Object.freeze({
+            width: '200px',
+            height: '49px',
+            borderRadius: 0,
+            textTransform: 'none',
+            backgroundColor: theme.palette.action.main,
+            margin: '26px 0',
+            color: theme.palette.common.black,
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
+        }),
+    });
+
+export const inputHelperText = theme =>
+    Object.freeze({
+        helperTextWrapStyles: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+        }),
+        iconInfoStyles: Object.freeze({
+            fontSize: '16px',
+            verticalAlign: 'middle',
+        }),
+        inputHelperTextStyles: Object.freeze({
+            fontSize: '16px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            color: COLOURS.RED,
         }),
     });
