@@ -13,7 +13,6 @@ import CustomDropdownIndicator from '../../components/Filters/CustomReactSelectC
 import { productionLocationInfoStyles } from '../../util/styles';
 import {
     countryOptionsPropType,
-    // processingTypeOptionsPropType,
     facilityProcessingTypeOptionsPropType,
     numberOfWorkerOptionsPropType,
     parentCompanyOptionsPropType,
@@ -173,7 +172,6 @@ const ProductionLocationInfo = ({
     fetching,
     error,
     fetchFacilityProcessingType,
-    facilityType,
     numberOfWorkersOptions,
     fetchNumberOfWorkers,
     parentCompanyOptions,
@@ -200,7 +198,7 @@ const ProductionLocationInfo = ({
     const [locationType, setLocationType] = useState(null);
     const [processingType, setProcessingType] = useState(null);
     const [numberOfWorkers, setNumberOfWorkers] = useState(null);
-    const [parentCompany, setParentCompany] = useState([{}]);
+    const [parentCompany, setParentCompany] = useState([]);
 
     const selectStyles = {
         control: provided => ({
@@ -220,30 +218,16 @@ const ProductionLocationInfo = ({
         setAddressTouched(true);
         setInputAddress(event.target.value);
     };
-    const handleCountryChange = event => {
+    const handleCountryChange = event =>
         setInputCountry(event || defaultCountryOption);
-    };
-    const handleSectorChange = event => {
-        setSector(event);
-    };
-    const handleProductType = event => {
-        setProductType(event);
-    };
-    const handleProcessingType = event => {
-        console.log('Processing', event);
-        setProcessingType(event);
-    };
-    const handleLocationType = event => {
-        console.log('setLocationType', event);
-        setLocationType(event);
-    };
-    const handleParentCompany = event => {
-        console.log('Parent', event, setParentCompany);
-        setParentCompany(event[0]);
-    };
-    const handleNumberOfWorkers = event => {
-        setNumberOfWorkers(event);
-    };
+
+    const handleSectorChange = event => setSector(event);
+    const handleProductType = event => setProductType(event);
+    const handleProcessingType = event => setProcessingType(event);
+    const handleLocationType = event => setLocationType(event);
+    const handleParentCompany = event => setParentCompany(event);
+
+    const handleNumberOfWorkers = event => setNumberOfWorkers(event);
 
     useEffect(() => {
         if (!countriesOptions) {
@@ -483,7 +467,7 @@ const ProductionLocationInfo = ({
                                 </Typography>
                                 <StyledSelect
                                     creatable
-                                    label="Product Type"
+                                    label={null}
                                     name="Product Type"
                                     value={productType}
                                     onChange={handleProductType}
@@ -547,7 +531,7 @@ const ProductionLocationInfo = ({
                                     label={null}
                                     options={mapProcessingTypeOptions(
                                         facilityProcessingTypeOptions || [],
-                                        facilityType || [],
+                                        locationType || [],
                                     )}
                                     value={processingType}
                                     onChange={handleProcessingType}
@@ -600,10 +584,8 @@ const ProductionLocationInfo = ({
                                 </Typography>
                                 <StyledSelect
                                     creatable
-                                    id="parent_company"
                                     label={null}
                                     name="Parent company"
-                                    options={parentCompanyOptions || []}
                                     value={parentCompany}
                                     onChange={handleParentCompany}
                                     placeholder="Select"
@@ -682,7 +664,6 @@ const mapStateToProps = ({
             // fetching: fetchingNumberofWorkers,
         },
     },
-    filters: { facilityType, processingType },
 }) => ({
     countriesOptions,
     facilityProcessingTypeOptions,
@@ -690,8 +671,6 @@ const mapStateToProps = ({
     parentCompanyOptions,
     fetching,
     error,
-    processingType,
-    facilityType,
 });
 
 function mapDispatchToProps(dispatch) {
