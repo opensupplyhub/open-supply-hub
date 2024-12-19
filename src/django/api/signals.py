@@ -14,6 +14,7 @@ from api.views.v1.index_names import OpenSearchIndexNames
 
 log = logging.getLogger(__name__)
 
+
 def signal_error_notifier(error_log_message, response):
     log.error(error_log_message)
     report_error_to_rollbar(
@@ -22,6 +23,7 @@ def signal_error_notifier(error_log_message, response):
             'response_result': json.dumps(response),
         }
     )
+
 
 @receiver(post_delete, sender=Facility)
 def location_post_delete_handler_for_opensearch(instance, **kwargs):
@@ -39,13 +41,15 @@ def location_post_delete_handler_for_opensearch(instance, **kwargs):
 
     if response and response.get('result') == 'not_found':
         error_log_message = (
-            "[Location Deletion] Facility not found in OpenSearch, indicating "
-            "data inconsistency."
+            '[Location Deletion] Facility not found in OpenSearch, indicating '
+            'data inconsistency.'
         )
         signal_error_notifier(error_log_message, response)
 
+
 @receiver(post_save, sender=ModerationEvent)
-def moderation_event_update_handler_for_opensearch(instance, created, **kwargs):
+def moderation_event_update_handler_for_opensearch(
+        instance, created, **kwargs):
     if created:
         return
 
@@ -55,21 +59,22 @@ def moderation_event_update_handler_for_opensearch(instance, created, **kwargs):
             index=OpenSearchIndexNames.MODERATION_EVENTS_INDEX,
             id=str(instance.uuid),
             body={
-                "doc": {
-                    "uuid": str(instance.uuid),
-                    "status": str(instance.status),
+                'doc': {
+                    'uuid': str(instance.uuid),
+                    'status': str(instance.status),
                 }
             },
         )
     except ConnectionError:
         log.error(
-            '[Moderation Event Updating] Lost connection to OpenSearch cluster.'
+            '[Moderation Event Updating] Lost connection to '
+            'OpenSearch cluster.'
         )
         raise
 
     if response and response.get('result') == 'not_found':
         error_log_message = (
-            "[Moderation Event Updating] ModerationEvent not found in OpenSearch, "
-            "indicating data inconsistency."
+            '[Moderation Event Updating] ModerationEvent not found in '
+            'OpenSearch, indicating data inconsistency.'
         )
         signal_error_notifier(error_log_message, response)

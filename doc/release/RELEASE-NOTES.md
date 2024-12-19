@@ -34,7 +34,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
-* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to refresh the index mappings for the `moderation-events` index after disabling dynamic mapping for the new fields that don't have an explicit mapping defined. The `production-locations` will also be affected since it will clean all of our custom indexes and templates within the OpenSearch cluster
+* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to refresh the index mappings for the `moderation-events` index after disabling dynamic mapping for the new fields that don't have an explicit mapping defined. The `production-locations` will also be affected since it will clean all of our custom indexes and templates within the OpenSearch cluster.
 
 
 ## Release 1.26.0
