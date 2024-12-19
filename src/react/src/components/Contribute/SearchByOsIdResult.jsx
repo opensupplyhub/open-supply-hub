@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 import { connect } from 'react-redux';
-import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
 import { object, bool, func } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -28,26 +27,23 @@ const SearchByOsIdResult = ({
     clearProductionLocation,
     classes,
 }) => {
-    const location = useLocation();
     const history = useHistory();
+    const { osID } = useParams();
 
     useEffect(() => {
-        const osId = new URLSearchParams(location.search).get('os_id');
-
-        if (osId) {
-            fetchProductionLocation(osId);
+        if (osID) {
+            fetchProductionLocation(osID);
         }
-    }, [location.search, fetchProductionLocation]);
+    }, [fetchProductionLocation]);
 
-    const locationData = get(data, 'data[0]', {});
-    const isLocationDataAvailable = !isEmpty(locationData);
+    const isLocationDataAvailable = !isEmpty(data);
     const {
         name,
         os_id: osId,
         historical_os_id: historicalOsIds,
         address,
         country: { name: countryName } = {},
-    } = locationData;
+    } = data || {};
 
     const handleBackToSearchByNameAddress = () => {
         clearProductionLocation();

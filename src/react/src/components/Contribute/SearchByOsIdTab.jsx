@@ -31,9 +31,7 @@ const SearchByOsIdTab = ({ classes }) => {
     };
 
     const handleSearch = () => {
-        history.push(
-            `/contribute/production-location/search/?os_id=${inputOsId}`,
-        );
+        history.push(`/contribute/production-location/search/id/${inputOsId}`);
     };
 
     return (
