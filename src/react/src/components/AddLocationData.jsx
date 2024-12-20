@@ -109,6 +109,11 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
             bottom: -5,
             right: 0,
         },
+        cardSliceDuoView: {
+            position: 'absolute',
+            top: 0,
+            right: '25%',
+        },
         cardIcon: {
             color: COLOURS.NEAR_BLACK,
             textAlign: 'center',
@@ -137,11 +142,13 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
         messyTitle: {
             color: COLOURS.NEAR_BLACK,
             maxWidth: '75%',
+            fontWeight: '600',
         },
         messySub: {
             color: COLOURS.NEAR_BLACK,
             marginBottom: '10px',
-            maxWidth: '75%',
+            maxWidth: '65%',
+            fontWeight: '600',
         },
         messyIcon: {
             color: COLOURS.NEAR_BLACK,
@@ -243,7 +250,12 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                                     of the rest.
                                 </Typography>
                             </div>
-
+                            <div style={styles.cardSliceDuoView}>
+                                <SliceMessyDuoFigure />
+                            </div>
+                            <div style={styles.cardSliceView}>
+                                <SliceMessyFigure />
+                            </div>
                             {/* Button on the right */}
                             <button
                                 type="button"
