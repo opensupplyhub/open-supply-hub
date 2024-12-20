@@ -1,6 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import { withStyles, withTheme } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Button from '@material-ui/core/Button';
@@ -312,6 +313,12 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
         </div>
     );
 }
+
+AddLocationData.propTypes = {
+    classes: PropTypes.object.isRequired,
+    userHasSignedIn: PropTypes.bool.isRequired,
+    fetchingSessionSignIn: PropTypes.bool.isRequired,
+};
 
 function mapStateToProps({
     auth: {
