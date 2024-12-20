@@ -16,7 +16,10 @@ import { authLoginFormRoute, InfoLink, InfoPaths } from '../util/constants';
 import MessyIcon from './MessyIcon';
 import PlaylistIcon from './PlaylistIcon';
 import PinDropIcon from './PinDropIcon';
-// import RectangleCardFigure from './RectangleCardFigure';
+import RectangleCardFigure from './RectangleCardFigure';
+import SliceCardFigure from './SliceCardFigure';
+import SliceMessyFigure from './SliceMessyFigure';
+import SliceMessyDuoFigure from './SliceMessyDuoFigure';
 import COLOURS from '../util/COLOURS';
 
 const addLocationStyles = theme =>
@@ -24,7 +27,7 @@ const addLocationStyles = theme =>
         buttonStyles: Object.freeze({
             textTransform: 'none',
             borderRadius: 0,
-            margin: '15px',
+            margin: '20px',
             padding: '15px 25px 15px 25px',
             display: 'center',
             fontWeight: '900',
@@ -53,7 +56,7 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
         description: {
             paddingLeft: '5%',
             paddingRight: '5%',
-            paddingTop: '15px',
+            paddingTop: '5px',
             marginBottom: '2rem',
             fontWeight: 'bold',
         },
@@ -68,19 +71,21 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
         card: {
             backgroundColor: COLOURS.WHITE,
             boxShadow: 'none',
-            padding: '60px 25px 25px 25px', // Add padding for spacing
+            padding: '60px 25px 25px 25px',
             width: '45%',
+            position: 'relative',
             textAlign: 'center',
-            display: 'flex', // Use flexbox
-            flexDirection: 'column', // Stack children vertically
-            alignItems: 'center', // Center horizontally
-            justifyContent: 'center', // Center vertically
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
         },
         cardTitle: {
             fontSize: '32px',
-            margin: '0 auto', // Center horizontally with auto margins
-            maxWidth: '80%', // Adjust the max width if needed
-            textAlign: 'center', // Ensure text alignment is centered
+            margin: '0 auto',
+            maxWidth: '80%',
+            textAlign: 'center',
             paddingTop: '15px',
             paddingBottom: '15px',
             fontWeight: '300',
@@ -88,24 +93,26 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
         },
         cardSub: {
             fontSize: '16px',
-            margin: '0 auto', // Center horizontally with auto margins
-            maxWidth: '50%', // Adjust the max width if needed
-            textAlign: 'center', // Ensure text alignment is centered
+            margin: '0 auto',
+            maxWidth: '50%',
+            textAlign: 'center',
             paddingBottom: '5px',
             fontWeight: '600',
         },
-        cardRectangle: {
+        cardRectangleView: {
             position: 'absolute',
-            top: '-30px', // Position above the card
-            left: '50%', // Center horizontally
-            transform: 'translateX(-50%)', // Adjust for centering
-            width: '60px', // Adjust size as needed
-            height: '60px', // Adjust size as needed
-            backgroundColor: '#FFB6C1', // Example color for the rectangle
-            zIndex: 1, // Ensure it is above the card
+            top: 0,
+            right: 0,
+        },
+        cardSliceView: {
+            position: 'absolute',
+            bottom: -5,
+            right: 0,
         },
         cardIcon: {
             color: COLOURS.NEAR_BLACK,
+            textAlign: 'center',
+            alignItems: 'center',
         },
         highlight: {
             color: COLOURS.NEAR_BLACK,
@@ -114,18 +121,18 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
         messyData: {
             backgroundColor: '#8428FA21',
             marginTop: '50px',
-            display: 'flex', // Use flexbox for icon, text, and button alignment
-            alignItems: 'center', // Vertically align items
+            display: 'flex',
+            alignItems: 'center',
             padding: '30px',
-            position: 'relative', // Allow button positioning
+            position: 'relative',
             maxHeight: '56px',
         },
         messyContent: {
-            display: 'flex', // Align icon and text horizontally
-            flexDirection: 'column', // Stack text vertically
-            marginLeft: '20px', // Add space between icon and text
+            display: 'flex',
+            flexDirection: 'column',
+            marginLeft: '20px',
             textAlign: 'left',
-            flex: 1, // Take up available space
+            flex: 1,
         },
         messyTitle: {
             color: COLOURS.NEAR_BLACK,
@@ -148,8 +155,8 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
             padding: '1rem 1.5rem',
             cursor: 'pointer',
             position: 'absolute',
-            right: '20px', // Align to the right
-            top: '50%', // Vertically center relative to the container
+            right: '20px',
+            top: '50%',
             transform: 'translateY(-50%)',
         },
     };
@@ -192,7 +199,9 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
             <div style={styles.dataOptions}>
                 {/* Multiple Locations */}
                 <Paper style={styles.card}>
-                    {/* <RectangleCardFigure style={styles.cardRectangle} /> */}
+                    <div style={styles.cardRectangleView}>
+                        <RectangleCardFigure />
+                    </div>
                     <div>
                         <PlaylistIcon style={styles.cardIcon} />
                         <Typography variant="display" style={styles.cardTitle}>
@@ -274,6 +283,9 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                         >
                             Add a Single Location
                         </Button>
+                    </div>
+                    <div style={styles.cardSliceView}>
+                        <SliceCardFigure />
                     </div>
                 </Paper>
             </div>
