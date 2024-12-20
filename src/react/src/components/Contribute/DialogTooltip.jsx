@@ -8,7 +8,6 @@ const DialogTooltip = ({ text, childComponent, classes }) => {
     const [arrowRef, setArrowRef] = useState(null);
     return (
         <Tooltip
-            aria-label={text}
             enterDelay={200}
             leaveDelay={200}
             title={

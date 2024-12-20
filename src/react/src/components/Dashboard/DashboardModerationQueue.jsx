@@ -20,7 +20,7 @@ import {
     updateBeforeDate,
 } from '../../actions/dashboardModerationQueue';
 import { fetchCountryOptions } from '../../actions/filterOptions';
-import { moderationEventsPropType } from '../../util/propTypes';
+import { moderationEventsListPropType } from '../../util/propTypes';
 import { makeDashboardModerationQueueStyles } from '../../util/styles';
 import {
     MODERATION_QUEUE,
@@ -36,7 +36,7 @@ const DATE_FORMAT_ERROR =
     "The date format is invalid. Please use the format 'DD-MM-YYYY'.";
 
 const DashboardModerationQueue = ({
-    events,
+    moderationEventsList,
     count,
     page,
     maxPage,
@@ -48,7 +48,7 @@ const DashboardModerationQueue = ({
     moderationStatuses,
     countries,
     fetching,
-    fetchEvents,
+    handleFetchModerationEvents,
     error,
     downloadEvents,
     downloadEventsError,
@@ -68,9 +68,9 @@ const DashboardModerationQueue = ({
     const dateRegexFormat = /^\d{4}-\d{2}-\d{2}$/;
 
     useEffect(() => {
-        fetchEvents();
+        handleFetchModerationEvents();
         fetchCountries();
-    }, [fetchEvents, fetchCountries]);
+    }, [handleFetchModerationEvents, fetchCountries]);
 
     const wasNotEmptyAndNowEmpty = (prev, current) =>
         prev?.current?.length > 0 && current?.length === 0;
@@ -121,7 +121,7 @@ const DashboardModerationQueue = ({
                     pageSize,
                 }),
             );
-            fetchEvents();
+            handleFetchModerationEvents();
         }
 
         prevDataSources.current = dataSources;
@@ -153,7 +153,7 @@ const DashboardModerationQueue = ({
                 pageSize,
             }),
         );
-        fetchEvents();
+        handleFetchModerationEvents();
     };
 
     const handleBeforeDateChange = date => {
@@ -180,14 +180,14 @@ const DashboardModerationQueue = ({
                 pageSize,
             }),
         );
-        fetchEvents();
+        handleFetchModerationEvents();
     };
 
     if (error) {
         return <Typography>{error}</Typography>;
     }
 
-    const eventsCount = count;
+    const moderationEventsCount = count;
 
     const sharedFilterProps = {
         isDisabled: fetching,
@@ -200,7 +200,7 @@ const DashboardModerationQueue = ({
             <div className={classes.dashboardFilters}>
                 <DashboardDownloadDataButton
                     fetching={fetching}
-                    downloadPayload={events || []}
+                    downloadPayload={moderationEventsList || []}
                     downloadData={downloadEvents}
                     downloadError={downloadEventsError}
                 />
@@ -240,25 +240,25 @@ const DashboardModerationQueue = ({
             </div>
 
             <Grid item className={classes.numberResults}>
-                {eventsCount} results
+                {moderationEventsCount} results
             </Grid>
 
             <DashboardModerationQueueListTable
                 fetching={fetching}
-                events={events}
+                moderationEventsList={moderationEventsList}
                 count={count}
                 page={page}
                 maxPage={maxPage}
                 pageSize={pageSize}
                 sort={sort}
-                fetchEvents={fetchEvents}
+                fetchModerationEvents={handleFetchModerationEvents}
             />
         </Paper>
     );
 };
 
 DashboardModerationQueue.defaultProps = {
-    events: [],
+    moderationEventsList: [],
     count: 0,
     page: MODERATION_INITIAL_PAGE_INDEX,
     maxPage: MODERATION_INITIAL_PAGE_INDEX,
@@ -277,7 +277,7 @@ DashboardModerationQueue.defaultProps = {
 };
 
 DashboardModerationQueue.propTypes = {
-    events: moderationEventsPropType,
+    moderationEventsList: moderationEventsListPropType,
     count: number,
     page: number,
     maxPage: number,
@@ -291,7 +291,7 @@ DashboardModerationQueue.propTypes = {
     fetching: bool.isRequired,
     error: string,
     downloadEventsError: string,
-    fetchEvents: func.isRequired,
+    handleFetchModerationEvents: func.isRequired,
     fetchCountries: func.isRequired,
     downloadEvents: func.isRequired,
     classes: object.isRequired,
@@ -300,7 +300,7 @@ DashboardModerationQueue.propTypes = {
 const mapStateToProps = ({
     dashboardModerationQueue: {
         moderationEvents: {
-            events,
+            moderationEventsList,
             count,
             page,
             maxPage,
@@ -315,7 +315,7 @@ const mapStateToProps = ({
     },
     filters: { dataSources, moderationStatuses, countries },
 }) => ({
-    events,
+    moderationEventsList,
     count,
     page,
     maxPage,
@@ -332,7 +332,7 @@ const mapStateToProps = ({
 });
 
 const mapDispatchToProps = dispatch => ({
-    fetchEvents: () => dispatch(fetchModerationEvents()),
+    handleFetchModerationEvents: () => dispatch(fetchModerationEvents()),
     fetchCountries: () => dispatch(fetchCountryOptions()),
     downloadEvents: moderationEvents =>
         dispatch(downloadModerationEvents(moderationEvents)),
