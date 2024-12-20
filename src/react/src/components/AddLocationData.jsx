@@ -215,9 +215,8 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                             Upload a dataset with multiple production locations
                             using a{' '}
                             <span className={classes.highlight}>
-                                spreadsheet
+                                spreadsheet.
                             </span>
-                            .
                         </Typography>
                         <Typography
                             variant="subheading"
