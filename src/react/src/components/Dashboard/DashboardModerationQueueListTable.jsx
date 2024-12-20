@@ -15,7 +15,7 @@ import {
     updateModerationEventsPage,
     updateModerationEventsOrder,
 } from '../../actions/dashboardModerationQueue';
-import { moderationEventsPropType } from '../../util/propTypes';
+import { moderationEventsPropType } from '../../util/propTypes'; //
 import {
     EMPTY_PLACEHOLDER,
     DATE_FORMATS,
@@ -185,7 +185,7 @@ function DashboardModerationQueueListTable({
                                                 {moderationStatus}
                                             </TableCell>
                                             <TableCell padding="dense">
-                                                {moderationDecisionDate !== null
+                                                {moderationDecisionDate
                                                     ? formatUTCDate(
                                                           moderationDecisionDate,
                                                           DATE_FORMATS.LONG,
