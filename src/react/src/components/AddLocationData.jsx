@@ -302,7 +302,9 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                         <Button
                             color="secondary"
                             variant="text"
+                            component={Link}
                             className={classes.buttonStyle}
+                            to="/contribute/single-location"
                             disabled="true"
                         >
                             Add a Single Location
