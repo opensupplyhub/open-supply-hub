@@ -239,9 +239,13 @@ export const facilityTypeOptionsPropType = arrayOf(
 
 export const parentCompanyOptionsPropType = arrayOf(
     shape({
-        value: string.isRequired,
-        label: string.isRequired,
+        value: oneOfType([string, number]),
+        label: string,
     }),
+    // shape({
+    //     value: string.isRequired,
+    //     label: string.isRequired,
+    // }),
 );
 
 export const processingTypeOptionsPropType = arrayOf(
