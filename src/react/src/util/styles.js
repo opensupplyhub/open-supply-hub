@@ -835,6 +835,9 @@ export const makeDashboardContributionRecordStyles = theme =>
             flexDirection: 'row',
             justifyContent: 'space-between',
         }),
+        listItemStyle_confirmed: Object.freeze({
+            backgroundColor: COLOURS.MINT_GREEN,
+        }),
         listItemTextStyle: Object.freeze({
             padding: 0,
         }),

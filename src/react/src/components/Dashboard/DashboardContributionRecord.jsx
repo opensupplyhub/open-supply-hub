@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 import { string, func, bool, object } from 'prop-types';
@@ -30,7 +31,7 @@ import {
     createProductionLocationFromModerationEvent,
     confirmPotentialMatchFromModerationEvent,
 } from '../../actions/dashboardContributionRecord';
-import { makeClaimFacilityLink } from '../../util/util';
+import { makeClaimFacilityLink, makeFacilityDetailLink } from '../../util/util';
 import DialogTooltip from './../Contribute/DialogTooltip';
 import { MODERATION_STATUSES_ENUM } from '../../util/constants';
 
@@ -50,7 +51,7 @@ const claimButtonDisabled = classes => (
     </span>
 );
 
-const confirmPotentialMatchButtonDisabled = classes => (
+const confirmPotentialMatchButtonDisabled = (classes, osId, matchOsId) => (
     <span className={`${classes.claimTooltipWrapper}`}>
         <Button
             color="secondary"
@@ -58,7 +59,7 @@ const confirmPotentialMatchButtonDisabled = classes => (
             className={classes.confirmButtonStyles}
             disabled
         >
-            {confirmPotentialMatchButtonTitle}
+            {osId === matchOsId ? 'Matched' : confirmPotentialMatchButtonTitle}
         </Button>
     </span>
 );
@@ -274,9 +275,32 @@ const DashboardContributionRecord = ({
                                 ) => (
                                     <React.Fragment key={matchOsId}>
                                         <ListItem
-                                            className={classes.listItemStyle}
+                                            className={
+                                                osId === matchOsId
+                                                    ? `${classes.listItemStyle} ${classes.listItemStyle_confirmed}`
+                                                    : classes.listItemStyle
+                                            }
                                         >
                                             <div>
+                                                <ListItemText
+                                                    className={
+                                                        classes.listItemTextStyle
+                                                    }
+                                                    primary={
+                                                        <Typography>
+                                                            OS ID:{' '}
+                                                            <Link
+                                                                to={makeFacilityDetailLink(
+                                                                    matchOsId,
+                                                                )}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                            >
+                                                                {matchOsId}
+                                                            </Link>
+                                                        </Typography>
+                                                    }
+                                                />
                                                 <ListItemText
                                                     className={
                                                         classes.listItemTextStyle
@@ -318,10 +342,16 @@ const DashboardContributionRecord = ({
                                                 </Button>
                                             ) : (
                                                 <DialogTooltip
-                                                    text={`You can't confirm potential match when moderation event is ${moderationEventStatus.toLowerCase()}.`}
+                                                    text={
+                                                        osId === matchOsId
+                                                            ? `Moderation event data has been already matched to this production location.`
+                                                            : `You can't confirm potential match when moderation event is ${moderationEventStatus.toLowerCase()}.`
+                                                    }
                                                     aria-label="Confirm potential match button tooltip"
                                                     childComponent={confirmPotentialMatchButtonDisabled(
                                                         classes,
+                                                        osId,
+                                                        matchOsId,
                                                     )}
                                                 />
                                             )}
