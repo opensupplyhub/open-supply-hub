@@ -15,7 +15,7 @@ import {
     updateModerationEventsPage,
     updateModerationEventsOrder,
 } from '../../actions/dashboardModerationQueue';
-import { moderationEventsPropType } from '../../util/propTypes'; //
+import { moderationEventsPropType } from '../../util/propTypes';
 import {
     EMPTY_PLACEHOLDER,
     DATE_FORMATS,
