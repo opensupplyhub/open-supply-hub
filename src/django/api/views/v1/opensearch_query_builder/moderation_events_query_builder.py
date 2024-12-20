@@ -55,7 +55,7 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
                 {
                     'cleaned_data.' +
                     field +
-                    '.alpha_2': {'order': order_by}
+                    '.name': {'order': order_by}
                 }
             )
         else:
