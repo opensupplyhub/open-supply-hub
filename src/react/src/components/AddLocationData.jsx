@@ -24,7 +24,7 @@ import COLOURS from '../util/COLOURS';
 
 const addLocationStyles = theme =>
     Object.freeze({
-        buttonStyles: Object.freeze({
+        buttonStyle: Object.freeze({
             textTransform: 'none',
             borderRadius: 0,
             margin: '20px',
@@ -41,34 +41,30 @@ const addLocationStyles = theme =>
         container: Object.freeze({
             backgroundColor: COLOURS.LIGHT_GREY,
         }),
-    });
-
-function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
-    const styles = {
-        title: {
+        title: Object.freeze({
             paddingLeft: '5%',
             paddingRight: '5%',
             paddingTop: '25px',
             color: COLOURS.NEAR_BLACK,
             fontWeight: 'bold',
             marginBottom: '1rem',
-        },
-        description: {
+        }),
+        description: Object.freeze({
             paddingLeft: '5%',
             paddingRight: '5%',
             paddingTop: '5px',
             marginBottom: '2rem',
             fontWeight: 'bold',
-        },
-        dataOptions: {
+        }),
+        dataOptions: Object.freeze({
             display: 'flex',
             paddingLeft: '5%',
             paddingRight: '5%',
             gap: '50px',
             paddingBottom: '5%',
             flexWrap: 'wrap',
-        },
-        card: {
+        }),
+        card: Object.freeze({
             backgroundColor: COLOURS.WHITE,
             boxShadow: 'none',
             padding: '60px 25px 25px 25px',
@@ -80,8 +76,8 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
-        },
-        cardTitle: {
+        }),
+        cardTitle: Object.freeze({
             fontSize: '32px',
             margin: '0 auto',
             maxWidth: '80%',
@@ -90,40 +86,40 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
             paddingBottom: '15px',
             fontWeight: '300',
             lineHeight: '1.0',
-        },
-        cardSub: {
+        }),
+        cardSub: Object.freeze({
             fontSize: '16px',
             margin: '0 auto',
             maxWidth: '50%',
             textAlign: 'center',
             paddingBottom: '5px',
             fontWeight: '600',
-        },
-        cardRectangleView: {
+        }),
+        cardRectangleView: Object.freeze({
             position: 'absolute',
             top: 0,
             right: 0,
-        },
-        cardSliceView: {
+        }),
+        cardSliceView: Object.freeze({
             position: 'absolute',
             bottom: -5,
             right: 0,
-        },
-        cardSliceDuoView: {
+        }),
+        cardSliceDuoView: Object.freeze({
             position: 'absolute',
             top: 0,
             right: '25%',
-        },
-        cardIcon: {
+        }),
+        cardIcon: Object.freeze({
             color: COLOURS.NEAR_BLACK,
             textAlign: 'center',
             alignItems: 'center',
-        },
-        highlight: {
+        }),
+        highlight: Object.freeze({
             color: COLOURS.NEAR_BLACK,
             fontWeight: '600',
-        },
-        messyData: {
+        }),
+        messyData: Object.freeze({
             backgroundColor: '#8428FA21',
             marginTop: '50px',
             display: 'flex',
@@ -131,29 +127,29 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
             padding: '30px',
             position: 'relative',
             maxHeight: '56px',
-        },
-        messyContent: {
+        }),
+        messyContent: Object.freeze({
             display: 'flex',
             flexDirection: 'column',
             marginLeft: '20px',
             textAlign: 'left',
             flex: 1,
-        },
-        messyTitle: {
+        }),
+        messyTitle: Object.freeze({
             color: COLOURS.NEAR_BLACK,
             maxWidth: '75%',
             fontWeight: '600',
-        },
-        messySub: {
+        }),
+        messySub: Object.freeze({
             color: COLOURS.NEAR_BLACK,
             marginBottom: '10px',
             maxWidth: '65%',
             fontWeight: '600',
-        },
-        messyIcon: {
+        }),
+        messyIcon: Object.freeze({
             color: COLOURS.NEAR_BLACK,
-        },
-        secondaryButton: {
+        }),
+        secondaryButton: Object.freeze({
             backgroundColor: COLOURS.WHITE,
             color: COLOURS.NEAR_BLACK,
             fontWeight: '900',
@@ -165,9 +161,10 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
             right: '20px',
             top: '50%',
             transform: 'translateY(-50%)',
-        },
-    };
+        }),
+    });
 
+function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
     if (fetchingSessionSignIn) {
         return (
             <AppGrid title="Contribute">
@@ -196,27 +193,36 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
 
     return (
         <div className={classes.container}>
-            <Typography variant="display3" style={styles.title}>
+            <Typography variant="display3" className={classes.title}>
                 Add production location data to OS Hub
             </Typography>
-            <Typography variant="subheading" style={styles.description}>
+            <Typography variant="subheading" className={classes.description}>
                 Contribute your data here to help build the world’s most
                 complete, open and accessible map of global production:
             </Typography>
-            <div style={styles.dataOptions}>
+            <div className={classes.dataOptions}>
                 {/* Multiple Locations */}
-                <Paper style={styles.card}>
-                    <div style={styles.cardRectangleView}>
+                <Paper className={classes.card}>
+                    <div className={classes.cardRectangleView}>
                         <RectangleCardFigure />
                     </div>
                     <div>
-                        <PlaylistIcon style={styles.cardIcon} />
-                        <Typography variant="display" style={styles.cardTitle}>
+                        <PlaylistIcon className={classes.cardIcon} />
+                        <Typography
+                            variant="display"
+                            className={classes.cardTitle}
+                        >
                             Upload a dataset with multiple production locations
                             using a{' '}
-                            <span style={styles.highlight}>spreadsheet</span>.
+                            <span className={classes.highlight}>
+                                spreadsheet
+                            </span>
+                            .
                         </Typography>
-                        <Typography variant="subheading" style={styles.cardSub}>
+                        <Typography
+                            variant="subheading"
+                            className={classes.cardSub}
+                        >
                             This option is best if you have a large number of
                             production locations to contribute.
                         </Typography>
@@ -224,42 +230,42 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                             color="secondary"
                             variant="text"
                             component={Link}
-                            className={classes.buttonStyles}
+                            className={classes.buttonStyle}
                             to="/contribute/multiple-locations"
                         >
                             Upload Multiple Locations
                         </Button>
                         {/* Messy Data Section */}
-                        <div style={styles.messyData}>
+                        <div className={classes.messyData}>
                             {/* Icon on the left */}
-                            <MessyIcon style={styles.messyIcon} />
+                            <MessyIcon className={classes.messyIcon} />
                             {/* Text content */}
-                            <div style={styles.messyContent}>
+                            <div className={classes.messyContent}>
                                 <Typography
                                     variant="display1"
-                                    style={styles.messyTitle}
+                                    className={classes.messyTitle}
                                 >
                                     Have messy data?
                                 </Typography>
                                 <Typography
                                     variant="subheading"
-                                    style={styles.messySub}
+                                    className={classes.messySub}
                                 >
                                     We can get it ready for you. All you need to
                                     do is upload your data and we’ll take care
                                     of the rest.
                                 </Typography>
                             </div>
-                            <div style={styles.cardSliceDuoView}>
+                            <div className={classes.cardSliceDuoView}>
                                 <SliceMessyDuoFigure />
                             </div>
-                            <div style={styles.cardSliceView}>
+                            <div className={classes.cardSliceView}>
                                 <SliceMessyFigure />
                             </div>
                             {/* Button on the right */}
                             <button
                                 type="button"
-                                style={styles.secondaryButton}
+                                className={classes.secondaryButton}
                                 onClick={() =>
                                     openInNewTab(
                                         `${InfoLink}/${InfoPaths.contribute}`,
@@ -272,17 +278,23 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                     </div>
                 </Paper>
                 {/* Single Location */}
-                <Paper style={styles.card}>
+                <Paper className={classes.card}>
                     <div>
-                        <PinDropIcon style={styles.cardIcon} />
-                        <Typography variant="display" style={styles.cardTitle}>
+                        <PinDropIcon className={classes.cardIcon} />
+                        <Typography
+                            variant="display"
+                            className={classes.cardTitle}
+                        >
                             Add data for a
                             <br />
-                            <span style={styles.highlight}>
+                            <span className={classes.highlight}>
                                 single production location.
                             </span>
                         </Typography>
-                        <Typography variant="subheading" style={styles.cardSub}>
+                        <Typography
+                            variant="subheading"
+                            className={classes.cardSub}
+                        >
                             This option is best if you want to register your
                             production location or contribute data for one
                             production location at a time.
@@ -290,13 +302,13 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                         <Button
                             color="secondary"
                             variant="text"
-                            className={classes.buttonStyles}
+                            className={classes.buttonStyle}
                             disabled="true"
                         >
                             Add a Single Location
                         </Button>
                     </div>
-                    <div style={styles.cardSliceView}>
+                    <div className={classes.cardSliceView}>
                         <SliceCardFigure />
                     </div>
                 </Paper>
