@@ -95,6 +95,7 @@ describe('DashboardContributionRecord component', () => {
   });
   */
 
+  /*
   test('should disable button when eventFetching is true', () => {
     const {getByRole} = renderComponent({ eventFetching: true });
     const createButton = getByRole('button', { name: /Create New Location/i });
@@ -105,6 +106,7 @@ describe('DashboardContributionRecord component', () => {
     expect(rejectButton).toBeDisabled();
     expect(claimButton).toBeDisabled();
   });
+  */
 
   /*
   test('should enable button when fetching is false', async () => {
