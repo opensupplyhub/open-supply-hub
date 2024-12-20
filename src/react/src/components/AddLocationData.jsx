@@ -201,7 +201,6 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                 complete, open and accessible map of global production:
             </Typography>
             <div className={classes.dataOptions}>
-                {/* Multiple Locations */}
                 <Paper className={classes.card}>
                     <div className={classes.cardRectangleView}>
                         <RectangleCardFigure />
@@ -235,11 +234,8 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                         >
                             Upload Multiple Locations
                         </Button>
-                        {/* Messy Data Section */}
                         <div className={classes.messyData}>
-                            {/* Icon on the left */}
                             <MessyIcon className={classes.messyIcon} />
-                            {/* Text content */}
                             <div className={classes.messyContent}>
                                 <Typography
                                     variant="display1"
@@ -262,7 +258,6 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                             <div className={classes.cardSliceView}>
                                 <SliceMessyFigure />
                             </div>
-                            {/* Button on the right */}
                             <button
                                 type="button"
                                 className={classes.secondaryButton}
@@ -277,7 +272,6 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                         </div>
                     </div>
                 </Paper>
-                {/* Single Location */}
                 <Paper className={classes.card}>
                     <div>
                         <PinDropIcon className={classes.cardIcon} />
