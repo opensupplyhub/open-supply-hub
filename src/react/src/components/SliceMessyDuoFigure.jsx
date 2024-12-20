@@ -3,7 +3,7 @@ import SvgIcon from '@material-ui/core/SvgIcon';
 
 export default function SliceMessyDuoFigure() {
     return (
-        <SvgIcon viewBox="0 0 102 38" style={{ width: '102', height: '38' }}>
+        <SvgIcon viewBox="0 0 102 38" style={{ width: 102, height: 38 }}>
             <path
                 d="M0 -23C0 -6.82336 6.10992 8.69206 16.9882 20.1331C27.8666 31.574 42.6189 38 58 38V-23H0Z"
                 fill="#4E6FFF"

@@ -3,7 +3,7 @@ import SvgIcon from '@material-ui/core/SvgIcon';
 
 export default function SliceCardFigure() {
     return (
-        <SvgIcon viewBox="0 0 157 92" style={{ width: '157', height: '92' }}>
+        <SvgIcon viewBox="0 0 157 92" style={{ width: 157, height: 92 }}>
             <path
                 d="M0 92C0 67.6024 9.37557 44.2021 26.0682 26.9469C42.7608 9.6916 65.398 0 89 0V92H0Z"
                 fill="#62CC74"
