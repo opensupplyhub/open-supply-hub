@@ -9,37 +9,37 @@ const isEqual = require('lodash/isEqual');
 
 describe('DashboardModerationQueueListTable component', () => {
     const sampleModerationEventsWithoutStatusChangeDate =[        {
-        moderation_id: 11,
-        created_at: '2024-10-17T11:30:20.287Z',
+        moderation_id: 188,
+        created_at: '2023-09-16T11:32:20.297Z',
         cleaned_data: {
-            name: 'Eco Friendly Plastics',
+            name: 'Plastic Test Eco',
             country: {
-                name: 'Germany',
-                alpha_2: 'DE',
-                alpha_3: 'DEU',
-                numeric: '276',
+                name: 'Greece',
+                alpha_2: 'GR',
+                alpha_3: 'GRC',
+                numeric: '300',
             }
         },
         contributor_name: 'Green Solutions Corp',
         status: 'PENDING',
-        updated_at: '2024-10-18T11:30:20.287Z',
+        updated_at: '2024-10-17T11:31:20.287Z',
         source: 'SLC',
     },
     {
-        moderation_id: 12,
-        created_at: '2024-10-10T12:45:30.297Z',
+        moderation_id: 189,
+        created_at: '2023-08-09T12:44:18.297Z',
         cleaned_data: {
-            name: 'Solar Energy Systems Ltd',
+            name: 'Winds Systems Energy Ltd',
             country: {
-                name: 'France',
-                alpha_2: 'FR',
-                alpha_3: 'FRA',
-                numeric: '250',
+                name: 'Greenland',
+                alpha_2: 'GL',
+                alpha_3: 'GRL',
+                numeric: '304',
             }
         },
-        contributor_name: 'Renewable Resources Inc',
+        contributor_name: 'New Resources Corp',
         status: 'PENDING',
-        updated_at: '2024-10-13T12:45:30.297Z',
+        updated_at: '2023-11-12T12:46:30.297Z',
         source: 'API',
     },];
     const sampleModerationEvents = [
