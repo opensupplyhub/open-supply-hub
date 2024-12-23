@@ -6,8 +6,6 @@ import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import { EMPTY_PLACEHOLDER, DATE_FORMATS } from '../../util/constants';
 import { formatUTCDate } from '../../util/util';
 
-const isEqual = require('lodash/isEqual');
-
 describe('DashboardModerationQueueListTable component', () => {
     const sampleModerationEventsWithoutStatusChangeDate =[        {
         moderation_id: 188,
