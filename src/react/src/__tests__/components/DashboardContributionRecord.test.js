@@ -84,29 +84,29 @@ describe('DashboardContributionRecord component', () => {
     },
   };
 
-  const renderComponent = (stateOverrides = {}) => {
-   return renderWithProviders(
+  const renderComponent = (stateOverrides = {}) => (
+    renderWithProviders(
       <Router>
         <DashboardContributionRecord {...routeProps} />
       </Router>,
-        {
-          preloadedState: {
-            ...preloadedState,
-            dashboardContributionRecord: {
-              ...preloadedState.dashboardContributionRecord,
-              singleModerationEvent: {
-                ...preloadedState.dashboardContributionRecord.singleModerationEvent,
-                ...stateOverrides.dashboardContributionRecord?.singleModerationEvent,
-              },
-              potentialMatches: {
-                ...preloadedState.dashboardContributionRecord.potentialMatches,
-                ...stateOverrides.dashboardContributionRecord?.potentialMatches,
-              },
+      {
+        preloadedState: {
+          ...preloadedState,
+          dashboardContributionRecord: {
+            ...preloadedState.dashboardContributionRecord,
+            singleModerationEvent: {
+              ...preloadedState.dashboardContributionRecord.singleModerationEvent,
+              ...stateOverrides.dashboardContributionRecord?.singleModerationEvent,
+            },
+            potentialMatches: {
+              ...preloadedState.dashboardContributionRecord.potentialMatches,
+              ...stateOverrides.dashboardContributionRecord?.potentialMatches,
             },
           },
-        }
-    );
-  }
+        },
+      }
+    )
+  )
 
   beforeEach(() => {
     jest.clearAllMocks();
