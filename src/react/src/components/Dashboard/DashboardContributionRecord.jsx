@@ -173,7 +173,7 @@ const DashboardContributionRecord = ({
     const moderationEventStatus = singleModerationEventItem.status || '';
     const jsonResults = JSON.stringify(singleModerationEventItem, null, 2);
     const potentialMatchCount = matches.length || 0;
-    // TODO: automatic write claim into moderation-events table to be done in Q1
+    // OSDEV-1445: automatic write claim into moderation-events table to be done in Q1
     const hasClaimID = singleModerationEventItem.claim_id;
     const isDisabled =
         moderationEventStatus === MODERATION_STATUSES_ENUM.REJECTED ||
@@ -440,10 +440,14 @@ DashboardContributionRecord.defaultProps = {
 };
 
 DashboardContributionRecord.propTypes = {
+    push: func.isRequired,
     singleModerationEventItem: moderationEventsListItemPropType,
     matches: potentialMatchesPropType,
     moderationEventFetching: bool.isRequired,
     fetchModerationEvent: func.isRequired,
+    updateModerationEvent: func.isRequired,
+    createProductionLocation: func.isRequired,
+    confirmPotentialMatch: func.isRequired,
     fetchMatches: func.isRequired,
     classes: object.isRequired,
     fetchModerationEventError: string,
