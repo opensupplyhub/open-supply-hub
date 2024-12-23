@@ -557,14 +557,6 @@ describe('DashboardModerationQueueListTable component', () => {
     test('if no status_change_date displays N/A', () => {
         const { getAllByText } = renderComponent({ events: sampleModerationEventsWithoutStatusChangeDate, count: 2});
 
-        sampleModerationEventsWithoutStatusChangeDate.forEach(event => {
-            expect(event.status_change_date).toBeUndefined();
-            const decisionDate = event.status_change_date
-            ? formatUTCDate(event.status_change_date, DATE_FORMATS.LONG)
-            : EMPTY_PLACEHOLDER;
-
-            expect(isEqual(decisionDate, EMPTY_PLACEHOLDER)).toBe(true);
-        });
         const elements = getAllByText(EMPTY_PLACEHOLDER);
         expect(elements).toHaveLength(2);
     });
