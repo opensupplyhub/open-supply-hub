@@ -502,7 +502,7 @@ describe('DashboardModerationQueueListTable component', () => {
     });
 
     test('renders event data in rows', () => {
-        const { getByText } = renderComponent({ events: sampleModerationEvents, count: 2 });
+        const { getByText } = renderComponent({ moderationEventsList: sampleModerationEvents, count: 2 });
 
         sampleModerationEvents.forEach(event => {
             expect(getByText(event.cleaned_data.name)).toBeInTheDocument();
