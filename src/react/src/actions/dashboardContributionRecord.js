@@ -70,7 +70,6 @@ export const failConfirmPotentialMatchFromModerationEvent = createAction(
 );
 
 export function fetchSingleModerationEvent(moderationID) {
-    console.log('### moderationID is: ', moderationID);
     return async dispatch => {
         if (!moderationID) {
             return null;
