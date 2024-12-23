@@ -5,8 +5,43 @@ import DashboardModerationQueueListTable from '../../components/Dashboard/Dashbo
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import { EMPTY_PLACEHOLDER, DATE_FORMATS } from '../../util/constants';
 import { formatUTCDate } from '../../util/util';
+const isEqual = require('lodash/isEqual');
 
 describe('DashboardModerationQueueListTable component', () => {
+    const sampleModerationEventsWithoutStatusChangeDate =[        {
+        moderation_id: 11,
+        created_at: '2024-10-17T11:30:20.287Z',
+        cleaned_data: {
+            name: 'Eco Friendly Plastics',
+            country: {
+                name: 'Germany',
+                alpha_2: 'DE',
+                alpha_3: 'DEU',
+                numeric: '276',
+            }
+        },
+        contributor_name: 'Green Solutions Corp',
+        status: 'PENDING',
+        updated_at: '2024-10-18T11:30:20.287Z',
+        source: 'SLC',
+    },
+    {
+        moderation_id: 12,
+        created_at: '2024-10-10T12:45:30.297Z',
+        cleaned_data: {
+            name: 'Solar Energy Systems Ltd',
+            country: {
+                name: 'France',
+                alpha_2: 'FR',
+                alpha_3: 'FRA',
+                numeric: '250',
+            }
+        },
+        contributor_name: 'Renewable Resources Inc',
+        status: 'PENDING',
+        updated_at: '2024-10-13T12:45:30.297Z',
+        source: 'API',
+    },];
     const sampleModerationEvents = [
         {
             moderation_id: 11,
@@ -22,7 +57,6 @@ describe('DashboardModerationQueueListTable component', () => {
             },
             contributor_name: 'Green Solutions Corp',
             status: 'PENDING',
-            status_change_date: null,
             updated_at: '2024-10-18T11:30:20.287Z',
             source: 'SLC',
         },
@@ -45,7 +79,7 @@ describe('DashboardModerationQueueListTable component', () => {
             source: 'API',
         },
     ];
-    
+
     const paginatedModerationEvents = [
         ...sampleModerationEvents,
         {
@@ -519,12 +553,27 @@ describe('DashboardModerationQueueListTable component', () => {
         });
     });
 
+    test('if no status_change_date displays N/A', () => {
+        const { getAllByText } = renderComponent({ events: sampleModerationEventsWithoutStatusChangeDate, count: 2});
+
+        sampleModerationEventsWithoutStatusChangeDate.forEach(event => {
+            expect(event.status_change_date).toBeUndefined();
+            const decisionDate = event.status_change_date
+            ? formatUTCDate(event.status_change_date, DATE_FORMATS.LONG)
+            : EMPTY_PLACEHOLDER;
+
+            expect(isEqual(decisionDate, EMPTY_PLACEHOLDER)).toBe(true);
+        });
+        const elements = getAllByText(EMPTY_PLACEHOLDER);
+        expect(elements).toHaveLength(2);
+    });
+
     test('handles rows per page change', () => {
         const { getByText, rerender } = renderComponent({ events: paginatedModerationEvents, count: 26 });
 
         expect(getByText(/1-25 of 26/)).toBeInTheDocument();
         expect(getByText(/rows per page/i)).toBeInTheDocument();
-        
+
         fireEvent.click(getByText('25'));
         fireEvent.click(getByText('50'));
 
