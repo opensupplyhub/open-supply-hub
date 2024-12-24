@@ -2,9 +2,10 @@ import React from 'react';
 import { string, object, func, arrayOf } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
-import PreviousOsIdTooltip from './PreviousOsIdTooltip';
+// import PreviousOsIdTooltip from './PreviousOsIdTooltip';
 import SearchByOsIdResultActions from './SearchByOsIdResultActions';
 import { makeSearchByOsIdResultStyles } from '../../util/styles';
+import ProductionLocationDetails from './ProductionLocationDetails';
 
 const SearchByOsIdSuccessResult = ({
     name,
@@ -14,16 +15,19 @@ const SearchByOsIdSuccessResult = ({
     countryName,
     handleBackToSearchByNameAddress,
     classes,
-}) => {
-    const historicalOsIdsNotEmpty =
-        Array.isArray(historicalOsIds) && historicalOsIds.length > 0;
-
-    return (
-        <>
-            <Typography component="h2" className={classes.resultTitleStyles}>
-                Is this your production location?
-            </Typography>
-            <div className={classes.locationDetailsStyles}>
+}) => (
+    <>
+        <Typography component="h2" className={classes.resultTitleStyles}>
+            Is this your production location?
+        </Typography>
+        <ProductionLocationDetails
+            osId={osId}
+            name={name}
+            address={address}
+            countryName={countryName}
+            historicalOsIds={historicalOsIds}
+        />
+        {/* <div className={classes.locationDetailsStyles}>
                 <Typography
                     component="h3"
                     className={classes.locationNameStyles}
@@ -55,16 +59,15 @@ const SearchByOsIdSuccessResult = ({
                         {countryName}
                     </Typography>
                 </div>
-            </div>
-            <SearchByOsIdResultActions
-                defaultButtonLabel="No, search by name and address"
-                defaultButtonAction={handleBackToSearchByNameAddress}
-                secondaryButtonLabel="Yes, add data and claim"
-                secondaryButtonAction={() => {}}
-            />
-        </>
-    );
-};
+            </div> */}
+        <SearchByOsIdResultActions
+            defaultButtonLabel="No, search by name and address"
+            defaultButtonAction={handleBackToSearchByNameAddress}
+            secondaryButtonLabel="Yes, add data and claim"
+            secondaryButtonAction={() => {}}
+        />
+    </>
+);
 
 SearchByOsIdSuccessResult.defaultProps = {
     historicalOsIds: [],
