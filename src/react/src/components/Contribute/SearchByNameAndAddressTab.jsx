@@ -57,7 +57,6 @@ const SearchByNameAndAddressTab = ({
     };
 
     const handleSearch = () => {
-        // const baseUrl = '/contribute/production-location/search/';
         const baseUrl = productionLocationInfoRoute;
         const params = new URLSearchParams({
             name: inputName,

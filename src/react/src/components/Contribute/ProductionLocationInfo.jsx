@@ -7,8 +7,9 @@ import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
+import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
+import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
 import StyledSelect from '../Filters/StyledSelect';
-import CustomDropdownIndicator from '../../components/Filters/CustomReactSelectComponents/CustomDropdownIndicator';
 import { productionLocationInfoStyles } from '../../util/styles';
 import {
     countryOptionsPropType,
@@ -70,7 +71,12 @@ const ProductionLocationInfo = ({
             height: '56px',
         }),
     };
-    const validate = val => val.length > 0;
+    const validate = val => {
+        if (val) {
+            return val.length > 0;
+        }
+        return false;
+    };
     const toggleExpand = () => {
         setIsExpanded(!isExpanded);
     };
@@ -84,14 +90,6 @@ const ProductionLocationInfo = ({
     };
     const handleCountryChange = event =>
         setInputCountry(event || defaultCountryOption);
-
-    const handleSectorChange = event => setSector(event);
-    const handleProductType = event => setProductType(event);
-    const handleProcessingType = event => setProcessingType(event);
-    const handleLocationType = event => setLocationType(event);
-    const handleParentCompany = event => setParentCompany(event);
-
-    const handleNumberOfWorkers = event => setNumberOfWorkers(event);
 
     useEffect(() => {
         if (!countriesOptions) {
@@ -236,8 +234,8 @@ const ProductionLocationInfo = ({
                         options={countriesOptions || []}
                         value={inputCountry}
                         onChange={handleCountryChange}
-                        className={`basic-multi-select notranslate ${classes.selectStyles}`}
                         styles={selectStyles}
+                        className={classes.selectStyles}
                         placeholder="Country"
                         isMulti={false}
                     />
@@ -258,7 +256,11 @@ const ProductionLocationInfo = ({
                         >
                             Additional information
                         </Typography>
-                        <CustomDropdownIndicator arrowDown={!isExpanded} />
+                        {isExpanded ? (
+                            <ArrowDropUpIcon />
+                        ) : (
+                            <ArrowDropDownIcon />
+                        )}
                     </div>
                     <Typography
                         component="h4"
@@ -288,16 +290,15 @@ const ProductionLocationInfo = ({
                                     id="sector"
                                     name="sector"
                                     aria-label="Select sector"
-                                    label={null}
                                     options={
                                         mapDjangoChoiceTuplesToSelectOptions(
                                             mockedSectors,
                                         ) || []
                                     }
                                     value={sector}
-                                    onChange={handleSectorChange}
-                                    className={`basic-multi-select notranslate ${classes.selectStyles}`}
+                                    onChange={setSector}
                                     styles={selectStyles}
+                                    className={classes.selectStyles}
                                     placeholder="Select"
                                     isMulti={!false}
                                 />
@@ -319,14 +320,13 @@ const ProductionLocationInfo = ({
                                 </Typography>
                                 <StyledSelect
                                     creatable
-                                    label={null}
                                     name="Product Type"
                                     value={productType}
-                                    onChange={handleProductType}
+                                    onChange={setProductType}
                                     placeholder="Enter product type(s)"
                                     aria-label="Enter product type(s)"
-                                    className={`basic-multi-select notranslate ${classes.selectStyles}`}
                                     styles={selectStyles}
+                                    className={classes.selectStyles}
                                 />
                             </div>
                             <div className={classes.inputSectionWrapStyles}>
@@ -349,15 +349,14 @@ const ProductionLocationInfo = ({
                                     id="location_type"
                                     name="Location type"
                                     aria-label="Location type"
-                                    label={null}
                                     options={mapFacilityTypeOptions(
                                         facilityProcessingTypeOptions || [],
                                         processingType || [],
                                     )}
                                     value={locationType}
-                                    onChange={handleLocationType}
-                                    className={`basic-multi-select notranslate ${classes.selectStyles}`}
+                                    onChange={setLocationType}
                                     styles={selectStyles}
+                                    className={classes.selectStyles}
                                     placeholder="Select"
                                 />
                             </div>
@@ -380,15 +379,14 @@ const ProductionLocationInfo = ({
                                     id="processing_type"
                                     name="Processing Type"
                                     aria-label="Processing Type"
-                                    label={null}
                                     options={mapProcessingTypeOptions(
                                         facilityProcessingTypeOptions || [],
                                         locationType || [],
                                     )}
                                     value={processingType}
-                                    onChange={handleProcessingType}
-                                    className={`basic-multi-select notranslate ${classes.selectStyles}`}
+                                    onChange={setProcessingType}
                                     styles={selectStyles}
+                                    className={classes.selectStyles}
                                 />
                             </div>
                             <div className={classes.inputSectionWrapStyles}>
@@ -408,16 +406,15 @@ const ProductionLocationInfo = ({
                                 </Typography>
                                 <StyledSelect
                                     id="number_of_workers"
-                                    label={null}
                                     name="Number of Workers"
                                     options={numberOfWorkersOptions || []}
                                     value={numberOfWorkers}
-                                    onChange={handleNumberOfWorkers}
+                                    onChange={setNumberOfWorkers}
                                     placeholder="Enter the number of workers as a number or range"
                                     aria-label="Number of workers"
                                     isMulti={false}
-                                    className={`basic-multi-select notranslate ${classes.selectStyles}`}
                                     styles={selectStyles}
+                                    className={classes.selectStyles}
                                 />
                             </div>
                             <div className={classes.inputSectionWrapStyles}>
@@ -439,11 +436,11 @@ const ProductionLocationInfo = ({
                                     label={null}
                                     name="Parent company"
                                     value={parentCompany}
-                                    onChange={handleParentCompany}
+                                    onChange={setParentCompany}
                                     placeholder="Select"
                                     aria-label="Parent company"
-                                    className={`basic-multi-select notranslate ${classes.selectStyles}`}
                                     styles={selectStyles}
+                                    className={classes.selectStyles}
                                 />
                             </div>
                         </>
