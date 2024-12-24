@@ -1,10 +1,8 @@
 import requests
 import uuid
-import unittest
 from datetime import datetime
 from ..base_api_test \
     import BaseAPITest
-
 class ModerationEventRecordTest(BaseAPITest):
     def setUp(self):
         super().setUp()
@@ -48,19 +46,17 @@ class ModerationEventRecordTest(BaseAPITest):
         result = response.json()
         self.assertEqual(result['moderation_id'], moderation_id)
 
-    # 1. Creates a new moderation event for the production location creation with the given details. ( POST /v1/production-locations/ )
-    def test_moderation_events_default_output(self):
+    def test_moderation_events_confirmation(self):
+        # 1. Creates a new moderation event for the production location creation with the given details. ( POST /v1/production-locations/ )
         response = requests.post(
             f"{self.root_url}/api/v1/production-locations/",
             headers=self.basic_headers,
             json=self.new_moderation_event,
         )
-
         result = response.json()
         print(f'@@@ Result of created moderation event {result}')
 
         self.assertEqual(len(result), 3, "Response JSON does not have exactly 3 items.")
-
         expected_keys = {'moderation_id', 'moderation_status', 'created_at'}
         self.assertEqual(set(result.keys()), expected_keys, "Response JSON keys do not match expected keys.")
 
@@ -77,12 +73,10 @@ class ModerationEventRecordTest(BaseAPITest):
         except ValueError:
             self.fail("created_at is not a valid ISO 8601 date.")
 
-        # Write moderation event id for the further testing
         self.moderation_event_id = result['moderation_id']
-        print(f'[Contribution Record id:] {self.moderation_event_id}')
+        print(f'[Contribution Record; moderation id:] {self.moderation_event_id}')
 
-    # 2. Creates a multiple moderation events that will act as potential matches. ( POST /v1/production-locations/ )
-    def test_moderation_events_default_output(self):
+        # 2. Creates a multiple moderation events that will act as potential matches. ( POST /v1/production-locations/ )
         HTTP_202_ACCEPTED = 202
         for i in range(5):
             with self.subTest(i=i):  # Subtest for better diagnostics
@@ -94,8 +88,7 @@ class ModerationEventRecordTest(BaseAPITest):
 
                 self.assertEqual(response.status_code, HTTP_202_ACCEPTED, f"Unexpected status code: {response.status_code}")
 
-    # 3. Show potential matches for moderation event that has been created first ( GET /v1/production-locations/?name={name}&country={county_alpha_2_code}&address={address}/ )
-    def test_potential_matches_for_moderation_event(self):
+        # 3. Show potential matches for moderation event that has been created first ( GET /v1/production-locations/?name={name}&country={county_alpha_2_code}&address={address}/ )
         response = requests.get(
             f"{self.root_url}/api/v1/production-locations/?name={self.name}&country={self.county_alpha_2_code}&address={self.address}/",
             headers=self.basic_headers,
@@ -104,15 +97,13 @@ class ModerationEventRecordTest(BaseAPITest):
         result = response.json()
         self.assertGreater(len(result['data']), 1)
         self.potential_match_os_id = result['data'][0]['os_id']
-        print(f'[Contribution Record first potential match OS ID:] {self.potential_match_os_id}')
+        print(f'[Contribution Record; first potential match OS ID:] {self.potential_match_os_id}')
 
-    # 4. Confirm potential match ( PATCH /v1/moderation-events/{moderation_id}/production-locations/{os_id}/ )
-    def test_confirm_potential_matches_from_moderation_event(self):
+        # 4. Confirm potential match ( PATCH /v1/moderation-events/{moderation_id}/production-locations/{os_id}/ )
         self.assertIsNotNone(self.moderation_event_id, "moderation_event_id is not set. Ensure the moderation event is created first.")
         self.assertIsNotNone(self.potential_match_os_id, "potential_match_os_id is not set. Ensure that potential match OS ID is available.")
 
         HTTP_200_OK = 200
-        print(f'self.moderation_event_id: {self.moderation_event_id}')
         response = requests.patch(
             f"{self.root_url}/api/v1/moderation-events/{self.moderation_event_id}/production-locations/{self.potential_match_os_id}/",
             headers=self.basic_headers,
@@ -123,10 +114,3 @@ class ModerationEventRecordTest(BaseAPITest):
         self.assertEqual(response.status_code, HTTP_200_OK, f"Unexpected status code: {response.status_code}")
         expected_keys = {'os_id'}
         self.assertEqual(set(result.keys()), expected_keys, "Response JSON keys do not match expected keys.")
-
-# Running the tests sequentially
-if __name__ == '__main__':
-    suite = unittest.TestSuite()
-    suite.addTest(ModerationEventRecordTest('test_moderation_events_default_output'))
-    suite.addTest(ModerationEventRecordTest('test_confirm_potential_matches_from_moderation_event'))
-    unittest.TextTestRunner().run(suite)
