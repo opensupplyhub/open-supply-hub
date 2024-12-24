@@ -2,7 +2,6 @@ import React from 'react';
 import { string, object, func, arrayOf } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
-// import PreviousOsIdTooltip from './PreviousOsIdTooltip';
 import SearchByOsIdResultActions from './SearchByOsIdResultActions';
 import { makeSearchByOsIdResultStyles } from '../../util/styles';
 import ProductionLocationDetails from './ProductionLocationDetails';
@@ -27,39 +26,6 @@ const SearchByOsIdSuccessResult = ({
             countryName={countryName}
             historicalOsIds={historicalOsIds}
         />
-        {/* <div className={classes.locationDetailsStyles}>
-                <Typography
-                    component="h3"
-                    className={classes.locationNameStyles}
-                >
-                    {name}
-                </Typography>
-                <Typography
-                    component="h6"
-                    className={classes.locationCurrentOsIdStyles}
-                >
-                    {historicalOsIdsNotEmpty ? 'Current OS ID:' : 'OS ID:'}{' '}
-                    {osId}
-                </Typography>
-                {historicalOsIdsNotEmpty &&
-                    historicalOsIds.map(historicalOsId => (
-                        <Typography
-                            key={historicalOsId}
-                            className={classes.locationHistoricalOsIdStyles}
-                        >
-                            Previous OS ID: {historicalOsId}{' '}
-                            <PreviousOsIdTooltip />
-                        </Typography>
-                    ))}
-                <div className={classes.locationAddressContainerStyles}>
-                    <Typography className={classes.locationAddressStyles}>
-                        {address}
-                    </Typography>
-                    <Typography className={classes.locationAddressStyles}>
-                        {countryName}
-                    </Typography>
-                </div>
-            </div> */}
         <SearchByOsIdResultActions
             defaultButtonLabel="No, search by name and address"
             defaultButtonAction={handleBackToSearchByNameAddress}
