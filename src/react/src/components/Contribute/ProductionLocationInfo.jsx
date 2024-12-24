@@ -242,25 +242,27 @@ const ProductionLocationInfo = ({
                 </div>
                 <hr className={classes.separator} />
                 <div className={classes.inputSectionWrapStyles}>
-                    <div
-                        className={classes.rowContainerStyles}
-                        onClick={toggleExpand}
-                        onKeyDown={toggleExpand}
-                        role="button"
-                        styling="link"
-                        tabIndex={0}
-                    >
+                    <div className={classes.rowContainerStyles}>
                         <Typography
                             component="h2"
                             className={`${classes.titleStyles} ${classes.marginRight}`}
                         >
                             Additional information
                         </Typography>
-                        {isExpanded ? (
-                            <ArrowDropUpIcon />
-                        ) : (
-                            <ArrowDropDownIcon />
-                        )}
+                        <div
+                            className="cursor"
+                            onClick={toggleExpand}
+                            onKeyDown={toggleExpand}
+                            role="button"
+                            styling="link"
+                            tabIndex={0}
+                        >
+                            {isExpanded ? (
+                                <ArrowDropUpIcon />
+                            ) : (
+                                <ArrowDropDownIcon />
+                            )}
+                        </div>
                     </div>
                     <Typography
                         component="h4"
