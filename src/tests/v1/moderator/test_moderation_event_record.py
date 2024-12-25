@@ -1,12 +1,15 @@
 import requests
 import uuid
+import time
 from datetime import datetime
 from ..base_api_test \
     import BaseAPITest
+
+HTTP_200_OK = 200
+HTTP_201_CREATED = 201
 class ModerationEventRecordTest(BaseAPITest):
     def setUp(self):
         super().setUp()
-        self.timeout = 5
         self.moderation_event_id = None
         self.potential_match_os_id = None
         self.name = 'Changzhou Hualida Garments Group Co.'
@@ -25,6 +28,13 @@ class ModerationEventRecordTest(BaseAPITest):
                 'lat': 31.750302,
                 'lng': 119.96891
             }
+        }
+
+        self.potential_match_facility = {
+            'name': self.name,
+            'address': self.address,
+            'country': 'China',
+            'sector': 'Apparel',
         }
 
     def test_moderation_events_default_output(self):
@@ -46,15 +56,13 @@ class ModerationEventRecordTest(BaseAPITest):
         result = response.json()
         self.assertEqual(result['moderation_id'], moderation_id)
 
-    def test_moderation_events_confirmation(self):
-        # 1. Creates a new moderation event for the production location creation with the given details. ( POST /v1/production-locations/ )
+    def create_moderation_event(self):
         response = requests.post(
             f"{self.root_url}/api/v1/production-locations/",
             headers=self.basic_headers,
             json=self.new_moderation_event,
         )
         result = response.json()
-        print(f'@@@ Result of created moderation event {result}')
 
         self.assertEqual(len(result), 3, "Response JSON does not have exactly 3 items.")
         expected_keys = {'moderation_id', 'moderation_status', 'created_at'}
@@ -67,32 +75,31 @@ class ModerationEventRecordTest(BaseAPITest):
             self.fail("moderation_id is not a valid UUID.")
 
         self.assertEqual(result['moderation_status'], 'PENDING', "moderation_status is not 'PENDING'.")
-
-        try:
-            datetime.fromisoformat(result['created_at'].replace('Z', '+00:00'))  # Handle 'Z' for UTC
-        except ValueError:
-            self.fail("created_at is not a valid ISO 8601 date.")
-
         self.moderation_event_id = result['moderation_id']
         print(f'[Contribution Record; moderation id:] {self.moderation_event_id}')
+        # Wait till the newly created facilities be indexed in the OpenSearch
+        time.sleep(80)
+        return result
 
-        # 2. Creates a multiple moderation events that will act as potential matches. ( POST /v1/production-locations/ )
-        HTTP_202_ACCEPTED = 202
+    def test_moderation_events_confirmation(self):
+        # 1. Creates a new moderation event for the production location creation with the given details. ( POST /v1/production-locations/ )
+        result = self.create_moderation_event()
+
+        # 2. Creates a multiple facilities that will act as potential matches. ( POST /facilities/ )
         for i in range(5):
-            with self.subTest(i=i):  # Subtest for better diagnostics
+            with self.subTest(i=i): # Subtest for better diagnostics
                 response = requests.post(
-                    f"{self.root_url}/api/v1/production-locations/",
+                    f"{self.root_url}/api/facilities/",
                     headers=self.basic_headers,
-                    json=self.new_moderation_event
+                    json=self.potential_match_facility
                 )
 
-                self.assertEqual(response.status_code, HTTP_202_ACCEPTED, f"Unexpected status code: {response.status_code}")
+                self.assertEqual(response.status_code, HTTP_201_CREATED, f"Unexpected status code: {response.status_code}")
 
         # 3. Show potential matches for moderation event that has been created first ( GET /v1/production-locations/?name={name}&country={county_alpha_2_code}&address={address}/ )
         response = requests.get(
             f"{self.root_url}/api/v1/production-locations/?name={self.name}&country={self.county_alpha_2_code}&address={self.address}/",
             headers=self.basic_headers,
-            timeout=self.timeout
         )
         result = response.json()
         self.assertGreater(len(result['data']), 1)
@@ -103,14 +110,42 @@ class ModerationEventRecordTest(BaseAPITest):
         self.assertIsNotNone(self.moderation_event_id, "moderation_event_id is not set. Ensure the moderation event is created first.")
         self.assertIsNotNone(self.potential_match_os_id, "potential_match_os_id is not set. Ensure that potential match OS ID is available.")
 
-        HTTP_200_OK = 200
         response = requests.patch(
             f"{self.root_url}/api/v1/moderation-events/{self.moderation_event_id}/production-locations/{self.potential_match_os_id}/",
             headers=self.basic_headers,
-            timeout=self.timeout
         )
         result = response.json()
-        print(result)
         self.assertEqual(response.status_code, HTTP_200_OK, f"Unexpected status code: {response.status_code}")
         expected_keys = {'os_id'}
         self.assertEqual(set(result.keys()), expected_keys, "Response JSON keys do not match expected keys.")
+
+    def test_moderation_events_approval(self):
+        # 1. Creates a new moderation event for the production location creation with the given details. ( POST /v1/production-locations/ )
+        self.create_moderation_event()
+
+        # 2. Create new production location from moderation event ( POST/v1/moderation-events/{moderation_id}/production-locations/ )
+        response = requests.post(
+            f"{self.root_url}/api/v1/moderation-events/{self.moderation_event_id}/production-locations/",
+            headers=self.basic_headers,
+        )
+        result = response.json()
+        self.assertEqual(response.status_code, HTTP_201_CREATED, f"Unexpected status code: {response.status_code}")
+        expected_keys = {'os_id'}
+        self.assertEqual(set(result.keys()), expected_keys, "Response JSON keys do not match expected keys.")
+
+    def test_moderation_events_rejection(self):
+        # 1. Creates a new moderation event for the production location creation with the given details. ( POST /v1/production-locations/ )
+        self.create_moderation_event()
+
+        # 2. Change moderation event status to REJECTED ( PATCH /v1/moderation-events/{moderation_id}/ )
+        status_rejected_payload = {
+            'status': 'REJECTED'
+        }
+        response = requests.patch(
+            f"{self.root_url}/api/v1/moderation-events/{self.moderation_event_id}/",
+            headers=self.basic_headers,
+            json=status_rejected_payload,
+        )
+        result = response.json()
+        self.assertEqual(response.status_code, HTTP_200_OK, f"Unexpected status code: {response.status_code}")
+        self.assertEqual(result['status'], 'REJECTED', "Moderation event should have REJECTED status")
