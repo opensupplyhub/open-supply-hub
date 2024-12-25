@@ -86,7 +86,11 @@ class Routes extends Component {
                 <Router history={history}>
                     <div className="App">
                         {!embed ? <Navbar /> : null}
-                        <main style={mainPanelStyle} className="mainPanel">
+                        <main
+                            style={mainPanelStyle}
+                            className="mainPanel"
+                            id="mainPanel"
+                        >
                             <Switch>
                                 <Route
                                     exact
