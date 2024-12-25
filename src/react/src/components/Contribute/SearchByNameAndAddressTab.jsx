@@ -9,7 +9,7 @@ import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import StyledSelect from '../Filters/StyledSelect';
-import InputHelperText from './InputHelperText';
+import InputErrorText from './InputErrorText';
 import { productionLocationInfoRoute } from '../../util/constants';
 
 import { makeSearchByNameAddressTabStyles } from '../../util/styles';
@@ -128,7 +128,7 @@ const SearchByNameAndAddressTab = ({
                     }}
                     helperText={
                         nameTouched &&
-                        !validate(inputName) && <InputHelperText />
+                        !validate(inputName) && <InputErrorText />
                     }
                     error={nameTouched && !validate(inputName)}
                 />
@@ -159,7 +159,7 @@ const SearchByNameAndAddressTab = ({
                     }}
                     helperText={
                         addressTouched &&
-                        !validate(inputAddress) && <InputHelperText />
+                        !validate(inputAddress) && <InputErrorText />
                     }
                     error={addressTouched && !validate(inputAddress)}
                 />

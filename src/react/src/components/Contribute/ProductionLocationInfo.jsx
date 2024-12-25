@@ -15,21 +15,20 @@ import {
     countryOptionsPropType,
     facilityProcessingTypeOptionsPropType,
     numberOfWorkerOptionsPropType,
-    parentCompanyOptionsPropType,
 } from '../../util/propTypes';
 import {
     fetchCountryOptions,
     fetchFacilityProcessingTypeOptions,
     fetchNumberOfWorkersOptions,
-    fetchParentCompanyOptions,
 } from '../../actions/filterOptions';
-import InputHelperText from './InputHelperText';
+import InputErrorText from './InputErrorText';
 import {
     mapDjangoChoiceTuplesToSelectOptions,
     mapFacilityTypeOptions,
     mapProcessingTypeOptions,
 } from '../../util/util';
 import { mockedSectors } from '../../util/constants';
+import COLOURS from '../../util/COLOURS';
 
 const ProductionLocationInfo = ({
     classes,
@@ -39,8 +38,6 @@ const ProductionLocationInfo = ({
     fetchFacilityProcessingType,
     numberOfWorkersOptions,
     fetchNumberOfWorkers,
-    parentCompanyOptions,
-    fetchParentCompanies,
 }) => {
     const location = useLocation();
     const defaultCountryOption = {
@@ -69,6 +66,11 @@ const ProductionLocationInfo = ({
         control: provided => ({
             ...provided,
             height: '56px',
+            borderRadius: '0',
+            '&:focus,&:active,&:focus-within': {
+                borderColor: COLOURS.PURPLE,
+                boxShadow: `0 0 0 1px ${COLOURS.PURPLE}`,
+            },
         }),
     };
     const validate = val => {
@@ -119,12 +121,6 @@ const ProductionLocationInfo = ({
         }
     }, [numberOfWorkersOptions, fetchNumberOfWorkers]);
 
-    useEffect(() => {
-        if (!parentCompanyOptions) {
-            fetchParentCompanies();
-        }
-    }, [parentCompanyOptions, fetchParentCompanies]);
-
     return (
         <div className={classes.mainContainerStyles}>
             <Typography component="h1" className={classes.headerStyles}>
@@ -136,7 +132,9 @@ const ProductionLocationInfo = ({
                 data from your search, but you can edit them.
             </Typography>
             <Paper className={classes.infoWrapStyles}>
-                <div className={classes.inputSectionWrapStyles}>
+                <div
+                    className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
+                >
                     <Typography component="h2" className={classes.titleStyles}>
                         Location Name
                     </Typography>
@@ -157,7 +155,7 @@ const ProductionLocationInfo = ({
                         aria-label="Enter the name"
                         InputProps={{
                             classes: {
-                                input: `${classes.searchInputStyles}
+                                input: `
                                     ${
                                         nameTouched &&
                                         !validate(inputName) &&
@@ -165,18 +163,20 @@ const ProductionLocationInfo = ({
                                     }`,
                                 notchedOutline: classes.notchedOutlineStyles,
                             },
-                            inputProps: {
-                                type: 'text',
-                            },
                         }}
                         helperText={
                             nameTouched &&
-                            !validate(inputName) && <InputHelperText />
+                            !validate(inputName) && <InputErrorText />
                         }
+                        FormHelperTextProps={{
+                            className: classes.helperText,
+                        }}
                         error={nameTouched && !validate(inputName)}
                     />
                 </div>
-                <div className={classes.inputSectionWrapStyles}>
+                <div
+                    className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
+                >
                     <Typography component="h2" className={classes.titleStyles}>
                         Address
                     </Typography>
@@ -205,18 +205,20 @@ const ProductionLocationInfo = ({
                                 }`,
                                 notchedOutline: classes.notchedOutlineStyles,
                             },
-                            inputProps: {
-                                type: 'text',
-                            },
                         }}
                         helperText={
                             addressTouched &&
-                            !validate(inputAddress) && <InputHelperText />
+                            !validate(inputAddress) && <InputErrorText />
                         }
+                        FormHelperTextProps={{
+                            className: classes.helperText,
+                        }}
                         error={addressTouched && !validate(inputAddress)}
                     />
                 </div>
-                <div className={classes.inputSectionWrapStyles}>
+                <div
+                    className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
+                >
                     <Typography component="h2" className={classes.titleStyles}>
                         Country
                     </Typography>
@@ -224,24 +226,25 @@ const ProductionLocationInfo = ({
                         component="h4"
                         className={classes.subTitleStyles}
                     >
-                        Enter the country where the production site is located.
+                        Select the country where the production site is located.
                     </Typography>
                     <StyledSelect
-                        id="countries"
+                        id="country"
                         name="Country"
                         aria-label="Country"
-                        label={null}
                         options={countriesOptions || []}
                         value={inputCountry}
                         onChange={handleCountryChange}
-                        styles={selectStyles}
                         className={classes.selectStyles}
+                        styles={selectStyles}
                         placeholder="Country"
                         isMulti={false}
                     />
                 </div>
                 <hr className={classes.separator} />
-                <div className={classes.inputSectionWrapStyles}>
+                <div
+                    className={`${classes.sectionWrapStyles} ${classes.wrapStyles}`}
+                >
                     <div className={classes.rowContainerStyles}>
                         <Typography
                             component="h2"
@@ -268,12 +271,18 @@ const ProductionLocationInfo = ({
                         component="h4"
                         className={classes.subTitleStyles}
                     >
-                        Expand this section to add more data, including product
-                        types, number of workers, parent company and more.
+                        Expand this section to add more data about your
+                        production location, including product types, number of
+                        workers, parent company and more.
                     </Typography>
                     {isExpanded && (
                         <>
-                            <div className={classes.inputSectionWrapStyles}>
+                            <div
+                                className={
+                                    (classes.inputSectionWrapStyles,
+                                    classes.wrapStyles)
+                                }
+                            >
                                 <Typography
                                     component="h2"
                                     className={classes.titleStyles}
@@ -284,9 +293,9 @@ const ProductionLocationInfo = ({
                                     component="h4"
                                     className={classes.subTitleStyles}
                                 >
-                                    Enter the type of products produced at this
-                                    location. For example: Shirts, Laptops,
-                                    Solar Panels.
+                                    Select the sector(s) that this location
+                                    operates in. For example: Apparel,
+                                    Electronics, Renewable Energy.
                                 </Typography>
                                 <StyledSelect
                                     id="sector"
@@ -305,7 +314,9 @@ const ProductionLocationInfo = ({
                                     isMulti={!false}
                                 />
                             </div>
-                            <div className={classes.inputSectionWrapStyles}>
+                            <div
+                                className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
+                            >
                                 <Typography
                                     component="h2"
                                     className={classes.titleStyles}
@@ -320,6 +331,7 @@ const ProductionLocationInfo = ({
                                     location. For example: Shirts, Laptops,
                                     Solar Panels.
                                 </Typography>
+
                                 <StyledSelect
                                     creatable
                                     name="Product Type"
@@ -331,7 +343,9 @@ const ProductionLocationInfo = ({
                                     className={classes.selectStyles}
                                 />
                             </div>
-                            <div className={classes.inputSectionWrapStyles}>
+                            <div
+                                className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
+                            >
                                 <Typography
                                     component="h2"
                                     className={classes.titleStyles}
@@ -342,8 +356,8 @@ const ProductionLocationInfo = ({
                                     component="h4"
                                     className={classes.subTitleStyles}
                                 >
-                                    Select or enter the location type(s) for
-                                    this production location. For example: Final
+                                    Select the location type(s) for this
+                                    production location. For example: Final
                                     Product Assembly, Raw Materials Production
                                     or Processing, Office/HQ.
                                 </Typography>
@@ -362,7 +376,9 @@ const ProductionLocationInfo = ({
                                     placeholder="Select"
                                 />
                             </div>
-                            <div className={classes.inputSectionWrapStyles}>
+                            <div
+                                className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
+                            >
                                 <Typography
                                     component="h2"
                                     className={classes.titleStyles}
@@ -373,9 +389,9 @@ const ProductionLocationInfo = ({
                                     component="h4"
                                     className={classes.subTitleStyles}
                                 >
-                                    Enter the type of processing activities that
-                                    take place at this location. For example:
-                                    Printing, Tooling, Assembly.
+                                    Select the type of processing activities
+                                    that take place at this location. For
+                                    example: Printing, Tooling, Assembly.
                                 </Typography>
                                 <StyledSelect
                                     id="processing_type"
@@ -391,7 +407,9 @@ const ProductionLocationInfo = ({
                                     className={classes.selectStyles}
                                 />
                             </div>
-                            <div className={classes.inputSectionWrapStyles}>
+                            <div
+                                className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
+                            >
                                 <Typography
                                     component="h2"
                                     className={classes.titleStyles}
@@ -402,7 +420,7 @@ const ProductionLocationInfo = ({
                                     component="h4"
                                     className={classes.subTitleStyles}
                                 >
-                                    Enter a number or a range for the number of
+                                    Select a number or a range for the number of
                                     people employed at the location. For
                                     example: 100, 100-150.
                                 </Typography>
@@ -419,7 +437,9 @@ const ProductionLocationInfo = ({
                                     className={classes.selectStyles}
                                 />
                             </div>
-                            <div className={classes.inputSectionWrapStyles}>
+                            <div
+                                className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
+                            >
                                 <Typography
                                     component="h2"
                                     className={classes.titleStyles}
@@ -430,8 +450,8 @@ const ProductionLocationInfo = ({
                                     component="h4"
                                     className={classes.subTitleStyles}
                                 >
-                                    Select or enter the company that holds
-                                    majority ownership for this production.
+                                    Enter the company that holds majority
+                                    ownership for this production.
                                 </Typography>
                                 <StyledSelect
                                     creatable
@@ -454,9 +474,6 @@ const ProductionLocationInfo = ({
                         variant="outlined"
                         onClick={() => {}}
                         className={classes.goBackButtonStyles}
-                        // classes={{
-                        //     label: classes.buttonLabel,
-                        // }}
                     >
                         Go Back
                     </Button>
@@ -465,9 +482,6 @@ const ProductionLocationInfo = ({
                         variant="contained"
                         onClick={() => {}}
                         className={classes.submitButtonStyles}
-                        classes={{
-                            label: classes.buttonLabel,
-                        }}
                         // disabled={!isFormValid}
                     >
                         Submit
@@ -482,7 +496,6 @@ ProductionLocationInfo.defaultProps = {
     countriesOptions: null,
     facilityProcessingTypeOptions: null,
     numberOfWorkersOptions: null,
-    parentCompanyOptions: null,
 };
 
 ProductionLocationInfo.propTypes = {
@@ -491,15 +504,12 @@ ProductionLocationInfo.propTypes = {
     fetchFacilityProcessingType: func.isRequired,
     facilityProcessingTypeOptions: facilityProcessingTypeOptionsPropType,
     numberOfWorkersOptions: numberOfWorkerOptionsPropType,
-    parentCompanyOptions: parentCompanyOptionsPropType,
-    fetchParentCompanies: func.isRequired,
     classes: object.isRequired,
 };
 
 const mapStateToProps = ({
     filterOptions: {
         countries: { data: countriesOptions },
-        parentCompanies: { data: parentCompanyOptions },
         facilityProcessingType: { data: facilityProcessingTypeOptions },
         numberOfWorkers: { data: numberOfWorkersOptions },
     },
@@ -507,7 +517,6 @@ const mapStateToProps = ({
     countriesOptions,
     facilityProcessingTypeOptions,
     numberOfWorkersOptions,
-    parentCompanyOptions,
 });
 
 function mapDispatchToProps(dispatch) {
@@ -516,7 +525,6 @@ function mapDispatchToProps(dispatch) {
         fetchFacilityProcessingType: () =>
             dispatch(fetchFacilityProcessingTypeOptions()),
         fetchNumberOfWorkers: () => dispatch(fetchNumberOfWorkersOptions()),
-        fetchParentCompanies: () => dispatch(fetchParentCompanyOptions()),
     };
 }
 

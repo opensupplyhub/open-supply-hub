@@ -978,6 +978,9 @@ export const makeSearchByNameAddressTabStyles = theme =>
 
 export const productionLocationInfoStyles = theme =>
     Object.freeze({
+        helperText: Object.freeze({
+            marginLeft: '0',
+        }),
         errorStyle: Object.freeze({
             color: COLOURS.RED,
         }),
@@ -1001,15 +1004,22 @@ export const productionLocationInfoStyles = theme =>
         }),
         textInputStyles: Object.freeze({
             maxWidth: '528px',
+            borderRadius: '0',
         }),
         instructionStyles: Object.freeze({
             fontSize: '18px',
             fontWeight: theme.typography.fontWeightSemiBold,
             margin: '24px 0 32px 0',
+            maxWidth: '730px',
         }),
         inputSectionWrapStyles: Object.freeze({
+            padding: '40px 0',
+        }),
+        wrapStyles: Object.freeze({
             display: 'inline-flex',
             flexDirection: 'column',
+        }),
+        sectionWrapStyles: Object.freeze({
             padding: '24px 0 32px 0',
         }),
         infoWrapStyles: Object.freeze({
@@ -1046,7 +1056,10 @@ export const productionLocationInfoStyles = theme =>
             height: '49px',
             borderRadius: 0,
             textTransform: 'none',
-            margin: '26px 20px 26px 0',
+            margin: '48px 20px 48px 0',
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightExtraBold,
+            border: '1px solid #0D1128',
         }),
         submitButtonStyles: Object.freeze({
             width: '200px',
@@ -1054,26 +1067,32 @@ export const productionLocationInfoStyles = theme =>
             borderRadius: 0,
             textTransform: 'none',
             backgroundColor: theme.palette.action.main,
-            margin: '26px 0',
+            margin: '48px 0',
             color: theme.palette.common.black,
             '&:hover': {
                 backgroundColor: theme.palette.action.dark,
             },
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightExtraBold,
+            boxShadow: 'none',
+        }),
+        notchedOutlineStyles: Object.freeze({
+            borderRadius: '0',
         }),
     });
 
-export const inputHelperText = theme =>
+export const inputErrorText = theme =>
     Object.freeze({
-        helperTextWrapStyles: Object.freeze({
+        errorTextWrapStyles: Object.freeze({
             display: 'flex',
             alignItems: 'center',
-            gap: '4px',
         }),
         iconInfoStyles: Object.freeze({
             fontSize: '16px',
             verticalAlign: 'middle',
+            marginRight: '5px',
         }),
-        inputHelperTextStyles: Object.freeze({
+        inputErrorTextStyles: Object.freeze({
             fontSize: '16px',
             fontWeight: theme.typography.fontWeightSemiBold,
             color: COLOURS.RED,
