@@ -40,10 +40,6 @@ const ProductionLocationInfo = ({
     fetchNumberOfWorkers,
 }) => {
     const location = useLocation();
-    const defaultCountryOption = {
-        label: 'Country',
-        value: '',
-    };
 
     const queryParams = new URLSearchParams(location.search);
     const nameInQuery = queryParams.get('name');
@@ -52,7 +48,7 @@ const ProductionLocationInfo = ({
     const [isExpanded, setIsExpanded] = useState(false);
     const [inputName, setInputName] = useState(nameInQuery ?? '');
     const [inputAddress, setInputAddress] = useState(addressInQuery ?? '');
-    const [inputCountry, setInputCountry] = useState(defaultCountryOption);
+    const [inputCountry, setInputCountry] = useState(null);
     const [nameTouched, setNameTouched] = useState(false);
     const [addressTouched, setAddressTouched] = useState(false);
     const [sector, setSector] = useState('');
@@ -90,8 +86,7 @@ const ProductionLocationInfo = ({
         setAddressTouched(true);
         setInputAddress(event.target.value);
     };
-    const handleCountryChange = event =>
-        setInputCountry(event || defaultCountryOption);
+    const handleCountryChange = event => setInputCountry(event);
 
     useEffect(() => {
         if (!countriesOptions) {
@@ -311,7 +306,6 @@ const ProductionLocationInfo = ({
                                     styles={selectStyles}
                                     className={classes.selectStyles}
                                     placeholder="Select"
-                                    isMulti={!false}
                                 />
                             </div>
                             <div
@@ -455,7 +449,6 @@ const ProductionLocationInfo = ({
                                 </Typography>
                                 <StyledSelect
                                     creatable
-                                    label={null}
                                     name="Parent company"
                                     value={parentCompany}
                                     onChange={setParentCompany}
@@ -482,7 +475,6 @@ const ProductionLocationInfo = ({
                         variant="contained"
                         onClick={() => {}}
                         className={classes.submitButtonStyles}
-                        // disabled={!isFormValid}
                     >
                         Submit
                     </Button>
