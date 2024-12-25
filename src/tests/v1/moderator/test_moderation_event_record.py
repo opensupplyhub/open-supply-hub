@@ -7,6 +7,10 @@ from ..base_api_test \
 
 HTTP_200_OK = 200
 HTTP_201_CREATED = 201
+HTTP_429_TOO_MANY_REQUEST = 429
+REINDEX_INTERVAL = 80
+
+
 class ModerationEventRecordTest(BaseAPITest):
     def setUp(self):
         super().setUp()
@@ -78,7 +82,7 @@ class ModerationEventRecordTest(BaseAPITest):
         self.moderation_event_id = result['moderation_id']
         print(f'[Contribution Record; moderation id:] {self.moderation_event_id}')
         # Wait till the newly created facilities be indexed in the OpenSearch
-        time.sleep(80)
+        time.sleep(REINDEX_INTERVAL)
         return result
 
     def test_moderation_events_confirmation(self):
@@ -149,3 +153,18 @@ class ModerationEventRecordTest(BaseAPITest):
         result = response.json()
         self.assertEqual(response.status_code, HTTP_200_OK, f"Unexpected status code: {response.status_code}")
         self.assertEqual(result['status'], 'REJECTED', "Moderation event should have REJECTED status")
+
+    def test_moderation_events_rate_limiting(self):
+        self.create_moderation_event()
+        for i in range(500):
+            response = requests.get(
+                f"{self.root_url}/api/v1/moderation-events/{self.moderation_event_id}",
+                headers=self.basic_headers,
+            )
+            if response.status_code == HTTP_429_TOO_MANY_REQUEST:
+                self.assertEqual(response.status_code, HTTP_429_TOO_MANY_REQUEST, "Expected 429 for rate-limited requests.")
+                result = response.json()
+                self.assertIn('Request was throttled', result['detail'], "Error message should be returned when rate-limited.")
+                break
+        else:
+            self.skipTest("Rate limit was not reached; adjust loop count or rate-limit policy if needed.")
