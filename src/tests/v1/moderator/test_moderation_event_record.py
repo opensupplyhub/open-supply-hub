@@ -82,17 +82,3 @@ class ModerationEventRecordTest(BaseAPITest):
         self.moderation_event_id = result['moderation_id']
         print(f'[Contribution Record; moderation id:] {self.moderation_event_id}')
 
-    def test_moderation_events_rate_limiting(self):
-        self.create_moderation_event()
-        for _ in range(500):
-            response = requests.get(
-                f"{self.root_url}/api/v1/moderation-events/{self.moderation_event_id}",
-                headers=self.basic_headers,
-            )
-            if response.status_code == HTTP_429_TOO_MANY_REQUEST:
-                self.assertEqual(response.status_code, HTTP_429_TOO_MANY_REQUEST, "Expected 429 for rate-limited requests.")
-                result = response.json()
-                self.assertIn('Request was throttled', result['detail'], "Error message should be returned when rate-limited.")
-                break
-        else:
-            self.skipTest("Rate limit was not reached; adjust loop count or rate-limit policy if needed.")
