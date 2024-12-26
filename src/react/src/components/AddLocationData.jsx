@@ -64,6 +64,11 @@ const addLocationStyles = theme =>
             gap: '50px',
             paddingBottom: '5%',
             flexWrap: 'wrap',
+            flexDirection: 'row',
+            [theme.breakpoints.down('md')]: {
+                flexDirection: 'column',
+                display: 'center',
+            },
         }),
         card: Object.freeze({
             backgroundColor: COLOURS.WHITE,
@@ -125,9 +130,14 @@ const addLocationStyles = theme =>
             marginTop: '50px',
             display: 'flex',
             alignItems: 'center',
+            flexDirection: 'row',
             padding: '30px',
             position: 'relative',
             maxHeight: '56px',
+            [theme.breakpoints.down('md')]: {
+                flexDirection: 'column',
+                maxHeight: '25%',
+            },
         }),
         messyContent: Object.freeze({
             display: 'flex',
@@ -140,12 +150,24 @@ const addLocationStyles = theme =>
             color: COLOURS.NEAR_BLACK,
             maxWidth: '75%',
             fontWeight: '600',
+            fontSize: '24px',
+            [theme.breakpoints.down('md')]: {
+                fontSize: '16px',
+                textAlign: 'center',
+                maxWidth: '100%',
+            },
         }),
         messySub: Object.freeze({
             color: COLOURS.NEAR_BLACK,
             marginBottom: '10px',
             maxWidth: '65%',
             fontWeight: '600',
+            fontSize: '16px',
+            [theme.breakpoints.down('md')]: {
+                fontSize: '12px',
+                textAlign: 'center',
+                maxWidth: '100%',
+            },
         }),
         messyIcon: Object.freeze({
             color: COLOURS.NEAR_BLACK,
@@ -162,6 +184,12 @@ const addLocationStyles = theme =>
             right: '20px',
             top: '50%',
             transform: 'translateY(-50%)',
+            [theme.breakpoints.down('md')]: {
+                fontSize: '12px',
+                position: 'relative',
+                right: '0px',
+                top: '20px',
+            },
         }),
     });
 
