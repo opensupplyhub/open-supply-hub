@@ -12,7 +12,13 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import AppGrid from './AppGrid';
 
 import { openInNewTab } from '../util/util';
-import { authLoginFormRoute, InfoLink, InfoPaths } from '../util/constants';
+import {
+    authLoginFormRoute,
+    InfoLink,
+    InfoPaths,
+    contributeProductionLocationRoute,
+    multipleLocationRoute,
+} from '../util/constants';
 
 import MessyIcon from './MessyIcon';
 import PlaylistIcon from './PlaylistIcon';
@@ -99,7 +105,7 @@ const addLocationStyles = theme =>
             maxWidth: '50%',
             textAlign: 'center',
             paddingBottom: '5px',
-            fontWeight: '600',
+            fontWeight: theme.typography.fontWeightSemiBold,
         }),
         cardRectangleView: Object.freeze({
             position: 'absolute',
@@ -123,10 +129,10 @@ const addLocationStyles = theme =>
         }),
         highlight: Object.freeze({
             color: COLOURS.NEAR_BLACK,
-            fontWeight: '600',
+            fontWeight: theme.typography.fontWeightSemiBold,
         }),
         messyData: Object.freeze({
-            backgroundColor: '#8428FA21',
+            backgroundColor: COLOURS.LIGHT_PURPLE,
             marginTop: '50px',
             display: 'flex',
             alignItems: 'center',
@@ -149,7 +155,7 @@ const addLocationStyles = theme =>
         messyTitle: Object.freeze({
             color: COLOURS.NEAR_BLACK,
             maxWidth: '75%',
-            fontWeight: '600',
+            fontWeight: theme.typography.fontWeightSemiBold,
             fontSize: '24px',
             [theme.breakpoints.down('md')]: {
                 fontSize: '16px',
@@ -161,7 +167,7 @@ const addLocationStyles = theme =>
             color: COLOURS.NEAR_BLACK,
             marginBottom: '10px',
             maxWidth: '65%',
-            fontWeight: '600',
+            fontWeight: theme.typography.fontWeightSemiBold,
             fontSize: '16px',
             [theme.breakpoints.down('md')]: {
                 fontSize: '12px',
@@ -258,7 +264,7 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                             variant="text"
                             component={Link}
                             className={classes.buttonStyle}
-                            to="/contribute/multiple-locations"
+                            to={multipleLocationRoute}
                         >
                             Upload Multiple Locations
                         </Button>
@@ -326,7 +332,7 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                             variant="text"
                             component={Link}
                             className={classes.buttonStyle}
-                            to="/contribute/single-location"
+                            to={contributeProductionLocationRoute}
                             disabled="true"
                         >
                             Add a Single Location

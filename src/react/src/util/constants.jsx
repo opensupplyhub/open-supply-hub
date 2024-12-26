@@ -349,8 +349,7 @@ export const claimedFacilitiesRoute = '/claimed';
 export const claimedFacilitiesDetailRoute = '/claimed/:claimID';
 export const dashboardClaimsDetailsRoute = '/dashboard/claims/:claimID';
 export const aboutClaimedFacilitiesRoute = `${InfoLink}/${InfoPaths.claimedFacilities}`;
-export const contributeProductionLocationRoute =
-    '/contribute/production-location';
+export const contributeProductionLocationRoute = '/contribute/single-location';
 export const searchByOsIdResultRoute = '/contribute/production-location/search';
 
 export const contributeFieldsEnum = Object.freeze({
