@@ -243,7 +243,7 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                     <div>
                         <PlaylistIcon className={classes.cardIcon} />
                         <Typography
-                            variant="display"
+                            variant="heading"
                             className={classes.cardTitle}
                         >
                             Upload a dataset with multiple production locations
@@ -310,7 +310,7 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                     <div>
                         <PinDropIcon className={classes.cardIcon} />
                         <Typography
-                            variant="display"
+                            variant="heading"
                             className={classes.cardTitle}
                         >
                             Add data for a
@@ -333,7 +333,7 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                             component={Link}
                             className={classes.buttonStyle}
                             to={contributeProductionLocationRoute}
-                            disabled="true"
+                            disabled
                         >
                             Add a Single Location
                         </Button>
