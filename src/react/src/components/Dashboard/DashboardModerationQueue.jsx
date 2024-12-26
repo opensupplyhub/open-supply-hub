@@ -85,7 +85,7 @@ const DashboardModerationQueue = ({
 
     useEffect(() => {
         /*
-         Fetch data if prev filters were not empty but 
+         Fetch data if prev filters were not empty but
          become empty after user click on select field.
          This will resolve conflict of when we want to fetch data
          when filters are removing in UI at the moment
@@ -130,6 +130,8 @@ const DashboardModerationQueue = ({
     }, [dataSources, moderationStatuses, countries]);
 
     const handleAfterDateChange = date => {
+        setAfterDateError(false);
+        setBeforeDateError(false);
         if (!isValidDate(date)) {
             dispatch(updateAfterDate(null));
             setErrorDateText(DATE_FORMAT_ERROR);
@@ -137,13 +139,12 @@ const DashboardModerationQueue = ({
             return;
         }
         if (!isValidDateRange(beforeDate, date)) {
-            dispatch(updateAfterDate(null));
+            dispatch(updateAfterDate(date));
             setErrorDateText(DATE_RANGE_ERROR);
             setAfterDateError(true);
             return;
         }
 
-        setAfterDateError(false);
         dispatch(updateAfterDate(date));
         dispatch(clearModerationEvents());
         dispatch(
@@ -157,6 +158,8 @@ const DashboardModerationQueue = ({
     };
 
     const handleBeforeDateChange = date => {
+        setAfterDateError(false);
+        setBeforeDateError(false);
         if (!isValidDate(date)) {
             dispatch(updateBeforeDate(null));
             setErrorDateText(DATE_FORMAT_ERROR);
@@ -164,13 +167,12 @@ const DashboardModerationQueue = ({
             return;
         }
         if (!isValidDateRange(date, afterDate)) {
-            dispatch(updateBeforeDate(null));
+            dispatch(updateBeforeDate(date));
             setErrorDateText(DATE_RANGE_ERROR);
             setBeforeDateError(true);
             return;
         }
 
-        setBeforeDateError(false);
         dispatch(updateBeforeDate(date));
         dispatch(clearModerationEvents());
         dispatch(
