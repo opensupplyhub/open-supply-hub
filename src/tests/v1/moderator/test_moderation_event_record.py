@@ -80,7 +80,7 @@ class ModerationEventRecordTest(BaseAPITest):
 
         self.assertEqual(result['moderation_status'], 'PENDING', "moderation_status is not 'PENDING'.")
         self.moderation_event_id = result['moderation_id']
-        print(f'[Contribution Record; moderation id:] {self.moderation_event_id}')
+        print(f'[Contribution Record]; moderation id: {self.moderation_event_id}')
         # Wait till the newly created facilities be indexed in the OpenSearch
         time.sleep(REINDEX_INTERVAL)
 
@@ -107,7 +107,7 @@ class ModerationEventRecordTest(BaseAPITest):
         result = response.json()
         self.assertGreater(len(result['data']), 1)
         self.potential_match_os_id = result['data'][0]['os_id']
-        print(f'[Contribution Record; first potential match OS ID:] {self.potential_match_os_id}')
+        print(f'[Contribution Record]; first potential match OS ID: {self.potential_match_os_id}')
 
         # 4. Confirm potential match ( PATCH /v1/moderation-events/{moderation_id}/production-locations/{os_id}/ )
         self.assertIsNotNone(self.moderation_event_id, "moderation_event_id is not set. Ensure the moderation event is created first.")
@@ -121,6 +121,16 @@ class ModerationEventRecordTest(BaseAPITest):
         self.assertEqual(response.status_code, HTTP_200_OK, f"Unexpected status code: {response.status_code}")
         expected_keys = {'os_id'}
         self.assertEqual(set(result.keys()), expected_keys, "Response JSON keys do not match expected keys.")
+
+        approved_status = requests.get(
+            f"{self.root_url}/api/v1/moderation-events/{self.moderation_event_id}",
+            headers=self.basic_headers,
+        ).json()
+        self.assertEqual(
+            approved_status['status'],
+            'APPROVED',
+            "Moderation event status should be APPROVED after successful match"
+        )
 
     def test_moderation_events_approval(self):
         # 1. Creates a new moderation event for the production location creation with the given details. ( POST /v1/production-locations/ )
