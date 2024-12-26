@@ -185,7 +185,7 @@ function DashboardModerationQueueListTable({
                                                 {moderationStatus}
                                             </TableCell>
                                             <TableCell padding="dense">
-                                                {moderationDecisionDate !== null
+                                                {moderationDecisionDate
                                                     ? formatUTCDate(
                                                           moderationDecisionDate,
                                                           DATE_FORMATS.LONG,
