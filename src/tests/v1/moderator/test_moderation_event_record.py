@@ -15,7 +15,6 @@ class ModerationEventRecordTest(BaseAPITest):
     def setUp(self):
         super().setUp()
         self.moderation_event_id = None
-        self.potential_match_os_id = None
         self.name = 'Changzhou Hualida Garments Group Co.'
         self.address = 'Lot 303 No.1108 Zhongwu High Road Changzhou Jiangsu China - China'
         self.county_alpha_2_code = 'CN'
@@ -106,15 +105,14 @@ class ModerationEventRecordTest(BaseAPITest):
         )
         result = response.json()
         self.assertGreater(len(result['data']), 1)
-        self.potential_match_os_id = result['data'][0]['os_id']
-        print(f'[Contribution Record]; first potential match OS ID: {self.potential_match_os_id}')
+        potential_match_os_id = result['data'][0]['os_id']
+        print(f'[Contribution Record]; first potential match OS ID: {potential_match_os_id}')
 
         # 4. Confirm potential match ( PATCH /v1/moderation-events/{moderation_id}/production-locations/{os_id}/ )
         self.assertIsNotNone(self.moderation_event_id, "moderation_event_id is not set. Ensure the moderation event is created first.")
-        self.assertIsNotNone(self.potential_match_os_id, "potential_match_os_id is not set. Ensure that potential match OS ID is available.")
 
         response = requests.patch(
-            f"{self.root_url}/api/v1/moderation-events/{self.moderation_event_id}/production-locations/{self.potential_match_os_id}/",
+            f"{self.root_url}/api/v1/moderation-events/{self.moderation_event_id}/production-locations/{potential_match_os_id}/",
             headers=self.basic_headers,
         )
         result = response.json()
