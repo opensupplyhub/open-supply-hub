@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
+import ConfirmNotFoundLocationDialog from './ConfirmNotFoundLocationDialog';
 import ProductionLocationDetails from './ProductionLocationDetails';
 import COLOURS from '../../util/COLOURS';
 
@@ -102,6 +103,7 @@ const makeSearchByNameAndAddressSuccessResultStyles = theme =>
     });
 
 const SearchByNameAndAddressSuccessResult = ({ data, classes }) => {
+    const [confirmDialogIsOpen, setConfirmDialogIsOpen] = useState(false);
     const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
 
     useEffect(() => {
@@ -123,13 +125,23 @@ const SearchByNameAndAddressSuccessResult = ({ data, classes }) => {
     };
 
     const handleNotFoundLocation = () => {
+        setConfirmDialogIsOpen(true);
         console.log('I don’t see my Location');
+    };
+
+    const handleConfirmDialogClose = () => {
+        setConfirmDialogIsOpen(false);
+        console.log('Close');
     };
 
     const count = data?.data?.length || 0;
 
     return (
         <>
+            <ConfirmNotFoundLocationDialog
+                confirmDialogIsOpen={confirmDialogIsOpen}
+                handleConfirmDialogClose={handleConfirmDialogClose}
+            />
             <div className={classes.searchResultsContainerStyles}>
                 <Typography component="h1" className={classes.titleStyles}>
                     Search results
