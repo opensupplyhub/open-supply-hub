@@ -273,10 +273,7 @@ const ProductionLocationInfo = ({
                     {isExpanded && (
                         <>
                             <div
-                                className={
-                                    (classes.inputSectionWrapStyles,
-                                    classes.wrapStyles)
-                                }
+                                className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
                             >
                                 <Typography
                                     component="h2"
