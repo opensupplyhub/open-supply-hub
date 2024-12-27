@@ -434,43 +434,22 @@ export const makeSearchByOsIdResultStyles = theme =>
             fontSize: '36px',
             fontWeight: theme.typography.fontWeightSemiBoldPlus,
             lineHeight: '44px',
+            marginBottom: '24px',
         }),
-        resultSubTitleStyles: Object.freeze({
+    });
+
+export const makeSearchByOsIdNotFoundResultStyles = theme =>
+    Object.freeze({
+        resultTitleStyles: Object.freeze({
+            fontSize: '36px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
+            lineHeight: '44px',
+        }),
+        resultDescriptionStyles: Object.freeze({
             fontSize: '18px',
             lineHeight: '21px',
             fontWeight: theme.typography.fontWeightSemiBold,
-            margin: '8px 0 24px 0',
-        }),
-        locationDetailsStyles: Object.freeze({
-            margin: '24px 0',
-        }),
-        locationNameStyles: Object.freeze({
-            fontSize: '36px',
-            lineHeight: '44px',
-            fontWeight: theme.typography.fontWeightBold,
-        }),
-        locationCurrentOsIdStyles: Object.freeze({
-            fontSize: '16px',
-            lineHeight: '20px',
-            fontWeight: theme.typography.fontWeightBold,
             marginTop: '8px',
-        }),
-        locationHistoricalOsIdStyles: Object.freeze({
-            fontSize: '14px',
-            lineHeight: '20px',
-            fontWeight: theme.typography.fontWeightBold,
-            color: COLOURS.DARK_GREY,
-            marginTop: '8px',
-        }),
-        locationAddressContainerStyles: Object.freeze({
-            display: 'flex',
-            flexDirection: 'column',
-            marginTop: '12px',
-        }),
-        locationAddressStyles: Object.freeze({
-            fontSize: '16px',
-            lineHeight: '20px',
-            fontWeight: theme.typography.fontWeightSemiBold,
         }),
     });
 
