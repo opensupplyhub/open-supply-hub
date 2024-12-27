@@ -43,7 +43,7 @@ const SearchByOsIdResult = ({
         historical_os_id: historicalOsIds,
         address,
         country: { name: countryName } = {},
-    } = data || {};
+    } = data;
 
     const handleBackToSearchByNameAddress = () => {
         clearProductionLocation();
@@ -98,14 +98,9 @@ const SearchByOsIdResult = ({
     );
 };
 
-SearchByOsIdResult.defaultProps = {
-    data: {},
-    fetching: false,
-};
-
 SearchByOsIdResult.propTypes = {
-    data: productionLocationPropType,
-    fetching: bool,
+    data: productionLocationPropType.isRequired,
+    fetching: bool.isRequired,
     fetchProductionLocation: func.isRequired,
     clearProductionLocation: func.isRequired,
     classes: object.isRequired,
