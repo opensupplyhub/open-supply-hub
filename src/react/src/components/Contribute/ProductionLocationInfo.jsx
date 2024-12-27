@@ -1,3 +1,4 @@
+/* eslint no-unused-vars: 0 */
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
@@ -21,6 +22,10 @@ import {
     fetchFacilityProcessingTypeOptions,
     fetchNumberOfWorkersOptions,
 } from '../../actions/filterOptions';
+import {
+    createProductionLocation,
+    updateProductionLocation,
+} from '../../actions/contributeProductionLocation';
 import InputErrorText from './InputErrorText';
 import {
     mapDjangoChoiceTuplesToSelectOptions,
@@ -30,11 +35,18 @@ import {
 import { mockedSectors } from '../../util/constants';
 import COLOURS from '../../util/COLOURS';
 
+// TODO: there should be already prefetched data from Redux state
+// If no, fetch related query
+
+// TODO: If production location exists, the URL should look like:
+// http://localhost:6543/contribute/production-location/info/{OS_ID}
 const ProductionLocationInfo = ({
     classes,
     countriesOptions,
     fetchCountries,
     facilityProcessingTypeOptions,
+    handleCreateProductionLocation,
+    handleUpdateProductionLocation,
     fetchFacilityProcessingType,
     numberOfWorkersOptions,
     fetchNumberOfWorkers,
@@ -470,7 +482,21 @@ const ProductionLocationInfo = ({
                     <Button
                         color="secondary"
                         variant="contained"
-                        onClick={() => {}}
+                        onClick={() => {
+                            // Name | Country | Address should not be empty
+                            // Same button for POST and PATCH
+                            handleCreateProductionLocation({
+                                name: inputName,
+                                address: inputAddress,
+                                country: inputCountry,
+                                sector,
+                                productType,
+                                locationType,
+                                processingType,
+                                numberOfWorkers,
+                                parentCompany,
+                            });
+                        }}
                         className={classes.submitButtonStyles}
                     >
                         Submit
@@ -491,6 +517,8 @@ ProductionLocationInfo.propTypes = {
     countriesOptions: countryOptionsPropType,
     fetchCountries: func.isRequired,
     fetchFacilityProcessingType: func.isRequired,
+    handleCreateProductionLocation: func.isRequired,
+    handleUpdateProductionLocation: func.isRequired,
     facilityProcessingTypeOptions: facilityProcessingTypeOptionsPropType,
     numberOfWorkersOptions: numberOfWorkerOptionsPropType,
     classes: object.isRequired,
@@ -514,6 +542,10 @@ function mapDispatchToProps(dispatch) {
         fetchFacilityProcessingType: () =>
             dispatch(fetchFacilityProcessingTypeOptions()),
         fetchNumberOfWorkers: () => dispatch(fetchNumberOfWorkersOptions()),
+        handleCreateProductionLocation: data =>
+            dispatch(createProductionLocation(data)),
+        handleUpdateProductionLocation: osID =>
+            dispatch(updateProductionLocation(osID)),
     };
 }
 

@@ -257,8 +257,14 @@ export const makeContributorEmbedConfigURL = contributorId =>
     `/api/contributor-embed-configs/${contributorId}/`;
 export const makeNonStandardFieldsURL = () => '/api/nonstandard-fields/';
 
+// TODO: Remove makeGetProductionLocationByOsIdURL in favor of makeGetProductionLocationURL
 export const makeGetProductionLocationByOsIdURL = osID =>
     `/api/v1/production-locations/${osID}/`;
+
+export const makeGetProductionLocationURL = (osID = '') => {
+    const osIDPathParameter = osID ? `${osID}/` : '';
+    return `/api/v1/production-locations/${osIDPathParameter}`;
+};
 
 export const makeGetModerationEventsWithQueryString = (
     qs,
