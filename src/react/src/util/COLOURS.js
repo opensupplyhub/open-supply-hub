@@ -13,6 +13,9 @@ export default {
     LIGHT_RED: '#FFEAEA',
     RED: '#F44336',
 
+    // Purples
+    LIGHT_PURPLE: '#8428FA21',
+
     // Grays and Neutrals
     WHITE: '#FFF',
     GREY: '#D2D2D2',
