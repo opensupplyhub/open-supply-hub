@@ -7,6 +7,8 @@ import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 import Typography from '@material-ui/core/Typography';
+import history from '../../util/history';
+import { contributeProductionLocationRoute } from '../../util/constants';
 
 const makeConfirmNotFoundLocationDialogStyles = theme =>
     Object.freeze({
@@ -53,55 +55,71 @@ const makeConfirmNotFoundLocationDialogStyles = theme =>
 
 const ConfirmNotFoundLocationDialog = ({
     confirmDialogIsOpen,
+    // setConfirmDialogIsOpen,
     handleConfirmDialogClose,
     classes,
-}) => (
-    <Dialog
-        classes={{
-            paper: classes.dialogPaperStyles,
-        }}
-        open={confirmDialogIsOpen}
-        onClose={handleConfirmDialogClose}
-        aria-labelledby="confirm-not-found-location-dialog-title"
-    >
-        <IconButton
-            aria-label="Close"
-            className={classes.closeButtonStyles}
-            onClick={handleConfirmDialogClose}
+}) => {
+    const handleAddNewLocation = () => {
+        handleConfirmDialogClose();
+        // clearProductionLocations();
+        console.log('Add new location');
+    };
+
+    const handleSearchAgain = () => {
+        handleConfirmDialogClose();
+        history.push(`${contributeProductionLocationRoute}?tab=name-address`);
+        // clearProductionLocations();
+        console.log('Search again');
+    };
+
+    return (
+        <Dialog
+            classes={{
+                paper: classes.dialogPaperStyles,
+            }}
+            open={confirmDialogIsOpen}
+            onClose={handleConfirmDialogClose}
+            aria-labelledby="confirm-not-found-location-dialog-title"
         >
-            <CloseIcon />
-        </IconButton>
-        <DialogTitle id="confirm-not-found-location-dialog-title">
-            <Typography className={classes.dialogTitleStyles}>
-                Are you sure you have reviewed the entire list and could not
-                find the production location?
-            </Typography>
-        </DialogTitle>
-        <DialogActions className={classes.dialogActionsStyles}>
-            <Button
-                variant="contained"
-                color="secondary"
+            <IconButton
+                aria-label="Close"
+                className={classes.closeButtonStyles}
                 onClick={handleConfirmDialogClose}
-                classes={{
-                    root: classes.buttonBaseStyles,
-                    label: classes.buttonLabelStyles,
-                }}
             >
-                No, I would like to try searching again
-            </Button>
-            <Button
-                variant="contained"
-                onClick={handleConfirmDialogClose}
-                classes={{
-                    root: `${classes.buttonBaseStyles} ${classes.addLocationButtonStyles}`,
-                    label: classes.buttonLabelStyles,
-                }}
-            >
-                Yes, add a new production location
-            </Button>
-        </DialogActions>
-    </Dialog>
-);
+                <CloseIcon />
+            </IconButton>
+            <DialogTitle id="confirm-not-found-location-dialog-title">
+                <Typography className={classes.dialogTitleStyles}>
+                    Are you sure you have reviewed the entire list and could not
+                    find the production location?
+                </Typography>
+            </DialogTitle>
+            <DialogActions className={classes.dialogActionsStyles}>
+                <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={handleSearchAgain}
+                    classes={{
+                        root: classes.buttonBaseStyles,
+                        label: classes.buttonLabelStyles,
+                    }}
+                >
+                    No, I would like to try searching again
+                </Button>
+                <Button
+                    variant="contained"
+                    onClick={handleAddNewLocation}
+                    classes={{
+                        root: `${classes.buttonBaseStyles} ${classes.addLocationButtonStyles}`,
+                        label: classes.buttonLabelStyles,
+                    }}
+                >
+                    Yes, add a new production location
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+};
 
 export default withStyles(makeConfirmNotFoundLocationDialogStyles)(
     ConfirmNotFoundLocationDialog,

@@ -126,12 +126,11 @@ const SearchByNameAndAddressSuccessResult = ({ data, classes }) => {
 
     const handleNotFoundLocation = () => {
         setConfirmDialogIsOpen(true);
-        console.log('I don’t see my Location');
+        console.log('I do not see my Location');
     };
 
     const handleConfirmDialogClose = () => {
         setConfirmDialogIsOpen(false);
-        console.log('Close');
     };
 
     const count = data?.data?.length || 0;
