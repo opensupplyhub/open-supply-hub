@@ -13,7 +13,7 @@ import {
 
 const initialState = Object.freeze({
     singleProductionLocation: Object.freeze({
-        data: [],
+        data: {},
         fetching: false,
         error: null,
     }),
