@@ -1,10 +1,10 @@
 import React from 'react';
+import { render } from '@testing-library/react';
 import configureMockStore from 'redux-mock-store';
 import { Provider } from 'react-redux';
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import { MemoryRouter } from 'react-router-dom';
 import AddLocationData from '../../components/AddLocationData';
-import { render } from '@testing-library/react';
 
 const mockStore = configureMockStore();
 
