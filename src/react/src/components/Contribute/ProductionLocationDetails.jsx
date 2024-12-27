@@ -6,9 +6,6 @@ import PreviousOsIdTooltip from './PreviousOsIdTooltip';
 import COLOURS from '../../util/COLOURS';
 
 const makeProductionLocationDetailsStyles = theme => ({
-    locationDetailsStyles: Object.freeze({
-        margin: '24px 0',
-    }),
     locationNameStyles: Object.freeze({
         fontSize: '36px',
         lineHeight: '44px',
@@ -51,7 +48,7 @@ const ProductionLocationDetails = ({
         Array.isArray(historicalOsIds) && historicalOsIds.length > 0;
 
     return (
-        <div className={classes.locationDetailsStyles}>
+        <div>
             <Typography component="h3" className={classes.locationNameStyles}>
                 {name}
             </Typography>
