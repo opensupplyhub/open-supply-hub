@@ -1078,3 +1078,48 @@ export const makeSearchByNameAndAddressSuccessResultStyles = theme =>
             fontWeight: theme.typography.fontWeightExtraBold,
         }),
     });
+
+export const makeSearchByNameAndAddressNotFoundResultStyles = theme =>
+    Object.freeze({
+        contentWrapperStyles: Object.freeze({
+            maxWidth: '601px',
+            margin: '94px auto 166px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+        }),
+        titleStyles: Object.freeze({
+            fontWeight: theme.typography.fontWeightExtraBold,
+            fontSize: '56px',
+            lineHeight: '60px',
+            marginBottom: '16px',
+            textAlign: 'center',
+        }),
+        descriptionStyles: Object.freeze({
+            fontSize: '18px',
+            lineHeight: '21px',
+            marginBottom: '32px',
+            textAlign: 'center',
+        }),
+        controlsContainerStyles: Object.freeze({
+            display: 'flex',
+            gap: '24px',
+        }),
+        buttonBaseStyles: Object.freeze({
+            textTransform: 'none',
+            border: 'none',
+            height: '49px',
+            width: '256px',
+        }),
+        buttonLabelStyles: Object.freeze({
+            fontSize: '18px',
+            lineHeight: '22px',
+            fontWeight: theme.typography.fontWeightExtraBold,
+        }),
+        addLocationButtonStyles: Object.freeze({
+            backgroundColor: theme.palette.action.main,
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
+        }),
+    });
