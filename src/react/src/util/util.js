@@ -1070,6 +1070,14 @@ export const convertFeatureFlagsObjectToListOfActiveFlags = featureFlags =>
 export const checkWhetherUserHasDashboardAccess = user =>
     get(user, 'is_superuser', false);
 
+export const generateRangeField = value => {
+    const [min, max] = value.split('-').map(Number);
+    return max !== undefined ? { min, max } : { min };
+};
+
+export const extractProductionLocationContributionValues = data =>
+    map(data, 'value');
+
 export const validateNumberOfWorkers = value => {
     if (isEmpty(value)) {
         return false;

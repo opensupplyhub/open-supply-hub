@@ -7,7 +7,11 @@ import {
     // TODO: Remove makeGetProductionLocationByOsIdURL
     makeGetProductionLocationByOsIdURL,
     makeGetProductionLocationURL,
+    generateRangeField,
+    extractProductionLocationContributionValues,
 } from '../util/util';
+
+import { DATA_SOURCES_ENUM } from '../util/constants';
 
 // This action is needed to fetch existing production location by OS ID
 // It is using in src/react/src/components/Contribute/SearchByOsIdResult.jsx
@@ -114,21 +118,24 @@ export function createProductionLocation(data) {
     }
     */
 
-    const mockedData = {
-        source: 'SLC', // Setup this automatically
-        name: 'Production Location Name',
-        address: 'David, Chiriquí Province, Panama',
-        country: 'PA',
-        sector: ['Apparel', 'Food'],
-        parent_company: 'Some parent company',
-        product_type: ['Salt'],
-        location_type: ['Assembly'],
-        processing_type: ['Chemical Synthesis'],
-        number_of_workers: {
-            min: 10,
-            max: 20,
-        },
-        // TODO: what about coordinates?
+    const contribData = {
+        source: DATA_SOURCES_ENUM.SLC,
+        name,
+        address,
+        country: country.value,
+        sector: extractProductionLocationContributionValues(sector),
+        parent_company: extractProductionLocationContributionValues(
+            parentCompany,
+        ),
+        product_type: extractProductionLocationContributionValues(productType),
+        location_type: extractProductionLocationContributionValues(
+            locationType,
+        ),
+        processing_type: extractProductionLocationContributionValues(
+            processingType,
+        ),
+        // TODO: refactor later
+        number_of_workers: generateRangeField(numberOfWorkers.value),
     };
 
     return async dispatch => {
@@ -137,7 +144,7 @@ export function createProductionLocation(data) {
         try {
             const { response } = await apiRequest.post(
                 makeGetProductionLocationURL(),
-                mockedData,
+                contribData,
             );
             /*
             {
