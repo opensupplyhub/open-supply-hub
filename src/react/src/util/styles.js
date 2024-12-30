@@ -1166,3 +1166,34 @@ export const makeConfirmNotFoundLocationDialogStyles = theme =>
             },
         }),
     });
+
+export const makeProductionLocationDetailsStyles = theme => ({
+    locationNameStyles: Object.freeze({
+        fontSize: '36px',
+        lineHeight: '44px',
+        fontWeight: theme.typography.fontWeightBold,
+    }),
+    locationCurrentOsIdStyles: Object.freeze({
+        fontSize: '16px',
+        lineHeight: '20px',
+        fontWeight: theme.typography.fontWeightBold,
+        marginTop: '8px',
+    }),
+    locationHistoricalOsIdStyles: Object.freeze({
+        fontSize: '14px',
+        lineHeight: '20px',
+        fontWeight: theme.typography.fontWeightBold,
+        color: COLOURS.DARK_GREY,
+        marginTop: '8px',
+    }),
+    locationAddressContainerStyles: Object.freeze({
+        display: 'flex',
+        flexDirection: 'column',
+        marginTop: '12px',
+    }),
+    locationAddressStyles: Object.freeze({
+        fontSize: '16px',
+        lineHeight: '20px',
+        fontWeight: theme.typography.fontWeightSemiBold,
+    }),
+});
