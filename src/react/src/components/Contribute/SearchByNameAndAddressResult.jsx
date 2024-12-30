@@ -64,6 +64,7 @@ const SearchByNameAndAddressResult = ({
                 <SearchByNameAndAddressSuccessResult
                     productionLocations={productionLocations}
                     productionLocationsCount={productionLocationsCount}
+                    clearLocations={clearLocations}
                 />
             ) : (
                 <SearchByNameAndAddressNotFoundResult />

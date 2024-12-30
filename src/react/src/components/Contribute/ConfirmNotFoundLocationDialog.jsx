@@ -1,4 +1,5 @@
 import React from 'react';
+import { bool, func, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
@@ -55,20 +56,20 @@ const makeConfirmNotFoundLocationDialogStyles = theme =>
 
 const ConfirmNotFoundLocationDialog = ({
     confirmDialogIsOpen,
-    // setConfirmDialogIsOpen,
     handleConfirmDialogClose,
+    clearLocations,
     classes,
 }) => {
     const handleAddNewLocation = () => {
         handleConfirmDialogClose();
-        // clearProductionLocations();
+        clearLocations();
         console.log('Add new location');
     };
 
     const handleSearchAgain = () => {
         handleConfirmDialogClose();
         history.push(`${contributeProductionLocationRoute}?tab=name-address`);
-        // clearProductionLocations();
+        clearLocations();
         console.log('Search again');
     };
 
@@ -119,6 +120,13 @@ const ConfirmNotFoundLocationDialog = ({
             </DialogActions>
         </Dialog>
     );
+};
+
+ConfirmNotFoundLocationDialog.propTypes = {
+    confirmDialogIsOpen: bool.isRequired,
+    handleConfirmDialogClose: func.isRequired,
+    clearLocations: func.isRequired,
+    classes: object.isRequired,
 };
 
 export default withStyles(makeConfirmNotFoundLocationDialogStyles)(

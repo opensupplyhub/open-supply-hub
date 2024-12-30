@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { arrayOf, number, object } from 'prop-types';
+import { arrayOf, func, number, object } from 'prop-types';
 import Button from '@material-ui/core/Button';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
@@ -107,6 +107,7 @@ const makeSearchByNameAndAddressSuccessResultStyles = theme =>
 const SearchByNameAndAddressSuccessResult = ({
     productionLocationsCount,
     productionLocations,
+    clearLocations,
     classes,
 }) => {
     const [confirmDialogIsOpen, setConfirmDialogIsOpen] = useState(false);
@@ -144,6 +145,7 @@ const SearchByNameAndAddressSuccessResult = ({
             <ConfirmNotFoundLocationDialog
                 confirmDialogIsOpen={confirmDialogIsOpen}
                 handleConfirmDialogClose={handleConfirmDialogClose}
+                clearLocations={clearLocations}
             />
             <div className={classes.searchResultsContainerStyles}>
                 <Typography component="h1" className={classes.titleStyles}>
@@ -223,6 +225,7 @@ const SearchByNameAndAddressSuccessResult = ({
 SearchByNameAndAddressSuccessResult.propTypes = {
     productionLocationsCount: number.isRequired,
     productionLocations: arrayOf(productionLocationPropType).isRequired,
+    clearLocations: func.isRequired,
     classes: object.isRequired,
 };
 
