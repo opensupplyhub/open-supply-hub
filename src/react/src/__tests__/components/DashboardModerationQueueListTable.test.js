@@ -7,6 +7,40 @@ import { EMPTY_PLACEHOLDER, DATE_FORMATS } from '../../util/constants';
 import { formatUTCDate } from '../../util/util';
 
 describe('DashboardModerationQueueListTable component', () => {
+    const sampleModerationEventsWithoutStatusChangeDate =[        {
+        moderation_id: 188,
+        created_at: '2023-09-16T11:32:20.297Z',
+        cleaned_data: {
+            name: 'Plastic Test Eco',
+            country: {
+                name: 'Greece',
+                alpha_2: 'GR',
+                alpha_3: 'GRC',
+                numeric: '300',
+            }
+        },
+        contributor_name: 'Green Solutions Corp',
+        status: 'PENDING',
+        updated_at: '2024-10-17T11:31:20.287Z',
+        source: 'SLC',
+    },
+    {
+        moderation_id: 189,
+        created_at: '2023-08-09T12:44:18.297Z',
+        cleaned_data: {
+            name: 'Winds Systems Energy Ltd',
+            country: {
+                name: 'Greenland',
+                alpha_2: 'GL',
+                alpha_3: 'GRL',
+                numeric: '304',
+            }
+        },
+        contributor_name: 'New Resources Corp',
+        status: 'PENDING',
+        updated_at: '2023-11-12T12:46:30.297Z',
+        source: 'API',
+    },];
     const sampleModerationEvents = [
         {
             moderation_id: 11,
@@ -22,7 +56,6 @@ describe('DashboardModerationQueueListTable component', () => {
             },
             contributor_name: 'Green Solutions Corp',
             status: 'PENDING',
-            status_change_date: null,
             updated_at: '2024-10-18T11:30:20.287Z',
             source: 'SLC',
         },
@@ -45,7 +78,7 @@ describe('DashboardModerationQueueListTable component', () => {
             source: 'API',
         },
     ];
-    
+
     const paginatedModerationEvents = [
         ...sampleModerationEvents,
         {
@@ -519,12 +552,19 @@ describe('DashboardModerationQueueListTable component', () => {
         });
     });
 
+    test('if no status_change_date displays N/A', () => {
+        const { getAllByText } = renderComponent({ events: sampleModerationEventsWithoutStatusChangeDate, count: 2});
+
+        const elements = getAllByText(EMPTY_PLACEHOLDER);
+        expect(elements).toHaveLength(2);
+    });
+
     test('handles rows per page change', () => {
         const { getByText, rerender } = renderComponent({ events: paginatedModerationEvents, count: 26 });
 
         expect(getByText(/1-25 of 26/)).toBeInTheDocument();
         expect(getByText(/rows per page/i)).toBeInTheDocument();
-        
+
         fireEvent.click(getByText('25'));
         fireEvent.click(getByText('50'));
 
