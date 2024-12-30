@@ -10,7 +10,7 @@ import Typography from '@material-ui/core/Typography';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import StyledSelect from '../Filters/StyledSelect';
-
+import COLOURS from '../../util/COLOURS';
 import { makeSearchByNameAddressTabStyles } from '../../util/styles';
 
 import { countryOptionsPropType } from '../../util/propTypes';
@@ -25,15 +25,23 @@ const InputHelperText = ({ classes }) => (
     </span>
 );
 
-const defaultCountryOption = {
-    label: "What's the country?",
-    value: '',
-};
-
 const selectStyles = {
     control: provided => ({
         ...provided,
         height: '56px',
+        borderRadius: '0',
+        '&:focus,&:active,&:focus-within': {
+            borderColor: COLOURS.PURPLE,
+            boxShadow: `inset 0 0 0 1px ${COLOURS.PURPLE}`,
+            transition: 'box-shadow 0.2s',
+        },
+        '&:hover': {
+            borderColor: 'black',
+        },
+    }),
+    placeholder: provided => ({
+        ...provided,
+        opacity: 0.7,
     }),
 };
 
@@ -46,7 +54,7 @@ const SearchByNameAndAddressTab = ({
 }) => {
     const [inputName, setInputName] = useState('');
     const [inputAddress, setInputAddress] = useState('');
-    const [inputCountry, setInputCountry] = useState(defaultCountryOption);
+    const [inputCountry, setInputCountry] = useState(null);
     const [nameTouched, setNameTouched] = useState(false);
     const [addressTouched, setAddressTouched] = useState(false);
 
@@ -61,7 +69,7 @@ const SearchByNameAndAddressTab = ({
         setInputAddress(event.target.value);
     };
     const handleCountryChange = event => {
-        setInputCountry(event || defaultCountryOption);
+        setInputCountry(event);
     };
 
     const handleSearch = () => {
@@ -163,9 +171,6 @@ const SearchByNameAndAddressTab = ({
                             }`,
                             notchedOutline: classes.notchedOutlineStyles,
                         },
-                        inputProps: {
-                            type: 'text',
-                        },
                     }}
                     helperText={
                         addressTouched &&
@@ -186,7 +191,7 @@ const SearchByNameAndAddressTab = ({
                     options={countriesData || []}
                     value={inputCountry}
                     onChange={handleCountryChange}
-                    className={`basic-multi-select notranslate ${classes.selectStyles}`}
+                    className={classes.selectStyles}
                     styles={selectStyles}
                     placeholder="What's the country?"
                     isMulti={false}
