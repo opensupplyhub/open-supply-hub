@@ -78,6 +78,7 @@ SearchByNameAndAddressResult.propTypes = {
     count: number.isRequired,
     fetching: bool.isRequired,
     fetchLocations: func.isRequired,
+    clearLocations: func.isRequired,
     classes: object.isRequired,
 };
 
