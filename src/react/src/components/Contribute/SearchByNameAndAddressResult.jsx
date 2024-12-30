@@ -1,14 +1,18 @@
 import React, { useEffect } from 'react';
-import { array, bool, func, object } from 'prop-types';
-import { connect } from 'react-redux';
-import { withStyles } from '@material-ui/core/styles';
+import { arrayOf, bool, func, object, number } from 'prop-types';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import BackToSearchButton from './BackToSearchButton';
-import SearchByNameAndAddressSuccessResult from './SearchByNameAndAddressSuccessResult';
-import SearchByNameAndAddressNotFoundResult from './SearchByNameAndAddressNotFoundResult';
+import { withStyles } from '@material-ui/core/styles';
+import { connect } from 'react-redux';
+import {
+    fetchProductionLocations,
+    resetProductionLocations,
+} from '../../actions/contributeProductionLocation';
 import { contributeProductionLocationRoute } from '../../util/constants';
 import history from '../../util/history';
-import { fetchProductionLocations } from '../../actions/contributeProductionLocation';
+import { productionLocationPropType } from '../../util/propTypes';
+import BackToSearchButton from './BackToSearchButton';
+import SearchByNameAndAddressNotFoundResult from './SearchByNameAndAddressNotFoundResult';
+import SearchByNameAndAddressSuccessResult from './SearchByNameAndAddressSuccessResult';
 
 const makeSearchByNameAndAddressResultStyles = () =>
     Object.freeze({
@@ -24,23 +28,21 @@ const makeSearchByNameAndAddressResultStyles = () =>
     });
 
 const SearchByNameAndAddressResult = ({
-    data,
+    data: productionLocations,
+    count: productionLocationsCount,
     fetching,
     fetchLocations,
+    clearLocations,
     classes,
 }) => {
-    console.log('data >>>', data);
-    console.log('fetching >>>', fetching);
     useEffect(() => {
         fetchLocations();
     }, [fetchLocations]);
 
     const handleBackToSearchByNameAddress = () => {
-        // clearProductionLocations();
+        clearLocations();
         history.push(`${contributeProductionLocationRoute}?tab=name-address`);
     };
-
-    const count = data?.data?.length || 0;
 
     if (fetching) {
         return (
@@ -58,8 +60,11 @@ const SearchByNameAndAddressResult = ({
                     handleBackToSearch={handleBackToSearchByNameAddress}
                 />
             </div>
-            {count > 0 ? (
-                <SearchByNameAndAddressSuccessResult data={data} />
+            {productionLocationsCount > 0 ? (
+                <SearchByNameAndAddressSuccessResult
+                    productionLocations={productionLocations}
+                    productionLocationsCount={productionLocationsCount}
+                />
             ) : (
                 <SearchByNameAndAddressNotFoundResult />
             )}
@@ -67,28 +72,26 @@ const SearchByNameAndAddressResult = ({
     );
 };
 
-SearchByNameAndAddressResult.defaultProps = {
-    data: [],
-    fetching: false,
-};
-
 SearchByNameAndAddressResult.propTypes = {
-    data: array,
-    fetching: bool,
+    data: arrayOf(productionLocationPropType).isRequired,
+    count: number.isRequired,
+    fetching: bool.isRequired,
     fetchLocations: func.isRequired,
     classes: object.isRequired,
 };
 
 const mapStateToProps = ({
     contributeProductionLocation: {
-        productionLocations: { data, fetching },
+        productionLocations: { data, count, fetching },
     },
 }) => ({
     data,
+    count,
     fetching,
 });
 const mapDispatchToProps = dispatch => ({
     fetchLocations: () => dispatch(fetchProductionLocations()),
+    clearLocations: () => dispatch(resetProductionLocations()),
 });
 
 export default connect(
