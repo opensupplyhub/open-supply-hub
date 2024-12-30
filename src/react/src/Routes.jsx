@@ -176,7 +176,6 @@ class Routes extends Component {
                                     path={productionLocationInfoRoute}
                                     component={ProductionLocationInfo}
                                 />
-
                                 <Route exact path="/about/processing">
                                     <ExternalRedirect
                                         to={`${InfoLink}/${InfoPaths.dataQuality}`}

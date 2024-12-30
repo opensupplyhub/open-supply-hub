@@ -39,8 +39,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Additional information section: Fields for optional contributions from the owner or manager of the production location, including sector(s), product type(s), location type(s), processing type(s), number of workers, and parent company.
 The page also features `Go Back` and `Submit` buttons for navigation and form submission.
 
-
-
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
