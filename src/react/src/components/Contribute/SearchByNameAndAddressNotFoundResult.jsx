@@ -2,10 +2,10 @@ import React from 'react';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
+import { object } from 'prop-types';
 import { contributeProductionLocationRoute } from '../../util/constants';
 import history from '../../util/history';
 import { makeSearchByNameAndAddressNotFoundResultStyles } from '../../util/styles';
-import { object } from 'prop-types';
 
 const SearchByNameAndAddressNotFoundResult = ({ classes }) => {
     const handleSearchAgain = () => {

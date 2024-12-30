@@ -1123,3 +1123,46 @@ export const makeSearchByNameAndAddressNotFoundResultStyles = theme =>
             },
         }),
     });
+
+export const makeConfirmNotFoundLocationDialogStyles = theme =>
+    Object.freeze({
+        dialogPaperStyles: Object.freeze({
+            borderRadius: 0,
+            padding: '24px 80px 42px',
+        }),
+        closeButtonStyles: {
+            position: 'absolute',
+            right: '16px',
+            top: '16px',
+            color: '#000',
+        },
+        dialogTitleStyles: Object.freeze({
+            fontSize: '32px',
+            lineHeight: '32px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
+            textAlign: 'center',
+            padding: 0,
+        }),
+        dialogActionsStyles: Object.freeze({
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '16px',
+        }),
+        buttonBaseStyles: Object.freeze({
+            textTransform: 'none',
+            border: 'none',
+            height: '48px',
+            width: '309px',
+        }),
+        buttonLabelStyles: Object.freeze({
+            fontSize: '18px',
+            lineHeight: '22px',
+            fontWeight: theme.typography.fontWeightExtraBold,
+        }),
+        addLocationButtonStyles: Object.freeze({
+            backgroundColor: theme.palette.action.main,
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
+        }),
+    });
