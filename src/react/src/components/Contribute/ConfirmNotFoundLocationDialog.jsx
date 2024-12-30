@@ -21,14 +21,12 @@ const ConfirmNotFoundLocationDialog = ({
     const handleAddNewLocation = () => {
         handleConfirmDialogClose();
         clearLocations();
-        console.log('Add new location');
     };
 
     const handleSearchAgain = () => {
         handleConfirmDialogClose();
         history.push(`${contributeProductionLocationRoute}?tab=name-address`);
         clearLocations();
-        console.log('Search again');
     };
 
     return (

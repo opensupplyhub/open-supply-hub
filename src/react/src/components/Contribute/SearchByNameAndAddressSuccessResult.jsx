@@ -31,13 +31,10 @@ const SearchByNameAndAddressSuccessResult = ({
         };
     }, []);
 
-    const handleSelectLocation = () => {
-        console.log('Select');
-    };
+    const handleSelectLocation = () => {};
 
     const handleNotFoundLocation = () => {
         setConfirmDialogIsOpen(true);
-        console.log('I do not see my Location');
     };
 
     const handleConfirmDialogClose = () => {

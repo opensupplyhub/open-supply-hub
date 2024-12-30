@@ -12,9 +12,7 @@ const SearchByNameAndAddressNotFoundResult = ({ classes }) => {
         history.push(`${contributeProductionLocationRoute}?tab=name-address`);
     };
 
-    const handleAddNewLocation = () => {
-        console.log('Add a new location');
-    };
+    const handleAddNewLocation = () => {};
 
     return (
         <div className={classes.contentWrapperStyles}>
