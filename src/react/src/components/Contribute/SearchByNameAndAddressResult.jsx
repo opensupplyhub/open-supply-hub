@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { arrayOf, bool, func, object, number } from 'prop-types';
+import { arrayOf, bool, func, number, object } from 'prop-types';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { withStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
@@ -7,25 +7,13 @@ import {
     fetchProductionLocations,
     resetProductionLocations,
 } from '../../actions/contributeProductionLocation';
-import { contributeProductionLocationRoute } from '../../util/constants';
-import history from '../../util/history';
-import { productionLocationPropType } from '../../util/propTypes';
 import BackToSearchButton from './BackToSearchButton';
 import SearchByNameAndAddressNotFoundResult from './SearchByNameAndAddressNotFoundResult';
 import SearchByNameAndAddressSuccessResult from './SearchByNameAndAddressSuccessResult';
-
-const makeSearchByNameAndAddressResultStyles = () =>
-    Object.freeze({
-        circularProgressContainerStyles: Object.freeze({
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: 'calc(100vh - 116px)',
-        }),
-        backToSearchButtonContainerStyles: Object.freeze({
-            padding: '48px 5% 0 5%',
-        }),
-    });
+import { contributeProductionLocationRoute } from '../../util/constants';
+import history from '../../util/history';
+import { productionLocationPropType } from '../../util/propTypes';
+import { makeSearchByNameAndAddressResultStyles } from '../../util/styles';
 
 const SearchByNameAndAddressResult = ({
     data: productionLocations,

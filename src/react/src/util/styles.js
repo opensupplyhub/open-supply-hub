@@ -689,6 +689,7 @@ export const makeSearchByOsIdResultActionsStyles = theme =>
         actionsStyles: Object.freeze({
             display: 'flex',
             gap: '24px',
+            marginTop: '24px',
         }),
         buttonLabelStyles: Object.freeze({
             fontSize: '18px',
@@ -966,5 +967,18 @@ export const makeSearchByNameAddressTabStyles = theme =>
             '&:hover': {
                 backgroundColor: theme.palette.action.dark,
             },
+        }),
+    });
+
+export const makeSearchByNameAndAddressResultStyles = () =>
+    Object.freeze({
+        circularProgressContainerStyles: Object.freeze({
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: 'calc(100vh - 116px)',
+        }),
+        backToSearchButtonContainerStyles: Object.freeze({
+            padding: '48px 5% 0 5%',
         }),
     });
