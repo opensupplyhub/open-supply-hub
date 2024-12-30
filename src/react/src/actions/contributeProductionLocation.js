@@ -30,6 +30,9 @@ export const resetSingleProductionLocation = createAction(
 );
 
 // TODO: Use modified makeGetProductionLocationByOsIdURL
+// TODO: This actions should use 'src/react/src/reducers/DashboardContributionRecordReducer.js' from OSDEV-1117
+// Regular contributor can get moderation event
+// OS ID will be rendered depending on request_type and os_id presence. But only moderator can change it's status
 export const startCreateProductionLocation = createAction(
     'START_CREATE_PRODUCTION_LOCATION',
 );
@@ -75,7 +78,7 @@ export function fetchProductionLocationByOsId(osID) {
     };
 }
 
-export function createProductionLocation(data) {
+export function createProductionLocation(contribData) {
     const {
         name,
         address,
@@ -86,7 +89,7 @@ export function createProductionLocation(data) {
         processingType,
         numberOfWorkers,
         parentCompany,
-    } = data;
+    } = contribData;
 
     /*
     {
@@ -118,7 +121,7 @@ export function createProductionLocation(data) {
     }
     */
 
-    const contribData = {
+    const parsedContribData = {
         source: DATA_SOURCES_ENUM.SLC,
         name,
         address,
@@ -142,9 +145,9 @@ export function createProductionLocation(data) {
         dispatch(startCreateProductionLocation());
 
         try {
-            const { response } = await apiRequest.post(
+            const { data } = await apiRequest.post(
                 makeGetProductionLocationURL(),
-                contribData,
+                parsedContribData,
             );
             /*
             {
@@ -153,8 +156,8 @@ export function createProductionLocation(data) {
                 moderation_status: "PENDING"
             }
             */
-            console.log('@@@ response is: ', response);
-            return dispatch(completeCreateProductionLocation(response));
+            console.log('@@@ response data is: ', data);
+            return dispatch(completeCreateProductionLocation(data));
         } catch (err) {
             return dispatch(
                 logErrorAndDispatchFailure(
