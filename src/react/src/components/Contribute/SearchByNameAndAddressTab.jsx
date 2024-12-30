@@ -32,7 +32,11 @@ const selectStyles = {
         borderRadius: '0',
         '&:focus,&:active,&:focus-within': {
             borderColor: COLOURS.PURPLE,
-            boxShadow: `0 0 0 1px ${COLOURS.PURPLE}`,
+            boxShadow: `inset 0 0 0 1px ${COLOURS.PURPLE}`,
+            transition: 'box-shadow 0.2s',
+        },
+        '&:hover': {
+            borderColor: 'black',
         },
     }),
     placeholder: provided => ({
