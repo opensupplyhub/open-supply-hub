@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { withStyles } from '@material-ui/core/styles';
+import React, { useEffect, useState } from 'react';
+import { arrayOf, number, object } from 'prop-types';
 import Button from '@material-ui/core/Button';
+import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
+import COLOURS from '../../util/COLOURS';
+import { productionLocationPropType } from '../../util/propTypes';
 import ConfirmNotFoundLocationDialog from './ConfirmNotFoundLocationDialog';
 import ProductionLocationDetails from './ProductionLocationDetails';
-import COLOURS from '../../util/COLOURS';
 
 const makeSearchByNameAndAddressSuccessResultStyles = theme =>
     Object.freeze({
@@ -102,7 +104,11 @@ const makeSearchByNameAndAddressSuccessResultStyles = theme =>
         }),
     });
 
-const SearchByNameAndAddressSuccessResult = ({ data, classes }) => {
+const SearchByNameAndAddressSuccessResult = ({
+    productionLocationsCount,
+    productionLocations,
+    classes,
+}) => {
     const [confirmDialogIsOpen, setConfirmDialogIsOpen] = useState(false);
     const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
 
@@ -133,8 +139,6 @@ const SearchByNameAndAddressSuccessResult = ({ data, classes }) => {
         setConfirmDialogIsOpen(false);
     };
 
-    const count = data?.data?.length || 0;
-
     return (
         <>
             <ConfirmNotFoundLocationDialog
@@ -159,37 +163,36 @@ const SearchByNameAndAddressSuccessResult = ({ data, classes }) => {
                 </Typography>
                 <div className={classes.resultsInfoContainerStyles}>
                     <Typography className={classes.resultsInfoStyles}>
-                        {count} results
+                        {productionLocationsCount} results
                     </Typography>
                     <Typography className={classes.resultsSortStyles}>
                         Sort By: <strong>Best match</strong>
                     </Typography>
                 </div>
                 <div>
-                    {data?.data &&
-                        data?.data.map(location => (
-                            <div
-                                key={location.os_id}
-                                className={classes.resultContainer}
+                    {productionLocations.map(location => (
+                        <div
+                            key={location.os_id}
+                            className={classes.resultContainer}
+                        >
+                            <ProductionLocationDetails
+                                osId={location.os_id}
+                                name={location.name}
+                                address={location.address}
+                                countryName={location.country.name}
+                            />
+                            <Button
+                                variant="contained"
+                                onClick={handleSelectLocation}
+                                classes={{
+                                    root: `${classes.buttonBaseStyles} ${classes.selectButtonStyles}`,
+                                    label: classes.selectButtonLabelStyles,
+                                }}
                             >
-                                <ProductionLocationDetails
-                                    osId={location.os_id}
-                                    name={location.name}
-                                    address={location.address}
-                                    countryName={location.country.name}
-                                />
-                                <Button
-                                    variant="contained"
-                                    onClick={handleSelectLocation}
-                                    classes={{
-                                        root: `${classes.buttonBaseStyles} ${classes.selectButtonStyles}`,
-                                        label: classes.selectButtonLabelStyles,
-                                    }}
-                                >
-                                    Select
-                                </Button>
-                            </div>
-                        ))}
+                                Select
+                            </Button>
+                        </div>
+                    ))}
                 </div>
             </div>
 
@@ -215,6 +218,12 @@ const SearchByNameAndAddressSuccessResult = ({ data, classes }) => {
             </div>
         </>
     );
+};
+
+SearchByNameAndAddressSuccessResult.propTypes = {
+    productionLocationsCount: number.isRequired,
+    productionLocations: arrayOf(productionLocationPropType).isRequired,
+    classes: object.isRequired,
 };
 
 export default withStyles(makeSearchByNameAndAddressSuccessResultStyles)(
