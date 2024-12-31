@@ -37,7 +37,10 @@ const PreviousOsIdTooltip = ({ classes }) => {
                 },
             }}
         >
-            <InfoOutlinedIcon className={classes.infoOutlinedIconStyles} />
+            <InfoOutlinedIcon
+                className={classes.infoOutlinedIconStyles}
+                data-testid="previous-os-id-tooltip"
+            />
         </Tooltip>
     );
 };
