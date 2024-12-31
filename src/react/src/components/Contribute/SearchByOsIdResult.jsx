@@ -37,13 +37,6 @@ const SearchByOsIdResult = ({
     }, [fetchProductionLocation]);
 
     const isLocationDataAvailable = !isEmpty(data);
-    const {
-        name,
-        os_id: osId,
-        historical_os_id: historicalOsIds,
-        address,
-        country: { name: countryName } = {},
-    } = data;
 
     const handleBackToSearchByNameAddress = () => {
         clearProductionLocation();
@@ -76,11 +69,7 @@ const SearchByOsIdResult = ({
             <Paper className={classes.resultContainerStyles}>
                 {isLocationDataAvailable ? (
                     <SearchByOsIdSuccessResult
-                        name={name}
-                        osId={osId}
-                        historicalOsIds={historicalOsIds}
-                        address={address}
-                        countryName={countryName}
+                        productionLocation={data}
                         handleBackToSearchByNameAddress={
                             handleBackToSearchByNameAddress
                         }
