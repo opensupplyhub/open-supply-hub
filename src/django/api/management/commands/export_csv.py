@@ -17,6 +17,16 @@ logger = logging.getLogger(__name__)
 
 
 def upload_file_to_google_drive(filename):
+    """
+    Uploads a CSV file to Google Drive using a service account.
+    Args:
+        filename (str): The path to the CSV file to be uploaded.
+    Returns:
+        str: The ID of the uploaded file on Google Drive.
+    Environment Variables:
+        GOOGLE_SERVICE_ACCOUNT_CREDS (str): JSON string of the Google service account credentials.
+        GOOGLE_DRIVE_SHARED_DIRECTORY_ID (str): The ID of the shared directory on Google Drive where the file will be uploaded.
+    """
     google_service_account_creds = os.getenv("GOOGLE_SERVICE_ACCOUNT_CREDS")
     credentials = service_account.Credentials.from_service_account_info(
         info=json.loads(google_service_account_creds),
@@ -41,6 +51,13 @@ def upload_file_to_google_drive(filename):
 
 
 def create_cvs_writer(file):
+    """
+    Create a CSV writer object and write the headers to the given file.
+    Args:
+        file (file object): The file object where the CSV data will be written.
+    Returns:
+        csv.writer: A CSV writer object that can be used to write rows to the file.
+    """
     writer = csv.writer(file)
     headers = serializer.get_headers()
     writer.writerow(headers)
@@ -49,12 +66,28 @@ def create_cvs_writer(file):
 
 
 def write_facilities(writer, facilities):
+    """
+    Write facility data to a CSV file using the provided writer.
+    Args:
+        writer (csv.writer): A CSV writer object used to write rows to the CSV file.
+        facilities (iterable): An iterable of facility objects to be written to the CSV file.
+    Returns:
+        None
+    """
     for facility in facilities:
         row = serializer.get_row(facility)
         writer.writerow(row)
 
 
 def get_facilities(id=None, limit=50000):
+    """
+    Retrieve a list of facilities from the FacilityIndex.
+    Args:
+        id (int, optional): The starting ID to filter facilities. Only facilities with an ID greater than this value will be included. Defaults to None.
+        limit (int, optional): The maximum number of facilities to retrieve. Defaults to 50000.
+    Returns:
+        QuerySet: A Django QuerySet containing the filtered and ordered facilities.
+    """
     facility_objects = FacilityIndex.objects
 
     if id is not None:
@@ -64,9 +97,29 @@ def get_facilities(id=None, limit=50000):
 
 
 class Command(BaseCommand):
+    """
+    Command class to export all facilities to a CSV file.
+    This command fetches facilities in batches and writes them to a CSV file.
+    It also uploads the generated CSV file to Google Drive.
+    Attributes:
+        help (str): Description of the command.
+    Methods:
+        add_arguments(parser):
+            Adds command-line arguments to the parser.
+        handle(*args, **options):
+            Executes the command to export facilities to a CSV file and upload it to Google Drive.
+    """
+
     help = "Export all facilities to a CSV file."
 
     def add_arguments(self, parser):
+        """
+        Adds custom command-line arguments to the parser.
+        Args:
+            parser (argparse.ArgumentParser): The argument parser instance to which custom arguments are added.
+        Arguments:
+            --limit (int): Optional; The maximum number of facilities to fetch in each iteration. Default is 50000.
+        """
         parser.add_argument(
             "--limit",
             type=int,
@@ -75,6 +128,13 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        """
+        Handles the export process of facilities to a CSV file and uploads it to Google Drive.
+        Args:
+            *args: Variable length argument list.
+            **options: Arbitrary keyword arguments. Expected to contain:
+                - "limit" (int): The maximum number of facilities to fetch in each iteration.
+        """
         logger.info("Starting the export process!")
 
         limit = options["limit"]
