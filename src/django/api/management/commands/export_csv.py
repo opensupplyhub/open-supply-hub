@@ -83,7 +83,7 @@ class Command(BaseCommand):
                 )
 
                 last_id = facilities[len(facilities) - 1].id
-                logger.info(f"Number of processed facilities: {len(facilities)}")
+                logger.info(f"Facilities processed: {len(facilities)}")
                 logger.info(f"End of iteration, ID: {last_id}")
 
         logger.info("Finished the export process!")
