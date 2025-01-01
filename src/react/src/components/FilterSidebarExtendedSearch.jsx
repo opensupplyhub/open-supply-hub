@@ -44,7 +44,7 @@ const FACILITY_TYPE = 'FACILITY_TYPE';
 const PROCESSING_TYPE = 'PROCESSING_TYPE';
 const PRODUCT_TYPE = 'PRODUCT_TYPE';
 const NUMBER_OF_WORKERS = 'NUMBER_OF_WORKERS';
-const customSelectComponents = { DropdownIndicator: null };
+const selectCustomComponents = { DropdownIndicator: null };
 
 const mapFacilityTypeOptions = (fPTypes, pTypes) => {
     let fTypes = [];
@@ -172,9 +172,8 @@ function FilterSidebarExtendedSearch({
                         onChange={updateParentCompany}
                         placeholder="e.g. ABC Textiles Limited"
                         isSideBarSearch={isSideBarSearch}
-                        aria-label="Parent
-                    company"
-                        components={customSelectComponents}
+                        aria-label="Parent company"
+                        components={selectCustomComponents}
                         disabled={fetchingFacilities}
                     />
                 </div>
@@ -307,7 +306,7 @@ function mapStateToProps({
         },
         numberOfWorkers: {
             data: numberOfWorkersOptions,
-            fetching: fetchingNumberofWorkers,
+            fetching: fetchingNumberOfWorkers,
         },
     },
     filters: {
@@ -340,7 +339,7 @@ function mapStateToProps({
         fetchingExtendedOptions:
             fetchingContributorTypes ||
             fetchingFacilityProcessingType ||
-            fetchingNumberofWorkers,
+            fetchingNumberOfWorkers,
         embed: !!embed,
         embedExtendedFields: config.extended_fields,
     };
