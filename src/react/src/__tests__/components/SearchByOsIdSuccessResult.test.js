@@ -21,7 +21,7 @@ jest.mock('../../components/Contribute/ProductionLocationDetails', () => ({
             <div>{`Name: ${name}`}</div>
             <div>{`Address: ${address}`}</div>
             <div>{`Country: ${countryName}`}</div>
-            {historicalOsIds && historicalOsIds.map((id) => <div key={id}>{`Historical OS ID: ${id}`}</div>)}
+            {historicalOsIds ? historicalOsIds.map((id) => <div key={id}>{`Historical OS ID: ${id}`}</div>) : null}
         </div>
     ),
 }));
