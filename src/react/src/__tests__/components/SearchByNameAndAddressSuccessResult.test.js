@@ -84,26 +84,26 @@ describe('SearchByNameAndAddressSuccessResult component', () => {
 
     test('opens the ConfirmNotFoundLocationDialog when the "I don\'t see my Location" button is clicked', () => {
         const { getByText, getByRole } = renderWithProviders(<SearchByNameAndAddressSuccessResult {...defaultProps} />);
-    
+
         const notFoundButton = getByRole('button', {
-          name: "I don't see my Location",
+            name: "I don't see my Location",
         });
         fireEvent.click(notFoundButton);
-    
+
         expect(getByText('Close Dialog')).toBeInTheDocument();
-      });
-    
-      test('closes the ConfirmNotFoundLocationDialog when the close button is clicked', () => {
+    });
+
+    test('closes the ConfirmNotFoundLocationDialog when the close button is clicked', () => {
         const { getByText, getByRole, queryByText } = renderWithProviders(<SearchByNameAndAddressSuccessResult {...defaultProps} />);
-    
+
         const notFoundButton = getByRole('button', {
-          name: "I don't see my Location",
+            name: "I don't see my Location",
         });
         fireEvent.click(notFoundButton);
-    
+
         const closeButton = getByText('Close Dialog');
         fireEvent.click(closeButton);
-    
+
         expect(queryByText('Close Dialog')).not.toBeInTheDocument();
-      });
+    });
 });
