@@ -18,32 +18,54 @@ logger = logging.getLogger(__name__)
 
 def upload_file_to_google_drive(filename):
     """
-    Uploads a CSV file to Google Drive using a service account.
+    Uploads a file to Google Drive using a service account.
     Args:
-        filename (str): The path to the CSV file to be uploaded.
+        filename (str): The path to the file to be uploaded.
     Returns:
         str: The ID of the uploaded file on Google Drive.
-    Environment Variables:
-        GOOGLE_SERVICE_ACCOUNT_CREDS (str): JSON string of the Google service account credentials.
-        GOOGLE_DRIVE_SHARED_DIRECTORY_ID (str): The ID of the shared directory on Google Drive where the file will be uploaded.
+    Raises:
+        ValueError: If the Google Service Account credentials
+        or the Google Drive shared directory ID are not found
+        in the environment variables.
     """
-    google_service_account_creds = os.getenv("GOOGLE_SERVICE_ACCOUNT_CREDS")
+
+    gdrive_creds = os.getenv("GOOGLE_SERVICE_ACCOUNT_CREDS")
+
+    if gdrive_creds is None:
+        raise ValueError("Google Service Account credentials not found!")
+
     credentials = service_account.Credentials.from_service_account_info(
-        info=json.loads(google_service_account_creds),
+        info=json.loads(gdrive_creds),
     )
     logger.info("Initialized Google Drive service account credentials")
 
+    gdrvie_dir_id = os.getenv("GOOGLE_DRIVE_SHARED_DIRECTORY_ID")
+
+    if gdrvie_dir_id is None:
+        raise ValueError("Google Drive shared directory ID not found!")
+
     file_metadata = {
         "name": os.path.basename(filename),
-        "parents": [os.getenv("GOOGLE_DRIVE_SHARED_DIRECTORY_ID")],
+        "parents": [gdrvie_dir_id],
     }
-    media = MediaFileUpload(filename, mimetype="text/csv")
+    media = MediaFileUpload(
+        filename,
+        mimetype="text/csv",
+    )
 
     logger.info("Initializing the Drive upload")
-    service = build("drive", "v3", credentials=credentials)
+    service = build(
+        "drive",
+        "v3",
+        credentials=credentials,
+    )
     uploaded_file = (
         service.files()
-        .create(body=file_metadata, media_body=media, fields="id")
+        .create(
+            body=file_metadata,
+            media_body=media,
+            fields="id",
+        )
         .execute()
     )
 
@@ -56,7 +78,8 @@ def create_cvs_writer(file):
     Args:
         file (file object): The file object where the CSV data will be written.
     Returns:
-        csv.writer: A CSV writer object that can be used to write rows to the file.
+        csv.writer: A CSV writer object that can be used
+            to write rows to the file.
     """
     writer = csv.writer(file)
     headers = serializer.get_headers()
@@ -69,8 +92,10 @@ def write_facilities(writer, facilities):
     """
     Write facility data to a CSV file using the provided writer.
     Args:
-        writer (csv.writer): A CSV writer object used to write rows to the CSV file.
-        facilities (iterable): An iterable of facility objects to be written to the CSV file.
+        writer (csv.writer): A CSV writer object used to write
+            rows to the CSV file.
+        facilities (iterable): An iterable of facility objects to be
+            written to the CSV file.
     Returns:
         None
     """
@@ -83,10 +108,14 @@ def get_facilities(id=None, limit=50000):
     """
     Retrieve a list of facilities from the FacilityIndex.
     Args:
-        id (int, optional): The starting ID to filter facilities. Only facilities with an ID greater than this value will be included. Defaults to None.
-        limit (int, optional): The maximum number of facilities to retrieve. Defaults to 50000.
+        id (int, optional): The starting ID to filter facilities.
+            Only facilities with an ID greater than this value
+            will be included. Defaults to None.
+        limit (int, optional): The maximum number of facilities to retrieve.
+            Defaults to 50000.
     Returns:
-        QuerySet: A Django QuerySet containing the filtered and ordered facilities.
+        QuerySet: A Django QuerySet containing the filtered
+            and ordered facilities.
     """
     facility_objects = FacilityIndex.objects
 
@@ -107,7 +136,8 @@ class Command(BaseCommand):
         add_arguments(parser):
             Adds command-line arguments to the parser.
         handle(*args, **options):
-            Executes the command to export facilities to a CSV file and upload it to Google Drive.
+            Executes the command to export facilities to a CSV file
+            and upload it to Google Drive.
     """
 
     help = "Export all facilities to a CSV file."
@@ -116,9 +146,11 @@ class Command(BaseCommand):
         """
         Adds custom command-line arguments to the parser.
         Args:
-            parser (argparse.ArgumentParser): The argument parser instance to which custom arguments are added.
+            parser (argparse.ArgumentParser): The argument parser instance
+                to which custom arguments are added.
         Arguments:
-            --limit (int): Optional; The maximum number of facilities to fetch in each iteration. Default is 50000.
+            --limit (int): Optional; The maximum number of facilities
+                to fetch in each iteration. Default is 50000.
         """
         parser.add_argument(
             "--limit",
@@ -129,11 +161,13 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         """
-        Handles the export process of facilities to a CSV file and uploads it to Google Drive.
+        Handles the export process of facilities to a CSV file and
+            uploads it to Google Drive.
         Args:
             *args: Variable length argument list.
             **options: Arbitrary keyword arguments. Expected to contain:
-                - "limit" (int): The maximum number of facilities to fetch in each iteration.
+                - "limit" (int): The maximum number of facilities
+                    to fetch in each iteration.
         """
         logger.info("Starting the export process!")
 
