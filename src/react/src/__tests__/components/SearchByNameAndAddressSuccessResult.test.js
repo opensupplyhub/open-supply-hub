@@ -5,7 +5,7 @@ import renderWithProviders from '../../util/testUtils/renderWithProviders';
 
 jest.mock('../../components/Contribute/ConfirmNotFoundLocationDialog', () => ({
     __esModule: true,
-    default: ({ confirmDialogIsOpen, handleConfirmDialogClose }) => <div>{confirmDialogIsOpen && <button onClick={handleConfirmDialogClose}>Close Dialog</button>}</div>,
+    default: ({ confirmDialogIsOpen, handleConfirmDialogClose }) => <div>{confirmDialogIsOpen && <button type='button' onClick={handleConfirmDialogClose}>Close Dialog</button>}</div>,
 }));
 
 jest.mock('../../components/Contribute/ProductionLocationDetails', () => ({

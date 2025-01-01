@@ -7,8 +7,8 @@ jest.mock('../../components/Contribute/SearchByOsIdResultActions', () => ({
     __esModule: true,
     default: ({ defaultButtonLabel, defaultButtonAction, secondaryButtonLabel, secondaryButtonAction }) => (
         <div>
-            <button onClick={defaultButtonAction}>{defaultButtonLabel}</button>
-            <button onClick={secondaryButtonAction}>{secondaryButtonLabel}</button>
+            <button type='button' onClick={defaultButtonAction}>{defaultButtonLabel}</button>
+            <button type='button' onClick={secondaryButtonAction}>{secondaryButtonLabel}</button>
         </div>
     ),
 }));
@@ -21,7 +21,7 @@ jest.mock('../../components/Contribute/ProductionLocationDetails', () => ({
             <div>{`Name: ${name}`}</div>
             <div>{`Address: ${address}`}</div>
             <div>{`Country: ${countryName}`}</div>
-            {historicalOsIds && historicalOsIds.map((id, index) => <div key={index}>{`Historical OS ID: ${id}`}</div>)}
+            {historicalOsIds && historicalOsIds.map((id) => <div key={id}>{`Historical OS ID: ${id}`}</div>)}
         </div>
     ),
 }));
