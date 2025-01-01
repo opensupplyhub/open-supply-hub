@@ -3,12 +3,13 @@ import logging
 from datetime import datetime
 from django.core.management.base import BaseCommand
 from api.serializers.facility.facility_download_serializer import (
-    FacilityDownloadSerializer
+    FacilityDownloadSerializer,
 )
 from api.models.facility.facility_index import FacilityIndex
 
 serializer = FacilityDownloadSerializer()
 logger = logging.getLogger(__name__)
+
 
 def create_cvs_writer(file):
     writer = csv.writer(file)
@@ -26,6 +27,7 @@ def write_facilities(writer, facilities):
         row = serializer.get_row(facility)
         writer.writerow(row)
 
+
 def get_facilities(id=None, limit=50000):
     facility_objects = FacilityIndex.objects
 
@@ -34,28 +36,28 @@ def get_facilities(id=None, limit=50000):
 
     return facility_objects.order_by("id")[:limit]
 
+
 class Command(BaseCommand):
-    help = 'Export all facilities to a CSV file.'
+    help = "Export all facilities to a CSV file."
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--limit',
+            "--limit",
             type=int,
             default=50000,
-            help='Limit the number of facilities to fetch in each iteration'
+            help="Limit the number of facilities to fetch in each iteration",
         )
-
 
     def handle(self, *args, **options):
         logger.info("Starting the export process!")
 
-        limit = options['limit']
+        limit = options["limit"]
         logger.info(f"Limit set to: {limit}")
 
-        now = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+        now = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         filename = f"./facilities-command-{now}.csv"
 
-        with open(filename, 'w+') as file:
+        with open(filename, "w+") as file:
             logger.info(f"Opened file for writing: {filename}")
 
             writer = create_cvs_writer(file=file)
