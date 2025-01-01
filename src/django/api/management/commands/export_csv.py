@@ -1,23 +1,49 @@
 import csv
 import logging
+import os
+import json
 from datetime import datetime
 from django.core.management.base import BaseCommand
 from api.serializers.facility.facility_download_serializer import (
     FacilityDownloadSerializer,
 )
 from api.models.facility.facility_index import FacilityIndex
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
 
 serializer = FacilityDownloadSerializer()
 logger = logging.getLogger(__name__)
 
 
+def upload_file_to_google_drive(filename):
+    google_service_account_creds = os.getenv("GOOGLE_SERVICE_ACCOUNT_CREDS")
+    credentials = service_account.Credentials.from_service_account_info(
+        info=json.loads(google_service_account_creds),
+    )
+    logger.info("Initialized Google Drive service account credentials")
+
+    file_metadata = {
+        "name": os.path.basename(filename),
+        "parents": [os.getenv("GOOGLE_DRIVE_SHARED_DIRECTORY_ID")],
+    }
+    media = MediaFileUpload(filename, mimetype="text/csv")
+
+    logger.info("Initializing the Drive upload")
+    service = build("drive", "v3", credentials=credentials)
+    uploaded_file = (
+        service.files()
+        .create(body=file_metadata, media_body=media, fields="id")
+        .execute()
+    )
+
+    return uploaded_file.get("id")
+
+
 def create_cvs_writer(file):
     writer = csv.writer(file)
-
     headers = serializer.get_headers()
     writer.writerow(headers)
-
-    logger.info("Wrote headers to file")
 
     return writer
 
@@ -85,6 +111,10 @@ class Command(BaseCommand):
                 last_id = facilities[len(facilities) - 1].id
                 logger.info(f"Facilities processed: {len(facilities)}")
                 logger.info(f"End of iteration, ID: {last_id}")
+
+        logger.info("Starting to upload the file to Google Drive!")
+        file_id = upload_file_to_google_drive(filename=filename)
+        logger.info(f"Finished writing {filename} with id {file_id}")
 
         logger.info("Finished the export process!")
         logger.info(f"Total number of facilities: {total_facilities}")
