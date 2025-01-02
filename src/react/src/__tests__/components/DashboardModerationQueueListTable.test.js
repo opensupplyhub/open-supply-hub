@@ -7,40 +7,43 @@ import { EMPTY_PLACEHOLDER, DATE_FORMATS } from '../../util/constants';
 import { formatUTCDate } from '../../util/util';
 
 describe('DashboardModerationQueueListTable component', () => {
-    const sampleModerationEventsWithoutStatusChangeDate =[        {
-        moderation_id: 188,
-        created_at: '2023-09-16T11:32:20.297Z',
-        cleaned_data: {
-            name: 'Plastic Test Eco',
-            country: {
-                name: 'Greece',
-                alpha_2: 'GR',
-                alpha_3: 'GRC',
-                numeric: '300',
-            }
+    const sampleModerationEventsWithoutStatusChangeDate = [
+        {
+            moderation_id: 188,
+            created_at: '2023-09-16T11:32:20.297Z',
+            cleaned_data: {
+                name: 'Plastic Test Eco',
+                country: {
+                    name: 'Greece',
+                    alpha_2: 'GR',
+                    alpha_3: 'GRC',
+                    numeric: '300',
+                }
+            },
+            contributor_name: 'Green Solutions Corp',
+            status: 'PENDING',
+            updated_at: '2024-10-17T11:31:20.287Z',
+            source: 'SLC',
         },
-        contributor_name: 'Green Solutions Corp',
-        status: 'PENDING',
-        updated_at: '2024-10-17T11:31:20.287Z',
-        source: 'SLC',
-    },
-    {
-        moderation_id: 189,
-        created_at: '2023-08-09T12:44:18.297Z',
-        cleaned_data: {
-            name: 'Winds Systems Energy Ltd',
-            country: {
-                name: 'Greenland',
-                alpha_2: 'GL',
-                alpha_3: 'GRL',
-                numeric: '304',
-            }
+        {
+            moderation_id: 189,
+            created_at: '2023-08-09T12:44:18.297Z',
+            cleaned_data: {
+                name: 'Winds Systems Energy Ltd',
+                country: {
+                    name: 'Greenland',
+                    alpha_2: 'GL',
+                    alpha_3: 'GRL',
+                    numeric: '304',
+                }
+            },
+            contributor_name: 'New Resources Corp',
+            status: 'PENDING',
+            updated_at: '2023-11-12T12:46:30.297Z',
+            source: 'API',
         },
-        contributor_name: 'New Resources Corp',
-        status: 'PENDING',
-        updated_at: '2023-11-12T12:46:30.297Z',
-        source: 'API',
-    },];
+    ];
+
     const sampleModerationEvents = [
         {
             moderation_id: 11,
@@ -535,7 +538,7 @@ describe('DashboardModerationQueueListTable component', () => {
     });
 
     test('renders event data in rows', () => {
-        const { getByText } = renderComponent({ events: sampleModerationEvents, count: 2 });
+        const { getByText } = renderComponent({ moderationEventsList: sampleModerationEvents, count: 2 });
 
         sampleModerationEvents.forEach(event => {
             expect(getByText(event.cleaned_data.name)).toBeInTheDocument();
@@ -553,14 +556,14 @@ describe('DashboardModerationQueueListTable component', () => {
     });
 
     test('if no status_change_date displays N/A', () => {
-        const { getAllByText } = renderComponent({ events: sampleModerationEventsWithoutStatusChangeDate, count: 2});
+        const { getAllByText } = renderComponent({ moderationEventsList: sampleModerationEventsWithoutStatusChangeDate, count: 2});
 
         const elements = getAllByText(EMPTY_PLACEHOLDER);
         expect(elements).toHaveLength(2);
     });
 
     test('handles rows per page change', () => {
-        const { getByText, rerender } = renderComponent({ events: paginatedModerationEvents, count: 26 });
+        const { getByText, rerender } = renderComponent({ moderationEventsList: paginatedModerationEvents, count: 26 });
 
         expect(getByText(/1-25 of 26/)).toBeInTheDocument();
         expect(getByText(/rows per page/i)).toBeInTheDocument();
@@ -570,7 +573,7 @@ describe('DashboardModerationQueueListTable component', () => {
 
         rerender(
             <Router>
-                <DashboardModerationQueueListTable events={paginatedModerationEvents} count={26} pageSize={50}/>,
+                <DashboardModerationQueueListTable moderationEventsList={paginatedModerationEvents} count={26} pageSize={50}/>,
             </Router>
         )
         expect(getByText(/1-26 of 26/)).toBeInTheDocument();
@@ -585,7 +588,7 @@ describe('DashboardModerationQueueListTable component', () => {
 
         rerender(
             <Router>
-                <DashboardModerationQueueListTable events={paginatedModerationEvents} count={26} page={1} fetchEvents={jest.fn()}/>,
+                <DashboardModerationQueueListTable moderationEventsList={paginatedModerationEvents} count={26} page={1} fetchEvents={jest.fn()}/>,
             </Router>
         )
         expect(getByText(/26-26 of 26/)).toBeInTheDocument();
@@ -595,14 +598,14 @@ describe('DashboardModerationQueueListTable component', () => {
 
         rerender(
             <Router>
-                <DashboardModerationQueueListTable events={paginatedModerationEvents} count={26} page={0} fetchEvents={jest.fn()}/>,
+                <DashboardModerationQueueListTable moderationEventsList={paginatedModerationEvents} count={26} page={0} fetchEvents={jest.fn()}/>,
             </Router>
         )
         expect(getByText(/1-25 of 26/)).toBeInTheDocument();
     });
 
     test('handles empty state pagination', () => {
-        const { getByText } = renderComponent({ events: [] });
+        const { getByText } = renderComponent({ moderationEventsList: [] });
         expect(getByText(/0-0 of 0/)).toBeInTheDocument();
     });
 });
