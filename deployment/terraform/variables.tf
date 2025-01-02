@@ -349,6 +349,10 @@ variable "batch_notifications_ce_spot_fleet_bid_percentage" {
   default = "40"
 }
 
+variable "batch_export_csv_ce_spot_fleet_bid_percentage" {
+  default = "40"
+}
+
 variable "batch_ami_id" {
   # Latest ECS-optimized Amazon Linux AMI in eu-west-1
   # See: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
@@ -388,15 +392,36 @@ variable "batch_notifications_ce_min_vcpus" {
   default = "0"
 }
 
+variable "batch_export_csv_ce_min_vcpus" {
+  default = "0"
+}
+
 variable "batch_notifications_ce_desired_vcpus" {
   default = "0"
+}
+
+variable "batch_export_csv_ce_desired_vcpus" {
+  default = "2"
 }
 
 variable "batch_notifications_ce_max_vcpus" {
   default = "16"
 }
 
+variable "batch_export_csv_ce_max_vcpus" {
+  default = "4"
+}
+
 variable "batch_notifications_ce_instance_types" {
+  type = list(string)
+
+  default = [
+    "c5",
+    "m5",
+  ]
+}
+
+variable "batch_export_csv_ce_instance_types" {
   type = list(string)
 
   default = [
@@ -477,7 +502,7 @@ variable "ec_memcached_max_item_size" {
 }
 
 variable "CORS_ALLOWED_ORIGIN_REGEXES" {
-  type = string
+  type    = string
   default = "http://localhost, https://127.0.0.1"
 }
 
@@ -523,22 +548,22 @@ variable "dedupe_hub_version" {
 }
 
 variable "opensearch_instance_type" {
-  type = string
+  type    = string
   default = "t3.small.search"
 }
 
 variable "opensearch_auth_type" {
-  type = string
+  type    = string
   default = "aws_iam"
 }
 
 variable "opensearch_ssl" {
-  type = bool
+  type    = bool
   default = true
 }
 
 variable "opensearch_ssl_cert_verification" {
-  type = bool
+  type    = bool
   default = true
 }
 
@@ -588,7 +613,7 @@ variable "anonymizer_schedule_expression" {
 }
 
 variable "anonymizer_kms_key_admin_users" {
-  type    = list
+  type    = list(any)
   default = []
 }
 
@@ -613,7 +638,7 @@ variable "anonymized_database_instance_type" {
 }
 
 variable "anonymized_database_identifier" {
-  type = string
+  type    = string
   default = "database-anonymizer"
 }
 
@@ -623,17 +648,32 @@ variable "anonymized_database_schedule_expression" {
 }
 
 variable "anonymized_database_name" {
-  type = string
+  type    = string
   default = ""
 }
 
 variable "anonymized_database_username" {
-  type = string
+  type    = string
   default = ""
 }
 
 variable "anonymized_database_password" {
-  type = string
-  default = ""
+  type      = string
+  default   = ""
   sensitive = true
+}
+
+variable "export_csv_schedule_expression" {
+  type    = string
+  default = "cron(0 0 1 * *)"
+}
+
+variable "google_service_account_creds" {
+  type        = string
+  description = "Credentials for the Google service account"
+}
+
+variable "google_drive_shared_directory_id" {
+  type        = string
+  description = "The ID of the shared directory in Google Drive"
 }
