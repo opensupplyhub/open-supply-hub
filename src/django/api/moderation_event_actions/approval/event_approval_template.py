@@ -271,6 +271,7 @@ class EventApprovalTemplate(ABC):
     @staticmethod
     def _update_event(event: ModerationEvent, item: FacilityListItem) -> None:
         event.status = ModerationEvent.Status.APPROVED
+        event.status_change_date = timezone.now()
         event.os_id = item.facility_id
         event.save()
 
