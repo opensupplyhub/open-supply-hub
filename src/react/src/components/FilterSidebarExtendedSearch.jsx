@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { bool, func } from 'prop-types';
 import { connect } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import uniq from 'lodash/uniq';
 
 import ShowOnly from './ShowOnly';
 import StyledSelect from './Filters/StyledSelect';
@@ -37,7 +36,8 @@ import {
 
 import {
     getValueFromEvent,
-    mapDjangoChoiceTuplesValueToSelectOptions,
+    mapProcessingTypeOptions,
+    mapFacilityTypeOptions,
 } from '../util/util';
 
 const CONTRIBUTOR_TYPES = 'CONTRIBUTOR_TYPES';
@@ -46,42 +46,6 @@ const FACILITY_TYPE = 'FACILITY_TYPE';
 const PROCESSING_TYPE = 'PROCESSING_TYPE';
 const PRODUCT_TYPE = 'PRODUCT_TYPE';
 const NUMBER_OF_WORKERS = 'NUMBER_OF_WORKERS';
-
-const mapFacilityTypeOptions = (fPTypes, pTypes) => {
-    let fTypes = [];
-    if (pTypes.length === 0) {
-        fTypes = fPTypes.map(type => type.facilityType);
-    } else {
-        // When there are processing types, only return the
-        // facility types that have those processing types
-        pTypes.forEach(pType => {
-            fPTypes.forEach(fPType => {
-                if (fPType.processingTypes.includes(pType.value)) {
-                    fTypes = fTypes.concat(fPType.facilityType);
-                }
-            });
-        });
-    }
-    return mapDjangoChoiceTuplesValueToSelectOptions(uniq(fTypes.sort()));
-};
-
-const mapProcessingTypeOptions = (fPTypes, fTypes) => {
-    let pTypes = [];
-    if (fTypes.length === 0) {
-        pTypes = fPTypes.map(type => type.processingTypes).flat();
-    } else {
-        // When there are facility types, only return the
-        // processing types that are under those facility types
-        fTypes.forEach(fType => {
-            fPTypes.forEach(fPType => {
-                if (fType.value === fPType.facilityType) {
-                    pTypes = pTypes.concat(fPType.processingTypes);
-                }
-            });
-        });
-    }
-    return mapDjangoChoiceTuplesValueToSelectOptions(uniq(pTypes.sort()));
-};
 
 const isExtendedFieldForThisContributor = (field, extendedFields) =>
     extendedFields.includes(field.toLowerCase());
