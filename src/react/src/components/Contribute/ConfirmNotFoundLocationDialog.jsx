@@ -23,9 +23,13 @@ const ConfirmNotFoundLocationDialog = ({
         clearLocations();
     };
 
+    const navigateToNameAddressTab = () => {
+        history.push(`${contributeProductionLocationRoute}?tab=name-address`);
+    };
+
     const handleSearchAgain = () => {
         handleConfirmDialogClose();
-        history.push(`${contributeProductionLocationRoute}?tab=name-address`);
+        navigateToNameAddressTab();
         clearLocations();
     };
 
