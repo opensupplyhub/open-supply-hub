@@ -25,6 +25,7 @@ import {
     mapDjangoChoiceTuplesToSelectOptions,
     mapFacilityTypeOptions,
     mapProcessingTypeOptions,
+    validateNumberOfWorkers,
 } from '../../util/util';
 import { mockedSectors } from '../../util/constants';
 import COLOURS from '../../util/COLOURS';
@@ -48,6 +49,7 @@ const ProductionLocationInfo = ({
     const [inputCountry, setInputCountry] = useState(null);
     const [nameTouched, setNameTouched] = useState(false);
     const [addressTouched, setAddressTouched] = useState(false);
+    const [numberOfWorkersTouched, setNumberOfWorkersTouched] = useState(false);
     const [sector, setSector] = useState('');
     const [productType, setProductType] = useState([]);
     const [locationType, setLocationType] = useState(null);
@@ -88,6 +90,11 @@ const ProductionLocationInfo = ({
         setAddressTouched(true);
         setInputAddress(event.target.value);
     };
+    const handlerNumberOfWorkersChange = event => {
+        setNumberOfWorkersTouched(true);
+        setNumberOfWorkers(event.target.value);
+    };
+
     const handleCountryChange = event => setInputCountry(event);
 
     useEffect(() => {
@@ -409,18 +416,39 @@ const ProductionLocationInfo = ({
                                     id="number_of_workers"
                                     className={classes.textInputStyles}
                                     value={numberOfWorkers}
-                                    onChange={e =>
-                                        setNumberOfWorkers(e.target.value)
-                                    }
+                                    onChange={handlerNumberOfWorkersChange}
                                     placeholder="Enter the number of workers as a number or range"
                                     variant="outlined"
                                     aria-label="Number of Workers"
                                     InputProps={{
                                         classes: {
+                                            input: `
+                                            ${
+                                                numberOfWorkersTouched &&
+                                                validateNumberOfWorkers(
+                                                    numberOfWorkers,
+                                                ) &&
+                                                classes.errorStyle
+                                            }`,
                                             notchedOutline:
                                                 classes.notchedOutlineStyles,
                                         },
                                     }}
+                                    helperText={
+                                        numberOfWorkersTouched &&
+                                        validateNumberOfWorkers(
+                                            numberOfWorkers,
+                                        ) && (
+                                            <InputErrorText text="Enter the number of workers as a number or range" />
+                                        )
+                                    }
+                                    FormHelperTextProps={{
+                                        className: classes.helperText,
+                                    }}
+                                    error={
+                                        numberOfWorkersTouched &&
+                                        validateNumberOfWorkers(numberOfWorkers)
+                                    }
                                 />
                             </div>
                             <div
