@@ -80,7 +80,7 @@ export default function withQueryStringSync(WrappedComponent) {
                 filters,
                 history: {
                     replace,
-                    location: { search },
+                    location: { search, pathname },
                 },
                 resetButtonClickCount,
                 hydrateFiltersFromQueryString,
@@ -115,6 +115,10 @@ export default function withQueryStringSync(WrappedComponent) {
             }
 
             if (!search && newQueryString.length === 1) {
+                return null;
+            }
+
+            if (pathname !== facilitiesRoute) {
                 return null;
             }
 

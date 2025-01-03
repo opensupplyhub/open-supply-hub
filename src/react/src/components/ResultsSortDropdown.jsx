@@ -50,35 +50,42 @@ const resultsSortDropdownStyles = theme =>
         },
     });
 
-const ResultsSortDropdown = ({ classes, sortAlgorithm, updateSort }) => (
-    <Grid container>
-        <Grid item>
-            <InputLabel
-                shrink={false}
-                htmlFor="sort-select"
-                className={classes.selectLabel}
-            >
-                Sort By:
-            </InputLabel>
+const ResultsSortDropdown = ({ classes, sortAlgorithm, updateSort }) => {
+    if (sortAlgorithm === '') {
+        updateSort(optionsForSortingResults[2]);
+    }
+
+    return (
+        <Grid container>
+            <Grid item>
+                <InputLabel
+                    shrink={false}
+                    htmlFor="sort-select"
+                    className={classes.selectLabel}
+                >
+                    Sort By:
+                </InputLabel>
+            </Grid>
+            <Grid item className={classes.selectWrapper}>
+                <ReactSelect
+                    id="sort-select"
+                    name="sort-select"
+                    className={`notranslate ${classes.select}`}
+                    classNamePrefix="select"
+                    styles={selectStyles}
+                    components={{
+                        IndicatorSeparator: null,
+                    }}
+                    isSearchable={false}
+                    value={sortAlgorithm}
+                    options={optionsForSortingResults}
+                    onChange={updateSort}
+                    defaultValue={optionsForSortingResults[2]}
+                />
+            </Grid>
         </Grid>
-        <Grid item className={classes.selectWrapper}>
-            <ReactSelect
-                id="sort-select"
-                name="sort-select"
-                className={`notranslate ${classes.select}`}
-                classNamePrefix="select"
-                styles={selectStyles}
-                components={{
-                    IndicatorSeparator: null,
-                }}
-                isSearchable={false}
-                value={sortAlgorithm}
-                options={optionsForSortingResults}
-                onChange={updateSort}
-            />
-        </Grid>
-    </Grid>
-);
+    );
+};
 
 function mapStateToProps({ filters: { sortAlgorithm } }) {
     return {
