@@ -10,7 +10,7 @@ from api.constants import (
 from api.exceptions import GoneException, InternalServerErrorException
 from api.models.facility.facility import Facility
 from api.models.moderation_event import ModerationEvent
-from api.os_id import validate_os_id
+from api.os_id import string_matches_os_id_format
 from api.serializers.v1.opensearch_common_validators.moderation_id_validator \
     import ModerationIdValidator
 from api.views.v1.utils import create_error_detail
@@ -52,7 +52,7 @@ class ModerationEventsService:
 
     @staticmethod
     def validate_location_os_id(os_id):
-        if not validate_os_id(os_id, raise_on_invalid=False):
+        if not string_matches_os_id_format(os_id):
             raise ParseError(
                 create_error_detail(
                     field="os_id",
