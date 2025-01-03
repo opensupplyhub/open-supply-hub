@@ -1,61 +1,37 @@
 import React from 'react';
-import { string, object, func, arrayOf } from 'prop-types';
+import { object, func } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
-import PreviousOsIdTooltip from './PreviousOsIdTooltip';
 import SearchByOsIdResultActions from './SearchByOsIdResultActions';
 import { makeSearchByOsIdResultStyles } from '../../util/styles';
+import { productionLocationPropType } from '../../util/propTypes';
+import ProductionLocationDetails from './ProductionLocationDetails';
 
 const SearchByOsIdSuccessResult = ({
-    name,
-    osId,
-    historicalOsIds,
-    address,
-    countryName,
+    productionLocation,
     handleBackToSearchByNameAddress,
     classes,
 }) => {
-    const historicalOsIdsNotEmpty =
-        Array.isArray(historicalOsIds) && historicalOsIds.length > 0;
+    const {
+        name,
+        os_id: osId,
+        historical_os_id: historicalOsIds,
+        address,
+        country: { name: countryName } = {},
+    } = productionLocation;
 
     return (
         <>
             <Typography component="h2" className={classes.resultTitleStyles}>
                 Is this your production location?
             </Typography>
-            <div className={classes.locationDetailsStyles}>
-                <Typography
-                    component="h3"
-                    className={classes.locationNameStyles}
-                >
-                    {name}
-                </Typography>
-                <Typography
-                    component="h6"
-                    className={classes.locationCurrentOsIdStyles}
-                >
-                    {historicalOsIdsNotEmpty ? 'Current OS ID:' : 'OS ID:'}{' '}
-                    {osId}
-                </Typography>
-                {historicalOsIdsNotEmpty &&
-                    historicalOsIds.map(historicalOsId => (
-                        <Typography
-                            key={historicalOsId}
-                            className={classes.locationHistoricalOsIdStyles}
-                        >
-                            Previous OS ID: {historicalOsId}{' '}
-                            <PreviousOsIdTooltip />
-                        </Typography>
-                    ))}
-                <div className={classes.locationAddressContainerStyles}>
-                    <Typography className={classes.locationAddressStyles}>
-                        {address}
-                    </Typography>
-                    <Typography className={classes.locationAddressStyles}>
-                        {countryName}
-                    </Typography>
-                </div>
-            </div>
+            <ProductionLocationDetails
+                osId={osId}
+                name={name}
+                address={address}
+                countryName={countryName}
+                historicalOsIds={historicalOsIds}
+            />
             <SearchByOsIdResultActions
                 defaultButtonLabel="No, search by name and address"
                 defaultButtonAction={handleBackToSearchByNameAddress}
@@ -66,16 +42,8 @@ const SearchByOsIdSuccessResult = ({
     );
 };
 
-SearchByOsIdSuccessResult.defaultProps = {
-    historicalOsIds: [],
-};
-
 SearchByOsIdSuccessResult.propTypes = {
-    name: string.isRequired,
-    osId: string.isRequired,
-    historicalOsIds: arrayOf(string),
-    address: string.isRequired,
-    countryName: string.isRequired,
+    productionLocation: productionLocationPropType.isRequired,
     handleBackToSearchByNameAddress: func.isRequired,
     classes: object.isRequired,
 };

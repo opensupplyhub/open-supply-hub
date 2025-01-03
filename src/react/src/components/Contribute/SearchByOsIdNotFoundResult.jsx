@@ -3,7 +3,7 @@ import { func, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import SearchByOsIdResultActions from './SearchByOsIdResultActions';
-import { makeSearchByOsIdResultStyles } from '../../util/styles';
+import { makeSearchByOsIdNotFoundResultStyles } from '../../util/styles';
 
 const SearchByOsIdNotFoundResult = ({
     handleBackToSearchByNameAddress,
@@ -14,7 +14,7 @@ const SearchByOsIdNotFoundResult = ({
         <Typography component="h2" className={classes.resultTitleStyles}>
             We didn&apos;t find a production location with that ID.
         </Typography>
-        <Typography className={classes.resultSubTitleStyles}>
+        <Typography className={classes.resultDescriptionStyles}>
             You can try searching by another OS ID or searching by name and
             address.
         </Typography>
@@ -33,6 +33,6 @@ SearchByOsIdNotFoundResult.propTypes = {
     classes: object.isRequired,
 };
 
-export default withStyles(makeSearchByOsIdResultStyles)(
+export default withStyles(makeSearchByOsIdNotFoundResultStyles)(
     SearchByOsIdNotFoundResult,
 );

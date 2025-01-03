@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { object } from 'prop-types';
 import { Tooltip, Typography } from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
@@ -37,9 +38,16 @@ const PreviousOsIdTooltip = ({ classes }) => {
                 },
             }}
         >
-            <InfoOutlinedIcon className={classes.infoOutlinedIconStyles} />
+            <InfoOutlinedIcon
+                className={classes.infoOutlinedIconStyles}
+                data-testid="previous-os-id-tooltip"
+            />
         </Tooltip>
     );
+};
+
+PreviousOsIdTooltip.propTypes = {
+    classes: object.isRequired,
 };
 
 export default withStyles(makePreviousOsIdTooltipStyles)(PreviousOsIdTooltip);

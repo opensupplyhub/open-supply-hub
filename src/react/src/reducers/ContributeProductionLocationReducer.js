@@ -1,16 +1,25 @@
 import { createReducer } from 'redux-act';
 import update from 'immutability-helper';
-
 import {
-    startFetchingSingleProductionLocation,
-    failFetchingSingleProductionLocation,
-    completeFetchingSingleProductionLocation,
+    startFetchSingleProductionLocation,
+    failFetchSingleProductionLocation,
+    completeFetchSingleProductionLocation,
     resetSingleProductionLocation,
+    startFetchProductionLocations,
+    failFetchProductionLocations,
+    completeFetchProductionLocations,
+    resetProductionLocations,
 } from '../actions/contributeProductionLocation';
 
 const initialState = Object.freeze({
     singleProductionLocation: Object.freeze({
-        data: null,
+        data: {},
+        fetching: false,
+        error: null,
+    }),
+    productionLocations: Object.freeze({
+        count: 0,
+        data: [],
         fetching: false,
         error: null,
     }),
@@ -18,26 +27,35 @@ const initialState = Object.freeze({
 
 export default createReducer(
     {
-        [startFetchingSingleProductionLocation]: state =>
+        // Single Production Location
+        [startFetchSingleProductionLocation]: state =>
             update(state, {
                 singleProductionLocation: {
                     fetching: { $set: true },
-                    error: { $set: null },
-                    data: { $set: null },
+                    error: {
+                        $set: initialState.singleProductionLocation.error,
+                    },
+                    data: { $set: initialState.singleProductionLocation.data },
                 },
             }),
-        [failFetchingSingleProductionLocation]: (state, payload) =>
+        [failFetchSingleProductionLocation]: (state, payload) =>
             update(state, {
                 singleProductionLocation: {
-                    fetching: { $set: false },
+                    fetching: {
+                        $set: initialState.singleProductionLocation.fetching,
+                    },
                     error: { $set: payload },
                 },
             }),
-        [completeFetchingSingleProductionLocation]: (state, payload) =>
+        [completeFetchSingleProductionLocation]: (state, payload) =>
             update(state, {
                 singleProductionLocation: {
-                    fetching: { $set: false },
-                    error: { $set: null },
+                    fetching: {
+                        $set: initialState.singleProductionLocation.fetching,
+                    },
+                    error: {
+                        $set: initialState.singleProductionLocation.error,
+                    },
                     data: { $set: payload },
                 },
             }),
@@ -45,6 +63,43 @@ export default createReducer(
             update(state, {
                 singleProductionLocation: {
                     $set: initialState.singleProductionLocation,
+                },
+            }),
+
+        // Production Locations
+        [startFetchProductionLocations]: state =>
+            update(state, {
+                productionLocations: {
+                    fetching: { $set: true },
+                    error: { $set: initialState.productionLocations.error },
+                    count: { $set: initialState.productionLocations.count },
+                    data: { $set: initialState.productionLocations.data },
+                },
+            }),
+        [failFetchProductionLocations]: (state, payload) =>
+            update(state, {
+                productionLocations: {
+                    fetching: {
+                        $set: initialState.productionLocations.fetching,
+                    },
+                    error: { $set: payload },
+                },
+            }),
+        [completeFetchProductionLocations]: (state, payload) =>
+            update(state, {
+                productionLocations: {
+                    fetching: {
+                        $set: initialState.productionLocations.fetching,
+                    },
+                    error: { $set: initialState.productionLocations.error },
+                    count: { $set: payload.count },
+                    data: { $set: payload.data },
+                },
+            }),
+        [resetProductionLocations]: state =>
+            update(state, {
+                productionLocations: {
+                    $set: initialState.productionLocations,
                 },
             }),
     },

@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 import { connect } from 'react-redux';
-import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
 import { object, bool, func } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -28,26 +27,16 @@ const SearchByOsIdResult = ({
     clearProductionLocation,
     classes,
 }) => {
-    const location = useLocation();
     const history = useHistory();
+    const { osID } = useParams();
 
     useEffect(() => {
-        const osId = new URLSearchParams(location.search).get('os_id');
-
-        if (osId) {
-            fetchProductionLocation(osId);
+        if (osID) {
+            fetchProductionLocation(osID);
         }
-    }, [location.search, fetchProductionLocation]);
+    }, [osID, fetchProductionLocation]);
 
-    const locationData = get(data, 'data[0]', {});
-    const isLocationDataAvailable = !isEmpty(locationData);
-    const {
-        name,
-        os_id: osId,
-        historical_os_id: historicalOsIds,
-        address,
-        country: { name: countryName } = {},
-    } = locationData;
+    const isLocationDataAvailable = !isEmpty(data);
 
     const handleBackToSearchByNameAddress = () => {
         clearProductionLocation();
@@ -80,11 +69,7 @@ const SearchByOsIdResult = ({
             <Paper className={classes.resultContainerStyles}>
                 {isLocationDataAvailable ? (
                     <SearchByOsIdSuccessResult
-                        name={name}
-                        osId={osId}
-                        historicalOsIds={historicalOsIds}
-                        address={address}
-                        countryName={countryName}
+                        productionLocation={data}
                         handleBackToSearchByNameAddress={
                             handleBackToSearchByNameAddress
                         }
@@ -102,14 +87,9 @@ const SearchByOsIdResult = ({
     );
 };
 
-SearchByOsIdResult.defaultProps = {
-    data: {},
-    fetching: false,
-};
-
 SearchByOsIdResult.propTypes = {
-    data: productionLocationPropType,
-    fetching: bool,
+    data: productionLocationPropType.isRequired,
+    fetching: bool.isRequired,
     fetchProductionLocation: func.isRequired,
     clearProductionLocation: func.isRequired,
     classes: object.isRequired,
