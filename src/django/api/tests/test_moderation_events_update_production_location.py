@@ -112,21 +112,33 @@ class ModerationEventsUpdateProductionLocationTest(
 
     def test_invalid_os_id_format(self):
         self.login_as_superuser()
-        response = self.client.patch(
-            self.get_url().replace(self.os_id, "invalid_os_id"),
-            data=json.dumps({}),
-            content_type="application/json",
-        )
+        invalid_ids = [
+            "A1234567ABCDEF",    # Less than 15 characters
+            "ABC1234567ABCDEF",  # More than 15 characters
+            "AB1234567abcdef",   # Contains lowercase letters
+            "AB1234567AB!DEF",   # Contains special character
+            "AB12345X7ABCDEF",   # Letter in the digit section
+            "1234567ABABCDEF",   # Starts with digits
+            "ABCD56789012345",   # Too many letters at the start
+            "AB12345678ABCDEF"   # Too many digits
+        ]
 
-        self.assertEqual(400, response.status_code)
-        self.assertEqual(
-            "The request path parameter is invalid.", response.data["detail"]
-        )
-        self.assertEqual("os_id", response.data["errors"][0]["field"])
-        self.assertEqual(
-            APIV1CommonErrorMessages.LOCATION_ID_NOT_VALID,
-            response.data["errors"][0]["detail"],
-        )
+        for invalid_id in invalid_ids:
+            response = self.client.patch(
+                self.get_url().replace(self.os_id, invalid_id),
+                data=json.dumps({}),
+                content_type="application/json",
+            )
+
+            self.assertEqual(400, response.status_code)
+            self.assertEqual(
+                "The request path parameter is invalid.", response.data["detail"]
+            )
+            self.assertEqual("os_id", response.data["errors"][0]["field"])
+            self.assertEqual(
+                APIV1CommonErrorMessages.LOCATION_ID_NOT_VALID,
+                response.data["errors"][0]["detail"],
+            )
 
     def test_no_production_location_found_with_os_id(self):
         self.login_as_superuser()
