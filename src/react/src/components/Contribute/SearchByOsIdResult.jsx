@@ -34,7 +34,7 @@ const SearchByOsIdResult = ({
         if (osID) {
             fetchProductionLocation(osID);
         }
-    }, [fetchProductionLocation]);
+    }, [osID, fetchProductionLocation]);
 
     const isLocationDataAvailable = !isEmpty(data);
 
