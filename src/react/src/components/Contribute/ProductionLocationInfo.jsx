@@ -25,7 +25,7 @@ import {
     mapDjangoChoiceTuplesToSelectOptions,
     mapFacilityTypeOptions,
     mapProcessingTypeOptions,
-    validateNumberOfWorkers,
+    isValidNumberOfWorkers,
 } from '../../util/util';
 import { mockedSectors } from '../../util/constants';
 import COLOURS from '../../util/COLOURS';
@@ -49,7 +49,6 @@ const ProductionLocationInfo = ({
     const [inputCountry, setInputCountry] = useState(null);
     const [nameTouched, setNameTouched] = useState(false);
     const [addressTouched, setAddressTouched] = useState(false);
-    const [numberOfWorkersTouched, setNumberOfWorkersTouched] = useState(false);
     const [sector, setSector] = useState('');
     const [productType, setProductType] = useState([]);
     const [locationType, setLocationType] = useState(null);
@@ -90,12 +89,6 @@ const ProductionLocationInfo = ({
         setAddressTouched(true);
         setInputAddress(event.target.value);
     };
-    const handlerNumberOfWorkersChange = event => {
-        setNumberOfWorkersTouched(true);
-        setNumberOfWorkers(event.target.value);
-    };
-
-    const handleCountryChange = event => setInputCountry(event);
 
     useEffect(() => {
         if (!countriesOptions) {
@@ -108,8 +101,7 @@ const ProductionLocationInfo = ({
             const prefilledCountry = countriesOptions.filter(
                 el => el.value === countryInQuery,
             );
-
-            handleCountryChange(prefilledCountry[0]);
+            setInputCountry(prefilledCountry[0]);
         }
     }, [countriesOptions]);
 
@@ -232,7 +224,7 @@ const ProductionLocationInfo = ({
                         aria-label="Country"
                         options={countriesOptions || []}
                         value={inputCountry}
-                        onChange={handleCountryChange}
+                        onChange={setInputCountry}
                         className={classes.selectStyles}
                         styles={selectStyles}
                         placeholder="Country"
@@ -414,29 +406,18 @@ const ProductionLocationInfo = ({
                                 </Typography>
                                 <TextField
                                     id="number_of_workers"
+                                    error={
+                                        !isValidNumberOfWorkers(numberOfWorkers)
+                                    }
+                                    variant="outlined"
                                     className={classes.textInputStyles}
                                     value={numberOfWorkers}
-                                    onChange={handlerNumberOfWorkersChange}
+                                    onChange={e =>
+                                        setNumberOfWorkers(e.target.value)
+                                    }
                                     placeholder="Enter the number of workers as a number or range"
-                                    variant="outlined"
-                                    aria-label="Number of Workers"
-                                    InputProps={{
-                                        classes: {
-                                            input: `
-                                            ${
-                                                numberOfWorkersTouched &&
-                                                validateNumberOfWorkers(
-                                                    numberOfWorkers,
-                                                ) &&
-                                                classes.errorStyle
-                                            }`,
-                                            notchedOutline:
-                                                classes.notchedOutlineStyles,
-                                        },
-                                    }}
                                     helperText={
-                                        numberOfWorkersTouched &&
-                                        validateNumberOfWorkers(
+                                        !isValidNumberOfWorkers(
                                             numberOfWorkers,
                                         ) && (
                                             <InputErrorText text="Enter the number of workers as a number or range" />
@@ -445,10 +426,19 @@ const ProductionLocationInfo = ({
                                     FormHelperTextProps={{
                                         className: classes.helperText,
                                     }}
-                                    error={
-                                        numberOfWorkersTouched &&
-                                        validateNumberOfWorkers(numberOfWorkers)
-                                    }
+                                    InputProps={{
+                                        classes: {
+                                            input: `
+                                            ${
+                                                !isValidNumberOfWorkers(
+                                                    numberOfWorkers,
+                                                ) && classes.errorStyle
+                                            }`,
+                                            notchedOutline:
+                                                classes.notchedOutlineStyles,
+                                        },
+                                    }}
+                                    aria-label="Number of Workers"
                                 />
                             </div>
                             <div
