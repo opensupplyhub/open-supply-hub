@@ -72,7 +72,7 @@ const ProductionLocationInfo = ({
             },
         }),
     };
-    const validate = val => {
+    const isValid = val => {
         if (val) {
             return val.length > 0;
         }
@@ -97,7 +97,7 @@ const ProductionLocationInfo = ({
     }, [countriesOptions, fetchCountries]);
 
     useEffect(() => {
-        if (countriesOptions && validate(countryInQuery)) {
+        if (countriesOptions && isValid(countryInQuery)) {
             const prefilledCountry = countriesOptions.filter(
                 el => el.value === countryInQuery,
             );
@@ -148,7 +148,7 @@ const ProductionLocationInfo = ({
                                 input: `
                                     ${
                                         nameTouched &&
-                                        !validate(inputName) &&
+                                        !isValid(inputName) &&
                                         classes.errorStyle
                                     }`,
                                 notchedOutline: classes.notchedOutlineStyles,
@@ -156,12 +156,12 @@ const ProductionLocationInfo = ({
                         }}
                         helperText={
                             nameTouched &&
-                            !validate(inputName) && <InputErrorText />
+                            !isValid(inputName) && <InputErrorText />
                         }
                         FormHelperTextProps={{
                             className: classes.helperText,
                         }}
-                        error={nameTouched && !validate(inputName)}
+                        error={nameTouched && !isValid(inputName)}
                     />
                 </div>
                 <div
@@ -190,7 +190,7 @@ const ProductionLocationInfo = ({
                                 input: `${classes.searchInputStyles}
                                 ${
                                     addressTouched &&
-                                    !validate(inputAddress) &&
+                                    !isValid(inputAddress) &&
                                     classes.errorStyle
                                 }`,
                                 notchedOutline: classes.notchedOutlineStyles,
@@ -198,12 +198,12 @@ const ProductionLocationInfo = ({
                         }}
                         helperText={
                             addressTouched &&
-                            !validate(inputAddress) && <InputErrorText />
+                            !isValid(inputAddress) && <InputErrorText />
                         }
                         FormHelperTextProps={{
                             className: classes.helperText,
                         }}
-                        error={addressTouched && !validate(inputAddress)}
+                        error={addressTouched && !isValid(inputAddress)}
                     />
                 </div>
                 <div

@@ -49,9 +49,15 @@ const SearchByNameAndAddressTab = ({
     const [inputCountry, setInputCountry] = useState(null);
     const [nameTouched, setNameTouched] = useState(false);
     const [addressTouched, setAddressTouched] = useState(false);
+    const [countryTouched, setCountryTouched] = useState(false);
 
     const history = useHistory();
-    const validate = val => val.length > 0;
+    const isValid = val => {
+        if (val) {
+            return val.length > 0;
+        }
+        return false;
+    };
     const handleNameChange = event => {
         setNameTouched(true);
         setInputName(event.target.value);
@@ -61,6 +67,7 @@ const SearchByNameAndAddressTab = ({
         setInputAddress(event.target.value);
     };
     const handleCountryChange = event => {
+        setCountryTouched(true);
         setInputCountry(event);
     };
 
@@ -76,9 +83,10 @@ const SearchByNameAndAddressTab = ({
         history.push(url);
     };
     const isFormValid =
-        validate(inputName) &&
-        validate(inputAddress) &&
-        validate(inputCountry.value);
+        isValid(inputName) &&
+        isValid(inputAddress) &&
+        countryTouched &&
+        isValid(inputCountry.value);
 
     useEffect(() => {
         if (!countriesData) {
@@ -125,7 +133,7 @@ const SearchByNameAndAddressTab = ({
                             input: `${classes.searchInputStyles}
                                 ${
                                     nameTouched &&
-                                    !validate(inputName) &&
+                                    !isValid(inputName) &&
                                     classes.errorStyle
                                 }`,
                             notchedOutline: classes.notchedOutlineStyles,
@@ -135,10 +143,9 @@ const SearchByNameAndAddressTab = ({
                         },
                     }}
                     helperText={
-                        nameTouched &&
-                        !validate(inputName) && <InputErrorText />
+                        nameTouched && !isValid(inputName) && <InputErrorText />
                     }
-                    error={nameTouched && !validate(inputName)}
+                    error={nameTouched && !isValid(inputName)}
                 />
                 <Typography component="h4" className={classes.subTitleStyles}>
                     Enter the Address
@@ -156,7 +163,7 @@ const SearchByNameAndAddressTab = ({
                             input: `${classes.searchInputStyles}
                             ${
                                 addressTouched &&
-                                !validate(inputAddress) &&
+                                !isValid(inputAddress) &&
                                 classes.errorStyle
                             }`,
                             notchedOutline: classes.notchedOutlineStyles,
@@ -164,9 +171,9 @@ const SearchByNameAndAddressTab = ({
                     }}
                     helperText={
                         addressTouched &&
-                        !validate(inputAddress) && <InputErrorText />
+                        !isValid(inputAddress) && <InputErrorText />
                     }
-                    error={addressTouched && !validate(inputAddress)}
+                    error={addressTouched && !isValid(inputAddress)}
                 />
                 <Typography component="h4" className={classes.subTitleStyles}>
                     Select the Country
