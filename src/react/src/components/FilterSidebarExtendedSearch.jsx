@@ -44,7 +44,6 @@ const FACILITY_TYPE = 'FACILITY_TYPE';
 const PROCESSING_TYPE = 'PROCESSING_TYPE';
 const PRODUCT_TYPE = 'PRODUCT_TYPE';
 const NUMBER_OF_WORKERS = 'NUMBER_OF_WORKERS';
-const selectCustomComponents = { DropdownIndicator: null };
 
 const mapFacilityTypeOptions = (fPTypes, pTypes) => {
     let fTypes = [];
@@ -173,7 +172,6 @@ function FilterSidebarExtendedSearch({
                         placeholder="e.g. ABC Textiles Limited"
                         isSideBarSearch={isSideBarSearch}
                         aria-label="Parent company"
-                        components={selectCustomComponents}
                         disabled={fetchingFacilities}
                     />
                 </div>
@@ -245,7 +243,6 @@ function FilterSidebarExtendedSearch({
                         disabled={fetchingFacilities}
                         placeholder="e.g. Jackets"
                         isSideBarSearch={isSideBarSearch}
-                        components={selectCustomComponents}
                     />
                 </div>
             </ShowOnly>
