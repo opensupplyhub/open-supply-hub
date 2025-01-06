@@ -3,11 +3,37 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.28.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: January 25, 2025
+
+### Database changes
+#### Migrations:
+
+#### Scheme changes
+
+### Code/API changes
+
+### Architecture/Environment changes
+
+### Bugfix
+
+### What's new
+* [OSDEV-40](https://opensupplyhub.atlassian.net/browse/OSDEV-40) - Created new page for `/contribute` to choose between multiple & single location upload. Replaced current multiple list upload to `/contribute/multiple-locations`. Changed `Upload Data` to `Add Data` text.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 1.27.0
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: December 28, 2024
+* Release date: January 11, 2025
 
 ### Database changes
 #### Migrations:
@@ -31,7 +57,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1376](https://opensupplyhub.atlassian.net/browse/OSDEV-1376) - Updated automated emails for closure reports (report_result) to remove the term "Rejected" for an improved user experience. Added link to Closure Policy and instructions for submitting a Reopening Report to make the process easier to understand for users.
 * [OSDEV-1383](https://opensupplyhub.atlassian.net/browse/OSDEV-1383) - Edited text of the automated email that notifies a contributor when one of their facilities has been claimed. The new text provides more information to the contributor to understand the claim process and how they can encourage more of their facilities to claim their profile.
 * [OSDEV-1474](https://opensupplyhub.atlassian.net/browse/OSDEV-1474) - Added contributor type value to response of `/api/contributors/` endpoint.
-* [OSDEV-40](https://opensupplyhub.atlassian.net/browse/OSDEV-40) - Created new page for `/contribute` to choose between multiple & single location upload. Replaced current multiple list upload to `/contribute/multiple-locations`. Changed `Upload Data` to `Add Data` text.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
