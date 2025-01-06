@@ -153,6 +153,7 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
             uuid=self.moderation_event_id
         )
         self.assertEqual(moderation_event.status, 'APPROVED')
+        self.assertIsNotNone(moderation_event.status_change_date)
         self.assertEqual(moderation_event.os_id, response.data["os_id"])
 
     def assert_source_creation(self, source):
