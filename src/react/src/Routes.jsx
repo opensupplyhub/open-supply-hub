@@ -32,6 +32,7 @@ import Facilities from './components/Facilities';
 import ContributeProductionLocation from './components/Contribute/ContributeProductionLocation';
 import SearchByOsIdResult from './components/Contribute/SearchByOsIdResult';
 import SearchByNameAndAddressResult from './components/Contribute/SearchByNameAndAddressResult';
+import ProductionLocationInfo from './components/Contribute/ProductionLocationInfo';
 
 import { sessionLogin } from './actions/auth';
 import { fetchFeatureFlags } from './actions/featureFlags';
@@ -59,6 +60,7 @@ import {
     contributeProductionLocationRoute,
     searchByOsIdResultRoute,
     searchByNameAndAddressResultRoute,
+    productionLocationInfoRoute,
 } from './util/constants';
 
 class Routes extends Component {
@@ -179,6 +181,11 @@ class Routes extends Component {
                                     exact
                                     path={searchByNameAndAddressResultRoute}
                                     component={SearchByNameAndAddressResult}
+                                />
+                                <Route
+                                    exact
+                                    path={productionLocationInfoRoute}
+                                    component={ProductionLocationInfo}
                                 />
                                 <Route exact path="/about/processing">
                                     <ExternalRedirect

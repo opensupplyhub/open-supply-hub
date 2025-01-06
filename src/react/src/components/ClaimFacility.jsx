@@ -13,7 +13,6 @@ import {
     fetchClaimFacilityData,
     clearClaimFacilityDataAndForm,
 } from '../actions/claimFacility';
-import { fetchParentCompanyOptions } from '../actions/filterOptions';
 
 import { facilityDetailsPropType } from '../util/propTypes';
 
@@ -119,16 +118,13 @@ const mapStateToProps = ({
     claimFacility: {
         facilityData: { data, fetching, error },
     },
-    filterOptions: {
-        parentCompanies: { fetching: fetchingParentCompanyOptions },
-    },
     auth: {
         user: { user },
         session: { fetching: sessionFetching },
     },
 }) => ({
     data,
-    fetching: fetching || sessionFetching || fetchingParentCompanyOptions,
+    fetching: fetching || sessionFetching,
     userHasSignedIn: !user.isAnon,
     error,
 });
@@ -141,10 +137,7 @@ const mapDispatchToProps = (
         },
     },
 ) => ({
-    getClaimData: () => {
-        dispatch(fetchParentCompanyOptions());
-        return dispatch(fetchClaimFacilityData(osID));
-    },
+    getClaimData: () => dispatch(fetchClaimFacilityData(osID)),
     clearClaimData: () => dispatch(clearClaimFacilityDataAndForm()),
 });
 

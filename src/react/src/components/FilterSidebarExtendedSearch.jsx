@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { bool, func } from 'prop-types';
 import { connect } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import uniq from 'lodash/uniq';
 
 import ShowOnly from './ShowOnly';
 import StyledSelect from './Filters/StyledSelect';
@@ -21,7 +20,6 @@ import {
     fetchContributorTypeOptions,
     fetchFacilityProcessingTypeOptions,
     fetchNumberOfWorkersOptions,
-    fetchParentCompanyOptions,
 } from '../actions/filterOptions';
 
 import {
@@ -32,12 +30,12 @@ import {
     facilityProcessingTypeOptionsPropType,
     productTypeOptionsPropType,
     numberOfWorkerOptionsPropType,
-    parentCompanyOptionsPropType,
 } from '../util/propTypes';
 
 import {
     getValueFromEvent,
-    mapDjangoChoiceTuplesValueToSelectOptions,
+    mapProcessingTypeOptions,
+    mapFacilityTypeOptions,
 } from '../util/util';
 
 const CONTRIBUTOR_TYPES = 'CONTRIBUTOR_TYPES';
@@ -47,48 +45,11 @@ const PROCESSING_TYPE = 'PROCESSING_TYPE';
 const PRODUCT_TYPE = 'PRODUCT_TYPE';
 const NUMBER_OF_WORKERS = 'NUMBER_OF_WORKERS';
 
-const mapFacilityTypeOptions = (fPTypes, pTypes) => {
-    let fTypes = [];
-    if (pTypes.length === 0) {
-        fTypes = fPTypes.map(type => type.facilityType);
-    } else {
-        // When there are processing types, only return the
-        // facility types that have those processing types
-        pTypes.forEach(pType => {
-            fPTypes.forEach(fPType => {
-                if (fPType.processingTypes.includes(pType.value)) {
-                    fTypes = fTypes.concat(fPType.facilityType);
-                }
-            });
-        });
-    }
-    return mapDjangoChoiceTuplesValueToSelectOptions(uniq(fTypes.sort()));
-};
-
-const mapProcessingTypeOptions = (fPTypes, fTypes) => {
-    let pTypes = [];
-    if (fTypes.length === 0) {
-        pTypes = fPTypes.map(type => type.processingTypes).flat();
-    } else {
-        // When there are facility types, only return the
-        // processing types that are under those facility types
-        fTypes.forEach(fType => {
-            fPTypes.forEach(fPType => {
-                if (fType.value === fPType.facilityType) {
-                    pTypes = pTypes.concat(fPType.processingTypes);
-                }
-            });
-        });
-    }
-    return mapDjangoChoiceTuplesValueToSelectOptions(uniq(pTypes.sort()));
-};
-
 const isExtendedFieldForThisContributor = (field, extendedFields) =>
     extendedFields.includes(field.toLowerCase());
 
 function FilterSidebarExtendedSearch({
     contributorTypeOptions,
-    parentCompanyOptions,
     facilityProcessingTypeOptions,
     numberOfWorkersOptions,
     contributorTypes,
@@ -108,7 +69,6 @@ function FilterSidebarExtendedSearch({
     embed,
     embedExtendedFields,
     fetchContributorTypes,
-    fetchParentCompanies,
     fetchFacilityProcessingType,
     fetchNumberOfWorkers,
     isSideBarSearch,
@@ -118,12 +78,6 @@ function FilterSidebarExtendedSearch({
             fetchContributorTypes();
         }
     }, [contributorTypeOptions, fetchContributorTypes]);
-
-    useEffect(() => {
-        if (!parentCompanyOptions) {
-            fetchParentCompanies();
-        }
-    }, [parentCompanyOptions, fetchParentCompanies]);
 
     useEffect(() => {
         if (!facilityProcessingTypeOptions) {
@@ -177,12 +131,12 @@ function FilterSidebarExtendedSearch({
                         creatable
                         label="Parent Company"
                         name={PARENT_COMPANY}
-                        options={parentCompanyOptions || []}
                         value={parentCompany}
                         onChange={updateParentCompany}
-                        disabled={fetchingExtendedOptions || fetchingFacilities}
                         placeholder="e.g. ABC Textiles Limited"
                         isSideBarSearch={isSideBarSearch}
+                        aria-label="Parent company"
+                        disabled={fetchingFacilities}
                     />
                 </div>
             </ShowOnly>
@@ -283,14 +237,12 @@ function FilterSidebarExtendedSearch({
 
 FilterSidebarExtendedSearch.defaultProps = {
     contributorTypeOptions: null,
-    parentCompanyOptions: null,
     facilityProcessingTypeOptions: null,
     numberOfWorkersOptions: null,
 };
 
 FilterSidebarExtendedSearch.propTypes = {
     contributorTypeOptions: contributorTypeOptionsPropType,
-    parentCompanyOptions: parentCompanyOptionsPropType,
     facilityProcessingTypeOptions: facilityProcessingTypeOptionsPropType,
     numberOfWorkersOptions: numberOfWorkerOptionsPropType,
     updateContributorType: func.isRequired,
@@ -310,17 +262,13 @@ function mapStateToProps({
             data: contributorTypeOptions,
             fetching: fetchingContributorTypes,
         },
-        parentCompanies: {
-            data: parentCompanyOptions,
-            fetching: fetchingParentCompanies,
-        },
         facilityProcessingType: {
             data: facilityProcessingTypeOptions,
             fetching: fetchingFacilityProcessingType,
         },
         numberOfWorkers: {
             data: numberOfWorkersOptions,
-            fetching: fetchingNumberofWorkers,
+            fetching: fetchingNumberOfWorkers,
         },
     },
     filters: {
@@ -339,7 +287,6 @@ function mapStateToProps({
 }) {
     return {
         contributorTypeOptions,
-        parentCompanyOptions,
         facilityProcessingTypeOptions,
         numberOfWorkersOptions,
         contributorTypes,
@@ -354,8 +301,7 @@ function mapStateToProps({
         fetchingExtendedOptions:
             fetchingContributorTypes ||
             fetchingFacilityProcessingType ||
-            fetchingNumberofWorkers ||
-            fetchingParentCompanies,
+            fetchingNumberOfWorkers,
         embed: !!embed,
         embedExtendedFields: config.extended_fields,
     };
@@ -372,7 +318,6 @@ function mapDispatchToProps(dispatch) {
         updateNativeLanguageName: e =>
             dispatch(updateNativeLanguageNameFilter(getValueFromEvent(e))),
         fetchContributorTypes: () => dispatch(fetchContributorTypeOptions()),
-        fetchParentCompanies: () => dispatch(fetchParentCompanyOptions()),
         fetchFacilityProcessingType: () =>
             dispatch(fetchFacilityProcessingTypeOptions()),
         fetchNumberOfWorkers: () => dispatch(fetchNumberOfWorkersOptions()),
