@@ -136,9 +136,7 @@ const SearchByNameAndAddressTab = ({
                     }}
                     helperText={
                         nameTouched &&
-                        !validate(inputName) && (
-                            <InputErrorText classes={classes} />
-                        )
+                        !validate(inputName) && <InputErrorText />
                     }
                     error={nameTouched && !validate(inputName)}
                 />
