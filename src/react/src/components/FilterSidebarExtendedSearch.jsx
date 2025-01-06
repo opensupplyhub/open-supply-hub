@@ -245,6 +245,7 @@ function FilterSidebarExtendedSearch({
                         disabled={fetchingFacilities}
                         placeholder="e.g. Jackets"
                         isSideBarSearch={isSideBarSearch}
+                        components={selectCustomComponents}
                     />
                 </div>
             </ShowOnly>
