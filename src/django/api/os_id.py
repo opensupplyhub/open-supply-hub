@@ -80,7 +80,7 @@ def validate_os_id(raw_id, raise_on_invalid=True):
     return True
 
 
-os_id_regex = re.compile('[A-Z]{2}[0-9]{7}[A-Z0-9]{6}')
+os_id_regex = re.compile('^[A-Z]{2}[0-9]{7}[A-Z0-9]{6}$')
 
 
 def string_matches_os_id_format(string):
