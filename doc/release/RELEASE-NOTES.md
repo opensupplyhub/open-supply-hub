@@ -33,6 +33,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1376](https://opensupplyhub.atlassian.net/browse/OSDEV-1376) - Updated automated emails for closure reports (report_result) to remove the term "Rejected" for an improved user experience. Added link to Closure Policy and instructions for submitting a Reopening Report to make the process easier to understand for users.
 * [OSDEV-1383](https://opensupplyhub.atlassian.net/browse/OSDEV-1383) - Edited text of the automated email that notifies a contributor when one of their facilities has been claimed. The new text provides more information to the contributor to understand the claim process and how they can encourage more of their facilities to claim their profile.
 * [OSDEV-1474](https://opensupplyhub.atlassian.net/browse/OSDEV-1474) - Added contributor type value to response of `/api/contributors/` endpoint.
+* [OSDEV-1130](https://opensupplyhub.atlassian.net/browse/OSDEV-1130) A new page, `Production Location Information`, has been implemented. It includes the following inputs:
+    * Required and pre-fillable fields:
+        - Name
+        - Address
+        - Country
+    * Additional information section: Fields for optional contributions from the owner or manager of the production location, including sector(s), product type(s), location type(s), processing type(s), number of workers, and parent company.
+The page also features `Go Back` and `Submit` buttons for navigation and form submission.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
