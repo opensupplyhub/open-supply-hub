@@ -26,6 +26,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe bugfix here.*
 
 ### What's new
+* [OSDEV-40](https://opensupplyhub.atlassian.net/browse/OSDEV-40) - Created new page for `/contribute` to choose between multiple & single location upload. Replaced current multiple list upload to `/contribute/multiple-locations`. Changed `Upload Data` to `Add Data` text.
 * [OSDEV-1117](https://opensupplyhub.atlassian.net/browse/OSDEV-1117) - Implemented integration of Contribution Record Page (`/dashboard/moderation-queue/contribution-record/{moderation_id}`):
     - Connected GET `api/v1/moderation-events/{moderation_id}/`.
     - Connected GET `api/v1/production-locations?name={productionLocationName}&country={countryCode}&address={address}` to get potential matches using OpenSearch engine.
@@ -38,7 +39,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     - Applied Django Signal for moderation-events OpenSearch index.
 
 ### Release instructions:
-* *Provide release instructions here.*
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
 
 
 ## Release 1.27.0
