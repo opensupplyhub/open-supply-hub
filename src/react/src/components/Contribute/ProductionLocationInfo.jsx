@@ -37,7 +37,6 @@ import {
 import { mockedSectors } from '../../util/constants';
 import COLOURS from '../../util/COLOURS';
 
-
 // TODO: there should be already prefetched data from Redux state
 // If no, fetch related query
 
@@ -546,7 +545,6 @@ ProductionLocationInfo.propTypes = {
     fetchFacilityProcessingType: func.isRequired,
     handleCreateProductionLocation: func.isRequired,
     handleUpdateProductionLocation: func.isRequired,
-    facilityProcessingTypeOptions: facilityProcessingTypeOptionsPropType,
     numberOfWorkersOptions: numberOfWorkerOptionsPropType,
     facilityProcessingTypeOptions: facilityProcessingTypeOptionsPropType,
     classes: object.isRequired,
