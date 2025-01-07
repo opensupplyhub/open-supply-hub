@@ -14,6 +14,7 @@ import RegisterForm from './components/RegisterForm';
 import ResetPasswordForm from './components/ResetPasswordForm';
 import LoginForm from './components/LoginForm';
 import Contribute from './components/Contribute';
+import AddLocationData from './components/AddLocationData';
 import Homepage from './components/Homepage';
 import FacilityLists from './components/FacilityLists';
 import FacilityListItems from './components/FacilityListItems';
@@ -46,6 +47,7 @@ import {
     authResetPasswordFormRoute,
     authConfirmRegistrationRoute,
     contributeRoute,
+    multipleLocationRoute,
     listsRoute,
     facilityListItemsRoute,
     facilitiesRoute,
@@ -142,6 +144,10 @@ class Routes extends Component {
                                 <Route
                                     exact
                                     path={contributeRoute}
+                                    component={AddLocationData}
+                                />
+                                <Route
+                                    path={multipleLocationRoute}
                                     component={Contribute}
                                 />
                                 <Route
