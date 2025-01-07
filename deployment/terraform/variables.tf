@@ -664,8 +664,9 @@ variable "anonymized_database_password" {
 }
 
 variable "export_csv_schedule_expression" {
-  type    = string
-  default = "cron(0 0 1 * *)"
+  type        = string
+  default     = "cron(0 0 1 * *)"
+  description = "The schedule expression for the export csv job"
 }
 
 variable "google_service_account_creds" {
