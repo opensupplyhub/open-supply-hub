@@ -82,7 +82,6 @@ export function fetchSingleModerationEvent(moderationID) {
                 dispatch(completeFetchSingleModerationEvent(data));
             })
             .catch(err => {
-                console.log('@@@ err is ', err);
                 dispatch(
                     logErrorAndDispatchFailure(
                         err,

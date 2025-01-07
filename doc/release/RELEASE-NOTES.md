@@ -34,7 +34,16 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1376](https://opensupplyhub.atlassian.net/browse/OSDEV-1376) - Updated automated emails for closure reports (report_result) to remove the term "Rejected" for an improved user experience. Added link to Closure Policy and instructions for submitting a Reopening Report to make the process easier to understand for users.
 * [OSDEV-1383](https://opensupplyhub.atlassian.net/browse/OSDEV-1383) - Edited text of the automated email that notifies a contributor when one of their facilities has been claimed. The new text provides more information to the contributor to understand the claim process and how they can encourage more of their facilities to claim their profile.
 * [OSDEV-1474](https://opensupplyhub.atlassian.net/browse/OSDEV-1474) - Added contributor type value to response of `/api/contributors/` endpoint.
-* [OSDEV-1117](https://opensupplyhub.atlassian.net/browse/OSDEV-1117) - Implemented integration of Contribution Record Page (`/dashboard/moderation-queue/contribution-record/{moderation_id}`).
+* [OSDEV-1117](https://opensupplyhub.atlassian.net/browse/OSDEV-1117) - Implemented integration of Contribution Record Page (`/dashboard/moderation-queue/contribution-record/{moderation_id}`):
+    - Connected GET `api/v1/moderation-events/{moderation_id}/`.
+    - Connected GET `api/v1/production-locations?name={productionLocationName}&country={countryCode}&address={address}` to get potential matches using OpenSearch engine.
+    - Connected PATCH `/v1/moderation-events/{moderation_id}/` (for Reject button).
+    - Connected POST `/v1/moderation-events/{moderation_id}/production-locations/` (for Create New Location button).
+    - Connected PATCH `/v1/moderation-events/{moderation_id}/production-locations/{os_id}/` (for Confirm potential match button).
+    - UI improvements: 
+        - Added a toast component to display notifications during moderation event updates.
+        - Introduced a backdrop to prevent accidental clicks on other buttons during the update process.
+    - Applied Django Signal for moderation-events OpenSearch index.
 * [OSDEV-1130](https://opensupplyhub.atlassian.net/browse/OSDEV-1130) A new page, `Production Location Information`, has been implemented. It includes the following inputs:
     * Required and pre-fillable fields:
         - Name
