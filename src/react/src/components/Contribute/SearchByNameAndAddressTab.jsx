@@ -11,7 +11,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import StyledSelect from '../Filters/StyledSelect';
 import InputErrorText from './InputErrorText';
 import { productionLocationInfoRoute } from '../../util/constants';
-
+import COLOURS from '../../util/COLOURS';
 import { makeSearchByNameAddressTabStyles } from '../../util/styles';
 
 import { countryOptionsPropType } from '../../util/propTypes';
@@ -26,6 +26,19 @@ const selectStyles = {
     control: provided => ({
         ...provided,
         height: '56px',
+        borderRadius: '0',
+        '&:focus,&:active,&:focus-within': {
+            borderColor: COLOURS.PURPLE,
+            boxShadow: `inset 0 0 0 1px ${COLOURS.PURPLE}`,
+            transition: 'box-shadow 0.2s',
+        },
+        '&:hover': {
+            borderColor: 'black',
+        },
+    }),
+    placeholder: provided => ({
+        ...provided,
+        opacity: 0.7,
     }),
 };
 
@@ -38,12 +51,18 @@ const SearchByNameAndAddressTab = ({
 }) => {
     const [inputName, setInputName] = useState('');
     const [inputAddress, setInputAddress] = useState('');
-    const [inputCountry, setInputCountry] = useState(defaultCountryOption);
+    const [inputCountry, setInputCountry] = useState(null);
     const [nameTouched, setNameTouched] = useState(false);
     const [addressTouched, setAddressTouched] = useState(false);
+    const [countryTouched, setCountryTouched] = useState(false);
 
     const history = useHistory();
-    const validate = val => val.length > 0;
+    const isValid = val => {
+        if (val) {
+            return val.length > 0;
+        }
+        return false;
+    };
     const handleNameChange = event => {
         setNameTouched(true);
         setInputName(event.target.value);
@@ -53,7 +72,8 @@ const SearchByNameAndAddressTab = ({
         setInputAddress(event.target.value);
     };
     const handleCountryChange = event => {
-        setInputCountry(event || defaultCountryOption);
+        setCountryTouched(true);
+        setInputCountry(event);
     };
 
     const handleSearch = () => {
@@ -68,9 +88,10 @@ const SearchByNameAndAddressTab = ({
         history.push(url);
     };
     const isFormValid =
-        validate(inputName) &&
-        validate(inputAddress) &&
-        validate(inputCountry.value);
+        isValid(inputName) &&
+        isValid(inputAddress) &&
+        countryTouched &&
+        isValid(inputCountry.value);
 
     useEffect(() => {
         if (!countriesData) {
@@ -117,7 +138,7 @@ const SearchByNameAndAddressTab = ({
                             input: `${classes.searchInputStyles}
                                 ${
                                     nameTouched &&
-                                    !validate(inputName) &&
+                                    !isValid(inputName) &&
                                     classes.errorStyle
                                 }`,
                             notchedOutline: classes.notchedOutlineStyles,
@@ -127,12 +148,9 @@ const SearchByNameAndAddressTab = ({
                         },
                     }}
                     helperText={
-                        nameTouched &&
-                        !validate(inputName) && (
-                            <InputErrorText classes={classes} />
-                        )
+                        nameTouched && !isValid(inputName) && <InputErrorText />
                     }
-                    error={nameTouched && !validate(inputName)}
+                    error={nameTouched && !isValid(inputName)}
                 />
                 <Typography component="h4" className={classes.subTitleStyles}>
                     Enter the Address
@@ -150,20 +168,17 @@ const SearchByNameAndAddressTab = ({
                             input: `${classes.searchInputStyles}
                             ${
                                 addressTouched &&
-                                !validate(inputAddress) &&
+                                !isValid(inputAddress) &&
                                 classes.errorStyle
                             }`,
                             notchedOutline: classes.notchedOutlineStyles,
                         },
-                        inputProps: {
-                            type: 'text',
-                        },
                     }}
                     helperText={
                         addressTouched &&
-                        !validate(inputAddress) && <InputErrorText />
+                        !isValid(inputAddress) && <InputErrorText />
                     }
-                    error={addressTouched && !validate(inputAddress)}
+                    error={addressTouched && !isValid(inputAddress)}
                 />
                 <Typography component="h4" className={classes.subTitleStyles}>
                     Select the Country
@@ -176,7 +191,7 @@ const SearchByNameAndAddressTab = ({
                     options={countriesData || []}
                     value={inputCountry}
                     onChange={handleCountryChange}
-                    className={`basic-multi-select notranslate ${classes.selectStyles}`}
+                    className={classes.selectStyles}
                     styles={selectStyles}
                     placeholder="What's the country?"
                     isMulti={false}

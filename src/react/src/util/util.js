@@ -1078,31 +1078,30 @@ export const generateRangeField = value => {
 export const extractProductionLocationContributionValues = data =>
     map(data, 'value');
 
-export const validateNumberOfWorkers = value => {
+export const isValidNumberOfWorkers = value => {
     if (isEmpty(value)) {
-        return false;
+        return true;
     }
 
-    const singleNumberPattern = /^\d+$/;
     const rangePattern = /^\d+-\d+$/;
 
-    if (singleNumberPattern.test(value)) {
-        return false;
+    if (isInt(value.trim(), { min: 1, allow_leading_zeroes: false })) {
+        return true;
     }
 
     if (rangePattern.test(value)) {
         const [start, end] = value.split('-');
 
         if (
-            isInt(start.trim(), { min: 0 }) &&
-            isInt(end.trim(), { min: 0 }) &&
+            isInt(start.trim(), { min: 1, allow_leading_zeroes: false }) &&
+            isInt(end.trim(), { min: 1, allow_leading_zeroes: false }) &&
             parseInt(start, 10) <= parseInt(end, 10)
         ) {
-            return false;
+            return true;
         }
     }
 
-    return true;
+    return false;
 };
 
 export const claimAFacilityFormIsValid = ({
@@ -1116,7 +1115,7 @@ export const claimAFacilityFormIsValid = ({
 }) =>
     every([!isEmpty(yourName), !isEmpty(yourTitle)], identity) &&
     some([isEmpty(yourBusinessWebsite), isURL(yourBusinessWebsite)]) &&
-    !validateNumberOfWorkers(numberOfWorkers) &&
+    isValidNumberOfWorkers(numberOfWorkers) &&
     every([
         isEmpty(businessWebsite) ||
             (!isEmpty(businessWebsite) && isURL(businessWebsite)),

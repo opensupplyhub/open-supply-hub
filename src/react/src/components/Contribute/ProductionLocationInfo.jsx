@@ -7,6 +7,7 @@ import { connect } from 'react-redux';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
+import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
@@ -31,9 +32,11 @@ import {
     mapDjangoChoiceTuplesToSelectOptions,
     mapFacilityTypeOptions,
     mapProcessingTypeOptions,
+    isValidNumberOfWorkers,
 } from '../../util/util';
 import { mockedSectors } from '../../util/constants';
 import COLOURS from '../../util/COLOURS';
+
 
 // TODO: there should be already prefetched data from Redux state
 // If no, fetch related query
@@ -50,6 +53,7 @@ const ProductionLocationInfo = ({
     fetchFacilityProcessingType,
     numberOfWorkersOptions,
     fetchNumberOfWorkers,
+    fetchFacilityProcessingType,
 }) => {
     const location = useLocation();
 
@@ -67,8 +71,9 @@ const ProductionLocationInfo = ({
     const [productType, setProductType] = useState([]);
     const [locationType, setLocationType] = useState(null);
     const [processingType, setProcessingType] = useState(null);
-    const [numberOfWorkers, setNumberOfWorkers] = useState(null);
+    const [numberOfWorkers, setNumberOfWorkers] = useState('');
     const [parentCompany, setParentCompany] = useState([]);
+    const customSelectComponents = { DropdownIndicator: null };
 
     const selectStyles = {
         control: provided => ({
@@ -77,11 +82,15 @@ const ProductionLocationInfo = ({
             borderRadius: '0',
             '&:focus,&:active,&:focus-within': {
                 borderColor: COLOURS.PURPLE,
-                boxShadow: `0 0 0 1px ${COLOURS.PURPLE}`,
+                boxShadow: `inset 0 0 0 1px ${COLOURS.PURPLE}`,
+                transition: 'box-shadow 0.2s',
+            },
+            '&:hover': {
+                borderColor: 'black',
             },
         }),
     };
-    const validate = val => {
+    const isValid = val => {
         if (val) {
             return val.length > 0;
         }
@@ -107,12 +116,11 @@ const ProductionLocationInfo = ({
     }, [countriesOptions, fetchCountries]);
 
     useEffect(() => {
-        if (countriesOptions && validate(countryInQuery)) {
+        if (countriesOptions && isValid(countryInQuery)) {
             const prefilledCountry = countriesOptions.filter(
                 el => el.value === countryInQuery,
             );
-
-            handleCountryChange(prefilledCountry[0]);
+            setInputCountry(prefilledCountry[0]);
         }
     }, [countriesOptions]);
 
@@ -155,7 +163,7 @@ const ProductionLocationInfo = ({
                     <TextField
                         id="name"
                         className={classes.textInputStyles}
-                        value={inputName ?? ''}
+                        value={inputName}
                         onChange={handleNameChange}
                         placeholder="Enter the name"
                         variant="outlined"
@@ -165,7 +173,7 @@ const ProductionLocationInfo = ({
                                 input: `
                                     ${
                                         nameTouched &&
-                                        !validate(inputName) &&
+                                        !isValid(inputName) &&
                                         classes.errorStyle
                                     }`,
                                 notchedOutline: classes.notchedOutlineStyles,
@@ -173,12 +181,12 @@ const ProductionLocationInfo = ({
                         }}
                         helperText={
                             nameTouched &&
-                            !validate(inputName) && <InputErrorText />
+                            !isValid(inputName) && <InputErrorText />
                         }
                         FormHelperTextProps={{
                             className: classes.helperText,
                         }}
-                        error={nameTouched && !validate(inputName)}
+                        error={nameTouched && !isValid(inputName)}
                     />
                 </div>
                 <div
@@ -207,7 +215,7 @@ const ProductionLocationInfo = ({
                                 input: `${classes.searchInputStyles}
                                 ${
                                     addressTouched &&
-                                    !validate(inputAddress) &&
+                                    !isValid(inputAddress) &&
                                     classes.errorStyle
                                 }`,
                                 notchedOutline: classes.notchedOutlineStyles,
@@ -215,12 +223,12 @@ const ProductionLocationInfo = ({
                         }}
                         helperText={
                             addressTouched &&
-                            !validate(inputAddress) && <InputErrorText />
+                            !isValid(inputAddress) && <InputErrorText />
                         }
                         FormHelperTextProps={{
                             className: classes.helperText,
                         }}
-                        error={addressTouched && !validate(inputAddress)}
+                        error={addressTouched && !isValid(inputAddress)}
                     />
                 </div>
                 <div
@@ -241,7 +249,7 @@ const ProductionLocationInfo = ({
                         aria-label="Country"
                         options={countriesOptions || []}
                         value={inputCountry}
-                        onChange={handleCountryChange}
+                        onChange={setInputCountry}
                         className={classes.selectStyles}
                         styles={selectStyles}
                         placeholder="Country"
@@ -259,20 +267,13 @@ const ProductionLocationInfo = ({
                         >
                             Additional information
                         </Typography>
-                        <div
-                            className="cursor"
-                            onClick={toggleExpand}
-                            onKeyDown={toggleExpand}
-                            role="button"
-                            styling="link"
-                            tabIndex={0}
-                        >
+                        <IconButton onClick={toggleExpand}>
                             {isExpanded ? (
                                 <ArrowDropUpIcon />
                             ) : (
                                 <ArrowDropDownIcon />
                             )}
-                        </div>
+                        </IconButton>
                     </div>
                     <Typography
                         component="h4"
@@ -314,7 +315,7 @@ const ProductionLocationInfo = ({
                                     onChange={setSector}
                                     styles={selectStyles}
                                     className={classes.selectStyles}
-                                    placeholder="Select"
+                                    placeholder="Select sector(s)"
                                 />
                             </div>
                             <div
@@ -344,6 +345,7 @@ const ProductionLocationInfo = ({
                                     aria-label="Enter product type(s)"
                                     styles={selectStyles}
                                     className={classes.selectStyles}
+                                    components={customSelectComponents}
                                 />
                             </div>
                             <div
@@ -376,7 +378,7 @@ const ProductionLocationInfo = ({
                                     onChange={setLocationType}
                                     styles={selectStyles}
                                     className={classes.selectStyles}
-                                    placeholder="Select"
+                                    placeholder="Select location type(s)"
                                 />
                             </div>
                             <div
@@ -423,21 +425,45 @@ const ProductionLocationInfo = ({
                                     component="h4"
                                     className={classes.subTitleStyles}
                                 >
-                                    Select a number or a range for the number of
+                                    Enter a number or a range for the number of
                                     people employed at the location. For
                                     example: 100, 100-150.
                                 </Typography>
-                                <StyledSelect
+                                <TextField
                                     id="number_of_workers"
-                                    name="Number of Workers"
-                                    options={numberOfWorkersOptions || []}
+                                    error={
+                                        !isValidNumberOfWorkers(numberOfWorkers)
+                                    }
+                                    variant="outlined"
+                                    className={classes.textInputStyles}
                                     value={numberOfWorkers}
-                                    onChange={setNumberOfWorkers}
+                                    onChange={e =>
+                                        setNumberOfWorkers(e.target.value)
+                                    }
                                     placeholder="Enter the number of workers as a number or range"
-                                    aria-label="Number of workers"
-                                    isMulti={false}
-                                    styles={selectStyles}
-                                    className={classes.selectStyles}
+                                    helperText={
+                                        !isValidNumberOfWorkers(
+                                            numberOfWorkers,
+                                        ) && (
+                                            <InputErrorText text="Enter the number of workers as a number or range" />
+                                        )
+                                    }
+                                    FormHelperTextProps={{
+                                        className: classes.helperText,
+                                    }}
+                                    InputProps={{
+                                        classes: {
+                                            input: `
+                                            ${
+                                                !isValidNumberOfWorkers(
+                                                    numberOfWorkers,
+                                                ) && classes.errorStyle
+                                            }`,
+                                            notchedOutline:
+                                                classes.notchedOutlineStyles,
+                                        },
+                                    }}
+                                    aria-label="Number of Workers"
                                 />
                             </div>
                             <div
@@ -461,10 +487,11 @@ const ProductionLocationInfo = ({
                                     name="Parent company"
                                     value={parentCompany}
                                     onChange={setParentCompany}
-                                    placeholder="Select"
+                                    placeholder="Enter the parent company"
                                     aria-label="Parent company"
                                     styles={selectStyles}
                                     className={classes.selectStyles}
+                                    components={customSelectComponents}
                                 />
                             </div>
                         </>
@@ -521,6 +548,7 @@ ProductionLocationInfo.propTypes = {
     handleUpdateProductionLocation: func.isRequired,
     facilityProcessingTypeOptions: facilityProcessingTypeOptionsPropType,
     numberOfWorkersOptions: numberOfWorkerOptionsPropType,
+    facilityProcessingTypeOptions: facilityProcessingTypeOptionsPropType,
     classes: object.isRequired,
 };
 
