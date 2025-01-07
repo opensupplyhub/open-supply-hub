@@ -21,7 +21,6 @@ import {
 import {
     fetchCountryOptions,
     fetchFacilityProcessingTypeOptions,
-    fetchNumberOfWorkersOptions,
 } from '../../actions/filterOptions';
 import {
     createProductionLocation,
@@ -49,9 +48,6 @@ const ProductionLocationInfo = ({
     facilityProcessingTypeOptions,
     handleCreateProductionLocation,
     handleUpdateProductionLocation,
-    fetchFacilityProcessingType,
-    numberOfWorkersOptions,
-    fetchNumberOfWorkers,
     fetchFacilityProcessingType,
 }) => {
     const location = useLocation();
@@ -128,12 +124,6 @@ const ProductionLocationInfo = ({
             fetchFacilityProcessingType();
         }
     }, [facilityProcessingTypeOptions, fetchFacilityProcessingType]);
-
-    useEffect(() => {
-        if (!numberOfWorkersOptions) {
-            fetchNumberOfWorkers();
-        }
-    }, [numberOfWorkersOptions, fetchNumberOfWorkers]);
 
     return (
         <div className={classes.mainContainerStyles}>
@@ -536,7 +526,6 @@ const ProductionLocationInfo = ({
 ProductionLocationInfo.defaultProps = {
     countriesOptions: null,
     facilityProcessingTypeOptions: null,
-    numberOfWorkersOptions: null,
 };
 
 ProductionLocationInfo.propTypes = {
@@ -545,7 +534,6 @@ ProductionLocationInfo.propTypes = {
     fetchFacilityProcessingType: func.isRequired,
     handleCreateProductionLocation: func.isRequired,
     handleUpdateProductionLocation: func.isRequired,
-    numberOfWorkersOptions: numberOfWorkerOptionsPropType,
     facilityProcessingTypeOptions: facilityProcessingTypeOptionsPropType,
     classes: object.isRequired,
 };
@@ -554,12 +542,10 @@ const mapStateToProps = ({
     filterOptions: {
         countries: { data: countriesOptions },
         facilityProcessingType: { data: facilityProcessingTypeOptions },
-        numberOfWorkers: { data: numberOfWorkersOptions },
     },
 }) => ({
     countriesOptions,
     facilityProcessingTypeOptions,
-    numberOfWorkersOptions,
 });
 
 function mapDispatchToProps(dispatch) {
@@ -567,7 +553,6 @@ function mapDispatchToProps(dispatch) {
         fetchCountries: () => dispatch(fetchCountryOptions()),
         fetchFacilityProcessingType: () =>
             dispatch(fetchFacilityProcessingTypeOptions()),
-        fetchNumberOfWorkers: () => dispatch(fetchNumberOfWorkersOptions()),
         handleCreateProductionLocation: data =>
             dispatch(createProductionLocation(data)),
         handleUpdateProductionLocation: osID =>

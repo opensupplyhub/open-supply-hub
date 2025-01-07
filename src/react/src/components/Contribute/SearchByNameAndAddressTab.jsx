@@ -17,11 +17,6 @@ import { makeSearchByNameAddressTabStyles } from '../../util/styles';
 import { countryOptionsPropType } from '../../util/propTypes';
 import { fetchCountryOptions } from '../../actions/filterOptions';
 
-const defaultCountryOption = {
-    label: "What's the country?",
-    value: '',
-};
-
 const selectStyles = {
     control: provided => ({
         ...provided,
