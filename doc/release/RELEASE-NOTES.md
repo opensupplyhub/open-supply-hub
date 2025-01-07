@@ -7,7 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: December 28, 2024
+* Release date: January 11, 2025
 
 ### Database changes
 #### Migrations:
@@ -26,12 +26,22 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1493](https://opensupplyhub.atlassian.net/browse/OSDEV-1493) - Fixed an issue where the backend sorts countries not by `name` but by their `alpha-2 codes` in `GET /api/v1/moderation-events/` endpoint.
 * [OSDEV-1532](https://opensupplyhub.atlassian.net/browse/OSDEV-1532) - Fixed the date range picker on the `Moderation Queue` page. A Data Moderator can change the Before date even if an Error message is displayed.
 * [OSDEV-1533](https://opensupplyhub.atlassian.net/browse/OSDEV-1533) - The presentation of the `Moderation Decision Date` in the `Moderation Queue` table has been corrected. If the "status_change_date" is missing in the object, it now displays as "N/A".
+* [OSDEV-1397](https://opensupplyhub.atlassian.net/browse/OSDEV-1397) - GET `/api/parent-companies/` request has been removed from the Open Supply Hub page and ClaimFacility component. Parent Company Select is a regular input field that allows the creation of multiple parent company names for filter on this page.
+* [OSDEV-1556](https://opensupplyhub.atlassian.net/browse/OSDEV-1556) - Fixed validation of `os_id` for PATCH `/api/v1/moderation-events/{moderation_id}/production-locations/{os_id}/` endpoint.
+* [OSDEV-1563](https://opensupplyhub.atlassian.net/browse/OSDEV-1563) - Fixed updating of the moderation decision date after moderation event approval.
 
 ### What's new
 * [OSDEV-1376](https://opensupplyhub.atlassian.net/browse/OSDEV-1376) - Updated automated emails for closure reports (report_result) to remove the term "Rejected" for an improved user experience. Added link to Closure Policy and instructions for submitting a Reopening Report to make the process easier to understand for users.
 * [OSDEV-1383](https://opensupplyhub.atlassian.net/browse/OSDEV-1383) - Edited text of the automated email that notifies a contributor when one of their facilities has been claimed. The new text provides more information to the contributor to understand the claim process and how they can encourage more of their facilities to claim their profile.
 * [OSDEV-1474](https://opensupplyhub.atlassian.net/browse/OSDEV-1474) - Added contributor type value to response of `/api/contributors/` endpoint.
-* [OSDEV-1117](https://opensupplyhub.atlassian.net/browse/OSDEV-1117) - Implemented integration of Contribution Record Page.
+* [OSDEV-1117](https://opensupplyhub.atlassian.net/browse/OSDEV-1117) - Implemented integration of Contribution Record Page (`/dashboard/moderation-queue/contribution-record/{moderation_id}`).
+* [OSDEV-1130](https://opensupplyhub.atlassian.net/browse/OSDEV-1130) A new page, `Production Location Information`, has been implemented. It includes the following inputs:
+    * Required and pre-fillable fields:
+        - Name
+        - Address
+        - Country
+    * Additional information section: Fields for optional contributions from the owner or manager of the production location, including sector(s), product type(s), location type(s), processing type(s), number of workers, and parent company.
+The page also features `Go Back` and `Submit` buttons for navigation and form submission.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:

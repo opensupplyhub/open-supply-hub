@@ -944,20 +944,6 @@ export const makeSearchByNameAddressTabStyles = theme =>
         errorPlaceholder: Object.freeze({
             color: COLOURS.RED,
         }),
-        helperTextWrapStyles: Object.freeze({
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-        }),
-        iconInfoStyles: Object.freeze({
-            fontSize: '16px',
-            verticalAlign: 'middle',
-        }),
-        inputHelperTextStyles: Object.freeze({
-            fontSize: '16px',
-            fontWeight: theme.typography.fontWeightSemiBold,
-            color: COLOURS.RED,
-        }),
         instructionStyles: Object.freeze({
             fontSize: '18px',
             fontWeight: theme.typography.fontWeightSemiBold,
@@ -1017,5 +1003,128 @@ export const makeSearchByNameAddressTabStyles = theme =>
             '&:hover': {
                 backgroundColor: theme.palette.action.dark,
             },
+        }),
+    });
+
+export const productionLocationInfoStyles = theme =>
+    Object.freeze({
+        helperText: Object.freeze({
+            marginLeft: '0',
+        }),
+        errorStyle: Object.freeze({
+            color: COLOURS.RED,
+        }),
+        rowContainerStyles: Object.freeze({
+            display: 'flex',
+            flexDirection: 'row',
+            width: '100%',
+            alignItems: 'center',
+        }),
+        marginRight: Object.freeze({
+            marginRight: '20px',
+        }),
+        buttonsContainerStyles: Object.freeze({
+            display: 'flex',
+            flexDirection: 'row',
+            width: '100%',
+            justifyContent: 'center',
+        }),
+        selectStyles: Object.freeze({
+            maxWidth: '528px',
+        }),
+        textInputStyles: Object.freeze({
+            maxWidth: '528px',
+            borderRadius: '0',
+        }),
+        instructionStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            margin: '24px 0 32px 0',
+            maxWidth: '730px',
+        }),
+        inputSectionWrapStyles: Object.freeze({
+            padding: '40px 0',
+        }),
+        wrapStyles: Object.freeze({
+            display: 'inline-flex',
+            flexDirection: 'column',
+        }),
+        sectionWrapStyles: Object.freeze({
+            padding: '24px 0 32px 0',
+        }),
+        infoWrapStyles: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '0 110px',
+            borderRadius: '0',
+            boxShadow: 'none',
+        }),
+        mainContainerStyles: Object.freeze({
+            background: theme.palette.background.grey,
+            padding: '48px 5% 120px 5%',
+        }),
+        headerStyles: Object.freeze({
+            fontWeight: theme.typography.fontWeightExtraBold,
+            fontSize: '56px',
+            lineHeight: '60px',
+        }),
+        titleStyles: Object.freeze({
+            fontSize: '36px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
+        }),
+        subTitleStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            margin: '0 0 20px 0',
+        }),
+        separator: Object.freeze({
+            margin: '1px 0',
+            color: COLOURS.GREY,
+        }),
+        goBackButtonStyles: Object.freeze({
+            width: '200px',
+            height: '49px',
+            borderRadius: 0,
+            textTransform: 'none',
+            margin: '48px 20px 48px 0',
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightExtraBold,
+            border: '1px solid #0D1128',
+        }),
+        submitButtonStyles: Object.freeze({
+            width: '200px',
+            height: '49px',
+            borderRadius: 0,
+            textTransform: 'none',
+            backgroundColor: theme.palette.action.main,
+            margin: '48px 0',
+            color: theme.palette.common.black,
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightExtraBold,
+            boxShadow: 'none',
+        }),
+        notchedOutlineStyles: Object.freeze({
+            borderRadius: '0',
+        }),
+    });
+
+export const inputErrorText = theme =>
+    Object.freeze({
+        errorTextWrapStyles: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+        }),
+        iconInfoStyles: Object.freeze({
+            fontSize: '16px',
+            verticalAlign: 'middle',
+            marginRight: '5px',
+        }),
+        inputErrorTextStyles: Object.freeze({
+            fontSize: '16px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            color: COLOURS.RED,
         }),
     });

@@ -29,7 +29,7 @@ import { fetchSectorOptions } from '../actions/filterOptions';
 
 import { sectorOptionsPropType } from '../util/propTypes';
 
-import { getValueFromEvent, validateNumberOfWorkers } from '../util/util';
+import { getValueFromEvent, isValidNumberOfWorkers } from '../util/util';
 
 import { claimAFacilitySupportDocsFormStyles } from '../util/styles';
 
@@ -284,7 +284,7 @@ function ClaimFacilityAdditionalData({
                 </Typography>
                 <TextField
                     id={numberOfWorkersForm.id}
-                    error={validateNumberOfWorkers(numberOfWorkers)}
+                    error={!isValidNumberOfWorkers(numberOfWorkers)}
                     variant="outlined"
                     style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
                     value={numberOfWorkers}
