@@ -104,7 +104,7 @@ def write_facilities(writer, facilities):
         writer.writerow(row)
 
 
-def get_facilities(id=None, limit=50000):
+def get_facilities(limit=50000, id=None):
     """
     Retrieve a list of facilities from the FacilityIndex.
     Args:
@@ -188,8 +188,8 @@ class Command(BaseCommand):
             while True:
                 logger.info(f"New loop iteration, ID: {last_id}")
                 facilities = get_facilities(
-                    id=last_id,
                     limit=limit,
+                    id=last_id,
                 )
                 total_facilities += len(facilities)
 

@@ -3,6 +3,33 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.28.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: January 25, 2025
+
+### Database changes
+
+#### Migrations:
+
+#### Scheme changes
+
+### Code/API changes
+* [OSDEV-1523](https://opensupplyhub.atlassian.net/browse/OSDEV-1523) - Updated `export_csv.py` to enable uploading to Google Drive and implemented cursor-based pagination for the export.
+
+### Architecture/Environment changes
+
+### Bugfix
+
+### What's new
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to refresh the index mappings for the `moderation-events` index after disabling dynamic mapping for the new fields that don't have an explicit mapping defined. The `production-locations` will also be affected since it will clean all of our custom indexes and templates within the OpenSearch cluster.
+
 ## Release 1.27.0
 
 ## Introduction
@@ -18,7 +45,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1409](https://opensupplyhub.atlassian.net/browse/OSDEV-1409) - Introduced a new PATCH `/api/v1/moderation-events/{moderation_id}/production-locations/{os_id}/` endpoint. This endpoint allows the creation of a new contribution for an existing production location based on the provided moderation event.
 * [OSDEV-1336](https://opensupplyhub.atlassian.net/browse/OSDEV-1336) - Introduced a new PATCH `/api/v1/production-locations/{os_id}/` endpoint based on the API v1 specification. This endpoint allows the creation of a new moderation event for updating the production location with the given details. Basically, the endpoint can be used to contribute to an existing location.
 * [OSDEV-1336](https://opensupplyhub.atlassian.net/browse/OSDEV-1336) - Dynamic mapping for the new fields in the `moderation-events` index has been disabled for those that don't have an explicit mapping defined. This change helps avoid indexing conflicts, such as when a field is initially indexed with one data type (e.g., long), but later an entry with a different data type for the same field is indexed, causing the entire entry to fail indexing. After this change, fields with an explicit mapping will be indexed, while other fields will not be indexed or searchable, but will still be displayed in the document.
-* [OSDEV-1523](https://opensupplyhub.atlassian.net/browse/OSDEV-1523) - Updated `export_csv.py` to enable uploading to Google Drive and implemented cursor-based pagination for the export.
 
 ### Architecture/Environment changes
 
