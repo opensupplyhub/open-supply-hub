@@ -4,6 +4,7 @@ import configureMockStore from 'redux-mock-store';
 import { Provider } from 'react-redux';
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import { MemoryRouter } from 'react-router-dom';
+import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import AddLocationData from '../../components/AddLocationData';
 
 const mockStore = configureMockStore();
@@ -23,22 +24,20 @@ describe('AddLocationData component', () => {
         },
     };
 
-    const renderComponent = (state = {}) => {
-        const store = mockStore(state);
+    const renderComponent = (preloadedState = {}) => {
         const theme = createMuiTheme({
             palette: {
                 action: { main: '#000', dark: '#333' }, // Define a valid palette
                 getContrastText: jest.fn(() => '#fff'), // Mock the method to return a contrast color
             },
         });
-        return render(
-            <Provider store={store}>
-                <MuiThemeProvider theme={theme}>
-                    <MemoryRouter>
-                        <AddLocationData />
-                    </MemoryRouter>
-                </MuiThemeProvider>
-            </Provider>
+        return renderWithProviders(
+            <MuiThemeProvider theme={theme}>
+                <MemoryRouter>
+                    <AddLocationData />
+                </MemoryRouter>
+            </MuiThemeProvider>,
+            { preloadedState }
         );
     };
 
@@ -46,12 +45,12 @@ describe('AddLocationData component', () => {
         jest.clearAllMocks();
     });
 
-    it('renders with the authorized user', () => {
+    it('renders for the authorized user', () => {
         const { getByText } = renderComponent(mockAuthorizedState);
         expect(getByText('Add production location data to OS Hub')).toBeInTheDocument();
     });
 
-    it('renders with the not authorized user', () => {
+    it('renders for the unauthorized user', () => {
         const { getByText } = renderComponent(mockNotAuthorizedState);
         expect(getByText('Log in to contribute to Open Supply Hub')).toBeInTheDocument();
     });
