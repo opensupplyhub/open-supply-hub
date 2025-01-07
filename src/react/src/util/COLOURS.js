@@ -26,5 +26,7 @@ export default {
     PALE_LIGHT_YELLOW: '#FFF2CE',
     ACCENT_GREY: '#E7E8EA',
 
+    // Purples
+    LIGHT_PURPLE: '#8428FA21',
     PURPLE: '#8428FA',
 };
