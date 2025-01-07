@@ -10,7 +10,7 @@ import Typography from '@material-ui/core/Typography';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import StyledSelect from '../Filters/StyledSelect';
 import InputErrorText from './InputErrorText';
-import { productionLocationInfoRoute } from '../../util/constants';
+import { searchByNameAndAddressResultRoute } from '../../util/constants';
 import COLOURS from '../../util/COLOURS';
 import { makeSearchByNameAddressTabStyles } from '../../util/styles';
 
@@ -72,7 +72,7 @@ const SearchByNameAndAddressTab = ({
     };
 
     const handleSearch = () => {
-        const baseUrl = productionLocationInfoRoute;
+        const baseUrl = searchByNameAndAddressResultRoute;
         const params = new URLSearchParams({
             name: inputName,
             address: inputAddress,
