@@ -1107,7 +1107,7 @@ export const makeAddLocationStyles = theme =>
             margin: '20px',
             padding: '15px 25px 15px 25px',
             display: 'center',
-            fontWeight: '900',
+            fontWeight: theme.typography.fontWeightExtraBold,
             fontSize: '16px',
             backgroundColor: theme.palette.action.main,
             color: theme.palette.getContrastText(theme.palette.action.main),
@@ -1251,7 +1251,7 @@ export const makeAddLocationStyles = theme =>
         secondaryButton: Object.freeze({
             backgroundColor: COLOURS.WHITE,
             color: COLOURS.NEAR_BLACK,
-            fontWeight: '900',
+            fontWeight: theme.typography.fontWeightExtraBold,
             fontSize: '16px',
             border: 'none',
             padding: '1rem 1.5rem',
