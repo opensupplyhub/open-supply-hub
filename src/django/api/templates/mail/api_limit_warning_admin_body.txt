@@ -1,10 +1,10 @@
 {% block content %}
-Hi,
+Hello,
 
 You're receiving this email because {{ contributor_name }} has used 90% of
 their limit of {{ limit }} OS Hub API requests for this year.
 
-Best wishes,
+Best Regards,
 
 {% include "mail/signature_block.txt" %}
 {% endblock content %}
