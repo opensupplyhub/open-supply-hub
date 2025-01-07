@@ -32,6 +32,7 @@ import ExternalRedirect from './components/ExternalRedirect';
 import Facilities from './components/Facilities';
 import ContributeProductionLocation from './components/Contribute/ContributeProductionLocation';
 import SearchByOsIdResult from './components/Contribute/SearchByOsIdResult';
+import SearchByNameAndAddressResult from './components/Contribute/SearchByNameAndAddressResult';
 import ProductionLocationInfo from './components/Contribute/ProductionLocationInfo';
 
 import { sessionLogin } from './actions/auth';
@@ -60,6 +61,7 @@ import {
     InfoPaths,
     contributeProductionLocationRoute,
     searchByOsIdResultRoute,
+    searchByNameAndAddressResultRoute,
     productionLocationInfoRoute,
 } from './util/constants';
 
@@ -88,7 +90,11 @@ class Routes extends Component {
                 <Router history={history}>
                     <div className="App">
                         {!embed ? <Navbar /> : null}
-                        <main style={mainPanelStyle} className="mainPanel">
+                        <main
+                            style={mainPanelStyle}
+                            className="mainPanel"
+                            id="mainPanel"
+                        >
                             <Switch>
                                 <Route
                                     exact
@@ -176,6 +182,11 @@ class Routes extends Component {
                                     exact
                                     path={searchByOsIdResultRoute}
                                     component={SearchByOsIdResult}
+                                />
+                                <Route
+                                    exact
+                                    path={searchByNameAndAddressResultRoute}
+                                    component={SearchByNameAndAddressResult}
                                 />
                                 <Route
                                     exact
