@@ -10,7 +10,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Release date: January 25, 2025
 
 ### Database changes
-
 #### Migrations:
 
 #### Scheme changes
@@ -23,12 +22,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Bugfix
 
 ### What's new
+* [OSDEV-40](https://opensupplyhub.atlassian.net/browse/OSDEV-40) - Created new page for `/contribute` to choose between multiple & single location upload. Replaced current multiple list upload to `/contribute/multiple-locations`. Changed `Upload Data` to `Add Data` text.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
-* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to refresh the index mappings for the `moderation-events` index after disabling dynamic mapping for the new fields that don't have an explicit mapping defined. The `production-locations` will also be affected since it will clean all of our custom indexes and templates within the OpenSearch cluster.
 
 ## Release 1.27.0
 
