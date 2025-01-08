@@ -350,7 +350,10 @@ export const claimedFacilitiesDetailRoute = '/claimed/:claimID';
 export const dashboardClaimsDetailsRoute = '/dashboard/claims/:claimID';
 export const aboutClaimedFacilitiesRoute = `${InfoLink}/${InfoPaths.claimedFacilities}`;
 export const contributeProductionLocationRoute = '/contribute/single-location';
-export const searchByOsIdResultRoute = '/contribute/production-location/search';
+export const searchByOsIdResultRoute =
+    '/contribute/production-location/search/id/:osID';
+export const searchByNameAndAddressResultRoute =
+    '/contribute/production-location/search/';
 export const productionLocationInfoRoute =
     '/contribute/production-location/info';
 

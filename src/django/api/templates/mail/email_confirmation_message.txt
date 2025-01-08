@@ -1,11 +1,11 @@
 {% block content %}
-Hi,
+Hello,
 
 You're receiving this message because you registered for an Open Supply Hub Account.
 
 To activate your account, visit {{ activate_url }}
 
-Sincerely,
+Best Regards,
 
 {% include "mail/signature_block.txt" %}
 {% endblock content %}

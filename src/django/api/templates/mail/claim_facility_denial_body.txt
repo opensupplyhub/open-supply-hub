@@ -2,7 +2,7 @@
 Hello,
 
 You are receiving this email because your request to claim the following production location on
-Open Supply Hub has been denied:
+Open Supply Hub (OS Hub) has been denied:
 
 - Name of Production Location: {{ production_location_name }}
 - Address of Production Location: {{ production_location_address }}, {{ production_location_country }}
@@ -18,7 +18,7 @@ If you wish to resubmit your claim and try again, please go to the profile youâ€
 the "I want to claim this production location" link at the top of the screen, and follow the next
 steps. Remember to provide the additional supporting evidence requested in your previous claim.
 
-Best wishes,
+Best Regards,
 
 {% include "mail/claims_team_signature_block.txt" %}
 {% endblock content %}
