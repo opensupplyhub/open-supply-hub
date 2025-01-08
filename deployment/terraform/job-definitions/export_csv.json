@@ -14,7 +14,7 @@
       { "name": "BATCH_JOB_QUEUE_NAME", "value": "${batch_job_queue_name}" },
       { "name": "BATCH_JOB_DEF_NAME", "value": "${batch_job_def_name}" },
       { "name": "BATCH_MODE", "value": "True" },
-      { "name": "GOOGLE_SERVICE_ACCOUNT_CREDS", "value": "${google_service_account_creds}" },
+      { "name": "GOOGLE_SERVICE_ACCOUNT_CREDS", "value": "${jsonencode(google_service_account_creds)}" },
       { "name": "GOOGLE_DRIVE_SHARED_DIRECTORY_ID", "value": "${google_drive_shared_directory_id}" }
   ],
   "logConfiguration": {
