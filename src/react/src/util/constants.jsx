@@ -320,6 +320,7 @@ export const authRegisterFormRoute = '/auth/register';
 export const authResetPasswordFormRoute = '/auth/resetpassword/:uid';
 export const authConfirmRegistrationRoute = '/auth/confirm/:uid';
 export const contributeRoute = '/contribute';
+export const multipleLocationRoute = '/contribute/multiple-locations';
 export const listsRoute = '/lists';
 export const facilityListItemsRoute = '/lists/:listID';
 export const facilitiesRoute = '/facilities';
@@ -348,9 +349,13 @@ export const claimedFacilitiesRoute = '/claimed';
 export const claimedFacilitiesDetailRoute = '/claimed/:claimID';
 export const dashboardClaimsDetailsRoute = '/dashboard/claims/:claimID';
 export const aboutClaimedFacilitiesRoute = `${InfoLink}/${InfoPaths.claimedFacilities}`;
-export const contributeProductionLocationRoute =
-    '/contribute/production-location';
-export const searchByOsIdResultRoute = '/contribute/production-location/search';
+export const contributeProductionLocationRoute = '/contribute/single-location';
+export const searchByOsIdResultRoute =
+    '/contribute/production-location/search/id/:osID';
+export const searchByNameAndAddressResultRoute =
+    '/contribute/production-location/search/';
+export const productionLocationInfoRoute =
+    '/contribute/production-location/info';
 
 export const contributeFieldsEnum = Object.freeze({
     name: 'name',
@@ -904,7 +909,7 @@ export const NavbarItems = [
     { type: 'auth' },
     {
         type: 'button',
-        label: 'Upload Data',
+        label: 'Add Data',
         href: '/contribute',
         internal: true,
     },
@@ -1368,3 +1373,137 @@ export const MODERATION_DEFAULT_ROWS_PER_PAGE = 25;
 
 export const MAINTENANCE_MESSAGE =
     'Open Supply Hub is undergoing maintenance and not accepting new data at the moment. Please try again in a few minutes.';
+
+export const mockedSectors = [
+    ['Electronics', 'Electronics'],
+    ['Accommodation', 'Accommodation'],
+    ['Aerospace', 'Aerospace'],
+    ['Agriculture', 'Agriculture'],
+    ['Air Transportation', 'Air Transportation'],
+    ['Allied Products', 'Allied Products'],
+    ['Animal Production', 'Animal Production'],
+    ['Apparel', 'Apparel'],
+    ['Apparel Accessories', 'Apparel Accessories'],
+    ['Appliances', 'Appliances'],
+    ['Aquaculture', 'Aquaculture'],
+    ['Archives', 'Archives'],
+    ['Arts', 'Arts'],
+    ['Arts & Entertainment', 'Arts & Entertainment'],
+    ['Automotive', 'Automotive'],
+    ['Automotive Parts', 'Automotive Parts'],
+    ['Banking', 'Banking'],
+    ['Beauty Products', 'Beauty Products'],
+    ['Beverages', 'Beverages'],
+    ['Biotechnology', 'Biotechnology'],
+    ['Books', 'Books'],
+    ['Building Construction', 'Building Construction'],
+    ['Building Materials', 'Building Materials'],
+    ['Chemicals', 'Chemicals'],
+    ['Civics', 'Civics'],
+    ['Civil Engineering Construction', 'Civil Engineering Construction'],
+    ['Coal', 'Coal'],
+    ['Commodities', 'Commodities'],
+    ['Components', 'Components'],
+    ['Computers', 'Computers'],
+    ['Computing Infrastructure', 'Computing Infrastructure'],
+    ['Construction', 'Construction'],
+    ['Consumer Products', 'Consumer Products'],
+    ['Crop Production', 'Crop Production'],
+    ['Durable Goods', 'Durable Goods'],
+    ['Educational Services', 'Educational Services'],
+    ['Electrical Devices', 'Electrical Devices'],
+    ['Electricity', 'Electricity'],
+    ['Electronic Product Manufacturing', 'Electronic Product Manufacturing'],
+    ['Energy', 'Energy'],
+    ['Energy Production & Utilities', 'Energy Production & Utilities'],
+    ['Entertainment', 'Entertainment'],
+    ['Equipment', 'Equipment'],
+    ['Farming', 'Farming'],
+    ['Finance', 'Finance'],
+    ['Financial Services', 'Financial Services'],
+    ['Fishing', 'Fishing'],
+    ['Food', 'Food'],
+    ['Food & Beverage', 'Food & Beverage'],
+    ['Food Industry', 'Food Industry'],
+    ['Food Manufacturing', 'Food Manufacturing'],
+    ['Footwear', 'Footwear'],
+    ['Forestry', 'Forestry'],
+    ['Furniture', 'Furniture'],
+    ['Garden Tools', 'Garden Tools'],
+    ['Gas', 'Gas'],
+    ['General Merchandise', 'General Merchandise'],
+    ['Ground Passenger Transportation', 'Ground Passenger Transportation'],
+    ['Hard Goods', 'Hard Goods'],
+    ['Health', 'Health'],
+    ['Healthcare', 'Healthcare'],
+    ['Hobby', 'Hobby'],
+    ['Home Accessories', 'Home Accessories'],
+    ['Home Furnishings', 'Home Furnishings'],
+    ['Hospitals', 'Hospitals'],
+    ['Home Textiles', 'Home Textiles'],
+    ['Hunting', 'Hunting'],
+    ['Information', 'Information'],
+    ['International Affairs', 'International Affairs'],
+    ['Jewelry', 'Jewelry'],
+    ['Leather', 'Leather'],
+    ['Logging', 'Logging'],
+    ['Machinery Manufacturing', 'Machinery Manufacturing'],
+    ['Maintenance', 'Maintenance'],
+    ['Manufacturing', 'Manufacturing'],
+    ['Material Production', 'Material Production'],
+    ['Medical Equipment & Services', 'Medical Equipment & Services'],
+    ['Merchant Wholesalers', 'Merchant Wholesalers'],
+    ['Metal Manufacturing', 'Metal Manufacturing'],
+    ['Mining', 'Mining'],
+    ['Multi-Category', 'Multi-Category'],
+    ['Musical Instruments', 'Musical Instruments'],
+    ['Nondurable Goods', 'Nondurable Goods'],
+    ['Nursing', 'Nursing'],
+    ['Oil & Gas', 'Oil & Gas'],
+    ['Paper Products', 'Paper Products'],
+    ['Parts Dealers', 'Parts Dealers'],
+    ['Personal Care Products', 'Personal Care Products'],
+    ['Pharmaceuticals', 'Pharmaceuticals'],
+    ['Pipeline Transportation', 'Pipeline Transportation'],
+    ['Plastics', 'Plastics'],
+    ['Printing', 'Printing'],
+    ['Professional Services', 'Professional Services'],
+    ['Quarrying', 'Quarrying'],
+    ['Rail Transportation', 'Rail Transportation'],
+    ['Recreation', 'Recreation'],
+    ['Renewable Energy', 'Renewable Energy'],
+    ['Renting', 'Renting'],
+    ['Repair', 'Repair'],
+    ['Rubber Products', 'Rubber Products'],
+    ['Solar Energy', 'Solar Energy'],
+    ['Research', 'Research'],
+    ['Specialty Trade Contractors', 'Specialty Trade Contractors'],
+    ['Sports Equipment', 'Sports Equipment'],
+    ['Sporting Goods', 'Sporting Goods'],
+    ['Storage', 'Storage'],
+    ['Supplies Dealers', 'Supplies Dealers'],
+    ['Technical Services', 'Technical Services'],
+    ['Technology', 'Technology'],
+    ['Telecommunications', 'Telecommunications'],
+    ['Textiles', 'Textiles'],
+    ['Tobacco Products', 'Tobacco Products'],
+    ['Toys', 'Toys'],
+    ['Transportation Equipment', 'Transportation Equipment'],
+    ['Trucking', 'Trucking'],
+    ['Utilities', 'Utilities'],
+    ['Water Utilities', 'Water Utilities'],
+    ['Warehousing', 'Warehousing'],
+    ['Wholesale Trade', 'Wholesale Trade'],
+    ['Wood Products', 'Wood Products'],
+    ['Consumer Electronics', 'Consumer Electronics'],
+    ['Home', 'Home'],
+    ['Maritime Transportation', 'Maritime Transportation'],
+    [
+        'Technical and Scientific Activities',
+        'Technical and Scientific Activities',
+    ],
+    ['Waste Management', 'Waste Management'],
+    ['Recycling', 'Recycling'],
+    ['Pets', 'Pets'],
+    ['Packaging', 'Packaging'],
+];
