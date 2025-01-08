@@ -1,5 +1,5 @@
 {% block content %}
-Hi,
+Hello,
 
 You're receiving this email because a facility on one of your facility lists
 has had its facility claim data updated.
@@ -16,6 +16,6 @@ The following details have been changed:
   - {{ change }} {% endfor %}
 {% endif %}
 
-Best wishes,
+Best Regards,
 {% include "mail/data_team_signature_block.txt" %}
 {% endblock content %}

@@ -2,7 +2,7 @@
 Hello,
 
 You are receiving this email because your request to claim the following production location on
-Open Supply Hub has been revoked:
+Open Supply Hub (OS Hub) has been revoked:
 
 - Name of Production Location: {{ production_location_name }}
 - Address of Production Location: {{ production_location_address }}, {{ production_location_country }}
@@ -19,7 +19,7 @@ with correct and updated information. To do so, go to the profile you would like
 "I want to claim this production location" link at the top of the screen, and follow the next steps.
 Remember to provide supporting evidence to address the reason that your claim was revoked.
 
-Best wishes,
+Best Regards,
 
 {% include "mail/claims_team_signature_block.txt" %}
 {% endblock content %}

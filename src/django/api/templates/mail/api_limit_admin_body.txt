@@ -1,5 +1,5 @@
 {% block content %}
-Hi,
+Hello,
 
 {% if grace_limit %}
 You're receiving this email because {{ contributor_name }} has exceeded
@@ -9,7 +9,7 @@ You're receiving this email because {{ contributor_name }} has exceeded
 their limit of {{ limit }} OS Hub API requests for this year.
 {% endif %}
 
-Best wishes,
+Best Regards,
 
 {% include "mail/signature_block.txt" %}
 {% endblock content %}

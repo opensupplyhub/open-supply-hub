@@ -1,7 +1,7 @@
 {% block content %}
 Hello,
 
-You are receiving this email because you submitted a request to claim the following production location on Open Supply Hub:
+You are receiving this email because you submitted a request to claim the following production location on Open Supply Hub (OS Hub):
 
 - Name of Production Location: {{ facility_name }}
 - Address of Production Location: {{ facility_address }}
@@ -11,7 +11,7 @@ Please note: Buyers can refer their suppliers to claim their profiles on OS Hub;
 
 The OS Hub Team will review your request and be in touch soon. The expected processing time for the initial review of a claim is 10-14 days.
 
-Best wishes,
+Best Regards,
 
 {% include "mail/claims_team_signature_block.txt" %}
 {% endblock content %}

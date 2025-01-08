@@ -434,43 +434,22 @@ export const makeSearchByOsIdResultStyles = theme =>
             fontSize: '36px',
             fontWeight: theme.typography.fontWeightSemiBoldPlus,
             lineHeight: '44px',
+            marginBottom: '24px',
         }),
-        resultSubTitleStyles: Object.freeze({
+    });
+
+export const makeSearchByOsIdNotFoundResultStyles = theme =>
+    Object.freeze({
+        resultTitleStyles: Object.freeze({
+            fontSize: '36px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
+            lineHeight: '44px',
+        }),
+        resultDescriptionStyles: Object.freeze({
             fontSize: '18px',
             lineHeight: '21px',
             fontWeight: theme.typography.fontWeightSemiBold,
-            margin: '8px 0 24px 0',
-        }),
-        locationDetailsStyles: Object.freeze({
-            margin: '24px 0',
-        }),
-        locationNameStyles: Object.freeze({
-            fontSize: '36px',
-            lineHeight: '44px',
-            fontWeight: theme.typography.fontWeightBold,
-        }),
-        locationCurrentOsIdStyles: Object.freeze({
-            fontSize: '16px',
-            lineHeight: '20px',
-            fontWeight: theme.typography.fontWeightBold,
             marginTop: '8px',
-        }),
-        locationHistoricalOsIdStyles: Object.freeze({
-            fontSize: '14px',
-            lineHeight: '20px',
-            fontWeight: theme.typography.fontWeightBold,
-            color: COLOURS.DARK_GREY,
-            marginTop: '8px',
-        }),
-        locationAddressContainerStyles: Object.freeze({
-            display: 'flex',
-            flexDirection: 'column',
-            marginTop: '12px',
-        }),
-        locationAddressStyles: Object.freeze({
-            fontSize: '16px',
-            lineHeight: '20px',
-            fontWeight: theme.typography.fontWeightSemiBold,
         }),
     });
 
@@ -710,6 +689,7 @@ export const makeSearchByOsIdResultActionsStyles = theme =>
         actionsStyles: Object.freeze({
             display: 'flex',
             gap: '24px',
+            marginTop: '24px',
         }),
         buttonLabelStyles: Object.freeze({
             fontSize: '18px',
@@ -1005,6 +985,234 @@ export const makeSearchByNameAddressTabStyles = theme =>
             },
         }),
     });
+
+export const makeSearchByNameAndAddressResultStyles = () =>
+    Object.freeze({
+        circularProgressContainerStyles: Object.freeze({
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: 'calc(100vh - 116px)',
+        }),
+        backToSearchButtonContainerStyles: Object.freeze({
+            padding: '48px 5% 0 5%',
+        }),
+    });
+
+export const makeSearchByNameAndAddressSuccessResultStyles = theme =>
+    Object.freeze({
+        searchResultsContainerStyles: Object.freeze({
+            padding: '24px 5% 0 5%',
+        }),
+        titleStyles: Object.freeze({
+            fontWeight: theme.typography.fontWeightExtraBold,
+            fontSize: '56px',
+            lineHeight: '60px',
+            marginBottom: '16px',
+        }),
+        descriptionStyles: Object.freeze({
+            fontSize: '18px',
+            lineHeight: '21px',
+            marginBottom: '32px',
+            maxWidth: '656px',
+        }),
+        subTitleStyles: Object.freeze({
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
+            fontSize: '36px',
+            lineHeight: '44px',
+            margin: '32px 0 24px 0',
+        }),
+        resultsInfoContainerStyles: Object.freeze({
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '24px',
+        }),
+        resultsInfoStyles: Object.freeze({
+            fontSize: '16px',
+            lineHeight: '20px',
+            fontWeight: theme.typography.fontWeightBold,
+        }),
+        resultsSortStyles: Object.freeze({
+            fontSize: '16px',
+            lineHeight: '20px',
+        }),
+        resultContainer: Object.freeze({
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '10px',
+            padding: '12px',
+            borderBottom: `1px solid ${COLOURS.ACCENT_GREY}`,
+            '&:hover': {
+                backgroundColor: COLOURS.LIGHT_GREY,
+            },
+            '&:last-child': {
+                marginBottom: '32px',
+            },
+        }),
+        buttonBaseStyles: Object.freeze({
+            height: '48px',
+            textTransform: 'none',
+            backgroundColor: theme.palette.action.main,
+            color: theme.palette.common.black,
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
+        }),
+        selectButtonStyles: Object.freeze({
+            minWidth: '100px',
+        }),
+        selectButtonLabelStyles: Object.freeze({
+            fontSize: '16px',
+            lineHeight: '20px',
+            fontWeight: theme.typography.fontWeightExtraBold,
+        }),
+        notFoundButtonOuterContainerStyles: Object.freeze({
+            position: 'sticky',
+            bottom: '-108px',
+            height: '188px',
+        }),
+        notFoundButtonContainerStyles: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            boxShadow: '0px -2px 12px 0px #00000014',
+            position: 'sticky',
+            bottom: 0,
+            padding: '0 5%',
+            height: '80px',
+            backgroundColor: '#fff',
+        }),
+        notFoundButtonContainerScrolledStyles: Object.freeze({
+            boxShadow: 'none',
+        }),
+        notFoundButtonStyles: Object.freeze({
+            width: '275px',
+        }),
+        notFoundButtonLabelStyles: Object.freeze({
+            fontSize: '18px',
+            lineHeight: '22px',
+            fontWeight: theme.typography.fontWeightExtraBold,
+        }),
+    });
+
+export const makeSearchByNameAndAddressNotFoundResultStyles = theme =>
+    Object.freeze({
+        contentWrapperStyles: Object.freeze({
+            maxWidth: '601px',
+            margin: '94px auto 166px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+        }),
+        titleStyles: Object.freeze({
+            fontWeight: theme.typography.fontWeightExtraBold,
+            fontSize: '56px',
+            lineHeight: '60px',
+            marginBottom: '16px',
+            textAlign: 'center',
+        }),
+        descriptionStyles: Object.freeze({
+            fontSize: '18px',
+            lineHeight: '21px',
+            marginBottom: '32px',
+            textAlign: 'center',
+        }),
+        controlsContainerStyles: Object.freeze({
+            display: 'flex',
+            gap: '24px',
+        }),
+        buttonBaseStyles: Object.freeze({
+            textTransform: 'none',
+            border: 'none',
+            height: '49px',
+            width: '256px',
+        }),
+        buttonLabelStyles: Object.freeze({
+            fontSize: '18px',
+            lineHeight: '22px',
+            fontWeight: theme.typography.fontWeightExtraBold,
+        }),
+        addLocationButtonStyles: Object.freeze({
+            backgroundColor: theme.palette.action.main,
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
+        }),
+    });
+
+export const makeConfirmNotFoundLocationDialogStyles = theme =>
+    Object.freeze({
+        dialogPaperStyles: Object.freeze({
+            borderRadius: 0,
+            padding: '24px 80px 42px',
+        }),
+        closeButtonStyles: {
+            position: 'absolute',
+            right: '16px',
+            top: '16px',
+            color: '#000',
+        },
+        dialogTitleStyles: Object.freeze({
+            fontSize: '32px',
+            lineHeight: '32px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
+            textAlign: 'center',
+            padding: 0,
+        }),
+        dialogActionsStyles: Object.freeze({
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '16px',
+        }),
+        buttonBaseStyles: Object.freeze({
+            textTransform: 'none',
+            border: 'none',
+            height: '48px',
+            width: '309px',
+        }),
+        buttonLabelStyles: Object.freeze({
+            fontSize: '18px',
+            lineHeight: '22px',
+            fontWeight: theme.typography.fontWeightExtraBold,
+        }),
+        addLocationButtonStyles: Object.freeze({
+            backgroundColor: theme.palette.action.main,
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
+        }),
+    });
+
+export const makeProductionLocationDetailsStyles = theme => ({
+    locationNameStyles: Object.freeze({
+        fontSize: '36px',
+        lineHeight: '44px',
+        fontWeight: theme.typography.fontWeightBold,
+    }),
+    locationCurrentOsIdStyles: Object.freeze({
+        fontSize: '16px',
+        lineHeight: '20px',
+        fontWeight: theme.typography.fontWeightBold,
+        marginTop: '8px',
+    }),
+    locationHistoricalOsIdStyles: Object.freeze({
+        fontSize: '14px',
+        lineHeight: '20px',
+        fontWeight: theme.typography.fontWeightBold,
+        color: COLOURS.DARK_GREY,
+        marginTop: '8px',
+    }),
+    locationAddressContainerStyles: Object.freeze({
+        display: 'flex',
+        flexDirection: 'column',
+        marginTop: '12px',
+    }),
+    locationAddressStyles: Object.freeze({
+        fontSize: '16px',
+        lineHeight: '20px',
+        fontWeight: theme.typography.fontWeightSemiBold,
+    }),
+});
 
 export const productionLocationInfoStyles = theme =>
     Object.freeze({
