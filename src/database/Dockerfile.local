@@ -1,4 +1,4 @@
-FROM postgres:12.17
+FROM postgres:13.18
 
 ENV POSTGRES_USER=opensupplyhub \
     POSTGRES_PASSWORD=opensupplyhub \
@@ -6,8 +6,8 @@ ENV POSTGRES_USER=opensupplyhub \
 
 
 # Build and install the PostGIS package from scratch to ensure it matches the
-# LLVM version used by the Docker container based on postgres:12.17 image.
-# See PostGIS installation details at https://postgis.net/docs/manual-3.4/postgis_installation.html
+# LLVM version used by the Docker container based on postgres:13.18 image.
+# See PostGIS installation details at https://postgis.net/docs/manual-3.5/postgis_installation.html
 
 # Install the requirements for building and using PostGIS.
 RUN apt-get update && apt-get install -y \
@@ -21,15 +21,15 @@ RUN apt-get update && apt-get install -y \
     libprotobuf-c-dev \
     protobuf-c-compiler \
     pkg-config \
-    postgresql-server-dev-12
+    postgresql-server-dev-13
 
 # Download the PostGIS source archive, build and install the PostGIS package.
-RUN wget http://download.osgeo.org/postgis/source/postgis-3.4.0.tar.gz && \
-    tar -xvzf postgis-3.4.0.tar.gz &&  \
-    cd /postgis-3.4.0 && \
+RUN wget https://postgis.net/stuff/postgis-3.5.1.tar.gz && \
+    tar -xvzf postgis-3.5.1.tar.gz &&  \
+    cd /postgis-3.5.1 && \
     ./configure && \
     make && \
     make install && \
     cd .. && \
-    rm -rf postgis-3.4.0 && \
-    rm postgis-3.4.0.tar.gz
+    rm -rf postgis-3.5.1 && \
+    rm postgis-3.5.1.tar.gz
