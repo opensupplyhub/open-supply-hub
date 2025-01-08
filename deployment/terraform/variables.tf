@@ -670,7 +670,7 @@ variable "export_csv_schedule_expression" {
 }
 
 variable "google_service_account_creds" {
-  type        = any
+  type        = string
   description = "Credentials for the Google service account"
 }
 
