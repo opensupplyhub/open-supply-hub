@@ -72,7 +72,7 @@ services:
         condition: service_started
       logstash:
         condition: service_started
-      
+
     command:
       - "-b :8081"
       - "--reload"
@@ -193,6 +193,9 @@ services:
       - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m # Set min and max JVM heap sizes to at least 50% of system RAM.
       - DISABLE_INSTALL_DEMO_CONFIG=true # Prevents execution of bundled demo script which installs demo certificates and security configurations to OpenSearch.
       - DISABLE_SECURITY_PLUGIN=true  # Disables Security plugin.
+      - "http.cors.allow-origin=*"
+      - "http.cors.enabled=true"
+      - "http.cors.allow-headers=*"
     ulimits:
       memlock:
         soft: -1 # Set memlock to unlimited (no soft or hard limit).
