@@ -764,6 +764,8 @@ export const makeDownloadExcelButtonStyles = theme =>
 export const makeDashboardContributionRecordStyles = theme =>
     Object.freeze({
         errorStyle: Object.freeze({ color: 'red' }),
+        backdrop_open: Object.freeze({ zIndex: '100' }),
+        backdrop_closed: Object.freeze({ zIndex: '-1' }),
         loaderStyles: Object.freeze({
             display: 'block',
             margin: 'auto',
@@ -777,14 +779,33 @@ export const makeDashboardContributionRecordStyles = theme =>
         emptyTextStyle: Object.freeze({ color: theme.palette.text.hint }),
         buttonStyles: Object.freeze({
             margin: '20px',
-            padding: '20px',
-            width: '100%',
+            padding: '15px 20px',
+            minWidth: '250px',
             fontWeight: 'bold',
+            boxShadow: 'none',
         }),
         container: Object.freeze({
             marginBottom: '25px',
             width: '100%',
             padding: '20px',
+            backgroundColor: COLOURS.LIGHT_GREY,
+            boxShadow: 'none',
+            border: `1px solid ${COLOURS.GREY}`,
+            borderRadius: 0,
+        }),
+        moderationEventStatus: Object.freeze({
+            color: COLOURS.NEAR_BLACK,
+            boxShadow: 'none',
+            zIndex: '1',
+        }),
+        moderationEventStatus_pending: Object.freeze({
+            backgroundColor: COLOURS.PALE_LIGHT_YELLOW,
+        }),
+        moderationEventStatus_approved: Object.freeze({
+            backgroundColor: COLOURS.MINT_GREEN,
+        }),
+        moderationEventStatus_rejected: Object.freeze({
+            backgroundColor: COLOURS.LIGHT_RED,
         }),
         title: Object.freeze({
             paddingBottom: '20px',
@@ -793,6 +814,9 @@ export const makeDashboardContributionRecordStyles = theme =>
             display: 'flex',
             flexDirection: 'row',
             justifyContent: 'space-between',
+        }),
+        listItemStyle_confirmed: Object.freeze({
+            backgroundColor: COLOURS.MINT_GREEN,
         }),
         listItemTextStyle: Object.freeze({
             padding: 0,
@@ -818,19 +842,28 @@ export const makeDashboardContributionRecordStyles = theme =>
             overflow: 'auto',
             maxHeight: '450px',
         }),
-        buttonsContainerStyles: Object.freeze({
-            display: 'flex',
-            flexDirection: 'row',
-            width: '100%',
+        buttonContentStyle: Object.freeze({
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '0 15px',
+            [theme.breakpoints.down('md')]: {
+                justifyContent: 'initial',
+                flexDirection: 'column',
+            },
         }),
         confirmButtonStyles: Object.freeze({
             backgroundColor: COLOURS.MINT_GREEN,
-            padding: '20px',
+            padding: '15px 25px',
+            fontWeight: theme.typography.fontWeightBold,
+            boxShadow: 'none',
             '&:hover': { backgroundColor: COLOURS.OLIVA_GREEN },
         }),
         claimButtonStyles: Object.freeze({
             backgroundColor: theme.palette.action.main,
             '&:hover': { backgroundColor: theme.palette.action.dark },
+        }),
+        claimTooltipWrapper: Object.freeze({
+            cursor: 'not-allowed',
         }),
     });
 
@@ -862,9 +895,6 @@ export const makeDashboardModerationQueueListTableStyles = Object.freeze({
     }),
     rowStyles: Object.freeze({
         cursor: 'pointer',
-    }),
-    emptyRowStyles: Object.freeze({
-        height: '5px',
     }),
     loaderStyles: Object.freeze({
         display: 'block',
