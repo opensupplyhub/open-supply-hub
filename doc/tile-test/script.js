@@ -1,7 +1,10 @@
+const LOCATION_LEVEL_ZOOM = 12;
+const BASE_COLOR = "#00b300";
 const $mapDiv = document.getElementById("map");
 let map = null;
 let query = null;
 let polygons = [];
+let markers = [];
 let precision = 1;
 let bounds = null;
 
@@ -27,16 +30,27 @@ function getCoordinates(bucket) {
 
 async function fetchLocations() {
   const url = "http://localhost:9200/production-locations/_search";
-  let body = {
-    aggregations: {
-      grouped: {
-        geohex_grid: {
-          field: "coordinates",
-          precision: precision && precision > 2 ? precision - 2 : 1,
+  let body = {};
+
+  if (precision <= LOCATION_LEVEL_ZOOM) {
+    body = {
+      ...body,
+      aggregations: {
+        grouped: {
+          geohex_grid: {
+            field: "coordinates",
+            precision: precision && precision > 2 ? precision - 2 : 1,
+          },
         },
       },
-    },
-  };
+    }
+  }
+
+  if (precision > LOCATION_LEVEL_ZOOM) {
+    body = {
+      size: 200,
+    }
+  }
 
   if (query) {
     body = {
@@ -100,25 +114,48 @@ async function fetchLocations() {
 
 async function drawTheGrid() {
   polygons.forEach((polygon) => polygon.setMap(null));
-  polygons = [];
+  markers.forEach((marker) => marker.setMap(null));
 
   const locations = await fetchLocations(precision, bounds);
-  const buckets = locations.aggregations.grouped.buckets;
+  const buckets = locations.aggregations ? locations.aggregations.grouped.buckets : [];
   const maxCount = Math.max(...buckets.map((bucket) => bucket.doc_count));
+  const { Polygon, InfoWindow } = await google.maps.importLibrary("maps");
+  const { Marker } = await google.maps.importLibrary("marker")
+  const infoWindow = new InfoWindow();
 
-  buckets.forEach((bucket) => {
-    const polygon = new google.maps.Polygon({
+  polygons = buckets.map((bucket) => {
+    const polygon = new Polygon({
       paths: bucket.boundary,
-      strokeColor: "#00b300",
+      strokeColor: BASE_COLOR,
       strokeOpacity: 0.8,
       strokeWeight: 3,
-      fillColor: "#00b300",
+      fillColor: BASE_COLOR,
       fillOpacity: bucket.doc_count / maxCount,
+      map
     });
-
-    polygon.setMap(map);
-    polygons.push(polygon);
+    return polygon;
   });
+
+  if (precision > LOCATION_LEVEL_ZOOM) {
+    markers = locations.hits.hits.map((hit) => {
+      const marker = new Marker({
+        position: {
+          lat: hit._source.coordinates.lat,
+          lng: hit._source.coordinates.lon,
+        },
+        title: hit._source.name,
+        map,
+      });
+
+      marker.addListener("click", () => {
+        infoWindow.close();
+        infoWindow.setContent(`<b>${hit._source.name}</b><br/><br/><i>${hit._source.address}</i>`);
+        infoWindow.open(marker.map, marker);
+      });
+
+      return marker;
+    });
+  }
 }
 
 async function init() {
