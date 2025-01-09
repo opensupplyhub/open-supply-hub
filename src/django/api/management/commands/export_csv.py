@@ -1,6 +1,7 @@
 import csv
 import logging
 import os
+import base64
 import json
 from datetime import datetime
 from django.core.management.base import BaseCommand
@@ -29,13 +30,17 @@ def upload_file_to_google_drive(filename):
         in the environment variables.
     """
 
-    gdrive_creds = os.getenv("GOOGLE_SERVICE_ACCOUNT_CREDS")
+    base64_gdrive_creds = os.getenv("GOOGLE_SERVICE_ACCOUNT_CREDS_BASE64")
+    print('base64_gdrive_creds >>>', base64_gdrive_creds)
 
-    if gdrive_creds is None:
+    if base64_gdrive_creds is None:
         raise ValueError("Google Service Account credentials not found!")
 
+    decoded_creds = base64.b64decode(base64_gdrive_creds).decode("utf-8")
+    print('decoded_creds >>>', decoded_creds)
+
     credentials = service_account.Credentials.from_service_account_info(
-        info=json.loads(gdrive_creds),
+        info=json.loads(decoded_creds),
     )
     logger.info("Initialized Google Drive service account credentials")
 

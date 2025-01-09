@@ -669,9 +669,9 @@ variable "export_csv_schedule_expression" {
   description = "The schedule expression for the export csv job"
 }
 
-variable "google_service_account_creds" {
+variable "google_service_account_creds_base64" {
   type        = string
-  description = "Credentials for the Google service account"
+  description = "Base64-encoded Google service account key"
 }
 
 variable "google_drive_shared_directory_id" {

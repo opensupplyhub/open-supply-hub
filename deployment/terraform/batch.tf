@@ -258,7 +258,7 @@ data "template_file" "export_csv_job_definition" {
     batch_job_queue_name             = "queue${local.short}ExportCsv"
     batch_job_def_name               = "job${local.short}ExportCsv"
     log_group_name                   = "log${local.short}Batch"
-    google_service_account_creds     = var.google_service_account_creds
+    google_service_account_creds_base64 = var.google_service_account_creds_base64
     google_drive_shared_directory_id = var.google_drive_shared_directory_id
   }
 }
