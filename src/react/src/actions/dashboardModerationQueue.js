@@ -7,14 +7,14 @@ import {
 } from '../util/util';
 import apiRequest from '../util/apiRequest';
 
-export const startFetchingModerationEvents = createAction(
-    'START_FETCHING_MODERATION_EVENTS',
+export const startFetchModerationEvents = createAction(
+    'START_FETCH_MODERATION_EVENTS',
 );
-export const failFetchingModerationEvents = createAction(
-    'FAIL_FETCHING_MODERATION_EVENTS',
+export const failFetchModerationEvents = createAction(
+    'FAIL_FETCH_MODERATION_EVENTS',
 );
-export const completeFetchingModerationEvents = createAction(
-    'COMPLETE_FETCHING_MODERATION_EVENTS',
+export const completeFetchModerationEvents = createAction(
+    'COMPLETE_FETCH_MODERATION_EVENTS',
 );
 export const clearModerationEvents = createAction('CLEAR_MODERATION_EVENTS');
 export const updateModerationEventsPage = createAction(
@@ -25,19 +25,19 @@ export const updateModerationEventsOrder = createAction(
 );
 export const updateAfterDate = createAction('UPDATE_AFTER_DATE');
 export const updateBeforeDate = createAction('UPDATE_BEFORE_DATE');
-export const startDownloadingModerationEvents = createAction(
-    'START_DOWNLOADING_MODERATION_EVENTS',
+export const startDownloadModerationEvents = createAction(
+    'START_DOWNLOAD_MODERATION_EVENTS',
 );
-export const failDownloadingModerationEvents = createAction(
-    'FAIL_DOWNLOADING_MODERATION_EVENTS',
+export const failDownloadModerationEvents = createAction(
+    'FAIL_DOWNLOAD_MODERATION_EVENTS',
 );
-export const completeDownloadingModerationEvents = createAction(
-    'COMPLETE_DOWNLOADING_MODERATION_EVENTS',
+export const completeDownloadModerationEvents = createAction(
+    'COMPLETE_DOWNLOAD_MODERATION_EVENTS',
 );
 
 export function fetchModerationEvents() {
-    return async (dispatch, getState) => {
-        dispatch(startFetchingModerationEvents());
+    return (dispatch, getState) => {
+        dispatch(startFetchModerationEvents());
 
         const {
             dashboardModerationQueue: {
@@ -69,14 +69,14 @@ export function fetchModerationEvents() {
                 ),
             )
             .then(({ data }) => {
-                dispatch(completeFetchingModerationEvents(data));
+                dispatch(completeFetchModerationEvents(data));
             })
             .catch(err =>
                 dispatch(
                     logErrorAndDispatchFailure(
                         err,
                         'An error prevented fetching moderation events',
-                        failFetchingModerationEvents,
+                        failFetchModerationEvents,
                     ),
                 ),
             );
@@ -85,17 +85,17 @@ export function fetchModerationEvents() {
 
 export function downloadModerationEvents(data) {
     return dispatch => {
-        dispatch(startDownloadingModerationEvents());
+        dispatch(startDownloadModerationEvents());
 
         try {
             downloadModerationEventsXLSX(data);
-            dispatch(completeDownloadingModerationEvents());
+            dispatch(completeDownloadModerationEvents());
         } catch (err) {
             dispatch(
                 logErrorAndDispatchFailure(
                     err,
                     'An error prevented downloading moderation events',
-                    failDownloadingModerationEvents,
+                    failDownloadModerationEvents,
                 ),
             );
         }

@@ -1,131 +1,210 @@
 import { createAction } from 'redux-act';
-import { logErrorAndDispatchFailure } from '../util/util';
+import apiRequest from '../util/apiRequest';
+import {
+    makeModerationEventRecordURL,
+    makeGetProductionLocationsForPotentialMatches,
+    makeProductionLocationFromModerationEventURL,
+    logErrorAndDispatchFailure,
+} from '../util/util';
+import { MODERATION_STATUSES_ENUM } from '../util/constants';
 
-export const startFetchingSingleModerationEvent = createAction(
-    'START_FETCHING_SINGLE_MODERATION_EVENT',
+export const startFetchSingleModerationEvent = createAction(
+    'START_FETCH_SINGLE_MODERATION_EVENT',
 );
-export const failFetchingSingleModerationEvent = createAction(
-    'FAIL_FETCHING_SINGLE_MODERATION_EVENT',
+export const failFetchSingleModerationEvent = createAction(
+    'FAIL_FETCH_SINGLE_MODERATION_EVENT',
 );
-export const completeFetchingSingleModerationEvent = createAction(
-    'COMPLETE_FETCHING_SINGLE_MODERATION_EVENT',
+export const completeFetchSingleModerationEvent = createAction(
+    'COMPLETE_FETCH_SINGLE_MODERATION_EVENT',
 );
-export const startFetchingPotentialMatches = createAction(
-    'START_FETCHING_POTENTIAL_MATCHES',
+export const startFetchPotentialMatches = createAction(
+    'START_FETCH_POTENTIAL_MATCHES',
 );
-export const failFetchingPotentialMatches = createAction(
-    'FAIL_FETCHING_POTENTIAL_MATCHES',
+export const failFetchPotentialMatches = createAction(
+    'FAIL_FETCH_POTENTIAL_MATCHES',
 );
-export const completeFetchingPotentialMatches = createAction(
-    'COMPLETE_FETCHING_POTENTIAL_MATCHES',
+export const completeFetchPotentialMatches = createAction(
+    'COMPLETE_FETCH_POTENTIAL_MATCHES',
 );
 export const cleanupContributionRecord = createAction(
     'CLEANUP_CONTRIBUTION_RECORD',
 );
+export const startUpdateSingleModerationEvent = createAction(
+    'START_UPDATE_SINGLE_MODERATION_EVENT',
+);
+export const completeUpdateSingleModerationEvent = createAction(
+    'COMPLETE_UPDATE_SINGLE_MODERATION_EVENT',
+);
+export const failUpdateSingleModerationEvent = createAction(
+    'FAIL_UPDATE_SINGLE_MODERATION_EVENT',
+);
+export const startCreateProductionLocationFromModerationEvent = createAction(
+    'START_CREATE_PRODUCTION_LOCATION_FROM_MODERATION_EVENT',
+);
+export const completeCreateProductionLocationFromModerationEvent = createAction(
+    'COMPLETE_CREATE_PRODUCTION_LOCATION_FROM_MODERATION_EVENT',
+    // We need to explicitly update the status for proper UI handling
+    // The status property doesn't exist in 'POST /v1/moderation-events/{moderation_id}/production-locations/' response
+    payload => ({
+        ...payload,
+        status: MODERATION_STATUSES_ENUM.APPROVED,
+    }),
+);
+export const failCreateProductionLocationFromModerationEvent = createAction(
+    'FAIL_CREATE_PRODUCTION_LOCATION_FROM_MODERATION_EVENT',
+);
+export const startConfirmPotentialMatchFromModerationEvent = createAction(
+    'START_CONFIRM_POTENTIAL_MATCH_FROM_MODERATION_EVENT',
+);
+export const completeConfirmPotentialMatchFromModerationEvent = createAction(
+    'COMPLETE_CONFIRM_POTENTIAL_MATCH_FROM_MODERATION_EVENT',
+    // We need to explicitly update the status for proper UI handling
+    // The status property doesn't exist in 'PATCH /v1/moderation-events/{moderation_id}/production-locations/{os_id}/' response
+    payload => ({
+        ...payload,
+        status: MODERATION_STATUSES_ENUM.APPROVED,
+    }),
+);
+export const failConfirmPotentialMatchFromModerationEvent = createAction(
+    'FAIL_CONFIRM_POTENTIAL_MATCH_FROM_MODERATION_EVENT',
+);
 
-// TODO: Remove mock data and replace with actual API call as part of https://opensupplyhub.atlassian.net/browse/OSDEV-1347
-const eventMockData = {
-    moderation_id: 28,
-    created_at: '2024-06-13T15:30:20.287Z',
-    updated_at: '2024-09-20T11:35:20.287Z',
-    os_id: 'FN2071250D1DTN7',
-    cleaned_data: {
-        name: 'Benetton 6784',
-        address: 'Bangladesh,Salman Adnan (Pvt) Ltd,35-B/I',
-        country: {
-            name: 'Haiti',
-            alpha_2: 'HT',
-            alpha_3: 'HTI',
-            numeric: '332',
-        },
-    },
-    contributor_id: 0,
-    contributor_name: 'SALIM & BROTHERS LTD',
-    request_type: 'CREATE',
-    source: 'API',
-    moderation_status: 'PENDING',
-    moderation_decision_date: null,
-    claim_id: 56,
-};
-// TODO: Remove mock data and replace with actual API call as part  of /v1/production-locations endpoint
-const potentialMatchesMockData = [
-    {
-        os_id: 'CY2021280D1DTN7',
-        name: 'M.K.SUNDHERAM LTD',
-        address: '1523 Main St, Manhattan, NY - USA',
-        sector: ['Footwear'],
-        parent_company: 'Intimate Apparels Ltd',
-        product_type: ['Accessories'],
-        location_type: [],
-        processing_type: ['Design', 'Knitting'],
-        number_of_workers: {
-            min: 500,
-            max: 5000,
-        },
-        coordinates: {
-            lat: 91.7896718,
-            lng: 22.2722865,
-        },
-        local_name: 'CHINA,FUZHOU STARRISING',
-        description:
-            'HUGO BOSS list of active finished goods suppliers March 2019',
-        business_url: '',
-        minimum_order_quantity: '',
-        average_lead_time: '',
-        percent_female_workers: 23,
-        affiliations: [],
-        certifications_standards_regulations: [],
-        historical_os_id: [],
-        country: {
-            name: 'Germany',
-            alpha_2: 'DE',
-            alpha_3: 'DEU',
-            numeric: '276',
-        },
-        claim_status: 'unclaimed',
-    },
-];
-
-// eslint-disable-next-line no-unused-vars
 export function fetchSingleModerationEvent(moderationID) {
-    return async dispatch => {
-        dispatch(startFetchingSingleModerationEvent());
-        // TODO: Replace the mock implementation with an actual API call as part of https://opensupplyhub.atlassian.net/browse/OSDEV-1347
-        return new Promise(resolve => {
-            setTimeout(() => resolve({ data: eventMockData }), 1000);
-        })
-            .then(({ data }) =>
-                dispatch(completeFetchingSingleModerationEvent(data)),
-            )
-            .catch(err =>
+    return dispatch => {
+        if (!moderationID) {
+            return null;
+        }
+        dispatch(startFetchSingleModerationEvent());
+
+        return apiRequest
+            .get(makeModerationEventRecordURL(moderationID))
+            .then(({ data }) => {
+                dispatch(completeFetchSingleModerationEvent(data));
+            })
+            .catch(err => {
                 dispatch(
                     logErrorAndDispatchFailure(
                         err,
                         'An error prevented fetching moderation event',
-                        failFetchingSingleModerationEvent,
+                        failFetchSingleModerationEvent,
+                    ),
+                );
+            });
+    };
+}
+
+export function fetchPotentialMatches(data) {
+    return dispatch => {
+        dispatch(startFetchPotentialMatches());
+
+        const {
+            productionLocationName,
+            countryCode,
+            productionLocationAddress,
+        } = data;
+
+        return apiRequest
+            .get(
+                makeGetProductionLocationsForPotentialMatches(
+                    productionLocationName,
+                    countryCode,
+                    productionLocationAddress,
+                ),
+            )
+            .then(potentialMatches => {
+                if (potentialMatches.data) {
+                    dispatch(
+                        completeFetchPotentialMatches(potentialMatches.data),
+                    );
+                }
+            })
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented fetching potential matches',
+                        failFetchPotentialMatches,
                     ),
                 ),
             );
     };
 }
 
-export function fetchPotentialMatches() {
-    return async dispatch => {
-        dispatch(startFetchingPotentialMatches());
+export function updateSingleModerationEvent(moderationID, status) {
+    return dispatch => {
+        if (!moderationID) {
+            return null;
+        }
+        dispatch(startUpdateSingleModerationEvent());
 
-        // TODO: Replace the mock implementation with an actual API call as part of /v1/production-locations endpoint
-        return new Promise(resolve => {
-            setTimeout(() => resolve({ data: potentialMatchesMockData }), 1000);
-        })
-            .then(({ data }) =>
-                dispatch(completeFetchingPotentialMatches(data)),
-            )
+        return apiRequest
+            .patch(makeModerationEventRecordURL(moderationID), { status })
+            .then(({ data }) => {
+                dispatch(completeUpdateSingleModerationEvent(data));
+            })
             .catch(err =>
                 dispatch(
                     logErrorAndDispatchFailure(
                         err,
-                        'An error prevented fetching potential matches',
-                        failFetchingPotentialMatches,
+                        'An error prevented updating moderation event record',
+                        failUpdateSingleModerationEvent,
+                    ),
+                ),
+            );
+    };
+}
+
+export function createProductionLocationFromModerationEvent(moderationID) {
+    return dispatch => {
+        if (!moderationID) {
+            return null;
+        }
+        dispatch(startCreateProductionLocationFromModerationEvent());
+
+        return apiRequest
+            .post(makeProductionLocationFromModerationEventURL(moderationID))
+            .then(({ data }) => {
+                dispatch(
+                    completeCreateProductionLocationFromModerationEvent(data),
+                );
+            })
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented creating production location from moderation event record',
+                        failCreateProductionLocationFromModerationEvent,
+                    ),
+                ),
+            );
+    };
+}
+
+export function confirmPotentialMatchFromModerationEvent(moderationID, osID) {
+    return dispatch => {
+        if (!moderationID) {
+            return null;
+        }
+        dispatch(startConfirmPotentialMatchFromModerationEvent());
+
+        return apiRequest
+            .patch(
+                makeProductionLocationFromModerationEventURL(
+                    moderationID,
+                    osID,
+                ),
+            )
+            .then(({ data }) => {
+                dispatch(
+                    completeConfirmPotentialMatchFromModerationEvent(data),
+                );
+            })
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented confirming potential match from moderation event record',
+                        failConfirmPotentialMatchFromModerationEvent,
                     ),
                 ),
             );

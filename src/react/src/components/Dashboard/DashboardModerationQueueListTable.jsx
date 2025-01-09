@@ -15,7 +15,7 @@ import {
     updateModerationEventsPage,
     updateModerationEventsOrder,
 } from '../../actions/dashboardModerationQueue';
-import { moderationEventsPropType } from '../../util/propTypes';
+import { moderationEventsListPropType } from '../../util/propTypes';
 import {
     EMPTY_PLACEHOLDER,
     DATE_FORMATS,
@@ -32,14 +32,14 @@ import {
 
 const ROWS_PER_PAGE_OPTIONS = [25, 50, 100];
 function DashboardModerationQueueListTable({
-    events,
+    moderationEventsList,
     count,
     page,
     maxPage,
     pageSize,
     sort: { sortBy, orderBy },
     fetching,
-    fetchEvents,
+    fetchModerationEvents,
     classes,
 }) {
     const dispatch = useDispatch();
@@ -55,7 +55,7 @@ function DashboardModerationQueueListTable({
             }),
         );
         if (isNewMaxPage) {
-            fetchEvents();
+            fetchModerationEvents();
         }
     };
     const handleRowClick = useCallback(
@@ -83,7 +83,7 @@ function DashboardModerationQueueListTable({
                 pageSize: newRowsPerPage,
             }),
         );
-        fetchEvents();
+        fetchModerationEvents();
     };
 
     const handleRequestSort = (_, property) => {
@@ -104,7 +104,7 @@ function DashboardModerationQueueListTable({
                 pageSize,
             }),
         );
-        fetchEvents();
+        fetchModerationEvents();
     };
 
     return (
@@ -130,8 +130,7 @@ function DashboardModerationQueueListTable({
                         </TableBody>
                     ) : (
                         <TableBody>
-                            <TableRow className={classes.emptyRowStyles} />
-                            {events
+                            {moderationEventsList
                                 .slice(
                                     page * pageSize,
                                     page * pageSize + pageSize,
@@ -225,7 +224,7 @@ function DashboardModerationQueueListTable({
 }
 
 DashboardModerationQueueListTable.defaultProps = {
-    events: null,
+    moderationEventsList: [],
     count: 0,
     page: MODERATION_INITIAL_PAGE_INDEX,
     maxPage: MODERATION_INITIAL_PAGE_INDEX,
@@ -237,14 +236,14 @@ DashboardModerationQueueListTable.defaultProps = {
 };
 
 DashboardModerationQueueListTable.propTypes = {
-    events: moderationEventsPropType,
+    moderationEventsList: moderationEventsListPropType,
     count: number,
     page: number,
     maxPage: number,
     pageSize: number,
     sort: object,
     fetching: bool.isRequired,
-    fetchEvents: func.isRequired,
+    fetchModerationEvents: func.isRequired,
     classes: object.isRequired,
 };
 
