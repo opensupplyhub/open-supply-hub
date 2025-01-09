@@ -1,4 +1,4 @@
-const LOCATION_LEVEL_ZOOM = 12;
+const LOCATION_LEVEL_ZOOM = 10;
 const BASE_COLOR = "#00b300";
 const $mapDiv = document.getElementById("map");
 const $searchForm = document.getElementById("search-form");
@@ -41,6 +41,7 @@ async function zoomOnTheMap() {
     });
   });
 
+  map.setCenter(bounds.getCenter());
   map.fitBounds(bounds);
 }
 
@@ -56,6 +57,19 @@ async function fetchLocations() {
           geohex_grid: {
             field: "coordinates",
             precision: precision && precision > 2 ? precision - 2 : 1,
+          },
+        },
+      },
+    }
+  }
+
+  if (precision == null) {
+    body = {
+      ...body,
+      aggregations: {
+        grouped: {
+          geohex_grid: {
+            field: "coordinates",
           },
         },
       },
@@ -207,10 +221,22 @@ async function init() {
 
   $searchForm.addEventListener("submit", async (event) => {
     event.preventDefault();
+
+    if ($searchInput.value == query) {
+      return;
+    }
+
     query = $searchInput.value;
-    bounds = null;
+
+    if (query) {
+      bounds = null;
+      precision = null;
+    }
+
     drawTheGrid(() => {
-      zoomOnTheMap();
+      if (query) {
+        zoomOnTheMap();
+      }
     });
   });
 }
