@@ -276,6 +276,23 @@ resource "aws_batch_job_definition" "export_csv" {
 }
 
 # Schedule the export_csv job
+resource "aws_iam_role" "export_csv_scheduler_role" {
+  name = "evb${local.short}ExportCsvSchedulerExecutionRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "scheduler.amazonaws.com"
+        }
+      },
+    ]
+  })
+}
+
 resource "aws_cloudwatch_event_rule" "export_csv_schedule" {
   name                = "cwOpenSupplyHubExportCsvScheduler"
   schedule_expression = var.export_csv_schedule_expression
