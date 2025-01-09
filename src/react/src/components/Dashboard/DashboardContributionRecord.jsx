@@ -80,10 +80,6 @@ const DashboardContributionRecord = ({
     fetchPotentialMatchError,
 }) => {
     const prevSingleModerationEventItemRef = useRef();
-    const [
-        shouldDisabledWhileRequest,
-        setShouldDisabledWhileRequest,
-    ] = useState(false);
     const [showBackdrop, setShowBackdrop] = useState(false);
     const {
         productionLocationName,
@@ -129,7 +125,6 @@ const DashboardContributionRecord = ({
         if (!isEmpty(singleModerationEventItem) && hasPrefetchedData) {
             if (moderationEventFetching) {
                 setShowBackdrop(true);
-                setShouldDisabledWhileRequest(true);
                 toast('Updating moderation event...', {
                     onClose: () => setShowBackdrop(false),
                 });
@@ -138,7 +133,6 @@ const DashboardContributionRecord = ({
                 fetchModerationEventError &&
                 fetchModerationEventError.length > 1
             ) {
-                setShouldDisabledWhileRequest(true);
                 setShowBackdrop(true);
                 toast(fetchModerationEventError[0], {
                     onClose: () => setShowBackdrop(false),
@@ -328,7 +322,7 @@ const DashboardContributionRecord = ({
                                                         classes.confirmButtonStyles
                                                     }
                                                     disabled={
-                                                        shouldDisabledWhileRequest
+                                                        moderationEventFetching
                                                     }
                                                     onClick={() => {
                                                         confirmPotentialMatch(
@@ -381,7 +375,7 @@ const DashboardContributionRecord = ({
                         createProductionLocation();
                     }}
                     className={classes.buttonStyles}
-                    disabled={isDisabled || shouldDisabledWhileRequest}
+                    disabled={isDisabled || moderationEventFetching}
                 >
                     Create New Location
                 </Button>
@@ -394,11 +388,7 @@ const DashboardContributionRecord = ({
                         );
                     }}
                     className={classes.buttonStyles}
-                    disabled={
-                        moderationEventFetching ||
-                        isDisabled ||
-                        shouldDisabledWhileRequest
-                    }
+                    disabled={isDisabled || moderationEventFetching}
                 >
                     Reject Contribution
                 </Button>
