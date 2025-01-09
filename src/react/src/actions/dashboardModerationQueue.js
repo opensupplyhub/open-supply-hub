@@ -36,7 +36,7 @@ export const completeDownloadModerationEvents = createAction(
 );
 
 export function fetchModerationEvents() {
-    return async (dispatch, getState) => {
+    return (dispatch, getState) => {
         dispatch(startFetchModerationEvents());
 
         const {

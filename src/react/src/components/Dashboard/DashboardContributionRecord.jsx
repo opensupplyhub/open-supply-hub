@@ -91,7 +91,7 @@ const DashboardContributionRecord = ({
         productionLocationAddress,
         osId,
     } = useMemo(() => {
-        if (!singleModerationEventItem || isEmpty(singleModerationEventItem)) {
+        if (isEmpty(singleModerationEventItem)) {
             return {};
         }
 
@@ -433,16 +433,14 @@ const DashboardContributionRecord = ({
 };
 
 DashboardContributionRecord.defaultProps = {
-    singleModerationEventItem: {},
-    matches: [],
     fetchModerationEventError: null,
     fetchPotentialMatchError: null,
 };
 
 DashboardContributionRecord.propTypes = {
     push: func.isRequired,
-    singleModerationEventItem: moderationEventsListItemPropType,
-    matches: potentialMatchesPropType,
+    singleModerationEventItem: moderationEventsListItemPropType.isRequired,
+    matches: potentialMatchesPropType.isRequired,
     moderationEventFetching: bool.isRequired,
     fetchModerationEvent: func.isRequired,
     updateModerationEvent: func.isRequired,

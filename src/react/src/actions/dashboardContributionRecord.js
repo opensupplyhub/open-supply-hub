@@ -70,7 +70,7 @@ export const failConfirmPotentialMatchFromModerationEvent = createAction(
 );
 
 export function fetchSingleModerationEvent(moderationID) {
-    return async dispatch => {
+    return dispatch => {
         if (!moderationID) {
             return null;
         }
@@ -94,7 +94,7 @@ export function fetchSingleModerationEvent(moderationID) {
 }
 
 export function fetchPotentialMatches(data) {
-    return async dispatch => {
+    return dispatch => {
         dispatch(startFetchPotentialMatches());
 
         const {
@@ -131,7 +131,7 @@ export function fetchPotentialMatches(data) {
 }
 
 export function updateSingleModerationEvent(moderationID, status) {
-    return async dispatch => {
+    return dispatch => {
         if (!moderationID) {
             return null;
         }
@@ -155,7 +155,7 @@ export function updateSingleModerationEvent(moderationID, status) {
 }
 
 export function createProductionLocationFromModerationEvent(moderationID) {
-    return async dispatch => {
+    return dispatch => {
         if (!moderationID) {
             return null;
         }
@@ -181,7 +181,7 @@ export function createProductionLocationFromModerationEvent(moderationID) {
 }
 
 export function confirmPotentialMatchFromModerationEvent(moderationID, osID) {
-    return async dispatch => {
+    return dispatch => {
         if (!moderationID) {
             return null;
         }
