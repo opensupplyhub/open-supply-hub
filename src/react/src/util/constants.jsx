@@ -335,7 +335,7 @@ export const dashboardApiBlockRoute = '/dashboard/apiblocks/:blockId';
 export const dashboardClaimsRoute = '/dashboard/claims';
 export const dashboardModerationQueueRoute = '/dashboard/moderation-queue';
 export const dashboardContributionRecordRoute =
-    '/dashboard/moderation-queue/contribution-record/:moderationID';
+    '/dashboard/moderation-queue/:moderationID';
 export const dashboardDeleteFacilityRoute = '/dashboard/deletefacility';
 export const dashboardMergeFacilitiesRoute = '/dashboard/mergefacilities';
 export const dashboardAdjustFacilityMatchesRoute =
