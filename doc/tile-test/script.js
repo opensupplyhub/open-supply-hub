@@ -127,6 +127,7 @@ async function init() {
   map = new Map($mapDiv, {
     center: { lat: 0, lng: 0 },
     zoom: precision,
+    styles,
   });
 
   drawTheGrid();
