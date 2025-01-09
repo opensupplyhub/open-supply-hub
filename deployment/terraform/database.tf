@@ -76,7 +76,7 @@ resource "aws_db_parameter_group" "default" {
 }
 
 module "database_enc" {
-  source = "github.com/opensupplyhub/terraform-aws-postgresql-rds?ref=OSDEV-1514-add-infrastructure-to-allow-major-version-upgrade"
+  source = "git::github.com/opensupplyhub/terraform-aws-postgresql-rds.git?ref=OSDEV-1514-add-infrastructure-to-allow-major-version-upgrade"
 
   vpc_id                     = module.vpc.id
   allocated_storage          = var.rds_allocated_storage
