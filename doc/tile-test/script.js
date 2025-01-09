@@ -149,6 +149,17 @@ async function fetchLocations() {
   return data;
 }
 
+function zoomOnThePolygon(polygon) {
+  const bounds = new google.maps.LatLngBounds();
+
+  polygon.getPath().forEach((latLng) => {
+    bounds.extend(latLng);
+  });
+
+  map.setCenter(bounds.getCenter());
+  map.fitBounds(bounds);
+}
+
 async function drawTheGrid(cb) {
   polygons.forEach((polygon) => polygon.setMap(null));
   markers.forEach((marker) => marker.setMap(null));
@@ -167,9 +178,14 @@ async function drawTheGrid(cb) {
       strokeOpacity: 0.8,
       strokeWeight: 3,
       fillColor: BASE_COLOR,
-      fillOpacity: bucket.doc_count / maxCount,
+      fillOpacity: 0.15 + (bucket.doc_count / maxCount) * 0.8,
       map
     });
+
+    polygon.addListener("click", () => {
+      zoomOnThePolygon(polygon);
+    });
+
     return polygon;
   });
 
