@@ -12,7 +12,7 @@ import {
 } from '../util/util';
 
 import { DATA_SOURCES_ENUM } from '../util/constants';
- 
+
 // This action is needed to fetch existing production location by OS ID
 // It is using in src/react/src/components/Contribute/SearchByOsIdResult.jsx
 // but response data is not rendered because 5 and 5b screens in progress.
@@ -68,27 +68,6 @@ export const completeUpdateProductionLocation = createAction(
 export const failUpdateProductionLocation = createAction(
     'FAIL_UPDATE_PRODUCTION_LOCATION',
 );
-
-export function fetchProductionLocationByOsId(osID) {
-    return async dispatch => {
-        dispatch(startFetchingSingleProductionLocation());
-
-        try {
-            const { data } = await apiRequest.get(
-                makeGetProductionLocationByOsIdURL(osID),
-            );
-            return dispatch(completeFetchingSingleProductionLocation(data));
-        } catch (err) {
-            return dispatch(
-                logErrorAndDispatchFailure(
-                    err,
-                    'An error prevented fetching data about that production location',
-                    failFetchingSingleProductionLocation,
-                ),
-            );
-        }
-    };
-}
 
 export function createProductionLocation(contribData) {
     const {
@@ -200,27 +179,6 @@ export function updateProductionLocation(osID) {
                 ),
             );
         }
-    };
-}
-
-export function fetchProductionLocationByOsId(osID) {
-    return dispatch => {
-        dispatch(startFetchSingleProductionLocation());
-
-        return apiRequest
-            .get(makeGetProductionLocationByOsIdURL(osID))
-            .then(({ data }) =>
-                dispatch(completeFetchSingleProductionLocation(data)),
-            )
-            .catch(err =>
-                dispatch(
-                    logErrorAndDispatchFailure(
-                        err,
-                        'An error prevented fetching data about that production location',
-                        failFetchSingleProductionLocation,
-                    ),
-                ),
-            );
     };
 }
 
@@ -1327,6 +1285,26 @@ export function fetchProductionLocations() {
                         'An error prevented fetching production locations',
                         failFetchProductionLocations,
                     ),
+                ),
+            );
+    };
+}
+
+export function fetchProductionLocationByOsId(osID) {
+    return async dispatch => {
+        dispatch(startFetchSingleProductionLocation());
+
+        try {
+            const { data } = await apiRequest.get(
+                makeGetProductionLocationByOsIdURL(osID),
+            );
+            return dispatch(completeFetchSingleProductionLocation(data));
+        } catch (err) {
+            return dispatch(
+                logErrorAndDispatchFailure(
+                    err,
+                    'An error prevented fetching data about that production location',
+                    failFetchSingleProductionLocation,
                 ),
             );
         }

@@ -16,7 +16,6 @@ import { productionLocationInfoStyles } from '../../util/styles';
 import {
     countryOptionsPropType,
     facilityProcessingTypeOptionsPropType,
-    numberOfWorkerOptionsPropType,
 } from '../../util/propTypes';
 import {
     fetchCountryOptions,
