@@ -4,7 +4,6 @@ const $mapDiv = document.getElementById("map");
 const $searchForm = document.getElementById("search-form");
 const $searchInput = document.getElementById("search-input");
 
-let zoomInProgress = false;
 let map = null;
 let query = null;
 let polygons = [];
@@ -33,6 +32,10 @@ function getCoordinates(bucket) {
 }
 
 async function zoomOnTheMap() {
+  if (polygons.length === 0) {
+    return;
+  }
+
   const bounds = new google.maps.LatLngBounds();
 
   polygons.forEach((polygon) => {
