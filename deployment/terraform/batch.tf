@@ -322,13 +322,15 @@ data "aws_iam_policy_document" "export_csv_scheduler_policy" {
   }
 }
 
-resource "aws_cloudwatch_event_permission" "allow_eventbridge" {
-  principal = "events.amazonaws.com"
-  # The statement_id must be unique within the policy
-  statement_id  = "AllowEventBridgeToInvokeBatch"
-  action        = "events:PutTargets"
-  event_bus_name = "default"
-}
+# resource "aws_cloudwatch_event_permission" "allow_eventbridge" {
+#   principal = "*"
+#   # The statement_id must be unique within the policy
+#   statement_id  = "AllowEventBridgeToInvokeBatch"
+#   action        = "events:PutTargets"
+#   event_bus_name = "default"
+# }
+
+# end of schedule the export_csv job
 
 # resource "aws_iam_role" "export_csv_scheduler_role" {
 #   name = "evb${local.short}ExportCsvSchedulerExecutionRole"
