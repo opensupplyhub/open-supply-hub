@@ -51,9 +51,11 @@ const resultsSortDropdownStyles = theme =>
     });
 
 const ResultsSortDropdown = ({ classes, sortAlgorithm, updateSort }) => {
-    if (sortAlgorithm === '') {
-        updateSort(optionsForSortingResults[2]);
-    }
+    React.useEffect(() => {
+        if (sortAlgorithm === '') {
+            updateSort(optionsForSortingResults[2]);
+        }
+    }, [sortAlgorithm, updateSort]);
 
     return (
         <Grid container>
@@ -80,7 +82,6 @@ const ResultsSortDropdown = ({ classes, sortAlgorithm, updateSort }) => {
                     value={sortAlgorithm}
                     options={optionsForSortingResults}
                     onChange={updateSort}
-                    defaultValue={optionsForSortingResults[2]}
                 />
             </Grid>
         </Grid>
