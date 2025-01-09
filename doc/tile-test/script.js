@@ -99,19 +99,20 @@ async function fetchLocations() {
 }
 
 async function drawTheGrid() {
+  polygons.forEach((polygon) => polygon.setMap(null));
+  polygons = [];
+
   const locations = await fetchLocations(precision, bounds);
   const buckets = locations.aggregations.grouped.buckets;
   const maxCount = Math.max(...buckets.map((bucket) => bucket.doc_count));
-  polygons.forEach((polygon) => polygon.setMap(null));
-  polygons = [];
 
   buckets.forEach((bucket) => {
     const polygon = new google.maps.Polygon({
       paths: bucket.boundary,
-      strokeColor: "#FF0000",
+      strokeColor: "#00b300",
       strokeOpacity: 0.8,
       strokeWeight: 3,
-      fillColor: "#FF0000",
+      fillColor: "#00b300",
       fillOpacity: bucket.doc_count / maxCount,
     });
 
@@ -130,9 +131,15 @@ async function init() {
 
   drawTheGrid();
 
-  map.addListener("tilesloaded", async () => {
+  map.addListener("bounds_changed", async () => {
     bounds = map.getBounds();
+  });
+
+  map.addListener("zoom_changed", async () => {
     precision = map.getZoom();
+  });
+
+  map.addListener("tilesloaded", async () => {
     drawTheGrid();
   });
 }
