@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { arrayOf, bool, func, number, object } from 'prop-types';
+import { useLocation } from 'react-router-dom';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { withStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
@@ -23,9 +24,15 @@ const SearchByNameAndAddressResult = ({
     clearLocations,
     classes,
 }) => {
+    const location = useLocation();
+
     useEffect(() => {
-        fetchLocations();
-    }, [fetchLocations]);
+        const searchParams = new URLSearchParams(location.search);
+        const name = searchParams.get('name');
+        const address = searchParams.get('address');
+        const country = searchParams.get('country');
+        fetchLocations({ name, address, country });
+    }, [location.search, fetchLocations]);
 
     const handleBackToSearchByNameAddress = () => {
         clearLocations();
@@ -80,7 +87,7 @@ const mapStateToProps = ({
     fetching,
 });
 const mapDispatchToProps = dispatch => ({
-    fetchLocations: () => dispatch(fetchProductionLocations()),
+    fetchLocations: data => dispatch(fetchProductionLocations(data)),
     clearLocations: () => dispatch(resetProductionLocations()),
 });
 

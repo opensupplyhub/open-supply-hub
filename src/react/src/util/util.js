@@ -260,6 +260,22 @@ export const makeNonStandardFieldsURL = () => '/api/nonstandard-fields/';
 export const makeGetProductionLocationByOsIdURL = osID =>
     `/api/v1/production-locations/${osID}/`;
 
+export const makeGetProductionLocationsForSearchMatches = (
+    name,
+    address,
+    country,
+    osId,
+) => {
+    const params = new URLSearchParams();
+
+    if (name) params.append('name', name);
+    if (address) params.append('address', address);
+    if (country) params.append('country', country);
+    if (osId) params.append('search_after[id]', osId);
+
+    return `/api/v1/production-locations/?${params.toString()}`;
+};
+
 export const makeGetModerationEventsWithQueryString = (
     qs,
     page,
