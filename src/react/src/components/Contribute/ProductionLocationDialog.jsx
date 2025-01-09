@@ -30,8 +30,10 @@ const claimButton = classes => (
     </span>
 );
 
-const ProductionLocationDialog = ({ classes }) => {
+const ProductionLocationDialog = ({ classes, data }) => {
     const history = useHistory();
+
+    const { name, address } = data;
 
     return (
         <Dialog
@@ -72,16 +74,13 @@ const ProductionLocationDialog = ({ classes }) => {
                                 Facility name
                             </Typography>
                             <Typography className={classes.primaryText}>
-                                Unifill Composite Dyeing Mills Ltd.
+                                {name}
                             </Typography>
                             <Typography className={classes.label}>
                                 Address
                             </Typography>
                             <Typography className={classes.primaryText}>
-                                Gobindobari, Bhabanipur, Kashimpur, Gazipur,
-                                Bangladesh. Gazipur - 1704 - DHAKA - Bangladesh
-                                March 23, 2022 by The WikiRate Project 7 more
-                                contributions
+                                {address}
                             </Typography>
                             <Typography className={classes.label}>
                                 Location type

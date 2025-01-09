@@ -30,6 +30,11 @@ const initialState = Object.freeze({
         fetching: false,
         error: null,
     }),
+    pendingModerationEvent: Object.freeze({
+        data: {},
+        fetching: false,
+        error: null,
+    }),
 });
 
 export default createReducer(
@@ -116,9 +121,37 @@ export default createReducer(
             }
 
         */
-        [startCreateProductionLocation]: state => update(state, {}),
-        [completeCreateProductionLocation]: state => update(state, {}),
-        [failCreateProductionLocation]: state => update(state, {}),
+        [startCreateProductionLocation]: state =>
+            update(state, {
+                pendingModerationEvent: {
+                    fetching: { $set: true },
+                    error: {
+                        $set: initialState.pendingModerationEvent.error,
+                    },
+                    data: { $set: initialState.pendingModerationEvent.data },
+                },
+            }),
+        [completeCreateProductionLocation]: (state, payload) =>
+            update(state, {
+                pendingModerationEvent: {
+                    fetching: {
+                        $set: initialState.pendingModerationEvent.fetching,
+                    },
+                    error: {
+                        $set: initialState.pendingModerationEvent.error,
+                    },
+                    data: { $set: payload },
+                },
+            }),
+        [failCreateProductionLocation]: (state, payload) =>
+            update(state, {
+                pendingModerationEvent: {
+                    fetching: {
+                        $set: initialState.pendingModerationEvent.fetching,
+                    },
+                    error: { $set: payload },
+                },
+            }),
         [startUpdateProductionLocation]: state => update(state, {}),
         [completeUpdateProductionLocation]: state => update(state, {}),
         [failUpdateProductionLocation]: state => update(state, {}),

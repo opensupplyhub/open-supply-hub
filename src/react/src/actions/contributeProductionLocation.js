@@ -112,6 +112,8 @@ export function createProductionLocation(contribData) {
     }
     */
 
+    console.log('@@@ contribData: ', contribData);
+
     const parsedContribData = {
         source: DATA_SOURCES_ENUM.SLC,
         name,
@@ -129,7 +131,7 @@ export function createProductionLocation(contribData) {
             processingType,
         ),
         // TODO: refactor later
-        number_of_workers: generateRangeField(numberOfWorkers.value),
+        number_of_workers: generateRangeField(numberOfWorkers),
     };
 
     return async dispatch => {
