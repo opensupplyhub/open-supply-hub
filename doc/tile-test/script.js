@@ -1,6 +1,10 @@
 const LOCATION_LEVEL_ZOOM = 12;
 const BASE_COLOR = "#00b300";
 const $mapDiv = document.getElementById("map");
+const $searchForm = document.getElementById("search-form");
+const $searchInput = document.getElementById("search-input");
+
+let zoomInProgress = false;
 let map = null;
 let query = null;
 let polygons = [];
@@ -28,6 +32,18 @@ function getCoordinates(bucket) {
   };
 }
 
+async function zoomOnTheMap() {
+  const bounds = new google.maps.LatLngBounds();
+
+  polygons.forEach((polygon) => {
+    polygon.getPath().forEach((latLng) => {
+      bounds.extend(latLng);
+    });
+  });
+
+  map.fitBounds(bounds);
+}
+
 async function fetchLocations() {
   const url = "http://localhost:9200/production-locations/_search";
   let body = {};
@@ -52,15 +68,12 @@ async function fetchLocations() {
     }
   }
 
-  if (query) {
-    body = {
-      ...body,
-      multi_match: {
-        query,
-        fields: ["name", "address"],
-      },
-    };
-  }
+  const must = query ? {
+    multi_match: {
+      query,
+      fields: ["name", "address"],
+    }
+  } : { match_all: {} };
 
   if (bounds) {
     const southWest = bounds.getSouthWest();
@@ -80,14 +93,21 @@ async function fetchLocations() {
       ...body,
       query: {
         bool: {
-          must: {
-            match_all: {},
-          },
+          must,
           filter: {
             geo_bounding_box: {
               coordinates,
             },
           },
+        },
+      },
+    };
+  } else {
+    body = {
+      ...body,
+      query: {
+        bool: {
+          must,
         },
       },
     };
@@ -112,11 +132,11 @@ async function fetchLocations() {
   return data;
 }
 
-async function drawTheGrid() {
+async function drawTheGrid(cb) {
   polygons.forEach((polygon) => polygon.setMap(null));
   markers.forEach((marker) => marker.setMap(null));
 
-  const locations = await fetchLocations(precision, bounds);
+  const locations = await fetchLocations();
   const buckets = locations.aggregations ? locations.aggregations.grouped.buckets : [];
   const maxCount = Math.max(...buckets.map((bucket) => bucket.doc_count));
   const { Polygon, InfoWindow } = await google.maps.importLibrary("maps");
@@ -156,6 +176,10 @@ async function drawTheGrid() {
       return marker;
     });
   }
+
+  if (cb) {
+    cb();
+  }
 }
 
 async function init() {
@@ -179,6 +203,15 @@ async function init() {
 
   map.addListener("tilesloaded", async () => {
     drawTheGrid();
+  });
+
+  $searchForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    query = $searchInput.value;
+    bounds = null;
+    drawTheGrid(() => {
+      zoomOnTheMap();
+    });
   });
 }
 

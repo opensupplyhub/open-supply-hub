@@ -10,8 +10,10 @@
 <body style="padding: 0; margin: 0;">
   <div id="inputs"
     style="position: fixed; left: 50%; transform: translateX(-50%); top: 10px; z-index: 1000; background: white; padding: 10px; width: 500px;">
-    <input type="text" id="search" placeholder="Search for a place" style="width: 85%;">
-    <button id="search-button">Search</button>
+    <form id="search-form">
+      <input type="text" id="search-input" placeholder="Search for a place" style="width: 85%;">
+      <button id="search-button">Search</button>
+    </form>
   </div>
   <div id="map" style="height: 100vh; width: 100%;"></div>
   <script src="https://unpkg.com/h3-js@4"></script>
