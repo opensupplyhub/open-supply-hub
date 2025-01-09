@@ -224,15 +224,7 @@ async function init() {
     styles,
   });
 
-  drawTheGrid();
-
-  map.addListener("zoom_changed", async () => {
-    bounds = map.getBounds();
-    precision = map.getZoom();
-    drawTheGrid();
-  });
-
-  map.addListener("dragend", async () => {
+  map.addListener("idle", async () => {
     bounds = map.getBounds();
     precision = map.getZoom();
     drawTheGrid();
