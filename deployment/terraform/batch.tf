@@ -302,6 +302,11 @@ resource "aws_cloudwatch_event_target" "export_csv" {
   rule      = aws_cloudwatch_event_rule.export_csv_schedule.name
   arn       = aws_batch_job_queue.export_csv.arn
   role_arn  = aws_iam_role.export_csv_scheduler_role.arn  # Must allow "events:InvokeBatchJobQueue"
+
+  batch_target {
+    job_definition = aws_batch_job_definition.export_csv.arn
+    job_name       = "export_csv"
+  }
 }
 
 resource "aws_iam_role_policy" "export_csv_scheduler_policy" {
