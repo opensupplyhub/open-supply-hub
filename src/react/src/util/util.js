@@ -257,13 +257,33 @@ export const makeContributorEmbedConfigURL = contributorId =>
     `/api/contributor-embed-configs/${contributorId}/`;
 export const makeNonStandardFieldsURL = () => '/api/nonstandard-fields/';
 
-// TODO: Remove makeGetProductionLocationByOsIdURL in favor of makeGetProductionLocationURL
-export const makeGetProductionLocationByOsIdURL = osID =>
-    `/api/v1/production-locations/${osID}/`;
-
 export const makeGetProductionLocationURL = (osID = '') => {
     const osIDPathParameter = osID ? `${osID}/` : '';
     return `/api/v1/production-locations/${osIDPathParameter}`;
+
+export const makeGetProductionLocationsForPotentialMatches = (
+    productionLocationName,
+    countryCode,
+    address,
+) => {
+    const params = new URLSearchParams();
+
+    if (productionLocationName) params.append('name', productionLocationName);
+    if (countryCode) params.append('country', countryCode);
+    if (address) params.append('address', address);
+
+    return `/api/v1/production-locations/?${params.toString()}/`;
+};
+
+export const makeModerationEventRecordURL = moderationID =>
+    `/api/v1/moderation-events/${moderationID}/`;
+
+export const makeProductionLocationFromModerationEventURL = (
+    moderationID,
+    osID = '',
+) => {
+    const osIDPathParameter = osID ? `${osID}/` : '';
+    return `/api/v1/moderation-events/${moderationID}/production-locations/${osIDPathParameter}`;
 };
 
 export const makeGetModerationEventsWithQueryString = (
@@ -802,7 +822,7 @@ export const makeFacilityClaimDetailsLink = claimID =>
     `/dashboard/claims/${claimID}`;
 
 export const makeContributionRecordLink = moderationID =>
-    `/dashboard/moderation-queue/contribution-record/${moderationID}`;
+    `/dashboard/moderation-queue/${moderationID}`;
 
 export const makeDashboardContributorListLink = ({
     contributorID,
