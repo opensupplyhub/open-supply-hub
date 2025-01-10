@@ -1,6 +1,5 @@
 import { createReducer } from 'redux-act';
 import update from 'immutability-helper';
-import { optionsForSortingResults } from '../util/constants';
 
 import {
     updateFacilityFreeTextQueryFilter,
@@ -47,7 +46,7 @@ const initialState = Object.freeze({
     countries: Object.freeze([]),
     claimStatuses: Object.freeze([]),
     sectors: Object.freeze([]),
-    sortAlgorithm: optionsForSortingResults[2],
+    sortAlgorithm: '',
     parentCompany: Object.freeze([]),
     facilityType: Object.freeze([]),
     processingType: Object.freeze([]),

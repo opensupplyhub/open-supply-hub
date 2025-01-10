@@ -3,6 +3,7 @@ import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
 import COLOURS from './COLOURS';
 
+export const DEFAULT_SORT_OPTION_INDEX = 2;
 export const OTHER = 'Other';
 export const FACILITIES_REQUEST_PAGE_SIZE = 50;
 export const FACILITIES_DOWNLOAD_DEFAULT_LIMIT = 10000;
