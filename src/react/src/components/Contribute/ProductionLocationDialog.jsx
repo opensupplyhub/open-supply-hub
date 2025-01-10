@@ -1,3 +1,4 @@
+/* eslint no-unused-vars: 0 */
 import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import { useHistory } from 'react-router-dom';
@@ -33,7 +34,19 @@ const claimButton = classes => (
 const ProductionLocationDialog = ({ classes, data }) => {
     const history = useHistory();
 
-    const { name, address } = data;
+    console.log('@@@ data is ', data);
+    const {
+        status,
+        /* eslint-disable camelcase */
+        od_id,
+        cleaned_data: {
+            raw_json: {
+                name: productionLocationName,
+                address,
+                country: { name: countryName },
+            },
+        },
+    } = data;
 
     return (
         <Dialog
@@ -74,13 +87,13 @@ const ProductionLocationDialog = ({ classes, data }) => {
                                 Facility name
                             </Typography>
                             <Typography className={classes.primaryText}>
-                                {name}
+                                {productionLocationName || 'N/A'}
                             </Typography>
                             <Typography className={classes.label}>
                                 Address
                             </Typography>
                             <Typography className={classes.primaryText}>
-                                {address}
+                                {address || 'N/A'}
                             </Typography>
                             <Typography className={classes.label}>
                                 Location type

@@ -2,8 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
-import { func, object } from 'prop-types';
+import { bool, func, object } from 'prop-types';
 import { connect } from 'react-redux';
+import isEmpty from 'lodash/isEmpty';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
@@ -17,7 +18,7 @@ import history from '../../util/history';
 import {
     countryOptionsPropType,
     facilityProcessingTypeOptionsPropType,
-    moderationEventPropType,
+    moderationEventsListItemPropType,
 } from '../../util/propTypes';
 import {
     fetchCountryOptions,
@@ -27,6 +28,7 @@ import {
     createProductionLocation,
     updateProductionLocation,
 } from '../../actions/contributeProductionLocation';
+import { fetchSingleModerationEvent } from '../../actions/dashboardContributionRecord';
 import InputErrorText from './InputErrorText';
 import {
     mapDjangoChoiceTuplesToSelectOptions,
@@ -48,15 +50,18 @@ const ProductionLocationInfo = ({
     countriesOptions,
     fetchCountries,
     facilityProcessingTypeOptions,
+    fetchModerationEvent,
     handleCreateProductionLocation,
     handleUpdateProductionLocation,
     fetchFacilityProcessingType,
     pendingModerationEvent,
+    /*
+    moderationEventFetching,
+    fetchModerationEventError,
+    */
+    singleModerationEventItem,
 }) => {
     const location = useLocation();
-
-    console.log('Moderation ID:', moderationID);
-
     const queryParams = new URLSearchParams(location.search);
     const nameInQuery = queryParams.get('name');
     const addressInQuery = queryParams.get('address');
@@ -165,10 +170,8 @@ const ProductionLocationInfo = ({
 
     const { moderationID } = useParams();
     useEffect(() => {
-        console.log('@@@ history: ', history);
         if (moderationID) {
-            // Trigger action to get moderation id
-            setShowProductionLocationDialog(true);
+            fetchModerationEvent(moderationID);
         }
     }, []);
 
@@ -193,17 +196,24 @@ const ProductionLocationInfo = ({
         }
     }, [facilityProcessingTypeOptions, fetchFacilityProcessingType]);
 
+    // Trigger popup on success submit click
+    // TODO: Add close button on modal window
     useEffect(() => {
-        if (pendingModerationEvent?.data?.moderation_id) {
-            setShowProductionLocationDialog(true);
-        }
-    }, [pendingModerationEvent]);
+        const intervalId = setInterval(() => {
+            fetchModerationEvent(pendingModerationEvent?.data?.moderation_id);
+        }, 3000);
 
-    // TODO: Use dummy data till apply get moderation event by id
-    const dummyData = {
-        name: 'Some name',
-        address: 'Some address',
-    };
+        if (!isEmpty(singleModerationEventItem)) {
+            clearInterval(intervalId);
+        }
+
+        return () => clearInterval(intervalId);
+    }, [pendingModerationEvent, singleModerationEventItem]);
+
+    useEffect(() => {
+        setShowProductionLocationDialog(true);
+    }, [singleModerationEventItem]);
+
     return (
         <>
             <div className={classes.mainContainerStyles}>
@@ -614,8 +624,9 @@ const ProductionLocationInfo = ({
                     </div>
                 </Paper>
             </div>
-            {showProductionLocationDialog ? (
-                <ProductionLocationDialog data={dummyData} />
+            {showProductionLocationDialog &&
+            !isEmpty(singleModerationEventItem) ? (
+                <ProductionLocationDialog data={singleModerationEventItem} />
             ) : null}
         </>
     );
@@ -625,6 +636,7 @@ ProductionLocationInfo.defaultProps = {
     countriesOptions: null,
     facilityProcessingTypeOptions: null,
     pendingModerationEvent: null,
+    singleModerationEventItem: null,
 };
 
 ProductionLocationInfo.propTypes = {
@@ -635,7 +647,10 @@ ProductionLocationInfo.propTypes = {
     handleUpdateProductionLocation: func.isRequired,
     facilityProcessingTypeOptions: facilityProcessingTypeOptionsPropType,
     // TODO: create new proptype for pendingModerationEvent
-    pendingModerationEvent: moderationEventPropType,
+    pendingModerationEvent: moderationEventsListItemPropType,
+    singleModerationEventItem: moderationEventsListItemPropType,
+    // moderationEventFetching: bool.isRequired,
+    // fetchModerationEvent: func.isRequired,
     classes: object.isRequired,
 };
 
@@ -645,10 +660,21 @@ const mapStateToProps = ({
         facilityProcessingType: { data: facilityProcessingTypeOptions },
     },
     contributeProductionLocation: { pendingModerationEvent },
+    dashboardContributionRecord: {
+        singleModerationEvent: {
+            fetching: moderationEventFetching,
+            error: fetchModerationEventError,
+            data: singleModerationEventItem,
+        },
+    },
 }) => ({
     countriesOptions,
     facilityProcessingTypeOptions,
     pendingModerationEvent,
+    singleModerationEventItem,
+    // TODO: you might not need these two props here
+    moderationEventFetching,
+    fetchModerationEventError,
 });
 
 function mapDispatchToProps(dispatch) {
@@ -660,6 +686,8 @@ function mapDispatchToProps(dispatch) {
             dispatch(createProductionLocation(data)),
         handleUpdateProductionLocation: osID =>
             dispatch(updateProductionLocation(osID)),
+        fetchModerationEvent: moderationID =>
+            dispatch(fetchSingleModerationEvent(moderationID)),
     };
 }
 

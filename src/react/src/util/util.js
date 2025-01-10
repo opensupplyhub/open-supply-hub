@@ -260,6 +260,7 @@ export const makeNonStandardFieldsURL = () => '/api/nonstandard-fields/';
 export const makeGetProductionLocationURL = (osID = '') => {
     const osIDPathParameter = osID ? `${osID}/` : '';
     return `/api/v1/production-locations/${osIDPathParameter}`;
+};
 
 export const makeGetProductionLocationsForPotentialMatches = (
     productionLocationName,

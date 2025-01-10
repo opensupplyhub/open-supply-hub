@@ -4,8 +4,6 @@ import { createAction } from 'redux-act';
 import apiRequest from '../util/apiRequest';
 import {
     logErrorAndDispatchFailure,
-    // TODO: Remove makeGetProductionLocationByOsIdURL
-    makeGetProductionLocationByOsIdURL,
     makeGetProductionLocationURL,
     generateRangeField,
     extractProductionLocationContributionValues,
@@ -41,7 +39,6 @@ export const resetProductionLocations = createAction(
     'RESET_PRODUCTION_LOCATIONS',
 );
 
-// TODO: Use modified makeGetProductionLocationByOsIdURL
 // TODO: This actions should use 'src/react/src/reducers/DashboardContributionRecordReducer.js' from OSDEV-1117
 // Regular contributor can get moderation event
 // OS ID will be rendered depending on request_type and os_id presence. But only moderator can change it's status
@@ -1298,7 +1295,7 @@ export function fetchProductionLocationByOsId(osID) {
 
         try {
             const { data } = await apiRequest.get(
-                makeGetProductionLocationByOsIdURL(osID),
+                makeGetProductionLocationURL(osID),
             );
             return dispatch(completeFetchSingleProductionLocation(data));
         } catch (err) {
