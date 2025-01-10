@@ -57,7 +57,7 @@ export function fetchProductionLocations(data) {
     return async dispatch => {
         dispatch(startFetchProductionLocations());
 
-        const { name, address, country } = data;
+        const { name, address, country, fromIndex } = data;
 
         return apiRequest
             .get(
@@ -65,6 +65,7 @@ export function fetchProductionLocations(data) {
                     name,
                     address,
                     country,
+                    fromIndex,
                 ),
             )
             .then(response => {

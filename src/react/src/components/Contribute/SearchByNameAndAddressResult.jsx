@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { arrayOf, bool, func, number, object } from 'prop-types';
 import { useLocation } from 'react-router-dom';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -25,14 +25,15 @@ const SearchByNameAndAddressResult = ({
     classes,
 }) => {
     const location = useLocation();
+    const [fromIndex, setFromIndex] = useState(10);
 
     useEffect(() => {
         const searchParams = new URLSearchParams(location.search);
         const name = searchParams.get('name');
         const address = searchParams.get('address');
         const country = searchParams.get('country');
-        fetchLocations({ name, address, country });
-    }, [location.search, fetchLocations]);
+        fetchLocations({ name, address, country, fromIndex });
+    }, [location.search, fromIndex, fetchLocations]);
 
     const handleBackToSearchByNameAddress = () => {
         clearLocations();
@@ -60,6 +61,7 @@ const SearchByNameAndAddressResult = ({
                     productionLocations={productionLocations}
                     productionLocationsCount={productionLocationsCount}
                     clearLocations={clearLocations}
+                    setFromIndex={setFromIndex}
                 />
             ) : (
                 <SearchByNameAndAddressNotFoundResult />

@@ -12,6 +12,7 @@ const SearchByNameAndAddressSuccessResult = ({
     productionLocationsCount,
     productionLocations,
     clearLocations,
+    setFromIndex,
     classes,
 }) => {
     const [confirmDialogIsOpen, setConfirmDialogIsOpen] = useState(false);
@@ -30,6 +31,12 @@ const SearchByNameAndAddressSuccessResult = ({
             window.removeEventListener('scroll', handleScroll);
         };
     }, []);
+
+    useEffect(() => {
+        if (isScrolledToBottom) {
+            setFromIndex(productionLocations.length + 10);
+        }
+    }, [isScrolledToBottom]);
 
     const handleSelectLocation = () => {};
 
@@ -127,6 +134,7 @@ SearchByNameAndAddressSuccessResult.propTypes = {
     productionLocationsCount: number.isRequired,
     productionLocations: arrayOf(productionLocationPropType).isRequired,
     clearLocations: func.isRequired,
+    setFromIndex: func.isRequired,
     classes: object.isRequired,
 };
 

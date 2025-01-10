@@ -275,14 +275,14 @@ export const makeGetProductionLocationsForSearchMatches = (
     name,
     address,
     country,
-    osId,
+    fromIndex,
 ) => {
     const params = new URLSearchParams();
 
     if (name) params.append('name', name);
     if (address) params.append('address', address);
     if (country) params.append('country', country);
-    if (osId) params.append('search_after[id]', osId);
+    if (fromIndex) params.append('size', fromIndex);
 
     return `/api/v1/production-locations/?${params.toString()}`;
 };
