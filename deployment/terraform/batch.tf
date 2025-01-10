@@ -240,10 +240,7 @@ resource "aws_batch_job_queue" "export_csv" {
   name                 = "queue${local.short}ExportCsv"
   priority             = 1
   state                = "ENABLED"
-  compute_environment_order {
-    compute_environment = aws_batch_compute_environment.export_csv.arn
-    order               = 1
-  }
+  compute_environments = [aws_batch_compute_environment.notifications.arn]
 }
 
 data "template_file" "export_csv_job_definition" {
