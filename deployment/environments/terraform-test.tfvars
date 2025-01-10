@@ -21,7 +21,7 @@ rds_database_identifier = "opensupplyhub-enc-tst"
 rds_database_name = "opensupplyhub"
 rds_multi_az = false
 rds_storage_encrypted = true
-snapshot_identifier = "osdev-1514-test-01-09-2025"
+snapshot_identifier = ""
 
 anonymized_database_instance_type = "db.t3.2xlarge"
 anonymized_database_identifier = "database-anonymizer"
