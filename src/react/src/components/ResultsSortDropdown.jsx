@@ -1,4 +1,5 @@
 import React from 'react';
+import { string, func, shape, oneOfType, node } from 'prop-types';
 import { withRouter } from 'react-router';
 import { connect } from 'react-redux';
 
@@ -6,7 +7,10 @@ import ReactSelect from 'react-select';
 import { Grid, withStyles } from '@material-ui/core';
 import InputLabel from '@material-ui/core/InputLabel';
 
-import { optionsForSortingResults } from '../util/constants';
+import {
+    optionsForSortingResults,
+    DEFAULT_SORT_OPTION_INDEX,
+} from '../util/constants';
 import { updateSortAlgorithm } from '../actions/filters';
 import { fetchFacilities } from '../actions/facilities';
 
@@ -52,8 +56,8 @@ const resultsSortDropdownStyles = theme =>
 
 const ResultsSortDropdown = ({ classes, sortAlgorithm, updateSort }) => {
     React.useEffect(() => {
-        if (sortAlgorithm === '') {
-            updateSort(optionsForSortingResults[2]);
+        if (!sortAlgorithm) {
+            updateSort(optionsForSortingResults[DEFAULT_SORT_OPTION_INDEX]);
         }
     }, [sortAlgorithm, updateSort]);
 
@@ -88,20 +92,32 @@ const ResultsSortDropdown = ({ classes, sortAlgorithm, updateSort }) => {
     );
 };
 
-function mapStateToProps({ filters: { sortAlgorithm } }) {
-    return {
-        sortAlgorithm,
-    };
-}
+ResultsSortDropdown.propTypes = {
+    classes: shape({
+        selectLabel: string.isRequired,
+        selectWrapper: string.isRequired,
+        select: string.isRequired,
+    }).isRequired,
+    sortAlgorithm: oneOfType([
+        shape({
+            value: string.isRequired,
+            label: oneOfType([node, string]).isRequired,
+        }).isRequired,
+        string,
+    ]).isRequired,
+    updateSort: func.isRequired,
+};
 
-function mapDispatchToProps(dispatch, { history: { push } }) {
-    return {
-        updateSort: v => {
-            dispatch(updateSortAlgorithm(v));
-            dispatch(fetchFacilities({ pushNewRoute: push }));
-        },
-    };
-}
+const mapStateToProps = ({ filters }) => ({
+    sortAlgorithm: filters.sortAlgorithm,
+});
+
+const mapDispatchToProps = (dispatch, { history: { push } }) => ({
+    updateSort: v => {
+        dispatch(updateSortAlgorithm(v));
+        dispatch(fetchFacilities({ pushNewRoute: push }));
+    },
+});
 
 export default withRouter(
     connect(
