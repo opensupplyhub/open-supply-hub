@@ -240,7 +240,10 @@ resource "aws_batch_job_queue" "export_csv" {
   name                 = "queue${local.short}ExportCsv"
   priority             = 1
   state                = "ENABLED"
-  compute_environments = [aws_batch_compute_environment.export_csv.arn]
+  compute_environment_order {
+    compute_environment = aws_batch_compute_environment.export_csv.arn
+    order               = 1
+  }
 }
 
 data "template_file" "export_csv_job_definition" {
@@ -275,57 +278,57 @@ resource "aws_batch_job_definition" "export_csv" {
   }
 }
 
-# Schedule the export_csv job
-resource "aws_iam_role" "export_csv_scheduler_role" {
-  name = "evb${local.short}ExportCsvSchedulerExecutionRole"
+# # Schedule the export_csv job
+# resource "aws_iam_role" "export_csv_scheduler_role" {
+#   name = "evb${local.short}ExportCsvSchedulerExecutionRole"
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "scheduler.amazonaws.com"
-        }
-      },
-    ]
-  })
-}
+#   assume_role_policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Action = "sts:AssumeRole"
+#         Effect = "Allow"
+#         Principal = {
+#           Service = "scheduler.amazonaws.com"
+#         }
+#       },
+#     ]
+#   })
+# }
 
-resource "aws_cloudwatch_event_rule" "export_csv_schedule" {
-  name                = "cwOpenSupplyHubExportCsvScheduler"
-  schedule_expression = var.export_csv_schedule_expression
-}
+# resource "aws_cloudwatch_event_rule" "export_csv_schedule" {
+#   name                = "cwOpenSupplyHubExportCsvScheduler"
+#   schedule_expression = var.export_csv_schedule_expression
+# }
 
-resource "aws_cloudwatch_event_target" "export_csv" {
-  rule      = aws_cloudwatch_event_rule.export_csv_schedule.name
-  arn       = aws_batch_job_queue.export_csv.arn
-  role_arn  = aws_iam_role.export_csv_scheduler_role.arn  # Must allow "events:InvokeBatchJobQueue"
+# resource "aws_cloudwatch_event_target" "export_csv" {
+#   rule      = aws_cloudwatch_event_rule.export_csv_schedule.name
+#   arn       = aws_batch_job_queue.export_csv.arn
+#   role_arn  = aws_iam_role.export_csv_scheduler_role.arn  # Must allow "events:InvokeBatchJobQueue"
 
-  batch_target {
-    job_definition = aws_batch_job_definition.export_csv.arn
-    job_name       = "export_csv"
-  }
-}
+#   batch_target {
+#     job_definition = aws_batch_job_definition.export_csv.arn
+#     job_name       = "export_csv"
+#   }
+# }
 
-resource "aws_iam_role_policy" "export_csv_scheduler_policy" {
-  name   = "evb${local.short}ExportCsvSchedulerPolicy"
-  role   = aws_iam_role.export_csv_scheduler_role.id
-  policy = data.aws_iam_policy_document.export_csv_scheduler_policy.json
-}
+# resource "aws_iam_role_policy" "export_csv_scheduler_policy" {
+#   name   = "evb${local.short}ExportCsvSchedulerPolicy"
+#   role   = aws_iam_role.export_csv_scheduler_role.id
+#   policy = data.aws_iam_policy_document.export_csv_scheduler_policy.json
+# }
 
-data "aws_iam_policy_document" "export_csv_scheduler_policy" {
-  statement {
-    actions = [
-      "batch:SubmitJob"
-    ]
-    resources = [
-      aws_batch_job_queue.export_csv.arn,
-      aws_batch_job_definition.export_csv.arn
-    ]
-  }
-}
+# data "aws_iam_policy_document" "export_csv_scheduler_policy" {
+#   statement {
+#     actions = [
+#       "batch:SubmitJob"
+#     ]
+#     resources = [
+#       aws_batch_job_queue.export_csv.arn,
+#       aws_batch_job_definition.export_csv.arn
+#     ]
+#   }
+# }
 
 # resource "aws_cloudwatch_event_permission" "allow_eventbridge" {
 #   principal = "*"
