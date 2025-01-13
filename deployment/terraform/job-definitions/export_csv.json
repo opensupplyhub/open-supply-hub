@@ -12,7 +12,7 @@
       { "name": "POSTGRES_DB", "value": "${postgres_db}" },
       { "name": "DJANGO_ENV", "value": "${environment}" },
       { "name": "EXTERNAL_DOMAIN", "value": "${external_domain}" },
-      { "name": "DJANGO_SECRET_KEY", "value": "${django_secret_key}" },
+      { "name": "GOOGLE_SERVER_SIDE_API_KEY", "value": "${google_server_side_api_key}" },
       { "name": "BATCH_JOB_QUEUE_NAME", "value": "${batch_job_queue_name}" },
       { "name": "BATCH_JOB_DEF_NAME", "value": "${batch_job_def_name}" },
       { "name": "BATCH_MODE", "value": "True" },
