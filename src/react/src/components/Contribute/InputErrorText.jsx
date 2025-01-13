@@ -22,4 +22,5 @@ InputErrorText.propTypes = {
     text: string,
     classes: object.isRequired,
 };
+
 export default withStyles(inputErrorText)(InputErrorText);

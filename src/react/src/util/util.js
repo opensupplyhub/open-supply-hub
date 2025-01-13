@@ -257,6 +257,11 @@ export const makeContributorEmbedConfigURL = contributorId =>
     `/api/contributor-embed-configs/${contributorId}/`;
 export const makeNonStandardFieldsURL = () => '/api/nonstandard-fields/';
 
+export const makeGetProductionLocationURL = (osID = '') => {
+    const osIDPathParameter = osID ? `${osID}/` : '';
+    return `/api/v1/production-locations/${osIDPathParameter}`;
+};
+
 export const makeGetProductionLocationsForPotentialMatches = (
     productionLocationName,
     countryCode,
@@ -270,9 +275,6 @@ export const makeGetProductionLocationsForPotentialMatches = (
 
     return `/api/v1/production-locations/?${params.toString()}/`;
 };
-
-export const makeGetProductionLocationByOsIdURL = osID =>
-    `/api/v1/production-locations/${osID}/`;
 
 export const makeModerationEventRecordURL = moderationID =>
     `/api/v1/moderation-events/${moderationID}/`;
@@ -1088,6 +1090,14 @@ export const convertFeatureFlagsObjectToListOfActiveFlags = featureFlags =>
 
 export const checkWhetherUserHasDashboardAccess = user =>
     get(user, 'is_superuser', false);
+
+export const generateRangeField = value => {
+    const [min, max] = value.split('-').map(Number);
+    return max !== undefined ? { min, max } : { min };
+};
+
+export const extractProductionLocationContributionValues = data =>
+    map(data, 'value');
 
 export const isValidNumberOfWorkers = value => {
     if (isEmpty(value)) {

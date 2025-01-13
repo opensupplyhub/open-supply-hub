@@ -11,9 +11,7 @@ from api.services.opensearch.opensearch import OpenSearchServiceConnection
 from oar.rollbar import report_error_to_rollbar
 from api.views.v1.index_names import OpenSearchIndexNames
 
-
 log = logging.getLogger(__name__)
-
 
 def signal_error_notifier(error_log_message, response):
     log.error(error_log_message)
@@ -24,6 +22,73 @@ def signal_error_notifier(error_log_message, response):
         }
     )
 
+@receiver(post_save, sender=Facility)
+def location_post_save_handler_for_opensearch(instance, created, **kwargs):
+    opensearch = OpenSearchServiceConnection()
+
+    try:
+        if created:
+            # Index a new facility in OpenSearch
+            response = opensearch.client.index(
+                index=OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
+                id=instance.id,
+                body={
+                    "name": instance.name,
+                    "address": instance.address,
+                    "country": instance.country,
+                    "coordinates": instance.coordinates,
+                    "number_of_workers": instance.number_of_workers,
+                    "sector": instance.sector,
+                    "parent_company": instance.parent_company,
+                    "product_type": instance.product_type,
+                    "location_type": instance.location_type,
+                    "processing_type": instance.processing_type,
+                    "minimum_order_quantity": instance.minimum_order_quantity,
+                    "average_lead_time": instance.average_lead_time,
+                    "percent_female_workers": instance.percent_female_workers,
+                    "affiliations": instance.affiliations,
+                    "certifications_standards_regulations": instance.certifications_standards_regulations,
+                    "claim_status": instance.claim_status,
+                },
+            )
+        else:
+            # Update an existing facility in OpenSearch
+            response = opensearch.client.update(
+                index=OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
+                id=instance.id,
+                body={
+                    "doc": {
+                        "name": instance.name,
+                        "address": instance.address,
+                        "country": instance.country,
+                        "coordinates": instance.coordinates,
+                        "number_of_workers": instance.number_of_workers,
+                        "sector": instance.sector,
+                        "parent_company": instance.parent_company,
+                        "product_type": instance.product_type,
+                        "location_type": instance.location_type,
+                        "processing_type": instance.processing_type,
+                        "minimum_order_quantity": instance.minimum_order_quantity,
+                        "average_lead_time": instance.average_lead_time,
+                        "percent_female_workers": instance.percent_female_workers,
+                        "affiliations": instance.affiliations,
+                        "certifications_standards_regulations": instance.certifications_standards_regulations,
+                        "claim_status": instance.claim_status,
+                    }
+                },
+            )
+    except ConnectionError:
+        log.error(
+            "[Location Save] Lost connection to OpenSearch cluster."
+        )
+        raise
+
+    if response and response.get('result') == 'not_found':
+        error_log_message = (
+            "[Location Save] Facility not found in OpenSearch, indicating "
+            "data inconsistency."
+        )
+        signal_error_notifier(error_log_message, response)
 
 @receiver(post_delete, sender=Facility)
 def location_post_delete_handler_for_opensearch(instance, **kwargs):
@@ -41,46 +106,7 @@ def location_post_delete_handler_for_opensearch(instance, **kwargs):
 
     if response and response.get('result') == 'not_found':
         error_log_message = (
-            "[Location Deletion] Facility not found "
-            "in OpenSearch, indicating "
+            "[Location Deletion] Facility not found in OpenSearch, indicating "
             "data inconsistency."
-        )
-        signal_error_notifier(error_log_message, response)
-
-
-@receiver(post_save, sender=ModerationEvent)
-def moderation_event_update_handler_for_opensearch(
-    instance,
-    created,
-    **kwargs
-):
-    if created:
-        return
-
-    opensearch = OpenSearchServiceConnection()
-    try:
-        response = opensearch.client.update(
-            index=OpenSearchIndexNames.MODERATION_EVENTS_INDEX,
-            id=str(instance.uuid),
-            body={
-                "doc": {
-                    "uuid": str(instance.uuid),
-                    "status": str(instance.status),
-                    "os": instance.os.id if instance.os else None
-                }
-            },
-        )
-    except ConnectionError:
-        log.error(
-            "[Moderation Event Updating] "
-            "Lost connection to OpenSearch cluster."
-        )
-        raise
-
-    if response and response.get('result') == 'not_found':
-        error_log_message = (
-            "[Moderation Event Updating] "
-            "ModerationEvent not found in OpenSearch, "
-            "indicating data inconsistency."
         )
         signal_error_notifier(error_log_message, response)

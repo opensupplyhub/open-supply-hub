@@ -592,7 +592,6 @@ export const makeProductionLocationDialogStyles = theme =>
         }),
         osIdStatusBadge: Object.freeze({
             backgroundColor: COLOURS.ACCENT_GREY,
-            marginLeft: '10px',
             fontWeight: theme.typography.fontWeightBold,
         }),
         osIdStatusBadgeIcon: Object.freeze({

@@ -355,7 +355,7 @@ export const searchByOsIdResultRoute =
 export const searchByNameAndAddressResultRoute =
     '/contribute/production-location/search/';
 export const productionLocationInfoRoute =
-    '/contribute/production-location/info';
+    '/contribute/production-location/info/:moderationID?';
 
 export const contributeFieldsEnum = Object.freeze({
     name: 'name',
