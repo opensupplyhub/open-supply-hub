@@ -271,6 +271,22 @@ export const makeGetProductionLocationsForPotentialMatches = (
     return `/api/v1/production-locations/?${params.toString()}/`;
 };
 
+export const makeGetProductionLocationsForSearchMatches = (
+    name,
+    address,
+    country,
+    fromIndex,
+) => {
+    const params = new URLSearchParams();
+
+    if (name) params.append('name', name);
+    if (address) params.append('address', address);
+    if (country) params.append('country', country);
+    if (fromIndex) params.append('size', fromIndex);
+
+    return `/api/v1/production-locations/?${params.toString()}`;
+};
+
 export const makeGetProductionLocationByOsIdURL = osID =>
     `/api/v1/production-locations/${osID}/`;
 

@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { arrayOf, bool, func, number, object } from 'prop-types';
+import { useLocation } from 'react-router-dom';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { withStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
@@ -9,6 +10,7 @@ import {
 } from '../../actions/contributeProductionLocation';
 import BackToSearchButton from './BackToSearchButton';
 import SearchByNameAndAddressNotFoundResult from './SearchByNameAndAddressNotFoundResult';
+
 import SearchByNameAndAddressSuccessResult from './SearchByNameAndAddressSuccessResult';
 import { contributeProductionLocationRoute } from '../../util/constants';
 import history from '../../util/history';
@@ -23,13 +25,20 @@ const SearchByNameAndAddressResult = ({
     clearLocations,
     classes,
 }) => {
+    const location = useLocation();
+    const [fromIndex, setFromIndex] = useState(10);
+
     useEffect(() => {
-        fetchLocations();
-    }, [fetchLocations]);
+        const searchParams = new URLSearchParams(location.search);
+        const name = searchParams.get('name');
+        const address = searchParams.get('address');
+        const country = searchParams.get('country');
+        fetchLocations({ name, address, country, fromIndex });
+    }, [location.search, fromIndex, fetchLocations]);
 
     const handleBackToSearchByNameAddress = () => {
         clearLocations();
-        history.push(`${contributeProductionLocationRoute}?tab=name-address`);
+        history.push(`${contributeProductionLocationRoute}?tab=name-address`); // here change
     };
 
     if (fetching) {
@@ -53,6 +62,7 @@ const SearchByNameAndAddressResult = ({
                     productionLocations={productionLocations}
                     productionLocationsCount={productionLocationsCount}
                     clearLocations={clearLocations}
+                    setFromIndex={setFromIndex}
                 />
             ) : (
                 <SearchByNameAndAddressNotFoundResult />
@@ -80,7 +90,7 @@ const mapStateToProps = ({
     fetching,
 });
 const mapDispatchToProps = dispatch => ({
-    fetchLocations: () => dispatch(fetchProductionLocations()),
+    fetchLocations: data => dispatch(fetchProductionLocations(data)),
     clearLocations: () => dispatch(resetProductionLocations()),
 });
 

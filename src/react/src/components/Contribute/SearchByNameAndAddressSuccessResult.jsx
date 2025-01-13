@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import { arrayOf, func, number, object } from 'prop-types';
 import Button from '@material-ui/core/Button';
 import { withStyles } from '@material-ui/core/styles';
@@ -7,15 +8,18 @@ import { makeSearchByNameAndAddressSuccessResultStyles } from '../../util/styles
 import { productionLocationPropType } from '../../util/propTypes';
 import ConfirmNotFoundLocationDialog from './ConfirmNotFoundLocationDialog';
 import ProductionLocationDetails from './ProductionLocationDetails';
+import { productionLocationInfoRoute } from '../../util/constants';
 
 const SearchByNameAndAddressSuccessResult = ({
     productionLocationsCount,
     productionLocations,
     clearLocations,
+    setFromIndex,
     classes,
 }) => {
     const [confirmDialogIsOpen, setConfirmDialogIsOpen] = useState(false);
     const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
+    const history = useHistory();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -31,7 +35,24 @@ const SearchByNameAndAddressSuccessResult = ({
         };
     }, []);
 
-    const handleSelectLocation = () => {};
+    useEffect(() => {
+        if (isScrolledToBottom) {
+            setFromIndex(productionLocations.length + 10);
+        }
+    }, [isScrolledToBottom]);
+
+    const handleSelectLocation = location => {
+        const { name, address, country } = location;
+        const baseUrl = productionLocationInfoRoute;
+        const params = new URLSearchParams({
+            name,
+            address,
+            country: country.alpha_2,
+        });
+        const url = `${baseUrl}?${params.toString()}`;
+
+        history.push(url);
+    };
 
     const handleNotFoundLocation = () => {
         setConfirmDialogIsOpen(true);
@@ -86,7 +107,7 @@ const SearchByNameAndAddressSuccessResult = ({
                             />
                             <Button
                                 variant="contained"
-                                onClick={handleSelectLocation}
+                                onClick={() => handleSelectLocation(location)}
                                 classes={{
                                     root: `${classes.buttonBaseStyles} ${classes.selectButtonStyles}`,
                                     label: classes.selectButtonLabelStyles,
@@ -127,6 +148,7 @@ SearchByNameAndAddressSuccessResult.propTypes = {
     productionLocationsCount: number.isRequired,
     productionLocations: arrayOf(productionLocationPropType).isRequired,
     clearLocations: func.isRequired,
+    setFromIndex: func.isRequired,
     classes: object.isRequired,
 };
 
