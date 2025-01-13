@@ -2,7 +2,7 @@
   "image": "${image_url}",
   "vcpus": 2,
   "memory": 2048,
-  "command": [ "./manage.py", "export_csv" ],
+  "command": [ "python", "manage.py", "export_csv" ],
   "environment": [
       { "name": "AWS_DEFAULT_REGION", "value": "${aws_region}" },
       { "name": "POSTGRES_HOST", "value": "${postgres_host}" },
