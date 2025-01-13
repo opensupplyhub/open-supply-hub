@@ -257,6 +257,7 @@ data "template_file" "export_csv_job_definition" {
     environment                      = var.environment
     # django_secret_key                = var.django_secret_key
     google_server_side_api_key       = var.google_server_side_api_key
+    oar_client_key                   = var.oar_client_key
 
     external_domain                  = local.domain_name
     batch_job_queue_name             = "queue${local.short}ExportCsv"
