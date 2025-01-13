@@ -4,7 +4,9 @@ import { useLocation, useParams } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import { bool, func, object } from 'prop-types';
 import { connect } from 'react-redux';
+import { ToastContainer, toast } from 'react-toastify';
 import isEmpty from 'lodash/isEmpty';
+import Backdrop from '@material-ui/core/Backdrop';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
@@ -169,6 +171,9 @@ const ProductionLocationInfo = ({
     const handleCountryChange = event => setInputCountry(event);
 
     const { moderationID } = useParams();
+
+    let toastId;
+
     useEffect(() => {
         if (moderationID) {
             fetchModerationEvent(moderationID);
@@ -199,20 +204,42 @@ const ProductionLocationInfo = ({
     // Trigger popup on success submit click
     // TODO: Add close button on modal window
     useEffect(() => {
-        const intervalId = setInterval(() => {
-            fetchModerationEvent(pendingModerationEvent?.data?.moderation_id);
-        }, 3000);
+        let intervalId;
+        if (pendingModerationEvent?.data?.moderation_id) {
+            console.log(
+                'singleModerationEventItem is: ',
+                singleModerationEventItem,
+            );
+            toastId = toast.info('Processing your request, please wait...', {
+                autoClose: false,
+                closeButton: false,
+            });
 
-        if (!isEmpty(singleModerationEventItem)) {
-            clearInterval(intervalId);
+            intervalId = setInterval(() => {
+                fetchModerationEvent(
+                    pendingModerationEvent?.data?.moderation_id,
+                );
+            }, 3000);
+
+            if (!isEmpty(singleModerationEventItem)) {
+                clearInterval(intervalId);
+                toast.dismiss(toastId);
+            }
+
+            return () => {
+                clearInterval(intervalId);
+                toast.dismiss(toastId);
+            };
         }
-
-        return () => clearInterval(intervalId);
+        return () => {};
     }, [pendingModerationEvent, singleModerationEventItem]);
 
     useEffect(() => {
         setShowProductionLocationDialog(true);
+        toast.dismiss(toastId);
     }, [singleModerationEventItem]);
+
+    // const { showBackdrop, setShowBackdrop } = useState(true);
 
     return (
         <>

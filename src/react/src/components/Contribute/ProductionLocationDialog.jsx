@@ -2,6 +2,7 @@
 import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import { useHistory } from 'react-router-dom';
+import { size, round } from 'lodash';
 import Button from '@material-ui/core/Button';
 import Chip from '@material-ui/core/Chip';
 import Typography from '@material-ui/core/Typography';
@@ -12,6 +13,7 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogActions from '@material-ui/core/DialogActions';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 import DialogTooltip from './DialogTooltip';
+import ProductionLocationDialogFields from './ProductionLocationDialogFields';
 import { mainRoute } from '../../util/constants';
 import { makeProductionLocationDialogStyles } from '../../util/styles';
 
@@ -34,19 +36,22 @@ const claimButton = classes => (
 const ProductionLocationDialog = ({ classes, data }) => {
     const history = useHistory();
 
-    console.log('@@@ data is ', data);
     const {
         status,
-        /* eslint-disable camelcase */
-        od_id,
+        od_id: osID,
         cleaned_data: {
             raw_json: {
                 name: productionLocationName,
                 address,
                 country: { name: countryName },
             },
+            fields,
         },
     } = data;
+
+    const fieldSetNumber = round(size(fields) / 2);
+
+    console.log('### fields: ', fields);
 
     return (
         <Dialog
@@ -95,19 +100,11 @@ const ProductionLocationDialog = ({ classes, data }) => {
                             <Typography className={classes.primaryText}>
                                 {address || 'N/A'}
                             </Typography>
-                            <Typography className={classes.label}>
-                                Location type
-                            </Typography>
-                            <Typography className={classes.primaryText}>
-                                Textile or Material Production March 23, 2022 by
-                                The WikiRate Project 7 more contributions
-                            </Typography>
-                            <Typography className={classes.label}>
-                                Number of workers
-                            </Typography>
-                            <Typography className={classes.primaryText}>
-                                1,000 - 5,000
-                            </Typography>
+                            <ProductionLocationDialogFields
+                                fields={fields}
+                                startTo={fieldSetNumber}
+                                classes={classes}
+                            />
                         </Grid>
                         <Grid
                             item
@@ -118,52 +115,46 @@ const ProductionLocationDialog = ({ classes, data }) => {
                             <Typography className={classes.label}>
                                 OS ID
                             </Typography>
-                            <Grid container className={classes.primaryText}>
-                                <Grid item>
-                                    <Typography className={classes.osIDText}>
-                                        US20243236AZ1R0
-                                    </Typography>
-                                </Grid>
-                                <Grid item>
-                                    <Chip
-                                        label="Pending"
-                                        onDelete={() => {}}
-                                        className={classes.osIdStatusBadge}
-                                        deleteIcon={
-                                            <DialogTooltip
-                                                text="Your submission is under
+                            {osID ? (
+                                <Typography className={classes.osIDText}>
+                                    {osID}
+                                </Typography>
+                            ) : (
+                                <Grid container className={classes.primaryText}>
+                                    <Grid item>
+                                        <Chip
+                                            label="Pending"
+                                            onDelete={() => {}}
+                                            className={classes.osIdStatusBadge}
+                                            deleteIcon={
+                                                <DialogTooltip
+                                                    text="Your submission is under
                                                         review. You will receive a
                                                         notification once the
                                                         production location is live
                                                         on OS Hub. You can proceed
                                                         to submit a claim while your
                                                         request is pending."
-                                                childComponent={infoIcon(
-                                                    classes,
-                                                )}
-                                            />
-                                        }
-                                    />
+                                                    childComponent={infoIcon(
+                                                        classes,
+                                                    )}
+                                                />
+                                            }
+                                        />
+                                    </Grid>
                                 </Grid>
-                            </Grid>
+                            )}
                             <Typography className={classes.label}>
-                                Product type
+                                Country
                             </Typography>
                             <Typography className={classes.primaryText}>
-                                Blouses Shirts
+                                {countryName || 'N/A'}
                             </Typography>
-                            <Typography className={classes.label}>
-                                Processing type
-                            </Typography>
-                            <Typography className={classes.primaryText}>
-                                Textile or Material Production
-                            </Typography>
-                            <Typography className={classes.label}>
-                                Parent company
-                            </Typography>
-                            <Typography className={classes.primaryText}>
-                                Unifill Composite Dyeing Mills Ltd.
-                            </Typography>
+                            <ProductionLocationDialogFields
+                                fields={fields}
+                                startFrom={fieldSetNumber}
+                                classes={classes}
+                            />
                         </Grid>
                     </Grid>
                 </DialogContent>
