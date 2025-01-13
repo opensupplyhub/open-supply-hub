@@ -11,6 +11,7 @@
       { "name": "POSTGRES_PASSWORD", "value": "${postgres_password}" },
       { "name": "POSTGRES_DB", "value": "${postgres_db}" },
       { "name": "DJANGO_ENV", "value": "${environment}" },
+      { "name": "EXTERNAL_DOMAIN", "value": "${external_domain}" },
       { "name": "BATCH_JOB_QUEUE_NAME", "value": "${batch_job_queue_name}" },
       { "name": "BATCH_JOB_DEF_NAME", "value": "${batch_job_def_name}" },
       { "name": "BATCH_MODE", "value": "True" },
