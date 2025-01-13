@@ -401,7 +401,7 @@ variable "batch_notifications_ce_desired_vcpus" {
 }
 
 variable "batch_export_csv_ce_desired_vcpus" {
-  default = "2"
+  default = "0"
 }
 
 variable "batch_notifications_ce_max_vcpus" {
