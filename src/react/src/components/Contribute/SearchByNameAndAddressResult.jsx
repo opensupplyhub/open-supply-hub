@@ -10,6 +10,7 @@ import {
 } from '../../actions/contributeProductionLocation';
 import BackToSearchButton from './BackToSearchButton';
 import SearchByNameAndAddressNotFoundResult from './SearchByNameAndAddressNotFoundResult';
+
 import SearchByNameAndAddressSuccessResult from './SearchByNameAndAddressSuccessResult';
 import { contributeProductionLocationRoute } from '../../util/constants';
 import history from '../../util/history';
@@ -37,7 +38,7 @@ const SearchByNameAndAddressResult = ({
 
     const handleBackToSearchByNameAddress = () => {
         clearLocations();
-        history.push(`${contributeProductionLocationRoute}?tab=name-address`);
+        history.push(`${contributeProductionLocationRoute}?tab=name-address`); // here change
     };
 
     if (fetching) {

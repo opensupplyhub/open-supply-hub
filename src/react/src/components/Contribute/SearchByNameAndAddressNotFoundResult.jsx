@@ -3,7 +3,10 @@ import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import { object } from 'prop-types';
-import { contributeProductionLocationRoute } from '../../util/constants';
+import {
+    contributeProductionLocationRoute,
+    productionLocationInfoRoute,
+} from '../../util/constants';
 import history from '../../util/history';
 import { makeSearchByNameAndAddressNotFoundResultStyles } from '../../util/styles';
 
@@ -11,8 +14,6 @@ const SearchByNameAndAddressNotFoundResult = ({ classes }) => {
     const handleSearchAgain = () => {
         history.push(`${contributeProductionLocationRoute}?tab=name-address`);
     };
-
-    const handleAddNewLocation = () => {};
 
     return (
         <div className={classes.contentWrapperStyles}>
@@ -44,7 +45,7 @@ const SearchByNameAndAddressNotFoundResult = ({ classes }) => {
                         root: `${classes.buttonBaseStyles} ${classes.addLocationButtonStyles}`,
                         label: classes.buttonLabelStyles,
                     }}
-                    onClick={handleAddNewLocation}
+                    onClick={() => history.push(productionLocationInfoRoute)}
                 >
                     Add a new Location
                 </Button>
