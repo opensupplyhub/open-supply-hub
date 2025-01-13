@@ -15,6 +15,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Scheme changes
 
 ### Code/API changes
+* [OSDEV-1523](https://opensupplyhub.atlassian.net/browse/OSDEV-1523) - Updated `export_csv.py` to enable uploading to Google Drive and implemented cursor-based pagination for the export.
 
 ### Architecture/Environment changes
 
@@ -42,7 +43,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
-
 
 ## Release 1.27.0
 
