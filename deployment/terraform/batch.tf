@@ -255,6 +255,7 @@ data "template_file" "export_csv_job_definition" {
     postgres_password                = var.rds_database_password
     postgres_db                      = var.rds_database_name
     environment                      = var.environment
+    external_domain                  = local.domain_name
     batch_job_queue_name             = "queue${local.short}ExportCsv"
     batch_job_def_name               = "job${local.short}ExportCsv"
     log_group_name                   = "log${local.short}Batch"
