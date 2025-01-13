@@ -114,6 +114,18 @@ variable "rds_auto_minor_version_upgrade" {
   default = true
 }
 
+variable "allow_major_version_upgrade" {
+  default     = false
+  type        = bool
+  description = "Indicates that major PostgreSQL engine version upgrades are allowed."
+}
+
+variable "apply_immediately" {
+  default     = false
+  type        = bool
+  description = "Specifies whether any database modifications are applied immediately, or during the next maintenance window."
+}
+
 variable "rds_final_snapshot_identifier" {
   default = "osh-rds-snapshot"
 }
