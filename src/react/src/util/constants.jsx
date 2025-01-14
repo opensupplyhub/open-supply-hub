@@ -354,8 +354,10 @@ export const searchByOsIdResultRoute =
     '/contribute/production-location/search/id/:osID';
 export const searchByNameAndAddressResultRoute =
     '/contribute/production-location/search/';
-export const productionLocationInfoRoute =
+export const productionLocationInfoRouteCreate =
     '/contribute/production-location/info/:moderationID?';
+export const productionLocationInfoRouteUpdate =
+    '/contribute/production-location/:osID/info/:moderationID?';
 
 export const contributeFieldsEnum = Object.freeze({
     name: 'name',

@@ -1,12 +1,11 @@
 /* eslint no-unused-vars: 0 */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
-import { bool, func, object } from 'prop-types';
+import { func, object } from 'prop-types';
 import { connect } from 'react-redux';
-import { ToastContainer, toast } from 'react-toastify';
-import isEmpty from 'lodash/isEmpty';
-import Backdrop from '@material-ui/core/Backdrop';
+import { toast } from 'react-toastify';
+import { isEmpty } from 'lodash';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
@@ -48,6 +47,7 @@ import ProductionLocationDialog from './ProductionLocationDialog';
 // TODO: If production location exists, the URL should look like:
 // http://localhost:6543/contribute/production-location/info/{OS_ID}
 const ProductionLocationInfo = ({
+    submitMethod,
     classes,
     countriesOptions,
     fetchCountries,
@@ -64,6 +64,7 @@ const ProductionLocationInfo = ({
     singleModerationEventItem,
 }) => {
     const location = useLocation();
+
     const queryParams = new URLSearchParams(location.search);
     const nameInQuery = queryParams.get('name');
     const addressInQuery = queryParams.get('address');
@@ -171,14 +172,21 @@ const ProductionLocationInfo = ({
     const handleCountryChange = event => setInputCountry(event);
 
     const { moderationID } = useParams();
-
-    let toastId;
-
+    const prevModerationIDRef = useRef();
     useEffect(() => {
-        if (moderationID) {
-            fetchModerationEvent(moderationID);
+        if (prevModerationIDRef.current !== moderationID) {
+            if (isEmpty(singleModerationEventItem)) {
+                console.log('Moderation ID has changed');
+                console.log(
+                    'Previous Moderation ID:',
+                    prevModerationIDRef.current,
+                );
+                console.log('Current Moderation ID:', moderationID);
+                fetchModerationEvent(moderationID);
+            }
         }
-    }, []);
+        prevModerationIDRef.current = moderationID;
+    }, [moderationID, singleModerationEventItem]);
 
     useEffect(() => {
         if (!countriesOptions) {
@@ -203,13 +211,17 @@ const ProductionLocationInfo = ({
 
     useEffect(() => {
         if (pendingModerationEvent?.data?.cleaned_data) {
-            toastId = toast('Your contribution has been added successfully!');
+            toast('Your contribution has been added successfully!');
+            if (pendingModerationEvent.data?.moderation_id) {
+                history.push(
+                    `${location.pathname}/${pendingModerationEvent.data.moderation_id}`,
+                );
+            }
         }
     }, [pendingModerationEvent]);
 
     useEffect(() => {
         setShowProductionLocationDialog(true);
-        toast.dismiss(toastId);
     }, [singleModerationEventItem]);
 
     return (

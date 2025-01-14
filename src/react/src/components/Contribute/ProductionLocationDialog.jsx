@@ -40,17 +40,11 @@ const ProductionLocationDialog = ({ classes, data }) => {
     const osID = null;
 
     const {
-        raw_json: {
-            name: productionLocationName,
-            address,
-            country: { name: countryName },
-        },
+        raw_json: { name: productionLocationName, address },
         fields,
     } = data;
 
     const fieldSetNumber = round(size(fields) / 2);
-
-    console.log('### fields: ', fields);
 
     return (
         <Dialog
@@ -143,12 +137,6 @@ const ProductionLocationDialog = ({ classes, data }) => {
                                     </Grid>
                                 </Grid>
                             )}
-                            <Typography className={classes.label}>
-                                Country
-                            </Typography>
-                            <Typography className={classes.primaryText}>
-                                {countryName || 'N/A'}
-                            </Typography>
                             <ProductionLocationDialogFields
                                 fields={fields}
                                 startFrom={fieldSetNumber}

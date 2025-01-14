@@ -34,6 +34,7 @@ import ContributeProductionLocation from './components/Contribute/ContributeProd
 import SearchByOsIdResult from './components/Contribute/SearchByOsIdResult';
 import SearchByNameAndAddressResult from './components/Contribute/SearchByNameAndAddressResult';
 import ProductionLocationInfo from './components/Contribute/ProductionLocationInfo';
+import withProductionLocationSubmit from './components/Contribute/HOC/withProductionLocationSubmit';
 
 import { sessionLogin } from './actions/auth';
 import { fetchFeatureFlags } from './actions/featureFlags';
@@ -62,7 +63,8 @@ import {
     contributeProductionLocationRoute,
     searchByOsIdResultRoute,
     searchByNameAndAddressResultRoute,
-    productionLocationInfoRoute,
+    productionLocationInfoRouteCreate,
+    productionLocationInfoRouteUpdate,
 } from './util/constants';
 
 class Routes extends Component {
@@ -188,11 +190,22 @@ class Routes extends Component {
                                     path={searchByNameAndAddressResultRoute}
                                     component={SearchByNameAndAddressResult}
                                 />
-                                <Route
-                                    exact
-                                    path={productionLocationInfoRoute}
-                                    component={ProductionLocationInfo}
-                                />
+                                <Switch>
+                                    <Route
+                                        exact
+                                        path={productionLocationInfoRouteUpdate}
+                                        component={withProductionLocationSubmit(
+                                            ProductionLocationInfo,
+                                        )}
+                                    />
+                                    <Route
+                                        exact
+                                        path={productionLocationInfoRouteCreate}
+                                        component={withProductionLocationSubmit(
+                                            ProductionLocationInfo,
+                                        )}
+                                    />
+                                </Switch>
                                 <Route exact path="/about/processing">
                                     <ExternalRedirect
                                         to={`${InfoLink}/${InfoPaths.dataQuality}`}

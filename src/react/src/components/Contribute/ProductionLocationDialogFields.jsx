@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { map, toPairs, slice } from 'lodash';
+import { map, toPairs, slice, isEmpty } from 'lodash';
 import Typography from '@material-ui/core/Typography';
 
 const ProductionLocationDialogFields = ({
@@ -14,6 +14,9 @@ const ProductionLocationDialogFields = ({
         key.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
 
     const renderValue = value => {
+        if (isEmpty(value)) {
+            return 'N/A';
+        }
         if (Array.isArray(value)) {
             return value.join(', ');
         }
