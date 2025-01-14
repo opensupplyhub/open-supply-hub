@@ -1,7 +1,7 @@
 module "database_anonymizer" {
   count = var.database_anonymizer_enabled == true ? 1 : 0
 
-  source = "./database_anonymizer_sheduled_task"
+  source = "./database_anonymizer_scheduled_task"
 
   rds_database_identifier       = var.rds_database_identifier
   rds_database_name             = var.rds_database_name

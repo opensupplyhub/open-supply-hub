@@ -76,7 +76,7 @@ resource "aws_db_parameter_group" "default" {
 }
 
 module "database_enc" {
-  source = "github.com/opensupplyhub/terraform-aws-postgresql-rds?ref=OSDEV-1514-add-infrastructure-to-allow-major-version-upgrade"
+  source = "github.com/opensupplyhub/terraform-aws-postgresql-rds?ref=3.0.3"
 
   vpc_id                      = module.vpc.id
   allocated_storage           = var.rds_allocated_storage
@@ -91,8 +91,8 @@ module "database_enc" {
   backup_window               = var.rds_backup_window
   maintenance_window          = var.rds_maintenance_window
   auto_minor_version_upgrade  = var.rds_auto_minor_version_upgrade
-  allow_major_version_upgrade = var.allow_major_version_upgrade
-  apply_immediately           = var.apply_immediately
+  allow_major_version_upgrade = var.rds_allow_major_version_upgrade
+  apply_immediately           = var.rds_apply_immediately
   final_snapshot_identifier   = join("-", [var.rds_final_snapshot_identifier, formatdate("YYYYMMDDhhmmss", timestamp())])
   skip_final_snapshot         = var.rds_skip_final_snapshot
   copy_tags_to_snapshot       = var.rds_copy_tags_to_snapshot

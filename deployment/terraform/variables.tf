@@ -70,11 +70,11 @@ variable "rds_allocated_storage" {
 }
 
 variable "rds_engine_version" {
-  default = "12.4"
+  default = "13"
 }
 
 variable "rds_parameter_group_family" {
-  default = "postgres12"
+  default = "postgres13"
 }
 
 variable "rds_instance_type" {
@@ -114,13 +114,13 @@ variable "rds_auto_minor_version_upgrade" {
   default = true
 }
 
-variable "allow_major_version_upgrade" {
+variable "rds_allow_major_version_upgrade" {
   default     = false
   type        = bool
   description = "Indicates that major PostgreSQL engine version upgrades are allowed."
 }
 
-variable "apply_immediately" {
+variable "rds_apply_immediately" {
   default     = false
   type        = bool
   description = "Specifies whether any database modifications are applied immediately, or during the next maintenance window."

@@ -21,8 +21,8 @@ rds_database_identifier = "opensupplyhub-enc-tst"
 rds_database_name = "opensupplyhub"
 rds_multi_az = false
 rds_storage_encrypted = true
-allow_major_version_upgrade = true
-apply_immediately = true
+rds_allow_major_version_upgrade = true
+rds_apply_immediately = true
 
 anonymized_database_instance_type = "db.t3.2xlarge"
 anonymized_database_identifier = "database-anonymizer"
