@@ -36,17 +36,16 @@ const claimButton = classes => (
 const ProductionLocationDialog = ({ classes, data }) => {
     const history = useHistory();
 
+    // You can obtain OS id only when query specific moderation id
+    const osID = null;
+
     const {
-        status,
-        od_id: osID,
-        cleaned_data: {
-            raw_json: {
-                name: productionLocationName,
-                address,
-                country: { name: countryName },
-            },
-            fields,
+        raw_json: {
+            name: productionLocationName,
+            address,
+            country: { name: countryName },
         },
+        fields,
     } = data;
 
     const fieldSetNumber = round(size(fields) / 2);

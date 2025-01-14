@@ -201,45 +201,16 @@ const ProductionLocationInfo = ({
         }
     }, [facilityProcessingTypeOptions, fetchFacilityProcessingType]);
 
-    // Trigger popup on success submit click
-    // TODO: Add close button on modal window
     useEffect(() => {
-        let intervalId;
-        if (pendingModerationEvent?.data?.moderation_id) {
-            console.log(
-                'singleModerationEventItem is: ',
-                singleModerationEventItem,
-            );
-            toastId = toast.info('Processing your request, please wait...', {
-                autoClose: false,
-                closeButton: false,
-            });
-
-            intervalId = setInterval(() => {
-                fetchModerationEvent(
-                    pendingModerationEvent?.data?.moderation_id,
-                );
-            }, 3000);
-
-            if (!isEmpty(singleModerationEventItem)) {
-                clearInterval(intervalId);
-                toast.dismiss(toastId);
-            }
-
-            return () => {
-                clearInterval(intervalId);
-                toast.dismiss(toastId);
-            };
+        if (pendingModerationEvent?.data?.cleaned_data) {
+            toastId = toast('Your contribution has been added successfully!');
         }
-        return () => {};
-    }, [pendingModerationEvent, singleModerationEventItem]);
+    }, [pendingModerationEvent]);
 
     useEffect(() => {
         setShowProductionLocationDialog(true);
         toast.dismiss(toastId);
     }, [singleModerationEventItem]);
-
-    // const { showBackdrop, setShowBackdrop } = useState(true);
 
     return (
         <>
@@ -652,8 +623,10 @@ const ProductionLocationInfo = ({
                 </Paper>
             </div>
             {showProductionLocationDialog &&
-            !isEmpty(singleModerationEventItem) ? (
-                <ProductionLocationDialog data={singleModerationEventItem} />
+            pendingModerationEvent?.data?.cleaned_data ? (
+                <ProductionLocationDialog
+                    data={pendingModerationEvent.data.cleaned_data}
+                />
             ) : null}
         </>
     );

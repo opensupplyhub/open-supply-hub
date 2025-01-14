@@ -79,38 +79,6 @@ export function createProductionLocation(contribData) {
         parentCompany,
     } = contribData;
 
-    /*
-    {
-        "source": "API",
-        "name": "string",
-        "address": "string",
-        "country": "string",
-        "sector": [
-            "string"
-        ],
-        "parent_company": "string",
-        "product_type": [
-            "string"
-        ],
-        "location_type": [
-            "string"
-        ],
-        "processing_type": [
-            "string"
-        ],
-        "number_of_workers": {
-            "min": 0,
-            "max": 0
-        },
-        "coordinates": {
-            "lat": 0,
-            "lng": 0
-        }
-    }
-    */
-
-    console.log('@@@ contribData: ', contribData);
-
     const parsedContribData = {
         source: DATA_SOURCES_ENUM.SLC,
         name,
@@ -139,14 +107,6 @@ export function createProductionLocation(contribData) {
                 makeGetProductionLocationURL(),
                 parsedContribData,
             );
-            /*
-            {
-                created_at: "2024-12-27T12:51:52.729339Z"
-                moderation_id: "c98cb4c4-6c91-4a7b-8844-858802049e0a"
-                moderation_status: "PENDING"
-            }
-            */
-            console.log('@@@ response data is: ', data);
             return dispatch(completeCreateProductionLocation(data));
         } catch (err) {
             return dispatch(
