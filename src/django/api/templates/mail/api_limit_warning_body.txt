@@ -1,13 +1,13 @@
 {% block content %}
-Hi there,
+Hello,
 
-We’re writing to notify you that you have used 90% of your OS Hub API allowance.
+We’re writing to notify you that you have used 90% of your Open Supply Hub (OS Hub) API allowance.
 To increase your allowance, please complete this short form
 (https://docs.google.com/forms/d/e/1FAIpQLSdJax3sVHw1IeDkBs0tmfQonWaX8SiR9UYlqXUfk0rLH73Y3w/viewform)
 letting us know which new package you would like to purchase and a member of
 the OS Hub Team will be in touch to arrange payment and access.
 
-Best wishes,
+Best Regards,
 
 {% include "mail/signature_block.txt" %}
 {% endblock content %}
