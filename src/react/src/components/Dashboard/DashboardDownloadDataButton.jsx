@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { arrayOf, string, func, bool } from 'prop-types';
 import { toast } from 'react-toastify';
 import DownloadExcelButton from './DownloadExcelButton';
-import { moderationEventsPropType } from '../../util/propTypes';
+import { moderationEventsListPropType } from '../../util/propTypes';
 
 const DashboardDownloadDataButton = ({
     fetching,
@@ -34,7 +34,7 @@ DashboardDownloadDataButton.defaultProps = {
 
 DashboardDownloadDataButton.propTypes = {
     fetching: bool.isRequired,
-    downloadPayload: moderationEventsPropType.isRequired,
+    downloadPayload: moderationEventsListPropType.isRequired,
     downloadData: func.isRequired,
     downloadError: arrayOf(string),
 };

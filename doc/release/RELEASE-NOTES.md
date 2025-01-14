@@ -3,11 +3,52 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.28.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: January 25, 2025
+
+### Database changes
+#### Migrations:
+
+#### Scheme changes
+
+### Code/API changes
+
+### Architecture/Environment changes
+
+### Bugfix
+
+### What's new
+* [OSDEV-40](https://opensupplyhub.atlassian.net/browse/OSDEV-40) - Created new page for `/contribute` to choose between multiple & single location upload. Replaced current multiple list upload to `/contribute/multiple-locations`. Changed `Upload Data` to `Add Data` text.
+* [OSDEV-1117](https://opensupplyhub.atlassian.net/browse/OSDEV-1117) - Implemented integration of Contribution Record Page (`/dashboard/moderation-queue/contribution-record/{moderation_id}`):
+    - Connected GET `api/v1/moderation-events/{moderation_id}/`.
+    - Connected GET `api/v1/production-locations?name={productionLocationName}&country={countryCode}&address={address}` to get potential matches using OpenSearch engine.
+    - Connected PATCH `/v1/moderation-events/{moderation_id}/` (for Reject button).
+    - Connected POST `/v1/moderation-events/{moderation_id}/production-locations/` (for Create New Location button).
+    - Connected PATCH `/v1/moderation-events/{moderation_id}/production-locations/{os_id}/` (for Confirm potential match button).
+    - UI improvements: 
+        - Added a toast component to display notifications during moderation event updates.
+        - Introduced a backdrop to prevent accidental clicks on other buttons during the update process.
+    - Applied Django Signal for moderation-events OpenSearch index.
+* [OSDEV-1524](https://opensupplyhub.atlassian.net/browse/OSDEV-1524) - Updated salutations in automated emails to ensure a consistent and professional experience of communication from OS Hub.
+* [OSDEV-1129](https://opensupplyhub.atlassian.net/browse/OSDEV-1129) - The UI for the results page for name and address search was implemented. It includes the following screens:
+    * Successful Search: If the search is successful, the results screen displays a list of production locations. Each item includes the following information about the production location: name, OS ID, address, and country name. Users can either select a specific production location or press the "I don’t see my Location" button, which triggers a confirmation dialog window.
+    * Confirmation Dialog Window: In this window, users can confirm that no correct location was found using the provided search parameters. They can either proceed to create a new production location or return to the search.
+    * Unsuccessful Search: If the search is unsuccessful, an explanation is provided along with two options: return to the search or add a new production location.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 1.27.0
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: December 28, 2024
+* Release date: January 11, 2025
 
 ### Database changes
 #### Migrations:

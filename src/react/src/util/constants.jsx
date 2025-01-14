@@ -320,6 +320,7 @@ export const authRegisterFormRoute = '/auth/register';
 export const authResetPasswordFormRoute = '/auth/resetpassword/:uid';
 export const authConfirmRegistrationRoute = '/auth/confirm/:uid';
 export const contributeRoute = '/contribute';
+export const multipleLocationRoute = '/contribute/multiple-locations';
 export const listsRoute = '/lists';
 export const facilityListItemsRoute = '/lists/:listID';
 export const facilitiesRoute = '/facilities';
@@ -334,7 +335,7 @@ export const dashboardApiBlockRoute = '/dashboard/apiblocks/:blockId';
 export const dashboardClaimsRoute = '/dashboard/claims';
 export const dashboardModerationQueueRoute = '/dashboard/moderation-queue';
 export const dashboardContributionRecordRoute =
-    '/dashboard/moderation-queue/contribution-record/:moderationID';
+    '/dashboard/moderation-queue/:moderationID';
 export const dashboardDeleteFacilityRoute = '/dashboard/deletefacility';
 export const dashboardMergeFacilitiesRoute = '/dashboard/mergefacilities';
 export const dashboardAdjustFacilityMatchesRoute =
@@ -348,9 +349,11 @@ export const claimedFacilitiesRoute = '/claimed';
 export const claimedFacilitiesDetailRoute = '/claimed/:claimID';
 export const dashboardClaimsDetailsRoute = '/dashboard/claims/:claimID';
 export const aboutClaimedFacilitiesRoute = `${InfoLink}/${InfoPaths.claimedFacilities}`;
-export const contributeProductionLocationRoute =
-    '/contribute/production-location';
-export const searchByOsIdResultRoute = '/contribute/production-location/search';
+export const contributeProductionLocationRoute = '/contribute/single-location';
+export const searchByOsIdResultRoute =
+    '/contribute/production-location/search/id/:osID';
+export const searchByNameAndAddressResultRoute =
+    '/contribute/production-location/search/';
 export const productionLocationInfoRoute =
     '/contribute/production-location/info';
 
@@ -906,7 +909,7 @@ export const NavbarItems = [
     { type: 'auth' },
     {
         type: 'button',
-        label: 'Upload Data',
+        label: 'Add Data',
         href: '/contribute',
         internal: true,
     },
