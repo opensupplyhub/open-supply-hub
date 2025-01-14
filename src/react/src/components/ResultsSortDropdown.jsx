@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { string, func, shape, oneOfType, node } from 'prop-types';
 import { withRouter } from 'react-router';
 import { connect } from 'react-redux';
@@ -55,7 +55,7 @@ const resultsSortDropdownStyles = theme =>
     });
 
 const ResultsSortDropdown = ({ classes, sortAlgorithm, updateSort }) => {
-    React.useEffect(() => {
+    useEffect(() => {
         if (!sortAlgorithm) {
             updateSort(optionsForSortingResults[DEFAULT_SORT_OPTION_INDEX]);
         }
