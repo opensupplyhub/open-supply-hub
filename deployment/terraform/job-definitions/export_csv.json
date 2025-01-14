@@ -1,7 +1,7 @@
 {
   "image": "${image_url}",
   "vcpus": 2,
-  "memory": 2048,
+  "memory": 4096,
   "command": [ "python", "manage.py", "export_csv" ],
   "environment": [
       { "name": "AWS_DEFAULT_REGION", "value": "${aws_region}" },
