@@ -350,7 +350,7 @@ variable "batch_notifications_ce_spot_fleet_bid_percentage" {
 }
 
 variable "batch_export_csv_ce_spot_fleet_bid_percentage" {
-  default = "40"
+  default = "60"
 }
 
 variable "batch_ami_id" {
