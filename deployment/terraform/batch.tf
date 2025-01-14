@@ -280,6 +280,74 @@ resource "aws_batch_job_definition" "export_csv" {
   }
 }
 
+# This section creates schedules for the export_csv job
+resource "aws_cloudwatch_event_rule" "export_csv_schedule" {
+  # count               = var.environment == "production" ? 1 : 0
+  name                = "cwOpenSupplyHubExportCsvScheduler"
+  description         = "Runs the export_csv job on a schedule"
+  schedule_expression = var.export_csv_schedule_expression
+}
+
+resource "aws_cloudwatch_event_target" "export_csv" {
+  # count     = var.environment == "production" ? 1 : 0
+  rule      = aws_cloudwatch_event_rule.export_csv_schedule.name
+  arn       = aws_batch_job_queue.export_csv.arn
+  role_arn  = aws_iam_role.container_instance_batch.arn
+
+  batch_target {
+    job_definition = aws_batch_job_definition.export_csv.arn
+    job_name       = "job${local.short}ExportCsv"
+  }
+}
+
+resource "aws_iam_role" "cloudwatch_events_batch_role" {
+  name = "evb${local.short}CloudWatchEventsBatchRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "events.amazonaws.com"
+        }
+      },
+    ]
+  })
+}
+
+data "aws_iam_policy_document" "cloudwatch_events_batch_assume_role" {
+  statement {
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["events.amazonaws.com"]
+    }
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role_policy" "cloudwatch_events_batch_role_policy" {
+  name   = "evb${local.short}CloudWatchEventsBatchRolePolicy"
+  role   = aws_iam_role.cloudwatch_events_batch_role.id
+  policy = data.aws_iam_policy_document.cloudwatch_events_batch_policy.json
+}
+
+data "aws_iam_policy_document" "cloudwatch_events_batch_policy" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "batch:SubmitJob",
+      "batch:DescribeJobDefinitions",
+      "batch:DescribeJobQueues",
+      "batch:DescribeJobs",
+    ]
+    resources = ["*"]
+  }
+}
+
+
 # # Schedule the export_csv job
 # resource "aws_iam_role" "export_csv_scheduler_role" {
 #   name = "evb${local.short}ExportCsvSchedulerExecutionRole"
