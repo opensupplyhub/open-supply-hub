@@ -176,12 +176,6 @@ const ProductionLocationInfo = ({
     useEffect(() => {
         if (prevModerationIDRef.current !== moderationID) {
             if (isEmpty(singleModerationEventItem)) {
-                console.log('Moderation ID has changed');
-                console.log(
-                    'Previous Moderation ID:',
-                    prevModerationIDRef.current,
-                );
-                console.log('Current Moderation ID:', moderationID);
                 fetchModerationEvent(moderationID);
             }
         }
@@ -221,8 +215,16 @@ const ProductionLocationInfo = ({
     }, [pendingModerationEvent]);
 
     useEffect(() => {
+        console.log(
+            '~~~ singleModerationEventItem?.cleaned_data: ',
+            singleModerationEventItem?.cleaned_data,
+        );
+        console.log(
+            '#### pendingModerationEvent?.data?.cleaned_data',
+            pendingModerationEvent?.data?.cleaned_data,
+        );
         setShowProductionLocationDialog(true);
-    }, [singleModerationEventItem]);
+    }, [singleModerationEventItem, pendingModerationEvent]);
 
     return (
         <>
@@ -637,7 +639,7 @@ const ProductionLocationInfo = ({
             {showProductionLocationDialog &&
             pendingModerationEvent?.data?.cleaned_data ? (
                 <ProductionLocationDialog
-                    data={pendingModerationEvent.data.cleaned_data}
+                    data={pendingModerationEvent?.data?.cleaned_data}
                 />
             ) : null}
         </>

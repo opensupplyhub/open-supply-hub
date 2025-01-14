@@ -1,3 +1,4 @@
+/* eslint no-unused-vars: 0 */
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { bool, func } from 'prop-types';
@@ -66,6 +67,14 @@ import {
     productionLocationInfoRouteCreate,
     productionLocationInfoRouteUpdate,
 } from './util/constants';
+
+// Pre-wrapping components outside of Routes to prevent redundant re-renders on component mount
+const WrappedProductionLocationInfoUpdate = withProductionLocationSubmit(
+    ProductionLocationInfo,
+);
+const WrappedProductionLocationInfoCreate = withProductionLocationSubmit(
+    ProductionLocationInfo,
+);
 
 class Routes extends Component {
     componentDidMount() {
@@ -190,22 +199,20 @@ class Routes extends Component {
                                     path={searchByNameAndAddressResultRoute}
                                     component={SearchByNameAndAddressResult}
                                 />
-                                <Switch>
-                                    <Route
-                                        exact
-                                        path={productionLocationInfoRouteUpdate}
-                                        component={withProductionLocationSubmit(
-                                            ProductionLocationInfo,
-                                        )}
-                                    />
-                                    <Route
-                                        exact
-                                        path={productionLocationInfoRouteCreate}
-                                        component={withProductionLocationSubmit(
-                                            ProductionLocationInfo,
-                                        )}
-                                    />
-                                </Switch>
+                                <Route
+                                    exact
+                                    path={productionLocationInfoRouteUpdate}
+                                    component={
+                                        WrappedProductionLocationInfoUpdate
+                                    }
+                                />
+                                <Route
+                                    exact
+                                    path={productionLocationInfoRouteCreate}
+                                    component={
+                                        WrappedProductionLocationInfoCreate
+                                    }
+                                />
                                 <Route exact path="/about/processing">
                                     <ExternalRedirect
                                         to={`${InfoLink}/${InfoPaths.dataQuality}`}
