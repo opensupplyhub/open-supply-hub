@@ -668,8 +668,7 @@ variable "anonymized_database_password" {
 
 variable "export_csv_schedule_expression" {
   type        = string
-  # default     = "cron(0 0 1 * ? *)"
-  default     = "rate(2 minutes)"
+  default     = "cron(0 0 1 * ? *)"
   description = "The schedule expression for the export csv job"
 }
 
