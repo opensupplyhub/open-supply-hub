@@ -282,14 +282,14 @@ resource "aws_batch_job_definition" "export_csv" {
 
 # This section creates schedules for the export_csv job
 resource "aws_cloudwatch_event_rule" "export_csv_schedule" {
-  # count               = var.environment == "production" ? 1 : 0
+  count               = var.environment == "Development" ? 1 : 0
   name                = "cwOpenSupplyHubExportCsvScheduler"
   description         = "Runs the export_csv job on a schedule"
   schedule_expression = var.export_csv_schedule_expression
 }
 
 resource "aws_cloudwatch_event_target" "export_csv" {
-  # count     = var.environment == "production" ? 1 : 0
+  count     = var.environment == "Development" ? 1 : 0
   rule      = aws_cloudwatch_event_rule.export_csv_schedule.name
   arn       = aws_batch_job_queue.export_csv.arn
   role_arn  = aws_iam_role.container_instance_batch.arn
