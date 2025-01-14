@@ -257,8 +257,33 @@ export const makeContributorEmbedConfigURL = contributorId =>
     `/api/contributor-embed-configs/${contributorId}/`;
 export const makeNonStandardFieldsURL = () => '/api/nonstandard-fields/';
 
+export const makeGetProductionLocationsForPotentialMatches = (
+    productionLocationName,
+    countryCode,
+    address,
+) => {
+    const params = new URLSearchParams();
+
+    if (productionLocationName) params.append('name', productionLocationName);
+    if (countryCode) params.append('country', countryCode);
+    if (address) params.append('address', address);
+
+    return `/api/v1/production-locations/?${params.toString()}/`;
+};
+
 export const makeGetProductionLocationByOsIdURL = osID =>
     `/api/v1/production-locations/${osID}/`;
+
+export const makeModerationEventRecordURL = moderationID =>
+    `/api/v1/moderation-events/${moderationID}/`;
+
+export const makeProductionLocationFromModerationEventURL = (
+    moderationID,
+    osID = '',
+) => {
+    const osIDPathParameter = osID ? `${osID}/` : '';
+    return `/api/v1/moderation-events/${moderationID}/production-locations/${osIDPathParameter}`;
+};
 
 export const makeGetModerationEventsWithQueryString = (
     qs,
@@ -735,6 +760,42 @@ const mapSingleChoiceValueToSelectOption = value =>
 export const mapDjangoChoiceTuplesValueToSelectOptions = data =>
     Object.freeze(data.map(mapSingleChoiceValueToSelectOption));
 
+export const mapProcessingTypeOptions = (fPTypes, fTypes) => {
+    let pTypes = [];
+    if (fTypes.length === 0) {
+        pTypes = fPTypes.map(type => type.processingTypes).flat();
+    } else {
+        // When there are facility types, only return the
+        // processing types that are under those facility types
+        fTypes.forEach(fType => {
+            fPTypes.forEach(fPType => {
+                if (fType.value === fPType.facilityType) {
+                    pTypes = pTypes.concat(fPType.processingTypes);
+                }
+            });
+        });
+    }
+    return mapDjangoChoiceTuplesValueToSelectOptions(uniq(pTypes.sort()));
+};
+
+export const mapFacilityTypeOptions = (fPTypes, pTypes) => {
+    let fTypes = [];
+    if (pTypes.length === 0) {
+        fTypes = fPTypes.map(type => type.facilityType);
+    } else {
+        // When there are processing types, only return the
+        // facility types that have those processing types
+        pTypes.forEach(pType => {
+            fPTypes.forEach(fPType => {
+                if (fPType.processingTypes.includes(pType.value)) {
+                    fTypes = fTypes.concat(fPType.facilityType);
+                }
+            });
+        });
+    }
+    return mapDjangoChoiceTuplesValueToSelectOptions(uniq(fTypes.sort()));
+};
+
 export const mapSectorGroupsToSelectOptions = data =>
     Object.freeze(
         data.map(group => ({
@@ -760,7 +821,7 @@ export const makeFacilityClaimDetailsLink = claimID =>
     `/dashboard/claims/${claimID}`;
 
 export const makeContributionRecordLink = moderationID =>
-    `/dashboard/moderation-queue/contribution-record/${moderationID}`;
+    `/dashboard/moderation-queue/${moderationID}`;
 
 export const makeDashboardContributorListLink = ({
     contributorID,
@@ -1028,31 +1089,30 @@ export const convertFeatureFlagsObjectToListOfActiveFlags = featureFlags =>
 export const checkWhetherUserHasDashboardAccess = user =>
     get(user, 'is_superuser', false);
 
-export const validateNumberOfWorkers = value => {
+export const isValidNumberOfWorkers = value => {
     if (isEmpty(value)) {
-        return false;
+        return true;
     }
 
-    const singleNumberPattern = /^\d+$/;
     const rangePattern = /^\d+-\d+$/;
 
-    if (singleNumberPattern.test(value)) {
-        return false;
+    if (isInt(value.trim(), { min: 1, allow_leading_zeroes: false })) {
+        return true;
     }
 
     if (rangePattern.test(value)) {
         const [start, end] = value.split('-');
 
         if (
-            isInt(start.trim(), { min: 0 }) &&
-            isInt(end.trim(), { min: 0 }) &&
+            isInt(start.trim(), { min: 1, allow_leading_zeroes: false }) &&
+            isInt(end.trim(), { min: 1, allow_leading_zeroes: false }) &&
             parseInt(start, 10) <= parseInt(end, 10)
         ) {
-            return false;
+            return true;
         }
     }
 
-    return true;
+    return false;
 };
 
 export const claimAFacilityFormIsValid = ({
@@ -1066,7 +1126,7 @@ export const claimAFacilityFormIsValid = ({
 }) =>
     every([!isEmpty(yourName), !isEmpty(yourTitle)], identity) &&
     some([isEmpty(yourBusinessWebsite), isURL(yourBusinessWebsite)]) &&
-    !validateNumberOfWorkers(numberOfWorkers) &&
+    isValidNumberOfWorkers(numberOfWorkers) &&
     every([
         isEmpty(businessWebsite) ||
             (!isEmpty(businessWebsite) && isURL(businessWebsite)),

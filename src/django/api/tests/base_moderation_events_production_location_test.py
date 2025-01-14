@@ -1,5 +1,6 @@
 from django.test import override_settings
 from django.utils.timezone import now
+from django.db.models.signals import post_save
 
 from rest_framework.test import APITestCase
 
@@ -10,11 +11,20 @@ from api.models.facility.facility_list_item import FacilityListItem
 from api.models.nonstandard_field import NonstandardField
 from api.models.source import Source
 
+from api.signals import moderation_event_update_handler_for_opensearch
+
 
 @override_settings(DEBUG=True)
 class BaseModerationEventsProductionLocationTest(APITestCase):
     def setUp(self):
         super().setUp()
+        # Disconnect moderation event save propagation to
+        # OpenSearch cluster, as it is outside the scope
+        # of Django unit testing.
+        post_save.disconnect(
+            moderation_event_update_handler_for_opensearch,
+            ModerationEvent
+        )
 
         self.email = "test@example.com"
         self.password = "example123"
@@ -153,6 +163,7 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
             uuid=self.moderation_event_id
         )
         self.assertEqual(moderation_event.status, 'APPROVED')
+        self.assertIsNotNone(moderation_event.status_change_date)
         self.assertEqual(moderation_event.os_id, response.data["os_id"])
 
     def assert_source_creation(self, source):

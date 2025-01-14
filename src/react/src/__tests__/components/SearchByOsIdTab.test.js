@@ -64,10 +64,8 @@ describe('SearchByOsIdTab component', () => {
         fireEvent.click(getByRole('button', { name: /Search by ID/i }));
 
         expect(history.location.pathname).toBe(
-            '/contribute/production-location/search/'
+            '/contribute/production-location/search/id/CN2021250D1DTN7'
         );
-        expect(history.location.search).toBe('?os_id=CN2021250D1DTN7');
-
     });
 
     it('transforms input to uppercase when typing', () => {

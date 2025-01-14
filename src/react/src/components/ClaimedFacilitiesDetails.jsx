@@ -80,7 +80,7 @@ import {
     isValidFacilityURL,
     makeClaimGeocoderURL,
     logErrorToRollbar,
-    validateNumberOfWorkers,
+    isValidNumberOfWorkers,
 } from '../util/util';
 
 import {
@@ -529,7 +529,7 @@ function ClaimedFacilitiesDetails({
                     onChange={updateFacilityWorkersCount}
                     disabled={updating}
                     hasValidationErrorFn={() =>
-                        validateNumberOfWorkers(data.facility_workers_count)
+                        !isValidNumberOfWorkers(data.facility_workers_count)
                     }
                 />
                 <InputSection
@@ -703,7 +703,7 @@ function ClaimedFacilitiesDetails({
                                 !isEmail(data.point_of_contact_email)) ||
                             (!isEmpty(data.facility_website) &&
                                 !isValidFacilityURL(data.facility_website)) ||
-                            validateNumberOfWorkers(data.facility_workers_count)
+                            !isValidNumberOfWorkers(data.facility_workers_count)
                         }
                     >
                         Save

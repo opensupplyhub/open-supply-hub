@@ -8,7 +8,6 @@ const DialogTooltip = ({ text, childComponent, classes }) => {
     const [arrowRef, setArrowRef] = useState(null);
     return (
         <Tooltip
-            aria-label={text}
             enterDelay={200}
             leaveDelay={200}
             title={
@@ -45,13 +44,13 @@ DialogTooltip.propTypes = {
     text: string.isRequired,
     childComponent: node.isRequired,
     classes: shape({
-        arrow: shape({}).isRequired,
-        tooltipStyles: shape({}).isRequired,
-        popperStyles: shape({}).isRequired,
-        placementLeft: shape({}).isRequired,
-        placementRight: shape({}).isRequired,
-        placementTop: shape({}).isRequired,
-        placementBottom: shape({}).isRequired,
+        arrow: string.isRequired,
+        tooltipStyles: string.isRequired,
+        popperStyles: string.isRequired,
+        placementLeft: string.isRequired,
+        placementRight: string.isRequired,
+        placementTop: string.isRequired,
+        placementBottom: string.isRequired,
     }).isRequired,
 };
 

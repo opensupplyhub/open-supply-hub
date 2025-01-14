@@ -500,8 +500,8 @@ export const productionLocationPropType = shape({
     historical_os_id: arrayOf(string),
 });
 
-export const moderationEventPropType = shape({
-    moderation_id: number,
+export const moderationEventsListItemPropType = shape({
+    moderation_id: string,
     created_at: string,
     updated_at: string,
     os_id: string,
@@ -519,7 +519,9 @@ export const moderationEventPropType = shape({
     claim_id: number,
 });
 
-export const moderationEventsPropType = arrayOf(moderationEventPropType);
+export const moderationEventsListPropType = arrayOf(
+    moderationEventsListItemPropType,
+);
 
 export const potentialMatchesPropType = arrayOf(
     shape({

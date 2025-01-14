@@ -2,7 +2,7 @@
 Hello,
 
 You are receiving this email because your request to claim the following production location on
-Open Supply Hub has been approved:
+Open Supply Hub (OS Hub) has been approved:
 
 - Name of Production Location: {{ production_location_name }}
 - Address of Production Location: {{ production_location_address }}, {{ production_location_country }}
@@ -16,7 +16,7 @@ your data to OS Hub. Once approved, those locations can be claimed as well.
 Visit https://opensupplyhub.org/claimed to view your approved claims and add additional
 information to a claimed production location’s profile.
 
-Best wishes,
+Best Regards,
 
 {% include "mail/claims_team_signature_block.txt" %}
 {% endblock content %}
