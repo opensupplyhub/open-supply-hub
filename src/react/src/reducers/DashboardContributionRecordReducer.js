@@ -2,12 +2,21 @@ import { createReducer } from 'redux-act';
 import update from 'immutability-helper';
 
 import {
-    startFetchingSingleModerationEvent,
-    failFetchingSingleModerationEvent,
-    completeFetchingSingleModerationEvent,
-    startFetchingPotentialMatches,
-    failFetchingPotentialMatches,
-    completeFetchingPotentialMatches,
+    startFetchSingleModerationEvent,
+    failFetchSingleModerationEvent,
+    completeFetchSingleModerationEvent,
+    startFetchPotentialMatches,
+    failFetchPotentialMatches,
+    completeFetchPotentialMatches,
+    startUpdateSingleModerationEvent,
+    failUpdateSingleModerationEvent,
+    completeUpdateSingleModerationEvent,
+    startCreateProductionLocationFromModerationEvent,
+    failCreateProductionLocationFromModerationEvent,
+    completeCreateProductionLocationFromModerationEvent,
+    startConfirmPotentialMatchFromModerationEvent,
+    failConfirmPotentialMatchFromModerationEvent,
+    completeConfirmPotentialMatchFromModerationEvent,
     cleanupContributionRecord,
 } from '../actions/dashboardContributionRecord';
 
@@ -15,7 +24,7 @@ const initialState = Object.freeze({
     singleModerationEvent: Object.freeze({
         fetching: false,
         error: null,
-        event: Object.freeze({}),
+        data: Object.freeze({}),
     }),
     potentialMatches: Object.freeze({
         matches: Object.freeze([]),
@@ -26,14 +35,14 @@ const initialState = Object.freeze({
 
 export default createReducer(
     {
-        [startFetchingSingleModerationEvent]: state =>
+        [startFetchSingleModerationEvent]: state =>
             update(state, {
                 singleModerationEvent: {
                     fetching: { $set: true },
                     error: { $set: initialState.singleModerationEvent.error },
                 },
             }),
-        [failFetchingSingleModerationEvent]: (state, error) =>
+        [failFetchSingleModerationEvent]: (state, error) =>
             update(state, {
                 singleModerationEvent: {
                     fetching: {
@@ -42,36 +51,123 @@ export default createReducer(
                     error: { $set: error },
                 },
             }),
-        [completeFetchingSingleModerationEvent]: (state, payload) =>
+        [completeFetchSingleModerationEvent]: (state, payload) =>
             update(state, {
                 singleModerationEvent: {
                     fetching: {
                         $set: initialState.singleModerationEvent.fetching,
                     },
                     error: { $set: initialState.singleModerationEvent.error },
-                    event: { $set: payload },
+                    data: { $set: payload },
                 },
             }),
-        [startFetchingPotentialMatches]: state =>
+        [startFetchPotentialMatches]: state =>
             update(state, {
                 potentialMatches: {
                     fetching: { $set: true },
                     error: { $set: initialState.potentialMatches.error },
                 },
             }),
-        [failFetchingPotentialMatches]: (state, error) =>
+        [failFetchPotentialMatches]: (state, error) =>
             update(state, {
                 potentialMatches: {
                     fetching: { $set: initialState.potentialMatches.fetching },
                     error: { $set: error },
                 },
             }),
-        [completeFetchingPotentialMatches]: (state, payload) =>
+        [completeFetchPotentialMatches]: (state, payload) =>
             update(state, {
                 potentialMatches: {
                     fetching: { $set: initialState.potentialMatches.fetching },
                     error: { $set: initialState.potentialMatches.error },
-                    matches: { $set: payload },
+                    matches: {
+                        $set: Array.isArray(payload?.data) ? payload.data : [],
+                    },
+                },
+            }),
+        [startUpdateSingleModerationEvent]: state =>
+            update(state, {
+                singleModerationEvent: {
+                    fetching: { $set: true },
+                    error: { $set: initialState.singleModerationEvent.error },
+                },
+            }),
+        [failUpdateSingleModerationEvent]: (state, error) =>
+            update(state, {
+                singleModerationEvent: {
+                    fetching: {
+                        $set: initialState.singleModerationEvent.fetching,
+                    },
+                    error: { $set: error },
+                },
+            }),
+        [completeUpdateSingleModerationEvent]: (state, payload) =>
+            update(state, {
+                singleModerationEvent: {
+                    fetching: {
+                        $set: initialState.singleModerationEvent.fetching,
+                    },
+                    error: { $set: initialState.singleModerationEvent.error },
+                    data: { $set: payload },
+                },
+            }),
+        [startCreateProductionLocationFromModerationEvent]: state =>
+            update(state, {
+                singleModerationEvent: {
+                    fetching: { $set: true },
+                    error: { $set: initialState.singleModerationEvent.error },
+                },
+            }),
+        [failCreateProductionLocationFromModerationEvent]: (state, error) =>
+            update(state, {
+                singleModerationEvent: {
+                    fetching: {
+                        $set: initialState.singleModerationEvent.fetching,
+                    },
+                    error: { $set: error },
+                },
+            }),
+        [completeCreateProductionLocationFromModerationEvent]: (
+            state,
+            payload,
+        ) =>
+            update(state, {
+                singleModerationEvent: {
+                    fetching: {
+                        $set: initialState.singleModerationEvent.fetching,
+                    },
+                    error: { $set: initialState.singleModerationEvent.error },
+                    data: {
+                        $merge: payload,
+                    },
+                },
+            }),
+        [startConfirmPotentialMatchFromModerationEvent]: state =>
+            update(state, {
+                singleModerationEvent: {
+                    fetching: { $set: true },
+                    error: { $set: initialState.singleModerationEvent.error },
+                },
+            }),
+        [failConfirmPotentialMatchFromModerationEvent]: (state, error) =>
+            update(state, {
+                singleModerationEvent: {
+                    fetching: {
+                        $set: initialState.singleModerationEvent.fetching,
+                    },
+                    error: { $set: error },
+                },
+            }),
+        [completeConfirmPotentialMatchFromModerationEvent]: (state, payload) =>
+            update(state, {
+                singleModerationEvent: {
+                    fetching: {
+                        $set: initialState.singleModerationEvent.fetching,
+                    },
+                    error: { $set: initialState.singleModerationEvent.error },
+                    data: {
+                        $merge: payload,
+                    },
                 },
             }),
         [cleanupContributionRecord]: () => initialState,
