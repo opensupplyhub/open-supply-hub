@@ -249,15 +249,19 @@ data "template_file" "export_csv_job_definition" {
   vars = {
     image_url                        = "${module.ecr_repository_batch.repository_url}:${var.image_tag}"
     aws_region                       = var.aws_region
+    aws_storage_bucket_name          = local.files_bucket_name
     postgres_host                    = aws_route53_record.database.name
     postgres_port                    = module.database_enc.port
     postgres_user                    = var.rds_database_username
     postgres_password                = var.rds_database_password
     postgres_db                      = var.rds_database_name
     environment                      = var.environment
-    # django_secret_key                = var.django_secret_key
+    django_secret_key                = var.django_secret_key
     google_server_side_api_key       = var.google_server_side_api_key
     oar_client_key                   = var.oar_client_key
+    hubspot_api_key                  = var.hubspot_api_key
+    hubspot_subscription_id          = var.hubspot_subscription_id
+    rollbar_server_side_access_token = var.rollbar_server_side_access_token
 
     external_domain                  = local.domain_name
     batch_job_queue_name             = "queue${local.short}ExportCsv"
