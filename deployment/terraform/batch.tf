@@ -290,7 +290,7 @@ resource "aws_cloudwatch_event_rule" "export_csv_schedule" {
 
 resource "aws_cloudwatch_event_target" "export_csv" {
   count     = var.environment == "Development" ? 1 : 0
-  rule      = aws_cloudwatch_event_rule.export_csv_schedule.name
+  rule      = aws_cloudwatch_event_rule.export_csv_schedule[count.index].name
   arn       = aws_batch_job_queue.export_csv.arn
   role_arn  = aws_iam_role.container_instance_batch.arn
 
