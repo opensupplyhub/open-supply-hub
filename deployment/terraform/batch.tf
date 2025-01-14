@@ -259,9 +259,9 @@ data "template_file" "export_csv_job_definition" {
     django_secret_key                = var.django_secret_key
     google_server_side_api_key       = var.google_server_side_api_key
     oar_client_key                   = var.oar_client_key
-    hubspot_api_key                  = var.hubspot_api_key
-    hubspot_subscription_id          = var.hubspot_subscription_id
-    rollbar_server_side_access_token = var.rollbar_server_side_access_token
+    # hubspot_api_key                  = var.hubspot_api_key
+    # hubspot_subscription_id          = var.hubspot_subscription_id
+    # rollbar_server_side_access_token = var.rollbar_server_side_access_token
 
     external_domain                  = local.domain_name
     batch_job_queue_name             = "queue${local.short}ExportCsv"
