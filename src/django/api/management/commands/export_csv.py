@@ -31,13 +31,11 @@ def upload_file_to_google_drive(filename):
     """
 
     base64_gdrive_creds = os.getenv("GOOGLE_SERVICE_ACCOUNT_CREDS_BASE64")
-    print('base64_gdrive_creds >>>', base64_gdrive_creds)
 
     if base64_gdrive_creds is None:
         raise ValueError("Google Service Account credentials not found!")
 
     decoded_creds = base64.b64decode(base64_gdrive_creds).decode("utf-8")
-    print('decoded_creds >>>', decoded_creds)
 
     credentials = service_account.Credentials.from_service_account_info(
         info=json.loads(decoded_creds),
