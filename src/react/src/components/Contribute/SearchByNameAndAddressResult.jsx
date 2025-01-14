@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { arrayOf, bool, func, number, object } from 'prop-types';
 import { useLocation } from 'react-router-dom';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -12,7 +12,10 @@ import BackToSearchButton from './BackToSearchButton';
 import SearchByNameAndAddressNotFoundResult from './SearchByNameAndAddressNotFoundResult';
 
 import SearchByNameAndAddressSuccessResult from './SearchByNameAndAddressSuccessResult';
-import { contributeProductionLocationRoute } from '../../util/constants';
+import {
+    contributeProductionLocationRoute,
+    MAX_LOCATIONS_TO_SHOW,
+} from '../../util/constants';
 import history from '../../util/history';
 import { productionLocationPropType } from '../../util/propTypes';
 import { makeSearchByNameAndAddressResultStyles } from '../../util/styles';
@@ -26,19 +29,18 @@ const SearchByNameAndAddressResult = ({
     classes,
 }) => {
     const location = useLocation();
-    const [fromIndex, setFromIndex] = useState(10);
 
     useEffect(() => {
         const searchParams = new URLSearchParams(location.search);
         const name = searchParams.get('name');
         const address = searchParams.get('address');
         const country = searchParams.get('country');
-        fetchLocations({ name, address, country, fromIndex });
-    }, [location.search, fromIndex, fetchLocations]);
+        fetchLocations({ name, address, country, size: MAX_LOCATIONS_TO_SHOW });
+    }, [location.search, fetchLocations]);
 
     const handleBackToSearchByNameAddress = () => {
         clearLocations();
-        history.push(`${contributeProductionLocationRoute}?tab=name-address`); // here change
+        history.push(`${contributeProductionLocationRoute}?tab=name-address`);
     };
 
     if (fetching) {
@@ -48,7 +50,6 @@ const SearchByNameAndAddressResult = ({
             </div>
         );
     }
-
     return (
         <>
             <div className={classes.backToSearchButtonContainerStyles}>
@@ -62,7 +63,6 @@ const SearchByNameAndAddressResult = ({
                     productionLocations={productionLocations}
                     productionLocationsCount={productionLocationsCount}
                     clearLocations={clearLocations}
-                    setFromIndex={setFromIndex}
                 />
             ) : (
                 <SearchByNameAndAddressNotFoundResult />

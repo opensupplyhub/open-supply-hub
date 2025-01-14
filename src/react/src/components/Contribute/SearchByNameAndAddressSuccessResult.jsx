@@ -8,13 +8,15 @@ import { makeSearchByNameAndAddressSuccessResultStyles } from '../../util/styles
 import { productionLocationPropType } from '../../util/propTypes';
 import ConfirmNotFoundLocationDialog from './ConfirmNotFoundLocationDialog';
 import ProductionLocationDetails from './ProductionLocationDetails';
-import { productionLocationInfoRoute } from '../../util/constants';
+import {
+    productionLocationInfoRoute,
+    MAX_LOCATIONS_TO_SHOW,
+} from '../../util/constants';
 
 const SearchByNameAndAddressSuccessResult = ({
     productionLocationsCount,
     productionLocations,
     clearLocations,
-    setFromIndex,
     classes,
 }) => {
     const [confirmDialogIsOpen, setConfirmDialogIsOpen] = useState(false);
@@ -34,12 +36,6 @@ const SearchByNameAndAddressSuccessResult = ({
             window.removeEventListener('scroll', handleScroll);
         };
     }, []);
-
-    useEffect(() => {
-        if (isScrolledToBottom) {
-            setFromIndex(productionLocations.length + 10);
-        }
-    }, [isScrolledToBottom]);
 
     const handleSelectLocation = location => {
         const { name, address, country } = location;
@@ -87,7 +83,10 @@ const SearchByNameAndAddressSuccessResult = ({
                 </Typography>
                 <div className={classes.resultsInfoContainerStyles}>
                     <Typography className={classes.resultsInfoStyles}>
-                        {productionLocationsCount} results
+                        {productionLocationsCount > MAX_LOCATIONS_TO_SHOW
+                            ? MAX_LOCATIONS_TO_SHOW
+                            : productionLocationsCount}{' '}
+                        results
                     </Typography>
                     <Typography className={classes.resultsSortStyles}>
                         Sort By: <strong>Best match</strong>
@@ -148,7 +147,6 @@ SearchByNameAndAddressSuccessResult.propTypes = {
     productionLocationsCount: number.isRequired,
     productionLocations: arrayOf(productionLocationPropType).isRequired,
     clearLocations: func.isRequired,
-    setFromIndex: func.isRequired,
     classes: object.isRequired,
 };
 

@@ -40,6 +40,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1374](https://opensupplyhub.atlassian.net/browse/OSDEV-1374) - Implemented integration of search & result page for name and address search (`/contribute/production-location/search`):
     - Connected GET `v1/production-locations`.
     - Routing between pages `Production Location Search`,`Search returned no results`, `Production Location Information`, `Search results`, and `I don't see my Location` pop-up is configured.
+    - Max result limit set to 100
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
