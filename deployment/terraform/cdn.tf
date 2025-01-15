@@ -39,6 +39,44 @@ resource "aws_s3_bucket_ownership_controls" "react" {
   }
 }
 
+data "aws_iam_policy_document" "react" {
+  statement {
+    sid    = "denyInsecureTransport"
+    effect = "Deny"
+
+    actions = [
+      "s3:*",
+    ]
+
+    resources = [
+      aws_s3_bucket.react.arn,
+      "${aws_s3_bucket.react.arn}/*",
+    ]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values = [
+        "false"
+      ]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "react" {
+  bucket = aws_s3_bucket.react.id
+  policy = data.aws_iam_policy_document.react.json
+
+  depends_on = [
+    aws_s3_bucket_acl.react_acl
+  ]
+}
+
 
 resource "aws_cloudfront_distribution" "cdn" {
   depends_on = [
