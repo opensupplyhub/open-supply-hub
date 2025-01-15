@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { arrayOf, bool, func, number, object } from 'prop-types';
+import { arrayOf, bool, func, object } from 'prop-types';
 import { useLocation } from 'react-router-dom';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { withStyles } from '@material-ui/core/styles';
@@ -21,7 +21,6 @@ import { makeSearchByNameAndAddressResultStyles } from '../../util/styles';
 
 const SearchByNameAndAddressResult = ({
     data: productionLocations,
-    count: productionLocationsCount,
     fetching,
     fetchLocations,
     clearLocations,
@@ -57,10 +56,9 @@ const SearchByNameAndAddressResult = ({
                     handleBackToSearch={handleBackToSearchByNameAddress}
                 />
             </div>
-            {productionLocationsCount > 0 ? (
+            {productionLocations.length > 0 ? (
                 <SearchByNameAndAddressSuccessResult
                     productionLocations={productionLocations}
-                    productionLocationsCount={productionLocationsCount}
                     clearLocations={clearLocations}
                 />
             ) : (
@@ -72,7 +70,6 @@ const SearchByNameAndAddressResult = ({
 
 SearchByNameAndAddressResult.propTypes = {
     data: arrayOf(productionLocationPropType).isRequired,
-    count: number.isRequired,
     fetching: bool.isRequired,
     fetchLocations: func.isRequired,
     clearLocations: func.isRequired,
@@ -81,11 +78,10 @@ SearchByNameAndAddressResult.propTypes = {
 
 const mapStateToProps = ({
     contributeProductionLocation: {
-        productionLocations: { data, count, fetching },
+        productionLocations: { data, fetching },
     },
 }) => ({
     data,
-    count,
     fetching,
 });
 const mapDispatchToProps = dispatch => ({

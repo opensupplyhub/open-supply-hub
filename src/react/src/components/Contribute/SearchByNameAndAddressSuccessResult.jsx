@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { arrayOf, func, number, object } from 'prop-types';
+import { arrayOf, func, object } from 'prop-types';
 import Button from '@material-ui/core/Button';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
@@ -8,13 +8,9 @@ import { makeSearchByNameAndAddressSuccessResultStyles } from '../../util/styles
 import { productionLocationPropType } from '../../util/propTypes';
 import ConfirmNotFoundLocationDialog from './ConfirmNotFoundLocationDialog';
 import ProductionLocationDetails from './ProductionLocationDetails';
-import {
-    productionLocationInfoRoute,
-    MAX_LOCATIONS_TO_SHOW,
-} from '../../util/constants';
+import { productionLocationInfoRoute } from '../../util/constants';
 
 const SearchByNameAndAddressSuccessResult = ({
-    productionLocationsCount,
     productionLocations,
     clearLocations,
     classes,
@@ -83,10 +79,7 @@ const SearchByNameAndAddressSuccessResult = ({
                 </Typography>
                 <div className={classes.resultsInfoContainerStyles}>
                     <Typography className={classes.resultsInfoStyles}>
-                        {productionLocationsCount > MAX_LOCATIONS_TO_SHOW
-                            ? MAX_LOCATIONS_TO_SHOW
-                            : productionLocationsCount}{' '}
-                        results
+                        {productionLocations.length} results
                     </Typography>
                     <Typography className={classes.resultsSortStyles}>
                         Sort By: <strong>Best match</strong>
@@ -144,7 +137,6 @@ const SearchByNameAndAddressSuccessResult = ({
 };
 
 SearchByNameAndAddressSuccessResult.propTypes = {
-    productionLocationsCount: number.isRequired,
     productionLocations: arrayOf(productionLocationPropType).isRequired,
     clearLocations: func.isRequired,
     classes: object.isRequired,
