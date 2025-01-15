@@ -41,6 +41,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     - Connected GET `v1/production-locations`.
     - Routing between pages `Production Location Search`,`Search returned no results`, `Production Location Information`, `Search results`, and `I don't see my Location` pop-up is configured.
     - Max result limit set to 100.
+* [OSDEV-1579](https://opensupplyhub.atlassian.net/browse/OSDEV-1579) - Updated the API limit automated email to remove an outdated link referring to OAR and improve the languate for clarity. With this update the contributor will be informed of the correct process to follow if they have reached their API calls limit.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
