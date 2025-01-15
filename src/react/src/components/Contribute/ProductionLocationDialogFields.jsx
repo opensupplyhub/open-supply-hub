@@ -1,3 +1,4 @@
+/* eslint no-unused-vars: 0 */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { map, toPairs, slice, isEmpty } from 'lodash';
@@ -14,9 +15,6 @@ const ProductionLocationDialogFields = ({
         key.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
 
     const renderValue = value => {
-        if (isEmpty(value)) {
-            return 'N/A';
-        }
         if (Array.isArray(value)) {
             return value.join(', ');
         }
@@ -48,9 +46,11 @@ const ProductionLocationDialogFields = ({
         <>
             {map(filteredEntries, ([key, value]) => (
                 <div key={key}>
-                    <Typography className={classes.label}>
-                        {formatLabel(key)}
-                    </Typography>
+                    {renderValue(value) ? (
+                        <Typography className={classes.label}>
+                            {formatLabel(key)}
+                        </Typography>
+                    ) : null}
                     <Typography className={classes.primaryText}>
                         {renderValue(value)}
                     </Typography>
