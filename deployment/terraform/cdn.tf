@@ -119,7 +119,7 @@ resource "aws_cloudfront_distribution" "cdn" {
   }
 
   origin {
-    domain_name              = aws_s3_bucket.react.bucket
+    domain_name              = aws_s3_bucket.react.bucket_regional_domain_name
     origin_id                = "originS3"
 
     s3_origin_config {
