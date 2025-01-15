@@ -133,10 +133,10 @@ resource "aws_cloudfront_distribution" "cdn" {
     #   origin_ssl_protocols   = ["TLSv1", "TLSv1.1", "TLSv1.2"]
     # }
 
-    # custom_header {
-    #     name = "X-CloudFront-Auth"
-    #     value = var.cloudfront_auth_token
-    # }
+    custom_header {
+        name = "X-CloudFront-Auth"
+        value = var.cloudfront_auth_token
+    }
   }
 
   enabled         = true
@@ -154,7 +154,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"]
+      headers      = []
 
       cookies {
         forward = "all"
