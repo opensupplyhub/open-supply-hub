@@ -35,7 +35,7 @@ resource "aws_s3_bucket_ownership_controls" "react" {
   bucket = aws_s3_bucket.react.id
 
   rule {
-    object_ownership = "BucketOwnerPreferred"
+    object_ownership = "BucketOwnerEnforced"
   }
 }
 
