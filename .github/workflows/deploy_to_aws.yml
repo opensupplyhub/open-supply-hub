@@ -176,7 +176,7 @@ jobs:
                   CLOUDFRONT_DISTRIBUTION_ID=$id
               fi
           done
-          aws s3 sync src/react/build/ s3://$FRONTEND_BUCKET-$AWS_DEFAULT_REGION/ --delete --acl public-read
+          aws s3 sync src/react/build/ s3://$FRONTEND_BUCKET-$AWS_DEFAULT_REGION/ --delete
           aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
 
       - name: Move static
