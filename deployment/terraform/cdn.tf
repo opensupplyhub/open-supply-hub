@@ -126,12 +126,12 @@ resource "aws_cloudfront_distribution" "cdn" {
       origin_access_identity = aws_cloudfront_origin_access_identity.react.id
     }
 
-    custom_origin_config {
-      http_port              = 80
-      https_port             = 443
-      origin_protocol_policy = "https-only"
-      origin_ssl_protocols   = ["TLSv1", "TLSv1.1", "TLSv1.2"]
-    }
+    # custom_origin_config {
+    #   http_port              = 80
+    #   https_port             = 443
+    #   origin_protocol_policy = "https-only"
+    #   origin_ssl_protocols   = ["TLSv1", "TLSv1.1", "TLSv1.2"]
+    # }
 
     custom_header {
         name = "X-CloudFront-Auth"
