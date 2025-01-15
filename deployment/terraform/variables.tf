@@ -427,7 +427,6 @@ variable "batch_export_csv_ce_instance_types" {
   default = [
     "c5",
     "m5",
-    "r5",
     "m4",
     "c4",
   ]
