@@ -66,6 +66,18 @@ data "aws_iam_policy_document" "react" {
       ]
     }
   }
+
+  statement {
+    sid = "CloudFront"
+    principals {
+      identifiers = [
+        aws_cloudfront_origin_access_identity.react.iam_arn
+      ]
+      type = "AWS"
+    }
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.react.arn}/*"]
+  }
 }
 
 resource "aws_s3_bucket_policy" "react" {
@@ -75,6 +87,10 @@ resource "aws_s3_bucket_policy" "react" {
   depends_on = [
     aws_s3_bucket_acl.react_acl
   ]
+}
+
+resource "aws_cloudfront_origin_access_identity" "react" {
+  comment = "Access Identity for S3 Bucket"
 }
 
 
@@ -103,8 +119,12 @@ resource "aws_cloudfront_distribution" "cdn" {
   }
 
   origin {
-    domain_name              = aws_s3_bucket.react.bucket_regional_domain_name
+    domain_name              = aws_s3_bucket.react.bucket
     origin_id                = "originS3"
+
+    s3_origin_config {
+      origin_access_identity = aws_cloudfront_origin_access_identity.react.id
+    }
 
     custom_origin_config {
       http_port              = 80
