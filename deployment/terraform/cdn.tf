@@ -90,7 +90,8 @@ resource "aws_s3_bucket_policy" "react" {
 }
 
 resource "aws_cloudfront_origin_access_identity" "react" {
-  comment = "Access Identity for S3 Bucket"
+  comment = local.frontend_bucket_name
+
 }
 
 
@@ -123,7 +124,7 @@ resource "aws_cloudfront_distribution" "cdn" {
     origin_id                = "originS3"
 
     s3_origin_config {
-      origin_access_identity = aws_cloudfront_origin_access_identity.react.id
+      origin_access_identity = aws_cloudfront_origin_access_identity.react.cloudfront_access_identity_path
     }
 
     # custom_origin_config {
