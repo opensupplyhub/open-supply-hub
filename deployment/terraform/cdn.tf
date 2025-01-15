@@ -122,9 +122,9 @@ resource "aws_cloudfront_distribution" "cdn" {
     domain_name              = aws_s3_bucket.react.bucket_regional_domain_name
     origin_id                = "originS3"
 
-    s3_origin_config {
-      origin_access_identity = aws_cloudfront_origin_access_identity.react.id
-    }
+    # s3_origin_config {
+    #   origin_access_identity = aws_cloudfront_origin_access_identity.react.id
+    # }
 
     # custom_origin_config {
     #   http_port              = 80
