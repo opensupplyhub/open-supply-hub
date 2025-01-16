@@ -1,1 +1,1 @@
-Open Supply Hub API limit notice
+Open Supply Hub API access limit reached
