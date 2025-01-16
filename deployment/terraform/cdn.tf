@@ -27,7 +27,7 @@ resource "aws_s3_bucket_versioning" "react" {
   bucket = aws_s3_bucket.react.id
 
   versioning_configuration {
-    status = "Suspended"
+    status = "Disabled"
   }
 }
 
