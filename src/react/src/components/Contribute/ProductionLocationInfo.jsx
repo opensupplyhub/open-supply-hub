@@ -204,7 +204,7 @@ const ProductionLocationInfo = ({
             toast('Your contribution has been added successfully!');
             if (pendingModerationEvent.data?.moderation_id) {
                 localStorage.setItem(
-                    `pendingModerationEventData-${pendingModerationEvent.data.moderation_id}`,
+                    pendingModerationEvent.data.moderation_id,
                     JSON.stringify(pendingModerationEvent?.data?.cleaned_data),
                 );
                 history.push({
@@ -217,15 +217,14 @@ const ProductionLocationInfo = ({
 
     useEffect(() => {
         if (!isEmpty(singleModerationEventItem) && moderationID) {
-            localStorage.removeItem(
-                `pendingModerationEventData-${moderationID}`,
-            );
+            localStorage.removeItem(moderationID);
         }
         setShowProductionLocationDialog(true);
     }, [singleModerationEventItem, pendingModerationEvent]);
 
     useEffect(() => {
         const unListen = history.listen(appLocation => {
+            // TODO: Apply PATCH endpoint here
             if (
                 appLocation.pathname === '/contribute/production-location/info/'
             ) {
@@ -643,25 +642,19 @@ const ProductionLocationInfo = ({
                             }}
                             className={classes.submitButtonStyles}
                         >
-                            Submit
+                            {submitMethod === 'POST' ? 'Submit' : 'Update'}
                         </Button>
                     </div>
                 </Paper>
             </div>
             {showProductionLocationDialog &&
             (pendingModerationEvent?.data?.cleaned_data ||
-                localStorage.getItem(
-                    `pendingModerationEventData-${moderationID}`,
-                ) ||
+                localStorage.getItem(moderationID) ||
                 singleModerationEventItem?.cleaned_data) ? (
                 <ProductionLocationDialog
                     data={
                         pendingModerationEvent?.data?.cleaned_data ||
-                        JSON.parse(
-                            localStorage.getItem(
-                                `pendingModerationEventData-${moderationID}`,
-                            ),
-                        ) ||
+                        JSON.parse(localStorage.getItem(moderationID)) ||
                         singleModerationEventItem?.cleaned_data
                     }
                 />
