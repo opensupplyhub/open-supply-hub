@@ -32,6 +32,7 @@ import includes from 'lodash/includes';
 import join from 'lodash/join';
 import map from 'lodash/map';
 import uniq from 'lodash/uniq';
+import has from 'lodash/has';
 import { isURL, isInt } from 'validator';
 import { featureCollection, bbox } from '@turf/turf';
 import hash from 'object-hash';
@@ -64,6 +65,7 @@ import {
     listParsingErrorMappings,
     MODERATION_QUEUE,
     MODERATION_STATUS_COLORS,
+    DATA_SOURCES_ENUM,
 } from './constants';
 
 import { createListItemCSV } from './util.listItemCSV';
@@ -1098,13 +1100,12 @@ export const convertFeatureFlagsObjectToListOfActiveFlags = featureFlags =>
 export const checkWhetherUserHasDashboardAccess = user =>
     get(user, 'is_superuser', false);
 
-export const generateRangeField = value => {
-    const [min, max] = value.split('-').map(Number);
-    return max !== undefined ? { min, max } : { min };
+export const convertRangeField = rangeObj => {
+    if (has(rangeObj, 'min') && has(rangeObj, 'max')) {
+        return `${rangeObj.min}-${rangeObj.max}`;
+    }
+    return !isNil(range.min) ? range.min : range.max;
 };
-
-export const extractProductionLocationContributionValues = data =>
-    map(data, 'value');
 
 export const isValidNumberOfWorkers = value => {
     if (isEmpty(value)) {
@@ -1417,4 +1418,44 @@ export const multiValueBackgroundHandler = (value, origin) => {
 export const openInNewTab = url => {
     const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
     if (newWindow) newWindow.opener = null;
+};
+
+const extractProductionLocationContributionValues = data => map(data, 'value');
+
+const generateRangeField = value => {
+    const [min, max] = value.split('-').map(Number);
+    return max !== undefined ? { min, max } : { min };
+};
+
+export const parseContribData = contribData => {
+    const {
+        name,
+        address,
+        country,
+        sector,
+        productType,
+        locationType,
+        processingType,
+        numberOfWorkers,
+        parentCompany,
+    } = contribData;
+
+    return {
+        source: DATA_SOURCES_ENUM.SLC,
+        name,
+        address,
+        country: country.value,
+        sector: extractProductionLocationContributionValues(sector),
+        parent_company: extractProductionLocationContributionValues(
+            parentCompany,
+        ),
+        product_type: extractProductionLocationContributionValues(productType),
+        location_type: extractProductionLocationContributionValues(
+            locationType,
+        ),
+        processing_type: extractProductionLocationContributionValues(
+            processingType,
+        ),
+        number_of_workers: generateRangeField(numberOfWorkers),
+    };
 };

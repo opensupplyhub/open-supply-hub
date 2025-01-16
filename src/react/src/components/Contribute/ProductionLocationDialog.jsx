@@ -1,5 +1,5 @@
-/* eslint no-unused-vars: 0 */
 import React from 'react';
+import { object, string } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { useHistory } from 'react-router-dom';
 import { size, round } from 'lodash';
@@ -33,10 +33,9 @@ const claimButton = classes => (
     </span>
 );
 
-const ProductionLocationDialog = ({ classes, data }) => {
+const ProductionLocationDialog = ({ classes, data, osID }) => {
     const history = useHistory();
 
-    const osID = null;
     const {
         raw_json: { name: productionLocationName, address },
         fields,
@@ -174,6 +173,16 @@ const ProductionLocationDialog = ({ classes, data }) => {
             </div>
         </Dialog>
     );
+};
+
+ProductionLocationDialog.defaultProps = {
+    osID: null,
+};
+
+ProductionLocationDialog.propTypes = {
+    data: object.isRequired,
+    osID: string,
+    classes: object.isRequired,
 };
 
 export default withStyles(makeProductionLocationDialogStyles)(

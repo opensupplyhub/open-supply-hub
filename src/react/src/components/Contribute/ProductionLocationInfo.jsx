@@ -36,6 +36,7 @@ import {
     mapFacilityTypeOptions,
     mapProcessingTypeOptions,
     isValidNumberOfWorkers,
+    convertRangeField,
     updateStateFromData,
 } from '../../util/util';
 import { mockedSectors } from '../../util/constants';
@@ -114,7 +115,7 @@ const ProductionLocationInfo = ({
     const handleProductionLocation =
         submitMethod === 'POST'
             ? handleCreateProductionLocation
-            : handleUpdateProductionLocation;
+            : data => handleUpdateProductionLocation(data, osID);
     const submitButtonText = submitMethod === 'POST' ? 'Submit' : 'Update';
 
     useEffect(() => {
@@ -127,6 +128,11 @@ const ProductionLocationInfo = ({
         if (singleProductionLocationData && osID) {
             setInputName(singleProductionLocationData.name ?? '');
             setInputAddress(singleProductionLocationData.address ?? '');
+            setNumberOfWorkers(
+                convertRangeField(
+                    singleProductionLocationData.number_of_workers,
+                ) ?? '',
+            );
             if (singleProductionLocationData.country) {
                 setInputCountry({
                     value: singleProductionLocationData?.country.alpha_2,
@@ -200,6 +206,7 @@ const ProductionLocationInfo = ({
                     pendingModerationEvent.data.moderation_id,
                     JSON.stringify(pendingModerationEvent?.data?.cleaned_data),
                 );
+                // TODO: make sure that forward slash is always present
                 history.push({
                     pathname: `${location.pathname}${pendingModerationEvent.data.moderation_id}`,
                     search: '',
@@ -621,7 +628,7 @@ const ProductionLocationInfo = ({
                             color="secondary"
                             variant="contained"
                             onClick={() => {
-                                handleProductionLocation({
+                                const data = {
                                     name: inputName,
                                     address: inputAddress,
                                     country: inputCountry,
@@ -631,7 +638,8 @@ const ProductionLocationInfo = ({
                                     processingType,
                                     numberOfWorkers,
                                     parentCompany,
-                                });
+                                };
+                                handleProductionLocation(data, osID);
                             }}
                             className={classes.submitButtonStyles}
                         >
@@ -650,6 +658,7 @@ const ProductionLocationInfo = ({
                         JSON.parse(localStorage.getItem(moderationID)) ||
                         singleModerationEventItem?.cleaned_data
                     }
+                    osID={osID}
                 />
             ) : null}
         </>
@@ -704,8 +713,8 @@ function mapDispatchToProps(dispatch) {
             dispatch(fetchFacilityProcessingTypeOptions()),
         handleCreateProductionLocation: data =>
             dispatch(createProductionLocation(data)),
-        handleUpdateProductionLocation: osID =>
-            dispatch(updateProductionLocation(osID)),
+        handleUpdateProductionLocation: (data, osID) =>
+            dispatch(updateProductionLocation(data, osID)),
         fetchModerationEvent: moderationID =>
             dispatch(fetchSingleModerationEvent(moderationID)),
         fetchProductionLocation: osId =>

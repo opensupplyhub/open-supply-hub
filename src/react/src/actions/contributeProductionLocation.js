@@ -5,15 +5,9 @@ import apiRequest from '../util/apiRequest';
 import {
     logErrorAndDispatchFailure,
     makeGetProductionLocationURL,
-    generateRangeField,
-    extractProductionLocationContributionValues,
+    parseContribData,
 } from '../util/util';
 
-import { DATA_SOURCES_ENUM } from '../util/constants';
-
-// This action is needed to fetch existing production location by OS ID
-// It is using in src/react/src/components/Contribute/SearchByOsIdResult.jsx
-// but response data is not rendered because 5 and 5b screens in progress.
 export const startFetchSingleProductionLocation = createAction(
     'START_FETCH_SINGLE_PRODUCTION_LOCATION',
 );
@@ -39,9 +33,6 @@ export const resetProductionLocations = createAction(
     'RESET_PRODUCTION_LOCATIONS',
 );
 
-// TODO: This actions should use 'src/react/src/reducers/DashboardContributionRecordReducer.js' from OSDEV-1117
-// Regular contributor can get moderation event
-// OS ID will be rendered depending on request_type and os_id presence. But only moderator can change it's status
 export const startCreateProductionLocation = createAction(
     'START_CREATE_PRODUCTION_LOCATION',
 );
@@ -67,37 +58,7 @@ export const failUpdateProductionLocation = createAction(
 );
 
 export function createProductionLocation(contribData) {
-    const {
-        name,
-        address,
-        country,
-        sector,
-        productType,
-        locationType,
-        processingType,
-        numberOfWorkers,
-        parentCompany,
-    } = contribData;
-
-    const parsedContribData = {
-        source: DATA_SOURCES_ENUM.SLC,
-        name,
-        address,
-        country: country.value,
-        sector: extractProductionLocationContributionValues(sector),
-        parent_company: extractProductionLocationContributionValues(
-            parentCompany,
-        ),
-        product_type: extractProductionLocationContributionValues(productType),
-        location_type: extractProductionLocationContributionValues(
-            locationType,
-        ),
-        processing_type: extractProductionLocationContributionValues(
-            processingType,
-        ),
-        // TODO: refactor later
-        number_of_workers: generateRangeField(numberOfWorkers),
-    };
+    const parsedContribData = parseContribData(contribData);
 
     return async dispatch => {
         dispatch(startCreateProductionLocation());
@@ -120,20 +81,23 @@ export function createProductionLocation(contribData) {
     };
 }
 
-export function updateProductionLocation(osID) {
+export function updateProductionLocation(contribData, osID) {
+    const parsedContribData = parseContribData(contribData);
+
     return async dispatch => {
         dispatch(startUpdateProductionLocation());
 
         try {
-            const { data } = await apiRequest.update(
+            const { data } = await apiRequest.patch(
                 makeGetProductionLocationURL(osID),
+                parsedContribData,
             );
             return dispatch(completeUpdateProductionLocation(data));
         } catch (err) {
             return dispatch(
                 logErrorAndDispatchFailure(
                     err,
-                    'An error prevented creating production location',
+                    'An error prevented updating production location',
                     failUpdateProductionLocation,
                 ),
             );
