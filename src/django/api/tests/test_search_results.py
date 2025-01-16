@@ -10,10 +10,10 @@ class SearchResultsTest(APITestCase):
         super().setUp()
         self.name = 'CHANG+KNITTING+FACTORY'
         self.address = 'TONGHU+ECONOMIC+DEVELOPMENT+ZONE，HUIZHOU%2C+CHINA'
-        self.county_alpha_2_code = 'CN'
+        self.county_code = 'CN'
         self.name1 = 'test name'
         self.address1 = 'test address'
-        self.county_alpha_2_code1 = 'AX'
+        self.county_code1 = 'AX'
 
         self.search_mock = unittest.mock.patch(OPEN_SEARCH_SERVICE).start()
         self.search_index_mock = self.search_mock.return_value.search_index
@@ -68,7 +68,7 @@ class SearchResultsTest(APITestCase):
     def test_receive_search_results_data(self):
         self.search_index_mock.return_value = self.search_results_response_mock
         api_res = self.client.get(
-            self.get_url(self.name, self.address, self.county_alpha_2_code))
+            self.get_url(self.name, self.address, self.county_code))
         self.assertEqual(api_res.status_code, status.HTTP_200_OK)
         self.assertEqual(api_res.data, self.search_results_response_mock)
         self.assertEqual(len(api_res.data.get("data")),
@@ -77,7 +77,7 @@ class SearchResultsTest(APITestCase):
     def test_get_search_results_not_found(self):
         self.search_index_mock.return_value = {"data": [], "count": 0}
         api_res = self.client.get(
-            self.get_url(self.name1, self.address1, self.county_alpha_2_code1))
+            self.get_url(self.name1, self.address1, self.county_code1))
         self.assertEqual(api_res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(api_res.data.get("data")), 0)
         self.assertEqual(api_res.data.get("count"), 0)
