@@ -224,6 +224,20 @@ const ProductionLocationInfo = ({
         setShowProductionLocationDialog(true);
     }, [singleModerationEventItem, pendingModerationEvent]);
 
+    useEffect(() => {
+        const unListen = history.listen(appLocation => {
+            if (
+                appLocation.pathname === '/contribute/production-location/info/'
+            ) {
+                setShowProductionLocationDialog(false);
+            }
+        });
+
+        return () => {
+            unListen();
+        };
+    }, [history]);
+
     return (
         <>
             <div className={classes.mainContainerStyles}>
