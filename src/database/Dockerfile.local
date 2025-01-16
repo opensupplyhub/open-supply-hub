@@ -31,7 +31,7 @@ RUN apt-get update && apt-get install -y \
     postgresql-server-dev-13
 
 # Download the PostGIS source archive, build and install the PostGIS package.
-RUN wget http://download.osgeo.org/postgis/source/postgis-3.4.2.tar.gz && \
+RUN wget https://download.osgeo.org/postgis/source/postgis-3.4.2.tar.gz && \
     tar -xvzf postgis-3.4.2.tar.gz &&  \
     cd /postgis-3.4.2 && \
     ./configure && \
