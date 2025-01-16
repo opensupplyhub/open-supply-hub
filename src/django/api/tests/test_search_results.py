@@ -36,7 +36,7 @@ class SearchResultsTest(APITestCase):
                     "numeric": "156"
                 },
                 "claim_status": "unclaimed",
-                "address": "KIU HING ROAD, 2-12 TONGHU ECONOMIC DEVELOPMENT ZONE，HUIZHOU, CHINA",
+                "address": "KIU HING ROAD, 2-12 TONGHU, CHINA",
                 "name": "XIN CHANG CHANG KNITTING FACTORY"
                 },
               {
@@ -55,25 +55,29 @@ class SearchResultsTest(APITestCase):
                     "numeric": "156"
                 },
                 "claim_status": "unclaimed",
-                "address": "No. 2 Industrial Area Economic Development Zone, Tongxiang Hangzhou, Zhejiang Province",
+                "address": "No. 2 Industrial Area Economic, Zhejiang Province",
                 "name": "Tongxiang Miracle Knitting Factory Co. Ltd."
               }
             ],
         }
 
     def get_url(self, name, address, county_code):
-        return f"/api/v1/production-locations/?name={name}&address={address}&country={county_code}"
+        return (f"/api/v1/production-locations/?name={name}&address={address}"
+                "&country={county_code}")
 
     def test_receive_search_results_data(self):
         self.search_index_mock.return_value = self.search_results_response_mock
-        api_res = self.client.get(self.get_url(self.name, self.address, self.county_alpha_2_code))
+        api_res = self.client.get(
+            self.get_url(self.name, self.address, self.county_alpha_2_code))
         self.assertEqual(api_res.status_code, status.HTTP_200_OK)
         self.assertEqual(api_res.data, self.search_results_response_mock)
-        self.assertEqual(len(api_res.data.get("data")), api_res.data.get("count"))
+        self.assertEqual(len(api_res.data.get("data")),
+                         api_res.data.get("count"))
 
     def test_get_search_results_not_found(self):
         self.search_index_mock.return_value = {"data": [], "count": 0}
-        api_res = self.client.get(self.get_url(self.name1, self.address1, self.county_alpha_2_code1))
+        api_res = self.client.get(
+            self.get_url(self.name1, self.address1, self.county_alpha_2_code1))
         self.assertEqual(api_res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(api_res.data.get("data")), 0)
         self.assertEqual(api_res.data.get("count"), 0)
