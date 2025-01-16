@@ -259,29 +259,15 @@ export const makeNonStandardFieldsURL = () => '/api/nonstandard-fields/';
 
 export const makeGetProductionLocationsForPotentialMatches = (
     productionLocationName,
+    address,
     countryCode,
-    address,
-) => {
-    const params = new URLSearchParams();
-
-    if (productionLocationName) params.append('name', productionLocationName);
-    if (countryCode) params.append('country', countryCode);
-    if (address) params.append('address', address);
-
-    return `/api/v1/production-locations/?${params.toString()}/`;
-};
-
-export const makeGetProductionLocationsForSearchMatches = (
-    name,
-    address,
-    country,
     limit,
 ) => {
     const params = new URLSearchParams();
 
-    if (name) params.append('name', name);
+    if (productionLocationName) params.append('name', productionLocationName);
     if (address) params.append('address', address);
-    if (country) params.append('country', country);
+    if (countryCode) params.append('country', countryCode);
     if (limit) params.append('size', limit);
 
     return `/api/v1/production-locations/?${params.toString()}`;

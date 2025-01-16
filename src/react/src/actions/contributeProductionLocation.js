@@ -4,7 +4,7 @@ import apiRequest from '../util/apiRequest';
 import {
     logErrorAndDispatchFailure,
     makeGetProductionLocationByOsIdURL,
-    makeGetProductionLocationsForSearchMatches,
+    makeGetProductionLocationsForPotentialMatches,
 } from '../util/util';
 
 export const startFetchSingleProductionLocation = createAction(
@@ -61,7 +61,7 @@ export function fetchProductionLocations(data) {
 
         return apiRequest
             .get(
-                makeGetProductionLocationsForSearchMatches(
+                makeGetProductionLocationsForPotentialMatches(
                     name,
                     address,
                     country,
