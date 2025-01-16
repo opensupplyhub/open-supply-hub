@@ -178,7 +178,7 @@ class Command(BaseCommand):
         logger.info(f"Limit set to: {limit}")
 
         now = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-        filename = f"./facilities-command-{now}.csv"
+        filename = f"./production-locations-data-{now}.csv"
 
         with open(filename, "w+") as file:
             logger.info(f"Opened file for writing: {filename}")
