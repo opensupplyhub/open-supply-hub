@@ -1,8 +1,7 @@
-/* eslint no-unused-vars: 0 */
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useParams, useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
-import { bool, func, object } from 'prop-types';
+import { func, object } from 'prop-types';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 import { isEmpty } from 'lodash';
@@ -29,7 +28,6 @@ import {
     createProductionLocation,
     updateProductionLocation,
     fetchProductionLocationByOsId,
-    resetSingleProductionLocation,
 } from '../../actions/contributeProductionLocation';
 import { fetchSingleModerationEvent } from '../../actions/dashboardContributionRecord';
 import InputErrorText from './InputErrorText';
@@ -55,20 +53,13 @@ const ProductionLocationInfo = ({
     handleUpdateProductionLocation,
     fetchFacilityProcessingType,
     pendingModerationEvent,
-    // TODO: Use these props if necessary
-    /*
-    moderationEventFetching,
-    fetchModerationEventError,
-    */
     singleModerationEventItem,
     fetchProductionLocation,
-    clearProductionLocation,
     singleProductionLocationData,
-    // TODO: Use fetching if necessary
-    singleProductionLocationFetching,
 }) => {
     const location = useLocation();
     const history = useHistory();
+    const { moderationID, osID } = useParams();
 
     const queryParams = new URLSearchParams(location.search);
     const nameInQuery = queryParams.get('name');
@@ -103,12 +94,6 @@ const ProductionLocationInfo = ({
             },
         }),
     };
-    const isValid = val => {
-        if (val) {
-            return val.length > 0;
-        }
-        return false;
-    };
 
     const [
         showProductionLocationDialog,
@@ -126,9 +111,11 @@ const ProductionLocationInfo = ({
         setAddressTouched(true);
         setInputAddress(event.target.value);
     };
-    const handleCountryChange = event => setInputCountry(event);
-
-    const { moderationID, osID } = useParams();
+    const handleProductionLocation =
+        submitMethod === 'POST'
+            ? handleCreateProductionLocation
+            : handleUpdateProductionLocation;
+    const submitButtonText = submitMethod === 'POST' ? 'Submit' : 'Update';
 
     useEffect(() => {
         if (submitMethod === 'PATCH' && osID) {
@@ -138,14 +125,6 @@ const ProductionLocationInfo = ({
 
     useEffect(() => {
         if (singleProductionLocationData && osID) {
-            console.log(
-                'singleProductionLocationData ',
-                singleProductionLocationData,
-            );
-            console.log(
-                'singleProductionLocationData Sectors',
-                singleProductionLocationData.sector,
-            );
             setInputName(singleProductionLocationData.name ?? '');
             setInputAddress(singleProductionLocationData.address ?? '');
             if (singleProductionLocationData.country) {
@@ -199,7 +178,7 @@ const ProductionLocationInfo = ({
     }, [countriesOptions, fetchCountries]);
 
     useEffect(() => {
-        if (countriesOptions && isValid(countryInQuery)) {
+        if (countriesOptions && !isEmpty(countryInQuery)) {
             const prefilledCountry = countriesOptions.filter(
                 el => el.value === countryInQuery,
             );
@@ -294,7 +273,7 @@ const ProductionLocationInfo = ({
                                     input: `
                                     ${
                                         nameTouched &&
-                                        !isValid(inputName) &&
+                                        !isEmpty(inputName) &&
                                         classes.errorStyle
                                     }`,
                                     notchedOutline:
@@ -303,12 +282,12 @@ const ProductionLocationInfo = ({
                             }}
                             helperText={
                                 nameTouched &&
-                                !isValid(inputName) && <InputErrorText />
+                                !isEmpty(inputName) && <InputErrorText />
                             }
                             FormHelperTextProps={{
                                 className: classes.helperText,
                             }}
-                            error={nameTouched && !isValid(inputName)}
+                            error={nameTouched && !isEmpty(inputName)}
                         />
                     </div>
                     <div
@@ -340,7 +319,7 @@ const ProductionLocationInfo = ({
                                     input: `${classes.searchInputStyles}
                                 ${
                                     addressTouched &&
-                                    !isValid(inputAddress) &&
+                                    !isEmpty(inputAddress) &&
                                     classes.errorStyle
                                 }`,
                                     notchedOutline:
@@ -349,12 +328,12 @@ const ProductionLocationInfo = ({
                             }}
                             helperText={
                                 addressTouched &&
-                                !isValid(inputAddress) && <InputErrorText />
+                                !isEmpty(inputAddress) && <InputErrorText />
                             }
                             FormHelperTextProps={{
                                 className: classes.helperText,
                             }}
-                            error={addressTouched && !isValid(inputAddress)}
+                            error={addressTouched && !isEmpty(inputAddress)}
                         />
                     </div>
                     <div
@@ -642,7 +621,7 @@ const ProductionLocationInfo = ({
                             color="secondary"
                             variant="contained"
                             onClick={() => {
-                                handleCreateProductionLocation({
+                                handleProductionLocation({
                                     name: inputName,
                                     address: inputAddress,
                                     country: inputCountry,
@@ -656,7 +635,7 @@ const ProductionLocationInfo = ({
                             }}
                             className={classes.submitButtonStyles}
                         >
-                            {submitMethod === 'POST' ? 'Submit' : 'Update'}
+                            {submitButtonText}
                         </Button>
                     </div>
                 </Paper>
@@ -694,9 +673,7 @@ ProductionLocationInfo.propTypes = {
     pendingModerationEvent: moderationEventsListItemPropType,
     singleModerationEventItem: moderationEventsListItemPropType,
     fetchProductionLocation: func.isRequired,
-    clearProductionLocation: func.isRequired,
     singleProductionLocationData: productionLocationPropType.isRequired,
-    singleProductionLocationFetching: bool.isRequired,
     classes: object.isRequired,
 };
 
@@ -707,29 +684,17 @@ const mapStateToProps = ({
     },
     contributeProductionLocation: { pendingModerationEvent },
     dashboardContributionRecord: {
-        singleModerationEvent: {
-            // TODO: use error and fetching if necessary
-            fetching: moderationEventFetching,
-            error: fetchModerationEventError,
-            data: singleModerationEventItem,
-        },
+        singleModerationEvent: { data: singleModerationEventItem },
     },
     contributeProductionLocation: {
-        singleProductionLocation: {
-            data: singleProductionLocationData,
-            fetching: singleProductionLocationFetching,
-        },
+        singleProductionLocation: { data: singleProductionLocationData },
     },
 }) => ({
     countriesOptions,
     facilityProcessingTypeOptions,
     pendingModerationEvent,
     singleModerationEventItem,
-    // TODO: you might not need these two props here
-    moderationEventFetching,
-    fetchModerationEventError,
     singleProductionLocationData,
-    singleProductionLocationFetching,
 });
 
 function mapDispatchToProps(dispatch) {
@@ -745,8 +710,6 @@ function mapDispatchToProps(dispatch) {
             dispatch(fetchSingleModerationEvent(moderationID)),
         fetchProductionLocation: osId =>
             dispatch(fetchProductionLocationByOsId(osId)),
-        clearProductionLocation: () =>
-            dispatch(resetSingleProductionLocation()),
     };
 }
 
