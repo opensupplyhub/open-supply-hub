@@ -13,7 +13,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1514](https://opensupplyhub.atlassian.net/browse/OSDEV-1514) - Upgraded the PostgreSQL version from 12 to 13 for the database used in local development, DB anonymization, DB restore setup, and environments in the AWS cloud. Additionally, the postgis and pg_trgm extensions have been upgraded to versions 3.4.2 and 1.5, respectively, based on the available extension versions for PostgreSQL 13.15 in AWS RDS. For more information, see [Extensions supported for RDS for PostgreSQL 13](https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-extensions.html#postgresql-extensions-13x). Allowed major version upgrades and activated the `apply immediately` flag to perform the PostgreSQL major version upgrade in AWS.
 
 #### Migrations:
-* 0163_upgrade_postgres_extensions.py - This migration upgrades the postgis and pg_trgm extensions to versions 3.4.2 and 1.5, respectively.
+* 0163_upgrade_postgres_extensions.py - This migration refreshes the `pg_statistic` table after the upgrade to PostgreSQL 13 and upgrades the postgis and pg_trgm extensions to versions 3.4.2 and 1.5, respectively.
 
 #### Schema changes
 
