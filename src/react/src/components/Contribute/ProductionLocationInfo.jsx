@@ -206,7 +206,6 @@ const ProductionLocationInfo = ({
                     pendingModerationEvent.data.moderation_id,
                     JSON.stringify(pendingModerationEvent?.data?.cleaned_data),
                 );
-                // TODO: make sure that forward slash is always present
                 history.push({
                     pathname: `${location.pathname}${pendingModerationEvent.data.moderation_id}`,
                     search: '',
@@ -223,6 +222,11 @@ const ProductionLocationInfo = ({
     }, [singleModerationEventItem, pendingModerationEvent]);
 
     useEffect(() => {
+        // Force trailing slash in URL to prevent broken UX scenarios
+        if (location.pathname && !location.pathname.endsWith('/')) {
+            history.replace(`${location.pathname}/`);
+        }
+
         const unListen = history.listen(appLocation => {
             if (
                 appLocation.pathname ===
@@ -237,7 +241,7 @@ const ProductionLocationInfo = ({
         return () => {
             unListen();
         };
-    }, [history]);
+    }, [location.pathname, history, osID]);
 
     return (
         <>
