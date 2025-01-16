@@ -2,6 +2,7 @@
 import unittest.mock
 from rest_framework.test import APITestCase
 from rest_framework import status
+
 OPEN_SEARCH_SERVICE = "api.views.v1.production_locations.OpenSearchService"
 
 
@@ -62,8 +63,9 @@ class SearchResultsTest(APITestCase):
         }
 
     def get_url(self, name, address, county_code):
-        return (f"/api/v1/production-locations/?name={name}&address={address}"
-                "&country={county_code}")
+        baseUrl = "/api/v1/production-locations/"
+        params = f"?name={name}&address={address}&country={county_code}"
+        return baseUrl+params
 
     def test_receive_search_results_data(self):
         self.search_index_mock.return_value = self.search_results_response_mock
