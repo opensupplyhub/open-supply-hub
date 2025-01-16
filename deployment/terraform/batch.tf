@@ -281,14 +281,16 @@ resource "aws_batch_job_definition" "export_csv" {
 }
 
 resource "aws_cloudwatch_event_rule" "export_csv_schedule" {
-  count               = var.environment == "Production" ? 1 : 0
+  # count               = var.environment == "Production" ? 1 : 0
+  count               = var.environment == "Development" ? 1 : 0
   name                = "schedule-export-csv"
   description         = "Runs the export_csv job on a schedule"
   schedule_expression = var.export_csv_schedule_expression
 }
 
 resource "aws_cloudwatch_event_target" "export_csv" {
-  count     = var.environment == "Production" ? 1 : 0
+  # count     = var.environment == "Production" ? 1 : 0
+  count     = var.environment == "Development" ? 1 : 0
   rule      = aws_cloudwatch_event_rule.export_csv_schedule[count.index].name
   arn       = aws_batch_job_queue.export_csv.arn
   role_arn  = aws_iam_role.cloudwatch_events_batch_role.arn
@@ -342,7 +344,10 @@ data "aws_iam_policy_document" "cloudwatch_events_batch_policy" {
       "batch:DescribeJobQueues",
       "batch:DescribeJobs",
     ]
-    resources = ["*"]
+    resources = [
+      aws_batch_job_definition.export_csv.arn,
+      aws_batch_job_queue.export_csv.arn,
+    ]
   }
 }
 
