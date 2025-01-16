@@ -37,6 +37,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Successful Search: If the search is successful, the results screen displays a list of production locations. Each item includes the following information about the production location: name, OS ID, address, and country name. Users can either select a specific production location or press the "I don’t see my Location" button, which triggers a confirmation dialog window.
     * Confirmation Dialog Window: In this window, users can confirm that no correct location was found using the provided search parameters. They can either proceed to create a new production location or return to the search.
     * Unsuccessful Search: If the search is unsuccessful, an explanation is provided along with two options: return to the search or add a new production location.
+* [OSDEV-1579](https://opensupplyhub.atlassian.net/browse/OSDEV-1579) - Updated the API limit automated email to remove an outdated link referring to OAR and improve the languate for clarity. With this update the contributor will be informed of the correct process to follow if they have reached their API calls limit.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
@@ -67,6 +68,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1493](https://opensupplyhub.atlassian.net/browse/OSDEV-1493) - Fixed an issue where the backend sorts countries not by `name` but by their `alpha-2 codes` in `GET /api/v1/moderation-events/` endpoint.
 * [OSDEV-1532](https://opensupplyhub.atlassian.net/browse/OSDEV-1532) - Fixed the date range picker on the `Moderation Queue` page. A Data Moderator can change the Before date even if an Error message is displayed.
 * [OSDEV-1533](https://opensupplyhub.atlassian.net/browse/OSDEV-1533) - The presentation of the `Moderation Decision Date` in the `Moderation Queue` table has been corrected. If the "status_change_date" is missing in the object, it now displays as "N/A".
+* [OSDEV-1196](https://opensupplyhub.atlassian.net/browse/OSDEV-1196) - The `?sort_by=contributors_desc` query parameter is only appended to URLs on the `/facilities` page and is excluded from all other pages. The error caused by the property type that occurred during local test execution has been resolved.
 * [OSDEV-1397](https://opensupplyhub.atlassian.net/browse/OSDEV-1397) - GET `/api/parent-companies/` request has been removed from the Open Supply Hub page and ClaimFacility component. Parent Company Select is a regular input field that allows the creation of multiple parent company names for filter on this page.
 * [OSDEV-1556](https://opensupplyhub.atlassian.net/browse/OSDEV-1556) - Fixed validation of `os_id` for PATCH `/api/v1/moderation-events/{moderation_id}/production-locations/{os_id}/` endpoint.
 * [OSDEV-1563](https://opensupplyhub.atlassian.net/browse/OSDEV-1563) - Fixed updating of the moderation decision date after moderation event approval.
