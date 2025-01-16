@@ -63,9 +63,9 @@ class SearchResultsTest(APITestCase):
         }
 
     def get_url(self, name, address, county_code):
-        baseUrl = "/api/v1/production-locations/"
-        params = f"?name={name}&address={address}&country={county_code}"
-        return baseUrl+params
+        base_url = "/api/v1/production-locations/"
+        query_string = f"?name={name}&address={address}&country={county_code}"
+        return f"{base_url}?{query_string}"
 
     def test_receive_search_results_data(self):
         self.search_index_mock.return_value = self.search_results_response_mock
