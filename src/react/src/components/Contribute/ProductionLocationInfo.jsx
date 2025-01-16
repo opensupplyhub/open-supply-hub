@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useParams, useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
-import { func, object } from 'prop-types';
+import { bool, func, object } from 'prop-types';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 import { isEmpty } from 'lodash';
@@ -19,6 +19,7 @@ import {
     countryOptionsPropType,
     facilityProcessingTypeOptionsPropType,
     moderationEventsListItemPropType,
+    productionLocationPropType,
 } from '../../util/propTypes';
 import {
     fetchCountryOptions,
@@ -27,6 +28,8 @@ import {
 import {
     createProductionLocation,
     updateProductionLocation,
+    fetchProductionLocationByOsId,
+    resetSingleProductionLocation,
 } from '../../actions/contributeProductionLocation';
 import { fetchSingleModerationEvent } from '../../actions/dashboardContributionRecord';
 import InputErrorText from './InputErrorText';
@@ -35,6 +38,7 @@ import {
     mapFacilityTypeOptions,
     mapProcessingTypeOptions,
     isValidNumberOfWorkers,
+    updateStateFromData,
 } from '../../util/util';
 import { mockedSectors } from '../../util/constants';
 import COLOURS from '../../util/COLOURS';
@@ -57,6 +61,11 @@ const ProductionLocationInfo = ({
     fetchModerationEventError,
     */
     singleModerationEventItem,
+    fetchProductionLocation,
+    clearProductionLocation,
+    singleProductionLocationData,
+    // TODO: Use fetching if necessary
+    singleProductionLocationFetching,
 }) => {
     const location = useLocation();
     const history = useHistory();
@@ -65,12 +74,7 @@ const ProductionLocationInfo = ({
     const nameInQuery = queryParams.get('name');
     const addressInQuery = queryParams.get('address');
     const countryInQuery = queryParams.get('country');
-    // TODO: bring default value later
-    // const [isExpanded, setIsExpanded] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(true);
-
-    // TODO: Bring back empty values later after testing
-    /*
+    const [isExpanded, setIsExpanded] = useState(false);
     const [inputName, setInputName] = useState(nameInQuery ?? '');
     const [inputAddress, setInputAddress] = useState(addressInQuery ?? '');
     const [inputCountry, setInputCountry] = useState(null);
@@ -81,48 +85,6 @@ const ProductionLocationInfo = ({
     const [locationType, setLocationType] = useState(null);
     const [processingType, setProcessingType] = useState(null);
     const [numberOfWorkers, setNumberOfWorkers] = useState('');
-    const [parentCompany, setParentCompany] = useState([]);
-    const customSelectComponents = { DropdownIndicator: null };
-    */
-    const [inputName, setInputName] = useState('Tech Innovations Inc.');
-    const [inputAddress, setInputAddress] = useState(
-        '670 Coleman Ave, San Jose, CA 95110, USA',
-    );
-    const [inputCountry, setInputCountry] = useState({
-        value: 'US',
-        label: 'United States',
-    });
-    const [nameTouched, setNameTouched] = useState(false);
-    const [addressTouched, setAddressTouched] = useState(false);
-    const [sector, setSector] = useState([
-        {
-            value: 'Electronics',
-            label: 'Electronics',
-        },
-    ]);
-    const [productType, setProductType] = useState([
-        {
-            label: 'Laptops',
-            value: 'Laptops',
-        },
-    ]);
-    const [locationType, setLocationType] = useState([
-        {
-            value: 'Warehousing / Distribution',
-            label: 'Warehousing / Distribution',
-        },
-    ]);
-    const [processingType, setProcessingType] = useState([
-        {
-            value: 'Packing',
-            label: 'Packing',
-        },
-        {
-            value: 'Warehousing / Distribution',
-            label: 'Warehousing / Distribution',
-        },
-    ]);
-    const [numberOfWorkers, setNumberOfWorkers] = useState('10-20');
     const [parentCompany, setParentCompany] = useState([]);
     const customSelectComponents = { DropdownIndicator: null };
 
@@ -153,7 +115,6 @@ const ProductionLocationInfo = ({
         setShowProductionLocationDialog,
     ] = useState(false);
 
-    // TODO: bring default value later
     const toggleExpand = () => {
         setIsExpanded(!isExpanded);
     };
@@ -167,7 +128,60 @@ const ProductionLocationInfo = ({
     };
     const handleCountryChange = event => setInputCountry(event);
 
-    const { moderationID } = useParams();
+    const { moderationID, osID } = useParams();
+
+    useEffect(() => {
+        if (submitMethod === 'PATCH' && osID) {
+            fetchProductionLocation(osID);
+        }
+    }, [submitMethod]);
+
+    useEffect(() => {
+        if (singleProductionLocationData && osID) {
+            console.log(
+                'singleProductionLocationData ',
+                singleProductionLocationData,
+            );
+            console.log(
+                'singleProductionLocationData Sectors',
+                singleProductionLocationData.sector,
+            );
+            setInputName(singleProductionLocationData.name ?? '');
+            setInputAddress(singleProductionLocationData.address ?? '');
+            if (singleProductionLocationData.country) {
+                setInputCountry({
+                    value: singleProductionLocationData?.country.alpha_2,
+                    label: singleProductionLocationData?.country.name,
+                });
+            }
+            updateStateFromData(
+                singleProductionLocationData,
+                'sector',
+                setSector,
+            );
+            updateStateFromData(
+                singleProductionLocationData,
+                'product_type',
+                setProductType,
+            );
+            updateStateFromData(
+                singleProductionLocationData,
+                'location_type',
+                setLocationType,
+            );
+            updateStateFromData(
+                singleProductionLocationData,
+                'processing_type',
+                setProcessingType,
+            );
+            updateStateFromData(
+                singleProductionLocationData,
+                'parent_company',
+                setParentCompany,
+            );
+        }
+    }, [singleProductionLocationData]);
+
     const prevModerationIDRef = useRef();
     useEffect(() => {
         if (prevModerationIDRef.current !== moderationID) {
@@ -224,9 +238,11 @@ const ProductionLocationInfo = ({
 
     useEffect(() => {
         const unListen = history.listen(appLocation => {
-            // TODO: Apply PATCH endpoint here
             if (
-                appLocation.pathname === '/contribute/production-location/info/'
+                appLocation.pathname ===
+                    '/contribute/production-location/info/' ||
+                appLocation.pathname ===
+                    `/contribute/production-location/${osID}/info/`
             ) {
                 setShowProductionLocationDialog(false);
             }
@@ -626,8 +642,6 @@ const ProductionLocationInfo = ({
                             color="secondary"
                             variant="contained"
                             onClick={() => {
-                                // Name | Country | Address should not be empty
-                                // Same button for POST and PATCH
                                 handleCreateProductionLocation({
                                     name: inputName,
                                     address: inputAddress,
@@ -679,6 +693,10 @@ ProductionLocationInfo.propTypes = {
     facilityProcessingTypeOptions: facilityProcessingTypeOptionsPropType,
     pendingModerationEvent: moderationEventsListItemPropType,
     singleModerationEventItem: moderationEventsListItemPropType,
+    fetchProductionLocation: func.isRequired,
+    clearProductionLocation: func.isRequired,
+    singleProductionLocationData: productionLocationPropType.isRequired,
+    singleProductionLocationFetching: bool.isRequired,
     classes: object.isRequired,
 };
 
@@ -696,6 +714,12 @@ const mapStateToProps = ({
             data: singleModerationEventItem,
         },
     },
+    contributeProductionLocation: {
+        singleProductionLocation: {
+            data: singleProductionLocationData,
+            fetching: singleProductionLocationFetching,
+        },
+    },
 }) => ({
     countriesOptions,
     facilityProcessingTypeOptions,
@@ -704,6 +728,8 @@ const mapStateToProps = ({
     // TODO: you might not need these two props here
     moderationEventFetching,
     fetchModerationEventError,
+    singleProductionLocationData,
+    singleProductionLocationFetching,
 });
 
 function mapDispatchToProps(dispatch) {
@@ -717,6 +743,10 @@ function mapDispatchToProps(dispatch) {
             dispatch(updateProductionLocation(osID)),
         fetchModerationEvent: moderationID =>
             dispatch(fetchSingleModerationEvent(moderationID)),
+        fetchProductionLocation: osId =>
+            dispatch(fetchProductionLocationByOsId(osId)),
+        clearProductionLocation: () =>
+            dispatch(resetSingleProductionLocation()),
     };
 }
 

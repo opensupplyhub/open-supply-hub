@@ -410,6 +410,13 @@ export const mapParamToReactSelectOption = param => {
     });
 };
 
+export const updateStateFromData = (obj, dataKey, setter) => {
+    if (obj[dataKey]?.length > 0) {
+        const transformedData = obj[dataKey].map(mapParamToReactSelectOption);
+        setter(transformedData);
+    }
+};
+
 export const createSelectOptionsFromParams = params => {
     const paramsInArray = !isArray(params) ? [params] : params;
 
