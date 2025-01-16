@@ -18,6 +18,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1523](https://opensupplyhub.atlassian.net/browse/OSDEV-1523) - Updated `export_csv.py` to enable uploading to Google Drive and implemented cursor-based pagination for the export.
 
 ### Architecture/Environment changes
+* [OSDEV-1523](https://opensupplyhub.atlassian.net/browse/OSDEV-1523) - Added a new batch job that triggers the export_csv.py command on the first day of each month to upload bulk data of production locations to Google Drive.
 
 ### Bugfix
 
