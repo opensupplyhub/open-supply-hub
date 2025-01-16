@@ -10,7 +10,6 @@ const ProductionLocationDialogFields = ({
     startFrom,
     classes,
 }) => {
-    // TODO: replace to utils
     const formatLabel = key =>
         key.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
 

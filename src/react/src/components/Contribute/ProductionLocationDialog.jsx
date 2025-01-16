@@ -34,12 +34,9 @@ const claimButton = classes => (
 );
 
 const ProductionLocationDialog = ({ classes, data }) => {
-    console.log('data in ProductionLocationDialog: ', data);
     const history = useHistory();
 
-    // You can obtain OS id only when query specific moderation id
     const osID = null;
-
     const {
         raw_json: { name: productionLocationName, address },
         fields,

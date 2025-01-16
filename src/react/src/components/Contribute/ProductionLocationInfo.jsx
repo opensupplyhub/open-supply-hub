@@ -1,6 +1,6 @@
 /* eslint no-unused-vars: 0 */
 import React, { useEffect, useState, useRef } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams, useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import { func, object } from 'prop-types';
 import { connect } from 'react-redux';
@@ -15,7 +15,6 @@ import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
 import StyledSelect from '../Filters/StyledSelect';
 import { productionLocationInfoStyles } from '../../util/styles';
-import history from '../../util/history';
 import {
     countryOptionsPropType,
     facilityProcessingTypeOptionsPropType,
@@ -41,11 +40,6 @@ import { mockedSectors } from '../../util/constants';
 import COLOURS from '../../util/COLOURS';
 import ProductionLocationDialog from './ProductionLocationDialog';
 
-// TODO: there should be already prefetched data from Redux state
-// If no, fetch related query
-
-// TODO: If production location exists, the URL should look like:
-// http://localhost:6543/contribute/production-location/info/{OS_ID}
 const ProductionLocationInfo = ({
     submitMethod,
     classes,
@@ -57,6 +51,7 @@ const ProductionLocationInfo = ({
     handleUpdateProductionLocation,
     fetchFacilityProcessingType,
     pendingModerationEvent,
+    // TODO: Use these props if necessary
     /*
     moderationEventFetching,
     fetchModerationEventError,
@@ -64,6 +59,7 @@ const ProductionLocationInfo = ({
     singleModerationEventItem,
 }) => {
     const location = useLocation();
+    const history = useHistory();
 
     const queryParams = new URLSearchParams(location.search);
     const nameInQuery = queryParams.get('name');
@@ -207,22 +203,24 @@ const ProductionLocationInfo = ({
         if (pendingModerationEvent?.data?.cleaned_data) {
             toast('Your contribution has been added successfully!');
             if (pendingModerationEvent.data?.moderation_id) {
-                history.push(
-                    `${location.pathname}/${pendingModerationEvent.data.moderation_id}`,
+                localStorage.setItem(
+                    `pendingModerationEventData-${pendingModerationEvent.data.moderation_id}`,
+                    JSON.stringify(pendingModerationEvent?.data?.cleaned_data),
                 );
+                history.push({
+                    pathname: `${location.pathname}${pendingModerationEvent.data.moderation_id}`,
+                    search: '',
+                });
             }
         }
     }, [pendingModerationEvent]);
 
     useEffect(() => {
-        console.log(
-            '~~~ singleModerationEventItem?.cleaned_data: ',
-            singleModerationEventItem?.cleaned_data,
-        );
-        console.log(
-            '#### pendingModerationEvent?.data?.cleaned_data',
-            pendingModerationEvent?.data?.cleaned_data,
-        );
+        if (!isEmpty(singleModerationEventItem) && moderationID) {
+            localStorage.removeItem(
+                `pendingModerationEventData-${moderationID}`,
+            );
+        }
         setShowProductionLocationDialog(true);
     }, [singleModerationEventItem, pendingModerationEvent]);
 
@@ -637,9 +635,21 @@ const ProductionLocationInfo = ({
                 </Paper>
             </div>
             {showProductionLocationDialog &&
-            pendingModerationEvent?.data?.cleaned_data ? (
+            (pendingModerationEvent?.data?.cleaned_data ||
+                localStorage.getItem(
+                    `pendingModerationEventData-${moderationID}`,
+                ) ||
+                singleModerationEventItem?.cleaned_data) ? (
                 <ProductionLocationDialog
-                    data={pendingModerationEvent?.data?.cleaned_data}
+                    data={
+                        pendingModerationEvent?.data?.cleaned_data ||
+                        JSON.parse(
+                            localStorage.getItem(
+                                `pendingModerationEventData-${moderationID}`,
+                            ),
+                        ) ||
+                        singleModerationEventItem?.cleaned_data
+                    }
                 />
             ) : null}
         </>
@@ -660,11 +670,8 @@ ProductionLocationInfo.propTypes = {
     handleCreateProductionLocation: func.isRequired,
     handleUpdateProductionLocation: func.isRequired,
     facilityProcessingTypeOptions: facilityProcessingTypeOptionsPropType,
-    // TODO: create new proptype for pendingModerationEvent
     pendingModerationEvent: moderationEventsListItemPropType,
     singleModerationEventItem: moderationEventsListItemPropType,
-    // moderationEventFetching: bool.isRequired,
-    // fetchModerationEvent: func.isRequired,
     classes: object.isRequired,
 };
 
@@ -676,6 +683,7 @@ const mapStateToProps = ({
     contributeProductionLocation: { pendingModerationEvent },
     dashboardContributionRecord: {
         singleModerationEvent: {
+            // TODO: use error and fetching if necessary
             fetching: moderationEventFetching,
             error: fetchModerationEventError,
             data: singleModerationEventItem,
