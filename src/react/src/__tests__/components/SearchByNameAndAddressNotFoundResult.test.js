@@ -9,6 +9,10 @@ jest.mock('../../util/history', () => ({
     push: jest.fn(),
 }));
 
+beforeEach(() => {
+    jest.clearAllMocks();
+});
+
 describe('SearchByNameAndAddressNotFoundResult component', () => {
     test('renders the not found message and buttons correctly', () => {
         const { getByText, getByRole } = renderWithProviders(<SearchByNameAndAddressNotFoundResult />);
@@ -40,8 +44,10 @@ describe('SearchByNameAndAddressNotFoundResult component', () => {
         const { getByRole } = renderWithProviders(<SearchByNameAndAddressNotFoundResult />);
 
         const addNewLocation = getByRole('button', { name: 'Add a new Location' });
+        expect(addNewLocation).toBeInTheDocument();
         fireEvent.click(addNewLocation);
 
         expect(history.push).toHaveBeenCalledWith(productionLocationInfoRoute);
+        expect(history.push).toHaveBeenCalledTimes(1);
     });
 });
