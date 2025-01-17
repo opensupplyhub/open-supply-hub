@@ -350,7 +350,8 @@ variable "batch_notifications_ce_spot_fleet_bid_percentage" {
 }
 
 variable "batch_export_csv_ce_spot_fleet_bid_percentage" {
-  default = "60"
+  type    = number
+  default = 60
 }
 
 variable "batch_ami_id" {
@@ -393,7 +394,8 @@ variable "batch_notifications_ce_min_vcpus" {
 }
 
 variable "batch_export_csv_ce_min_vcpus" {
-  default = "0"
+  type = number
+  default = 0
 }
 
 variable "batch_notifications_ce_desired_vcpus" {
@@ -401,7 +403,8 @@ variable "batch_notifications_ce_desired_vcpus" {
 }
 
 variable "batch_export_csv_ce_desired_vcpus" {
-  default = "0"
+  type = number
+  default = 0
 }
 
 variable "batch_notifications_ce_max_vcpus" {
@@ -409,7 +412,8 @@ variable "batch_notifications_ce_max_vcpus" {
 }
 
 variable "batch_export_csv_ce_max_vcpus" {
-  default = "4"
+  type = number
+  default = 4
 }
 
 variable "batch_notifications_ce_instance_types" {
