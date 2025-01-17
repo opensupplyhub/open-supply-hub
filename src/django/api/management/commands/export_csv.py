@@ -54,17 +54,15 @@ def upload_file_to_google_drive(filename):
         "name": os.path.basename(filename),
         "parents": [gdrvie_dir_id],
     }
-    media = MediaFileUpload(
-        filename,
-        mimetype="text/csv",
-    )
+    media = MediaFileUpload(filename, mimetype="text/csv", resumable=True)
 
-    logger.info("Initializing the Drive upload")
     service = build(
         "drive",
         "v3",
         credentials=credentials,
     )
+
+    logger.info("Uploading file to Google Drive...")
     uploaded_file = (
         service.files()
         .create(
@@ -76,10 +74,13 @@ def upload_file_to_google_drive(filename):
         .execute()
     )
 
-    return uploaded_file.get("id")
+    file_id = uploaded_file.get("id")
+    logger.info(f"File uploaded to Google Drive with ID: {file_id}")
+
+    return file_id
 
 
-def create_cvs_writer(file):
+def create_csv_writer(file):
     """
     Create a CSV writer object and write the headers to the given file.
     Args:
@@ -187,7 +188,7 @@ class Command(BaseCommand):
         with open(filename, "w+") as file:
             logger.info(f"Opened file for writing: {filename}")
 
-            writer = create_cvs_writer(file=file)
+            writer = create_csv_writer(file=file)
             last_id = None
             facilities = None
             total_facilities = 0
