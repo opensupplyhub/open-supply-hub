@@ -182,8 +182,10 @@ class Command(BaseCommand):
         limit = options["limit"]
         logger.info(f"Limit set to: {limit}")
 
+        environment_name = os.getenv("ENVIRONMENT").lower()
         now = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-        filename = f"./production-locations-data-{now}.csv"
+
+        filename = f"./locations-data-{environment_name}-{now}.csv"
 
         with open(filename, "w+") as file:
             logger.info(f"Opened file for writing: {filename}")
