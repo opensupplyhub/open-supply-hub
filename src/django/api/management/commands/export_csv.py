@@ -30,6 +30,8 @@ def upload_file_to_google_drive(filename):
         in the environment variables.
     """
 
+    SCOPES = ["https://www.googleapis.com/auth/drive"]
+
     base64_gdrive_creds = os.getenv("GOOGLE_SERVICE_ACCOUNT_CREDS_BASE64")
 
     if base64_gdrive_creds is None:
@@ -39,6 +41,7 @@ def upload_file_to_google_drive(filename):
 
     credentials = service_account.Credentials.from_service_account_info(
         info=json.loads(decoded_creds),
+        scopes=SCOPES,
     )
     logger.info("Initialized Google Drive service account credentials")
 
@@ -68,6 +71,7 @@ def upload_file_to_google_drive(filename):
             body=file_metadata,
             media_body=media,
             fields="id",
+            supportsAllDrives=True,
         )
         .execute()
     )
