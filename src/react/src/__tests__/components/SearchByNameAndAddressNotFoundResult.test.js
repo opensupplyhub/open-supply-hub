@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent } from '@testing-library/react';
 import SearchByNameAndAddressNotFoundResult from '../../components/Contribute/SearchByNameAndAddressNotFoundResult';
-import { contributeProductionLocationRoute } from '../../util/constants';
+import { contributeProductionLocationRoute, productionLocationInfoRoute } from '../../util/constants';
 import history from '../../util/history';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 
@@ -34,5 +34,14 @@ describe('SearchByNameAndAddressNotFoundResult component', () => {
         fireEvent.click(searchAgainButton);
 
         expect(history.push).toHaveBeenCalledWith(`${contributeProductionLocationRoute}?tab=name-address`);
+    });
+
+    test("navigates to the contribute page when 'Add a new Location' is clicked", () => {
+        const { getByRole } = renderWithProviders(<SearchByNameAndAddressNotFoundResult />);
+
+        const addNewLocation = getByRole('button', { name: 'Add a new Location' });
+        fireEvent.click(addNewLocation);
+
+        expect(history.push).toHaveBeenCalledWith(productionLocationInfoRoute);
     });
 });
