@@ -107,7 +107,7 @@ describe('SearchByNameAndAddressSuccessResult component', () => {
         expect(queryByText('Close Dialog')).not.toBeInTheDocument();
     });
 
-    test('opens the "Production Location Information" page when the "Select" button is clicked', () => {
+    test('the "Select" button is clicked', () => {
         const { getAllByRole } = renderWithProviders(<SearchByNameAndAddressSuccessResult {...defaultProps} />);
         const selectButtons = getAllByRole('button', { name: /Select/i });
 
