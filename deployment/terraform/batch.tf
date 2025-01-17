@@ -247,24 +247,24 @@ data "template_file" "export_csv_job_definition" {
   template = file("job-definitions/export_csv.json")
 
   vars = {
-    image_url                        = "${module.ecr_repository_batch.repository_url}:${var.image_tag}"
-    aws_region                       = var.aws_region
-    aws_storage_bucket_name          = local.files_bucket_name
-    postgres_host                    = aws_route53_record.database.name
-    postgres_port                    = module.database_enc.port
-    postgres_user                    = var.rds_database_username
-    postgres_password                = var.rds_database_password
-    postgres_db                      = var.rds_database_name
-    environment                      = var.environment
-    django_secret_key                = var.django_secret_key
-    google_server_side_api_key       = var.google_server_side_api_key
-    oar_client_key                   = var.oar_client_key
-    external_domain                  = local.domain_name
-    batch_job_queue_name             = "queue${local.short}ExportCsv"
-    batch_job_def_name               = "job${local.short}ExportCsv"
-    log_group_name                   = "log${local.short}Batch"
+    image_url                           = "${module.ecr_repository_batch.repository_url}:${var.image_tag}"
+    aws_region                          = var.aws_region
+    aws_storage_bucket_name             = local.files_bucket_name
+    postgres_host                       = aws_route53_record.database.name
+    postgres_port                       = module.database_enc.port
+    postgres_user                       = var.rds_database_username
+    postgres_password                   = var.rds_database_password
+    postgres_db                         = var.rds_database_name
+    environment                         = var.environment
+    django_secret_key                   = var.django_secret_key
+    google_server_side_api_key          = var.google_server_side_api_key
+    oar_client_key                      = var.oar_client_key
+    external_domain                     = local.domain_name
+    batch_job_queue_name                = "queue${local.short}ExportCsv"
+    batch_job_def_name                  = "job${local.short}ExportCsv"
+    log_group_name                      = "log${local.short}Batch"
     google_service_account_creds_base64 = var.google_service_account_creds_base64
-    google_drive_shared_directory_id = var.google_drive_shared_directory_id
+    google_drive_shared_directory_id    = var.google_drive_shared_directory_id
   }
 }
 
@@ -287,9 +287,9 @@ resource "aws_cloudwatch_event_rule" "export_csv_schedule" {
 }
 
 resource "aws_cloudwatch_event_target" "export_csv" {
-  rule      = aws_cloudwatch_event_rule.export_csv_schedule.name
-  arn       = aws_batch_job_queue.export_csv.arn
-  role_arn  = aws_iam_role.cloudwatch_events_batch_role.arn
+  rule     = aws_cloudwatch_event_rule.export_csv_schedule.name
+  arn      = aws_batch_job_queue.export_csv.arn
+  role_arn = aws_iam_role.cloudwatch_events_batch_role.arn
 
   batch_target {
     job_definition = aws_batch_job_definition.export_csv.arn

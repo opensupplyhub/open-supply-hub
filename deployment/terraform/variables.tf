@@ -394,7 +394,7 @@ variable "batch_notifications_ce_min_vcpus" {
 }
 
 variable "batch_export_csv_ce_min_vcpus" {
-  type = number
+  type    = number
   default = 0
 }
 
@@ -403,7 +403,7 @@ variable "batch_notifications_ce_desired_vcpus" {
 }
 
 variable "batch_export_csv_ce_desired_vcpus" {
-  type = number
+  type    = number
   default = 0
 }
 
@@ -412,7 +412,7 @@ variable "batch_notifications_ce_max_vcpus" {
 }
 
 variable "batch_export_csv_ce_max_vcpus" {
-  type = number
+  type    = number
   default = 4
 }
 
