@@ -13,13 +13,15 @@ bastion_ami = "ami-0bb3fad3c0286ebd5"
 bastion_instance_type = "t3.nano"
 
 rds_allocated_storage = "256"
-rds_engine_version = "12"
-rds_parameter_group_family = "postgres12"
+rds_engine_version = "13"
+rds_parameter_group_family = "postgres13"
 rds_instance_type = "db.m6in.4xlarge"
 rds_database_identifier = "opensupplyhub-enc-prd"
 rds_database_name = "opensupplyhub"
 rds_multi_az = false
 rds_storage_encrypted = true
+rds_allow_major_version_upgrade = true
+rds_apply_immediately = true
 
 app_ecs_desired_count = "10"
 app_ecs_deployment_min_percent = "100"
