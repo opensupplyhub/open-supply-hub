@@ -69,7 +69,7 @@ pg_dump --clean --no-owner --no-privileges -Fc -d anondb -U anondb  -f /dumps/os
 
 ls -la /dumps
 
-echo "Finshed anonymization"
+echo "Finished anonymization"
 
 AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_TEST \
     AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_TEST \
