@@ -623,7 +623,7 @@ const ProductionLocationInfo = ({
                     <div className={classes.buttonsContainerStyles}>
                         <Button
                             variant="outlined"
-                            onClick={() => {}}
+                            onClick={() => history.goBack()}
                             className={classes.goBackButtonStyles}
                         >
                             Go Back

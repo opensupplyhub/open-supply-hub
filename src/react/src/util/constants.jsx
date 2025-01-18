@@ -1510,3 +1510,5 @@ export const mockedSectors = [
     ['Pets', 'Pets'],
     ['Packaging', 'Packaging'],
 ];
+
+export const MAX_LOCATIONS_TO_SHOW = 100;

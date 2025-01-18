@@ -25,7 +25,6 @@ const initialState = Object.freeze({
         error: null,
     }),
     productionLocations: Object.freeze({
-        count: 0,
         data: [],
         fetching: false,
         error: null,
@@ -146,7 +145,6 @@ export default createReducer(
                 productionLocations: {
                     fetching: { $set: true },
                     error: { $set: initialState.productionLocations.error },
-                    count: { $set: initialState.productionLocations.count },
                     data: { $set: initialState.productionLocations.data },
                 },
             }),
@@ -166,7 +164,6 @@ export default createReducer(
                         $set: initialState.productionLocations.fetching,
                     },
                     error: { $set: initialState.productionLocations.error },
-                    count: { $set: payload.count },
                     data: { $set: payload.data },
                 },
             }),
