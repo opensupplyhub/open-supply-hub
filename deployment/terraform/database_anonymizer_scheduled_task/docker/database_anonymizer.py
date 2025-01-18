@@ -77,9 +77,6 @@ connection_information = dict(
 )
 
 db = pg8000.native.Connection(**connection_information)
-# cur = db.cursor()
-# cur.execute(open("anonymize_script.sql", "r").read())
-# cur.commit()
 db.run(open("anonymize_script.sql", "r").read())
 print('Database anonymized successfully!')
 
