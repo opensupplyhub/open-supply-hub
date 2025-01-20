@@ -84,9 +84,9 @@ resource "aws_s3_bucket_policy" "react" {
   bucket = aws_s3_bucket.react.id
   policy = data.aws_iam_policy_document.react.json
 
-  depends_on = [
-    aws_s3_bucket_acl.react_acl
-  ]
+  # depends_on = [
+  #   aws_s3_bucket_acl.react_acl
+  # ]
 }
 
 resource "aws_cloudfront_origin_access_identity" "react" {
