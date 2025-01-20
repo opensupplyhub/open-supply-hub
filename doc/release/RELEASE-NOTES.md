@@ -18,10 +18,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Schema changes
 
 ### Code/API changes
-[OSDEV-1514](https://opensupplyhub.atlassian.net/browse/OSDEV-1514) - Corrected spelling mistakes in the `src/anon-tools/do_dump.sh` file and in the name of the folder `database_anonymizer_sheduled_task`. Removed the unused `src/anon-tools/anon.sql` file and the redundant `src/anon-tools/initdb.sql` file. Removed commented-out code in the `src/anon-tools/Dockerfile.dump` and `deployment/terraform/database_anonymizer_scheduled_task/docker/database_anonymizer.py` files.
+* [OSDEV-1514](https://opensupplyhub.atlassian.net/browse/OSDEV-1514) - Corrected spelling mistakes in the `src/anon-tools/do_dump.sh` file and in the name of the folder `database_anonymizer_sheduled_task`. Removed the unused `src/anon-tools/anon.sql` file and the redundant `src/anon-tools/initdb.sql` file. Removed commented-out code in the `src/anon-tools/Dockerfile.dump` and `deployment/terraform/database_anonymizer_scheduled_task/docker/database_anonymizer.py` files.
+* [OSDEV-1523](https://opensupplyhub.atlassian.net/browse/OSDEV-1523) - Updated `export_csv.py` to enable uploading to Google Drive and implemented cursor-based pagination for the export.
 
 ### Architecture/Environment changes
-[OSDEV-1514](https://opensupplyhub.atlassian.net/browse/OSDEV-1514) - Introduced `rds_allow_major_version_upgrade` and `rds_apply_immediately` Terraform variables to enable or disable major version upgrades and the `apply immediately` flag, depending on the environment.
+* [OSDEV-1514](https://opensupplyhub.atlassian.net/browse/OSDEV-1514) - Introduced `rds_allow_major_version_upgrade` and `rds_apply_immediately` Terraform variables to enable or disable major version upgrades and the `apply immediately` flag, depending on the environment.
+* [OSDEV-1523](https://opensupplyhub.atlassian.net/browse/OSDEV-1523) - Added a new batch job that triggers the export_csv.py command on the first day of each month to upload bulk data of production locations to Google Drive.
 
 ### Bugfix
 
@@ -52,7 +54,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * The upgrade will be performed automatically by Terrafrom and AWS, but some steps need to be completed **before** and **after** the upgrade. Please refer to [the Confluence article](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/620134402/PostgreSQL+database+upgrade+from+version+12+to+version+13) for detailed instructions.
     * Steps to be completed before the upgrade are marked with the statement: "**This should be done before deploying the upgraded database.**". Post-upgrade tasks can be found under the [After the PostgreSQL major version upgrade](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/620134402/PostgreSQL+database+upgrade+from+version+12+to+version+13#After-the-PostgreSQL-major-version-upgrade) section.
     * In case of an unsuccessful release along with the database upgrade, follow the instructions under the [Guide for rolling back the PostgreSQL major version upgrade](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/620134402/PostgreSQL+database+upgrade+from+version+12+to+version+13#Guide-for-rolling-back-the-PostgreSQL-major-version-upgrade) section.
-
 
 ## Release 1.27.0
 
