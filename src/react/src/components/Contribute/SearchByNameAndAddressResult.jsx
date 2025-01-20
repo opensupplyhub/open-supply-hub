@@ -83,7 +83,6 @@ const mapStateToProps = ({
     },
 }) => ({
     data,
-    count,
     fetching,
 });
 const mapDispatchToProps = dispatch => ({

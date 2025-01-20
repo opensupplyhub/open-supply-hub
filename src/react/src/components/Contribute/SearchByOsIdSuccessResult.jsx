@@ -1,4 +1,5 @@
 import React from 'react';
+import { useHistory } from 'react-router-dom';
 import { object, func } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
@@ -13,12 +14,16 @@ const SearchByOsIdSuccessResult = ({
     classes,
 }) => {
     const {
-        name,
-        os_id: osId,
-        historical_os_id: historicalOsIds,
-        address,
-        country: { name: countryName } = {},
+        data: {
+            name,
+            os_id: osId,
+            historical_os_id: historicalOsIds,
+            address,
+            country: { name: countryName } = {},
+        },
     } = productionLocation;
+
+    const history = useHistory();
 
     return (
         <>
@@ -36,7 +41,11 @@ const SearchByOsIdSuccessResult = ({
                 defaultButtonLabel="No, search by name and address"
                 defaultButtonAction={handleBackToSearchByNameAddress}
                 secondaryButtonLabel="Yes, add data and claim"
-                secondaryButtonAction={() => {}}
+                secondaryButtonAction={() => {
+                    history.push(
+                        `/contribute/production-location/${osId}/info/`,
+                    );
+                }}
             />
         </>
     );

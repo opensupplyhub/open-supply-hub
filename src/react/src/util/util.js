@@ -266,7 +266,6 @@ export const makeGetProductionLocationURL = (osID = '') => {
 
 export const makeGetProductionLocationsForPotentialMatches = (
     productionLocationName,
-    countryCode,
     address,
     countryCode,
     limit,

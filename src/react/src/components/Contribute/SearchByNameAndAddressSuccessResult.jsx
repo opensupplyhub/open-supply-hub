@@ -8,10 +8,6 @@ import { makeSearchByNameAndAddressSuccessResultStyles } from '../../util/styles
 import { productionLocationPropType } from '../../util/propTypes';
 import ConfirmNotFoundLocationDialog from './ConfirmNotFoundLocationDialog';
 import ProductionLocationDetails from './ProductionLocationDetails';
-import {
-    productionLocationInfoRouteCreate,
-    productionLocationInfoRouteUpdate,
-} from '../../util/constants';
 
 const SearchByNameAndAddressSuccessResult = ({
     productionLocations,
@@ -39,8 +35,7 @@ const SearchByNameAndAddressSuccessResult = ({
 
     const handleSelectLocation = location => {
         const { name, address, country } = location;
-        // TODO: This route should be conditional (Create / Update)
-        const baseUrl = productionLocationInfoRouteCreate;
+        const baseUrl = `/contribute/production-location/${location.os_id}/info/`;
         const params = new URLSearchParams({
             name,
             address,
