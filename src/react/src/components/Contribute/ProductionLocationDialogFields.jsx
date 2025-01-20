@@ -1,7 +1,6 @@
-/* eslint no-unused-vars: 0 */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { map, toPairs, slice, isEmpty } from 'lodash';
+import { map, toPairs, slice } from 'lodash';
 import Typography from '@material-ui/core/Typography';
 
 const ProductionLocationDialogFields = ({

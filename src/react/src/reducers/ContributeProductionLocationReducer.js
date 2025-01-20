@@ -1,4 +1,3 @@
-/* eslint no-unused-vars: 0 */
 import { createReducer } from 'redux-act';
 import update from 'immutability-helper';
 import {

@@ -679,6 +679,7 @@ ProductionLocationInfo.defaultProps = {
 ProductionLocationInfo.propTypes = {
     countriesOptions: countryOptionsPropType,
     fetchCountries: func.isRequired,
+    fetchModerationEvent: func.isRequired,
     fetchFacilityProcessingType: func.isRequired,
     handleCreateProductionLocation: func.isRequired,
     handleUpdateProductionLocation: func.isRequired,
@@ -687,6 +688,7 @@ ProductionLocationInfo.propTypes = {
     singleModerationEventItem: moderationEventsListItemPropType,
     fetchProductionLocation: func.isRequired,
     singleProductionLocationData: productionLocationPropType.isRequired,
+    submitMethod: func.isRequired,
     classes: object.isRequired,
 };
 
