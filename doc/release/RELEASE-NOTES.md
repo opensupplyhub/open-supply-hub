@@ -10,13 +10,20 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Release date: January 25, 2025
 
 ### Database changes
-#### Migrations:
+* [OSDEV-1514](https://opensupplyhub.atlassian.net/browse/OSDEV-1514) - Upgraded the PostgreSQL version from 12 to 13 for the database used in local development, DB anonymization, DB restore setup, and environments in the AWS cloud. Additionally, the postgis and pg_trgm extensions have been upgraded to versions 3.4.2 and 1.5, respectively, based on the available extension versions for PostgreSQL 13.15 in AWS RDS. For more information, see [Extensions supported for RDS for PostgreSQL 13](https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-extensions.html#postgresql-extensions-13x). Allowed major version upgrades and activated the `apply immediately` flag to perform the PostgreSQL major version upgrade in AWS.
 
-#### Scheme changes
+#### Migrations:
+* 0163_refresh_pg_statistic_and_upgrade_postgres_extensions.py - This migration refreshes the `pg_statistic` table after the upgrade to PostgreSQL 13 and upgrades the postgis and pg_trgm extensions to versions 3.4.2 and 1.5, respectively.
+
+#### Schema changes
 
 ### Code/API changes
+* [OSDEV-1514](https://opensupplyhub.atlassian.net/browse/OSDEV-1514) - Corrected spelling mistakes in the `src/anon-tools/do_dump.sh` file and in the name of the folder `database_anonymizer_sheduled_task`. Removed the unused `src/anon-tools/anon.sql` file and the redundant `src/anon-tools/initdb.sql` file. Removed commented-out code in the `src/anon-tools/Dockerfile.dump` and `deployment/terraform/database_anonymizer_scheduled_task/docker/database_anonymizer.py` files.
+* [OSDEV-1523](https://opensupplyhub.atlassian.net/browse/OSDEV-1523) - Updated `export_csv.py` to enable uploading to Google Drive and implemented cursor-based pagination for the export.
 
 ### Architecture/Environment changes
+* [OSDEV-1514](https://opensupplyhub.atlassian.net/browse/OSDEV-1514) - Introduced `rds_allow_major_version_upgrade` and `rds_apply_immediately` Terraform variables to enable or disable major version upgrades and the `apply immediately` flag, depending on the environment.
+* [OSDEV-1523](https://opensupplyhub.atlassian.net/browse/OSDEV-1523) - Added a new batch job that triggers the export_csv.py command on the first day of each month to upload bulk data of production locations to Google Drive.
 
 ### Bugfix
 
@@ -37,12 +44,16 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Successful Search: If the search is successful, the results screen displays a list of production locations. Each item includes the following information about the production location: name, OS ID, address, and country name. Users can either select a specific production location or press the "I don’t see my Location" button, which triggers a confirmation dialog window.
     * Confirmation Dialog Window: In this window, users can confirm that no correct location was found using the provided search parameters. They can either proceed to create a new production location or return to the search.
     * Unsuccessful Search: If the search is unsuccessful, an explanation is provided along with two options: return to the search or add a new production location.
+* [OSDEV-1579](https://opensupplyhub.atlassian.net/browse/OSDEV-1579) - Updated the API limit automated email to remove an outdated link referring to OAR and improve the languate for clarity. With this update the contributor will be informed of the correct process to follow if they have reached their API calls limit.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
-
+* This release will upgrade PostgreSQL from version 12 to version 13.
+    * The upgrade will be performed automatically by Terrafrom and AWS, but some steps need to be completed **before** and **after** the upgrade. Please refer to [the Confluence article](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/620134402/PostgreSQL+database+upgrade+from+version+12+to+version+13) for detailed instructions.
+    * Steps to be completed before the upgrade are marked with the statement: "**This should be done before deploying the upgraded database.**". Post-upgrade tasks can be found under the [After the PostgreSQL major version upgrade](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/620134402/PostgreSQL+database+upgrade+from+version+12+to+version+13#After-the-PostgreSQL-major-version-upgrade) section.
+    * In case of an unsuccessful release along with the database upgrade, follow the instructions under the [Guide for rolling back the PostgreSQL major version upgrade](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/620134402/PostgreSQL+database+upgrade+from+version+12+to+version+13#Guide-for-rolling-back-the-PostgreSQL-major-version-upgrade) section.
 
 ## Release 1.27.0
 
@@ -53,7 +64,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 #### Migrations:
 
-#### Scheme changes
+#### Schema changes
 
 ### Code/API changes
 * [OSDEV-1409](https://opensupplyhub.atlassian.net/browse/OSDEV-1409) - Introduced a new PATCH `/api/v1/moderation-events/{moderation_id}/production-locations/{os_id}/` endpoint. This endpoint allows the creation of a new contribution for an existing production location based on the provided moderation event.
@@ -67,6 +78,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1493](https://opensupplyhub.atlassian.net/browse/OSDEV-1493) - Fixed an issue where the backend sorts countries not by `name` but by their `alpha-2 codes` in `GET /api/v1/moderation-events/` endpoint.
 * [OSDEV-1532](https://opensupplyhub.atlassian.net/browse/OSDEV-1532) - Fixed the date range picker on the `Moderation Queue` page. A Data Moderator can change the Before date even if an Error message is displayed.
 * [OSDEV-1533](https://opensupplyhub.atlassian.net/browse/OSDEV-1533) - The presentation of the `Moderation Decision Date` in the `Moderation Queue` table has been corrected. If the "status_change_date" is missing in the object, it now displays as "N/A".
+* [OSDEV-1196](https://opensupplyhub.atlassian.net/browse/OSDEV-1196) - The `?sort_by=contributors_desc` query parameter is only appended to URLs on the `/facilities` page and is excluded from all other pages. The error caused by the property type that occurred during local test execution has been resolved.
 * [OSDEV-1397](https://opensupplyhub.atlassian.net/browse/OSDEV-1397) - GET `/api/parent-companies/` request has been removed from the Open Supply Hub page and ClaimFacility component. Parent Company Select is a regular input field that allows the creation of multiple parent company names for filter on this page.
 * [OSDEV-1556](https://opensupplyhub.atlassian.net/browse/OSDEV-1556) - Fixed validation of `os_id` for PATCH `/api/v1/moderation-events/{moderation_id}/production-locations/{os_id}/` endpoint.
 * [OSDEV-1563](https://opensupplyhub.atlassian.net/browse/OSDEV-1563) - Fixed updating of the moderation decision date after moderation event approval.
@@ -100,7 +112,7 @@ The page also features `Go Back` and `Submit` buttons for navigation and form su
 #### Migrations:
 * 0162_update_moderationevent_table_fields.py - This migration updates the ModerationEvent table and its constraints.
 
-#### Scheme changes
+#### Schema changes
 * [OSDEV-1158](https://opensupplyhub.atlassian.net/browse/OSDEV-1158) - The following updates to the ModerationEvent table have been made:
     1. Set `uuid` as the primary key.
     2. Make `geocode_result` field optional. It can be blank if lat and lng
@@ -180,7 +192,7 @@ This issue has been fixed by adding additional requests to delete the appropriat
 * 0160_allow_null_parsing_errors_in_facilitylist.py - This migration allows empty parsing_errors in api_facilitylist.
 * 0161_create_disable_list_uploading_switch.py - This migration creates disable_list_uploading switch in the Django admin panel and record in the waffle_switch table.
 
-#### Scheme changes
+#### Schema changes
 * [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Alter status options for api_moderationevent table.
 * [OSDEV-1411](https://opensupplyhub.atlassian.net/browse/OSDEV-1411) - Allows empty parsing_errors in api_facilitylist.
 
@@ -263,7 +275,7 @@ to modify moderation event `status`.
 #### Migrations:
 * 0158_create_moderation_events_table.py - This migration creates api_moderationevent table for Moderation Queue.
 
-#### Scheme changes
+#### Schema changes
 * [OSDEV-1229](https://opensupplyhub.atlassian.net/browse/OSDEV-1229) - Created Moderation Events Postgres table to track moderation events in the database.
 
 ### Code/API changes
@@ -290,7 +302,7 @@ to modify moderation event `status`.
 * 0156_introduce_list_level_parsing_errors - This migration introduces the parsing_errors field for the FacilityList model to collect list-level and internal errors logged during the background parsing of the list.
 * 0157_delete_endpoint_switcher_for_list_uploads - This migration deletes the `use_old_upload_list_endpoint` switcher that was necessary to toggle between the old and new list upload endpoints.
 
-#### Scheme changes
+#### Schema changes
 * [OSDEV-1039](https://opensupplyhub.atlassian.net/browse/OSDEV-1039) - Since the `use_old_upload_list_endpoint` switcher is no longer necessary for the list upload, it has been deleted from the DB. Additionally, the `parsing_errors` field has been added to the FacilityList model.
 
 ### Code/API changes
@@ -380,7 +392,7 @@ Note: This instruction updates item 3 of the ['Release to Production and Sandbox
 #### Migrations:
 * 0155_remove_verification_method_column_from_facility_claim - This migration replaces the old `index_approved_claim` function with a new one that does not index the `verification_method` and `phone_number` fields. Additionally, it removes the `verification_method` and `phone_number` fields from the FacilityClaim model and the respective history table.
 
-#### Scheme changes
+#### Schema changes
 * [OSDEV-1092](https://opensupplyhub.atlassian.net/browse/OSDEV-1092) - Since the `verification_method` and `phone_number` fields are no longer necessary for the claim form and aren't used anywhere in the codebase, they have been deleted from the FacilityClaim model and the respective history table.
 
 ### Code/API changes
@@ -467,7 +479,7 @@ Note: This instruction updates item 3 of the ['Release to Production and Sandbox
 * 0153_add_sector_group_table - creates the `SectorGroup` model and populates it with the sector groups names.
 * 0154_associate_sectors_with_groups - associates sectors with sector groups.
 
-#### Scheme changes
+#### Schema changes
 * [OSDEV-1142](https://opensupplyhub.atlassian.net/browse/OSDEV-1142) - Technical Debt. Remove unused `api_tilecache` and `api_dynamicsetting` tables. Migration has been created, removed related data in the code base.
 * [OSDEV-360](https://opensupplyhub.atlassian.net/browse/OSDEV-360) - The following changes have been implemented:
     * A new table, `api_sectorgroup`, has been introduced and populated with sector group names.
@@ -509,15 +521,6 @@ Note: This instruction updates item 3 of the ['Release to Production and Sandbox
 #### Migrations:
 * 0151_replace_index_number_of_workers - replace function `index_number_of_workers` to use one source of truth for both`number_of_workers` & `extended_fields`.
 
-#### Scheme changes
-* *Describe scheme changes here.*
-
-### Code/API changes
-* *Describe code/API changes here.*
-
-### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
-
 ### Bugfix
 * [OSDEV-1145](https://opensupplyhub.atlassian.net/browse/OSDEV-1145) - Error message appearing as red dot with no context. Error display has been fixed. Simplified displaying logic of errors. Changed error property type.
 * [OSDEV-576](https://opensupplyhub.atlassian.net/browse/OSDEV-576) - Implemented one source of truth to Search query source & Production Location Details page source for field `number_of_workers`.
@@ -540,13 +543,6 @@ Note: This instruction updates item 3 of the ['Release to Production and Sandbox
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: July 13, 2024
-
-### Database changes
-#### Migrations:
-* *Describe migrations here.*
-
-#### Scheme changes
-* *Describe scheme changes here.*
 
 ### Code/API changes
 * [OSDEV-1100](https://opensupplyhub.atlassian.net/browse/OSDEV-1100) - Replaced all mentions of "facility" and "facilities" with the new production location naming in the Logstash app. Renamed `location` field in the production locations index to `coordinates`.
@@ -633,7 +629,7 @@ drop_calc_column_func.
 * 0148_remove_facility_workers_count_field_from_facilityclaim - removes the facility_workers_count field from the FacilityClaim model.
 * 0149_rename_facility_workers_count_new_to_facility_workers_count - renames the facility_workers_count_new field to facility_workers_count.
 
-#### Scheme changes
+#### Schema changes
 * [OSDEV-1084](https://opensupplyhub.atlassian.net/browse/OSDEV-1084) - To enable adding a range for the number of workers during the claiming process, the type of the `facility_workers_count` field in the `FacilityClaim` table was changed from `IntegerField` to `CharField`.
 
 ### Architecture/Environment changes
@@ -733,7 +729,7 @@ and receives information about merges that have occurred for the contributors wi
 * 0143_create_facility_claim_attachment_table.py - create api_facilityclaimattachments table to store claimant attachments per facility claim
 * 0144_remove_unnecessary_columns_from_facility_claim.py - This migration replaces the old `index_approved_claim` function with a similar one that does not index the `preferred_contact_method` field. Additionally, the migration removes `email` and `preferred_contact_method` from the `FacilityClaim` model and the respective history table.
 
-#### Scheme changes
+#### Schema changes
 * [OSDEV-931](https://opensupplyhub.atlassian.net/browse/OSDEV-931) - Since `email` and `preferred_contact_method` are no longer necessary for the claim form, they have been removed from the `FacilityClaim` model and the respective history table. Additionally, the old `index_approved_claim` function has been replaced with a similar one that does not index the `preferred_contact_method` field.
 
 ### Code/API changes
@@ -845,7 +841,7 @@ database:
 * 0141_delete_contributor_webhooks.py - deletes `ContributorWebhook` model
 * 0142_introduce_temporary_endpoint_switcher_for_list_uploads.py - This migration introduces a temporary API endpoint switcher for list uploads.
 
-#### Scheme changes
+#### Schema changes
 * [OSDEV-893](https://opensupplyhub.atlassian.net/browse/OSDEV-893) - Introduce a temporary API endpoint switcher for list uploads to enable switching to the old list upload API endpoint if the new endpoint affects production uptime.
 
 ### Code/API changes
@@ -902,7 +898,7 @@ Updated existing users api_apilimit records renewal_period value.
 * 0139_remove_ppe_switch.py - This migration removes the ppe switch.
 * 0140_remove_indexing_ppe_fields.py - This migration updates indexing functions to not index PPE fields.
 
-#### Scheme changes
+#### Schema changes
 * [OSDEV-835](https://opensupplyhub.atlassian.net/browse/OSDEV-835) - Since the FacilityIndex model is primarily used to store cached facility data and display it publicly via the `/facilities/{id}` API endpoint, only public data can be shown. Therefore, caching emails to the FacilityIndex model was removed from the PostgreSQL indexing functions. All instances where emails are publicly displayed have been removed. The only remaining field is `ppe_contact_email`, but all functionality and code related to PPE will be deleted in this [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) ticket.
 * [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) - Remove PPE fields (ppe_product_types, ppe_contact_email, ppe_contact_phone, ppe_website, ppe) from the `api_facility`, `api_facilityindex`, `api_facilitylistitem`, `api_facilitylistitemtemp`, `api_historicalfacility`. Remove this fields from indexing processes.
 
@@ -1015,7 +1011,7 @@ Updated existing users api_apilimit records renewal_period value.
 * 0132_add_moderation_mode_field - This migration adds the field `is_moderation_mode` to table `api_user`.
 * 0133_introduce_tile_caching - This migration creates the TileCache table and the DynamicSetting table. This migration is reversible.
 
-#### Scheme changes
+#### Schema changes
 * [OSDEV-622](https://opensupplyhub.atlassian.net/browse/OSDEV-622) - Separate data-gathering functions were created for the `api_facilityindexnew` table columns to collect data independently of the main procedure. The `index_facilities` and `index_facilities_by` procedures were updated to use new separate functions for collecting data for the `api_facilityindexnew` table columns that require long SQL queries.
 * [OSDEV-595](https://opensupplyhub.atlassian.net/browse/OSDEV-595) - Rename FacilityIndexNew to FacilityIndex
 * [OSDEV-623](https://opensupplyhub.atlassian.net/browse/OSDEV-623), [OSDEV-624](https://opensupplyhub.atlassian.net/browse/OSDEV-624), [OSDEV-638](https://opensupplyhub.atlassian.net/browse/OSDEV-638) - New SQL triggers have been introduced to handle changes in the `api_contributor`, `api_extendedfield`, `api_facility`, `api_facilityclaim`, `api_facilitylistitem`, `api_facilitymatch`, `api_source`, and `api_facilitylist` tables at the database level. This change is essential for the future functionality of DedupeHub, which will communicate directly with the database. All the Django signals have been removed. Additionally, reindexing of the necessary columns of the index table has been transferred to these triggers, eliminating the need for the large SQL procedure previously used in conjunction with Django signals.
@@ -1066,7 +1062,7 @@ Fix issue with exceeding API requests. [OSDEV-557](https://opensupplyhub.atlassi
 #### Migrations:
 - 0130_facility_index_gin_index - implement indexes for fields on "api_facilityindexnew" table related to tile generation
 
-#### Scheme changes
+#### Schema changes
 * indexing fields in api_facilityindexnew
     * contrib_types
     * contributors_id
@@ -1096,7 +1092,7 @@ Fix issue with exceeding API requests. [OSDEV-557](https://opensupplyhub.atlassi
 - 0128_custom_text_implementation - creates custom_text SQL functions and updated index_facilities and index_facilities_by to use it
 - 0129_delete_facility_index - removes api_facilityindex table
 
-#### Scheme changes
+#### Schema changes
 * introduce fields to api_facility_list_items
     * raw_json:JSON
     * raw_header:Text

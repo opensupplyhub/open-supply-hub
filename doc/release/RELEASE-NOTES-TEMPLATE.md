@@ -7,11 +7,13 @@ Use the format below to document information about the new release.
 * Release date: *Provide release date*
 
 ### Database changes
+* *Describe high-level database changes.*
+
 #### Migrations:
 * *Describe migrations here.*
 
-#### Scheme changes
-* *Describe scheme changes here.*
+#### Schema changes
+* *Describe schema changes here.*
 
 ### Code/API changes
 * *Describe code/API changes here.*
