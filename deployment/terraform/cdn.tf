@@ -6,10 +6,10 @@ resource "aws_s3_bucket" "react" {
   bucket = local.frontend_bucket_name
 }
 
-resource "aws_s3_bucket_acl" "react_acl" {
-  bucket = aws_s3_bucket.react.id
-  acl    = "private"
-}
+# resource "aws_s3_bucket_acl" "react_acl" {
+#   bucket = aws_s3_bucket.react.id
+#   acl    = "private"
+# }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "react" {
   bucket = aws_s3_bucket.react.id
