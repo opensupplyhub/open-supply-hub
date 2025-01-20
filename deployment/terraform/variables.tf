@@ -689,10 +689,12 @@ variable "export_csv_schedule_expression" {
 
 variable "google_service_account_creds_base64" {
   type        = string
+  sensitive   = true
   description = "Base64-encoded Google service account key"
 }
 
 variable "google_drive_shared_directory_id" {
   type        = string
+  sensitive   = true
   description = "The ID of the shared directory in Google Drive"
 }
