@@ -40,3 +40,6 @@ gunicorn==20.1.0
 django==3.2.17
 psycopg2==2.9.4
 gevent==22.8.0
+google-api-python-client==2.156.0
+google-auth-httplib2==0.2.0
+google-auth-oauthlib==1.2.1
