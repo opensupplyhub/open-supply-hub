@@ -1,4 +1,3 @@
-/* eslint no-unused-vars: 0 */
 import { createAction } from 'redux-act';
 
 import apiRequest from '../util/apiRequest';
@@ -142,7 +141,9 @@ export function fetchProductionLocationByOsId(osID) {
 
         return apiRequest
             .get(makeGetProductionLocationURL(osID))
-            .then(data => dispatch(completeFetchSingleProductionLocation(data)))
+            .then(response =>
+                dispatch(completeFetchSingleProductionLocation(response.data)),
+            )
             .catch(err =>
                 dispatch(
                     logErrorAndDispatchFailure(
