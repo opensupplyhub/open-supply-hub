@@ -3,13 +3,9 @@ locals {
 }
 
 resource "aws_s3_bucket" "react" {
-  bucket = local.frontend_bucket_name
+  bucket        = local.frontend_bucket_name
+  force_destroy = true
 }
-
-# resource "aws_s3_bucket_acl" "react_acl" {
-#   bucket = aws_s3_bucket.react.id
-#   acl    = "private"
-# }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "react" {
   bucket = aws_s3_bucket.react.id
@@ -126,13 +122,6 @@ resource "aws_cloudfront_distribution" "cdn" {
     s3_origin_config {
       origin_access_identity = aws_cloudfront_origin_access_identity.react.cloudfront_access_identity_path
     }
-
-    # custom_origin_config {
-    #   http_port              = 80
-    #   https_port             = 443
-    #   origin_protocol_policy = "https-only"
-    #   origin_ssl_protocols   = ["TLSv1", "TLSv1.1", "TLSv1.2"]
-    # }
 
     custom_header {
         name = "X-CloudFront-Auth"
@@ -497,94 +486,27 @@ resource "aws_cloudfront_distribution" "cdn" {
     max_ttl                = 300
   }
 
-  # ordered_cache_behavior {
-  #   path_pattern     = "/auth/login"
-  #   allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-  #   cached_methods   = ["GET", "HEAD", "OPTIONS"]
-  #   target_origin_id = "originAlb"
-  #
-  #   forwarded_values {
-  #     query_string = true
-  #     headers      = ["*"] # To discourage hotlinking to cached tiles
-  #
-  #     cookies {
-  #       forward = "all"
-  #     }
-  #   }
-  #
-  #   compress               = true
-  #   viewer_protocol_policy = "redirect-to-https"
-  #   min_ttl                = 0
-  #   default_ttl            = 0
-  #   max_ttl                = 300
-  # }
-  #
-  # ordered_cache_behavior {
-  #   path_pattern     = "/admin"
-  #   allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-  #   cached_methods   = ["GET", "HEAD", "OPTIONS"]
-  #   target_origin_id = "originAlb"
-  #
-  #   forwarded_values {
-  #     query_string = true
-  #     headers      = ["*"] # To discourage hotlinking to cached tiles
-  #
-  #     cookies {
-  #       forward = "all"
-  #     }
-  #   }
-  #
-  #   compress               = true
-  #   viewer_protocol_policy = "redirect-to-https"
-  #   min_ttl                = 0
-  #   default_ttl            = 0
-  #   max_ttl                = 300
-  # }
-  #
-  # ordered_cache_behavior {
-  #   path_pattern     = "/contribute"
-  #   allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-  #   cached_methods   = ["GET", "HEAD", "OPTIONS"]
-  #   target_origin_id = "originAlb"
-  #
-  #   forwarded_values {
-  #     query_string = true
-  #     headers      = ["*"] # To discourage hotlinking to cached tiles
-  #
-  #     cookies {
-  #       forward = "all"
-  #     }
-  #   }
-  #
-  #   compress               = true
-  #   viewer_protocol_policy = "redirect-to-https"
-  #   min_ttl                = 0
-  #   default_ttl            = 0
-  #   max_ttl                = 300
-  # }
-  #
-  # ordered_cache_behavior {
-  #   path_pattern     = "/contribute/multiple-locations"
-  #   allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-  #   cached_methods   = ["GET", "HEAD", "OPTIONS"]
-  #   target_origin_id = "originAlb"
-  #
-  #   forwarded_values {
-  #     query_string = true
-  #     headers      = ["*"] # To discourage hotlinking to cached tiles
-  #
-  #     cookies {
-  #       forward = "all"
-  #     }
-  #   }
-  #
-  #   compress               = true
-  #   viewer_protocol_policy = "redirect-to-https"
-  #   min_ttl                = 0
-  #   default_ttl            = 0
-  #   max_ttl                = 300
-  # }
+  ordered_cache_behavior {
+    path_pattern     = "/admin"
+    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods   = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id = "originAlb"
 
+    forwarded_values {
+      query_string = true
+      headers      = ["*"] # To discourage hotlinking to cached tiles
+
+      cookies {
+        forward = "all"
+      }
+    }
+
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 300
+  }
 
   logging_config {
     include_cookies = false
@@ -602,6 +524,20 @@ resource "aws_cloudfront_distribution" "cdn" {
     acm_certificate_arn      = module.cert_cdn.arn
     minimum_protocol_version = "TLSv1.2_2018"
     ssl_support_method       = "sni-only"
+  }
+
+  custom_error_response {
+    error_code = 403
+    error_caching_min_ttl = 10
+    response_code = 200
+    response_page_path = "/index.html"
+  }
+
+  custom_error_response {
+    error_code = 404
+    error_caching_min_ttl = 10
+    response_code = 200
+    response_page_path = "/index.html"
   }
 
   tags = {
