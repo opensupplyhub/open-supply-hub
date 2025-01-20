@@ -182,7 +182,8 @@ class Command(BaseCommand):
         limit = options["limit"]
         logger.info(f"Limit set to: {limit}")
 
-        environment_name = os.getenv("ENVIRONMENT").lower()
+        environment_name = os.getenv('DJANGO_ENV', 'Local').lower()
+
         now = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
         filename = f"./locations-data-{environment_name}-{now}.csv"
