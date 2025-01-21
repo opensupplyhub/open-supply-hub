@@ -1,8 +1,9 @@
+/* eslint no-unused-vars: 0 */
 import React, { useEffect, useState } from 'react';
 import { func, number, object, string } from 'prop-types';
 import { withStyles, withTheme } from '@material-ui/core/styles';
 import { useHistory } from 'react-router-dom';
-import { size, round } from 'lodash';
+import { size, startCase, round, toLower } from 'lodash';
 import Button from '@material-ui/core/Button';
 import Chip from '@material-ui/core/Chip';
 import Typography from '@material-ui/core/Typography';
@@ -15,7 +16,10 @@ import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 import ProductionLocationDialogCloseButton from './ProductionLocationDialogCloseButton';
 import DialogTooltip from './DialogTooltip';
 import ProductionLocationDialogFields from './ProductionLocationDialogFields';
-import { mainRoute } from '../../util/constants';
+import {
+    mainRoute,
+    searchByNameAndAddressResultRoute,
+} from '../../util/constants';
 import { makeProductionLocationDialogStyles } from '../../util/styles';
 
 const infoIcon = classes => (
@@ -40,17 +44,13 @@ const ProductionLocationDialog = ({
     classes,
     data,
     osID,
+    moderationStatus,
     handleShow,
 }) => {
     const history = useHistory();
 
     const [isMobile, setIsMobile] = useState(false);
     useEffect(() => {
-        /*
-        console.log(theme.breakpoints.up('sm'));
-        console.log(theme.breakpoints.values.sm);
-        console.log('innerWidth is: ', innerWidth);
-        */
         if (innerWidth <= theme.breakpoints.values.sm) {
             setIsMobile(true);
         } else {
@@ -145,23 +145,24 @@ const ProductionLocationDialog = ({
                                 <Typography className={classes.label}>
                                     OS ID
                                 </Typography>
-                                {osID ? (
-                                    <Typography className={classes.osIDText}>
-                                        {osID}
-                                    </Typography>
-                                ) : (
-                                    <Grid
-                                        container
-                                        className={classes.primaryText}
-                                    >
-                                        <Grid item>
-                                            <Chip
-                                                label="Pending"
-                                                onDelete={() => {}}
-                                                className={
-                                                    classes.osIdStatusBadge
-                                                }
-                                                deleteIcon={
+                                <Grid container className={classes.primaryText}>
+                                    <Grid item>
+                                        {osID ? (
+                                            <Typography
+                                                className={classes.osIDText}
+                                            >
+                                                {osID}
+                                            </Typography>
+                                        ) : null}
+                                        <Chip
+                                            label={startCase(
+                                                toLower(moderationStatus),
+                                            )}
+                                            onDelete={() => {}}
+                                            className={classes.osIdStatusBadge}
+                                            deleteIcon={
+                                                moderationStatus ===
+                                                'PENDING' ? (
                                                     <DialogTooltip
                                                         text="Your submission is under
                                                         review. You will receive a
@@ -174,11 +175,11 @@ const ProductionLocationDialog = ({
                                                             classes,
                                                         )}
                                                     />
-                                                }
-                                            />
-                                        </Grid>
+                                                ) : null
+                                            }
+                                        />
                                     </Grid>
-                                )}
+                                </Grid>
                                 <ProductionLocationDialogFields
                                     fields={fields}
                                     startFrom={fieldSetNumber}
@@ -201,7 +202,9 @@ const ProductionLocationDialog = ({
                                 variant="contained"
                                 color="secondary"
                                 onClick={() => {
-                                    console.log('submit another location');
+                                    history.push(
+                                        searchByNameAndAddressResultRoute,
+                                    );
                                 }}
                                 className={classes.button}
                             >
@@ -228,6 +231,7 @@ ProductionLocationDialog.defaultProps = {
 ProductionLocationDialog.propTypes = {
     data: object.isRequired,
     osID: string,
+    moderationStatus: string.isRequired,
     handleShow: func.isRequired,
     classes: object.isRequired,
     innerWidth: number.isRequired,

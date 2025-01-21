@@ -582,6 +582,8 @@ export const makeProductionLocationDialogStyles = theme =>
             marginBottom: '20px',
         }),
         osIDText: Object.freeze({
+            display: 'inline-block',
+            marginRight: '15px',
             lineHeight: '2.3',
         }),
         leftContainerColumn: Object.freeze({

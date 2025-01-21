@@ -39,7 +39,7 @@ import {
     convertRangeField,
     updateStateFromData,
 } from '../../util/util';
-import { mockedSectors } from '../../util/constants';
+import { mockedSectors, MODERATION_STATUSES_ENUM } from '../../util/constants';
 import COLOURS from '../../util/COLOURS';
 import ProductionLocationDialog from './ProductionLocationDialog';
 
@@ -682,6 +682,11 @@ const ProductionLocationInfo = ({
                     osID={osID}
                     handleShow={setShowProductionLocationDialog}
                     innerWidth={innerWidth}
+                    moderationStatus={
+                        pendingModerationEvent?.data?.status ||
+                        singleModerationEventItem?.status ||
+                        MODERATION_STATUSES_ENUM.PENDING
+                    }
                 />
             ) : null}
         </>
