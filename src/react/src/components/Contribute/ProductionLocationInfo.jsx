@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useParams, useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
-import { func, object, string } from 'prop-types';
+import { func, number, object, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
-import { isEmpty } from 'lodash';
+import { endsWith, isEmpty } from 'lodash';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
@@ -57,6 +57,7 @@ const ProductionLocationInfo = ({
     singleModerationEventItem,
     fetchProductionLocation,
     singleProductionLocationData,
+    innerWidth,
 }) => {
     const location = useLocation();
     const history = useHistory();
@@ -99,7 +100,7 @@ const ProductionLocationInfo = ({
     const [
         showProductionLocationDialog,
         setShowProductionLocationDialog,
-    ] = useState(false);
+    ] = useState(null);
 
     const toggleExpand = () => {
         setIsExpanded(!isExpanded);
@@ -123,6 +124,22 @@ const ProductionLocationInfo = ({
             fetchProductionLocation(osID);
         }
     }, [submitMethod]);
+
+    useEffect(() => {
+        if (showProductionLocationDialog === false) {
+            const pathSegments = location.pathname.split('/');
+            // URL may contain trailing slash which should be trimmed
+            if (endsWith(pathSegments, '')) {
+                pathSegments.pop();
+            }
+            pathSegments.pop();
+            const baseContributeInfoLocation = pathSegments.join('/');
+            history.push({
+                pathname: baseContributeInfoLocation,
+                search: '',
+            });
+        }
+    }, [showProductionLocationDialog]);
 
     useEffect(() => {
         if (singleProductionLocationData && osID) {
@@ -284,7 +301,7 @@ const ProductionLocationInfo = ({
                                     input: `
                                     ${
                                         nameTouched &&
-                                        !isEmpty(inputName) &&
+                                        isEmpty(inputName) &&
                                         classes.errorStyle
                                     }`,
                                     notchedOutline:
@@ -293,12 +310,12 @@ const ProductionLocationInfo = ({
                             }}
                             helperText={
                                 nameTouched &&
-                                !isEmpty(inputName) && <InputErrorText />
+                                isEmpty(inputName) && <InputErrorText />
                             }
                             FormHelperTextProps={{
                                 className: classes.helperText,
                             }}
-                            error={nameTouched && !isEmpty(inputName)}
+                            error={nameTouched && isEmpty(inputName)}
                         />
                     </div>
                     <div
@@ -330,7 +347,7 @@ const ProductionLocationInfo = ({
                                     input: `${classes.searchInputStyles}
                                 ${
                                     addressTouched &&
-                                    !isEmpty(inputAddress) &&
+                                    isEmpty(inputAddress) &&
                                     classes.errorStyle
                                 }`,
                                     notchedOutline:
@@ -339,12 +356,12 @@ const ProductionLocationInfo = ({
                             }}
                             helperText={
                                 addressTouched &&
-                                !isEmpty(inputAddress) && <InputErrorText />
+                                isEmpty(inputAddress) && <InputErrorText />
                             }
                             FormHelperTextProps={{
                                 className: classes.helperText,
                             }}
-                            error={addressTouched && !isEmpty(inputAddress)}
+                            error={addressTouched && isEmpty(inputAddress)}
                         />
                     </div>
                     <div
@@ -663,6 +680,8 @@ const ProductionLocationInfo = ({
                         singleModerationEventItem?.cleaned_data
                     }
                     osID={osID}
+                    handleShow={setShowProductionLocationDialog}
+                    innerWidth={innerWidth}
                 />
             ) : null}
         </>
@@ -690,6 +709,7 @@ ProductionLocationInfo.propTypes = {
     singleProductionLocationData: productionLocationPropType.isRequired,
     submitMethod: string.isRequired,
     classes: object.isRequired,
+    innerWidth: number.isRequired,
 };
 
 const mapStateToProps = ({
@@ -704,12 +724,16 @@ const mapStateToProps = ({
     contributeProductionLocation: {
         singleProductionLocation: { data: singleProductionLocationData },
     },
+    ui: {
+        window: { innerWidth },
+    },
 }) => ({
     countriesOptions,
     facilityProcessingTypeOptions,
     pendingModerationEvent,
     singleModerationEventItem,
     singleProductionLocationData,
+    innerWidth,
 });
 
 function mapDispatchToProps(dispatch) {

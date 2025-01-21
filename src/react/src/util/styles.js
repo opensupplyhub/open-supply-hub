@@ -535,6 +535,24 @@ export const makeDialogTooltipStyles = () =>
         }),
     });
 
+export const makeProductionLocationCloseButtonStyles = theme =>
+    Object.freeze({
+        root: Object.freeze({
+            borderBottom: `1px solid ${theme.palette.divider}`,
+            margin: 0,
+            padding: theme.spacing.unit * 2,
+        }),
+        mobileCloseButton: Object.freeze({
+            color: 'white',
+        }),
+        desktopCloseButton: Object.freeze({
+            position: 'absolute',
+            right: theme.spacing.unit,
+            top: theme.spacing.unit,
+            color: theme.palette.grey[500],
+        }),
+    });
+
 export const makeProductionLocationDialogStyles = theme =>
     Object.freeze({
         modalContainerWrapper: Object.freeze({
@@ -600,7 +618,6 @@ export const makeProductionLocationDialogStyles = theme =>
         }),
         button: Object.freeze({
             fontWeight: theme.typography.fontWeightBold,
-            textTransform: 'none',
             paddingLeft: '30px',
             paddingRight: '30px',
             boxShadow: 'none',

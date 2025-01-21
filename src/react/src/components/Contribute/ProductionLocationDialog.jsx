@@ -1,6 +1,6 @@
-import React from 'react';
-import { object, string } from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
+import React, { useEffect, useState } from 'react';
+import { func, number, object, string } from 'prop-types';
+import { withStyles, withTheme } from '@material-ui/core/styles';
 import { useHistory } from 'react-router-dom';
 import { size, round } from 'lodash';
 import Button from '@material-ui/core/Button';
@@ -12,6 +12,7 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogActions from '@material-ui/core/DialogActions';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
+import ProductionLocationDialogCloseButton from './ProductionLocationDialogCloseButton';
 import DialogTooltip from './DialogTooltip';
 import ProductionLocationDialogFields from './ProductionLocationDialogFields';
 import { mainRoute } from '../../util/constants';
@@ -33,8 +34,29 @@ const claimButton = classes => (
     </span>
 );
 
-const ProductionLocationDialog = ({ classes, data, osID }) => {
+const ProductionLocationDialog = ({
+    theme,
+    innerWidth,
+    classes,
+    data,
+    osID,
+    handleShow,
+}) => {
     const history = useHistory();
+
+    const [isMobile, setIsMobile] = useState(false);
+    useEffect(() => {
+        /*
+        console.log(theme.breakpoints.up('sm'));
+        console.log(theme.breakpoints.values.sm);
+        console.log('innerWidth is: ', innerWidth);
+        */
+        if (innerWidth <= theme.breakpoints.values.sm) {
+            setIsMobile(true);
+        } else {
+            setIsMobile(false);
+        }
+    }, [innerWidth]);
 
     const {
         raw_json: { name: productionLocationName, address },
@@ -44,134 +66,158 @@ const ProductionLocationDialog = ({ classes, data, osID }) => {
     const fieldSetNumber = round(size(fields) / 2);
 
     return (
-        <Dialog
-            open
-            aria-labelledby="production-location-dialog-title"
-            aria-describedby="production-location-dialog-description"
-        >
-            <div className={classes.modalContainerWrapper}>
-                <DialogTitle
-                    id="production-location-dialog-title"
-                    className={classes.titleContentStyle}
-                >
-                    <p className={classes.titleInnerContentStyle}>
-                        Thanks for adding data for this production location!
-                    </p>
-                </DialogTitle>
-                <DialogContent>
-                    <Typography
-                        variant="body1"
-                        className={classes.dialogContentStyles}
+        <>
+            {isMobile ? (
+                <ProductionLocationDialogCloseButton
+                    handleShow={handleShow}
+                    isMobile={isMobile}
+                />
+            ) : null}
+            <Dialog
+                open
+                aria-labelledby="production-location-dialog-title"
+                aria-describedby="production-location-dialog-description"
+                PaperProps={{
+                    style: {
+                        top: isMobile ? '150px' : 'auto',
+                    },
+                }}
+            >
+                <div className={classes.modalContainerWrapper}>
+                    <DialogTitle
+                        id="production-location-dialog-title"
+                        className={classes.titleContentStyle}
                     >
-                        Do you own or manage this location? If so, you can now
-                        claim your production location to have a complete,
-                        credible and confirmed profile with a green banner and
-                        claimed badge. You’ll be able to add more information,
-                        like contact details, certifications, native language
-                        name, and more.
-                    </Typography>
-                    <hr className={classes.separator} />
-                    <Grid container>
-                        <Grid
-                            item
-                            xs={12}
-                            md={6}
-                            className={classes.leftContainerColumn}
-                        >
-                            <Typography className={classes.label}>
-                                Facility name
-                            </Typography>
-                            <Typography className={classes.primaryText}>
-                                {productionLocationName || 'N/A'}
-                            </Typography>
-                            <Typography className={classes.label}>
-                                Address
-                            </Typography>
-                            <Typography className={classes.primaryText}>
-                                {address || 'N/A'}
-                            </Typography>
-                            <ProductionLocationDialogFields
-                                fields={fields}
-                                startTo={fieldSetNumber}
-                                classes={classes}
+                        <p className={classes.titleInnerContentStyle}>
+                            Thanks for adding data for this production location!
+                        </p>
+                        {!isMobile ? (
+                            <ProductionLocationDialogCloseButton
+                                handleShow={handleShow}
+                                isMobile={isMobile}
                             />
-                        </Grid>
-                        <Grid
-                            item
-                            xs={12}
-                            md={6}
-                            className={classes.rightContainerColumn}
+                        ) : null}
+                    </DialogTitle>
+                    <DialogContent>
+                        <Typography
+                            variant="body1"
+                            className={classes.dialogContentStyles}
                         >
-                            <Typography className={classes.label}>
-                                OS ID
-                            </Typography>
-                            {osID ? (
-                                <Typography className={classes.osIDText}>
-                                    {osID}
+                            Do you own or manage this location? If so, you can
+                            now claim your production location to have a
+                            complete, credible and confirmed profile with a
+                            green banner and claimed badge. You’ll be able to
+                            add more information, like contact details,
+                            certifications, native language name, and more.
+                        </Typography>
+                        <hr className={classes.separator} />
+                        <Grid container>
+                            <Grid
+                                item
+                                xs={12}
+                                md={6}
+                                className={classes.leftContainerColumn}
+                            >
+                                <Typography className={classes.label}>
+                                    Facility name
                                 </Typography>
-                            ) : (
-                                <Grid container className={classes.primaryText}>
-                                    <Grid item>
-                                        <Chip
-                                            label="Pending"
-                                            onDelete={() => {}}
-                                            className={classes.osIdStatusBadge}
-                                            deleteIcon={
-                                                <DialogTooltip
-                                                    text="Your submission is under
+                                <Typography className={classes.primaryText}>
+                                    {productionLocationName || 'N/A'}
+                                </Typography>
+                                <Typography className={classes.label}>
+                                    Address
+                                </Typography>
+                                <Typography className={classes.primaryText}>
+                                    {address || 'N/A'}
+                                </Typography>
+                                <ProductionLocationDialogFields
+                                    fields={fields}
+                                    startTo={fieldSetNumber}
+                                    classes={classes}
+                                />
+                            </Grid>
+                            <Grid
+                                item
+                                xs={12}
+                                md={6}
+                                className={classes.rightContainerColumn}
+                            >
+                                <Typography className={classes.label}>
+                                    OS ID
+                                </Typography>
+                                {osID ? (
+                                    <Typography className={classes.osIDText}>
+                                        {osID}
+                                    </Typography>
+                                ) : (
+                                    <Grid
+                                        container
+                                        className={classes.primaryText}
+                                    >
+                                        <Grid item>
+                                            <Chip
+                                                label="Pending"
+                                                onDelete={() => {}}
+                                                className={
+                                                    classes.osIdStatusBadge
+                                                }
+                                                deleteIcon={
+                                                    <DialogTooltip
+                                                        text="Your submission is under
                                                         review. You will receive a
                                                         notification once the
                                                         production location is live
                                                         on OS Hub. You can proceed
                                                         to submit a claim while your
                                                         request is pending."
-                                                    childComponent={infoIcon(
-                                                        classes,
-                                                    )}
-                                                />
-                                            }
-                                        />
+                                                        childComponent={infoIcon(
+                                                            classes,
+                                                        )}
+                                                    />
+                                                }
+                                            />
+                                        </Grid>
                                     </Grid>
-                                </Grid>
-                            )}
-                            <ProductionLocationDialogFields
-                                fields={fields}
-                                startFrom={fieldSetNumber}
-                                classes={classes}
+                                )}
+                                <ProductionLocationDialogFields
+                                    fields={fields}
+                                    startFrom={fieldSetNumber}
+                                    classes={classes}
+                                />
+                            </Grid>
+                        </Grid>
+                    </DialogContent>
+                    <DialogActions>
+                        <Grid container className={classes.buttonContentStyle}>
+                            <Button
+                                variant="contained"
+                                color="default"
+                                onClick={() => history.push(mainRoute)}
+                                className={classes.button}
+                            >
+                                Search OS Hub
+                            </Button>
+                            <Button
+                                variant="contained"
+                                color="secondary"
+                                onClick={() => {
+                                    console.log('submit another location');
+                                }}
+                                className={classes.button}
+                            >
+                                Submit another Location
+                            </Button>
+                            <DialogTooltip
+                                text="You'll be able to claim the
+                                        location after the moderation is done"
+                                aria-label="Claim button tooltip"
+                                childComponent={claimButton(classes)}
                             />
                         </Grid>
-                    </Grid>
-                </DialogContent>
-                <DialogActions>
-                    <Grid container className={classes.buttonContentStyle}>
-                        <Button
-                            variant="contained"
-                            color="default"
-                            onClick={() => history.push(mainRoute)}
-                            className={classes.button}
-                        >
-                            Search OS Hub
-                        </Button>
-                        <Button
-                            variant="contained"
-                            color="secondary"
-                            onClick={() => {
-                                console.log('submit another location');
-                            }}
-                            className={classes.button}
-                        >
-                            Submit another Location
-                        </Button>
-                        <DialogTooltip
-                            text="You'll be able to claim the
-                                        location after the moderation is done"
-                            aria-label="Claim button tooltip"
-                            childComponent={claimButton(classes)}
-                        />
-                    </Grid>
-                </DialogActions>
-            </div>
-        </Dialog>
+                    </DialogActions>
+                </div>
+            </Dialog>
+        </>
     );
 };
 
@@ -182,9 +228,11 @@ ProductionLocationDialog.defaultProps = {
 ProductionLocationDialog.propTypes = {
     data: object.isRequired,
     osID: string,
+    handleShow: func.isRequired,
     classes: object.isRequired,
+    innerWidth: number.isRequired,
 };
 
-export default withStyles(makeProductionLocationDialogStyles)(
-    ProductionLocationDialog,
+export default withTheme()(
+    withStyles(makeProductionLocationDialogStyles)(ProductionLocationDialog),
 );
