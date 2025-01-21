@@ -2,6 +2,16 @@ import React from 'react';
 import { fireEvent } from '@testing-library/react';
 import SearchByNameAndAddressSuccessResult from '../../components/Contribute/SearchByNameAndAddressSuccessResult';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
+import { productionLocationInfoRoute } from '../../util/constants';
+
+const mockHistoryPush = jest.fn();
+
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useHistory: () => ({
+    push: mockHistoryPush,
+  }),
+}));
 
 jest.mock('../../components/Contribute/ConfirmNotFoundLocationDialog', () => ({
     __esModule: true,
@@ -107,14 +117,14 @@ describe('SearchByNameAndAddressSuccessResult component', () => {
         expect(queryByText('Close Dialog')).not.toBeInTheDocument();
     });
 
-    test('the "Select" button is clicked', () => {
+    test('opens the "Production Location Information" page when the "Select" button is clicked', () => {
         const { getAllByRole } = renderWithProviders(<SearchByNameAndAddressSuccessResult {...defaultProps} />);
         const selectButtons = getAllByRole('button', { name: /Select/i });
 
         selectButtons.forEach(button => {
             expect(button).toBeInTheDocument();
             fireEvent.click(button);
+            expect(mockHistoryPush).toHaveBeenCalledWith(expect.stringContaining(productionLocationInfoRoute));
         });
     });
-
 });
