@@ -1,0 +1,33 @@
+{
+  "image": "${image_url}",
+  "vcpus": 2,
+  "memory": 4096,
+  "command": [ "python", "manage.py", "export_csv" ],
+  "environment": [
+      { "name": "AWS_DEFAULT_REGION", "value": "${aws_region}" },
+      { "name": "AWS_STORAGE_BUCKET_NAME", "value": "${aws_storage_bucket_name}" },
+      { "name": "POSTGRES_HOST", "value": "${postgres_host}" },
+      { "name": "POSTGRES_PORT", "value": "${postgres_port}" },
+      { "name": "POSTGRES_USER", "value": "${postgres_user}" },
+      { "name": "POSTGRES_PASSWORD", "value": "${postgres_password}" },
+      { "name": "POSTGRES_DB", "value": "${postgres_db}" },
+      { "name": "BATCH_JOB_QUEUE_NAME", "value": "${batch_job_queue_name}" },
+      { "name": "BATCH_JOB_DEF_NAME", "value": "${batch_job_def_name}" },
+      { "name": "BATCH_MODE", "value": "True" },
+      { "name": "DJANGO_ENV", "value": "${environment}" },
+      { "name": "DJANGO_SECRET_KEY", "value": "${django_secret_key}" },
+      { "name": "GOOGLE_SERVER_SIDE_API_KEY", "value": "${google_server_side_api_key}" },
+      { "name": "OAR_CLIENT_KEY", "value": "${oar_client_key}" },
+      { "name": "EXTERNAL_DOMAIN", "value": "${external_domain}" },
+      { "name": "GOOGLE_SERVICE_ACCOUNT_CREDS_BASE64", "value": "${google_service_account_creds_base64}" },
+      { "name": "GOOGLE_DRIVE_SHARED_DIRECTORY_ID", "value": "${google_drive_shared_directory_id}" }
+  ],
+  "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+          "awslogs-group": "${log_group_name}",
+          "awslogs-region": "${aws_region}",
+          "awslogs-stream-prefix": "export_csv"
+      }
+  }
+}
