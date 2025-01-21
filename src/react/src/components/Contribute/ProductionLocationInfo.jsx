@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useParams, useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
-import { func, object } from 'prop-types';
+import { func, object, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 import { isEmpty } from 'lodash';
@@ -688,7 +688,7 @@ ProductionLocationInfo.propTypes = {
     singleModerationEventItem: moderationEventsListItemPropType,
     fetchProductionLocation: func.isRequired,
     singleProductionLocationData: productionLocationPropType.isRequired,
-    submitMethod: func.isRequired,
+    submitMethod: string.isRequired,
     classes: object.isRequired,
 };
 
