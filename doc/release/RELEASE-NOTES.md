@@ -3,6 +3,36 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.29.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: February 8, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* *Describe migrations here.*
+
+#### Schema changes
+* *Describe schema changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* [OSDEV-899](https://opensupplyhub.atlassian.net/browse/OSDEV-899) - After moving the React application to the S3 bucket, we transfer the processing of part of the traffic to the CDN, which allows us to use the computing resources of the ECS cluster more efficiently.
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* *Provide release instructions here.*
+
 ## Release 1.28.0
 
 ## Introduction
