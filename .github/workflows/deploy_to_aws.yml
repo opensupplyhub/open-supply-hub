@@ -179,8 +179,8 @@ jobs:
           aws s3 sync src/react/build/ s3://$FRONTEND_BUCKET-$AWS_DEFAULT_REGION/ --delete
           aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
 
-      - name: Move static
-        run: mv src/react/build src/django/static
+#      - name: Move static
+#        run: mv src/react/build src/django/static
 
       - name: Configure AWS credentials for ${{ vars.ENV_NAME }}
         uses: aws-actions/configure-aws-credentials@v1
