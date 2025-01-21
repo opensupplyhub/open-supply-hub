@@ -2,7 +2,7 @@ import React from "react";
 import renderWithProviders from "../../util/testUtils/renderWithProviders";
 import ConfirmNotFoundLocationDialog from "../../components/Contribute/ConfirmNotFoundLocationDialog";
 import history from "../../util/history";
-import { contributeProductionLocationRoute } from "../../util/constants";
+import { contributeProductionLocationRoute, productionLocationInfoRoute } from "../../util/constants";
 
 jest.mock("../../util/history", () => ({
     push: jest.fn(),
@@ -72,6 +72,9 @@ describe("ConfirmNotFoundLocationDialog component", () => {
 
         expect(mockHandleConfirmDialogClose).toHaveBeenCalledTimes(1);
         expect(mockClearLocations).toHaveBeenCalledTimes(1);
+        expect(history.push).toHaveBeenCalledWith(
+            productionLocationInfoRoute,
+        );
     });
 
     test("closes the dialog when the close button is clicked", () => {
