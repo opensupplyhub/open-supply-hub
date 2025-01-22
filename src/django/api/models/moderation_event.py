@@ -122,8 +122,8 @@ class ModerationEvent(models.Model):
     action_type = models.CharField(
         max_length=12,
         choices=ActionType.choices,
+        null=True,
         blank=True,
-        default='',
         help_text='Type of moderation action.'
     )
 
