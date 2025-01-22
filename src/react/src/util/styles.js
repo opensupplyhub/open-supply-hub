@@ -619,6 +619,7 @@ export const makeProductionLocationDialogStyles = theme =>
             marginRight: '5px',
         }),
         button: Object.freeze({
+            textTransform: 'capitalize',
             fontWeight: theme.typography.fontWeightBold,
             paddingLeft: '30px',
             paddingRight: '30px',
