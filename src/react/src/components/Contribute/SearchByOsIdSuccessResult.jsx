@@ -14,13 +14,11 @@ const SearchByOsIdSuccessResult = ({
     classes,
 }) => {
     const {
-        data: {
-            name,
-            os_id: osId,
-            historical_os_id: historicalOsIds,
-            address,
-            country: { name: countryName } = {},
-        },
+        name,
+        os_id: osId,
+        historical_os_id: historicalOsIds,
+        address,
+        country: { name: countryName } = {},
     } = productionLocation;
 
     const history = useHistory();

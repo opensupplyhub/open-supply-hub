@@ -1,6 +1,5 @@
-/* eslint no-unused-vars: 0 */
 import React, { useEffect, useState } from 'react';
-import { func, number, object, string } from 'prop-types';
+import { bool, func, number, object, string } from 'prop-types';
 import { withStyles, withTheme } from '@material-ui/core/styles';
 import { useHistory } from 'react-router-dom';
 import { size, startCase, round, toLower } from 'lodash';
@@ -22,17 +21,19 @@ import {
     MODERATION_STATUSES_ENUM,
 } from '../../util/constants';
 import { makeProductionLocationDialogStyles } from '../../util/styles';
+import { makeClaimFacilityLink } from '../../util/util';
 
 const infoIcon = classes => (
     <InfoOutlinedIcon className={classes.osIdStatusBadgeIcon} />
 );
 
-const claimButton = classes => (
+const claimButton = (classes, isDisabled, osID) => (
     <span className={`${classes.claimTooltipWrapper}`}>
         <Button
             variant="contained"
-            disabled
+            disabled={isDisabled}
             className={`${classes.button} ${classes.claimButton}`}
+            href={makeClaimFacilityLink(osID || '')}
         >
             Continue to Claim
         </Button>
@@ -60,6 +61,7 @@ const ProductionLocationDialog = ({
     osID,
     moderationStatus,
     handleShow,
+    isClaimed,
 }) => {
     const history = useHistory();
 
@@ -232,11 +234,15 @@ const ProductionLocationDialog = ({
                             >
                                 Submit another Location
                             </Button>
-                            <DialogTooltip
-                                text="You'll be able to claim the location after the moderation is complete, and the associated claim link becomes available."
-                                aria-label="Claim button tooltip"
-                                childComponent={claimButton(classes)}
-                            />
+                            {isClaimed ? (
+                                <>{claimButton(classes, false, osID)}</>
+                            ) : (
+                                <DialogTooltip
+                                    text="You'll be able to claim the location after the moderation is complete."
+                                    aria-label="Claim button tooltip"
+                                    childComponent={claimButton(classes, true)}
+                                />
+                            )}
                         </Grid>
                     </DialogActions>
                 </div>
@@ -247,6 +253,7 @@ const ProductionLocationDialog = ({
 
 ProductionLocationDialog.defaultProps = {
     osID: null,
+    isClaimed: false,
 };
 
 ProductionLocationDialog.propTypes = {
@@ -257,6 +264,7 @@ ProductionLocationDialog.propTypes = {
     classes: object.isRequired,
     theme: object.isRequired,
     innerWidth: number.isRequired,
+    isClaimed: bool,
 };
 
 export default withTheme()(
