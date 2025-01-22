@@ -5,11 +5,11 @@ import { withStyles } from '@material-ui/core/styles';
 import { object } from 'prop-types';
 import history from '../../util/history';
 import { makeSearchByNameAndAddressNotFoundResultStyles } from '../../util/styles';
-import { productionLocationInfoRouteCommon } from '../../util/constants';
+import { contributeProductionLocationRoute, productionLocationInfoRouteCommon } from '../../util/constants';
 
 const SearchByNameAndAddressNotFoundResult = ({ classes }) => {
     const handleSearchAgain = () => {
-        history.push('/contribute/single-location?tab=name-address');
+        history.push(`${contributeProductionLocationRoute}?tab=name-address`);
     };
 
     return (
