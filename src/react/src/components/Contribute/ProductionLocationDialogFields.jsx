@@ -53,18 +53,22 @@ const ProductionLocationDialogFields = ({
 
     return (
         <>
-            {map(filteredEntries, ([key, value]) => (
-                <div key={key}>
-                    {renderValue(value) ? (
+            {map(filteredEntries, ([key, value]) => {
+                const renderedValue = renderValue(value);
+                if (!renderedValue) {
+                    return null;
+                }
+                return (
+                    <div key={key}>
                         <Typography className={classes.label}>
                             {formatLabel(key)}
                         </Typography>
-                    ) : null}
-                    <Typography className={classes.primaryText}>
-                        {renderValue(value)}
-                    </Typography>
-                </div>
-            ))}
+                        <Typography className={classes.primaryText}>
+                            {renderedValue}
+                        </Typography>
+                    </div>
+                );
+            })}
         </>
     );
 };

@@ -547,8 +547,8 @@ export const makeProductionLocationCloseButtonStyles = theme =>
         }),
         desktopCloseButton: Object.freeze({
             position: 'absolute',
-            right: theme.spacing.unit,
-            top: theme.spacing.unit,
+            right: 0,
+            top: 0,
             color: theme.palette.grey[500],
         }),
     });
@@ -580,6 +580,7 @@ export const makeProductionLocationDialogStyles = theme =>
         }),
         primaryText: Object.freeze({
             marginBottom: '20px',
+            minHeight: '32px',
         }),
         osIDText: Object.freeze({
             display: 'inline-block',
