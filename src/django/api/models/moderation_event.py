@@ -22,6 +22,11 @@ class ModerationEvent(models.Model):
     class Source(models.TextChoices):
         API = 'API', 'API'
         SLC = 'SLC', 'SLC'
+    
+    class ActionType(models.TextChoices):
+        NEW_LOCATION = 'NEW_LOCATION', 'New Location'
+        MATCHED = 'MATCHED', 'Matched'
+        REJECTED = 'REJECTED', 'Rejected'
 
     uuid = models.UUIDField(
         primary_key=True,
@@ -112,6 +117,14 @@ class ModerationEvent(models.Model):
         choices=Status.choices,
         default=Status.PENDING,
         help_text='Moderation status of the production location.'
+    )
+
+    action_type = models.CharField(
+        max_length=12,
+        choices=ActionType.choices,
+        blank=True,
+        default='',
+        help_text='Type of moderation action.'
     )
 
     source = models.CharField(
