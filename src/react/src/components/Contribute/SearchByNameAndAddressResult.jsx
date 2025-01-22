@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import { arrayOf, bool, func, object } from 'prop-types';
+import { useLocation } from 'react-router-dom';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { withStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
@@ -48,7 +48,6 @@ const SearchByNameAndAddressResult = ({
             </div>
         );
     }
-
     return (
         <>
             <div className={classes.backToSearchButtonContainerStyles}>

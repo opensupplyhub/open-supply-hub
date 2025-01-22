@@ -8,6 +8,7 @@ import { makeSearchByNameAndAddressSuccessResultStyles } from '../../util/styles
 import { productionLocationPropType } from '../../util/propTypes';
 import ConfirmNotFoundLocationDialog from './ConfirmNotFoundLocationDialog';
 import ProductionLocationDetails from './ProductionLocationDetails';
+import { productionLocationInfoRoute } from '../../util/constants';
 
 const SearchByNameAndAddressSuccessResult = ({
     productionLocations,
@@ -18,6 +19,7 @@ const SearchByNameAndAddressSuccessResult = ({
 
     const [confirmDialogIsOpen, setConfirmDialogIsOpen] = useState(false);
     const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
+    const history = useHistory();
 
     useEffect(() => {
         const handleScroll = () => {
