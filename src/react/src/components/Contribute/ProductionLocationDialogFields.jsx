@@ -17,16 +17,8 @@ const ProductionLocationDialogFields = ({
             return value.join(', ');
         }
         if (typeof value === 'object' && value !== null) {
-            /* 
-            Check for the specific case of { min: 0 } which 
-            stores in DB if no number of workers has been set
-            */
-            if (
-                Object.keys(value).length === 1 &&
-                value.min !== undefined &&
-                value.min === 0
-            ) {
-                return null;
+            if ('min' in value && Object.keys(value).length === 1) {
+                return value.min.toLocaleString();
             }
             if (value.min !== undefined && value.max !== undefined) {
                 return `${value.min.toLocaleString()} - ${value.max.toLocaleString()}`;

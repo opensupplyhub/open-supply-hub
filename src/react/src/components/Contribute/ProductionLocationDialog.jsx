@@ -233,8 +233,7 @@ const ProductionLocationDialog = ({
                                 Submit another Location
                             </Button>
                             <DialogTooltip
-                                text="You'll be able to claim the
-                                        location after the moderation is done"
+                                text="You'll be able to claim the location after the moderation is complete, and the associated claim link becomes available."
                                 aria-label="Claim button tooltip"
                                 childComponent={claimButton(classes)}
                             />

@@ -642,7 +642,11 @@ const ProductionLocationInfo = ({
                     <div className={classes.buttonsContainerStyles}>
                         <Button
                             variant="outlined"
-                            onClick={() => history.goBack()}
+                            onClick={() =>
+                                history.push(
+                                    '/contribute/production-location/search/',
+                                )
+                            }
                             className={classes.goBackButtonStyles}
                         >
                             Go Back
@@ -681,7 +685,7 @@ const ProductionLocationInfo = ({
                         JSON.parse(localStorage.getItem(moderationID)) ||
                         singleModerationEventItem?.cleaned_data
                     }
-                    osID={osID}
+                    osID={osID || singleModerationEventItem?.os_id}
                     handleShow={setShowProductionLocationDialog}
                     innerWidth={innerWidth}
                     moderationStatus={
