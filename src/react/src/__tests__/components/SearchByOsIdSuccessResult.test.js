@@ -29,16 +29,18 @@ jest.mock('../../components/Contribute/ProductionLocationDetails', () => ({
 describe('SearchByOsIdSuccessResult component', () => {
     const defaultProps = {
         productionLocation: {
-            name: 'Production Location Name',
-            os_id: 'US2021250D1DTN7',
-            address: '1234 Production Location St, City, State, 12345',
-            country: {
-                alpha_2: 'US',
-                alpha_3: 'USA',
-                name: 'United States',
-                numeric: '840',
-            },
-            historical_os_id: ['US2020053ZH1RY4', 'US2020053ZH1RY5'],
+            data: {
+                name: 'Production Location Name',
+                os_id: 'US2021250D1DTN7',
+                address: '1234 Production Location St, City, State, 12345',
+                country: {
+                    alpha_2: 'US',
+                    alpha_3: 'USA',
+                    name: 'United States',
+                    numeric: '840',
+                },
+                historical_os_id: ['US2020053ZH1RY4', 'US2020053ZH1RY5'],
+            }
         },
         handleBackToSearchByNameAddress: jest.fn(),
     };

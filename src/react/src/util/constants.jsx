@@ -355,6 +355,8 @@ export const searchByOsIdResultRoute =
     '/contribute/production-location/search/id/:osID';
 export const searchByNameAndAddressResultRoute =
     '/contribute/production-location/search/';
+export const productionLocationInfoRouteCommon =
+    '/contribute/production-location/info/';
 export const productionLocationInfoRouteCreate =
     '/contribute/production-location/info/:moderationID?';
 export const productionLocationInfoRouteUpdate =

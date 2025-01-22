@@ -5,6 +5,7 @@ import { withStyles } from '@material-ui/core/styles';
 import { object } from 'prop-types';
 import history from '../../util/history';
 import { makeSearchByNameAndAddressNotFoundResultStyles } from '../../util/styles';
+import { productionLocationInfoRouteCommon } from '../../util/constants';
 
 const SearchByNameAndAddressNotFoundResult = ({ classes }) => {
     const handleSearchAgain = () => {
@@ -42,7 +43,7 @@ const SearchByNameAndAddressNotFoundResult = ({ classes }) => {
                         label: classes.buttonLabelStyles,
                     }}
                     onClick={() =>
-                        history.push('/contribute/production-location/info/')
+                        history.push(productionLocationInfoRouteCommon)
                     }
                 >
                     Add a new Location

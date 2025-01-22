@@ -39,7 +39,11 @@ import {
     convertRangeField,
     updateStateFromData,
 } from '../../util/util';
-import { mockedSectors, MODERATION_STATUSES_ENUM } from '../../util/constants';
+import {
+    mockedSectors,
+    productionLocationInfoRouteCommon,
+    MODERATION_STATUSES_ENUM,
+} from '../../util/constants';
 import COLOURS from '../../util/COLOURS';
 import ProductionLocationDialog from './ProductionLocationDialog';
 
@@ -246,10 +250,9 @@ const ProductionLocationInfo = ({
 
         const unListen = history.listen(appLocation => {
             if (
+                appLocation.pathname === productionLocationInfoRouteCommon ||
                 appLocation.pathname ===
-                    '/contribute/production-location/info/' ||
-                appLocation.pathname ===
-                    `/contribute/production-location/${osID}/info/`
+                    `${productionLocationInfoRouteCommon}${osID}/info/`
             ) {
                 setShowProductionLocationDialog(false);
             }

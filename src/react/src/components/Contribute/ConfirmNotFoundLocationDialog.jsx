@@ -10,6 +10,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import Typography from '@material-ui/core/Typography';
 import history from '../../util/history';
 import { makeConfirmNotFoundLocationDialogStyles } from '../../util/styles';
+import { productionLocationInfoRouteCommon } from '../../util/constants';
 
 const ConfirmNotFoundLocationDialog = ({
     confirmDialogIsOpen,
@@ -20,7 +21,7 @@ const ConfirmNotFoundLocationDialog = ({
     const handleAddNewLocation = () => {
         handleConfirmDialogClose();
         clearLocations();
-        history.push('/contribute/production-location/info/');
+        history.push(productionLocationInfoRouteCommon);
     };
 
     const navigateToNameAddressTab = () => {

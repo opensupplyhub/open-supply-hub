@@ -2,7 +2,6 @@ import React from 'react';
 import { fireEvent } from '@testing-library/react';
 import SearchByNameAndAddressSuccessResult from '../../components/Contribute/SearchByNameAndAddressSuccessResult';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
-import { productionLocationInfoRoute } from '../../util/constants';
 
 const mockHistoryPush = jest.fn();
 
@@ -124,7 +123,7 @@ describe('SearchByNameAndAddressSuccessResult component', () => {
         selectButtons.forEach(button => {
             expect(button).toBeInTheDocument();
             fireEvent.click(button);
-            expect(mockHistoryPush).toHaveBeenCalledWith(expect.stringContaining(productionLocationInfoRoute));
+            expect(mockHistoryPush).toHaveBeenCalledWith(expect.stringContaining('/contribute/production-location/US1234567890124/info/'));
         });
     });
 });
