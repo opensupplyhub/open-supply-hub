@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { bool, func, number, object, string } from 'prop-types';
+import { func, number, object, string } from 'prop-types';
 import { withStyles, withTheme } from '@material-ui/core/styles';
 import { useHistory } from 'react-router-dom';
 import { size, startCase, round, toLower } from 'lodash';
@@ -19,6 +19,7 @@ import {
     mainRoute,
     searchByNameAndAddressResultRoute,
     MODERATION_STATUSES_ENUM,
+    PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM,
 } from '../../util/constants';
 import { makeProductionLocationDialogStyles } from '../../util/styles';
 import { makeClaimFacilityLink } from '../../util/util';
@@ -34,6 +35,8 @@ const claimButton = (classes, isDisabled, osID) => (
             disabled={isDisabled}
             className={`${classes.button} ${classes.claimButton}`}
             href={makeClaimFacilityLink(osID || '')}
+            target="_blank"
+            rel="noopener noreferrer"
         >
             Continue to Claim
         </Button>
@@ -61,7 +64,7 @@ const ProductionLocationDialog = ({
     osID,
     moderationStatus,
     handleShow,
-    isClaimed,
+    claimStatus,
 }) => {
     const history = useHistory();
 
@@ -234,7 +237,8 @@ const ProductionLocationDialog = ({
                             >
                                 Submit another Location
                             </Button>
-                            {isClaimed ? (
+                            {claimStatus ===
+                            PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED ? (
                                 <>{claimButton(classes, false, osID)}</>
                             ) : (
                                 <DialogTooltip
@@ -253,7 +257,7 @@ const ProductionLocationDialog = ({
 
 ProductionLocationDialog.defaultProps = {
     osID: null,
-    isClaimed: false,
+    claimStatus: PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED,
 };
 
 ProductionLocationDialog.propTypes = {
@@ -264,7 +268,7 @@ ProductionLocationDialog.propTypes = {
     classes: object.isRequired,
     theme: object.isRequired,
     innerWidth: number.isRequired,
-    isClaimed: bool,
+    claimStatus: string,
 };
 
 export default withTheme()(

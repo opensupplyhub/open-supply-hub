@@ -19,7 +19,6 @@ import {
     facilityProcessingTypeOptionsPropType,
     moderationEventsListItemPropType,
     productionLocationPropType,
-    facilityPropType,
 } from '../../util/propTypes';
 import {
     fetchCountryOptions,
@@ -31,7 +30,6 @@ import {
     fetchProductionLocationByOsId,
 } from '../../actions/contributeProductionLocation';
 import { fetchSingleModerationEvent } from '../../actions/dashboardContributionRecord';
-import { fetchSingleFacility } from '../../actions/facilities';
 import InputErrorText from './InputErrorText';
 import {
     mapDjangoChoiceTuplesToSelectOptions,
@@ -45,6 +43,7 @@ import {
     mockedSectors,
     productionLocationInfoRouteCommon,
     MODERATION_STATUSES_ENUM,
+    PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM,
 } from '../../util/constants';
 import COLOURS from '../../util/COLOURS';
 import ProductionLocationDialog from './ProductionLocationDialog';
@@ -56,7 +55,6 @@ const ProductionLocationInfo = ({
     fetchCountries,
     facilityProcessingTypeOptions,
     fetchModerationEvent,
-    initFetchSingleFacility,
     handleCreateProductionLocation,
     handleUpdateProductionLocation,
     fetchFacilityProcessingType,
@@ -65,7 +63,6 @@ const ProductionLocationInfo = ({
     fetchProductionLocation,
     singleProductionLocationData,
     innerWidth,
-    facilityDetailsData,
 }) => {
     const location = useLocation();
     const history = useHistory();
@@ -199,8 +196,11 @@ const ProductionLocationInfo = ({
                 fetchModerationEvent(moderationID);
             }
         }
-        if (singleModerationEventItem.os_id && isEmpty(facilityDetailsData)) {
-            initFetchSingleFacility(singleModerationEventItem.os_id);
+        if (
+            singleModerationEventItem?.os_id &&
+            isEmpty(singleProductionLocationData)
+        ) {
+            fetchProductionLocation(singleModerationEventItem.os_id);
         }
         prevModerationIDRef.current = moderationID;
     }, [moderationID, singleModerationEventItem]);
@@ -700,8 +700,9 @@ const ProductionLocationInfo = ({
                         singleModerationEventItem?.status ||
                         MODERATION_STATUSES_ENUM.PENDING
                     }
-                    isClaimed={
-                        facilityDetailsData?.properties?.is_claimed || false
+                    claimStatus={
+                        singleProductionLocationData?.claim_status ||
+                        PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED
                     }
                 />
             ) : null}
@@ -714,7 +715,6 @@ ProductionLocationInfo.defaultProps = {
     facilityProcessingTypeOptions: null,
     pendingModerationEvent: null,
     singleModerationEventItem: null,
-    facilityDetailsData: null,
 };
 
 ProductionLocationInfo.propTypes = {
@@ -722,7 +722,6 @@ ProductionLocationInfo.propTypes = {
     fetchCountries: func.isRequired,
     fetchModerationEvent: func.isRequired,
     fetchFacilityProcessingType: func.isRequired,
-    initFetchSingleFacility: func.isRequired,
     handleCreateProductionLocation: func.isRequired,
     handleUpdateProductionLocation: func.isRequired,
     facilityProcessingTypeOptions: facilityProcessingTypeOptionsPropType,
@@ -733,7 +732,6 @@ ProductionLocationInfo.propTypes = {
     submitMethod: string.isRequired,
     classes: object.isRequired,
     innerWidth: number.isRequired,
-    facilityDetailsData: facilityPropType,
 };
 
 const mapStateToProps = ({
@@ -751,9 +749,6 @@ const mapStateToProps = ({
     ui: {
         window: { innerWidth },
     },
-    facilities: {
-        singleFacility: { data: facilityDetailsData },
-    },
 }) => ({
     countriesOptions,
     facilityProcessingTypeOptions,
@@ -761,7 +756,6 @@ const mapStateToProps = ({
     singleModerationEventItem,
     singleProductionLocationData,
     innerWidth,
-    facilityDetailsData,
 });
 
 function mapDispatchToProps(dispatch) {
@@ -777,11 +771,6 @@ function mapDispatchToProps(dispatch) {
             dispatch(fetchSingleModerationEvent(moderationID)),
         fetchProductionLocation: osId =>
             dispatch(fetchProductionLocationByOsId(osId)),
-        /*
-         When finished with OSDEV-1333, this action can be removed
-         because moderation events table will contain claim ids
-        */
-        initFetchSingleFacility: osId => dispatch(fetchSingleFacility(osId)),
     };
 }
 
