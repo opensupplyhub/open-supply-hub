@@ -10,10 +10,6 @@ import CloseIcon from '@material-ui/icons/Close';
 import Typography from '@material-ui/core/Typography';
 import history from '../../util/history';
 import { makeConfirmNotFoundLocationDialogStyles } from '../../util/styles';
-import {
-    contributeProductionLocationRoute,
-    productionLocationInfoRoute,
-} from '../../util/constants';
 
 const ConfirmNotFoundLocationDialog = ({
     confirmDialogIsOpen,

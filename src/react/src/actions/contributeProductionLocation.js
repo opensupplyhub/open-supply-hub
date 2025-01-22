@@ -5,7 +5,6 @@ import {
     logErrorAndDispatchFailure,
     makeGetProductionLocationURL,
     parseContribData,
-    makeGetProductionLocationByOsIdURL,
     makeGetProductionLocationsForPotentialMatches,
 } from '../util/util';
 

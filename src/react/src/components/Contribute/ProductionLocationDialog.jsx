@@ -256,6 +256,7 @@ ProductionLocationDialog.propTypes = {
     moderationStatus: string.isRequired,
     handleShow: func.isRequired,
     classes: object.isRequired,
+    theme: object.isRequired,
     innerWidth: number.isRequired,
 };
 

@@ -80,7 +80,6 @@ const ProductionLocationInfo = ({
     const [numberOfWorkers, setNumberOfWorkers] = useState('');
     const [parentCompany, setParentCompany] = useState([]);
     const customSelectComponents = { DropdownIndicator: null };
-    const history = useHistory();
 
     const selectStyles = {
         control: provided => ({
