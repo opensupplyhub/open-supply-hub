@@ -19,6 +19,7 @@ import ProductionLocationDialogFields from './ProductionLocationDialogFields';
 import {
     mainRoute,
     searchByNameAndAddressResultRoute,
+    MODERATION_STATUSES_ENUM,
 } from '../../util/constants';
 import { makeProductionLocationDialogStyles } from '../../util/styles';
 
@@ -37,6 +38,19 @@ const claimButton = classes => (
         </Button>
     </span>
 );
+
+const getStatusBadgeClass = (classes, status) => {
+    switch (status) {
+        case MODERATION_STATUSES_ENUM.PENDING:
+            return classes.osIdStatusBadge_pending;
+        case MODERATION_STATUSES_ENUM.APPROVED:
+            return classes.osIdStatusBadge_approved;
+        case MODERATION_STATUSES_ENUM.REJECTED:
+            return classes.osIdStatusBadge_rejected;
+        default:
+            return '';
+    }
+};
 
 const ProductionLocationDialog = ({
     theme,
@@ -158,11 +172,19 @@ const ProductionLocationDialog = ({
                                             label={startCase(
                                                 toLower(moderationStatus),
                                             )}
-                                            onDelete={() => {}}
-                                            className={classes.osIdStatusBadge}
+                                            {...(moderationStatus ===
+                                                MODERATION_STATUSES_ENUM.PENDING && {
+                                                onDelete: () => {},
+                                            })}
+                                            className={`${
+                                                classes.osIdStatusBadge
+                                            } ${getStatusBadgeClass(
+                                                classes,
+                                                moderationStatus,
+                                            )}`}
                                             deleteIcon={
                                                 moderationStatus ===
-                                                'PENDING' ? (
+                                                MODERATION_STATUSES_ENUM.PENDING ? (
                                                     <DialogTooltip
                                                         text="Your submission is under
                                                         review. You will receive a

@@ -611,8 +611,16 @@ export const makeProductionLocationDialogStyles = theme =>
             },
         }),
         osIdStatusBadge: Object.freeze({
-            backgroundColor: COLOURS.ACCENT_GREY,
             fontWeight: theme.typography.fontWeightBold,
+        }),
+        osIdStatusBadge_pending: Object.freeze({
+            backgroundColor: COLOURS.ACCENT_GREY,
+        }),
+        osIdStatusBadge_rejected: Object.freeze({
+            backgroundColor: COLOURS.LIGHT_RED,
+        }),
+        osIdStatusBadge_approved: Object.freeze({
+            backgroundColor: COLOURS.MINT_GREEN,
         }),
         osIdStatusBadgeIcon: Object.freeze({
             color: COLOURS.DARK_GREY,
