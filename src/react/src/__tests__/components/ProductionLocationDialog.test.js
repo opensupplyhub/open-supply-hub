@@ -150,7 +150,7 @@ describe('ProductionLocationDialog', () => {
                 data={defaultProps.data}
                 osID={defaultProps.osID}
                 moderationStatus={defaultProps.moderationStatus}
-                isOpen={true}
+                isOpen
                 handleShow={handleShowMock}
             >
                 <ProductionLocationDialogCloseButton
