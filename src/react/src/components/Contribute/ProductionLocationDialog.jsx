@@ -28,7 +28,7 @@ const infoIcon = classes => (
     <InfoOutlinedIcon className={classes.osIdStatusBadgeIcon} />
 );
 
-const claimButton = (classes, isDisabled, osID) => (
+const claimButton = (classes, osID, isDisabled = true) => (
     <span className={`${classes.claimTooltipWrapper}`}>
         <Button
             variant="contained"
@@ -238,16 +238,15 @@ const ProductionLocationDialog = ({
                                 Submit another Location
                             </Button>
                             {claimStatus ===
-                            PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED ? (
-                                <>{claimButton(classes, false, osID)}</>
+                            (PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED &&
+                                moderationStatus !==
+                                    MODERATION_STATUSES_ENUM.PENDING) ? (
+                                <>{claimButton(classes, osID, false)}</>
                             ) : (
                                 <DialogTooltip
                                     text="You'll be able to claim the location after the moderation is complete."
                                     aria-label="Claim button tooltip"
-                                    childComponent={claimButton({
-                                        classes,
-                                        isDisabled: true,
-                                    })}
+                                    childComponent={claimButton(classes, true)}
                                 />
                             )}
                         </Grid>
