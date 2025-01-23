@@ -9,6 +9,7 @@ from django.utils import timezone
 from api.constants import (
     LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX,
     ProcessingAction,
+    APIV1MatchTypes,
 )
 from api.extended_fields import (
     create_extendedfields_for_single_item,
@@ -125,7 +126,7 @@ class EventApprovalTemplate(ABC):
             'created.'
         )
 
-        self._update_event(self.__event, item)
+        self.__update_event(item)
         log.info(
             f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Status and os_id of '
             'Moderation Event updated.'
@@ -268,10 +269,18 @@ class EventApprovalTemplate(ABC):
             updated_at=timezone.now(),
         )
 
-    @staticmethod
-    def _update_event(event: ModerationEvent, item: FacilityListItem) -> None:
+    def __update_event(self, item: FacilityListItem) -> None:
+        match_type = self._get_match_type()
+        action_type = (
+            ModerationEvent.ActionType.MATCHED 
+            if match_type == APIV1MatchTypes.CONFIRMED_MATCH 
+            else ModerationEvent.ActionType.NEW_LOCATION
+        )
+
+        event = self.__event
         event.status = ModerationEvent.Status.APPROVED
         event.status_change_date = timezone.now()
+        event.action_type = action_type
         event.os_id = item.facility_id
         event.save()
 

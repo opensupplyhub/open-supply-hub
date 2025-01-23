@@ -64,6 +64,9 @@ class ModerationEventUpdateSerializer(ModelSerializer):
     def update(self, instance, validated_data):
         if 'status' in validated_data:
             value = validated_data['status']
+            if value == ModerationEvent.Status.REJECTED:
+                instance.action_type = ModerationEvent.ActionType.REJECTED
+
             instance.status = value
             instance.status_change_date = now()
 
