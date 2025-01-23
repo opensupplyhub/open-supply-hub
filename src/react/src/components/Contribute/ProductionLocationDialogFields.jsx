@@ -17,6 +17,9 @@ const ProductionLocationDialogFields = ({
             return value.join(', ');
         }
         if (typeof value === 'object' && value !== null) {
+            if ('min' in value && 'max' in value && value.min === value.max) {
+                return value.min;
+            }
             if ('min' in value && Object.keys(value).length === 1) {
                 return value.min.toLocaleString();
             }
