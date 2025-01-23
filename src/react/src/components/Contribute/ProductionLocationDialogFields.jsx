@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { map, toPairs, slice } from 'lodash';
+import { map, toPairs, isArray, slice } from 'lodash';
 import Typography from '@material-ui/core/Typography';
 
 const ProductionLocationDialogFields = ({
@@ -13,7 +13,8 @@ const ProductionLocationDialogFields = ({
         key.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
 
     const renderValue = value => {
-        if (Array.isArray(value)) {
+        if (isArray(value)) {
+            if (value.length === 0) return 'None';
             return value.join(', ');
         }
         if (typeof value === 'object' && value !== null) {
@@ -23,13 +24,16 @@ const ProductionLocationDialogFields = ({
             if ('min' in value && Object.keys(value).length === 1) {
                 return value.min.toLocaleString();
             }
-            if (value.min !== undefined && value.max !== undefined) {
+            if (value?.min !== undefined && value?.max !== undefined) {
                 return `${value.min.toLocaleString()} - ${value.max.toLocaleString()}`;
             }
-            if (value.processed_values) {
+            if (isArray(value.processed_values)) {
+                if (value.processed_values.length === 0) return 'None';
                 return value.processed_values.join(', ');
             }
-            return JSON.stringify(value);
+            return JSON.stringify(value, (_, v) =>
+                typeof v === 'string' ? v.replace(/</g, '&lt;') : v,
+            );
         }
         return value;
     };

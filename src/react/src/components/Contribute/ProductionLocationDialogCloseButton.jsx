@@ -12,11 +12,12 @@ const ProductionLocationDialogCloseButton = withStyles(
     return (
         <>
             {isMobile ? (
-                <IconButton className="mobile-dialog-close-button">
-                    <CloseIcon
-                        aria-label="Close"
-                        onClick={() => handleShow(false)}
-                    />
+                <IconButton
+                    aria-label="Close"
+                    className="mobile-dialog-close-button"
+                    onClick={() => handleShow(false)}
+                >
+                    <CloseIcon />
                 </IconButton>
             ) : (
                 <IconButton

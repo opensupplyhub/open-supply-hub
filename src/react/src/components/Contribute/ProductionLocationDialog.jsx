@@ -244,7 +244,10 @@ const ProductionLocationDialog = ({
                                 <DialogTooltip
                                     text="You'll be able to claim the location after the moderation is complete."
                                     aria-label="Claim button tooltip"
-                                    childComponent={claimButton(classes, true)}
+                                    childComponent={claimButton({
+                                        classes,
+                                        isDisabled: true,
+                                    })}
                                 />
                             )}
                         </Grid>

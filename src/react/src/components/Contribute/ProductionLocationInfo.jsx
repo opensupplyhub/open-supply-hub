@@ -118,17 +118,28 @@ const ProductionLocationInfo = ({
         setAddressTouched(true);
         setInputAddress(event.target.value);
     };
-    const handleProductionLocation =
-        submitMethod === 'POST'
-            ? handleCreateProductionLocation
-            : data => handleUpdateProductionLocation(data, osID);
+    let handleProductionLocation;
+    switch (submitMethod) {
+        case 'POST':
+            handleProductionLocation = handleCreateProductionLocation;
+            break;
+        case 'PATCH':
+            handleProductionLocation = data =>
+                handleUpdateProductionLocation(data, osID);
+            break;
+        default:
+            handleProductionLocation = () => {
+                console.error(`Unsupported submit method: ${submitMethod}`);
+            };
+            break;
+    }
     const submitButtonText = submitMethod === 'POST' ? 'Submit' : 'Update';
 
     useEffect(() => {
         if (submitMethod === 'PATCH' && osID) {
             fetchProductionLocation(osID);
         }
-    }, [submitMethod]);
+    }, [submitMethod, osID, fetchProductionLocation]);
 
     useEffect(() => {
         if (showProductionLocationDialog === false) {
@@ -147,6 +158,10 @@ const ProductionLocationInfo = ({
     }, [showProductionLocationDialog]);
 
     useEffect(() => {
+        console.log(
+            'singleProductionLocationData.number_of_workers is: ',
+            singleProductionLocationData,
+        );
         if (singleProductionLocationData && osID) {
             setInputName(singleProductionLocationData.name ?? '');
             setInputAddress(singleProductionLocationData.address ?? '');
@@ -187,7 +202,7 @@ const ProductionLocationInfo = ({
                 setParentCompany,
             );
         }
-    }, [singleProductionLocationData]);
+    }, [singleProductionLocationData, osID]);
 
     const prevModerationIDRef = useRef();
     useEffect(() => {

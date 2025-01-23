@@ -1103,10 +1103,13 @@ export const checkWhetherUserHasDashboardAccess = user =>
     get(user, 'is_superuser', false);
 
 export const convertRangeField = rangeObj => {
+    if (isEmpty(rangeObj)) {
+        return null;
+    }
     if (has(rangeObj, 'min') && has(rangeObj, 'max')) {
         return `${rangeObj.min}-${rangeObj.max}`;
     }
-    return !isNil(range.min) ? range.min : range.max;
+    return !isNil(rangeObj.min) ? rangeObj.min : rangeObj.max;
 };
 
 export const isValidNumberOfWorkers = value => {
