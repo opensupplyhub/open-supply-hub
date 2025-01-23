@@ -12,29 +12,47 @@ const ProductionLocationDialogFields = ({
     const formatLabel = key =>
         key.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
 
+    const hasMinMaxEqual = value =>
+        'min' in value && 'max' in value && value.min === value.max;
+    const hasMinOnly = value =>
+        'min' in value && Object.keys(value).length === 1;
+    const hasMinMax = value =>
+        value?.min !== undefined && value?.max !== undefined;
+    const hasProcessedValues = value =>
+        isArray(value.processed_values) && value.processed_values.length > 0;
+
+    const renderArray = value => {
+        if (value.length === 0) return null;
+        return value.join(', ');
+    };
+
+    const renderObject = value => {
+        if (hasMinMaxEqual(value)) {
+            return value.min;
+        }
+        if (hasMinOnly(value)) {
+            return value.min.toLocaleString();
+        }
+        if (hasMinMax(value)) {
+            return `${value.min.toLocaleString()} - ${value.max.toLocaleString()}`;
+        }
+        if (hasProcessedValues(value)) {
+            return renderArray(value.processed_values);
+        }
+        return JSON.stringify(value, (_, v) =>
+            typeof v === 'string' ? v.replace(/</g, '&lt;') : v,
+        );
+    };
+
     const renderValue = value => {
         if (isArray(value)) {
-            if (value.length === 0) return 'None';
-            return value.join(', ');
+            return renderArray(value);
         }
+
         if (typeof value === 'object' && value !== null) {
-            if ('min' in value && 'max' in value && value.min === value.max) {
-                return value.min;
-            }
-            if ('min' in value && Object.keys(value).length === 1) {
-                return value.min.toLocaleString();
-            }
-            if (value?.min !== undefined && value?.max !== undefined) {
-                return `${value.min.toLocaleString()} - ${value.max.toLocaleString()}`;
-            }
-            if (isArray(value.processed_values)) {
-                if (value.processed_values.length === 0) return 'None';
-                return value.processed_values.join(', ');
-            }
-            return JSON.stringify(value, (_, v) =>
-                typeof v === 'string' ? v.replace(/</g, '&lt;') : v,
-            );
+            return renderObject(value);
         }
+
         return value;
     };
 
