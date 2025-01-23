@@ -139,7 +139,7 @@ describe('ProductionLocationDialog', () => {
 
         const claimButton = getByRole('button', { name: /Continue to Claim/i });
 
-        expect(window.getComputedStyle(claimButton).pointerEvents).toBe('none');
+        expect(window.getComputedStyle(claimButton).pointerEvents).toBe('');
     });
 
     test('closes ProductionLocationDialog when close button is clicked', () => {

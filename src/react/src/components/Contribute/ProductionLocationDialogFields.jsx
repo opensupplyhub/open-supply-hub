@@ -58,15 +58,9 @@ const ProductionLocationDialogFields = ({
 
     const fieldEntries = toPairs(fields);
 
-    let filteredEntries;
-
-    if (startTo) {
-        filteredEntries = slice(fieldEntries, 0, startTo);
-    } else if (startFrom) {
-        filteredEntries = slice(fieldEntries, startFrom);
-    } else {
-        filteredEntries = fieldEntries;
-    }
+    const start = startFrom || 0;
+    const end = startTo || fieldEntries.length;
+    const filteredEntries = slice(fieldEntries, start, end);
 
     return (
         <>
