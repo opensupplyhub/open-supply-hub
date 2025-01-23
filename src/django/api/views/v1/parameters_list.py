@@ -31,3 +31,5 @@ class V1_PARAMETERS_LIST:
     MODERATION_ID = 'moderation_id'
     DATE_GTE = 'date_gte'
     DATE_LT = 'date_lt'
+    AGGREGATION = 'aggregation'
+    PRECISION = 'precision'
