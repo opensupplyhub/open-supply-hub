@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { func, number, object, string } from 'prop-types';
 import { withStyles, withTheme } from '@material-ui/core/styles';
 import { useHistory } from 'react-router-dom';
-import { size, startCase, round, toLower } from 'lodash';
+import { assign, size, startCase, round, toLower } from 'lodash';
 import Button from '@material-ui/core/Button';
 import Chip from '@material-ui/core/Chip';
 import Typography from '@material-ui/core/Typography';
@@ -80,9 +80,11 @@ const ProductionLocationDialog = ({
     const {
         raw_json: { name: productionLocationName, address },
         fields,
+        sector,
     } = data;
 
-    const fieldSetNumber = round(size(fields) / 2);
+    const additionalInformationFields = assign({}, fields, { sector });
+    const fieldSetNumber = round(size(additionalInformationFields) / 2);
 
     return (
         <>
@@ -150,7 +152,9 @@ const ProductionLocationDialog = ({
                                     {address || 'N/A'}
                                 </Typography>
                                 <ProductionLocationDialogFields
-                                    fields={fields}
+                                    additionalInformationFields={
+                                        additionalInformationFields
+                                    }
                                     startTo={fieldSetNumber}
                                     classes={classes}
                                 />
@@ -208,7 +212,9 @@ const ProductionLocationDialog = ({
                                     </Grid>
                                 </Grid>
                                 <ProductionLocationDialogFields
-                                    fields={fields}
+                                    additionalInformationFields={
+                                        additionalInformationFields
+                                    }
                                     startFrom={fieldSetNumber}
                                     classes={classes}
                                 />
@@ -238,7 +244,7 @@ const ProductionLocationDialog = ({
                                 Submit another Location
                             </Button>
                             {claimStatus ===
-                            (PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED &&
+                            (PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED ||
                                 moderationStatus !==
                                     MODERATION_STATUSES_ENUM.PENDING) ? (
                                 <>{claimButton(classes, osID, false)}</>

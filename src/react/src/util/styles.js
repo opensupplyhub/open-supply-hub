@@ -647,6 +647,7 @@ export const makeProductionLocationDialogStyles = theme =>
         }),
         claimButton: Object.freeze({
             backgroundColor: COLOURS.NAVIGATION,
+            borderRadius: 0,
         }),
     });
 

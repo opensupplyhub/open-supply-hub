@@ -4,7 +4,7 @@ import { map, toPairs, isArray, slice } from 'lodash';
 import Typography from '@material-ui/core/Typography';
 
 const ProductionLocationDialogFields = ({
-    fields,
+    additionalInformationFields,
     startTo,
     startFrom,
     classes,
@@ -56,7 +56,7 @@ const ProductionLocationDialogFields = ({
         return value;
     };
 
-    const fieldEntries = toPairs(fields);
+    const fieldEntries = toPairs(additionalInformationFields);
 
     const start = startFrom || 0;
     const end = startTo || fieldEntries.length;
@@ -85,7 +85,7 @@ const ProductionLocationDialogFields = ({
 };
 
 ProductionLocationDialogFields.propTypes = {
-    fields: PropTypes.object.isRequired,
+    additionalInformationFields: PropTypes.object.isRequired,
     startTo: PropTypes.number,
     startFrom: PropTypes.number,
     classes: PropTypes.object.isRequired,
