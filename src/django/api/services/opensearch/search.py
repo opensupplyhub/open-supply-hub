@@ -46,10 +46,21 @@ class OpenSearchService(SearchInterface):
             else:
                 logger.warning(f"Missing '_source' in hit: {hit}")
 
-        return {
-            "count": total_hits,
-            "data": data
+        response_data = {
+            "total_hits": total_hits,
+            "data": data,
         }
+
+        buckets = (
+            response.get("aggregations", {})
+            .get("grouped", {})
+            .get("buckets", [])
+        )
+
+        if buckets:
+            response_data["aggregation_data"] = buckets
+
+        return response_data
 
     @staticmethod
     def __remove_null_values(obj):
