@@ -158,10 +158,6 @@ const ProductionLocationInfo = ({
     }, [showProductionLocationDialog]);
 
     useEffect(() => {
-        console.log(
-            'singleProductionLocationData.number_of_workers is: ',
-            singleProductionLocationData,
-        );
         if (singleProductionLocationData && osID) {
             setInputName(singleProductionLocationData.name ?? '');
             setInputAddress(singleProductionLocationData.address ?? '');
