@@ -98,8 +98,6 @@ class OpenSearchQueryDirector:
         if size:
             self.__builder.add_size(size)
 
-        multi_match_query = query_params.get(V1_PARAMETERS_LIST.QUERY)
-        if multi_match_query:
-            self.__builder.add_multi_match(multi_match_query)
+        self.__builder.add_specific_queries(query_params)
 
         return self.__builder.get_final_query_body()

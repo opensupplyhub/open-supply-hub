@@ -98,3 +98,40 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
         id_type='os_id'
     ):
         super().add_search_after(search_after_value, search_after_id, id_type)
+
+    def add_specific_queries(self, query_params):
+        multi_match_query = query_params.get(V1_PARAMETERS_LIST.QUERY)
+
+        if multi_match_query:
+            self.__add_multi_match(multi_match_query)
+
+        aggregation = query_params.get(V1_PARAMETERS_LIST.AGGREGATION)
+        precision = query_params.get(V1_PARAMETERS_LIST.PRECISION)
+
+        if aggregation and precision:
+            self.__add_aggregations(precision)
+
+    def __add_multi_match(self, query):
+        self.query_body['query']['bool']['must'].append({
+            'multi_match': {
+                'query': query,
+                'fields': [
+                    f'{V1_PARAMETERS_LIST.NAME}^2',
+                    V1_PARAMETERS_LIST.ADDRESS,
+                    V1_PARAMETERS_LIST.DESCRIPTION,
+                    V1_PARAMETERS_LIST.LOCAL_NAME
+                ],
+                'fuzziness': self.default_fuzziness
+            }
+        })
+
+    def __add_aggregations(self, precision):
+        self.query_body['aggregations'] = {
+            "grouped": {
+                "geohex_grid": {
+                    "field": "coordinates",
+                    "precision": precision
+                }
+            }
+        }
+        return self.query_body

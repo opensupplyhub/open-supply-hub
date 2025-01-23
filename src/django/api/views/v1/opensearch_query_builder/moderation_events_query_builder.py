@@ -74,3 +74,6 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
         id_type='moderation_id'
     ):
         super().add_search_after(search_after_value, search_after_id, id_type)
+
+    def add_specific_queries(self, query_params):
+        pass

@@ -21,20 +21,6 @@ class OpenSearchQueryBuilder(ABC):
         }
         self.query_body['query']['bool']['must'].append(match_query)
 
-    def add_multi_match(self, query):
-        self.query_body['query']['bool']['must'].append({
-            'multi_match': {
-                'query': query,
-                'fields': [
-                    f'{V1_PARAMETERS_LIST.NAME}^2',
-                    V1_PARAMETERS_LIST.ADDRESS,
-                    V1_PARAMETERS_LIST.DESCRIPTION,
-                    V1_PARAMETERS_LIST.LOCAL_NAME
-                ],
-                'fuzziness': self.default_fuzziness
-            }
-        })
-
     def add_range(self, field, query_params):
         if field in {
             V1_PARAMETERS_LIST.NUMBER_OF_WORKERS,
@@ -151,14 +137,6 @@ class OpenSearchQueryBuilder(ABC):
             search_after_id
         ]
 
-    @abstractmethod
-    def add_sort(self, field, order_by=None):
-        pass
-
-    @abstractmethod
-    def add_terms(self, field, values):
-        pass
-
     def get_final_query_body(self):
         return self.query_body
 
@@ -174,3 +152,15 @@ class OpenSearchQueryBuilder(ABC):
                 }
             }
         )
+
+    @abstractmethod
+    def add_sort(self, field, order_by=None):
+        pass
+
+    @abstractmethod
+    def add_terms(self, field, values):
+        pass
+
+    @abstractmethod
+    def add_specific_queries(self, query_params):
+        pass
