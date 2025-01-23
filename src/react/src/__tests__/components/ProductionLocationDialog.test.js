@@ -1,7 +1,8 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter as Router, useHistory } from 'react-router-dom';
 import ProductionLocationDialog from '../../components/Contribute/ProductionLocationDialog';
+import ProductionLocationDialogCloseButton from '../../components/Contribute/ProductionLocationDialogCloseButton';
 
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
@@ -66,7 +67,7 @@ describe('ProductionLocationDialog', () => {
         render(
             <Router>
                 <ProductionLocationDialog 
-                    classes={{}} 
+                    classes={{}}
                     data={defaultProps.data}
                     osID={defaultProps.osID}
                     moderationStatus={defaultProps.moderationStatus}
@@ -106,7 +107,7 @@ describe('ProductionLocationDialog', () => {
     test('Continue to Claim button should be active if production location is unclaimed', () => {
         const { getByRole } = render(
             <Router>
-                <ProductionLocationDialog 
+                <ProductionLocationDialog
                     classes={{}}
                     data={defaultProps.data}
                     osID={defaultProps.osID}
@@ -126,8 +127,8 @@ describe('ProductionLocationDialog', () => {
     test('Continue to Claim button should be disabled if production location has been claimed', () => {
         const { getByRole } = render(
             <Router>
-                <ProductionLocationDialog 
-                    classes={{}} 
+                <ProductionLocationDialog
+                    classes={{}}
                     data={defaultProps.data}
                     osID={defaultProps.osID}
                     moderationStatus={defaultProps.moderationStatus}
@@ -139,5 +140,35 @@ describe('ProductionLocationDialog', () => {
         const claimButton = getByRole('button', { name: /Continue to Claim/i });
 
         expect(window.getComputedStyle(claimButton).pointerEvents).toBe('none');
+    });
+
+    test('closes ProductionLocationDialog when close button is clicked', () => {
+        const handleShowMock = jest.fn();
+        const { unmount } = render(
+            <ProductionLocationDialog
+                classes={{}}
+                data={defaultProps.data}
+                osID={defaultProps.osID}
+                moderationStatus={defaultProps.moderationStatus}
+                isOpen={true}
+                handleShow={handleShowMock}
+            >
+                <ProductionLocationDialogCloseButton
+                    handleShow={handleShowMock}
+                    isMobile={false}
+                />
+            </ProductionLocationDialog>
+        );
+
+        expect(screen.getByText(/Continue to Claim/i)).toBeInTheDocument();
+    
+        const closeButton = screen.getByRole('button', { name: /close/i });
+        fireEvent.click(closeButton);
+
+        expect(handleShowMock).toHaveBeenCalledWith(false);
+
+        unmount();
+
+        expect(screen.queryByText(/Continue to Claim/i)).not.toBeInTheDocument();
     });
 });
