@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent } from '@testing-library/react';
-import SearchByOsIdSuccessResult from '../../components/Contribute/SearchByOsIdSuccessResult';
+import SearchByOsIdSuccessResult  from '../../components/Contribute/SearchByOsIdSuccessResult';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 
 jest.mock('../../components/Contribute/SearchByOsIdResultActions', () => ({
@@ -57,14 +57,13 @@ describe('SearchByOsIdSuccessResult component', () => {
         expect(getByRole('button', { name: 'Yes, add data and claim' })).toBeInTheDocument();
     });
 
-    test('calls handleBackToSearchByNameAddress when the default button is clicked', () => {
+    test('calls handleBackToSearchByNameAddress when the default button is clicked', async () => {
         const { getByRole } = renderWithProviders(<SearchByOsIdSuccessResult {...defaultProps} />);
-
         const backButton = getByRole('button', {
             name: 'No, search by name and address',
         });
-        fireEvent.click(backButton);
 
+        fireEvent.click(backButton);
         expect(defaultProps.handleBackToSearchByNameAddress).toHaveBeenCalledTimes(1);
     });
 });
