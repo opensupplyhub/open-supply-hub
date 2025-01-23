@@ -76,4 +76,8 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
         super().add_search_after(search_after_value, search_after_id, id_type)
 
     def add_specific_queries(self, query_params):
+        '''
+        Implement any specific queries for the moderation events.
+        Currently, there are no specific queries for moderation events.
+        '''
         pass
