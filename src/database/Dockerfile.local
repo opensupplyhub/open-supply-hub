@@ -1,11 +1,8 @@
-# The latest supported version of PostgreSQL in AWS RDS is 13.15.
-# However, the official PostgreSQL Docker registry provides only
-# the latest minor version for PostgreSQL 13, and it is not
-# possible to specify a specific minor version like 13.15. Therefore,
-# it was decided to provide only the major version and let Docker
-# determine which minor version to install. This should not cause
-# incompatibilities, even if PostgreSQL 13.15 is used in AWS.
-FROM postgres:13
+# The latest supported minor version of PostgreSQL in AWS RDS is 17.1
+# for PostgreSQL 17, and this version is used across all RDS
+# instances. The same version is also set for local development to
+# ensure consistency with the AWS environment.
+FROM postgres:17.1
 
 ENV POSTGRES_USER=opensupplyhub \
     POSTGRES_PASSWORD=opensupplyhub \
@@ -13,8 +10,8 @@ ENV POSTGRES_USER=opensupplyhub \
 
 
 # Build and install the PostGIS package from scratch to ensure it matches the
-# LLVM version used by the Docker container based on postgres:13 image.
-# See PostGIS installation details at https://postgis.net/docs/manual-3.4/postgis_installation.html
+# LLVM version used by the Docker container based on postgres:17.1 image.
+# See PostGIS installation details at https://postgis.net/docs/manual-3.5/postgis_installation.html
 
 # Install the requirements for building and using PostGIS.
 RUN apt-get update && apt-get install -y \
@@ -28,15 +25,15 @@ RUN apt-get update && apt-get install -y \
     libprotobuf-c-dev \
     protobuf-c-compiler \
     pkg-config \
-    postgresql-server-dev-13
+    postgresql-server-dev-17
 
 # Download the PostGIS source archive, build and install the PostGIS package.
-RUN wget https://download.osgeo.org/postgis/source/postgis-3.4.2.tar.gz && \
-    tar -xvzf postgis-3.4.2.tar.gz &&  \
-    cd /postgis-3.4.2 && \
+RUN wget https://download.osgeo.org/postgis/source/postgis-3.5.0.tar.gz && \
+    tar -xvzf postgis-3.5.0.tar.gz &&  \
+    cd /postgis-3.5.0 && \
     ./configure && \
     make && \
     make install && \
     cd .. && \
-    rm -rf postgis-3.4.2 && \
-    rm postgis-3.4.2.tar.gz
+    rm -rf postgis-3.5.0 && \
+    rm postgis-3.5.0.tar.gz

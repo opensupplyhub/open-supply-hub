@@ -4,11 +4,11 @@ DO $$
 DECLARE
 -- Variables for postgis.
 current_version_postgis TEXT;
-target_version_postgis TEXT := '3.4.2';
+target_version_postgis TEXT := '3.5.0';
 
 -- Variables for pg_trgm.
 current_version_pg_trgm TEXT;
-target_version_pg_trgm TEXT := '1.5';
+target_version_pg_trgm TEXT := '1.6';
 
 BEGIN
 -- Extension 1: Check and upgrade "postgis" to its target version.
