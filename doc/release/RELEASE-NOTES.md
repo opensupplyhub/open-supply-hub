@@ -32,6 +32,19 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     - Connected GET `v1/production-locations`.
     - Routing between pages `Production Location Search`,`Search returned no results`, `Production Location Information`, `Search results`, and `I don't see my Location` pop-up is configured.
     - Max result limit set to 100.
+* [OSDEV-1365](https://opensupplyhub.atlassian.net/browse/OSDEV-1365) - SLC: Integrate collecting contribution data page.
+* [OSDEV-1370](https://opensupplyhub.atlassian.net/browse/OSDEV-1370) - SLC: Connect Backend API submission with "Thank for Submitting" screen
+    - Integrated `POST /v1/production-locations/` in `/contribute/production-location/info/` page.
+    - Integrated `PATCH /v1/production-locations/` in `/contribute/production-location/{os_id}/info/` page.
+    - Production location info page is now rendered using two routes: /contribute/production-location/info/ and /contribute/production-location/{os_id}/info/. First route for creating new production location, second is for updating existing one.
+    - Implemented error popup on error response for `PATCH | POST /v1/production-locations/`.
+    - Implemented error popup on error response for `GET /v1/moderation-events/{moderation_id}`.
+    - Integrated "Thank for Submitting" modal dialog. When popup is appeared, path parameter `{moderation-id}` will be attached to `/contribute/production-location/{os_id}/info/` or `/contribute/production-location/info/`.
+    - Implemented temporary saving of moderation events in local storage for a seamless user experience.
+    - Created separate mobile and desktop layouts for "Thank for Submitting" modal dialog.
+    - Created link to claim from "Thank for Submitting" modal dialog only if production location is available for claim and moderation event is not pending.
+    - Implemented serializing and validation production location fields before passing to the "Thank for Submitting" modal dialog.
+    - Refactored routing between search results page and production location info page. Search parameters are now stored in the Redux state, so the 'Go Back' button in production location info page will lead to the previous search.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
