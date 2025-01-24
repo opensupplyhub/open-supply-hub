@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='moderationevent',
             name='action_type',
-            field=models.CharField(blank=True, choices=[('NEW_LOCATION', 'New Location'), ('MATCHED', 'Matched'), ('REJECTED', 'Rejected')], null=True, help_text='Type of moderation action.', max_length=12),
+            field=models.CharField(blank=True, choices=[('NEW_LOCATION', 'New Location'), ('MATCHED', 'Matched'), ('REJECTED', 'Rejected')], help_text='Type of moderation action.', max_length=12),
         ),
     ]
