@@ -272,8 +272,8 @@ class EventApprovalTemplate(ABC):
     def __update_event(self, item: FacilityListItem) -> None:
         match_type = self._get_match_type()
         action_type = (
-            ModerationEvent.ActionType.MATCHED 
-            if match_type == APIV1MatchTypes.CONFIRMED_MATCH 
+            ModerationEvent.ActionType.MATCHED
+            if match_type == APIV1MatchTypes.CONFIRMED_MATCH
             else ModerationEvent.ActionType.NEW_LOCATION
         )
 

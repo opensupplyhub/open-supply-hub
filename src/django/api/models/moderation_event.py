@@ -22,7 +22,7 @@ class ModerationEvent(models.Model):
     class Source(models.TextChoices):
         API = 'API', 'API'
         SLC = 'SLC', 'SLC'
-    
+
     class ActionType(models.TextChoices):
         NEW_LOCATION = 'NEW_LOCATION', 'New Location'
         MATCHED = 'MATCHED', 'Matched'
