@@ -263,4 +263,3 @@ class TestProductionLocationsQueryBuilder(TestCase):
         self.assertEqual(
             expected_aggregations, self.builder.query_body['aggregations']
         )
-
