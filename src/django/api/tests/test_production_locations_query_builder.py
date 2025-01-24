@@ -26,20 +26,6 @@ class TestProductionLocationsQueryBuilder(TestCase):
             self.builder.query_body['query']['bool']['must']
             )
 
-    def test_add_multi_match(self):
-        self.builder.add_multi_match('test query')
-        expected = {
-            'multi_match': {
-                'query': 'test query',
-                'fields': ['name^2', 'address', 'description', 'local_name'],
-                'fuzziness': 2
-            }
-        }
-        self.assertIn(
-            expected,
-            self.builder.query_body['query']['bool']['must']
-            )
-
     def test_add_terms_for_standard_field(self):
         self.builder.add_terms('country', ['US', 'CA'])
         expected = {'terms': {'country.alpha_2': ['US', 'CA']}}
@@ -213,6 +199,39 @@ class TestProductionLocationsQueryBuilder(TestCase):
             'sort': []
         }
         self.assertEqual(final_query, expected)
+
+    def test_add_multi_match(self):
+        self.builder.add_specific_queries({
+            'query': 'test query'
+        })
+        expected = {
+            'multi_match': {
+                'query': 'test query',
+                'fields': ['name^2', 'address', 'description', 'local_name'],
+                'fuzziness': 2
+            }
+        }
+        self.assertIn(
+            expected,
+            self.builder.query_body['query']['bool']['must']
+            )
+
+    def test_add_aggregations(self):
+        precision = 5
+        self.builder.add_specific_queries({
+            'aggregation': 'hexgrid',
+            'precision': precision
+        })
+        expected = {
+            'grouped': {
+                'geohex_grid': {
+                    'field': 'coordinates',
+                    'precision': precision
+                }
+            }
+        }
+        self.assertIn('aggregations', self.builder.query_body)
+        self.assertEqual(expected, self.builder.query_body['aggregations'])
 
 
 if __name__ == '__main__':
