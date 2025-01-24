@@ -47,7 +47,7 @@ class OpenSearchService(SearchInterface):
                 logger.warning(f"Missing '_source' in hit: {hit}")
 
         response_data = {
-            "total_hits": total_hits,
+            "count": total_hits,
             "data": data,
         }
 
