@@ -219,14 +219,30 @@ class TestProductionLocationsQueryBuilder(TestCase):
             expected, self.builder.query_body['query']['bool']['must']
         )
 
-    def test_add_aggregations(self):
+    def test_add_aggregations_with_precision(self):
+        aggregation = 'hexgrid'
         precision = 5
         self.builder._ProductionLocationsQueryBuilder__add_aggregations(
+            aggregation,
             precision
         )
         expected = {
             'grouped': {
                 'geohex_grid': {'field': 'coordinates', 'precision': precision}
+            }
+        }
+        self.assertIn('aggregations', self.builder.query_body)
+        self.assertEqual(expected, self.builder.query_body['aggregations'])
+
+    def test_add_aggregations_without_precision(self):
+        aggregation = 'hexgrid'
+        self.builder._ProductionLocationsQueryBuilder__add_aggregations(
+            aggregation,
+            None
+        )
+        expected = {
+            'grouped': {
+                'geohex_grid': {'field': 'coordinates'}
             }
         }
         self.assertIn('aggregations', self.builder.query_body)

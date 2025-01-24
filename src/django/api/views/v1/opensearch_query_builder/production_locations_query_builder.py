@@ -106,10 +106,14 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
             self.__add_multi_match(multi_match_query)
 
         aggregation = query_params.get(V1_PARAMETERS_LIST.AGGREGATION)
-        precision = query_params.get(V1_PARAMETERS_LIST.PRECISION)
+        default_precision = 5
+        precision = query_params.get(
+            V1_PARAMETERS_LIST.PRECISION,
+            default_precision
+        )
 
-        if aggregation and precision:
-            self.__add_aggregations(precision)
+        if aggregation:
+            self.__add_aggregations(aggregation, precision)
 
     def __add_multi_match(self, query):
         self.query_body['query']['bool']['must'].append({
@@ -125,13 +129,15 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
             }
         })
 
-    def __add_aggregations(self, precision):
-        self.query_body['aggregations'] = {
-            "grouped": {
-                "geohex_grid": {
-                    "field": "coordinates",
-                    "precision": precision
+    def __add_aggregations(self, aggregation, precision):
+        if aggregation == 'hexgrid':
+            self.query_body['aggregations'] = {
+                "grouped": {
+                    "geohex_grid": {
+                        "field": "coordinates",
+                        "precision": precision
+                    }
                 }
             }
-        }
+
         return self.query_body
