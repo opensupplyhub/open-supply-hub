@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocation, useParams, useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
-import { array, bool, func, number, object, string } from 'prop-types';
+import { array, bool, func, number, object, shape, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 import { endsWith, isEmpty, isNil, omitBy, toString } from 'lodash';
@@ -770,6 +770,11 @@ ProductionLocationInfo.defaultProps = {
     singleModerationEventItem: null,
     singleModerationEventItemFetching: false,
     singleModerationEventItemError: null,
+    searchParameters: shape({
+        name: null,
+        address: null,
+        country: null,
+    }),
 };
 
 ProductionLocationInfo.propTypes = {
@@ -791,6 +796,11 @@ ProductionLocationInfo.propTypes = {
     submitMethod: string.isRequired,
     classes: object.isRequired,
     innerWidth: number.isRequired,
+    searchParameters: shape({
+        name: string,
+        address: string,
+        country: string,
+    }),
 };
 
 const mapStateToProps = ({

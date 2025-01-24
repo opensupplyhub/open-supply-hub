@@ -8,7 +8,7 @@ import {
 
 const initialState = Object.freeze({
     name: null,
-    address: false,
+    address: null,
     country: null,
 });
 
