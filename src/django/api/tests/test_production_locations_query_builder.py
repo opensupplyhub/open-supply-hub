@@ -167,6 +167,11 @@ class TestProductionLocationsQueryBuilder(TestCase):
         expected = {'name.keyword': {'order': 'desc'}}
         self.assertIn(expected, self.builder.query_body['sort'])
 
+    def test_add_sort_with_default_order(self):
+        self.builder.add_sort('name')
+        expected = {'name.keyword': {'order': 'asc'}}
+        self.assertIn(expected, self.builder.query_body['sort'])
+
     def test_add_search_after(self):
         search_after_value = 'test_value'
         search_after_id = 'test_id'
@@ -201,38 +206,62 @@ class TestProductionLocationsQueryBuilder(TestCase):
         self.assertEqual(final_query, expected)
 
     def test_add_multi_match(self):
-        self.builder.add_specific_queries({
-            'query': 'test query'
-        })
+        self.builder._ProductionLocationsQueryBuilder__add_multi_match(
+            'test query'
+        )
         expected = {
             'multi_match': {
                 'query': 'test query',
                 'fields': ['name^2', 'address', 'description', 'local_name'],
-                'fuzziness': 2
+                'fuzziness': 2,
             }
         }
         self.assertIn(
-            expected,
-            self.builder.query_body['query']['bool']['must']
-            )
+            expected, self.builder.query_body['query']['bool']['must']
+        )
 
     def test_add_aggregations(self):
         precision = 5
-        self.builder.add_specific_queries({
-            'aggregation': 'hexgrid',
-            'precision': precision
-        })
+        self.builder._ProductionLocationsQueryBuilder__add_aggregations(
+            precision
+        )
         expected = {
             'grouped': {
-                'geohex_grid': {
-                    'field': 'coordinates',
-                    'precision': precision
-                }
+                'geohex_grid': {'field': 'coordinates', 'precision': precision}
             }
         }
         self.assertIn('aggregations', self.builder.query_body)
         self.assertEqual(expected, self.builder.query_body['aggregations'])
 
+    def test_add_specific_queries_with_all_params(self):
+        query_params = {
+            'query': 'search term',
+            'aggregation': 'hexgrid',
+            'precision': 4,
+        }
+        self.builder.add_specific_queries(query_params)
 
-if __name__ == '__main__':
-    unittest.main()
+        # Check multi_match
+        expected_multi_match = {
+            'multi_match': {
+                'query': 'search term',
+                'fields': ['name^2', 'address', 'description', 'local_name'],
+                'fuzziness': 2,
+            }
+        }
+        self.assertIn(
+            expected_multi_match,
+            self.builder.query_body['query']['bool']['must'],
+        )
+
+        # Check aggregations
+        expected_aggregations = {
+            'grouped': {
+                'geohex_grid': {'field': 'coordinates', 'precision': 4}
+            }
+        }
+        self.assertIn('aggregations', self.builder.query_body)
+        self.assertEqual(
+            expected_aggregations, self.builder.query_body['aggregations']
+        )
+
