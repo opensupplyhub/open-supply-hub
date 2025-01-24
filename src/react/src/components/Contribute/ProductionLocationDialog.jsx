@@ -78,7 +78,11 @@ const ProductionLocationDialog = ({
     }, [innerWidth]);
 
     const {
-        raw_json: { name: productionLocationName, address, sector },
+        raw_json: {
+            name: productionLocationName = '',
+            address = '',
+            sector = '',
+        } = {},
         fields,
     } = data;
 

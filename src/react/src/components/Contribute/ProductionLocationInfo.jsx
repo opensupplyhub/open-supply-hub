@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useParams, useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
-import { func, number, object, string } from 'prop-types';
+import { array, bool, func, number, object, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
-import { endsWith, isEmpty } from 'lodash';
+import { endsWith, isEmpty, toString } from 'lodash';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
@@ -58,8 +58,12 @@ const ProductionLocationInfo = ({
     handleCreateProductionLocation,
     handleUpdateProductionLocation,
     fetchFacilityProcessingType,
-    pendingModerationEvent,
+    pendingModerationEventData,
+    pendingModerationEventFetching,
+    pendingModerationEventError,
     singleModerationEventItem,
+    singleModerationEventItemFetching,
+    singleModerationEventItemError,
     fetchProductionLocation,
     singleProductionLocationData,
     innerWidth,
@@ -238,27 +242,27 @@ const ProductionLocationInfo = ({
     }, [facilityProcessingTypeOptions, fetchFacilityProcessingType]);
 
     useEffect(() => {
-        if (pendingModerationEvent?.data?.cleaned_data) {
+        if (pendingModerationEventData?.cleaned_data) {
             toast('Your contribution has been added successfully!');
-            if (pendingModerationEvent.data?.moderation_id) {
+            if (pendingModerationEventData?.moderation_id) {
                 localStorage.setItem(
-                    pendingModerationEvent.data.moderation_id,
-                    JSON.stringify(pendingModerationEvent?.data?.cleaned_data),
+                    pendingModerationEventData.moderation_id,
+                    JSON.stringify(pendingModerationEventData?.cleaned_data),
                 );
                 history.push({
-                    pathname: `${location.pathname}${pendingModerationEvent.data.moderation_id}`,
+                    pathname: `${location.pathname}${pendingModerationEventData.moderation_id}`,
                     search: '',
                 });
             }
         }
-    }, [pendingModerationEvent]);
+    }, [pendingModerationEventData]);
 
     useEffect(() => {
         if (!isEmpty(singleModerationEventItem) && moderationID) {
             localStorage.removeItem(moderationID);
         }
         setShowProductionLocationDialog(true);
-    }, [singleModerationEventItem, pendingModerationEvent]);
+    }, [singleModerationEventItem, pendingModerationEventData]);
 
     useEffect(() => {
         // Force trailing slash in URL to prevent broken UX scenarios
@@ -280,6 +284,21 @@ const ProductionLocationInfo = ({
             unListen();
         };
     }, [location.pathname, history, osID]);
+
+    useEffect(() => {
+        if (!pendingModerationEventFetching && pendingModerationEventError) {
+            toast(toString(pendingModerationEventError));
+        }
+    }, [pendingModerationEventFetching, pendingModerationEventError]);
+
+    useEffect(() => {
+        if (
+            !singleModerationEventItemFetching &&
+            singleModerationEventItemError
+        ) {
+            toast(toString(singleModerationEventItemError));
+        }
+    }, [singleModerationEventItemFetching, singleModerationEventItemError]);
 
     return (
         <>
@@ -694,12 +713,12 @@ const ProductionLocationInfo = ({
                 </Paper>
             </div>
             {showProductionLocationDialog &&
-            (pendingModerationEvent?.data?.cleaned_data ||
+            (pendingModerationEventData?.cleaned_data ||
                 localStorage.getItem(moderationID) ||
                 singleModerationEventItem?.cleaned_data) ? (
                 <ProductionLocationDialog
                     data={
-                        pendingModerationEvent?.data?.cleaned_data ||
+                        pendingModerationEventData?.cleaned_data ||
                         JSON.parse(localStorage.getItem(moderationID)) ||
                         singleModerationEventItem?.cleaned_data
                     }
@@ -707,7 +726,7 @@ const ProductionLocationInfo = ({
                     handleShow={setShowProductionLocationDialog}
                     innerWidth={innerWidth}
                     moderationStatus={
-                        pendingModerationEvent?.data?.status ||
+                        pendingModerationEventData?.status ||
                         singleModerationEventItem?.status ||
                         MODERATION_STATUSES_ENUM.PENDING
                     }
@@ -724,8 +743,12 @@ const ProductionLocationInfo = ({
 ProductionLocationInfo.defaultProps = {
     countriesOptions: null,
     facilityProcessingTypeOptions: null,
-    pendingModerationEvent: null,
+    pendingModerationEventData: null,
+    pendingModerationEventFetching: false,
+    pendingModerationEventError: null,
     singleModerationEventItem: null,
+    singleModerationEventItemFetching: false,
+    singleModerationEventItemError: null,
 };
 
 ProductionLocationInfo.propTypes = {
@@ -736,8 +759,12 @@ ProductionLocationInfo.propTypes = {
     handleCreateProductionLocation: func.isRequired,
     handleUpdateProductionLocation: func.isRequired,
     facilityProcessingTypeOptions: facilityProcessingTypeOptionsPropType,
-    pendingModerationEvent: moderationEventsListItemPropType,
+    pendingModerationEventData: moderationEventsListItemPropType,
+    pendingModerationEventFetching: bool,
+    pendingModerationEventError: array,
     singleModerationEventItem: moderationEventsListItemPropType,
+    singleModerationEventItemFetching: bool,
+    singleModerationEventItemError: string,
     fetchProductionLocation: func.isRequired,
     singleProductionLocationData: productionLocationPropType.isRequired,
     submitMethod: string.isRequired,
@@ -750,9 +777,19 @@ const mapStateToProps = ({
         countries: { data: countriesOptions },
         facilityProcessingType: { data: facilityProcessingTypeOptions },
     },
-    contributeProductionLocation: { pendingModerationEvent },
+    contributeProductionLocation: {
+        pendingModerationEvent: {
+            data: pendingModerationEventData,
+            fetching: pendingModerationEventFetching,
+            error: pendingModerationEventError,
+        },
+    },
     dashboardContributionRecord: {
-        singleModerationEvent: { data: singleModerationEventItem },
+        singleModerationEvent: {
+            data: singleModerationEventItem,
+            fetching: singleModerationEventItemFetching,
+            error: singleModerationEventItemError,
+        },
     },
     contributeProductionLocation: {
         singleProductionLocation: { data: singleProductionLocationData },
@@ -763,8 +800,12 @@ const mapStateToProps = ({
 }) => ({
     countriesOptions,
     facilityProcessingTypeOptions,
-    pendingModerationEvent,
+    pendingModerationEventData,
+    pendingModerationEventFetching,
+    pendingModerationEventError,
     singleModerationEventItem,
+    singleModerationEventItemFetching,
+    singleModerationEventItemError,
     singleProductionLocationData,
     innerWidth,
 });
