@@ -6,10 +6,14 @@ import renderWithProviders from '../../util/testUtils/renderWithProviders';
 const mockHistoryPush = jest.fn();
 
 jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useHistory: () => ({
-    push: mockHistoryPush,
-  }),
+    ...jest.requireActual('react-router-dom'),
+    useHistory: () => ({
+        push: mockHistoryPush,
+    }),
+    useLocation: jest.fn(() => ({
+        pathname: '/contribute/search',
+        search: '?name=Test&address=123&country=US',
+    })),
 }));
 
 jest.mock('../../components/Contribute/ConfirmNotFoundLocationDialog', () => ({
@@ -117,13 +121,16 @@ describe('SearchByNameAndAddressSuccessResult component', () => {
     });
 
     test('opens the "Production Location Information" page when the "Select" button is clicked', () => {
-        const { getAllByRole } = renderWithProviders(<SearchByNameAndAddressSuccessResult {...defaultProps} />);
+        const { getAllByRole } = renderWithProviders(
+          <SearchByNameAndAddressSuccessResult {...defaultProps} />
+        );
         const selectButtons = getAllByRole('button', { name: /Select/i });
 
-        selectButtons.forEach(button => {
-            expect(button).toBeInTheDocument();
-            fireEvent.click(button);
-            expect(mockHistoryPush).toHaveBeenCalledWith(expect.stringContaining('/contribute/production-location/US1234567890124/info/'));
+        selectButtons.forEach((button, index) => {
+          fireEvent.click(button);
+          expect(mockHistoryPush).toHaveBeenCalledWith(
+            `/contribute/production-location/${defaultProps.productionLocations[index].os_id}/info/`
+          );
         });
     });
 });

@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocation, useParams, useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import { array, bool, func, number, object, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
-import { endsWith, isEmpty, toString } from 'lodash';
+import { endsWith, isEmpty, isNil, omitBy, toString } from 'lodash';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
@@ -42,6 +42,7 @@ import {
 import {
     mockedSectors,
     productionLocationInfoRouteCommon,
+    searchByNameAndAddressResultRoute,
     MODERATION_STATUSES_ENUM,
     PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM,
 } from '../../util/constants';
@@ -67,6 +68,7 @@ const ProductionLocationInfo = ({
     fetchProductionLocation,
     singleProductionLocationData,
     innerWidth,
+    searchParameters,
 }) => {
     const location = useLocation();
     const history = useHistory();
@@ -122,6 +124,15 @@ const ProductionLocationInfo = ({
         setAddressTouched(true);
         setInputAddress(event.target.value);
     };
+    const handleGoBack = useCallback(() => {
+        const { name, address, country } = searchParameters;
+        const filteredParams = omitBy({ name, address, country }, isNil);
+        const params = new URLSearchParams(filteredParams);
+
+        const url = `${searchByNameAndAddressResultRoute}?${params.toString()}`;
+        history.push(url);
+    }, [searchParameters, history]);
+
     let handleProductionLocation;
     switch (submitMethod) {
         case 'POST':
@@ -292,13 +303,27 @@ const ProductionLocationInfo = ({
     }, [pendingModerationEventFetching, pendingModerationEventError]);
 
     useEffect(() => {
+        /* 
+        After first POST or PATCH v1/production-locations, there will be an error
+        because moderation event should be re-indexed in the OpenSearch,
+        so move this effect to the very end of event loop to make sure moderation event
+        will be saved in the local storage
+        */
         if (
+            (!moderationID,
             !singleModerationEventItemFetching &&
-            singleModerationEventItemError
+                singleModerationEventItemError &&
+                !localStorage.getItem(moderationID))
         ) {
-            toast(toString(singleModerationEventItemError));
+            setTimeout(() => {
+                toast(toString(singleModerationEventItemError));
+            }, 0);
         }
-    }, [singleModerationEventItemFetching, singleModerationEventItemError]);
+    }, [
+        singleModerationEventItemFetching,
+        singleModerationEventItemError,
+        moderationID,
+    ]);
 
     return (
         <>
@@ -679,11 +704,7 @@ const ProductionLocationInfo = ({
                     <div className={classes.buttonsContainerStyles}>
                         <Button
                             variant="outlined"
-                            onClick={() =>
-                                history.push(
-                                    '/contribute/production-location/search/',
-                                )
-                            }
+                            onClick={handleGoBack}
                             className={classes.goBackButtonStyles}
                         >
                             Go Back
@@ -797,6 +818,7 @@ const mapStateToProps = ({
     ui: {
         window: { innerWidth },
     },
+    searchParameters,
 }) => ({
     countriesOptions,
     facilityProcessingTypeOptions,
@@ -808,6 +830,7 @@ const mapStateToProps = ({
     singleModerationEventItemError,
     singleProductionLocationData,
     innerWidth,
+    searchParameters,
 });
 
 function mapDispatchToProps(dispatch) {
