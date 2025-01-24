@@ -1,4 +1,3 @@
-import unittest
 from django.test import TestCase
 from api.views.v1.opensearch_query_builder. \
     production_locations_query_builder import ProductionLocationsQueryBuilder
