@@ -1,4 +1,5 @@
 import copy
+from api.constants import DEFAULT_PRECISION
 from api.views.v1.opensearch_query_builder. \
     opensearch_query_builder import OpenSearchQueryBuilder
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
@@ -106,10 +107,9 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
             self.__add_multi_match(multi_match_query)
 
         aggregation = query_params.get(V1_PARAMETERS_LIST.AGGREGATION)
-        default_precision = 5
         precision = query_params.get(
             V1_PARAMETERS_LIST.PRECISION,
-            default_precision
+            DEFAULT_PRECISION
         )
 
         if aggregation:

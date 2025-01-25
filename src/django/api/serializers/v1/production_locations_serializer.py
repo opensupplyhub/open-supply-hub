@@ -45,6 +45,8 @@ class ProductionLocationsSerializer(Serializer):
         choices=['asc', 'desc'],
         required=False
     )
+    # aggregation = CharField(required=False)
+    # precision = IntegerField(required=False)
 
     def validate(self, data):
         validators = [

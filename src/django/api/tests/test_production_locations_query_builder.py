@@ -1,4 +1,5 @@
 from django.test import TestCase
+from api.constants import DEFAULT_PRECISION
 from api.views.v1.opensearch_query_builder. \
     production_locations_query_builder import ProductionLocationsQueryBuilder
 
@@ -259,6 +260,25 @@ class TestProductionLocationsQueryBuilder(TestCase):
         expected_aggregations = {
             'grouped': {
                 'geohex_grid': {'field': 'coordinates', 'precision': 4}
+            }
+        }
+        self.assertIn('aggregations', self.builder.query_body)
+        self.assertEqual(
+            expected_aggregations, self.builder.query_body['aggregations']
+        )
+
+    def test_add_specific_queries_with_aggregation_only(self):
+        query_params = {
+            'aggregation': 'hexgrid',
+        }
+        self.builder.add_specific_queries(query_params)
+
+        expected_aggregations = {
+            'grouped': {
+                'geohex_grid': {
+                    'field': 'coordinates',
+                    'precision': DEFAULT_PRECISION
+                }
             }
         }
         self.assertIn('aggregations', self.builder.query_body)
