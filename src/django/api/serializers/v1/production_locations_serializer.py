@@ -45,8 +45,14 @@ class ProductionLocationsSerializer(Serializer):
         choices=['asc', 'desc'],
         required=False
     )
-    # aggregation = CharField(required=False)
-    # precision = IntegerField(required=False)
+    aggregation = ChoiceField(
+        choices=['hexgrid'],
+        required=False,
+    )
+    precision = IntegerField(
+        min_value=0,
+        required=False,
+    )
 
     def validate(self, data):
         validators = [
