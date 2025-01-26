@@ -1,5 +1,4 @@
 import copy
-from api.constants import DEFAULT_PRECISION
 from api.views.v1.opensearch_query_builder. \
     opensearch_query_builder import OpenSearchQueryBuilder
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
@@ -107,10 +106,7 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
             self.__add_multi_match(multi_match_query)
 
         aggregation = query_params.get(V1_PARAMETERS_LIST.AGGREGATION)
-        precision = query_params.get(
-            V1_PARAMETERS_LIST.PRECISION,
-            DEFAULT_PRECISION
-        )
+        precision = query_params.get(V1_PARAMETERS_LIST.PRECISION)
 
         if aggregation:
             self.__add_aggregations(aggregation, precision)
@@ -129,15 +125,24 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
             }
         })
 
-    def __add_aggregations(self, aggregation, precision):
+    def __add_aggregations(self, aggregation, precision=None):
         if aggregation == 'hexgrid':
-            self.query_body['aggregations'] = {
-                "grouped": {
-                    "geohex_grid": {
-                        "field": "coordinates",
-                        "precision": precision
+            if not precision:
+                self.query_body['aggregations'] = {
+                    "grouped": {
+                        "geohex_grid": {
+                            "field": "coordinates",
+                        }
                     }
                 }
-            }
+            else:
+                self.query_body['aggregations'] = {
+                    "grouped": {
+                        "geohex_grid": {
+                            "field": "coordinates",
+                            "precision": precision
+                        }
+                    }
+                }
 
         return self.query_body

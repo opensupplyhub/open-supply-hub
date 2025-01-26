@@ -1,5 +1,5 @@
 from django.test import TestCase
-from api.constants import DEFAULT_PRECISION
+from unittest.mock import patch
 from api.views.v1.opensearch_query_builder. \
     production_locations_query_builder import ProductionLocationsQueryBuilder
 
@@ -235,53 +235,56 @@ class TestProductionLocationsQueryBuilder(TestCase):
         self.assertIn('aggregations', self.builder.query_body)
         self.assertEqual(expected, self.builder.query_body['aggregations'])
 
-    def test_add_specific_queries_with_all_params(self):
+    def test_add_aggregations_without_precision(self):
+        aggregation = 'hexgrid'
+        self.builder._ProductionLocationsQueryBuilder__add_aggregations(
+            aggregation
+        )
+        expected = {
+            'grouped': {
+                'geohex_grid': {'field': 'coordinates'}
+            }
+        }
+        self.assertIn('aggregations', self.builder.query_body)
+        self.assertEqual(expected, self.builder.query_body['aggregations'])
+
+    @patch.object(
+        ProductionLocationsQueryBuilder,
+        '_ProductionLocationsQueryBuilder__add_aggregations'
+    )
+    def test_add_specific_queries_with_aggregation(
+        self, mock_add_aggregations
+    ):
         query_params = {
-            'query': 'search term',
+            'aggregation': 'hexgrid',
+        }
+        self.builder.add_specific_queries(query_params)
+
+        mock_add_aggregations.assert_called_once_with('hexgrid', None)
+
+    @patch.object(
+        ProductionLocationsQueryBuilder,
+        '_ProductionLocationsQueryBuilder__add_aggregations'
+    )
+    def test_add_specific_queries_wit_aggregation_and_precision(
+        self, mock_add_aggregations
+    ):
+        query_params = {
             'aggregation': 'hexgrid',
             'precision': 4,
         }
         self.builder.add_specific_queries(query_params)
 
-        # Check multi_match
-        expected_multi_match = {
-            'multi_match': {
-                'query': 'search term',
-                'fields': ['name^2', 'address', 'description', 'local_name'],
-                'fuzziness': 2,
-            }
-        }
-        self.assertIn(
-            expected_multi_match,
-            self.builder.query_body['query']['bool']['must'],
-        )
+        mock_add_aggregations.assert_called_once_with('hexgrid', 4)
 
-        # Check aggregations
-        expected_aggregations = {
-            'grouped': {
-                'geohex_grid': {'field': 'coordinates', 'precision': 4}
-            }
-        }
-        self.assertIn('aggregations', self.builder.query_body)
-        self.assertEqual(
-            expected_aggregations, self.builder.query_body['aggregations']
-        )
-
-    def test_add_specific_queries_with_aggregation_only(self):
+    @patch.object(
+        ProductionLocationsQueryBuilder,
+        '_ProductionLocationsQueryBuilder__add_multi_match'
+    )
+    def test_add_specific_queries_with_query(self, mock_add_multi_match):
         query_params = {
-            'aggregation': 'hexgrid',
+            'query': 'search term',
         }
         self.builder.add_specific_queries(query_params)
 
-        expected_aggregations = {
-            'grouped': {
-                'geohex_grid': {
-                    'field': 'coordinates',
-                    'precision': DEFAULT_PRECISION
-                }
-            }
-        }
-        self.assertIn('aggregations', self.builder.query_body)
-        self.assertEqual(
-            expected_aggregations, self.builder.query_body['aggregations']
-        )
+        mock_add_multi_match.assert_called_once_with('search term')

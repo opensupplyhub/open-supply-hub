@@ -260,4 +260,3 @@ class APIV1MatchTypes:
 LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX = (
     '[API V1 Location Contribution Approval]'
 )
-DEFAULT_PRECISION = 5
