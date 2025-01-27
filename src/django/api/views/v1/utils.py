@@ -64,7 +64,7 @@ def serialize_params(serializer_class, query_params):
         if 'detail' in params.errors and 'errors' in params.errors:
             for error_item in params.errors.get('errors', []):
                 error_response['errors'].append({
-                    'field': error_item.get('field', '').capitalize(),
+                    'field': error_item.get('field', ''),
                     'detail': error_item.get('detail', '').capitalize()
                 })
 
