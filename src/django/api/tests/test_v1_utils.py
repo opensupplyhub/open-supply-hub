@@ -85,7 +85,7 @@ class V1UtilsTests(TestCase):
             'number_of_workers[min]': 'not_a_number',
             'size': 'not_a_number'
         })
-        serialized_params, error_response = \
+        _, error_response = \
             serialize_params(ProductionLocationsSerializer, query_dict)
         self.assertIsNotNone(error_response)
         self.assertEqual(
@@ -112,7 +112,7 @@ class V1UtilsTests(TestCase):
         query_dict.update({
             'aggregation': 'invalid_aggregation',
         })
-        serialized_params, error_response = \
+        _, error_response = \
             serialize_params(ProductionLocationsSerializer, query_dict)
         self.assertIsNotNone(error_response)
         self.assertIn(
@@ -128,7 +128,7 @@ class V1UtilsTests(TestCase):
         query_dict.update({
             'precision': 'not_a_number',
         })
-        serialized_params, error_response = \
+        _, error_response = \
             serialize_params(ProductionLocationsSerializer, query_dict)
         self.assertIsNotNone(error_response)
         self.assertIn(
@@ -144,7 +144,7 @@ class V1UtilsTests(TestCase):
         query_dict.update({
             'precision': '-1',
         })
-        serialized_params, error_response = \
+        _, error_response = \
             serialize_params(ProductionLocationsSerializer, query_dict)
         self.assertIsNotNone(error_response)
         self.assertIn(
