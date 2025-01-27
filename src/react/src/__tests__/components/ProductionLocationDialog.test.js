@@ -111,7 +111,7 @@ describe('ProductionLocationDialog', () => {
                     classes={{}}
                     data={defaultProps.data}
                     osID={defaultProps.osID}
-                    moderationStatus={'APPROVED'}
+                    moderationStatus='APPROVED'
                     claimStatus='unclaimed'
                 />
             </Router>
@@ -131,7 +131,7 @@ describe('ProductionLocationDialog', () => {
                     classes={{}}
                     data={defaultProps.data}
                     osID={defaultProps.osID}
-                    moderationStatus={'REJECTED'}
+                    moderationStatus='REJECTED'
                     claimStatus='unclaimed'
                 />
             </Router>
