@@ -10,16 +10,16 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Release date: February 8, 2025
 
 ### Database changes
-* *Describe high-level database changes.*
+* [OSDEV-1558](https://opensupplyhub.atlassian.net/browse/OSDEV-1558) - Added new field `action_type` to `api_moderationevent` table so we can handled and stored moderation actions.
 
 #### Migrations:
-* *Describe migrations here.*
+* 0164_add_moderationevent_action_type.py - This migration added new field `action_type` to existing table `api_moderationevent`.
 
 #### Schema changes
 * *Describe schema changes here.*
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-1558](https://opensupplyhub.atlassian.net/browse/OSDEV-1558) - Updated Logstash mapping configuration to handled new `action_type` field for OpenSearch.
 
 ### Architecture/Environment changes
 * *Describe architecture/environment changes here.*
@@ -32,12 +32,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     - Connected GET `v1/production-locations`.
     - Routing between pages `Production Location Search`,`Search returned no results`, `Production Location Information`, `Search results`, and `I don't see my Location` pop-up is configured.
     - Max result limit set to 100.
+* [OSDEV-1558](https://opensupplyhub.atlassian.net/browse/OSDEV-1558) - Added new field `action_type` to moderation event. This data appear in Contribution Record page when moderator create new location or matched to existing one.
+
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
-
+* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to refresh the index mappings for the `moderation-events` index after disabling dynamic mapping for the new fields that don't have an explicit mapping defined. The `production-locations` will also be affected since it will clean all of our custom indexes and templates within the OpenSearch cluster
 
 ## Release 1.28.0
 
