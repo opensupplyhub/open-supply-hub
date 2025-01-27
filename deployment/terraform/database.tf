@@ -76,7 +76,7 @@ resource "aws_db_parameter_group" "default" {
 }
 
 module "database_enc" {
-  source = "github.com/opensupplyhub/terraform-aws-postgresql-rds?ref=3.1.0"
+  source = "github.com/opensupplyhub/terraform-aws-postgresql-rds?ref=OSDEV-1515-upgrade-the-postgresql-version-to-17"
 
   vpc_id                      = module.vpc.id
   allocated_storage           = var.rds_allocated_storage
