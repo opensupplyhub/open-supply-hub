@@ -630,8 +630,8 @@ export const makeProductionLocationDialogStyles = theme =>
         button: Object.freeze({
             textTransform: 'capitalize',
             fontWeight: theme.typography.fontWeightBold,
-            paddingLeft: '30px',
-            paddingRight: '30px',
+            paddingLeft: '25px',
+            paddingRight: '25px',
             boxShadow: 'none',
             [theme.breakpoints.down('md')]: {
                 width: '100%',
@@ -648,6 +648,14 @@ export const makeProductionLocationDialogStyles = theme =>
         claimButton: Object.freeze({
             backgroundColor: COLOURS.NAVIGATION,
             borderRadius: 0,
+        }),
+        claimButton_disabled: Object.freeze({
+            paddingTop: '6px',
+            paddingBottom: '6px',
+        }),
+        claimButton_infoIcon: Object.freeze({
+            color: COLOURS.DARK_GREY,
+            marginLeft: '5px',
         }),
     });
 

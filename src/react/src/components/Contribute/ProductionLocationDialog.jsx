@@ -33,12 +33,17 @@ const claimButton = (classes, osID, isDisabled = true) => (
         <Button
             variant="contained"
             disabled={isDisabled}
-            className={`${classes.button} ${classes.claimButton}`}
+            className={`${classes.button} ${classes.claimButton} ${
+                isDisabled ? classes.claimButton_disabled : ''
+            }`}
             href={makeClaimFacilityLink(osID || '')}
             target="_blank"
             rel="noopener noreferrer"
         >
             Continue to Claim
+            {isDisabled ? (
+                <InfoOutlinedIcon className={classes.claimButton_infoIcon} />
+            ) : null}
         </Button>
     </span>
 );
