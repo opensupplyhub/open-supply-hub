@@ -104,14 +104,34 @@ describe('ProductionLocationDialog', () => {
         expect(screen.getByText(/Shirts, Pants/i)).toBeInTheDocument();
     });
 
-    test('Continue to Claim button should be active if production location is unclaimed', () => {
+    test('Continue to Claim button should be active if production location is unclaimed and approved', () => {
         const { getByRole } = render(
             <Router>
                 <ProductionLocationDialog
                     classes={{}}
                     data={defaultProps.data}
                     osID={defaultProps.osID}
-                    moderationStatus={defaultProps.moderationStatus}
+                    moderationStatus={'APPROVED'}
+                    claimStatus='unclaimed'
+                />
+            </Router>
+        );
+
+        const claimButton = getByRole('button', { name: /Continue to Claim/i });
+
+        expect(window.getComputedStyle(claimButton).pointerEvents).not.toBe('none');
+
+        expect(claimButton).toHaveAttribute('href', `/facilities/${defaultProps.osID}/claim`);
+    });
+
+    test('Continue to Claim button should be active if production location is unclaimed and rejected', () => {
+        const { getByRole } = render(
+            <Router>
+                <ProductionLocationDialog
+                    classes={{}}
+                    data={defaultProps.data}
+                    osID={defaultProps.osID}
+                    moderationStatus={'REJECTED'}
                     claimStatus='unclaimed'
                 />
             </Router>
