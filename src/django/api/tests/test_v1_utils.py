@@ -1,13 +1,5 @@
 from django.test import TestCase
 from django.http import QueryDict
-from rest_framework.serializers import (
-    CharField,
-    ChoiceField,
-    FloatField,
-    IntegerField,
-    ListField,
-    Serializer
-)
 from rest_framework.response import Response
 from api.views.v1.utils import (
     serialize_params,
@@ -82,7 +74,6 @@ class V1UtilsTests(TestCase):
         })
         serialized_params, error_response = \
             serialize_params(ProductionLocationsSerializer, query_dict)
-        print('serialized_params >>>', serialized_params)
         self.assertIsNone(error_response)
         self.assertEqual(serialized_params['number_of_workers_min'], 10)
         self.assertEqual(serialized_params['number_of_workers_max'], 50)
@@ -104,14 +95,14 @@ class V1UtilsTests(TestCase):
         self.assertIn(
             {
                 'field': 'number_of_workers_min',
-                'detail': 'A Valid Integer Is Required.'
+                'detail': 'A valid integer is required.'
             },
             error_response['errors']
         )
         self.assertIn(
             {
                 'field': 'size',
-                'detail': 'A Valid Integer Is Required.'
+                'detail': 'A valid integer is required.'
             },
             error_response['errors']
         )
@@ -127,7 +118,7 @@ class V1UtilsTests(TestCase):
         self.assertIn(
             {
                 'field': 'aggregation',
-                'detail': '"Invalid_Aggregation" Is Not A Valid Choice.'
+                'detail': '"invalid_aggregation" is not a valid choice.'
             },
             error_response['errors']
         )
@@ -143,7 +134,7 @@ class V1UtilsTests(TestCase):
         self.assertIn(
             {
                 'field': 'precision',
-                'detail': 'A Valid Integer Is Required.'
+                'detail': 'A valid integer is required.'
             },
             error_response['errors']
         )
@@ -159,7 +150,7 @@ class V1UtilsTests(TestCase):
         self.assertIn(
             {
                 'field': 'precision',
-                'detail': 'Ensure This Value Is Greater Than Or Equal To 0.'
+                'detail': 'Ensure this value is greater than or equal to 0.'
             },
             error_response['errors']
         )
