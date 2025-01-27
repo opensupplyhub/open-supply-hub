@@ -57,6 +57,10 @@ export const failUpdateProductionLocation = createAction(
     'FAIL_UPDATE_PRODUCTION_LOCATION',
 );
 
+export const resetPendingModerationEvent = createAction(
+    'RESET_PENDING_MODERATION_EVENT',
+);
+
 export function createProductionLocation(contribData) {
     const parsedContribData = parseContribData(contribData);
 

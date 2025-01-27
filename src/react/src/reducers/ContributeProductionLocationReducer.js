@@ -15,6 +15,7 @@ import {
     failFetchProductionLocations,
     completeFetchProductionLocations,
     resetProductionLocations,
+    resetPendingModerationEvent,
 } from '../actions/contributeProductionLocation';
 
 const initialState = Object.freeze({
@@ -137,7 +138,12 @@ export default createReducer(
                     error: { $set: payload },
                 },
             }),
-
+        [resetPendingModerationEvent]: state =>
+            update(state, {
+                pendingModerationEvent: {
+                    $set: initialState.pendingModerationEvent,
+                },
+            }),
         // Production Locations
         [startFetchProductionLocations]: state =>
             update(state, {

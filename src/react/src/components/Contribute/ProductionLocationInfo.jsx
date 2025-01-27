@@ -28,6 +28,7 @@ import {
     createProductionLocation,
     updateProductionLocation,
     fetchProductionLocationByOsId,
+    resetPendingModerationEvent,
 } from '../../actions/contributeProductionLocation';
 import { fetchSingleModerationEvent } from '../../actions/dashboardContributionRecord';
 import InputErrorText from './InputErrorText';
@@ -69,6 +70,7 @@ const ProductionLocationInfo = ({
     singleProductionLocationData,
     innerWidth,
     searchParameters,
+    handleResetPendingModerationEvent,
 }) => {
     const location = useLocation();
     const history = useHistory();
@@ -169,6 +171,7 @@ const ProductionLocationInfo = ({
                 pathname: baseContributeInfoLocation,
                 search: '',
             });
+            handleResetPendingModerationEvent();
         }
     }, [showProductionLocationDialog]);
 
@@ -217,10 +220,12 @@ const ProductionLocationInfo = ({
 
     const prevModerationIDRef = useRef();
     useEffect(() => {
-        if (prevModerationIDRef.current !== moderationID) {
-            if (isEmpty(singleModerationEventItem)) {
-                fetchModerationEvent(moderationID);
-            }
+        if (
+            moderationID &&
+            prevModerationIDRef.current !== moderationID &&
+            isEmpty(singleModerationEventItem)
+        ) {
+            fetchModerationEvent(moderationID);
         }
         if (
             singleModerationEventItem?.os_id &&
@@ -272,8 +277,10 @@ const ProductionLocationInfo = ({
         if (!isEmpty(singleModerationEventItem) && moderationID) {
             localStorage.removeItem(moderationID);
         }
-        setShowProductionLocationDialog(true);
-    }, [singleModerationEventItem, pendingModerationEventData]);
+        if (moderationID) {
+            setShowProductionLocationDialog(true);
+        }
+    }, [singleModerationEventItem, pendingModerationEventData, moderationID]);
 
     useEffect(() => {
         // Force trailing slash in URL to prevent broken UX scenarios
@@ -310,10 +317,10 @@ const ProductionLocationInfo = ({
         will be saved in the local storage
         */
         if (
-            (!moderationID,
+            moderationID &&
             !singleModerationEventItemFetching &&
-                singleModerationEventItemError &&
-                !localStorage.getItem(moderationID))
+            singleModerationEventItemError &&
+            !localStorage.getItem(moderationID)
         ) {
             setTimeout(() => {
                 toast(toString(singleModerationEventItemError));
@@ -790,7 +797,7 @@ ProductionLocationInfo.propTypes = {
     pendingModerationEventError: array,
     singleModerationEventItem: moderationEventsListItemPropType,
     singleModerationEventItemFetching: bool,
-    singleModerationEventItemError: string,
+    singleModerationEventItemError: array,
     fetchProductionLocation: func.isRequired,
     singleProductionLocationData: productionLocationPropType.isRequired,
     submitMethod: string.isRequired,
@@ -856,6 +863,8 @@ function mapDispatchToProps(dispatch) {
             dispatch(fetchSingleModerationEvent(moderationID)),
         fetchProductionLocation: osId =>
             dispatch(fetchProductionLocationByOsId(osId)),
+        handleResetPendingModerationEvent: () =>
+            dispatch(resetPendingModerationEvent()),
     };
 }
 
