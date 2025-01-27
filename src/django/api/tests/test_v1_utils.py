@@ -14,33 +14,9 @@ from api.views.v1.utils import (
     handle_value_error,
     handle_opensearch_exception
 )
+from api.serializers.v1.production_locations_serializer \
+    import ProductionLocationsSerializer
 from api.services.opensearch.search import OpenSearchServiceException
-
-
-class TestProductionLocationsSerializer(Serializer):
-    size = IntegerField(required=False)
-    address = CharField(required=False)
-    description = CharField(required=False)
-    search_after_value = CharField(required=False)
-    search_after_id = CharField(required=False)
-    number_of_workers_min = IntegerField(required=False)
-    number_of_workers_max = IntegerField(required=False)
-    percent_female_workers_min = FloatField(required=False)
-    percent_female_workers_max = FloatField(required=False)
-    coordinates_lat = FloatField(required=False)
-    coordinates_lng = FloatField(required=False)
-    country = ListField(
-        child=CharField(required=False),
-        required=False
-    )
-    sort_by = ChoiceField(
-        choices=['name', 'address'],
-        required=False
-    )
-    order_by = ChoiceField(
-        choices=['asc', 'desc'],
-        required=False
-    )
 
 
 class V1UtilsTests(TestCase):
@@ -56,7 +32,7 @@ class V1UtilsTests(TestCase):
             'coordinates[lng]': '56.78',
         })
         serialized_params, error_response = \
-            serialize_params(TestProductionLocationsSerializer, query_dict)
+            serialize_params(ProductionLocationsSerializer, query_dict)
         self.assertIsNone(error_response)
         self.assertEqual(serialized_params['number_of_workers_min'], 10)
         self.assertEqual(serialized_params['number_of_workers_max'], 50)
@@ -74,10 +50,12 @@ class V1UtilsTests(TestCase):
             'search_after[value]': 'abc123',
             'sort_by': 'name',
             'order_by': 'asc',
-            'size': 10
+            'size': 10,
+            'aggregation': 'hexgrid',
+            'precision': 2,
         })
         serialized_params, error_response = \
-            serialize_params(TestProductionLocationsSerializer, query_dict)
+            serialize_params(ProductionLocationsSerializer, query_dict)
         self.assertIsNone(error_response)
         self.assertEqual(serialized_params['address'], '123 Main St')
         self.assertEqual(
@@ -92,17 +70,22 @@ class V1UtilsTests(TestCase):
         self.assertEqual(serialized_params['sort_by'], 'name')
         self.assertEqual(serialized_params['order_by'], 'asc')
         self.assertEqual(serialized_params['size'], 10)
+        self.assertEqual(serialized_params['aggregation'], 'hexgrid')
+        self.assertEqual(serialized_params['precision'], 2)
 
     def test_serialize_params_with_mixed_values(self):
         query_dict = QueryDict('', mutable=True)
         query_dict.update({
             'number_of_workers[min]': '10',
+            'number_of_workers[max]': '50',
             'address': '123 Main St',
         })
         serialized_params, error_response = \
-            serialize_params(TestProductionLocationsSerializer, query_dict)
+            serialize_params(ProductionLocationsSerializer, query_dict)
+        print('serialized_params >>>', serialized_params)
         self.assertIsNone(error_response)
         self.assertEqual(serialized_params['number_of_workers_min'], 10)
+        self.assertEqual(serialized_params['number_of_workers_max'], 50)
         self.assertEqual(serialized_params['address'], '123 Main St')
 
     def test_serialize_params_invalid(self):
@@ -112,7 +95,7 @@ class V1UtilsTests(TestCase):
             'size': 'not_a_number'
         })
         serialized_params, error_response = \
-            serialize_params(TestProductionLocationsSerializer, query_dict)
+            serialize_params(ProductionLocationsSerializer, query_dict)
         self.assertIsNotNone(error_response)
         self.assertEqual(
             error_response['detail'],
@@ -129,6 +112,54 @@ class V1UtilsTests(TestCase):
             {
                 'field': 'size',
                 'detail': 'A Valid Integer Is Required.'
+            },
+            error_response['errors']
+        )
+
+    def test_serialize_invalid_aggregation(self):
+        query_dict = QueryDict('', mutable=True)
+        query_dict.update({
+            'aggregation': 'invalid_aggregation',
+        })
+        serialized_params, error_response = \
+            serialize_params(ProductionLocationsSerializer, query_dict)
+        self.assertIsNotNone(error_response)
+        self.assertIn(
+            {
+                'field': 'aggregation',
+                'detail': '"Invalid_Aggregation" Is Not A Valid Choice.'
+            },
+            error_response['errors']
+        )
+
+    def test_serialize_invalid_precision_type(self):
+        query_dict = QueryDict('', mutable=True)
+        query_dict.update({
+            'precision': 'not_a_number',
+        })
+        serialized_params, error_response = \
+            serialize_params(ProductionLocationsSerializer, query_dict)
+        self.assertIsNotNone(error_response)
+        self.assertIn(
+            {
+                'field': 'precision',
+                'detail': 'A Valid Integer Is Required.'
+            },
+            error_response['errors']
+        )
+
+    def test_serialize_invalid_precision_value(self):
+        query_dict = QueryDict('', mutable=True)
+        query_dict.update({
+            'precision': '-1',
+        })
+        serialized_params, error_response = \
+            serialize_params(ProductionLocationsSerializer, query_dict)
+        self.assertIsNotNone(error_response)
+        self.assertIn(
+            {
+                'field': 'precision',
+                'detail': 'Ensure This Value Is Greater Than Or Equal To 0.'
             },
             error_response['errors']
         )
