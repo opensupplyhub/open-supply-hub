@@ -56,6 +56,18 @@ const getStatusBadgeClass = (classes, status) => {
     }
 };
 
+const getTooltipText = (claimStatus, moderationStatus) => {
+    if (moderationStatus === MODERATION_STATUSES_ENUM.PENDING) {
+        return "You'll be able to claim the location after the moderation is complete.";
+    }
+
+    if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED) {
+        return 'Production location has been claimed already';
+    }
+
+    return '';
+};
+
 const ProductionLocationDialog = ({
     theme,
     innerWidth,
@@ -247,13 +259,16 @@ const ProductionLocationDialog = ({
                                 Submit another Location
                             </Button>
                             {claimStatus ===
-                            (PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED ||
-                                moderationStatus !==
-                                    MODERATION_STATUSES_ENUM.PENDING) ? (
+                                PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED &&
+                            moderationStatus !==
+                                MODERATION_STATUSES_ENUM.PENDING ? (
                                 <>{claimButton(classes, osID, false)}</>
                             ) : (
                                 <DialogTooltip
-                                    text="You'll be able to claim the location after the moderation is complete."
+                                    text={getTooltipText(
+                                        claimStatus,
+                                        moderationStatus,
+                                    )}
                                     aria-label="Claim button tooltip"
                                     childComponent={claimButton(classes, true)}
                                 />

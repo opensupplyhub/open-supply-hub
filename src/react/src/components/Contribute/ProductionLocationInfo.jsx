@@ -30,7 +30,10 @@ import {
     fetchProductionLocationByOsId,
     resetPendingModerationEvent,
 } from '../../actions/contributeProductionLocation';
-import { fetchSingleModerationEvent } from '../../actions/dashboardContributionRecord';
+import {
+    fetchSingleModerationEvent,
+    cleanupContributionRecord,
+} from '../../actions/dashboardContributionRecord';
 import InputErrorText from './InputErrorText';
 import {
     mapDjangoChoiceTuplesToSelectOptions,
@@ -70,6 +73,7 @@ const ProductionLocationInfo = ({
     singleProductionLocationData,
     innerWidth,
     searchParameters,
+    handleCleanupContributionRecord,
     handleResetPendingModerationEvent,
 }) => {
     const location = useLocation();
@@ -171,6 +175,7 @@ const ProductionLocationInfo = ({
                 pathname: baseContributeInfoLocation,
                 search: '',
             });
+            handleCleanupContributionRecord();
             handleResetPendingModerationEvent();
         }
     }, [showProductionLocationDialog]);
@@ -808,6 +813,8 @@ ProductionLocationInfo.propTypes = {
         address: string,
         country: string,
     }),
+    handleCleanupContributionRecord: func.isRequired,
+    handleResetPendingModerationEvent: func.isRequired,
 };
 
 const mapStateToProps = ({
@@ -863,6 +870,8 @@ function mapDispatchToProps(dispatch) {
             dispatch(fetchSingleModerationEvent(moderationID)),
         fetchProductionLocation: osId =>
             dispatch(fetchProductionLocationByOsId(osId)),
+        handleCleanupContributionRecord: () =>
+            dispatch(cleanupContributionRecord()),
         handleResetPendingModerationEvent: () =>
             dispatch(resetPendingModerationEvent()),
     };
