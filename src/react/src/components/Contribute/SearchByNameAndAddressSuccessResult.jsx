@@ -5,6 +5,7 @@ import { arrayOf, func, object } from 'prop-types';
 import Button from '@material-ui/core/Button';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
+import { makeContributeProductionLocationUpdateURL } from '../../util/util';
 import { makeSearchByNameAndAddressSuccessResultStyles } from '../../util/styles';
 import { productionLocationPropType } from '../../util/propTypes';
 import ConfirmNotFoundLocationDialog from './ConfirmNotFoundLocationDialog';
@@ -54,7 +55,9 @@ const SearchByNameAndAddressSuccessResult = ({
                 const country = queryParams.get('country');
                 handleSaveSearchParameters({ name, address, country });
             }
-            const baseUrl = `/contribute/production-location/${productionLocation.os_id}/info/`;
+            const baseUrl = makeContributeProductionLocationUpdateURL(
+                productionLocation.os_id,
+            );
             history.push(baseUrl);
         },
         [handleSaveSearchParameters, history, location],

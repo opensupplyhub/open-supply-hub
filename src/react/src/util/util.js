@@ -291,6 +291,9 @@ export const makeProductionLocationFromModerationEventURL = (
     return `/api/v1/moderation-events/${moderationID}/production-locations/${osIDPathParameter}`;
 };
 
+export const makeContributeProductionLocationUpdateURL = osID =>
+    `/contribute/production-location/${osID}/info/`;
+
 export const makeGetModerationEventsWithQueryString = (
     qs,
     page,
