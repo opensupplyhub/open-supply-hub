@@ -1,5 +1,4 @@
 from django.test import TestCase
-from unittest.mock import patch
 from api.views.v1.opensearch_query_builder. \
     production_locations_query_builder import ProductionLocationsQueryBuilder
 
@@ -206,7 +205,7 @@ class TestProductionLocationsQueryBuilder(TestCase):
         self.assertEqual(final_query, expected)
 
     def test_add_multi_match(self):
-        self.builder._ProductionLocationsQueryBuilder__add_multi_match(
+        self.builder.add_multi_match(
             'test query'
         )
         expected = {
@@ -223,7 +222,7 @@ class TestProductionLocationsQueryBuilder(TestCase):
     def test_add_aggregations_with_precision(self):
         aggregation = 'geohex_grid'
         geohex_grid_precision = 5
-        self.builder._ProductionLocationsQueryBuilder__add_aggregations(
+        self.builder.add_aggregations(
             aggregation,
             geohex_grid_precision
         )
@@ -240,7 +239,7 @@ class TestProductionLocationsQueryBuilder(TestCase):
 
     def test_add_aggregations_without_precision(self):
         aggregation = 'geohex_grid'
-        self.builder._ProductionLocationsQueryBuilder__add_aggregations(
+        self.builder.add_aggregations(
             aggregation
         )
         expected = {
@@ -251,43 +250,9 @@ class TestProductionLocationsQueryBuilder(TestCase):
         self.assertIn('aggregations', self.builder.query_body)
         self.assertEqual(expected, self.builder.query_body['aggregations'])
 
-    @patch.object(
-        ProductionLocationsQueryBuilder,
-        '_ProductionLocationsQueryBuilder__add_aggregations'
-    )
-    def test_add_specific_queries_with_aggregation(
-        self, mock_add_aggregations
-    ):
-        query_params = {
-            'aggregation': 'geohex_grid',
-        }
-        self.builder.add_specific_queries(query_params)
-
-        mock_add_aggregations.assert_called_once_with('geohex_grid', None)
-
-    @patch.object(
-        ProductionLocationsQueryBuilder,
-        '_ProductionLocationsQueryBuilder__add_aggregations'
-    )
-    def test_add_specific_queries_wit_aggregation_and_precision(
-        self, mock_add_aggregations
-    ):
-        query_params = {
-            'aggregation': 'geohex_grid',
-            'geohex_grid_precision': 4,
-        }
-        self.builder.add_specific_queries(query_params)
-
-        mock_add_aggregations.assert_called_once_with('geohex_grid', 4)
-
-    @patch.object(
-        ProductionLocationsQueryBuilder,
-        '_ProductionLocationsQueryBuilder__add_multi_match'
-    )
-    def test_add_specific_queries_with_query(self, mock_add_multi_match):
-        query_params = {
-            'query': 'search term',
-        }
-        self.builder.add_specific_queries(query_params)
-
-        mock_add_multi_match.assert_called_once_with('search term')
+    def test_add_aggregations_where_aggregation_is_not_geohex_grid(self):
+        aggregation = 'test_aggregation'
+        self.builder.add_aggregations(
+            aggregation
+        )
+        self.assertNotIn('aggregations', self.builder.query_body)

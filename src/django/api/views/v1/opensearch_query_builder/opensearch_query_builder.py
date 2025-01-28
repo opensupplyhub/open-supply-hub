@@ -160,7 +160,3 @@ class OpenSearchQueryBuilder(ABC):
     @abstractmethod
     def add_terms(self, field, values):
         pass
-
-    @abstractmethod
-    def add_specific_queries(self, query_params):
-        pass

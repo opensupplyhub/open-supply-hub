@@ -98,6 +98,16 @@ class OpenSearchQueryDirector:
         if size:
             self.__builder.add_size(size)
 
-        self.__builder.add_specific_queries(query_params)
+        multi_match_query = query_params.get(V1_PARAMETERS_LIST.QUERY)
+
+        if multi_match_query and hasattr(self.__builder, 'add_multi_match'):
+            self.add_multi_match(multi_match_query)
+
+        aggregation = query_params.get(V1_PARAMETERS_LIST.AGGREGATION)
+        geohex_grid_precision = query_params.get(
+            V1_PARAMETERS_LIST.GEOHEX_GRID_PRECISION
+        )
+        if aggregation and hasattr(self.__builder, 'add_aggregations'):
+            self.__builder.add_aggregations(aggregation, geohex_grid_precision)
 
         return self.__builder.get_final_query_body()
