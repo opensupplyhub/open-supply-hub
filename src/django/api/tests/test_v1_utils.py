@@ -43,7 +43,7 @@ class V1UtilsTests(TestCase):
             'sort_by': 'name',
             'order_by': 'asc',
             'size': 10,
-            'aggregation': 'hexgrid',
+            'aggregation': 'geohex_grid',
             'geohex_grid_precision': 2,
         })
         serialized_params, error_response = \
@@ -62,7 +62,7 @@ class V1UtilsTests(TestCase):
         self.assertEqual(serialized_params['sort_by'], 'name')
         self.assertEqual(serialized_params['order_by'], 'asc')
         self.assertEqual(serialized_params['size'], 10)
-        self.assertEqual(serialized_params['aggregation'], 'hexgrid')
+        self.assertEqual(serialized_params['aggregation'], 'geohex_grid')
         self.assertEqual(serialized_params['geohex_grid_precision'], 2)
 
     def test_serialize_params_with_mixed_values(self):

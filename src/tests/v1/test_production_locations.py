@@ -106,7 +106,7 @@ class ProductionLocationsTest(BaseAPITest):
         )
 
     def test_production_locations_aggregations(self):
-        query = "?aggregation=hexgrid&geohex_grid_precision=2"
+        query = "?aggregation=geohex_grid&geohex_grid_precision=2"
         response = requests.get(
                 f"{self.root_url}/api/v1/production-locations/{query}",
                 headers=self.basic_headers,

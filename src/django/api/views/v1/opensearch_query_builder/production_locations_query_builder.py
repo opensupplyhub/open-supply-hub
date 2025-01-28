@@ -128,7 +128,7 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
         })
 
     def __add_aggregations(self, aggregation, geohex_grid_precision=None):
-        if aggregation == 'hexgrid':
+        if aggregation == 'geohex_grid':
             if not geohex_grid_precision:
                 self.query_body['aggregations'] = {
                     "grouped": {

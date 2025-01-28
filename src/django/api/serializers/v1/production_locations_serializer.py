@@ -48,7 +48,7 @@ class ProductionLocationsSerializer(Serializer):
         required=False
     )
     aggregation = ChoiceField(
-        choices=['hexgrid'],
+        choices=['geohex_grid'],
         required=False,
     )
     geohex_grid_precision = IntegerField(

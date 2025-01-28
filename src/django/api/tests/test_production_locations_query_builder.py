@@ -221,7 +221,7 @@ class TestProductionLocationsQueryBuilder(TestCase):
         )
 
     def test_add_aggregations_with_precision(self):
-        aggregation = 'hexgrid'
+        aggregation = 'geohex_grid'
         geohex_grid_precision = 5
         self.builder._ProductionLocationsQueryBuilder__add_aggregations(
             aggregation,
@@ -239,7 +239,7 @@ class TestProductionLocationsQueryBuilder(TestCase):
         self.assertEqual(expected, self.builder.query_body['aggregations'])
 
     def test_add_aggregations_without_precision(self):
-        aggregation = 'hexgrid'
+        aggregation = 'geohex_grid'
         self.builder._ProductionLocationsQueryBuilder__add_aggregations(
             aggregation
         )
@@ -259,11 +259,11 @@ class TestProductionLocationsQueryBuilder(TestCase):
         self, mock_add_aggregations
     ):
         query_params = {
-            'aggregation': 'hexgrid',
+            'aggregation': 'geohex_grid',
         }
         self.builder.add_specific_queries(query_params)
 
-        mock_add_aggregations.assert_called_once_with('hexgrid', None)
+        mock_add_aggregations.assert_called_once_with('geohex_grid', None)
 
     @patch.object(
         ProductionLocationsQueryBuilder,
@@ -273,12 +273,12 @@ class TestProductionLocationsQueryBuilder(TestCase):
         self, mock_add_aggregations
     ):
         query_params = {
-            'aggregation': 'hexgrid',
+            'aggregation': 'geohex_grid',
             'geohex_grid_precision': 4,
         }
         self.builder.add_specific_queries(query_params)
 
-        mock_add_aggregations.assert_called_once_with('hexgrid', 4)
+        mock_add_aggregations.assert_called_once_with('geohex_grid', 4)
 
     @patch.object(
         ProductionLocationsQueryBuilder,
