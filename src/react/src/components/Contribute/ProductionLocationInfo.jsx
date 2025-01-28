@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import { func, object } from 'prop-types';
 import { connect } from 'react-redux';
@@ -56,6 +56,7 @@ const ProductionLocationInfo = ({
     const [numberOfWorkers, setNumberOfWorkers] = useState('');
     const [parentCompany, setParentCompany] = useState([]);
     const customSelectComponents = { DropdownIndicator: null };
+    const history = useHistory();
 
     const selectStyles = {
         control: provided => ({
@@ -476,7 +477,7 @@ const ProductionLocationInfo = ({
                 <div className={classes.buttonsContainerStyles}>
                     <Button
                         variant="outlined"
-                        onClick={() => {}}
+                        onClick={() => history.goBack()}
                         className={classes.goBackButtonStyles}
                     >
                         Go Back

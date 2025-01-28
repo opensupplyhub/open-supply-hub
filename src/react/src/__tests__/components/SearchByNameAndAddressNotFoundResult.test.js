@@ -1,13 +1,17 @@
 import React from 'react';
 import { fireEvent } from '@testing-library/react';
 import SearchByNameAndAddressNotFoundResult from '../../components/Contribute/SearchByNameAndAddressNotFoundResult';
-import { contributeProductionLocationRoute } from '../../util/constants';
+import { contributeProductionLocationRoute, productionLocationInfoRoute } from '../../util/constants';
 import history from '../../util/history';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 
 jest.mock('../../util/history', () => ({
     push: jest.fn(),
 }));
+
+beforeEach(() => {
+    jest.clearAllMocks();
+});
 
 describe('SearchByNameAndAddressNotFoundResult component', () => {
     test('renders the not found message and buttons correctly', () => {
@@ -34,5 +38,16 @@ describe('SearchByNameAndAddressNotFoundResult component', () => {
         fireEvent.click(searchAgainButton);
 
         expect(history.push).toHaveBeenCalledWith(`${contributeProductionLocationRoute}?tab=name-address`);
+    });
+
+    test("navigates to the contribute page when 'Add a new Location' is clicked", () => {
+        const { getByRole } = renderWithProviders(<SearchByNameAndAddressNotFoundResult />);
+
+        const addNewLocation = getByRole('button', { name: 'Add a new Location' });
+        expect(addNewLocation).toBeInTheDocument();
+        fireEvent.click(addNewLocation);
+
+        expect(history.push).toHaveBeenCalledWith(productionLocationInfoRoute);
+        expect(history.push).toHaveBeenCalledTimes(1);
     });
 });

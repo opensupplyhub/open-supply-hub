@@ -99,16 +99,16 @@ export function fetchPotentialMatches(data) {
 
         const {
             productionLocationName,
-            countryCode,
             productionLocationAddress,
+            countryCode,
         } = data;
 
         return apiRequest
             .get(
                 makeGetProductionLocationsForPotentialMatches(
                     productionLocationName,
-                    countryCode,
                     productionLocationAddress,
+                    countryCode,
                 ),
             )
             .then(potentialMatches => {
