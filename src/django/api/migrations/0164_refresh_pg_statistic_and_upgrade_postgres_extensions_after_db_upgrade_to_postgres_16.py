@@ -11,14 +11,14 @@ def refresh_pg_statistic_and_perform_upgrading_pg_extensions(
         apps, schema_editor):
     helper.run_sql_files([
         ('0164_refresh_pg_statistic_and_upgrade_postgres_extensions'
-         '_after_db_upgrade_to_postgres_17.sql')
+         '_after_db_upgrade_to_postgres_16.sql')
     ])
 
 
 class Migration(Migration):
     '''
     This migration refreshes the pg_statistic table and upgrades the
-    PostgreSQL database extensions in light of the upgrade to Postgres 17.
+    PostgreSQL database extensions in light of the upgrade to Postgres 16.
 
     Since this migration will be executed after the PostgreSQL major version
     upgrade, the ANALYZE operation should be run to refresh the pg_statistic
@@ -34,12 +34,12 @@ class Migration(Migration):
     5. btree_gin
     6. pgcrypto
 
-    Based on the available extension versions for PostgreSQL 17.1 in AWS RDS,
+    Based on the available extension versions for PostgreSQL 16.3 in AWS RDS,
     which will be used across all AWS environments after the database upgrade
-    to Postgres 17, it was found that the `postgis` and `pg_trgm` extensions
-    can be upgraded to version 3.5.0 and 1.6, respectively, in Production,
-    Staging, Test, and Development environments. If the specified versions
-    are already installed in the database, there will be no issues.
+    to Postgres 16, it was found that the `pg_trgm` extensions can be upgraded
+    to version 1.6, respectively, in Production, Staging, Test, and
+    Development environments. If the specified versions are already installed
+    in the database, there will be no issues.
     '''
 
     dependencies = [

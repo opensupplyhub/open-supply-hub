@@ -1,4 +1,4 @@
-FROM postgis/postgis:17-3.5-alpine
+FROM postgis/postgis:16-3.4-alpine
 
 WORKDIR /opt/
 
