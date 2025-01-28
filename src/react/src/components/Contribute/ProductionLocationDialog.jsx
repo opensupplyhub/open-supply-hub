@@ -63,11 +63,11 @@ const getStatusBadgeClass = (classes, status) => {
 
 const getTooltipText = (claimStatus, moderationStatus) => {
     if (moderationStatus === MODERATION_STATUSES_ENUM.PENDING) {
-        return "You'll be able to claim the location after the moderation is complete.";
+        return "You'll be able to claim the location after the moderation is done.";
     }
 
     if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED) {
-        return 'Production location has been claimed already';
+        return 'Production location has been claimed already.';
     }
 
     return '';
