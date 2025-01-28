@@ -231,7 +231,7 @@ class TestProductionLocationsQueryBuilder(TestCase):
             'grouped': {
                 'geohex_grid': {
                     'field': 'coordinates',
-                    'geohex_grid_precision': geohex_grid_precision
+                    'precision': geohex_grid_precision
                 }
             }
         }

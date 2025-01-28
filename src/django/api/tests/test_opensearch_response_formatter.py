@@ -216,10 +216,12 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
                 {"field1": "value1"},
                 {"field2": "value2"}
             ],
-            "aggregation_data": [
-                {"key": "value1"},
-                {"key": "value2"}
-            ]
+            "aggregations": {
+                "geohex_grid": [
+                    {"key": "value1"},
+                    {"key": "value2"}
+                ]
+            }
         }
 
         result = self.service. \

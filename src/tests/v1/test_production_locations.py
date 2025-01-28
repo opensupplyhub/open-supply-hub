@@ -113,6 +113,8 @@ class ProductionLocationsTest(BaseAPITest):
             )
 
         result = response.json()
-        self.assertIsNotNone(result['aggregation_data'])
-        self.assertIsNotNone(result['aggregation_data'][0]['key'])
-        self.assertIsNotNone(result['aggregation_data'][0]['doc_count'])
+        self.assertIsNotNone(result['aggregations'])
+        self.assertIsNotNone(result['aggregations']['geohex_grid'][0]['key'])
+        self.assertIsNotNone(
+            result['aggregations']['geohex_grid'][0]['doc_count']
+        )
