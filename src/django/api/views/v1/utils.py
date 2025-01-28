@@ -36,7 +36,7 @@ def serialize_params(serializer_class, query_params):
             V1_PARAMETERS_LIST.SIZE,
             V1_PARAMETERS_LIST.DATE_GTE,
             V1_PARAMETERS_LIST.DATE_LT,
-            V1_PARAMETERS_LIST.PRECISION,
+            V1_PARAMETERS_LIST.GEOHEX_GRID_PRECISION,
             V1_PARAMETERS_LIST.AGGREGATION,
         ]:
             flattened_query_params[key] = value[0]

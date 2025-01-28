@@ -222,14 +222,17 @@ class TestProductionLocationsQueryBuilder(TestCase):
 
     def test_add_aggregations_with_precision(self):
         aggregation = 'hexgrid'
-        precision = 5
+        geohex_grid_precision = 5
         self.builder._ProductionLocationsQueryBuilder__add_aggregations(
             aggregation,
-            precision
+            geohex_grid_precision
         )
         expected = {
             'grouped': {
-                'geohex_grid': {'field': 'coordinates', 'precision': precision}
+                'geohex_grid': {
+                    'field': 'coordinates',
+                    'geohex_grid_precision': geohex_grid_precision
+                }
             }
         }
         self.assertIn('aggregations', self.builder.query_body)
@@ -271,7 +274,7 @@ class TestProductionLocationsQueryBuilder(TestCase):
     ):
         query_params = {
             'aggregation': 'hexgrid',
-            'precision': 4,
+            'geohex_grid_precision': 4,
         }
         self.builder.add_specific_queries(query_params)
 

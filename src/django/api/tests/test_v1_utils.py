@@ -44,7 +44,7 @@ class V1UtilsTests(TestCase):
             'order_by': 'asc',
             'size': 10,
             'aggregation': 'hexgrid',
-            'precision': 2,
+            'geohex_grid_precision': 2,
         })
         serialized_params, error_response = \
             serialize_params(ProductionLocationsSerializer, query_dict)
@@ -63,7 +63,7 @@ class V1UtilsTests(TestCase):
         self.assertEqual(serialized_params['order_by'], 'asc')
         self.assertEqual(serialized_params['size'], 10)
         self.assertEqual(serialized_params['aggregation'], 'hexgrid')
-        self.assertEqual(serialized_params['precision'], 2)
+        self.assertEqual(serialized_params['geohex_grid_precision'], 2)
 
     def test_serialize_params_with_mixed_values(self):
         query_dict = QueryDict('', mutable=True)
@@ -126,14 +126,14 @@ class V1UtilsTests(TestCase):
     def test_serialize_invalid_precision_type(self):
         query_dict = QueryDict('', mutable=True)
         query_dict.update({
-            'precision': 'not_a_number',
+            'geohex_grid_precision': 'not_a_number',
         })
         _, error_response = \
             serialize_params(ProductionLocationsSerializer, query_dict)
         self.assertIsNotNone(error_response)
         self.assertIn(
             {
-                'field': 'precision',
+                'field': 'geohex_grid_precision',
                 'detail': 'A valid integer is required.'
             },
             error_response['errors']
@@ -142,14 +142,14 @@ class V1UtilsTests(TestCase):
     def test_serialize_precision_value_too_low(self):
         query_dict = QueryDict('', mutable=True)
         query_dict.update({
-            'precision': '-1',
+            'geohex_grid_precision': '-1',
         })
         _, error_response = \
             serialize_params(ProductionLocationsSerializer, query_dict)
         self.assertIsNotNone(error_response)
         self.assertIn(
             {
-                'field': 'precision',
+                'field': 'geohex_grid_precision',
                 'detail': 'Ensure this value is greater than or equal to 0.'
             },
             error_response['errors']
@@ -158,14 +158,14 @@ class V1UtilsTests(TestCase):
     def test_serialize_precision_value_too_high(self):
         query_dict = QueryDict('', mutable=True)
         query_dict.update({
-            'precision': '16',
+            'geohex_grid_precision': '16',
         })
         _, error_response = \
             serialize_params(ProductionLocationsSerializer, query_dict)
         self.assertIsNotNone(error_response)
         self.assertIn(
             {
-                'field': 'precision',
+                'field': 'geohex_grid_precision',
                 'detail': 'Ensure this value is less than or equal to 15.'
             },
             error_response['errors']

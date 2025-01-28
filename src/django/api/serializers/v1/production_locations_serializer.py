@@ -51,7 +51,7 @@ class ProductionLocationsSerializer(Serializer):
         choices=['hexgrid'],
         required=False,
     )
-    precision = IntegerField(
+    geohex_grid_precision = IntegerField(
         min_value=0,
         max_value=15,
         required=False,

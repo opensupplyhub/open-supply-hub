@@ -32,4 +32,4 @@ class V1_PARAMETERS_LIST:
     DATE_GTE = 'date_gte'
     DATE_LT = 'date_lt'
     AGGREGATION = 'aggregation'
-    PRECISION = 'precision'
+    GEOHEX_GRID_PRECISION = 'geohex_grid_precision'
