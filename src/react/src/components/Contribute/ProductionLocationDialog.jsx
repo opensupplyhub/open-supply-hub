@@ -31,13 +31,13 @@ import {
     PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM,
 } from '../../util/constants';
 import { makeProductionLocationDialogStyles } from '../../util/styles';
-import { makeClaimFacilityLink } from '../../util/util';
+import { getIsMobile, makeClaimFacilityLink } from '../../util/util';
 
 const infoIcon = classes => (
     <InfoOutlinedIcon className={classes.osIdStatusBadgeIcon} />
 );
 
-const claimButton = ({ classes, osID = '', isDisabled = true }) => (
+const claimButton = (classes, osID = '', isDisabled = true) => (
     <span className={`${classes.claimTooltipWrapper}`}>
         <Button
             variant="contained"
@@ -83,7 +83,6 @@ const getTooltipText = (claimStatus, moderationStatus) => {
 };
 
 const ProductionLocationDialog = ({
-    theme,
     innerWidth,
     classes,
     data,
@@ -96,7 +95,7 @@ const ProductionLocationDialog = ({
 
     const [isMobile, setIsMobile] = useState(false);
     useEffect(() => {
-        if (innerWidth <= theme.breakpoints.values.sm) {
+        if (getIsMobile(innerWidth)) {
             setIsMobile(true);
         } else {
             setIsMobile(false);
