@@ -162,8 +162,8 @@ function zoomOnThePolygon(polygon) {
 
 async function drawTheGrid(cb) {
   const locations = await fetchLocations();
-  polygons.forEach((polygon) => polygon.setMap(null));
   markers.forEach((marker) => marker.setMap(null));
+  polygons.forEach((polygon) => polygon.setMap(null));
   const buckets = locations.aggregations ? locations.aggregations.grouped.buckets : [];
   const maxCount = Math.max(...buckets.map((bucket) => bucket.doc_count));
   const { Polygon, InfoWindow } = await google.maps.importLibrary("maps");
