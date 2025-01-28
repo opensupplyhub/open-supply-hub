@@ -1,10 +1,10 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+import { object, number } from 'prop-types';
 import { map, toPairs, isArray, slice } from 'lodash';
 import Typography from '@material-ui/core/Typography';
 
 const ProductionLocationDialogFields = ({
-    additionalInformationFields,
+    filteredAdditionalFields,
     startTo,
     startFrom,
     classes,
@@ -22,7 +22,7 @@ const ProductionLocationDialogFields = ({
         isArray(value.processed_values) && value.processed_values.length > 0;
 
     const renderArray = value => {
-        if (value.length === 0) return null;
+        if (!value || value.length === 0) return null;
         return value.join(', ');
     };
 
@@ -48,15 +48,13 @@ const ProductionLocationDialogFields = ({
         if (isArray(value)) {
             return renderArray(value);
         }
-
         if (typeof value === 'object' && value !== null) {
             return renderObject(value);
         }
-
-        return value;
+        return value || null;
     };
 
-    const fieldEntries = toPairs(additionalInformationFields);
+    const fieldEntries = toPairs(filteredAdditionalFields);
 
     const start = startFrom || 0;
     const end = startTo || fieldEntries.length;
@@ -85,10 +83,10 @@ const ProductionLocationDialogFields = ({
 };
 
 ProductionLocationDialogFields.propTypes = {
-    additionalInformationFields: PropTypes.object.isRequired,
-    startTo: PropTypes.number,
-    startFrom: PropTypes.number,
-    classes: PropTypes.object.isRequired,
+    filteredAdditionalFields: object.isRequired,
+    startTo: number,
+    startFrom: number,
+    classes: object.isRequired,
 };
 
 ProductionLocationDialogFields.defaultProps = {
