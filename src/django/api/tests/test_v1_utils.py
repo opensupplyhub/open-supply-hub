@@ -139,7 +139,7 @@ class V1UtilsTests(TestCase):
             error_response['errors']
         )
 
-    def test_serialize_invalid_precision_value(self):
+    def test_serialize_precision_value_too_low(self):
         query_dict = QueryDict('', mutable=True)
         query_dict.update({
             'precision': '-1',
@@ -151,6 +151,22 @@ class V1UtilsTests(TestCase):
             {
                 'field': 'precision',
                 'detail': 'Ensure this value is greater than or equal to 0.'
+            },
+            error_response['errors']
+        )
+
+    def test_serialize_precision_value_too_high(self):
+        query_dict = QueryDict('', mutable=True)
+        query_dict.update({
+            'precision': '16',
+        })
+        _, error_response = \
+            serialize_params(ProductionLocationsSerializer, query_dict)
+        self.assertIsNotNone(error_response)
+        self.assertIn(
+            {
+                'field': 'precision',
+                'detail': 'Ensure this value is less than or equal to 15.'
             },
             error_response['errors']
         )

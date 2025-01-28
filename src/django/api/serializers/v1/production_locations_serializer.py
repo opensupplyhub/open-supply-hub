@@ -53,6 +53,7 @@ class ProductionLocationsSerializer(Serializer):
     )
     precision = IntegerField(
         min_value=0,
+        max_value=15,
         required=False,
     )
 
