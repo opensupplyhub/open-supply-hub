@@ -51,14 +51,18 @@ class OpenSearchService(SearchInterface):
             "data": data,
         }
 
-        buckets = (
+        geohex_buckets = (
             response.get("aggregations", {})
             .get("grouped", {})
             .get("buckets", [])
         )
 
-        if buckets:
-            response_data["aggregation_data"] = buckets
+        if geohex_buckets:
+            response_data.update({
+                "aggregations": {
+                    "geohex_grid": geohex_buckets
+                }
+            })
 
         return response_data
 
