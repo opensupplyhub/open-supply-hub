@@ -272,5 +272,5 @@ class ModerationEventsTest(BaseAPITest):
         self.assertEqual(len(result['errors']), 1)
 
         error = result['errors'][0]
-        self.assertEqual(error['field'], 'moderation_dd')
+        self.assertEqual(error['field'], 'moderation_id')
         self.assertEqual(error['detail'], "Invalid uuid(s): 123!.")
