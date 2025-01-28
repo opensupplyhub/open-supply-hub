@@ -19,7 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe schema changes here.*
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-1581](https://opensupplyhub.atlassian.net/browse/OSDEV-1581) - Added Geohex grid aggregation support to the GET `/api/v1/production-locations/` endpoint. To receive the `aggregation_data` list in the response, it is necessary to pass the `aggregation` parameter with a value of `hexgrid` and optionally specify `precision` with an integer from 0 to 15. If `precision` is not defined, the default value of 5 will be used.
 
 ### Architecture/Environment changes
 * *Describe architecture/environment changes here.*
