@@ -37,7 +37,7 @@ const infoIcon = classes => (
     <InfoOutlinedIcon className={classes.osIdStatusBadgeIcon} />
 );
 
-const claimButton = (classes, osID, isDisabled = true) => (
+const claimButton = ({ classes, osID = '', isDisabled = true }) => (
     <span className={`${classes.claimTooltipWrapper}`}>
         <Button
             variant="contained"
@@ -45,7 +45,7 @@ const claimButton = (classes, osID, isDisabled = true) => (
             className={`${classes.button} ${classes.claimButton} ${
                 isDisabled ? classes.claimButton_disabled : ''
             }`}
-            href={makeClaimFacilityLink(osID || '')}
+            href={makeClaimFacilityLink(osID)}
             target="_blank"
             rel="noopener noreferrer"
         >
