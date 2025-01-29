@@ -19,13 +19,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe schema changes here.*
 
 ### Code/API changes
+* [OSDEV-1581](https://opensupplyhub.atlassian.net/browse/OSDEV-1581) - Added support for Geohex grid aggregation to the GET `/api/v1/production-locations/` endpoint. To receive the Geohex grid aggregation list in the response, it is necessary to pass the `aggregation` parameter with a value of `geohex_grid` and optionally specify `geohex_grid_precision` with an integer between 0 and 15. If `geohex_grid_precision` is not defined, the default value of 5 will be used.
 * [OSDEV-1558](https://opensupplyhub.atlassian.net/browse/OSDEV-1558) - Updated Logstash mapping configuration to handled new `action_type` field for OpenSearch.
 
 ### Architecture/Environment changes
 * *Describe architecture/environment changes here.*
 
 ### Bugfix
-* *Describe bugfix here.*
+* Some of the resources related to the Development AWS environment still have the `stg` prefix, which can be confusing since we also have a Staging environment with the same prefix. To clarify the resource names, including the database instance, the prefix has been updated from `stg` to `dev` for the development environment.
 
 ### What's new
 * [OSDEV-1374](https://opensupplyhub.atlassian.net/browse/OSDEV-1374) - Implemented integration for the `Search results` page to show results of searching by name and address (`/contribute/production-location/search`):
@@ -40,6 +41,16 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `migrate`
     * `reindex_database`
 * Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to refresh the index mappings for the `moderation-events` index after disabling dynamic mapping for the new fields that don't have an explicit mapping defined. The `production-locations` will also be affected since it will clean all of our custom indexes and templates within the OpenSearch cluster
+
+## Release 1.28.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: January 31, 2025
+
+### Bugfix
+* [OSDEV-1626](https://opensupplyhub.atlassian.net/browse/OSDEV-1626) - Temporarily hid the new contribution page `Add Location Data` and re-enabled the old navigation to the `List Upload` page via the `/contribute` path.
+
 
 ## Release 1.28.0
 

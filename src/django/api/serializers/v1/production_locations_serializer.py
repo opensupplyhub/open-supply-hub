@@ -25,6 +25,8 @@ from api.constants import APIV1CommonErrorMessages
 class ProductionLocationsSerializer(Serializer):
     # These params are checking considering serialize_params output
     size = IntegerField(required=False)
+    address = CharField(required=False)
+    description = CharField(required=False)
     number_of_workers_min = IntegerField(required=False)
     number_of_workers_max = IntegerField(required=False)
     percent_female_workers_min = FloatField(required=False)
@@ -44,6 +46,15 @@ class ProductionLocationsSerializer(Serializer):
     order_by = ChoiceField(
         choices=['asc', 'desc'],
         required=False
+    )
+    aggregation = ChoiceField(
+        choices=['geohex_grid'],
+        required=False,
+    )
+    geohex_grid_precision = IntegerField(
+        min_value=0,
+        max_value=15,
+        required=False,
     )
 
     def validate(self, data):
