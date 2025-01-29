@@ -35,7 +35,9 @@ def serialize_params(serializer_class, query_params):
             V1_PARAMETERS_LIST.ORDER_BY,
             V1_PARAMETERS_LIST.SIZE,
             V1_PARAMETERS_LIST.DATE_GTE,
-            V1_PARAMETERS_LIST.DATE_LT
+            V1_PARAMETERS_LIST.DATE_LT,
+            V1_PARAMETERS_LIST.GEOHEX_GRID_PRECISION,
+            V1_PARAMETERS_LIST.AGGREGATION,
         ]:
             flattened_query_params[key] = value[0]
         else:
@@ -52,18 +54,18 @@ def serialize_params(serializer_class, query_params):
             for field, error_list in params.errors.items():
                 error_response['errors'].append({
                     'field': field,
-                    'detail': error_list[0].title()
+                    'detail': error_list[0].capitalize()
                 })
 
         # Handle errors that come from serializers
         detail_errors = params.errors.get('detail')
         if detail_errors:
-            error_response['detail'] = detail_errors[0].title()
+            error_response['detail'] = detail_errors[0].capitalize()
         if 'detail' in params.errors and 'errors' in params.errors:
             for error_item in params.errors.get('errors', []):
                 error_response['errors'].append({
-                    'field': error_item.get('field', '').title(),
-                    'detail': error_item.get('detail', '').title()
+                    'field': error_item.get('field', ''),
+                    'detail': error_item.get('detail', '').capitalize()
                 })
 
         return None, error_response
