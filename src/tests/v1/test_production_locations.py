@@ -104,3 +104,17 @@ class ProductionLocationsTest(BaseAPITest):
         self.assertEqual(
             result['data'][0]['historical_os_id'], 'US20203545HUE4L'
         )
+
+    def test_production_locations_aggregations(self):
+        query = "?aggregation=geohex_grid&geohex_grid_precision=2"
+        response = requests.get(
+                f"{self.root_url}/api/v1/production-locations/{query}",
+                headers=self.basic_headers,
+            )
+
+        result = response.json()
+        self.assertIsNotNone(result['aggregations'])
+        self.assertIsNotNone(result['aggregations']['geohex_grid'][0]['key'])
+        self.assertIsNotNone(
+            result['aggregations']['geohex_grid'][0]['doc_count']
+        )
