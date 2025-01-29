@@ -1110,6 +1110,9 @@ export const convertRangeField = rangeObj => {
         return null;
     }
     if (has(rangeObj, 'min') && has(rangeObj, 'max')) {
+        if (rangeObj.min === rangeObj.max) {
+            return rangeObj.min;
+        }
         return `${rangeObj.min}-${rangeObj.max}`;
     }
     return !isNil(rangeObj.min) ? rangeObj.min : rangeObj.max;
