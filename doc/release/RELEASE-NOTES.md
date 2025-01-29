@@ -25,7 +25,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe architecture/environment changes here.*
 
 ### Bugfix
-* *Describe bugfix here.*
+* Some of the resources related to the Development AWS environment still have the `stg` prefix, which can be confusing since we also have a Staging environment with the same prefix. To clarify the resource names, including the database instance, the prefix has been updated from `stg` to `dev` for the development environment.
 
 ### What's new
 * [OSDEV-1374](https://opensupplyhub.atlassian.net/browse/OSDEV-1374) - Implemented integration for the `Search results` page to show results of searching by name and address (`/contribute/production-location/search`):
