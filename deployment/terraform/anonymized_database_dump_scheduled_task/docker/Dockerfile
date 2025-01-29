@@ -1,4 +1,4 @@
-FROM postgis/postgis:13-3.4-alpine
+FROM postgis/postgis:16-3.4-alpine
 
 WORKDIR /opt/
 
@@ -9,4 +9,3 @@ RUN set -ex && \
 
 COPY ./dump.sh ./dump.sh
 CMD ["bash", "dump.sh"]
-
