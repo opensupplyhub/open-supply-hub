@@ -3,6 +3,42 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.29.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: February 8, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* *Describe migrations here.*
+
+#### Schema changes
+* *Describe schema changes here.*
+
+### Code/API changes
+* [OSDEV-1581](https://opensupplyhub.atlassian.net/browse/OSDEV-1581) - Added support for Geohex grid aggregation to the GET `/api/v1/production-locations/` endpoint. To receive the Geohex grid aggregation list in the response, it is necessary to pass the `aggregation` parameter with a value of `geohex_grid` and optionally specify `geohex_grid_precision` with an integer between 0 and 15. If `geohex_grid_precision` is not defined, the default value of 5 will be used.
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* [OSDEV-1374](https://opensupplyhub.atlassian.net/browse/OSDEV-1374) - Implemented integration for the `Search results` page to show results of searching by name and address (`/contribute/production-location/search`):
+    - Connected GET `v1/production-locations`.
+    - Routing between pages `Production Location Search`,`Search returned no results`, `Production Location Information`, `Search results`, and `I don't see my Location` pop-up is configured.
+    - Max result limit set to 100.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 1.28.1
 
 ## Introduction
@@ -11,6 +47,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-1662](https://opensupplyhub.atlassian.net/browse/OSDEV-1662) - Temporarily hid the new contribution page `Add Location Data` and re-enabled the old navigation to the `List Upload` page via the `/contribute` path.
+
 
 ## Release 1.28.0
 
@@ -24,8 +61,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Migrations:
 * 0163_refresh_pg_statistic_and_upgrade_postgres_extensions.py - This migration refreshes the `pg_statistic` table after the upgrade to PostgreSQL 13 and upgrades the postgis and pg_trgm extensions to versions 3.4.2 and 1.5, respectively.
 
-#### Schema changes
-
 ### Code/API changes
 * [OSDEV-1514](https://opensupplyhub.atlassian.net/browse/OSDEV-1514) - Corrected spelling mistakes in the `src/anon-tools/do_dump.sh` file and in the name of the folder `database_anonymizer_sheduled_task`. Removed the unused `src/anon-tools/anon.sql` file and the redundant `src/anon-tools/initdb.sql` file. Removed commented-out code in the `src/anon-tools/Dockerfile.dump` and `deployment/terraform/database_anonymizer_scheduled_task/docker/database_anonymizer.py` files.
 * [OSDEV-1523](https://opensupplyhub.atlassian.net/browse/OSDEV-1523) - Updated `export_csv.py` to enable uploading to Google Drive and implemented cursor-based pagination for the export.
@@ -33,8 +68,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Architecture/Environment changes
 * [OSDEV-1514](https://opensupplyhub.atlassian.net/browse/OSDEV-1514) - Introduced `rds_allow_major_version_upgrade` and `rds_apply_immediately` Terraform variables to enable or disable major version upgrades and the `apply immediately` flag, depending on the environment.
 * [OSDEV-1523](https://opensupplyhub.atlassian.net/browse/OSDEV-1523) - Added a new batch job that triggers the export_csv.py command on the first day of each month to upload bulk data of production locations to Google Drive.
-
-### Bugfix
 
 ### What's new
 * [OSDEV-40](https://opensupplyhub.atlassian.net/browse/OSDEV-40) - Created new page for `/contribute` to choose between multiple & single location upload. Replaced current multiple list upload to `/contribute/multiple-locations`. Changed `Upload Data` to `Add Data` text.
@@ -44,7 +77,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     - Connected PATCH `/v1/moderation-events/{moderation_id}/` (for Reject button).
     - Connected POST `/v1/moderation-events/{moderation_id}/production-locations/` (for Create New Location button).
     - Connected PATCH `/v1/moderation-events/{moderation_id}/production-locations/{os_id}/` (for Confirm potential match button).
-    - UI improvements: 
+    - UI improvements:
         - Added a toast component to display notifications during moderation event updates.
         - Introduced a backdrop to prevent accidental clicks on other buttons during the update process.
     - Applied Django Signal for moderation-events OpenSearch index.
@@ -63,6 +96,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * The upgrade will be performed automatically by Terrafrom and AWS, but some steps need to be completed **before** and **after** the upgrade. Please refer to [the Confluence article](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/620134402/PostgreSQL+database+upgrade+from+version+12+to+version+13) for detailed instructions.
     * Steps to be completed before the upgrade are marked with the statement: "**This should be done before deploying the upgraded database.**". Post-upgrade tasks can be found under the [After the PostgreSQL major version upgrade](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/620134402/PostgreSQL+database+upgrade+from+version+12+to+version+13#After-the-PostgreSQL-major-version-upgrade) section.
     * In case of an unsuccessful release along with the database upgrade, follow the instructions under the [Guide for rolling back the PostgreSQL major version upgrade](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/620134402/PostgreSQL+database+upgrade+from+version+12+to+version+13#Guide-for-rolling-back-the-PostgreSQL-major-version-upgrade) section.
+
 
 ## Release 1.27.0
 

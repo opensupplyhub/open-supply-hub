@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { arrayOf, func, number, object } from 'prop-types';
+import { useHistory } from 'react-router-dom';
+import { arrayOf, func, object } from 'prop-types';
 import Button from '@material-ui/core/Button';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
@@ -7,15 +8,16 @@ import { makeSearchByNameAndAddressSuccessResultStyles } from '../../util/styles
 import { productionLocationPropType } from '../../util/propTypes';
 import ConfirmNotFoundLocationDialog from './ConfirmNotFoundLocationDialog';
 import ProductionLocationDetails from './ProductionLocationDetails';
+import { productionLocationInfoRoute } from '../../util/constants';
 
 const SearchByNameAndAddressSuccessResult = ({
-    productionLocationsCount,
     productionLocations,
     clearLocations,
     classes,
 }) => {
     const [confirmDialogIsOpen, setConfirmDialogIsOpen] = useState(false);
     const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
+    const history = useHistory();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -31,7 +33,18 @@ const SearchByNameAndAddressSuccessResult = ({
         };
     }, []);
 
-    const handleSelectLocation = () => {};
+    const handleSelectLocation = location => {
+        const { name, address, country } = location;
+        const baseUrl = productionLocationInfoRoute;
+        const params = new URLSearchParams({
+            name,
+            address,
+            country: country.alpha_2,
+        });
+        const url = `${baseUrl}?${params.toString()}`;
+
+        history.push(url);
+    };
 
     const handleNotFoundLocation = () => {
         setConfirmDialogIsOpen(true);
@@ -66,7 +79,7 @@ const SearchByNameAndAddressSuccessResult = ({
                 </Typography>
                 <div className={classes.resultsInfoContainerStyles}>
                     <Typography className={classes.resultsInfoStyles}>
-                        {productionLocationsCount} results
+                        {productionLocations.length} results
                     </Typography>
                     <Typography className={classes.resultsSortStyles}>
                         Sort By: <strong>Best match</strong>
@@ -86,7 +99,7 @@ const SearchByNameAndAddressSuccessResult = ({
                             />
                             <Button
                                 variant="contained"
-                                onClick={handleSelectLocation}
+                                onClick={() => handleSelectLocation(location)}
                                 classes={{
                                     root: `${classes.buttonBaseStyles} ${classes.selectButtonStyles}`,
                                     label: classes.selectButtonLabelStyles,
@@ -124,7 +137,6 @@ const SearchByNameAndAddressSuccessResult = ({
 };
 
 SearchByNameAndAddressSuccessResult.propTypes = {
-    productionLocationsCount: number.isRequired,
     productionLocations: arrayOf(productionLocationPropType).isRequired,
     clearLocations: func.isRequired,
     classes: object.isRequired,
