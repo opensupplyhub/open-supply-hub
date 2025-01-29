@@ -188,6 +188,47 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
         self.assertEqual(result, expected_result)
         mock_logger.warning.assert_not_called()
 
+    @patch('api.services.opensearch.search.logger')
+    def test_prepare_opensearch_response_with_aggregation_data(
+        self,
+        mock_logger
+    ):
+        response = {
+            "hits": {
+                "total": {"value": 10},
+                "hits": [
+                    {"_source": {"field1": "value1"}},
+                    {"_source": {"field2": "value2"}}
+                ]
+            },
+            "aggregations": {
+                "grouped": {
+                    "buckets": [
+                        {"key": "value1"},
+                        {"key": "value2"}
+                    ]
+                }
+            }
+        }
+        expected_result = {
+            "count": 10,
+            "data": [
+                {"field1": "value1"},
+                {"field2": "value2"}
+            ],
+            "aggregations": {
+                "geohex_grid": [
+                    {"key": "value1"},
+                    {"key": "value2"}
+                ]
+            }
+        }
+
+        result = self.service. \
+            _OpenSearchService__prepare_opensearch_response(response)
+        self.assertEqual(result, expected_result)
+        mock_logger.warning.assert_not_called()
+
 
 if __name__ == '__main__':
     unittest.main()
