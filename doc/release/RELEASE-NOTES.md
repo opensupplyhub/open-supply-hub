@@ -14,7 +14,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Migrations:
 * 0163_refresh_pg_statistic_and_upgrade_postgres_extensions.py - Updated the SQL script within the migration that upgrades the DB extension versions to handle previously failure cases when a higher version is available for upgrade or when the extension is not installed. This is primarily useful for local development or DB resets in the Development environment, where migrations are applied from scratch, one by one. This fix will not negatively affect other environments, as the migration has already been applied and will not be reapplied. Additionally, the changes are backward compatible.
-* 0164_refresh_pg_statistic_and_upgrade_postgres_extensions_after_db_upgrade_to_postgres_16.py - This migration refreshes the `pg_statistic` table after the upgrade to PostgreSQL 16 and upgrades the pg_trgm extensions to version 1.6. The SQL script within the migration that upgrades the DB extension versions handles previously failure cases where a higher version is available for upgrade or where the extension is not installed.
+* 0164_refresh_pg_statistic_and_upgrade_postgres_extensions_after_db_upgrade_to_postgres_16.py - This migration refreshes the `pg_statistic` table after the upgrade to PostgreSQL 16 and upgrades the pg_trgm extension to version 1.6. The SQL script within the migration that upgrades the DB extension versions handles previously failure cases where a higher version is available for upgrade or where the extension is not installed.
 
 #### Schema changes
 * *Describe schema changes here.*
