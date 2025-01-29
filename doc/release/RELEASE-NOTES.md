@@ -91,10 +91,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Successful Search: If the search is successful, the results screen displays a list of production locations. Each item includes the following information about the production location: name, OS ID, address, and country name. Users can either select a specific production location or press the "I don’t see my Location" button, which triggers a confirmation dialog window.
     * Confirmation Dialog Window: In this window, users can confirm that no correct location was found using the provided search parameters. They can either proceed to create a new production location or return to the search.
     * Unsuccessful Search: If the search is unsuccessful, an explanation is provided along with two options: return to the search or add a new production location.
-* [OSDEV-1374](https://opensupplyhub.atlassian.net/browse/OSDEV-1374) - Implemented integration for the `Search results` page to show results of searching by name and address (`/contribute/production-location/search`):
-    - Connected GET `v1/production-locations`.
-    - Routing between pages `Production Location Search`,`Search returned no results`, `Production Location Information`, `Search results`, and `I don't see my Location` pop-up is configured.
-    - Max result limit set to 100.
 * [OSDEV-1579](https://opensupplyhub.atlassian.net/browse/OSDEV-1579) - Updated the API limit automated email to remove an outdated link referring to OAR and improve the languate for clarity. With this update the contributor will be informed of the correct process to follow if they have reached their API calls limit.
 
 ### Release instructions:
