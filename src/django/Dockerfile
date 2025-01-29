@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 python:3.7-slim-bullseye
+FROM --platform=linux/amd64 python:3.7-slim-bookworm
 
 RUN mkdir -p /usr/local/src/static/static
 WORKDIR /usr/local/src
@@ -12,7 +12,7 @@ RUN set -ex \
     && deps=" \
     gdal-bin \
     gettext \
-    postgresql-client-13 \
+    postgresql-client-15 \
     " \
     && apt-get update && apt-get install -y $buildDeps $deps --no-install-recommends \
     && pip install --no-cache-dir -r requirements.txt \
