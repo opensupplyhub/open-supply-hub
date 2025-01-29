@@ -44,6 +44,16 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * In case of an unsuccessful release along with the database upgrade, follow the instructions under the [Guide for rolling back the PostgreSQL major version upgrade](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/640155649/PostgreSQL+database+upgrade+from+version+13+to+version+16#Guide-for-rolling-back-the-PostgreSQL-major-version-upgrade) section.
 
 
+## Release 1.28.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: January 31, 2025
+
+### Bugfix
+* [OSDEV-1626](https://opensupplyhub.atlassian.net/browse/OSDEV-1626) - Temporarily hid the new contribution page `Add Location Data` and re-enabled the old navigation to the `List Upload` page via the `/contribute` path.
+
+
 ## Release 1.28.0
 
 ## Introduction
