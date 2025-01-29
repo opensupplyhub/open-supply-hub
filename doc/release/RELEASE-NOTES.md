@@ -3,6 +3,15 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.28.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: January 31, 2025
+
+### Bugfix
+* [OSDEV-1662](https://opensupplyhub.atlassian.net/browse/OSDEV-1662) - Temporarily hid the new contribution page `Add Location Data` and re-enabled the old navigation to the `List Upload` page via the `/contribute` path.
+
 ## Release 1.28.0
 
 ## Introduction
