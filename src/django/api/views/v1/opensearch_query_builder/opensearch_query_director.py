@@ -121,7 +121,7 @@ class OpenSearchQueryDirector:
         multi_match_query = query_params.get(V1_PARAMETERS_LIST.QUERY)
 
         if multi_match_query and hasattr(self.__builder, 'add_multi_match'):
-            self.add_multi_match(multi_match_query)
+            self.__builder.add_multi_match(multi_match_query)
 
     def __process_aggregation(self, query_params):
         aggregation = query_params.get(V1_PARAMETERS_LIST.AGGREGATION)
