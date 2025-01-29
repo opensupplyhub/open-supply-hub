@@ -17,7 +17,7 @@ rds_allocated_storage = "128"
 rds_engine_version = "16"
 rds_parameter_group_family = "postgres16"
 rds_instance_type = "db.t3.micro"
-rds_database_identifier = "opensupplyhub-enc-stg"
+rds_database_identifier = "opensupplyhub-enc-dev"
 rds_database_name = "opensupplyhub"
 rds_multi_az = false
 rds_storage_encrypted = true
@@ -49,8 +49,8 @@ batch_default_ce_instance_types = ["c5", "m5"]
 
 app_ecs_grace_period_seconds = 300
 
-ec_memcached_identifier = "opensupplyhub-stg"
-rds_final_snapshot_identifier = "opensupplyhub-rds-stg"
+ec_memcached_identifier = "opensupplyhub-dev"
+rds_final_snapshot_identifier = "opensupplyhub-rds-dev"
 topic_dedup_basic_name = "basic-name"
 dedupe_hub_live = true
 dedupe_hub_name = "deduplicate"
