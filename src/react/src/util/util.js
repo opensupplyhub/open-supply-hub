@@ -1455,18 +1455,24 @@ export const parseContribData = contribData => {
         source: DATA_SOURCES_ENUM.SLC,
         name,
         address,
-        country: country.value,
-        sector: extractProductionLocationContributionValues(sector),
-        parent_company: extractProductionLocationContributionValues(
-            parentCompany,
-        ),
-        product_type: extractProductionLocationContributionValues(productType),
-        location_type: extractProductionLocationContributionValues(
-            locationType,
-        ),
-        processing_type: extractProductionLocationContributionValues(
-            processingType,
-        ),
-        number_of_workers: generateRangeField(numberOfWorkers),
+        country: country?.value,
+        sector: isArray(sector)
+            ? extractProductionLocationContributionValues(sector)
+            : [],
+        parent_company: isArray(parentCompany)
+            ? extractProductionLocationContributionValues(parentCompany)
+            : [],
+        product_type: isArray(productType)
+            ? extractProductionLocationContributionValues(productType)
+            : [],
+        location_type: isArray(locationType)
+            ? extractProductionLocationContributionValues(locationType)
+            : [],
+        processing_type: isArray(processingType)
+            ? extractProductionLocationContributionValues(processingType)
+            : [],
+        number_of_workers: numberOfWorkers
+            ? generateRangeField(numberOfWorkers)
+            : null,
     };
 };
