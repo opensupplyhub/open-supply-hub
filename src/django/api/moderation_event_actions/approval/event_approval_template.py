@@ -270,17 +270,10 @@ class EventApprovalTemplate(ABC):
         )
 
     def __update_event(self, item: FacilityListItem) -> None:
-        match_type = self._get_match_type()
-        action_type = (
-            ModerationEvent.ActionType.MATCHED
-            if match_type == APIV1MatchTypes.CONFIRMED_MATCH
-            else ModerationEvent.ActionType.NEW_LOCATION
-        )
-
         event = self.__event
         event.status = ModerationEvent.Status.APPROVED
         event.status_change_date = timezone.now()
-        event.action_type = action_type
+        event.action_type = self._get_action_type()
         event.os_id = item.facility_id
         event.save()
 
@@ -310,6 +303,14 @@ class EventApprovalTemplate(ABC):
         """
         Return the status that should be used when creating
         facility matches.
+        """
+        raise NotImplementedError
+    
+    @abstractmethod
+    def _get_action_type(self) -> str:
+        """
+        Return the action type that should be used when
+        updating the moderation event.
         """
         raise NotImplementedError
 
