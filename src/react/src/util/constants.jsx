@@ -1343,6 +1343,12 @@ export const MODERATION_STATUSES_ENUM = Object.freeze({
     REJECTED: 'REJECTED',
 });
 
+export const MODERATION_ACTIONS_ENUM = Object.freeze({
+    NEW_LOCATION: 'NEW_LOCATION',
+    MATCHED: 'MATCHED',
+    REJECTED: 'REJECTED',
+});
+
 export const MODERATION_QUEUE_HEAD_CELLS = Object.freeze([
     { id: 'created_at', label: 'Created Date' },
     { id: 'name', label: 'Location Name' },
