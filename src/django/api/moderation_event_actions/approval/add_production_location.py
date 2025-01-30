@@ -40,6 +40,9 @@ class AddProductionLocation(EventApprovalTemplate):
     def _get_match_status(self) -> str:
         return FacilityMatch.AUTOMATIC
 
+    def _get_action_type(self):
+        return ModerationEvent.ActionType.NEW_LOCATION
+
     @staticmethod
     def _create_new_facility(item: FacilityListItem, facility_id: str) -> None:
         Facility.objects.create(

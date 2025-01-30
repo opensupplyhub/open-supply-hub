@@ -33,10 +33,15 @@ import {
 } from '../../actions/dashboardContributionRecord';
 import { makeClaimFacilityLink, makeFacilityDetailLink } from '../../util/util';
 import DialogTooltip from './../Contribute/DialogTooltip';
-import { MODERATION_STATUSES_ENUM } from '../../util/constants';
+import {
+    MODERATION_STATUSES_ENUM,
+    MODERATION_ACTIONS_ENUM,
+} from '../../util/constants';
 
 const claimButtonTitle = 'Go to Claim';
 const confirmPotentialMatchButtonTitle = 'Confirm';
+const newLocationTitle = 'New Location';
+const matchedTitle = 'Matched';
 
 const claimButtonDisabled = classes => (
     <span className={`${classes.claimTooltipWrapper}`}>
@@ -165,6 +170,7 @@ const DashboardContributionRecord = ({
     }
 
     const moderationEventStatus = singleModerationEventItem.status || '';
+    const moderationActionType = singleModerationEventItem.action_type || null;
     const jsonResults = JSON.stringify(singleModerationEventItem, null, 2);
     const potentialMatchCount = matches.length || 0;
     // OSDEV-1445: automatic write claim into moderation-events table to be done in Q1
@@ -204,7 +210,15 @@ const DashboardContributionRecord = ({
             <Typography variant="title" className={classes.title}>
                 Moderation Event Data
             </Typography>
-
+            {moderationActionType &&
+            moderationActionType !== MODERATION_ACTIONS_ENUM.REJECTED ? (
+                <Typography variant="title" className={classes.actionTypeTitle}>
+                    {moderationActionType ===
+                    MODERATION_ACTIONS_ENUM.NEW_LOCATION
+                        ? newLocationTitle
+                        : matchedTitle}
+                </Typography>
+            ) : null}
             <AppBar
                 position="static"
                 className={`

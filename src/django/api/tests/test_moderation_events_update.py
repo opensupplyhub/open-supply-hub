@@ -107,11 +107,12 @@ class ModerationEventsUpdateTest(APITestCase):
         response = self.client.patch(
             "/api/v1/moderation-events/{}/"
             .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
-            data=json.dumps({"status": "APPROVED"}),
+            data=json.dumps({"status": "REJECTED"}),
             content_type="application/json"
         )
 
         self.assertEqual(200, response.status_code)
         self.moderation_event.refresh_from_db()
-        self.assertEqual(self.moderation_event.status, "APPROVED")
+        self.assertEqual(self.moderation_event.status, "REJECTED")
+        self.assertEqual(self.moderation_event.action_type, "REJECTED")
         self.assertIsNotNone(self.moderation_event.status_change_date)
