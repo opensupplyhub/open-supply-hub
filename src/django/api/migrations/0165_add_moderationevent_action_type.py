@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0163_refresh_pg_statistic_and_upgrade_postgres_extensions'),
+        ('api', '0164_refresh_pg_statistic_and_upgrade_postgres_extensions_after_db_upgrade_to_postgres_16'),
     ]
 
     operations = [
