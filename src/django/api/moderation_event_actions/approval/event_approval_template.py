@@ -9,7 +9,6 @@ from django.utils import timezone
 from api.constants import (
     LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX,
     ProcessingAction,
-    APIV1MatchTypes,
 )
 from api.extended_fields import (
     create_extendedfields_for_single_item,
