@@ -34,6 +34,6 @@ class UpdateProductionLocation(EventApprovalTemplate):
 
     def _get_match_status(self) -> str:
         return FacilityMatch.CONFIRMED
-    
+
     def _get_action_type(self):
         return ModerationEvent.ActionType.MATCHED

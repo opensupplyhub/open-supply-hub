@@ -304,7 +304,7 @@ class EventApprovalTemplate(ABC):
         facility matches.
         """
         raise NotImplementedError
-    
+
     @abstractmethod
     def _get_action_type(self) -> str:
         """
