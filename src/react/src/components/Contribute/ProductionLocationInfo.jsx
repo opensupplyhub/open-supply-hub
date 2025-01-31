@@ -338,16 +338,22 @@ const ProductionLocationInfo = ({
         so move this effect to the very end of event loop to make sure moderation event
         will be saved in the local storage
         */
+        let timeoutId;
         if (
             moderationID &&
             !singleModerationEventItemFetching &&
             singleModerationEventItemError &&
             !localStorage.getItem(moderationID)
         ) {
-            setTimeout(() => {
+            timeoutId = setTimeout(() => {
                 toast(toString(singleModerationEventItemError));
             }, 0);
         }
+        return () => {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+        };
     }, [
         singleModerationEventItemFetching,
         singleModerationEventItemError,
