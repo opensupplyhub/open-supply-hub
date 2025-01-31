@@ -3,7 +3,8 @@ import { createAction } from 'redux-act';
 import apiRequest from '../util/apiRequest';
 import {
     logErrorAndDispatchFailure,
-    makeGetProductionLocationByOsIdURL,
+    makeProductionLocationURL,
+    parseContribData,
     makeGetProductionLocationsForPotentialMatches,
 } from '../util/util';
 
@@ -32,29 +33,84 @@ export const resetProductionLocations = createAction(
     'RESET_PRODUCTION_LOCATIONS',
 );
 
-export function fetchProductionLocationByOsId(osID) {
-    return dispatch => {
-        dispatch(startFetchSingleProductionLocation());
+export const startCreateProductionLocation = createAction(
+    'START_CREATE_PRODUCTION_LOCATION',
+);
 
-        return apiRequest
-            .get(makeGetProductionLocationByOsIdURL(osID))
-            .then(({ data }) =>
-                dispatch(completeFetchSingleProductionLocation(data)),
-            )
-            .catch(err =>
-                dispatch(
-                    logErrorAndDispatchFailure(
-                        err,
-                        'An error prevented fetching data about that production location',
-                        failFetchSingleProductionLocation,
-                    ),
+export const completeCreateProductionLocation = createAction(
+    'COMPLETE_CREATE_PRODUCTION_LOCATION',
+);
+
+export const failCreateProductionLocation = createAction(
+    'FAIL_CREATE_PRODUCTION_LOCATION',
+);
+
+export const startUpdateProductionLocation = createAction(
+    'START_UPDATE_PRODUCTION_LOCATION',
+);
+
+export const completeUpdateProductionLocation = createAction(
+    'COMPLETE_UPDATE_PRODUCTION_LOCATION',
+);
+
+export const failUpdateProductionLocation = createAction(
+    'FAIL_UPDATE_PRODUCTION_LOCATION',
+);
+
+export const resetPendingModerationEvent = createAction(
+    'RESET_PENDING_MODERATION_EVENT',
+);
+
+export function createProductionLocation(contribData) {
+    const parsedContribData = parseContribData(contribData);
+
+    return async dispatch => {
+        dispatch(startCreateProductionLocation());
+
+        try {
+            const { data } = await apiRequest.post(
+                makeProductionLocationURL(),
+                parsedContribData,
+            );
+            return dispatch(completeCreateProductionLocation(data));
+        } catch (err) {
+            return dispatch(
+                logErrorAndDispatchFailure(
+                    err,
+                    'An error prevented creating production location',
+                    failCreateProductionLocation,
                 ),
             );
+        }
+    };
+}
+
+export function updateProductionLocation(contribData, osID) {
+    const parsedContribData = parseContribData(contribData);
+
+    return async dispatch => {
+        dispatch(startUpdateProductionLocation());
+
+        try {
+            const { data } = await apiRequest.patch(
+                makeProductionLocationURL(osID),
+                parsedContribData,
+            );
+            return dispatch(completeUpdateProductionLocation(data));
+        } catch (err) {
+            return dispatch(
+                logErrorAndDispatchFailure(
+                    err,
+                    'An error prevented updating production location',
+                    failUpdateProductionLocation,
+                ),
+            );
+        }
     };
 }
 
 export function fetchProductionLocations(data) {
-    return async dispatch => {
+    return dispatch => {
         dispatch(startFetchProductionLocations());
 
         const { name, address, country, size } = data;
@@ -77,6 +133,27 @@ export function fetchProductionLocations(data) {
                         err,
                         'An error prevented fetching production locations',
                         failFetchProductionLocations,
+                    ),
+                ),
+            );
+    };
+}
+
+export function fetchProductionLocationByOsId(osID) {
+    return dispatch => {
+        dispatch(startFetchSingleProductionLocation());
+
+        return apiRequest
+            .get(makeProductionLocationURL(osID))
+            .then(response =>
+                dispatch(completeFetchSingleProductionLocation(response.data)),
+            )
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented fetching data about that production location',
+                        failFetchSingleProductionLocation,
                     ),
                 ),
             );

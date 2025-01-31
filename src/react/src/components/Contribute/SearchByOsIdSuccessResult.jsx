@@ -1,4 +1,5 @@
 import React from 'react';
+import { useHistory } from 'react-router-dom';
 import { object, func } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
@@ -20,6 +21,11 @@ const SearchByOsIdSuccessResult = ({
         country: { name: countryName } = {},
     } = productionLocation;
 
+    const history = useHistory();
+
+    const handleGoToSelectedProductionLocationInfo = () =>
+        history.push(`/contribute/production-location/${osId}/info/`);
+
     return (
         <>
             <Typography component="h2" className={classes.resultTitleStyles}>
@@ -36,7 +42,7 @@ const SearchByOsIdSuccessResult = ({
                 defaultButtonLabel="No, search by name and address"
                 defaultButtonAction={handleBackToSearchByNameAddress}
                 secondaryButtonLabel="Yes, add data and claim"
-                secondaryButtonAction={() => {}}
+                secondaryButtonAction={handleGoToSelectedProductionLocationInfo}
             />
         </>
     );

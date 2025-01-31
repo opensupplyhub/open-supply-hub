@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent } from '@testing-library/react';
 import SearchByNameAndAddressNotFoundResult from '../../components/Contribute/SearchByNameAndAddressNotFoundResult';
-import { contributeProductionLocationRoute, productionLocationInfoRoute } from '../../util/constants';
+import { contributeProductionLocationRoute, productionLocationInfoRouteCommon } from '../../util/constants';
 import history from '../../util/history';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 
@@ -47,7 +47,7 @@ describe('SearchByNameAndAddressNotFoundResult component', () => {
         expect(addNewLocation).toBeInTheDocument();
         fireEvent.click(addNewLocation);
 
-        expect(history.push).toHaveBeenCalledWith(productionLocationInfoRoute);
+        expect(history.push).toHaveBeenCalledWith(productionLocationInfoRouteCommon);
         expect(history.push).toHaveBeenCalledTimes(1);
     });
 });

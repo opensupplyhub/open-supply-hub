@@ -535,6 +535,24 @@ export const makeDialogTooltipStyles = () =>
         }),
     });
 
+export const makeProductionLocationCloseButtonStyles = theme =>
+    Object.freeze({
+        root: Object.freeze({
+            borderBottom: `1px solid ${theme.palette.divider}`,
+            margin: 0,
+            padding: theme.spacing.unit * 2,
+        }),
+        mobileCloseButton: Object.freeze({
+            color: 'white',
+        }),
+        desktopCloseButton: Object.freeze({
+            position: 'absolute',
+            right: 0,
+            top: 0,
+            color: theme.palette.grey[500],
+        }),
+    });
+
 export const makeProductionLocationDialogStyles = theme =>
     Object.freeze({
         modalContainerWrapper: Object.freeze({
@@ -562,8 +580,11 @@ export const makeProductionLocationDialogStyles = theme =>
         }),
         primaryText: Object.freeze({
             marginBottom: '20px',
+            minHeight: '32px',
         }),
         osIDText: Object.freeze({
+            display: 'inline-block',
+            marginRight: '15px',
             lineHeight: '2.3',
         }),
         leftContainerColumn: Object.freeze({
@@ -591,19 +612,26 @@ export const makeProductionLocationDialogStyles = theme =>
             },
         }),
         osIdStatusBadge: Object.freeze({
-            backgroundColor: COLOURS.ACCENT_GREY,
-            marginLeft: '10px',
             fontWeight: theme.typography.fontWeightBold,
+        }),
+        osIdStatusBadge_pending: Object.freeze({
+            backgroundColor: COLOURS.ACCENT_GREY,
+        }),
+        osIdStatusBadge_rejected: Object.freeze({
+            backgroundColor: COLOURS.LIGHT_RED,
+        }),
+        osIdStatusBadge_approved: Object.freeze({
+            backgroundColor: COLOURS.MINT_GREEN,
         }),
         osIdStatusBadgeIcon: Object.freeze({
             color: COLOURS.DARK_GREY,
             marginRight: '5px',
         }),
         button: Object.freeze({
+            textTransform: 'capitalize',
             fontWeight: theme.typography.fontWeightBold,
-            textTransform: 'none',
-            paddingLeft: '30px',
-            paddingRight: '30px',
+            paddingLeft: '25px',
+            paddingRight: '25px',
             boxShadow: 'none',
             [theme.breakpoints.down('md')]: {
                 width: '100%',
@@ -619,6 +647,15 @@ export const makeProductionLocationDialogStyles = theme =>
         }),
         claimButton: Object.freeze({
             backgroundColor: COLOURS.NAVIGATION,
+            borderRadius: 0,
+        }),
+        claimButton_disabled: Object.freeze({
+            paddingTop: '6px',
+            paddingBottom: '6px',
+        }),
+        claimButton_infoIcon: Object.freeze({
+            color: COLOURS.DARK_GREY,
+            marginLeft: '5px',
         }),
     });
 
@@ -866,7 +903,6 @@ export const makeDashboardContributionRecordStyles = theme =>
             backgroundColor: COLOURS.MINT_GREEN,
             padding: '15px 25px',
             fontWeight: theme.typography.fontWeightBold,
-            boxShadow: 'none',
             '&:hover': { backgroundColor: COLOURS.OLIVA_GREEN },
         }),
         claimButtonStyles: Object.freeze({
