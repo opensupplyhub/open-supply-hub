@@ -833,6 +833,7 @@ const mapStateToProps = ({
             fetching: pendingModerationEventFetching,
             error: pendingModerationEventError,
         },
+        singleProductionLocation: { data: singleProductionLocationData },
     },
     dashboardContributionRecord: {
         singleModerationEvent: {
@@ -840,9 +841,6 @@ const mapStateToProps = ({
             fetching: singleModerationEventItemFetching,
             error: singleModerationEventItemError,
         },
-    },
-    contributeProductionLocation: {
-        singleProductionLocation: { data: singleProductionLocationData },
     },
     ui: {
         window: { innerWidth },
