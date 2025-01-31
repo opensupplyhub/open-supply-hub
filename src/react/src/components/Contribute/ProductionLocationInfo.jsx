@@ -166,6 +166,11 @@ const ProductionLocationInfo = ({
             };
             break;
     }
+
+    const instructionExtraMessage =
+        submitMethod === 'PATCH'
+            ? 'These fields are pre-filled with the data from your search, but you can edit them.'
+            : '';
     const submitButtonText = submitMethod === 'POST' ? 'Submit' : 'Update';
 
     useEffect(() => {
@@ -356,9 +361,8 @@ const ProductionLocationInfo = ({
                     Production Location Information
                 </Typography>
                 <Typography className={classes.instructionStyles}>
-                    Use the form below to edit the name, address, and country
-                    for your production location. These fields are pre-filled
-                    with the data from your search, but you can edit them.
+                    {`Use the form below to edit the name, address, and country
+                    for your production location. ${instructionExtraMessage}`}
                 </Typography>
                 <Paper className={classes.infoWrapStyles}>
                     <div
