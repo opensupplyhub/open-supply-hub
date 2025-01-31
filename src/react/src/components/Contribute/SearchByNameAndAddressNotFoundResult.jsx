@@ -15,6 +15,9 @@ const SearchByNameAndAddressNotFoundResult = ({ classes }) => {
         history.push(`${contributeProductionLocationRoute}?tab=name-address`);
     };
 
+    const handleGoToCommonProductionLocationInfo = () =>
+        history.push(productionLocationInfoRouteCommon);
+
     return (
         <div className={classes.contentWrapperStyles}>
             <Typography component="h1" className={classes.titleStyles}>
@@ -45,9 +48,7 @@ const SearchByNameAndAddressNotFoundResult = ({ classes }) => {
                         root: `${classes.buttonBaseStyles} ${classes.addLocationButtonStyles}`,
                         label: classes.buttonLabelStyles,
                     }}
-                    onClick={() =>
-                        history.push(productionLocationInfoRouteCommon)
-                    }
+                    onClick={handleGoToCommonProductionLocationInfo()}
                 >
                     Add a new Location
                 </Button>

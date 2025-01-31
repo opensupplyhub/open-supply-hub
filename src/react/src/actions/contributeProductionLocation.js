@@ -3,7 +3,7 @@ import { createAction } from 'redux-act';
 import apiRequest from '../util/apiRequest';
 import {
     logErrorAndDispatchFailure,
-    makeGetProductionLocationURL,
+    makeProductionLocationURL,
     parseContribData,
     makeGetProductionLocationsForPotentialMatches,
 } from '../util/util';
@@ -69,7 +69,7 @@ export function createProductionLocation(contribData) {
 
         try {
             const { data } = await apiRequest.post(
-                makeGetProductionLocationURL(),
+                makeProductionLocationURL(),
                 parsedContribData,
             );
             return dispatch(completeCreateProductionLocation(data));
@@ -93,7 +93,7 @@ export function updateProductionLocation(contribData, osID) {
 
         try {
             const { data } = await apiRequest.patch(
-                makeGetProductionLocationURL(osID),
+                makeProductionLocationURL(osID),
                 parsedContribData,
             );
             return dispatch(completeUpdateProductionLocation(data));
@@ -144,7 +144,7 @@ export function fetchProductionLocationByOsId(osID) {
         dispatch(startFetchSingleProductionLocation());
 
         return apiRequest
-            .get(makeGetProductionLocationURL(osID))
+            .get(makeProductionLocationURL(osID))
             .then(response =>
                 dispatch(completeFetchSingleProductionLocation(response.data)),
             )

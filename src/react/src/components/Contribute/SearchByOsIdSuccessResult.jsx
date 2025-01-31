@@ -23,6 +23,9 @@ const SearchByOsIdSuccessResult = ({
 
     const history = useHistory();
 
+    const handleGoToSelectedProductionLocationInfo = () =>
+        history.push(`/contribute/production-location/${osId}/info/`);
+
     return (
         <>
             <Typography component="h2" className={classes.resultTitleStyles}>
@@ -39,11 +42,7 @@ const SearchByOsIdSuccessResult = ({
                 defaultButtonLabel="No, search by name and address"
                 defaultButtonAction={handleBackToSearchByNameAddress}
                 secondaryButtonLabel="Yes, add data and claim"
-                secondaryButtonAction={() => {
-                    history.push(
-                        `/contribute/production-location/${osId}/info/`,
-                    );
-                }}
+                secondaryButtonAction={handleGoToSelectedProductionLocationInfo}
             />
         </>
     );

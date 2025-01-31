@@ -98,6 +98,18 @@ const ProductionLocationInfo = ({
     const [parentCompany, setParentCompany] = useState([]);
     const customSelectComponents = { DropdownIndicator: null };
 
+    const inputData = {
+        name: inputName,
+        address: inputAddress,
+        country: inputCountry,
+        sector,
+        productType,
+        locationType,
+        processingType,
+        numberOfWorkers,
+        parentCompany,
+    };
+
     const selectStyles = {
         control: provided => ({
             ...provided,
@@ -725,18 +737,7 @@ const ProductionLocationInfo = ({
                             color="secondary"
                             variant="contained"
                             onClick={() => {
-                                const data = {
-                                    name: inputName,
-                                    address: inputAddress,
-                                    country: inputCountry,
-                                    sector,
-                                    productType,
-                                    locationType,
-                                    processingType,
-                                    numberOfWorkers,
-                                    parentCompany,
-                                };
-                                handleProductionLocation(data, osID);
+                                handleProductionLocation(inputData, osID);
                             }}
                             className={classes.submitButtonStyles}
                         >

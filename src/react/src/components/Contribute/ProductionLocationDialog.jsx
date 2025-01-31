@@ -29,6 +29,7 @@ import {
     searchByNameAndAddressResultRoute,
     MODERATION_STATUSES_ENUM,
     PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM,
+    EMPTY_PLACEHOLDER,
 } from '../../util/constants';
 import { makeProductionLocationDialogStyles } from '../../util/styles';
 import { getIsMobile, makeClaimFacilityLink } from '../../util/util';
@@ -119,7 +120,7 @@ const ProductionLocationDialog = ({
             if (isArray(value)) {
                 return value.length > 0;
             }
-            if (typeof value === 'object' && value !== null) {
+            if (value && typeof value === 'object') {
                 return !isEmpty(value);
             }
             return value !== null && value !== undefined && value !== '';
@@ -185,13 +186,14 @@ const ProductionLocationDialog = ({
                                     Facility name
                                 </Typography>
                                 <Typography className={classes.primaryText}>
-                                    {productionLocationName || 'N/A'}
+                                    {productionLocationName ||
+                                        EMPTY_PLACEHOLDER}
                                 </Typography>
                                 <Typography className={classes.label}>
                                     Address
                                 </Typography>
                                 <Typography className={classes.primaryText}>
-                                    {address || 'N/A'}
+                                    {address || EMPTY_PLACEHOLDER}
                                 </Typography>
                                 <ProductionLocationDialogFields
                                     filteredAdditionalFields={
