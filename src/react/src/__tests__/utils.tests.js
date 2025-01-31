@@ -1807,60 +1807,68 @@ it('should return an array with claimed facility link if active feature flag is 
     });
 });
 
-describe('updateStateFromData', () => {
-    let mockSetter;
-    let sampleObject;
+it('should call setter with transformed array when dataKey is an array property', () => {
+    const mockSetter = jest.fn();
+    const sampleObject = {
+        location_type: ["CMT"],
+    };
+    updateStateFromData(sampleObject, 'location_type', mockSetter);
+    expect(mockSetter).toHaveBeenCalledWith([{ label: "CMT", value: "CMT" }]);
+});
 
-    beforeEach(() => {
-        mockSetter = jest.fn();
-        sampleObject = {
-            location_type: ["CMT"],
-            historical_os_id: ["CN2019083HG1GHB", "CN2019200171K0V"],
-            name: "KASHION INDUSTRY CO. LTD",
-            claim_status: "claimed",
-            number_of_workers: { max: 323, min: 323 },
-            country: { name: "China", alpha_2: "CN", numeric: "156", alpha_3: "CHN" },
-            empty_array: [],
-            undefined_key: undefined,
-            null_key: null
-        };
-    });
+it('should call setter with transformed array when dataKey is historical_os_id', () => {
+    const mockSetter = jest.fn();
+    const sampleObject = {
+        historical_os_id: ["CN2019083HG1GHB", "CN2019200171K0V"],
+    };
+    updateStateFromData(sampleObject, 'historical_os_id', mockSetter);
+    expect(mockSetter).toHaveBeenCalledWith([
+        { label: "CN2019083HG1GHB", value: "CN2019083HG1GHB" },
+        { label: "CN2019200171K0V", value: "CN2019200171K0V" }
+    ]);
+});
 
-    it('should call setter with transformed array when dataKey is an array property', () => {
-        updateStateFromData(sampleObject, 'location_type', mockSetter);
-        expect(mockSetter).toHaveBeenCalledWith([{ label: "CMT", value: "CMT" }]);
-    });
+it('should not call setter when array is empty', () => {
+    const mockSetter = jest.fn();
+    const sampleObject = {
+        empty_array: [],
+    };
+    updateStateFromData(sampleObject, 'empty_array', mockSetter);
+    expect(mockSetter).not.toHaveBeenCalled();
+});
 
-    it('should call setter with transformed array when dataKey is historical_os_id', () => {
-        updateStateFromData(sampleObject, 'historical_os_id', mockSetter);
-        expect(mockSetter).toHaveBeenCalledWith([
-            { label: "CN2019083HG1GHB", value: "CN2019083HG1GHB" },
-            { label: "CN2019200171K0V", value: "CN2019200171K0V" }
-        ]);
-    });
+it('should not call setter when dataKey is a non-array string property', () => {
+    const mockSetter = jest.fn();
+    const sampleObject = {
+        name: "KASHION INDUSTRY CO. LTD",
+    };
+    updateStateFromData(sampleObject, 'name', mockSetter);
+    expect(mockSetter).not.toHaveBeenCalled();
+});
 
-    it('should not call setter when array is empty', () => {
-        updateStateFromData(sampleObject, 'empty_array', mockSetter);
-        expect(mockSetter).not.toHaveBeenCalled();
-    });
+it('should not call setter when dataKey is an object property', () => {
+    const mockSetter = jest.fn();
+    const sampleObject = {
+        number_of_workers: { max: 323, min: 323 },
+    };
+    updateStateFromData(sampleObject, 'number_of_workers', mockSetter);
+    expect(mockSetter).not.toHaveBeenCalled();
+});
 
-    it('should not call setter when dataKey is a non-array string property', () => {
-        updateStateFromData(sampleObject, 'name', mockSetter);
-        expect(mockSetter).not.toHaveBeenCalled();
-    });
+it('should not call setter when dataKey is undefined', () => {
+    const mockSetter = jest.fn();
+    const sampleObject = {
+        undefined_key: undefined,
+    };
+    updateStateFromData(sampleObject, 'undefined_key', mockSetter);
+    expect(mockSetter).not.toHaveBeenCalled();
+});
 
-    it('should not call setter when dataKey is an object property', () => {
-        updateStateFromData(sampleObject, 'number_of_workers', mockSetter);
-        expect(mockSetter).not.toHaveBeenCalled();
-    });
-
-    it('should not call setter when dataKey is undefined', () => {
-        updateStateFromData(sampleObject, 'undefined_key', mockSetter);
-        expect(mockSetter).not.toHaveBeenCalled();
-    });
-
-    it('should not call setter when dataKey is null', () => {
-        updateStateFromData(sampleObject, 'null_key', mockSetter);
-        expect(mockSetter).not.toHaveBeenCalled();
-    });
+it('should not call setter when dataKey is null', () => {
+    const mockSetter = jest.fn();
+    const sampleObject = {
+        null_key: null
+    };
+    updateStateFromData(sampleObject, 'null_key', mockSetter);
+    expect(mockSetter).not.toHaveBeenCalled();
 });
