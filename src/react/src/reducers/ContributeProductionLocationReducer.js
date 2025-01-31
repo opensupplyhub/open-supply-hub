@@ -5,10 +5,17 @@ import {
     failFetchSingleProductionLocation,
     completeFetchSingleProductionLocation,
     resetSingleProductionLocation,
+    startCreateProductionLocation,
+    completeCreateProductionLocation,
+    failCreateProductionLocation,
+    startUpdateProductionLocation,
+    completeUpdateProductionLocation,
+    failUpdateProductionLocation,
     startFetchProductionLocations,
     failFetchProductionLocations,
     completeFetchProductionLocations,
     resetProductionLocations,
+    resetPendingModerationEvent,
 } from '../actions/contributeProductionLocation';
 
 const initialState = Object.freeze({
@@ -19,6 +26,11 @@ const initialState = Object.freeze({
     }),
     productionLocations: Object.freeze({
         data: [],
+        fetching: false,
+        error: null,
+    }),
+    pendingModerationEvent: Object.freeze({
+        data: {},
         fetching: false,
         error: null,
     }),
@@ -64,7 +76,74 @@ export default createReducer(
                     $set: initialState.singleProductionLocation,
                 },
             }),
-
+        [startCreateProductionLocation]: state =>
+            update(state, {
+                pendingModerationEvent: {
+                    fetching: { $set: true },
+                    error: {
+                        $set: initialState.pendingModerationEvent.error,
+                    },
+                    data: { $set: initialState.pendingModerationEvent.data },
+                },
+            }),
+        [completeCreateProductionLocation]: (state, payload) =>
+            update(state, {
+                pendingModerationEvent: {
+                    fetching: {
+                        $set: initialState.pendingModerationEvent.fetching,
+                    },
+                    error: {
+                        $set: initialState.pendingModerationEvent.error,
+                    },
+                    data: { $set: payload },
+                },
+            }),
+        [failCreateProductionLocation]: (state, payload) =>
+            update(state, {
+                pendingModerationEvent: {
+                    fetching: {
+                        $set: initialState.pendingModerationEvent.fetching,
+                    },
+                    error: { $set: payload },
+                },
+            }),
+        [startUpdateProductionLocation]: state =>
+            update(state, {
+                pendingModerationEvent: {
+                    fetching: { $set: true },
+                    error: {
+                        $set: initialState.pendingModerationEvent.error,
+                    },
+                    data: { $set: initialState.pendingModerationEvent.data },
+                },
+            }),
+        [completeUpdateProductionLocation]: (state, payload) =>
+            update(state, {
+                pendingModerationEvent: {
+                    fetching: {
+                        $set: initialState.pendingModerationEvent.fetching,
+                    },
+                    error: {
+                        $set: initialState.pendingModerationEvent.error,
+                    },
+                    data: { $set: payload },
+                },
+            }),
+        [failUpdateProductionLocation]: (state, payload) =>
+            update(state, {
+                pendingModerationEvent: {
+                    fetching: {
+                        $set: initialState.pendingModerationEvent.fetching,
+                    },
+                    error: { $set: payload },
+                },
+            }),
+        [resetPendingModerationEvent]: state =>
+            update(state, {
+                pendingModerationEvent: {
+                    $set: initialState.pendingModerationEvent,
+                },
+            }),
         // Production Locations
         [startFetchProductionLocations]: state =>
             update(state, {

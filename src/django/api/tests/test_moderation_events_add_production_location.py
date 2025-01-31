@@ -86,7 +86,7 @@ class ModerationEventsAddProductionLocationTest(
             content_type="application/json",
         )
 
-        self.assert_success_response(response, 201)
+        self.assert_success_response(response, 201, 'NEW_LOCATION')
 
     def test_successful_add_production_location_without_geocode_result(self):
         self.moderation_event.cleaned_data["fields"]["lat"] = self.latitude

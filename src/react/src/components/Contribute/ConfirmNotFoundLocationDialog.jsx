@@ -12,7 +12,7 @@ import history from '../../util/history';
 import { makeConfirmNotFoundLocationDialogStyles } from '../../util/styles';
 import {
     contributeProductionLocationRoute,
-    productionLocationInfoRoute,
+    productionLocationInfoRouteCommon,
 } from '../../util/constants';
 
 const ConfirmNotFoundLocationDialog = ({
@@ -24,7 +24,7 @@ const ConfirmNotFoundLocationDialog = ({
     const handleAddNewLocation = () => {
         handleConfirmDialogClose();
         clearLocations();
-        history.push(productionLocationInfoRoute);
+        history.push(productionLocationInfoRouteCommon);
     };
 
     const navigateToNameAddressTab = () => {

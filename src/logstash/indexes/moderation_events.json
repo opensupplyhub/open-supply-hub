@@ -31,6 +31,9 @@
         "source": {
           "type": "keyword"
         },
+        "action_type": {
+          "type": "keyword"
+        },
         "status": {
           "type": "keyword"
         },
