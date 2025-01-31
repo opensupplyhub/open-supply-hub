@@ -7,6 +7,7 @@ SELECT
 	ame.cleaned_data::TEXT AS cleaned_data_value,
 	ame.request_type,
 	ame.source AS source_value,
+	ame.action_type AS action_type_value,
 	ame.status,
 	ame.status_change_date AS status_change_date_value,
 	ame.created_at,

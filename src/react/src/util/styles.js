@@ -847,6 +847,17 @@ export const makeDashboardContributionRecordStyles = theme =>
         title: Object.freeze({
             paddingBottom: '20px',
         }),
+        actionTypeTitle: Object.freeze({
+            marginLeft: '20px',
+            marginBottom: '20px',
+            backgroundColor: COLOURS.MINT_GREEN,
+            borderRadius: 5,
+            padding: '5px 10px',
+            display: 'inline-block',
+            fontSize: '16px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            textAlign: 'center',
+        }),
         listItemStyle: Object.freeze({
             display: 'flex',
             flexDirection: 'row',
