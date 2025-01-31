@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, {
+    useEffect,
+    useMemo,
+    useState,
+    useRef,
+    useCallback,
+} from 'react';
 import { useLocation, useParams, useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import { array, bool, func, number, object, shape, string } from 'prop-types';
@@ -98,17 +104,30 @@ const ProductionLocationInfo = ({
     const [parentCompany, setParentCompany] = useState([]);
     const customSelectComponents = { DropdownIndicator: null };
 
-    const inputData = {
-        name: inputName,
-        address: inputAddress,
-        country: inputCountry,
-        sector,
-        productType,
-        locationType,
-        processingType,
-        numberOfWorkers,
-        parentCompany,
-    };
+    const inputData = useMemo(
+        () => ({
+            name: inputName,
+            address: inputAddress,
+            country: inputCountry,
+            sector,
+            productType,
+            locationType,
+            processingType,
+            numberOfWorkers,
+            parentCompany,
+        }),
+        [
+            inputName,
+            inputAddress,
+            inputCountry,
+            sector,
+            productType,
+            locationType,
+            processingType,
+            numberOfWorkers,
+            parentCompany,
+        ],
+    );
 
     const selectStyles = {
         control: provided => ({
