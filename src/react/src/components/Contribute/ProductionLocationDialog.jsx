@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { func, number, object, string } from 'prop-types';
 import { withStyles, withTheme } from '@material-ui/core/styles';
 import { useHistory } from 'react-router-dom';
@@ -95,13 +95,12 @@ const ProductionLocationDialog = ({
     const history = useHistory();
 
     const [isMobile, setIsMobile] = useState(false);
+    const getIsMobileMemoized = useMemo(() => getIsMobile(innerWidth), [
+        innerWidth,
+    ]);
     useEffect(() => {
-        if (getIsMobile(innerWidth)) {
-            setIsMobile(true);
-        } else {
-            setIsMobile(false);
-        }
-    }, [innerWidth]);
+        setIsMobile(getIsMobileMemoized);
+    }, [getIsMobileMemoized]);
 
     const {
         raw_json: {
