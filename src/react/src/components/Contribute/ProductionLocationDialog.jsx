@@ -128,6 +128,24 @@ const ProductionLocationDialog = ({
 
     const fieldSetNumber = round(size(filteredAdditionalFields) / 2);
 
+    const isClaimable =
+        claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED &&
+        moderationStatus !== MODERATION_STATUSES_ENUM.PENDING;
+
+    const statusLabel = startCase(toLower(moderationStatus));
+
+    const handleGoToMainPage = () => history.push(mainRoute);
+    const handleGoToSearchByNameAndAddressResult = () =>
+        history.push(searchByNameAndAddressResultRoute);
+
+    const deleteIcon =
+        moderationStatus === MODERATION_STATUSES_ENUM.PENDING ? (
+            <DialogTooltip
+                text="Your submission is under review. You will receive a notification once the production location is live on OS Hub. You can proceed to submit a claim while your request is pending."
+                childComponent={infoIcon(classes)}
+            />
+        ) : null;
+
     return (
         <>
             {isMobile ? (
@@ -221,9 +239,7 @@ const ProductionLocationDialog = ({
                                             </Typography>
                                         ) : null}
                                         <Chip
-                                            label={startCase(
-                                                toLower(moderationStatus),
-                                            )}
+                                            label={statusLabel}
                                             {...(moderationStatus ===
                                                 MODERATION_STATUSES_ENUM.PENDING && {
                                                 onDelete: () => {},
@@ -234,23 +250,7 @@ const ProductionLocationDialog = ({
                                                 classes,
                                                 moderationStatus,
                                             )}`}
-                                            deleteIcon={
-                                                moderationStatus ===
-                                                MODERATION_STATUSES_ENUM.PENDING ? (
-                                                    <DialogTooltip
-                                                        text="Your submission is under
-                                                        review. You will receive a
-                                                        notification once the
-                                                        production location is live
-                                                        on OS Hub. You can proceed
-                                                        to submit a claim while your
-                                                        request is pending."
-                                                        childComponent={infoIcon(
-                                                            classes,
-                                                        )}
-                                                    />
-                                                ) : null
-                                            }
+                                            deleteIcon={deleteIcon}
                                         />
                                     </Grid>
                                 </Grid>
@@ -269,7 +269,7 @@ const ProductionLocationDialog = ({
                             <Button
                                 variant="contained"
                                 color="default"
-                                onClick={() => history.push(mainRoute)}
+                                onClick={handleGoToMainPage}
                                 className={classes.button}
                             >
                                 Search OS Hub
@@ -277,19 +277,12 @@ const ProductionLocationDialog = ({
                             <Button
                                 variant="contained"
                                 color="secondary"
-                                onClick={() => {
-                                    history.push(
-                                        searchByNameAndAddressResultRoute,
-                                    );
-                                }}
+                                onClick={handleGoToSearchByNameAndAddressResult}
                                 className={classes.button}
                             >
                                 Submit another Location
                             </Button>
-                            {claimStatus ===
-                                PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED &&
-                            moderationStatus !==
-                                MODERATION_STATUSES_ENUM.PENDING ? (
+                            {isClaimable ? (
                                 <>
                                     {claimButton({
                                         classes,

@@ -227,6 +227,8 @@ const FacilityListItems = ({
         ? `${dashboardListsRoute}${adminSearch || ''}`
         : listsRoute;
 
+    const handleGoToMainPage = () => history.push(mainRoute);
+
     const listHeader = (
         <>
             <div style={facilityListItemsStyles.headerStyles}>
@@ -312,7 +314,7 @@ const FacilityListItems = ({
                 <Button
                     variant="outlined"
                     color="secondary"
-                    onClick={() => history.push(mainRoute)}
+                    onClick={handleGoToMainPage}
                 >
                     Go to the main page
                 </Button>
