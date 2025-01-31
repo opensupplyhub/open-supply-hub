@@ -626,6 +626,18 @@ hr {
   align-items: center;
 }
 
+.mobile-dialog-close-button {
+  border: 2px solid white !important;
+  border-radius: 50% !important;
+  color: white !important;
+  padding: 7px !important;
+  position: fixed !important;
+  right: 0;
+  top: 140px;
+  margin-right: 48px !important;
+  z-index: 10000 !important;
+}
+
 @media (max-width: 600px) {
   .user-profile-title-bar {
     flex-direction: column;

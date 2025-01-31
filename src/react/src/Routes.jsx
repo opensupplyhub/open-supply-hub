@@ -33,6 +33,7 @@ import ContributeProductionLocation from './components/Contribute/ContributeProd
 import SearchByOsIdResult from './components/Contribute/SearchByOsIdResult';
 import SearchByNameAndAddressResult from './components/Contribute/SearchByNameAndAddressResult';
 import ProductionLocationInfo from './components/Contribute/ProductionLocationInfo';
+import withProductionLocationSubmit from './components/Contribute/HOC/withProductionLocationSubmit';
 
 import { sessionLogin } from './actions/auth';
 import { fetchFeatureFlags } from './actions/featureFlags';
@@ -60,8 +61,17 @@ import {
     contributeProductionLocationRoute,
     searchByOsIdResultRoute,
     searchByNameAndAddressResultRoute,
-    productionLocationInfoRoute,
+    productionLocationInfoRouteCreate,
+    productionLocationInfoRouteUpdate,
 } from './util/constants';
+
+// Pre-wrapping components outside of Routes to prevent redundant re-renders on component mount
+const WrappedProductionLocationInfoUpdate = withProductionLocationSubmit(
+    ProductionLocationInfo,
+);
+const WrappedProductionLocationInfoCreate = withProductionLocationSubmit(
+    ProductionLocationInfo,
+);
 
 class Routes extends Component {
     componentDidMount() {
@@ -184,8 +194,17 @@ class Routes extends Component {
                                 />
                                 <Route
                                     exact
-                                    path={productionLocationInfoRoute}
-                                    component={ProductionLocationInfo}
+                                    path={productionLocationInfoRouteUpdate}
+                                    component={
+                                        WrappedProductionLocationInfoUpdate
+                                    }
+                                />
+                                <Route
+                                    exact
+                                    path={productionLocationInfoRouteCreate}
+                                    component={
+                                        WrappedProductionLocationInfoCreate
+                                    }
                                 />
                                 <Route exact path="/about/processing">
                                     <ExternalRedirect

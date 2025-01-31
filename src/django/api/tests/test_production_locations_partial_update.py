@@ -139,7 +139,8 @@ class TestProductionLocationsPartialUpdate(APITestCase):
                 response_body_dict.get('os_id'),
                 self.production_location.id
             )
-            self.assertEqual(len(response_body_dict), 4)
+            self.assertIn("cleaned_data", response_body_dict)
+            self.assertEqual(len(response_body_dict), 5)
 
         # Now simulate the 31st request, which should be throttled.
         throttled_response = self.client.patch(
@@ -269,7 +270,8 @@ class TestProductionLocationsPartialUpdate(APITestCase):
             response_body_dict.get('os_id'),
             self.production_location.id
         )
-        self.assertEqual(len(response_body_dict), 4)
+        self.assertIn("cleaned_data", response_body_dict)
+        self.assertEqual(len(response_body_dict), 5)
 
     @patch('api.geocoding.requests.get')
     def test_moderation_event_not_created_with_invalid_data(
