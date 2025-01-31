@@ -113,17 +113,14 @@ const ProductionLocationDialog = ({
 
     const additionalInformationFields = assign({}, fields, { sector });
 
+    const isValidValue = value => {
+        if (isArray(value)) return value.length > 0;
+        if (value && typeof value === 'object') return !isEmpty(value);
+        return value !== null && value !== undefined && value !== '';
+    };
     const filteredAdditionalFields = pickBy(
         additionalInformationFields,
-        value => {
-            if (isArray(value)) {
-                return value.length > 0;
-            }
-            if (value && typeof value === 'object') {
-                return !isEmpty(value);
-            }
-            return value !== null && value !== undefined && value !== '';
-        },
+        isValidValue,
     );
 
     const fieldSetNumber = round(size(filteredAdditionalFields) / 2);
