@@ -5,6 +5,10 @@ locals {
 resource "aws_s3_bucket" "react" {
   bucket        = local.frontend_bucket_name
   force_destroy = true
+
+  tags = {
+    Name        = local.frontend_bucket_name
+  }
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "react" {
@@ -79,17 +83,11 @@ data "aws_iam_policy_document" "react" {
 resource "aws_s3_bucket_policy" "react" {
   bucket = aws_s3_bucket.react.id
   policy = data.aws_iam_policy_document.react.json
-
-  # depends_on = [
-  #   aws_s3_bucket_acl.react_acl
-  # ]
 }
 
 resource "aws_cloudfront_origin_access_identity" "react" {
   comment = local.frontend_bucket_name
-
 }
-
 
 resource "aws_cloudfront_distribution" "cdn" {
   depends_on = [
