@@ -54,7 +54,6 @@ import {
     productionLocationInfoRouteCommon,
     searchByNameAndAddressResultRoute,
     MODERATION_STATUSES_ENUM,
-    PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM,
 } from '../../util/constants';
 import COLOURS from '../../util/COLOURS';
 import ProductionLocationDialog from './ProductionLocationDialog';
@@ -794,8 +793,7 @@ const ProductionLocationInfo = ({
                         MODERATION_STATUSES_ENUM.PENDING
                     }
                     claimStatus={
-                        singleProductionLocationData?.claim_status ||
-                        PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED
+                        singleProductionLocationData?.claim_status || null
                     }
                 />
             ) : null}
