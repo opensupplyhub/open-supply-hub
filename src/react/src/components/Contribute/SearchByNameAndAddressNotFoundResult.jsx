@@ -48,7 +48,7 @@ const SearchByNameAndAddressNotFoundResult = ({ classes }) => {
                         root: `${classes.buttonBaseStyles} ${classes.addLocationButtonStyles}`,
                         label: classes.buttonLabelStyles,
                     }}
-                    onClick={handleGoToCommonProductionLocationInfo()}
+                    onClick={handleGoToCommonProductionLocationInfo}
                 >
                     Add a new Location
                 </Button>
