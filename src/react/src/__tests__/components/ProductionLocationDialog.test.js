@@ -104,7 +104,32 @@ describe('ProductionLocationDialog', () => {
         expect(screen.getByText(/Shirts, Pants/i)).toBeInTheDocument();
     });
 
-    test('Continue to Claim button should be active if production location is unclaimed and approved', () => {
+    test.each([
+        ['PENDING', 'unclaimed', true],
+        ['PENDING', 'claimed', true],
+        ['REJECTED', 'claimed', true],
+        ['REJECTED', 'unclaimed', false],
+        ['REJECTED', undefined, true],
+        ['APPROVED', 'unclaimed', false],
+        ['APPROVED', 'claimed', true]
+    ])('handles moderation status %s and claim status %s correctly', (moderationStatus, claimStatus, shouldBeDisabled) => {
+        const { getByRole } = render(
+            <Router>
+                <ProductionLocationDialog
+                    classes={{}}
+                    data={defaultProps.data}
+                    osID={defaultProps.osID}
+                    moderationStatus={moderationStatus}
+                    claimStatus={claimStatus}
+                />
+            </Router>
+        );
+
+        const claimButton = getByRole('button', { name: /Continue to Claim/i });
+        expect(window.getComputedStyle(claimButton).pointerEvents).toBe(shouldBeDisabled ? 'none' : '');
+    });
+
+    test('check link to the claim flow for specific production location', () => {
         const { getByRole } = render(
             <Router>
                 <ProductionLocationDialog
@@ -118,49 +143,8 @@ describe('ProductionLocationDialog', () => {
         );
 
         const claimButton = getByRole('button', { name: /Continue to Claim/i });
-
-        expect(window.getComputedStyle(claimButton).pointerEvents).not.toBe('none');
-
         expect(claimButton).toHaveAttribute('href', `/facilities/${defaultProps.osID}/claim`);
-    });
-
-    test('Continue to Claim button should be active if production location is unclaimed and rejected', () => {
-        const { getByRole } = render(
-            <Router>
-                <ProductionLocationDialog
-                    classes={{}}
-                    data={defaultProps.data}
-                    osID={defaultProps.osID}
-                    moderationStatus='REJECTED'
-                    claimStatus='unclaimed'
-                />
-            </Router>
-        );
-
-        const claimButton = getByRole('button', { name: /Continue to Claim/i });
-
-        expect(window.getComputedStyle(claimButton).pointerEvents).not.toBe('none');
-
-        expect(claimButton).toHaveAttribute('href', `/facilities/${defaultProps.osID}/claim`);
-    });
-
-    test('Continue to Claim button should be disabled if production location has been claimed', () => {
-        const { getByRole } = render(
-            <Router>
-                <ProductionLocationDialog
-                    classes={{}}
-                    data={defaultProps.data}
-                    osID={defaultProps.osID}
-                    moderationStatus={defaultProps.moderationStatus}
-                    claimStatus='claimed'
-                />
-            </Router>
-        );
-
-        const claimButton = getByRole('button', { name: /Continue to Claim/i });
-
-        expect(window.getComputedStyle(claimButton).pointerEvents).toBe('none');
-    });
+    })
 
     test('closes ProductionLocationDialog when close button is clicked', () => {
         const handleShowMock = jest.fn();
