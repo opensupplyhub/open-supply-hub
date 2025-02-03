@@ -80,7 +80,7 @@ const getTooltipText = (claimStatus, moderationStatus) => {
         return 'Production location has been claimed already.';
     }
 
-    return '';
+    return 'Claim is not available.';
 };
 
 const ProductionLocationDialog = ({
@@ -310,7 +310,7 @@ const ProductionLocationDialog = ({
 
 ProductionLocationDialog.defaultProps = {
     osID: null,
-    claimStatus: PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED,
+    claimStatus: null,
 };
 
 ProductionLocationDialog.propTypes = {
