@@ -39,7 +39,8 @@ class ProductionLocationSerializer(serializers.Serializer):
         validators=[
             RegexValidator(
                 regex=r'^[a-zA-Z0-9\s.,&()-]*$',
-                message="Parent company must contain only letters, numbers, spaces, and allowed symbols (, . & - ())."
+                message="Parent company must contain only letters, numbers, \
+                    spaces, and allowed symbols (, . & - ())."
             )
         ],
         error_messages={
