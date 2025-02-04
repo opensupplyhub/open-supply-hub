@@ -152,18 +152,8 @@ class ProductionLocations(ViewSet):
                 APIV1CommonErrorMessages.MAINTENANCE_MODE
             )
 
-        serializer = ProductionLocationSerializer(data=request.data)
+        self.checkDataSerialization(request.data)
 
-        if not serializer.is_valid():
-            errors = (
-                serializer.errors['non_field_errors']
-                if 'non_field_errors' in serializer.errors
-                else serializer.errors
-            )
-            return Response({
-                'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
-                'errors': errors},
-                            status=status.HTTP_422_UNPROCESSABLE_ENTITY)
         if not isinstance(request.data, dict):
             data_type = type(request.data).__name__
             specific_error = APIV1LocationContributionErrorMessages \
@@ -210,19 +200,8 @@ class ProductionLocations(ViewSet):
             raise ServiceUnavailableException(
                 APIV1CommonErrorMessages.MAINTENANCE_MODE
             )
-        serializer = ProductionLocationSerializer(data=request.data)
+        self.checkDataSerialization(request.data)
 
-        if not serializer.is_valid():
-            print('!!!!', serializer.errors)
-            errors = (
-                serializer.errors['non_field_errors']
-                if 'non_field_errors' in serializer.errors
-                else serializer.errors
-            )
-            return Response({
-                    'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
-                    'errors': errors},
-                    status=status.HTTP_422_UNPROCESSABLE_ENTITY)
         if not Facility.objects.filter(id=pk).exists():
             specific_error = APIV1CommonErrorMessages.LOCATION_NOT_FOUND
             return Response(
@@ -270,3 +249,17 @@ class ProductionLocations(ViewSet):
             },
             status=result.status_code
         )
+
+    def checkDataSerialization(self, data):
+        serializer = ProductionLocationSerializer(data=data)
+
+        if not serializer.is_valid():
+            errors = (
+                serializer.errors['non_field_errors']
+                if 'non_field_errors' in serializer.errors
+                else serializer.errors
+            )
+            return Response({
+                'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
+                'errors': errors},
+                            status=status.HTTP_422_UNPROCESSABLE_ENTITY)
