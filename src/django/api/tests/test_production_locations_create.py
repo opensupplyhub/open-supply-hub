@@ -5,6 +5,7 @@ from rest_framework.test import APITestCase
 from django.urls import reverse
 from allauth.account.models import EmailAddress
 from waffle.testutils import override_switch
+from rest_framework import status
 
 from api.models.moderation_event import ModerationEvent
 from api.models.contributor.contributor import Contributor
@@ -144,7 +145,8 @@ class TestProductionLocationsCreate(APITestCase):
             [1, 2, 3],
             content_type='application/json'
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code,
+                         status.HTTP_422_UNPROCESSABLE_ENTITY)
 
         response_body_dict = json.loads(response.content)
         self.assertEqual(len(response_body_dict), 2)
@@ -217,23 +219,18 @@ class TestProductionLocationsCreate(APITestCase):
         mock_get.return_value.json.return_value = geocoding_data
 
         expected_response_body = {
-            'detail': 'The request body is invalid.',
-            'errors': [
-                {
-                    'field': 'sector',
-                    'detail': ('Expected value for sector to be a string or a '
-                               "list of strings but got {'some_key': 1135}.")
-                },
-                {
-                    'field': 'location_type',
-                    'detail': (
-                        'Expected value for location_type to be a '
-                        'string or a list of strings but got '
-                        "{'some_key': 1135}."
-                    )
-                }
-            ]
-        }
+            "detail": "The request body is invalid.",
+            "errors": {
+                "sector": ["Field must be a string or a list of strings."],
+                "location_type": [
+                    "Field must be a string or a list of strings."],
+                "number_of_workers": {
+                    "min": [
+                        "Ensure this value is greater than or equal to 1."],
+                    "max": ["Ensure this value is greater than or equal to 1."]
+                    }
+                    }
+                    }
         initial_moderation_event_count = ModerationEvent.objects.count()
 
         invalid_req_body = json.dumps({
@@ -265,7 +262,8 @@ class TestProductionLocationsCreate(APITestCase):
             invalid_req_body,
             content_type='application/json'
         )
-        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.status_code,
+                         status.HTTP_422_UNPROCESSABLE_ENTITY)
 
         response_body_dict = json.loads(response.content)
         self.assertEqual(response_body_dict, expected_response_body)

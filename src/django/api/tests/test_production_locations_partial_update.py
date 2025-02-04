@@ -6,6 +6,7 @@ from django.urls import reverse
 from allauth.account.models import EmailAddress
 from waffle.testutils import override_switch
 from django.contrib.gis.geos import Point
+from rest_framework import status
 
 from api.models.moderation_event import ModerationEvent
 from api.models.contributor.contributor import Contributor
@@ -204,7 +205,8 @@ class TestProductionLocationsPartialUpdate(APITestCase):
             [1, 2, 3],
             content_type='application/json'
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code,
+                         status.HTTP_422_UNPROCESSABLE_ENTITY)
 
         response_body_dict = json.loads(response.content)
         self.assertEqual(len(response_body_dict), 2)
@@ -329,7 +331,8 @@ class TestProductionLocationsPartialUpdate(APITestCase):
             invalid_req_body,
             content_type='application/json'
         )
-        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.status_code,
+                         status.HTTP_422_UNPROCESSABLE_ENTITY)
 
         response_body_dict = json.loads(response.content)
         self.assertEqual(response_body_dict, expected_response_body)
