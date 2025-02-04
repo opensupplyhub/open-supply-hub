@@ -199,11 +199,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - id: project
-        uses: Entepotenz/change-string-case-action-min-dependencies@v1
-        with:
-          string: ${{ vars.PROJECT }}
-
       - name: Configure AWS credentials for ${{ vars.ENV_NAME }}
         uses: aws-actions/configure-aws-credentials@v1
         with:

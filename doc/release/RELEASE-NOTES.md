@@ -3,8 +3,6 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
-Use the format below to document information about the new release.
-
 ## Release 1.30.0
 
 ## Introduction
@@ -24,7 +22,33 @@ Use the format below to document information about the new release.
 * *Describe code/API changes here.*
 
 ### Architecture/Environment changes
-* [OSDEV-899](https://opensupplyhub.atlassian.net/browse/OSDEV-899) - With this task, we split the Django container into two components FE (React) and BE (Django). Requests to the frontend (React) will be processed by CDN (CloudFront), requests to the API will be redirected to the Django container. This will allow more efficient use of the ECS cluster computing resources, as well as speed up the frontend.
+* [OSDEV-899](https://opensupplyhub.atlassian.net/browse/OSDEV-899) - With this task, we split the Django container into two components: FE (React) and BE (Django). Requests to the frontend (React) will be processed by the CDN (CloudFront), while requests to the API will be redirected to the Django container. This approach will allow for more efficient use of ECS cluster computing resources and improve frontend performance.
+
+  The following endpoints will be redirected to the Django container:
+  * tile/*
+  * api/*
+  * /api-auth/*
+  * /api-token-auth/*
+  * /api-feature-flags/*
+  * /web/environment.js
+  * /admin/*
+  * /health-check/*
+  * /rest-auth/*
+  * /user-login/*
+  * /user-logout/*
+  * /user-signup/*
+  * /user-profile/*
+  * /user-api-info/*
+  * /admin
+  * /static/admin/*
+  * /static/django_extensions/*
+  * /static/drf-yasg/*
+  * /static/gis/*
+  * /static/rest_framework/*
+  * /static/static/*
+  * /static/staticfiles.json
+
+  All other traffic will be redirected to the React application.
 
 
 ### Bugfix
@@ -35,6 +59,7 @@ Use the format below to document information about the new release.
 
 ### Release instructions:
 * *Provide release instructions here.*
+
 
 ## Release 1.29.0
 
