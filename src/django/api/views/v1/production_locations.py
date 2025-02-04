@@ -189,7 +189,8 @@ class ProductionLocations(ViewSet):
             {
                 'moderation_id': result.moderation_event.uuid,
                 'moderation_status': result.moderation_event.status,
-                'created_at': result.moderation_event.created_at
+                'created_at': result.moderation_event.created_at,
+                'cleaned_data': result.moderation_event.cleaned_data,
             },
             status=result.status_code
         )
@@ -245,7 +246,8 @@ class ProductionLocations(ViewSet):
                 'os_id': result.os.id,
                 'moderation_id': result.moderation_event.uuid,
                 'moderation_status': result.moderation_event.status,
-                'created_at': result.moderation_event.created_at
+                'created_at': result.moderation_event.created_at,
+                'cleaned_data': result.moderation_event.cleaned_data,
             },
             status=result.status_code
         )

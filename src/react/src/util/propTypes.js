@@ -55,8 +55,8 @@ export const registrationFormInputHandlersPropType = shape(
 
 export const userPropType = shape({
     isAnon: bool.isRequired,
-    email: string.isRequired,
-    id: number.isRequired,
+    email: string,
+    id: number,
     contributor_id: number,
     is_superuser: bool.isRequired,
     is_staff: bool.isRequired,
