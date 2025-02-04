@@ -2,6 +2,8 @@ from typing import Tuple, List
 
 from django.http import QueryDict
 from django.db import transaction
+from api.serializers.v1.production_location_serializer \
+    import ProductionLocationSerializer
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
@@ -149,6 +151,19 @@ class ProductionLocations(ViewSet):
             raise ServiceUnavailableException(
                 APIV1CommonErrorMessages.MAINTENANCE_MODE
             )
+
+        serializer = ProductionLocationSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            errors = (
+                serializer.errors['non_field_errors']
+                if 'non_field_errors' in serializer.errors
+                else serializer.errors
+            )
+            return Response({
+                'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
+                'errors': errors},
+                            status=status.HTTP_422_UNPROCESSABLE_ENTITY)
         if not isinstance(request.data, dict):
             data_type = type(request.data).__name__
             specific_error = APIV1LocationContributionErrorMessages \
@@ -195,6 +210,19 @@ class ProductionLocations(ViewSet):
             raise ServiceUnavailableException(
                 APIV1CommonErrorMessages.MAINTENANCE_MODE
             )
+        serializer = ProductionLocationSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            print('!!!!', serializer.errors)
+            errors = (
+                serializer.errors['non_field_errors']
+                if 'non_field_errors' in serializer.errors
+                else serializer.errors
+            )
+            return Response({
+                    'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
+                    'errors': errors},
+                    status=status.HTTP_422_UNPROCESSABLE_ENTITY)
         if not Facility.objects.filter(id=pk).exists():
             specific_error = APIV1CommonErrorMessages.LOCATION_NOT_FOUND
             return Response(
