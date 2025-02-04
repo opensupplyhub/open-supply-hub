@@ -21,8 +21,6 @@ rds_database_identifier = "opensupplyhub-enc-dev"
 rds_database_name = "opensupplyhub"
 rds_multi_az = false
 rds_storage_encrypted = true
-rds_allow_major_version_upgrade = true
-rds_apply_immediately = true
 
 app_ecs_desired_count = "1"
 app_ecs_deployment_min_percent = "100"

@@ -3,6 +3,39 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 1.30.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: February 22, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* *Describe migrations here.*
+
+#### Schema changes
+* *Describe schema changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* [OSDEV-1515](https://opensupplyhub.atlassian.net/browse/OSDEV-1515) - Removed `rds_allow_major_version_upgrade` and `rds_apply_immediately` from the environment tfvars files (e.g., terraform-production.tfvars) to set them to `false` again, as the default values in `/deployment/terraform/variables.tf` are `false`. This is necessary to prevent unintended PostgreSQL major version upgrades since the target PostgreSQL 16.3 version has been reached. 
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 1.29.0
 
 ## Introduction
@@ -18,15 +51,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * 0164_refresh_pg_statistic_and_upgrade_postgres_extensions_after_db_upgrade_to_postgres_16.py - This migration refreshes the `pg_statistic` table after the upgrade to PostgreSQL 16 and upgrades the pg_trgm extension to version 1.6. The SQL script within the migration that upgrades the DB extension versions handles previously failure cases where a higher version is available for upgrade or where the extension is not installed.
 * 0165_add_moderationevent_action_type.py - This migration added a new field, `action_type`, to the existing table `api_moderationevent`.
 
-#### Schema changes
-* *Describe schema changes here.*
-
 ### Code/API changes
 * [OSDEV-1581](https://opensupplyhub.atlassian.net/browse/OSDEV-1581) - Added support for Geohex grid aggregation to the GET `/api/v1/production-locations/` endpoint. To receive the Geohex grid aggregation list in the response, it is necessary to pass the `aggregation` parameter with a value of `geohex_grid` and optionally specify `geohex_grid_precision` with an integer between 0 and 15. If `geohex_grid_precision` is not defined, the default value of 5 will be used.
 * [OSDEV-1558](https://opensupplyhub.atlassian.net/browse/OSDEV-1558) - Updated Logstash mapping configuration to handle the new `action_type` field for OpenSearch.
-
-### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
 
 ### Bugfix
 * Some of the resources related to the Development AWS environment still have the `stg` prefix, which can be confusing since we also have a Staging environment with the same prefix. To clarify the resource names, including the database instance, the prefix has been updated from `stg` to `dev` for the development environment.
@@ -615,9 +642,6 @@ Note: This instruction updates item 3 of the ['Release to Production and Sandbox
 * [OSDEV-705](https://opensupplyhub.atlassian.net/browse/OSDEV-705) - Created an additional `RowCoordinatesSerializer` in the ContriCleaner to handle coordinate values ("lat" and "lng"). Moved the conversion of "lat" and "lng" into float point numbers from `FacilityListViewSet` to this serializer.
 * Introduced a general format for all Python logs by updating the Django `LOGGING` constant. Disabled propagation for the `django` logger to the `root` logger to avoid log duplication. Removed unnecessary calls to the `basicConfig` method since only the configuration defined in the `LOGGING` constant in the settings.py file is considered valid by the current Django app.
 
-### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
-
 ### Bugfix
 * [OSDEV-705](https://opensupplyhub.atlassian.net/browse/OSDEV-705) - Fixed the error “could not convert string to float” that occurred when a list contained columns for “lat” and “lng” and only some of the rows in these columns had data. As a result, rows are processed regardless of whether the values for “lat” and “lng” are present and valid, invalid, or empty.
 
@@ -631,9 +655,6 @@ Note: This instruction updates item 3 of the ['Release to Production and Sandbox
 * [OSDEV-272](https://opensupplyhub.atlassian.net/browse/OSDEV-272) - Facility Claims Page. Implement ascending/descending and alphabetic sort on FE. Applied proper sorting for lower case/upper case/accented strings.
 * [OSDEV-1036](https://opensupplyhub.atlassian.net/browse/OSDEV-1036) - Claims. Add a sortable "claim decision" column to claims admin page.
 * [OSDEV-1053](https://opensupplyhub.atlassian.net/browse/OSDEV-1053) - Updated email notification about the claim submission.
-
-### Release instructions:
-* *Provide release instructions here.*
 
 
 ## Release 1.15.0
@@ -1060,6 +1081,7 @@ Updated existing users api_apilimit records renewal_period value.
 ### Code/API changes
 * [OSDEV-714](https://opensupplyhub.atlassian.net/browse/OSDEV-714) - `select_for_update` and `get_or_create` have been implemented in the `retrieve_cached_tile` function to ensure that if another thread attempts to `select_for_update()`, it will block at the `get_or_create()` until the first thread's transaction commits. The `get_tile` function, which serves as an API endpoint handler for tile generation, was implemented as an atomic transaction to facilitate the use of `select_for_update()` and maintain the lock until the end of the transaction. This approach helps to prevent crashes from parallel requests attempting to create a cache record with the same primary key, corresponding to the full URL path.
 * [OSDEV-711](https://opensupplyhub.atlassian.net/browse/OSDEV-711) - Make JS code related to load testing for tile generation more universal so that they can work with the HAR file provided by the developer. For that, the `ZOOM_HAR_PATH` environment variable was introduced. More test cases for tile generation were added to test the environment close to production, focusing on densely saturated regions with facilities, such as China and India. The README.md file for the load tests was updated to reflect the changes made.
+
 
 ## Release 1.7.0
 
