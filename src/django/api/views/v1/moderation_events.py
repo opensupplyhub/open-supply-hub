@@ -136,13 +136,15 @@ class ModerationEvents(ViewSet):
         methods=['POST'],
         url_path='production-locations',
     )
-    def add_production_location(self, _, pk=None):
+    def add_production_location(self, request, pk=None):
         ModerationEventsService.validate_uuid(pk)
 
         event = ModerationEventsService.fetch_moderation_event_by_uuid(pk)
         ModerationEventsService.validate_moderation_status(event.status)
 
-        add_production_location_processor = AddProductionLocation(event)
+        add_production_location_processor = AddProductionLocation(
+            event, request.user
+        )
 
         try:
             item = add_production_location_processor.process_moderation_event()
@@ -158,7 +160,7 @@ class ModerationEvents(ViewSet):
         methods=['PATCH'],
         url_path='production-locations/(?P<os_id>[^/.]+)',
     )
-    def update_production_location(self, _, pk=None, os_id=None):
+    def update_production_location(self, request, pk=None, os_id=None):
         ModerationEventsService.validate_uuid(pk)
 
         event = ModerationEventsService.fetch_moderation_event_by_uuid(pk)
@@ -168,7 +170,7 @@ class ModerationEvents(ViewSet):
         ModerationEventsService.validate_location_os_id(os_id)
 
         update_production_location_processor = UpdateProductionLocation(
-            event, os_id
+            event, request.user, os_id
         )
 
         try:
