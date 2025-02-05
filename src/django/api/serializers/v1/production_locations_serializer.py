@@ -20,6 +20,8 @@ from api.serializers.v1.opensearch_common_validators. \
 from api.serializers.v1.opensearch_common_validators. \
     coordinates_validator import CoordinatesValidator
 from api.constants import APIV1CommonErrorMessages
+from api.serializers.v1.opensearch_common_validators.\
+    geo_bounding_box_validator import GeoBoundingBoxValidator
 
 
 class ProductionLocationsSerializer(Serializer):
@@ -56,6 +58,7 @@ class ProductionLocationsSerializer(Serializer):
         max_value=15,
         required=False,
     )
+    geo_bounding_box = CharField(required=False)
 
     def validate(self, data):
         validators = [
@@ -64,6 +67,7 @@ class ProductionLocationsSerializer(Serializer):
             PercentOfFemaleWorkersValidator(),
             CoordinatesValidator(),
             CountryValidator(),
+            GeoBoundingBoxValidator(),
         ]
 
         error_list_builder = OpenSearchErrorListBuilder(validators)
