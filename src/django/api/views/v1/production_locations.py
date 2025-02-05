@@ -9,6 +9,8 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
 from waffle import switch_is_active
+from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ErrorDetail
 
 from api.views.v1.utils import (
     serialize_params,
@@ -154,15 +156,12 @@ class ProductionLocations(ViewSet):
 
         serializer = ProductionLocationSerializer(data=request.data)
 
-        if not serializer.is_valid():
-            errors = (
-                serializer.errors['non_field_errors']
-                if 'non_field_errors' in serializer.errors
-                else serializer.errors
-            )
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
             return Response({
                 'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
-                'errors': errors},
+                'errors': self.transform_errors(e.detail)},
                             status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
         if not isinstance(request.data, dict):
@@ -212,17 +211,15 @@ class ProductionLocations(ViewSet):
             raise ServiceUnavailableException(
                 APIV1CommonErrorMessages.MAINTENANCE_MODE
             )
+
         serializer = ProductionLocationSerializer(data=request.data)
 
-        if not serializer.is_valid():
-            errors = (
-                serializer.errors['non_field_errors']
-                if 'non_field_errors' in serializer.errors
-                else serializer.errors
-            )
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
             return Response({
                 'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
-                'errors': errors},
+                'errors': self.transform_errors(e.detail)},
                             status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
         if not Facility.objects.filter(id=pk).exists():
@@ -273,3 +270,24 @@ class ProductionLocations(ViewSet):
             },
             status=result.status_code
         )
+
+    def transform_errors(self, serializer_errors):
+        if 'non_field_errors' in serializer_errors:
+            return {
+                'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
+                'errors': serializer_errors['non_field_errors']}
+        else:
+            formatted_errors = []
+            for key, value in serializer_errors.items():
+                if isinstance(value, list):  # If errors are directly in a list
+                    for error in value:
+                        if isinstance(error, ErrorDetail):
+                            formatted_errors.append({"field": key,
+                                                     "detail": str(error)})
+
+                elif isinstance(value, dict):  # If errors are in a nested dict
+                    nested_errors = self.transform_errors(value)
+                    formatted_errors.append({"field": key,
+                                            "errors": nested_errors})
+
+            return formatted_errors

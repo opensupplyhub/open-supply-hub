@@ -3,6 +3,37 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.0.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: February 22, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* *Describe migrations here.*
+
+#### Schema changes
+* *Describe schema changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* [OSDEV-1549](https://opensupplyhub.atlassian.net/browse/OSDEV-1549) - Added Django serialization check for all fields from the request body based on [the API specification](https://opensupplyhub.github.io/open-supply-hub-api-docs/) for POST and PATCH v1/production-locations endpoint, and appropriate errors return according to the request body schema in the API spec.
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* *Provide release instructions here.*
+
+
 ## Release 1.29.0
 
 ## Introduction

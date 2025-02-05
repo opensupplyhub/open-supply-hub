@@ -10,25 +10,19 @@ from rest_framework import serializers
 class ProductionLocationSerializer(serializers.Serializer):
     name = serializers.CharField(
         required=True,
-        max_length=255,
         error_messages={
-            'max_length': 'Name cannot exceed 100 characters!',
             'required': 'Name is a required field!',
             'invalid': 'Name must be a valid string.'
             },)
     address = serializers.CharField(
         required=True,
-        max_length=255,
         error_messages={
-            'max_length': 'Address cannot exceed 100 characters!',
             'required': 'Address is a required field!',
             'invalid': 'Address must be a valid string.'
             },)
     country = serializers.CharField(
         required=True,
-        max_length=100,
         error_messages={
-            'max_length': 'Country cannot exceed 100 characters!',
             'required': 'Country is a required field!',
             'invalid': 'Country must be a valid string.'
             },)
@@ -59,7 +53,7 @@ class ProductionLocationSerializer(serializers.Serializer):
     coordinates = CoordinatesSerializer(
         required=False,
         error_messages={
-            'required': 'Lat and Lng is a required fields!',
+            'required': 'Lat and Lng are required fields!',
             'invalid': 'Coordinates must be a valid geo point.'
         },)
 
