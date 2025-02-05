@@ -15,8 +15,8 @@ class StringOrListField(serializers.Field):
             if not data or any(
                 not isinstance(item, str) or item == "" for item in data
             ):
-                self.raise_error("Field must be a non-empty list of valid \
-                                 strings.")
+                self.raise_error(('Field must be a non-empty list of valid '
+                                  'strings.'))
             return data
 
         self.raise_error("Field must be a string or a list of strings.")
