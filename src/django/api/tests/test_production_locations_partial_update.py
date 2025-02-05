@@ -196,9 +196,10 @@ class TestProductionLocationsPartialUpdate(APITestCase):
             'The request body is invalid.'
         )
         expected_specific_error = (
-            'Invalid data. Expected a dictionary (object), but got list.'
+            "The request body is invalid."
         )
-        expected_error_field = 'non_field_errors'
+        expected_error_field = ('Invalid data. Expected a dictionary,'
+                                ' but got list.')
 
         response = self.client.patch(
             self.url,
@@ -213,8 +214,8 @@ class TestProductionLocationsPartialUpdate(APITestCase):
 
         general_error = response_body_dict['detail']
         errors_list_length = len(response_body_dict['errors'])
-        specific_error = response_body_dict['errors'][0]['detail']
-        error_field = response_body_dict['errors'][0]['field']
+        specific_error = response_body_dict['detail']
+        error_field = response_body_dict['errors'][0]
         self.assertEqual(general_error, expected_general_error)
         self.assertEqual(errors_list_length, 1)
         self.assertEqual(specific_error, expected_specific_error)
@@ -283,23 +284,18 @@ class TestProductionLocationsPartialUpdate(APITestCase):
         mock_get.return_value.json.return_value = geocoding_data
 
         expected_response_body = {
-            'detail': 'The request body is invalid.',
-            'errors': [
-                {
-                    'field': 'sector',
-                    'detail': ('Expected value for sector to be a string or a '
-                               "list of strings but got {'some_key': 1135}.")
-                },
-                {
-                    'field': 'location_type',
-                    'detail': (
-                        'Expected value for location_type to be a '
-                        'string or a list of strings but got '
-                        "{'some_key': 1135}."
-                    )
-                }
-            ]
-        }
+            "detail": "The request body is invalid.",
+            "errors": {
+                "sector": ["Field must be a string or a list of strings."],
+                "location_type": [
+                    "Field must be a string or a list of strings."],
+                "number_of_workers": {
+                    "min": [
+                        "Ensure this value is greater than or equal to 1."],
+                    "max": ["Ensure this value is greater than or equal to 1."]
+                    }
+                    }
+                    }
         initial_moderation_event_count = ModerationEvent.objects.count()
 
         invalid_req_body = json.dumps({

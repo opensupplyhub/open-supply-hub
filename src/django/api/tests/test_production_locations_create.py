@@ -136,9 +136,10 @@ class TestProductionLocationsCreate(APITestCase):
             'The request body is invalid.'
         )
         expected_specific_error = (
-            'Invalid data. Expected a dictionary (object), but got list.'
+            'The request body is invalid.'
         )
-        expected_error_field = 'non_field_errors'
+        expected_error_field = ('Invalid data. Expected a dictionary,'
+                                ' but got list.')
 
         response = self.client.post(
             self.url,
@@ -153,8 +154,8 @@ class TestProductionLocationsCreate(APITestCase):
 
         general_error = response_body_dict['detail']
         errors_list_length = len(response_body_dict['errors'])
-        specific_error = response_body_dict['errors'][0]['detail']
-        error_field = response_body_dict['errors'][0]['field']
+        specific_error = response_body_dict['detail']
+        error_field = response_body_dict['errors'][0]
         self.assertEqual(general_error, expected_general_error)
         self.assertEqual(errors_list_length, 1)
         self.assertEqual(specific_error, expected_specific_error)
