@@ -1,3 +1,4 @@
+import json
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 
 
@@ -41,6 +42,7 @@ class OpenSearchQueryDirector:
         self.__process_size(query_params)
         self.__process_multi_match(query_params)
         self.__process_aggregation(query_params)
+        self.__process_filter(query_params)
 
         return self.__builder.get_final_query_body()
 
@@ -131,3 +133,16 @@ class OpenSearchQueryDirector:
 
         if aggregation and hasattr(self.__builder, 'add_aggregations'):
             self.__builder.add_aggregations(aggregation, geohex_grid_precision)
+
+    def __process_filter(self, query_params):
+        geo_bounding_box_str = query_params.get(
+            V1_PARAMETERS_LIST.GEO_BOUNDING_BOX
+        )
+        geo_bounding_box = (
+            json.loads(geo_bounding_box_str) if geo_bounding_box_str else None
+        )
+
+        if geo_bounding_box and hasattr(
+            self.__builder, 'add_geo_bounding_box'
+        ):
+            self.__builder.add_geo_bounding_box(geo_bounding_box)
