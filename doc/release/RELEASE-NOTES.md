@@ -50,7 +50,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
   All other traffic will be redirected to the React application.
 
-
 ### Bugfix
 * *Describe bugfix here.*
 
