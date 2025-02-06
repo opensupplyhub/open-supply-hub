@@ -135,14 +135,20 @@ class OpenSearchQueryDirector:
             self.__builder.add_aggregations(aggregation, geohex_grid_precision)
 
     def __process_filter(self, query_params):
-        geo_bounding_box_str = query_params.get(
-            V1_PARAMETERS_LIST.GEO_BOUNDING_BOX
+        top = query_params.get(
+            V1_PARAMETERS_LIST.GEO_BOUNDING_BOX + '[top]'
         )
-        geo_bounding_box = (
-            json.loads(geo_bounding_box_str) if geo_bounding_box_str else None
+        right = query_params.get(
+            V1_PARAMETERS_LIST.GEO_BOUNDING_BOX + '[right]'
+        )
+        bottom = query_params.get(
+            V1_PARAMETERS_LIST.GEO_BOUNDING_BOX + '[bottom]'
+        )
+        left = query_params.get(
+            V1_PARAMETERS_LIST.GEO_BOUNDING_BOX + '[left]'
         )
 
-        if geo_bounding_box and hasattr(
-            self.__builder, 'add_geo_bounding_box'
-        ):
-            self.__builder.add_geo_bounding_box(geo_bounding_box)
+        if top and right and bottom and left:
+            self.__builder.add_geo_bounding_box(
+                top, right, bottom, left
+            )
