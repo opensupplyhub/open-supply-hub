@@ -1,4 +1,3 @@
-import json
 from api.serializers.v1.opensearch_validation_interface import (
     OpenSearchValidationInterface,
 )
@@ -7,104 +6,76 @@ from api.serializers.v1.opensearch_validation_interface import (
 class GeoBoundingBoxValidator(OpenSearchValidationInterface):
     def validate_opensearch_params(self, data):
         errors = []
-        geo_bounding_box_str = data.get('geo_bounding_box')
-        geo_bounding_box = (
-            json.loads(geo_bounding_box_str) if geo_bounding_box_str else None
-        )
 
-        if geo_bounding_box:
-            required_keys = ['top_right', 'bottom_left']
-            for key in required_keys:
-                if key not in geo_bounding_box:
+        top = data.get('geo_bounding_box_top')
+        left = data.get('geo_bounding_box_left')
+        bottom = data.get('geo_bounding_box_bottom')
+        right = data.get('geo_bounding_box_right')
+
+        bounding_box_fields = [top, left, bottom, right]
+
+        if any(bounding_box_fields) and not all(bounding_box_fields):
+            errors.append(
+                {
+                    "field": "geo_bounding_box",
+                    "detail": (
+                        "All of the following fields are required: "
+                        "`geo_bounding_box_top`, `geo_bounding_box_left`, "
+                        "`geo_bounding_box_bottom`, `geo_bounding_box_right`."
+                    ),
+                }
+            )
+
+        if all(bounding_box_fields):
+            for coord in ['top', 'left', 'bottom', 'right']:
+                value = data.get(f'geo_bounding_box_{coord}')
+
+                if not value:
                     errors.append(
                         {
-                            "field": "geo_bounding_box",
+                            "field": "geo_bounding_box_{coord}",
+                            "detail": (f"Missing geo_bounding_box_{coord}."),
+                        }
+                    )
+
+                if coord in ['top', 'bottom'] and not (-90 <= value <= 90):
+                    errors.append(
+                        {
+                            "field": f'geo_bounding_box_{coord}',
                             "detail": (
-                                "The value must be a valid object with "
-                                "`top_right` and `bottom_left` properties."
+                                f"The 'geo_bounding_box_{coord}' must be "
+                                "between -90 and 90."
                             ),
                         }
                     )
 
-                if not isinstance(geo_bounding_box[key], dict):
+                if coord in ['left', 'right'] and not (-180 <= value <= 180):
                     errors.append(
                         {
-                            "field": "geo_bounding_box",
+                            "field": "geo_bounding_box_{coord}",
                             "detail": (
-                                "The value must be a valid object with "
-                                "`lat` and `lon` properties."
+                                f"The 'geo_bounding_box_{coord}' must be "
+                                "between -180 and 180."
                             ),
                         }
                     )
 
-                for coord in ['lat', 'lon']:
-                    if coord not in geo_bounding_box[key]:
-                        errors.append(
-                            {
-                                "field": "geo_bounding_box",
-                                "detail": (f"Missing {coord} in {key}."),
-                            }
-                        )
-
-                    try:
-                        value = float(geo_bounding_box[key][coord])
-                    except ValueError:
-                        errors.append(
-                            {
-                                "field": "geo_bounding_box",
-                                "detail": (
-                                    f"The '{coord}' in '{key}' must be "
-                                    "a number."
-                                ),
-                            }
-                        )
-
-                    if coord == 'lat' and not (-90 <= value <= 90):
-                        errors.append(
-                            {
-                                "field": "geo_bounding_box",
-                                "detail": (
-                                    f"The 'lat' in '{key}' must be between "
-                                    "-90 and 90."
-                                ),
-                            }
-                        )
-
-                    if coord == 'lon' and not (-180 <= value <= 180):
-                        errors.append(
-                            {
-                                "field": "geo_bounding_box",
-                                "detail": (
-                                    f"The 'lon' in '{key}' must be between "
-                                    "-180 and 180."
-                                ),
-                            }
-                        )
-
-            if (
-                geo_bounding_box['top_right']['lat']
-                < geo_bounding_box['bottom_left']['lat']
-            ):
+            if top <= bottom:
                 errors.append(
                     {
-                        "field": "geo_bounding_box",
+                        "field": "geo_bounding_box_top",
                         "detail": (
-                            "Top right latitude must be greater than "
-                            "bottom left latitude."
+                            "Top latitude must be greater than bottom latitude."
                         ),
                     }
                 )
 
-            if (
-                geo_bounding_box['top_right']['lon']
-                < geo_bounding_box['bottom_left']['lon']
-            ):
+            if right <= left:
                 errors.append(
                     {
-                        "field": "geo_bounding_box",
+                        "field": "geo_bounding_box_right",
                         "detail": (
-                            "Top right longitude must be greater than "
-                            "bottom left longitude."
+                            "Right longitude must be greater than left longitude."
                         ),
                     }
                 )
