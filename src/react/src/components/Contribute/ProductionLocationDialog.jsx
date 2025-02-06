@@ -71,17 +71,10 @@ const getStatusBadgeClass = (classes, status) => {
     }
 };
 
-const getTooltipText = (claimStatus, moderationStatus) => {
-    if (moderationStatus === MODERATION_STATUSES_ENUM.PENDING) {
-        return "You'll be able to claim the location after the moderation is done.";
-    }
-
-    if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED) {
-        return 'Production location has been claimed already.';
-    }
-
-    return 'Claim is not available.';
-};
+const getTooltipText = claimStatus =>
+    claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED
+        ? 'Production location has been claimed already.'
+        : 'Claim is not available.';
 
 const ProductionLocationDialog = ({
     innerWidth,
@@ -126,8 +119,7 @@ const ProductionLocationDialog = ({
     const fieldSetNumber = round(size(filteredAdditionalFields) / 2);
 
     const isClaimable =
-        claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED &&
-        moderationStatus !== MODERATION_STATUSES_ENUM.PENDING;
+        claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED;
 
     const statusLabel = startCase(toLower(moderationStatus));
 

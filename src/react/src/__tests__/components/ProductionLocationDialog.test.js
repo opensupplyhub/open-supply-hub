@@ -105,7 +105,7 @@ describe('ProductionLocationDialog', () => {
     });
 
     test.each([
-        ['PENDING', 'unclaimed', true],
+        ['PENDING', 'unclaimed', false],
         ['PENDING', 'claimed', true],
         ['REJECTED', 'claimed', true],
         ['REJECTED', 'unclaimed', false],
