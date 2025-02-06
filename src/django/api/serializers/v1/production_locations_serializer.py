@@ -58,7 +58,10 @@ class ProductionLocationsSerializer(Serializer):
         max_value=15,
         required=False,
     )
-    geo_bounding_box = CharField(required=False)
+    geo_bounding_box_top = FloatField(required=False)
+    geo_bounding_box_left = FloatField(required=False)
+    geo_bounding_box_bottom = FloatField(required=False)
+    geo_bounding_box_right = FloatField(required=False)
 
     def validate(self, data):
         validators = [
