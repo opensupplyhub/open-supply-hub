@@ -116,7 +116,10 @@ class ModerationEvents(ViewSet):
         event = ModerationEventsService.fetch_moderation_event_by_uuid(pk)
 
         serializer = ModerationEventUpdateSerializer(
-            event, data=request.data, partial=True
+            instance=event,
+            data=request.data,
+            user=request.user,
+            partial=True
         )
 
         if not serializer.is_valid():

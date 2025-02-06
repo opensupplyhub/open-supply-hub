@@ -127,7 +127,7 @@ class ModerationEvent(models.Model):
         help_text='Type of moderation action.'
     )
 
-    action_perform_by = models.OneToOneField(
+    action_perform_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         null=True,

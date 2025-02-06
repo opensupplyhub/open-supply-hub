@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='moderationevent',
             name='action_perform_by',
-            field=models.OneToOneField(help_text='Linked user id who performed the action.', null=True, blank=True, on_delete=django.db.models.deletion.SET_NULL, related_name='moderation_event_action_perform_by', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(help_text='Linked user id who performed the action.', null=True, blank=True, on_delete=django.db.models.deletion.SET_NULL, related_name='moderation_event_action_perform_by', to=settings.AUTH_USER_MODEL),
         ),
     ]
