@@ -256,3 +256,27 @@ class TestProductionLocationsQueryBuilder(TestCase):
             aggregation
         )
         self.assertNotIn('aggregations', self.builder.query_body)
+
+    def test_add_geo_bounding_box(self):
+        top = 40.7128
+        left = -74.0060
+        bottom = 40.7128
+        right = -74.0060
+        self.builder.add_geo_bounding_box(top, right, bottom, left)
+        expected = {
+            'geo_bounding_box': {
+                'coordinates': {
+                    'top': top,
+                    'left': left,
+                    'bottom': bottom,
+                    'right': right,
+                }
+            }
+        }
+        self.assertIn(
+            'filter', self.builder.query_body['query']['bool']
+        )
+        self.assertEqual(
+            expected,
+            self.builder.query_body['query']['bool']['filter']
+        )
