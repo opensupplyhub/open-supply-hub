@@ -7,77 +7,59 @@ class GeoBoundingBoxValidator(OpenSearchValidationInterface):
     def validate_opensearch_params(self, data):
         errors = []
 
-        top = data.get('geo_bounding_box_top')
-        left = data.get('geo_bounding_box_left')
-        bottom = data.get('geo_bounding_box_bottom')
-        right = data.get('geo_bounding_box_right')
+        fields = ['top', 'left', 'bottom', 'right']
+        coords = {
+            field: data.get(f'geo_bounding_box_{field}') for field in fields
+        }
 
-        bounding_box_fields = [top, left, bottom, right]
-
-        if any(bounding_box_fields) and not all(bounding_box_fields):
+        if any(value is not None for value in coords.values()) and not all(
+            value is not None for value in coords.values()
+        ):
             errors.append(
                 {
                     "field": "geo_bounding_box",
-                    "detail": (
-                        "All of the following fields are required: "
-                        "`geo_bounding_box_top`, `geo_bounding_box_left`, "
-                        "`geo_bounding_box_bottom`, `geo_bounding_box_right`."
-                    ),
+                    "detail": "All coordinates (top, left, bottom, right) "
+                    "must be provided.",
                 }
             )
 
-        if all(bounding_box_fields):
-            for coord in ['top', 'left', 'bottom', 'right']:
-                value = data.get(f'geo_bounding_box_{coord}')
+            return errors
 
-                if not value:
-                    errors.append(
-                        {
-                            "field": "geo_bounding_box_{coord}",
-                            "detail": (f"Missing geo_bounding_box_{coord}."),
-                        }
-                    )
+        if not any(value is not None for value in coords.values()):
+            return errors
 
-                if coord in ['top', 'bottom'] and not (-90 <= value <= 90):
-                    errors.append(
-                        {
-                            "field": f'geo_bounding_box_{coord}',
-                            "detail": (
-                                f"The 'geo_bounding_box_{coord}' must be "
-                                "between -90 and 90."
-                            ),
-                        }
-                    )
+        range_limits = {
+            'top': (-90, 90),
+            'bottom': (-90, 90),
+            'left': (-180, 180),
+            'right': (-180, 180),
+        }
 
-                if coord in ['left', 'right'] and not (-180 <= value <= 180):
-                    errors.append(
-                        {
-                            "field": "geo_bounding_box_{coord}",
-                            "detail": (
-                                f"The 'geo_bounding_box_{coord}' must be "
-                                "between -180 and 180."
-                            ),
-                        }
-                    )
+        for field, (min_val, max_val) in range_limits.items():
+            value = coords[field]
 
-            if top <= bottom:
+            if value < min_val or value > max_val:
                 errors.append(
                     {
-                        "field": "geo_bounding_box_top",
-                        "detail": (
-                            "Top latitude must be greater than bottom latitude."
-                        ),
+                        "field": "geo_bounding_box",
+                        "detail": f"The {field} value must be between {min_val} and {max_val}.",
                     }
                 )
 
-            if right <= left:
-                errors.append(
-                    {
-                        "field": "geo_bounding_box_right",
-                        "detail": (
-                            "Right longitude must be greater than left longitude."
-                        ),
-                    }
-                )
+        if coords['top'] <= coords['bottom']:
+            errors.append(
+                {
+                    "field": "geo_bounding_box",
+                    "detail": "The top must be greater than bottom.",
+                }
+            )
+
+        if coords['right'] <= coords['left']:
+            errors.append(
+                {
+                    "field": "geo_bounding_box",
+                    "detail": "The right must be greater than left.",
+                }
+            )
 
         return errors
