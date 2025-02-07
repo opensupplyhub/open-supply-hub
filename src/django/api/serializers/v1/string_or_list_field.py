@@ -8,18 +8,21 @@ class StringOrListField(serializers.Field):
     """
     def to_internal_value(self, data):
         if isinstance(data, str):
-            return [data] if data else self.raise_error("Field can't be an \
-                                                        empty string.")
+            error = f"Field {self.field_name} can't be an empty string."
+
+            return [data] if data else self.raise_error(error)
 
         if isinstance(data, list):
             if not data or any(
                 not isinstance(item, str) or item == "" for item in data
             ):
-                self.raise_error(('Field must be a non-empty list of valid '
-                                  'strings.'))
+                error = (f"Field {self.field_name} must be a non-empty list "
+                         "of valid strings.")
+                self.raise_error(error)
             return data
-
-        self.raise_error("Field must be a string or a list of strings.")
+        error = (f"Field {self.field_name} must be a string or a "
+                 "list of strings.")
+        self.raise_error(error)
 
     def to_representation(self, value):
         if isinstance(value, list) and len(value) == 1:

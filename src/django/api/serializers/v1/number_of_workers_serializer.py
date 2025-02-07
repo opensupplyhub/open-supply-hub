@@ -4,10 +4,16 @@ from rest_framework import serializers
 class NumberOfWorkersSerializer(serializers.Serializer):
     min = serializers.IntegerField(
         min_value=1,
-        required=True)
+        required=True,
+        error_messages={
+            'required': 'The min field is required!',
+        })
     max = serializers.IntegerField(
         min_value=1,
-        required=True)
+        required=True,
+        error_messages={
+            'required': 'The max field is required!',
+        })
 
     def validate(self, data):
         """Ensure min is less than max"""
@@ -20,7 +26,10 @@ class NumberOfWorkersSerializer(serializers.Serializer):
             and min_value >= max_value
         ):
             raise serializers.ValidationError(
-                {"min": "Min must be less than Max."}
+                {"min": "The min field must be less than max filed."}
             )
 
         return data
+
+    def validate_object(value):
+        return isinstance(value, dict)

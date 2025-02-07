@@ -1,6 +1,6 @@
 import logging
 import copy
-from typing import Dict, List
+from typing import Dict, List, Optional, Any
 
 from rest_framework import status
 
@@ -12,7 +12,14 @@ from api.moderation_event_actions.creation.location_contribution \
     .processors.contribution_processor import ContributionProcessor
 from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
     import CreateModerationEventDTO
-from api.constants import APIV1CommonErrorMessages
+from api.constants import (
+    APIV1CommonErrorMessages,
+    NON_FIELD_ERRORS_KEY
+)
+from django.api.serializers.v1.production_location_schema_serializer \
+    import ProductionLocationSchemaSerializer
+from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ErrorDetail
 
 
 log = logging.getLogger(__name__)
@@ -26,6 +33,23 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         cc_ready_data = self.__extract_data_for_contri_cleaner(
             event_dto.raw_data
         )
+
+        serializer = ProductionLocationSchemaSerializer(data=cc_ready_data)
+
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            log.error(
+                f'[API V1 Location Upload] Internal ContriCleaner Error: {e}'
+            )
+            event_dto.errors = {
+                'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
+                'errors': ProductionLocationDataProcessor.__transform_errors(
+                    serializer.errors)}
+            event_dto.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+
+            return event_dto
+
         mapped_data = self.__map_fields_to_supported_cc_schema(cc_ready_data)
 
         contri_cleaner = ContriCleaner(mapped_data, SectorCache())
@@ -155,3 +179,37 @@ class ProductionLocationDataProcessor(ContributionProcessor):
                 field_mapping_config[field_to_replace]
             )
         }
+
+    @staticmethod
+    def __transform_errors(serializer_errors: Dict) -> List[Dict]:
+        formatted_errors = []
+
+        for field, errors in serializer_errors.items():
+            if isinstance(errors, list):
+                for err in errors:
+                    extracted = ProductionLocationDataProcessor.\
+                        __extract_error(field, err)
+                    if extracted:
+                        formatted_errors.append(extracted)
+            elif isinstance(errors, dict):
+                if NON_FIELD_ERRORS_KEY in errors and len(errors) == 1:
+                    extracted = ProductionLocationDataProcessor.\
+                        __extract_error(field, errors[NON_FIELD_ERRORS_KEY][0])
+                    if extracted:
+                        formatted_errors.append(extracted)
+                else:
+                    nested = ProductionLocationDataProcessor.\
+                        __transform_errors(errors)
+                    formatted_errors.append({"field": field, "errors": nested})
+
+        return formatted_errors
+
+    @staticmethod
+    def __extract_error(field: str, error: Any) -> Optional[Dict]:
+        if isinstance(error, ErrorDetail):
+            return {"field": field,
+                    "detail": str(error)}
+        if isinstance(error, dict) and NON_FIELD_ERRORS_KEY in error:
+            return {"field": field,
+                    "detail": str(error[NON_FIELD_ERRORS_KEY][0])}
+        return None
