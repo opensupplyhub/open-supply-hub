@@ -138,17 +138,19 @@ class OpenSearchQueryDirector:
         top = query_params.get(
             V1_PARAMETERS_LIST.GEO_BOUNDING_BOX + '[top]'
         )
-        right = query_params.get(
-            V1_PARAMETERS_LIST.GEO_BOUNDING_BOX + '[right]'
+        left = query_params.get(
+            V1_PARAMETERS_LIST.GEO_BOUNDING_BOX + '[left]'
         )
         bottom = query_params.get(
             V1_PARAMETERS_LIST.GEO_BOUNDING_BOX + '[bottom]'
         )
-        left = query_params.get(
-            V1_PARAMETERS_LIST.GEO_BOUNDING_BOX + '[left]'
+        right = query_params.get(
+            V1_PARAMETERS_LIST.GEO_BOUNDING_BOX + '[right]'
         )
 
-        if top and right and bottom and left:
+        if top and left and bottom and right and hasattr(
+            self.__builder, 'add_geo_bounding_box'
+        ):
             self.__builder.add_geo_bounding_box(
-                top, right, bottom, left
+                top, left, bottom, right
             )

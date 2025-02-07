@@ -130,14 +130,14 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
 
         return self.query_body
 
-    def add_geo_bounding_box(self, top, right, bottom, left):
+    def add_geo_bounding_box(self, top, left, bottom, right):
         self.query_body['query']['bool']['filter'] = {
             'geo_bounding_box': {
                 'coordinates': {
                     'top': top,
-                    'right': right,
+                    'left': left,
                     'bottom': bottom,
-                    'left': left
+                    'right': right,
                 }
             }
         }
