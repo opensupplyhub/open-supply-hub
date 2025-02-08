@@ -118,3 +118,40 @@ class ProductionLocationsTest(BaseAPITest):
         self.assertIsNotNone(
             result['aggregations']['geohex_grid'][0]['doc_count']
         )
+
+    def test_production_locations_geo_bounding_box(self):
+        doc = {
+            "sector": [
+                "Apparel"
+            ],
+            "address": "Test Address 2",
+            "name": "Test Name 2",
+            "country": {
+                "alpha_2": "US"
+            },
+            "os_id": "US2020052SV22KJ",
+            "coordinates": {
+                "lon": -102.378162,
+                "lat": 40.1166236
+            },
+        }
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=doc,
+            id=self.open_search_client.count()
+        )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
+
+        query = "?geo_bounding_box[top]=41&geo_bounding_box[left]="
+        "-103&geo_bounding_box[bottom]=39&geo_bounding_box[right]=-101"
+        response = requests.get(
+                f"{self.root_url}/api/v1/production-locations/{query}",
+                headers=self.basic_headers,
+            )
+
+        result = response.json()
+        self.assertIsNotNone(result['data'])
+        self.assertEqual(len(result['data']), 1)
+        self.assertEqual(result['data'][0]['os_id'], 'US2020052SV22KJ')

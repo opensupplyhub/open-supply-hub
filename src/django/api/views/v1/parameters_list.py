@@ -33,3 +33,4 @@ class V1_PARAMETERS_LIST:
     DATE_LT = 'date_lt'
     AGGREGATION = 'aggregation'
     GEOHEX_GRID_PRECISION = 'geohex_grid_precision'
+    GEO_BOUNDING_BOX = 'geo_bounding_box'
