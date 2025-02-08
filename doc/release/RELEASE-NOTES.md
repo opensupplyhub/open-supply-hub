@@ -3,6 +3,63 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.0.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: February 22, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* *Describe migrations here.*
+
+#### Schema changes
+* *Describe schema changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* [OSDEV-899](https://opensupplyhub.atlassian.net/browse/OSDEV-899) - With this task, we split the Django container into two components: FE (React) and BE (Django). Requests to the frontend (React) will be processed by the CDN (CloudFront), while requests to the API will be redirected to the Django container. This approach will allow for more efficient use of ECS cluster computing resources and improve frontend performance.
+
+  The following endpoints will be redirected to the Django container:
+  * tile/*
+  * api/*
+  * /api-auth/*
+  * /api-token-auth/*
+  * /api-feature-flags/*
+  * /web/environment.js
+  * /admin/*
+  * /health-check/*
+  * /rest-auth/*
+  * /user-login/*
+  * /user-logout/*
+  * /user-signup/*
+  * /user-profile/*
+  * /user-api-info/*
+  * /admin
+  * /static/admin/*
+  * /static/django_extensions/*
+  * /static/drf-yasg/*
+  * /static/gis/*
+  * /static/rest_framework/*
+  * /static/static/*
+  * /static/staticfiles.json
+
+  All other traffic will be redirected to the React application.
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* *Provide release instructions here.*
+
+
 ## Release 1.29.0
 
 ## Introduction
@@ -55,7 +112,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
-* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to refresh the index mappings for the `moderation-events` index after disabling dynamic mapping for the new fields that don't have an explicit mapping defined. The `production-locations` will also be affected since it will clean all of our custom indexes and templates within the OpenSearch cluster
+* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to update the index mapping for the `moderation-events` index after adding the new field `action_type`. The `production-locations` will also be affected since it will clean all of our custom indexes and templates within the OpenSearch cluster.
 * This release will upgrade PostgreSQL from version 13 to version 16.
     * The upgrade will be performed automatically by Terrafrom and AWS, but some steps need to be completed **before** and **after** the upgrade. Please refer to [the Confluence article](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/640155649/PostgreSQL+database+upgrade+from+version+13+to+version+16) for detailed instructions.
     * Steps to be completed before the upgrade are marked with the statement: "**This should be done before deploying the upgraded database.**". Post-upgrade tasks can be found under the [After the PostgreSQL major version upgrade](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/640155649/PostgreSQL+database+upgrade+from+version+13+to+version+16#After-the-PostgreSQL-major-version-upgrade) section.
