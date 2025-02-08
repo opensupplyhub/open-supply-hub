@@ -42,7 +42,8 @@ class GeoBoundingBoxValidator(OpenSearchValidationInterface):
                 errors.append(
                     {
                         "field": "geo_bounding_box",
-                        "detail": f"The {field} value must be between {min_val} and {max_val}.",
+                        "detail": f"The {field} value must be between "
+                        f"{min_val} and {max_val}.",
                     }
                 )
 
