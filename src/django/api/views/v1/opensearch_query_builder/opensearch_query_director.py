@@ -1,4 +1,3 @@
-import json
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 
 
