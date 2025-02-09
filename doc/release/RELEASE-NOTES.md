@@ -26,6 +26,36 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-1549](https://opensupplyhub.atlassian.net/browse/OSDEV-1549) - Added Django serialization check for all fields from the request body based on [the API specification](https://opensupplyhub.github.io/open-supply-hub-api-docs/) for POST and PATCH v1/production-locations endpoint, and appropriate errors return according to the request body schema in the API spec.
+* [OSDEV-899](https://opensupplyhub.atlassian.net/browse/OSDEV-899) - With this task, we split the Django container into two components: FE (React) and BE (Django). Requests to the frontend (React) will be processed by the CDN (CloudFront), while requests to the API will be redirected to the Django container. This approach will allow for more efficient use of ECS cluster computing resources and improve frontend performance.
+
+  The following endpoints will be redirected to the Django container:
+  * tile/*
+  * api/*
+  * /api-auth/*
+  * /api-token-auth/*
+  * /api-feature-flags/*
+  * /web/environment.js
+  * /admin/*
+  * /health-check/*
+  * /rest-auth/*
+  * /user-login/*
+  * /user-logout/*
+  * /user-signup/*
+  * /user-profile/*
+  * /user-api-info/*
+  * /admin
+  * /static/admin/*
+  * /static/django_extensions/*
+  * /static/drf-yasg/*
+  * /static/gis/*
+  * /static/rest_framework/*
+  * /static/static/*
+  * /static/staticfiles.json
+
+  All other traffic will be redirected to the React application.
+
+### Bugfix
+* *Describe bugfix here.*
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
