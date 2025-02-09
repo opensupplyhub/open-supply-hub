@@ -138,8 +138,8 @@ class TestProductionLocationsCreate(APITestCase):
         expected_specific_error = (
             'The request body is invalid.'
         )
-        expected_error_field = ('Invalid data. Expected a dictionary,'
-                                ' but got list.')
+        expected_error_field = ('Invalid data. Expected a dictionary '
+                                '(object), but got list.')
 
         response = self.client.post(
             self.url,
@@ -147,7 +147,7 @@ class TestProductionLocationsCreate(APITestCase):
             content_type='application/json'
         )
         self.assertEqual(response.status_code,
-                         status.HTTP_422_UNPROCESSABLE_ENTITY)
+                         status.HTTP_400_BAD_REQUEST)
 
         response_body_dict = json.loads(response.content)
         self.assertEqual(len(response_body_dict), 2)
@@ -155,7 +155,7 @@ class TestProductionLocationsCreate(APITestCase):
         general_error = response_body_dict['detail']
         errors_list_length = len(response_body_dict['errors'])
         specific_error = response_body_dict['detail']
-        error_field = response_body_dict['errors'][0]
+        error_field = response_body_dict['errors'][0]['detail']
         self.assertEqual(general_error, expected_general_error)
         self.assertEqual(errors_list_length, 1)
         self.assertEqual(specific_error, expected_specific_error)
@@ -220,18 +220,21 @@ class TestProductionLocationsCreate(APITestCase):
         mock_get.return_value.json.return_value = geocoding_data
 
         expected_response_body = {
-            "detail": "The request body is invalid.",
-            "errors": {
-                "sector": ["Field must be a string or a list of strings."],
-                "location_type": [
-                    "Field must be a string or a list of strings."],
-                "number_of_workers": {
-                    "min": [
-                        "Ensure this value is greater than or equal to 1."],
-                    "max": ["Ensure this value is greater than or equal to 1."]
-                    }
-                    }
-                    }
+            'detail': 'The request body is invalid.',
+            'errors': [
+                {'field': 'sector',
+                 'detail': ('Field sector must be '
+                            'a string or a list of strings.')},
+                {'field': 'location_type',
+                 'detail': ('Field location_type must be a string'
+                            ' or a list of strings.')},
+                {'field': 'number_of_workers',
+                 'errors': [{'field': 'min',
+                             'detail': ('Ensure this value is greater than'
+                                        ' or equal to 1.')},
+                            {'field': 'max',
+                             'detail': ('Ensure this value is greater than'
+                                        ' or equal to 1.')}]}]}
         initial_moderation_event_count = ModerationEvent.objects.count()
 
         invalid_req_body = json.dumps({

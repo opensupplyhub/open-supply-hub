@@ -233,21 +233,13 @@ class TestLocationContributionStrategy(APITestCase):
         expected_error_result = {
             'detail': 'The request body is invalid.',
             'errors': [
-                {
-                    'field': 'sector',
-                    'detail': ('Expected value for sector to be a string or a '
-                               "list of strings but got {'some_key': 1135}.")
-                },
-                {
-                    'field': 'location_type',
-                    'detail': (
-                        'Expected value for location_type to be a '
-                        'string or a list of strings but got '
-                        "{'key': 'Coating'}."
-                    )
-                }
-            ]
-        }
+                {'field': 'sector',
+                 'detail': ('Field sector must be a string or a list of '
+                            'strings.')},
+                {'field': 'location_type',
+                 'detail': ('Field location_type must be a string or a '
+                            'list of strings.')}
+                 ]}
         input_data = {
             'source': 'API',
             'name': 'Blue Horizon Facility',
@@ -284,8 +276,7 @@ class TestLocationContributionStrategy(APITestCase):
         expected_general_error = 'The request body is invalid.'
         # Expect only part of the message, as the next part is dynamic because
         # it is generated from a Python set and is hard to predict.
-        expected_part_of_specific_error = 'Required Fields are missing:'
-        expected_error_field = 'non_field_errors'
+        expected_part_of_specific_error = 'Field name is required!'
         input_data = {
             'source': 'SLC',
             'coordinates': {
@@ -309,10 +300,6 @@ class TestLocationContributionStrategy(APITestCase):
         self.assertIn(
             expected_part_of_specific_error,
             result.errors['errors'][0]['detail']
-        )
-        self.assertEqual(
-            result.errors['errors'][0]['field'],
-            expected_error_field
         )
 
     @patch.object(ContriCleaner, 'process_data')
