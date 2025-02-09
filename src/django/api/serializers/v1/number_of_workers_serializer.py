@@ -31,5 +31,5 @@ class NumberOfWorkersSerializer(serializers.Serializer):
 
         return data
 
-    def validate_object(value):
-        return isinstance(value, dict)
+    def validate_object(self):
+        return isinstance(self, dict)

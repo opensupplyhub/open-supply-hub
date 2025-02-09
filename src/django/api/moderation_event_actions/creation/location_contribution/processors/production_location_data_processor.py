@@ -16,7 +16,7 @@ from api.constants import (
     APIV1CommonErrorMessages,
     NON_FIELD_ERRORS_KEY
 )
-from django.api.serializers.v1.production_location_schema_serializer \
+from api.serializers.v1.production_location_schema_serializer \
     import ProductionLocationSchemaSerializer
 from rest_framework.exceptions import ValidationError
 from rest_framework.exceptions import ErrorDetail
@@ -182,21 +182,23 @@ class ProductionLocationDataProcessor(ContributionProcessor):
 
     @staticmethod
     def __transform_errors(serializer_errors: Dict) -> List[Dict]:
+        def __append_extracted_error(field: str, error: Any) -> None:
+            extracted = ProductionLocationDataProcessor.\
+                    __extract_error(field, error)
+            if extracted:
+                formatted_errors.append(extracted)
+
         formatted_errors = []
 
         for field, errors in serializer_errors.items():
             if isinstance(errors, list):
                 for err in errors:
-                    extracted = ProductionLocationDataProcessor.\
-                        __extract_error(field, err)
-                    if extracted:
-                        formatted_errors.append(extracted)
+                    __append_extracted_error(field, err)
             elif isinstance(errors, dict):
                 if NON_FIELD_ERRORS_KEY in errors and len(errors) == 1:
-                    extracted = ProductionLocationDataProcessor.\
-                        __extract_error(field, errors[NON_FIELD_ERRORS_KEY][0])
-                    if extracted:
-                        formatted_errors.append(extracted)
+                    __append_extracted_error(
+                            field,
+                            errors[NON_FIELD_ERRORS_KEY][0])
                 else:
                     nested = ProductionLocationDataProcessor.\
                         __transform_errors(errors)
