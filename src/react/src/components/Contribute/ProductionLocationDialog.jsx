@@ -71,11 +71,15 @@ const getStatusBadgeClass = (classes, status) => {
     }
 };
 
-const getTooltipText = claimStatus =>
-    claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED ||
-    PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.PENDING
-        ? 'Production location has been claimed already.'
-        : 'Claim is not available.';
+const getTooltipText = claimStatus => {
+    if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED) {
+        return 'Production location has been claimed already.';
+    }
+    if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.PENDING) {
+        return 'A claim for this production location is pending approval.';
+    }
+    return 'Claim is not available.';
+};
 
 const ProductionLocationDialog = ({
     innerWidth,
