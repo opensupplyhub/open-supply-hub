@@ -144,14 +144,17 @@ class ProductionLocationsTest(BaseAPITest):
             index=self.production_locations_index_name
         )
 
-        query = "?geo_bounding_box[top]=41&geo_bounding_box[left]="
-        "-103&geo_bounding_box[bottom]=39&geo_bounding_box[right]=-101"
+        query = (
+            "?geo_bounding_box[top]=41&geo_bounding_box[left]="
+            "-103&geo_bounding_box[bottom]=39&geo_bounding_box[right]=-101"
+        )
         response = requests.get(
                 f"{self.root_url}/api/v1/production-locations/{query}",
                 headers=self.basic_headers,
             )
 
         result = response.json()
+        print('result >>>', result)
         self.assertIsNotNone(result['data'])
         self.assertEqual(len(result['data']), 1)
         self.assertEqual(result['data'][0]['os_id'], 'US2020052SV22KJ')
