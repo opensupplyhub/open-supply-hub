@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter as Router, useHistory } from 'react-router-dom';
-import history from "../../util/history";
 import ProductionLocationDialog from '../../components/Contribute/ProductionLocationDialog';
 import ProductionLocationDialogCloseButton from '../../components/Contribute/ProductionLocationDialogCloseButton';
 
@@ -146,8 +145,7 @@ describe('ProductionLocationDialog', () => {
         const searchOSHubButton = getByRole('button', { name: /Search OS Hub/i });
         fireEvent.click(searchOSHubButton);
 
-        expect(history.location.pathname + history.location.search)
-            .toBe('/');
+        expect(mockHistoryPush).toHaveBeenCalledWith('/');
     });
 
     test('check link of Submit another Location button', () => {
@@ -166,8 +164,7 @@ describe('ProductionLocationDialog', () => {
         const submitAnotherLocationButton = getByRole('button', { name: /Submit another Location/i });
         fireEvent.click(submitAnotherLocationButton);
 
-        expect(history.location.pathname + history.location.search)
-            .toBe('/contribute/single-location?tab=name-address');
+        expect(mockHistoryPush).toHaveBeenCalledWith('/contribute/single-location?tab=name-address');
     });
 
     test('check link to the claim flow for specific production location', () => {

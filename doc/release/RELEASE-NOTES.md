@@ -51,7 +51,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   All other traffic will be redirected to the React application.
 
 ### Bugfix
-* *Describe bugfix here.*
+* [OSDEV-1695](https://opensupplyhub.atlassian.net/browse/OSDEV-1695) - SLC: Refactored the "Submit Another Location" button link to direct users to the search-by-name-and-address form at /contribute/single-location?tab=name-address.
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
