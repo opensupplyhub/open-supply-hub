@@ -154,7 +154,6 @@ class ProductionLocationsTest(BaseAPITest):
             )
 
         result = response.json()
-        print('result >>>', result)
         self.assertIsNotNone(result['data'])
         self.assertEqual(len(result['data']), 1)
         self.assertEqual(result['data'][0]['os_id'], 'US2020052SV22KJ')
