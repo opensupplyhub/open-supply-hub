@@ -39,7 +39,11 @@ class EventApprovalTemplate(ABC):
     abstract methods and hooks.
     """
 
-    def __init__(self, moderation_event: ModerationEvent, moderator: User) -> None:
+    def __init__(
+        self,
+        moderation_event: ModerationEvent,
+        moderator: User
+    ) -> None:
         self.__event = moderation_event
         self.__moderator = moderator
 

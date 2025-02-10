@@ -16,10 +16,11 @@ log = logging.getLogger(__name__)
 
 
 class UpdateProductionLocation(EventApprovalTemplate):
-    def __init__(self,
-                 moderation_event: ModerationEvent,
-                 moderator: User,
-                 os_id: str
+    def __init__(
+        self,
+        moderation_event: ModerationEvent,
+        moderator: User,
+        os_id: str
     ) -> None:
         super().__init__(moderation_event, moderator)
         self.__os_id = os_id

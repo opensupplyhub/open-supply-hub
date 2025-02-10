@@ -20,7 +20,11 @@ log = logging.getLogger(__name__)
 
 
 class AddProductionLocation(EventApprovalTemplate):
-    def __init__(self, moderation_event: ModerationEvent, moderator: User) -> None:
+    def __init__(
+        self,
+        moderation_event: ModerationEvent,
+        moderator: User
+    ) -> None:
         super().__init__(moderation_event, moderator)
 
     def _get_os_id(self, country_code: str) -> str:
