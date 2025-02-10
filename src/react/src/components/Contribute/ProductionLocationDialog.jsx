@@ -26,7 +26,7 @@ import DialogTooltip from './DialogTooltip';
 import ProductionLocationDialogFields from './ProductionLocationDialogFields';
 import {
     mainRoute,
-    searchByNameAndAddressResultRoute,
+    contributeProductionLocationRoute,
     MODERATION_STATUSES_ENUM,
     PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM,
     EMPTY_PLACEHOLDER,
@@ -132,8 +132,8 @@ const ProductionLocationDialog = ({
     const statusLabel = startCase(toLower(moderationStatus));
 
     const handleGoToMainPage = () => history.push(mainRoute);
-    const handleGoToSearchByNameAndAddressResult = () =>
-        history.push(searchByNameAndAddressResultRoute);
+    const handleGoToSearchByNameAndAddress = () =>
+        history.push(`${contributeProductionLocationRoute}?tab=name-address`);
 
     const deleteIcon =
         moderationStatus === MODERATION_STATUSES_ENUM.PENDING ? (
@@ -274,7 +274,7 @@ const ProductionLocationDialog = ({
                             <Button
                                 variant="contained"
                                 color="secondary"
-                                onClick={handleGoToSearchByNameAndAddressResult}
+                                onClick={handleGoToSearchByNameAndAddress}
                                 className={classes.button}
                             >
                                 Submit another Location

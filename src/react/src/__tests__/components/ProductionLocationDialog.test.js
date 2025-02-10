@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter as Router, useHistory } from 'react-router-dom';
+import history from "../../util/history";
 import ProductionLocationDialog from '../../components/Contribute/ProductionLocationDialog';
 import ProductionLocationDialogCloseButton from '../../components/Contribute/ProductionLocationDialogCloseButton';
 
@@ -129,6 +130,46 @@ describe('ProductionLocationDialog', () => {
         expect(window.getComputedStyle(claimButton).pointerEvents).toBe(shouldBeDisabled ? 'none' : '');
     });
 
+    test('check link of Search OS Hub button', () => {
+        const { getByRole } = render(
+            <Router>
+                <ProductionLocationDialog
+                    classes={{}}
+                    data={defaultProps.data}
+                    osID={defaultProps.osID}
+                    moderationStatus='APPROVED'
+                    claimStatus='unclaimed'
+                />
+            </Router>
+        );
+
+        const searchOSHubButton = getByRole('button', { name: /Search OS Hub/i });
+        fireEvent.click(searchOSHubButton);
+
+        expect(history.location.pathname + history.location.search)
+            .toBe('/');
+    });
+
+    test('check link of Submit another Location button', () => {
+        const { getByRole } = render(
+            <Router>
+                <ProductionLocationDialog
+                    classes={{}}
+                    data={defaultProps.data}
+                    osID={defaultProps.osID}
+                    moderationStatus='APPROVED'
+                    claimStatus='unclaimed'
+                />
+            </Router>
+        );
+
+        const submitAnotherLocationButton = getByRole('button', { name: /Submit another Location/i });
+        fireEvent.click(submitAnotherLocationButton);
+
+        expect(history.location.pathname + history.location.search)
+            .toBe('/contribute/single-location?tab=name-address');
+    });
+
     test('check link to the claim flow for specific production location', () => {
         const { getByRole } = render(
             <Router>
@@ -144,7 +185,7 @@ describe('ProductionLocationDialog', () => {
 
         const claimButton = getByRole('button', { name: /Continue to Claim/i });
         expect(claimButton).toHaveAttribute('href', `/facilities/${defaultProps.osID}/claim`);
-    })
+    });
 
     test('closes ProductionLocationDialog when close button is clicked', () => {
         const handleShowMock = jest.fn();
