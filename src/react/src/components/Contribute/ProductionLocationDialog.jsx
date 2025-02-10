@@ -72,7 +72,8 @@ const getStatusBadgeClass = (classes, status) => {
 };
 
 const getTooltipText = claimStatus =>
-    claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED
+    claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED ||
+    PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.PENDING
         ? 'Production location has been claimed already.'
         : 'Claim is not available.';
 
