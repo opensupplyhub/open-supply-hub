@@ -990,14 +990,13 @@ export const makeSearchByNameAddressTabStyles = theme =>
         formFieldTitleStyles: Object.freeze({
             fontSize: '21px',
             fontWeight: theme.typography.fontWeightSemiBold,
-            margin: '8px 0 8px 0',
+            margin: '24px 0 8px 0',
         }),
         requiredAsterisk: Object.freeze({
             color: COLOURS.RED,
         }),
         textInputStyles: Object.freeze({
             maxWidth: '528px',
-            marginBottom: '21px',
         }),
         selectStyles: Object.freeze({
             fontSize: '18px',
@@ -1022,13 +1021,16 @@ export const makeSearchByNameAddressTabStyles = theme =>
             lineHeight: '20px',
             fontWeight: theme.typography.fontWeightExtraBold,
         }),
+        errorWrapStyles: Object.freeze({
+            margin: '8px 12px 0',
+        }),
         searchButtonStyles: Object.freeze({
             width: '200px',
             height: '49px',
             borderRadius: 0,
             textTransform: 'none',
             backgroundColor: theme.palette.action.main,
-            marginTop: '26px',
+            marginTop: '24px',
             color: theme.palette.common.black,
             '&:hover': {
                 backgroundColor: theme.palette.action.dark,
@@ -1374,6 +1376,7 @@ export const inputErrorText = theme =>
         errorTextWrapStyles: Object.freeze({
             display: 'flex',
             alignItems: 'center',
+            color: COLOURS.RED,
         }),
         iconInfoStyles: Object.freeze({
             fontSize: '16px',

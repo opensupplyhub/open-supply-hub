@@ -17,25 +17,39 @@ import { makeSearchByNameAddressTabStyles } from '../../util/styles';
 import { countryOptionsPropType } from '../../util/propTypes';
 import { fetchCountryOptions } from '../../actions/filterOptions';
 
-const selectStyles = {
-    control: provided => ({
-        ...provided,
-        height: '56px',
-        borderRadius: '0',
-        '&:focus,&:active,&:focus-within': {
-            borderColor: COLOURS.PURPLE,
-            boxShadow: `inset 0 0 0 1px ${COLOURS.PURPLE}`,
+const getSelectStyles = isErrorState => ({
+    control: (provided, state) => {
+        let borderColor;
+        if (isErrorState) {
+            borderColor = COLOURS.RED;
+        } else if (state.isFocused) {
+            borderColor = COLOURS.PURPLE;
+        } else {
+            borderColor = provided.borderColor;
+        }
+
+        const boxShadow = state.isFocused
+            ? `inset 0 0 0 1px ${borderColor}`
+            : provided.boxShadow;
+
+        return {
+            ...provided,
+            height: '56px',
+            borderRadius: '0',
+            borderColor,
+            boxShadow,
             transition: 'box-shadow 0.2s',
-        },
-        '&:hover': {
-            borderColor: 'black',
-        },
-    }),
+            '&:hover': {
+                borderColor: !isErrorState && !state.isFocused && 'black',
+            },
+        };
+    },
     placeholder: provided => ({
         ...provided,
         opacity: 0.7,
+        color: isErrorState ? COLOURS.RED : provided.color,
     }),
-};
+});
 
 const FormFieldTitle = ({ label, classes }) => (
     <Typography component="h4" className={classes.formFieldTitleStyles}>
@@ -58,6 +72,9 @@ const SearchByNameAndAddressTab = ({
     const [addressTouched, setAddressTouched] = useState(false);
     const [countryTouched, setCountryTouched] = useState(false);
 
+    const isCountryError =
+        countryTouched && (!inputCountry || !inputCountry.value);
+
     const history = useHistory();
     const isValid = val => {
         if (val) {
@@ -66,16 +83,22 @@ const SearchByNameAndAddressTab = ({
         return false;
     };
     const handleNameChange = event => {
-        setNameTouched(true);
         setInputName(event.target.value);
     };
     const handleAddressChange = event => {
-        setAddressTouched(true);
         setInputAddress(event.target.value);
     };
     const handleCountryChange = event => {
-        setCountryTouched(true);
         setInputCountry(event);
+    };
+    const handleNameBlur = () => {
+        setNameTouched(true);
+    };
+    const handleAddressBlur = () => {
+        setAddressTouched(true);
+    };
+    const handleCountryBlur = () => {
+        setCountryTouched(true);
     };
 
     const handleSearch = () => {
@@ -130,6 +153,7 @@ const SearchByNameAndAddressTab = ({
                     className={classes.textInputStyles}
                     value={inputName}
                     onChange={handleNameChange}
+                    onBlur={handleNameBlur}
                     placeholder="Type a name"
                     variant="outlined"
                     aria-label="Type a name"
@@ -158,6 +182,7 @@ const SearchByNameAndAddressTab = ({
                     className={classes.textInputStyles}
                     value={inputAddress}
                     onChange={handleAddressChange}
+                    onBlur={handleAddressBlur}
                     placeholder="Address"
                     variant="outlined"
                     aria-label="Address"
@@ -187,11 +212,17 @@ const SearchByNameAndAddressTab = ({
                     options={countriesData || []}
                     value={inputCountry}
                     onChange={handleCountryChange}
+                    onBlur={handleCountryBlur}
                     className={classes.selectStyles}
-                    styles={selectStyles}
+                    styles={getSelectStyles(isCountryError)}
                     placeholder="What's the country?"
                     isMulti={false}
                 />
+                {isCountryError && (
+                    <div className={classes.errorWrapStyles}>
+                        <InputErrorText />
+                    </div>
+                )}
 
                 <Button
                     color="secondary"
