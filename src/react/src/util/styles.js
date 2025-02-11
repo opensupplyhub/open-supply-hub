@@ -987,10 +987,13 @@ export const makeSearchByNameAddressTabStyles = theme =>
             fontSize: '36px',
             fontWeight: theme.typography.fontWeightSemiBoldPlus,
         }),
-        subTitleStyles: Object.freeze({
+        formFieldTitleStyles: Object.freeze({
             fontSize: '21px',
             fontWeight: theme.typography.fontWeightSemiBold,
             margin: '8px 0 8px 0',
+        }),
+        requiredAsterisk: Object.freeze({
+            color: COLOURS.RED,
         }),
         textInputStyles: Object.freeze({
             maxWidth: '528px',

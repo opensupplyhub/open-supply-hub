@@ -37,6 +37,13 @@ const selectStyles = {
     }),
 };
 
+const FormFieldTitle = ({ label, classes }) => (
+    <Typography component="h4" className={classes.formFieldTitleStyles}>
+        {label}
+        <span className={classes.requiredAsterisk}> *</span>
+    </Typography>
+);
+
 const SearchByNameAndAddressTab = ({
     classes,
     countriesData,
@@ -117,9 +124,7 @@ const SearchByNameAndAddressTab = ({
                 <Typography component="h2" className={classes.titleStyles}>
                     Production Location Details
                 </Typography>
-                <Typography component="h4" className={classes.subTitleStyles}>
-                    Enter the Name
-                </Typography>
+                <FormFieldTitle label="Enter the Name" classes={classes} />
                 <TextField
                     id="name"
                     className={classes.textInputStyles}
@@ -147,9 +152,7 @@ const SearchByNameAndAddressTab = ({
                     }
                     error={nameTouched && !isValid(inputName)}
                 />
-                <Typography component="h4" className={classes.subTitleStyles}>
-                    Enter the Address
-                </Typography>
+                <FormFieldTitle label="Enter the Address" classes={classes} />
                 <TextField
                     id="address"
                     className={classes.textInputStyles}
@@ -175,9 +178,7 @@ const SearchByNameAndAddressTab = ({
                     }
                     error={addressTouched && !isValid(inputAddress)}
                 />
-                <Typography component="h4" className={classes.subTitleStyles}>
-                    Select the Country
-                </Typography>
+                <FormFieldTitle label="Select the Country" classes={classes} />
                 <StyledSelect
                     id="countries"
                     name="What's the country?"
