@@ -151,5 +151,5 @@ class OpenSearchQueryDirector:
             self.__builder, 'add_geo_bounding_box'
         ):
             self.__builder.add_geo_bounding_box(
-                top, left, bottom, right
+                float(top), float(left), float(bottom), float(right)
             )
