@@ -20,7 +20,7 @@ const ProductionLocationDetails = ({
 
     const location = useLocation();
     let osIdSearchParameter = '';
-    if (location && location.pathname) {
+    if (location?.pathname) {
         osIdSearchParameter = getLastPathParameter(location.pathname);
     }
 
