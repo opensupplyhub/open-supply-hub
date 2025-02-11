@@ -18,23 +18,21 @@ class CoordinatesValidator(OpenSearchValidationInterface):
                 "detail": "Both latitude and longitude must be provided."
             })
 
-        if lat is not None:
-            if not (
-                CoordinateLimits.LAT_MIN <= lat <= CoordinateLimits.LAT_MAX
-            ):
-                errors.append({
-                    "field": "coordinates",
-                    "detail": "Latitude must be between -90 and 90 degrees."
-                })
+        if lat is not None and not (
+            CoordinateLimits.LAT_MIN <= lat <= CoordinateLimits.LAT_MAX
+        ):
+            errors.append({
+                "field": "coordinates",
+                "detail": "Latitude must be between -90 and 90 degrees."
+            })
 
-        if lng is not None:
-            if not (
-                CoordinateLimits.LNG_MIN <= lng <= CoordinateLimits.LNG_MAX
-            ):
-                errors.append({
-                    "field": "coordinates",
-                    "detail":
-                        "Longitude must be between -180 and 180 degrees."
-                })
+        if lng is not None and not (
+            CoordinateLimits.LNG_MIN <= lng <= CoordinateLimits.LNG_MAX
+        ):
+            errors.append({
+                "field": "coordinates",
+                "detail":
+                    "Longitude must be between -180 and 180 degrees."
+            })
 
         return errors
