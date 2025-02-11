@@ -74,7 +74,7 @@ jobs:
           string: ${{ vars.ENV_NAME }}
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: Run migrations for ${{ vars.ENV_NAME }}
+      - name: Run migrations and other post-deployment tasks for ${{ vars.ENV_NAME }}
         run: |
           ./deployment/run_cli_task ${{ vars.ENV_NAME }} "post_deployment"
         env:
