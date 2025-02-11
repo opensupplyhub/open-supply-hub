@@ -64,6 +64,7 @@ class ProductionLocationsSerializer(Serializer):
     geo_bounding_box_right = FloatField(required=False)
 
     def validate(self, data):
+        print('data >>>', data)
         validators = [
             SizeValidator(),
             NumberOfWorkersValidator(),
