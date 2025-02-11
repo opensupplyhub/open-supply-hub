@@ -33,7 +33,6 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
     sector = StringOrListField(required=False)
     parent_company = serializers.CharField(
         required=False,
-        max_length=255,
         validators=[
             RegexValidator(
                 regex=r'^[a-zA-Z0-9\s.,&()-]*$',
@@ -42,7 +41,6 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
             )
         ],
         error_messages={
-            'max_length': 'Field parent company cannot exceed 255 characters!',
             'invalid': 'Field parent_company must be a valid string.'
             },)
     product_type = StringOrListField(required=False)
