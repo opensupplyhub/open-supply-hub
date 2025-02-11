@@ -436,6 +436,7 @@ resource "aws_ecs_service" "app" {
   deployment_minimum_healthy_percent = var.app_ecs_deployment_min_percent
   deployment_maximum_percent         = var.app_ecs_deployment_max_percent
   health_check_grace_period_seconds  = var.app_ecs_grace_period_seconds
+  force_new_deployment               = false
 
   launch_type = "FARGATE"
 
