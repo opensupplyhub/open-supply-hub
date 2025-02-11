@@ -25,7 +25,7 @@ end
 test 'action_perform_by_id filter with nil action_perform_by_id_value' do
     in_event {
         {
-            'action_type_value' => nil,
+            'action_perform_by_id_value' => nil,
         }
     }
   
