@@ -1,4 +1,5 @@
 from typing import List
+from api.constants import CoordinateLimits
 from api.serializers.v1.opensearch_validation_interface \
     import OpenSearchValidationInterface
 
@@ -18,14 +19,18 @@ class CoordinatesValidator(OpenSearchValidationInterface):
             })
 
         if lat is not None:
-            if not (-90 <= lat <= 90):
+            if not (
+                CoordinateLimits.LAT_MIN <= lat <= CoordinateLimits.LAT_MAX
+            ):
                 errors.append({
                     "field": "coordinates",
                     "detail": "Latitude must be between -90 and 90 degrees."
                 })
 
         if lng is not None:
-            if not (-180 <= lng <= 180):
+            if not (
+                CoordinateLimits.LNG_MIN <= lng <= CoordinateLimits.LNG_MAX
+            ):
                 errors.append({
                     "field": "coordinates",
                     "detail":

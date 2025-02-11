@@ -1,3 +1,4 @@
+from api.constants import CoordinateLimits
 from api.serializers.v1.opensearch_validation_interface import (
     OpenSearchValidationInterface,
 )
@@ -29,10 +30,10 @@ class GeoBoundingBoxValidator(OpenSearchValidationInterface):
             return errors
 
         range_limits = {
-            'top': (-90, 90),
-            'bottom': (-90, 90),
-            'left': (-180, 180),
-            'right': (-180, 180),
+            'top': (CoordinateLimits.LAT_MIN, CoordinateLimits.LAT_MAX),
+            'bottom': (CoordinateLimits.LAT_MIN, CoordinateLimits.LAT_MAX),
+            'left': (CoordinateLimits.LNG_MIN, CoordinateLimits.LNG_MAX),
+            'right': (CoordinateLimits.LNG_MIN, CoordinateLimits.LNG_MAX),
         }
 
         for field, (min_val, max_val) in range_limits.items():
