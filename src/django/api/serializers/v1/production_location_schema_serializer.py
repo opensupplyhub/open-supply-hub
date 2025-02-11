@@ -68,25 +68,26 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
         if data.get('name').isdigit():
             errors.append({
                 "field": "name",
-                "detail": "Field name must be a string, not a number"
+                "detail": "Field name must be a string, not a number."
             },)
 
         if data.get('address').isdigit():
             errors.append({
                 "field": "address",
-                "detail": "Field address must be a string, not a number"
+                "detail": "Field address must be a string, not a number."
             },)
 
         if data.get('country').isdigit():
             errors.append({
                 "field": "country",
-                "detail": "Field country must be a string, not a number"
+                "detail": "Field country must be a string, not a number."
             },)
 
         if 'parent_company' in data and data.get('parent_company').isdigit():
             errors.append({
                 "field": "parent_company",
-                "detail": "Field parent_company must be a string, not a number"
+                "detail": ("Field parent_company must be a string,"
+                           " not a number.")
             },)
 
         if len(errors) > 0:

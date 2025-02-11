@@ -44,7 +44,7 @@ class ProductionLocationDataProcessor(ContributionProcessor):
             )
             event_dto.errors = {
                 'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
-                'errors': ProductionLocationDataProcessor.__transform_errors(
+                'errors': self._transform_errors(
                     serializer.errors)}
             event_dto.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
 
@@ -181,7 +181,7 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         }
 
     @staticmethod
-    def __transform_errors(serializer_errors: Dict) -> List[Dict]:
+    def _transform_errors(serializer_errors: Dict) -> List[Dict]:
         def __append_extracted_error(field: str, error: Any) -> None:
             extracted = ProductionLocationDataProcessor.\
                     __extract_error(field, error)
@@ -201,7 +201,7 @@ class ProductionLocationDataProcessor(ContributionProcessor):
                             errors[NON_FIELD_ERRORS_KEY][0])
                 else:
                     nested = ProductionLocationDataProcessor.\
-                        __transform_errors(errors)
+                        _transform_errors(errors)
                     formatted_errors.append({"field": field, "errors": nested})
 
         return formatted_errors
@@ -209,9 +209,15 @@ class ProductionLocationDataProcessor(ContributionProcessor):
     @staticmethod
     def __extract_error(field: str, error: Any) -> Optional[Dict]:
         if isinstance(error, ErrorDetail):
-            return {"field": field,
-                    "detail": str(error)}
+            return {"field": field, "detail": str(error)}
+
+        if isinstance(error, dict) and "field" in error and "detail" in error:
+            err_field = str(error.get("field", ""))
+            err_detail = str(error.get("detail", ""))
+            return {"field": err_field, "detail": err_detail}
+
         if isinstance(error, dict) and NON_FIELD_ERRORS_KEY in error:
             return {"field": field,
                     "detail": str(error[NON_FIELD_ERRORS_KEY][0])}
+
         return None
