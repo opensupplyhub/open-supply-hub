@@ -60,33 +60,27 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
             'invalid': 'Field coordinates must be a valid geopoint.'
         },)
 
+    def _validate_string_field(self, data, field_name):
+        """Helper method to validate string fields aren't numeric."""
+        if field_name in data and data[field_name].isdigit():
+            return {
+                "field": field_name,
+                "detail": f"Field {field_name} must be a string, not a number."
+            }
+
+        return None
+
     def validate(self, data):
         errors = []
 
-        if data.get('name').isdigit():
-            errors.append({
-                "field": "name",
-                "detail": "Field name must be a string, not a number."
-            },)
+        for field in ['name', 'address', 'country']:
+            error = self._validate_string_field(data, field)
+            if error:
+                errors.append(error)
 
-        if data.get('address').isdigit():
-            errors.append({
-                "field": "address",
-                "detail": "Field address must be a string, not a number."
-            },)
-
-        if data.get('country').isdigit():
-            errors.append({
-                "field": "country",
-                "detail": "Field country must be a string, not a number."
-            },)
-
-        if 'parent_company' in data and data.get('parent_company').isdigit():
-            errors.append({
-                "field": "parent_company",
-                "detail": ("Field parent_company must be a string,"
-                           " not a number.")
-            },)
+        error = self._validate_string_field(data, 'parent_company')
+        if error:
+            errors.append(error)
 
         if len(errors) > 0:
             raise serializers.ValidationError(errors)
