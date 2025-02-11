@@ -834,11 +834,11 @@ class TestLocationContributionStrategy(APITestCase):
              "detail": "Field coordinates must be a valid geopoint."}]
         input_data = {
             "source": "SLC",
-            "name": ("namehgkdjgbkjdbgfkjdhntgljkhfkjhglkfgjhlkjf;lhjgl;"
-                     "khjlkgjh;hgjgkgkhgjhgjhgjhgjhgjhgjhgjhgjhgjhgjhgjhg"
-                     "jhgjhgjhgjhgjgkjjlkjljljlkhdfdfdsgfdhgfjhgkjgkjgkjg"
-                     "kgkgkgkjgkjgkgkjgjhfghdhgkujhlkjhlkhkjghjgjhgjhgjhg"
-                     "jhgjgjfhdh"),
+            "name": ("The standard chunk of Lorem Ipsum used since the 1500s"
+                     "reproduced below for those interested. Sections 1.10.32"
+                     "reproduced in their exact original form, accompanied"
+                     "versions from the 1914 translation by H. Rackham by"
+                     "injected humour, or non-characteristic words etc"),
             "address": "name",
             "country": "Ukraine",
             "number_of_workers": {"min": 100},

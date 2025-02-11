@@ -40,7 +40,7 @@ class ProductionLocationDataProcessor(ContributionProcessor):
             serializer.is_valid(raise_exception=True)
         except ValidationError as e:
             log.error(
-                f'[API V1 Location Upload] Internal ContriCleaner Error: {e}'
+                f'[API V1 Location Upload] Schema Serializer Error: {e}'
             )
             event_dto.errors = {
                 'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
