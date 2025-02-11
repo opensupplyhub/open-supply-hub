@@ -7,7 +7,6 @@ from api.moderation_event_actions.creation.location_contribution.processors\
     .production_location_data_processor import ProductionLocationDataProcessor
 from rest_framework import status
 from rest_framework.test import APITestCase
-from rest_framework.exceptions import ErrorDetail
 from allauth.account.models import EmailAddress
 from rest_framework.exceptions import ValidationError
 from django.contrib.gis.geos import Point
