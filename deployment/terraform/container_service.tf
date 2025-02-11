@@ -254,7 +254,7 @@ resource "aws_ecs_task_definition" "app" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = var.app_fargate_cpu
   memory                   = var.app_fargate_memory
-  skip_destroy             = true
+  skip_destroy              = true
 
   task_role_arn      = aws_iam_role.app_task_role.arn
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
