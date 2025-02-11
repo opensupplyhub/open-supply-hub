@@ -115,4 +115,5 @@ class ModerationEventsUpdateTest(APITestCase):
         self.moderation_event.refresh_from_db()
         self.assertEqual(self.moderation_event.status, "REJECTED")
         self.assertEqual(self.moderation_event.action_type, "REJECTED")
+        self.assertEqual(self.moderation_event.action_perform_by.id, self.superuser.id)
         self.assertIsNotNone(self.moderation_event.status_change_date)
