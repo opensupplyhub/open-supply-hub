@@ -4,6 +4,8 @@ import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
 import flatten from 'lodash/flatten';
 import identity from 'lodash/identity';
+import split from 'lodash/split';
+import last from 'lodash/last';
 import some from 'lodash/some';
 import size from 'lodash/size';
 import negate from 'lodash/negate';
@@ -1476,3 +1478,5 @@ export const parseContribData = contribData => {
             : null,
     };
 };
+
+export const getLastPathParameter = url => last(split(trimEnd(url, '/'), '/'));
