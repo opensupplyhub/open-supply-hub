@@ -51,7 +51,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   All other traffic will be redirected to the React application.
 
 ### Bugfix
-* *Describe bugfix here.*
+* [OSDEV-1697](https://opensupplyhub.atlassian.net/browse/OSDEV-1697) - Added a redirect to the main page upon closing the SLC modal window to prevent the creation of multiple moderation events.
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*

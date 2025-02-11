@@ -785,7 +785,6 @@ const ProductionLocationInfo = ({
                         singleModerationEventItem?.cleaned_data
                     }
                     osID={osID || singleModerationEventItem?.os_id}
-                    handleShow={setShowProductionLocationDialog}
                     innerWidth={innerWidth}
                     moderationStatus={
                         pendingModerationEventData?.status ||
