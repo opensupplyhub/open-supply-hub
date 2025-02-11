@@ -260,9 +260,9 @@ class TestProductionLocationsQueryBuilder(TestCase):
     def test_add_geo_bounding_box(self):
         top = 40.7128
         left = -74.0060
-        bottom = 40.7128
-        right = -74.0060
-        self.builder.add_geo_bounding_box(top, right, bottom, left)
+        bottom = 35.7128
+        right = -78.0060
+        self.builder.add_geo_bounding_box(top, left, bottom, right)
         expected = {
             'geo_bounding_box': {
                 'coordinates': {
