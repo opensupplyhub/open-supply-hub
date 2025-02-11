@@ -51,7 +51,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   All other traffic will be redirected to the React application.
 
 ### Bugfix
-* *Describe bugfix here.*
+* [OSDEV-1701](https://opensupplyhub.atlassian.net/browse/OSDEV-1701) - Refactored "Go Back" button in production location info page.
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
