@@ -59,10 +59,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     All other traffic will be redirected to the React application.
 
 ### Bugfix
-* *Describe bugfix here.*
+* [OSDEV-1672](https://opensupplyhub.atlassian.net/browse/OSDEV-1672) - SLC. Implement collecting contribution data page (FE) - All Multi-Selects on the page have been fixed. They resize based on the number of items selected.
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.
 
 ### Release instructions:
 * *Provide release instructions here.*
@@ -95,7 +95,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * Some of the resources related to the Development AWS environment still have the `stg` prefix, which can be confusing since we also have a Staging environment with the same prefix. To clarify the resource names, including the database instance, the prefix has been updated from `stg` to `dev` for the development environment.
-* [OSDEV-1672](https://opensupplyhub.atlassian.net/browse/OSDEV-1672) - SLC. Implement collecting contribution data page (FE) - All Multi-Selects on the page have been fixed. They resize based on the number of items selected.
 
 ### What's new
 * [OSDEV-1374](https://opensupplyhub.atlassian.net/browse/OSDEV-1374) - Implemented integration for the `Search results` page to show results of searching by name and address (`/contribute/production-location/search`):
