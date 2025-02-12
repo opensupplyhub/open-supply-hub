@@ -207,6 +207,13 @@ class FacilitiesListSettings:
     DEFAULT_PAGE_LIMIT = 100
 
 
+class CoordinateLimits:
+    LAT_MIN = -90
+    LAT_MAX = 90
+    LNG_MIN = -180
+    LNG_MAX = 180
+
+
 # API v1
 class APIV1CommonErrorMessages:
     COMMON_REQ_BODY_ERROR = 'The request body is invalid.'
