@@ -61,7 +61,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     All other traffic will be redirected to the React application.
 
 ### Bugfix
-* [OSDEV-1695](https://opensupplyhub.atlassian.net/browse/OSDEV-1695) - SLC: Refactored the "Submit Another Location" button link to direct users to the search-by-name-and-address form at /contribute/single-location?tab=name-address.
+* [OSDEV-1698](https://opensupplyhub.atlassian.net/browse/OSDEV-1698) - SLC: Refactored the "Submit Another Location" button link to direct users to the search-by-name-and-address form at /contribute/single-location?tab=name-address.
 
 ### What's new
 * [OSDEV-1662](https://opensupplyhub.atlassian.net/browse/OSDEV-1662) - Added a new field, `action_perform_by`, to the moderation event. This data appears on the Contribution Record page when a moderator perform any actions like `APPROVED` or `REJECTED`.
