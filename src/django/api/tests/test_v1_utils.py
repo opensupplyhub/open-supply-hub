@@ -193,3 +193,113 @@ class V1UtilsTests(TestCase):
         self.assertIsInstance(response, Response)
         self.assertEqual(response.status_code, 500)
         self.assertEqual(response.data['detail'], "OpenSearch error")
+
+    def test_serialize_geo_bounding_box(self):
+        query_dict = QueryDict('', mutable=True)
+        query_dict.update(
+            {
+                'geo_bounding_box[top]': '90',
+                'geo_bounding_box[left]': '-180',
+                'geo_bounding_box[bottom]': '-90',
+                'geo_bounding_box[right]': '180',
+            }
+        )
+        serialized_params, error_response = serialize_params(
+            ProductionLocationsSerializer, query_dict
+        )
+        self.assertIsNone(error_response)
+        self.assertEqual(serialized_params['geo_bounding_box_top'], 90)
+        self.assertEqual(serialized_params['geo_bounding_box_left'], -180)
+        self.assertEqual(serialized_params['geo_bounding_box_bottom'], -90)
+        self.assertEqual(serialized_params['geo_bounding_box_right'], 180)
+
+    def test_serialize_geo_bounding_box_missing_values(self):
+        query_dict = QueryDict('', mutable=True)
+        query_dict.update(
+            {
+                'geo_bounding_box[top]': '90',
+                'geo_bounding_box[left]': '-180',
+                'geo_bounding_box[bottom]': '-90',
+            }
+        )
+        _, error_response = serialize_params(
+            ProductionLocationsSerializer, query_dict
+        )
+        self.assertIsNotNone(error_response)
+        self.assertEqual(
+            error_response['detail'], "The request query is invalid."
+        )
+        self.assertIn(
+            {
+                'field': 'geo_bounding_box',
+                'detail': 'All coordinates (top, left, bottom, right) '
+                'must be provided.',
+            },
+            error_response['errors'],
+        )
+
+    def test_serialize_geo_bounding_box_invalid_range(self):
+        query_dict = QueryDict('', mutable=True)
+        query_dict.update(
+            {
+                'geo_bounding_box[top]': '91',
+                'geo_bounding_box[left]': '-180',
+                'geo_bounding_box[bottom]': '-90',
+                'geo_bounding_box[right]': '181',
+            }
+        )
+        _, error_response = serialize_params(
+            ProductionLocationsSerializer, query_dict
+        )
+
+        self.assertIsNotNone(error_response)
+        self.assertEqual(
+            error_response['detail'], "The request query is invalid."
+        )
+        self.assertIn(
+            {
+                'field': 'geo_bounding_box',
+                'detail': 'The top value must be between -90 and 90.',
+            },
+            error_response['errors'],
+        )
+        self.assertIn(
+            {
+                'field': 'geo_bounding_box',
+                'detail': 'The right value must be between -180 and 180.',
+            },
+            error_response['errors'],
+        )
+
+    def test_serialize_geo_bounding_box_invalid_order(self):
+        query_dict = QueryDict('', mutable=True)
+        query_dict.update(
+            {
+                'geo_bounding_box[top]': '-90',
+                'geo_bounding_box[left]': '180',
+                'geo_bounding_box[bottom]': '90',
+                'geo_bounding_box[right]': '-180',
+            }
+        )
+        _, error_response = serialize_params(
+            ProductionLocationsSerializer, query_dict
+        )
+
+        self.assertIsNotNone(error_response)
+        self.assertEqual(
+            error_response['detail'], "The request query is invalid."
+        )
+        self.assertIn(
+            {
+                'field': 'geo_bounding_box',
+                'detail': 'The right must be greater than left.',
+            },
+            error_response['errors'],
+        )
+        self.assertIn(
+            {
+                'field': 'geo_bounding_box',
+                'detail': 'The top must be greater than bottom.',
+            },
+            error_response['errors'],
+        )

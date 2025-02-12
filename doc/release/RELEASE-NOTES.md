@@ -19,36 +19,44 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe schema changes here.*
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-1577](https://opensupplyhub.atlassian.net/browse/OSDEV-1577) - Added geo-bounding box query support to the GET `/api/v1/production-locations/` endpoint. To filter production locations whose geopoints fall within the bounding box, it is necessary to specify valid values for the parameters `geo_bounding_box[top]`, `geo_bounding_box[left]`, `geo_bounding_box[bottom]`, and `geo_bounding_box[right]`. 
+
+    The validation rules are as follows:
+    * All coordinates of the geo-boundary box (top, left, bottom, right) must be provided.
+    * All values must be integers.
+    * The top and bottom coordinates must be between -90 and 90.
+    * The left and right coordinates must be between -180 and 180.
+    * The top must be greater than the bottom.
+    * The right must be greater than the left.
 
 ### Architecture/Environment changes
 * [OSDEV-899](https://opensupplyhub.atlassian.net/browse/OSDEV-899) - With this task, we split the Django container into two components: FE (React) and BE (Django). Requests to the frontend (React) will be processed by the CDN (CloudFront), while requests to the API will be redirected to the Django container. This approach will allow for more efficient use of ECS cluster computing resources and improve frontend performance.
 
-  The following endpoints will be redirected to the Django container:
-  * tile/*
-  * api/*
-  * /api-auth/*
-  * /api-token-auth/*
-  * /api-feature-flags/*
-  * /web/environment.js
-  * /admin/*
-  * /health-check/*
-  * /rest-auth/*
-  * /user-login/*
-  * /user-logout/*
-  * /user-signup/*
-  * /user-profile/*
-  * /user-api-info/*
-  * /admin
-  * /static/admin/*
-  * /static/django_extensions/*
-  * /static/drf-yasg/*
-  * /static/gis/*
-  * /static/rest_framework/*
-  * /static/static/*
-  * /static/staticfiles.json
+    The following endpoints will be redirected to the Django container:
+    * tile/*
+    * api/*
+    * /api-auth/*
+    * /api-token-auth/*
+    * /api-feature-flags/*
+    * /web/environment.js
+    * /admin/*
+    * /health-check/*
+    * /rest-auth/*
+    * /user-login/*
+    * /user-logout/*
+    * /user-signup/*
+    * /user-profile/*
+    * /user-api-info/*
+    * /admin
+    * /static/admin/*
+    * /static/django_extensions/*
+    * /static/drf-yasg/*
+    * /static/gis/*
+    * /static/rest_framework/*
+    * /static/static/*
+    * /static/staticfiles.json
 
-  All other traffic will be redirected to the React application.
+    All other traffic will be redirected to the React application.
 
 ### Bugfix
 * [OSDEV-1695](https://opensupplyhub.atlassian.net/browse/OSDEV-1695) - [SLC] Enabled the claim button for updated production locations when a moderation event has a pending status. Disabled claim button explicitly if production location has pending claim status.
