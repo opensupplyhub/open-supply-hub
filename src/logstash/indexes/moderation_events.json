@@ -34,6 +34,9 @@
         "action_type": {
           "type": "keyword"
         },
+        "action_perform_by_id": {
+          "type": "integer"
+        },
         "status": {
           "type": "keyword"
         },
