@@ -3,6 +3,7 @@ from django.db import models
 from api.models.contributor.contributor import Contributor
 from api.models.facility.facility import Facility
 from api.models.facility.facility_claim import FacilityClaim
+from api.models.user import User
 
 
 class ModerationEvent(models.Model):
@@ -124,6 +125,15 @@ class ModerationEvent(models.Model):
         choices=ActionType.choices,
         blank=True,
         help_text='Type of moderation action.'
+    )
+
+    action_perform_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='moderation_event_action_perform_by',
+        help_text='Linked user id who performed the action.'
     )
 
     source = models.CharField(
