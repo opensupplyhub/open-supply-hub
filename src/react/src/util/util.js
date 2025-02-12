@@ -1435,9 +1435,17 @@ export const openInNewTab = url => {
 
 const extractProductionLocationContributionValues = data => map(data, 'value');
 
-const generateRangeField = value => {
-    const [min, max] = value.split('-').map(Number);
-    return max !== undefined ? { min, max } : { min };
+export const generateRangeField = value => {
+    if (typeof value === 'number') {
+        return { min: value, max: value };
+    }
+
+    if (typeof value === 'string' && value.includes('-')) {
+        const [min, max] = value.split('-').map(Number);
+        return max !== undefined ? { min, max } : { min };
+    }
+
+    return { min: value, max: value };
 };
 
 export const parseContribData = contribData => {
