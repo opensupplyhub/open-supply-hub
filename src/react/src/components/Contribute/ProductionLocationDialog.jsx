@@ -76,7 +76,7 @@ const getTooltipText = claimStatus => {
         return 'Production location has been claimed already.';
     }
     if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.PENDING) {
-        return 'A claim for this production location is pending approval.';
+        return "You'll be able to claim the location after the moderation is done";
     }
     return 'Claim is not available.';
 };
