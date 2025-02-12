@@ -77,6 +77,7 @@ const {
     createUserDropdownLinks,
     createUploadFormErrorMessages,
     updateStateFromData,
+    generateRangeField,
 } = require('../util/util');
 
 const {
@@ -1871,4 +1872,37 @@ it('should not call setter when dataKey is null', () => {
     };
     updateStateFromData(sampleObject, 'null_key', mockSetter);
     expect(mockSetter).not.toHaveBeenCalled();
+});
+
+it('should return { min: value, max: value } when value is a number', () => {
+    expect(generateRangeField(10)).toEqual({ min: 10, max: 10 });
+    expect(generateRangeField(0)).toEqual({ min: 0, max: 0 });
+    expect(generateRangeField(-5)).toEqual({ min: -5, max: -5 });
+});
+
+it('should return { min, max } when value is a valid range string', () => {
+    expect(generateRangeField('10-20')).toEqual({ min: 10, max: 20 });
+    expect(generateRangeField('0-100')).toEqual({ min: 0, max: 100 });
+    expect(generateRangeField('-5-5')).toEqual({ min: 0, max: 5 });
+});
+
+it('should return { min: value, max: value } when value is a single string (not a range)', () => {
+    expect(generateRangeField('15')).toEqual({ min: '15', max: '15' });
+    expect(generateRangeField('test')).toEqual({ min: 'test', max: 'test' });
+});
+
+it('should return { min: value, max: value } when value is an empty string', () => {
+    expect(generateRangeField('')).toEqual({ min: '', max: '' });
+});
+
+it('should return { min, max } correctly when value has extra spaces', () => {
+    expect(generateRangeField(' 10 - 20 ')).toEqual({ min: 10, max: 20 });
+    expect(generateRangeField('  5 -   15')).toEqual({ min: 5, max: 15 });
+});
+
+it('should return { min: value, max: value } for non-string and non-number values', () => {
+    expect(generateRangeField(null)).toEqual({ min: null, max: null });
+    expect(generateRangeField(undefined)).toEqual({ min: undefined, max: undefined });
+    expect(generateRangeField({})).toEqual({ min: {}, max: {} });
+    expect(generateRangeField([])).toEqual({ min: [], max: [] });
 });
