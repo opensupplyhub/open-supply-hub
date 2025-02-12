@@ -101,14 +101,14 @@ const ProductionLocationDialog = ({
 
     // Override browser's go back button when modal dialog is open
     useEffect(() => {
-        const unblock = history.listen((location, action) => {
+        const cleanupListener = history.listen((location, action) => {
             if (action === 'POP') {
                 history.push(contributeProductionLocationRoute);
             }
         });
 
         return () => {
-            unblock();
+            cleanupListener();
         };
     }, [history]);
 
