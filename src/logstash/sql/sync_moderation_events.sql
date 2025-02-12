@@ -8,6 +8,7 @@ SELECT
 	ame.request_type,
 	ame.source AS source_value,
 	ame.action_type AS action_type_value,
+	ame.action_perform_by_id AS action_perform_by_id_value,
 	ame.status,
 	ame.status_change_date AS status_change_date_value,
 	ame.created_at,

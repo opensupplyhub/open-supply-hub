@@ -171,6 +171,8 @@ const DashboardContributionRecord = ({
 
     const moderationEventStatus = singleModerationEventItem.status || '';
     const moderationActionType = singleModerationEventItem.action_type || null;
+    const moderationActionPerformBy =
+        singleModerationEventItem.action_perform_by_id || null;
     const jsonResults = JSON.stringify(singleModerationEventItem, null, 2);
     const potentialMatchCount = matches.length || 0;
     // OSDEV-1445: automatic write claim into moderation-events table to be done in Q1
@@ -231,9 +233,17 @@ const DashboardContributionRecord = ({
                         `}
             >
                 <Toolbar>
-                    <Typography variant="title">
-                        {moderationEventStatus}
-                    </Typography>
+                    {moderationEventStatus ===
+                    MODERATION_STATUSES_ENUM.PENDING ? (
+                        <Typography variant="title">
+                            {moderationEventStatus}
+                        </Typography>
+                    ) : (
+                        <Typography variant="title">
+                            {moderationEventStatus} by user ID:{' '}
+                            {moderationActionPerformBy}
+                        </Typography>
+                    )}
                 </Toolbar>
             </AppBar>
             <Paper className={classes.container}>
