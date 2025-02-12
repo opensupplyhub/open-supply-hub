@@ -27,6 +27,7 @@ import ProductionLocationDialogFields from './ProductionLocationDialogFields';
 import {
     mainRoute,
     searchByNameAndAddressResultRoute,
+    contributeProductionLocationRoute,
     MODERATION_STATUSES_ENUM,
     PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM,
     EMPTY_PLACEHOLDER,
@@ -97,6 +98,20 @@ const ProductionLocationDialog = ({
     const getIsMobileMemoized = useMemo(() => getIsMobile(innerWidth), [
         innerWidth,
     ]);
+
+    // Override browser's go back button when modal dialog is open
+    useEffect(() => {
+        const unblock = history.listen((location, action) => {
+            if (action === 'POP') {
+                history.push(contributeProductionLocationRoute);
+            }
+        });
+
+        return () => {
+            unblock();
+        };
+    }, [history]);
+
     useEffect(() => {
         setIsMobile(getIsMobileMemoized);
     }, [getIsMobileMemoized]);
