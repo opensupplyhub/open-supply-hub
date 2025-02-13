@@ -123,7 +123,7 @@ const ProductionLocationInfo = ({
     const selectStyles = {
         control: provided => ({
             ...provided,
-            height: '56px',
+            minHeight: '56px',
             borderRadius: '0',
             '&:focus,&:active,&:focus-within': {
                 borderColor: COLOURS.PURPLE,
@@ -334,7 +334,7 @@ const ProductionLocationInfo = ({
     }, [pendingModerationEventFetching, pendingModerationEventError]);
 
     useEffect(() => {
-        /* 
+        /*
         After first POST or PATCH v1/production-locations, there will be an error
         because moderation event should be re-indexed in the OpenSearch,
         so move this effect to the very end of event loop to make sure moderation event
@@ -769,7 +769,6 @@ const ProductionLocationInfo = ({
                         singleModerationEventItem?.cleaned_data
                     }
                     osID={osID || singleModerationEventItem?.os_id}
-                    handleShow={setShowProductionLocationDialog}
                     innerWidth={innerWidth}
                     moderationStatus={
                         pendingModerationEventData?.status ||

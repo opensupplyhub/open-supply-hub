@@ -4,6 +4,8 @@ import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
 import flatten from 'lodash/flatten';
 import identity from 'lodash/identity';
+import split from 'lodash/split';
+import last from 'lodash/last';
 import some from 'lodash/some';
 import size from 'lodash/size';
 import negate from 'lodash/negate';
@@ -1483,4 +1485,10 @@ export const parseContribData = contribData => {
             ? generateRangeField(numberOfWorkers)
             : null,
     };
+};
+
+export const getLastPathParameter = url => {
+    if (typeof url !== 'string') return '';
+    const cleanUrl = url.split('?')[0];
+    return last(split(trimEnd(cleanUrl, '/'), '/')) || '';
 };

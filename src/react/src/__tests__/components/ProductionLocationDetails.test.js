@@ -1,6 +1,12 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import ProductionLocationDetails from '../../components/Contribute/ProductionLocationDetails';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
+
+jest.mock('react-router-dom', () => ({
+    ...jest.requireActual('react-router-dom'),
+    useLocation: jest.fn(),
+}));
 
 describe('ProductionLocationDetails component', () => {
     const osId = 'US2021250D1DTN7';
@@ -17,17 +23,26 @@ describe('ProductionLocationDetails component', () => {
         historicalOsIds,
     };
 
-    test('renders the production location details correctly', () => {
-        const { getByText } = renderWithProviders(<ProductionLocationDetails {...defaultProps}/>);
-    
+    beforeEach(() => {
+        jest.clearAllMocks();
+        useLocation.mockReturnValue({ pathname: '' });
+    });
+
+    test('renders production location details correctly', () => {
+        useLocation.mockReturnValue({
+            pathname: '/contribute/production-location/search/id/US2021250D1DTN7',
+        });
+
+        const { getByText } = renderWithProviders(
+            <ProductionLocationDetails {...defaultProps} />
+        );
+
         expect(getByText(name)).toBeInTheDocument();
-        expect(getByText(`Current OS ID: ${osId}`)).toBeInTheDocument();
-        expect(getByText(`Previous OS ID: ${historicalOsIds[0]}`)).toBeInTheDocument();
-        expect(getByText(`Previous OS ID: ${historicalOsIds[1]}`)).toBeInTheDocument();
+        expect(getByText(`OS ID: ${osId}`)).toBeInTheDocument();
         expect(getByText(address)).toBeInTheDocument();
         expect(getByText(countryName)).toBeInTheDocument();
     });
-    
+
     test('does not render historical OS IDs if the array is empty', () => {
         const props = { ...defaultProps, historicalOsIds: [] };
         const { getByText, queryByText } = renderWithProviders(<ProductionLocationDetails {...props}/>);
@@ -42,13 +57,54 @@ describe('ProductionLocationDetails component', () => {
     
         expect(getByText(`OS ID: ${osId}`)).toBeInTheDocument();
     });
-    
-    test('renders the tooltip for each historical OS ID', () => {
-        const { getAllByTestId } = renderWithProviders(<ProductionLocationDetails {...defaultProps}/>);
-    
-        const tooltips = getAllByTestId('previous-os-id-tooltip');
-        expect(tooltips.length).toBe(defaultProps.historicalOsIds.length);
+
+    test('renders previous OS IDs that match the search parameter', () => {
+        useLocation.mockReturnValue({
+            pathname: '/contribute/production-location/search/id/US2020053ZH1RY5',
+        });
+
+        const { getByText } = renderWithProviders(
+            <ProductionLocationDetails {...defaultProps} />
+        );
+
+        expect(getByText(`Current OS ID: ${osId}`)).toBeInTheDocument();
+        expect(getByText('Previous OS ID: US2020053ZH1RY5')).toBeInTheDocument();
+    });
+
+    test('does not render previous OS IDs if they do not match the search parameter', () => {
+        useLocation.mockReturnValue({
+            pathname: '/contribute/production-location/search/id/UNKNOWN_OS_ID',
+        });
+
+        const { queryByText } = renderWithProviders(
+            <ProductionLocationDetails {...defaultProps} />
+        );
+
+        expect(queryByText(`Previous OS ID: ${osId}`)).not.toBeInTheDocument();
+    });
+
+    test('renders only "OS ID:" if there are no historical OS IDs', () => {
+        useLocation.mockReturnValue({
+            pathname: '/contribute/production-location/search/id/US2021250D1DTN7',
+        });
+
+        const { getByText } = renderWithProviders(
+            <ProductionLocationDetails
+                {...defaultProps}
+                historicalOsIds={[]}
+            />
+        );
+
+        expect(getByText(`OS ID: ${osId}`)).toBeInTheDocument();
+    });
+
+    test('handles missing location pathname gracefully', () => {
+        useLocation.mockReturnValue({});
+
+        const { getByText } = renderWithProviders(
+            <ProductionLocationDetails {...defaultProps} />
+        );
+
+        expect(getByText(`OS ID: ${osId}`)).toBeInTheDocument();
     });
 });
-
-
