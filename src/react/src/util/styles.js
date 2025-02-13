@@ -1246,6 +1246,9 @@ export const makeProductionLocationDetailsStyles = theme => ({
         marginTop: '8px',
     }),
     locationHistoricalOsIdStyles: Object.freeze({
+        display: 'flex',
+        alignItems: 'center',
+        gap: '5px',
         fontSize: '14px',
         lineHeight: '20px',
         fontWeight: theme.typography.fontWeightBold,
