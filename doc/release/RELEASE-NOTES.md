@@ -62,6 +62,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-1697](https://opensupplyhub.atlassian.net/browse/OSDEV-1697) - Added a redirect to the main page upon closing the SLC modal window to prevent the creation of multiple moderation events.
+* [OSDEV-1701](https://opensupplyhub.atlassian.net/browse/OSDEV-1701) - Refactored "Go Back" button in production location info page.
 
 ### What's new
 * [OSDEV-1662](https://opensupplyhub.atlassian.net/browse/OSDEV-1662) - Added a new field, `action_perform_by`, to the moderation event. This data appears on the Contribution Record page when a moderator perform any actions like `APPROVED` or `REJECTED`.
