@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { func, number, object, string } from 'prop-types';
+import { number, object, string } from 'prop-types';
 import { withStyles, withTheme } from '@material-ui/core/styles';
 import { useHistory } from 'react-router-dom';
 import {
@@ -87,7 +87,6 @@ const ProductionLocationDialog = ({
     data,
     osID,
     moderationStatus,
-    handleShow,
     claimStatus,
 }) => {
     const history = useHistory();
@@ -96,6 +95,20 @@ const ProductionLocationDialog = ({
     const getIsMobileMemoized = useMemo(() => getIsMobile(innerWidth), [
         innerWidth,
     ]);
+
+    // Override browser's go back button when modal dialog is open
+    useEffect(() => {
+        const cleanupListener = history.listen((location, action) => {
+            if (action === 'POP') {
+                history.push(contributeProductionLocationRoute);
+            }
+        });
+
+        return () => {
+            cleanupListener();
+        };
+    }, [history]);
+
     useEffect(() => {
         setIsMobile(getIsMobileMemoized);
     }, [getIsMobileMemoized]);
@@ -144,7 +157,7 @@ const ProductionLocationDialog = ({
         <>
             {isMobile ? (
                 <ProductionLocationDialogCloseButton
-                    handleShow={handleShow}
+                    handleGoToMainPage={handleGoToMainPage}
                     isMobile={isMobile}
                 />
             ) : null}
@@ -168,7 +181,7 @@ const ProductionLocationDialog = ({
                         </p>
                         {!isMobile ? (
                             <ProductionLocationDialogCloseButton
-                                handleShow={handleShow}
+                                handleGoToMainPage={handleGoToMainPage}
                                 isMobile={isMobile}
                             />
                         ) : null}
@@ -311,7 +324,6 @@ ProductionLocationDialog.propTypes = {
     data: object.isRequired,
     osID: string,
     moderationStatus: string.isRequired,
-    handleShow: func.isRequired,
     classes: object.isRequired,
     theme: object.isRequired,
     innerWidth: number.isRequired,
