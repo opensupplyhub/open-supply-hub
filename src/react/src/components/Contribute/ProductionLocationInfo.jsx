@@ -742,8 +742,9 @@ const ProductionLocationInfo = ({
                                             component="h4"
                                             className={classes.subTitleStyles}
                                         >
-                                            Enter the company that holds majority
-                                            ownership for this production.
+                                            Enter the company that holds
+                                            majority ownership for this
+                                            production.
                                         </Typography>
                                         <StyledSelect
                                             creatable
@@ -756,9 +757,9 @@ const ProductionLocationInfo = ({
                                             className={classes.selectStyles}
                                             components={customSelectComponents}
                                         />
-                                </div>
-                            </>
-                        )}
+                                    </div>
+                                </>
+                            )}
                         </div>
                         <div className={classes.buttonsContainerStyles}>
                             <Button
@@ -819,11 +820,6 @@ ProductionLocationInfo.defaultProps = {
     singleModerationEventItemError: null,
     singleProductionLocationFetching: false,
     singleProductionLocationError: null,
-    searchParameters: shape({
-        name: null,
-        address: null,
-        country: null,
-    }),
 };
 
 ProductionLocationInfo.propTypes = {
