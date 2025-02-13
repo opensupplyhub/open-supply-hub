@@ -8,14 +8,14 @@ import { makeProductionLocationCloseButtonStyles } from '../../util/styles';
 const ProductionLocationDialogCloseButton = ({
     isMobile,
     classes,
-    handleShow,
+    handleGoToMainPage,
 }) => (
     <>
         {isMobile ? (
             <IconButton
                 aria-label="Close"
                 className="mobile-dialog-close-button"
-                onClick={() => handleShow(false)}
+                onClick={handleGoToMainPage}
             >
                 <CloseIcon />
             </IconButton>
@@ -23,7 +23,7 @@ const ProductionLocationDialogCloseButton = ({
             <IconButton
                 aria-label="Close"
                 className={classes.desktopCloseButton}
-                onClick={() => handleShow(false)}
+                onClick={handleGoToMainPage}
             >
                 <CloseIcon />
             </IconButton>
@@ -32,7 +32,7 @@ const ProductionLocationDialogCloseButton = ({
 );
 
 ProductionLocationDialogCloseButton.propTypes = {
-    handleShow: func.isRequired,
+    handleGoToMainPage: func.isRequired,
     isMobile: bool.isRequired,
     classes: object.isRequired,
 };
