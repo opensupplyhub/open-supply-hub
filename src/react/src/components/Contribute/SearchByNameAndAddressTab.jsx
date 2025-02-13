@@ -72,8 +72,7 @@ const SearchByNameAndAddressTab = ({
     const [addressTouched, setAddressTouched] = useState(false);
     const [countryTouched, setCountryTouched] = useState(false);
 
-    const isCountryError =
-        countryTouched && (!inputCountry || !inputCountry.value);
+    const isCountryError = countryTouched && !inputCountry?.value;
 
     const history = useHistory();
     const isValid = val => val.trim().length > 0;
