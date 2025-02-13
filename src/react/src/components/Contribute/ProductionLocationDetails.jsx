@@ -1,9 +1,11 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { string, arrayOf, object } from 'prop-types';
 import { Typography } from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
 import PreviousOsIdTooltip from './PreviousOsIdTooltip';
 import { makeProductionLocationDetailsStyles } from '../../util/styles';
+import { getLastPathParameter } from '../../util/util';
 
 const ProductionLocationDetails = ({
     osId,
@@ -13,8 +15,12 @@ const ProductionLocationDetails = ({
     historicalOsIds,
     classes,
 }) => {
-    const historicalOsIdsNotEmpty =
-        Array.isArray(historicalOsIds) && historicalOsIds.length > 0;
+    const { pathname = '' } = useLocation();
+    const osIdSearchParameter = pathname ? getLastPathParameter(pathname) : '';
+
+    const previousOsId = historicalOsIds.find(
+        historicalOsId => historicalOsId === osIdSearchParameter,
+    );
 
     return (
         <div>
@@ -25,17 +31,13 @@ const ProductionLocationDetails = ({
                 component="h6"
                 className={classes.locationCurrentOsIdStyles}
             >
-                {historicalOsIdsNotEmpty ? 'Current OS ID:' : 'OS ID:'} {osId}
+                {previousOsId ? 'Current OS ID:' : 'OS ID:'} {osId}
             </Typography>
-            {historicalOsIdsNotEmpty &&
-                historicalOsIds.map(historicalOsId => (
-                    <Typography
-                        key={historicalOsId}
-                        className={classes.locationHistoricalOsIdStyles}
-                    >
-                        Previous OS ID: {historicalOsId} <PreviousOsIdTooltip />
-                    </Typography>
-                ))}
+            {previousOsId && (
+                <Typography className={classes.locationHistoricalOsIdStyles}>
+                    Previous OS ID: {previousOsId} <PreviousOsIdTooltip />
+                </Typography>
+            )}
             <div className={classes.locationAddressContainerStyles}>
                 <Typography className={classes.locationAddressStyles}>
                     {address}

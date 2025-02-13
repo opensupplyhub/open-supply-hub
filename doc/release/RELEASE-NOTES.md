@@ -19,7 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe schema changes here.*
 
 ### Code/API changes
-* [OSDEV-1577](https://opensupplyhub.atlassian.net/browse/OSDEV-1577) - Added geo-bounding box query support to the GET `/api/v1/production-locations/` endpoint. To filter production locations whose geopoints fall within the bounding box, it is necessary to specify valid values for the parameters `geo_bounding_box[top]`, `geo_bounding_box[left]`, `geo_bounding_box[bottom]`, and `geo_bounding_box[right]`. 
+* [OSDEV-1577](https://opensupplyhub.atlassian.net/browse/OSDEV-1577) - Added geo-bounding box query support to the GET `/api/v1/production-locations/` endpoint. To filter production locations whose geopoints fall within the bounding box, it is necessary to specify valid values for the parameters `geo_bounding_box[top]`, `geo_bounding_box[left]`, `geo_bounding_box[bottom]`, and `geo_bounding_box[right]`.
 
     The validation rules are as follows:
     * All coordinates of the geo-boundary box (top, left, bottom, right) must be provided.
@@ -31,7 +31,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1662](https://opensupplyhub.atlassian.net/browse/OSDEV-1662) - Updated Logstash mapping configuration to handle the new `action_perform_by` field for OpenSearch.
 
 ### Architecture/Environment changes
-* [OSDEV-1515](https://opensupplyhub.atlassian.net/browse/OSDEV-1515) - Removed `rds_allow_major_version_upgrade` and `rds_apply_immediately` from the environment tfvars files (e.g., terraform-production.tfvars) to set them to `false` again, as the default values in `/deployment/terraform/variables.tf` are `false`. This is necessary to prevent unintended PostgreSQL major version upgrades since the target PostgreSQL 16.3 version has been reached. 
+* [OSDEV-1515](https://opensupplyhub.atlassian.net/browse/OSDEV-1515) - Removed `rds_allow_major_version_upgrade` and `rds_apply_immediately` from the environment tfvars files (e.g., terraform-production.tfvars) to set them to `false` again, as the default values in `/deployment/terraform/variables.tf` are `false`. This is necessary to prevent unintended PostgreSQL major version upgrades since the target PostgreSQL 16.3 version has been reached.
 * [OSDEV-899](https://opensupplyhub.atlassian.net/browse/OSDEV-899) - With this task, we split the Django container into two components: FE (React) and BE (Django). Requests to the frontend (React) will be processed by the CDN (CloudFront), while requests to the API will be redirected to the Django container. This approach will allow for more efficient use of ECS cluster computing resources and improve frontend performance.
 
     The following endpoints will be redirected to the Django container:
@@ -62,9 +62,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-1698](https://opensupplyhub.atlassian.net/browse/OSDEV-1698) - SLC: Refactored the "Submit Another Location" button link to direct users to the search-by-name-and-address form at /contribute/single-location?tab=name-address.
+* [OSDEV-1700](https://opensupplyhub.atlassian.net/browse/OSDEV-1700) - SLC: Keep only one previous OS ID in the search result if it matches the search query.
 * [OSDEV-1697](https://opensupplyhub.atlassian.net/browse/OSDEV-1697) - Added a redirect to the main page upon closing the SLC modal window to prevent the creation of multiple moderation events.
 * [OSDEV-1695](https://opensupplyhub.atlassian.net/browse/OSDEV-1695) - [SLC] Enabled the claim button for updated production locations when a moderation event has a pending status. Disabled claim button explicitly if production location has pending claim status.
 * [OSDEV-1701](https://opensupplyhub.atlassian.net/browse/OSDEV-1701) - Refactored "Go Back" button in production location info page.
+* [OSDEV-1672](https://opensupplyhub.atlassian.net/browse/OSDEV-1672) - SLC. Implement collecting contribution data page (FE) - All Multi-Selects on the page have been fixed. They resize based on the number of items selected.
 
 ### What's new
 * [OSDEV-1662](https://opensupplyhub.atlassian.net/browse/OSDEV-1662) - Added a new field, `action_perform_by`, to the moderation event. This data appears on the Contribution Record page when a moderator perform any actions like `APPROVED` or `REJECTED`.
