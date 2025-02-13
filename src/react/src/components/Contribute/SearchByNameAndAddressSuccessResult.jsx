@@ -4,20 +4,21 @@ import { arrayOf, func, object } from 'prop-types';
 import Button from '@material-ui/core/Button';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
+import { makeContributeProductionLocationUpdateURL } from '../../util/util';
 import { makeSearchByNameAndAddressSuccessResultStyles } from '../../util/styles';
 import { productionLocationPropType } from '../../util/propTypes';
 import ConfirmNotFoundLocationDialog from './ConfirmNotFoundLocationDialog';
 import ProductionLocationDetails from './ProductionLocationDetails';
-import { productionLocationInfoRoute } from '../../util/constants';
 
 const SearchByNameAndAddressSuccessResult = ({
     productionLocations,
     clearLocations,
     classes,
 }) => {
+    const history = useHistory();
+
     const [confirmDialogIsOpen, setConfirmDialogIsOpen] = useState(false);
     const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
-    const history = useHistory();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -34,16 +35,10 @@ const SearchByNameAndAddressSuccessResult = ({
     }, []);
 
     const handleSelectLocation = location => {
-        const { name, address, country } = location;
-        const baseUrl = productionLocationInfoRoute;
-        const params = new URLSearchParams({
-            name,
-            address,
-            country: country.alpha_2,
-        });
-        const url = `${baseUrl}?${params.toString()}`;
-
-        history.push(url);
+        const baseUrl = makeContributeProductionLocationUpdateURL(
+            location.os_id,
+        );
+        history.push(baseUrl);
     };
 
     const handleNotFoundLocation = () => {
@@ -86,20 +81,22 @@ const SearchByNameAndAddressSuccessResult = ({
                     </Typography>
                 </div>
                 <div>
-                    {productionLocations.map(location => (
+                    {productionLocations.map(productionLocation => (
                         <div
-                            key={location.os_id}
+                            key={productionLocation.os_id}
                             className={classes.resultContainer}
                         >
                             <ProductionLocationDetails
-                                osId={location.os_id}
-                                name={location.name}
-                                address={location.address}
-                                countryName={location.country.name}
+                                osId={productionLocation.os_id}
+                                name={productionLocation.name}
+                                address={productionLocation.address}
+                                countryName={productionLocation.country.name}
                             />
                             <Button
                                 variant="contained"
-                                onClick={() => handleSelectLocation(location)}
+                                onClick={() =>
+                                    handleSelectLocation(productionLocation)
+                                }
                                 classes={{
                                     root: `${classes.buttonBaseStyles} ${classes.selectButtonStyles}`,
                                     label: classes.selectButtonLabelStyles,

@@ -4,6 +4,8 @@ import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
 import flatten from 'lodash/flatten';
 import identity from 'lodash/identity';
+import split from 'lodash/split';
+import last from 'lodash/last';
 import some from 'lodash/some';
 import size from 'lodash/size';
 import negate from 'lodash/negate';
@@ -32,6 +34,7 @@ import includes from 'lodash/includes';
 import join from 'lodash/join';
 import map from 'lodash/map';
 import uniq from 'lodash/uniq';
+import has from 'lodash/has';
 import { isURL, isInt } from 'validator';
 import { featureCollection, bbox } from '@turf/turf';
 import hash from 'object-hash';
@@ -64,6 +67,7 @@ import {
     listParsingErrorMappings,
     MODERATION_QUEUE,
     MODERATION_STATUS_COLORS,
+    DATA_SOURCES_ENUM,
 } from './constants';
 
 import { createListItemCSV } from './util.listItemCSV';
@@ -224,7 +228,7 @@ export const makeMergeTwoFacilitiesAPIURL = (targetOSID, toMergeOSID) =>
 export const makeGetFacilitiesCountURL = () => '/api/facilities/count/';
 
 export const makeGetAPIFeatureFlagsURL = () => '/api-feature-flags/';
-// TODO: handle &sort_by=contributors_desc at the end of a query
+
 export const makeGetFacilityClaimsURLWithQueryString = qs =>
     `/api/facility-claims/?${qs}`;
 export const makeGetFacilityClaimByClaimIDURL = claimID =>
@@ -257,6 +261,11 @@ export const makeContributorEmbedConfigURL = contributorId =>
     `/api/contributor-embed-configs/${contributorId}/`;
 export const makeNonStandardFieldsURL = () => '/api/nonstandard-fields/';
 
+export const makeProductionLocationURL = (osID = '') => {
+    const osIDPathParameter = osID ? `${osID}/` : '';
+    return `/api/v1/production-locations/${osIDPathParameter}`;
+};
+
 export const makeGetProductionLocationsForPotentialMatches = (
     productionLocationName,
     address,
@@ -273,9 +282,6 @@ export const makeGetProductionLocationsForPotentialMatches = (
     return `/api/v1/production-locations/?${params.toString()}`;
 };
 
-export const makeGetProductionLocationByOsIdURL = osID =>
-    `/api/v1/production-locations/${osID}/`;
-
 export const makeModerationEventRecordURL = moderationID =>
     `/api/v1/moderation-events/${moderationID}/`;
 
@@ -286,6 +292,9 @@ export const makeProductionLocationFromModerationEventURL = (
     const osIDPathParameter = osID ? `${osID}/` : '';
     return `/api/v1/moderation-events/${moderationID}/production-locations/${osIDPathParameter}`;
 };
+
+export const makeContributeProductionLocationUpdateURL = osID =>
+    `/contribute/production-location/${osID}/info/`;
 
 export const makeGetModerationEventsWithQueryString = (
     qs,
@@ -408,6 +417,13 @@ export const mapParamToReactSelectOption = param => {
         value: param,
         label: param,
     });
+};
+
+export const updateStateFromData = (obj, dataKey, setter) => {
+    if (isArray(obj[dataKey]) && obj[dataKey].length > 0) {
+        const transformedData = obj[dataKey].map(mapParamToReactSelectOption);
+        setter(transformedData);
+    }
 };
 
 export const createSelectOptionsFromParams = params => {
@@ -1091,6 +1107,19 @@ export const convertFeatureFlagsObjectToListOfActiveFlags = featureFlags =>
 export const checkWhetherUserHasDashboardAccess = user =>
     get(user, 'is_superuser', false);
 
+export const convertRangeField = rangeObj => {
+    if (isEmpty(rangeObj)) {
+        return null;
+    }
+    if (has(rangeObj, 'min') && has(rangeObj, 'max')) {
+        if (rangeObj.min === rangeObj.max) {
+            return rangeObj.min;
+        }
+        return `${rangeObj.min}-${rangeObj.max}`;
+    }
+    return !isNil(rangeObj.min) ? rangeObj.min : rangeObj.max;
+};
+
 export const isValidNumberOfWorkers = value => {
     if (isEmpty(value)) {
         return true;
@@ -1402,4 +1431,64 @@ export const multiValueBackgroundHandler = (value, origin) => {
 export const openInNewTab = url => {
     const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
     if (newWindow) newWindow.opener = null;
+};
+
+const extractProductionLocationContributionValues = data => map(data, 'value');
+
+export const generateRangeField = value => {
+    if (typeof value === 'number') {
+        return { min: value, max: value };
+    }
+
+    if (typeof value === 'string' && value.includes('-')) {
+        const [min, max] = value.split('-').map(Number);
+        return max !== undefined ? { min, max } : { min };
+    }
+
+    return { min: value, max: value };
+};
+
+export const parseContribData = contribData => {
+    const {
+        name,
+        address,
+        country,
+        sector,
+        productType,
+        locationType,
+        processingType,
+        numberOfWorkers,
+        parentCompany,
+    } = contribData;
+
+    return {
+        source: DATA_SOURCES_ENUM.SLC,
+        name,
+        address,
+        country: country?.value,
+        sector: isArray(sector)
+            ? extractProductionLocationContributionValues(sector)
+            : [],
+        parent_company: isArray(parentCompany)
+            ? extractProductionLocationContributionValues(parentCompany)
+            : [],
+        product_type: isArray(productType)
+            ? extractProductionLocationContributionValues(productType)
+            : [],
+        location_type: isArray(locationType)
+            ? extractProductionLocationContributionValues(locationType)
+            : [],
+        processing_type: isArray(processingType)
+            ? extractProductionLocationContributionValues(processingType)
+            : [],
+        number_of_workers: numberOfWorkers
+            ? generateRangeField(numberOfWorkers)
+            : null,
+    };
+};
+
+export const getLastPathParameter = url => {
+    if (typeof url !== 'string') return '';
+    const cleanUrl = url.split('?')[0];
+    return last(split(trimEnd(cleanUrl, '/'), '/')) || '';
 };

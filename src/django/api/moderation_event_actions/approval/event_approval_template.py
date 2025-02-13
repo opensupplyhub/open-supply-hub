@@ -21,6 +21,7 @@ from api.models.facility.facility_match import FacilityMatch
 from api.models.facility.facility_match_temp import FacilityMatchTemp
 from api.models.moderation_event import ModerationEvent
 from api.models.source import Source
+from api.models.user import User
 from api.views.fields.create_nonstandard_fields import (
     create_nonstandard_fields,
 )
@@ -38,8 +39,13 @@ class EventApprovalTemplate(ABC):
     abstract methods and hooks.
     """
 
-    def __init__(self, moderation_event: ModerationEvent) -> None:
+    def __init__(
+        self,
+        moderation_event: ModerationEvent,
+        moderator: User
+    ) -> None:
         self.__event = moderation_event
+        self.__moderator = moderator
 
     @transaction.atomic
     def process_moderation_event(self) -> FacilityListItem:
@@ -125,7 +131,7 @@ class EventApprovalTemplate(ABC):
             'created.'
         )
 
-        self._update_event(self.__event, item)
+        self.__update_event(item)
         log.info(
             f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Status and os_id of '
             'Moderation Event updated.'
@@ -268,10 +274,12 @@ class EventApprovalTemplate(ABC):
             updated_at=timezone.now(),
         )
 
-    @staticmethod
-    def _update_event(event: ModerationEvent, item: FacilityListItem) -> None:
+    def __update_event(self, item: FacilityListItem) -> None:
+        event = self.__event
         event.status = ModerationEvent.Status.APPROVED
         event.status_change_date = timezone.now()
+        event.action_type = self._get_action_type()
+        event.action_perform_by = self.__moderator
         event.os_id = item.facility_id
         event.save()
 
@@ -301,6 +309,14 @@ class EventApprovalTemplate(ABC):
         """
         Return the status that should be used when creating
         facility matches.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def _get_action_type(self) -> str:
+        """
+        Return the action type that should be used when
+        updating the moderation event.
         """
         raise NotImplementedError
 

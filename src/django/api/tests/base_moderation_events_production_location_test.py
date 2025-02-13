@@ -155,7 +155,7 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
             response.data["detail"],
         )
 
-    def assert_success_response(self, response, status_code):
+    def assert_success_response(self, response, status_code, action_type):
         self.assertEqual(status_code, response.status_code)
         self.assertIn("os_id", response.data)
 
@@ -165,6 +165,11 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
         self.assertEqual(moderation_event.status, 'APPROVED')
         self.assertIsNotNone(moderation_event.status_change_date)
         self.assertEqual(moderation_event.os_id, response.data["os_id"])
+        self.assertEqual(moderation_event.action_type, action_type)
+        self.assertEqual(
+            moderation_event.action_perform_by.id,
+            self.superuser.id
+        )
 
     def assert_source_creation(self, source):
         self.assertIsNotNone(source)

@@ -355,8 +355,12 @@ export const searchByOsIdResultRoute =
     '/contribute/production-location/search/id/:osID';
 export const searchByNameAndAddressResultRoute =
     '/contribute/production-location/search/';
-export const productionLocationInfoRoute =
-    '/contribute/production-location/info';
+export const productionLocationInfoRouteCommon =
+    '/contribute/production-location/info/';
+export const productionLocationInfoRouteCreate =
+    '/contribute/production-location/info/:moderationID?';
+export const productionLocationInfoRouteUpdate =
+    '/contribute/production-location/:osID/info/:moderationID?';
 
 export const contributeFieldsEnum = Object.freeze({
     name: 'name',
@@ -1340,6 +1344,18 @@ export const DATA_SOURCES_ENUM = Object.freeze({
 export const MODERATION_STATUSES_ENUM = Object.freeze({
     PENDING: 'PENDING',
     APPROVED: 'APPROVED',
+    REJECTED: 'REJECTED',
+});
+
+export const PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM = Object.freeze({
+    CLAIMED: 'claimed',
+    UNCLAIMED: 'unclaimed',
+    PENDING: 'pending',
+});
+
+export const MODERATION_ACTIONS_ENUM = Object.freeze({
+    NEW_LOCATION: 'NEW_LOCATION',
+    MATCHED: 'MATCHED',
     REJECTED: 'REJECTED',
 });
 

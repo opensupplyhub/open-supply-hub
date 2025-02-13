@@ -4,6 +4,7 @@ from rest_framework.serializers import (
     CharField,
     IntegerField
 )
+from rest_framework.fields import empty
 from api.models.moderation_event \
     import ModerationEvent
 from django.utils.timezone import now
@@ -33,6 +34,22 @@ class ModerationEventUpdateSerializer(ModelSerializer):
             'status_change_date',
             'claim_id'
         ]
+
+    def __init__(
+        self,
+        instance=None,
+        data=empty,
+        user=None,
+        partial=False,
+        **kwargs
+    ):
+        self.__moderator = user
+        super().__init__(
+            instance=instance,
+            data=data,
+            partial=partial,
+            **kwargs
+        )
 
     def to_internal_value(self, data):
         status = data.get('status')
@@ -64,6 +81,10 @@ class ModerationEventUpdateSerializer(ModelSerializer):
     def update(self, instance, validated_data):
         if 'status' in validated_data:
             value = validated_data['status']
+            if value == ModerationEvent.Status.REJECTED:
+                instance.action_type = ModerationEvent.ActionType.REJECTED
+                instance.action_perform_by = self.__moderator
+
             instance.status = value
             instance.status_change_date = now()
 

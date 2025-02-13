@@ -75,7 +75,10 @@ const {
     removeDuplicatesFromOtherLocationsData,
     makeGetSectorsURL,
     createUserDropdownLinks,
-    createUploadFormErrorMessages
+    createUploadFormErrorMessages,
+    updateStateFromData,
+    getLastPathParameter,
+    generateRangeField,
 } = require('../util/util');
 
 const {
@@ -1804,4 +1807,143 @@ it('should return an array with claimed facility link if active feature flag is 
         label: 'My Facilities',
         href: '/claimed',
     });
+});
+
+it('should call setter with transformed array when dataKey is an array property', () => {
+    const mockSetter = jest.fn();
+    const sampleObject = {
+        location_type: ["CMT"],
+    };
+    updateStateFromData(sampleObject, 'location_type', mockSetter);
+    expect(mockSetter).toHaveBeenCalledWith([{ label: "CMT", value: "CMT" }]);
+});
+
+it('should call setter with transformed array when dataKey is historical_os_id', () => {
+    const mockSetter = jest.fn();
+    const sampleObject = {
+        historical_os_id: ["CN2019083HG1GHB", "CN2019200171K0V"],
+    };
+    updateStateFromData(sampleObject, 'historical_os_id', mockSetter);
+    expect(mockSetter).toHaveBeenCalledWith([
+        { label: "CN2019083HG1GHB", value: "CN2019083HG1GHB" },
+        { label: "CN2019200171K0V", value: "CN2019200171K0V" }
+    ]);
+});
+
+it('should not call setter when array is empty', () => {
+    const mockSetter = jest.fn();
+    const sampleObject = {
+        empty_array: [],
+    };
+    updateStateFromData(sampleObject, 'empty_array', mockSetter);
+    expect(mockSetter).not.toHaveBeenCalled();
+});
+
+it('should not call setter when dataKey is a non-array string property', () => {
+    const mockSetter = jest.fn();
+    const sampleObject = {
+        name: "KASHION INDUSTRY CO. LTD",
+    };
+    updateStateFromData(sampleObject, 'name', mockSetter);
+    expect(mockSetter).not.toHaveBeenCalled();
+});
+
+it('should not call setter when dataKey is an object property', () => {
+    const mockSetter = jest.fn();
+    const sampleObject = {
+        number_of_workers: { max: 323, min: 323 },
+    };
+    updateStateFromData(sampleObject, 'number_of_workers', mockSetter);
+    expect(mockSetter).not.toHaveBeenCalled();
+});
+
+it('should not call setter when dataKey is undefined', () => {
+    const mockSetter = jest.fn();
+    const sampleObject = {
+        undefined_key: undefined,
+    };
+    updateStateFromData(sampleObject, 'undefined_key', mockSetter);
+    expect(mockSetter).not.toHaveBeenCalled();
+});
+
+it('should not call setter when dataKey is null', () => {
+    const mockSetter = jest.fn();
+    const sampleObject = {
+        null_key: null
+    };
+    updateStateFromData(sampleObject, 'null_key', mockSetter);
+    expect(mockSetter).not.toHaveBeenCalled();
+});
+
+it('extracts the ID from a valid URL without a trailing slash', () => {
+    const url = '/contribute/production-location/search/id/BD202034606B9SA';
+    expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
+});
+
+it('extracts the ID from a valid URL with a trailing slash', () => {
+    const url = '/contribute/production-location/search/id/BD202034606B9SA/';
+    expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
+});
+
+it('returns id when the URL ends at "id/" with no ID', () => {
+    const url = '/contribute/production-location/search/id/';
+    expect(getLastPathParameter(url)).toBe('id');
+});
+
+it('returns the correct ID when the URL contains query parameters', () => {
+    const url = '/contribute/production-location/search/id/BD202034606B9SA?foo=bar';
+    expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
+});
+
+it('returns the correct ID when the URL has multiple segments after "id/"', () => {
+    const url = '/contribute/production-location/search/id/BD202034606B9SA/extra';
+    expect(getLastPathParameter(url)).toBe('extra');
+});
+
+it('returns the whole string if no slashes exist', () => {
+    const url = 'BD202034606B9SA';
+    expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
+});
+
+it('returns empty string for an empty string', () => {
+    const url = '';
+    expect(getLastPathParameter(url)).toBe('');
+});
+
+it('returns empty string for a URL that only contains slashes', () => {
+    const url = '///';
+    expect(getLastPathParameter(url)).toBe('');
+});
+
+it('should return { min: value, max: value } when value is a number', () => {
+    expect(generateRangeField(10)).toEqual({ min: 10, max: 10 });
+    expect(generateRangeField(0)).toEqual({ min: 0, max: 0 });
+    expect(generateRangeField(-5)).toEqual({ min: -5, max: -5 });
+});
+
+it('should return { min, max } when value is a valid range string', () => {
+    expect(generateRangeField('10-20')).toEqual({ min: 10, max: 20 });
+    expect(generateRangeField('0-100')).toEqual({ min: 0, max: 100 });
+    expect(generateRangeField('-5-5')).toEqual({ min: 0, max: 5 });
+});
+
+it('should return { min: value, max: value } when value is a single string (not a range)', () => {
+    expect(generateRangeField('15')).toEqual({ min: '15', max: '15' });
+    expect(generateRangeField('test')).toEqual({ min: 'test', max: 'test' });
+});
+
+it('should return { min: value, max: value } when value is an empty string', () => {
+    expect(generateRangeField('')).toEqual({ min: '', max: '' });
+});
+
+it('should return { min, max } correctly when value has extra spaces', () => {
+    expect(generateRangeField(' 10 - 20 ')).toEqual({ min: 10, max: 20 });
+    expect(generateRangeField('  5 -   15')).toEqual({ min: 5, max: 15 });
+});
+
+it('should return { min: value, max: value } for non-string and non-number values', () => {
+    expect(generateRangeField(null)).toEqual({ min: null, max: null });
+    expect(generateRangeField(undefined)).toEqual({ min: undefined, max: undefined });
+    expect(generateRangeField({})).toEqual({ min: {}, max: {} });
+    expect(generateRangeField([])).toEqual({ min: [], max: [] });
 });
