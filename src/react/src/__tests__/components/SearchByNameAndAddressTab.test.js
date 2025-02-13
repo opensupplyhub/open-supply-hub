@@ -17,30 +17,28 @@ jest.mock("react-router-dom", () => {
     };
 });
 
-jest.mock("../../components/Filters/StyledSelect", () => {
-    return (props) => {
-        const { options, value, onChange, onBlur, placeholder } = props;
-        return (
-            <select
-                data-testid="countries-select"
-                value={value ? value.value : ""}
-                onChange={(e) => {
-                    const selectedOption = options.find(
-                        (opt) => opt.value === e.target.value,
-                    );
-                    onChange(selectedOption);
-                }}
-                onBlur={onBlur}
-            >
-                <option value="">{placeholder}</option>
-                {options.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                    </option>
-                ))}
-            </select>
-        );
-    };
+jest.mock("../../components/Filters/StyledSelect", () => (props) => {
+    const { options, value, onChange, onBlur, placeholder } = props;
+    return (
+        <select
+            data-testid="countries-select"
+            value={value ? value.value : ""}
+            onChange={(e) => {
+                const selectedOption = options.find(
+                    (opt) => opt.value === e.target.value,
+                );
+                onChange(selectedOption);
+            }}
+            onBlur={onBlur}
+        >
+            <option value="">{placeholder}</option>
+            {options.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                </option>
+            ))}
+        </select>
+    );
 });
 
 describe("SearchByNameAndAddressTab component", () => {
