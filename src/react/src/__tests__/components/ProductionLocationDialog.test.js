@@ -105,12 +105,15 @@ describe('ProductionLocationDialog', () => {
     });
 
     test.each([
-        ['PENDING', 'unclaimed', true],
+        ['PENDING', 'unclaimed', false],
+        ['PENDING', 'pending', true],
         ['PENDING', 'claimed', true],
         ['REJECTED', 'claimed', true],
+        ['REJECTED', 'pending', true],
         ['REJECTED', 'unclaimed', false],
         ['REJECTED', undefined, true],
         ['APPROVED', 'unclaimed', false],
+        ['APPROVED', 'pending', true],
         ['APPROVED', 'claimed', true]
     ])('handles moderation status %s and claim status %s correctly', (moderationStatus, claimStatus, shouldBeDisabled) => {
         const { getByRole } = render(

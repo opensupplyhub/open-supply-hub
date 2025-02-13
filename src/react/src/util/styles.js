@@ -648,6 +648,9 @@ export const makeProductionLocationDialogStyles = theme =>
         claimButton: Object.freeze({
             backgroundColor: COLOURS.NAVIGATION,
             borderRadius: 0,
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
         }),
         claimButton_disabled: Object.freeze({
             paddingTop: '6px',
