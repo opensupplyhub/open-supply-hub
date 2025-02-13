@@ -31,10 +31,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1662](https://opensupplyhub.atlassian.net/browse/OSDEV-1662) - Updated Logstash mapping configuration to handle the new `action_perform_by` field for OpenSearch.
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
-
-### Bugfix
-* [OSDEV-1549](https://opensupplyhub.atlassian.net/browse/OSDEV-1549) - Added Django serialization check for all fields from the request body based on [the API specification](https://opensupplyhub.github.io/open-supply-hub-api-docs/) for POST and PATCH v1/production-locations endpoint, and appropriate errors return according to the request body schema in the API spec.
 * [OSDEV-1515](https://opensupplyhub.atlassian.net/browse/OSDEV-1515) - Removed `rds_allow_major_version_upgrade` and `rds_apply_immediately` from the environment tfvars files (e.g., terraform-production.tfvars) to set them to `false` again, as the default values in `/deployment/terraform/variables.tf` are `false`. This is necessary to prevent unintended PostgreSQL major version upgrades since the target PostgreSQL 16.3 version has been reached.
 * [OSDEV-899](https://opensupplyhub.atlassian.net/browse/OSDEV-899) - With this task, we split the Django container into two components: FE (React) and BE (Django). Requests to the frontend (React) will be processed by the CDN (CloudFront), while requests to the API will be redirected to the Django container. This approach will allow for more efficient use of ECS cluster computing resources and improve frontend performance.
 
@@ -70,6 +66,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1695](https://opensupplyhub.atlassian.net/browse/OSDEV-1695) - [SLC] Enabled the claim button for updated production locations when a moderation event has a pending status. Disabled claim button explicitly if production location has pending claim status.
 * [OSDEV-1701](https://opensupplyhub.atlassian.net/browse/OSDEV-1701) - Refactored "Go Back" button in production location info page.
 * [OSDEV-1672](https://opensupplyhub.atlassian.net/browse/OSDEV-1672) - SLC. Implement collecting contribution data page (FE) - All Multi-Selects on the page have been fixed. They resize based on the number of items selected.
+* [OSDEV-1549](https://opensupplyhub.atlassian.net/browse/OSDEV-1549) - Added Django serialization check for all fields from the request body based on [the API specification](https://opensupplyhub.github.io/open-supply-hub-api-docs/) for POST and PATCH v1/production-locations endpoint, and appropriate errors return according to the request body schema in the API spec.
 
 ### What's new
 * [OSDEV-1662](https://opensupplyhub.atlassian.net/browse/OSDEV-1662) - Added a new field, `action_perform_by`, to the moderation event. This data appears on the Contribution Record page when a moderator perform any actions like `APPROVED` or `REJECTED`.
