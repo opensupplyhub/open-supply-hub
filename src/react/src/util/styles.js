@@ -1429,7 +1429,6 @@ export const makeAddLocationStyles = theme =>
             paddingRight: '5%',
             gap: '50px',
             paddingBottom: '5%',
-            flexWrap: 'center',
             flexDirection: 'row',
             [theme.breakpoints.down('sm')]: {
                 flexDirection: 'column',
