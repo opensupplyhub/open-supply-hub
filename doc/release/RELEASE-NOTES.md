@@ -61,6 +61,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     All other traffic will be redirected to the React application.
 
 ### Bugfix
+* [OSDEV-1695](https://opensupplyhub.atlassian.net/browse/OSDEV-1695) - [SLC] Enabled the claim button for updated production locations when a moderation event has a pending status. Disabled claim button explicitly if production location has pending claim status.
 * [OSDEV-1701](https://opensupplyhub.atlassian.net/browse/OSDEV-1701) - Refactored "Go Back" button in production location info page.
 
 ### What's new
