@@ -1,10 +1,16 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { BrowserRouter as Router, useHistory } from 'react-router-dom';
 import ProductionLocationDialog from '../../components/Contribute/ProductionLocationDialog';
 import ProductionLocationDialogCloseButton from '../../components/Contribute/ProductionLocationDialogCloseButton';
-import history from '../../util/history';
 
+
+jest.mock('react-router-dom', () => ({
+    ...jest.requireActual('react-router-dom'),
+    useHistory: jest.fn(),
+}));
+
+const mockHistoryPush = jest.fn();
 
 describe('ProductionLocationDialog', () => {
     const defaultProps = {
@@ -51,6 +57,13 @@ describe('ProductionLocationDialog', () => {
             }
         }
     }
+
+    beforeEach(() => {
+        useHistory.mockReturnValue({
+            push: mockHistoryPush,
+            listen: jest.fn(() => jest.fn()),
+        });
+    });
 
     test('renders dialog content', () => {
         render(
@@ -136,11 +149,49 @@ describe('ProductionLocationDialog', () => {
 
         const claimButton = getByRole('button', { name: /Continue to Claim/i });
         expect(claimButton).toHaveAttribute('href', `/facilities/${defaultProps.osID}/claim`);
-    })
+    });
+
+    test('Search OS Hub button should link to the main page', () => {
+        const { getByRole } = render(
+            <Router>
+                <ProductionLocationDialog
+                    classes={{}}
+                    data={defaultProps.data}
+                    osID={defaultProps.osID}
+                    moderationStatus='APPROVED'
+                    claimStatus='unclaimed'
+                />
+            </Router>
+        );
+
+        const searchOSHubButton = getByRole('button', { name: /Search OS Hub/i });
+        fireEvent.click(searchOSHubButton);
+
+        expect(mockHistoryPush).toHaveBeenCalledWith('/');
+    });
+
+    test('Submit another Location button should link to the SLC search page', () => {
+        const { getByRole } = render(
+            <Router>
+                <ProductionLocationDialog
+                    classes={{}}
+                    data={defaultProps.data}
+                    osID={defaultProps.osID}
+                    moderationStatus='APPROVED'
+                    claimStatus='unclaimed'
+                />
+            </Router>
+        );
+
+        const submitAnotherLocationButton = getByRole('button', { name: /Submit another Location/i });
+        fireEvent.click(submitAnotherLocationButton);
+
+        expect(mockHistoryPush).toHaveBeenCalledWith('/contribute/single-location?tab=name-address');
+    });
 
     test('redirect to the main page when clicking close button', () => {
         render(
-            <Router history={history}>
+            <Router>
                 <ProductionLocationDialog
                     classes={{}}
                     data={defaultProps.data}
@@ -160,6 +211,6 @@ describe('ProductionLocationDialog', () => {
         const closeButton = screen.getByRole('button', { name: /close/i });
 
         fireEvent.click(closeButton);
-        expect(history.location.pathname).toBe('/');
+        expect(mockHistoryPush).toHaveBeenCalledWith('/');
     });
 });

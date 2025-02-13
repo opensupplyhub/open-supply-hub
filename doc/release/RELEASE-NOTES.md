@@ -61,6 +61,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     All other traffic will be redirected to the React application.
 
 ### Bugfix
+* [OSDEV-1698](https://opensupplyhub.atlassian.net/browse/OSDEV-1698) - SLC: Refactored the "Submit Another Location" button link to direct users to the search-by-name-and-address form at /contribute/single-location?tab=name-address.
 * [OSDEV-1700](https://opensupplyhub.atlassian.net/browse/OSDEV-1700) - SLC: Keep only one previous OS ID in the search result if it matches the search query.
 * [OSDEV-1697](https://opensupplyhub.atlassian.net/browse/OSDEV-1697) - Added a redirect to the main page upon closing the SLC modal window to prevent the creation of multiple moderation events.
 * [OSDEV-1695](https://opensupplyhub.atlassian.net/browse/OSDEV-1695) - [SLC] Enabled the claim button for updated production locations when a moderation event has a pending status. Disabled claim button explicitly if production location has pending claim status.
