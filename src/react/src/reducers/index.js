@@ -36,7 +36,6 @@ import FacilityCardsReducer from './FacilityCardsReducer';
 import ContributeProductionLocationReducer from './ContributeProductionLocationReducer';
 import DashboardModerationQueueReducer from './DashboardModerationQueueReducer';
 import DashboardContributionRecordReducer from './DashboardContributionRecordReducer';
-import SearchParametersReducer from './SearchParametersReducer';
 
 export default combineReducers({
     auth: AuthReducer,
@@ -69,5 +68,4 @@ export default combineReducers({
     contributeProductionLocation: ContributeProductionLocationReducer,
     dashboardModerationQueue: DashboardModerationQueueReducer,
     dashboardContributionRecord: DashboardContributionRecordReducer,
-    searchParameters: SearchParametersReducer,
 });

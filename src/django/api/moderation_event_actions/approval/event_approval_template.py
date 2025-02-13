@@ -21,6 +21,7 @@ from api.models.facility.facility_match import FacilityMatch
 from api.models.facility.facility_match_temp import FacilityMatchTemp
 from api.models.moderation_event import ModerationEvent
 from api.models.source import Source
+from api.models.user import User
 from api.views.fields.create_nonstandard_fields import (
     create_nonstandard_fields,
 )
@@ -38,8 +39,13 @@ class EventApprovalTemplate(ABC):
     abstract methods and hooks.
     """
 
-    def __init__(self, moderation_event: ModerationEvent) -> None:
+    def __init__(
+        self,
+        moderation_event: ModerationEvent,
+        moderator: User
+    ) -> None:
         self.__event = moderation_event
+        self.__moderator = moderator
 
     @transaction.atomic
     def process_moderation_event(self) -> FacilityListItem:
@@ -273,6 +279,7 @@ class EventApprovalTemplate(ABC):
         event.status = ModerationEvent.Status.APPROVED
         event.status_change_date = timezone.now()
         event.action_type = self._get_action_type()
+        event.action_perform_by = self.__moderator
         event.os_id = item.facility_id
         event.save()
 
