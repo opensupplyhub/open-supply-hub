@@ -9,8 +9,10 @@ class StringOrListField(serializers.Field):
     def to_internal_value(self, data):
         if isinstance(data, str):
             error = f"Field {self.field_name} can't be an empty string."
-
-            return [data] if data else self.raise_error(error)
+            if data:
+                return [data]
+            else:
+                raise serializers.ValidationError(error)
 
         if isinstance(data, list):
             if not data or any(
@@ -18,18 +20,14 @@ class StringOrListField(serializers.Field):
             ):
                 error = (f"Field {self.field_name} must be a non-empty list "
                          "of valid strings.")
-                self.raise_error(error)
+                raise serializers.ValidationError(error)
             return data
         error = (f"Field {self.field_name} must be a string or a "
                  "list of strings.")
-        self.raise_error(error)
+        raise serializers.ValidationError(error)
 
     def to_representation(self, value):
         if isinstance(value, list) and len(value) == 1:
             return value[0]
         else:
             return value
-
-    @staticmethod
-    def raise_error(message):
-        raise serializers.ValidationError(message)
