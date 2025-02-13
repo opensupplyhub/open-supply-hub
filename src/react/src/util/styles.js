@@ -1016,13 +1016,16 @@ export const makeSearchByNameAddressTabStyles = theme =>
         notchedOutlineStyles: Object.freeze({
             borderRadius: 0,
         }),
+        helperTextStyles: Object.freeze({
+            margin: '8px 0 0 0',
+        }),
         buttonLabel: Object.freeze({
             fontSize: '18px',
             lineHeight: '20px',
             fontWeight: theme.typography.fontWeightExtraBold,
         }),
         errorWrapStyles: Object.freeze({
-            margin: '8px 12px 0',
+            marginTop: '8px',
         }),
         searchButtonStyles: Object.freeze({
             width: '200px',
@@ -1384,7 +1387,7 @@ export const inputErrorText = theme =>
             marginRight: '5px',
         }),
         inputErrorTextStyles: Object.freeze({
-            fontSize: '16px',
+            fontSize: '14px',
             fontWeight: theme.typography.fontWeightSemiBold,
             color: COLOURS.RED,
         }),

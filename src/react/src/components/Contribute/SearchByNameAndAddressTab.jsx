@@ -157,6 +157,10 @@ const SearchByNameAndAddressTab = ({
                     placeholder="Type a name"
                     variant="outlined"
                     aria-label="Type a name"
+                    helperText={
+                        nameTouched && !isValid(inputName) && <InputErrorText />
+                    }
+                    error={nameTouched && !isValid(inputName)}
                     InputProps={{
                         classes: {
                             input: `${classes.searchInputStyles}
@@ -171,10 +175,11 @@ const SearchByNameAndAddressTab = ({
                             type: 'text',
                         },
                     }}
-                    helperText={
-                        nameTouched && !isValid(inputName) && <InputErrorText />
-                    }
-                    error={nameTouched && !isValid(inputName)}
+                    FormHelperTextProps={{
+                        classes: {
+                            root: classes.helperTextStyles,
+                        },
+                    }}
                 />
                 <FormFieldTitle label="Enter the Address" classes={classes} />
                 <TextField
@@ -186,6 +191,11 @@ const SearchByNameAndAddressTab = ({
                     placeholder="Address"
                     variant="outlined"
                     aria-label="Address"
+                    helperText={
+                        addressTouched &&
+                        !isValid(inputAddress) && <InputErrorText />
+                    }
+                    error={addressTouched && !isValid(inputAddress)}
                     InputProps={{
                         classes: {
                             input: `${classes.searchInputStyles}
@@ -197,11 +207,11 @@ const SearchByNameAndAddressTab = ({
                             notchedOutline: classes.notchedOutlineStyles,
                         },
                     }}
-                    helperText={
-                        addressTouched &&
-                        !isValid(inputAddress) && <InputErrorText />
-                    }
-                    error={addressTouched && !isValid(inputAddress)}
+                    FormHelperTextProps={{
+                        classes: {
+                            root: classes.helperTextStyles,
+                        },
+                    }}
                 />
                 <FormFieldTitle label="Select the Country" classes={classes} />
                 <StyledSelect
@@ -220,7 +230,7 @@ const SearchByNameAndAddressTab = ({
                 />
                 {isCountryError && (
                     <div className={classes.errorWrapStyles}>
-                        <InputErrorText />
+                        <InputErrorText text="The country is missing from your search. Select the correct country from the drop down menu." />
                     </div>
                 )}
 
