@@ -260,6 +260,11 @@ SearchByNameAndAddressTab.propTypes = {
     classes: object.isRequired,
 };
 
+FormFieldTitle.propTypes = {
+    label: string.isRequired,
+    classes: object.isRequired,
+};
+
 const mapStateToProps = ({
     filterOptions: {
         countries: { data: countriesData, error, fetching },
