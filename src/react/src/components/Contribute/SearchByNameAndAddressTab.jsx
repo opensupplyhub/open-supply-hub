@@ -108,10 +108,7 @@ const SearchByNameAndAddressTab = ({
         history.push(url);
     };
     const isFormValid =
-        isValid(inputName) &&
-        isValid(inputAddress) &&
-        inputCountry &&
-        inputCountry.value;
+        isValid(inputName) && isValid(inputAddress) && inputCountry?.value;
 
     useEffect(() => {
         if (!countriesData) {
