@@ -15,7 +15,7 @@ const ProductionLocationDialogCloseButton = ({
             <IconButton
                 aria-label="Close"
                 className="mobile-dialog-close-button"
-                onClick={() => handleGoToMainPage()}
+                onClick={handleGoToMainPage}
             >
                 <CloseIcon />
             </IconButton>
@@ -23,7 +23,7 @@ const ProductionLocationDialogCloseButton = ({
             <IconButton
                 aria-label="Close"
                 className={classes.desktopCloseButton}
-                onClick={() => handleGoToMainPage()}
+                onClick={handleGoToMainPage}
             >
                 <CloseIcon />
             </IconButton>
