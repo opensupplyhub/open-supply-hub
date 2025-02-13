@@ -214,12 +214,16 @@ In case there is a need to run additional command in the terminal of the Django 
 
 On Monday after each release, current metrics should be checked by QA engineer.
 
-1. Kamino:
-    - Successfully logged with valid OS HUb admin credentials and re-directed to Kamino's [main page](https://34.241.25.221/kamino/bk).
-2. Looker:
+1. [Monday](https://opensupplyhub.monday.com/boards/3514246658/views/155598921):
+     - check that there are new uploadrs in Monday after release
+2. [Contribot](https://spdfn.slack.com/archives/C04EDHR643E):
+    - Make sure that new uploads are displayed in Contribot and they are similar to the Contributor List Approval Queue in Monday
+3. [Kamino](https://34.241.25.221/kamino/bk):
+    - Successfully logged with valid OS HUb admin credentials and re-directed to Kamino's.
+2. [Looker](https://lookerstudio.google.com/u/1/reporting/b242ab63-6cfd-4d49-98ca-88ad84a47208/page/clbkD):
     - `duplicate_ratio_perc` ~ 2 (+- 0.1)
     - `estimated_duplicates` ~ 4000-6000
-3. Airflow:
+3. [Airflow](https://34.241.25.221/airflow/dagrun/list/?_flt_3_dag_id=dupliloom): 
     - Dag_Id duplillom should approximately take 50 min. So we can conclude that it <strong>must be > 2.5</strong>
 
 ### Reloading the DedupeHub
