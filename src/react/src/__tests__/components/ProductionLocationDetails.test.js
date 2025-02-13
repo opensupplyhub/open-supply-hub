@@ -25,6 +25,7 @@ describe('ProductionLocationDetails component', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        useLocation.mockReturnValue({ pathname: '' });
     });
 
     test('renders production location details correctly', () => {
@@ -37,7 +38,7 @@ describe('ProductionLocationDetails component', () => {
         );
 
         expect(getByText(name)).toBeInTheDocument();
-        expect(getByText(`Current OS ID: ${osId}`)).toBeInTheDocument();
+        expect(getByText(`OS ID: ${osId}`)).toBeInTheDocument();
         expect(getByText(address)).toBeInTheDocument();
         expect(getByText(countryName)).toBeInTheDocument();
     });
@@ -104,6 +105,6 @@ describe('ProductionLocationDetails component', () => {
             <ProductionLocationDetails {...defaultProps} />
         );
 
-        expect(getByText(`Current OS ID: ${osId}`)).toBeInTheDocument();
+        expect(getByText(`OS ID: ${osId}`)).toBeInTheDocument();
     });
 });

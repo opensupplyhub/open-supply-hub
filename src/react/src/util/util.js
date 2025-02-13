@@ -1487,4 +1487,8 @@ export const parseContribData = contribData => {
     };
 };
 
-export const getLastPathParameter = url => last(split(trimEnd(url, '/'), '/'));
+export const getLastPathParameter = url => {
+    if (typeof url !== 'string') return '';
+    const cleanUrl = url.split('?')[0];
+    return last(split(trimEnd(cleanUrl, '/'), '/')) || '';
+};

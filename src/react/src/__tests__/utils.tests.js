@@ -1892,7 +1892,7 @@ it('returns id when the URL ends at "id/" with no ID', () => {
 
 it('returns the correct ID when the URL contains query parameters', () => {
     const url = '/contribute/production-location/search/id/BD202034606B9SA?foo=bar';
-    expect(getLastPathParameter(url)).toBe('BD202034606B9SA?foo=bar');
+    expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
 });
 
 it('returns the correct ID when the URL has multiple segments after "id/"', () => {
@@ -1913,6 +1913,7 @@ it('returns empty string for an empty string', () => {
 it('returns empty string for a URL that only contains slashes', () => {
     const url = '///';
     expect(getLastPathParameter(url)).toBe('');
+});
 
 it('should return { min: value, max: value } when value is a number', () => {
     expect(generateRangeField(10)).toEqual({ min: 10, max: 10 });
