@@ -41,6 +41,7 @@ class OpenSearchQueryDirector:
         self.__process_size(query_params)
         self.__process_multi_match(query_params)
         self.__process_aggregation(query_params)
+        self.__process_filter(query_params)
 
         return self.__builder.get_final_query_body()
 
@@ -131,3 +132,24 @@ class OpenSearchQueryDirector:
 
         if aggregation and hasattr(self.__builder, 'add_aggregations'):
             self.__builder.add_aggregations(aggregation, geohex_grid_precision)
+
+    def __process_filter(self, query_params):
+        top = query_params.get(
+            V1_PARAMETERS_LIST.GEO_BOUNDING_BOX + '[top]'
+        )
+        left = query_params.get(
+            V1_PARAMETERS_LIST.GEO_BOUNDING_BOX + '[left]'
+        )
+        bottom = query_params.get(
+            V1_PARAMETERS_LIST.GEO_BOUNDING_BOX + '[bottom]'
+        )
+        right = query_params.get(
+            V1_PARAMETERS_LIST.GEO_BOUNDING_BOX + '[right]'
+        )
+
+        if top and left and bottom and right and hasattr(
+            self.__builder, 'add_geo_bounding_box'
+        ):
+            self.__builder.add_geo_bounding_box(
+                float(top), float(left), float(bottom), float(right)
+            )

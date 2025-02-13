@@ -77,6 +77,8 @@ const {
     createUserDropdownLinks,
     createUploadFormErrorMessages,
     updateStateFromData,
+    getLastPathParameter,
+    generateRangeField,
 } = require('../util/util');
 
 const {
@@ -1871,4 +1873,77 @@ it('should not call setter when dataKey is null', () => {
     };
     updateStateFromData(sampleObject, 'null_key', mockSetter);
     expect(mockSetter).not.toHaveBeenCalled();
+});
+
+it('extracts the ID from a valid URL without a trailing slash', () => {
+    const url = '/contribute/production-location/search/id/BD202034606B9SA';
+    expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
+});
+
+it('extracts the ID from a valid URL with a trailing slash', () => {
+    const url = '/contribute/production-location/search/id/BD202034606B9SA/';
+    expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
+});
+
+it('returns id when the URL ends at "id/" with no ID', () => {
+    const url = '/contribute/production-location/search/id/';
+    expect(getLastPathParameter(url)).toBe('id');
+});
+
+it('returns the correct ID when the URL contains query parameters', () => {
+    const url = '/contribute/production-location/search/id/BD202034606B9SA?foo=bar';
+    expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
+});
+
+it('returns the correct ID when the URL has multiple segments after "id/"', () => {
+    const url = '/contribute/production-location/search/id/BD202034606B9SA/extra';
+    expect(getLastPathParameter(url)).toBe('extra');
+});
+
+it('returns the whole string if no slashes exist', () => {
+    const url = 'BD202034606B9SA';
+    expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
+});
+
+it('returns empty string for an empty string', () => {
+    const url = '';
+    expect(getLastPathParameter(url)).toBe('');
+});
+
+it('returns empty string for a URL that only contains slashes', () => {
+    const url = '///';
+    expect(getLastPathParameter(url)).toBe('');
+});
+
+it('should return { min: value, max: value } when value is a number', () => {
+    expect(generateRangeField(10)).toEqual({ min: 10, max: 10 });
+    expect(generateRangeField(0)).toEqual({ min: 0, max: 0 });
+    expect(generateRangeField(-5)).toEqual({ min: -5, max: -5 });
+});
+
+it('should return { min, max } when value is a valid range string', () => {
+    expect(generateRangeField('10-20')).toEqual({ min: 10, max: 20 });
+    expect(generateRangeField('0-100')).toEqual({ min: 0, max: 100 });
+    expect(generateRangeField('-5-5')).toEqual({ min: 0, max: 5 });
+});
+
+it('should return { min: value, max: value } when value is a single string (not a range)', () => {
+    expect(generateRangeField('15')).toEqual({ min: '15', max: '15' });
+    expect(generateRangeField('test')).toEqual({ min: 'test', max: 'test' });
+});
+
+it('should return { min: value, max: value } when value is an empty string', () => {
+    expect(generateRangeField('')).toEqual({ min: '', max: '' });
+});
+
+it('should return { min, max } correctly when value has extra spaces', () => {
+    expect(generateRangeField(' 10 - 20 ')).toEqual({ min: 10, max: 20 });
+    expect(generateRangeField('  5 -   15')).toEqual({ min: 5, max: 15 });
+});
+
+it('should return { min: value, max: value } for non-string and non-number values', () => {
+    expect(generateRangeField(null)).toEqual({ min: null, max: null });
+    expect(generateRangeField(undefined)).toEqual({ min: undefined, max: undefined });
+    expect(generateRangeField({})).toEqual({ min: {}, max: {} });
+    expect(generateRangeField([])).toEqual({ min: [], max: [] });
 });

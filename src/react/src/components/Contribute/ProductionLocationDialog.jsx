@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { func, number, object, string } from 'prop-types';
+import { number, object, string } from 'prop-types';
 import { withStyles, withTheme } from '@material-ui/core/styles';
 import { useHistory } from 'react-router-dom';
 import {
@@ -26,7 +26,7 @@ import DialogTooltip from './DialogTooltip';
 import ProductionLocationDialogFields from './ProductionLocationDialogFields';
 import {
     mainRoute,
-    searchByNameAndAddressResultRoute,
+    contributeProductionLocationRoute,
     MODERATION_STATUSES_ENUM,
     PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM,
     EMPTY_PLACEHOLDER,
@@ -71,15 +71,13 @@ const getStatusBadgeClass = (classes, status) => {
     }
 };
 
-const getTooltipText = (claimStatus, moderationStatus) => {
-    if (moderationStatus === MODERATION_STATUSES_ENUM.PENDING) {
-        return "You'll be able to claim the location after the moderation is done.";
-    }
-
+const getTooltipText = claimStatus => {
     if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED) {
         return 'Production location has been claimed already.';
     }
-
+    if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.PENDING) {
+        return "You'll be able to claim the location after the moderation is done";
+    }
     return 'Claim is not available.';
 };
 
@@ -89,7 +87,6 @@ const ProductionLocationDialog = ({
     data,
     osID,
     moderationStatus,
-    handleShow,
     claimStatus,
 }) => {
     const history = useHistory();
@@ -98,6 +95,20 @@ const ProductionLocationDialog = ({
     const getIsMobileMemoized = useMemo(() => getIsMobile(innerWidth), [
         innerWidth,
     ]);
+
+    // Override browser's go back button when modal dialog is open
+    useEffect(() => {
+        const cleanupListener = history.listen((location, action) => {
+            if (action === 'POP') {
+                history.push(contributeProductionLocationRoute);
+            }
+        });
+
+        return () => {
+            cleanupListener();
+        };
+    }, [history]);
+
     useEffect(() => {
         setIsMobile(getIsMobileMemoized);
     }, [getIsMobileMemoized]);
@@ -126,14 +137,13 @@ const ProductionLocationDialog = ({
     const fieldSetNumber = round(size(filteredAdditionalFields) / 2);
 
     const isClaimable =
-        claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED &&
-        moderationStatus !== MODERATION_STATUSES_ENUM.PENDING;
+        claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED;
 
     const statusLabel = startCase(toLower(moderationStatus));
 
     const handleGoToMainPage = () => history.push(mainRoute);
-    const handleGoToSearchByNameAndAddressResult = () =>
-        history.push(searchByNameAndAddressResultRoute);
+    const handleGoToSearchByNameAndAddress = () =>
+        history.push(`${contributeProductionLocationRoute}?tab=name-address`);
 
     const deleteIcon =
         moderationStatus === MODERATION_STATUSES_ENUM.PENDING ? (
@@ -147,7 +157,7 @@ const ProductionLocationDialog = ({
         <>
             {isMobile ? (
                 <ProductionLocationDialogCloseButton
-                    handleShow={handleShow}
+                    handleGoToMainPage={handleGoToMainPage}
                     isMobile={isMobile}
                 />
             ) : null}
@@ -171,7 +181,7 @@ const ProductionLocationDialog = ({
                         </p>
                         {!isMobile ? (
                             <ProductionLocationDialogCloseButton
-                                handleShow={handleShow}
+                                handleGoToMainPage={handleGoToMainPage}
                                 isMobile={isMobile}
                             />
                         ) : null}
@@ -274,7 +284,7 @@ const ProductionLocationDialog = ({
                             <Button
                                 variant="contained"
                                 color="secondary"
-                                onClick={handleGoToSearchByNameAndAddressResult}
+                                onClick={handleGoToSearchByNameAndAddress}
                                 className={classes.button}
                             >
                                 Submit another Location
@@ -289,10 +299,7 @@ const ProductionLocationDialog = ({
                                 </>
                             ) : (
                                 <DialogTooltip
-                                    text={getTooltipText(
-                                        claimStatus,
-                                        moderationStatus,
-                                    )}
+                                    text={getTooltipText(claimStatus)}
                                     aria-label="Claim button tooltip"
                                     childComponent={claimButton({
                                         classes,
@@ -317,7 +324,6 @@ ProductionLocationDialog.propTypes = {
     data: object.isRequired,
     osID: string,
     moderationStatus: string.isRequired,
-    handleShow: func.isRequired,
     classes: object.isRequired,
     theme: object.isRequired,
     innerWidth: number.isRequired,

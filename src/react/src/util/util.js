@@ -4,6 +4,8 @@ import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
 import flatten from 'lodash/flatten';
 import identity from 'lodash/identity';
+import split from 'lodash/split';
+import last from 'lodash/last';
 import some from 'lodash/some';
 import size from 'lodash/size';
 import negate from 'lodash/negate';
@@ -1433,9 +1435,17 @@ export const openInNewTab = url => {
 
 const extractProductionLocationContributionValues = data => map(data, 'value');
 
-const generateRangeField = value => {
-    const [min, max] = value.split('-').map(Number);
-    return max !== undefined ? { min, max } : { min };
+export const generateRangeField = value => {
+    if (typeof value === 'number') {
+        return { min: value, max: value };
+    }
+
+    if (typeof value === 'string' && value.includes('-')) {
+        const [min, max] = value.split('-').map(Number);
+        return max !== undefined ? { min, max } : { min };
+    }
+
+    return { min: value, max: value };
 };
 
 export const parseContribData = contribData => {
@@ -1475,4 +1485,10 @@ export const parseContribData = contribData => {
             ? generateRangeField(numberOfWorkers)
             : null,
     };
+};
+
+export const getLastPathParameter = url => {
+    if (typeof url !== 'string') return '';
+    const cleanUrl = url.split('?')[0];
+    return last(split(trimEnd(cleanUrl, '/'), '/')) || '';
 };

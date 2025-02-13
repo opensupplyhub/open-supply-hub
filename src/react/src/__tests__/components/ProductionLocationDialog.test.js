@@ -4,6 +4,7 @@ import { BrowserRouter as Router, useHistory } from 'react-router-dom';
 import ProductionLocationDialog from '../../components/Contribute/ProductionLocationDialog';
 import ProductionLocationDialogCloseButton from '../../components/Contribute/ProductionLocationDialogCloseButton';
 
+
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
     useHistory: jest.fn(),
@@ -60,6 +61,7 @@ describe('ProductionLocationDialog', () => {
     beforeEach(() => {
         useHistory.mockReturnValue({
             push: mockHistoryPush,
+            listen: jest.fn(() => jest.fn()),
         });
     });
 
@@ -105,12 +107,15 @@ describe('ProductionLocationDialog', () => {
     });
 
     test.each([
-        ['PENDING', 'unclaimed', true],
+        ['PENDING', 'unclaimed', false],
+        ['PENDING', 'pending', true],
         ['PENDING', 'claimed', true],
         ['REJECTED', 'claimed', true],
+        ['REJECTED', 'pending', true],
         ['REJECTED', 'unclaimed', false],
         ['REJECTED', undefined, true],
         ['APPROVED', 'unclaimed', false],
+        ['APPROVED', 'pending', true],
         ['APPROVED', 'claimed', true]
     ])('handles moderation status %s and claim status %s correctly', (moderationStatus, claimStatus, shouldBeDisabled) => {
         const { getByRole } = render(
@@ -144,35 +149,68 @@ describe('ProductionLocationDialog', () => {
 
         const claimButton = getByRole('button', { name: /Continue to Claim/i });
         expect(claimButton).toHaveAttribute('href', `/facilities/${defaultProps.osID}/claim`);
-    })
+    });
 
-    test('closes ProductionLocationDialog when close button is clicked', () => {
-        const handleShowMock = jest.fn();
-        const { unmount } = render(
-            <ProductionLocationDialog
-                classes={{}}
-                data={defaultProps.data}
-                osID={defaultProps.osID}
-                moderationStatus={defaultProps.moderationStatus}
-                isOpen
-                handleShow={handleShowMock}
-            >
-                <ProductionLocationDialogCloseButton
-                    handleShow={handleShowMock}
-                    isMobile={false}
+    test('Search OS Hub button should link to the main page', () => {
+        const { getByRole } = render(
+            <Router>
+                <ProductionLocationDialog
+                    classes={{}}
+                    data={defaultProps.data}
+                    osID={defaultProps.osID}
+                    moderationStatus='APPROVED'
+                    claimStatus='unclaimed'
                 />
-            </ProductionLocationDialog>
+            </Router>
+        );
+
+        const searchOSHubButton = getByRole('button', { name: /Search OS Hub/i });
+        fireEvent.click(searchOSHubButton);
+
+        expect(mockHistoryPush).toHaveBeenCalledWith('/');
+    });
+
+    test('Submit another Location button should link to the SLC search page', () => {
+        const { getByRole } = render(
+            <Router>
+                <ProductionLocationDialog
+                    classes={{}}
+                    data={defaultProps.data}
+                    osID={defaultProps.osID}
+                    moderationStatus='APPROVED'
+                    claimStatus='unclaimed'
+                />
+            </Router>
+        );
+
+        const submitAnotherLocationButton = getByRole('button', { name: /Submit another Location/i });
+        fireEvent.click(submitAnotherLocationButton);
+
+        expect(mockHistoryPush).toHaveBeenCalledWith('/contribute/single-location?tab=name-address');
+    });
+
+    test('redirect to the main page when clicking close button', () => {
+        render(
+            <Router>
+                <ProductionLocationDialog
+                    classes={{}}
+                    data={defaultProps.data}
+                    osID={defaultProps.osID}
+                    moderationStatus={defaultProps.moderationStatus}
+                    isOpen
+                >
+                    <ProductionLocationDialogCloseButton
+                        isMobile={false}
+                    />
+                </ProductionLocationDialog>
+            </Router>
         );
 
         expect(screen.getByText(/Continue to Claim/i)).toBeInTheDocument();
-    
+
         const closeButton = screen.getByRole('button', { name: /close/i });
+
         fireEvent.click(closeButton);
-
-        expect(handleShowMock).toHaveBeenCalledWith(false);
-
-        unmount();
-
-        expect(screen.queryByText(/Continue to Claim/i)).not.toBeInTheDocument();
+        expect(mockHistoryPush).toHaveBeenCalledWith('/');
     });
 });

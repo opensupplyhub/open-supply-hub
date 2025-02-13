@@ -1,16 +1,10 @@
-import React, {
-    useEffect,
-    useMemo,
-    useState,
-    useRef,
-    useCallback,
-} from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useParams, useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
-import { array, bool, func, number, object, shape, string } from 'prop-types';
+import { array, bool, func, number, object, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
-import { endsWith, isEmpty, isNil, omitBy, toString } from 'lodash';
+import { endsWith, isEmpty, toString } from 'lodash';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
@@ -52,7 +46,6 @@ import {
 import {
     mockedSectors,
     productionLocationInfoRouteCommon,
-    searchByNameAndAddressResultRoute,
     MODERATION_STATUSES_ENUM,
 } from '../../util/constants';
 import COLOURS from '../../util/COLOURS';
@@ -77,7 +70,6 @@ const ProductionLocationInfo = ({
     fetchProductionLocation,
     singleProductionLocationData,
     innerWidth,
-    searchParameters,
     handleCleanupContributionRecord,
     handleResetPendingModerationEvent,
 }) => {
@@ -131,7 +123,7 @@ const ProductionLocationInfo = ({
     const selectStyles = {
         control: provided => ({
             ...provided,
-            height: '56px',
+            minHeight: '56px',
             borderRadius: '0',
             '&:focus,&:active,&:focus-within': {
                 borderColor: COLOURS.PURPLE,
@@ -160,14 +152,6 @@ const ProductionLocationInfo = ({
         setAddressTouched(true);
         setInputAddress(event.target.value);
     };
-    const handleGoBack = useCallback(() => {
-        const { name, address, country } = searchParameters;
-        const filteredParams = omitBy({ name, address, country }, isNil);
-        const params = new URLSearchParams(filteredParams);
-
-        const url = `${searchByNameAndAddressResultRoute}?${params.toString()}`;
-        history.push(url);
-    }, [searchParameters, history]);
 
     let handleProductionLocation;
     switch (submitMethod) {
@@ -350,7 +334,7 @@ const ProductionLocationInfo = ({
     }, [pendingModerationEventFetching, pendingModerationEventError]);
 
     useEffect(() => {
-        /* 
+        /*
         After first POST or PATCH v1/production-locations, there will be an error
         because moderation event should be re-indexed in the OpenSearch,
         so move this effect to the very end of event loop to make sure moderation event
@@ -756,7 +740,7 @@ const ProductionLocationInfo = ({
                     <div className={classes.buttonsContainerStyles}>
                         <Button
                             variant="outlined"
-                            onClick={handleGoBack}
+                            onClick={() => history.goBack()}
                             className={classes.goBackButtonStyles}
                         >
                             Go Back
@@ -785,7 +769,6 @@ const ProductionLocationInfo = ({
                         singleModerationEventItem?.cleaned_data
                     }
                     osID={osID || singleModerationEventItem?.os_id}
-                    handleShow={setShowProductionLocationDialog}
                     innerWidth={innerWidth}
                     moderationStatus={
                         pendingModerationEventData?.status ||
@@ -810,11 +793,6 @@ ProductionLocationInfo.defaultProps = {
     singleModerationEventItem: null,
     singleModerationEventItemFetching: false,
     singleModerationEventItemError: null,
-    searchParameters: shape({
-        name: null,
-        address: null,
-        country: null,
-    }),
 };
 
 ProductionLocationInfo.propTypes = {
@@ -836,11 +814,6 @@ ProductionLocationInfo.propTypes = {
     submitMethod: string.isRequired,
     classes: object.isRequired,
     innerWidth: number.isRequired,
-    searchParameters: shape({
-        name: string,
-        address: string,
-        country: string,
-    }),
     handleCleanupContributionRecord: func.isRequired,
     handleResetPendingModerationEvent: func.isRequired,
 };
@@ -868,7 +841,6 @@ const mapStateToProps = ({
     ui: {
         window: { innerWidth },
     },
-    searchParameters,
 }) => ({
     countriesOptions,
     facilityProcessingTypeOptions,
@@ -880,7 +852,6 @@ const mapStateToProps = ({
     singleModerationEventItemError,
     singleProductionLocationData,
     innerWidth,
-    searchParameters,
 });
 
 function mapDispatchToProps(dispatch) {
