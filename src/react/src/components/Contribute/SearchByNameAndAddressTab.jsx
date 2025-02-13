@@ -76,12 +76,8 @@ const SearchByNameAndAddressTab = ({
         countryTouched && (!inputCountry || !inputCountry.value);
 
     const history = useHistory();
-    const isValid = val => {
-        if (val) {
-            return val.length > 0;
-        }
-        return false;
-    };
+    const isValid = val => val.trim().length > 0;
+
     const handleNameChange = event => {
         setInputName(event.target.value);
     };
@@ -115,8 +111,8 @@ const SearchByNameAndAddressTab = ({
     const isFormValid =
         isValid(inputName) &&
         isValid(inputAddress) &&
-        countryTouched &&
-        isValid(inputCountry.value);
+        inputCountry &&
+        inputCountry.value;
 
     useEffect(() => {
         if (!countriesData) {
