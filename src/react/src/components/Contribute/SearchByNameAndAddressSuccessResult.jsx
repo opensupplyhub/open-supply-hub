@@ -1,6 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
-import { connect } from 'react-redux';
+import React, { useEffect, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import { arrayOf, func, object } from 'prop-types';
 import Button from '@material-ui/core/Button';
 import { withStyles } from '@material-ui/core/styles';
@@ -10,27 +9,16 @@ import { makeSearchByNameAndAddressSuccessResultStyles } from '../../util/styles
 import { productionLocationPropType } from '../../util/propTypes';
 import ConfirmNotFoundLocationDialog from './ConfirmNotFoundLocationDialog';
 import ProductionLocationDetails from './ProductionLocationDetails';
-import {
-    saveSearchParameters,
-    clearSearchParameters,
-} from '../../actions/searchParameters';
 
 const SearchByNameAndAddressSuccessResult = ({
     productionLocations,
     clearLocations,
     classes,
-    handleSaveSearchParameters,
-    handleClearSearchParameters,
 }) => {
     const history = useHistory();
-    const location = useLocation();
 
     const [confirmDialogIsOpen, setConfirmDialogIsOpen] = useState(false);
     const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
-
-    useEffect(() => {
-        handleClearSearchParameters();
-    }, []);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -46,22 +34,12 @@ const SearchByNameAndAddressSuccessResult = ({
         };
     }, []);
 
-    const handleSelectLocation = useCallback(
-        productionLocation => {
-            if (location?.search) {
-                const queryParams = new URLSearchParams(location.search);
-                const name = queryParams.get('name');
-                const address = queryParams.get('address');
-                const country = queryParams.get('country');
-                handleSaveSearchParameters({ name, address, country });
-            }
-            const baseUrl = makeContributeProductionLocationUpdateURL(
-                productionLocation.os_id,
-            );
-            history.push(baseUrl);
-        },
-        [handleSaveSearchParameters, history, location],
-    );
+    const handleSelectLocation = location => {
+        const baseUrl = makeContributeProductionLocationUpdateURL(
+            location.os_id,
+        );
+        history.push(baseUrl);
+    };
 
     const handleNotFoundLocation = () => {
         setConfirmDialogIsOpen(true);
@@ -159,23 +137,8 @@ SearchByNameAndAddressSuccessResult.propTypes = {
     productionLocations: arrayOf(productionLocationPropType).isRequired,
     clearLocations: func.isRequired,
     classes: object.isRequired,
-    handleSaveSearchParameters: func.isRequired,
-    handleClearSearchParameters: func.isRequired,
 };
 
-function mapDispatchToProps(dispatch) {
-    return {
-        handleSaveSearchParameters: parameters =>
-            dispatch(saveSearchParameters(parameters)),
-        handleClearSearchParameters: () => dispatch(clearSearchParameters()),
-    };
-}
-
-export default connect(
-    null,
-    mapDispatchToProps,
-)(
-    withStyles(makeSearchByNameAndAddressSuccessResultStyles)(
-        SearchByNameAndAddressSuccessResult,
-    ),
+export default withStyles(makeSearchByNameAndAddressSuccessResultStyles)(
+    SearchByNameAndAddressSuccessResult,
 );
