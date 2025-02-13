@@ -1350,6 +1350,7 @@ export const MODERATION_STATUSES_ENUM = Object.freeze({
 export const PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM = Object.freeze({
     CLAIMED: 'claimed',
     UNCLAIMED: 'unclaimed',
+    PENDING: 'pending',
 });
 
 export const MODERATION_ACTIONS_ENUM = Object.freeze({
