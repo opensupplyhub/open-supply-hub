@@ -6,12 +6,14 @@ class CoordinatesSerializer(serializers.Serializer):
         required=True,
         error_messages={
             'required': "Both latitude and longitude must be provided.",
-            },)
+        },
+    )
     lng = serializers.FloatField(
         required=True,
         error_messages={
             'required': "Both latitude and longitude must be provided."
-            },)
+        },
+    )
 
     def validate(self, data):
         errors = []

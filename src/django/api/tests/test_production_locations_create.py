@@ -224,17 +224,26 @@ class TestProductionLocationsCreate(APITestCase):
             'errors': [
                 {'field': 'sector',
                  'detail': ('Field sector must be '
-                            'a string or a list of strings.')},
+                            'a string or a list of strings.')
+                 },
                 {'field': 'location_type',
                  'detail': ('Field location_type must be a string'
-                            ' or a list of strings.')},
+                            ' or a list of strings.')
+                 },
                 {'field': 'number_of_workers',
-                 'errors': [{'field': 'min',
+                 'errors': [
+                            {'field': 'min',
                              'detail': ('Ensure this value is greater than'
-                                        ' or equal to 1.')},
+                                        ' or equal to 1.')
+                             },
                             {'field': 'max',
                              'detail': ('Ensure this value is greater than'
-                                        ' or equal to 1.')}]}]}
+                                        ' or equal to 1.')
+                             }
+                            ]
+                 }
+            ]
+         }
         initial_moderation_event_count = ModerationEvent.objects.count()
 
         invalid_req_body = json.dumps({
@@ -242,12 +251,16 @@ class TestProductionLocationsCreate(APITestCase):
             'name': 'Blue Horizon Facility',
             'address': '990 Spring Garden St., Philadelphia PA 19123',
             'country': 'US',
-            'sector': {'some_key': 1135},
+            'sector': {
+                'some_key': 1135
+            },
             'parent_company': 'string',
             'product_type': [
                 'string'
             ],
-            'location_type': {'some_key': 1135},
+            'location_type': {
+                'some_key': 1135
+            },
             'processing_type': [
                 'string'
             ],

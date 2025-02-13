@@ -880,7 +880,9 @@ class TestLocationContributionStrategy(APITestCase):
             "coordinates": {
                 "lng": 20
             },
-            "number_of_workers": {"min": 10}
+            "number_of_workers": {
+                "min": 10
+            }
         }
         expected_response_structure = [
             {

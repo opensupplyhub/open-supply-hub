@@ -7,13 +7,15 @@ class NumberOfWorkersSerializer(serializers.Serializer):
         required=True,
         error_messages={
             'required': 'The min field is required!',
-        })
+        }
+    )
     max = serializers.IntegerField(
         min_value=1,
         required=True,
         error_messages={
             'required': 'The max field is required!',
-        })
+        }
+    )
 
     def validate(self, data):
         """Ensure min is less than max"""

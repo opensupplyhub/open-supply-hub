@@ -15,7 +15,8 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
             'required': 'Field name is required!',
             'invalid': 'Field name must be a valid string.',
             'max_length': 'Field name cannot be longer than 200 characters.'
-            },)
+        },
+    )
     address = serializers.CharField(
         max_length=200,
         required=True,
@@ -23,13 +24,15 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
             'required': 'Field address is required!',
             'invalid': 'Field address must be a valid string.',
             'max_length': 'Field address cannot be longer than 200 characters.'
-            },)
+        },
+    )
     country = serializers.CharField(
         required=True,
         error_messages={
             'required': 'Field country is required!',
             'invalid': 'Field country must be a valid string.'
-            },)
+        },
+    )
     sector = StringOrListField(required=False)
     parent_company = serializers.CharField(
         required=False,
@@ -42,7 +45,8 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
         ],
         error_messages={
             'invalid': 'Field parent_company must be a valid string.'
-            },)
+        },
+    )
     product_type = StringOrListField(required=False)
     location_type = StringOrListField(required=False)
     processing_type = StringOrListField(required=False)
@@ -52,13 +56,14 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
         error_messages={
             'invalid': 'Invalid data. Expected a dictionary(object).'
         },
-        )
+    )
     coordinates = CoordinatesSerializer(
         required=False,
         error_messages={
             'required': 'The lat and lng fields are required!',
             'invalid': 'Field coordinates must be a valid geopoint.'
-        },)
+        },
+    )
 
     def _validate_string_field(self, data, field_name):
         """Helper method to validate string fields aren't numeric."""
