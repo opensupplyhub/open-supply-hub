@@ -2,6 +2,7 @@ from typing import Tuple, List
 
 from django.http import QueryDict
 from django.db import transaction
+
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
@@ -149,6 +150,7 @@ class ProductionLocations(ViewSet):
             raise ServiceUnavailableException(
                 APIV1CommonErrorMessages.MAINTENANCE_MODE
             )
+
         if not isinstance(request.data, dict):
             data_type = type(request.data).__name__
             specific_error = APIV1LocationContributionErrorMessages \
@@ -196,6 +198,7 @@ class ProductionLocations(ViewSet):
             raise ServiceUnavailableException(
                 APIV1CommonErrorMessages.MAINTENANCE_MODE
             )
+
         if not Facility.objects.filter(id=pk).exists():
             specific_error = APIV1CommonErrorMessages.LOCATION_NOT_FOUND
             return Response(
