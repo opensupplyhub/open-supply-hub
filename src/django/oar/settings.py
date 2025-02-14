@@ -34,7 +34,7 @@ ENVIRONMENT = os.getenv('DJANGO_ENV', 'Local')
 DEBUG = (ENVIRONMENT == 'Local')
 
 VALID_ENVIRONMENTS = ('Production', 'Staging', 'Development', 'Test',
-                      'Preprod', 'Local')
+                      'Preprod', 'Pentesting', 'Local')
 if ENVIRONMENT not in VALID_ENVIRONMENTS:
     raise ImproperlyConfigured(
         'Invalid ENVIRONMENT provided, must be one of {}'
