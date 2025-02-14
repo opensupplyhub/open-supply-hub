@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, waitFor } from "@testing-library/react";
+import { fireEvent } from "@testing-library/react";
 import SearchByNameAndAddressTab from "../../components/Contribute/SearchByNameAndAddressTab";
 import { searchByNameAndAddressResultRoute } from "../../util/constants";
 import renderWithProviders from "../../util/testUtils/renderWithProviders";
@@ -125,7 +125,7 @@ describe("SearchByNameAndAddressTab component", () => {
         expect(searchButton).toBeDisabled();
     });
 
-    test("enables the Search button when all fields are filled", async () => {
+    test("enables the Search button when all fields are filled", () => {
         const { getByRole, getByPlaceholderText, getByTestId } =
             renderWithProviders(<SearchByNameAndAddressTab />, {
                 preloadedState: defaultState,
@@ -142,13 +142,8 @@ describe("SearchByNameAndAddressTab component", () => {
         fireEvent.change(addressInput, { target: { value: "Test Address" } });
         fireEvent.change(countrySelect, { target: { value: "US" } });
 
-        await waitFor(() => {
-            expect(countrySelect.value).toBe("US");
-        });
-
-        await waitFor(() => {
-            expect(searchButton).toBeEnabled();
-        });
+        expect(countrySelect.value).toBe("US");
+        expect(searchButton).toBeEnabled();
 
         const searchParams = new URLSearchParams({
             name: "Test Name",
@@ -161,7 +156,7 @@ describe("SearchByNameAndAddressTab component", () => {
         expect(mockPush).toHaveBeenCalledWith(expectedUrl);
     });
 
-    test("shows error indication on blur when fields are empty", async () => {
+    test("shows error indication on blur when fields are empty", () => {
         const { getByText, getAllByText, getByTestId, getByPlaceholderText } =
             renderWithProviders(<SearchByNameAndAddressTab />, {
                 preloadedState: defaultState,
@@ -174,19 +169,15 @@ describe("SearchByNameAndAddressTab component", () => {
         fireEvent.blur(addressInput);
         fireEvent.blur(countrySelect);
 
-        await waitFor(() => {
-            expect(getByPlaceholderText("Type a name")).toHaveAttribute(
-                "aria-invalid",
-                "true",
-            );
-            expect(getByPlaceholderText("Address")).toHaveAttribute(
-                "aria-invalid",
-                "true",
-            );
-        });
-
+        expect(getByPlaceholderText("Type a name")).toHaveAttribute(
+            "aria-invalid",
+            "true",
+        );
+        expect(getByPlaceholderText("Address")).toHaveAttribute(
+            "aria-invalid",
+            "true",
+        );
         expect(getAllByText(/This field is required./i)).toHaveLength(2);
-
         expect(
             getByText(
                 /The country is missing from your search. Select the correct country from the drop down menu./i,
