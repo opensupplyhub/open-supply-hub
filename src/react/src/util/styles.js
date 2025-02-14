@@ -990,14 +990,16 @@ export const makeSearchByNameAddressTabStyles = theme =>
             fontSize: '36px',
             fontWeight: theme.typography.fontWeightSemiBoldPlus,
         }),
-        subTitleStyles: Object.freeze({
+        formFieldTitleStyles: Object.freeze({
             fontSize: '21px',
             fontWeight: theme.typography.fontWeightSemiBold,
-            margin: '8px 0 8px 0',
+            margin: '24px 0 8px 0',
+        }),
+        requiredAsterisk: Object.freeze({
+            color: COLOURS.RED,
         }),
         textInputStyles: Object.freeze({
             maxWidth: '528px',
-            marginBottom: '21px',
         }),
         selectStyles: Object.freeze({
             fontSize: '18px',
@@ -1017,10 +1019,16 @@ export const makeSearchByNameAddressTabStyles = theme =>
         notchedOutlineStyles: Object.freeze({
             borderRadius: 0,
         }),
+        helperTextStyles: Object.freeze({
+            margin: '8px 0 0 0',
+        }),
         buttonLabel: Object.freeze({
             fontSize: '18px',
             lineHeight: '20px',
             fontWeight: theme.typography.fontWeightExtraBold,
+        }),
+        errorWrapStyles: Object.freeze({
+            marginTop: '8px',
         }),
         searchButtonStyles: Object.freeze({
             width: '200px',
@@ -1028,7 +1036,7 @@ export const makeSearchByNameAddressTabStyles = theme =>
             borderRadius: 0,
             textTransform: 'none',
             backgroundColor: theme.palette.action.main,
-            marginTop: '26px',
+            marginTop: '24px',
             color: theme.palette.common.black,
             '&:hover': {
                 backgroundColor: theme.palette.action.dark,
@@ -1377,6 +1385,7 @@ export const inputErrorText = theme =>
         errorTextWrapStyles: Object.freeze({
             display: 'flex',
             alignItems: 'center',
+            color: COLOURS.RED,
         }),
         iconInfoStyles: Object.freeze({
             fontSize: '16px',
@@ -1384,7 +1393,7 @@ export const inputErrorText = theme =>
             marginRight: '5px',
         }),
         inputErrorTextStyles: Object.freeze({
-            fontSize: '16px',
+            fontSize: '14px',
             fontWeight: theme.typography.fontWeightSemiBold,
             color: COLOURS.RED,
         }),
