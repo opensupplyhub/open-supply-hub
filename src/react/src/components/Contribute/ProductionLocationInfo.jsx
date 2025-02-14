@@ -95,6 +95,10 @@ const ProductionLocationInfo = ({
     const [parentCompany, setParentCompany] = useState([]);
     const customSelectComponents = { DropdownIndicator: null };
 
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [location]);
+
     const inputData = useMemo(
         () => ({
             name: inputName,
