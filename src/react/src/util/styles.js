@@ -1439,7 +1439,7 @@ export const makeAddLocationStyles = theme =>
             backgroundColor: COLOURS.WHITE,
             boxShadow: 'none',
             padding: '60px 25px 25px 25px',
-            maxWidth: '50%',
+            width: '50%',
             position: 'relative',
             textAlign: 'center',
             display: 'flex',
@@ -1448,7 +1448,7 @@ export const makeAddLocationStyles = theme =>
             justifyContent: 'center',
             overflow: 'hidden',
             [theme.breakpoints.down('sm')]: {
-                maxWidth: '100%',
+                width: 'auto',
             },
         }),
         cardTitle: Object.freeze({
