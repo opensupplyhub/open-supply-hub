@@ -14,6 +14,7 @@ import RegisterForm from './components/RegisterForm';
 import ResetPasswordForm from './components/ResetPasswordForm';
 import LoginForm from './components/LoginForm';
 import Contribute from './components/Contribute';
+import AddLocationData from './components/AddLocationData';
 import Homepage from './components/Homepage';
 import FacilityLists from './components/FacilityLists';
 import FacilityListItems from './components/FacilityListItems';
@@ -48,6 +49,7 @@ import {
     authResetPasswordFormRoute,
     authConfirmRegistrationRoute,
     contributeRoute,
+    contributeNewRoute, // TODO: Remove this in scope of https://opensupplyhub.atlassian.net/browse/OSDEV-1607
     listsRoute,
     facilityListItemsRoute,
     facilitiesRoute,
@@ -159,6 +161,11 @@ class Routes extends Component {
                                     exact
                                     path={contributeRoute}
                                     component={Contribute}
+                                />
+                                <Route
+                                    exact
+                                    path={contributeNewRoute}
+                                    component={AddLocationData}
                                 />
                                 <Route
                                     path={dashboardRoute}

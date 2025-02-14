@@ -1421,17 +1421,16 @@ export const makeAddLocationStyles = theme =>
         title: Object.freeze({
             paddingLeft: '5%',
             paddingRight: '5%',
-            paddingTop: '25px',
+            paddingTop: '48px',
             color: COLOURS.NEAR_BLACK,
-            fontWeight: 'bold',
-            marginBottom: '1rem',
+            fontWeight: theme.typography.fontWeightExtraBold,
         }),
         description: Object.freeze({
             paddingLeft: '5%',
             paddingRight: '5%',
-            paddingTop: '5px',
-            marginBottom: '2rem',
-            fontWeight: 'bold',
+            paddingTop: '24px',
+            marginBottom: '32px',
+            fontWeight: theme.typography.fontWeightSemiBold,
         }),
         dataOptions: Object.freeze({
             display: 'flex',
@@ -1439,9 +1438,8 @@ export const makeAddLocationStyles = theme =>
             paddingRight: '5%',
             gap: '50px',
             paddingBottom: '5%',
-            flexWrap: 'wrap',
             flexDirection: 'row',
-            [theme.breakpoints.down('md')]: {
+            [theme.breakpoints.down('sm')]: {
                 flexDirection: 'column',
                 display: 'center',
             },
@@ -1450,7 +1448,7 @@ export const makeAddLocationStyles = theme =>
             backgroundColor: COLOURS.WHITE,
             boxShadow: 'none',
             padding: '60px 25px 25px 25px',
-            width: '45%',
+            width: '50%',
             position: 'relative',
             textAlign: 'center',
             display: 'flex',
@@ -1458,6 +1456,9 @@ export const makeAddLocationStyles = theme =>
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
+            [theme.breakpoints.down('sm')]: {
+                width: 'auto',
+            },
         }),
         cardTitle: Object.freeze({
             fontSize: '32px',
@@ -1466,7 +1467,7 @@ export const makeAddLocationStyles = theme =>
             textAlign: 'center',
             paddingTop: '15px',
             paddingBottom: '15px',
-            fontWeight: '300',
+            fontWeight: theme.typography.fontWeightRegular,
             lineHeight: '1.0',
         }),
         cardSub: Object.freeze({
