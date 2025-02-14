@@ -67,6 +67,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1695](https://opensupplyhub.atlassian.net/browse/OSDEV-1695) - [SLC] Enabled the claim button for updated production locations when a moderation event has a pending status. Disabled claim button explicitly if production location has pending claim status.
 * [OSDEV-1701](https://opensupplyhub.atlassian.net/browse/OSDEV-1701) - Refactored "Go Back" button in production location info page.
 * [OSDEV-1672](https://opensupplyhub.atlassian.net/browse/OSDEV-1672) - SLC. Implement collecting contribution data page (FE) - All Multi-Selects on the page have been fixed. They resize based on the number of items selected.
+* [OSDEV-1696](https://opensupplyhub.atlassian.net/browse/OSDEV-1696) - Added loader on single production location fetch; added error handling; added cleanup hook to clear production location data on component unmount.
 * [OSDEV-1653](https://opensupplyhub.atlassian.net/browse/OSDEV-1653) - Added asterisks next to each required form field (Name, Address, and Country) on the "Search by Name and Address" tab. Highlighted an empty field and displayed an error message if it loses focus. Added proper styles for the error messages.
 * [OSDEV-1589](https://opensupplyhub.atlassian.net/browse/OSDEV-1589) - Fixed layout issue on new `contribute` page.
 
