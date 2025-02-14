@@ -18,6 +18,7 @@ on:
         - Pre-prod
         - Staging
         - Production
+        - Pentesting
         default: Development
       deploy-plan-only:
         description: 'Plan only'
@@ -52,6 +53,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'opensupplyhub/ci-deployment'
+          ref: 'OSDEV-1580-add-new-environment-for-pen-testing'
           path: 'terraform-config'
           token: ${{ secrets.PAT }}
 
