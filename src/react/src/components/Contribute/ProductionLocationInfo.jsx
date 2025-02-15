@@ -362,6 +362,14 @@ const ProductionLocationInfo = ({
         moderationID,
     ]);
 
+    useEffect(
+        () => () => {
+            handleCleanupContributionRecord();
+            handleResetPendingModerationEvent();
+        },
+        [],
+    );
+
     return (
         <>
             <div className={classes.mainContainerStyles}>
