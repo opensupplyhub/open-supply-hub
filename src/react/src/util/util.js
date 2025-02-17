@@ -1461,30 +1461,36 @@ export const parseContribData = contribData => {
         parentCompany,
     } = contribData;
 
-    return {
+    const onlyRequiredAndFilledFieldsData = {
         source: DATA_SOURCES_ENUM.SLC,
         name,
         address,
         country: country?.value,
-        sector: isArray(sector)
-            ? extractProductionLocationContributionValues(sector)
-            : [],
-        parent_company: isArray(parentCompany)
-            ? extractProductionLocationContributionValues(parentCompany)
-            : [],
-        product_type: isArray(productType)
-            ? extractProductionLocationContributionValues(productType)
-            : [],
-        location_type: isArray(locationType)
-            ? extractProductionLocationContributionValues(locationType)
-            : [],
-        processing_type: isArray(processingType)
-            ? extractProductionLocationContributionValues(processingType)
-            : [],
-        number_of_workers: numberOfWorkers
-            ? generateRangeField(numberOfWorkers)
-            : null,
     };
+
+    const fieldsToExtract = [
+        { key: 'sector', value: sector },
+        { key: 'parent_company', value: parentCompany },
+        { key: 'product_type', value: productType },
+        { key: 'location_type', value: locationType },
+        { key: 'processing_type', value: processingType },
+    ];
+
+    fieldsToExtract.forEach(({ key, value }) => {
+        if (!isEmpty(value)) {
+            onlyRequiredAndFilledFieldsData[
+                key
+            ] = extractProductionLocationContributionValues(value);
+        }
+    });
+
+    if (numberOfWorkers) {
+        onlyRequiredAndFilledFieldsData.number_of_workers = generateRangeField(
+            numberOfWorkers,
+        );
+    }
+
+    return onlyRequiredAndFilledFieldsData;
 };
 
 export const getLastPathParameter = url => {
