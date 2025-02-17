@@ -371,13 +371,20 @@ const ProductionLocationInfo = ({
         moderationID,
     ]);
 
+    useEffect(
+        () => () => {
+            handleCleanupContributionRecord();
+            handleResetPendingModerationEvent();
+            handleResetSingleProductionLocation();
+        },
+        [],
+    );
+
     useEffect(() => {
         if (!isEmpty(singleProductionLocationError)) {
             toast(singleProductionLocationError[0]);
         }
     }, [singleProductionLocationError]);
-
-    useEffect(() => () => handleResetSingleProductionLocation(), []);
 
     return (
         <>
