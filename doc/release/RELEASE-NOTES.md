@@ -70,6 +70,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1549](https://opensupplyhub.atlassian.net/browse/OSDEV-1549) - Added Django serialization check for all fields from the request body based on [the API specification](https://opensupplyhub.github.io/open-supply-hub-api-docs/) for POST and PATCH v1/production-locations endpoint, and appropriate errors return according to the request body schema in the API spec.
 * [OSDEV-1696](https://opensupplyhub.atlassian.net/browse/OSDEV-1696) - Added loader on single production location fetch; added error handling; added cleanup hook to clear production location data on component unmount.
 * [OSDEV-1653](https://opensupplyhub.atlassian.net/browse/OSDEV-1653) - Added asterisks next to each required form field (Name, Address, and Country) on the "Search by Name and Address" tab. Highlighted an empty field and displayed an error message if it loses focus. Added proper styles for the error messages.
+* [OSDEV-1699](https://opensupplyhub.atlassian.net/browse/OSDEV-1699) - The scroll position has been fixed from the bottom to the top after navigating from the bottom of the `Search results` page (press the `Select` button) to `Product Location Information`.
 * [OSDEV-1589](https://opensupplyhub.atlassian.net/browse/OSDEV-1589) - Fixed layout issue on new `contribute` page.
 
 ### What's new
