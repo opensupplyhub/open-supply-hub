@@ -6,6 +6,7 @@ from django.urls import reverse
 from allauth.account.models import EmailAddress
 from waffle.testutils import override_switch
 from django.contrib.gis.geos import Point
+from rest_framework import status
 
 from api.models.moderation_event import ModerationEvent
 from api.models.contributor.contributor import Contributor
@@ -195,24 +196,26 @@ class TestProductionLocationsPartialUpdate(APITestCase):
             'The request body is invalid.'
         )
         expected_specific_error = (
-            'Invalid data. Expected a dictionary (object), but got list.'
+            "The request body is invalid."
         )
-        expected_error_field = 'non_field_errors'
+        expected_error_field = ('Invalid data. Expected a dictionary (object)'
+                                ', but got list.')
 
         response = self.client.patch(
             self.url,
             [1, 2, 3],
             content_type='application/json'
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code,
+                         status.HTTP_400_BAD_REQUEST)
 
         response_body_dict = json.loads(response.content)
         self.assertEqual(len(response_body_dict), 2)
 
         general_error = response_body_dict['detail']
         errors_list_length = len(response_body_dict['errors'])
-        specific_error = response_body_dict['errors'][0]['detail']
-        error_field = response_body_dict['errors'][0]['field']
+        specific_error = response_body_dict['detail']
+        error_field = response_body_dict['errors'][0]['detail']
         self.assertEqual(general_error, expected_general_error)
         self.assertEqual(errors_list_length, 1)
         self.assertEqual(specific_error, expected_specific_error)
@@ -283,21 +286,20 @@ class TestProductionLocationsPartialUpdate(APITestCase):
         expected_response_body = {
             'detail': 'The request body is invalid.',
             'errors': [
-                {
-                    'field': 'sector',
-                    'detail': ('Expected value for sector to be a string or a '
-                               "list of strings but got {'some_key': 1135}.")
-                },
-                {
-                    'field': 'location_type',
-                    'detail': (
-                        'Expected value for location_type to be a '
-                        'string or a list of strings but got '
-                        "{'some_key': 1135}."
-                    )
-                }
-            ]
-        }
+                {'field': 'sector',
+                 'detail': ('Field sector must be a string or a'
+                            ' list of strings.')},
+                {'field': 'location_type',
+                 'detail': ('Field location_type must be a string or a list of'
+                            ' strings.')},
+                {'field': 'number_of_workers',
+                 'errors': [
+                     {'field': 'min',
+                      'detail': ('Ensure this value is greater than or equal'
+                                 ' to 1.')},
+                     {'field': 'max',
+                      'detail': ('Ensure this value is greater than or equal'
+                                 ' to 1.')}]}]}
         initial_moderation_event_count = ModerationEvent.objects.count()
 
         invalid_req_body = json.dumps({
@@ -329,7 +331,8 @@ class TestProductionLocationsPartialUpdate(APITestCase):
             invalid_req_body,
             content_type='application/json'
         )
-        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.status_code,
+                         status.HTTP_422_UNPROCESSABLE_ENTITY)
 
         response_body_dict = json.loads(response.content)
         self.assertEqual(response_body_dict, expected_response_body)
