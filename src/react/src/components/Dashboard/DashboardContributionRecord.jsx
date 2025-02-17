@@ -233,8 +233,7 @@ const DashboardContributionRecord = ({
                         `}
             >
                 <Toolbar>
-                    {moderationEventStatus ===
-                    MODERATION_STATUSES_ENUM.PENDING ? (
+                    {moderationActionPerformBy === null ? (
                         <Typography variant="title">
                             {moderationEventStatus}
                         </Typography>
