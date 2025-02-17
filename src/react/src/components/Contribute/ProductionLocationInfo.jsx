@@ -12,6 +12,7 @@ import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import StyledSelect from '../Filters/StyledSelect';
 import { productionLocationInfoStyles } from '../../util/styles';
 import {
@@ -29,6 +30,7 @@ import {
     updateProductionLocation,
     fetchProductionLocationByOsId,
     resetPendingModerationEvent,
+    resetSingleProductionLocation,
 } from '../../actions/contributeProductionLocation';
 import {
     fetchSingleModerationEvent,
@@ -69,9 +71,12 @@ const ProductionLocationInfo = ({
     singleModerationEventItemError,
     fetchProductionLocation,
     singleProductionLocationData,
+    singleProductionLocationFetching,
+    singleProductionLocationError,
     innerWidth,
     handleCleanupContributionRecord,
     handleResetPendingModerationEvent,
+    handleResetSingleProductionLocation,
 }) => {
     const location = useLocation();
     const history = useHistory();
@@ -366,6 +371,14 @@ const ProductionLocationInfo = ({
         moderationID,
     ]);
 
+    useEffect(() => {
+        if (!isEmpty(singleProductionLocationError)) {
+            toast(singleProductionLocationError[0]);
+        }
+    }, [singleProductionLocationError]);
+
+    useEffect(() => () => handleResetSingleProductionLocation(), []);
+
     return (
         <>
             <div className={classes.mainContainerStyles}>
@@ -376,391 +389,403 @@ const ProductionLocationInfo = ({
                     {`Use the form below to edit the name, address, and country
                     for your production location. ${instructionExtraMessage}`}
                 </Typography>
-                <Paper className={classes.infoWrapStyles}>
-                    <div
-                        className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
-                    >
-                        <Typography
-                            component="h2"
-                            className={classes.titleStyles}
+                {singleProductionLocationFetching ? (
+                    <CircularProgress />
+                ) : (
+                    <Paper className={classes.infoWrapStyles}>
+                        <div
+                            className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
                         >
-                            Location Name
-                        </Typography>
-                        <Typography
-                            component="h4"
-                            className={classes.subTitleStyles}
-                        >
-                            Enter the name of the production location that you
-                            are uploading.
-                        </Typography>
-                        <TextField
-                            id="name"
-                            className={classes.textInputStyles}
-                            value={inputName}
-                            onChange={handleNameChange}
-                            placeholder="Enter the name"
-                            variant="outlined"
-                            aria-label="Enter the name"
-                            InputProps={{
-                                classes: {
-                                    input: `
+                            <Typography
+                                component="h2"
+                                className={classes.titleStyles}
+                            >
+                                Location Name
+                            </Typography>
+                            <Typography
+                                component="h4"
+                                className={classes.subTitleStyles}
+                            >
+                                Enter the name of the production location that
+                                you are uploading.
+                            </Typography>
+                            <TextField
+                                id="name"
+                                className={classes.textInputStyles}
+                                value={inputName}
+                                onChange={handleNameChange}
+                                placeholder="Enter the name"
+                                variant="outlined"
+                                aria-label="Enter the name"
+                                InputProps={{
+                                    classes: {
+                                        input: `
                                     ${
                                         nameTouched &&
                                         isEmpty(inputName) &&
                                         classes.errorStyle
                                     }`,
-                                    notchedOutline:
-                                        classes.notchedOutlineStyles,
-                                },
-                            }}
-                            helperText={
-                                nameTouched &&
-                                isEmpty(inputName) && <InputErrorText />
-                            }
-                            FormHelperTextProps={{
-                                className: classes.helperText,
-                            }}
-                            error={nameTouched && isEmpty(inputName)}
-                        />
-                    </div>
-                    <div
-                        className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
-                    >
-                        <Typography
-                            component="h2"
-                            className={classes.titleStyles}
+                                        notchedOutline:
+                                            classes.notchedOutlineStyles,
+                                    },
+                                }}
+                                helperText={
+                                    nameTouched &&
+                                    isEmpty(inputName) && <InputErrorText />
+                                }
+                                FormHelperTextProps={{
+                                    className: classes.helperText,
+                                }}
+                                error={nameTouched && isEmpty(inputName)}
+                            />
+                        </div>
+                        <div
+                            className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
                         >
-                            Address
-                        </Typography>
-                        <Typography
-                            component="h4"
-                            className={classes.subTitleStyles}
-                        >
-                            Enter the address of the production location. We
-                            will use this to plot the location on a map.
-                        </Typography>
-                        <TextField
-                            id="address"
-                            className={classes.textInputStyles}
-                            value={inputAddress}
-                            onChange={handleAddressChange}
-                            placeholder="Enter the full address"
-                            variant="outlined"
-                            aria-label="Enter the address"
-                            InputProps={{
-                                classes: {
-                                    input: `${classes.searchInputStyles}
+                            <Typography
+                                component="h2"
+                                className={classes.titleStyles}
+                            >
+                                Address
+                            </Typography>
+                            <Typography
+                                component="h4"
+                                className={classes.subTitleStyles}
+                            >
+                                Enter the address of the production location. We
+                                will use this to plot the location on a map.
+                            </Typography>
+                            <TextField
+                                id="address"
+                                className={classes.textInputStyles}
+                                value={inputAddress}
+                                onChange={handleAddressChange}
+                                placeholder="Enter the full address"
+                                variant="outlined"
+                                aria-label="Enter the address"
+                                InputProps={{
+                                    classes: {
+                                        input: `${classes.searchInputStyles}
                                 ${
                                     addressTouched &&
                                     isEmpty(inputAddress) &&
                                     classes.errorStyle
                                 }`,
-                                    notchedOutline:
-                                        classes.notchedOutlineStyles,
-                                },
-                            }}
-                            helperText={
-                                addressTouched &&
-                                isEmpty(inputAddress) && <InputErrorText />
-                            }
-                            FormHelperTextProps={{
-                                className: classes.helperText,
-                            }}
-                            error={addressTouched && isEmpty(inputAddress)}
-                        />
-                    </div>
-                    <div
-                        className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
-                    >
-                        <Typography
-                            component="h2"
-                            className={classes.titleStyles}
+                                        notchedOutline:
+                                            classes.notchedOutlineStyles,
+                                    },
+                                }}
+                                helperText={
+                                    addressTouched &&
+                                    isEmpty(inputAddress) && <InputErrorText />
+                                }
+                                FormHelperTextProps={{
+                                    className: classes.helperText,
+                                }}
+                                error={addressTouched && isEmpty(inputAddress)}
+                            />
+                        </div>
+                        <div
+                            className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
                         >
-                            Country
-                        </Typography>
-                        <Typography
-                            component="h4"
-                            className={classes.subTitleStyles}
-                        >
-                            Select the country where the production site is
-                            located.
-                        </Typography>
-                        <StyledSelect
-                            id="country"
-                            name="Country"
-                            aria-label="Country"
-                            options={countriesOptions || []}
-                            value={inputCountry}
-                            onChange={setInputCountry}
-                            className={classes.selectStyles}
-                            styles={selectStyles}
-                            placeholder="Country"
-                            isMulti={false}
-                        />
-                    </div>
-                    <hr className={classes.separator} />
-                    <div
-                        className={`${classes.sectionWrapStyles} ${classes.wrapStyles}`}
-                    >
-                        <div className={classes.rowContainerStyles}>
                             <Typography
                                 component="h2"
-                                className={`${classes.titleStyles} ${classes.marginRight}`}
+                                className={classes.titleStyles}
                             >
-                                Additional information
+                                Country
                             </Typography>
-                            <IconButton onClick={toggleExpand}>
-                                {isExpanded ? (
-                                    <ArrowDropUpIcon />
-                                ) : (
-                                    <ArrowDropDownIcon />
-                                )}
-                            </IconButton>
+                            <Typography
+                                component="h4"
+                                className={classes.subTitleStyles}
+                            >
+                                Select the country where the production site is
+                                located.
+                            </Typography>
+                            <StyledSelect
+                                id="country"
+                                name="Country"
+                                aria-label="Country"
+                                options={countriesOptions || []}
+                                value={inputCountry}
+                                onChange={setInputCountry}
+                                className={classes.selectStyles}
+                                styles={selectStyles}
+                                placeholder="Country"
+                                isMulti={false}
+                            />
                         </div>
-                        <Typography
-                            component="h4"
-                            className={classes.subTitleStyles}
+                        <hr className={classes.separator} />
+                        <div
+                            className={`${classes.sectionWrapStyles} ${classes.wrapStyles}`}
                         >
-                            Expand this section to add more data about your
-                            production location, including product types, number
-                            of workers, parent company and more.
-                        </Typography>
-                        {isExpanded && (
-                            <>
-                                <div
-                                    className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
+                            <div className={classes.rowContainerStyles}>
+                                <Typography
+                                    component="h2"
+                                    className={`${classes.titleStyles} ${classes.marginRight}`}
                                 >
-                                    <Typography
-                                        component="h2"
-                                        className={classes.titleStyles}
+                                    Additional information
+                                </Typography>
+                                <IconButton onClick={toggleExpand}>
+                                    {isExpanded ? (
+                                        <ArrowDropUpIcon />
+                                    ) : (
+                                        <ArrowDropDownIcon />
+                                    )}
+                                </IconButton>
+                            </div>
+                            <Typography
+                                component="h4"
+                                className={classes.subTitleStyles}
+                            >
+                                Expand this section to add more data about your
+                                production location, including product types,
+                                number of workers, parent company and more.
+                            </Typography>
+                            {isExpanded && (
+                                <>
+                                    <div
+                                        className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
                                     >
-                                        Sector(s)
-                                    </Typography>
-                                    <Typography
-                                        component="h4"
-                                        className={classes.subTitleStyles}
+                                        <Typography
+                                            component="h2"
+                                            className={classes.titleStyles}
+                                        >
+                                            Sector(s)
+                                        </Typography>
+                                        <Typography
+                                            component="h4"
+                                            className={classes.subTitleStyles}
+                                        >
+                                            Select the sector(s) that this
+                                            location operates in. For example:
+                                            Apparel, Electronics, Renewable
+                                            Energy.
+                                        </Typography>
+                                        <StyledSelect
+                                            id="sector"
+                                            name="sector"
+                                            aria-label="Select sector"
+                                            options={
+                                                mapDjangoChoiceTuplesToSelectOptions(
+                                                    mockedSectors,
+                                                ) || []
+                                            }
+                                            value={sector}
+                                            onChange={setSector}
+                                            styles={selectStyles}
+                                            className={classes.selectStyles}
+                                            placeholder="Select sector(s)"
+                                        />
+                                    </div>
+                                    <div
+                                        className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
                                     >
-                                        Select the sector(s) that this location
-                                        operates in. For example: Apparel,
-                                        Electronics, Renewable Energy.
-                                    </Typography>
-                                    <StyledSelect
-                                        id="sector"
-                                        name="sector"
-                                        aria-label="Select sector"
-                                        options={
-                                            mapDjangoChoiceTuplesToSelectOptions(
-                                                mockedSectors,
-                                            ) || []
-                                        }
-                                        value={sector}
-                                        onChange={setSector}
-                                        styles={selectStyles}
-                                        className={classes.selectStyles}
-                                        placeholder="Select sector(s)"
-                                    />
-                                </div>
-                                <div
-                                    className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
-                                >
-                                    <Typography
-                                        component="h2"
-                                        className={classes.titleStyles}
-                                    >
-                                        Product Type(s)
-                                    </Typography>
-                                    <Typography
-                                        component="h4"
-                                        className={classes.subTitleStyles}
-                                    >
-                                        Enter the type of products produced at
-                                        this location. For example: Shirts,
-                                        Laptops, Solar Panels.
-                                    </Typography>
+                                        <Typography
+                                            component="h2"
+                                            className={classes.titleStyles}
+                                        >
+                                            Product Type(s)
+                                        </Typography>
+                                        <Typography
+                                            component="h4"
+                                            className={classes.subTitleStyles}
+                                        >
+                                            Enter the type of products produced
+                                            at this location. For example:
+                                            Shirts, Laptops, Solar Panels.
+                                        </Typography>
 
-                                    <StyledSelect
-                                        creatable
-                                        name="Product Type"
-                                        value={productType}
-                                        onChange={setProductType}
-                                        placeholder="Enter product type(s)"
-                                        aria-label="Enter product type(s)"
-                                        styles={selectStyles}
-                                        className={classes.selectStyles}
-                                        components={customSelectComponents}
-                                    />
-                                </div>
-                                <div
-                                    className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
-                                >
-                                    <Typography
-                                        component="h2"
-                                        className={classes.titleStyles}
+                                        <StyledSelect
+                                            creatable
+                                            name="Product Type"
+                                            value={productType}
+                                            onChange={setProductType}
+                                            placeholder="Enter product type(s)"
+                                            aria-label="Enter product type(s)"
+                                            styles={selectStyles}
+                                            className={classes.selectStyles}
+                                            components={customSelectComponents}
+                                        />
+                                    </div>
+                                    <div
+                                        className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
                                     >
-                                        Location Type(s)
-                                    </Typography>
-                                    <Typography
-                                        component="h4"
-                                        className={classes.subTitleStyles}
+                                        <Typography
+                                            component="h2"
+                                            className={classes.titleStyles}
+                                        >
+                                            Location Type(s)
+                                        </Typography>
+                                        <Typography
+                                            component="h4"
+                                            className={classes.subTitleStyles}
+                                        >
+                                            Select the location type(s) for this
+                                            production location. For example:
+                                            Final Product Assembly, Raw
+                                            Materials Production or Processing,
+                                            Office/HQ.
+                                        </Typography>
+                                        <StyledSelect
+                                            id="location_type"
+                                            name="Location type"
+                                            aria-label="Location type"
+                                            options={mapFacilityTypeOptions(
+                                                facilityProcessingTypeOptions ||
+                                                    [],
+                                                processingType || [],
+                                            )}
+                                            value={locationType}
+                                            onChange={setLocationType}
+                                            styles={selectStyles}
+                                            className={classes.selectStyles}
+                                            placeholder="Select location type(s)"
+                                        />
+                                    </div>
+                                    <div
+                                        className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
                                     >
-                                        Select the location type(s) for this
-                                        production location. For example: Final
-                                        Product Assembly, Raw Materials
-                                        Production or Processing, Office/HQ.
-                                    </Typography>
-                                    <StyledSelect
-                                        id="location_type"
-                                        name="Location type"
-                                        aria-label="Location type"
-                                        options={mapFacilityTypeOptions(
-                                            facilityProcessingTypeOptions || [],
-                                            processingType || [],
-                                        )}
-                                        value={locationType}
-                                        onChange={setLocationType}
-                                        styles={selectStyles}
-                                        className={classes.selectStyles}
-                                        placeholder="Select location type(s)"
-                                    />
-                                </div>
-                                <div
-                                    className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
-                                >
-                                    <Typography
-                                        component="h2"
-                                        className={classes.titleStyles}
+                                        <Typography
+                                            component="h2"
+                                            className={classes.titleStyles}
+                                        >
+                                            Processing Type(s)
+                                        </Typography>
+                                        <Typography
+                                            component="h4"
+                                            className={classes.subTitleStyles}
+                                        >
+                                            Select the type of processing
+                                            activities that take place at this
+                                            location. For example: Printing,
+                                            Tooling, Assembly.
+                                        </Typography>
+                                        <StyledSelect
+                                            id="processing_type"
+                                            name="Processing Type"
+                                            aria-label="Processing Type"
+                                            options={mapProcessingTypeOptions(
+                                                facilityProcessingTypeOptions ||
+                                                    [],
+                                                locationType || [],
+                                            )}
+                                            value={processingType}
+                                            onChange={setProcessingType}
+                                            styles={selectStyles}
+                                            className={classes.selectStyles}
+                                        />
+                                    </div>
+                                    <div
+                                        className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
                                     >
-                                        Processing Type(s)
-                                    </Typography>
-                                    <Typography
-                                        component="h4"
-                                        className={classes.subTitleStyles}
-                                    >
-                                        Select the type of processing activities
-                                        that take place at this location. For
-                                        example: Printing, Tooling, Assembly.
-                                    </Typography>
-                                    <StyledSelect
-                                        id="processing_type"
-                                        name="Processing Type"
-                                        aria-label="Processing Type"
-                                        options={mapProcessingTypeOptions(
-                                            facilityProcessingTypeOptions || [],
-                                            locationType || [],
-                                        )}
-                                        value={processingType}
-                                        onChange={setProcessingType}
-                                        styles={selectStyles}
-                                        className={classes.selectStyles}
-                                    />
-                                </div>
-                                <div
-                                    className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
-                                >
-                                    <Typography
-                                        component="h2"
-                                        className={classes.titleStyles}
-                                    >
-                                        Number of Workers
-                                    </Typography>
-                                    <Typography
-                                        component="h4"
-                                        className={classes.subTitleStyles}
-                                    >
-                                        Enter a number or a range for the number
-                                        of people employed at the location. For
-                                        example: 100, 100-150.
-                                    </Typography>
-                                    <TextField
-                                        id="number_of_workers"
-                                        error={
-                                            !isValidNumberOfWorkers(
-                                                numberOfWorkers,
-                                            )
-                                        }
-                                        variant="outlined"
-                                        className={classes.textInputStyles}
-                                        value={numberOfWorkers}
-                                        onChange={e =>
-                                            setNumberOfWorkers(e.target.value)
-                                        }
-                                        placeholder="Enter the number of workers as a number or range"
-                                        helperText={
-                                            !isValidNumberOfWorkers(
-                                                numberOfWorkers,
-                                            ) && (
-                                                <InputErrorText text="Enter the number of workers as a number or range" />
-                                            )
-                                        }
-                                        FormHelperTextProps={{
-                                            className: classes.helperText,
-                                        }}
-                                        InputProps={{
-                                            classes: {
-                                                input: `
+                                        <Typography
+                                            component="h2"
+                                            className={classes.titleStyles}
+                                        >
+                                            Number of Workers
+                                        </Typography>
+                                        <Typography
+                                            component="h4"
+                                            className={classes.subTitleStyles}
+                                        >
+                                            Enter a number or a range for the
+                                            number of people employed at the
+                                            location. For example: 100, 100-150.
+                                        </Typography>
+                                        <TextField
+                                            id="number_of_workers"
+                                            error={
+                                                !isValidNumberOfWorkers(
+                                                    numberOfWorkers,
+                                                )
+                                            }
+                                            variant="outlined"
+                                            className={classes.textInputStyles}
+                                            value={numberOfWorkers}
+                                            onChange={e =>
+                                                setNumberOfWorkers(
+                                                    e.target.value,
+                                                )
+                                            }
+                                            placeholder="Enter the number of workers as a number or range"
+                                            helperText={
+                                                !isValidNumberOfWorkers(
+                                                    numberOfWorkers,
+                                                ) && (
+                                                    <InputErrorText text="Enter the number of workers as a number or range" />
+                                                )
+                                            }
+                                            FormHelperTextProps={{
+                                                className: classes.helperText,
+                                            }}
+                                            InputProps={{
+                                                classes: {
+                                                    input: `
                                             ${
                                                 !isValidNumberOfWorkers(
                                                     numberOfWorkers,
                                                 ) && classes.errorStyle
                                             }`,
-                                                notchedOutline:
-                                                    classes.notchedOutlineStyles,
-                                            },
-                                        }}
-                                        aria-label="Number of Workers"
-                                    />
-                                </div>
-                                <div
-                                    className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
-                                >
-                                    <Typography
-                                        component="h2"
-                                        className={classes.titleStyles}
+                                                    notchedOutline:
+                                                        classes.notchedOutlineStyles,
+                                                },
+                                            }}
+                                            aria-label="Number of Workers"
+                                        />
+                                    </div>
+                                    <div
+                                        className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
                                     >
-                                        Parent Company
-                                    </Typography>
-                                    <Typography
-                                        component="h4"
-                                        className={classes.subTitleStyles}
-                                    >
-                                        Enter the company that holds majority
-                                        ownership for this production.
-                                    </Typography>
-                                    <StyledSelect
-                                        creatable
-                                        name="Parent company"
-                                        value={parentCompany}
-                                        onChange={setParentCompany}
-                                        placeholder="Enter the parent company"
-                                        aria-label="Parent company"
-                                        styles={selectStyles}
-                                        className={classes.selectStyles}
-                                        components={customSelectComponents}
-                                    />
-                                </div>
-                            </>
-                        )}
-                    </div>
-                    <div className={classes.buttonsContainerStyles}>
-                        <Button
-                            variant="outlined"
-                            onClick={() => history.goBack()}
-                            className={classes.goBackButtonStyles}
-                        >
-                            Go Back
-                        </Button>
-                        <Button
-                            color="secondary"
-                            variant="contained"
-                            onClick={() => {
-                                handleProductionLocation(inputData, osID);
-                            }}
-                            className={classes.submitButtonStyles}
-                        >
-                            {submitButtonText}
-                        </Button>
-                    </div>
-                </Paper>
+                                        <Typography
+                                            component="h2"
+                                            className={classes.titleStyles}
+                                        >
+                                            Parent Company
+                                        </Typography>
+                                        <Typography
+                                            component="h4"
+                                            className={classes.subTitleStyles}
+                                        >
+                                            Enter the company that holds
+                                            majority ownership for this
+                                            production.
+                                        </Typography>
+                                        <StyledSelect
+                                            creatable
+                                            name="Parent company"
+                                            value={parentCompany}
+                                            onChange={setParentCompany}
+                                            placeholder="Enter the parent company"
+                                            aria-label="Parent company"
+                                            styles={selectStyles}
+                                            className={classes.selectStyles}
+                                            components={customSelectComponents}
+                                        />
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                        <div className={classes.buttonsContainerStyles}>
+                            <Button
+                                variant="outlined"
+                                onClick={() => history.goBack()}
+                                className={classes.goBackButtonStyles}
+                            >
+                                Go Back
+                            </Button>
+                            <Button
+                                color="secondary"
+                                variant="contained"
+                                onClick={() => {
+                                    handleProductionLocation(inputData, osID);
+                                }}
+                                className={classes.submitButtonStyles}
+                            >
+                                {submitButtonText}
+                            </Button>
+                        </div>
+                    </Paper>
+                )}
             </div>
             {showProductionLocationDialog &&
             (pendingModerationEventData?.cleaned_data ||
@@ -797,6 +822,8 @@ ProductionLocationInfo.defaultProps = {
     singleModerationEventItem: null,
     singleModerationEventItemFetching: false,
     singleModerationEventItemError: null,
+    singleProductionLocationFetching: false,
+    singleProductionLocationError: null,
 };
 
 ProductionLocationInfo.propTypes = {
@@ -815,11 +842,14 @@ ProductionLocationInfo.propTypes = {
     singleModerationEventItemError: array,
     fetchProductionLocation: func.isRequired,
     singleProductionLocationData: productionLocationPropType.isRequired,
+    singleProductionLocationFetching: bool,
+    singleProductionLocationError: array,
     submitMethod: string.isRequired,
     classes: object.isRequired,
     innerWidth: number.isRequired,
     handleCleanupContributionRecord: func.isRequired,
     handleResetPendingModerationEvent: func.isRequired,
+    handleResetSingleProductionLocation: func.isRequired,
 };
 
 const mapStateToProps = ({
@@ -833,7 +863,11 @@ const mapStateToProps = ({
             fetching: pendingModerationEventFetching,
             error: pendingModerationEventError,
         },
-        singleProductionLocation: { data: singleProductionLocationData },
+        singleProductionLocation: {
+            data: singleProductionLocationData,
+            fetching: singleProductionLocationFetching,
+            error: singleProductionLocationError,
+        },
     },
     dashboardContributionRecord: {
         singleModerationEvent: {
@@ -855,6 +889,8 @@ const mapStateToProps = ({
     singleModerationEventItemFetching,
     singleModerationEventItemError,
     singleProductionLocationData,
+    singleProductionLocationFetching,
+    singleProductionLocationError,
     innerWidth,
 });
 
@@ -875,6 +911,8 @@ function mapDispatchToProps(dispatch) {
             dispatch(cleanupContributionRecord()),
         handleResetPendingModerationEvent: () =>
             dispatch(resetPendingModerationEvent()),
+        handleResetSingleProductionLocation: () =>
+            dispatch(resetSingleProductionLocation()),
     };
 }
 
