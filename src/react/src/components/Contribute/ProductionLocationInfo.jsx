@@ -371,7 +371,7 @@ const ProductionLocationInfo = ({
         () => () => {
             handleCleanupContributionRecord();
             handleResetPendingModerationEvent();
-            handleResetSingleProductionLocation()
+            handleResetSingleProductionLocation();
         },
         [],
     );
