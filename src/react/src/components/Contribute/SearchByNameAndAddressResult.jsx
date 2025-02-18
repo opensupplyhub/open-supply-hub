@@ -17,6 +17,7 @@ import {
     contributeProductionLocationRoute,
     MAX_LOCATIONS_TO_SHOW,
     authLoginFormRoute,
+    LOG_IN_TITLE,
 } from '../../util/constants';
 import history from '../../util/history';
 import { productionLocationPropType } from '../../util/propTypes';
@@ -31,6 +32,7 @@ const SearchByNameAndAddressResult = ({
     userHasSignedIn,
     fetchingSessionSignIn,
 }) => {
+    const TITLE = 'Production Location Search';
     const location = useLocation();
 
     useEffect(() => {
@@ -55,11 +57,11 @@ const SearchByNameAndAddressResult = ({
     }
     if (!userHasSignedIn) {
         return (
-            <AppGrid title="Contribute">
+            <AppGrid title={TITLE}>
                 <Grid container className="margin-bottom-64">
                     <Grid item xs={12}>
                         <Link to={authLoginFormRoute} href={authLoginFormRoute}>
-                            Log in to contribute to Open Supply Hub
+                            {LOG_IN_TITLE}
                         </Link>
                     </Grid>
                 </Grid>

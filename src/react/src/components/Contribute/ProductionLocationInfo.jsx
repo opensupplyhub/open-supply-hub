@@ -52,6 +52,7 @@ import {
     productionLocationInfoRouteCommon,
     MODERATION_STATUSES_ENUM,
     authLoginFormRoute,
+    LOG_IN_TITLE,
 } from '../../util/constants';
 import COLOURS from '../../util/COLOURS';
 import ProductionLocationDialog from './ProductionLocationDialog';
@@ -83,6 +84,7 @@ const ProductionLocationInfo = ({
     userHasSignedIn,
     fetchingSessionSignIn,
 }) => {
+    const TITLE = 'Production Location Information';
     const location = useLocation();
     const history = useHistory();
     const { moderationID, osID } = useParams();
@@ -400,11 +402,11 @@ const ProductionLocationInfo = ({
 
     if (!userHasSignedIn) {
         return (
-            <AppGrid title="Contribute">
+            <AppGrid title={TITLE}>
                 <Grid container className="margin-bottom-64">
                     <Grid item xs={12}>
                         <Link to={authLoginFormRoute} href={authLoginFormRoute}>
-                            Log in to contribute to Open Supply Hub
+                            {LOG_IN_TITLE}
                         </Link>
                     </Grid>
                 </Grid>
@@ -416,7 +418,7 @@ const ProductionLocationInfo = ({
         <>
             <div className={classes.mainContainerStyles}>
                 <Typography component="h1" className={classes.headerStyles}>
-                    Production Location Information
+                    {TITLE}
                 </Typography>
                 <Typography className={classes.instructionStyles}>
                     {`Use the form below to edit the name, address, and country

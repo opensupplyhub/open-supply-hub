@@ -15,12 +15,15 @@ import {
     authLoginFormRoute,
     InfoLink,
     InfoPaths,
+    LOG_IN_TITLE,
 } from '../util/constants';
 
 function ContributeList({ userHasSignedIn, fetchingSessionSignIn }) {
+    const TITLE = 'Contribute';
+
     if (fetchingSessionSignIn) {
         return (
-            <AppGrid title="Contribute">
+            <AppGrid title={TITLE}>
                 <Grid container className="margin-bottom-64">
                     <Grid item xs={12}>
                         <CircularProgress />
@@ -32,11 +35,11 @@ function ContributeList({ userHasSignedIn, fetchingSessionSignIn }) {
 
     if (!userHasSignedIn) {
         return (
-            <AppGrid title="Contribute">
+            <AppGrid title={TITLE}>
                 <Grid container className="margin-bottom-64">
                     <Grid item xs={12}>
                         <Link to={authLoginFormRoute} href={authLoginFormRoute}>
-                            Log in to contribute to Open Supply Hub
+                            {LOG_IN_TITLE}
                         </Link>
                     </Grid>
                 </Grid>

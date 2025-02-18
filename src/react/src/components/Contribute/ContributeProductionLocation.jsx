@@ -12,11 +12,12 @@ import SearchByOsIdTab from './SearchByOsIdTab';
 import SearchByNameAndAddressTab from './SearchByNameAndAddressTab';
 import { makeContributeProductionLocationStyles } from '../../util/styles';
 import AppGrid from '../AppGrid';
-import { authLoginFormRoute } from '../../util/constants';
+import { authLoginFormRoute, LOG_IN_TITLE } from '../../util/constants';
 
 const TAB_OS_ID = 'os-id';
 const TAB_NAME_ADDRESS = 'name-address';
 const VALID_TABS = [TAB_OS_ID, TAB_NAME_ADDRESS];
+const TITLE = 'Production Location Search';
 
 const ContributeProductionLocation = ({
     classes,
@@ -57,11 +58,11 @@ const ContributeProductionLocation = ({
 
     if (!userHasSignedIn) {
         return (
-            <AppGrid title="Contribute">
+            <AppGrid title={TITLE}>
                 <Grid container className="margin-bottom-64">
                     <Grid item xs={12}>
                         <Link to={authLoginFormRoute} href={authLoginFormRoute}>
-                            Log in to contribute to Open Supply Hub
+                            {LOG_IN_TITLE}
                         </Link>
                     </Grid>
                 </Grid>
@@ -72,7 +73,7 @@ const ContributeProductionLocation = ({
     return (
         <div className={classes.mainContainerStyles}>
             <Typography component="h1" className={classes.titleStyles}>
-                Production Location Search
+                {TITLE}
             </Typography>
             <div className={classes.tabsContainerStyles}>
                 <Tabs

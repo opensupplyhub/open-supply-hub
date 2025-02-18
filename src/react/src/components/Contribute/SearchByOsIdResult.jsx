@@ -18,6 +18,7 @@ import {
 import {
     contributeProductionLocationRoute,
     authLoginFormRoute,
+    LOG_IN_TITLE,
 } from '../../util/constants';
 import { makeSearchByOsIdResultStyles } from '../../util/styles';
 import { productionLocationPropType } from '../../util/propTypes';
@@ -35,6 +36,7 @@ const SearchByOsIdResult = ({
     userHasSignedIn,
     fetchingSessionSignIn,
 }) => {
+    const TITLE = 'Production Location Search';
     const history = useHistory();
     const { osID } = useParams();
 
@@ -66,11 +68,11 @@ const SearchByOsIdResult = ({
 
     if (!userHasSignedIn) {
         return (
-            <AppGrid title="Contribute">
+            <AppGrid title={TITLE}>
                 <Grid container className="margin-bottom-64">
                     <Grid item xs={12}>
                         <Link to={authLoginFormRoute} href={authLoginFormRoute}>
-                            Log in to contribute to Open Supply Hub
+                            {LOG_IN_TITLE}
                         </Link>
                     </Grid>
                 </Grid>
@@ -85,7 +87,7 @@ const SearchByOsIdResult = ({
                 handleBackToSearch={handleBackToSearchByOsId}
             />
             <Typography component="h1" className={classes.mainTitleStyles}>
-                Production Location Search
+                {TITLE}
             </Typography>
 
             <Paper className={classes.resultContainerStyles}>
