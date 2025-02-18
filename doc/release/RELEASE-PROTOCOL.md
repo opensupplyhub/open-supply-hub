@@ -215,7 +215,7 @@ In case there is a need to run additional command in the terminal of the Django 
 On Monday after each release, current metrics should be checked by QA engineer.
 
 1. [Monday](https://opensupplyhub.monday.com/boards/3514246658/views/155598921):
-     - check that there are new uploadrs in Monday after release
+     - check that there are new uploads in Monday after release
 2. [Contribot](https://spdfn.slack.com/archives/C04EDHR643E):
     - Make sure that new uploads are displayed in Contribot and they are similar to the Contributor List Approval Queue in Monday
 3. [~~Kamino~~](https://34.241.25.221/kamino/bk): (not relevant)
