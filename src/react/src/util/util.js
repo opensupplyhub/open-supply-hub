@@ -34,6 +34,7 @@ import filter from 'lodash/filter';
 import includes from 'lodash/includes';
 import join from 'lodash/join';
 import map from 'lodash/map';
+import mapValues from 'lodash/mapValues';
 import uniq from 'lodash/uniq';
 import has from 'lodash/has';
 import { isURL, isInt } from 'validator';
@@ -1434,7 +1435,12 @@ export const openInNewTab = url => {
     if (newWindow) newWindow.opener = null;
 };
 
-const extractProductionLocationContributionValues = data => map(data, 'value');
+const extractProductionLocationContributionValues = data => {
+    if (isArray(data)) {
+        return data.map(item => (item?.value ? item.value : item));
+    }
+    return data;
+};
 
 export const generateRangeField = value => {
     if (typeof value === 'number') {
@@ -1446,45 +1452,28 @@ export const generateRangeField = value => {
         return max !== undefined ? { min, max } : { min };
     }
 
-    return { min: value, max: value };
+    return { min: Number(value), max: Number(value) };
 };
 
 export const parseContribData = contribData => {
-    const {
-        name,
-        address,
-        country,
-        sector,
-        productType,
-        locationType,
-        processingType,
-        numberOfWorkers,
-        parentCompany,
-    } = contribData;
+    // eslint-disable-next-line camelcase
+    const { numberOfWorkers, country, ...fields } = contribData;
+
+    const countryValue = country?.value;
+
+    const transformedFields = mapValues(
+        pickBy(fields, value => !isEmpty(value)),
+        extractProductionLocationContributionValues,
+    );
 
     return {
+        ...transformedFields,
+        // eslint-disable-next-line camelcase
+        ...(numberOfWorkers && {
+            number_of_workers: generateRangeField(numberOfWorkers),
+        }),
+        country: countryValue,
         source: DATA_SOURCES_ENUM.SLC,
-        name,
-        address,
-        country: country?.value,
-        sector: isArray(sector)
-            ? extractProductionLocationContributionValues(sector)
-            : [],
-        parent_company: isArray(parentCompany)
-            ? extractProductionLocationContributionValues(parentCompany)
-            : [],
-        product_type: isArray(productType)
-            ? extractProductionLocationContributionValues(productType)
-            : [],
-        location_type: isArray(locationType)
-            ? extractProductionLocationContributionValues(locationType)
-            : [],
-        processing_type: isArray(processingType)
-            ? extractProductionLocationContributionValues(processingType)
-            : [],
-        number_of_workers: numberOfWorkers
-            ? generateRangeField(numberOfWorkers)
-            : null,
     };
 };
 
