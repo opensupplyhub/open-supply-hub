@@ -1378,6 +1378,12 @@ export const productionLocationInfoStyles = theme =>
         notchedOutlineStyles: Object.freeze({
             borderRadius: '0',
         }),
+        circularProgressStyles: Object.freeze({
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: 'calc(100vh - 116px)',
+        }),
     });
 
 export const inputErrorText = theme =>

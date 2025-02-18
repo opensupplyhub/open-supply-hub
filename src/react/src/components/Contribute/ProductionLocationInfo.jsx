@@ -397,7 +397,9 @@ const ProductionLocationInfo = ({
                     for your production location. ${instructionExtraMessage}`}
                 </Typography>
                 {singleProductionLocationFetching ? (
-                    <CircularProgress />
+                    <div className={classes.circularProgressStyles}>
+                        <CircularProgress />
+                    </div>
                 ) : (
                     <Paper className={classes.infoWrapStyles}>
                         <div
