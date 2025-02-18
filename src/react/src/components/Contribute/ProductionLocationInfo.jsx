@@ -1,18 +1,20 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { useLocation, useParams, useHistory } from 'react-router-dom';
+import { useLocation, useParams, useHistory, Link } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import { array, bool, func, number, object, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 import { endsWith, isEmpty, toString } from 'lodash';
 import Button from '@material-ui/core/Button';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import AppGrid from '../AppGrid';
 import StyledSelect from '../Filters/StyledSelect';
 import { productionLocationInfoStyles } from '../../util/styles';
 import {
@@ -49,6 +51,7 @@ import {
     mockedSectors,
     productionLocationInfoRouteCommon,
     MODERATION_STATUSES_ENUM,
+    authLoginFormRoute,
 } from '../../util/constants';
 import COLOURS from '../../util/COLOURS';
 import ProductionLocationDialog from './ProductionLocationDialog';
@@ -77,6 +80,8 @@ const ProductionLocationInfo = ({
     handleCleanupContributionRecord,
     handleResetPendingModerationEvent,
     handleResetSingleProductionLocation,
+    userHasSignedIn,
+    fetchingSessionSignIn,
 }) => {
     const location = useLocation();
     const history = useHistory();
@@ -385,6 +390,27 @@ const ProductionLocationInfo = ({
             toast(singleProductionLocationError[0]);
         }
     }, [singleProductionLocationError]);
+    if (fetchingSessionSignIn) {
+        return (
+            <div className={classes.circularProgressContainerStyles}>
+                <CircularProgress />
+            </div>
+        );
+    }
+
+    if (!userHasSignedIn) {
+        return (
+            <AppGrid title="Contribute">
+                <Grid container className="margin-bottom-64">
+                    <Grid item xs={12}>
+                        <Link to={authLoginFormRoute} href={authLoginFormRoute}>
+                            Log in to contribute to Open Supply Hub
+                        </Link>
+                    </Grid>
+                </Grid>
+            </AppGrid>
+        );
+    }
 
     return (
         <>
@@ -857,6 +883,8 @@ ProductionLocationInfo.propTypes = {
     handleCleanupContributionRecord: func.isRequired,
     handleResetPendingModerationEvent: func.isRequired,
     handleResetSingleProductionLocation: func.isRequired,
+    userHasSignedIn: bool.isRequired,
+    fetchingSessionSignIn: bool.isRequired,
 };
 
 const mapStateToProps = ({
@@ -886,6 +914,10 @@ const mapStateToProps = ({
     ui: {
         window: { innerWidth },
     },
+    auth: {
+        user: { user },
+        session: { fetching: fetchingSessionSignIn },
+    },
 }) => ({
     countriesOptions,
     facilityProcessingTypeOptions,
@@ -899,6 +931,8 @@ const mapStateToProps = ({
     singleProductionLocationFetching,
     singleProductionLocationError,
     innerWidth,
+    userHasSignedIn: !user.isAnon,
+    fetchingSessionSignIn,
 });
 
 function mapDispatchToProps(dispatch) {

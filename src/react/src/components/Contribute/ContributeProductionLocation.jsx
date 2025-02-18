@@ -1,18 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useHistory } from 'react-router-dom';
+import { useLocation, useHistory, Link } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
+import { connect } from 'react-redux';
+import { bool } from 'prop-types';
+import Grid from '@material-ui/core/Grid';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
 import SearchByOsIdTab from './SearchByOsIdTab';
 import SearchByNameAndAddressTab from './SearchByNameAndAddressTab';
 import { makeContributeProductionLocationStyles } from '../../util/styles';
+import AppGrid from '../AppGrid';
+import { authLoginFormRoute } from '../../util/constants';
 
 const TAB_OS_ID = 'os-id';
 const TAB_NAME_ADDRESS = 'name-address';
 const VALID_TABS = [TAB_OS_ID, TAB_NAME_ADDRESS];
 
-const ContributeProductionLocation = ({ classes }) => {
+const ContributeProductionLocation = ({
+    classes,
+    userHasSignedIn,
+    fetchingSessionSignIn,
+}) => {
     const location = useLocation();
     const history = useHistory();
 
@@ -36,6 +46,28 @@ const ContributeProductionLocation = ({ classes }) => {
         setSelectedTab(value);
         history.push(`?tab=${value}`);
     };
+
+    if (fetchingSessionSignIn) {
+        return (
+            <div className={classes.circularProgressContainerStyles}>
+                <CircularProgress />
+            </div>
+        );
+    }
+
+    if (!userHasSignedIn) {
+        return (
+            <AppGrid title="Contribute">
+                <Grid container className="margin-bottom-64">
+                    <Grid item xs={12}>
+                        <Link to={authLoginFormRoute} href={authLoginFormRoute}>
+                            Log in to contribute to Open Supply Hub
+                        </Link>
+                    </Grid>
+                </Grid>
+            </AppGrid>
+        );
+    }
 
     return (
         <div className={classes.mainContainerStyles}>
@@ -78,6 +110,28 @@ const ContributeProductionLocation = ({ classes }) => {
     );
 };
 
-export default withStyles(makeContributeProductionLocationStyles)(
-    ContributeProductionLocation,
+ContributeProductionLocation.propTypes = {
+    userHasSignedIn: bool.isRequired,
+    fetchingSessionSignIn: bool.isRequired,
+};
+
+const mapStateToProps = ({
+    contributeProductionLocation: {
+        singleProductionLocation: { data, fetching },
+    },
+    auth: {
+        user: { user },
+        session: { fetching: fetchingSessionSignIn },
+    },
+}) => ({
+    data,
+    fetching,
+    userHasSignedIn: !user.isAnon,
+    fetchingSessionSignIn,
+});
+
+export default connect(mapStateToProps)(
+    withStyles(makeContributeProductionLocationStyles)(
+        ContributeProductionLocation,
+    ),
 );
