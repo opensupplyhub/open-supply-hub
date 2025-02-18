@@ -567,7 +567,10 @@ const ProductionLocationInfo = ({
                                 >
                                     Additional information
                                 </Typography>
-                                <IconButton onClick={toggleExpand}>
+                                <IconButton
+                                    data-testid="toggle-additional-info"
+                                    onClick={toggleExpand}
+                                >
                                     {isExpanded ? (
                                         <ArrowDropUpIcon />
                                     ) : (
