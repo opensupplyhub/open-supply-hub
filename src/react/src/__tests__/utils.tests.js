@@ -79,6 +79,7 @@ const {
     updateStateFromData,
     getLastPathParameter,
     generateRangeField,
+    parseContribData,
 } = require('../util/util');
 
 const {
@@ -1928,12 +1929,12 @@ it('should return { min, max } when value is a valid range string', () => {
 });
 
 it('should return { min: value, max: value } when value is a single string (not a range)', () => {
-    expect(generateRangeField('15')).toEqual({ min: '15', max: '15' });
-    expect(generateRangeField('test')).toEqual({ min: 'test', max: 'test' });
+    expect(generateRangeField('15')).toEqual({ min: 15, max: 15 });
+    expect(generateRangeField('test')).toEqual({ min: NaN, max: NaN });
 });
 
 it('should return { min: value, max: value } when value is an empty string', () => {
-    expect(generateRangeField('')).toEqual({ min: '', max: '' });
+    expect(generateRangeField('')).toEqual({ min: 0, max: 0 });
 });
 
 it('should return { min, max } correctly when value has extra spaces', () => {
@@ -1942,8 +1943,128 @@ it('should return { min, max } correctly when value has extra spaces', () => {
 });
 
 it('should return { min: value, max: value } for non-string and non-number values', () => {
-    expect(generateRangeField(null)).toEqual({ min: null, max: null });
-    expect(generateRangeField(undefined)).toEqual({ min: undefined, max: undefined });
-    expect(generateRangeField({})).toEqual({ min: {}, max: {} });
-    expect(generateRangeField([])).toEqual({ min: [], max: [] });
+    expect(generateRangeField(null)).toEqual({ min: 0, max: 0 });
+    expect(generateRangeField(undefined)).toEqual({ min: NaN, max: NaN });
+    expect(generateRangeField({})).toEqual({ min: NaN, max: NaN });
+    expect(generateRangeField([])).toEqual({ min: 0, max: 0 });
+});
+
+it('should return the base fields correctly', () => {
+    const input = {
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: { value: 'US' },
+    };
+
+    const expectedOutput = {
+        source: 'SLC',
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: 'US',
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+
+it('should process array fields and keep non-empty values', () => {
+    const input = {
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: { value: 'US' },
+        sector: ['Waste Management'],
+        parent_company: ['ParentCompanySingle'],
+        product_type: ['Shirts', 'Pants'],
+    };
+
+    const expectedOutput = {
+        source: 'SLC',
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: 'US',
+        sector: ['Waste Management'],
+        parent_company: ['ParentCompanySingle'],
+        product_type: ['Shirts', 'Pants'],
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+it('should handle an empty array by not including the field', () => {
+    const input = {
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: { value: 'US' },
+        sector: [],
+    };
+
+    const expectedOutput = {
+        source: 'SLC',
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: 'US',
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+it('should handle number_of_workers correctly', () => {
+    const input = {
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: { value: 'US' },
+        numberOfWorkers: '15',
+    };
+
+    const expectedOutput = {
+        source: 'SLC',
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: 'US',
+        number_of_workers: { min: 15, max: 15 },
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+it('should remove empty fields while keeping valid ones', () => {
+    const input = {
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: { value: 'US' },
+        sector: [],
+        parent_company: null,
+        product_type: undefined,
+        location_type: ['RCRAInfo subtitle C (Hazardous waste handlers)'],
+    };
+
+    const expectedOutput = {
+        source: 'SLC',
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: 'US',
+        location_type: ['RCRAInfo subtitle C (Hazardous waste handlers)'],
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+it('should return only the source field if all other values are empty', () => {
+    const input = {
+        name: '',
+        address: '',
+        country: null,
+        sector: [],
+        parent_company: '',
+        product_type: undefined,
+        location_type: null,
+        processing_type: '',
+        numberOfWorkers: null,
+    };
+
+    const expectedOutput = {
+        source: 'SLC',
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
 });

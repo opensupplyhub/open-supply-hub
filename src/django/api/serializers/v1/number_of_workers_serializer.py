@@ -17,22 +17,6 @@ class NumberOfWorkersSerializer(serializers.Serializer):
         }
     )
 
-    def validate(self, data):
-        """Ensure min is less than max"""
-        min_value = data.get('min')
-        max_value = data.get('max')
-
-        if (
-            min_value is not None
-            and max_value is not None
-            and min_value >= max_value
-        ):
-            raise serializers.ValidationError(
-                {"min": "The min field must be less than max filed."}
-            )
-
-        return data
-
     @staticmethod
     def validate_object(value):
         return isinstance(value, dict)
