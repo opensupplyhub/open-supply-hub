@@ -437,7 +437,7 @@ const ProductionLocationInfo = ({
                                         input: `
                                     ${
                                         nameTouched &&
-                                        isEmpty(inputName) &&
+                                        !isRequiredFieldValid(inputName) &&
                                         classes.errorStyle
                                     }`,
                                         notchedOutline:
@@ -446,12 +446,17 @@ const ProductionLocationInfo = ({
                                 }}
                                 helperText={
                                     nameTouched &&
-                                    isEmpty(inputName) && <InputErrorText />
+                                    !isRequiredFieldValid(inputName) && (
+                                        <InputErrorText />
+                                    )
                                 }
                                 FormHelperTextProps={{
                                     className: classes.helperText,
                                 }}
-                                error={nameTouched && isEmpty(inputName)}
+                                error={
+                                    nameTouched &&
+                                    !isRequiredFieldValid(inputName)
+                                }
                             />
                         </div>
                         <div
@@ -490,7 +495,7 @@ const ProductionLocationInfo = ({
                                         input: `${classes.searchInputStyles}
                                 ${
                                     addressTouched &&
-                                    isEmpty(inputAddress) &&
+                                    !isRequiredFieldValid(inputAddress) &&
                                     classes.errorStyle
                                 }`,
                                         notchedOutline:
@@ -499,12 +504,17 @@ const ProductionLocationInfo = ({
                                 }}
                                 helperText={
                                     addressTouched &&
-                                    isEmpty(inputAddress) && <InputErrorText />
+                                    !isRequiredFieldValid(inputAddress) && (
+                                        <InputErrorText />
+                                    )
                                 }
                                 FormHelperTextProps={{
                                     className: classes.helperText,
                                 }}
-                                error={addressTouched && isEmpty(inputAddress)}
+                                error={
+                                    addressTouched &&
+                                    !isRequiredFieldValid(inputAddress)
+                                }
                             />
                         </div>
                         <div
