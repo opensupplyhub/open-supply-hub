@@ -408,6 +408,12 @@ const ProductionLocationInfo = ({
                                 className={classes.titleStyles}
                             >
                                 Location Name
+                                <span
+                                    className={classes.requiredAsteriskStyles}
+                                >
+                                    {' '}
+                                    *
+                                </span>
                             </Typography>
                             <Typography
                                 component="h4"
@@ -454,6 +460,12 @@ const ProductionLocationInfo = ({
                                 className={classes.titleStyles}
                             >
                                 Address
+                                <span
+                                    className={classes.requiredAsteriskStyles}
+                                >
+                                    {' '}
+                                    *
+                                </span>
                             </Typography>
                             <Typography
                                 component="h4"
@@ -500,6 +512,12 @@ const ProductionLocationInfo = ({
                                 className={classes.titleStyles}
                             >
                                 Country
+                                <span
+                                    className={classes.requiredAsteriskStyles}
+                                >
+                                    {' '}
+                                    *
+                                </span>
                             </Typography>
                             <Typography
                                 component="h4"
