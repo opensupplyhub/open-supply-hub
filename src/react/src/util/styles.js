@@ -1,4 +1,4 @@
-import { OARColor } from './constants';
+import { OARColor, HEADER_HEIGHT, FOOTER_HEIGHT } from './constants';
 import COLOURS from './COLOURS';
 import { multiValueBackgroundHandler } from './util';
 
@@ -1382,7 +1382,7 @@ export const productionLocationInfoStyles = theme =>
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            height: 'calc(100vh - 116px)',
+            height: `calc(100vh - ${HEADER_HEIGHT + FOOTER_HEIGHT}px)`,
         }),
     });
 
