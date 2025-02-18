@@ -1436,7 +1436,7 @@ export const openInNewTab = url => {
 
 const extractProductionLocationContributionValues = data => {
     if (isArray(data)) {
-        return data.map(item => (item && item.value ? item.value : item));
+        return data.map(item => (item?.value ? item.value : item));
     }
     return data;
 };
