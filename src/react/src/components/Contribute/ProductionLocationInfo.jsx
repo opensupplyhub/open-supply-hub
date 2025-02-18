@@ -42,6 +42,7 @@ import {
     mapFacilityTypeOptions,
     mapProcessingTypeOptions,
     isValidNumberOfWorkers,
+    isRequiredFieldValid,
     convertRangeField,
     updateStateFromData,
 } from '../../util/util';
@@ -92,6 +93,7 @@ const ProductionLocationInfo = ({
     const [inputCountry, setInputCountry] = useState(null);
     const [nameTouched, setNameTouched] = useState(false);
     const [addressTouched, setAddressTouched] = useState(false);
+    const [countryTouched, setCountryTouched] = useState(false);
     const [sector, setSector] = useState('');
     const [productType, setProductType] = useState([]);
     const [locationType, setLocationType] = useState(null);
@@ -99,6 +101,7 @@ const ProductionLocationInfo = ({
     const [numberOfWorkers, setNumberOfWorkers] = useState('');
     const [parentCompany, setParentCompany] = useState([]);
     const customSelectComponents = { DropdownIndicator: null };
+    const isCountryError = countryTouched && !inputCountry?.value;
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -129,21 +132,39 @@ const ProductionLocationInfo = ({
         ],
     );
 
-    const selectStyles = {
-        control: provided => ({
-            ...provided,
-            minHeight: '56px',
-            borderRadius: '0',
-            '&:focus,&:active,&:focus-within': {
-                borderColor: COLOURS.PURPLE,
-                boxShadow: `inset 0 0 0 1px ${COLOURS.PURPLE}`,
+    const getSelectStyles = (isErrorState = false) => ({
+        control: (provided, state) => {
+            let borderColor;
+            if (isErrorState) {
+                borderColor = COLOURS.RED;
+            } else if (state.isFocused) {
+                borderColor = COLOURS.PURPLE;
+            } else {
+                borderColor = provided.borderColor;
+            }
+
+            const boxShadow = state.isFocused
+                ? `inset 0 0 0 1px ${borderColor}`
+                : provided.boxShadow;
+
+            return {
+                ...provided,
+                height: '56px',
+                borderRadius: '0',
+                borderColor,
+                boxShadow,
                 transition: 'box-shadow 0.2s',
-            },
-            '&:hover': {
-                borderColor: 'black',
-            },
+                '&:hover': {
+                    borderColor: !isErrorState && !state.isFocused && 'black',
+                },
+            };
+        },
+        placeholder: provided => ({
+            ...provided,
+            opacity: 0.7,
+            color: isErrorState ? COLOURS.RED : provided.color,
         }),
-    };
+    });
 
     const [
         showProductionLocationDialog,
@@ -154,13 +175,27 @@ const ProductionLocationInfo = ({
         setIsExpanded(!isExpanded);
     };
     const handleNameChange = event => {
-        setNameTouched(true);
         setInputName(event.target.value);
     };
     const handleAddressChange = event => {
-        setAddressTouched(true);
         setInputAddress(event.target.value);
     };
+
+    const handleNameBlur = () => {
+        setNameTouched(true);
+    };
+    const handleAddressBlur = () => {
+        setAddressTouched(true);
+    };
+    const handleCountryBlur = () => {
+        setCountryTouched(true);
+    };
+
+    const isFormValid = !!(
+        isRequiredFieldValid(inputName) &&
+        isRequiredFieldValid(inputAddress) &&
+        inputCountry?.value
+    );
 
     let handleProductionLocation;
     switch (submitMethod) {
@@ -427,6 +462,7 @@ const ProductionLocationInfo = ({
                                 className={classes.textInputStyles}
                                 value={inputName}
                                 onChange={handleNameChange}
+                                onBlur={handleNameBlur}
                                 placeholder="Enter the name"
                                 variant="outlined"
                                 aria-label="Enter the name"
@@ -479,6 +515,7 @@ const ProductionLocationInfo = ({
                                 className={classes.textInputStyles}
                                 value={inputAddress}
                                 onChange={handleAddressChange}
+                                onBlur={handleAddressBlur}
                                 placeholder="Enter the full address"
                                 variant="outlined"
                                 aria-label="Enter the address"
@@ -533,11 +570,17 @@ const ProductionLocationInfo = ({
                                 options={countriesOptions || []}
                                 value={inputCountry}
                                 onChange={setInputCountry}
+                                onBlur={handleCountryBlur}
                                 className={classes.selectStyles}
-                                styles={selectStyles}
+                                styles={getSelectStyles(isCountryError)}
                                 placeholder="Country"
                                 isMulti={false}
                             />
+                            {isCountryError && (
+                                <div className={classes.errorWrapStyles}>
+                                    <InputErrorText />
+                                </div>
+                            )}
                         </div>
                         <hr className={classes.separator} />
                         <div
@@ -597,7 +640,7 @@ const ProductionLocationInfo = ({
                                             }
                                             value={sector}
                                             onChange={setSector}
-                                            styles={selectStyles}
+                                            styles={getSelectStyles()}
                                             className={classes.selectStyles}
                                             placeholder="Select sector(s)"
                                         />
@@ -627,7 +670,7 @@ const ProductionLocationInfo = ({
                                             onChange={setProductType}
                                             placeholder="Enter product type(s)"
                                             aria-label="Enter product type(s)"
-                                            styles={selectStyles}
+                                            styles={getSelectStyles()}
                                             className={classes.selectStyles}
                                             components={customSelectComponents}
                                         />
@@ -662,7 +705,7 @@ const ProductionLocationInfo = ({
                                             )}
                                             value={locationType}
                                             onChange={setLocationType}
-                                            styles={selectStyles}
+                                            styles={getSelectStyles()}
                                             className={classes.selectStyles}
                                             placeholder="Select location type(s)"
                                         />
@@ -696,7 +739,7 @@ const ProductionLocationInfo = ({
                                             )}
                                             value={processingType}
                                             onChange={setProcessingType}
-                                            styles={selectStyles}
+                                            styles={getSelectStyles()}
                                             className={classes.selectStyles}
                                         />
                                     </div>
@@ -782,7 +825,7 @@ const ProductionLocationInfo = ({
                                             onChange={setParentCompany}
                                             placeholder="Enter the parent company"
                                             aria-label="Parent company"
-                                            styles={selectStyles}
+                                            styles={getSelectStyles()}
                                             className={classes.selectStyles}
                                             components={customSelectComponents}
                                         />
@@ -805,6 +848,7 @@ const ProductionLocationInfo = ({
                                     handleProductionLocation(inputData, osID);
                                 }}
                                 className={classes.submitButtonStyles}
+                                disabled={!isFormValid}
                             >
                                 {submitButtonText}
                             </Button>
