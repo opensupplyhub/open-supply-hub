@@ -990,14 +990,16 @@ export const makeSearchByNameAddressTabStyles = theme =>
             fontSize: '36px',
             fontWeight: theme.typography.fontWeightSemiBoldPlus,
         }),
-        subTitleStyles: Object.freeze({
+        formFieldTitleStyles: Object.freeze({
             fontSize: '21px',
             fontWeight: theme.typography.fontWeightSemiBold,
-            margin: '8px 0 8px 0',
+            margin: '24px 0 8px 0',
+        }),
+        requiredAsterisk: Object.freeze({
+            color: COLOURS.RED,
         }),
         textInputStyles: Object.freeze({
             maxWidth: '528px',
-            marginBottom: '21px',
         }),
         selectStyles: Object.freeze({
             fontSize: '18px',
@@ -1017,10 +1019,16 @@ export const makeSearchByNameAddressTabStyles = theme =>
         notchedOutlineStyles: Object.freeze({
             borderRadius: 0,
         }),
+        helperTextStyles: Object.freeze({
+            margin: '8px 0 0 0',
+        }),
         buttonLabel: Object.freeze({
             fontSize: '18px',
             lineHeight: '20px',
             fontWeight: theme.typography.fontWeightExtraBold,
+        }),
+        errorWrapStyles: Object.freeze({
+            marginTop: '8px',
         }),
         searchButtonStyles: Object.freeze({
             width: '200px',
@@ -1028,7 +1036,7 @@ export const makeSearchByNameAddressTabStyles = theme =>
             borderRadius: 0,
             textTransform: 'none',
             backgroundColor: theme.palette.action.main,
-            marginTop: '26px',
+            marginTop: '24px',
             color: theme.palette.common.black,
             '&:hover': {
                 backgroundColor: theme.palette.action.dark,
@@ -1377,6 +1385,7 @@ export const inputErrorText = theme =>
         errorTextWrapStyles: Object.freeze({
             display: 'flex',
             alignItems: 'center',
+            color: COLOURS.RED,
         }),
         iconInfoStyles: Object.freeze({
             fontSize: '16px',
@@ -1384,7 +1393,7 @@ export const inputErrorText = theme =>
             marginRight: '5px',
         }),
         inputErrorTextStyles: Object.freeze({
-            fontSize: '16px',
+            fontSize: '14px',
             fontWeight: theme.typography.fontWeightSemiBold,
             color: COLOURS.RED,
         }),
@@ -1412,17 +1421,16 @@ export const makeAddLocationStyles = theme =>
         title: Object.freeze({
             paddingLeft: '5%',
             paddingRight: '5%',
-            paddingTop: '25px',
+            paddingTop: '48px',
             color: COLOURS.NEAR_BLACK,
-            fontWeight: 'bold',
-            marginBottom: '1rem',
+            fontWeight: theme.typography.fontWeightExtraBold,
         }),
         description: Object.freeze({
             paddingLeft: '5%',
             paddingRight: '5%',
-            paddingTop: '5px',
-            marginBottom: '2rem',
-            fontWeight: 'bold',
+            paddingTop: '24px',
+            marginBottom: '32px',
+            fontWeight: theme.typography.fontWeightSemiBold,
         }),
         dataOptions: Object.freeze({
             display: 'flex',
@@ -1430,9 +1438,8 @@ export const makeAddLocationStyles = theme =>
             paddingRight: '5%',
             gap: '50px',
             paddingBottom: '5%',
-            flexWrap: 'wrap',
             flexDirection: 'row',
-            [theme.breakpoints.down('md')]: {
+            [theme.breakpoints.down('sm')]: {
                 flexDirection: 'column',
                 display: 'center',
             },
@@ -1441,7 +1448,7 @@ export const makeAddLocationStyles = theme =>
             backgroundColor: COLOURS.WHITE,
             boxShadow: 'none',
             padding: '60px 25px 25px 25px',
-            width: '45%',
+            width: '50%',
             position: 'relative',
             textAlign: 'center',
             display: 'flex',
@@ -1449,6 +1456,9 @@ export const makeAddLocationStyles = theme =>
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
+            [theme.breakpoints.down('sm')]: {
+                width: 'auto',
+            },
         }),
         cardTitle: Object.freeze({
             fontSize: '32px',
@@ -1457,7 +1467,7 @@ export const makeAddLocationStyles = theme =>
             textAlign: 'center',
             paddingTop: '15px',
             paddingBottom: '15px',
-            fontWeight: '300',
+            fontWeight: theme.typography.fontWeightRegular,
             lineHeight: '1.0',
         }),
         cardSub: Object.freeze({

@@ -3,8 +3,12 @@ from uuid import UUID
 from copy import deepcopy
 
 from unittest.mock import Mock, patch
+from api.moderation_event_actions.creation.location_contribution.processors\
+    .production_location_data_processor import ProductionLocationDataProcessor
+from rest_framework import status
 from rest_framework.test import APITestCase
 from allauth.account.models import EmailAddress
+from rest_framework.exceptions import ValidationError
 from django.contrib.gis.geos import Point
 
 from api.models.moderation_event import ModerationEvent
@@ -27,6 +31,8 @@ from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
 from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.exceptions.handler_not_set_error \
     import HandlerNotSetError
+from api.serializers.v1.production_location_schema_serializer \
+    import ProductionLocationSchemaSerializer
 
 
 class TestLocationContributionStrategy(APITestCase):
@@ -70,7 +76,7 @@ class TestLocationContributionStrategy(APITestCase):
 
     @patch('api.geocoding.requests.get')
     def test_source_set_as_api_regardless_of_whether_passed(self, mock_get):
-        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value = Mock(ok=True, status_code=status.HTTP_200_OK)
         mock_get.return_value.json.return_value = geocoding_data
 
         self.assertNotIn('source', self.common_valid_input_data)
@@ -84,12 +90,12 @@ class TestLocationContributionStrategy(APITestCase):
             event_dto
         )
 
-        self.assertEqual(result.status_code, 202)
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
         self.assertEqual(result.moderation_event.source, 'API')
 
     @patch('api.geocoding.requests.get')
     def test_invalid_source_value_cannot_be_accepted(self, mock_get):
-        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value = Mock(ok=True, status_code=status.HTTP_200_OK)
         mock_get.return_value.json.return_value = geocoding_data
 
         invalid_input_data_1 = {
@@ -150,7 +156,8 @@ class TestLocationContributionStrategy(APITestCase):
         result_1 = self.moderation_event_creator.perform_event_creation(
             event_dto_1
         )
-        self.assertEqual(result_1.status_code, 422)
+        self.assertEqual(result_1.status_code,
+                         status.HTTP_422_UNPROCESSABLE_ENTITY)
         self.assertEqual(result_1.errors, expected_error_result_1)
         self.assertIsNone(result_1.moderation_event)
 
@@ -163,7 +170,8 @@ class TestLocationContributionStrategy(APITestCase):
         result_2 = self.moderation_event_creator.perform_event_creation(
             event_dto_2
         )
-        self.assertEqual(result_2.status_code, 422)
+        self.assertEqual(result_2.status_code,
+                         status.HTTP_422_UNPROCESSABLE_ENTITY)
         self.assertEqual(result_2.errors, expected_error_result_2)
         self.assertIsNone(result_2.moderation_event)
 
@@ -176,7 +184,8 @@ class TestLocationContributionStrategy(APITestCase):
         result_3 = self.moderation_event_creator.perform_event_creation(
             event_dto_3
         )
-        self.assertEqual(result_3.status_code, 422)
+        self.assertEqual(result_3.status_code,
+                         status.HTTP_422_UNPROCESSABLE_ENTITY)
         self.assertEqual(result_3.errors, expected_error_result_3)
         self.assertIsNone(result_3.moderation_event)
 
@@ -202,7 +211,7 @@ class TestLocationContributionStrategy(APITestCase):
         result = self.moderation_event_creator.perform_event_creation(
             event_dto
         )
-        self.assertEqual(result.status_code, 202)
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
         self.assertIsNotNone(result.moderation_event)
 
         # Check that ContriCleaner recognizes the mapped fields and that they
@@ -233,21 +242,13 @@ class TestLocationContributionStrategy(APITestCase):
         expected_error_result = {
             'detail': 'The request body is invalid.',
             'errors': [
-                {
-                    'field': 'sector',
-                    'detail': ('Expected value for sector to be a string or a '
-                               "list of strings but got {'some_key': 1135}.")
-                },
-                {
-                    'field': 'location_type',
-                    'detail': (
-                        'Expected value for location_type to be a '
-                        'string or a list of strings but got '
-                        "{'key': 'Coating'}."
-                    )
-                }
-            ]
-        }
+                {'field': 'sector',
+                 'detail': ('Field sector must be a string or a list of '
+                            'strings.')},
+                {'field': 'location_type',
+                 'detail': ('Field location_type must be a string or a '
+                            'list of strings.')}
+                 ]}
         input_data = {
             'source': 'API',
             'name': 'Blue Horizon Facility',
@@ -269,7 +270,8 @@ class TestLocationContributionStrategy(APITestCase):
         result = self.moderation_event_creator.perform_event_creation(
             event_dto
         )
-        self.assertEqual(result.status_code, 422)
+        self.assertEqual(result.status_code,
+                         status.HTTP_422_UNPROCESSABLE_ENTITY)
         self.assertIsNone(result.moderation_event)
 
         # Check that ContriCleaner recognizes the mapped fields and that
@@ -284,8 +286,7 @@ class TestLocationContributionStrategy(APITestCase):
         expected_general_error = 'The request body is invalid.'
         # Expect only part of the message, as the next part is dynamic because
         # it is generated from a Python set and is hard to predict.
-        expected_part_of_specific_error = 'Required Fields are missing:'
-        expected_error_field = 'non_field_errors'
+        expected_part_of_specific_error = 'Field name is required!'
         input_data = {
             'source': 'SLC',
             'coordinates': {
@@ -302,17 +303,14 @@ class TestLocationContributionStrategy(APITestCase):
         result = self.moderation_event_creator.perform_event_creation(
             event_dto
         )
-        self.assertEqual(result.status_code, 422)
+        self.assertEqual(result.status_code,
+                         status.HTTP_422_UNPROCESSABLE_ENTITY)
         self.assertIsNone(result.moderation_event)
         self.assertEqual(len(result.errors), 2)
         self.assertEqual(result.errors['detail'], expected_general_error)
         self.assertIn(
             expected_part_of_specific_error,
             result.errors['errors'][0]['detail']
-        )
-        self.assertEqual(
-            result.errors['errors'][0]['field'],
-            expected_error_field
         )
 
     @patch.object(ContriCleaner, 'process_data')
@@ -351,7 +349,7 @@ class TestLocationContributionStrategy(APITestCase):
 
     @patch('api.geocoding.requests.get')
     def test_handling_geocoded_no_results_error(self, mock_get):
-        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value = Mock(ok=True, status_code=status.HTTP_200_OK)
         mock_get.return_value.json.return_value = geocoding_no_results
         expected_error_result = {
             'detail': 'The request body is invalid.',
@@ -381,7 +379,8 @@ class TestLocationContributionStrategy(APITestCase):
         result = self.moderation_event_creator.perform_event_creation(
             event_dto
         )
-        self.assertEqual(result.status_code, 422)
+        self.assertEqual(result.status_code,
+                         status.HTTP_422_UNPROCESSABLE_ENTITY)
         self.assertIsNone(result.moderation_event)
         self.assertEqual(result.errors, expected_error_result)
 
@@ -466,7 +465,7 @@ class TestLocationContributionStrategy(APITestCase):
         result = self.moderation_event_creator.perform_event_creation(
             event_dto
         )
-        self.assertEqual(result.status_code, 202)
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
 
         moderation_event = result.moderation_event
 
@@ -609,7 +608,7 @@ class TestLocationContributionStrategy(APITestCase):
         result = self.moderation_event_creator.perform_event_creation(
             event_dto
         )
-        self.assertEqual(result.status_code, 202)
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
 
         moderation_event = result.moderation_event
 
@@ -651,7 +650,7 @@ class TestLocationContributionStrategy(APITestCase):
         # This test focuses on testing the case when the coordinates were not
         # passed, and geocoding should be performed for the particular
         # contribution.
-        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value = Mock(ok=True, status_code=status.HTTP_200_OK)
         mock_get.return_value.json.return_value = geocoding_data
 
         input_data = {
@@ -785,7 +784,7 @@ class TestLocationContributionStrategy(APITestCase):
         result = self.moderation_event_creator.perform_event_creation(
             event_dto
         )
-        self.assertEqual(result.status_code, 202)
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
 
         moderation_event = result.moderation_event
 
@@ -821,3 +820,150 @@ class TestLocationContributionStrategy(APITestCase):
         # The os field should be None because no production location relation
         # was provided during the creation of the moderation event.
         self.assertIsNone(moderation_event.os)
+
+    def test_transform_errors_after_serializer_check(
+            self):
+        expected_response_structure = [
+            {"field": "name",
+             "detail": "Field name cannot be longer than 200 characters."},
+            {"field": "number_of_workers", "errors": [
+                {"field": "max",
+                 "detail": "The max field is required!"}]},
+            {"field": "coordinates",
+             "detail": "Field coordinates must be a valid geopoint."}]
+        input_data = {
+            "source": "SLC",
+            "name": ("The standard chunk of Lorem Ipsum used since the 1500s"
+                     "reproduced below for those interested. Sections 1.10.32"
+                     "reproduced in their exact original form, accompanied"
+                     "versions from the 1914 translation by H. Rackham by"
+                     "injected humour, or non-characteristic words etc"),
+            "address": "name",
+            "country": "Ukraine",
+            "number_of_workers": {"min": 100},
+            "coordinates": []
+            }
+        serializer = ProductionLocationSchemaSerializer(data=input_data)
+        with self.assertRaises(ValidationError) as cm:
+            serializer.is_valid(raise_exception=True)
+        error_details = cm.exception.detail
+        transformed_errors = ProductionLocationDataProcessor.\
+            _transform_errors(error_details)
+        self.assertEqual(transformed_errors, expected_response_structure)
+
+    def test_simple_error_structure(self):
+        input_wrong_data = {
+            "source": "SLC",
+            "name": 999,
+            "address": "Test address",
+            "country": "Germany"
+        }
+        expected_response_structure = [{
+            "field": "name",
+            "detail": "Field name must be a string, not a number."
+        }]
+
+        serializer = ProductionLocationSchemaSerializer(data=input_wrong_data)
+        with self.assertRaises(ValidationError) as cm:
+            serializer.is_valid(raise_exception=True)
+        error_details = cm.exception.detail
+        transformed_errors = ProductionLocationDataProcessor.\
+            _transform_errors(error_details)
+        self.assertEqual(transformed_errors, expected_response_structure)
+
+    def test_complex_error_structure(self):
+        input_wrong_data = {
+            "source": "SLC",
+            "name": "Name",
+            "address": "Test address",
+            "country": "Germany",
+            "coordinates": {
+                "lng": 20
+            },
+            "number_of_workers": {
+                "min": 10
+            }
+        }
+        expected_response_structure = [
+            {
+                "field": "number_of_workers",
+                "errors": [
+                    {
+                        "field": "max",
+                        "detail": "The max field is required!"
+                    }
+                ]
+            },
+            {
+                "field": "coordinates",
+                "errors": [
+                    {
+                        "field": "lat",
+                        "detail": ("Both latitude and longitude"
+                                   " must be provided.")
+                    }
+                ]
+            }
+        ]
+
+        serializer = ProductionLocationSchemaSerializer(data=input_wrong_data)
+        with self.assertRaises(ValidationError) as cm:
+            serializer.is_valid(raise_exception=True)
+        error_details = cm.exception.detail
+        transformed_errors = ProductionLocationDataProcessor.\
+            _transform_errors(error_details)
+        self.assertEqual(transformed_errors, expected_response_structure)
+
+    def test_combine_simple_and_complex_error_structure(self):
+        input_wrong_data = {
+            "source": "API",
+            "name": "Test name",
+            "address": "Some address",
+            "country": "UK",
+            "sector": "Apparel",
+            "product_type": [
+                "string"
+            ],
+            "location_type": 777,
+            "processing_type": [
+                "string"
+            ],
+            "number_of_workers": {"min": 20},
+            "coordinates": {
+                "lng": 25.3467
+            }
+        }
+        expected_response_structure = [
+            {
+                "field": "location_type",
+                "detail": ("Field location_type must be a string or "
+                           "a list of strings.")
+            },
+            {
+                "field": "number_of_workers",
+                "errors": [
+                    {
+                        "field": "max",
+                        "detail": "The max field is required!"
+                    }
+                ]
+            },
+            {
+                "field": "coordinates",
+                "errors": [
+                    {
+                        "field": "lat",
+                        "detail": ("Both latitude and longitude "
+                                   "must be provided.")
+                    }
+                ]
+            }
+        ]
+
+        serializer = ProductionLocationSchemaSerializer(data=input_wrong_data)
+        with self.assertRaises(ValidationError) as cm:
+            serializer.is_valid(raise_exception=True)
+        error_details = cm.exception.detail
+        transformed_errors = ProductionLocationDataProcessor.\
+            _transform_errors(error_details)
+        self.assertEqual(transformed_errors, expected_response_structure)

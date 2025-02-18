@@ -29,6 +29,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * The top must be greater than the bottom.
     * The right must be greater than the left.
 * [OSDEV-1662](https://opensupplyhub.atlassian.net/browse/OSDEV-1662) - Updated Logstash mapping configuration to handle the new `action_perform_by` field for OpenSearch.
+* [OSDEV-1748](https://opensupplyhub.atlassian.net/browse/OSDEV-1748) - Aligned SLC with current v1/production-locations validation. Removed validation for `number_of_workers` min >= max.
 
 ### Architecture/Environment changes
 * [OSDEV-1515](https://opensupplyhub.atlassian.net/browse/OSDEV-1515) - Removed `rds_allow_major_version_upgrade` and `rds_apply_immediately` from the environment tfvars files (e.g., terraform-production.tfvars) to set them to `false` again, as the default values in `/deployment/terraform/variables.tf` are `false`. This is necessary to prevent unintended PostgreSQL major version upgrades since the target PostgreSQL 16.3 version has been reached.
@@ -59,6 +60,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * /static/staticfiles.json
 
     All other traffic will be redirected to the React application.
+* [OSDEV-1692](https://opensupplyhub.atlassian.net/browse/OSDEV-1692) - Update cache dependencies due to Ubuntu 20 image runner deprecation. See [link](https://github.blog/changelog/2024-12-05-notice-of-upcoming-releases-and-breaking-changes-for-github-actions/#actions-cache-v1-v2-and-actions-toolkit-cache-package-closing-down).
 
 ### Bugfix
 * [OSDEV-1698](https://opensupplyhub.atlassian.net/browse/OSDEV-1698) - SLC: Refactored the "Submit Another Location" button link to direct users to the search-by-name-and-address form at /contribute/single-location?tab=name-address.
@@ -67,6 +69,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1695](https://opensupplyhub.atlassian.net/browse/OSDEV-1695) - [SLC] Enabled the claim button for updated production locations when a moderation event has a pending status. Disabled claim button explicitly if production location has pending claim status.
 * [OSDEV-1701](https://opensupplyhub.atlassian.net/browse/OSDEV-1701) - Refactored "Go Back" button in production location info page.
 * [OSDEV-1672](https://opensupplyhub.atlassian.net/browse/OSDEV-1672) - SLC. Implement collecting contribution data page (FE) - All Multi-Selects on the page have been fixed. They resize based on the number of items selected.
+* [OSDEV-1549](https://opensupplyhub.atlassian.net/browse/OSDEV-1549) - Added Django serialization check for all fields from the request body based on [the API specification](https://opensupplyhub.github.io/open-supply-hub-api-docs/) for POST and PATCH v1/production-locations endpoint, and appropriate errors return according to the request body schema in the API spec.
+* [OSDEV-1696](https://opensupplyhub.atlassian.net/browse/OSDEV-1696) - Added loader on single production location fetch; added error handling; added cleanup hook to clear production location data on component unmount.
+* [OSDEV-1653](https://opensupplyhub.atlassian.net/browse/OSDEV-1653) - Added asterisks next to each required form field (Name, Address, and Country) on the "Search by Name and Address" tab. Highlighted an empty field and displayed an error message if it loses focus. Added proper styles for the error messages.
+* [OSDEV-1699](https://opensupplyhub.atlassian.net/browse/OSDEV-1699) - The scroll position has been fixed from the bottom to the top after navigating from the bottom of the `Search results` page (press the `Select` button) to `Product Location Information`.
+* [OSDEV-1589](https://opensupplyhub.atlassian.net/browse/OSDEV-1589) - Fixed layout issue on new `contribute` page.
+* [OSDEV-1739](https://opensupplyhub.atlassian.net/browse/OSDEV-1739) - Applied state cleanup on modal unmount to prevent the same dialog from appearing when clicking on a different production location.
+* [OSDEV-1744](https://opensupplyhub.atlassian.net/browse/OSDEV-1744) - Fixed the issue where the text `by user ID:` appeared even when `user_id` was `null` in Contribution Record page.
 
 ### What's new
 * [OSDEV-1662](https://opensupplyhub.atlassian.net/browse/OSDEV-1662) - Added a new field, `action_perform_by`, to the moderation event. This data appears on the Contribution Record page when a moderator perform any actions like `APPROVED` or `REJECTED`.
