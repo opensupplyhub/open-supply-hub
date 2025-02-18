@@ -45,13 +45,13 @@ import {
     isRequiredFieldValid,
     convertRangeField,
     updateStateFromData,
+    getSelectStyles,
 } from '../../util/util';
 import {
     mockedSectors,
     productionLocationInfoRouteCommon,
     MODERATION_STATUSES_ENUM,
 } from '../../util/constants';
-import COLOURS from '../../util/COLOURS';
 import ProductionLocationDialog from './ProductionLocationDialog';
 
 const ProductionLocationInfo = ({
@@ -131,40 +131,6 @@ const ProductionLocationInfo = ({
             parentCompany,
         ],
     );
-
-    const getSelectStyles = (isErrorState = false) => ({
-        control: (provided, state) => {
-            let borderColor;
-            if (isErrorState) {
-                borderColor = COLOURS.RED;
-            } else if (state.isFocused) {
-                borderColor = COLOURS.PURPLE;
-            } else {
-                borderColor = provided.borderColor;
-            }
-
-            const boxShadow = state.isFocused
-                ? `inset 0 0 0 1px ${borderColor}`
-                : provided.boxShadow;
-
-            return {
-                ...provided,
-                height: '56px',
-                borderRadius: '0',
-                borderColor,
-                boxShadow,
-                transition: 'box-shadow 0.2s',
-                '&:hover': {
-                    borderColor: !isErrorState && !state.isFocused && 'black',
-                },
-            };
-        },
-        placeholder: provided => ({
-            ...provided,
-            opacity: 0.7,
-            color: isErrorState ? COLOURS.RED : provided.color,
-        }),
-    });
 
     const [
         showProductionLocationDialog,
