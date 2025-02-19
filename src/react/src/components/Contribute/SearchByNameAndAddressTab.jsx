@@ -11,45 +11,11 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import StyledSelect from '../Filters/StyledSelect';
 import InputErrorText from './InputErrorText';
 import { searchByNameAndAddressResultRoute } from '../../util/constants';
-import COLOURS from '../../util/COLOURS';
+import { getSelectStyles, isRequiredFieldValid } from '../../util/util';
 import { makeSearchByNameAddressTabStyles } from '../../util/styles';
 
 import { countryOptionsPropType } from '../../util/propTypes';
 import { fetchCountryOptions } from '../../actions/filterOptions';
-
-const getSelectStyles = isErrorState => ({
-    control: (provided, state) => {
-        let borderColor;
-        if (isErrorState) {
-            borderColor = COLOURS.RED;
-        } else if (state.isFocused) {
-            borderColor = COLOURS.PURPLE;
-        } else {
-            borderColor = provided.borderColor;
-        }
-
-        const boxShadow = state.isFocused
-            ? `inset 0 0 0 1px ${borderColor}`
-            : provided.boxShadow;
-
-        return {
-            ...provided,
-            height: '56px',
-            borderRadius: '0',
-            borderColor,
-            boxShadow,
-            transition: 'box-shadow 0.2s',
-            '&:hover': {
-                borderColor: !isErrorState && !state.isFocused && 'black',
-            },
-        };
-    },
-    placeholder: provided => ({
-        ...provided,
-        opacity: 0.7,
-        color: isErrorState ? COLOURS.RED : provided.color,
-    }),
-});
 
 const FormFieldTitle = ({ label, classes }) => (
     <Typography component="h4" className={classes.formFieldTitleStyles}>
@@ -75,7 +41,6 @@ const SearchByNameAndAddressTab = ({
     const isCountryError = countryTouched && !inputCountry?.value;
 
     const history = useHistory();
-    const isValid = val => val.trim().length > 0;
 
     const handleNameChange = event => {
         setInputName(event.target.value);
@@ -107,8 +72,12 @@ const SearchByNameAndAddressTab = ({
 
         history.push(url);
     };
-    const isFormValid =
-        isValid(inputName) && isValid(inputAddress) && inputCountry?.value;
+
+    const isFormValid = !!(
+        isRequiredFieldValid(inputName) &&
+        isRequiredFieldValid(inputAddress) &&
+        inputCountry?.value
+    );
 
     useEffect(() => {
         if (!countriesData) {
@@ -150,15 +119,16 @@ const SearchByNameAndAddressTab = ({
                     variant="outlined"
                     aria-label="Type a name"
                     helperText={
-                        nameTouched && !isValid(inputName) && <InputErrorText />
+                        nameTouched &&
+                        !isRequiredFieldValid(inputName) && <InputErrorText />
                     }
-                    error={nameTouched && !isValid(inputName)}
+                    error={nameTouched && !isRequiredFieldValid(inputName)}
                     InputProps={{
                         classes: {
                             input: `${classes.searchInputStyles}
                                 ${
                                     nameTouched &&
-                                    !isValid(inputName) &&
+                                    !isRequiredFieldValid(inputName) &&
                                     classes.errorStyle
                                 }`,
                             notchedOutline: classes.notchedOutlineStyles,
@@ -185,15 +155,19 @@ const SearchByNameAndAddressTab = ({
                     aria-label="Address"
                     helperText={
                         addressTouched &&
-                        !isValid(inputAddress) && <InputErrorText />
+                        !isRequiredFieldValid(inputAddress) && (
+                            <InputErrorText />
+                        )
                     }
-                    error={addressTouched && !isValid(inputAddress)}
+                    error={
+                        addressTouched && !isRequiredFieldValid(inputAddress)
+                    }
                     InputProps={{
                         classes: {
                             input: `${classes.searchInputStyles}
                             ${
                                 addressTouched &&
-                                !isValid(inputAddress) &&
+                                !isRequiredFieldValid(inputAddress) &&
                                 classes.errorStyle
                             }`,
                             notchedOutline: classes.notchedOutlineStyles,

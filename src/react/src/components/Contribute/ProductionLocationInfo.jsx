@@ -42,15 +42,16 @@ import {
     mapFacilityTypeOptions,
     mapProcessingTypeOptions,
     isValidNumberOfWorkers,
+    isRequiredFieldValid,
     convertRangeField,
     updateStateFromData,
+    getSelectStyles,
 } from '../../util/util';
 import {
     mockedSectors,
     productionLocationInfoRouteCommon,
     MODERATION_STATUSES_ENUM,
 } from '../../util/constants';
-import COLOURS from '../../util/COLOURS';
 import ProductionLocationDialog from './ProductionLocationDialog';
 
 const ProductionLocationInfo = ({
@@ -92,6 +93,7 @@ const ProductionLocationInfo = ({
     const [inputCountry, setInputCountry] = useState(null);
     const [nameTouched, setNameTouched] = useState(false);
     const [addressTouched, setAddressTouched] = useState(false);
+    const [countryTouched, setCountryTouched] = useState(false);
     const [sector, setSector] = useState('');
     const [productType, setProductType] = useState([]);
     const [locationType, setLocationType] = useState(null);
@@ -99,6 +101,7 @@ const ProductionLocationInfo = ({
     const [numberOfWorkers, setNumberOfWorkers] = useState('');
     const [parentCompany, setParentCompany] = useState([]);
     const customSelectComponents = { DropdownIndicator: null };
+    const isCountryError = countryTouched && !inputCountry?.value;
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -129,22 +132,6 @@ const ProductionLocationInfo = ({
         ],
     );
 
-    const selectStyles = {
-        control: provided => ({
-            ...provided,
-            minHeight: '56px',
-            borderRadius: '0',
-            '&:focus,&:active,&:focus-within': {
-                borderColor: COLOURS.PURPLE,
-                boxShadow: `inset 0 0 0 1px ${COLOURS.PURPLE}`,
-                transition: 'box-shadow 0.2s',
-            },
-            '&:hover': {
-                borderColor: 'black',
-            },
-        }),
-    };
-
     const [
         showProductionLocationDialog,
         setShowProductionLocationDialog,
@@ -154,13 +141,27 @@ const ProductionLocationInfo = ({
         setIsExpanded(!isExpanded);
     };
     const handleNameChange = event => {
-        setNameTouched(true);
         setInputName(event.target.value);
     };
     const handleAddressChange = event => {
-        setAddressTouched(true);
         setInputAddress(event.target.value);
     };
+
+    const handleNameBlur = () => {
+        setNameTouched(true);
+    };
+    const handleAddressBlur = () => {
+        setAddressTouched(true);
+    };
+    const handleCountryBlur = () => {
+        setCountryTouched(true);
+    };
+
+    const isFormValid = !!(
+        isRequiredFieldValid(inputName) &&
+        isRequiredFieldValid(inputAddress) &&
+        inputCountry?.value
+    );
 
     let handleProductionLocation;
     switch (submitMethod) {
@@ -412,8 +413,12 @@ const ProductionLocationInfo = ({
                             component="h2"
                             className={classes.titleStyles}
                         >
-                            Location Name
+                            Location Name{' '}
+                            <span className={classes.requiredAsteriskStyles}>
+                                *
+                            </span>
                         </Typography>
+
                         <Typography
                             component="h4"
                             className={classes.subTitleStyles}
@@ -426,6 +431,7 @@ const ProductionLocationInfo = ({
                             className={classes.textInputStyles}
                             value={inputName}
                             onChange={handleNameChange}
+                            onBlur={handleNameBlur}
                             placeholder="Enter the name"
                             variant="outlined"
                             aria-label="Enter the name"
@@ -434,7 +440,7 @@ const ProductionLocationInfo = ({
                                     input: `
                                     ${
                                         nameTouched &&
-                                        isEmpty(inputName) &&
+                                        !isRequiredFieldValid(inputName) &&
                                         classes.errorStyle
                                     }`,
                                     notchedOutline:
@@ -443,12 +449,16 @@ const ProductionLocationInfo = ({
                             }}
                             helperText={
                                 nameTouched &&
-                                isEmpty(inputName) && <InputErrorText />
+                                !isRequiredFieldValid(inputName) && (
+                                    <InputErrorText />
+                                )
                             }
                             FormHelperTextProps={{
                                 className: classes.helperText,
                             }}
-                            error={nameTouched && isEmpty(inputName)}
+                            error={
+                                nameTouched && !isRequiredFieldValid(inputName)
+                            }
                         />
                     </div>
                     <div
@@ -458,7 +468,10 @@ const ProductionLocationInfo = ({
                             component="h2"
                             className={classes.titleStyles}
                         >
-                            Address
+                            Address{' '}
+                            <span className={classes.requiredAsteriskStyles}>
+                                *
+                            </span>
                         </Typography>
                         <Typography
                             component="h4"
@@ -472,6 +485,7 @@ const ProductionLocationInfo = ({
                             className={classes.textInputStyles}
                             value={inputAddress}
                             onChange={handleAddressChange}
+                            onBlur={handleAddressBlur}
                             placeholder="Enter the full address"
                             variant="outlined"
                             aria-label="Enter the address"
@@ -480,7 +494,7 @@ const ProductionLocationInfo = ({
                                     input: `${classes.searchInputStyles}
                                 ${
                                     addressTouched &&
-                                    isEmpty(inputAddress) &&
+                                    !isRequiredFieldValid(inputAddress) &&
                                     classes.errorStyle
                                 }`,
                                     notchedOutline:
@@ -489,12 +503,17 @@ const ProductionLocationInfo = ({
                             }}
                             helperText={
                                 addressTouched &&
-                                isEmpty(inputAddress) && <InputErrorText />
+                                !isRequiredFieldValid(inputAddress) && (
+                                    <InputErrorText />
+                                )
                             }
                             FormHelperTextProps={{
                                 className: classes.helperText,
                             }}
-                            error={addressTouched && isEmpty(inputAddress)}
+                            error={
+                                addressTouched &&
+                                !isRequiredFieldValid(inputAddress)
+                            }
                         />
                     </div>
                     <div
@@ -504,7 +523,10 @@ const ProductionLocationInfo = ({
                             component="h2"
                             className={classes.titleStyles}
                         >
-                            Country
+                            Country{' '}
+                            <span className={classes.requiredAsteriskStyles}>
+                                *
+                            </span>
                         </Typography>
                         <Typography
                             component="h4"
@@ -520,11 +542,17 @@ const ProductionLocationInfo = ({
                             options={countriesOptions || []}
                             value={inputCountry}
                             onChange={setInputCountry}
+                            onBlur={handleCountryBlur}
                             className={classes.selectStyles}
-                            styles={selectStyles}
+                            styles={getSelectStyles(isCountryError)}
                             placeholder="Country"
                             isMulti={false}
                         />
+                        {isCountryError && (
+                            <div className={classes.errorWrapStyles}>
+                                <InputErrorText />
+                            </div>
+                        )}
                     </div>
                     <hr className={classes.separator} />
                     <div
@@ -537,7 +565,10 @@ const ProductionLocationInfo = ({
                             >
                                 Additional information
                             </Typography>
-                            <IconButton onClick={toggleExpand}>
+                            <IconButton
+                                data-testid="toggle-additional-info"
+                                onClick={toggleExpand}
+                            >
                                 {isExpanded ? (
                                     <ArrowDropUpIcon />
                                 ) : (
@@ -583,7 +614,7 @@ const ProductionLocationInfo = ({
                                         }
                                         value={sector}
                                         onChange={setSector}
-                                        styles={selectStyles}
+                                        styles={getSelectStyles()}
                                         className={classes.selectStyles}
                                         placeholder="Select sector(s)"
                                     />
@@ -613,7 +644,7 @@ const ProductionLocationInfo = ({
                                         onChange={setProductType}
                                         placeholder="Enter product type(s)"
                                         aria-label="Enter product type(s)"
-                                        styles={selectStyles}
+                                        styles={getSelectStyles()}
                                         className={classes.selectStyles}
                                         components={customSelectComponents}
                                     />
@@ -646,7 +677,7 @@ const ProductionLocationInfo = ({
                                         )}
                                         value={locationType}
                                         onChange={setLocationType}
-                                        styles={selectStyles}
+                                        styles={getSelectStyles()}
                                         className={classes.selectStyles}
                                         placeholder="Select location type(s)"
                                     />
@@ -678,7 +709,7 @@ const ProductionLocationInfo = ({
                                         )}
                                         value={processingType}
                                         onChange={setProcessingType}
-                                        styles={selectStyles}
+                                        styles={getSelectStyles()}
                                         className={classes.selectStyles}
                                     />
                                 </div>
@@ -761,7 +792,7 @@ const ProductionLocationInfo = ({
                                         onChange={setParentCompany}
                                         placeholder="Enter the parent company"
                                         aria-label="Parent company"
-                                        styles={selectStyles}
+                                        styles={getSelectStyles()}
                                         className={classes.selectStyles}
                                         components={customSelectComponents}
                                     />
@@ -784,6 +815,7 @@ const ProductionLocationInfo = ({
                                 handleProductionLocation(inputData, osID);
                             }}
                             className={classes.submitButtonStyles}
+                            disabled={!isFormValid}
                         >
                             {submitButtonText}
                         </Button>
