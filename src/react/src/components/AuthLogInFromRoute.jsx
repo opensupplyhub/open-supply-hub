@@ -5,7 +5,10 @@ import AppGrid from './AppGrid';
 
 import { authLoginFormRoute, LOG_IN_TITLE } from '../util/constants';
 
-export default function AuthLogInFromRoute({ title, text = LOG_IN_TITLE }) {
+export default function AuthLogInFromRoute({
+    title = '',
+    text = LOG_IN_TITLE,
+}) {
     return (
         <AppGrid title={title}>
             <Grid container className="margin-bottom-64">

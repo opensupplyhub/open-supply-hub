@@ -44,8 +44,8 @@ function Settings({
     if (!user) {
         return (
             <AuthLogInFromRoute
-                title={'Settings'}
-                text={'Log in to update your settings'}
+                title="Settings"
+                text="Log in to update your settings"
             />
         );
     }
