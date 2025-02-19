@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { arrayOf, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
-import { Link } from 'react-router-dom';
 import moment from 'moment';
 
 import Paper from '@material-ui/core/Paper';
@@ -12,6 +11,7 @@ import InputLabel from '@material-ui/core/InputLabel';
 import TextField from '@material-ui/core/TextField';
 
 import AppGrid from './AppGrid';
+import AuthLogInFromRoute from './AuthLogInFromRoute';
 import DashboardApiBlocksTable from './DashboardApiBlocksTable';
 
 import {
@@ -19,7 +19,7 @@ import {
     updateDashboardApiBlock,
 } from '../actions/dashboardApiBlocks';
 
-import { authLoginFormRoute, dashboardApiBlocksRoute } from '../util/constants';
+import { dashboardApiBlocksRoute } from '../util/constants';
 
 import { apiBlockPropType } from '../util/propTypes';
 
@@ -97,11 +97,10 @@ function DashboardApiBlock({
     if (error && error.length) {
         if (!userHasSignedIn) {
             return (
-                <AppGrid title="Unable to retrieve that API block">
-                    <Link to={authLoginFormRoute} href={authLoginFormRoute}>
-                        Sign in to view Open Supply Hub API blocks
-                    </Link>
-                </AppGrid>
+                <AuthLogInFromRoute
+                    title="Unable to retrieve that API block"
+                    text="Sign in to view Open Supply Hub API blocks"
+                />
             );
         }
 

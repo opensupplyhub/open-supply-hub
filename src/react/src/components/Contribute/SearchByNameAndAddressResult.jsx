@@ -1,11 +1,10 @@
 import React, { useEffect } from 'react';
 import { arrayOf, bool, func, object } from 'prop-types';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { withStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
-import Grid from '@material-ui/core/Grid';
-import AppGrid from '../AppGrid';
+
 import {
     fetchProductionLocations,
     resetProductionLocations,
@@ -13,11 +12,10 @@ import {
 import BackToSearchButton from './BackToSearchButton';
 import SearchByNameAndAddressNotFoundResult from './SearchByNameAndAddressNotFoundResult';
 import SearchByNameAndAddressSuccessResult from './SearchByNameAndAddressSuccessResult';
+import AuthLogInFromRoute from '../AuthLogInFromRoute';
 import {
     contributeProductionLocationRoute,
     MAX_LOCATIONS_TO_SHOW,
-    authLoginFormRoute,
-    LOG_IN_TITLE,
 } from '../../util/constants';
 import history from '../../util/history';
 import { productionLocationPropType } from '../../util/propTypes';
@@ -56,17 +54,7 @@ const SearchByNameAndAddressResult = ({
         );
     }
     if (!userHasSignedIn) {
-        return (
-            <AppGrid title={TITLE}>
-                <Grid container className="margin-bottom-64">
-                    <Grid item xs={12}>
-                        <Link to={authLoginFormRoute} href={authLoginFormRoute}>
-                            {LOG_IN_TITLE}
-                        </Link>
-                    </Grid>
-                </Grid>
-            </AppGrid>
-        );
+        return <AuthLogInFromRoute title={TITLE} />;
     }
 
     return (

@@ -1,25 +1,20 @@
 import React, { useEffect } from 'react';
-import { useHistory, useParams, Link } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 import { connect } from 'react-redux';
 import isEmpty from 'lodash/isEmpty';
 import { object, bool, func } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 
-import AppGrid from '../AppGrid';
+import AuthLogInFromRoute from '../AuthLogInFromRoute';
 
 import {
     fetchProductionLocationByOsId,
     resetSingleProductionLocation,
 } from '../../actions/contributeProductionLocation';
-import {
-    contributeProductionLocationRoute,
-    authLoginFormRoute,
-    LOG_IN_TITLE,
-} from '../../util/constants';
+import { contributeProductionLocationRoute } from '../../util/constants';
 import { makeSearchByOsIdResultStyles } from '../../util/styles';
 import { productionLocationPropType } from '../../util/propTypes';
 
@@ -67,17 +62,7 @@ const SearchByOsIdResult = ({
     }
 
     if (!userHasSignedIn) {
-        return (
-            <AppGrid title={TITLE}>
-                <Grid container className="margin-bottom-64">
-                    <Grid item xs={12}>
-                        <Link to={authLoginFormRoute} href={authLoginFormRoute}>
-                            {LOG_IN_TITLE}
-                        </Link>
-                    </Grid>
-                </Grid>
-            </AppGrid>
-        );
+        return <AuthLogInFromRoute title={TITLE} />;
     }
 
     return (

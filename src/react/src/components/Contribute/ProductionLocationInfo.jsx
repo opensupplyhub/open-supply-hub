@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { useLocation, useParams, useHistory, Link } from 'react-router-dom';
+import { useLocation, useParams, useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import { array, bool, func, number, object, string } from 'prop-types';
 import { connect } from 'react-redux';
@@ -7,14 +7,13 @@ import { toast } from 'react-toastify';
 import { endsWith, isEmpty, toString } from 'lodash';
 import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
-import AppGrid from '../AppGrid';
+import AuthLogInFromRoute from '../AuthLogInFromRoute';
 import StyledSelect from '../Filters/StyledSelect';
 import { productionLocationInfoStyles } from '../../util/styles';
 import {
@@ -51,8 +50,6 @@ import {
     mockedSectors,
     productionLocationInfoRouteCommon,
     MODERATION_STATUSES_ENUM,
-    authLoginFormRoute,
-    LOG_IN_TITLE,
 } from '../../util/constants';
 import COLOURS from '../../util/COLOURS';
 import ProductionLocationDialog from './ProductionLocationDialog';
@@ -401,17 +398,7 @@ const ProductionLocationInfo = ({
     }
 
     if (!userHasSignedIn) {
-        return (
-            <AppGrid title={TITLE}>
-                <Grid container className="margin-bottom-64">
-                    <Grid item xs={12}>
-                        <Link to={authLoginFormRoute} href={authLoginFormRoute}>
-                            {LOG_IN_TITLE}
-                        </Link>
-                    </Grid>
-                </Grid>
-            </AppGrid>
-        );
+        return <AuthLogInFromRoute title={TITLE} />;
     }
 
     return (

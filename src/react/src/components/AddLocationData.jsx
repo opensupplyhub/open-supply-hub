@@ -10,15 +10,14 @@ import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
 import AppGrid from './AppGrid';
+import AuthLogInFromRoute from './AuthLogInFromRoute';
 
 import { openInNewTab } from '../util/util';
 import {
-    authLoginFormRoute,
     InfoLink,
     InfoPaths,
     contributeProductionLocationRoute,
     multipleLocationRoute,
-    LOG_IN_TITLE,
 } from '../util/constants';
 import { makeAddLocationStyles } from '../util/styles';
 
@@ -44,17 +43,7 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
     }
 
     if (!userHasSignedIn) {
-        return (
-            <AppGrid title="Contribute">
-                <Grid container className="margin-bottom-64">
-                    <Grid item xs={12}>
-                        <Link to={authLoginFormRoute} href={authLoginFormRoute}>
-                            {LOG_IN_TITLE}
-                        </Link>
-                    </Grid>
-                </Grid>
-            </AppGrid>
-        );
+        return <AuthLogInFromRoute title="Contribute" />;
     }
 
     return (

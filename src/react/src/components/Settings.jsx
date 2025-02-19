@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
-import { Link } from 'react-router-dom';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Grid from '@material-ui/core/Grid';
@@ -12,10 +11,10 @@ import UserAPITokens from './UserAPITokens';
 import AppOverflow from './AppOverflow';
 import AppGrid from './AppGrid';
 import EmbeddedMapConfigWrapper from './EmbeddedMapConfigWrapper';
+import AuthLogInFromRoute from '../AuthLogInFromRoute';
 
 import { userPropType } from '../util/propTypes';
 import {
-    authLoginFormRoute,
     EMBEDDED_MAP_FLAG,
     USER_DEFAULT_STATE,
 } from '../util/constants';
@@ -58,15 +57,10 @@ function Settings({
 
     if (!user) {
         return (
-            <AppGrid title="Settings">
-                <Grid container className="margin-bottom-64">
-                    <Grid item xs={12}>
-                        <Link to={authLoginFormRoute} href={authLoginFormRoute}>
-                            Log in to update your settings
-                        </Link>
-                    </Grid>
-                </Grid>
-            </AppGrid>
+            <AuthLogInFromRoute
+                title="Settings"
+                text="Log in to update your settings"
+            />
         );
     }
 

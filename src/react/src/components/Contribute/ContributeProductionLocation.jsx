@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useHistory, Link } from 'react-router-dom';
+import { useLocation, useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
 import { bool } from 'prop-types';
-import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
 import SearchByOsIdTab from './SearchByOsIdTab';
 import SearchByNameAndAddressTab from './SearchByNameAndAddressTab';
+import AuthLogInFromRoute from '../AuthLogInFromRoute';
 import { makeContributeProductionLocationStyles } from '../../util/styles';
-import AppGrid from '../AppGrid';
-import { authLoginFormRoute, LOG_IN_TITLE } from '../../util/constants';
 
 const TAB_OS_ID = 'os-id';
 const TAB_NAME_ADDRESS = 'name-address';
@@ -57,17 +55,7 @@ const ContributeProductionLocation = ({
     }
 
     if (!userHasSignedIn) {
-        return (
-            <AppGrid title={TITLE}>
-                <Grid container className="margin-bottom-64">
-                    <Grid item xs={12}>
-                        <Link to={authLoginFormRoute} href={authLoginFormRoute}>
-                            {LOG_IN_TITLE}
-                        </Link>
-                    </Grid>
-                </Grid>
-            </AppGrid>
-        );
+        return <AuthLogInFromRoute title={TITLE} />;
     }
 
     return (
