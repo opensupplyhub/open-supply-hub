@@ -3,21 +3,34 @@ import { Router } from 'react-router-dom';
 import history from '../../util/history';
 import SearchByOsIdResult from '../../components/Contribute/SearchByOsIdResult';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
+import {LOG_IN_TITLE} from '../../util/constants';
 
 
 describe('SearchByOsIdResult component', () => {
-    
-    const renderComponent = (detailOverride) => {
+    const mockNotAuthorizedState = {
+        auth: {
+            user: { user: { isAnon: true } },
+            session: { fetching: false },
+        },
+    };
+
+    const renderComponent = (detailOverride, authOverride) => {
         const preloadedState = {
             contributeProductionLocation: {
-                singleProductionLocation: { 
-                    data: {}, 
-                    fetching: false, 
+
+                singleProductionLocation: {
+                    data: {},
+                    fetching: false,
                     ...detailOverride,
                 },
             },
+            auth: {
+                user: { user: { isAnon: false } },
+                session: { fetching: false },
+            },
+            ...authOverride,
         };
-    
+
         return renderWithProviders(
             <Router history={history}>
                 <SearchByOsIdResult />
@@ -25,15 +38,42 @@ describe('SearchByOsIdResult component', () => {
             { preloadedState }
         );
     };
-    
+
     beforeEach(() => {
         jest.clearAllMocks();
     });
+
 
     it('renders without crashing', () => {
         const {getByText} = renderComponent();
 
         expect(getByText('Production Location Search')).toBeInTheDocument();
+    });
+
+    it('renders for the unauthorized user', () => {
+        const  expectedTitle = 'Production Location Search'
+        const { getByText, getByRole } = renderComponent({}, mockNotAuthorizedState);
+        const linkElement = getByRole('link', { name: /Log in to contribute to Open Supply Hub/i });
+
+        expect(linkElement).toBeInTheDocument();
+        expect(linkElement).toHaveAttribute('href', '/auth/login');
+        expect(getByText(LOG_IN_TITLE)).toBeInTheDocument();
+        expect(getByText(expectedTitle)).toBeInTheDocument();
+    });
+
+    it('renders for the authorized user', () => {
+        const  expectedTitle = 'Production Location Search'
+        const { getByText, getByRole } = renderComponent();
+        const title = getByText(expectedTitle);
+        const backToIdBtn = getByRole('button', { name: /Back to ID search/i });
+        const byNameAndIdBtn = getByRole('button', { name: /Search by Name and Address/i });
+        const anotherIdBtn = getByRole('button', { name: /Search for another ID/i });
+
+
+        expect(title).toBeInTheDocument();
+        expect(backToIdBtn).toBeInTheDocument();
+        expect(byNameAndIdBtn).toBeInTheDocument();
+        expect(anotherIdBtn).toBeInTheDocument();
     });
 
     it('shows loading spinner when fetching is true', () => {
