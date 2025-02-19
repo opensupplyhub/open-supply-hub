@@ -1527,3 +1527,5 @@ export const mockedSectors = [
 ];
 
 export const MAX_LOCATIONS_TO_SHOW = 100;
+
+export const HEADER_HEIGHT = 116;
