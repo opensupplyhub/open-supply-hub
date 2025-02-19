@@ -60,6 +60,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * /static/staticfiles.json
 
     All other traffic will be redirected to the React application.
+* [OSDEV-1692](https://opensupplyhub.atlassian.net/browse/OSDEV-1692) - Update cache dependencies due to Ubuntu 20 image runner deprecation. See [link](https://github.blog/changelog/2024-12-05-notice-of-upcoming-releases-and-breaking-changes-for-github-actions/#actions-cache-v1-v2-and-actions-toolkit-cache-package-closing-down).
 
 ### Bugfix
 * [OSDEV-1698](https://opensupplyhub.atlassian.net/browse/OSDEV-1698) - SLC: Refactored the "Submit Another Location" button link to direct users to the search-by-name-and-address form at /contribute/single-location?tab=name-address.
