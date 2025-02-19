@@ -160,8 +160,9 @@ To identify the tasks that need testing, QA engineers should refer to the Jira r
 
 **Preparation for Release Testing**
 1. Creating a Test Run Cycle:
-    - Five working days before the release (scheduled for Saturday), the QA engineer creates a new test run cycle in QAlity.
-    - The QA team adds tickets implemented in the current release to the test run cycle.
+    - A Day before the Code Freeze (Five working days before the release scheduled for Saturday), the QA engineer creates a new test run cycle in QAlity.
+    [See Instructions how to create Test Cycles in QAlity](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/657358851/QAlity+instruction+how+to+create+Regression+and+Smoke+test+Cycles)
+    - Above the regular set of test cases, the QA team adds tickets implemented in the current release to the test run cycle as well. For this in the QAlity should be created new folder "Release {#release-version}" in the Functional Testing Folder. [See Instructions here](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/665255957/QAlity+Instruction+how+to+add+tests+regarding+change+list+for+release)
 2. Executing the Test Run:
     - The QA engineer tests all items in the test run.
     - If a regression bug is found, it must be immediately documented as a Jira bug ticket and rated according to severity (P1, P2, or P3):
@@ -171,9 +172,10 @@ To identify the tasks that need testing, QA engineers should refer to the Jira r
 
 **Smoke Testing on Release Day**
 
-On Saturday (release day), the QA team should create two additional test cycles for conducting Smoke Testing:
-1.`Staging Environment:` Verify the release changes before deployment to production.
-2.`Production Environment:` Ensure the release is successfully deployed and functions as expected in the live environment.
+On Saturday (release day), the QA team should create two additional test cycles for conducting Smoke Testing [See Instructions here](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/657358851/QAlity+instruction+how+to+create+Regression+and+Smoke+test+Cycles):
+
+1. `Staging Environment:` Verify the release changes before deployment to production.
+2. `Production Environment:` Ensure the release is successfully deployed and functions as expected in the live environment.
 
 ### Release to production and sandbox
 
@@ -212,13 +214,17 @@ In case there is a need to run additional command in the terminal of the Django 
 
 On Monday after each release, current metrics should be checked by QA engineer.
 
-1. Kamino:
-    - Successfully logged with valid OS HUb admin credentials and re-directed to Kamino's [main page](https://34.241.25.221/kamino/bk).
-2. Looker:
+1. [Monday](https://opensupplyhub.monday.com/boards/3514246658/views/155598921):
+     - check that there are new uploads in Monday after release
+2. [Contribot](https://spdfn.slack.com/archives/C04EDHR643E):
+    - Make sure that new uploads are displayed in Contribot and they are similar to the Contributor List Approval Queue in Monday
+3. [~~Kamino~~](https://34.241.25.221/kamino/bk): (not relevant)
+    - ~~Successfully logged with valid OS HUb admin credentials and re-directed to Kamino's.~~ 
+2. [Looker](https://lookerstudio.google.com/u/1/reporting/b242ab63-6cfd-4d49-98ca-88ad84a47208/page/clbkD):
     - `duplicate_ratio_perc` ~ 2 (+- 0.1)
     - `estimated_duplicates` ~ 4000-6000
-3. Airflow:
-    - Dag_Id duplillom should approximately take 50 min. So we can conclude that it <strong>must be > 2.5</strong>
+3. [~~Airflow~~](https://34.241.25.221/airflow/dagrun/list/?_flt_3_dag_id=dupliloom): (not relevant)
+    - ~~Dag_Id duplillom should approximately take 50 min. So we can conclude that it <strong>must be > 2.5</strong>~~
 
 ### Reloading the DedupeHub
 - To restart DedupeHub the responsible person have to find `ecsOpenSupplyHubProductionCluster` in Amazon Elastic Container Service (ECS), select `OpenSupplyHubProductionAppDD` and press update. Then select `Force New Deployment` and press update button.
