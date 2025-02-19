@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
-import { bool } from 'prop-types';
+import { bool, string, shape } from 'prop-types';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
@@ -102,6 +102,9 @@ const ContributeProductionLocation = ({
 ContributeProductionLocation.propTypes = {
     userHasSignedIn: bool.isRequired,
     fetchingSessionSignIn: bool.isRequired,
+    classes: shape({
+        circularProgressContainerStyles: string,
+    }).isRequired,
 };
 
 const mapStateToProps = ({
