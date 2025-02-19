@@ -49,14 +49,13 @@ describe("ProductionLocationInfo component", () => {
         submitMethod: "POST",
     };
 
-    const renderComponent = (props = {}) => {
-        return renderWithProviders(
+    const renderComponent = (props = {}) => 
+        renderWithProviders(
             <Router>
                 <ProductionLocationInfo {...defaultProps} {...props} />
             </Router>,
             { preloadedState: defaultState },
-        );
-    };
+        )
 
     test("renders the production location form", () => {
         const { getByText, getByPlaceholderText, getAllByText, getByTestId } = renderComponent();
