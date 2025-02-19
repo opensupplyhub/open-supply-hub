@@ -1,4 +1,4 @@
-import { OARColor, HEADER_HEIGHT, FOOTER_HEIGHT } from './constants';
+import { OARColor, HEADER_HEIGHT } from './constants';
 import COLOURS from './COLOURS';
 import { multiValueBackgroundHandler } from './util';
 
@@ -411,7 +411,7 @@ export const makeSearchByOsIdResultStyles = theme =>
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            height: 'calc(100vh - 116px)',
+            height: `calc(100vh - ${HEADER_HEIGHT}px)`,
         }),
         mainContainerStyles: Object.freeze({
             backgroundColor: theme.palette.background.grey,
@@ -1050,7 +1050,7 @@ export const makeSearchByNameAndAddressResultStyles = () =>
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            height: 'calc(100vh - 116px)',
+            height: `calc(100vh - ${HEADER_HEIGHT}px)`,
         }),
         backToSearchButtonContainerStyles: Object.freeze({
             padding: '48px 5% 0 5%',
@@ -1382,7 +1382,7 @@ export const productionLocationInfoStyles = theme =>
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            height: `calc(100vh - ${HEADER_HEIGHT + FOOTER_HEIGHT}px)`,
+            height: `calc(100vh - ${HEADER_HEIGHT}px)`,
         }),
     });
 
