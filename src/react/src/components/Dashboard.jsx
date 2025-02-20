@@ -20,6 +20,7 @@ import DashboardModerationQueue from './Dashboard/DashboardModerationQueue';
 import DashboardContributionRecord from './Dashboard/DashboardContributionRecord';
 import FeatureFlag from './FeatureFlag';
 import RouteNotFound from './RouteNotFound';
+import AuthLogInFromRoute from './AuthLogInFromRoute';
 
 import { checkWhetherUserHasDashboardAccess } from '../util/util';
 
@@ -76,12 +77,25 @@ const makeClickableDashboardLinkFn = (screenTitle, secondaryLink) => () => (
     </span>
 );
 
-function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
+function Dashboard({
+    userWithAccessHasSignedIn,
+    fetchingSessionSignIn,
+    userHasSignedIn,
+}) {
     if (fetchingSessionSignIn) {
         return (
             <AppGrid title="">
                 <CircularProgress />
             </AppGrid>
+        );
+    }
+
+    if (!userHasSignedIn) {
+        return (
+            <AuthLogInFromRoute
+                title="Dashboard"
+                text="Sign in to view Open Supply Hub Dashboard"
+            />
         );
     }
 
@@ -338,6 +352,7 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
 Dashboard.propTypes = {
     userWithAccessHasSignedIn: bool.isRequired,
     fetchingSessionSignIn: bool.isRequired,
+    userHasSignedIn: bool.isRequired,
 };
 function mapStateToProps({
     auth: {
@@ -348,6 +363,7 @@ function mapStateToProps({
     return {
         userWithAccessHasSignedIn: checkWhetherUserHasDashboardAccess(user),
         fetchingSessionSignIn: fetching,
+        userHasSignedIn: !user.isAnon,
     };
 }
 export default connect(mapStateToProps)(Dashboard);
