@@ -1527,4 +1527,7 @@ export const mockedSectors = [
 ];
 
 export const MAX_LOCATIONS_TO_SHOW = 100;
+
 export const LOG_IN_TITLE = 'Log in to contribute to Open Supply Hub';
+
+export const HEADER_HEIGHT = 116;

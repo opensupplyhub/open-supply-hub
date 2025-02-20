@@ -22,7 +22,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe code/API changes here.*
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* [OSDEV-1580](https://opensupplyhub.atlassian.net/browse/OSDEV-1580) - The new architecture diagram of the OS Hub platform has been created in response to the penetration testing that will be conducted in February 2025. The diagram has been placed in the root of the `./doc/system_design/` folder, replacing the old diagrams that have been moved to the `./doc/system_design/archived/` folder as they are no longer valid. A new `./doc/system_design/README.md` file has also been created, with a reference to the new architecture/network diagram.
 
 ### Bugfix
 * [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - All SLC pages have been made accessible only to authorized users.
@@ -31,7 +31,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
 
 ### Release instructions:
-* *Provide release instructions here.*
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
 
 
 ## Release 2.0.0
@@ -46,9 +48,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Migrations:
 * 0166_add_moderationevent_action_perform_by.py - This migration added a new field, `action_perform_by`, to the existing table `api_moderationevent`.
 
-#### Schema changes
-* *Describe schema changes here.*
-
 ### Code/API changes
 * [OSDEV-1577](https://opensupplyhub.atlassian.net/browse/OSDEV-1577) - Added geo-bounding box query support to the GET `/api/v1/production-locations/` endpoint. To filter production locations whose geopoints fall within the bounding box, it is necessary to specify valid values for the parameters `geo_bounding_box[top]`, `geo_bounding_box[left]`, `geo_bounding_box[bottom]`, and `geo_bounding_box[right]`.
 
@@ -60,6 +59,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * The top must be greater than the bottom.
     * The right must be greater than the left.
 * [OSDEV-1662](https://opensupplyhub.atlassian.net/browse/OSDEV-1662) - Updated Logstash mapping configuration to handle the new `action_perform_by` field for OpenSearch.
+* [OSDEV-1748](https://opensupplyhub.atlassian.net/browse/OSDEV-1748) - Aligned SLC with current v1/production-locations validation. Removed validation for `number_of_workers` min >= max.
 
 ### Architecture/Environment changes
 * [OSDEV-1515](https://opensupplyhub.atlassian.net/browse/OSDEV-1515) - Removed `rds_allow_major_version_upgrade` and `rds_apply_immediately` from the environment tfvars files (e.g., terraform-production.tfvars) to set them to `false` again, as the default values in `/deployment/terraform/variables.tf` are `false`. This is necessary to prevent unintended PostgreSQL major version upgrades since the target PostgreSQL 16.3 version has been reached.
@@ -90,6 +90,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * /static/staticfiles.json
 
     All other traffic will be redirected to the React application.
+* [OSDEV-1692](https://opensupplyhub.atlassian.net/browse/OSDEV-1692) - Update cache dependencies due to Ubuntu 20 image runner deprecation. See [link](https://github.blog/changelog/2024-12-05-notice-of-upcoming-releases-and-breaking-changes-for-github-actions/#actions-cache-v1-v2-and-actions-toolkit-cache-package-closing-down).
 
 ### Bugfix
 * [OSDEV-1698](https://opensupplyhub.atlassian.net/browse/OSDEV-1698) - SLC: Refactored the "Submit Another Location" button link to direct users to the search-by-name-and-address form at /contribute/single-location?tab=name-address.
