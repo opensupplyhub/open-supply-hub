@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { arrayOf, bool, func, string } from 'prop-types';
+import { arrayOf, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import moment from 'moment';
 
@@ -11,7 +11,6 @@ import InputLabel from '@material-ui/core/InputLabel';
 import TextField from '@material-ui/core/TextField';
 
 import AppGrid from './AppGrid';
-import AuthLogInFromRoute from './AuthLogInFromRoute';
 import DashboardApiBlocksTable from './DashboardApiBlocksTable';
 
 import {
@@ -57,7 +56,6 @@ function DashboardApiBlock({
     apiBlock,
     error,
     fetching,
-    userHasSignedIn,
     push,
     fetchApiBlock,
     updateApiBlock,
@@ -95,15 +93,6 @@ function DashboardApiBlock({
     }
 
     if (error && error.length) {
-        if (!userHasSignedIn) {
-            return (
-                <AuthLogInFromRoute
-                    title="Unable to retrieve that API block"
-                    text="Sign in to view Open Supply Hub API blocks"
-                />
-            );
-        }
-
         return (
             <AppGrid title="API block error">
                 <ul>
@@ -208,22 +197,17 @@ DashboardApiBlock.propTypes = {
     apiBlock: apiBlockPropType,
     error: arrayOf(string),
     fetchApiBlock: func.isRequired,
-    userHasSignedIn: bool.isRequired,
 };
 
 function mapStateToProps({
     dashboardApiBlocks: {
         apiBlock: { data, error, fetching },
     },
-    auth: {
-        user: { user },
-    },
 }) {
     return {
         apiBlock: data,
         error,
         fetching,
-        userHasSignedIn: !user.isAnon,
     };
 }
 
