@@ -53,7 +53,7 @@ describe('ContributeProductionLocation component', () => {
         const { getByText, getByRole } = renderComponent();
         const osIdTab = getByRole('tab', { name: /Search by OS ID/i });
         
-        fireEvent.click(osIdTab);``
+        fireEvent.click(osIdTab);
         expect(getByText('Mocked SearchByOsIdTab')).toBeInTheDocument();
     });
 
