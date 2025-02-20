@@ -33,33 +33,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [OSDEV-1515](https://opensupplyhub.atlassian.net/browse/OSDEV-1515) - Removed `rds_allow_major_version_upgrade` and `rds_apply_immediately` from the environment tfvars files (e.g., terraform-production.tfvars) to set them to `false` again, as the default values in `/deployment/terraform/variables.tf` are `false`. This is necessary to prevent unintended PostgreSQL major version upgrades since the target PostgreSQL 16.3 version has been reached.
-* [OSDEV-899](https://opensupplyhub.atlassian.net/browse/OSDEV-899) - With this task, we split the Django container into two components: FE (React) and BE (Django). Requests to the frontend (React) will be processed by the CDN (CloudFront), while requests to the API will be redirected to the Django container. This approach will allow for more efficient use of ECS cluster computing resources and improve frontend performance.
-
-    The following endpoints will be redirected to the Django container:
-    * tile/*
-    * api/*
-    * /api-auth/*
-    * /api-token-auth/*
-    * /api-feature-flags/*
-    * /web/environment.js
-    * /admin/*
-    * /health-check/*
-    * /rest-auth/*
-    * /user-login/*
-    * /user-logout/*
-    * /user-signup/*
-    * /user-profile/*
-    * /user-api-info/*
-    * /admin
-    * /static/admin/*
-    * /static/django_extensions/*
-    * /static/drf-yasg/*
-    * /static/gis/*
-    * /static/rest_framework/*
-    * /static/static/*
-    * /static/staticfiles.json
-
-    All other traffic will be redirected to the React application.
 * [OSDEV-1692](https://opensupplyhub.atlassian.net/browse/OSDEV-1692) - Update cache dependencies due to Ubuntu 20 image runner deprecation. See [link](https://github.blog/changelog/2024-12-05-notice-of-upcoming-releases-and-breaking-changes-for-github-actions/#actions-cache-v1-v2-and-actions-toolkit-cache-package-closing-down).
 
 ### Bugfix
