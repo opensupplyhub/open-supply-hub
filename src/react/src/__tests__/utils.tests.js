@@ -1973,7 +1973,7 @@ it('should process array fields and keep non-empty values', () => {
         address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
         country: { value: 'US' },
         sector: ['Waste Management'],
-        parent_company: ['ParentCompanySingle'],
+        parent_company: 'ParentCompanySingle',
         product_type: ['Shirts', 'Pants'],
     };
 
@@ -1983,7 +1983,7 @@ it('should process array fields and keep non-empty values', () => {
         address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
         country: 'US',
         sector: ['Waste Management'],
-        parent_company: ['ParentCompanySingle'],
+        parent_company: 'ParentCompanySingle',
         product_type: ['Shirts', 'Pants'],
     };
 

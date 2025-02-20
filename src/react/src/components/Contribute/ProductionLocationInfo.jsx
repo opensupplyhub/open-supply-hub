@@ -97,7 +97,7 @@ const ProductionLocationInfo = ({
     const [locationType, setLocationType] = useState(null);
     const [processingType, setProcessingType] = useState(null);
     const [numberOfWorkers, setNumberOfWorkers] = useState('');
-    const [parentCompany, setParentCompany] = useState([]);
+    const [parentCompany, setParentCompany] = useState('');
     const customSelectComponents = { DropdownIndicator: null };
 
     useEffect(() => {
@@ -160,6 +160,9 @@ const ProductionLocationInfo = ({
     const handleAddressChange = event => {
         setAddressTouched(true);
         setInputAddress(event.target.value);
+    };
+    const handleParentCompanyChange = event => {
+        setParentCompany(event.target.value);
     };
 
     let handleProductionLocation;
@@ -243,11 +246,7 @@ const ProductionLocationInfo = ({
                 'processing_type',
                 setProcessingType,
             );
-            updateStateFromData(
-                singleProductionLocationData,
-                'parent_company',
-                setParentCompany,
-            );
+            setParentCompany(singleProductionLocationData.parent_company ?? '');
         }
     }, [singleProductionLocationData, osID]);
 
@@ -728,11 +727,11 @@ const ProductionLocationInfo = ({
                                             InputProps={{
                                                 classes: {
                                                     input: `
-                                            ${
-                                                !isValidNumberOfWorkers(
-                                                    numberOfWorkers,
-                                                ) && classes.errorStyle
-                                            }`,
+                                                    ${
+                                                        !isValidNumberOfWorkers(
+                                                            numberOfWorkers,
+                                                        ) && classes.errorStyle
+                                                    }`,
                                                     notchedOutline:
                                                         classes.notchedOutlineStyles,
                                                 },
@@ -757,16 +756,20 @@ const ProductionLocationInfo = ({
                                             majority ownership for this
                                             production.
                                         </Typography>
-                                        <StyledSelect
-                                            creatable
-                                            name="Parent company"
+                                        <TextField
+                                            id="parent_company"
+                                            className={classes.textInputStyles}
                                             value={parentCompany}
-                                            onChange={setParentCompany}
+                                            onChange={handleParentCompanyChange}
                                             placeholder="Enter the parent company"
+                                            variant="outlined"
                                             aria-label="Parent company"
-                                            styles={selectStyles}
-                                            className={classes.selectStyles}
-                                            components={customSelectComponents}
+                                            InputProps={{
+                                                classes: {
+                                                    notchedOutline:
+                                                        classes.notchedOutlineStyles,
+                                                },
+                                            }}
                                         />
                                     </div>
                                 </>
