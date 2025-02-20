@@ -352,6 +352,7 @@ function Dashboard({
 Dashboard.propTypes = {
     userWithAccessHasSignedIn: bool.isRequired,
     fetchingSessionSignIn: bool.isRequired,
+    userHasSignedIn: bool.isRequired,
 };
 function mapStateToProps({
     auth: {
