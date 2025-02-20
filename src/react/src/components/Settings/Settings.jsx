@@ -28,10 +28,11 @@ function Settings({
     const handleTabChange = (e, tab) => setActiveTabIndex(tab);
 
     const tabs = getTabs({ fetchingFlags, activeFeatureFlags, user });
+    const TITLE = 'Settings';
 
     if (fetchingSessionSignIn) {
         return (
-            <AppGrid title="Settings">
+            <AppGrid title={TITLE}>
                 <Grid container className="margin-bottom-64">
                     <Grid item xs={12}>
                         <CircularProgress />
@@ -41,10 +42,10 @@ function Settings({
         );
     }
 
-    if (!user) {
+    if (user.isAnon) {
         return (
             <AuthLogInFromRoute
-                title="Settings"
+                title={TITLE}
                 text="Log in to update your settings"
             />
         );
@@ -52,7 +53,7 @@ function Settings({
 
     return (
         <>
-            <AppGrid title="Settings">
+            <AppGrid title={TITLE}>
                 <SettingTabs
                     value={activeTabIndex}
                     onChange={handleTabChange}
@@ -60,7 +61,7 @@ function Settings({
                 />
             </AppGrid>
             <AppOverflow>
-                {!user.isAnon && tabs[activeTabIndex] === PROFILE_TAB && (
+                {tabs[activeTabIndex] === PROFILE_TAB && (
                     <UserProfile allowEdits id={user.id.toString()} />
                 )}
                 {tabs[activeTabIndex] === EMBED_TAB && (
