@@ -48,7 +48,7 @@ describe('ContributeProductionLocation component', () => {
     });
 
     it('handles invalid tab and defaults to OS ID tab', () => {
-        const { getByRole } = renderComponent(['contribute/production-location?tab=invalid-tab']);
+        const { getByRole } = renderComponent(['contribute/single-location?tab=invalid-tab']);
         const osIdTab = getByRole('tab', { name: /Search by OS ID/i });
 
         expect(osIdTab).toHaveAttribute('aria-selected', 'true');
