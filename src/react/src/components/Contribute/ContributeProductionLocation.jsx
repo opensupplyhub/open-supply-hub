@@ -20,15 +20,15 @@ const ContributeProductionLocation = ({ classes }) => {
     const tabInQuery = queryParams.get('tab');
 
     const [selectedTab, setSelectedTab] = useState(
-        VALID_TABS.includes(tabInQuery) ? tabInQuery : TAB_OS_ID,
+        VALID_TABS.includes(tabInQuery) ? tabInQuery : TAB_NAME_ADDRESS,
     );
 
     useEffect(() => {
         if (VALID_TABS.includes(tabInQuery)) {
             setSelectedTab(tabInQuery);
         } else {
-            history.replace(`?tab=${TAB_OS_ID}`);
-            setSelectedTab(TAB_OS_ID);
+            history.replace(`?tab=${TAB_NAME_ADDRESS}`);
+            setSelectedTab(TAB_NAME_ADDRESS);
         }
     }, [tabInQuery, history]);
 
