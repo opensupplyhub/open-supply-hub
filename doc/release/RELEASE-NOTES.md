@@ -26,6 +26,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - All SLC pages have been made accessible only to authorized users.
+* [OSDEV-1745](https://opensupplyhub.atlassian.net/browse/OSDEV-1745) - The `Search by Name and Address` tab was defined as default on the Production Location Search page.
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
@@ -106,6 +107,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1589](https://opensupplyhub.atlassian.net/browse/OSDEV-1589) - Fixed layout issue on new `contribute` page.
 * [OSDEV-1739](https://opensupplyhub.atlassian.net/browse/OSDEV-1739) - Applied state cleanup on modal unmount to prevent the same dialog from appearing when clicking on a different production location.
 * [OSDEV-1744](https://opensupplyhub.atlassian.net/browse/OSDEV-1744) - Fixed the issue where the text `by user ID:` appeared even when `user_id` was `null` in Contribution Record page.
+* [OSDEV-1779](https://opensupplyhub.atlassian.net/browse/OSDEV-1779) - SLC. Made Parent Company field as regular text field and apply snake_case keys to standard keys (e.g. `location_type`, `number_of_workers`, `parent_company`, `processing_type` and `product_type`) in request payload from production location info page to conform API specs.
 
 ### What's new
 * [OSDEV-1662](https://opensupplyhub.atlassian.net/browse/OSDEV-1662) - Added a new field, `action_perform_by`, to the moderation event. This data appears on the Contribution Record page when a moderator perform any actions like `APPROVED` or `REJECTED`.
