@@ -1507,7 +1507,7 @@ export const getSelectStyles = (isErrorState = false) => ({
 
         return {
             ...provided,
-            height: '56px',
+            minHeight: '56px',
             borderRadius: '0',
             borderColor,
             boxShadow,
