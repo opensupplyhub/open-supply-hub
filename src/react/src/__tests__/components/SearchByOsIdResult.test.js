@@ -3,7 +3,6 @@ import { Router } from 'react-router-dom';
 import history from '../../util/history';
 import SearchByOsIdResult from '../../components/Contribute/SearchByOsIdResult';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
-import {LOG_IN_TITLE} from '../../util/constants';
 
 
 describe('SearchByOsIdResult component', () => {
@@ -57,7 +56,7 @@ describe('SearchByOsIdResult component', () => {
 
         expect(linkElement).toBeInTheDocument();
         expect(linkElement).toHaveAttribute('href', '/auth/login');
-        expect(getByText(LOG_IN_TITLE)).toBeInTheDocument();
+        expect(getByText('Log in to contribute to Open Supply Hub')).toBeInTheDocument();
         expect(getByText(expectedTitle)).toBeInTheDocument();
     });
 

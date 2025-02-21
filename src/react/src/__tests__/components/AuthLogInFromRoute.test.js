@@ -1,18 +1,20 @@
 import React from 'react';
-import { MemoryRouter } from 'react-router-dom';
 import AuthLogInFromRoute from '../../components/AuthLogInFromRoute';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
-
+import { fireEvent } from '@testing-library/react';
+import { createMemoryHistory } from "history";
+import { Router } from "react-router-dom";
 import {
-    LOG_IN_TITLE,
+    authLoginFormRoute,
 } from '../../util/constants';
 
 describe('AuthLogInFromRoute component', () => {
-    const renderComponent = (preloadedState = {},initialEntries = ['/']) =>
+    const history = createMemoryHistory();
+    const renderComponent = (preloadedState = {}) =>
         renderWithProviders(
-            <MemoryRouter initialEntries={initialEntries}>
-                 <AuthLogInFromRoute {...preloadedState}/>,
-            </MemoryRouter>
+            <Router history={history}>
+               <AuthLogInFromRoute {...preloadedState}/>,
+            </Router>
         );
 
     beforeEach(() => {
@@ -20,16 +22,20 @@ describe('AuthLogInFromRoute component', () => {
     });
 
     test("renders component with default params", () => {
-        const defaultTitle = " ";
-        const defaultText = LOG_IN_TITLE;
+        const defaultTitle = 'Unauthorized Access';
+        const defaultText = 'Log in to contribute to Open Supply Hub';
 
         const { getByText, getByRole } = renderComponent();
         const titleEl = getByRole("heading", { level: 2 });
-        const titleText = titleEl.textContent;
+        const titleText = titleEl.textContent.trim();
+        const linkEl = getByRole("link", { name: defaultText });
 
         expect(titleEl).toBeInTheDocument();
         expect(defaultTitle).toBe(titleText);
         expect(getByText(defaultText)).toBeInTheDocument();
+
+        fireEvent.click(linkEl);
+        expect(history.location.pathname).toBe(authLoginFormRoute);
     });
 
     test("renders component with set params", () => {

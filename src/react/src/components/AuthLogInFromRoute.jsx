@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import Grid from '@material-ui/core/Grid';
 import AppGrid from './AppGrid';
 
-import { authLoginFormRoute, LOG_IN_TITLE } from '../util/constants';
+import { authLoginFormRoute } from '../util/constants';
 
 export default function AuthLogInFromRoute({ title, text }) {
     return (
@@ -21,8 +21,8 @@ export default function AuthLogInFromRoute({ title, text }) {
 }
 
 AuthLogInFromRoute.defaultProps = {
-    title: '',
-    text: LOG_IN_TITLE,
+    title: 'Unauthorized Access',
+    text: 'Log in to contribute to Open Supply Hub',
 };
 
 AuthLogInFromRoute.propTypes = {

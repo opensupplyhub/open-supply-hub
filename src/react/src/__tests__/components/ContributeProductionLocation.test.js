@@ -3,7 +3,6 @@ import { MemoryRouter } from 'react-router-dom';
 import { fireEvent } from '@testing-library/react';
 import ContributeProductionLocation from '../../components/Contribute/ContributeProductionLocation';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
-import {LOG_IN_TITLE} from '../../util/constants';
 
 jest.mock('../../components/Contribute/SearchByOsIdTab', () => () => <div>Mocked SearchByOsIdTab</div>);
 
@@ -41,7 +40,7 @@ describe('ContributeProductionLocation component', () => {
 
         expect(linkElement).toBeInTheDocument();
         expect(linkElement).toHaveAttribute('href', '/auth/login');
-        expect(getByText(LOG_IN_TITLE)).toBeInTheDocument();
+        expect(getByText('Log in to contribute to Open Supply Hub')).toBeInTheDocument();
         expect(getByText(expectedTitle)).toBeInTheDocument();
     });
 

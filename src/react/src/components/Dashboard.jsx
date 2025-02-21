@@ -56,7 +56,7 @@ const dashboardStyles = Object.freeze({
     }),
 });
 
-const DASHBOARD_TITLE = 'Dashboard';
+const TITLE = 'Dashboard';
 
 const makeClickableSecondaryLink = ({ route, screenTitle }) => (
     <React.Fragment>
@@ -84,7 +84,7 @@ function Dashboard({
 }) {
     if (fetchingSessionSignIn) {
         return (
-            <AppGrid title="">
+            <AppGrid title={TITLE}>
                 <CircularProgress />
             </AppGrid>
         );
@@ -93,7 +93,7 @@ function Dashboard({
     if (!userHasSignedIn) {
         return (
             <AuthLogInFromRoute
-                title="Dashboard"
+                title={TITLE}
                 text="Sign in to view Open Supply Hub Dashboard"
             />
         );
@@ -144,7 +144,7 @@ function Dashboard({
                             render={() => (
                                 <FeatureFlag
                                     flag={CLAIM_A_FACILITY}
-                                    alternative={DASHBOARD_TITLE}
+                                    alternative={TITLE}
                                 >
                                     {makeClickableDashboardLinkFn(
                                         'Facility Claim Details',
@@ -162,7 +162,7 @@ function Dashboard({
                             render={() => (
                                 <FeatureFlag
                                     flag={CLAIM_A_FACILITY}
-                                    alternative={DASHBOARD_TITLE}
+                                    alternative={TITLE}
                                 >
                                     {makeClickableDashboardLinkFn(
                                         'Facility Claims',
