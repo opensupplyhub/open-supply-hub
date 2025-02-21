@@ -1,6 +1,5 @@
 import React from 'react';
-import { Router } from "react-router-dom";
-import { createMemoryHistory } from 'react-router-dom';
+import { Router, createMemoryHistory } from "react-router-dom";
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import { fireEvent } from '@testing-library/react';
 import {
