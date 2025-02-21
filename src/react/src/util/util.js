@@ -1469,11 +1469,10 @@ export const parseContribData = contribData => {
     const { numberOfWorkers, country, ...fields } = contribData;
     const countryValue = country?.value;
 
-    const nonEmptyFields = filterNonEmptyFields(fields);
-    const snakeCaseFields = convertToSnakeFields(nonEmptyFields);
+    const parsedFields = convertToSnakeFields(filterNonEmptyFields(fields));
 
     return {
-        ...snakeCaseFields,
+        ...parsedFields,
         ...(numberOfWorkers && {
             number_of_workers: generateRangeField(numberOfWorkers),
         }),
