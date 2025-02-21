@@ -1469,8 +1469,8 @@ export const parseContribData = contribData => {
     const { numberOfWorkers, country, ...fields } = contribData;
     const countryValue = country?.value;
 
-    const filteredFields = filterNonEmptyFields(fields);
-    const snakeCaseFields = convertToSnakeFields(filteredFields);
+    const nonEmptyFields = filterNonEmptyFields(fields);
+    const snakeCaseFields = convertToSnakeFields(nonEmptyFields);
 
     return {
         ...snakeCaseFields,
