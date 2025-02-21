@@ -163,7 +163,8 @@ const ProductionLocationInfo = ({
     const isFormValid = !!(
         isRequiredFieldValid(inputName) &&
         isRequiredFieldValid(inputAddress) &&
-        inputCountry?.value
+        inputCountry?.value &&
+        isValidNumberOfWorkers(numberOfWorkers)
     );
 
     let handleProductionLocation;
