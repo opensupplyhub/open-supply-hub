@@ -1,7 +1,7 @@
 import React from 'react';
 import { Router } from "react-router-dom";
-import history from '../../util/history';
 import { fireEvent } from '@testing-library/react';
+import history from '../../util/history';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import {
     authLoginFormRoute,
