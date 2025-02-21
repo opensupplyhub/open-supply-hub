@@ -42,7 +42,6 @@ describe('SearchByOsIdResult component', () => {
         jest.clearAllMocks();
     });
 
-
     it('renders without crashing', () => {
         const {getByText} = renderComponent();
 
