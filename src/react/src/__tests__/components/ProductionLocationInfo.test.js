@@ -195,6 +195,6 @@ describe("ProductionLocationInfo component", () => {
         fireEvent.change(numberInput, { target: { value: "200-100" } });
 
         expect(getByPlaceholderText("Enter the number of workers as a number or range")).toHaveAttribute("aria-invalid", "true");
-        expect(submitButton).toBeDisabled
+        expect(submitButton).toBeDisabled();
     });
 });
