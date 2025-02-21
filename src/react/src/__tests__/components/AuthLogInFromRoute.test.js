@@ -1,12 +1,12 @@
 import React from 'react';
-import AuthLogInFromRoute from '../../components/AuthLogInFromRoute';
+import { Router } from "react-router-dom";
+import { createMemoryHistory } from 'react-router-dom';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import { fireEvent } from '@testing-library/react';
-import { createMemoryHistory } from "history";
-import { Router } from "react-router-dom";
 import {
     authLoginFormRoute,
 } from '../../util/constants';
+import AuthLogInFromRoute from '../../components/AuthLogInFromRoute';
 
 describe('AuthLogInFromRoute component', () => {
     const history = createMemoryHistory();
