@@ -80,6 +80,8 @@ const {
     getLastPathParameter,
     generateRangeField,
     parseContribData,
+    isRequiredFieldValid,
+    getSelectStyles,
 } = require('../util/util');
 
 const {
@@ -98,6 +100,8 @@ const {
     CLAIM_A_FACILITY,
     componentsWithErrorMessage,
 } = require('../util/constants');
+
+const COLOURS = require('../util/COLOURS').default;
 
 it('gets correct error message component', () => {
     const correctListName = 'New & Test Name - Location, [Ltd].';
@@ -2067,4 +2071,75 @@ it('should return only the source field if all other values are empty', () => {
     };
 
     expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+describe('isRequiredFieldValid', () => {
+    it('should return true if the field has a value', () => {
+        expect(isRequiredFieldValid('test')).toBe(true);
+        expect(isRequiredFieldValid('  test  ')).toBe(true);
+        expect(isRequiredFieldValid('test test')).toBe(true);
+    });
+
+    it('should return false if the field has no value', () => {
+        expect(isRequiredFieldValid('')).toBe(false);
+        expect(isRequiredFieldValid('     ')).toBe(false);
+        expect(isRequiredFieldValid(null)).toBe(false);
+        expect(isRequiredFieldValid(undefined)).toBe(false);
+    });
+});
+
+describe('getSelectStyles', () => {
+    const provided = {
+        borderColor: 'grey',
+        boxShadow: 'none',
+        color: 'blue',
+      };
+    
+    const stateFocused = { isFocused: true };
+    const stateNotFocused = { isFocused: false };
+
+    it('returns an object with control and placeholder functions', () => {
+        const styles = getSelectStyles();
+        expect(typeof styles.control).toBe('function');
+        expect(typeof styles.placeholder).toBe('function');
+    });
+
+    it('applies PURPLE border and inset box shadow when focused and no error', () => {
+        const styles = getSelectStyles();
+        const controlStyles = styles.control(provided, stateFocused);
+        expect(controlStyles.borderColor).toBe(COLOURS.PURPLE);
+        expect(controlStyles.boxShadow).toBe(`inset 0 0 0 1px ${COLOURS.PURPLE}`);
+    });
+    
+    it('applies RED border when error state is true', () => {
+        const styles = getSelectStyles(true);
+        const controlStyles = styles.control(provided, stateFocused);
+        expect(controlStyles.borderColor).toBe(COLOURS.RED);
+    });
+    
+    it('applies correct placeholder style when error state is true', () => {
+        const styles = getSelectStyles(true);
+        const placeholderStyles = styles.placeholder(provided);
+        expect(placeholderStyles.opacity).toBe(0.7);
+        expect(placeholderStyles.color).toBe(COLOURS.RED);
+    });
+    
+    it('uses the provided color for placeholder when error state is false', () => {
+        const styles = getSelectStyles();
+        const placeholderStyles = styles.placeholder(provided);
+        expect(placeholderStyles.opacity).toBe(0.7);
+        expect(placeholderStyles.color).toBe(provided.color);
+    });
+    
+    it('sets hover borderColor to "black" when not focused and no error', () => {
+        const styles = getSelectStyles();
+        const controlStyles = styles.control(provided, stateNotFocused);
+        expect(controlStyles['&:hover']).toEqual({ borderColor: 'black' });
+    });
+    
+    it('sets hover borderColor to false when error state is true', () => {
+        const styles = getSelectStyles(true);
+        const controlStyles = styles.control(provided, stateNotFocused);
+        expect(controlStyles['&:hover']).toEqual({ borderColor: false });
+    });
 });
