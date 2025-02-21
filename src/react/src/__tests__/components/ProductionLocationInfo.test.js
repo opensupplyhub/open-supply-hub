@@ -6,7 +6,7 @@ import ProductionLocationInfo from "../../components/Contribute/ProductionLocati
 import renderWithProviders from "../../util/testUtils/renderWithProviders";
 
 jest.mock("../../components/Filters/StyledSelect", () => (props) => {
-    const { options, value, onChange, onBlur, placeholder } = props;
+    const { options = [], value, onChange, onBlur, placeholder } = props;
     return (
         <select
             data-testid="mocked-select"
@@ -126,5 +126,75 @@ describe("ProductionLocationInfo component", () => {
 
         expect(countrySelect.value).toBe("US");
         expect(submitButton).toBeEnabled();
+    });
+
+    test("displays additional information form when icon button is clicked", () => {
+        const { getByTestId, getByText, queryByText } = renderComponent();
+
+        const iconButton = getByTestId("toggle-additional-info");
+        fireEvent.click(iconButton);
+
+        expect(getByText("Sector(s)")).toBeInTheDocument();
+        expect(getByText("Select the sector(s) that this location operates in. For example: Apparel, Electronics, Renewable Energy.")).toBeInTheDocument();
+        expect(getByText("Product Type(s)")).toBeInTheDocument();
+        expect(getByText("Enter the type of products produced at this location. For example: Shirts, Laptops, Solar Panels.")).toBeInTheDocument();
+        expect(getByText("Location Type(s)")).toBeInTheDocument();
+        expect(getByText("Select the location type(s) for this production location. For example: Final Product Assembly, Raw Materials Production or Processing, Office/HQ.")).toBeInTheDocument();
+        expect(getByText("Processing Type(s)")).toBeInTheDocument();
+        expect(getByText("Select the type of processing activities that take place at this location. For example: Printing, Tooling, Assembly.")).toBeInTheDocument();
+        expect(getByText("Number of Workers")).toBeInTheDocument();
+        expect(getByText("Enter a number or a range for the number of people employed at the location. For example: 100, 100-150.")).toBeInTheDocument();
+        expect(getByText("Parent Company")).toBeInTheDocument();
+        expect(getByText("Enter the company that holds majority ownership for this production.")).toBeInTheDocument();
+
+        fireEvent.click(iconButton);
+
+        expect(queryByText("Sector(s)")).not.toBeInTheDocument();
+        expect(queryByText("Product Type(s)")).not.toBeInTheDocument();
+        expect(queryByText("Location Type(s)")).not.toBeInTheDocument();
+        expect(queryByText("Processing Type(s)")).not.toBeInTheDocument();
+        expect(queryByText("Number of Workers")).not.toBeInTheDocument();
+        expect(queryByText("Parent Company")).not.toBeInTheDocument();
+    });
+
+    test("displays error when number of workers is not a valid number and disable submit button", () => {
+        const { getByRole, getByPlaceholderText, getByTestId } = renderComponent();
+
+        const submitButton = getByRole("button", { name: /Submit/i });
+        expect(submitButton).toBeDisabled();
+
+        const nameInput = getByPlaceholderText("Enter the name");
+        const addressInput = getByPlaceholderText("Enter the full address");
+        const countrySelect = getByTestId("mocked-select");
+
+        fireEvent.change(nameInput, { target: { value: "Test Name" } });
+        fireEvent.change(addressInput, { target: { value: "Test Address" } });
+        fireEvent.change(countrySelect, { target: { value: "US" } });
+
+        expect(submitButton).toBeEnabled();
+
+        const iconButton = getByTestId("toggle-additional-info");
+        fireEvent.click(iconButton);
+
+        const numberInput = getByPlaceholderText("Enter the number of workers as a number or range");
+        fireEvent.change(numberInput, { target: { value: "Test" } });
+
+        expect(getByPlaceholderText("Enter the number of workers as a number or range")).toHaveAttribute("aria-invalid", "true");
+        expect(submitButton).toBeDisabled();
+
+        fireEvent.change(numberInput, { target: { value: "100" } });
+
+        expect(getByPlaceholderText("Enter the number of workers as a number or range")).toHaveAttribute("aria-invalid", "false");
+        expect(submitButton).toBeEnabled();
+
+        fireEvent.change(numberInput, { target: { value: "100-150" } });
+
+        expect(getByPlaceholderText("Enter the number of workers as a number or range")).toHaveAttribute("aria-invalid", "false");
+        expect(submitButton).toBeEnabled();
+
+        fireEvent.change(numberInput, { target: { value: "200-100" } });
+
+        expect(getByPlaceholderText("Enter the number of workers as a number or range")).toHaveAttribute("aria-invalid", "true");
+        expect(submitButton).toBeDisabled
     });
 });
