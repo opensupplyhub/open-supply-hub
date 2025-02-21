@@ -65,7 +65,7 @@ export function createProductionLocation(contribData) {
     const parsedContribData = parseContribData(contribData);
 
     return async dispatch => {
-        dispatch(startCreateProductionLocation());
+        dispatch(startCreateProductionLocation(parsedContribData));
 
         try {
             const { data } = await apiRequest.post(
@@ -89,7 +89,7 @@ export function updateProductionLocation(contribData, osID) {
     const parsedContribData = parseContribData(contribData);
 
     return async dispatch => {
-        dispatch(startUpdateProductionLocation());
+        dispatch(startUpdateProductionLocation(parsedContribData));
 
         try {
             const { data } = await apiRequest.patch(

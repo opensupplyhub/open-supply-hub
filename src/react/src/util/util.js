@@ -6,6 +6,7 @@ import flatten from 'lodash/flatten';
 import identity from 'lodash/identity';
 import split from 'lodash/split';
 import last from 'lodash/last';
+import snakeCase from 'lodash/snakeCase';
 import some from 'lodash/some';
 import size from 'lodash/size';
 import negate from 'lodash/negate';
@@ -35,6 +36,7 @@ import includes from 'lodash/includes';
 import join from 'lodash/join';
 import map from 'lodash/map';
 import mapValues from 'lodash/mapValues';
+import mapKeys from 'lodash/mapKeys';
 import uniq from 'lodash/uniq';
 import has from 'lodash/has';
 import { isURL, isInt } from 'validator';
@@ -1455,20 +1457,23 @@ export const generateRangeField = value => {
     return { min: Number(value), max: Number(value) };
 };
 
-export const parseContribData = contribData => {
-    // eslint-disable-next-line camelcase
-    const { numberOfWorkers, country, ...fields } = contribData;
+const convertToSnakeFields = fields =>
+    mapKeys(fields, (value, key) => snakeCase(key));
 
-    const countryValue = country?.value;
-
-    const transformedFields = mapValues(
+const filterNonEmptyFields = fields =>
+    mapValues(
         pickBy(fields, value => !isEmpty(value)),
         extractProductionLocationContributionValues,
     );
 
+export const parseContribData = contribData => {
+    const { numberOfWorkers, country, ...fields } = contribData;
+    const countryValue = country?.value;
+
+    const parsedFields = convertToSnakeFields(filterNonEmptyFields(fields));
+
     return {
-        ...transformedFields,
-        // eslint-disable-next-line camelcase
+        ...parsedFields,
         ...(numberOfWorkers && {
             number_of_workers: generateRangeField(numberOfWorkers),
         }),
