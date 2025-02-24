@@ -1341,9 +1341,6 @@ export const productionLocationInfoStyles = theme =>
             fontSize: '36px',
             fontWeight: theme.typography.fontWeightSemiBoldPlus,
         }),
-        requiredAsteriskStyles: Object.freeze({
-            color: COLOURS.RED,
-        }),
         subTitleStyles: Object.freeze({
             fontSize: '18px',
             fontWeight: theme.typography.fontWeightSemiBold,

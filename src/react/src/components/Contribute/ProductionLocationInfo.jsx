@@ -53,6 +53,7 @@ import {
     MODERATION_STATUSES_ENUM,
 } from '../../util/constants';
 import ProductionLocationDialog from './ProductionLocationDialog';
+import RequiredAsterisk from '../RequiredAsterisk';
 
 const ProductionLocationInfo = ({
     submitMethod,
@@ -413,10 +414,7 @@ const ProductionLocationInfo = ({
                             component="h2"
                             className={classes.titleStyles}
                         >
-                            Location Name{' '}
-                            <span className={classes.requiredAsteriskStyles}>
-                                *
-                            </span>
+                            Location Name <RequiredAsterisk />
                         </Typography>
 
                         <Typography
@@ -468,10 +466,7 @@ const ProductionLocationInfo = ({
                             component="h2"
                             className={classes.titleStyles}
                         >
-                            Address{' '}
-                            <span className={classes.requiredAsteriskStyles}>
-                                *
-                            </span>
+                            Address <RequiredAsterisk />
                         </Typography>
                         <Typography
                             component="h4"
@@ -523,10 +518,7 @@ const ProductionLocationInfo = ({
                             component="h2"
                             className={classes.titleStyles}
                         >
-                            Country{' '}
-                            <span className={classes.requiredAsteriskStyles}>
-                                *
-                            </span>
+                            Country <RequiredAsterisk />
                         </Typography>
                         <Typography
                             component="h4"
