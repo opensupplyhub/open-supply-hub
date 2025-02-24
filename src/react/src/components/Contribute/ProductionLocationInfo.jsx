@@ -14,6 +14,7 @@ import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import StyledSelect from '../Filters/StyledSelect';
+import RequiredAsterisk from '../RequiredAsterisk';
 import { productionLocationInfoStyles } from '../../util/styles';
 import {
     countryOptionsPropType,
@@ -53,7 +54,6 @@ import {
     MODERATION_STATUSES_ENUM,
 } from '../../util/constants';
 import ProductionLocationDialog from './ProductionLocationDialog';
-import RequiredAsterisk from '../RequiredAsterisk';
 
 const ProductionLocationInfo = ({
     submitMethod,
