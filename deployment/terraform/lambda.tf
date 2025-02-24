@@ -131,10 +131,29 @@ resource "aws_iam_role_policy" "lambda_edge_redirect_to_s3_origin_exec_role" {
   policy = data.aws_iam_policy_document.lambda_edge_redirect_to_s3_origin_exec_role_policy.json
 }
 
+# data "archive_file" "lambda_edge_redirect_to_s3_origin" {
+#   type        = "zip"
+#   source_file = "lambda-functions/redirect_to_s3_origin/index.mjs"
+#   output_path = "/tmp/redirect_to_s3_origin.zip"
+# }
+
 data "archive_file" "lambda_edge_redirect_to_s3_origin" {
   type        = "zip"
-  source_file = "lambda-functions/redirect_to_s3_origin/index.mjs"
   output_path = "/tmp/redirect_to_s3_origin.zip"
+  source {
+    content  = <<EOF
+'use strict';
+
+export const handler = async (event) => {
+    const request = event.Records[0].cf.request;
+    if (request.uri === '/') {
+        request.uri = '/index.html';
+    }
+    return request;
+}
+EOF
+    filename = "index.mjs"
+  }
 }
 
 resource "aws_lambda_function" "redirect_to_s3_origin" {
