@@ -21,8 +21,8 @@ RUN set -ex \
     " \
     && apt-get update && apt-get install -y $buildDeps $deps --no-install-recommends \
     && pip install --no-cache-dir -r requirements.txt \
-    # [OSDEV-1785][https://github.com/aio-libs/aiokafka/issues/1093] - Install aiokafka from the custom repo.
-    && pip install --no-cache-dir git+https://github.com/VadimKovalenkoSNF/aiokafka.git@kafka-python-2.0.3 \
+    # [OSDEV-1785][https://github.com/aio-libs/aiokafka/issues/1093] - Install aiokafka from the forked repo.
+    && pip install --no-cache-dir git+https://github.com/opensupplyhub/aiokafka.git@kafka-python-2.0.3 \
     && apt-get purge -y --auto-remove $buildDeps \
     && rm -rf /usr/local/src/requirements.txt /var/lib/apt/lists/*
 
