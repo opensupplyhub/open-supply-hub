@@ -410,13 +410,53 @@ def send_facility_list_rejection_email(request, facility_list):
     )
 
 def send_slc_additional_info_confirmation_email(request, moderation_event):
-    return
+    subj_template = get_template('mail/slc_additional_info_confirmation_subject.txt')
+    text_template = get_template('mail/slc_additional_info_confirmation_body.txt')
+    html_template = get_template('mail/slc_additional_info_confirmation_body.html')
+
+    send_mail(
+        subj_template.render().rstrip(),
+        text_template.render(),
+        settings.DATA_FROM_EMAIL,
+        [moderation_event.contributor.admin.email],
+        html_message=html_template.render()
+    )
 
 def send_slc_new_location_confirmation_email(request, moderation_event):
-    return
+    subj_template = get_template('mail/slc_new_location_confirmation_subject.txt')
+    text_template = get_template('mail/slc_new_location_confirmation_body.txt')
+    html_template = get_template('mail/slc_new_location_confirmation_body.html')
+
+    send_mail(
+        subj_template.render().rstrip(),
+        text_template.render(),
+        settings.DATA_FROM_EMAIL,
+        [moderation_event.contributor.admin.email],
+        html_message=html_template.render()
+    )
 
 def send_slc_contribution_approval_email(request, moderation_event):
-    return
+    subj_template = get_template('mail/slc_contribution_approval_subject.txt')
+    text_template = get_template('mail/slc_contribution_approval_body.txt')
+    html_template = get_template('mail/slc_contribution_approval_body.html')
+
+    send_mail(
+        subj_template.render().rstrip(),
+        text_template.render(),
+        settings.DATA_FROM_EMAIL,
+        [moderation_event.contributor.admin.email],
+        html_message=html_template.render()
+    )
 
 def send_slc_contribution_rejected_email(request, moderation_event):
-    return
+    subj_template = get_template('mail/slc_contribution_rejected_subject.txt')
+    text_template = get_template('mail/slc_contribution_rejected_body.txt')
+    html_template = get_template('mail/slc_contribution_rejected_body.html')
+
+    send_mail(
+        subj_template.render().rstrip(),
+        text_template.render(),
+        settings.DATA_FROM_EMAIL,
+        [moderation_event.contributor.admin.email],
+        html_message=html_template.render()
+    )
