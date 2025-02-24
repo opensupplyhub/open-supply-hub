@@ -408,3 +408,15 @@ def send_facility_list_rejection_email(request, facility_list):
         [facility_list.source.contributor.admin.email],
         html_message=html_template.render(denial_dictionary)
     )
+
+def send_slc_additional_info_confirmation_email(request, moderation_event):
+    return
+
+def send_slc_new_location_confirmation_email(request, moderation_event):
+    return
+
+def send_slc_contribution_approval_email(request, moderation_event):
+    return
+
+def send_slc_contribution_rejected_email(request, moderation_event):
+    return

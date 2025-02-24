@@ -32,6 +32,10 @@ from api.views.v1.utils import (
     handle_errors_decorator,
     serialize_params,
 )
+from api.mail import (
+    send_slc_contribution_approval_email,
+    send_slc_contribution_rejected_email
+)
 
 
 class ModerationEvents(ViewSet):
@@ -132,6 +136,7 @@ class ModerationEvents(ViewSet):
 
         serializer.save()
 
+        send_slc_contribution_rejected_email(request, event)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(
@@ -154,6 +159,7 @@ class ModerationEvents(ViewSet):
         except Exception as error:
             return ModerationEventsService.handle_processing_error(error)
 
+        send_slc_contribution_approval_email(request, event)
         return Response(
             {"os_id": item.facility_id}, status=status.HTTP_201_CREATED
         )
@@ -183,4 +189,5 @@ class ModerationEvents(ViewSet):
         except Exception as error:
             return ModerationEventsService.handle_processing_error(error)
 
+        send_slc_contribution_approval_email(request, event)
         return Response({"os_id": item.facility_id}, status=status.HTTP_200_OK)
