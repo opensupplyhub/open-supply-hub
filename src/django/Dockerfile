@@ -4,6 +4,10 @@ RUN mkdir -p /usr/local/src/static/static
 WORKDIR /usr/local/src
 
 COPY requirements.txt /usr/local/src/
+
+# [OSDEV-1785][https://github.com/aio-libs/aiokafka/issues/1093] - Remove aiokafka in requirements.txt to avoid conflicts.
+RUN sed -i '/aiokafka/d' requirements.txt
+
 RUN set -ex \
     && buildDeps=" \
     build-essential \
@@ -13,11 +17,14 @@ RUN set -ex \
     gdal-bin \
     gettext \
     postgresql-client-15 \
+    git \
     " \
     && apt-get update && apt-get install -y $buildDeps $deps --no-install-recommends \
     && pip install --no-cache-dir -r requirements.txt \
+    # [OSDEV-1785][https://github.com/aio-libs/aiokafka/issues/1093] - Install aiokafka from the custom repo.
+    && pip install --no-cache-dir git+https://github.com/VadimKovalenkoSNF/aiokafka.git@kafka-python-2.0.3 \
     && apt-get purge -y --auto-remove $buildDeps \
-    && rm -rf  /usr/local/src/requirements.txt /var/lib/apt/lists/*
+    && rm -rf /usr/local/src/requirements.txt /var/lib/apt/lists/*
 
 COPY . /usr/local/src
 
