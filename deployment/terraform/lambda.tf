@@ -140,7 +140,7 @@ data "archive_file" "lambda_edge_redirect_to_s3_origin" {
 resource "aws_lambda_function" "redirect_to_s3_origin" {
   filename         = "redirect_to_s3_origin.zip"
   source_code_hash = data.archive_file.lambda_edge_redirect_to_s3_origin.output_base64sha256
-  function_name    = "func${local.short}RedirectoToS3origin"
+  function_name    = "func${local.short}RedirectToS3origin"
   role             = aws_iam_role.lambda_edge_redirect_to_s3_origin
   handler          = "index.handler"
   publish          = true
