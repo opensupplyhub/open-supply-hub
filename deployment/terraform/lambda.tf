@@ -126,7 +126,7 @@ resource "aws_iam_role" "lambda_edge_redirect_to_s3_origin" {
   assume_role_policy = data.aws_iam_policy_document.lambda_edge_redirect_to_s3_origin_assume_role.json
 }
 
-resource "aws_iam_role_policy" "ambda_edge_redirect_to_s3_origin_exec_role" {
+resource "aws_iam_role_policy" "lambda_edge_redirect_to_s3_origin_exec_role" {
   role   = aws_iam_role.lambda_edge_redirect_to_s3_origin.id
   policy = data.aws_iam_policy_document.lambda_edge_redirect_to_s3_origin_exec_role_policy.json
 }
