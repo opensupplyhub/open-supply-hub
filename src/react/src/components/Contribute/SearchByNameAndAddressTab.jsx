@@ -10,17 +10,17 @@ import Typography from '@material-ui/core/Typography';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import StyledSelect from '../Filters/StyledSelect';
 import InputErrorText from './InputErrorText';
-import { searchByNameAndAddressResultRoute } from '../../util/constants';
-import { getSelectStyles, isRequiredFieldValid } from '../../util/util';
-import { makeSearchByNameAddressTabStyles } from '../../util/styles';
-
-import { countryOptionsPropType } from '../../util/propTypes';
+import RequiredAsterisk from '../RequiredAsterisk';
 import { fetchCountryOptions } from '../../actions/filterOptions';
+import { searchByNameAndAddressResultRoute } from '../../util/constants';
+import { countryOptionsPropType } from '../../util/propTypes';
+import { makeSearchByNameAddressTabStyles } from '../../util/styles';
+import { getSelectStyles, isRequiredFieldValid } from '../../util/util';
 
 const FormFieldTitle = ({ label, classes }) => (
     <Typography component="h4" className={classes.formFieldTitleStyles}>
         {label}
-        <span className={classes.requiredAsterisk}> *</span>
+        <RequiredAsterisk />
     </Typography>
 );
 

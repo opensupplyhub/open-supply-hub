@@ -995,9 +995,6 @@ export const makeSearchByNameAddressTabStyles = theme =>
             fontWeight: theme.typography.fontWeightSemiBold,
             margin: '24px 0 8px 0',
         }),
-        requiredAsterisk: Object.freeze({
-            color: COLOURS.RED,
-        }),
         textInputStyles: Object.freeze({
             maxWidth: '528px',
         }),
