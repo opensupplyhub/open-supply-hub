@@ -151,9 +151,11 @@ resource "aws_cloudfront_distribution" "cdn" {
     }
 
     lambda_function_association {
-      event_type = "origin-request"
+      event_type = "viewer-request"
       lambda_arn = "${aws_lambda_function.redirect_to_s3_origin.qualified_arn}"
     }
+
+
 
     compress               = false
     viewer_protocol_policy = "redirect-to-https"
