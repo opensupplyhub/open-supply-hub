@@ -1973,8 +1973,8 @@ it('should process array fields and keep non-empty values', () => {
         address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
         country: { value: 'US' },
         sector: ['Waste Management'],
-        parent_company: ['ParentCompanySingle'],
-        product_type: ['Shirts', 'Pants'],
+        parentCompany: 'ParentCompanySingle',
+        productType: ['Shirts', 'Pants'],
     };
 
     const expectedOutput = {
@@ -1983,7 +1983,7 @@ it('should process array fields and keep non-empty values', () => {
         address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
         country: 'US',
         sector: ['Waste Management'],
-        parent_company: ['ParentCompanySingle'],
+        parent_company: 'ParentCompanySingle',
         product_type: ['Shirts', 'Pants'],
     };
 
@@ -2033,9 +2033,9 @@ it('should remove empty fields while keeping valid ones', () => {
         address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
         country: { value: 'US' },
         sector: [],
-        parent_company: null,
-        product_type: undefined,
-        location_type: ['RCRAInfo subtitle C (Hazardous waste handlers)'],
+        parentCompany: null,
+        productType: undefined,
+        locationType: ['RCRAInfo subtitle C (Hazardous waste handlers)'],
     };
 
     const expectedOutput = {
@@ -2055,15 +2055,113 @@ it('should return only the source field if all other values are empty', () => {
         address: '',
         country: null,
         sector: [],
-        parent_company: '',
-        product_type: undefined,
-        location_type: null,
-        processing_type: '',
+        parentCompany: '',
+        productType: undefined,
+        locationType: null,
+        processingType: '',
         numberOfWorkers: null,
     };
 
     const expectedOutput = {
         source: 'SLC',
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+it('should convert incoming object with camelCase keys into snake_case to conform request payload format', () => {
+    const input = {
+        name: 'AJAX AUTO DISMANTLERS INC',
+        address: '2895 3RD, SAN FRANCISCO, CA, 94107-0000',
+        country: {
+            value: 'US',
+            label: 'United States'
+        },
+        sector: [
+            {
+                value: 'Waste Management',
+                label: 'Waste Management'
+            },
+            {
+                value: 'Recycling',
+                label: 'Recycling'
+            }
+        ],
+        productType: [
+            {
+                label: 'Bottles',
+                value: 'Bottles'
+            },
+            {
+                label: 'Pockets',
+                value: 'Pockets'
+            },
+            {
+                label: 'Domestic goods',
+                value: 'Domestic goods'
+            }
+        ],
+        locationType: [
+            {
+                value: 'Warehousing / Distribution',
+                label: 'Warehousing / Distribution'
+            },
+            {
+                value: 'Final Product Assembly',
+                label: 'Final Product Assembly'
+            },
+            {
+                value: 'Office / HQ',
+                label: 'Office / HQ'
+            }
+        ],
+        processingType: [
+            {
+                value: 'Assembly',
+                label: 'Assembly'
+            },
+            {
+                value: 'Cut & Sew',
+                label: 'Cut & Sew'
+            },
+            {
+                value: 'Warehousing / Distribution',
+                label: 'Warehousing / Distribution'
+            }
+        ],
+        numberOfWorkers: "20-35",
+        parentCompany: "Ajax Parent Ltd."
+    };
+
+    const expectedOutput = {
+        name: 'AJAX AUTO DISMANTLERS INC',
+        address: '2895 3RD, SAN FRANCISCO, CA, 94107-0000',
+        sector: [
+            'Waste Management',
+            'Recycling'
+        ],
+        product_type: [
+            'Bottles',
+            'Pockets',
+            'Domestic goods'
+        ],
+        location_type: [
+            'Warehousing / Distribution',
+            'Final Product Assembly',
+            'Office / HQ'
+        ],
+        processing_type: [
+            'Assembly',
+            'Cut & Sew',
+            'Warehousing / Distribution'
+        ],
+        parent_company: 'Ajax Parent Ltd.',
+        number_of_workers: {
+            "min": 20,
+            "max": 35
+        },
+        country: 'US',
+        source: 'SLC'
     };
 
     expect(parseContribData(input)).toEqual(expectedOutput);
