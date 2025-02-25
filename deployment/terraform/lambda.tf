@@ -158,6 +158,7 @@ resource "aws_iam_role_policy" "lambda_edge_redirect_to_s3_origin_exec_role" {
 
 resource "aws_lambda_function" "redirect_to_s3_origin" {
   filename         = "lambda-functions/redirect_to_s3_origin/redirect_to_s3_origin.zip"
+  source_code_hash = filebase64sha256("lambda-functions/redirect_to_s3_origin/redirect_to_s3_origin.zip")
   function_name    = "func${local.short}RedirectToS3origin"
   role             = aws_iam_role.lambda_edge_redirect_to_s3_origin.arn
   handler          = "index.handler"
