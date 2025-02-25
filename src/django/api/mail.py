@@ -34,11 +34,13 @@ def make_facility_list_url(request, list_id):
 def make_claimed_url(request):
     return '{}/claimed'.format(make_oar_url(request))
 
+
 def make_contribution_record_url(request, moderation_event):
     return '{}/contribute/production-location/info/{}'.format(
         make_oar_url(request),
         moderation_event.uuid,
     )
+
 
 def send_claim_facility_confirmation_email(request, facility_claim):
     subj_template = get_template('mail/claim_facility_submitted_subject.txt')
@@ -414,19 +416,28 @@ def send_facility_list_rejection_email(request, facility_list):
         html_message=html_template.render(denial_dictionary)
     )
 
+
 def send_slc_additional_info_confirmation_email(
     request,
     moderation_event,
     production_location
 ):
-    subj_template = get_template('mail/slc_additional_info_confirmation_subject.txt')
-    text_template = get_template('mail/slc_additional_info_confirmation_body.txt')
-    html_template = get_template('mail/slc_additional_info_confirmation_body.html')
+    subj_template = get_template(
+        'mail/slc_additional_info_confirmation_subject.txt'
+    )
+    text_template = get_template(
+        'mail/slc_additional_info_confirmation_body.txt'
+    )
+    html_template = get_template(
+        'mail/slc_additional_info_confirmation_body.html'
+    )
 
     additional_info_dictionary = {
         'moderation_id': moderation_event.uuid,
-        'location_url': make_facility_url(request, production_location),
-        'moderation_url': make_contribution_record_url(request, moderation_event),
+        'location_url': make_facility_url(request,
+                                          production_location),
+        'moderation_url': make_contribution_record_url(request,
+                                                       moderation_event),
     }
 
     send_mail(
@@ -437,14 +448,22 @@ def send_slc_additional_info_confirmation_email(
         html_message=html_template.render(additional_info_dictionary)
     )
 
+
 def send_slc_new_location_confirmation_email(request, moderation_event):
-    subj_template = get_template('mail/slc_new_location_confirmation_subject.txt')
-    text_template = get_template('mail/slc_new_location_confirmation_body.txt')
-    html_template = get_template('mail/slc_new_location_confirmation_body.html')
+    subj_template = get_template(
+        'mail/slc_new_location_confirmation_subject.txt'
+    )
+    text_template = get_template(
+        'mail/slc_new_location_confirmation_body.txt'
+    )
+    html_template = get_template(
+        'mail/slc_new_location_confirmation_body.html'
+    )
 
     new_location_dictionary = {
         'moderation_id': moderation_event.uuid,
-        'moderation_url': make_contribution_record_url(request, moderation_event),
+        'moderation_url': make_contribution_record_url(request,
+                                                       moderation_event),
     }
 
     send_mail(
@@ -455,20 +474,29 @@ def send_slc_new_location_confirmation_email(request, moderation_event):
         html_message=html_template.render(new_location_dictionary)
     )
 
+
 def send_slc_contribution_approval_email(
     request,
     moderation_event,
     facility_list_item
 ):
-    subj_template = get_template('mail/slc_contribution_approval_subject.txt')
-    text_template = get_template('mail/slc_contribution_approval_body.txt')
-    html_template = get_template('mail/slc_contribution_approval_body.html')
+    subj_template = get_template(
+        'mail/slc_contribution_approval_subject.txt'
+    )
+    text_template = get_template(
+        'mail/slc_contribution_approval_body.txt'
+    )
+    html_template = get_template(
+        'mail/slc_contribution_approval_body.html'
+    )
 
     approval_dictionary = {
         'production_location_name': facility_list_item.facility.name,
-        'production_location_url': make_facility_url(request, facility_list_item.facility),
+        'production_location_url': make_facility_url(request,
+                                                     facility_list_item.facility),
         'action_type': moderation_event.action_type,
-        'moderation_url': make_contribution_record_url(request, moderation_event),
+        'moderation_url': make_contribution_record_url(request,
+                                                       moderation_event),
     }
 
     send_mail(
@@ -479,14 +507,22 @@ def send_slc_contribution_approval_email(
         html_message=html_template.render(approval_dictionary)
     )
 
+
 def send_slc_contribution_rejected_email(request, moderation_event):
-    subj_template = get_template('mail/slc_contribution_rejected_subject.txt')
-    text_template = get_template('mail/slc_contribution_rejected_body.txt')
-    html_template = get_template('mail/slc_contribution_rejected_body.html')
+    subj_template = get_template(
+        'mail/slc_contribution_rejected_subject.txt'
+    )
+    text_template = get_template(
+        'mail/slc_contribution_rejected_body.txt'
+    )
+    html_template = get_template(
+        'mail/slc_contribution_rejected_body.html'
+    )
 
     rejected_dictionary = {
         'moderation_id': moderation_event.uuid,
-        'moderation_url': make_contribution_record_url(request, moderation_event),
+        'moderation_url': make_contribution_record_url(request,
+                                                       moderation_event),
     }
 
     send_mail(

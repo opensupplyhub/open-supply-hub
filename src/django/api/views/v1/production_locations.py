@@ -186,7 +186,8 @@ class ProductionLocations(ViewSet):
                 result.errors,
                 status=result.status_code)
 
-        send_slc_new_location_confirmation_email(request, result.moderation_event)
+        send_slc_new_location_confirmation_email(request,
+                                                 result.moderation_event)
         return Response(
             {
                 'moderation_id': result.moderation_event.uuid,
