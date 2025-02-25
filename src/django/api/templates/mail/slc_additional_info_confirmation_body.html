@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>
+            We received your request to contribute in production location on Open Supply Hub
+        </title>
+    </head>
+    <body>
+        <p>Hello,</p>
+        <p>
+            You are receiving this email because you submitted
+            data to production location on Open Supply Hub (OS Hub):
+        </p>
+        <ul>
+            <li>Moderation Id: {{ moderation_id }}</li>
+            <li>Production Location Id: {{ location_id }}</li>
+            <li>Contribution Record Profile: {{ moderation_url }}</li>
+        </ul>
+        <p>
+            The OS Hub Team will review your request and be in touch soon.
+        </p>
+        <p>Best Regards,</p>
+        {% include "mail/data_team_signature_block.html" %}
+    </body>
+</html>

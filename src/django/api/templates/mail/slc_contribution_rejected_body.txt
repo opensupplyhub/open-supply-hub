@@ -1,0 +1,15 @@
+{% block content %}
+Hello,
+
+You are receiving this email because your contribution request to the production location on
+Open Supply Hub (OS Hub) has been rejected:
+
+- Moderation Id: {{ moderation_id }}
+- Contribution Record Profile: {{ moderation_url }}
+
+Thank you for your contribution! Your data helps open doors to safe and sustainable supply chains.
+
+Best Regards,
+
+{% include "mail/data_team_signature_block.txt" %}
+{% endblock content %}

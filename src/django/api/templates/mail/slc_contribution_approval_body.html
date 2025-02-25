@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>
+      Great News: your OS Hub contribution is live!
+    </title>
+  </head>
+  <body>
+    <p>
+      Hello,
+    </p>
+    <p>
+        You are receiving this email because your contribution request to the production location on
+        Open Supply Hub (OS Hub) has been approved:
+    </p>
+    <ul>
+        <li>Name of Production Location: {{ production_location_name }}</li>
+        <li>OS Hub Profile: {{ production_location_url }}</li>
+        <li>Contribution Record Profile: {{ moderation_url }}</li>
+    </ul>
+    <p>
+      Thank you for your contribution! Your data helps open doors to safe and sustainable supply chains.
+    </p>
+    {% include "mail/data_team_signature_block.html" %}
+  </body>
+</html>
