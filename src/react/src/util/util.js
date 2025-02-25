@@ -297,7 +297,7 @@ export const makeProductionLocationFromModerationEventURL = (
 };
 
 export const makeContributeProductionLocationUpdateURL = osID =>
-    `/contribute/production-location/${osID}/info/`;
+    `/contribute/single-location/${osID}/info/`;
 
 export const makeGetModerationEventsWithQueryString = (
     qs,
