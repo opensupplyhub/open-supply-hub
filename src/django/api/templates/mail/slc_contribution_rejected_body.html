@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>
+        ACTION REQUESTED: We need more information from you to process your submission.
+    </title>
+  </head>
+  <body>
+    <p>
+      Hello,
+    </p>
+    <p>
+        You are receiving this email because your contribution request to the production location on
+        Open Supply Hub (OS Hub) has been rejected:
+    </p>
+    <ul>
+        <li>Moderation Id: {{ moderation_id }}</li>
+        <li>Contribution Record Profile: {{ moderation_url }}</li>
+    </ul>
+    <p>
+        The OS Hub Team will contact with you soon.
+    </p>
+    {% include "mail/data_team_signature_block.html" %}
+  </body>
+</html>

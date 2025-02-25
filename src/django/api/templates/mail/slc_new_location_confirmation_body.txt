@@ -1,0 +1,14 @@
+{% block content %}
+Hello,
+
+You are receiving this email because you submitted new production location on Open Supply Hub (OS Hub):
+
+- Moderation Id: {{ moderation_id }}
+- Contribution Record Profile: {{ moderation_url }}
+
+The OS Hub Team will review your request and be in touch soon.
+
+Best Regards,
+
+{% include "mail/data_team_signature_block.txt" %}
+{% endblock content %}
