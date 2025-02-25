@@ -23,6 +23,7 @@ import startsWith from 'lodash/startsWith';
 import head from 'lodash/head';
 import replace from 'lodash/replace';
 import trimEnd from 'lodash/trimEnd';
+import trim from 'lodash/trim';
 import range from 'lodash/range';
 import ceil from 'lodash/ceil';
 import toInteger from 'lodash/toInteger';
@@ -297,7 +298,7 @@ export const makeProductionLocationFromModerationEventURL = (
 };
 
 export const makeContributeProductionLocationUpdateURL = osID =>
-    `/contribute/production-location/${osID}/info/`;
+    `/contribute/single-location/${osID}/info/`;
 
 export const makeGetModerationEventsWithQueryString = (
     qs,
@@ -1486,3 +1487,39 @@ export const getLastPathParameter = url => {
     const cleanUrl = url.split('?')[0];
     return last(split(trimEnd(cleanUrl, '/'), '/')) || '';
 };
+
+export const isRequiredFieldValid = val => !isEmpty(trim(val));
+
+export const getSelectStyles = (isErrorState = false) => ({
+    control: (provided, state) => {
+        let borderColor;
+        if (isErrorState) {
+            borderColor = COLOURS.RED;
+        } else if (state.isFocused) {
+            borderColor = COLOURS.PURPLE;
+        } else {
+            borderColor = provided.borderColor;
+        }
+
+        const boxShadow = state.isFocused
+            ? `inset 0 0 0 1px ${borderColor}`
+            : provided.boxShadow;
+
+        return {
+            ...provided,
+            minHeight: '56px',
+            borderRadius: '0',
+            borderColor,
+            boxShadow,
+            transition: 'box-shadow 0.2s',
+            '&:hover': {
+                borderColor: !isErrorState && !state.isFocused && 'black',
+            },
+        };
+    },
+    placeholder: provided => ({
+        ...provided,
+        opacity: 0.7,
+        color: isErrorState ? COLOURS.RED : provided.color,
+    }),
+});

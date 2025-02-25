@@ -995,9 +995,6 @@ export const makeSearchByNameAddressTabStyles = theme =>
             fontWeight: theme.typography.fontWeightSemiBold,
             margin: '24px 0 8px 0',
         }),
-        requiredAsterisk: Object.freeze({
-            color: COLOURS.RED,
-        }),
         textInputStyles: Object.freeze({
             maxWidth: '528px',
         }),
@@ -1327,6 +1324,9 @@ export const productionLocationInfoStyles = theme =>
             padding: '0 110px',
             borderRadius: '0',
             boxShadow: 'none',
+        }),
+        errorWrapStyles: Object.freeze({
+            marginTop: '8px',
         }),
         mainContainerStyles: Object.freeze({
             background: theme.palette.background.grey,
