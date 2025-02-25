@@ -30,7 +30,7 @@ describe('ProductionLocationDetails component', () => {
 
     test('renders production location details correctly', () => {
         useLocation.mockReturnValue({
-            pathname: '/contribute/production-location/search/id/US2021250D1DTN7',
+            pathname: '/contribute/single-location/search/id/US2021250D1DTN7',
         });
 
         const { getByText } = renderWithProviders(
@@ -60,7 +60,7 @@ describe('ProductionLocationDetails component', () => {
 
     test('renders previous OS IDs that match the search parameter', () => {
         useLocation.mockReturnValue({
-            pathname: '/contribute/production-location/search/id/US2020053ZH1RY5',
+            pathname: '/contribute/single-location/search/id/US2020053ZH1RY5',
         });
 
         const { getByText } = renderWithProviders(
@@ -73,7 +73,7 @@ describe('ProductionLocationDetails component', () => {
 
     test('does not render previous OS IDs if they do not match the search parameter', () => {
         useLocation.mockReturnValue({
-            pathname: '/contribute/production-location/search/id/UNKNOWN_OS_ID',
+            pathname: '/contribute/single-location/search/id/UNKNOWN_OS_ID',
         });
 
         const { queryByText } = renderWithProviders(
@@ -85,7 +85,7 @@ describe('ProductionLocationDetails component', () => {
 
     test('renders only "OS ID:" if there are no historical OS IDs', () => {
         useLocation.mockReturnValue({
-            pathname: '/contribute/production-location/search/id/US2021250D1DTN7',
+            pathname: '/contribute/single-location/search/id/US2021250D1DTN7',
         });
 
         const { getByText } = renderWithProviders(

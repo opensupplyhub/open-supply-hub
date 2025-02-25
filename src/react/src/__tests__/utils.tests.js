@@ -1881,27 +1881,27 @@ it('should not call setter when dataKey is null', () => {
 });
 
 it('extracts the ID from a valid URL without a trailing slash', () => {
-    const url = '/contribute/production-location/search/id/BD202034606B9SA';
+    const url = '/contribute/single-location/search/id/BD202034606B9SA';
     expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
 });
 
 it('extracts the ID from a valid URL with a trailing slash', () => {
-    const url = '/contribute/production-location/search/id/BD202034606B9SA/';
+    const url = '/contribute/single-location/search/id/BD202034606B9SA/';
     expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
 });
 
 it('returns id when the URL ends at "id/" with no ID', () => {
-    const url = '/contribute/production-location/search/id/';
+    const url = '/contribute/single-location/search/id/';
     expect(getLastPathParameter(url)).toBe('id');
 });
 
 it('returns the correct ID when the URL contains query parameters', () => {
-    const url = '/contribute/production-location/search/id/BD202034606B9SA?foo=bar';
+    const url = '/contribute/single-location/search/id/BD202034606B9SA?foo=bar';
     expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
 });
 
 it('returns the correct ID when the URL has multiple segments after "id/"', () => {
-    const url = '/contribute/production-location/search/id/BD202034606B9SA/extra';
+    const url = '/contribute/single-location/search/id/BD202034606B9SA/extra';
     expect(getLastPathParameter(url)).toBe('extra');
 });
 

@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
-## Release 2.1.0
+## Release 1.31.0
 
 ## Introduction
 * Product name: Open Supply Hub
@@ -22,10 +22,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe code/API changes here.*
 
 ### Architecture/Environment changes
-* [OSDEV-1580](https://opensupplyhub.atlassian.net/browse/OSDEV-1580) - The new architecture diagram of the OS Hub platform has been created in response to the penetration testing that will be conducted in February 2025. The diagram has been placed in the root of the `./doc/system_design/` folder, replacing the old diagrams that have been moved to the `./doc/system_design/archived/` folder as they are no longer valid. A new `./doc/system_design/README.md` file has also been created, with a reference to the new architecture/network diagram.
+* *Describe architecture/environment changes here.*
 
 ### Bugfix
-* [OSDEV-1745](https://opensupplyhub.atlassian.net/browse/OSDEV-1745) - The `Search by Name and Address` tab was defined as default on the Production Location Search page.
+* [OSDEV-1777](https://opensupplyhub.atlassian.net/browse/OSDEV-1777) - A consistent URL style was established across all pages of the SLC workflow. After the changes, the URL begins from `/contribute/single-location/`.
 * [OSDEV-1678](https://opensupplyhub.atlassian.net/browse/OSDEV-1678) - Added asterisks next to each required form field (Name, Address, and Country) on the "Production Location Information" page. Highlighted an empty field and displayed an error message if it loses focus.
 
 ### What's new
@@ -37,11 +37,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `reindex_database`
 
 
-## Release 2.0.0
+## Release 1.30.0
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: February 22, 2025
+* Release date: March 01, 2025
 
 ### Database changes
 * [OSDEV-1662](https://opensupplyhub.atlassian.net/browse/OSDEV-1662) - Added a new field, `action_perform_by`, to the `api_moderationevent` table so we can handle and store moderation actions user data.
@@ -65,6 +65,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Architecture/Environment changes
 * [OSDEV-1515](https://opensupplyhub.atlassian.net/browse/OSDEV-1515) - Removed `rds_allow_major_version_upgrade` and `rds_apply_immediately` from the environment tfvars files (e.g., terraform-production.tfvars) to set them to `false` again, as the default values in `/deployment/terraform/variables.tf` are `false`. This is necessary to prevent unintended PostgreSQL major version upgrades since the target PostgreSQL 16.3 version has been reached.
 * [OSDEV-1692](https://opensupplyhub.atlassian.net/browse/OSDEV-1692) - Update cache dependencies due to Ubuntu 20 image runner deprecation. See [link](https://github.blog/changelog/2024-12-05-notice-of-upcoming-releases-and-breaking-changes-for-github-actions/#actions-cache-v1-v2-and-actions-toolkit-cache-package-closing-down).
+* [OSDEV-1580](https://opensupplyhub.atlassian.net/browse/OSDEV-1580) - The new architecture diagram of the OS Hub platform has been created in response to the penetration testing that will be conducted in February 2025. The diagram has been placed in the root of the `./doc/system_design/` folder, replacing the old diagrams that have been moved to the `./doc/system_design/archived/` folder as they are no longer valid. A new `./doc/system_design/README.md` file has also been created, with a reference to the new architecture/network diagram.
+* [OSDEV-1785](https://opensupplyhub.atlassian.net/browse/OSDEV-1785) - Forked the aiokafka repository to the Open Supply Hub GitHub account, reverted to v0.8.0, and created a kafka-python-2.0.3 [branch](https://github.com/opensupplyhub/aiokafka/tree/kafka-python-2.0.3). Pinned kafka-python to v2.0.3 ([released](https://pypi.org/project/kafka-python/#history) on Feb 13, 2025) in the Dockerfile to install aiokafka from the forked repository and verified the local installation.
 
 ### Bugfix
 * [OSDEV-1698](https://opensupplyhub.atlassian.net/browse/OSDEV-1698) - SLC: Refactored the "Submit Another Location" button link to direct users to the search-by-name-and-address form at /contribute/single-location?tab=name-address.
@@ -81,6 +83,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1739](https://opensupplyhub.atlassian.net/browse/OSDEV-1739) - Applied state cleanup on modal unmount to prevent the same dialog from appearing when clicking on a different production location.
 * [OSDEV-1744](https://opensupplyhub.atlassian.net/browse/OSDEV-1744) - Fixed the issue where the text `by user ID:` appeared even when `user_id` was `null` in Contribution Record page.
 * [OSDEV-1779](https://opensupplyhub.atlassian.net/browse/OSDEV-1779) - SLC. Made Parent Company field as regular text field and apply snake_case keys to standard keys (e.g. `location_type`, `number_of_workers`, `parent_company`, `processing_type` and `product_type`) in request payload from production location info page to conform API specs.
+* [OSDEV-1745](https://opensupplyhub.atlassian.net/browse/OSDEV-1745) - The `Search by Name and Address` tab was defined as default on the Production Location Search page.
 
 ### What's new
 * [OSDEV-1662](https://opensupplyhub.atlassian.net/browse/OSDEV-1662) - Added a new field, `action_perform_by`, to the moderation event. This data appears on the Contribution Record page when a moderator perform any actions like `APPROVED` or `REJECTED`.
