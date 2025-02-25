@@ -131,38 +131,38 @@ resource "aws_iam_role_policy" "lambda_edge_redirect_to_s3_origin_exec_role" {
   policy = data.aws_iam_policy_document.lambda_edge_redirect_to_s3_origin_exec_role_policy.json
 }
 
-# data "archive_file" "lambda_edge_redirect_to_s3_origin" {
-#   type        = "zip"
-#   source_file = "lambda-functions/redirect_to_s3_origin/index.mjs"
-#   output_path = "/tmp/redirect_to_s3_origin.zip"
-# }
-
 data "archive_file" "lambda_edge_redirect_to_s3_origin" {
   type        = "zip"
-  output_path = "/tmp/redirect_to_s3_origin.zip"
-  source {
-    content  = <<EOF
-'use strict';
+  source_file = "lambda-functions/redirect_to_s3_origin/index.mjs"
+  output_path = "/tmp/redirect_to_s3_origin_${timestamp()}.zip"
+}
 
-export const handler = async (event) => {
-    const request = event.Records[0].cf.request;
-    if (request.uri === '/') {
-        request.uri = '/index.html';
-    }
-    return request;
-}
-EOF
-    filename = "index.mjs"
-  }
-}
+# data "archive_file" "lambda_edge_redirect_to_s3_origin" {
+#   type        = "zip"
+#   output_path = "/tmp/redirect_to_s3_origin.zip"
+#   source {
+#     content  = <<EOF
+# 'use strict';
+#
+# export const handler = async (event) => {
+#     const request = event.Records[0].cf.request;
+#     if (request.uri === '/') {
+#         request.uri = '/index.html';
+#     }
+#     return request;
+# }
+# EOF
+#     filename = "index.mjs"
+#   }
+# }
 
 resource "aws_lambda_function" "redirect_to_s3_origin" {
-  filename         = "/tmp/redirect_to_s3_origin.zip"
+  filename         = "/tmp/redirect_to_s3_origin_${timestamp()}.zip"
   source_code_hash = data.archive_file.lambda_edge_redirect_to_s3_origin.output_base64sha256
   function_name    = "func${local.short}RedirectToS3origin"
   role             = aws_iam_role.lambda_edge_redirect_to_s3_origin.arn
   handler          = "index.handler"
   publish          = true
   runtime          = "nodejs18.x"
-  provider         = "aws.certificates"
+  provider         = aws.certificates
 }
