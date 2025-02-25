@@ -165,10 +165,6 @@ resource "aws_lambda_function" "redirect_to_s3_origin" {
   runtime          = "nodejs18.x"
   provider         = aws.certificates
 
-  logging_config {
-    log_format = "Text"
-  }
-
   depends_on = [
     aws_iam_role.lambda_edge_redirect_to_s3_origin,
     aws_cloudwatch_log_group.redirect_to_s3_origin,
