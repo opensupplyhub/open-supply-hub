@@ -49,7 +49,7 @@ class NumberOfWorkersSerializer(serializers.Serializer):
 
         if not isinstance(data.get('max'), int):
             errors.append({
-                "field": "min",
+                "field": "max",
                 "detail":
                     "The max field must be an integer."
             })
