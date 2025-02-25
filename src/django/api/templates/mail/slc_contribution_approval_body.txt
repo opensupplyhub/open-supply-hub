@@ -6,6 +6,7 @@ Open Supply Hub (OS Hub) has been approved:
 
 - Name of Production Location: {{ production_location_name }}
 - OS Hub Profile: {{ production_location_url }}
+- Moderation Action Type: {{ action_type }}
 - Contribution Record Profile: {{ moderation_url }}
 
 Thank you for your contribution! Your data helps open doors to safe and sustainable supply chains.

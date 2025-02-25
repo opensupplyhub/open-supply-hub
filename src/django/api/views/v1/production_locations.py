@@ -242,7 +242,11 @@ class ProductionLocations(ViewSet):
                 result.errors,
                 status=result.status_code)
 
-        send_slc_additional_info_confirmation_email(request, result.moderation_event)
+        send_slc_additional_info_confirmation_email(
+            request,
+            result.moderation_event,
+            result.os
+        )
         return Response(
             {
                 'os_id': result.os.id,
