@@ -64,7 +64,7 @@ describe('SearchByOsIdTab component', () => {
         fireEvent.click(getByRole('button', { name: /Search by ID/i }));
 
         expect(history.location.pathname).toBe(
-            '/contribute/production-location/search/id/CN2021250D1DTN7'
+            '/contribute/single-location/search/id/CN2021250D1DTN7'
         );
     });
 
