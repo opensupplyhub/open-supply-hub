@@ -7,7 +7,7 @@ Open Supply Hub (OS Hub) has been rejected:
 - Moderation Id: {{ moderation_id }}
 - Contribution Record Profile: {{ moderation_url }}
 
-Thank you for your contribution! Your data helps open doors to safe and sustainable supply chains.
+The OS Hub Team will contact with you soon.
 
 Best Regards,
 
