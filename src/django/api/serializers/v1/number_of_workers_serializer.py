@@ -32,32 +32,32 @@ class NumberOfWorkersSerializer(serializers.Serializer):
             raise serializers.ValidationError(
               "Invalid data. Expected a dictionary(object).")
 
-        min = data.get('min')
-        max = data.get('max')
+        min_value = data.get('min')
+        max_value = data.get('max')
         errors = []
 
-        if not min:
+        if not min_value:
             errors.append({
                 "field": "min",
                 "detail":
                     "The min field is required!"
             })
 
-        if not max:
+        if not max_value:
             errors.append({
                 "field": "max",
                 "detail":
                     "The max field is required!"
             })
 
-        if min and not isinstance(data.get('min'), int):
+        if min_value and not isinstance(min_value, int):
             errors.append({
                 "field": "min",
                 "detail":
                     "The min field must be an integer."
             })
 
-        if max and not isinstance(data.get('max'), int):
+        if max_value and not isinstance(max_value, int):
             errors.append({
                 "field": "max",
                 "detail":
