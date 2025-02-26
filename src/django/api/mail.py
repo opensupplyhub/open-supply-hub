@@ -492,11 +492,15 @@ def send_slc_contribution_approval_email(
 
     approval_dictionary = {
         'production_location_name': facility_list_item.facility.name,
-        'production_location_url': make_facility_url(request,
-                                                     facility_list_item.facility),
+        'production_location_url': make_facility_url(
+            request,
+            facility_list_item.facility
+        ),
         'action_type': moderation_event.action_type,
-        'moderation_url': make_contribution_record_url(request,
-                                                       moderation_event),
+        'moderation_url': make_contribution_record_url(
+            request,
+            moderation_event
+        ),
     }
 
     send_mail(
