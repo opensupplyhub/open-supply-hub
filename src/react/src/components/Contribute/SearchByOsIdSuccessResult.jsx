@@ -24,7 +24,7 @@ const SearchByOsIdSuccessResult = ({
     const history = useHistory();
 
     const handleGoToSelectedProductionLocationInfo = () =>
-        history.push(`/contribute/production-location/${osId}/info/`);
+        history.push(`/contribute/single-location/${osId}/info/`);
 
     return (
         <>

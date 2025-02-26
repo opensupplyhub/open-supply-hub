@@ -103,7 +103,7 @@ ContributeProductionLocation.propTypes = {
     userHasSignedIn: bool.isRequired,
     fetchingSessionSignIn: bool.isRequired,
     classes: shape({
-        circularProgressContainerStyles: string.isRequired,
+        circularProgressContainerStyles: string,
         mainContainerStyles: string.isRequired,
         titleStyles: string.isRequired,
         tabsContainerStyles: string.isRequired,
