@@ -65,7 +65,7 @@ class NumberOfWorkersSerializer(serializers.Serializer):
             })
 
         if len(errors) > 0:
-            raise serializers.ValidationError({"field": {self.field_name},
+            raise serializers.ValidationError({"field": self.field_name,
                                                "errors": errors})
 
         return super().to_internal_value(data)
