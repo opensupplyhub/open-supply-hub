@@ -8,7 +8,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 
-import AuthLogInFromRoute from '../AuthLogInFromRoute';
+import RequireAuthNotice from '../RequireAuthNotice';
 
 import {
     fetchProductionLocationByOsId,
@@ -62,7 +62,7 @@ const SearchByOsIdResult = ({
     }
 
     if (!userHasSignedIn) {
-        return <AuthLogInFromRoute title={TITLE} />;
+        return <RequireAuthNotice title={TITLE} />;
     }
 
     return (

@@ -13,7 +13,7 @@ import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
-import AuthLogInFromRoute from '../AuthLogInFromRoute';
+import RequireAuthNotice from '../RequireAuthNotice';
 import StyledSelect from '../Filters/StyledSelect';
 import RequiredAsterisk from '../RequiredAsterisk';
 import { productionLocationInfoStyles } from '../../util/styles';
@@ -400,7 +400,7 @@ const ProductionLocationInfo = ({
     }
 
     if (!userHasSignedIn) {
-        return <AuthLogInFromRoute title={TITLE} />;
+        return <RequireAuthNotice title={TITLE} />;
     }
 
     if (singleProductionLocationFetching) {

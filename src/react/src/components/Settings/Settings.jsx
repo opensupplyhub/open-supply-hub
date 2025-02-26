@@ -10,7 +10,7 @@ import AppOverflow from '../AppOverflow';
 import AppGrid from '../AppGrid';
 import SettingTabs from './SettingTabs';
 import EmbeddedMapConfigWrapper from '../EmbeddedMapConfigWrapper';
-import AuthLogInFromRoute from '../AuthLogInFromRoute';
+import RequireAuthNotice from '../RequireAuthNotice';
 
 import { userPropType } from '../../util/propTypes';
 import { USER_DEFAULT_STATE } from '../../util/constants';
@@ -44,7 +44,7 @@ function Settings({
 
     if (user.isAnon) {
         return (
-            <AuthLogInFromRoute
+            <RequireAuthNotice
                 title={TITLE}
                 text="Log in to update your settings"
             />

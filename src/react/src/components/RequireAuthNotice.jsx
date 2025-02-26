@@ -6,7 +6,7 @@ import AppGrid from './AppGrid';
 
 import { authLoginFormRoute } from '../util/constants';
 
-export default function AuthLogInFromRoute({ title, text }) {
+export default function RequireAuthNotice({ title, text }) {
     return (
         <AppGrid title={title}>
             <Grid container className="margin-bottom-64">
@@ -20,12 +20,12 @@ export default function AuthLogInFromRoute({ title, text }) {
     );
 }
 
-AuthLogInFromRoute.defaultProps = {
+RequireAuthNotice.defaultProps = {
     title: 'Unauthorized Access',
     text: 'Log in to contribute to Open Supply Hub',
 };
 
-AuthLogInFromRoute.propTypes = {
+RequireAuthNotice.propTypes = {
     title: string,
     text: string,
 };

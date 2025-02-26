@@ -12,7 +12,7 @@ import {
 import BackToSearchButton from './BackToSearchButton';
 import SearchByNameAndAddressNotFoundResult from './SearchByNameAndAddressNotFoundResult';
 import SearchByNameAndAddressSuccessResult from './SearchByNameAndAddressSuccessResult';
-import AuthLogInFromRoute from '../AuthLogInFromRoute';
+import RequireAuthNotice from '../RequireAuthNotice';
 import {
     contributeProductionLocationRoute,
     MAX_LOCATIONS_TO_SHOW,
@@ -54,7 +54,7 @@ const SearchByNameAndAddressResult = ({
         );
     }
     if (!userHasSignedIn) {
-        return <AuthLogInFromRoute title={TITLE} />;
+        return <RequireAuthNotice title={TITLE} />;
     }
 
     return (

@@ -6,13 +6,13 @@ import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import {
     authLoginFormRoute,
 } from '../../util/constants';
-import AuthLogInFromRoute from '../../components/AuthLogInFromRoute';
+import RequireAuthNotice from '../../components/RequireAuthNotice';
 
-describe('AuthLogInFromRoute component', () => {
+describe('RequireAuthNotice component', () => {
     const renderComponent = (preloadedState = {}) =>
         renderWithProviders(
             <Router history={history}>
-               <AuthLogInFromRoute {...preloadedState}/>,
+               <RequireAuthNotice {...preloadedState}/>,
             </Router>
         );
 

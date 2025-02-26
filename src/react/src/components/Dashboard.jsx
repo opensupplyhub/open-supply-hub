@@ -20,7 +20,7 @@ import DashboardModerationQueue from './Dashboard/DashboardModerationQueue';
 import DashboardContributionRecord from './Dashboard/DashboardContributionRecord';
 import FeatureFlag from './FeatureFlag';
 import RouteNotFound from './RouteNotFound';
-import AuthLogInFromRoute from './AuthLogInFromRoute';
+import RequireAuthNotice from './RequireAuthNotice';
 
 import { checkWhetherUserHasDashboardAccess } from '../util/util';
 
@@ -92,7 +92,7 @@ function Dashboard({
 
     if (!userHasSignedIn) {
         return (
-            <AuthLogInFromRoute
+            <RequireAuthNotice
                 title={TITLE}
                 text="Sign in to view Open Supply Hub Dashboard"
             />

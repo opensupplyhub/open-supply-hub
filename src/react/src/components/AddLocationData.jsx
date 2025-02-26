@@ -10,7 +10,7 @@ import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
 import AppGrid from './AppGrid';
-import AuthLogInFromRoute from './AuthLogInFromRoute';
+import RequireAuthNotice from './RequireAuthNotice';
 
 import { openInNewTab } from '../util/util';
 import {
@@ -43,7 +43,7 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
     }
 
     if (!userHasSignedIn) {
-        return <AuthLogInFromRoute title="Contribute" />;
+        return <RequireAuthNotice title="Contribute" />;
     }
 
     return (

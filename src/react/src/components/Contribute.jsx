@@ -9,7 +9,7 @@ import Paper from '@material-ui/core/Paper';
 import AppGrid from './AppGrid';
 import AppOverflow from './AppOverflow';
 import ContributeForm from './ContributeForm';
-import AuthLogInFromRoute from './AuthLogInFromRoute';
+import RequireAuthNotice from './RequireAuthNotice';
 
 import { listsRoute, InfoLink, InfoPaths } from '../util/constants';
 
@@ -29,7 +29,7 @@ function ContributeList({ userHasSignedIn, fetchingSessionSignIn }) {
     }
 
     if (!userHasSignedIn) {
-        return <AuthLogInFromRoute title={TITLE} />;
+        return <RequireAuthNotice title={TITLE} />;
     }
 
     return (

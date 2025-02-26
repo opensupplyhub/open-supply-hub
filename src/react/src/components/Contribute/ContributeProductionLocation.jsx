@@ -9,7 +9,7 @@ import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
 import SearchByOsIdTab from './SearchByOsIdTab';
 import SearchByNameAndAddressTab from './SearchByNameAndAddressTab';
-import AuthLogInFromRoute from '../AuthLogInFromRoute';
+import RequireAuthNotice from '../RequireAuthNotice';
 import { makeContributeProductionLocationStyles } from '../../util/styles';
 
 const TAB_OS_ID = 'os-id';
@@ -55,7 +55,7 @@ const ContributeProductionLocation = ({
     }
 
     if (!userHasSignedIn) {
-        return <AuthLogInFromRoute title={TITLE} />;
+        return <RequireAuthNotice title={TITLE} />;
     }
 
     return (
