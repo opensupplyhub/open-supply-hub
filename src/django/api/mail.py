@@ -417,11 +417,7 @@ def send_facility_list_rejection_email(request, facility_list):
     )
 
 
-def send_slc_additional_info_confirmation_email(
-    request,
-    moderation_event,
-    production_location
-):
+def send_slc_additional_info_confirmation_email(moderation_event):
     subj_template = get_template(
         'mail/slc_additional_info_confirmation_subject.txt'
     )
@@ -433,11 +429,9 @@ def send_slc_additional_info_confirmation_email(
     )
 
     additional_info_dictionary = {
-        'moderation_id': moderation_event.uuid,
-        'location_url': make_facility_url(request,
-                                          production_location),
-        'moderation_url': make_contribution_record_url(request,
-                                                       moderation_event),
+        'pl_name': moderation_event.cleaned_data.name,
+        'pl_address': moderation_event.cleaned_data.address,
+        'pl_country': moderation_event.cleaned_data.country.name,
     }
 
     send_mail(
