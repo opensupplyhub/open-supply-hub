@@ -33,8 +33,8 @@ app_ecs_deployment_max_percent = "400"
 app_fargate_cpu = "2048"
 app_fargate_memory = "4096"
 
-app_ecs_max_cpu_threshold         = "85"
-app_ecs_min_cpu_threshold         = "30"
+app_ecs_max_cpu_threshold         = 85
+app_ecs_min_cpu_threshold         = 30
 app_ecs_scale_target_max_capacity = 2
 app_ecs_scale_target_min_capacity = 1
 app_ecs_cooldown                  = 120

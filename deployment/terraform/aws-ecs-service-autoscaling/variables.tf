@@ -1,6 +1,3 @@
-#------------------------------------------------------------------------------
-# Misc
-#------------------------------------------------------------------------------
 variable "name_prefix" {
   description = "Name prefix for resources on AWS"
 }
@@ -11,9 +8,6 @@ variable "tags" {
   description = "Resource tags"
 }
 
-#------------------------------------------------------------------------------
-# AWS ECS SERVICE AUTOSCALING
-#------------------------------------------------------------------------------
 variable "ecs_cluster_name" {
   description = "Name of the ECS cluster"
 }
@@ -24,35 +18,37 @@ variable "ecs_service_name" {
 
 variable "max_cpu_threshold" {
   description = "Threshold for max CPU usage"
-  default     = "85"
-  type        = string
+  default     = 85
+  type        = number
 }
+
 variable "min_cpu_threshold" {
   description = "Threshold for min CPU usage"
-  default     = "10"
-  type        = string
+  default     = 10
+  type        = number
 }
 
 variable "max_cpu_evaluation_period" {
   description = "The number of periods over which data is compared to the specified threshold for max cpu metric alarm"
-  default     = "3"
-  type        = string
+  default     = 3
+  type        = number
 }
+
 variable "min_cpu_evaluation_period" {
   description = "The number of periods over which data is compared to the specified threshold for min cpu metric alarm"
-  default     = "3"
-  type        = string
+  default     = 3
+  type        = number
 }
 
 variable "max_cpu_period" {
   description = "The period in seconds over which the specified statistic is applied for max cpu metric alarm"
-  default     = "60"
-  type        = string
+  default     = 60
+  type        = number
 }
 variable "min_cpu_period" {
   description = "The period in seconds over which the specified statistic is applied for min cpu metric alarm"
-  default     = "60"
-  type        = string
+  default     = 60
+  type        = number
 }
 
 variable "scale_target_max_capacity" {
@@ -68,13 +64,13 @@ variable "scale_target_min_capacity" {
 }
 
 variable "sns_topic_arn" {
-  # Optional ARN of an SNS topic for sending notifications
   type        = string
   description = "The ARN of an SNS topic to send notifications on alarm actions."
-  default     = "" # Set an empty string as default to avoid potential errors
+  default     = ""
 }
+
 variable "cooldown" {
   description = "Cooldown period for scaling actions"
   type        = number
-  default     = 60 // Default value, adjust as needed
+  default     = 60
 }
