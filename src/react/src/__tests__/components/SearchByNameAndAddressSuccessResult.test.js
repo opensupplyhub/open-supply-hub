@@ -129,7 +129,7 @@ describe('SearchByNameAndAddressSuccessResult component', () => {
         selectButtons.forEach((button, index) => {
           fireEvent.click(button);
           expect(mockHistoryPush).toHaveBeenCalledWith(
-            `/contribute/production-location/${defaultProps.productionLocations[index].os_id}/info/`
+            `/contribute/single-location/${defaultProps.productionLocations[index].os_id}/info/`
           );
         });
     });
