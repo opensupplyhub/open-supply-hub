@@ -1,14 +1,21 @@
 {% block content %}
 Hello,
 
-You are receiving this email because you submitted new production location on Open Supply Hub (OS Hub):
+Thank you for submitting your production location information to Open Supply Hub (OS Hub)!
 
-- Moderation Id: {{ moderation_id }}
-- Contribution Record Profile: {{ moderation_url }}
+Our team is now reviewing your submission to ensure it can be assigned an OS ID.
+This process may take up to 15 business days.
 
-The OS Hub Team will review your request and be in touch soon.
+Once the review is complete, you will receive an email confirming your OS ID.
+If we need any additional information, we will contact you at this email address.
+
+After your OS ID is confirmed, we will send you instructions for how you can claim your profile.
+You can read more about the claims process here.
+
+Thank you for sharing your information! Your data helps open doors to safe and sustainable
+supply chains.
 
 Best Regards,
 
-{% include "mail/data_team_signature_block.txt" %}
+{% include "mail/signature_block.txt" %}
 {% endblock content %}

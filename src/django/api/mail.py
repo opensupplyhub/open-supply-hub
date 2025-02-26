@@ -44,8 +44,9 @@ def make_contribution_record_url(request, moderation_event):
 
 def make_pl_search_url(request):
     return (
-        '{}/contribute/single-location'
-            .format(make_oar_url(request))
+        "{}/contribute/single-location".format(
+            make_oar_url(request)
+        )
     )
 
 
@@ -439,11 +440,11 @@ def send_slc_additional_info_confirmation_email(moderation_event):
         'pl_name': moderation_event.cleaned_data.get("name", ''),
         'pl_address': moderation_event.cleaned_data.get("address", ''),
         'pl_country': (
-            moderation_event.cleaned_data
-                .get("country", {})
-                .get("name")
+            moderation_event.cleaned_data.get("country", {})
+            .get("name")
         ),
-    }
+}
+
 
     send_mail(
         subj_template.render().rstrip(),
@@ -454,7 +455,7 @@ def send_slc_additional_info_confirmation_email(moderation_event):
     )
 
 
-def send_slc_new_location_confirmation_email(request, moderation_event):
+def send_slc_new_location_confirmation_email(moderation_event):
     subj_template = get_template(
         'mail/slc_new_location_confirmation_subject.txt'
     )
@@ -465,18 +466,12 @@ def send_slc_new_location_confirmation_email(request, moderation_event):
         'mail/slc_new_location_confirmation_body.html'
     )
 
-    new_location_dictionary = {
-        'moderation_id': moderation_event.uuid,
-        'moderation_url': make_contribution_record_url(request,
-                                                       moderation_event),
-    }
-
     send_mail(
         subj_template.render().rstrip(),
-        text_template.render(new_location_dictionary),
+        text_template.render(),
         settings.DATA_FROM_EMAIL,
         [moderation_event.contributor.admin.email],
-        html_message=html_template.render(new_location_dictionary)
+        html_message=html_template.render()
     )
 
 
@@ -496,7 +491,7 @@ def send_slc_contribution_approval_email(
     )
 
     approval_dictionary = {
-        'is_claimed': moderation_event.claim != None,
+        'is_claimed': moderation_event.claim is not None,
         'pl_search_url': make_pl_search_url(request),
         'os_id': facility_list_item.facility.id,
         'location_url': make_facility_url(
