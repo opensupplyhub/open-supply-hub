@@ -19,6 +19,7 @@ import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 
+import ConfirmActionDialog from './ConfirmActionDialog';
 import { makeDashboardContributionRecordStyles } from '../../util/styles';
 import {
     moderationEventsListItemPropType,
@@ -86,6 +87,9 @@ const DashboardContributionRecord = ({
 }) => {
     const prevSingleModerationEventItemRef = useRef();
     const [showBackdrop, setShowBackdrop] = useState(false);
+    const [confirmActionDialogIsOpen, setConfirmActionDialogIsOpen] = useState(
+        false,
+    );
     const {
         productionLocationName,
         countryCode,
@@ -160,6 +164,14 @@ const DashboardContributionRecord = ({
             });
         }
     }, [productionLocationName, countryCode, productionLocationAddress, osId]);
+
+    const handleRejectContribution = () => {
+        setConfirmActionDialogIsOpen(true);
+    };
+
+    const handleConfirmDialogClose = () => {
+        setConfirmActionDialogIsOpen(false);
+    };
 
     if (fetchModerationEventError) {
         return (
@@ -405,11 +417,7 @@ const DashboardContributionRecord = ({
                 <Button
                     color="secondary"
                     variant="contained"
-                    onClick={() => {
-                        updateModerationEvent(
-                            MODERATION_STATUSES_ENUM.REJECTED,
-                        );
-                    }}
+                    onClick={handleRejectContribution}
                     className={classes.buttonStyles}
                     disabled={isDisabled || moderationEventFetching}
                 >
@@ -441,6 +449,11 @@ const DashboardContributionRecord = ({
                     )}
                 </Grid>
             </Grid>
+            <ConfirmActionDialog
+                updateModerationEvent={updateModerationEvent}
+                isOpen={confirmActionDialogIsOpen}
+                closeDialog={handleConfirmDialogClose}
+            />
         </>
     );
 };
