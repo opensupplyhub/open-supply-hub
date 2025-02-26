@@ -8,6 +8,8 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 
+import RequireAuthNotice from '../RequireAuthNotice';
+
 import {
     fetchProductionLocationByOsId,
     resetSingleProductionLocation,
@@ -26,7 +28,10 @@ const SearchByOsIdResult = ({
     fetchProductionLocation,
     clearProductionLocation,
     classes,
+    userHasSignedIn,
+    fetchingSessionSignIn,
 }) => {
+    const TITLE = 'Production Location Search';
     const history = useHistory();
     const { osID } = useParams();
 
@@ -48,12 +53,16 @@ const SearchByOsIdResult = ({
         history.push(`${contributeProductionLocationRoute}?tab=os-id`);
     };
 
-    if (fetching) {
+    if (fetching || fetchingSessionSignIn) {
         return (
             <div className={classes.circularProgressContainerStyles}>
                 <CircularProgress />
             </div>
         );
+    }
+
+    if (!userHasSignedIn) {
+        return <RequireAuthNotice title={TITLE} />;
     }
 
     return (
@@ -63,7 +72,7 @@ const SearchByOsIdResult = ({
                 handleBackToSearch={handleBackToSearchByOsId}
             />
             <Typography component="h1" className={classes.mainTitleStyles}>
-                Production Location Search
+                {TITLE}
             </Typography>
 
             <Paper className={classes.resultContainerStyles}>
@@ -93,15 +102,23 @@ SearchByOsIdResult.propTypes = {
     fetchProductionLocation: func.isRequired,
     clearProductionLocation: func.isRequired,
     classes: object.isRequired,
+    userHasSignedIn: bool.isRequired,
+    fetchingSessionSignIn: bool.isRequired,
 };
 
 const mapStateToProps = ({
     contributeProductionLocation: {
         singleProductionLocation: { data, fetching },
     },
+    auth: {
+        user: { user },
+        session: { fetching: fetchingSessionSignIn },
+    },
 }) => ({
     data,
     fetching,
+    userHasSignedIn: !user.isAnon,
+    fetchingSessionSignIn,
 });
 
 const mapDispatchToProps = dispatch => ({
