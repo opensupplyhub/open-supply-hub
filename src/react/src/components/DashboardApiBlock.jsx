@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { arrayOf, bool, func, string } from 'prop-types';
+import { arrayOf, func, string } from 'prop-types';
 import { connect } from 'react-redux';
-import { Link } from 'react-router-dom';
 import moment from 'moment';
 
 import Paper from '@material-ui/core/Paper';
@@ -19,7 +18,7 @@ import {
     updateDashboardApiBlock,
 } from '../actions/dashboardApiBlocks';
 
-import { authLoginFormRoute, dashboardApiBlocksRoute } from '../util/constants';
+import { dashboardApiBlocksRoute } from '../util/constants';
 
 import { apiBlockPropType } from '../util/propTypes';
 
@@ -57,7 +56,6 @@ function DashboardApiBlock({
     apiBlock,
     error,
     fetching,
-    userHasSignedIn,
     push,
     fetchApiBlock,
     updateApiBlock,
@@ -95,16 +93,6 @@ function DashboardApiBlock({
     }
 
     if (error && error.length) {
-        if (!userHasSignedIn) {
-            return (
-                <AppGrid title="Unable to retrieve that API block">
-                    <Link to={authLoginFormRoute} href={authLoginFormRoute}>
-                        Sign in to view Open Supply Hub API blocks
-                    </Link>
-                </AppGrid>
-            );
-        }
-
         return (
             <AppGrid title="API block error">
                 <ul>
@@ -209,22 +197,17 @@ DashboardApiBlock.propTypes = {
     apiBlock: apiBlockPropType,
     error: arrayOf(string),
     fetchApiBlock: func.isRequired,
-    userHasSignedIn: bool.isRequired,
 };
 
 function mapStateToProps({
     dashboardApiBlocks: {
         apiBlock: { data, error, fetching },
     },
-    auth: {
-        user: { user },
-    },
 }) {
     return {
         apiBlock: data,
         error,
         fetching,
-        userHasSignedIn: !user.isAnon,
     };
 }
 

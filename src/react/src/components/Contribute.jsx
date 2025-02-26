@@ -9,18 +9,16 @@ import Paper from '@material-ui/core/Paper';
 import AppGrid from './AppGrid';
 import AppOverflow from './AppOverflow';
 import ContributeForm from './ContributeForm';
+import RequireAuthNotice from './RequireAuthNotice';
 
-import {
-    listsRoute,
-    authLoginFormRoute,
-    InfoLink,
-    InfoPaths,
-} from '../util/constants';
+import { listsRoute, InfoLink, InfoPaths } from '../util/constants';
 
 function ContributeList({ userHasSignedIn, fetchingSessionSignIn }) {
+    const TITLE = 'Contribute';
+
     if (fetchingSessionSignIn) {
         return (
-            <AppGrid title="Contribute">
+            <AppGrid title={TITLE}>
                 <Grid container className="margin-bottom-64">
                     <Grid item xs={12}>
                         <CircularProgress />
@@ -31,17 +29,7 @@ function ContributeList({ userHasSignedIn, fetchingSessionSignIn }) {
     }
 
     if (!userHasSignedIn) {
-        return (
-            <AppGrid title="Contribute">
-                <Grid container className="margin-bottom-64">
-                    <Grid item xs={12}>
-                        <Link to={authLoginFormRoute} href={authLoginFormRoute}>
-                            Log in to contribute to Open Supply Hub
-                        </Link>
-                    </Grid>
-                </Grid>
-            </AppGrid>
-        );
+        return <RequireAuthNotice title={TITLE} />;
     }
 
     return (

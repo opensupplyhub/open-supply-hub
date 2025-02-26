@@ -43,13 +43,17 @@ describe("ProductionLocationInfo component", () => {
                 fetching: false,
             },
         },
+        auth: {
+            user: { user: { isAnon: false } },
+            session: { fetching: false },
+        },
     };
 
     const defaultProps = {
         submitMethod: "POST",
     };
 
-    const renderComponent = (props = {}) => 
+    const renderComponent = (props = {}) =>
         renderWithProviders(
             <Router>
                 <ProductionLocationInfo {...defaultProps} {...props} />
