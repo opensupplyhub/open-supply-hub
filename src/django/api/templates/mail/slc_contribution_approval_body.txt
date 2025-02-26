@@ -1,17 +1,26 @@
 {% block content %}
 Hello,
 
-You are receiving this email because your contribution request to the production location on
-Open Supply Hub (OS Hub) has been approved:
+Thank you for submitting your production location information to Open Supply Hub (OS Hub)!
 
-- Name of Production Location: {{ production_location_name }}
-- OS Hub Profile: {{ production_location_url }}
-- Moderation Action Type: {{ action_type }}
-- Contribution Record Profile: {{ moderation_url }}
+You can now:
+1. Save your OS ID and the public link to your production location profile and share it
+with clients and stakeholders:
+    - OS ID: {{ os_id }}
+    - Public link: {{ location_url }}
+2. Claim your production location to take control of
+your data and make it visible to more global partners. It’s free and only takes a few
+steps! Claim my production location now.
+3. Learn more about the OS ID and how to use it to advance your business in this Guide for Facilities.
 
-Thank you for your contribution! Your data helps open doors to safe and sustainable supply chains.
+We will now review the documents you submitted to claim the location
+and either approve or deny the claim. Review of claims typically takes 7 - 10 business days.
+You will receive another email when this stage is complete.
+
+Thank you for sharing your information! Your data helps open doors to safe and sustainable
+supply chains.
 
 Best Regards,
 
-{% include "mail/data_team_signature_block.txt" %}
+{% include "mail/signature_block.txt" %}
 {% endblock content %}

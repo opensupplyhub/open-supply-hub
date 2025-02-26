@@ -42,6 +42,13 @@ def make_contribution_record_url(request, moderation_event):
     )
 
 
+def make_pl_search_url(request):
+    return (
+        '{}/contribute/single-location'
+            .format(make_oar_url(request))
+    )
+
+
 def send_claim_facility_confirmation_email(request, facility_claim):
     subj_template = get_template('mail/claim_facility_submitted_subject.txt')
     text_template = get_template('mail/claim_facility_submitted_body.txt')
@@ -431,9 +438,11 @@ def send_slc_additional_info_confirmation_email(moderation_event):
     additional_info_dictionary = {
         'pl_name': moderation_event.cleaned_data.get("name", ''),
         'pl_address': moderation_event.cleaned_data.get("address", ''),
-        'pl_country': moderation_event.cleaned_data
-            .get("country", {})
-            .get("name"),
+        'pl_country': (
+            moderation_event.cleaned_data
+                .get("country", {})
+                .get("name")
+        ),
     }
 
     send_mail(
@@ -487,15 +496,12 @@ def send_slc_contribution_approval_email(
     )
 
     approval_dictionary = {
-        'production_location_name': facility_list_item.facility.name,
-        'production_location_url': make_facility_url(
+        'is_claimed': moderation_event.claim != None,
+        'pl_search_url': make_pl_search_url(request),
+        'os_id': facility_list_item.facility.id,
+        'location_url': make_facility_url(
             request,
             facility_list_item.facility
-        ),
-        'action_type': moderation_event.action_type,
-        'moderation_url': make_contribution_record_url(
-            request,
-            moderation_event
         ),
     }
 
