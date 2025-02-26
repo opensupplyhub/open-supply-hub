@@ -1,12 +1,13 @@
 from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import get_template
-from api.models import FacilityList
+from api.models.facility.facility_list import FacilityList
+from api.models.moderation_event import ModerationEvent
 
 from countries.lib.countries import COUNTRY_NAMES
 
 
-def make_oar_url(request):
+def make_oshub_url(request):
     if settings.DEBUG:
         protocol = 'http'
         host = 'localhost:6543'
@@ -22,17 +23,17 @@ def make_oar_url(request):
 
 def make_facility_url(request, facility):
     return '{}/facilities/{}'.format(
-        make_oar_url(request),
+        make_oshub_url(request),
         facility.id,
     )
 
 
 def make_facility_list_url(request, list_id):
-    return '{}/lists/{}'.format(make_oar_url(request), list_id)
+    return '{}/lists/{}'.format(make_oshub_url(request), list_id)
 
 
 def make_claimed_url(request):
-    return '{}/claimed'.format(make_oar_url(request))
+    return '{}/claimed'.format(make_oshub_url(request))
 
 
 def send_claim_facility_confirmation_email(request, facility_claim):
@@ -407,4 +408,64 @@ def send_facility_list_rejection_email(request, facility_list):
         settings.DATA_FROM_EMAIL,
         [facility_list.source.contributor.admin.email],
         html_message=html_template.render(denial_dictionary)
+    )
+
+
+def send_production_location_creation_email(
+        moderation_event: ModerationEvent):
+    '''
+    This function is used to send an email to the contributor in cases where a
+    production location has been created based on the moderation event
+    initiated by the contributor.
+    '''
+
+    subj_template = get_template(
+        'mail/production_location_creation_subject.txt'
+    )
+    text_template = get_template('mail/production_location_creation_body.txt')
+    html_template = get_template('mail/production_location_creation_body.html')
+
+    creation_dict = {
+        'location_url': 'new location url',
+        'claim_url': 'new claim url',
+    }
+
+    send_mail(
+        subj_template.render().rstrip(),
+        text_template.render(creation_dict),
+        settings.DATA_FROM_EMAIL,
+        [moderation_event.contributor.admin.email],
+        html_message=html_template.render(creation_dict)
+    )
+
+
+def send_approved_contribution_to_existing_location_email(
+        moderation_event: ModerationEvent):
+    '''
+    This function is used to send an email to the contributor when a
+    new contribution has been successfully added to the existing production
+    location, based on the moderation event initiated by the contributor.
+    '''
+
+    subj_template = get_template(
+        'mail/approved_contribution_to_existing_location_subject.txt'
+    )
+    text_template = get_template(
+        'mail/approved_contribution_to_existing_location_body.txt'
+    )
+    html_template = get_template(
+        'mail/approved_contribution_to_existing_location_body.html'
+    )
+
+    creation_dict = {
+        'location_url': 'new location url',
+        'claim_url': 'new claim url',
+    }
+
+    send_mail(
+        subj_template.render().rstrip(),
+        text_template.render(creation_dict),
+        settings.DATA_FROM_EMAIL,
+        [moderation_event.contributor.admin.email],
+        html_message=html_template.render(creation_dict)
     )

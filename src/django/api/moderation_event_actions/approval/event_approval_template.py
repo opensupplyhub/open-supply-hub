@@ -44,18 +44,18 @@ class EventApprovalTemplate(ABC):
         moderation_event: ModerationEvent,
         moderator: User
     ) -> None:
-        self.__event = moderation_event
+        self._event = moderation_event
         self.__moderator = moderator
 
     @transaction.atomic
     def process_moderation_event(self) -> FacilityListItem:
-        data: Dict = self.__event.cleaned_data
+        data: Dict = self._event.cleaned_data
         log.info(
             f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Processing event '
             f'with data: {data}'
         )
 
-        contributor: Contributor = self.__event.contributor
+        contributor: Contributor = self._event.contributor
         log.info(
             f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Contributor: '
             f'{contributor}'
@@ -89,7 +89,7 @@ class EventApprovalTemplate(ABC):
             'created.'
         )
 
-        self.__set_geocoded_location(item, data, self.__event)
+        self.__set_geocoded_location(item, data, self._event)
         log.info(
             f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Geocoded '
             'location set.'
@@ -136,6 +136,12 @@ class EventApprovalTemplate(ABC):
             f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Status and os_id of '
             'Moderation Event updated.'
         )
+
+        # Send a push notification once all the steps have been finished.
+        # Push notifications should be sent only to contributors who came
+        # from the SLC flow.
+        if self._event.source == ModerationEvent.Source.SLC:
+            self._send_push_notification()
 
         return item
 
@@ -275,7 +281,7 @@ class EventApprovalTemplate(ABC):
         )
 
     def __update_event(self, item: FacilityListItem) -> None:
-        event = self.__event
+        event = self._event
         event.status = ModerationEvent.Status.APPROVED
         event.status_change_date = timezone.now()
         event.action_type = self._get_action_type()
@@ -323,4 +329,8 @@ class EventApprovalTemplate(ABC):
     @staticmethod
     def _create_new_facility(item: FacilityListItem, facility_id: str) -> None:
         """Hook method to create a new facility."""
+        pass
+
+    def _send_push_notification(self) -> None:
+        """Hook method to send a push notification to the contributor."""
         pass

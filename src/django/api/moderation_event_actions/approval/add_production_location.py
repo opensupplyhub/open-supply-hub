@@ -15,6 +15,10 @@ from api.moderation_event_actions.approval.event_approval_template import (
     EventApprovalTemplate,
 )
 from api.os_id import make_os_id
+from api.mail import (
+    send_production_location_creation_email,
+    send_approved_contribution_to_existing_location_email
+)
 
 log = logging.getLogger(__name__)
 
@@ -47,6 +51,24 @@ class AddProductionLocation(EventApprovalTemplate):
 
     def _get_action_type(self):
         return ModerationEvent.ActionType.NEW_LOCATION
+
+    def _send_push_notification(self) -> None:
+        # Check what the initial moderation event request type was submitted
+        # by the contributor to send the appropriate email.
+        if self._event.request_type == ModerationEvent.RequestType.CREATE:
+            send_production_location_creation_email(self._event)
+            log.info(
+                f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} A push '
+                'notification was sent to the user with '
+                f'ID: {self._event.contributor.admin_id}'
+            )
+        elif self._event.request_type == ModerationEvent.RequestType.UPDATE:
+            send_approved_contribution_to_existing_location_email(self._event)
+            log.info(
+                f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} A push '
+                'notification was sent to the user with '
+                f'ID: {self._event.contributor.admin_id}'
+            )
 
     @staticmethod
     def _create_new_facility(item: FacilityListItem, facility_id: str) -> None:
