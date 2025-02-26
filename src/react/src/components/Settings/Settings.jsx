@@ -46,7 +46,7 @@ function Settings({
         return (
             <RequireAuthNotice
                 title={TITLE}
-                text="Log in to update your settings"
+                text="Log in to update your account settings"
             />
         );
     }

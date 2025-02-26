@@ -94,7 +94,7 @@ function Dashboard({
         return (
             <RequireAuthNotice
                 title={TITLE}
-                text="Sign in to view Open Supply Hub Dashboard"
+                text="Sign in to view your Open Supply Hub Dashboard"
             />
         );
     }
