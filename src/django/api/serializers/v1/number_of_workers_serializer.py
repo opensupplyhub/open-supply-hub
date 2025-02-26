@@ -36,28 +36,28 @@ class NumberOfWorkersSerializer(serializers.Serializer):
         max_value = data.get('max')
         errors = []
 
-        if not min_value:
+        if min_value is None:
             errors.append({
                 "field": "min",
                 "detail":
                     "The min field is required!"
             })
 
-        if not max_value:
+        if max_value is None:
             errors.append({
                 "field": "max",
                 "detail":
                     "The max field is required!"
             })
 
-        if min_value and not isinstance(min_value, int):
+        if min_value is not None and not isinstance(min_value, int):
             errors.append({
                 "field": "min",
                 "detail":
                     "The min field must be an integer."
             })
 
-        if max_value and not isinstance(max_value, int):
+        if max_value is not None and not isinstance(max_value, int):
             errors.append({
                 "field": "max",
                 "detail":
