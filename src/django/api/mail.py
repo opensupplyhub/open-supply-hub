@@ -429,9 +429,11 @@ def send_slc_additional_info_confirmation_email(moderation_event):
     )
 
     additional_info_dictionary = {
-        'pl_name': moderation_event.cleaned_data.name,
-        'pl_address': moderation_event.cleaned_data.address,
-        'pl_country': moderation_event.cleaned_data.country.name,
+        'pl_name': moderation_event.cleaned_data.get("name", ''),
+        'pl_address': moderation_event.cleaned_data.get("address", ''),
+        'pl_country': moderation_event.cleaned_data
+            .get("country", {})
+            .get("name"),
     }
 
     send_mail(
