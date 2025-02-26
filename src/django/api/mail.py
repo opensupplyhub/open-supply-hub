@@ -513,7 +513,7 @@ def send_slc_contribution_rejected_email(request, moderation_event):
     )
 
     rejected_dictionary = {
-        'action_reason': getattr(moderation_event, "action_reason", None),
+        'action_reason': getattr(moderation_event, "action_reason_text_cleaned", None),
         'pl_search_url': make_pl_search_url(request),
         'pl_name': moderation_event.cleaned_data.get("name", ''),
         'pl_address': moderation_event.cleaned_data.get("address", ''),
