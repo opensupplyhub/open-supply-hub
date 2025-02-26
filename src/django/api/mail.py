@@ -35,13 +35,6 @@ def make_claimed_url(request):
     return '{}/claimed'.format(make_oar_url(request))
 
 
-def make_contribution_record_url(request, moderation_event):
-    return '{}/contribute/production-location/info/{}'.format(
-        make_oar_url(request),
-        moderation_event.uuid,
-    )
-
-
 def make_pl_search_url(request):
     return (
         "{}/contribute/single-location".format(
@@ -520,9 +513,14 @@ def send_slc_contribution_rejected_email(request, moderation_event):
     )
 
     rejected_dictionary = {
-        'moderation_id': moderation_event.uuid,
-        'moderation_url': make_contribution_record_url(request,
-                                                       moderation_event),
+        'action_reason': getattr(moderation_event, "action_reason", None),
+        'pl_search_url': make_pl_search_url(request),
+        'pl_name': moderation_event.cleaned_data.get("name", ''),
+        'pl_address': moderation_event.cleaned_data.get("address", ''),
+        'pl_country': (
+            moderation_event.cleaned_data.get("country", {})
+            .get("name")
+        ),
     }
 
     send_mail(

@@ -1,15 +1,25 @@
 {% block content %}
 Hello,
 
-You are receiving this email because your contribution request to the production location on
-Open Supply Hub (OS Hub) has been rejected:
+Thank you for submitting your production location information to Open Supply Hub (OS Hub)!
 
-- Moderation Id: {{ moderation_id }}
-- Contribution Record Profile: {{ moderation_url }}
+We weren’t able to accept your submission as provided. To move forward and get an OS ID,
+please follow these steps:
 
-The OS Hub Team will contact with you soon.
+1. Review the feedback below:
+    - {{ action_reason }}
+2. Make the necessary updates based on the feedback and
+resubmit your information using this link: Resubmit Your Production Location
+
+Here are the details of your submission:
+- Production Location Name: {{ pl_name }}
+- Production Location Address: {{ pl_address }}
+- Production Location Country: {{ pl_country }}
+
+Thank you for sharing your information! Your data helps open doors to safe and sustainable
+supply chains.
 
 Best Regards,
 
-{% include "mail/data_team_signature_block.txt" %}
+{% include "mail/signature_block.txt" %}
 {% endblock content %}
