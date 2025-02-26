@@ -5,16 +5,10 @@ class NumberOfWorkersSerializer(serializers.Serializer):
     min = serializers.IntegerField(
         min_value=1,
         required=True,
-        error_messages={
-            'required': 'The min field is required!',
-        }
     )
     max = serializers.IntegerField(
         min_value=1,
         required=True,
-        error_messages={
-            'required': 'The max field is required!',
-        }
     )
 
     def validate(self, data):
@@ -38,16 +32,32 @@ class NumberOfWorkersSerializer(serializers.Serializer):
         return isinstance(value, dict)
 
     def to_internal_value(self, data):
+        min = data.get('min')
+        max = data.get('max')
         errors = []
 
-        if not isinstance(data.get('min'), int):
+        if not min:
+            errors.append({
+                "field": "min",
+                "detail":
+                    "The min field is required!"
+            })
+
+        if not max:
+            errors.append({
+                "field": "max",
+                "detail":
+                    "The max field is required!"
+            })
+
+        if min and not isinstance(data.get('min'), int):
             errors.append({
                 "field": "min",
                 "detail":
                     "The min field must be an integer."
             })
 
-        if not isinstance(data.get('max'), int):
+        if max and not isinstance(data.get('max'), int):
             errors.append({
                 "field": "max",
                 "detail":
@@ -55,6 +65,7 @@ class NumberOfWorkersSerializer(serializers.Serializer):
             })
 
         if len(errors) > 0:
-            raise serializers.ValidationError(errors)
+            raise serializers.ValidationError({"field": {self.field_name},
+                                               "errors": errors})
 
         return super().to_internal_value(data)

@@ -27,6 +27,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Bugfix
 * [OSDEV-1777](https://opensupplyhub.atlassian.net/browse/OSDEV-1777) - A consistent URL style was established across all pages of the SLC workflow. After the changes, the URL begins from `/contribute/single-location/`.
 * [OSDEV-1678](https://opensupplyhub.atlassian.net/browse/OSDEV-1678) - Added asterisks next to each required form field (Name, Address, and Country) on the "Production Location Information" page. Highlighted an empty field and displayed an error message if it loses focus.
+* [OSDEV-1778](https://opensupplyhub.atlassian.net/browse/OSDEV-1778) - Fixed the validation for number of workers field in POST, PATH production locations API. The min field must be less than or equal to the max field.
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
@@ -82,7 +83,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1589](https://opensupplyhub.atlassian.net/browse/OSDEV-1589) - Fixed layout issue on new `contribute` page.
 * [OSDEV-1739](https://opensupplyhub.atlassian.net/browse/OSDEV-1739) - Applied state cleanup on modal unmount to prevent the same dialog from appearing when clicking on a different production location.
 * [OSDEV-1744](https://opensupplyhub.atlassian.net/browse/OSDEV-1744) - Fixed the issue where the text `by user ID:` appeared even when `user_id` was `null` in Contribution Record page.
-* [OSDEV-1778](https://opensupplyhub.atlassian.net/browse/OSDEV-1778) - Fixed the validation for number of workers field in POST, PATH production locations API. The min field must be less than or equal to the max field.
 * [OSDEV-1779](https://opensupplyhub.atlassian.net/browse/OSDEV-1779) - SLC. Made Parent Company field as regular text field and apply snake_case keys to standard keys (e.g. `location_type`, `number_of_workers`, `parent_company`, `processing_type` and `product_type`) in request payload from production location info page to conform API specs.
 * [OSDEV-1745](https://opensupplyhub.atlassian.net/browse/OSDEV-1745) - The `Search by Name and Address` tab was defined as default on the Production Location Search page.
 
