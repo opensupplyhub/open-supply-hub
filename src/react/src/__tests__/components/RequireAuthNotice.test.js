@@ -12,7 +12,7 @@ describe('RequireAuthNotice component', () => {
     const renderComponent = (preloadedState = {}) =>
         renderWithProviders(
             <Router history={history}>
-               <RequireAuthNotice {...preloadedState}/>,
+               <RequireAuthNotice {...preloadedState}/>
             </Router>
         );
 

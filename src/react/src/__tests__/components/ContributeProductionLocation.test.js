@@ -105,4 +105,15 @@ describe('ContributeProductionLocation component', () => {
 
         expect(nameAddressTab).toHaveAttribute('aria-selected', 'true');
     });
+
+    it('renders loading indicator when fetching session', () => {
+        const loadingState = {
+            auth: {
+                user: { user: { isAnon: true } },
+                session: { fetching: true },
+            },
+        };
+        const { getByRole } = renderComponent(loadingState);
+        expect(getByRole('progressbar')).toBeInTheDocument();
+    });
 });
