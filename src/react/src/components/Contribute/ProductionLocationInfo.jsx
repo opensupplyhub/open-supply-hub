@@ -6,13 +6,14 @@ import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 import { endsWith, isEmpty, toString } from 'lodash';
 import Button from '@material-ui/core/Button';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
-import CircularProgress from '@material-ui/core/CircularProgress';
+import RequireAuthNotice from '../RequireAuthNotice';
 import StyledSelect from '../Filters/StyledSelect';
 import RequiredAsterisk from '../RequiredAsterisk';
 import { productionLocationInfoStyles } from '../../util/styles';
@@ -79,7 +80,10 @@ const ProductionLocationInfo = ({
     handleCleanupContributionRecord,
     handleResetPendingModerationEvent,
     handleResetSingleProductionLocation,
+    userHasSignedIn,
+    fetchingSessionSignIn,
 }) => {
+    const TITLE = 'Production Location Information';
     const location = useLocation();
     const history = useHistory();
     const { moderationID, osID } = useParams();
@@ -387,6 +391,17 @@ const ProductionLocationInfo = ({
             toast(singleProductionLocationError[0]);
         }
     }, [singleProductionLocationError]);
+    if (fetchingSessionSignIn) {
+        return (
+            <div className={classes.circularProgressContainerStyles}>
+                <CircularProgress />
+            </div>
+        );
+    }
+
+    if (!userHasSignedIn) {
+        return <RequireAuthNotice title={TITLE} />;
+    }
 
     if (singleProductionLocationFetching) {
         return (
@@ -400,7 +415,7 @@ const ProductionLocationInfo = ({
         <>
             <div className={classes.mainContainerStyles}>
                 <Typography component="h1" className={classes.headerStyles}>
-                    Production Location Information
+                    {TITLE}
                 </Typography>
                 <Typography className={classes.instructionStyles}>
                     {`Use the form below to edit the name, address, and country
@@ -881,6 +896,8 @@ ProductionLocationInfo.propTypes = {
     handleCleanupContributionRecord: func.isRequired,
     handleResetPendingModerationEvent: func.isRequired,
     handleResetSingleProductionLocation: func.isRequired,
+    userHasSignedIn: bool.isRequired,
+    fetchingSessionSignIn: bool.isRequired,
 };
 
 const mapStateToProps = ({
@@ -910,6 +927,10 @@ const mapStateToProps = ({
     ui: {
         window: { innerWidth },
     },
+    auth: {
+        user: { user },
+        session: { fetching: fetchingSessionSignIn },
+    },
 }) => ({
     countriesOptions,
     facilityProcessingTypeOptions,
@@ -923,6 +944,8 @@ const mapStateToProps = ({
     singleProductionLocationFetching,
     singleProductionLocationError,
     innerWidth,
+    userHasSignedIn: !user.isAnon,
+    fetchingSessionSignIn,
 });
 
 function mapDispatchToProps(dispatch) {
