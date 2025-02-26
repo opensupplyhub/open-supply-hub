@@ -52,10 +52,6 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
     processing_type = StringOrListField(required=False)
     number_of_workers = NumberOfWorkersSerializer(
         required=False,
-        validators=[NumberOfWorkersSerializer.validate_object],
-        error_messages={
-            'invalid': 'Invalid data. Expected a dictionary(object).'
-        },
     )
     coordinates = CoordinatesSerializer(
         required=False,

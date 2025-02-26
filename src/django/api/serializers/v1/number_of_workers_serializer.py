@@ -27,11 +27,11 @@ class NumberOfWorkersSerializer(serializers.Serializer):
 
         return data
 
-    @staticmethod
-    def validate_object(value):
-        return isinstance(value, dict)
-
     def to_internal_value(self, data):
+        if not isinstance(data, dict):
+            raise serializers.ValidationError(
+              "Invalid data. Expected a dictionary(object).")
+
         min = data.get('min')
         max = data.get('max')
         errors = []
