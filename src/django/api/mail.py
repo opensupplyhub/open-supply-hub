@@ -443,8 +443,7 @@ def send_slc_additional_info_confirmation_email(moderation_event):
             moderation_event.cleaned_data.get("country", {})
             .get("name")
         ),
-}
-
+    }
 
     send_mail(
         subj_template.render().rstrip(),
