@@ -1,12 +1,16 @@
+import logging
+
+
+import bleach
 from api.serializers.v1.coordinates_serializer \
-  import CoordinatesSerializer
+    import CoordinatesSerializer
 from api.serializers.v1.number_of_workers_serializer \
-  import NumberOfWorkersSerializer
+    import NumberOfWorkersSerializer
 from api.serializers.v1.string_or_list_field import StringOrListField
 from django.core.validators import RegexValidator
 from rest_framework import serializers
 
-
+logger = logging.getLogger(__name__)
 class ProductionLocationSchemaSerializer(serializers.Serializer):
     name = serializers.CharField(
         max_length=200,
@@ -34,20 +38,7 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
         },
     )
     sector = StringOrListField(required=False)
-    parent_company = serializers.CharField(
-        required=False,
-        validators=[
-            RegexValidator(
-                regex=r'^[\p{L}\p{N}\s.,&()/@-]*$',
-                message=("Field parent_company must contain only letters, "
-                         "numbers, spaces, and allowed "
-                         "symbols (, . & - () / @).")
-            )
-        ],
-        error_messages={
-            'invalid': 'Field parent_company must be a valid string.'
-        },
-    )
+    parent_company = serializers.CharField(required=False)
     product_type = StringOrListField(required=False)
     location_type = StringOrListField(required=False)
     processing_type = StringOrListField(required=False)
@@ -66,27 +57,61 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
         },
     )
 
-    def _validate_string_field(self, data, field_name):
-        """Helper method to validate string fields aren't numeric."""
-        if field_name in data and data[field_name].isdigit():
-            return {
-                "field": field_name,
-                "detail": f"Field {field_name} must be a string, not a number."
-            }
+    def __sanitize_check(self, field, value):
+        invalid_input_data_msg = {
+            "field": field,
+            "detail": "Invalid input data"
+        }
 
-        return None
+        def raise_sanitize_error():
+            raise serializers.ValidationError([invalid_input_data_msg])
+
+        if isinstance(value, list):
+            sanitized_list = [bleach.clean(str(item)) for item in value]
+            '''
+            Force bleach module to omit ampersand but preserve other checks
+            https://github.com/mozilla/bleach/issues/192
+            '''
+            sanitized_list = [item.replace('&amp;', '&') for item in sanitized_list]
+            sanitized_list = [bleach.clean(str(item).replace('"', 'QUOTE')) for item in value]
+            sanitized_list = [item.replace('QUOTE', '"') for item in sanitized_list]
+            if sanitized_list != value:
+                raise_sanitize_error()
+            return sanitized_list
+
+        elif isinstance(value, str):
+            value_updated = value.replace('"', 'QUOTE')
+            print(f'Updated value with changed QUOTE: {value_updated}')
+            sanitized_value = bleach.clean(value_updated)
+            sanitized_value = sanitized_value.replace('&amp;', '&')
+            sanitized_value = sanitized_value.replace('QUOTE', '"')
+            print(f'### sanitized value is: {sanitized_value}')
+            if sanitized_value != value:
+                raise_sanitize_error()
+            return sanitized_value
+
+    def __sanitize_all_fields(self, data):
+        for field, value in data.items():
+            if value is not None:
+                data[field] = self.__sanitize_check(field, value)
+        return data
+
+    def __validate_strict_string_field(self, data, errors):
+        for field in ['name', 'address', 'country']:
+            if data.get(field) and data[field].isdigit():
+                errors.append({
+                    "field": field,
+                    "detail": f"Field {field} must be a string, not a number."
+                })
+
+        return errors
 
     def validate(self, data):
+        data = self.__sanitize_all_fields(data)
+
         errors = []
 
-        for field in ['name', 'address', 'country']:
-            error = self._validate_string_field(data, field)
-            if error:
-                errors.append(error)
-
-        error = self._validate_string_field(data, 'parent_company')
-        if error:
-            errors.append(error)
+        self.__validate_strict_string_field(data, errors)
 
         if len(errors) > 0:
             raise serializers.ValidationError(errors)
