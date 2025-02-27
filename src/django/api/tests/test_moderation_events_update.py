@@ -1,18 +1,27 @@
 import json
+
+from django.db.models.signals import post_save
 from django.test import override_settings
+from django.utils.timezone import now
+from rest_framework.test import APITestCase
+
 from api.models import (
     ModerationEvent,
     User,
-    Contributor
+    Contributor,
 )
-from django.utils.timezone import now
-from rest_framework.test import APITestCase
+from api.signals import moderation_event_update_handler_for_opensearch
 
 
 @override_settings(DEBUG=True)
 class ModerationEventsUpdateTest(APITestCase):
     def setUp(self):
         super().setUp()
+
+        post_save.disconnect(
+            moderation_event_update_handler_for_opensearch,
+            ModerationEvent
+        )
 
         self.email = "test@example.com"
         self.password = "example123"
@@ -43,7 +52,7 @@ class ModerationEventsUpdateTest(APITestCase):
             geocode_result={"latitude": -53, "longitude": 142},
             status='PENDING',
             source='API',
-            contributor=self.contributor
+            contributor=self.contributor,
         )
 
     def test_moderation_event_permission(self):
@@ -99,7 +108,7 @@ class ModerationEventsUpdateTest(APITestCase):
 
         self.assertEqual(400, response.status_code)
 
-    def test_moderation_event_status_changed(self):
+    def test_moderation_event_status_changed_with_reason(self):
         self.client.login(
             email=self.superemail,
             password=self.superpassword
@@ -107,7 +116,11 @@ class ModerationEventsUpdateTest(APITestCase):
         response = self.client.patch(
             "/api/v1/moderation-events/{}/"
             .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
-            data=json.dumps({"status": "REJECTED"}),
+            data=json.dumps({
+                "status": "REJECTED",
+                "action_reason_text_cleaned": "cleaned reason",
+                "action_reason_text_raw": "raw reason"
+            }),
             content_type="application/json"
         )
 
@@ -120,3 +133,11 @@ class ModerationEventsUpdateTest(APITestCase):
             self.superuser.id
         )
         self.assertIsNotNone(self.moderation_event.status_change_date)
+        self.assertEqual(
+            self.moderation_event.action_reason_text_cleaned,
+            "cleaned reason"
+        )
+        self.assertEqual(
+            self.moderation_event.action_reason_text_raw,
+            "raw reason"
+        )
