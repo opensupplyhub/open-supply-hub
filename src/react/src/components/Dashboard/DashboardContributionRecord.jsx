@@ -451,7 +451,7 @@ const DashboardContributionRecord = ({
             </Grid>
             <ConfirmActionDialog
                 updateModerationEvent={updateModerationEvent}
-                isOpen={confirmActionDialogIsOpen}
+                isOpenDialog={confirmActionDialogIsOpen}
                 closeDialog={handleConfirmDialogClose}
             />
         </>
@@ -512,8 +512,15 @@ const mapDispatchToProps = (
     push,
     fetchModerationEvent: () =>
         dispatch(fetchSingleModerationEvent(moderationID)),
-    updateModerationEvent: status =>
-        dispatch(updateSingleModerationEvent(moderationID, status)),
+    updateModerationEvent: (status, textCleaned, textRaw) =>
+        dispatch(
+            updateSingleModerationEvent(
+                moderationID,
+                status,
+                textCleaned,
+                textRaw,
+            ),
+        ),
     createProductionLocation: () =>
         dispatch(createProductionLocationFromModerationEvent(moderationID)),
     confirmPotentialMatch: osId =>
