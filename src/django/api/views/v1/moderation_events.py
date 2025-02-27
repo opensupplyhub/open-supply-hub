@@ -134,7 +134,7 @@ class ModerationEvents(ViewSet):
                 }
             )
 
-        serializer.save()        
+        serializer.save()
         event.refresh_from_db()
 
         send_slc_contribution_rejected_email(request, event)
