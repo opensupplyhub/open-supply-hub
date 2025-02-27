@@ -152,6 +152,7 @@ class ModerationEvent(models.Model):
         null=True,
         help_text='Cleaned version of the action reason text.'
     )
+
     action_reason_text_raw = models.TextField(
         blank=True,
         null=True,
