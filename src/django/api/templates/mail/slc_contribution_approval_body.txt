@@ -10,7 +10,7 @@ with clients and stakeholders:
     - Public link: {{ location_url }}
 2. Claim your production location to take control of
 your data and make it visible to more global partners. It’s free and only takes a few
-steps! Claim my production location now ({{ pl_search_url }}).
+steps! Claim my production location now ({{ pl_claim_url }}).
 3. Learn more about the OS ID and how to use it to advance your business in this Guide for Facilities (https://info.opensupplyhub.org/facilities).
 
 We will now review the documents you submitted to claim the location (https://info.opensupplyhub.org/resources/claim-a-facility)
