@@ -7,7 +7,7 @@ We weren’t able to accept your submission as provided. To move forward and get
 please follow these steps:
 
 1. Review the feedback below:
-    - {{ action_reason }}
+    - {{ action_reason_text_cleaned }}
 2. Make the necessary updates based on the feedback and
 resubmit your information using this link: Resubmit Your Production Location
 
