@@ -492,7 +492,10 @@ def send_slc_contribution_approval_email(
 
     approval_dictionary = {
         'is_claimed': moderation_event.claim is not None,
-        'pl_claim_url': make_pl_claim_url(request, facility_list_item.facility),
+        'pl_claim_url': make_pl_claim_url(
+            request,
+            facility_list_item.facility
+        ),
         'os_id': facility_list_item.facility.id,
         'location_url': make_facility_url(
             request,
