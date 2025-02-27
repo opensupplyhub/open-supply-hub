@@ -38,9 +38,9 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
         required=False,
         validators=[
             RegexValidator(
-                regex=r'^[a-zA-Z0-9\s.,&()-]*$',
+                regex=r'^[\p{L}\p{N}\s.,&()/@-]*$',
                 message=("Field parent_company must contain only letters, "
-                         "numbers, spaces, and allowed symbols (, . & - ()).")
+                         "numbers, spaces, and allowed symbols (, . & - () / @).")
             )
         ],
         error_messages={
