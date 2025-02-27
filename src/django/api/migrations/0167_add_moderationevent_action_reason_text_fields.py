@@ -16,7 +16,6 @@ class Migration(migrations.Migration):
             field=models.TextField(
                 blank=True,
                 help_text='Cleaned version of the action reason text.',
-                null=True,
             ),
         ),
         migrations.AddField(
@@ -25,7 +24,6 @@ class Migration(migrations.Migration):
             field=models.TextField(
                 blank=True,
                 help_text='Raw version of the action reason text.',
-                null=True,
             ),
         ),
     ]
