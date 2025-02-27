@@ -11,6 +11,7 @@ from api.constants import (
     APIV1CommonErrorMessages,
     APIV1ModerationEventErrorMessages
 )
+from api.models.moderation_event import ModerationEvent
 from api.moderation_event_actions.approval.add_production_location \
     import AddProductionLocation
 from api.moderation_event_actions.approval.update_production_location \
@@ -137,7 +138,9 @@ class ModerationEvents(ViewSet):
         serializer.save()
         event.refresh_from_db()
 
-        send_slc_contribution_rejected_email(request, event)
+        if event.source == ModerationEvent.Source.SLC:
+            send_slc_contribution_rejected_email(request, event)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(
@@ -189,5 +192,7 @@ class ModerationEvents(ViewSet):
         except Exception as error:
             return ModerationEventsService.handle_processing_error(error)
 
-        send_slc_contribution_approval_email(request, event, item)
+        if event.source == ModerationEvent.Source.SLC:
+            send_slc_contribution_approval_email(request, event, item)
+
         return Response({"os_id": item.facility_id}, status=status.HTTP_200_OK)
