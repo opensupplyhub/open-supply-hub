@@ -222,26 +222,40 @@ class TestProductionLocationsCreate(APITestCase):
         expected_response_body = {
             'detail': 'The request body is invalid.',
             'errors': [
-                {'field': 'sector',
-                 'detail': ('Field sector must be '
-                            'a string or a list of strings.')
-                 },
-                {'field': 'location_type',
-                 'detail': ('Field location_type must be a string'
-                            ' or a list of strings.')
-                 },
-                {'field': 'number_of_workers',
-                 'errors': [
-                            {'field': 'min',
-                             'detail': ('Ensure this value is greater than'
-                                        ' or equal to 1.')
-                             },
-                            {'field': 'max',
-                             'detail': ('Ensure this value is greater than'
-                                        ' or equal to 1.')
-                             }
-                            ]
-                 }
+                {
+                    'field': 'sector',
+                    'detail':
+                        (
+                            'Field sector must be '
+                            'a string or a list of strings.'
+                        )
+                },
+                {
+                    'field': 'location_type',
+                    'detail': (
+                        'Field location_type must be a string'
+                        ' or a list of strings.'
+                    )
+                },
+                {
+                    'field': 'number_of_workers',
+                    'errors': [
+                        {
+                            'field': 'min',
+                            'detail': (
+                                'Ensure this value is greater than'
+                                ' or equal to 1.'
+                            )
+                        },
+                        {
+                            'field': 'max',
+                            'detail': (
+                                'Ensure this value is greater than'
+                                ' or equal to 1.'
+                            )
+                        }
+                    ]
+                }
             ]
          }
         initial_moderation_event_count = ModerationEvent.objects.count()
