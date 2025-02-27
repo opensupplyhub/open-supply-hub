@@ -159,7 +159,6 @@ class ModerationEvents(ViewSet):
         except Exception as error:
             return ModerationEventsService.handle_processing_error(error)
 
-        send_slc_contribution_approval_email(request, event, item)
         return Response(
             {"os_id": item.facility_id}, status=status.HTTP_201_CREATED
         )
