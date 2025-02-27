@@ -30,7 +30,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1678](https://opensupplyhub.atlassian.net/browse/OSDEV-1678) - Added asterisks next to each required form field (Name, Address, and Country) on the "Production Location Information" page. Highlighted an empty field and displayed an error message if it loses focus.
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* [OSDEV-1721](https://opensupplyhub.atlassian.net/browse/OSDEV-1721) - Added new email templates for Moderation/SLC workflow:
+    * Email #1 SLC additional contribution to existing production location - Pending moderation.
+    * Email #2 SLC contribution - Moderation complete. APPROVED.
+    * Email #3 SLC contribution - Moderation complete. REJECTED.
+    * Email #4 SLC new production location contribution - Pending moderation.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
