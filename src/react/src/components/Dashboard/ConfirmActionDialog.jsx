@@ -1,74 +1,77 @@
 import React, { useState } from 'react';
+import { bool, func, object } from 'prop-types';
+
 import { EditorState, convertToRaw } from 'draft-js';
 import draftToHtml from 'draftjs-to-html';
 import { Editor } from 'react-draft-wysiwyg';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
+
+import { withStyles } from '@material-ui/core/styles';
 import {
+    Button,
     Dialog,
-    DialogTitle,
-    DialogContent,
     DialogActions,
+    DialogContent,
+    DialogTitle,
     InputLabel,
     Typography,
-    Button,
 } from '@material-ui/core';
+
 import { MODERATION_STATUSES_ENUM } from '../../util/constants';
+import { makeConfirmActionDialogStyles } from '../../util/styles';
 
 const ConfirmActionDialog = ({
     updateModerationEvent,
-    isOpen,
+    isOpenDialog,
     closeDialog,
+    classes,
 }) => {
     const [editorState, setEditorState] = useState(EditorState.createEmpty());
-    // console.log('editorState >>>', editorState);
 
-    const handleEditorChange = content => {
-        // console.log('content >>>', content);
-        setEditorState(content);
-    };
     const contentState = editorState.getCurrentContent();
     const rawContentState = convertToRaw(contentState);
-    // console.log('rawContentState >>>', rawContentState);
     const htmlContent = draftToHtml(rawContentState);
-    console.log('htmlContent >>>', htmlContent);
     const cleanedText = contentState.getPlainText();
-    console.log('cleanedText >>>', cleanedText);
-    // console.log('typeof cleanedText >>>', typeof cleanedText);
+
+    const handleEditorChange = content => {
+        setEditorState(content);
+    };
 
     const handleAction = () => {
-        updateModerationEvent(MODERATION_STATUSES_ENUM.REJECTED);
-        // Convert the editor content to raw JSON or HTML (using a conversion library)
-        // const content = convertToRaw(editorState.getCurrentContent());
-        // Pass the content to your action handler
-        // dialogContentData.action(content);
-        // const contentString = JSON.stringify(rawContentState);
-        // console.log('contentString >>>', contentString);
+        updateModerationEvent(
+            MODERATION_STATUSES_ENUM.REJECTED,
+            cleanedText,
+            htmlContent,
+        );
+        closeDialog();
     };
 
     return (
         <Dialog
-            open={isOpen}
+            open={isOpenDialog}
             onClose={closeDialog}
-            aria-labelledby="dialog-title"
+            aria-labelledby="contribution-action-dialog-title"
+            aria-describedby="contribution-action-dialog-description"
+            classes={{
+                paper: classes.dialogPaperStyles,
+            }}
         >
-            <DialogTitle>Reject Event</DialogTitle>
+            <DialogTitle>Reject this contribution record?</DialogTitle>
             <DialogContent>
                 <InputLabel htmlFor="dialog-wysiwyg">
                     <Typography variant="body2">
-                        Please provide a reason for rejecting the event.
+                        Enter a reason. (This will be emailed to the person who
+                        submitted the contribution.)
                     </Typography>
                 </InputLabel>
                 <div
                     id="dialog-wysiwyg"
-                    style={{
-                        border: '1px solid #ccc',
-                        padding: '5px',
-                        minHeight: '350px',
-                    }}
+                    className={classes.editorContainerStyles}
                 >
                     <Editor
                         editorState={editorState}
                         onEditorStateChange={handleEditorChange}
+                        editorClassName={classes.editorStyles}
                         toolbar={{
                             options: [
                                 'inline',
@@ -78,19 +81,15 @@ const ConfirmActionDialog = ({
                                 'history',
                             ],
                         }}
-                        editorStyle={{
-                            padding: '5px',
-                            overflowY: 'auto',
-                            maxHeight: '260px',
-                        }}
                     />
                 </div>
             </DialogContent>
-            <DialogActions>
+            <DialogActions className={classes.dialogActionsStyles}>
                 <Button
                     variant="outlined"
                     color="primary"
                     onClick={closeDialog}
+                    className={classes.buttonBaseStyles}
                 >
                     Cancel
                 </Button>
@@ -98,6 +97,7 @@ const ConfirmActionDialog = ({
                     variant="contained"
                     color="secondary"
                     onClick={handleAction}
+                    className={classes.buttonBaseStyles}
                 >
                     Reject
                 </Button>
@@ -106,4 +106,11 @@ const ConfirmActionDialog = ({
     );
 };
 
-export default ConfirmActionDialog;
+ConfirmActionDialog.propTypes = {
+    updateModerationEvent: func.isRequired,
+    isOpenDialog: bool.isRequired,
+    closeDialog: func.isRequired,
+    classes: object.isRequired,
+};
+
+export default withStyles(makeConfirmActionDialogStyles)(ConfirmActionDialog);
