@@ -11,6 +11,8 @@ from django.utils.timezone import now
 
 
 class ModerationEventUpdateSerializer(ModelSerializer):
+    action_reason_text_cleaned = CharField(write_only=True, required=False)
+    action_reason_text_raw = CharField(write_only=True, required=False)
 
     contributor_id = IntegerField(source='contributor.id', read_only=True)
     contributor_name = CharField(source='contributor.name', read_only=True)
