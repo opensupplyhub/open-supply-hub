@@ -32,7 +32,9 @@ class ModerationEventUpdateSerializer(ModelSerializer):
             'source',
             'status',
             'status_change_date',
-            'claim_id'
+            'claim_id',
+            'action_reason_text_cleaned',
+            'action_reason_text_raw',
         ]
 
     def __init__(
@@ -84,6 +86,12 @@ class ModerationEventUpdateSerializer(ModelSerializer):
             if value == ModerationEvent.Status.REJECTED:
                 instance.action_type = ModerationEvent.ActionType.REJECTED
                 instance.action_perform_by = self.__moderator
+                instance.action_reason_text_cleaned = validated_data[
+                    'action_reason_text_cleaned'
+                ]
+                instance.action_reason_text_raw = validated_data[
+                    'action_reason_text_raw'
+                ]
 
             instance.status = value
             instance.status_change_date = now()
