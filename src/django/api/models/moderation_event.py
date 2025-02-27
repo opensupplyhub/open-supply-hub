@@ -147,6 +147,17 @@ class ModerationEvent(models.Model):
         )
     )
 
+    action_reason_text_cleaned = models.TextField(
+        blank=True,
+        null=True,
+        help_text='Cleaned version of the action reason text.'
+    )
+    action_reason_text_raw = models.TextField(
+        blank=True,
+        null=True,
+        help_text='Raw version of the action reason text.'
+    )
+
     def __str__(self):
         return (
             f'ModerationEvent entry {self.uuid} '
