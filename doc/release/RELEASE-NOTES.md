@@ -28,6 +28,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - All SLC pages have been made accessible only to authorized users.
 * [OSDEV-1777](https://opensupplyhub.atlassian.net/browse/OSDEV-1777) - A consistent URL style was established across all pages of the SLC workflow. After the changes, the URL begins from `/contribute/single-location/`.
 * [OSDEV-1678](https://opensupplyhub.atlassian.net/browse/OSDEV-1678) - Added asterisks next to each required form field (Name, Address, and Country) on the "Production Location Information" page. Highlighted an empty field and displayed an error message if it loses focus.
+* [OSDEV-1778](https://opensupplyhub.atlassian.net/browse/OSDEV-1778) - Fixed the validation for number of workers field in POST, PATCH production locations API. The min field must be less than or equal to the max field.
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
