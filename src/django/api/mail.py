@@ -441,7 +441,7 @@ def send_slc_additional_info_confirmation_email(moderation_event):
     send_mail(
         subj_template.render().rstrip(),
         text_template.render(additional_info_dictionary),
-        settings.DATA_FROM_EMAIL,
+        settings.DEFAULT_FROM_EMAIL,
         [moderation_event.contributor.admin.email],
         html_message=html_template.render(additional_info_dictionary)
     )
@@ -461,7 +461,7 @@ def send_slc_new_location_confirmation_email(moderation_event):
     send_mail(
         subj_template.render().rstrip(),
         text_template.render(),
-        settings.DATA_FROM_EMAIL,
+        settings.DEFAULT_FROM_EMAIL,
         [moderation_event.contributor.admin.email],
         html_message=html_template.render()
     )
@@ -495,7 +495,7 @@ def send_slc_contribution_approval_email(
     send_mail(
         subj_template.render().rstrip(),
         text_template.render(approval_dictionary),
-        settings.DATA_FROM_EMAIL,
+        settings.DEFAULT_FROM_EMAIL,
         [moderation_event.contributor.admin.email],
         html_message=html_template.render(approval_dictionary)
     )
@@ -530,7 +530,7 @@ def send_slc_contribution_rejected_email(request, moderation_event):
     send_mail(
         subj_template.render().rstrip(),
         text_template.render(rejected_dictionary),
-        settings.DATA_FROM_EMAIL,
+        settings.DEFAULT_FROM_EMAIL,
         [moderation_event.contributor.admin.email],
         html_message=html_template.render(rejected_dictionary)
     )
