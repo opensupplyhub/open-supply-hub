@@ -4,11 +4,9 @@ from rest_framework import serializers
 class NumberOfWorkersSerializer(serializers.Serializer):
     min = serializers.IntegerField(
         min_value=1,
-        required=True,
     )
     max = serializers.IntegerField(
         min_value=1,
-        required=True,
     )
 
     def validate(self, data):
