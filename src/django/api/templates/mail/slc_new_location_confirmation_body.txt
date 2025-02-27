@@ -1,16 +1,16 @@
 {% block content %}
 Hello,
 
-Thank you for submitting your production location information to Open Supply Hub (OS Hub)!
+Thank you for submitting your production location information to Open Supply Hub (https://info.opensupplyhub.org/) (OS Hub)!
 
-Our team is now reviewing your submission to ensure it can be assigned an OS ID.
+Our team is now reviewing your submission to ensure it can be assigned an OS ID (https://info.opensupplyhub.org/resources/a-free-universal-id-matching-algorithm).
 This process may take up to 15 business days.
 
 Once the review is complete, you will receive an email confirming your OS ID.
 If we need any additional information, we will contact you at this email address.
 
 After your OS ID is confirmed, we will send you instructions for how you can claim your profile.
-You can read more about the claims process here.
+You can read more about the claims process here (https://info.opensupplyhub.org/resources/claim-a-facility).
 
 Thank you for sharing your information! Your data helps open doors to safe and sustainable
 supply chains.

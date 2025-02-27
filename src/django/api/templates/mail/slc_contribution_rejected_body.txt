@@ -1,7 +1,7 @@
 {% block content %}
 Hello,
 
-Thank you for submitting your production location information to Open Supply Hub (OS Hub)!
+Thank you for submitting your production location information to Open Supply Hub (https://info.opensupplyhub.org/) (OS Hub)!
 
 We weren’t able to accept your submission as provided. To move forward and get an OS ID,
 please follow these steps:

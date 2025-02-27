@@ -1,7 +1,7 @@
 {% block content %}
 Hello,
 
-Thank you for submitting your production location information to Open Supply Hub (OS Hub)!
+Thank you for submitting your production location information to Open Supply Hub (https://info.opensupplyhub.org/) (OS Hub)!
 
 You can now:
 1. Save your OS ID and the public link to your production location profile and share it
@@ -10,10 +10,10 @@ with clients and stakeholders:
     - Public link: {{ location_url }}
 2. Claim your production location to take control of
 your data and make it visible to more global partners. It’s free and only takes a few
-steps! Claim my production location now.
-3. Learn more about the OS ID and how to use it to advance your business in this Guide for Facilities.
+steps! Claim my production location now ({{ pl_search_url }}).
+3. Learn more about the OS ID and how to use it to advance your business in this Guide for Facilities (https://info.opensupplyhub.org/facilities).
 
-We will now review the documents you submitted to claim the location
+We will now review the documents you submitted to claim the location (https://info.opensupplyhub.org/resources/claim-a-facility)
 and either approve or deny the claim. Review of claims typically takes 7 - 10 business days.
 You will receive another email when this stage is complete.
 
