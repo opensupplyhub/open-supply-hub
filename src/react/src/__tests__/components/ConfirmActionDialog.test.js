@@ -9,7 +9,6 @@ const mockUpdateModerationEvent = jest.fn();
 const mockCloseDialog = jest.fn();
 
 jest.mock("react-draft-wysiwyg", () => {
-    const React = require("react");
     const { EditorState, ContentState } = require("draft-js");
     return {
        Editor: ({ editorState, onEditorStateChange }) => {
