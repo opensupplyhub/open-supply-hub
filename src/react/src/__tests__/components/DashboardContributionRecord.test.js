@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, useHistory } from 'react-router-dom';
-import { waitFor, fireEvent } from '@testing-library/react';
+import { waitFor } from '@testing-library/react';
 import DashboardContributionRecord from '../../components/Dashboard/DashboardContributionRecord';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import {
