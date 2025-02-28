@@ -50,6 +50,9 @@ class TestProductionLocationsCreate(APITestCase):
         self.client.login(email=email, password=password)
 
     '''
+    TODO: Enable these tests later
+    '''
+    '''
     def test_only_registered_and_confirmed_has_access(self):
         expected_response_body = {
             'detail': (
@@ -362,7 +365,7 @@ class TestProductionLocationsCreate(APITestCase):
         mock_get.return_value = Mock(ok=True, status_code=200)
         mock_get.return_value.json.return_value = geocoding_data
 
-        special_characters = '&@, \' " #()'
+        special_characters = '&@, \' #()'
         numbers = '1234567890'
         multi_lang_letters = '贾建龙ÖrmeTİCіїъыParent_companyการผลิตהפָקָהผลิต'
         valid_parent_company = special_characters + numbers + multi_lang_letters

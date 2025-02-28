@@ -86,6 +86,12 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
             sanitized_value = sanitized_value.replace('&amp;', '&')
             sanitized_value = sanitized_value.replace('QUOTE', '"')
             print(f'### sanitized value is: {sanitized_value}')
+            print(f'### initial value is: {value}')
+            '''
+            Double quotes will be removed by bleach and ContriCleaner,
+            see CompositeRowSerializer.__remove_double_quotes()
+            so we have to re-insert them to avoid triggering errors on this level
+            '''
             if sanitized_value != value:
                 raise_sanitize_error()
             return sanitized_value
@@ -96,7 +102,7 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
                 data[field] = self.__sanitize_check(field, value)
         return data
 
-    def __validate_strict_string_field(self, data, errors):
+    def __validate_string_only_field(self, data, errors):
         for field in ['name', 'address', 'country']:
             if data.get(field) and data[field].isdigit():
                 errors.append({
@@ -109,9 +115,10 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
     def validate(self, data):
         data = self.__sanitize_all_fields(data)
 
+        # TODO: refactor error array to keep errors from self.__sanitize_all_fields
         errors = []
 
-        self.__validate_strict_string_field(data, errors)
+        self.__validate_string_only_field(data, errors)
 
         if len(errors) > 0:
             raise serializers.ValidationError(errors)

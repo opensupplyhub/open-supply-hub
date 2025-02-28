@@ -1,9 +1,11 @@
+import logging
 import re
 from typing import List, Dict
 
 from contricleaner.lib.serializers.row_serializers.row_serializer \
     import RowSerializer
 
+logger = logging.getLogger(__name__)
 
 class CompositeRowSerializer(RowSerializer):
 
@@ -36,6 +38,7 @@ class CompositeRowSerializer(RowSerializer):
         quotes_to_remove = ['"', '“', '”', '‟', '„', '«', '»', '‹', '›']
         for symbol in quotes_to_remove:
             value = value.replace(symbol, '')
+        logger.info(f'$$$$$ value after ContriCleaner: {value}')
         return value
 
     @staticmethod
