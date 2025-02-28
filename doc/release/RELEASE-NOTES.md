@@ -31,7 +31,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1778](https://opensupplyhub.atlassian.net/browse/OSDEV-1778) - Fixed the validation for number of workers field in POST, PATCH production locations API. The min field must be less than or equal to the max field.
 
 ### What's new
-* [OSDEV-1764](https://opensupplyhub.atlassian.net/browse/OSDEV-1764) - Added a new email for the Moderation queue/SLC workflow to send a claiming email to the customer after a data moderator creates a new location based on the moderation event they submitted.
+* [OSDEV-1764](https://opensupplyhub.atlassian.net/browse/OSDEV-1764) - Added a new claiming email for the Moderation queue/SLC workflow, which is sent once a data moderator creates a new location based on the moderation event the customer submitted through the SLC workflow.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
