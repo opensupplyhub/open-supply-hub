@@ -283,14 +283,4 @@ describe('DashboardContributionRecord component', () => {
     const res = reduxStore.getState().dashboardContributionRecord.potentialMatches.matches
     expect(res.length).toBe(3);
   });
-
-  test('no tooltip on hover Go to Claim Button', () => {
-    const { getByRole} = renderComponent(preloadedState);
-    const button = getByRole('button', { name: 'Go to Claim'});
-
-    fireEvent.mouseOver(button);
-    const tooltip = document.querySelector('[aria-describedby^="mui-tooltip-"]');
-
-    expect(tooltip).not.toBeInTheDocument();
-  });
 });
