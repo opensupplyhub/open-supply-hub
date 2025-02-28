@@ -1,8 +1,9 @@
 import React from 'react';
-import ConfirmActionDialog from '../../components/Dashboard/ConfirmActionDialog';
-import renderWithProviders  from '../../util/testUtils/renderWithProviders';
-import { MODERATION_STATUSES_ENUM } from '../../util/constants';
 import { fireEvent } from '@testing-library/react';
+
+import ConfirmActionDialog from '../../components/Dashboard/ConfirmActionDialog';
+import { MODERATION_STATUSES_ENUM } from '../../util/constants';
+import renderWithProviders from '../../util/testUtils/renderWithProviders';
 
 const mockUpdateModerationEvent = jest.fn();
 const mockCloseDialog = jest.fn();
