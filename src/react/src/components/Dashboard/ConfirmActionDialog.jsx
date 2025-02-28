@@ -56,12 +56,13 @@ const ConfirmActionDialog = ({
                 paper: classes.dialogPaperStyles,
             }}
         >
-            <DialogTitle>Reject this contribution record?</DialogTitle>
+            <DialogTitle>Reject this Moderation Event?</DialogTitle>
             <DialogContent>
                 <InputLabel htmlFor="dialog-wysiwyg">
                     <Typography variant="body2">
-                        Enter a reason. (This will be emailed to the person who
-                        submitted the contribution.)
+                        Keep the instructions brief and action orientated.
+                        (Suggested opening, &quot;Just a few fixes are
+                        needed.&quot;)
                     </Typography>
                 </InputLabel>
                 <div
