@@ -115,7 +115,6 @@ jobs:
 
       - name: Terraform Apply for ${{ vars.ENV_NAME }}
         run: |
-          ls /tmp/
           ./deployment/infra apply
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
