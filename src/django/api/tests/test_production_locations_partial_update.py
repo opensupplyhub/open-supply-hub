@@ -250,7 +250,7 @@ class TestProductionLocationsPartialUpdate(APITestCase):
         self.assertEqual(
             email.subject,
             "Thank You for Your Submission – "
-            "Your Data Is Now Being Reviewed"
+            "It Is Now Being Reviewed"
         )
         self.assertEqual(response.status_code, 202)
 
