@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
-import { Link } from 'react-router-dom';
 import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
@@ -11,9 +10,10 @@ import AppOverflow from '../AppOverflow';
 import AppGrid from '../AppGrid';
 import SettingTabs from './SettingTabs';
 import EmbeddedMapConfigWrapper from '../EmbeddedMapConfigWrapper';
+import RequireAuthNotice from '../RequireAuthNotice';
 
 import { userPropType } from '../../util/propTypes';
-import { authLoginFormRoute, USER_DEFAULT_STATE } from '../../util/constants';
+import { USER_DEFAULT_STATE } from '../../util/constants';
 import { convertFeatureFlagsObjectToListOfActiveFlags } from '../../util/util';
 import { getTabs } from './utils';
 import { PROFILE_TAB, EMBED_TAB, API_TAB } from './constants';
@@ -28,10 +28,11 @@ function Settings({
     const handleTabChange = (e, tab) => setActiveTabIndex(tab);
 
     const tabs = getTabs({ fetchingFlags, activeFeatureFlags, user });
+    const TITLE = 'Settings';
 
     if (fetchingSessionSignIn) {
         return (
-            <AppGrid title="Settings">
+            <AppGrid title={TITLE}>
                 <Grid container className="margin-bottom-64">
                     <Grid item xs={12}>
                         <CircularProgress />
@@ -41,23 +42,18 @@ function Settings({
         );
     }
 
-    if (!user) {
+    if (user.isAnon) {
         return (
-            <AppGrid title="Settings">
-                <Grid container className="margin-bottom-64">
-                    <Grid item xs={12}>
-                        <Link to={authLoginFormRoute} href={authLoginFormRoute}>
-                            Log in to update your settings
-                        </Link>
-                    </Grid>
-                </Grid>
-            </AppGrid>
+            <RequireAuthNotice
+                title={TITLE}
+                text="Log in to update your account settings"
+            />
         );
     }
 
     return (
         <>
-            <AppGrid title="Settings">
+            <AppGrid title={TITLE}>
                 <SettingTabs
                     value={activeTabIndex}
                     onChange={handleTabChange}
@@ -65,7 +61,7 @@ function Settings({
                 />
             </AppGrid>
             <AppOverflow>
-                {!user.isAnon && tabs[activeTabIndex] === PROFILE_TAB && (
+                {tabs[activeTabIndex] === PROFILE_TAB && (
                     <UserProfile allowEdits id={user.id.toString()} />
                 )}
                 {tabs[activeTabIndex] === EMBED_TAB && (
