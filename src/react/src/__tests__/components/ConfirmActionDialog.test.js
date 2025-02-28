@@ -9,24 +9,23 @@ const mockUpdateModerationEvent = jest.fn();
 const mockCloseDialog = jest.fn();
 
 jest.mock("react-draft-wysiwyg", () => {
+    // eslint-disable-next-line global-require
     const { EditorState, ContentState } = require("draft-js");
     return {
-       Editor: ({ editorState, onEditorStateChange }) => {
-          return (
-             <textarea
+        Editor: ({ editorState, onEditorStateChange }) => (
+            <textarea
                 data-testid="fake-editor"
                 value={editorState.getCurrentContent().getPlainText()}
                 onChange={(e) => {
-                   const newState = EditorState.createWithContent(
-                      ContentState.createFromText(e.target.value),
-                   );
-                   onEditorStateChange(newState);
+                    const newState = EditorState.createWithContent(
+                        ContentState.createFromText(e.target.value),
+                    );
+                    onEditorStateChange(newState);
                 }}
-             />
-          );
-       },
+            />
+        ),
     };
- }); 
+});
 
 describe('ConfirmActionDialog component', () => {
     const defaultProps = {
