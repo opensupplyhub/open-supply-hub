@@ -6,7 +6,7 @@ from api.models import (
     FacilityClaim
 )
 from countries.lib.countries import COUNTRY_NAMES
-from constants import FacilityClaimStatuses
+from api.constants import FacilityClaimStatuses
 
 
 def make_oar_url(request):
