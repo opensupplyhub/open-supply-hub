@@ -43,7 +43,7 @@ class ModerationEventsUpdateTest(APITestCase):
             cleaned_data={"name": "cleaned_name", "country_code": "UK"},
             geocode_result={"latitude": -53, "longitude": 142},
             status='PENDING',
-            source='API',
+            source='SLC',
             contributor=self.contributor
         )
 
