@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { bool, func, object } from 'prop-types';
 
 import { EditorState, convertToRaw } from 'draft-js';
@@ -28,10 +28,13 @@ const ConfirmActionDialog = ({
 }) => {
     const [editorState, setEditorState] = useState(EditorState.createEmpty());
 
-    const contentState = editorState.getCurrentContent();
-    const rawContentState = convertToRaw(contentState);
-    const htmlContent = draftToHtml(rawContentState);
-    const cleanedText = contentState.getPlainText();
+    const { cleanedText, htmlContent } = useMemo(() => {
+        const contentState = editorState.getCurrentContent();
+        return {
+            cleanedText: contentState.getPlainText(),
+            htmlContent: draftToHtml(convertToRaw(contentState)),
+        };
+    }, [editorState]);
 
     const handleEditorChange = content => {
         setEditorState(content);
