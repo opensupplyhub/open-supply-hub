@@ -1,9 +1,12 @@
 from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import get_template
-from api.models import FacilityList
-
+from api.models import (
+    FacilityList,
+    FacilityClaim
+)
 from countries.lib.countries import COUNTRY_NAMES
+from constants import FacilityClaimStatuses
 
 
 def make_oar_url(request):
@@ -490,8 +493,16 @@ def send_slc_contribution_approval_email(
         'mail/slc_contribution_approval_body.html'
     )
 
+    is_claimed = FacilityClaim.objects.filter(
+        facility=facility_list_item.facility,
+        status__in=[
+            FacilityClaimStatuses.APPROVED,
+            FacilityClaimStatuses.PENDING
+        ]
+    ).exists()
+
     approval_dictionary = {
-        'is_claimed': moderation_event.claim is not None,
+        'is_claimed': is_claimed,
         'pl_claim_url': make_pl_claim_url(
             request,
             facility_list_item.facility
