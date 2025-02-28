@@ -20,6 +20,8 @@ import {
 import { MODERATION_STATUSES_ENUM } from '../../util/constants';
 import { makeConfirmActionDialogStyles } from '../../util/styles';
 
+const MIN_TEXT_INPUT_LENGTH = 30;
+
 const ConfirmActionDialog = ({
     updateModerationEvent,
     isOpenDialog,
@@ -48,6 +50,8 @@ const ConfirmActionDialog = ({
         );
         closeDialog();
     };
+
+    const isRejectDisabled = cleanedText.trim().length < MIN_TEXT_INPUT_LENGTH;
 
     return (
         <Dialog
@@ -102,6 +106,7 @@ const ConfirmActionDialog = ({
                     color="secondary"
                     onClick={handleAction}
                     className={classes.buttonBaseStyles}
+                    disabled={isRejectDisabled}
                 >
                     Reject
                 </Button>
