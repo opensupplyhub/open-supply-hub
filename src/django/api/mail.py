@@ -48,7 +48,7 @@ def make_claim_url(request: Request, location: Facility):
 def make_pl_search_url(request):
     return (
         "{}/contribute/single-location".format(
-            make_oar_url(request)
+            make_oshub_url(request)
         )
     )
 
@@ -56,7 +56,7 @@ def make_pl_search_url(request):
 def make_pl_claim_url(request, facility):
     return (
         "{}/facilities/{}/claim".format(
-            make_oar_url(request),
+            make_oshub_url(request),
             facility.id,
         )
     )
