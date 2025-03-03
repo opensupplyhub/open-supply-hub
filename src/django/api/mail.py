@@ -1,15 +1,18 @@
+from rest_framework.request import Request
 from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import get_template
 from api.models import (
     FacilityList,
-    FacilityClaim
+    FacilityClaim,
+    ModerationEvent,
+    Facility
 )
 from countries.lib.countries import COUNTRY_NAMES
 from api.constants import FacilityClaimStatuses
 
 
-def make_oar_url(request):
+def make_oshub_url(request: Request):
     if settings.DEBUG:
         protocol = 'http'
         host = 'localhost:6543'
@@ -25,17 +28,21 @@ def make_oar_url(request):
 
 def make_facility_url(request, facility):
     return '{}/facilities/{}'.format(
-        make_oar_url(request),
+        make_oshub_url(request),
         facility.id,
     )
 
 
 def make_facility_list_url(request, list_id):
-    return '{}/lists/{}'.format(make_oar_url(request), list_id)
+    return '{}/lists/{}'.format(make_oshub_url(request), list_id)
 
 
 def make_claimed_url(request):
-    return '{}/claimed'.format(make_oar_url(request))
+    return '{}/claimed'.format(make_oshub_url(request))
+
+
+def make_claim_url(request: Request, location: Facility):
+    return '{}/claim'.format(make_facility_url(request, location))
 
 
 def make_pl_search_url(request):
@@ -430,6 +437,36 @@ def send_facility_list_rejection_email(request, facility_list):
     )
 
 
+def send_production_location_creation_email(
+        moderation_event: ModerationEvent, request: Request
+        ):
+    '''
+    This function is used to send an email to the contributor in cases where a
+    production location has been created based on the moderation event
+    initiated by the contributor.
+    '''
+
+    subj_template = get_template(
+        'mail/production_location_creation_subject.txt'
+    )
+    text_template = get_template('mail/production_location_creation_body.txt')
+    html_template = get_template('mail/production_location_creation_body.html')
+
+    creation_dict = {
+        'os_id': moderation_event.os_id,
+        'location_url': make_facility_url(request, moderation_event.os),
+        'claim_url': make_claim_url(request, moderation_event.os),
+    }
+    
+    send_mail(
+        subj_template.render().rstrip(),
+        text_template.render(creation_dict),
+        settings.DATA_FROM_EMAIL,
+        [moderation_event.contributor.admin.email],
+        html_message=html_template.render(creation_dict)
+    )
+
+
 def send_slc_additional_info_confirmation_email(moderation_event):
     subj_template = get_template(
         'mail/slc_additional_info_confirmation_subject.txt'
@@ -452,7 +489,7 @@ def send_slc_additional_info_confirmation_email(moderation_event):
     send_mail(
         subj_template.render().rstrip(),
         text_template.render(additional_info_dictionary),
-        settings.DEFAULT_FROM_EMAIL,
+        settings.DATA_FROM_EMAIL,
         [moderation_event.contributor.admin.email],
         html_message=html_template.render(additional_info_dictionary)
     )
@@ -472,7 +509,7 @@ def send_slc_new_location_confirmation_email(moderation_event):
     send_mail(
         subj_template.render().rstrip(),
         text_template.render(),
-        settings.DEFAULT_FROM_EMAIL,
+        settings.DATA_FROM_EMAIL,
         [moderation_event.contributor.admin.email],
         html_message=html_template.render()
     )
@@ -517,7 +554,7 @@ def send_slc_contribution_approval_email(
     send_mail(
         subj_template.render().rstrip(),
         text_template.render(approval_dictionary),
-        settings.DEFAULT_FROM_EMAIL,
+        settings.DATA_FROM_EMAIL,
         [moderation_event.contributor.admin.email],
         html_message=html_template.render(approval_dictionary)
     )
@@ -556,7 +593,7 @@ def send_slc_contribution_rejected_email(request, moderation_event):
     send_mail(
         subj_template.render().rstrip(),
         text_template.render(rejected_dictionary),
-        settings.DEFAULT_FROM_EMAIL,
+        settings.DATA_FROM_EMAIL,
         [moderation_event.contributor.admin.email],
         html_message=html_template.render(rejected_dictionary)
     )

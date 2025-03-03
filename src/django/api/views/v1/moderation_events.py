@@ -28,14 +28,14 @@ from api.views.v1.opensearch_query_builder.moderation_events_query_builder \
     import ModerationEventsQueryBuilder
 from api.views.v1.opensearch_query_builder.opensearch_query_director import \
     OpenSearchQueryDirector
-
 from api.views.v1.utils import (
     handle_errors_decorator,
     serialize_params,
 )
 from api.mail import (
     send_slc_contribution_approval_email,
-    send_slc_contribution_rejected_email
+    send_slc_contribution_rejected_email,
+    send_production_location_creation_email
 )
 
 
@@ -162,6 +162,9 @@ class ModerationEvents(ViewSet):
             item = add_production_location_processor.process_moderation_event()
         except Exception as error:
             return ModerationEventsService.handle_processing_error(error)
+
+        if event.source == ModerationEvent.Source.SLC:
+            send_production_location_creation_email(event, request)
 
         return Response(
             {"os_id": item.facility_id}, status=status.HTTP_201_CREATED
