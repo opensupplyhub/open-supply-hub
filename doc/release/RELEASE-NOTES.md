@@ -32,7 +32,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1787](https://opensupplyhub.atlassian.net/browse/OSDEV-1787) - The tooltip messages for the Claim button have been removed for all statuses of moderation events on the `Contribution Record` page and changed according to the design on `Thanks for adding data for this production location` pop-up.
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* [OSDEV-1764](https://opensupplyhub.atlassian.net/browse/OSDEV-1764) - Added a new claiming email for the Moderation queue/SLC workflow, which is sent once a data moderator creates a new location based on the moderation event the customer submitted through the SLC workflow.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
