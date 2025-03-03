@@ -22,10 +22,13 @@ import Select from 'react-select';
 import Creatable from 'react-select/creatable';
 import { isEmail, isInt } from 'validator';
 import { toast } from 'react-toastify';
+import AppOverflow from './AppOverflow';
+import AppGrid from './AppGrid';
 
 import ClaimedFacilitiesDetailsSidebar from './ClaimedFacilitiesDetailsSidebar';
 import ShowOnly from './ShowOnly';
 import CreatableInputOnly from './CreatableInputOnly';
+import RequireAuthNotice from './RequireAuthNotice';
 
 import COLOURS from '../util/COLOURS';
 
@@ -328,6 +331,7 @@ function ClaimedFacilitiesDetails({
     parentCompanyOptions,
     fetchSectors,
     fetchParentCompanies,
+    userHasSignedIn,
 }) {
     /* eslint-disable react-hooks/exhaustive-deps */
     // disabled because we want to use this as just
@@ -351,6 +355,7 @@ function ClaimedFacilitiesDetails({
     }, [sectorOptions, fetchSectors]);
 
     const [isSavingForm, setIsSavingForm] = useState(false);
+    const TITLE = 'Claimed Facility Details';
 
     useEffect(() => {
         if (updating || errorUpdating) {
@@ -419,14 +424,37 @@ function ClaimedFacilitiesDetails({
     };
 
     if (fetching) {
-        return <CircularProgress />;
+        return (
+            <AppOverflow>
+                <AppGrid title={TITLE}>
+                    <CircularProgress />
+                </AppGrid>
+            </AppOverflow>
+        );
+    }
+
+    if (!userHasSignedIn) {
+        return (
+            <AppOverflow>
+                <RequireAuthNotice
+                    title={TITLE}
+                    text="Sign in to view your Open Supply Hub lists"
+                />
+            </AppOverflow>
+        );
     }
 
     if (error) {
         return (
-            <Typography variant="body1">
-                An error prevented fetching that facility claim.
-            </Typography>
+            <AppOverflow>
+                <AppGrid title={TITLE}>
+                    <ul>
+                        {error.map(err => (
+                            <li key={err}>{err}</li>
+                        ))}
+                    </ul>
+                </AppGrid>
+            </AppOverflow>
         );
     }
 
@@ -437,282 +465,329 @@ function ClaimedFacilitiesDetails({
     const countryOptions = createCountrySelectOptions(data.countries);
 
     return (
-        <div style={claimedFacilitiesDetailsStyles.containerStyles}>
-            <div style={claimedFacilitiesDetailsStyles.formStyles}>
-                <Typography
-                    variant="title"
-                    style={claimedFacilitiesDetailsStyles.headingStyles}
-                >
-                    Facility Details
-                </Typography>
-                <InputSection
-                    label="Facility name (native language)"
-                    value={data.facility_name_native_language}
-                    onChange={updateFacilityNameNativeLanguage}
-                    disabled={updating}
-                />
-                <InputSection
-                    label="Sector"
-                    value={get(data, 'sector', [])}
-                    onChange={updateSector}
-                    disabled={updating}
-                    isSelect
-                    isMultiSelect
-                    selectOptions={sectorOptions || []}
-                    selectPlaceholder="Select..."
-                />
-                <InputSection
-                    label="Phone Number"
-                    value={data.facility_phone_number}
-                    onChange={updateFacilityPhone}
-                    disabled={updating}
-                    hasSwitch
-                    switchValue={data.facility_phone_number_publicly_visible}
-                    onSwitchChange={updateFacilityPhoneVisibility}
-                />
-                <InputSection
-                    label="Website"
-                    value={data.facility_website}
-                    onChange={updateFacilityWebsite}
-                    disabled={updating}
-                    hasValidationErrorFn={() => {
-                        if (isEmpty(data.facility_website)) {
-                            return false;
-                        }
-
-                        return !isValidFacilityURL(data.facility_website);
-                    }}
-                    hasSwitch
-                    switchValue={data.facility_website_publicly_visible}
-                    onSwitchChange={updateFacilityWebsiteVisibility}
-                />
-                <InputSection
-                    label="Description"
-                    value={data.facility_description}
-                    multiline
-                    onChange={updateFacilityDescription}
-                    disabled={updating}
-                />
-                <ShowOnly when={!isEmpty(parentCompanyOptions)}>
-                    <InputSection
-                        isCreatable
-                        label="Parent Company / Supplier Group"
-                        aside={parentCompanyAside}
-                        value={get(data, 'facility_parent_company.id', null)}
-                        onChange={updateParentCompany}
-                        disabled={updating}
-                        isSelect
-                        selectOptions={parentCompanyOptions}
-                    />
-                </ShowOnly>
-                <ShowOnly when={!parentCompanyOptions}>
-                    <Typography>Parent Company / Supplier Group</Typography>
-                    <Typography>
-                        {get(data, 'facility_parent_company.name', null)}
-                    </Typography>
-                </ShowOnly>
-                <InputSection
-                    label="Minimum order quantity"
-                    value={data.facility_minimum_order_quantity}
-                    onChange={updateFacilityMinimumOrder}
-                    disabled={updating}
-                />
-                <InputSection
-                    label="Average lead time"
-                    value={data.facility_average_lead_time}
-                    onChange={updateFacilityAverageLeadTime}
-                    disabled={updating}
-                />
-                <InputSection
-                    label="Number of workers"
-                    value={data.facility_workers_count}
-                    onChange={updateFacilityWorkersCount}
-                    disabled={updating}
-                    hasValidationErrorFn={() =>
-                        !isValidNumberOfWorkers(data.facility_workers_count)
-                    }
-                />
-                <InputSection
-                    label="Percentage of female workers"
-                    value={data.facility_female_workers_percentage}
-                    onChange={updateFacilityFemaleWorkersPercentage}
-                    disabled={updating}
-                    hasValidationErrorFn={() => {
-                        if (isEmpty(data.facility_female_workers_percentage)) {
-                            return false;
-                        }
-
-                        return !isInt(data.facility_female_workers_percentage, {
-                            min: 0,
-                            max: 100,
-                        });
-                    }}
-                />
-                <InputSection
-                    label="Affiliations"
-                    value={get(data, 'facility_affiliations', [])}
-                    onChange={updateFacilityAffiliations}
-                    disabled={updating}
-                    isSelect
-                    isMultiSelect
-                    selectOptions={mapDjangoChoiceTuplesToSelectOptions(
-                        data.affiliation_choices,
-                    )}
-                />
-                <InputSection
-                    label="Certifications/Standards/Regulations"
-                    value={get(data, 'facility_certifications', [])}
-                    onChange={updateFacilityCertifications}
-                    disabled={updating}
-                    isSelect
-                    isMultiSelect
-                    selectOptions={mapDjangoChoiceTuplesToSelectOptions(
-                        data.certification_choices,
-                    )}
-                />
-                <InputSection
-                    label="Facility / Processing Types"
-                    value={get(data, 'facility_production_types', [])}
-                    onChange={updateFacilityProductionTypes}
-                    disabled={updating}
-                    isSelect
-                    isMultiSelect
-                    selectOptions={mapDjangoChoiceTuplesToSelectOptions(
-                        data.production_type_choices,
-                    )}
-                />
-                <InputSection
-                    label="Product Types"
-                    value={get(data, 'facility_product_types', [])}
-                    onChange={updateFacilityProductTypes}
-                    disabled={updating}
-                    isSelect
-                    isMultiSelect
-                    isCreatable
-                    selectPlaceholder="e.g. Jackets - Use <Enter> or <Tab> to add multiple values"
-                />
-                <Typography
-                    variant="title"
-                    style={claimedFacilitiesDetailsStyles.headingStyles}
-                >
-                    Point of contact
-                    <span
-                        style={
-                            claimedFacilitiesDetailsStyles.switchSectionStyles
-                        }
-                    >
-                        <Switch
-                            color="primary"
-                            onChange={updateContactVisibility}
-                            checked={data.point_of_contact_publicly_visible}
+        <AppOverflow>
+            <AppGrid>
+                <div style={claimedFacilitiesDetailsStyles.containerStyles}>
+                    <div style={claimedFacilitiesDetailsStyles.formStyles}>
+                        <Typography
+                            variant="title"
+                            style={claimedFacilitiesDetailsStyles.headingStyles}
+                        >
+                            Facility Details
+                        </Typography>
+                        <InputSection
+                            label="Facility name (native language)"
+                            value={data.facility_name_native_language}
+                            onChange={updateFacilityNameNativeLanguage}
+                            disabled={updating}
                         />
-                        Publicly visible
-                    </span>
-                </Typography>
-                <InputSection
-                    label="Contact person name"
-                    value={data.point_of_contact_person_name}
-                    onChange={updateContactPerson}
-                    disabled={updating}
-                />
-                <InputSection
-                    label="Email"
-                    value={data.point_of_contact_email}
-                    onChange={updateContactEmail}
-                    disabled={updating}
-                    hasValidationErrorFn={() => {
-                        if (isEmpty(data.point_of_contact_email)) {
-                            return false;
-                        }
-
-                        return !isEmail(data.point_of_contact_email);
-                    }}
-                />
-                <Typography
-                    variant="headline"
-                    style={claimedFacilitiesDetailsStyles.headingStyles}
-                >
-                    Office information
-                    <span
-                        style={
-                            claimedFacilitiesDetailsStyles.switchSectionStyles
-                        }
-                    >
-                        <Switch
-                            color="primary"
-                            onChange={updateOfficeVisibility}
-                            checked={data.office_info_publicly_visible}
+                        <InputSection
+                            label="Sector"
+                            value={get(data, 'sector', [])}
+                            onChange={updateSector}
+                            disabled={updating}
+                            isSelect
+                            isMultiSelect
+                            selectOptions={sectorOptions || []}
+                            selectPlaceholder="Select..."
                         />
-                        Publicly visible
-                    </span>
-                </Typography>
-                <aside style={claimedFacilitiesDetailsStyles.asideStyles}>
-                    If different from facility address
-                </aside>
-                <InputSection
-                    label="Office name"
-                    value={data.office_official_name}
-                    onChange={updateOfficeName}
-                    disabled={updating}
-                />
-                <InputSection
-                    label="Address"
-                    value={data.office_address}
-                    onChange={updateOfficeAddress}
-                    disabled={updating}
-                />
-                <InputSection
-                    label="Country"
-                    value={data.office_country_code}
-                    onChange={updateOfficeCountry}
-                    disabled={updating}
-                    isSelect
-                    selectOptions={countryOptions || []}
-                />
-                <InputSection
-                    label="Phone number"
-                    value={data.office_phone_number}
-                    onChange={updateOfficePhone}
-                    disabled={updating}
-                />
-                {errorUpdating && (
-                    <div style={claimedFacilitiesDetailsStyles.errorStyles}>
-                        <Typography variant="body1">
-                            <span style={{ color: 'red' }}>
-                                The following errors prevented updating the
-                                facility claim:
+                        <InputSection
+                            label="Phone Number"
+                            value={data.facility_phone_number}
+                            onChange={updateFacilityPhone}
+                            disabled={updating}
+                            hasSwitch
+                            switchValue={
+                                data.facility_phone_number_publicly_visible
+                            }
+                            onSwitchChange={updateFacilityPhoneVisibility}
+                        />
+                        <InputSection
+                            label="Website"
+                            value={data.facility_website}
+                            onChange={updateFacilityWebsite}
+                            disabled={updating}
+                            hasValidationErrorFn={() => {
+                                if (isEmpty(data.facility_website)) {
+                                    return false;
+                                }
+
+                                return !isValidFacilityURL(
+                                    data.facility_website,
+                                );
+                            }}
+                            hasSwitch
+                            switchValue={data.facility_website_publicly_visible}
+                            onSwitchChange={updateFacilityWebsiteVisibility}
+                        />
+                        <InputSection
+                            label="Description"
+                            value={data.facility_description}
+                            multiline
+                            onChange={updateFacilityDescription}
+                            disabled={updating}
+                        />
+                        <ShowOnly when={!isEmpty(parentCompanyOptions)}>
+                            <InputSection
+                                isCreatable
+                                label="Parent Company / Supplier Group"
+                                aside={parentCompanyAside}
+                                value={get(
+                                    data,
+                                    'facility_parent_company.id',
+                                    null,
+                                )}
+                                onChange={updateParentCompany}
+                                disabled={updating}
+                                isSelect
+                                selectOptions={parentCompanyOptions}
+                            />
+                        </ShowOnly>
+                        <ShowOnly when={!parentCompanyOptions}>
+                            <Typography>
+                                Parent Company / Supplier Group
+                            </Typography>
+                            <Typography>
+                                {get(
+                                    data,
+                                    'facility_parent_company.name',
+                                    null,
+                                )}
+                            </Typography>
+                        </ShowOnly>
+                        <InputSection
+                            label="Minimum order quantity"
+                            value={data.facility_minimum_order_quantity}
+                            onChange={updateFacilityMinimumOrder}
+                            disabled={updating}
+                        />
+                        <InputSection
+                            label="Average lead time"
+                            value={data.facility_average_lead_time}
+                            onChange={updateFacilityAverageLeadTime}
+                            disabled={updating}
+                        />
+                        <InputSection
+                            label="Number of workers"
+                            value={data.facility_workers_count}
+                            onChange={updateFacilityWorkersCount}
+                            disabled={updating}
+                            hasValidationErrorFn={() =>
+                                !isValidNumberOfWorkers(
+                                    data.facility_workers_count,
+                                )
+                            }
+                        />
+                        <InputSection
+                            label="Percentage of female workers"
+                            value={data.facility_female_workers_percentage}
+                            onChange={updateFacilityFemaleWorkersPercentage}
+                            disabled={updating}
+                            hasValidationErrorFn={() => {
+                                if (
+                                    isEmpty(
+                                        data.facility_female_workers_percentage,
+                                    )
+                                ) {
+                                    return false;
+                                }
+
+                                return !isInt(
+                                    data.facility_female_workers_percentage,
+                                    {
+                                        min: 0,
+                                        max: 100,
+                                    },
+                                );
+                            }}
+                        />
+                        <InputSection
+                            label="Affiliations"
+                            value={get(data, 'facility_affiliations', [])}
+                            onChange={updateFacilityAffiliations}
+                            disabled={updating}
+                            isSelect
+                            isMultiSelect
+                            selectOptions={mapDjangoChoiceTuplesToSelectOptions(
+                                data.affiliation_choices,
+                            )}
+                        />
+                        <InputSection
+                            label="Certifications/Standards/Regulations"
+                            value={get(data, 'facility_certifications', [])}
+                            onChange={updateFacilityCertifications}
+                            disabled={updating}
+                            isSelect
+                            isMultiSelect
+                            selectOptions={mapDjangoChoiceTuplesToSelectOptions(
+                                data.certification_choices,
+                            )}
+                        />
+                        <InputSection
+                            label="Facility / Processing Types"
+                            value={get(data, 'facility_production_types', [])}
+                            onChange={updateFacilityProductionTypes}
+                            disabled={updating}
+                            isSelect
+                            isMultiSelect
+                            selectOptions={mapDjangoChoiceTuplesToSelectOptions(
+                                data.production_type_choices,
+                            )}
+                        />
+                        <InputSection
+                            label="Product Types"
+                            value={get(data, 'facility_product_types', [])}
+                            onChange={updateFacilityProductTypes}
+                            disabled={updating}
+                            isSelect
+                            isMultiSelect
+                            isCreatable
+                            selectPlaceholder="e.g. Jackets - Use <Enter> or <Tab> to add multiple values"
+                        />
+                        <Typography
+                            variant="title"
+                            style={claimedFacilitiesDetailsStyles.headingStyles}
+                        >
+                            Point of contact
+                            <span
+                                style={
+                                    claimedFacilitiesDetailsStyles.switchSectionStyles
+                                }
+                            >
+                                <Switch
+                                    color="primary"
+                                    onChange={updateContactVisibility}
+                                    checked={
+                                        data.point_of_contact_publicly_visible
+                                    }
+                                />
+                                Publicly visible
                             </span>
                         </Typography>
-                        <ul>
-                            {errorUpdating.map(err => (
-                                <li key={err}>
-                                    <span style={{ color: 'red' }}>{err}</span>
-                                </li>
-                            ))}
-                        </ul>
+                        <InputSection
+                            label="Contact person name"
+                            value={data.point_of_contact_person_name}
+                            onChange={updateContactPerson}
+                            disabled={updating}
+                        />
+                        <InputSection
+                            label="Email"
+                            value={data.point_of_contact_email}
+                            onChange={updateContactEmail}
+                            disabled={updating}
+                            hasValidationErrorFn={() => {
+                                if (isEmpty(data.point_of_contact_email)) {
+                                    return false;
+                                }
+
+                                return !isEmail(data.point_of_contact_email);
+                            }}
+                        />
+                        <Typography
+                            variant="headline"
+                            style={claimedFacilitiesDetailsStyles.headingStyles}
+                        >
+                            Office information
+                            <span
+                                style={
+                                    claimedFacilitiesDetailsStyles.switchSectionStyles
+                                }
+                            >
+                                <Switch
+                                    color="primary"
+                                    onChange={updateOfficeVisibility}
+                                    checked={data.office_info_publicly_visible}
+                                />
+                                Publicly visible
+                            </span>
+                        </Typography>
+                        <aside
+                            style={claimedFacilitiesDetailsStyles.asideStyles}
+                        >
+                            If different from facility address
+                        </aside>
+                        <InputSection
+                            label="Office name"
+                            value={data.office_official_name}
+                            onChange={updateOfficeName}
+                            disabled={updating}
+                        />
+                        <InputSection
+                            label="Address"
+                            value={data.office_address}
+                            onChange={updateOfficeAddress}
+                            disabled={updating}
+                        />
+                        <InputSection
+                            label="Country"
+                            value={data.office_country_code}
+                            onChange={updateOfficeCountry}
+                            disabled={updating}
+                            isSelect
+                            selectOptions={countryOptions || []}
+                        />
+                        <InputSection
+                            label="Phone number"
+                            value={data.office_phone_number}
+                            onChange={updateOfficePhone}
+                            disabled={updating}
+                        />
+                        {errorUpdating && (
+                            <div
+                                style={
+                                    claimedFacilitiesDetailsStyles.errorStyles
+                                }
+                            >
+                                <Typography variant="body1">
+                                    <span style={{ color: 'red' }}>
+                                        The following errors prevented updating
+                                        the facility claim:
+                                    </span>
+                                </Typography>
+                                <ul>
+                                    {errorUpdating.map(err => (
+                                        <li key={err}>
+                                            <span style={{ color: 'red' }}>
+                                                {err}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                        <div
+                            style={claimedFacilitiesDetailsStyles.controlStyles}
+                        >
+                            <Button
+                                onClick={saveForm}
+                                variant="contained"
+                                color="primary"
+                                disabled={
+                                    updating ||
+                                    (!isEmpty(data.point_of_contact_email) &&
+                                        !isEmail(
+                                            data.point_of_contact_email,
+                                        )) ||
+                                    (!isEmpty(data.facility_website) &&
+                                        !isValidFacilityURL(
+                                            data.facility_website,
+                                        )) ||
+                                    !isValidNumberOfWorkers(
+                                        data.facility_workers_count,
+                                    )
+                                }
+                            >
+                                Save
+                            </Button>
+                            {updating && <CircularProgress />}
+                        </div>
                     </div>
-                )}
-                <div style={claimedFacilitiesDetailsStyles.controlStyles}>
-                    <Button
-                        onClick={saveForm}
-                        variant="contained"
-                        color="primary"
-                        disabled={
-                            updating ||
-                            (!isEmpty(data.point_of_contact_email) &&
-                                !isEmail(data.point_of_contact_email)) ||
-                            (!isEmpty(data.facility_website) &&
-                                !isValidFacilityURL(data.facility_website)) ||
-                            !isValidNumberOfWorkers(data.facility_workers_count)
-                        }
-                    >
-                        Save
-                    </Button>
-                    {updating && <CircularProgress />}
+                    <ClaimedFacilitiesDetailsSidebar
+                        facilityDetails={data.facility}
+                    />
                 </div>
-            </div>
-            <ClaimedFacilitiesDetailsSidebar facilityDetails={data.facility} />
-        </div>
+            </AppGrid>
+        </AppOverflow>
     );
 }
 
@@ -784,6 +859,7 @@ function mapStateToProps({
         errorUpdating,
         sectorOptions,
         parentCompanyOptions,
+        userHasSignedIn: !user.isAnon,
     };
 }
 

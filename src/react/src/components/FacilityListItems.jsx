@@ -18,6 +18,7 @@ import FacilityListItemsEmpty from './FacilityListItemsEmpty';
 import FacilityListItemsTable from './FacilityListItemsTable';
 import FacilityListControls from './FacilityListControls';
 import ListUploadErrors from './ListUploadErrors';
+import RequireAuthNotice from './RequireAuthNotice';
 
 import {
     createPaginationOptionsFromQueryString,
@@ -37,7 +38,6 @@ import {
     listsRoute,
     facilityListItemsRoute,
     facilityListItemStatusChoicesEnum,
-    authLoginFormRoute,
     dashboardListsRoute,
     matchResponsibilityEnum,
 } from '../util/constants';
@@ -136,6 +136,7 @@ const FacilityListItems = ({
     isListOwner,
     listParsingErrorsExist,
 }) => {
+    const TITLE = 'Unable to retrieve that list';
     const history = useHistory();
 
     useEffect(() => {
@@ -152,19 +153,18 @@ const FacilityListItems = ({
         );
     }
 
-    if (error && error.length) {
-        if (!userHasSignedIn) {
-            return (
-                <AppGrid title="Unable to retrieve that list">
-                    <Link to={authLoginFormRoute}>
-                        Sign in to view your Open Supply Hub lists
-                    </Link>
-                </AppGrid>
-            );
-        }
-
+    if (!userHasSignedIn) {
         return (
-            <AppGrid title="Unable to retrieve that list">
+            <RequireAuthNotice
+                title={TITLE}
+                text="Sign in to view your Open Supply Hub lists"
+            />
+        );
+    }
+
+    if (error && error.length) {
+        return (
+            <AppGrid title={TITLE}>
                 <ul>
                     {error.map(err => (
                         <li key={err}>{err}</li>

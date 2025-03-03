@@ -9,18 +9,14 @@ import AppOverflow from './AppOverflow';
 import FacilityListsEmpty from './FacilityListsEmpty';
 import FacilityListsTable from './FacilityListsTable';
 import ShowOnly from './ShowOnly';
+import RequireAuthNotice from './RequireAuthNotice';
 
 import {
     fetchUserFacilityLists,
     resetUserFacilityLists,
 } from '../actions/facilityLists';
 
-import {
-    authLoginFormRoute,
-    claimedFacilitiesRoute,
-    InfoLink,
-    InfoPaths,
-} from '../util/constants';
+import { claimedFacilitiesRoute, InfoLink, InfoPaths } from '../util/constants';
 import { facilityListPropType } from '../util/propTypes';
 
 class FacilityLists extends Component {
@@ -41,37 +37,37 @@ class FacilityLists extends Component {
             fetchingSessionSignIn,
             myFacilitiesRoute,
         } = this.props;
+        const TITLE = 'My Lists';
 
-        if (fetching || fetchingSessionSignIn || error || !userHasSignedIn) {
-            const insetComponent = (() => {
-                if (fetching || fetchingSessionSignIn) {
-                    return <CircularProgress size={50} />;
-                }
+        if (fetching || fetchingSessionSignIn) {
+            return (
+                <AppGrid title={TITLE}>
+                    <CircularProgress size={50} />
+                </AppGrid>
+            );
+        }
 
-                if (!userHasSignedIn) {
-                    return (
-                        <Link to={authLoginFormRoute} href={authLoginFormRoute}>
-                            Sign in to view your Open Supply Hub lists
-                        </Link>
-                    );
-                }
+        if (!userHasSignedIn) {
+            return (
+                <RequireAuthNotice
+                    title={TITLE}
+                    text="Sign in to view your Open Supply Hub lists"
+                />
+            );
+        }
 
-                if (error && error.length) {
-                    return (
-                        <ul>
-                            {error.map(err => (
-                                <li key={err} style={{ color: 'red' }}>
-                                    {err}
-                                </li>
-                            ))}
-                        </ul>
-                    );
-                }
-
-                return null;
-            })();
-
-            return <AppGrid title="My Lists">{insetComponent}</AppGrid>;
+        if (error && error.length) {
+            return (
+                <AppGrid title={TITLE}>
+                    <ul>
+                        {error.map(err => (
+                            <li key={err} style={{ color: 'red' }}>
+                                {err}
+                            </li>
+                        ))}
+                    </ul>
+                </AppGrid>
+            );
         }
 
         const tableComponent =
