@@ -2,11 +2,14 @@ from rest_framework.request import Request
 from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import get_template
-
-from api.models.facility.facility_list import FacilityList
-from api.models.moderation_event import ModerationEvent
+from api.models import (
+    FacilityList,
+    FacilityClaim,
+    ModerationEvent,
+    Facility
+)
 from countries.lib.countries import COUNTRY_NAMES
-from api.models.facility.facility import Facility
+from api.constants import FacilityClaimStatuses
 
 
 def make_oshub_url(request: Request):
@@ -40,6 +43,23 @@ def make_claimed_url(request):
 
 def make_claim_url(request: Request, location: Facility):
     return '{}/claim'.format(make_facility_url(request, location))
+
+
+def make_pl_search_url(request):
+    return (
+        "{}/contribute/single-location".format(
+            make_oshub_url(request)
+        )
+    )
+
+
+def make_pl_claim_url(request, facility):
+    return (
+        "{}/facilities/{}/claim".format(
+            make_oshub_url(request),
+            facility.id,
+        )
+    )
 
 
 def send_claim_facility_confirmation_email(request, facility_claim):
@@ -444,4 +464,136 @@ def send_production_location_creation_email(
         settings.DATA_FROM_EMAIL,
         [moderation_event.contributor.admin.email],
         html_message=html_template.render(creation_dict)
+    )
+
+
+def send_slc_additional_info_confirmation_email(moderation_event):
+    subj_template = get_template(
+        'mail/slc_additional_info_confirmation_subject.txt'
+    )
+    text_template = get_template(
+        'mail/slc_additional_info_confirmation_body.txt'
+    )
+    html_template = get_template(
+        'mail/slc_additional_info_confirmation_body.html'
+    )
+
+    additional_info_dictionary = {
+        'pl_name': moderation_event.cleaned_data.get("name", ''),
+        'pl_address': moderation_event.cleaned_data.get("address", ''),
+        'pl_country': (
+            moderation_event.cleaned_data.get("country_code", '')
+        ),
+    }
+
+    send_mail(
+        subj_template.render().rstrip(),
+        text_template.render(additional_info_dictionary),
+        settings.DATA_FROM_EMAIL,
+        [moderation_event.contributor.admin.email],
+        html_message=html_template.render(additional_info_dictionary)
+    )
+
+
+def send_slc_new_location_confirmation_email(moderation_event):
+    subj_template = get_template(
+        'mail/slc_new_location_confirmation_subject.txt'
+    )
+    text_template = get_template(
+        'mail/slc_new_location_confirmation_body.txt'
+    )
+    html_template = get_template(
+        'mail/slc_new_location_confirmation_body.html'
+    )
+
+    send_mail(
+        subj_template.render().rstrip(),
+        text_template.render(),
+        settings.DATA_FROM_EMAIL,
+        [moderation_event.contributor.admin.email],
+        html_message=html_template.render()
+    )
+
+
+def send_slc_contribution_approval_email(
+    request,
+    moderation_event,
+    facility_list_item
+):
+    subj_template = get_template(
+        'mail/slc_contribution_approval_subject.txt'
+    )
+    text_template = get_template(
+        'mail/slc_contribution_approval_body.txt'
+    )
+    html_template = get_template(
+        'mail/slc_contribution_approval_body.html'
+    )
+
+    is_claimed = FacilityClaim.objects.filter(
+        facility=facility_list_item.facility,
+        status__in=[
+            FacilityClaimStatuses.APPROVED,
+            FacilityClaimStatuses.PENDING
+        ]
+    ).exists()
+
+    approval_dictionary = {
+        'is_claimed': is_claimed,
+        'pl_claim_url': make_pl_claim_url(
+            request,
+            facility_list_item.facility
+        ),
+        'os_id': facility_list_item.facility.id,
+        'location_url': make_facility_url(
+            request,
+            facility_list_item.facility
+        ),
+    }
+
+    send_mail(
+        subj_template.render().rstrip(),
+        text_template.render(approval_dictionary),
+        settings.DATA_FROM_EMAIL,
+        [moderation_event.contributor.admin.email],
+        html_message=html_template.render(approval_dictionary)
+    )
+
+
+def send_slc_contribution_rejected_email(request, moderation_event):
+    subj_template = get_template(
+        'mail/slc_contribution_rejected_subject.txt'
+    )
+    text_template = get_template(
+        'mail/slc_contribution_rejected_body.txt'
+    )
+    html_template = get_template(
+        'mail/slc_contribution_rejected_body.html'
+    )
+
+    rejected_dictionary = {
+        'action_reason_text_cleaned': getattr(
+            moderation_event,
+            "action_reason_text_cleaned",
+            None
+        ),
+        'action_reason_text_raw': getattr(
+            moderation_event,
+            "action_reason_text_raw",
+            None
+        ),
+        'pl_search_url': make_pl_search_url(request),
+        'pl_name': moderation_event.cleaned_data.get("name", ''),
+        'pl_address': moderation_event.cleaned_data.get("address", ''),
+        'pl_country': (
+            moderation_event.cleaned_data.get("country_code", '')
+        ),
+    }
+
+    send_mail(
+        subj_template.render().rstrip(),
+        text_template.render(rejected_dictionary),
+        settings.DATA_FROM_EMAIL,
+        [moderation_event.contributor.admin.email],
+        html_message=html_template.render(rejected_dictionary)
     )

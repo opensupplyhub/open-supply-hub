@@ -1,0 +1,25 @@
+{% block content %}
+Hello,
+
+Thank you for submitting your production location information to Open Supply Hub (https://info.opensupplyhub.org/) (OS Hub)!
+
+We weren’t able to accept your submission as provided. To move forward and get an OS ID,
+please follow these steps:
+
+1. Review the feedback below:
+    - {{ action_reason_text_cleaned }}
+2. Make the necessary updates based on the feedback and
+resubmit your information using this link: Resubmit Your Production Location ({{ pl_search_url }}).
+
+Here are the details of your submission:
+- Production Location Name: {{ pl_name }}
+- Production Location Address: {{ pl_address }}
+- Production Location Country: {{ pl_country }}
+
+Thank you for sharing your information! Your data helps open doors to safe and sustainable
+supply chains.
+
+Best Regards,
+
+{% include "mail/signature_block.txt" %}
+{% endblock content %}
