@@ -29,31 +29,33 @@ This document outlines the SDLC pillars of the opensupplyhub monorepo, as well a
 
 ## Release Schedule
 
-| Version |  Release date | Code Freeze Date |  Responsible  |
-| --- | --- |  ---   | --- |
-| v1.8.0 | January 27, 2024  | January 22, 2024 | @Vlad Shapik |
-| v1.9.0 | February 24, 2024  | February 19, 2024 | @Vlad Shapik |
-| v1.10.0 | March 23, 2024  | March 18, 2024 | @Nessa Drew |
-| v1.11.0 | April 20, 2024  | April 15, 2024 | @Nessa Drew |
-| v1.12.0 | May 18, 2024  | May 14, 2024 | @Vadim Kovalenko |
-| v1.13.0 | June 01, 2024  | May 29, 2024 | @Vadim Kovalenko |
-| v1.14.0 | June 15, 2024  | June 12, 2024 | @Oleksandr Mazur |
-| v1.15.0 | June 29, 2024  | June 26, 2024 | @Oleksandr Mazur |
-| v1.16.0 | July 13, 2024  | July 10, 2024 | @Roman Stolar |
-| v1.17.0 | July 27, 2024  | July 23, 2024 | @Roman Stolar |
-| v1.18.0 | August 10, 2024  | August 6, 2024 | @Vlad Shapik |
-| v1.19.0 | August 24, 2024  | August 20, 2024 | @Vlad Shapik |
-| v1.20.0 | September 07, 2024  | September 03, 2024 | @Anhelina Bohdanova |
-| v1.21.0 | September 21, 2024  | September 17, 2024 | @Anhelina Bohdanova |
-| v1.22.0 | October 19, 2024  | October 15, 2024 | @Vadim Kovalenko |
-| v1.23.0 | November 02, 2024  | October 29, 2024 | @Vadim Kovalenko |
-| v1.24.0 | November 16, 2024  | November 12, 2024 | @Oleksandr Mazur |
-| v1.25.0 | November 30, 2024  | November 26, 2024 | @Oleksandr Mazur |
-| v1.26.0 | December 14, 2024  | December 10, 2024 | @Nessa Drew |
-| v1.27.0 | January 11, 2025  | January 7, 2025 | @Nessa Drew |
-| v1.28.0 | January 25, 2025  | January 21, 2025 | @Vlad Shapik |
-| v1.29.0 | February 8, 2025  | February 4, 2025 | @Vlad Shapik |
-| v1.30.0 | March 1, 2025 | February 25, 2025 | @Vadim Kovalenko |
+| Version | Code Freeze Date | Release date | Responsible |
+| --- | --- | --- | --- |
+| v1.8.0 | January 22, 2024 | January 27, 2024 | @Vlad Shapik |
+| v1.9.0 | February 19, 2024 | February 24, 2024 | @Vlad Shapik |
+| v1.10.0 | March 18, 2024 | March 23, 2024 | @Nessa Drew |
+| v1.11.0 | April 15, 2024 | April 20, 2024 | @Nessa Drew |
+| v1.12.0 | May 14, 2024 | May 18, 2024 | @Vadim Kovalenko |
+| v1.13.0 | May 29, 2024 | June 01, 2024 | @Vadim Kovalenko |
+| v1.14.0 | June 12, 2024 | June 15, 2024 | @Oleksandr Mazur |
+| v1.15.0 | June 26, 2024 | June 29, 2024 | @Oleksandr Mazur |
+| v1.16.0 | July 10, 2024 | July 13, 2024 | @Roman Stolar |
+| v1.17.0 | July 23, 2024 | July 27, 2024 | @Roman Stolar |
+| v1.18.0 | August 6, 2024 | August 10, 2024 | @Vlad Shapik |
+| v1.19.0 | August 20, 2024 | August 24, 2024 | @Vlad Shapik |
+| v1.20.0 | September 03, 2024 | September 07, 2024 | @Anhelina Bohdanova |
+| v1.21.0 | September 17, 2024 | September 21, 2024 | @Anhelina Bohdanova |
+| v1.22.0 | October 15, 2024 | October 19, 2024 | @Vadim Kovalenko |
+| v1.23.0 | October 29, 2024 | November 02, 2024 | @Vadim Kovalenko |
+| v1.24.0 | November 12, 2024 | November 16, 2024 | @Oleksandr Mazur |
+| v1.25.0 | November 26, 2024 | November 30, 2024 | @Oleksandr Mazur |
+| v1.26.0 | December 10, 2024 | December 14, 2024 | @Nessa Drew |
+| v1.27.0 | January 7, 2025 | January 11, 2025 | @Nessa Drew |
+| v1.28.0 | January 21, 2025 | January 25, 2025 | @Vlad Shapik |
+| v1.29.0 | February 4, 2025 | February 8, 2025 | @Vlad Shapik |
+| v1.30.0 | February 25, 2025 | March 1, 2025 | @Vadim Kovalenko |
+| v2.0.0 | March 4, 2025 | March 8, 2025 | @Roman Stolar |
+| v2.1.0 | March 18, 2025 | March 22, 2025 | @Roman Stolar |
 
 ## General Information
 
@@ -145,7 +147,7 @@ Make sure that:
 ### Code Freeze
 
 1. Code freeze occurs every Tuesday following two weeks of development for a new release version. To enhance communication within the team, all stakeholders must be notified about the code freeze two working days before the code freeze by the responsible person for the release.
-2. Before initiating the code freeze process, ensure that all commands required for the deployment process (e.g., `index_facilities_new`) are included in the `post_deployment` command.
+2. Before initiating the code freeze process, ensure that all commands required for the deployment process (e.g., `migrate` or `reindex_database` or `index_facilities_new`) are included in the `post_deployment` command.
 3. On the day of the code freeze, the responsible person has to run the `Release [Init]` workflow from the `main` branch, specifying the major and minor versions of the release. Subsequently, the `releases/v.X.Y` branch will be created and automatically deployed to the running pre-prod environment via the `Deploy to AWS` workflow.
 4. After a successful deployment, you should copy the ARN of the `terraform` user from the AWS IAM console. Navigate to the AWS console's search input, type "IAM", and open the IAM console. In the IAM console, find and click on the "Users" tab. In the list of available users, locate the `terraform` user, click on it, and on that page, you will find its ARN. After copying this value, go to the AWS OpenSearch console in the same way you accessed the IAM console. Open the available domains and locate the domain for the preprod environment. Open it, then navigate to the security configuration and click "Edit". Find the section titled "Fine-grained access control", and under this section, you will find an "IAM ARN" input field. Paste the copied ARN into this field and save the changes. It may take several minutes to apply. Make sure that the "Configuration change status" field has green status.
 5. You need to run the `DB - Save Anonymized DB` workflow (if this job did not run on the same or the previous day). Once the Anonymized DB is successfully saved, run the `DB - Apply Anonymized DB` workflow to ensure that testing will be conducted with up-to-date data. Be sure to select the `Pre-prod` environment and the `releases/v.X.Y` branch before running the `DB - Apply Anonymized DB` workflow.
@@ -179,8 +181,8 @@ On Saturday (release day), the QA team should create two additional test cycles 
 ### Release to production and sandbox
 
 1. To enhance communication within the team, the responsible person for the release must notify all stakeholders about the release two working days before its scheduled date and in 1-2 hours to prevent any actions on the environment on which the deployment is carried out.
-2. The responsible person have to take db snapshot manually via Amazon RDS in the `Snapshots` tab with name `env-db-date` (examples: `stg-db-05-18-2024` and `prd-db-05-18-2024`).
-3. On the designated time and day, before triggering workflow on Production environment the responsible person have manually make active the `disable_list_uploading` switch, as mentioned in [Block loading of new production locations](#block-loading-production-locations).
+2. On the designated time and day, before triggering workflow on Production environment the responsible person have manually make active the `disable_list_uploading` switch, as mentioned in [Block loading of new production locations](#block-loading-production-locations).
+3. The responsible person have to take db snapshot manually via Amazon RDS in the `Snapshots` tab with name `env-db-MM-DD-YYYY` (examples: `stg-db-05-18-2025` and `prd-db-05-18-2025`).
 4. Then the responsible person runs the `Release [Deploy]` workflow for the sandbox and production environments from the release branch. They need to fill in the full release tag version (`X.Y.Z`) and choose the environment. If the responsible person need to clear the custom OpenSearch indexes and templates during deployment, they must select the `Clear the custom OpenSearch indexes and templates` checkbox.
 ℹ️ Note, that `Deploy to AWS` workflow will be triggered <strong>automatically</strong> for the sandbox and production environments respectively.
 5. After completing the triggered workflows, the responsible person must open the AWS console and verify that all tasks of the `OpenSupplyHubStagingAppDD`, `OpenSupplyHubStagingApp`, `OpenSupplyHubStagingAppLogstash`, `OpenSupplyHubProductionAppDD`, `OpenSupplyHubProductionApp` and `OpenSupplyHubProductionAppLogstash` services in the `ecsOpenSupplyHubStagingCluster` and `ecsOpenSupplyHubProductionCluster` Amazon ECS clusters, respectively, have been restarted.
@@ -190,7 +192,7 @@ If there is no such message and DedupeHub hangs, you need to reload it (perhaps 
 8. Once the aforementioned steps are successfully completed, the person responsible for the release should also verify that all actions included in the post_deployment command have been successfully executed. Here is the [instructions](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/280788993/Checking+successful+application+of+post-deployment+actions+in+the+test+environment).
 In case there is a need to run additional command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Migration+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5DHow-to-correctly-run-migrations-for-our-four-environments%3F---Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
 9. Make inactive the `disable_list_uploading` switch (on Production).
-10. Notify the QA Engineer that the new version has been released, and they can commence testing the items listed under the *prod* column in [the QA Checklist sheet](https://docs.google.com/spreadsheets/d/1uinHJOPpGfrUNkewBxPVsDeDXnNx4dJnnX94LoBA_zk/edit?usp=sharing).
+10. Notify the QA Engineer that the new version has been released, and they can commence smoke testing.
 11. The QA Engineer must notify stakeholders in the *#data_x_product* Slack channel when testing is complete in the sandbox and in the production, as well as issues, if any encountered during testing.
 12. Upon completing the release, the responsible person must notify stakeholders in the *#data_x_product* Slack channel that the releases to sandbox and production have concluded. Additionally, update the *Unreleased* version's status in Jira.
 
