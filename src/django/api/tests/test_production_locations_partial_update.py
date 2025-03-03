@@ -473,6 +473,6 @@ class TestProductionLocationsPartialUpdate(APITestCase):
             .get('fields', {})
             .get('parent_company')
         )
-        self.assertEqual(len(response_body_dict), 4)
+        self.assertEqual(len(response_body_dict), 5)
         self.assertEqual(name, valid_char_field)
         self.assertEqual(parent_company, valid_char_field)
