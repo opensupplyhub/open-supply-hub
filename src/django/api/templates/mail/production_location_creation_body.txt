@@ -1,0 +1,26 @@
+{% block content %}
+
+Hello,
+
+Thank you for submitting your production location information
+to Open Supply Hub (https://info.opensupplyhub.org/) (OS Hub)!
+
+You can now:
+
+- Save your OS ID and the public link to your production
+  location profile and share it with clients and stakeholders:
+    - OS ID: {{ os_id }}
+    - Public link: {{ location_url }}
+- Claim your production location to take control of your data
+  and make it visible to more global partners. It’s free and
+  only takes a few steps! Claim my production location now ({{ claim_url }}).
+- Learn more about the OS ID and how to use it to advance
+  your business in this Guide for Facilities (https://info.opensupplyhub.org/facilities).
+
+Thank you for sharing your information! Your data helps open
+doors to safe and sustainable supply chains.
+
+Best Regards,
+
+{% include "mail/signature_block.txt" %}
+{% endblock content %}
