@@ -15,6 +15,11 @@ class OpenSearchIntegrationTestCase(unittest.TestCase):
             connection_class=RequestsHttpConnection,
         )
 
+<<<<<<< Updated upstream
+=======
+        self.index_name = os.getenv("OPENSEARCH_INDEX_NAME")
+        self.production_locations_index_name = os.getenv('OPENSEARCH_PRODUCTION_LOCATIONS_INDEX')
+>>>>>>> Stashed changes
         self.moderation_events_index_name = os.getenv('OPENSEARCH_MODERATION_EVENTS_INDEX')
         self.production_locations_index_name = os.getenv('OPENSEARCH_PRODUCTION_LOCATIONS_INDEX')
 

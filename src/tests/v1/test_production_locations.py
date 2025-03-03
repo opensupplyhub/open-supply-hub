@@ -31,12 +31,17 @@ class ProductionLocationsTest(BaseAPITest):
             "claim_status": "unclaimed"
         }
         self.open_search_client.index(
+<<<<<<< Updated upstream
             index=self.production_locations_index_name,
+=======
+            # index=self.production_locations_index_name,
+            index=self.index_name,
+>>>>>>> Stashed changes
             body=doc,
             id=self.open_search_client.count()
         )
         self.open_search_client.indices.refresh(
-            index=self.production_locations_index_name
+            index=self.index_name,
         )
 
         search_name = "Silver Composite Textile Mills Ltd."
@@ -83,12 +88,17 @@ class ProductionLocationsTest(BaseAPITest):
             },
         }
         self.open_search_client.index(
+<<<<<<< Updated upstream
             index=self.production_locations_index_name,
+=======
+            # index=self.production_locations_index_name,
+            index=self.index_name,
+>>>>>>> Stashed changes
             body=doc,
             id=self.open_search_client.count()
         )
         self.open_search_client.indices.refresh(
-            index=self.production_locations_index_name
+            index=self.index_name
         )
 
         search_os_id = "US2020052SV22HT"

@@ -11,6 +11,11 @@ services:
     environment:
       - OPENSEARCH_HOST=opensearch-single-node
       - OPENSEARCH_PORT=9200
+<<<<<<< Updated upstream
+=======
+      - OPENSEARCH_INDEX_NAME=production-locations
+      - OPENSEARCH_PRODUCTION_LOCATIONS_INDEX=production-locations
+>>>>>>> Stashed changes
       - OPENSEARCH_MODERATION_EVENTS_INDEX=moderation-events
       - OPENSEARCH_PRODUCTION_LOCATIONS_INDEX=production-locations
       - REACT_HOST=react
