@@ -100,7 +100,7 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
                 },
             },
             status='PENDING',
-            source='API',
+            source='SLC',
             contributor=self.contributor,
         )
 
