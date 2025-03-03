@@ -380,7 +380,7 @@ class TestProductionLocationsPartialUpdate(APITestCase):
                 {
                     'field': 'parent_company',
                     'detail': (
-                        'Field parent_company must be a string'
+                        'Field parent_company must be a string,'
                         ' not a number.'
                     )
                 },
@@ -410,7 +410,7 @@ class TestProductionLocationsPartialUpdate(APITestCase):
                          initial_moderation_event_count)
 
     @patch('api.geocoding.requests.get')
-    def test_moderation_event_created_with_valid_parent_company(
+    def test_moderation_event_created_with_valid_char_field(
             self,
             mock_get):
         mock_get.return_value = Mock(ok=True, status_code=200)
@@ -419,7 +419,7 @@ class TestProductionLocationsPartialUpdate(APITestCase):
         special_characters = '&@, \' _ #()'
         numbers = '1234567890'
         multi_lang_letters = '贾建龙ÖrmeTİCіїъыParentCompanyการผลิตהפָקָהผลิต'
-        valid_parent_company = (
+        valid_char_field = (
             special_characters +
             numbers +
             multi_lang_letters
@@ -427,10 +427,10 @@ class TestProductionLocationsPartialUpdate(APITestCase):
 
         valid_req_body = json.dumps({
             'source': 'SLC',
-            'name': 'Blue Horizon Facility',
+            'name': valid_char_field,
             'address': '990 Spring Garden St., Philadelphia PA 19123',
             'country': 'US',
-            'parent_company': valid_parent_company
+            'parent_company': valid_char_field
         })
 
         response = self.client.patch(
@@ -462,6 +462,11 @@ class TestProductionLocationsPartialUpdate(APITestCase):
             str(moderation_event.uuid)
         )
         self.assertIn("cleaned_data", response_body_dict)
+        name = (
+            response_body_dict
+            .get('cleaned_data', {})
+            .get('name')
+        )
         parent_company = (
             response_body_dict
             .get('cleaned_data', {})
@@ -469,4 +474,5 @@ class TestProductionLocationsPartialUpdate(APITestCase):
             .get('parent_company')
         )
         self.assertEqual(len(response_body_dict), 4)
-        self.assertEqual(parent_company, valid_parent_company)
+        self.assertEqual(name, valid_char_field)
+        self.assertEqual(parent_company, valid_char_field)
