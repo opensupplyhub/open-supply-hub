@@ -457,7 +457,7 @@ def send_production_location_creation_email(
         'location_url': make_facility_url(request, moderation_event.os),
         'claim_url': make_claim_url(request, moderation_event.os),
     }
-    
+
     send_mail(
         subj_template.render().rstrip(),
         text_template.render(creation_dict),
