@@ -29,6 +29,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1777](https://opensupplyhub.atlassian.net/browse/OSDEV-1777) - A consistent URL style was established across all pages of the SLC workflow. After the changes, the URL begins from `/contribute/single-location/`.
 * [OSDEV-1678](https://opensupplyhub.atlassian.net/browse/OSDEV-1678) - Added asterisks next to each required form field (Name, Address, and Country) on the "Production Location Information" page. Highlighted an empty field and displayed an error message if it loses focus.
 * [OSDEV-1778](https://opensupplyhub.atlassian.net/browse/OSDEV-1778) - Fixed the validation for number of workers field in POST, PATCH production locations API. The min field must be less than or equal to the max field.
+* [OSDEV-1795](https://opensupplyhub.atlassian.net/browse/OSDEV-1795) - With this bugfix, we are resolving the issue with database connectivity after upgrading PostgreSQL to version 16.3.
 
 ### What's new
 * [OSDEV-1764](https://opensupplyhub.atlassian.net/browse/OSDEV-1764) - Added a new claiming email for the Moderation queue/SLC workflow, which is sent once a data moderator creates a new location based on the moderation event the customer submitted through the SLC workflow.
