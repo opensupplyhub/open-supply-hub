@@ -37,6 +37,10 @@ from api.constants import (
     APIV1LocationContributionErrorMessages
 )
 from api.exceptions import ServiceUnavailableException
+from api.mail import (
+    send_slc_new_location_confirmation_email,
+    send_slc_additional_info_confirmation_email
+)
 
 
 class ProductionLocations(ViewSet):
@@ -182,6 +186,11 @@ class ProductionLocations(ViewSet):
                 result.errors,
                 status=result.status_code)
 
+        if result.moderation_event.source == ModerationEvent.Source.SLC:
+            send_slc_new_location_confirmation_email(
+                result.moderation_event
+            )
+
         return Response(
             {
                 'moderation_id': result.moderation_event.uuid,
@@ -236,6 +245,11 @@ class ProductionLocations(ViewSet):
             return Response(
                 result.errors,
                 status=result.status_code)
+
+        if result.moderation_event.source == ModerationEvent.Source.SLC:
+            send_slc_additional_info_confirmation_email(
+                result.moderation_event
+            )
 
         return Response(
             {
