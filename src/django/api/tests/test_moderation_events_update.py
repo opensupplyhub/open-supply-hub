@@ -1,5 +1,6 @@
 import json
 from django.test import override_settings
+from django.core import mail
 from api.models import (
     ModerationEvent,
     User,
@@ -42,7 +43,7 @@ class ModerationEventsUpdateTest(APITestCase):
             cleaned_data={"name": "cleaned_name", "country_code": "UK"},
             geocode_result={"latitude": -53, "longitude": 142},
             status='PENDING',
-            source='API',
+            source='SLC',
             contributor=self.contributor
         )
 
@@ -111,6 +112,12 @@ class ModerationEventsUpdateTest(APITestCase):
             content_type="application/json"
         )
 
+        email = mail.outbox[0]
+        self.assertEqual(
+            email.subject,
+            "ACTION REQUESTED: We need more information to process "
+            "your submission and provide an OS ID"
+        )
         self.assertEqual(200, response.status_code)
         self.moderation_event.refresh_from_db()
         self.assertEqual(self.moderation_event.status, "REJECTED")

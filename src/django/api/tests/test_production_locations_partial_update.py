@@ -3,6 +3,7 @@ import json
 from unittest.mock import Mock, patch
 from rest_framework.test import APITestCase
 from django.urls import reverse
+from django.core import mail
 from allauth.account.models import EmailAddress
 from waffle.testutils import override_switch
 from django.contrib.gis.geos import Point
@@ -244,6 +245,12 @@ class TestProductionLocationsPartialUpdate(APITestCase):
             self.url,
             valid_req_body,
             content_type='application/json'
+        )
+        email = mail.outbox[0]
+        self.assertEqual(
+            email.subject,
+            "Thank You for Your Submission – "
+            "It Is Now Being Reviewed"
         )
         self.assertEqual(response.status_code, 202)
 
