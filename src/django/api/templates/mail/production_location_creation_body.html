@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>
+            Great News: your OS ID is ready! You can now claim your profile.
+        </title>
+    </head>
+    <body>
+        <p>Hello,</p>
+        <p>
+            Thank you for submitting your production location information to
+            <a href="https://info.opensupplyhub.org/">Open Supply Hub</a> (OS
+            Hub)!
+        </p>
+        <p>You can now:</p>
+        <ol type="1">
+            <li>
+                <span>
+                    <b>Save your OS ID and the public link</b> to your
+                    production location profile and share it with clients and
+                    stakeholders:
+                </span>
+                <ul style="list-style-type: circle">
+                    <li>OS ID: {{ os_id }}</li>
+                    <li>Public link: {{ location_url }}</li>
+                </ul>
+            </li>
+            <li>
+                <b>Claim your production location</b> to take control of your
+                data and make it visible to more global partners. It’s free and
+                only takes a few steps!
+                <a href="{{ claim_url }}">Claim my production location now</a>.
+            </li>
+            <li>
+                <b>Learn more about the OS ID</b> and how to use it to advance
+                your business in this
+                <a href="https://info.opensupplyhub.org/facilities"
+                    >Guide for Facilities</a
+                >.
+            </li>
+        </ol>
+        <p>
+            Thank you for sharing your information! Your data helps open doors
+            to safe and sustainable supply chains.
+        </p>
+        <p>Best Regards,</p>
+        {% include "mail/signature_block.html" %}
+    </body>
+</html>
