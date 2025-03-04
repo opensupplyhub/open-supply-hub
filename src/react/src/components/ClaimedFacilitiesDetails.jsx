@@ -28,7 +28,8 @@ import AppGrid from './AppGrid';
 import ClaimedFacilitiesDetailsSidebar from './ClaimedFacilitiesDetailsSidebar';
 import ShowOnly from './ShowOnly';
 import CreatableInputOnly from './CreatableInputOnly';
-import RequireAuthNotice from './RequireAuthNotice';
+// import RequireAuthNotice from './RequireAuthNotice';
+import checkComponentStatus from '../util/checkComponentStatus';
 
 import COLOURS from '../util/COLOURS';
 
@@ -423,40 +424,18 @@ function ClaimedFacilitiesDetails({
             });
     };
 
-    if (fetching) {
-        return (
-            <AppOverflow>
-                <AppGrid title={TITLE}>
-                    <CircularProgress />
-                </AppGrid>
-            </AppOverflow>
-        );
-    }
+    const {
+        renderIfFetchStatus,
+        renderIfNotAuthStatus,
+        renderIfErrorsStatus,
+    } = checkComponentStatus;
 
-    if (!userHasSignedIn) {
-        return (
-            <AppOverflow>
-                <RequireAuthNotice
-                    title={TITLE}
-                    text="Sign in to view your Open Supply Hub lists"
-                />
-            </AppOverflow>
-        );
-    }
-
-    if (error) {
-        return (
-            <AppOverflow>
-                <AppGrid title={TITLE}>
-                    <ul>
-                        {error.map(err => (
-                            <li key={err}>{err}</li>
-                        ))}
-                    </ul>
-                </AppGrid>
-            </AppOverflow>
-        );
-    }
+    const fetchStatus = renderIfFetchStatus(fetching, TITLE);
+    if (fetchStatus) return fetchStatus;
+    const nonAuthStatus = renderIfNotAuthStatus(userHasSignedIn, TITLE);
+    if (nonAuthStatus) return nonAuthStatus;
+    const errorsStatus = renderIfErrorsStatus(error, TITLE);
+    if (errorsStatus) return errorsStatus;
 
     if (!data) {
         return null;

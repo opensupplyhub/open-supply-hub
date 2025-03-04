@@ -11,12 +11,13 @@ import {
 } from '../util/constants';
 
 export default function ClaimedFacilities() {
+    console.log('^^^!!!!!!!!');
     return (
         <Switch>
             <Route
                 exact
                 path={claimedFacilitiesDetailRoute}
-                render={() => <Route component={ClaimedFacilitiesDetails} />}
+                component={ClaimedFacilitiesDetails}
             />
             <Route
                 exact

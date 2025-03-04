@@ -1,14 +1,12 @@
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { arrayOf, bool, func, string } from 'prop-types';
-import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import AppGrid from './AppGrid';
 import AppOverflow from './AppOverflow';
 
 import ClaimedFacilitiesListTable from './ClaimedFacilitiesListTable';
-import RequireAuthNotice from './RequireAuthNotice';
 
 import {
     fetchClaimedFacilities,
@@ -16,6 +14,7 @@ import {
 } from '../actions/claimedFacilities';
 
 import { facilityClaimsListPropType } from '../util/propTypes';
+import checkComponentStatus from '../util/checkComponentStatus';
 
 const styles = Object.freeze({
     searchButton: Object.freeze({
@@ -38,42 +37,20 @@ function ClaimedFacilitiesList({
         return clearClaimed;
     }, [getClaimed, clearClaimed]);
 
-    if (fetching) {
-        return (
-            <AppOverflow>
-                <AppGrid title={TITLE}>
-                    <CircularProgress />
-                </AppGrid>
-            </AppOverflow>
-        );
-    }
+    const {
+        renderIfFetchStatus,
+        renderIfNotAuthStatus,
+        renderIfErrorsStatus,
+    } = checkComponentStatus;
 
-    if (!userHasSignedIn) {
-        return (
-            <AppOverflow>
-                <RequireAuthNotice
-                    title={TITLE}
-                    text="Sign in to view your Open Supply Hub lists"
-                />
-            </AppOverflow>
-        );
-    }
+    const fetchStatus = renderIfFetchStatus(fetching, TITLE);
+    if (fetchStatus) return fetchStatus;
+    const nonAuthStatus = renderIfNotAuthStatus(userHasSignedIn, TITLE);
+    if (nonAuthStatus) return nonAuthStatus;
+    const errorsStatus = renderIfErrorsStatus(error, TITLE);
+    if (errorsStatus) return errorsStatus;
 
-    if (error) {
-        return (
-            <AppOverflow>
-                <AppGrid title={TITLE}>
-                    <ul>
-                        {error.map(err => (
-                            <li key={err}>{err}</li>
-                        ))}
-                    </ul>
-                </AppGrid>
-            </AppOverflow>
-        );
-    }
-
-    if (data === null) {
+    if (!data) {
         return null;
     }
 
