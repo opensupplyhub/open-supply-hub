@@ -82,6 +82,46 @@ class ModerationEventUpdateSerializer(ModelSerializer):
             })
         return value
 
+    def validate(self, data):
+        status = data.get('status')
+        if status == ModerationEvent.Status.REJECTED:
+            cleaned = data.get('action_reason_text_cleaned')
+            raw = data.get('action_reason_text_raw')
+            errors = []
+
+            if not cleaned:
+                errors.append({
+                    "field": "action_reason_text_cleaned",
+                    "detail": (
+                        "This field is required when rejecting a moderation "
+                        "event."
+                    )
+                })
+            elif len(cleaned) < 30:
+                errors.append({
+                    "field": "action_reason_text_cleaned",
+                    "detail": "This field must be at least 30 characters."
+                })
+
+            if not raw:
+                errors.append({
+                    "field": "action_reason_text_raw",
+                    "detail": (
+                        "This field is required when rejecting a moderation "
+                        "event."
+                    )
+                })
+            elif len(raw) < 30:
+                errors.append({
+                    "field": "action_reason_text_raw",
+                    "detail": "This field must be at least 30 characters."
+                })
+
+            if errors:
+                raise ValidationError(errors)
+
+        return data
+
     def update(self, instance, validated_data):
         if 'status' in validated_data:
             value = validated_data['status']
