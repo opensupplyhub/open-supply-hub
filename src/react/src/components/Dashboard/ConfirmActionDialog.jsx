@@ -15,6 +15,7 @@ import {
     DialogTitle,
     InputLabel,
     Typography,
+    Tooltip,
 } from '@material-ui/core';
 
 import { MODERATION_STATUSES_ENUM } from '../../util/constants';
@@ -102,15 +103,22 @@ const ConfirmActionDialog = ({
                 >
                     Cancel
                 </Button>
-                <Button
-                    variant="contained"
-                    color="secondary"
-                    onClick={handleAction}
-                    className={classes.buttonBaseStyles}
-                    disabled={isRejectDisabled}
+                <Tooltip
+                    title="Please provide a message with at least 30 characters."
+                    placement="top"
                 >
-                    Reject
-                </Button>
+                    <span>
+                        <Button
+                            variant="contained"
+                            color="secondary"
+                            onClick={handleAction}
+                            className={classes.buttonBaseStyles}
+                            disabled={isRejectDisabled}
+                        >
+                            Reject
+                        </Button>
+                    </span>
+                </Tooltip>
             </DialogActions>
         </Dialog>
     );
