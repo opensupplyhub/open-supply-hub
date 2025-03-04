@@ -27,6 +27,22 @@ jest.mock("react-draft-wysiwyg", () => {
     };
 });
 
+jest.mock('@material-ui/core/Tooltip', () => {
+    return ({ children, title, open, onOpen, onClose }) => {
+      return (
+        <div
+          data-testid="tooltip-wrapper"
+          onMouseOver={onOpen}
+          onMouseOut={onClose}
+        >
+          {children}
+          {open && <div data-testid="tooltip">{title}</div>}
+        </div>
+      );
+    };
+  });
+  
+  
 describe('ConfirmActionDialog component', () => {
     const defaultProps = {
         updateModerationEvent: mockUpdateModerationEvent,
@@ -90,6 +106,41 @@ describe('ConfirmActionDialog component', () => {
             `<p>${validText}</p>\n`,
         );
         expect(mockCloseDialog).toHaveBeenCalledTimes(1);
-    
+    });
+
+    test('displays tooltip on hover when reject button is disabled', () => {
+        const { getByRole, queryByText } = renderWithProviders(
+            <ConfirmActionDialog {...defaultProps} />
+        );
+        const tooltipText = 'Please provide a message with at least 30 characters.';
+
+        expect(queryByText(tooltipText)).not.toBeInTheDocument();
+
+        const rejectButton = getByRole('button', { name: /Reject/i });
+        expect(rejectButton).toBeDisabled();
+
+        fireEvent.mouseOver(rejectButton);
+
+        expect(queryByText(tooltipText)).toBeInTheDocument();
+
+        fireEvent.mouseOut(rejectButton);
+
+        expect(queryByText(tooltipText)).not.toBeInTheDocument()
+    });
+
+    test('does not display tooltip when reject button is enabled', () => {
+        const { getByRole, queryByText, getByTestId } = renderWithProviders(
+            <ConfirmActionDialog {...defaultProps} />
+        );
+        const rejectButton = getByRole('button', { name: /Reject/i });
+        const fakeEditor = getByTestId('fake-editor');
+        const validText = 'a'.repeat(30);
+
+        fireEvent.change(fakeEditor, { target: { value: validText } });
+
+        expect(rejectButton).toBeEnabled();
+        
+        fireEvent.mouseOver(rejectButton);
+        expect(queryByText('Please provide a message with at least 30 characters.')).not.toBeInTheDocument();
     });
 });
