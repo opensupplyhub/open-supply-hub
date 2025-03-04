@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import { arrayOf, bool, func, string, object } from 'prop-types';
+import { arrayOf, bool, func, string, shape } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
@@ -559,7 +559,7 @@ function ClaimedFacilitiesDetails({
                             variant="title"
                             style={classes.headingStyles}
                         >
-                            Point of contact
+                            Point of contact{' '}
                             <span style={classes.switchSectionStyles}>
                                 <Switch
                                     color="primary"
@@ -594,7 +594,7 @@ function ClaimedFacilitiesDetails({
                             variant="headline"
                             style={classes.headingStyles}
                         >
-                            Office information
+                            Office information{' '}
                             <span style={classes.switchSectionStyles}>
                                 <Switch
                                     color="primary"
@@ -726,7 +726,14 @@ ClaimedFacilitiesDetails.propTypes = {
     sectorOptions: sectorOptionsPropType,
     parentCompanyOptions: parentCompanyOptionsPropType,
     fetchSectors: func.isRequired,
-    classes: object.isRequired,
+    classes: shape({
+        switchSectionStyles: string.isRequired,
+        inputSectionFieldStyles: string.isRequired,
+        inputSectionLabelStyles: string.isRequired,
+        inputSectionStyles: string.isRequired,
+        asideStyles: string.isRequired,
+    }).isRequired,
+    userHasSignedIn: bool.isRequired,
 };
 
 function mapStateToProps({
