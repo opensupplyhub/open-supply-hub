@@ -51,7 +51,8 @@ const ConfirmActionDialog = ({
         closeDialog();
     };
 
-    const isRejectDisabled = cleanedText.trim().length < MIN_TEXT_INPUT_LENGTH;
+    const isRejectDisabled =
+        cleanedText.replace(/\s/g, '').length < MIN_TEXT_INPUT_LENGTH;
 
     return (
         <Dialog
