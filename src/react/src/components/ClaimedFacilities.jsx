@@ -11,7 +11,6 @@ import {
 } from '../util/constants';
 
 export default function ClaimedFacilities() {
-    console.log('^^^!!!!!!!!');
     return (
         <Switch>
             <Route

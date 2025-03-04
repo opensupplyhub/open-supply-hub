@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import { arrayOf, bool, func, string } from 'prop-types';
+import { arrayOf, bool, func, string, object } from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
@@ -28,10 +29,7 @@ import AppGrid from './AppGrid';
 import ClaimedFacilitiesDetailsSidebar from './ClaimedFacilitiesDetailsSidebar';
 import ShowOnly from './ShowOnly';
 import CreatableInputOnly from './CreatableInputOnly';
-// import RequireAuthNotice from './RequireAuthNotice';
 import checkComponentStatus from '../util/checkComponentStatus';
-
-import COLOURS from '../util/COLOURS';
 
 import {
     fetchClaimedFacilityDetails,
@@ -74,6 +72,7 @@ import {
     sectorOptionsPropType,
     userPropType,
 } from '../util/propTypes';
+import { claimedFacilitiesDetailsStyles } from '../../src/util/styles.js';
 
 import apiRequest from '../util/apiRequest';
 
@@ -95,63 +94,6 @@ import {
 const {
     parentCompany: { aside: parentCompanyAside },
 } = claimAFacilityFormFields;
-
-const claimedFacilitiesDetailsStyles = Object.freeze({
-    containerStyles: Object.freeze({
-        display: 'flex',
-        width: '100%',
-        justifyContent: 'space-between',
-        marginBottom: '100px',
-    }),
-    formStyles: Object.freeze({
-        width: '60%',
-    }),
-    headingStyles: Object.freeze({
-        padding: '10px 0',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    }),
-    inputSectionStyles: Object.freeze({
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '10px 0',
-    }),
-    inputSectionLabelStyles: Object.freeze({
-        fontSize: '18px',
-        fontWeight: '400',
-        padding: '10px 0',
-        color: '#000',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    }),
-    inputSectionFieldStyles: Object.freeze({
-        width: '100%',
-    }),
-    switchSectionStyles: Object.freeze({
-        fontSize: '15px',
-        fontWeight: '400',
-        display: 'flex',
-        alignItems: 'center',
-        color: COLOURS.DARK_GREY,
-    }),
-    controlStyles: Object.freeze({
-        width: '100%',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '10px 0',
-    }),
-    errorStyles: Object.freeze({
-        width: '100%',
-        padding: '10px 0',
-        color: 'red',
-    }),
-    asideStyles: Object.freeze({
-        padding: '5px 20px 20px 0',
-    }),
-});
 
 const selectStyles = Object.freeze({
     input: provided =>
@@ -182,14 +124,13 @@ const InputSection = ({
     hasValidationErrorFn = stubFalse,
     aside = null,
     selectPlaceholder = 'Select...',
+    classes,
 }) => {
     let SelectComponent = null;
 
     const asideNode = (
         <ShowOnly when={!isNull(aside)}>
-            <aside style={claimedFacilitiesDetailsStyles.asideStyles}>
-                {aside}
-            </aside>
+            <aside style={classes.asideStyles}>{aside}</aside>
         </ShowOnly>
     );
 
@@ -227,12 +168,8 @@ const InputSection = ({
         }
 
         return (
-            <div style={claimedFacilitiesDetailsStyles.inputSectionStyles}>
-                <InputLabel
-                    style={
-                        claimedFacilitiesDetailsStyles.inputSectionLabelStyles
-                    }
-                >
+            <div style={classes.inputSectionStyles}>
+                <InputLabel style={classes.inputSectionLabelStyles}>
                     {label}
                 </InputLabel>
                 {asideNode}
@@ -250,17 +187,11 @@ const InputSection = ({
     }
 
     return (
-        <div style={claimedFacilitiesDetailsStyles.inputSectionStyles}>
-            <InputLabel
-                style={claimedFacilitiesDetailsStyles.inputSectionLabelStyles}
-            >
+        <div style={classes.inputSectionStyles}>
+            <InputLabel style={classes.inputSectionLabelStyles}>
                 {label}
                 {hasSwitch ? (
-                    <span
-                        style={
-                            claimedFacilitiesDetailsStyles.switchSectionStyles
-                        }
-                    >
+                    <span style={classes.switchSectionStyles}>
                         <Switch
                             color="primary"
                             onChange={onSwitchChange}
@@ -274,7 +205,7 @@ const InputSection = ({
             {asideNode}
             <TextField
                 variant="outlined"
-                style={claimedFacilitiesDetailsStyles.inputSectionFieldStyles}
+                style={classes.inputSectionFieldStyles}
                 value={value}
                 multiline={multiline}
                 rows={6}
@@ -333,6 +264,7 @@ function ClaimedFacilitiesDetails({
     fetchSectors,
     fetchParentCompanies,
     userHasSignedIn,
+    classes,
 }) {
     /* eslint-disable react-hooks/exhaustive-deps */
     // disabled because we want to use this as just
@@ -446,11 +378,11 @@ function ClaimedFacilitiesDetails({
     return (
         <AppOverflow>
             <AppGrid>
-                <div style={claimedFacilitiesDetailsStyles.containerStyles}>
-                    <div style={claimedFacilitiesDetailsStyles.formStyles}>
+                <div style={classes.containerStylesWithPadding}>
+                    <div style={classes.formStyles}>
                         <Typography
                             variant="title"
-                            style={claimedFacilitiesDetailsStyles.headingStyles}
+                            style={classes.headingStyles}
                         >
                             Facility Details
                         </Typography>
@@ -625,14 +557,10 @@ function ClaimedFacilitiesDetails({
                         />
                         <Typography
                             variant="title"
-                            style={claimedFacilitiesDetailsStyles.headingStyles}
+                            style={classes.headingStyles}
                         >
                             Point of contact
-                            <span
-                                style={
-                                    claimedFacilitiesDetailsStyles.switchSectionStyles
-                                }
-                            >
+                            <span style={classes.switchSectionStyles}>
                                 <Switch
                                     color="primary"
                                     onChange={updateContactVisibility}
@@ -664,14 +592,10 @@ function ClaimedFacilitiesDetails({
                         />
                         <Typography
                             variant="headline"
-                            style={claimedFacilitiesDetailsStyles.headingStyles}
+                            style={classes.headingStyles}
                         >
                             Office information
-                            <span
-                                style={
-                                    claimedFacilitiesDetailsStyles.switchSectionStyles
-                                }
-                            >
+                            <span style={classes.switchSectionStyles}>
                                 <Switch
                                     color="primary"
                                     onChange={updateOfficeVisibility}
@@ -680,9 +604,7 @@ function ClaimedFacilitiesDetails({
                                 Publicly visible
                             </span>
                         </Typography>
-                        <aside
-                            style={claimedFacilitiesDetailsStyles.asideStyles}
-                        >
+                        <aside style={classes.asideStyles}>
                             If different from facility address
                         </aside>
                         <InputSection
@@ -712,11 +634,7 @@ function ClaimedFacilitiesDetails({
                             disabled={updating}
                         />
                         {errorUpdating && (
-                            <div
-                                style={
-                                    claimedFacilitiesDetailsStyles.errorStyles
-                                }
-                            >
+                            <div style={classes.errorStyles}>
                                 <Typography variant="body1">
                                     <span style={{ color: 'red' }}>
                                         The following errors prevented updating
@@ -734,9 +652,7 @@ function ClaimedFacilitiesDetails({
                                 </ul>
                             </div>
                         )}
-                        <div
-                            style={claimedFacilitiesDetailsStyles.controlStyles}
-                        >
+                        <div style={classes.controlStyles}>
                             <Button
                                 onClick={saveForm}
                                 variant="contained"
@@ -810,6 +726,7 @@ ClaimedFacilitiesDetails.propTypes = {
     sectorOptions: sectorOptionsPropType,
     parentCompanyOptions: parentCompanyOptionsPropType,
     fetchSectors: func.isRequired,
+    classes: object.isRequired,
 };
 
 function mapStateToProps({
@@ -943,4 +860,4 @@ function mapDispatchToProps(
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(ClaimedFacilitiesDetails);
+)(withStyles(claimedFacilitiesDetailsStyles)(ClaimedFacilitiesDetails));

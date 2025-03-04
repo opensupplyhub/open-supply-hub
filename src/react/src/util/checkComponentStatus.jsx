@@ -20,7 +20,6 @@ const renderIfFetchStatus = (fetchingStatus, title) => {
 
 const renderIfNotAuthStatus = (userHasSignedIn, title) => {
     if (!userHasSignedIn) {
-        console.log('HERRe');
         return (
             <AppOverflow>
                 <RequireAuthNotice

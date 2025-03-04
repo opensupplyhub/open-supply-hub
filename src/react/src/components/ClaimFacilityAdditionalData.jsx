@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { bool, func, string, PropTypes } from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
@@ -31,7 +32,10 @@ import { sectorOptionsPropType } from '../util/propTypes';
 
 import { getValueFromEvent, isValidNumberOfWorkers } from '../util/util';
 
-import { claimAFacilitySupportDocsFormStyles } from '../util/styles';
+import {
+    claimAFacilitySupportDocsFormStyles,
+    claimedFacilitiesDetailsStyles,
+} from '../util/styles';
 
 import { claimAFacilityAdditionalDataFormFields } from '../util/constants';
 
@@ -41,65 +45,6 @@ const infoTitleStyle = Object.freeze({
     paddingBottom: '10px',
     color: COLOURS.NEAR_BLACK,
     fontWeight: 'bold',
-});
-
-const claimedFacilitiesDetailsStyles = Object.freeze({
-    containerStyles: Object.freeze({
-        display: 'flex',
-        width: '100%',
-        justifyContent: 'space-between',
-        marginBottom: '100px',
-        padding: '10px 0 10px',
-    }),
-    formStyles: Object.freeze({
-        width: '60%',
-    }),
-    headingStyles: Object.freeze({
-        padding: '10px 0',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    }),
-    inputSectionStyles: Object.freeze({
-        display: 'flex',
-        flexDirection: 'column',
-        width: '50%',
-        padding: '10px 0 10px',
-    }),
-    inputSectionLabelStyles: Object.freeze({
-        fontSize: '18px',
-        fontWeight: '400',
-        padding: '10px 0',
-        color: '#000',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    }),
-    inputSectionFieldStyles: Object.freeze({
-        width: '100%',
-    }),
-    switchSectionStyles: Object.freeze({
-        fontSize: '15px',
-        fontWeight: '400',
-        display: 'flex',
-        alignItems: 'center',
-        color: COLOURS.DARK_GREY,
-    }),
-    controlStyles: Object.freeze({
-        width: '100%',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '10px 0',
-    }),
-    errorStyles: Object.freeze({
-        width: '100%',
-        padding: '10px 0',
-        color: 'red',
-    }),
-    asideStyles: Object.freeze({
-        padding: '5px 20px 20px 0',
-    }),
 });
 
 const selectStyles = Object.freeze({
@@ -139,14 +84,13 @@ const InputSection = ({
     hasValidationErrorFn = stubFalse,
     aside = null,
     selectPlaceholder = 'Select...',
+    classes,
 }) => {
     let SelectComponent = null;
 
     const asideNode = (
         <ShowOnly when={!isNull(aside)}>
-            <aside style={claimedFacilitiesDetailsStyles.asideStyles}>
-                {aside}
-            </aside>
+            <aside style={classes.asideStyles}>{aside}</aside>
         </ShowOnly>
     );
 
@@ -184,7 +128,7 @@ const InputSection = ({
         }
 
         return (
-            <div style={claimedFacilitiesDetailsStyles.inputSectionStyles}>
+            <div style={classes.inputSectionStylesWithPadding}>
                 {asideNode}
                 <SelectComponent
                     onChange={onChange}
@@ -200,16 +144,10 @@ const InputSection = ({
     }
 
     return (
-        <div style={claimedFacilitiesDetailsStyles.inputSectionStyles}>
-            <InputLabel
-                style={claimedFacilitiesDetailsStyles.inputSectionLabelStyles}
-            >
+        <div style={classes.inputSectionStyles}>
+            <InputLabel style={classes.inputSectionLabelStyles}>
                 {hasSwitch ? (
-                    <span
-                        style={
-                            claimedFacilitiesDetailsStyles.switchSectionStyles
-                        }
-                    >
+                    <span style={classes.switchSectionStyles}>
                         <Switch
                             color="primary"
                             onChange={onSwitchChange}
@@ -223,7 +161,7 @@ const InputSection = ({
             {asideNode}
             <TextField
                 variant="outlined"
-                style={claimedFacilitiesDetailsStyles.inputSectionFieldStyles}
+                style={classes.inputSectionFieldStyles}
                 value={value}
                 multiline={multiline}
                 rows={6}
@@ -368,4 +306,4 @@ function mapDispatchToProps(dispatch) {
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(ClaimFacilityAdditionalData);
+)(withStyles(claimedFacilitiesDetailsStyles)(ClaimFacilityAdditionalData));
