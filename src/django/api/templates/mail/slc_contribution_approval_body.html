@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>
+      Great News: your OS ID is ready!
+    </title>
+  </head>
+  <body>
+    <p>
+      Hello,
+    </p>
+    <p>
+      Thank you for submitting your production location information to <a href="https://info.opensupplyhub.org/">Open Supply Hub</a> (OS Hub)!
+    </p>
+    <p>
+      You can now:
+    </p>
+    <ol>
+      <li>
+        <p>
+          <b>Save your OS ID and the public link</b> to your production location profile and share it
+          with clients and stakeholders:
+        </p>
+        <ul>
+          <li>OS ID: {{ os_id }}</li>
+          <li>Public link: {{ location_url }}</li>
+        </ul>
+      </li>
+      {% if not is_claimed %}
+      <li>
+        <p>
+          <b>Claim your production location</b> to take control of
+          your data and make it visible to more global partners. It’s free and only takes a few
+          steps! <b><a href="{{ pl_claim_url }}">Claim my production location now</a></b>.
+        </p>
+      </li>
+      {% endif %}
+      <li>
+        <p>
+          <b>Learn more about the OS ID</b> and how to use it to advance your business
+          in this <a href="https://info.opensupplyhub.org/facilities">Guide for Facilities</a>.
+        </p>
+      </li>
+    </ol>
+    {% if is_claimed %}
+    <p>
+      <b>We will now review the documents you submitted to <a href="https://info.opensupplyhub.org/resources/claim-a-facility">claim the location</a>
+      and either approve or deny the claim.</b> Review of claims typically takes 7 - 10 business days.
+      You will receive another email when this stage is complete.
+    </p>
+    {% endif %}
+    <p>
+      Thank you for sharing your information! Your data helps open doors to safe and sustainable
+      supply chains.
+    </p>
+    {% include "mail/signature_block.html" %}
+  </body>
+</html>
