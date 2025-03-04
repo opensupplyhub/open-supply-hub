@@ -33,6 +33,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-1764](https://opensupplyhub.atlassian.net/browse/OSDEV-1764) - Added a new claiming email for the Moderation queue/SLC workflow, which is sent once a data moderator creates a new location based on the moderation event the customer submitted through the SLC workflow.
+* [OSDEV-1721](https://opensupplyhub.atlassian.net/browse/OSDEV-1721) - Added new email templates for Moderation/SLC workflow:
+    * Email #1 SLC additional contribution to existing production location - Pending moderation.
+    * Email #2 SLC contribution - Moderation complete. APPROVED.
+    * Email #3 SLC contribution - Moderation complete. REJECTED.
+    * Email #4 SLC new production location contribution - Pending moderation.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
