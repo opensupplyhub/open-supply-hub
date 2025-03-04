@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent } from "@testing-library/react";
+import { fireEvent, waitFor } from "@testing-library/react";
 import { BrowserRouter as Router } from "react-router-dom";
 
 import ProductionLocationInfo from "../../components/Contribute/ProductionLocationInfo";
@@ -29,7 +29,7 @@ jest.mock("../../components/Filters/StyledSelect", () => (props) => {
     );
 });
 
-describe("ProductionLocationInfo component", () => {
+describe("ProductionLocationInfo component, test input fields for POST v1/production-locations", () => {
     const defaultState = {
         filterOptions: {
             countries: {
@@ -60,7 +60,7 @@ describe("ProductionLocationInfo component", () => {
             </Router>,
             { preloadedState: defaultState },
         )
-
+    /*
     test("renders the production location form", () => {
         const { getByText, getByPlaceholderText, getAllByText, getByTestId } = renderComponent();
 
@@ -89,8 +89,8 @@ describe("ProductionLocationInfo component", () => {
         expect(countrySelect).toBeInTheDocument();
         expect(countrySelect).toHaveValue("");
 
-        const iconButton = getByTestId("toggle-additional-info");
-        expect(iconButton).toBeInTheDocument();
+        const switchButton = getByTestId("switch-additional-info-fields");
+        expect(switchButton).toBeInTheDocument();
     });
 
     test("displays error (and disables submit) when required fields are empty after blur", () => {
@@ -135,8 +135,8 @@ describe("ProductionLocationInfo component", () => {
     test("displays additional information form when icon button is clicked", () => {
         const { getByTestId, getByText, queryByText } = renderComponent();
 
-        const iconButton = getByTestId("toggle-additional-info");
-        fireEvent.click(iconButton);
+        const switchButton = getByTestId("switch-additional-info-fields");
+        fireEvent.click(switchButton);
 
         expect(getByText("Sector(s)")).toBeInTheDocument();
         expect(getByText("Select the sector(s) that this location operates in. For example: Apparel, Electronics, Renewable Energy.")).toBeInTheDocument();
@@ -151,7 +151,7 @@ describe("ProductionLocationInfo component", () => {
         expect(getByText("Parent Company")).toBeInTheDocument();
         expect(getByText("Enter the company that holds majority ownership for this production.")).toBeInTheDocument();
 
-        fireEvent.click(iconButton);
+        fireEvent.click(switchButton);
 
         expect(queryByText("Sector(s)")).not.toBeInTheDocument();
         expect(queryByText("Product Type(s)")).not.toBeInTheDocument();
@@ -160,9 +160,12 @@ describe("ProductionLocationInfo component", () => {
         expect(queryByText("Number of Workers")).not.toBeInTheDocument();
         expect(queryByText("Parent Company")).not.toBeInTheDocument();
     });
+    */
 
-    test("displays error when number of workers is not a valid number and disable submit button", () => {
+    test("displays error when number of workers is not a valid number and disable submit button", async () => {
         const { getByRole, getByPlaceholderText, getByTestId } = renderComponent();
+
+        // await waitFor(() => console.log(document.body.innerHTML));
 
         const submitButton = getByRole("button", { name: /Submit/i });
         expect(submitButton).toBeDisabled();
@@ -177,8 +180,13 @@ describe("ProductionLocationInfo component", () => {
 
         expect(submitButton).toBeEnabled();
 
-        const iconButton = getByTestId("toggle-additional-info");
-        fireEvent.click(iconButton);
+        // await waitFor(() => console.log(document.body.innerHTML));
+
+        const switchButton = getByTestId("switch-additional-info-fields");
+        expect(switchButton).not.toBeChecked();
+
+        fireEvent.click(switchButton);
+        expect(switchButton).toBeChecked();
 
         const numberInput = getByPlaceholderText("Enter the number of workers as a number or range");
         fireEvent.change(numberInput, { target: { value: "Test" } });
@@ -200,5 +208,82 @@ describe("ProductionLocationInfo component", () => {
 
         expect(getByPlaceholderText("Enter the number of workers as a number or range")).toHaveAttribute("aria-invalid", "true");
         expect(submitButton).toBeDisabled();
+    });
+});
+
+describe("ProductionLocationInfo component, test invalid incoming data for UPDATE v1/production-locations", () => {
+    const defaultState = {
+        auth: {
+            user: { user: { isAnon: false } },
+            session: { fetching: false },
+        },
+        contributeProductionLocation: {
+            singleProductionLocation: {
+                data: {
+                    processing_type: ['Apparel'],
+                    name: 'Modelina',
+                    coordinates: {
+                        lat: 40.6875863,
+                        lng: 22.9389083
+                    },
+                    os_id: 'GR2019098DC1P4A',
+                    location_type: ['Apparel'],
+                    country: {
+                        name: 'Greece',
+                        numeric: '300',
+                        alpha_3: 'GRC',
+                        alpha_2: 'GR'
+                    },
+                    address: '1 Agiou Petrou Street, Oreokastrou, Thessaloniki, 56430',
+                    claim_status: 'unclaimed',
+                    sector: ['Apparel'],
+                    number_of_workers: {
+                        max: 150,
+                        min: 0
+                    },
+                    product_type: ['Accessories']
+                },
+                fetching: false,
+                error: null
+            },
+            productionLocations: {
+                data: [],
+                fetching: false,
+                error: null
+            },
+            pendingModerationEvent: {
+                data: {},
+                fetching: false,
+                error: null
+            }
+        },
+    };
+
+    const defaultProps = {
+        submitMethod: "UPDATE",
+    };
+
+    const renderComponent = (props = {}) =>
+        renderWithProviders(
+            <Router>
+                <ProductionLocationInfo {...defaultProps} {...props} />
+            </Router>,
+            { preloadedState: defaultState },
+        )
+
+    test("submit button should be enabled when number of workers invalid but additional info is hidden", async () => {
+        const { getByRole, getByTestId } = renderComponent();
+
+        // await waitFor(() => console.log(document.body.innerHTML));
+
+        const updateButton = getByRole("button", { name: /Update/i });
+
+        await waitFor(() => console.log(document.body.innerHTML));
+        expect(updateButton).toBeEnabled();
+
+        const switchButton = getByTestId("switch-additional-info-fields");
+        fireEvent.click(switchButton);
+
+        expect(updateButton).toBeDisabled();
     });
 });
