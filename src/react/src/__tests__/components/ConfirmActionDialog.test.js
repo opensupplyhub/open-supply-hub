@@ -27,20 +27,18 @@ jest.mock("react-draft-wysiwyg", () => {
     };
 });
 
-jest.mock('@material-ui/core/Tooltip', () => {
-    return ({ children, title, open, onOpen, onClose }) => {
-      return (
-        <div
-          data-testid="tooltip-wrapper"
-          onMouseOver={onOpen}
-          onMouseOut={onClose}
-        >
-          {children}
-          {open && <div data-testid="tooltip">{title}</div>}
-        </div>
-      );
-    };
-  });
+jest.mock('@material-ui/core/Tooltip', () => ({ children, title, open, onOpen, onClose }) => (
+    <div
+        data-testid="tooltip-wrapper"
+        onMouseOver={onOpen}
+        onFocus={onOpen}
+        onMouseOut={onClose}
+        onBlur={onClose}    
+    >
+        {children}
+        {open && <div data-testid="tooltip">{title}</div>}
+    </div>
+));
   
   
 describe('ConfirmActionDialog component', () => {
