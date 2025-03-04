@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { bool, func, string, PropTypes } from 'prop-types';
+import { bool, func, string, PropTypes, shape } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
@@ -183,6 +183,7 @@ function ClaimFacilityAdditionalData({
     sectorOptions,
     fetchSectors,
     fetching,
+    classes,
 }) {
     useEffect(() => {
         if (!sectorOptions) {
@@ -209,6 +210,7 @@ function ClaimFacilityAdditionalData({
                     isMultiSelect
                     selectOptions={sectorOptions || []}
                     selectPlaceholder={sectorsForm.placeholder}
+                    classes={classes}
                 />
             </div>
             <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
@@ -268,6 +270,13 @@ ClaimFacilityAdditionalData.propTypes = {
     sectorOptions: sectorOptionsPropType,
     fetchSectors: func.isRequired,
     fetching: bool.isRequired,
+    classes: shape({
+        switchSectionStyles: string.isRequired,
+        inputSectionFieldStyles: string.isRequired,
+        inputSectionLabelStyles: string.isRequired,
+        inputSectionStyles: string.isRequired,
+        asideStyles: string.isRequired,
+    }).isRequired,
 };
 
 function mapStateToProps({
