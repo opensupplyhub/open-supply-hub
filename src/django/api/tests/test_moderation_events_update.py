@@ -108,7 +108,7 @@ class ModerationEventsUpdateTest(APITestCase):
 
         self.assertEqual(400, response.status_code)
 
-    def test_moderation_event_status_changed_with_reason(self):
+    def test_moderation_event_rejected_with_valid_reason_text(self):
         self.client.login(
             email=self.superemail,
             password=self.superpassword
@@ -118,8 +118,10 @@ class ModerationEventsUpdateTest(APITestCase):
             .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
             data=json.dumps({
                 "status": "REJECTED",
-                "action_reason_text_cleaned": "cleaned reason",
-                "action_reason_text_raw": "raw reason"
+                "action_reason_text_cleaned": (
+                    "Cleaned reason text with 30 characters"
+                ),
+                "action_reason_text_raw": "Raw reason text with 30 characters"
             }),
             content_type="application/json"
         )
@@ -141,9 +143,79 @@ class ModerationEventsUpdateTest(APITestCase):
         self.assertIsNotNone(self.moderation_event.status_change_date)
         self.assertEqual(
             self.moderation_event.action_reason_text_cleaned,
-            "cleaned reason"
+            "Cleaned reason text with 30 characters"
         )
         self.assertEqual(
             self.moderation_event.action_reason_text_raw,
-            "raw reason"
+            "Raw reason text with 30 characters"
         )
+
+    def test_moderation_event_rejected_with_invalid_reason_text(self):
+        self.client.login(
+            email=self.superemail,
+            password=self.superpassword
+        )
+        response = self.client.patch(
+            "/api/v1/moderation-events/{}/"
+            .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
+            data=json.dumps({
+                "status": "REJECTED",
+                "action_reason_text_cleaned": "Too short cleaned text",
+                "action_reason_text_raw": "Too short raw text"
+            }),
+            content_type="application/json"
+        )
+
+        self.assertEqual(400, response.status_code)
+        self.assertEqual(
+            response.json(),
+            {
+                "detail": "The request body is invalid.",
+                "errors": [
+                    {
+                        "field": "action_reason_text_cleaned",
+                        "detail": "This field must be at least 30 characters."
+                    },
+                    {
+                        "field": "action_reason_text_raw",
+                        "detail": "This field must be at least 30 characters."
+                    }
+                ]
+            }
+        )
+        self.moderation_event.refresh_from_db()
+        self.assertEqual(self.moderation_event.status, "PENDING")
+
+    def test_moderation_event_rejected_without_reason(self):
+        self.client.login(
+            email=self.superemail,
+            password=self.superpassword
+        )
+        response = self.client.patch(
+            "/api/v1/moderation-events/{}/"
+            .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
+            data=json.dumps({"status": "REJECTED"}),
+            content_type="application/json"
+        )
+
+        self.assertEqual(400, response.status_code)
+        self.assertEqual(
+            response.json(),
+            {
+                "detail": "The request body is invalid.",
+                "errors": [
+                    {
+                        "field": "action_reason_text_cleaned",
+                        "detail": "This field is required when rejecting a "
+                                  "moderation event."
+                    },
+                    {
+                        "field": "action_reason_text_raw",
+                        "detail": "This field is required when rejecting a "
+                                  "moderation event."
+                    }
+                ]
+            }
+        )
+        self.moderation_event.refresh_from_db()
+        self.assertEqual(self.moderation_event.status, "PENDING")
