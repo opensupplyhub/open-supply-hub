@@ -173,6 +173,16 @@ const InputSection = ({
     );
 };
 
+InputSection.propTypes = {
+    classes: shape({
+        switchSectionStyles: string.isRequired,
+        inputSectionFieldStyles: string.isRequired,
+        inputSectionLabelStyles: string.isRequired,
+        inputSectionStyles: string.isRequired,
+        asideStyles: string.isRequired,
+    }).isRequired,
+};
+
 function ClaimFacilityAdditionalData({
     sectors,
     updateSectors,
@@ -183,7 +193,6 @@ function ClaimFacilityAdditionalData({
     sectorOptions,
     fetchSectors,
     fetching,
-    classes,
 }) {
     useEffect(() => {
         if (!sectorOptions) {
@@ -210,7 +219,6 @@ function ClaimFacilityAdditionalData({
                     isMultiSelect
                     selectOptions={sectorOptions || []}
                     selectPlaceholder={sectorsForm.placeholder}
-                    classes={classes}
                 />
             </div>
             <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
@@ -270,13 +278,6 @@ ClaimFacilityAdditionalData.propTypes = {
     sectorOptions: sectorOptionsPropType,
     fetchSectors: func.isRequired,
     fetching: bool.isRequired,
-    classes: shape({
-        switchSectionStyles: string.isRequired,
-        inputSectionFieldStyles: string.isRequired,
-        inputSectionLabelStyles: string.isRequired,
-        inputSectionStyles: string.isRequired,
-        asideStyles: string.isRequired,
-    }).isRequired,
 };
 
 function mapStateToProps({
