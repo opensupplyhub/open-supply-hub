@@ -30,6 +30,7 @@ const ConfirmActionDialog = ({
     classes,
 }) => {
     const [editorState, setEditorState] = useState(EditorState.createEmpty());
+    const [isTooltipOpen, setIsTooltipOpen] = useState(false);
 
     const { cleanedText, htmlContent } = useMemo(() => {
         const contentState = editorState.getCurrentContent();
@@ -50,6 +51,14 @@ const ConfirmActionDialog = ({
             htmlContent,
         );
         closeDialog();
+    };
+
+    const handleTooltipClose = () => {
+        setIsTooltipOpen(false);
+    };
+
+    const handleTooltipOpen = () => {
+        setIsTooltipOpen(true);
     };
 
     const isRejectDisabled =
@@ -106,6 +115,9 @@ const ConfirmActionDialog = ({
                 <Tooltip
                     title="Please provide a message with at least 30 characters."
                     placement="top"
+                    open={isTooltipOpen && isRejectDisabled}
+                    onClose={handleTooltipClose}
+                    onOpen={handleTooltipOpen}
                 >
                     <span>
                         <Button
