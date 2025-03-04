@@ -11,6 +11,8 @@ from django.utils.timezone import now
 
 
 class ModerationEventUpdateSerializer(ModelSerializer):
+    MIN_REASON_TEXT_LENGTH = 30
+
     action_reason_text_cleaned = CharField(write_only=True, required=False)
     action_reason_text_raw = CharField(write_only=True, required=False)
 
@@ -97,7 +99,7 @@ class ModerationEventUpdateSerializer(ModelSerializer):
                         "event."
                     )
                 })
-            elif len(cleaned) < 30:
+            elif len(cleaned) < self.MIN_REASON_TEXT_LENGTH:
                 errors.append({
                     "field": "action_reason_text_cleaned",
                     "detail": "This field must be at least 30 characters."
@@ -111,7 +113,7 @@ class ModerationEventUpdateSerializer(ModelSerializer):
                         "event."
                     )
                 })
-            elif len(raw) < 30:
+            elif len(raw) < self.MIN_REASON_TEXT_LENGTH:
                 errors.append({
                     "field": "action_reason_text_raw",
                     "detail": "This field must be at least 30 characters."
