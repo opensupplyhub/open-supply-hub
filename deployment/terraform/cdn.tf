@@ -164,13 +164,13 @@ resource "aws_cloudfront_distribution" "cdn" {
 
   ordered_cache_behavior {
     path_pattern     = "tile/*"
-    allowed_methods = ["GET", "HEAD", "OPTIONS"]
-    cached_methods = ["GET", "HEAD", "OPTIONS"]
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD", "OPTIONS"]
     target_origin_id = "originAlb"
 
     forwarded_values {
       query_string = true
-      headers = ["Referer"] # To discourage hotlinking to cached tiles
+      headers = ["Referer"]
 
       cookies {
         forward = "none"
@@ -192,7 +192,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"
@@ -214,7 +214,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"
@@ -236,7 +236,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"
@@ -258,7 +258,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"
@@ -280,7 +280,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"
@@ -302,7 +302,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"
@@ -324,7 +324,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"
@@ -346,7 +346,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"
@@ -368,7 +368,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"
@@ -390,7 +390,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"
@@ -412,7 +412,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"
@@ -434,7 +434,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"
@@ -456,7 +456,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"
@@ -478,7 +478,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"
@@ -500,7 +500,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"
@@ -522,7 +522,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"
@@ -544,7 +544,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"
@@ -566,7 +566,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"
@@ -588,7 +588,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"
@@ -610,7 +610,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"
@@ -632,7 +632,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers      = ["*"] # To discourage hotlinking to cached tiles
+      headers      = ["*"]
 
       cookies {
         forward = "all"

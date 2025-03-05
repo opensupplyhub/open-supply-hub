@@ -3,30 +3,10 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
-## Release 1.32.0
+## Release 2.0.0
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: March 22, 2025
-
-### What's new
-* [OSDEV-1814](https://opensupplyhub.atlassian.net/browse/OSDEV-1814) - Added toggle switch button for production location info page to render additional data if necessary. If toggle switch button is inactive (default behavior), additional data won't be send to the server along with name, address and country.
-
-### Bugfix
-* [OSDEV-1806](https://opensupplyhub.atlassian.net/browse/OSDEV-1806) - Refactored the Parent Company field validation. The field is now validated as a regular character field.
-* [OSDEV-1787](https://opensupplyhub.atlassian.net/browse/OSDEV-1787) - The tooltip messages for the Claim button have been removed for all statuses of moderation events on the `Contribution Record` page and changed according to the design on `Thanks for adding data for this production location` pop-up.
-* [OSDEV-1789](https://opensupplyhub.atlassian.net/browse/OSDEV-1789) - Fixed an issue where the scroll position was not resetting to the top when navigating through SLC workflow pages.
-
-### Release instructions:
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-
-
-## Release 1.31.0
-
-## Introduction
-* Product name: Open Supply Hub
-* Release date: March 8, 2025
 
 ### Database changes
 * *Describe high-level database changes.*
@@ -68,6 +48,41 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   * /static/staticfiles.json
 
   All other traffic will be redirected to the React application.
+
+### What's new
+* [OSDEV-1814](https://opensupplyhub.atlassian.net/browse/OSDEV-1814) - Added toggle switch button for production location info page to render additional data if necessary. If toggle switch button is inactive (default behavior), additional data won't be send to the server along with name, address and country.
+
+### Bugfix
+* [OSDEV-1806](https://opensupplyhub.atlassian.net/browse/OSDEV-1806) - Refactored the Parent Company field validation. The field is now validated as a regular character field.
+* [OSDEV-1787](https://opensupplyhub.atlassian.net/browse/OSDEV-1787) - The tooltip messages for the Claim button have been removed for all statuses of moderation events on the `Contribution Record` page and changed according to the design on `Thanks for adding data for this production location` pop-up.
+* [OSDEV-1789](https://opensupplyhub.atlassian.net/browse/OSDEV-1789) - Fixed an issue where the scroll position was not resetting to the top when navigating through SLC workflow pages.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
+## Release 1.31.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: March 8, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* *Describe migrations here.*
+
+#### Schema changes
+* *Describe schema changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
 
 ### Bugfix
 * [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - All SLC pages have been made accessible only to authorized users.
