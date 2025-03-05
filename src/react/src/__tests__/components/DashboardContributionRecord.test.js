@@ -290,7 +290,7 @@ describe('DashboardContributionRecord component', () => {
         },
       ],
     };
-  
+
     const { reduxStore } = renderComponent();
     reduxStore.dispatch(completeFetchPotentialMatches(matches));
 

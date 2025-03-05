@@ -3,10 +3,7 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
-Use the format below to document information about the new release.
-
-## Release 1.31.0
-
+## Release 1.32.0
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: March 22, 2025
@@ -27,9 +24,12 @@ Use the format below to document information about the new release.
 * *Describe architecture/environment changes here.*
 
 ### Bugfix
-* *Describe bugfix here.*
+* [OSDEV-1806](https://opensupplyhub.atlassian.net/browse/OSDEV-1806) - Refactored the Parent Company field validation. The field is now validated as a regular character field.
+* [OSDEV-1787](https://opensupplyhub.atlassian.net/browse/OSDEV-1787) - The tooltip messages for the Claim button have been removed for all statuses of moderation events on the `Contribution Record` page and changed according to the design on `Thanks for adding data for this production location` pop-up.
+* [OSDEV-1789](https://opensupplyhub.atlassian.net/browse/OSDEV-1789) - Fixed an issue where the scroll position was not resetting to the top when navigating through SLC workflow pages.
 
 ### What's new
+* [OSDEV-1814](https://opensupplyhub.atlassian.net/browse/OSDEV-1814) - Added toggle switch button for production location info page to render additional data if necessary. If toggle switch button is inactive (default behavior), additional data won't be send to the server along with name, address and country.
 * [OSDEV-1782](https://opensupplyhub.atlassian.net/browse/OSDEV-1782) - Added a confirmation dialog window that appears when a user tries to reject a moderation event. The dialog includes a WYSIWYG text editor where entering a message of at least 30 characters is required to confirm the rejection. If a user does not enter the required number of characters, the 'Reject' button is disabled, and a tooltip with a clear message appears when the mouse hovers over it.
 
 ### Release instructions:
