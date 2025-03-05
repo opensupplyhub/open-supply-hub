@@ -16,6 +16,7 @@ import {
 } from '../../actions/contributeProductionLocation';
 import { contributeProductionLocationRoute } from '../../util/constants';
 import { makeSearchByOsIdResultStyles } from '../../util/styles';
+import { useResetScrollPosition } from '../../util/hooks';
 import { productionLocationPropType } from '../../util/propTypes';
 
 import BackToSearchButton from './BackToSearchButton';
@@ -36,9 +37,7 @@ const SearchByOsIdResult = ({
     const location = useLocation();
     const { osID } = useParams();
 
-    useEffect(() => {
-        window.scrollTo(0, 0);
-    }, [location]);
+    useResetScrollPosition(location);
 
     useEffect(() => {
         if (osID) {
