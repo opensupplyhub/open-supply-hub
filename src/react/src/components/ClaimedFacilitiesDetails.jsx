@@ -217,6 +217,16 @@ const InputSection = ({
     );
 };
 
+InputSection.propTypes = {
+    classes: shape({
+        switchSectionStyles: string.isRequired,
+        inputSectionFieldStyles: string.isRequired,
+        inputSectionLabelStyles: string.isRequired,
+        inputSectionStyles: string.isRequired,
+        asideStyles: string.isRequired,
+    }).isRequired,
+};
+
 const createCountrySelectOptions = memoize(
     mapDjangoChoiceTuplesToSelectOptions,
 );
