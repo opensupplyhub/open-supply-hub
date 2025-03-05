@@ -1,6 +1,6 @@
 import React from "react";
-import { fireEvent, waitFor } from "@testing-library/react";
-import { BrowserRouter as Router } from "react-router-dom";
+import { fireEvent } from "@testing-library/react";
+import { MemoryRouter, Route, BrowserRouter as Router } from "react-router-dom";
 
 import ProductionLocationInfo from "../../components/Contribute/ProductionLocationInfo";
 import renderWithProviders from "../../util/testUtils/renderWithProviders";
@@ -60,7 +60,7 @@ describe("ProductionLocationInfo component, test input fields for POST v1/produc
             </Router>,
             { preloadedState: defaultState },
         )
-    /*
+
     test("renders the production location form", () => {
         const { getByText, getByPlaceholderText, getAllByText, getByTestId } = renderComponent();
 
@@ -160,12 +160,9 @@ describe("ProductionLocationInfo component, test input fields for POST v1/produc
         expect(queryByText("Number of Workers")).not.toBeInTheDocument();
         expect(queryByText("Parent Company")).not.toBeInTheDocument();
     });
-    */
 
-    test("displays error when number of workers is not a valid number and disable submit button", async () => {
+    test("displays error when number of workers is not a valid number and disable submit button", () => {
         const { getByRole, getByPlaceholderText, getByTestId } = renderComponent();
-
-        // await waitFor(() => console.log(document.body.innerHTML));
 
         const submitButton = getByRole("button", { name: /Submit/i });
         expect(submitButton).toBeDisabled();
@@ -180,31 +177,29 @@ describe("ProductionLocationInfo component, test input fields for POST v1/produc
 
         expect(submitButton).toBeEnabled();
 
-        // await waitFor(() => console.log(document.body.innerHTML));
-
         const switchButton = getByTestId("switch-additional-info-fields");
         expect(switchButton).not.toBeChecked();
 
         fireEvent.click(switchButton);
         expect(switchButton).toBeChecked();
 
-        const numberInput = getByPlaceholderText("Enter the number of workers as a number or range");
-        fireEvent.change(numberInput, { target: { value: "Test" } });
+        const numberOfWorkersInput = getByPlaceholderText("Enter the number of workers as a number or range");
+        fireEvent.change(numberOfWorkersInput, { target: { value: "Test" } });
 
         expect(getByPlaceholderText("Enter the number of workers as a number or range")).toHaveAttribute("aria-invalid", "true");
         expect(submitButton).toBeDisabled();
 
-        fireEvent.change(numberInput, { target: { value: "100" } });
+        fireEvent.change(numberOfWorkersInput, { target: { value: "100" } });
 
         expect(getByPlaceholderText("Enter the number of workers as a number or range")).toHaveAttribute("aria-invalid", "false");
         expect(submitButton).toBeEnabled();
 
-        fireEvent.change(numberInput, { target: { value: "100-150" } });
+        fireEvent.change(numberOfWorkersInput, { target: { value: "100-150" } });
 
         expect(getByPlaceholderText("Enter the number of workers as a number or range")).toHaveAttribute("aria-invalid", "false");
         expect(submitButton).toBeEnabled();
 
-        fireEvent.change(numberInput, { target: { value: "200-100" } });
+        fireEvent.change(numberOfWorkersInput, { target: { value: "200-100" } });
 
         expect(getByPlaceholderText("Enter the number of workers as a number or range")).toHaveAttribute("aria-invalid", "true");
         expect(submitButton).toBeDisabled();
@@ -212,6 +207,7 @@ describe("ProductionLocationInfo component, test input fields for POST v1/produc
 });
 
 describe("ProductionLocationInfo component, test invalid incoming data for UPDATE v1/production-locations", () => {
+    const osID = 'GR2019098DC1P4A';
     const defaultState = {
         auth: {
             user: { user: { isAnon: false } },
@@ -226,7 +222,7 @@ describe("ProductionLocationInfo component, test invalid incoming data for UPDAT
                         lat: 40.6875863,
                         lng: 22.9389083
                     },
-                    os_id: 'GR2019098DC1P4A',
+                    os_id: osID,
                     location_type: ['Apparel'],
                     country: {
                         name: 'Greece',
@@ -265,24 +261,29 @@ describe("ProductionLocationInfo component, test invalid incoming data for UPDAT
 
     const renderComponent = (props = {}) =>
         renderWithProviders(
-            <Router>
-                <ProductionLocationInfo {...defaultProps} {...props} />
-            </Router>,
+            <MemoryRouter initialEntries={[`/contribute/single-location/${osID}/info/`]}>
+                <Route 
+                    path="/contribute/single-location/:osID/info/"
+                    component={() => <ProductionLocationInfo {...defaultProps} {...props} />}
+                />
+            </MemoryRouter>,
             { preloadedState: defaultState },
         )
 
-    test("submit button should be enabled when number of workers invalid but additional info is hidden", async () => {
-        const { getByRole, getByTestId } = renderComponent();
+    test("submit button should be enabled when number of workers invalid but additional info is hidden", () => {
+        const { getByRole, getByText, getByTestId, getByPlaceholderText, queryByText } = renderComponent();
 
-        // await waitFor(() => console.log(document.body.innerHTML));
+        expect(queryByText("Enter the number of workers as a number or range")).not.toBeInTheDocument();
 
         const updateButton = getByRole("button", { name: /Update/i });
-
-        await waitFor(() => console.log(document.body.innerHTML));
         expect(updateButton).toBeEnabled();
 
         const switchButton = getByTestId("switch-additional-info-fields");
         fireEvent.click(switchButton);
+
+        const numberOfWorkersInput = getByPlaceholderText("Enter the number of workers as a number or range");
+        expect(numberOfWorkersInput).toHaveAttribute("aria-invalid", "true");
+        expect(getByText("Enter the number of workers as a number or range")).toBeInTheDocument();
 
         expect(updateButton).toBeDisabled();
     });
