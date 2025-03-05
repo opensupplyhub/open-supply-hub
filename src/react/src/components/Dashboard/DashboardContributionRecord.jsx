@@ -180,24 +180,6 @@ const DashboardContributionRecord = ({
     const isDisabled =
         moderationEventStatus === MODERATION_STATUSES_ENUM.REJECTED ||
         moderationEventStatus === MODERATION_STATUSES_ENUM.APPROVED;
-    let claimButtonTooltipText = '';
-
-    switch (moderationEventStatus) {
-        case MODERATION_STATUSES_ENUM.PENDING:
-            claimButtonTooltipText =
-                'A production location must be created before it can receive a claim request.';
-            break;
-        case MODERATION_STATUSES_ENUM.APPROVED:
-            claimButtonTooltipText =
-                "Production location hasn't received a claim yet.";
-            break;
-        case MODERATION_STATUSES_ENUM.REJECTED:
-            claimButtonTooltipText =
-                'Moderation event has been rejected, no claim request available.';
-            break;
-        default:
-            break;
-    }
 
     return (
         <>
@@ -433,11 +415,7 @@ const DashboardContributionRecord = ({
                             {claimButtonTitle}
                         </Button>
                     ) : (
-                        <DialogTooltip
-                            text={claimButtonTooltipText}
-                            aria-label="Claim button tooltip"
-                            childComponent={claimButtonDisabled(classes)}
-                        />
+                        claimButtonDisabled(classes)
                     )}
                 </Grid>
             </Grid>

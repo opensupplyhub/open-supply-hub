@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>
+      ACTION REQUESTED: We need more information to process your submission and provide an OS ID
+    </title>
+  </head>
+  <body>
+    <p>
+      Hello,
+    </p>
+    <p>
+      Thank you for submitting your production location information to <a href="https://info.opensupplyhub.org/">Open Supply Hub</a> (OS Hub)!
+    </p>
+    <p>
+      We weren’t able to accept your submission as provided.
+      To move forward and get an OS ID, please follow these steps:
+    </p>
+    <ol>
+      <li>
+        <p>
+          <b>Review the feedback below:</b>
+        </p>
+        <ul>
+          <li>{{ action_reason_text_raw }}</li>
+        </ul>
+      </li>
+      <li>
+        <p>
+          <b>Make the necessary updates</b> based on the feedback and <b>resubmit your information</b>
+          using this link: <b><a href="{{ pl_search_url }}">Resubmit Your Production Location</a></b>
+        </p>
+      </li>
+    </ol>
+    <p>
+      <b>Here are the details of your submission:</b>
+    </p>
+    <ul>
+      <li>Production Location Name: {{ pl_name }}</li>
+      <li>Production Location Address: {{ pl_address }}</li>
+      <li>Production Location Country: {{ pl_country }}</li>
+    </ul>
+    <p>
+      Thank you for sharing your information! Your data helps open doors to safe and sustainable
+      supply chains.
+    </p>
+    <p>Best Regards,</p>
+    {% include "mail/signature_block.html" %}
+  </body>
+</html>

@@ -3,7 +3,6 @@ from api.serializers.v1.coordinates_serializer \
 from api.serializers.v1.number_of_workers_serializer \
   import NumberOfWorkersSerializer
 from api.serializers.v1.string_or_list_field import StringOrListField
-from django.core.validators import RegexValidator
 from rest_framework import serializers
 
 
@@ -35,14 +34,8 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
     )
     sector = StringOrListField(required=False)
     parent_company = serializers.CharField(
+        max_length=200,
         required=False,
-        validators=[
-            RegexValidator(
-                regex=r'^[a-zA-Z0-9\s.,&()-]*$',
-                message=("Field parent_company must contain only letters, "
-                         "numbers, spaces, and allowed symbols (, . & - ()).")
-            )
-        ],
         error_messages={
             'invalid': 'Field parent_company must be a valid string.'
         },
@@ -52,10 +45,6 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
     processing_type = StringOrListField(required=False)
     number_of_workers = NumberOfWorkersSerializer(
         required=False,
-        validators=[NumberOfWorkersSerializer.validate_object],
-        error_messages={
-            'invalid': 'Invalid data. Expected a dictionary(object).'
-        },
     )
     coordinates = CoordinatesSerializer(
         required=False,
@@ -66,7 +55,6 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
     )
 
     def _validate_string_field(self, data, field_name):
-        """Helper method to validate string fields aren't numeric."""
         if field_name in data and data[field_name].isdigit():
             return {
                 "field": field_name,
