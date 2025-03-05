@@ -1286,14 +1286,14 @@ export const productionLocationInfoStyles = theme =>
             width: '100%',
             alignItems: 'center',
         }),
-        marginRight: Object.freeze({
-            marginRight: '20px',
-        }),
         buttonsContainerStyles: Object.freeze({
             display: 'flex',
             flexDirection: 'row',
             width: '100%',
             justifyContent: 'center',
+        }),
+        switchButton: Object.freeze({
+            marginTop: '10px',
         }),
         selectStyles: Object.freeze({
             maxWidth: '528px',
