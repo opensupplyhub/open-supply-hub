@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useHistory, useParams, useLocation } from 'react-router-dom';
 import { connect } from 'react-redux';
 import isEmpty from 'lodash/isEmpty';
 import { object, bool, func } from 'prop-types';
@@ -16,6 +16,7 @@ import {
 } from '../../actions/contributeProductionLocation';
 import { contributeProductionLocationRoute } from '../../util/constants';
 import { makeSearchByOsIdResultStyles } from '../../util/styles';
+import { useResetScrollPosition } from '../../util/hooks';
 import { productionLocationPropType } from '../../util/propTypes';
 
 import BackToSearchButton from './BackToSearchButton';
@@ -33,7 +34,10 @@ const SearchByOsIdResult = ({
 }) => {
     const TITLE = 'Production Location Search';
     const history = useHistory();
+    const location = useLocation();
     const { osID } = useParams();
+
+    useResetScrollPosition(location);
 
     useEffect(() => {
         if (osID) {

@@ -11,6 +11,7 @@ import SearchByOsIdTab from './SearchByOsIdTab';
 import SearchByNameAndAddressTab from './SearchByNameAndAddressTab';
 import RequireAuthNotice from '../RequireAuthNotice';
 import { makeContributeProductionLocationStyles } from '../../util/styles';
+import { useResetScrollPosition } from '../../util/hooks';
 
 const TAB_OS_ID = 'os-id';
 const TAB_NAME_ADDRESS = 'name-address';
@@ -31,6 +32,8 @@ const ContributeProductionLocation = ({
     const [selectedTab, setSelectedTab] = useState(
         VALID_TABS.includes(tabInQuery) ? tabInQuery : TAB_NAME_ADDRESS,
     );
+
+    useResetScrollPosition(location);
 
     useEffect(() => {
         if (VALID_TABS.includes(tabInQuery)) {
