@@ -15,6 +15,7 @@ import RequireAuthNotice from '../RequireAuthNotice';
 import StyledSelect from '../Filters/StyledSelect';
 import RequiredAsterisk from '../RequiredAsterisk';
 import { productionLocationInfoStyles } from '../../util/styles';
+import { useResetScrollPosition } from '../../util/hooks';
 import {
     countryOptionsPropType,
     facilityProcessingTypeOptionsPropType,
@@ -138,9 +139,7 @@ const ProductionLocationInfo = ({
         setParentCompany('');
     };
 
-    useEffect(() => {
-        window.scrollTo(0, 0);
-    }, [location]);
+    useResetScrollPosition(location);
 
     const inputData = useMemo(
         () => ({
