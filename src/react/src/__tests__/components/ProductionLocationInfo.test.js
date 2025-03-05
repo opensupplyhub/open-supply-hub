@@ -270,7 +270,7 @@ describe("ProductionLocationInfo component, test invalid incoming data for UPDAT
             { preloadedState: defaultState },
         )
 
-    test("submit button should be enabled when number of workers invalid but additional info is hidden", () => {
+    test("update button should be enabled when number of workers invalid but additional info is hidden", () => {
         const { getByRole, getByText, getByTestId, getByPlaceholderText, queryByText } = renderComponent();
 
         expect(queryByText("Enter the number of workers as a number or range")).not.toBeInTheDocument();
