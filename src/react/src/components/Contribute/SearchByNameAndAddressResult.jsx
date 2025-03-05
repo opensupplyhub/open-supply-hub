@@ -34,6 +34,10 @@ const SearchByNameAndAddressResult = ({
     const location = useLocation();
 
     useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [location]);
+
+    useEffect(() => {
         const searchParams = new URLSearchParams(location.search);
         const name = searchParams.get('name');
         const address = searchParams.get('address');

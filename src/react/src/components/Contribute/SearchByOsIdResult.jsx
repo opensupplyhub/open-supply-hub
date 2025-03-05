@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useHistory, useParams, useLocation } from 'react-router-dom';
 import { connect } from 'react-redux';
 import isEmpty from 'lodash/isEmpty';
 import { object, bool, func } from 'prop-types';
@@ -33,7 +33,12 @@ const SearchByOsIdResult = ({
 }) => {
     const TITLE = 'Production Location Search';
     const history = useHistory();
+    const location = useLocation();
     const { osID } = useParams();
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [location]);
 
     useEffect(() => {
         if (osID) {

@@ -33,6 +33,10 @@ const ContributeProductionLocation = ({
     );
 
     useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [location]);
+
+    useEffect(() => {
         if (VALID_TABS.includes(tabInQuery)) {
             setSelectedTab(tabInQuery);
         } else {
