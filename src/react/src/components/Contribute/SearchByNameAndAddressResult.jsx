@@ -20,6 +20,7 @@ import {
 import history from '../../util/history';
 import { productionLocationPropType } from '../../util/propTypes';
 import { makeSearchByNameAndAddressResultStyles } from '../../util/styles';
+import { useResetScrollPosition } from '../../util/hooks';
 
 const SearchByNameAndAddressResult = ({
     data: productionLocations,
@@ -32,6 +33,8 @@ const SearchByNameAndAddressResult = ({
 }) => {
     const TITLE = 'Production Location Search';
     const location = useLocation();
+
+    useResetScrollPosition(location);
 
     useEffect(() => {
         const searchParams = new URLSearchParams(location.search);

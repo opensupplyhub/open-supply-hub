@@ -1,6 +1,6 @@
 import React from "react";
 import { fireEvent } from "@testing-library/react";
-import { BrowserRouter as Router } from "react-router-dom";
+import { MemoryRouter, Route, BrowserRouter as Router } from "react-router-dom";
 
 import ProductionLocationInfo from "../../components/Contribute/ProductionLocationInfo";
 import renderWithProviders from "../../util/testUtils/renderWithProviders";
@@ -29,7 +29,7 @@ jest.mock("../../components/Filters/StyledSelect", () => (props) => {
     );
 });
 
-describe("ProductionLocationInfo component", () => {
+describe("ProductionLocationInfo component, test input fields for POST v1/production-locations", () => {
     const defaultState = {
         filterOptions: {
             countries: {
@@ -89,8 +89,8 @@ describe("ProductionLocationInfo component", () => {
         expect(countrySelect).toBeInTheDocument();
         expect(countrySelect).toHaveValue("");
 
-        const iconButton = getByTestId("toggle-additional-info");
-        expect(iconButton).toBeInTheDocument();
+        const switchButton = getByTestId("switch-additional-info-fields");
+        expect(switchButton).toBeInTheDocument();
     });
 
     test("displays error (and disables submit) when required fields are empty after blur", () => {
@@ -135,8 +135,8 @@ describe("ProductionLocationInfo component", () => {
     test("displays additional information form when icon button is clicked", () => {
         const { getByTestId, getByText, queryByText } = renderComponent();
 
-        const iconButton = getByTestId("toggle-additional-info");
-        fireEvent.click(iconButton);
+        const switchButton = getByTestId("switch-additional-info-fields");
+        fireEvent.click(switchButton);
 
         expect(getByText("Sector(s)")).toBeInTheDocument();
         expect(getByText("Select the sector(s) that this location operates in. For example: Apparel, Electronics, Renewable Energy.")).toBeInTheDocument();
@@ -151,7 +151,7 @@ describe("ProductionLocationInfo component", () => {
         expect(getByText("Parent Company")).toBeInTheDocument();
         expect(getByText("Enter the company that holds majority ownership for this production.")).toBeInTheDocument();
 
-        fireEvent.click(iconButton);
+        fireEvent.click(switchButton);
 
         expect(queryByText("Sector(s)")).not.toBeInTheDocument();
         expect(queryByText("Product Type(s)")).not.toBeInTheDocument();
@@ -177,28 +177,118 @@ describe("ProductionLocationInfo component", () => {
 
         expect(submitButton).toBeEnabled();
 
-        const iconButton = getByTestId("toggle-additional-info");
-        fireEvent.click(iconButton);
+        const switchButton = getByTestId("switch-additional-info-fields");
+        expect(switchButton).not.toBeChecked();
 
-        const numberInput = getByPlaceholderText("Enter the number of workers as a number or range");
-        fireEvent.change(numberInput, { target: { value: "Test" } });
+        fireEvent.click(switchButton);
+        expect(switchButton).toBeChecked();
+
+        const numberOfWorkersInput = getByPlaceholderText("Enter the number of workers as a number or range");
+        fireEvent.change(numberOfWorkersInput, { target: { value: "Test" } });
 
         expect(getByPlaceholderText("Enter the number of workers as a number or range")).toHaveAttribute("aria-invalid", "true");
         expect(submitButton).toBeDisabled();
 
-        fireEvent.change(numberInput, { target: { value: "100" } });
+        fireEvent.change(numberOfWorkersInput, { target: { value: "100" } });
 
         expect(getByPlaceholderText("Enter the number of workers as a number or range")).toHaveAttribute("aria-invalid", "false");
         expect(submitButton).toBeEnabled();
 
-        fireEvent.change(numberInput, { target: { value: "100-150" } });
+        fireEvent.change(numberOfWorkersInput, { target: { value: "100-150" } });
 
         expect(getByPlaceholderText("Enter the number of workers as a number or range")).toHaveAttribute("aria-invalid", "false");
         expect(submitButton).toBeEnabled();
 
-        fireEvent.change(numberInput, { target: { value: "200-100" } });
+        fireEvent.change(numberOfWorkersInput, { target: { value: "200-100" } });
 
         expect(getByPlaceholderText("Enter the number of workers as a number or range")).toHaveAttribute("aria-invalid", "true");
         expect(submitButton).toBeDisabled();
+    });
+});
+
+describe("ProductionLocationInfo component, test invalid incoming data for UPDATE v1/production-locations", () => {
+    const osID = 'GR2019098DC1P4A';
+    const defaultState = {
+        auth: {
+            user: { user: { isAnon: false } },
+            session: { fetching: false },
+        },
+        contributeProductionLocation: {
+            singleProductionLocation: {
+                data: {
+                    processing_type: ['Apparel'],
+                    name: 'Modelina',
+                    coordinates: {
+                        lat: 40.6875863,
+                        lng: 22.9389083
+                    },
+                    os_id: osID,
+                    location_type: ['Apparel'],
+                    country: {
+                        name: 'Greece',
+                        numeric: '300',
+                        alpha_3: 'GRC',
+                        alpha_2: 'GR'
+                    },
+                    address: '1 Agiou Petrou Street, Oreokastrou, Thessaloniki, 56430',
+                    claim_status: 'unclaimed',
+                    sector: ['Apparel'],
+                    number_of_workers: {
+                        max: 150,
+                        min: 0
+                    },
+                    product_type: ['Accessories']
+                },
+                fetching: false,
+                error: null
+            },
+            productionLocations: {
+                data: [],
+                fetching: false,
+                error: null
+            },
+            pendingModerationEvent: {
+                data: {},
+                fetching: false,
+                error: null
+            }
+        },
+    };
+
+    const defaultProps = {
+        submitMethod: "UPDATE",
+    };
+
+    const renderComponent = (props = {}) =>
+        renderWithProviders(
+            <MemoryRouter initialEntries={[`/contribute/single-location/${osID}/info/`]}>
+                <Route 
+                    path="/contribute/single-location/:osID/info/"
+                    component={() => <ProductionLocationInfo {...defaultProps} {...props} />}
+                />
+            </MemoryRouter>,
+            { preloadedState: defaultState },
+        )
+
+    test("update button should be enabled when number of workers invalid but additional info is hidden", () => {
+        const { getByRole, getByText, getByTestId, getByPlaceholderText, queryByText } = renderComponent();
+
+        expect(queryByText("Enter the number of workers as a number or range")).not.toBeInTheDocument();
+
+        const updateButton = getByRole("button", { name: /Update/i });
+        expect(updateButton).toBeEnabled();
+
+        const switchButton = getByTestId("switch-additional-info-fields");
+        fireEvent.click(switchButton);
+
+        const numberOfWorkersInput = getByPlaceholderText("Enter the number of workers as a number or range");
+        expect(numberOfWorkersInput).toHaveAttribute("aria-invalid", "true");
+        expect(getByText("Enter the number of workers as a number or range")).toBeInTheDocument();
+
+        expect(updateButton).toBeDisabled();
+
+        fireEvent.click(switchButton);
+        expect(queryByText("Enter the number of workers as a number or range")).not.toBeInTheDocument();
+        expect(updateButton).toBeEnabled();
     });
 });
