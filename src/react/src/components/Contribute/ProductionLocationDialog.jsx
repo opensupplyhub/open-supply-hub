@@ -76,7 +76,7 @@ const getTooltipText = claimStatus => {
         return 'Production location has been claimed already.';
     }
     if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.PENDING) {
-        return 'There is a pending calm for this production location.';
+        return 'There is a pending claim for this production location.';
     }
 
     return "You'll be able to claim the location after the moderation is done.";
