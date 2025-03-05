@@ -286,5 +286,9 @@ describe("ProductionLocationInfo component, test invalid incoming data for UPDAT
         expect(getByText("Enter the number of workers as a number or range")).toBeInTheDocument();
 
         expect(updateButton).toBeDisabled();
+
+        fireEvent.click(switchButton);
+        expect(queryByText("Enter the number of workers as a number or range")).not.toBeInTheDocument();
+        expect(updateButton).toBeEnabled();
     });
 });
