@@ -8,11 +8,9 @@ import { endsWith, isEmpty, toString } from 'lodash';
 import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Paper from '@material-ui/core/Paper';
+import Switch from '@material-ui/core/Switch';
 import TextField from '@material-ui/core/TextField';
-import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
-import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
-import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
 import RequireAuthNotice from '../RequireAuthNotice';
 import StyledSelect from '../Filters/StyledSelect';
 import RequiredAsterisk from '../RequiredAsterisk';
@@ -92,7 +90,6 @@ const ProductionLocationInfo = ({
     const nameInQuery = queryParams.get('name');
     const addressInQuery = queryParams.get('address');
     const countryInQuery = queryParams.get('country');
-    const [isExpanded, setIsExpanded] = useState(false);
     const [inputName, setInputName] = useState(nameInQuery ?? '');
     const [inputAddress, setInputAddress] = useState(addressInQuery ?? '');
     const [inputCountry, setInputCountry] = useState(null);
@@ -107,6 +104,39 @@ const ProductionLocationInfo = ({
     const [parentCompany, setParentCompany] = useState('');
     const customSelectComponents = { DropdownIndicator: null };
     const isCountryError = countryTouched && !inputCountry?.value;
+
+    const fillAdditionalDataFields = () => {
+        setNumberOfWorkers(
+            convertRangeField(singleProductionLocationData.number_of_workers) ??
+                '',
+        );
+        updateStateFromData(singleProductionLocationData, 'sector', setSector);
+        updateStateFromData(
+            singleProductionLocationData,
+            'product_type',
+            setProductType,
+        );
+        updateStateFromData(
+            singleProductionLocationData,
+            'location_type',
+            setLocationType,
+        );
+        updateStateFromData(
+            singleProductionLocationData,
+            'processing_type',
+            setProcessingType,
+        );
+        setParentCompany(singleProductionLocationData.parent_company ?? '');
+    };
+
+    const resetAdditionalDataFields = () => {
+        setSector('');
+        setProductType([]);
+        setLocationType(null);
+        setProcessingType(null);
+        setNumberOfWorkers('');
+        setParentCompany('');
+    };
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -142,9 +172,6 @@ const ProductionLocationInfo = ({
         setShowProductionLocationDialog,
     ] = useState(null);
 
-    const toggleExpand = () => {
-        setIsExpanded(!isExpanded);
-    };
     const handleNameChange = event => {
         setInputName(event.target.value);
     };
@@ -194,6 +221,19 @@ const ProductionLocationInfo = ({
             : '';
     const submitButtonText = submitMethod === 'POST' ? 'Submit' : 'Update';
 
+    const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
+    const onSwitchChange = () => {
+        setShowAdditionalInfo(prevShowAdditionalInfo => {
+            const newShowAdditionalInfo = !prevShowAdditionalInfo;
+            if (newShowAdditionalInfo) {
+                fillAdditionalDataFields();
+            } else {
+                resetAdditionalDataFields();
+            }
+            return newShowAdditionalInfo;
+        });
+    };
+
     useEffect(() => {
         if (submitMethod === 'PATCH' && osID) {
             fetchProductionLocation(osID);
@@ -222,38 +262,12 @@ const ProductionLocationInfo = ({
         if (singleProductionLocationData && osID) {
             setInputName(singleProductionLocationData.name ?? '');
             setInputAddress(singleProductionLocationData.address ?? '');
-            setNumberOfWorkers(
-                convertRangeField(
-                    singleProductionLocationData.number_of_workers,
-                ) ?? '',
-            );
             if (singleProductionLocationData.country) {
                 setInputCountry({
                     value: singleProductionLocationData?.country.alpha_2,
                     label: singleProductionLocationData?.country.name,
                 });
             }
-            updateStateFromData(
-                singleProductionLocationData,
-                'sector',
-                setSector,
-            );
-            updateStateFromData(
-                singleProductionLocationData,
-                'product_type',
-                setProductType,
-            );
-            updateStateFromData(
-                singleProductionLocationData,
-                'location_type',
-                setLocationType,
-            );
-            updateStateFromData(
-                singleProductionLocationData,
-                'processing_type',
-                setProcessingType,
-            );
-            setParentCompany(singleProductionLocationData.parent_company ?? '');
         }
     }, [singleProductionLocationData, osID]);
 
@@ -572,16 +586,17 @@ const ProductionLocationInfo = ({
                             >
                                 Additional information
                             </Typography>
-                            <IconButton
-                                data-testid="toggle-additional-info"
-                                onClick={toggleExpand}
-                            >
-                                {isExpanded ? (
-                                    <ArrowDropUpIcon />
-                                ) : (
-                                    <ArrowDropDownIcon />
-                                )}
-                            </IconButton>
+                            <Switch
+                                color="primary"
+                                onChange={onSwitchChange}
+                                checked={showAdditionalInfo}
+                                style={{ zIndex: 1 }}
+                                className={classes.switchButton}
+                                inputProps={{
+                                    'data-testid':
+                                        'switch-additional-info-fields',
+                                }}
+                            />
                         </div>
                         <Typography
                             component="h4"
@@ -591,7 +606,7 @@ const ProductionLocationInfo = ({
                             production location, including product types, number
                             of workers, parent company and more.
                         </Typography>
-                        {isExpanded && (
+                        {showAdditionalInfo && (
                             <>
                                 <div
                                     className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
