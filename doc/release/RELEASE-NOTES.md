@@ -5,7 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 Use the format below to document information about the new release.
 
-## Release 2.0.0
+## Release 1.31.0
 
 ## Introduction
 * Product name: Open Supply Hub
