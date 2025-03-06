@@ -3,10 +3,52 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
-## Release 1.32.0
+## Release 2.0.0
+
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: March 22, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* *Describe migrations here.*
+
+#### Schema changes
+* *Describe schema changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* [OSDEV-899](https://opensupplyhub.atlassian.net/browse/OSDEV-899) - Splitted the Django container into two components: FE (React) and BE (Django). Requests to the frontend (React) will be processed by the CDN (CloudFront), while requests to the API will be redirected to the Django container. This approach will allow for more efficient use of ECS cluster computing resources and improve frontend performance.
+
+  The following endpoints will be redirected to the Django container:
+  * tile/*
+  * api/*
+  * /api-auth/*
+  * /api-token-auth/*
+  * /api-feature-flags/*
+  * /web/environment.js
+  * /admin/*
+  * /health-check/*
+  * /rest-auth/*
+  * /user-login/*
+  * /user-logout/*
+  * /user-signup/*
+  * /user-profile/*
+  * /user-api-info/*
+  * /admin
+  * /static/admin/*
+  * /static/django_extensions/*
+  * /static/drf-yasg/*
+  * /static/gis/*
+  * /static/rest_framework/*
+  * /static/static/*
+  * /static/staticfiles.json
+
+  All other traffic will be redirected to the React application.
 
 ### What's new
 * [OSDEV-1814](https://opensupplyhub.atlassian.net/browse/OSDEV-1814) - Added toggle switch button for production location info page to render additional data if necessary. If toggle switch button is inactive (default behavior), additional data won't be send to the server along with name, address and country.
@@ -15,6 +57,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1806](https://opensupplyhub.atlassian.net/browse/OSDEV-1806) - Refactored the Parent Company field validation. The field is now validated as a regular character field.
 * [OSDEV-1787](https://opensupplyhub.atlassian.net/browse/OSDEV-1787) - The tooltip messages for the Claim button have been removed for all statuses of moderation events on the `Contribution Record` page and changed according to the design on `Thanks for adding data for this production location` pop-up.
 * [OSDEV-1789](https://opensupplyhub.atlassian.net/browse/OSDEV-1789) - Fixed an issue where the scroll position was not resetting to the top when navigating through SLC workflow pages.
+* [OSDEV-1803](https://opensupplyhub.atlassian.net/browse/OSDEV-1803) - Updated text from `Facility Type` to `Location Type` and `Facility Name` to `Location Name` on the SLC `Thank You for Your Submission` page.
 * [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - All SLC pages have been made accessible only to authorized users.
 
 ### Release instructions:

@@ -88,3 +88,64 @@ resource "aws_lambda_function" "alert_sfn_failures" {
     Environment = var.environment
   }
 }
+
+#
+# Redirect to S3 origin
+#
+data "aws_iam_policy_document" "lambda_edge_redirect_to_s3_origin_assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com", "edgelambda.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+data "aws_iam_policy_document" "lambda_edge_redirect_to_s3_origin_exec_role_policy" {
+  statement {
+    sid = "1"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+    resources = [
+      "arn:aws:logs:*:*:*"
+    ]
+  }
+}
+
+resource "aws_iam_role" "lambda_edge_redirect_to_s3_origin" {
+  name               = "role${local.short}RedirectToS3origin"
+  assume_role_policy = data.aws_iam_policy_document.lambda_edge_redirect_to_s3_origin_assume_role.json
+}
+
+resource "aws_iam_role_policy" "lambda_edge_redirect_to_s3_origin_exec_role" {
+  role   = aws_iam_role.lambda_edge_redirect_to_s3_origin.id
+  policy = data.aws_iam_policy_document.lambda_edge_redirect_to_s3_origin_exec_role_policy.json
+}
+
+resource "aws_lambda_function" "redirect_to_s3_origin" {
+  filename         = "lambda-functions/redirect_to_s3_origin/redirect_to_s3_origin.zip"
+  source_code_hash = filebase64sha256("lambda-functions/redirect_to_s3_origin/redirect_to_s3_origin.zip")
+  function_name    = "func${local.short}RedirectToS3origin"
+  role             = aws_iam_role.lambda_edge_redirect_to_s3_origin.arn
+  handler          = "index.handler"
+  publish          = true
+  runtime          = "nodejs18.x"
+  provider         = aws.certificates
+
+  depends_on = [
+    aws_iam_role.lambda_edge_redirect_to_s3_origin,
+    aws_cloudwatch_log_group.redirect_to_s3_origin,
+  ]
+}
+
+resource "aws_cloudwatch_log_group" "redirect_to_s3_origin" {
+  name              = "/aws/lambda/func${local.short}RedirectToS3origin"
+  retention_in_days = 14
+}

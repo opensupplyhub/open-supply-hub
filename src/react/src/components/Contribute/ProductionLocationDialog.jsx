@@ -208,7 +208,7 @@ const ProductionLocationDialog = ({
                                 className={classes.leftContainerColumn}
                             >
                                 <Typography className={classes.label}>
-                                    Facility name
+                                    Location name
                                 </Typography>
                                 <Typography className={classes.primaryText}>
                                     {productionLocationName ||
