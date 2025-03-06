@@ -1577,6 +1577,11 @@ export const makeAddLocationStyles = theme =>
     });
 
 export const claimedFacilitiesDetailsStyles = Object.freeze({
+    infoTitleStyle: Object.freeze({
+        paddingBottom: '10px',
+        color: COLOURS.NEAR_BLACK,
+        fontWeight: 'bold',
+    }),
     containerStylesWithPadding: Object.freeze({
         display: 'flex',
         width: '100%',

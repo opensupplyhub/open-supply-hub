@@ -3,23 +3,14 @@ import { connect } from 'react-redux';
 import { arrayOf, bool, func, string } from 'prop-types';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
-import TextField from '@material-ui/core/TextField';
-import InputLabel from '@material-ui/core/InputLabel';
 import Button from '@material-ui/core/Button';
 import Switch from '@material-ui/core/Switch';
 import flow from 'lodash/flow';
 import noop from 'lodash/noop';
 import memoize from 'lodash/memoize';
-import find from 'lodash/find';
-import stubFalse from 'lodash/stubFalse';
 import isEmpty from 'lodash/isEmpty';
 import get from 'lodash/get';
 import map from 'lodash/map';
-import filter from 'lodash/filter';
-import includes from 'lodash/includes';
-import isNull from 'lodash/isNull';
-import Select from 'react-select';
-import Creatable from 'react-select/creatable';
 import { isEmail, isInt } from 'validator';
 import { toast } from 'react-toastify';
 import AppOverflow from './AppOverflow';
@@ -27,9 +18,8 @@ import AppGrid from './AppGrid';
 
 import ClaimedFacilitiesDetailsSidebar from './ClaimedFacilitiesDetailsSidebar';
 import ShowOnly from './ShowOnly';
-import CreatableInputOnly from './CreatableInputOnly';
 import checkComponentStatus from '../util/checkComponentStatus';
-// import COLOURS from '../util/COLOURS';
+import InputSection from '../components/InputSection';
 
 import {
     fetchClaimedFacilityDetails,
@@ -94,149 +84,6 @@ import {
 const {
     parentCompany: { aside: parentCompanyAside },
 } = claimAFacilityFormFields;
-
-const selectStyles = Object.freeze({
-    input: provided =>
-        Object.freeze({
-            ...provided,
-            padding: '10px',
-        }),
-    menu: provided =>
-        Object.freeze({
-            ...provided,
-            zIndex: '2',
-        }),
-});
-
-const InputSection = ({
-    label,
-    value,
-    multiline,
-    onChange,
-    hasSwitch = false,
-    switchValue = null,
-    onSwitchChange = noop,
-    disabled = false,
-    isSelect = false,
-    isMultiSelect = false,
-    isCreatable = false,
-    selectOptions = null,
-    hasValidationErrorFn = stubFalse,
-    aside = null,
-    selectPlaceholder = 'Select...',
-}) => {
-    let SelectComponent = null;
-
-    const asideNode = (
-        <ShowOnly when={!isNull(aside)}>
-            <aside style={claimedFacilitiesDetailsStyles.asideStyles}>
-                {aside}
-            </aside>
-        </ShowOnly>
-    );
-
-    if (isSelect) {
-        const selectValue = (() => {
-            if (!isCreatable && !isMultiSelect) {
-                return find(selectOptions, ['value', value]);
-            }
-
-            if (!isCreatable && isMultiSelect) {
-                return filter(selectOptions, ({ value: option }) =>
-                    includes(value, option),
-                );
-            }
-
-            if (isCreatable && isMultiSelect) {
-                return map(value, s => ({ value: s, label: s }));
-            }
-
-            // isCreatable && !isMultiSelect creates an option object from the value
-            // if it doesn't exist in the options list
-            const option = find(selectOptions, ['value', value]);
-            return (
-                option || {
-                    value,
-                    label: value,
-                }
-            );
-        })();
-
-        if (isCreatable) {
-            SelectComponent = selectOptions ? Creatable : CreatableInputOnly;
-        } else {
-            SelectComponent = Select;
-        }
-
-        return (
-            <div style={claimedFacilitiesDetailsStyles.inputSectionStyles}>
-                <InputLabel
-                    style={
-                        claimedFacilitiesDetailsStyles.inputSectionLabelStyles
-                    }
-                >
-                    {label}
-                </InputLabel>
-                {asideNode}
-                <SelectComponent
-                    onChange={onChange}
-                    value={selectValue}
-                    options={selectOptions}
-                    disabled={disabled}
-                    styles={selectStyles}
-                    isMulti={isMultiSelect}
-                    placeholder={selectPlaceholder}
-                />
-            </div>
-        );
-    }
-
-    return (
-        <div style={claimedFacilitiesDetailsStyles.inputSectionStyles}>
-            <InputLabel
-                style={claimedFacilitiesDetailsStyles.inputSectionLabelStyles}
-            >
-                {label}
-                {hasSwitch ? (
-                    <span
-                        style={
-                            claimedFacilitiesDetailsStyles.switchSectionStyles
-                        }
-                    >
-                        <Switch
-                            color="primary"
-                            onChange={onSwitchChange}
-                            checked={switchValue}
-                            style={{ zIndex: 1 }}
-                        />
-                        Publicly visible
-                    </span>
-                ) : null}
-            </InputLabel>
-            {asideNode}
-            <TextField
-                variant="outlined"
-                style={claimedFacilitiesDetailsStyles.inputSectionFieldStyles}
-                value={value}
-                multiline={multiline}
-                rows={6}
-                onChange={onChange}
-                disabled={disabled}
-                error={hasValidationErrorFn()}
-            />
-        </div>
-    );
-};
-
-// InputSection.propTypes = {
-//     classes: shape({
-//         switchSectionStyles: string.isRequired,
-//         inputSectionFieldStyles: string.isRequired,
-//         inputSectionLabelStyles: string.isRequired,
-//         inputSectionStyles: string.isRequired,
-//         asideStyles: string.isRequired,
-//     }).isRequired,
-// };
 
 const createCountrySelectOptions = memoize(
     mapDjangoChoiceTuplesToSelectOptions,
@@ -394,14 +241,10 @@ function ClaimedFacilitiesDetails({
     }
 
     const countryOptions = createCountrySelectOptions(data.countries);
-    console.log(
-        '!!!',
-        claimedFacilitiesDetailsStyles,
-        claimedFacilitiesDetailsStyles.containerStylesWithPadding,
-    );
+
     return (
         <AppOverflow>
-            <AppGrid>
+            <AppGrid title="">
                 <div
                     style={
                         claimedFacilitiesDetailsStyles.containerStylesWithPadding
@@ -790,13 +633,6 @@ ClaimedFacilitiesDetails.propTypes = {
     sectorOptions: sectorOptionsPropType,
     parentCompanyOptions: parentCompanyOptionsPropType,
     fetchSectors: func.isRequired,
-    // classes: shape({
-    //     switchSectionStyles: string.isRequired,
-    //     inputSectionFieldStyles: string.isRequired,
-    //     inputSectionLabelStyles: string.isRequired,
-    //     inputSectionStyles: string.isRequired,
-    //     asideStyles: string.isRequired,
-    // }).isRequired,
     userHasSignedIn: bool.isRequired,
 };
 
