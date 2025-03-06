@@ -9,6 +9,14 @@ const ProductionLocationDialogFields = ({
     startFrom,
     classes,
 }) => {
+    const transformLabel = key => {
+        switch (key) {
+            case 'facility_type':
+                return 'location_type';
+            default:
+                return key;
+        }
+    };
     const formatLabel = key =>
         key.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
 
@@ -63,14 +71,15 @@ const ProductionLocationDialogFields = ({
     return (
         <>
             {map(filteredEntries, ([key, value]) => {
+                const title = transformLabel(key);
                 const renderedValue = renderValue(value);
                 if (!renderedValue) {
                     return null;
                 }
                 return (
-                    <div key={key}>
+                    <div key={title}>
                         <Typography className={classes.label}>
-                            {formatLabel(key)}
+                            {formatLabel(title)}
                         </Typography>
                         <Typography className={classes.primaryText}>
                             {renderedValue}
