@@ -89,6 +89,7 @@ describe('ProductionLocationDialog', () => {
         expect(screen.getByText(/US2021250D1DTN7/i)).toBeInTheDocument();
 
         expect(screen.getByText(/Pending/i)).toBeInTheDocument();
+        expect(screen.getByText(/Location Type/i)).toBeInTheDocument();
 
         expect(screen.getByText(/Number of workers/i)).toBeInTheDocument();
         expect(screen.getByText(/35 - 60/i)).toBeInTheDocument();

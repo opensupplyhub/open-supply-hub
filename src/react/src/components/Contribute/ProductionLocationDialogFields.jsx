@@ -9,6 +9,7 @@ const ProductionLocationDialogFields = ({
     startFrom,
     classes,
 }) => {
+    // TODO: Remove transformLabel usage in scope of https://opensupplyhub.atlassian.net/browse/OSDEV-1657
     const transformLabel = key => {
         switch (key) {
             case 'facility_type':
