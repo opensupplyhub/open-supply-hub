@@ -13,6 +13,9 @@ import Select from 'react-select';
 import Creatable from 'react-select/creatable';
 import CreatableInputOnly from './CreatableInputOnly';
 import ShowOnly from './ShowOnly';
+import { getSelectStyles } from '../util/util';
+
+const controlStyles = getSelectStyles();
 
 const selectStyles = Object.freeze({
     input: provided =>
@@ -25,6 +28,7 @@ const selectStyles = Object.freeze({
             ...provided,
             zIndex: '2',
         }),
+    ...controlStyles,
 });
 
 const InputSection = ({
