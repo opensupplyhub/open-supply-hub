@@ -58,6 +58,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1787](https://opensupplyhub.atlassian.net/browse/OSDEV-1787) - The tooltip messages for the Claim button have been removed for all statuses of moderation events on the `Contribution Record` page and changed according to the design on `Thanks for adding data for this production location` pop-up.
 * [OSDEV-1789](https://opensupplyhub.atlassian.net/browse/OSDEV-1789) - Fixed an issue where the scroll position was not resetting to the top when navigating through SLC workflow pages.
 * [OSDEV-1795](https://opensupplyhub.atlassian.net/browse/OSDEV-1795) - Resolved database connection issue after PostgreSQL 16.3 upgrade by upgrading pg8000 module version.
+* [OSDEV-1803](https://opensupplyhub.atlassian.net/browse/OSDEV-1803) - Updated text from `Facility Type` to `Location Type` and `Facility Name` to `Location Name` on the SLC `Thank You for Your Submission` page. 
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
