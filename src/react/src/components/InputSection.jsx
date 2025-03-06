@@ -1,4 +1,14 @@
 import React from 'react';
+import {
+    bool,
+    func,
+    string,
+    oneOfType,
+    oneOf,
+    node,
+    object,
+    array,
+} from 'prop-types';
 import TextField from '@material-ui/core/TextField';
 import InputLabel from '@material-ui/core/InputLabel';
 import find from 'lodash/find';
@@ -36,18 +46,18 @@ const InputSection = ({
     value,
     multiline,
     onChange,
-    hasSwitch = false,
-    switchValue = null,
-    onSwitchChange = noop,
-    disabled = false,
-    isSelect = false,
-    isMultiSelect = false,
-    isCreatable = false,
-    selectOptions = null,
-    hasValidationErrorFn = stubFalse,
-    aside = null,
-    selectPlaceholder = 'Select...',
-    isClaimFacilityAdditionalDataPage = false,
+    hasSwitch,
+    switchValue,
+    onSwitchChange,
+    disabled,
+    isSelect,
+    isMultiSelect,
+    isCreatable,
+    selectOptions,
+    hasValidationErrorFn,
+    aside,
+    selectPlaceholder,
+    isClaimFacilityAdditionalDataPage,
     classes,
 }) => {
     let SelectComponent = null;
@@ -152,6 +162,51 @@ const InputSection = ({
             />
         </div>
     );
+};
+
+InputSection.defaultProps = {
+    label: null,
+    value: null,
+    multiline: false,
+    hasSwitch: false,
+    switchValue: null,
+    onSwitchChange: noop,
+    disabled: false,
+    isSelect: false,
+    isMultiSelect: false,
+    isCreatable: false,
+    selectOptions: null,
+    hasValidationErrorFn: stubFalse,
+    aside: null,
+    selectPlaceholder: 'Select...',
+    isClaimFacilityAdditionalDataPage: false,
+};
+
+InputSection.propTypes = {
+    label: string,
+    value: string,
+    multiline: bool,
+    onChange: func.isRequired,
+    hasSwitch: bool,
+    switchValue: oneOfType([bool, oneOf([null])]),
+    onSwitchChange: func,
+    disabled: bool,
+    isSelect: bool,
+    isMultiSelect: bool,
+    isCreatable: bool,
+    selectOptions: oneOfType([array, oneOf([null])]),
+    hasValidationErrorFn: func,
+    aside: oneOfType([node, oneOf([null])]),
+    selectPlaceholder: string,
+    isClaimFacilityAdditionalDataPage: bool,
+    classes: object.isRequired,
+    // shape({
+    //     switchSectionStyles: string.isRequired,
+    //     inputSectionFieldStyles: string.isRequired,
+    //     inputSectionLabelStyles: string.isRequired,
+    //     inputSectionStyles: string.isRequired,
+    //     asideStyles: string.isRequired,
+    // }).isRequired,
 };
 
 export default InputSection;
