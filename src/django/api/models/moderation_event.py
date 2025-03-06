@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from django_bleach.models import BleachField
 from api.models.contributor.contributor import Contributor
 from api.models.facility.facility import Facility
 from api.models.facility.facility_claim import FacilityClaim
@@ -152,7 +153,7 @@ class ModerationEvent(models.Model):
         help_text='Cleaned version of the action reason text.'
     )
 
-    action_reason_text_raw = models.TextField(
+    action_reason_text_raw = BleachField(
         blank=True,
         help_text='Raw version of the action reason text.'
     )
