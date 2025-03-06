@@ -1576,7 +1576,7 @@ export const makeAddLocationStyles = theme =>
         }),
     });
 
-export const makeConfirmActionDialogStyles = () =>
+export const makeRejectModerationEventDialogStyles = () =>
     Object.freeze({
         dialogPaperStyles: Object.freeze({
             overflowX: 'hidden',

@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent } from '@testing-library/react';
 
-import ConfirmActionDialog from '../../components/Dashboard/ConfirmActionDialog';
+import RejectModerationEventDialog from '../../components/Dashboard/RejectModerationEventDialog';
 import { MODERATION_STATUSES_ENUM } from '../../util/constants';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 
@@ -41,7 +41,7 @@ jest.mock('@material-ui/core/Tooltip', () => ({ children, title, open, onOpen, o
 ));
   
   
-describe('ConfirmActionDialog component', () => {
+describe('RejectModerationEventDialog component', () => {
     const defaultProps = {
         updateModerationEvent: mockUpdateModerationEvent,
         isOpenDialog: true,
@@ -54,7 +54,7 @@ describe('ConfirmActionDialog component', () => {
 
     test('renders the dialog with the correct title and buttons', () => {
         const { getByText, getByRole } = renderWithProviders(
-            <ConfirmActionDialog {...defaultProps} />,
+            <RejectModerationEventDialog {...defaultProps} />,
         );
 
         expect(getByText("Reject this Moderation Event?")).toBeInTheDocument();
@@ -64,7 +64,7 @@ describe('ConfirmActionDialog component', () => {
     });
 
     test('calls closeDialog when "Cancel" button is clicked', () => {
-        const { getByRole } = renderWithProviders(<ConfirmActionDialog {...defaultProps} />);
+        const { getByRole } = renderWithProviders(<RejectModerationEventDialog {...defaultProps} />);
         const cancelButton = getByRole('button', {name: /Cancel/i});
         
         fireEvent.click(cancelButton);
@@ -73,7 +73,7 @@ describe('ConfirmActionDialog component', () => {
 
     test('reject button is disabled if editor text is less than 30 characters', () => {
         const { getByRole } = renderWithProviders(
-            <ConfirmActionDialog {...defaultProps} />
+            <RejectModerationEventDialog {...defaultProps} />
         );
         const rejectButton = getByRole('button', {name: /Reject/i});
         
@@ -82,7 +82,7 @@ describe('ConfirmActionDialog component', () => {
       
     test('reject button is enabled when editor text is at least 30 characters and calls updateModerationEvent and closeDialog on click', async () => {
         const { getByRole, getByTestId } = renderWithProviders(
-            <ConfirmActionDialog {...defaultProps} />
+            <RejectModerationEventDialog {...defaultProps} />
         );
         const rejectButton = getByRole('button', {name: /Reject/i});
 
@@ -108,7 +108,7 @@ describe('ConfirmActionDialog component', () => {
 
     test('displays tooltip on hover when reject button is disabled', () => {
         const { getByRole, queryByText } = renderWithProviders(
-            <ConfirmActionDialog {...defaultProps} />
+            <RejectModerationEventDialog {...defaultProps} />
         );
         const tooltipText = 'Please provide a message with at least 30 characters.';
 
@@ -128,7 +128,7 @@ describe('ConfirmActionDialog component', () => {
 
     test('does not display tooltip when reject button is enabled', () => {
         const { getByRole, queryByText, getByTestId } = renderWithProviders(
-            <ConfirmActionDialog {...defaultProps} />
+            <RejectModerationEventDialog {...defaultProps} />
         );
         const rejectButton = getByRole('button', { name: /Reject/i });
         const fakeEditor = getByTestId('fake-editor');

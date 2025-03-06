@@ -19,7 +19,7 @@ import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 
-import ConfirmActionDialog from './ConfirmActionDialog';
+import RejectModerationEventDialog from './RejectModerationEventDialog';
 import { makeDashboardContributionRecordStyles } from '../../util/styles';
 import {
     moderationEventsListItemPropType,
@@ -87,9 +87,10 @@ const DashboardContributionRecord = ({
 }) => {
     const prevSingleModerationEventItemRef = useRef();
     const [showBackdrop, setShowBackdrop] = useState(false);
-    const [confirmActionDialogIsOpen, setConfirmActionDialogIsOpen] = useState(
-        false,
-    );
+    const [
+        rejectModerationEventDialogIsOpen,
+        setRejectModerationEventDialogIsOpen,
+    ] = useState(false);
     const {
         productionLocationName,
         countryCode,
@@ -166,11 +167,11 @@ const DashboardContributionRecord = ({
     }, [productionLocationName, countryCode, productionLocationAddress, osId]);
 
     const handleRejectContribution = () => {
-        setConfirmActionDialogIsOpen(true);
+        setRejectModerationEventDialogIsOpen(true);
     };
 
-    const handleConfirmDialogClose = () => {
-        setConfirmActionDialogIsOpen(false);
+    const handleRejectModerationEventDialogClose = () => {
+        setRejectModerationEventDialogIsOpen(false);
     };
 
     if (fetchModerationEventError) {
@@ -427,10 +428,10 @@ const DashboardContributionRecord = ({
                     )}
                 </Grid>
             </Grid>
-            <ConfirmActionDialog
+            <RejectModerationEventDialog
                 updateModerationEvent={updateModerationEvent}
-                isOpenDialog={confirmActionDialogIsOpen}
-                closeDialog={handleConfirmDialogClose}
+                isOpenDialog={rejectModerationEventDialogIsOpen}
+                closeDialog={handleRejectModerationEventDialogClose}
             />
         </>
     );

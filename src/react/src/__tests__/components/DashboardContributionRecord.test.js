@@ -31,7 +31,7 @@ jest.mock('../../actions/dashboardContributionRecord', () => {
   };
 });
 
-jest.mock('../../components/Dashboard/ConfirmActionDialog', () => ({
+jest.mock('../../components/Dashboard/RejectModerationEventDialog', () => ({
   __esModule: true,
   default: ({ isOpenDialog, closeDialog }) => (
     <div>
@@ -298,7 +298,7 @@ describe('DashboardContributionRecord component', () => {
     expect(res.length).toBe(3);
   });
 
-  test('opens the ConfirmActionDialog when the Reject Contribution button is clicked', () => {
+  test('opens the RejectModerationEventDialog when the Reject Contribution button is clicked', () => {
     const { getByRole } = renderComponent();
 
     const rejectButton = getByRole('button', { name: /Reject Contribution/i });
@@ -307,7 +307,7 @@ describe('DashboardContributionRecord component', () => {
     expect(getByRole('button', { name: /Close Dialog/i })).toBeInTheDocument();
   });
 
-  test('closes the ConfirmActionDialog when the close button is clicked', () => {
+  test('closes the RejectModerationEventDialog when the close button is clicked', () => {
     const { getByRole, queryByText } = renderComponent();
 
     const rejectButton = getByRole('button', { name: /Reject Contribution/i });

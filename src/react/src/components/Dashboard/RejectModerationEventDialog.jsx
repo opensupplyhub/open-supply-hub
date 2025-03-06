@@ -19,11 +19,11 @@ import {
 } from '@material-ui/core';
 
 import { MODERATION_STATUSES_ENUM } from '../../util/constants';
-import { makeConfirmActionDialogStyles } from '../../util/styles';
+import { makeRejectModerationEventDialogStyles } from '../../util/styles';
 
 const MIN_TEXT_INPUT_LENGTH = 30;
 
-const ConfirmActionDialog = ({
+const RejectModerationEventDialog = ({
     updateModerationEvent,
     isOpenDialog,
     closeDialog,
@@ -136,11 +136,13 @@ const ConfirmActionDialog = ({
     );
 };
 
-ConfirmActionDialog.propTypes = {
+RejectModerationEventDialog.propTypes = {
     updateModerationEvent: func.isRequired,
     isOpenDialog: bool.isRequired,
     closeDialog: func.isRequired,
     classes: object.isRequired,
 };
 
-export default withStyles(makeConfirmActionDialogStyles)(ConfirmActionDialog);
+export default withStyles(makeRejectModerationEventDialogStyles)(
+    RejectModerationEventDialog,
+);
