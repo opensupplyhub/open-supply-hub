@@ -86,41 +86,44 @@ class ModerationEventUpdateSerializer(ModelSerializer):
 
     def validate(self, data):
         status = data.get('status')
-        if status == ModerationEvent.Status.REJECTED:
-            cleaned = data.get('action_reason_text_cleaned')
-            raw = data.get('action_reason_text_raw')
-            errors = []
 
-            if not cleaned:
-                errors.append({
-                    "field": "action_reason_text_cleaned",
-                    "detail": (
-                        "This field is required when rejecting a moderation "
-                        "event."
-                    )
-                })
-            elif len(cleaned) < self.MIN_REASON_TEXT_LENGTH:
-                errors.append({
-                    "field": "action_reason_text_cleaned",
-                    "detail": "This field must be at least 30 characters."
-                })
+        if status != ModerationEvent.Status.REJECTED:
+            return data
 
-            if not raw:
-                errors.append({
-                    "field": "action_reason_text_raw",
-                    "detail": (
-                        "This field is required when rejecting a moderation "
-                        "event."
-                    )
-                })
-            elif len(raw) < self.MIN_REASON_TEXT_LENGTH:
-                errors.append({
-                    "field": "action_reason_text_raw",
-                    "detail": "This field must be at least 30 characters."
-                })
+        cleaned = data.get('action_reason_text_cleaned')
+        raw = data.get('action_reason_text_raw')
+        errors = []
 
-            if errors:
-                raise ValidationError(errors)
+        if not cleaned:
+            errors.append({
+                "field": "action_reason_text_cleaned",
+                "detail": (
+                    "This field is required when rejecting a moderation "
+                    "event."
+                )
+            })
+        elif len(cleaned) < self.MIN_REASON_TEXT_LENGTH:
+            errors.append({
+                "field": "action_reason_text_cleaned",
+                "detail": "This field must be at least 30 characters."
+            })
+
+        if not raw:
+            errors.append({
+                "field": "action_reason_text_raw",
+                "detail": (
+                    "This field is required when rejecting a moderation "
+                    "event."
+                )
+            })
+        elif len(raw) < self.MIN_REASON_TEXT_LENGTH:
+            errors.append({
+                "field": "action_reason_text_raw",
+                "detail": "This field must be at least 30 characters."
+            })
+
+        if errors:
+            raise ValidationError(errors)
 
         return data
 
