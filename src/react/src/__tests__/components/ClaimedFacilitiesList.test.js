@@ -6,6 +6,7 @@ import {
     fetchClaimedFacilities,
     clearClaimedFacilities,
 } from '../../actions/claimedFacilities';
+import { claimedFacilitiesRoute } from '../../util/constants.jsx'
 
 jest.mock('../../actions/claimedFacilities', () => {
     const actualActions = jest.requireActual('../../actions/claimedFacilities');
@@ -18,7 +19,6 @@ jest.mock('../../actions/claimedFacilities', () => {
 
 describe('ClaimedFacilitiesList', () => {
     const renderComponent = () => {
-        const claimedPageRoute = '/claimed'
         const preloadedState = {
             claimedFacilities: {
                 data: [],
@@ -27,9 +27,9 @@ describe('ClaimedFacilitiesList', () => {
         };
 
         return renderWithProviders(
-            <MemoryRouter initialEntries={[claimedPageRoute]}>
+            <MemoryRouter initialEntries={[claimedFacilitiesRoute]}>
                 <Route
-                    path={claimedPageRoute}
+                    path={claimedFacilitiesRoute}
                     component={() => <ClaimedFacilitiesList />}
                 />
             </MemoryRouter>,
@@ -44,7 +44,7 @@ describe('ClaimedFacilitiesList', () => {
     })
 
     test('renders the button with correct text and href if no claimed production locations are available', () => {
-        const { getByRole } = renderComponent(ClaimedFacilitiesList);
+        const { getByRole } = renderComponent();
 
         const button = getByRole('button', { name: /Find My Production Location/i });
         expect(button).toBeInTheDocument();
