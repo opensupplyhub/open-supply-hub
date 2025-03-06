@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
-import { bool, func, string, PropTypes, shape } from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
+import { bool, func, string, PropTypes } from 'prop-types';
 import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
@@ -84,13 +83,14 @@ const InputSection = ({
     hasValidationErrorFn = stubFalse,
     aside = null,
     selectPlaceholder = 'Select...',
-    classes,
 }) => {
     let SelectComponent = null;
 
     const asideNode = (
         <ShowOnly when={!isNull(aside)}>
-            <aside style={classes.asideStyles}>{aside}</aside>
+            <aside style={claimedFacilitiesDetailsStyles.asideStyles}>
+                {aside}
+            </aside>
         </ShowOnly>
     );
 
@@ -128,7 +128,11 @@ const InputSection = ({
         }
 
         return (
-            <div style={classes.inputSectionStylesWithPadding}>
+            <div
+                style={
+                    claimedFacilitiesDetailsStyles.inputSectionStylesWithPadding
+                }
+            >
                 {asideNode}
                 <SelectComponent
                     onChange={onChange}
@@ -144,10 +148,16 @@ const InputSection = ({
     }
 
     return (
-        <div style={classes.inputSectionStyles}>
-            <InputLabel style={classes.inputSectionLabelStyles}>
+        <div style={claimedFacilitiesDetailsStyles.inputSectionStyles}>
+            <InputLabel
+                style={claimedFacilitiesDetailsStyles.inputSectionLabelStyles}
+            >
                 {hasSwitch ? (
-                    <span style={classes.switchSectionStyles}>
+                    <span
+                        style={
+                            claimedFacilitiesDetailsStyles.switchSectionStyles
+                        }
+                    >
                         <Switch
                             color="primary"
                             onChange={onSwitchChange}
@@ -161,7 +171,7 @@ const InputSection = ({
             {asideNode}
             <TextField
                 variant="outlined"
-                style={classes.inputSectionFieldStyles}
+                style={claimedFacilitiesDetailsStyles.inputSectionFieldStyles}
                 value={value}
                 multiline={multiline}
                 rows={6}
@@ -173,15 +183,15 @@ const InputSection = ({
     );
 };
 
-InputSection.propTypes = {
-    classes: shape({
-        switchSectionStyles: string.isRequired,
-        inputSectionFieldStyles: string.isRequired,
-        inputSectionLabelStyles: string.isRequired,
-        inputSectionStyles: string.isRequired,
-        asideStyles: string.isRequired,
-    }).isRequired,
-};
+// InputSection.propTypes = {
+//     classes: shape({
+//         switchSectionStyles: string.isRequired,
+//         inputSectionFieldStyles: string.isRequired,
+//         inputSectionLabelStyles: string.isRequired,
+//         inputSectionStyles: string.isRequired,
+//         asideStyles: string.isRequired,
+//     }).isRequired,
+// };
 
 function ClaimFacilityAdditionalData({
     sectors,
@@ -316,4 +326,4 @@ function mapDispatchToProps(dispatch) {
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(withStyles(claimedFacilitiesDetailsStyles)(ClaimFacilityAdditionalData));
+)(ClaimFacilityAdditionalData);

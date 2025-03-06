@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import { arrayOf, bool, func, string, shape } from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
+import { arrayOf, bool, func, string } from 'prop-types';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
@@ -30,6 +29,7 @@ import ClaimedFacilitiesDetailsSidebar from './ClaimedFacilitiesDetailsSidebar';
 import ShowOnly from './ShowOnly';
 import CreatableInputOnly from './CreatableInputOnly';
 import checkComponentStatus from '../util/checkComponentStatus';
+// import COLOURS from '../util/COLOURS';
 
 import {
     fetchClaimedFacilityDetails,
@@ -72,7 +72,7 @@ import {
     sectorOptionsPropType,
     userPropType,
 } from '../util/propTypes';
-import { claimedFacilitiesDetailsStyles } from '../../src/util/styles.js';
+import { claimedFacilitiesDetailsStyles } from '../util/styles';
 
 import apiRequest from '../util/apiRequest';
 
@@ -124,13 +124,14 @@ const InputSection = ({
     hasValidationErrorFn = stubFalse,
     aside = null,
     selectPlaceholder = 'Select...',
-    classes,
 }) => {
     let SelectComponent = null;
 
     const asideNode = (
         <ShowOnly when={!isNull(aside)}>
-            <aside style={classes.asideStyles}>{aside}</aside>
+            <aside style={claimedFacilitiesDetailsStyles.asideStyles}>
+                {aside}
+            </aside>
         </ShowOnly>
     );
 
@@ -168,8 +169,12 @@ const InputSection = ({
         }
 
         return (
-            <div style={classes.inputSectionStyles}>
-                <InputLabel style={classes.inputSectionLabelStyles}>
+            <div style={claimedFacilitiesDetailsStyles.inputSectionStyles}>
+                <InputLabel
+                    style={
+                        claimedFacilitiesDetailsStyles.inputSectionLabelStyles
+                    }
+                >
                     {label}
                 </InputLabel>
                 {asideNode}
@@ -187,11 +192,17 @@ const InputSection = ({
     }
 
     return (
-        <div style={classes.inputSectionStyles}>
-            <InputLabel style={classes.inputSectionLabelStyles}>
+        <div style={claimedFacilitiesDetailsStyles.inputSectionStyles}>
+            <InputLabel
+                style={claimedFacilitiesDetailsStyles.inputSectionLabelStyles}
+            >
                 {label}
                 {hasSwitch ? (
-                    <span style={classes.switchSectionStyles}>
+                    <span
+                        style={
+                            claimedFacilitiesDetailsStyles.switchSectionStyles
+                        }
+                    >
                         <Switch
                             color="primary"
                             onChange={onSwitchChange}
@@ -205,7 +216,7 @@ const InputSection = ({
             {asideNode}
             <TextField
                 variant="outlined"
-                style={classes.inputSectionFieldStyles}
+                style={claimedFacilitiesDetailsStyles.inputSectionFieldStyles}
                 value={value}
                 multiline={multiline}
                 rows={6}
@@ -217,15 +228,15 @@ const InputSection = ({
     );
 };
 
-InputSection.propTypes = {
-    classes: shape({
-        switchSectionStyles: string.isRequired,
-        inputSectionFieldStyles: string.isRequired,
-        inputSectionLabelStyles: string.isRequired,
-        inputSectionStyles: string.isRequired,
-        asideStyles: string.isRequired,
-    }).isRequired,
-};
+// InputSection.propTypes = {
+//     classes: shape({
+//         switchSectionStyles: string.isRequired,
+//         inputSectionFieldStyles: string.isRequired,
+//         inputSectionLabelStyles: string.isRequired,
+//         inputSectionStyles: string.isRequired,
+//         asideStyles: string.isRequired,
+//     }).isRequired,
+// };
 
 const createCountrySelectOptions = memoize(
     mapDjangoChoiceTuplesToSelectOptions,
@@ -274,7 +285,6 @@ function ClaimedFacilitiesDetails({
     fetchSectors,
     fetchParentCompanies,
     userHasSignedIn,
-    classes,
 }) {
     /* eslint-disable react-hooks/exhaustive-deps */
     // disabled because we want to use this as just
@@ -384,15 +394,23 @@ function ClaimedFacilitiesDetails({
     }
 
     const countryOptions = createCountrySelectOptions(data.countries);
-
+    console.log(
+        '!!!',
+        claimedFacilitiesDetailsStyles,
+        claimedFacilitiesDetailsStyles.containerStylesWithPadding,
+    );
     return (
         <AppOverflow>
             <AppGrid>
-                <div style={classes.containerStylesWithPadding}>
-                    <div style={classes.formStyles}>
+                <div
+                    style={
+                        claimedFacilitiesDetailsStyles.containerStylesWithPadding
+                    }
+                >
+                    <div style={claimedFacilitiesDetailsStyles.formStyles}>
                         <Typography
                             variant="title"
-                            style={classes.headingStyles}
+                            style={claimedFacilitiesDetailsStyles.headingStyles}
                         >
                             Facility Details
                         </Typography>
@@ -401,6 +419,7 @@ function ClaimedFacilitiesDetails({
                             value={data.facility_name_native_language}
                             onChange={updateFacilityNameNativeLanguage}
                             disabled={updating}
+                            classes={claimedFacilitiesDetailsStyles}
                         />
                         <InputSection
                             label="Sector"
@@ -411,6 +430,7 @@ function ClaimedFacilitiesDetails({
                             isMultiSelect
                             selectOptions={sectorOptions || []}
                             selectPlaceholder="Select..."
+                            classes={claimedFacilitiesDetailsStyles}
                         />
                         <InputSection
                             label="Phone Number"
@@ -422,6 +442,7 @@ function ClaimedFacilitiesDetails({
                                 data.facility_phone_number_publicly_visible
                             }
                             onSwitchChange={updateFacilityPhoneVisibility}
+                            classes={claimedFacilitiesDetailsStyles}
                         />
                         <InputSection
                             label="Website"
@@ -440,6 +461,7 @@ function ClaimedFacilitiesDetails({
                             hasSwitch
                             switchValue={data.facility_website_publicly_visible}
                             onSwitchChange={updateFacilityWebsiteVisibility}
+                            classes={claimedFacilitiesDetailsStyles}
                         />
                         <InputSection
                             label="Description"
@@ -447,6 +469,7 @@ function ClaimedFacilitiesDetails({
                             multiline
                             onChange={updateFacilityDescription}
                             disabled={updating}
+                            classes={claimedFacilitiesDetailsStyles}
                         />
                         <ShowOnly when={!isEmpty(parentCompanyOptions)}>
                             <InputSection
@@ -462,6 +485,7 @@ function ClaimedFacilitiesDetails({
                                 disabled={updating}
                                 isSelect
                                 selectOptions={parentCompanyOptions}
+                                classes={claimedFacilitiesDetailsStyles}
                             />
                         </ShowOnly>
                         <ShowOnly when={!parentCompanyOptions}>
@@ -481,12 +505,14 @@ function ClaimedFacilitiesDetails({
                             value={data.facility_minimum_order_quantity}
                             onChange={updateFacilityMinimumOrder}
                             disabled={updating}
+                            classes={claimedFacilitiesDetailsStyles}
                         />
                         <InputSection
                             label="Average lead time"
                             value={data.facility_average_lead_time}
                             onChange={updateFacilityAverageLeadTime}
                             disabled={updating}
+                            classes={claimedFacilitiesDetailsStyles}
                         />
                         <InputSection
                             label="Number of workers"
@@ -498,6 +524,7 @@ function ClaimedFacilitiesDetails({
                                     data.facility_workers_count,
                                 )
                             }
+                            classes={claimedFacilitiesDetailsStyles}
                         />
                         <InputSection
                             label="Percentage of female workers"
@@ -521,6 +548,7 @@ function ClaimedFacilitiesDetails({
                                     },
                                 );
                             }}
+                            classes={claimedFacilitiesDetailsStyles}
                         />
                         <InputSection
                             label="Affiliations"
@@ -532,6 +560,7 @@ function ClaimedFacilitiesDetails({
                             selectOptions={mapDjangoChoiceTuplesToSelectOptions(
                                 data.affiliation_choices,
                             )}
+                            classes={claimedFacilitiesDetailsStyles}
                         />
                         <InputSection
                             label="Certifications/Standards/Regulations"
@@ -543,6 +572,7 @@ function ClaimedFacilitiesDetails({
                             selectOptions={mapDjangoChoiceTuplesToSelectOptions(
                                 data.certification_choices,
                             )}
+                            classes={claimedFacilitiesDetailsStyles}
                         />
                         <InputSection
                             label="Facility / Processing Types"
@@ -554,6 +584,7 @@ function ClaimedFacilitiesDetails({
                             selectOptions={mapDjangoChoiceTuplesToSelectOptions(
                                 data.production_type_choices,
                             )}
+                            classes={claimedFacilitiesDetailsStyles}
                         />
                         <InputSection
                             label="Product Types"
@@ -564,13 +595,18 @@ function ClaimedFacilitiesDetails({
                             isMultiSelect
                             isCreatable
                             selectPlaceholder="e.g. Jackets - Use <Enter> or <Tab> to add multiple values"
+                            classes={claimedFacilitiesDetailsStyles}
                         />
                         <Typography
                             variant="title"
-                            style={classes.headingStyles}
+                            style={claimedFacilitiesDetailsStyles.headingStyles}
                         >
                             Point of contact{' '}
-                            <span style={classes.switchSectionStyles}>
+                            <span
+                                style={
+                                    claimedFacilitiesDetailsStyles.switchSectionStyles
+                                }
+                            >
                                 <Switch
                                     color="primary"
                                     onChange={updateContactVisibility}
@@ -586,6 +622,7 @@ function ClaimedFacilitiesDetails({
                             value={data.point_of_contact_person_name}
                             onChange={updateContactPerson}
                             disabled={updating}
+                            classes={claimedFacilitiesDetailsStyles}
                         />
                         <InputSection
                             label="Email"
@@ -599,13 +636,18 @@ function ClaimedFacilitiesDetails({
 
                                 return !isEmail(data.point_of_contact_email);
                             }}
+                            classes={claimedFacilitiesDetailsStyles}
                         />
                         <Typography
                             variant="headline"
-                            style={classes.headingStyles}
+                            style={claimedFacilitiesDetailsStyles.headingStyles}
                         >
                             Office information{' '}
-                            <span style={classes.switchSectionStyles}>
+                            <span
+                                style={
+                                    claimedFacilitiesDetailsStyles.switchSectionStyles
+                                }
+                            >
                                 <Switch
                                     color="primary"
                                     onChange={updateOfficeVisibility}
@@ -614,7 +656,9 @@ function ClaimedFacilitiesDetails({
                                 Publicly visible
                             </span>
                         </Typography>
-                        <aside style={classes.asideStyles}>
+                        <aside
+                            style={claimedFacilitiesDetailsStyles.asideStyles}
+                        >
                             If different from facility address
                         </aside>
                         <InputSection
@@ -622,12 +666,14 @@ function ClaimedFacilitiesDetails({
                             value={data.office_official_name}
                             onChange={updateOfficeName}
                             disabled={updating}
+                            classes={claimedFacilitiesDetailsStyles}
                         />
                         <InputSection
                             label="Address"
                             value={data.office_address}
                             onChange={updateOfficeAddress}
                             disabled={updating}
+                            classes={claimedFacilitiesDetailsStyles}
                         />
                         <InputSection
                             label="Country"
@@ -636,15 +682,21 @@ function ClaimedFacilitiesDetails({
                             disabled={updating}
                             isSelect
                             selectOptions={countryOptions || []}
+                            classes={claimedFacilitiesDetailsStyles}
                         />
                         <InputSection
                             label="Phone number"
                             value={data.office_phone_number}
                             onChange={updateOfficePhone}
                             disabled={updating}
+                            classes={claimedFacilitiesDetailsStyles}
                         />
                         {errorUpdating && (
-                            <div style={classes.errorStyles}>
+                            <div
+                                style={
+                                    claimedFacilitiesDetailsStyles.errorStyles
+                                }
+                            >
                                 <Typography variant="body1">
                                     <span style={{ color: 'red' }}>
                                         The following errors prevented updating
@@ -662,7 +714,9 @@ function ClaimedFacilitiesDetails({
                                 </ul>
                             </div>
                         )}
-                        <div style={classes.controlStyles}>
+                        <div
+                            style={claimedFacilitiesDetailsStyles.controlStyles}
+                        >
                             <Button
                                 onClick={saveForm}
                                 variant="contained"
@@ -736,13 +790,13 @@ ClaimedFacilitiesDetails.propTypes = {
     sectorOptions: sectorOptionsPropType,
     parentCompanyOptions: parentCompanyOptionsPropType,
     fetchSectors: func.isRequired,
-    classes: shape({
-        switchSectionStyles: string.isRequired,
-        inputSectionFieldStyles: string.isRequired,
-        inputSectionLabelStyles: string.isRequired,
-        inputSectionStyles: string.isRequired,
-        asideStyles: string.isRequired,
-    }).isRequired,
+    // classes: shape({
+    //     switchSectionStyles: string.isRequired,
+    //     inputSectionFieldStyles: string.isRequired,
+    //     inputSectionLabelStyles: string.isRequired,
+    //     inputSectionStyles: string.isRequired,
+    //     asideStyles: string.isRequired,
+    // }).isRequired,
     userHasSignedIn: bool.isRequired,
 };
 
@@ -877,4 +931,4 @@ function mapDispatchToProps(
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(withStyles(claimedFacilitiesDetailsStyles)(ClaimedFacilitiesDetails));
+)(ClaimedFacilitiesDetails);
