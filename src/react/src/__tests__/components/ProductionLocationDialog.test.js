@@ -79,7 +79,7 @@ describe('ProductionLocationDialog', () => {
 
         expect(screen.getByText(/Thanks for adding data for this production location!/i)).toBeInTheDocument();
 
-        expect(screen.getByText(/Location name/i)).toBeInTheDocument();
+        expect(screen.getAllByText(/Location name/i)).toHaveLength(2);
         expect(screen.getByText(/Production Location Name/i)).toBeInTheDocument();
 
         expect(screen.getByText(/Address/i)).toBeInTheDocument();
