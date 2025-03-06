@@ -19,6 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-1782](https://opensupplyhub.atlassian.net/browse/OSDEV-1782) - Added additional validation for the fields `action_reason_text_cleaned` and `action_reason_text_raw` when using the `PATCH api/v1/moderation-events/{moderation_id}` endpoint. These fields are required in the request body when the status field is set to 'REJECTED'. The minimum length for the values of these fields is 30 characters.
+Also was added sanitization on the server side by using the `Django-Bleach` library for the HTML content that is stored in the `action_reason_text_raw` field. The bleach filter was applied to the `action_reason_text_raw` value in the `slc_contribution_rejected_body.html` template.
 
 ### Architecture/Environment changes
 * *Describe architecture/environment changes here.*
