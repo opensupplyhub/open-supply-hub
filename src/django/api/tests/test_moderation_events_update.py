@@ -1,19 +1,27 @@
 import json
+
+from django.db.models.signals import post_save
 from django.test import override_settings
+from django.utils.timezone import now
 from django.core import mail
+from rest_framework.test import APITestCase
 from api.models import (
     ModerationEvent,
     User,
-    Contributor
+    Contributor,
 )
-from django.utils.timezone import now
-from rest_framework.test import APITestCase
+from api.signals import moderation_event_update_handler_for_opensearch
 
 
 @override_settings(DEBUG=True)
 class ModerationEventsUpdateTest(APITestCase):
     def setUp(self):
         super().setUp()
+
+        post_save.disconnect(
+            moderation_event_update_handler_for_opensearch,
+            ModerationEvent
+        )
 
         self.email = "test@example.com"
         self.password = "example123"
@@ -100,7 +108,7 @@ class ModerationEventsUpdateTest(APITestCase):
 
         self.assertEqual(400, response.status_code)
 
-    def test_moderation_event_status_changed(self):
+    def test_moderation_event_rejected_with_valid_reason_text(self):
         self.client.login(
             email=self.superemail,
             password=self.superpassword
@@ -108,7 +116,13 @@ class ModerationEventsUpdateTest(APITestCase):
         response = self.client.patch(
             "/api/v1/moderation-events/{}/"
             .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
-            data=json.dumps({"status": "REJECTED"}),
+            data=json.dumps({
+                "status": "REJECTED",
+                "action_reason_text_cleaned": (
+                    "Cleaned reason text with 30 characters"
+                ),
+                "action_reason_text_raw": "Raw reason text with 30 characters"
+            }),
             content_type="application/json"
         )
 
@@ -127,3 +141,81 @@ class ModerationEventsUpdateTest(APITestCase):
             self.superuser.id
         )
         self.assertIsNotNone(self.moderation_event.status_change_date)
+        self.assertEqual(
+            self.moderation_event.action_reason_text_cleaned,
+            "Cleaned reason text with 30 characters"
+        )
+        self.assertEqual(
+            self.moderation_event.action_reason_text_raw,
+            "Raw reason text with 30 characters"
+        )
+
+    def test_moderation_event_rejected_with_invalid_reason_text(self):
+        self.client.login(
+            email=self.superemail,
+            password=self.superpassword
+        )
+        response = self.client.patch(
+            "/api/v1/moderation-events/{}/"
+            .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
+            data=json.dumps({
+                "status": "REJECTED",
+                "action_reason_text_cleaned": "Too short cleaned text",
+                "action_reason_text_raw": "Too short raw text"
+            }),
+            content_type="application/json"
+        )
+
+        self.assertEqual(400, response.status_code)
+        self.assertEqual(
+            response.json(),
+            {
+                "detail": "The request body is invalid.",
+                "errors": [
+                    {
+                        "field": "action_reason_text_cleaned",
+                        "detail": "This field must be at least 30 characters."
+                    },
+                    {
+                        "field": "action_reason_text_raw",
+                        "detail": "This field must be at least 30 characters."
+                    }
+                ]
+            }
+        )
+        self.moderation_event.refresh_from_db()
+        self.assertEqual(self.moderation_event.status, "PENDING")
+
+    def test_moderation_event_rejected_without_reason(self):
+        self.client.login(
+            email=self.superemail,
+            password=self.superpassword
+        )
+        response = self.client.patch(
+            "/api/v1/moderation-events/{}/"
+            .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
+            data=json.dumps({"status": "REJECTED"}),
+            content_type="application/json"
+        )
+
+        self.assertEqual(400, response.status_code)
+        self.assertEqual(
+            response.json(),
+            {
+                "detail": "The request body is invalid.",
+                "errors": [
+                    {
+                        "field": "action_reason_text_cleaned",
+                        "detail": "This field is required when rejecting a "
+                                  "moderation event."
+                    },
+                    {
+                        "field": "action_reason_text_raw",
+                        "detail": "This field is required when rejecting a "
+                                  "moderation event."
+                    }
+                ]
+            }
+        )
+        self.moderation_event.refresh_from_db()
+        self.assertEqual(self.moderation_event.status, "PENDING")
