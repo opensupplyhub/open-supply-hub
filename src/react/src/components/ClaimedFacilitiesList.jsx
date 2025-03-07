@@ -30,7 +30,7 @@ function ClaimedFacilitiesList({
     useEffect(() => {
         getClaimed();
 
-        return clearClaimed;
+        return () => clearClaimed();
     }, [getClaimed, clearClaimed]);
 
     const {
