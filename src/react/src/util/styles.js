@@ -1577,11 +1577,6 @@ export const makeAddLocationStyles = theme =>
     });
 
 export const claimedFacilitiesDetailsStyles = Object.freeze({
-    infoTitleStyle: Object.freeze({
-        paddingBottom: '10px',
-        color: COLOURS.NEAR_BLACK,
-        fontWeight: 'bold',
-    }),
     containerStylesWithPadding: Object.freeze({
         display: 'flex',
         width: '100%',
@@ -1648,5 +1643,29 @@ export const claimedFacilitiesDetailsStyles = Object.freeze({
     }),
     asideStyles: Object.freeze({
         padding: '5px 20px 20px 0',
+    }),
+});
+
+export const yourContactInfoTitleStyle = Object.freeze({
+    paddingBottom: '10px',
+    color: COLOURS.NEAR_BLACK,
+    fontSize: '2.125rem',
+    fontWeight: '400',
+    lineHeight: '1.20588em',
+});
+
+export const yourContactInfoDescStyle = Object.freeze({
+    fontWeight: 'bold',
+});
+
+export const claimFacilitiesListStyle = Object.freeze({
+    searchButton: Object.freeze({
+        margin: '10px 0',
+    }),
+    bodyStyle: Object.freeze({
+        padding: '10px 0',
+        fontSize: 'calc(2* var(--rem))',
+        fontWeight: '400',
+        lineHeight: '1.20588em',
     }),
 });

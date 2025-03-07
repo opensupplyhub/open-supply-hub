@@ -200,13 +200,6 @@ InputSection.propTypes = {
     selectPlaceholder: string,
     isClaimFacilityAdditionalDataPage: bool,
     classes: object.isRequired,
-    // shape({
-    //     switchSectionStyles: string.isRequired,
-    //     inputSectionFieldStyles: string.isRequired,
-    //     inputSectionLabelStyles: string.isRequired,
-    //     inputSectionStyles: string.isRequired,
-    //     asideStyles: string.isRequired,
-    // }).isRequired,
 };
 
 export default InputSection;

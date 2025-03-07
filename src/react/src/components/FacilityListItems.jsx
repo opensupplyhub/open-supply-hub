@@ -162,7 +162,7 @@ const FacilityListItems = ({
         );
     }
 
-    if (error && error.length) {
+    if (error?.length) {
         return (
             <AppGrid title={TITLE}>
                 <ul>

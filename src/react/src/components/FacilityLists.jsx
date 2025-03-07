@@ -56,7 +56,7 @@ class FacilityLists extends Component {
             );
         }
 
-        if (error && error.length) {
+        if (error?.length) {
             return (
                 <AppGrid title={TITLE}>
                     <ul>

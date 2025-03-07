@@ -22,6 +22,7 @@ import { getValueFromEvent, isValidNumberOfWorkers } from '../util/util';
 import {
     claimAFacilitySupportDocsFormStyles,
     claimedFacilitiesDetailsStyles,
+    yourContactInfoTitleStyle,
 } from '../util/styles';
 
 import { claimAFacilityAdditionalDataFormFields } from '../util/constants';
@@ -58,8 +59,8 @@ function ClaimFacilityAdditionalData({
             <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
                 <InputLabel htmlFor={sectorsForm.id}>
                     <Typography
-                        variant="display1"
-                        style={claimedFacilitiesDetailsStyles.infoTitleStyle}
+                        variant="title"
+                        style={yourContactInfoTitleStyle}
                     >
                         {sectorsForm.label}
                     </Typography>
@@ -82,8 +83,8 @@ function ClaimFacilityAdditionalData({
             <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
                 <InputLabel htmlFor={numberOfWorkersForm.id}>
                     <Typography
-                        variant="display1"
-                        style={claimedFacilitiesDetailsStyles.infoTitleStyle}
+                        variant="title"
+                        style={yourContactInfoTitleStyle}
                     >
                         {numberOfWorkersForm.label}
                     </Typography>
@@ -105,8 +106,8 @@ function ClaimFacilityAdditionalData({
             <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
                 <InputLabel htmlFor={localLanguageNameForm.id}>
                     <Typography
-                        variant="display1"
-                        style={claimedFacilitiesDetailsStyles.infoTitleStyle}
+                        variant="title"
+                        style={yourContactInfoTitleStyle}
                     >
                         {localLanguageNameForm.label}
                     </Typography>

@@ -24,13 +24,14 @@ const renderIfNotAuthStatus = (userHasSignedIn, title) => {
             <AppOverflow>
                 <RequireAuthNotice
                     title={title}
-                    text="Sign in to view your Open Supply Hub lists"
+                    text="Sign in to view your Open Supply Hub facility claims."
                 />
             </AppOverflow>
         );
     }
     return null;
 };
+
 const renderIfErrorsStatus = (errors, title) => {
     if (errors) {
         return (

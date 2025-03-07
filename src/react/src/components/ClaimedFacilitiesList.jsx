@@ -15,12 +15,8 @@ import {
 
 import { facilityClaimsListPropType } from '../util/propTypes';
 import checkComponentStatus from '../util/checkComponentStatus';
-
-const styles = Object.freeze({
-    searchButton: Object.freeze({
-        margin: '10px 0',
-    }),
-});
+import { mainRoute } from '../util/constants';
+import { claimFacilitiesListStyle } from '../util/styles';
 
 function ClaimedFacilitiesList({
     data,
@@ -61,8 +57,8 @@ function ClaimedFacilitiesList({
                 <AppGrid title={TITLE}>
                     <div>
                         <Typography
-                            variant="body"
-                            style={{ padding: '10px 0' }}
+                            variant="body1"
+                            style={claimFacilitiesListStyle.bodyStyle}
                         >
                             You do not have any approved facility claims. Search
                             for your facility and make a request to claim it.
@@ -74,9 +70,8 @@ function ClaimedFacilitiesList({
                         <Button
                             variant="contained"
                             color="primary"
-                            style={styles.searchButton}
-                            to="/"
-                            href="/"
+                            style={claimFacilitiesListStyle.searchButton}
+                            to={mainRoute}
                         >
                             Search
                         </Button>
