@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { arrayOf, bool, func, string } from 'prop-types';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
@@ -13,6 +14,7 @@ import {
 } from '../actions/claimedFacilities';
 
 import { facilityClaimsListPropType } from '../util/propTypes';
+import { contributeProductionLocationRoute } from '../util/constants';
 
 const styles = Object.freeze({
     searchButton: Object.freeze({
@@ -46,10 +48,9 @@ function ClaimedFacilitiesList({
     }
 
     if (data.length === 0) {
-        window.console.log(fetching, data);
         return (
             <div>
-                <Typography variant="body" style={{ padding: '10px 0' }}>
+                <Typography variant="body1" style={{ padding: '10px 0' }}>
                     You do not have any approved facility claims. Search for
                     your facility and make a request to claim it. Claiming your
                     facility will enable you to add business information,
@@ -59,11 +60,11 @@ function ClaimedFacilitiesList({
                 <Button
                     variant="contained"
                     color="primary"
+                    component={Link}
                     style={styles.searchButton}
-                    to="/"
-                    href="/"
+                    to={`${contributeProductionLocationRoute}?tab=name-address`}
                 >
-                    Search
+                    Find My Production Location
                 </Button>
             </div>
         );
