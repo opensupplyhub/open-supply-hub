@@ -53,15 +53,6 @@ def make_pl_search_url(request):
     )
 
 
-def make_pl_claim_url(request, facility):
-    return (
-        "{}/facilities/{}/claim".format(
-            make_oshub_url(request),
-            facility.id,
-        )
-    )
-
-
 def send_claim_facility_confirmation_email(request, facility_claim):
     subj_template = get_template('mail/claim_facility_submitted_subject.txt')
     text_template = get_template('mail/claim_facility_submitted_body.txt')
@@ -547,7 +538,7 @@ def send_slc_contribution_approval_email(
     approval_dictionary = {
         'is_contributor_claim': is_contributor_claim,
         'is_anyone_claim': is_anyone_claim,
-        'pl_claim_url': make_pl_claim_url(
+        'pl_claim_url': make_claim_url(
             request,
             facility_list_item.facility
         ),
