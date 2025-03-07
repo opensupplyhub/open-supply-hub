@@ -3,6 +3,7 @@ import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import { MemoryRouter } from 'react-router-dom';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import AddLocationData from '../../components/AddLocationData';
+import { multipleLocationRoute, contributeProductionLocationRoute } from '../../util/constants';
 
 describe('AddLocationData component', () => {
     const mockAuthorizedState = {
@@ -48,5 +49,19 @@ describe('AddLocationData component', () => {
     it('renders for the unauthorized user', () => {
         const { getByText } = renderComponent(mockNotAuthorizedState);
         expect(getByText('Log in to contribute to Open Supply Hub')).toBeInTheDocument();
+    });
+
+    it('Upload Multiple Locations button should be enabled', () => {
+        const { getByRole } = renderComponent(mockAuthorizedState);
+        const uploadMultipleLocationsButton = getByRole('button', { name: /Upload Multiple Locations/i });
+        expect(uploadMultipleLocationsButton).toBeEnabled();
+        expect(uploadMultipleLocationsButton).toHaveAttribute('href', multipleLocationRoute);
+    });
+
+    it('Add a Single Location button should be enabled', () => {
+        const { getByRole } = renderComponent(mockAuthorizedState);
+        const addSingleLocationButton = getByRole('button', { name: /Add a Single Location/i });
+        expect(addSingleLocationButton).toBeEnabled();
+        expect(addSingleLocationButton).toHaveAttribute('href', contributeProductionLocationRoute);
     });
 });

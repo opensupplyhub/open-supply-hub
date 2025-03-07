@@ -154,7 +154,6 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                             component={Link}
                             className={classes.buttonStyle}
                             to={contributeProductionLocationRoute}
-                            disabled
                         >
                             Add a Single Location
                         </Button>
