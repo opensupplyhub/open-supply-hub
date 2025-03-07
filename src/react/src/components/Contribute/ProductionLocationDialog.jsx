@@ -104,7 +104,6 @@ const ProductionLocationDialog = ({
     claimStatus,
 }) => {
     const history = useHistory();
-    console.log('claimStatus >>>', claimStatus);
 
     const [isMobile, setIsMobile] = useState(false);
     const getIsMobileMemoized = useMemo(() => getIsMobile(innerWidth), [
