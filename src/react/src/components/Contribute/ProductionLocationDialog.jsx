@@ -71,15 +71,28 @@ const getStatusBadgeClass = (classes, status) => {
     }
 };
 
-const getTooltipText = claimStatus => {
-    if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED) {
-        return 'Production location has been claimed already.';
+const getPendingTooltipText = claimStatus => {
+    switch (claimStatus) {
+        case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED:
+            return 'Text for claimed status';
+        case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.PENDING:
+            return 'Text for pending status';
+        case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED:
+            return 'Text for unclaimed status';
+        default:
+            return 'Default text when user can not claim because no os id is available';
     }
-    if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.PENDING) {
-        return 'There is a pending claim for this production location.';
-    }
+};
 
-    return "You'll be able to claim the location after the moderation is done.";
+const getClaimTooltipText = claimStatus => {
+    switch (claimStatus) {
+        case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED:
+            return 'Production location has been claimed already.';
+        case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.PENDING:
+            return 'There is a pending claim for this production location.';
+        default:
+            return "You'll be able to claim the location after the moderation is done.";
+    }
 };
 
 const ProductionLocationDialog = ({
