@@ -72,14 +72,14 @@ const getStatusBadgeClass = (classes, status) => {
 };
 
 const getTooltipText = claimStatus => {
-    if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED) {
-        return 'Production location has been claimed already.';
+    switch (claimStatus) {
+        case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED:
+            return 'Production location has been claimed already.';
+        case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.PENDING:
+            return 'There is a pending claim for this production location.';
+        default:
+            return "You'll be able to claim the location after the moderation is done.";
     }
-    if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.PENDING) {
-        return 'There is a pending claim for this production location.';
-    }
-
-    return "You'll be able to claim the location after the moderation is done.";
 };
 
 const ProductionLocationDialog = ({
@@ -91,6 +91,7 @@ const ProductionLocationDialog = ({
     claimStatus,
 }) => {
     const history = useHistory();
+    console.log('claimStatus >>>', claimStatus);
 
     const [isMobile, setIsMobile] = useState(false);
     const getIsMobileMemoized = useMemo(() => getIsMobile(innerWidth), [
