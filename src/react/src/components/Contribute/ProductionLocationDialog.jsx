@@ -71,7 +71,20 @@ const getStatusBadgeClass = (classes, status) => {
     }
 };
 
-const getTooltipText = claimStatus => {
+const getPendingTooltipText = claimStatus => {
+    switch (claimStatus) {
+        case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED:
+            return 'Text for claimed status';
+        case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.PENDING:
+            return 'Text for pending status';
+        case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED:
+            return 'Text for unclaimed status';
+        default:
+            return 'Default text when user can not claim because no os id is available';
+    }
+};
+
+const getClaimTooltipText = claimStatus => {
     switch (claimStatus) {
         case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED:
             return 'Production location has been claimed already.';
