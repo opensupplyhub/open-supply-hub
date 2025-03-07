@@ -13,13 +13,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe high-level database changes.*
 
 #### Migrations:
-* *Describe migrations here.*
+* 0167_add_moderationevent_action_reason_text_fields.py - This migration adds new fields `action_reason_text_cleaned` and  `action_reason_text_raw` to the existing table `api_moderationevent`.
 
 #### Schema changes
-* *Describe schema changes here.*
+* [OSDEV-1782](https://opensupplyhub.atlassian.net/browse/OSDEV-1782) - Added new fields `action_reason_text_cleaned` and `action_reason_text_raw` to the `api_moderationevent` table to store text messages received when a moderator takes an action on a moderation event.
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-1782](https://opensupplyhub.atlassian.net/browse/OSDEV-1782) - Added additional validation for the fields `action_reason_text_cleaned` and `action_reason_text_raw` when using the `PATCH api/v1/moderation-events/{moderation_id}` endpoint. These fields are required in the request body when the status field is set to 'REJECTED'. The minimum length for the values of these fields is 30 characters.
+Also was added sanitization on the server side by using the `Django-Bleach` library for the HTML content that is stored in the `action_reason_text_raw` field. The bleach filter was applied to the `action_reason_text_raw` value in the `slc_contribution_rejected_body.html` template.
 
 ### Architecture/Environment changes
 * [OSDEV-899](https://opensupplyhub.atlassian.net/browse/OSDEV-899) - Splitted the Django container into two components: FE (React) and BE (Django). Requests to the frontend (React) will be processed by the CDN (CloudFront), while requests to the API will be redirected to the Django container. This approach will allow for more efficient use of ECS cluster computing resources and improve frontend performance.
@@ -50,15 +51,16 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
   All other traffic will be redirected to the React application.
 
-### What's new
-* [OSDEV-1814](https://opensupplyhub.atlassian.net/browse/OSDEV-1814) - Added toggle switch button for production location info page to render additional data if necessary. If toggle switch button is inactive (default behavior), additional data won't be send to the server along with name, address and country.
-
 ### Bugfix
 * [OSDEV-1806](https://opensupplyhub.atlassian.net/browse/OSDEV-1806) - Refactored the Parent Company field validation. The field is now validated as a regular character field.
 * [OSDEV-1787](https://opensupplyhub.atlassian.net/browse/OSDEV-1787) - The tooltip messages for the Claim button have been removed for all statuses of moderation events on the `Contribution Record` page and changed according to the design on `Thanks for adding data for this production location` pop-up.
 * [OSDEV-1789](https://opensupplyhub.atlassian.net/browse/OSDEV-1789) - Fixed an issue where the scroll position was not resetting to the top when navigating through SLC workflow pages.
 * [OSDEV-1795](https://opensupplyhub.atlassian.net/browse/OSDEV-1795) - Resolved database connection issue after PostgreSQL 16.3 upgrade by upgrading pg8000 module version.
 * [OSDEV-1803](https://opensupplyhub.atlassian.net/browse/OSDEV-1803) - Updated text from `Facility Type` to `Location Type` and `Facility Name` to `Location Name` on the SLC `Thank You for Your Submission` page. 
+
+### What's new
+* [OSDEV-1814](https://opensupplyhub.atlassian.net/browse/OSDEV-1814) - Added toggle switch button for production location info page to render additional data if necessary. If toggle switch button is inactive (default behavior), additional data won't be send to the server along with name, address and country.
+* [OSDEV-1782](https://opensupplyhub.atlassian.net/browse/OSDEV-1782) - Added a confirmation dialog window that appears when a user tries to reject a moderation event. The dialog includes a WYSIWYG text editor where entering a message of at least 30 characters is required to confirm the rejection. If a user does not enter the required number of characters, the 'Reject' button is disabled, and a tooltip with a clear message appears when the mouse hovers over it.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
