@@ -24,21 +24,13 @@ import {
 
 import { getValueFromEvent } from '../util/util';
 
-import { claimAFacilitySupportDocsFormStyles } from '../util/styles';
+import {
+    claimAFacilitySupportDocsFormStyles,
+    yourContactInfoTitleStyle,
+    yourContactInfoDescStyle,
+} from '../util/styles';
 
 import { claimAFacilitySupportDocsFormFields } from '../util/constants';
-
-import COLOURS from '../util/COLOURS';
-
-const yourContactInfoTitleStyle = Object.freeze({
-    paddingBottom: '10px',
-    color: COLOURS.NEAR_BLACK,
-    fontWeight: 'bold',
-});
-
-const yourContactInfoDescStyle = Object.freeze({
-    fontWeight: 'bold',
-});
 
 const {
     contactYourName,
@@ -70,7 +62,7 @@ const ClaimFacilitySupportDocs = ({
 }) => (
     <>
         <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
-            <Typography variant="display1" style={yourContactInfoTitleStyle}>
+            <Typography variant="title" style={yourContactInfoTitleStyle}>
                 Your Contact Information
                 <RequiredAsterisk />
             </Typography>
@@ -155,7 +147,7 @@ const ClaimFacilitySupportDocs = ({
             />
         </div>
         <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
-            <Typography variant="display1" style={yourContactInfoTitleStyle}>
+            <Typography variant="title" style={yourContactInfoTitleStyle}>
                 Business Contact Information
                 <RequiredAsterisk />
             </Typography>

@@ -19,6 +19,7 @@ import {
     approveFacilityList,
     rejectFacilityList,
 } from '../actions/facilityListDetails';
+import COLOURS from '../util/COLOURS';
 
 const dialogTypesEnum = Object.freeze({ REJECT: 'REJECT', INFORM: 'INFORM' });
 
@@ -60,6 +61,10 @@ const facilityListControlStyles = Object.freeze({
         padding: '1rem 0',
         display: 'flex',
         alignItems: 'center',
+        color: COLOURS.NEAR_BLACK,
+        fontSize: '2.125rem',
+        fontWeight: '400',
+        lineHeight: '1.20588em',
     }),
     dialogActionsStyles: Object.freeze({
         display: 'flex',
@@ -156,7 +161,7 @@ function FacilityListControls({
             <div style={facilityListControlStyles.listIDAndStatusStyles}>
                 <Typography variant="title">List Status</Typography>
                 <Typography
-                    variant="display1"
+                    variant="title"
                     style={facilityListControlStyles.statusLabelStyles}
                 >
                     {status}{' '}
