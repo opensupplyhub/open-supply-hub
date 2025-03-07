@@ -131,6 +131,7 @@ INSTALLED_APPS = [
     'api',
     'web',
     'ecsmanage',
+    'django_bleach',
 ]
 
 # For allauth
@@ -563,3 +564,19 @@ ALWAYS_GENERATE_SLOW_REPORT = True  # Generate report only when requested using 
 
 KAFKA_BOOTSTRAP_SERVERS = os.getenv('KAFKA_BOOTSTRAP_SERVERS', '') # Kafka servers to connect
 KAFKA_TOPIC_DEDUPE_BASIC_NAME = os.getenv('KAFKA_TOPIC_DEDUPE_BASIC_NAME', '') # Kafka Dedupe Hub Topic
+
+# Django Bleach settings
+# https://django-bleach.readthedocs.io/en/latest/
+BLEACH_ALLOWED_TAGS = [
+    'p', 'br', 'em', 'strong', 'ins', 'del', 'code', 'sup', 'sub',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre',
+    'ul', 'ol', 'li', 'a',
+]
+
+BLEACH_ALLOWED_ATTRIBUTES = {
+    'a': ['href', 'target', 'title'],
+}
+
+BLEACH_STRIP_TAGS = True
+
+BLEACH_STRIP_COMMENTS = True

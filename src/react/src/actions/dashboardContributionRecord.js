@@ -130,7 +130,12 @@ export function fetchPotentialMatches(data) {
     };
 }
 
-export function updateSingleModerationEvent(moderationID, status) {
+export function updateSingleModerationEvent(
+    moderationID,
+    status,
+    textCleaned,
+    textRaw,
+) {
     return dispatch => {
         if (!moderationID) {
             return null;
@@ -138,7 +143,11 @@ export function updateSingleModerationEvent(moderationID, status) {
         dispatch(startUpdateSingleModerationEvent());
 
         return apiRequest
-            .patch(makeModerationEventRecordURL(moderationID), { status })
+            .patch(makeModerationEventRecordURL(moderationID), {
+                status,
+                action_reason_text_cleaned: textCleaned,
+                action_reason_text_raw: textRaw,
+            })
             .then(({ data }) => {
                 dispatch(completeUpdateSingleModerationEvent(data));
             })

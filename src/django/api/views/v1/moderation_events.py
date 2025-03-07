@@ -126,12 +126,15 @@ class ModerationEvents(ViewSet):
             user=request.user,
             partial=True
         )
-
         if not serializer.is_valid():
+            errors = serializer.errors.get(
+                "non_field_errors",
+                [serializer.errors]
+            )
             raise ValidationError(
                 {
                     "detail": APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
-                    "errors": [serializer.errors],
+                    "errors": errors,
                 }
             )
 

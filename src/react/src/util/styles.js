@@ -1669,3 +1669,30 @@ export const claimFacilitiesListStyle = Object.freeze({
         lineHeight: '1.20588em',
     }),
 });
+
+export const makeRejectModerationEventDialogStyles = () =>
+    Object.freeze({
+        dialogPaperStyles: Object.freeze({
+            overflowX: 'hidden',
+        }),
+        editorContainerStyles: Object.freeze({
+            border: `1px solid ${COLOURS.GREY}`,
+            borderRadius: '5px',
+            minHeight: '320px',
+            marginTop: '10px',
+            padding: '5px',
+        }),
+        editorStyles: Object.freeze({
+            padding: '5px',
+            maxHeight: '230px',
+            minHeight: '230px',
+        }),
+        dialogActionsStyles: Object.freeze({
+            display: 'flex',
+            justifyContent: 'space-evenly',
+            paddingBottom: '10px',
+        }),
+        buttonBaseStyles: Object.freeze({
+            width: '150px',
+        }),
+    });
