@@ -47,6 +47,7 @@ import {
     convertRangeField,
     updateStateFromData,
     getSelectStyles,
+    getNumberOfWorkersValidationError,
 } from '../../util/util';
 import {
     mockedSectors,
@@ -769,7 +770,11 @@ const ProductionLocationInfo = ({
                                             !isValidNumberOfWorkers(
                                                 numberOfWorkers,
                                             ) && (
-                                                <InputErrorText text="Enter the number of workers as a number or range" />
+                                                <InputErrorText
+                                                    text={getNumberOfWorkersValidationError(
+                                                        numberOfWorkers,
+                                                    )}
+                                                />
                                             )
                                         }
                                         FormHelperTextProps={{
