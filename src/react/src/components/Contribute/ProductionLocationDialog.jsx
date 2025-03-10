@@ -314,7 +314,7 @@ const ProductionLocationDialog = ({
                                 </>
                             ) : (
                                 <DialogTooltip
-                                    text={getTooltipText(claimStatus)}
+                                    text={getClaimTooltipText(claimStatus)}
                                     aria-label="Claim button tooltip"
                                     childComponent={claimButton({
                                         classes,
