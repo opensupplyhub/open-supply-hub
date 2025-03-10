@@ -162,7 +162,8 @@ const ProductionLocationDialog = ({
     const deleteIcon =
         moderationStatus === MODERATION_STATUSES_ENUM.PENDING ? (
             <DialogTooltip
-                text="Your submission is under review. You will receive a notification once the production location is live on OS Hub. You can proceed to submit a claim while your request is pending."
+                text={getPendingTooltipText(claimStatus)}
+                aria-label="Pending status tooltip"
                 childComponent={infoIcon(classes)}
             />
         ) : null;
