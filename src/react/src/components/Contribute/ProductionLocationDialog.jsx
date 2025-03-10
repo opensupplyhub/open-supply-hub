@@ -72,26 +72,20 @@ const getStatusBadgeClass = (classes, status) => {
 };
 
 const getPendingTooltipText = claimStatus => {
-    switch (claimStatus) {
-        case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED:
-            return 'Text for claimed status';
-        case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.PENDING:
-            return 'Text for pending status';
-        case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED:
-            return 'Text for unclaimed status';
-        default:
-            return 'Your submission is under review. You will receive a notification once the production location is live on OS Hub. You can proceed to submit a claim while your request is pending.';
+    if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED) {
+        return 'Your submission is under review. You will receive a notification once the production location is live on OS Hub. You can proceed to submit a claim while your request is pending.';
     }
+    return 'Your submission is under review. You will receive an email confirming your OS ID once your information is live on OS Hub.';
 };
 
 const getClaimTooltipText = claimStatus => {
     switch (claimStatus) {
         case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED:
-            return 'Production location has been claimed already.';
+            return 'This location cannot be claimed because it has already been claimed.';
         case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.PENDING:
-            return 'There is a pending claim for this production location.';
+            return 'This location cannot be claimed because a pending claim already exists.';
         default:
-            return "You'll be able to claim the location after the moderation is done.";
+            return 'You will be able to claim this location once the OS ID is live on OS Hub.';
     }
 };
 
