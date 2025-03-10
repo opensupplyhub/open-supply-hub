@@ -80,7 +80,7 @@ const getPendingTooltipText = claimStatus => {
         case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED:
             return 'Text for unclaimed status';
         default:
-            return 'Default text when user can not claim because no os id is available';
+            return 'Your submission is under review. You will receive a notification once the production location is live on OS Hub. You can proceed to submit a claim while your request is pending.';
     }
 };
 
