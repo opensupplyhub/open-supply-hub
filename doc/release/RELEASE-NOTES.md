@@ -57,6 +57,7 @@ Also was added sanitization on the server side by using the `Django-Bleach` libr
 * [OSDEV-1789](https://opensupplyhub.atlassian.net/browse/OSDEV-1789) - Fixed an issue where the scroll position was not resetting to the top when navigating through SLC workflow pages.
 * [OSDEV-1795](https://opensupplyhub.atlassian.net/browse/OSDEV-1795) - Resolved database connection issue after PostgreSQL 16.3 upgrade by upgrading pg8000 module version.
 * [OSDEV-1803](https://opensupplyhub.atlassian.net/browse/OSDEV-1803) - Updated text from `Facility Type` to `Location Type` and `Facility Name` to `Location Name` on the SLC `Thank You for Your Submission` page.
+* [OSDEV-1838](https://opensupplyhub.atlassian.net/browse/OSDEV-1838) - Fixed an issue where the router redirected to an unsupported page when the OS ID contained a forward slash. The fix was implemented by encoding the OS ID value using the `encodeURIComponent()` function before passing it as a URL parameter.
 * [OSDEV-1827](https://opensupplyhub.atlassian.net/browse/OSDEV-1827) - Fixed the condition logic for the email template when approving a contribution to an existing production location that has either been claimed or has a pending claim request.
 
 ### What's new
