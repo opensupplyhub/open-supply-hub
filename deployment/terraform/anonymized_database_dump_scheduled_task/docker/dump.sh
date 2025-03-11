@@ -13,12 +13,26 @@ aws rds copy-db-snapshot \
     --kms-key-id $KMS_KEY_ID --output text
 
 echo "Waiting for snapshot $ANONYMIZED_SNAPSHOT_ID to enter 'available' state..."
+export ATTEMPT=0
+export MAX_ATTEMPT=600
 while true
 do
-    aws rds wait db-snapshot-available --db-snapshot-identifier $ANONYMIZED_SNAPSHOT_ID
-    if echo $? == 0; then
+    export SNAPSHOT_STATUS=$(aws rds describe-db-snapshots --db-snapshot-identifier $ANONYMIZED_SNAPSHOT_ID --query 'DBSnapshots[0].Status' --output text)
+    if [[ $SNAPSHOT_STATUS == "available" ]];
+    then
+        echo "Snapshot $ANONYMIZED_SNAPSHOT_ID is now available."
         break
+    else
+        echo "Snapshot $ANONYMIZED_SNAPSHOT_ID status is: $SNAPSHOT_STATUS. Waiting..."
     fi
+    if [[ $ATTEMPT -le $MAX_ATTEMPT ]];
+    then
+        sleep 60s
+    else
+        echo "Snapshot creation timed out"
+        exit 1
+    fi
+    ATTEMPT=$((ATTEMPT + 1))
 done
 echo "Copying shared snapshot is finished"
 
