@@ -75,17 +75,17 @@ const getPendingTooltipText = claimStatus => {
     if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED) {
         return 'Your submission is under review. You will receive a notification once the production location is live on OS Hub. You can proceed to submit a claim while your request is pending.';
     }
-    return 'Your submission is under review. You will receive an email confirming your OS ID once your information is live on OS Hub.';
+    return 'Your submission is being reviewed. You will receive an email with your OS ID once the review is complete.';
 };
 
 const getClaimTooltipText = claimStatus => {
     switch (claimStatus) {
         case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED:
-            return 'This location cannot be claimed because it has already been claimed.';
+            return 'This location has already been claimed and therefore cannot be claimed again.';
         case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.PENDING:
             return 'This location cannot be claimed because a pending claim already exists.';
         default:
-            return 'You will be able to claim this location once the OS ID is live on OS Hub.';
+            return 'You will be able to claim this location once the review is complete.';
     }
 };
 
