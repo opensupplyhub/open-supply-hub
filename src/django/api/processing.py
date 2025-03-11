@@ -200,10 +200,12 @@ def handle_external_match_process_result(id, result, request, should_create):
 
     return [
         get_potential_match_result(
-            f_l_item, item,
+            f_l_item,
+            item,
             len(pending_matches),
             context,
-            should_create, result
+            should_create,
+            result
         )
         for item in pending_matches
     ]
