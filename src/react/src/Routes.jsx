@@ -48,8 +48,8 @@ import {
     authRegisterFormRoute,
     authResetPasswordFormRoute,
     authConfirmRegistrationRoute,
+    multipleLocationRoute,
     contributeRoute,
-    contributeNewRoute, // TODO: Remove this in scope of https://opensupplyhub.atlassian.net/browse/OSDEV-1607
     listsRoute,
     facilityListItemsRoute,
     facilitiesRoute,
@@ -159,12 +159,12 @@ class Routes extends Component {
                                 />
                                 <Route
                                     exact
-                                    path={contributeRoute}
+                                    path={multipleLocationRoute}
                                     component={Contribute}
                                 />
                                 <Route
                                     exact
-                                    path={contributeNewRoute}
+                                    path={contributeRoute}
                                     component={AddLocationData}
                                 />
                                 <Route
