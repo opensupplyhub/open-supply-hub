@@ -198,6 +198,7 @@ def handle_external_match_process_result(id, result, request, should_create):
         if match.status == match_object_type.PENDING
     ]
 
+    # Potential Matches
     return [
         get_potential_match_result(
             f_l_item,
