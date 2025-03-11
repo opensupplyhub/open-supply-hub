@@ -57,7 +57,7 @@ dedupe_hub_name = "deduplicate"
 dedupe_hub_version = 1
 app_cc_ecs_desired_count = 0
 app_dd_fargate_cpu = 4096
-app_dd_fargate_memory = 12288
+app_dd_fargate_memory = 16384
 app_dd_ecs_desired_count = 1
 django_log_level="DEBUG"
 
