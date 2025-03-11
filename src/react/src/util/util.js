@@ -1151,34 +1151,36 @@ export const isValidNumberOfWorkers = value => {
 };
 
 export const getNumberOfWorkersValidationError = value => {
-    const trimmedValue = value.trim();
-    const valueOfZeroText = 'The value of zero is not valid!';
+    const valueOfZeroText =
+        'The value of zero is not valid. Enter a positive whole number or a valid range (e.g., 1-5).';
+    const lessThenOrEqualText =
+        'Invalid range. The minimum value must be less than or equal to the maximum value.';
+    const invalidEntryText = 'Invalid entry. The value cannot start from zero.';
+    const invalidFormatText =
+        'Invalid format. Enter a whole number or a valid numeric range (e.g., 1-5).';
     const rangePattern = /^\d+-\d+$/;
 
-    if (isEmpty(trimmedValue)) {
-        return 'The value cannot be empty!';
-    }
-
-    if (parseInt(trimmedValue, 10) === 0) {
+    if (parseInt(value, 10) === 0) {
         return valueOfZeroText;
     }
 
-    if (!isInt(trimmedValue, 10) && !rangePattern.test(value)) {
-        return 'The value must be a whole number or a range for the number.';
+    if (!isInt(value, 10) && !rangePattern.test(value)) {
+        return invalidFormatText;
     }
 
     if (rangePattern.test(value)) {
         const [start, end] = value.split('-');
+
         if (!isInt(end.trim(), { min: 1, allow_leading_zeroes: false })) {
             return valueOfZeroText;
         }
 
         if (start >= end) {
-            return 'The minimum value must be less than or equal to the maximum value.';
+            return lessThenOrEqualText;
         }
     }
 
-    return 'The value cannot start from zero.';
+    return invalidEntryText;
 };
 
 export const claimAFacilityFormIsValid = ({

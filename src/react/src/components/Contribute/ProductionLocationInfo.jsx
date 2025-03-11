@@ -763,7 +763,9 @@ const ProductionLocationInfo = ({
                                         className={classes.textInputStyles}
                                         value={numberOfWorkers}
                                         onChange={e =>
-                                            setNumberOfWorkers(e.target.value)
+                                            setNumberOfWorkers(
+                                                e.target.value.trim(),
+                                            )
                                         }
                                         placeholder="Enter the number of workers as a number or range"
                                         helperText={
