@@ -156,12 +156,12 @@ class FacilityCreateAPITest(APITestCase):
         result_three = handle_external_match_process_result(
             self.list_item_three.id, result_obj_three, None, True
         )
-        self.assertEqual(result_three['status'], 'POTENTIAL_MATCH')
+        self.assertEqual(result_three[0]['status'], 'POTENTIAL_MATCH')
         self.assertIsNotNone(
-            result_three['matches'][0]['confirm_match_url']
+            result_three[0]['matches'][0]['confirm_match_url']
         )
         self.assertIsNotNone(
-            result_three['matches'][0]['reject_match_url']
+            result_three[0]['matches'][0]['reject_match_url']
         )
 
         result_obj_four = {
