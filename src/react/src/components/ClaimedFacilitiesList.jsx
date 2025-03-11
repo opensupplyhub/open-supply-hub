@@ -21,7 +21,7 @@ import { claimFacilitiesListStyle } from '../util/styles';
 function ClaimedFacilitiesList({
     data,
     fetching,
-    error,
+    errors,
     getClaimed,
     clearClaimed,
     userHasSignedIn,
@@ -33,18 +33,18 @@ function ClaimedFacilitiesList({
         return () => clearClaimed();
     }, [getClaimed, clearClaimed]);
 
-    const {
-        renderIfFetchStatus,
-        renderIfNotAuthStatus,
-        renderIfErrorsStatus,
-    } = checkComponentStatus;
+    const { LoadingIndicator, AuthNotice, ErrorsList } = checkComponentStatus;
+    if (fetching) {
+        return <LoadingIndicator title={TITLE} />;
+    }
 
-    const fetchStatus = renderIfFetchStatus(fetching, TITLE);
-    if (fetchStatus) return fetchStatus;
-    const nonAuthStatus = renderIfNotAuthStatus(userHasSignedIn, TITLE);
-    if (nonAuthStatus) return nonAuthStatus;
-    const errorsStatus = renderIfErrorsStatus(error, TITLE);
-    if (errorsStatus) return errorsStatus;
+    if (!userHasSignedIn) {
+        return <AuthNotice title={TITLE} />;
+    }
+
+    if (errors) {
+        return <ErrorsList title={TITLE} errors={errors} />;
+    }
 
     if (!data) {
         return null;
@@ -92,13 +92,13 @@ function ClaimedFacilitiesList({
 
 ClaimedFacilitiesList.defaultProps = {
     data: null,
-    error: null,
+    errors: null,
 };
 
 ClaimedFacilitiesList.propTypes = {
     data: facilityClaimsListPropType,
     fetching: bool.isRequired,
-    error: arrayOf(string),
+    errors: arrayOf(string),
     getClaimed: func.isRequired,
     clearClaimed: func.isRequired,
     userHasSignedIn: bool.isRequired,
@@ -113,7 +113,7 @@ function mapStateToProps({
     return {
         data,
         fetching,
-        error,
+        errors: error,
         userHasSignedIn: !user.isAnon,
     };
 }

@@ -32,7 +32,7 @@ class FacilityLists extends Component {
         const {
             facilityLists,
             fetching,
-            error,
+            errors,
             userHasSignedIn,
             fetchingSessionSignIn,
             myFacilitiesRoute,
@@ -56,11 +56,11 @@ class FacilityLists extends Component {
             );
         }
 
-        if (error?.length) {
+        if (errors?.length) {
             return (
                 <AppGrid title={TITLE}>
                     <ul>
-                        {error.map(err => (
+                        {errors.map(err => (
                             <li key={err} style={{ color: 'red' }}>
                                 {err}
                             </li>
@@ -115,13 +115,13 @@ class FacilityLists extends Component {
 }
 
 FacilityLists.defaultProps = {
-    error: null,
+    errors: null,
 };
 
 FacilityLists.propTypes = {
     facilityLists: arrayOf(facilityListPropType).isRequired,
     fetching: bool.isRequired,
-    error: arrayOf(string),
+    errors: arrayOf(string),
     fetchLists: func.isRequired,
     resetLists: func.isRequired,
     userHasSignedIn: bool.isRequired,
@@ -138,7 +138,7 @@ function mapStateToProps({
     return {
         facilityLists,
         fetching,
-        error,
+        errors: error,
         userHasSignedIn: !user.isAnon,
         fetchingSessionSignIn,
     };

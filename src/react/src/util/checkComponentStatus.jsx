@@ -4,53 +4,37 @@ import AppGrid from '../components/AppGrid';
 import AppOverflow from '../components/AppOverflow';
 import RequireAuthNotice from '../components/RequireAuthNotice';
 
-const renderIfFetchStatus = (fetchingStatus, title) => {
-    if (fetchingStatus) {
-        return (
-            <AppOverflow>
-                <AppGrid title={title}>
-                    <CircularProgress />
-                </AppGrid>
-            </AppOverflow>
-        );
-    }
+const LoadingIndicator = ({ title }) => (
+    <AppOverflow>
+        <AppGrid title={title}>
+            <CircularProgress />
+        </AppGrid>
+    </AppOverflow>
+);
 
-    return null;
-};
+const AuthNotice = ({ title }) => (
+    <AppOverflow>
+        <RequireAuthNotice
+            title={title}
+            text="Sign in to view your Open Supply Hub facility claims."
+        />
+    </AppOverflow>
+);
 
-const renderIfNotAuthStatus = (userHasSignedIn, title) => {
-    if (!userHasSignedIn) {
-        return (
-            <AppOverflow>
-                <RequireAuthNotice
-                    title={title}
-                    text="Sign in to view your Open Supply Hub facility claims."
-                />
-            </AppOverflow>
-        );
-    }
-    return null;
-};
-
-const renderIfErrorsStatus = (errors, title) => {
-    if (errors) {
-        return (
-            <AppOverflow>
-                <AppGrid title={title}>
-                    <ul>
-                        {errors.map(err => (
-                            <li key={err}>{err}</li>
-                        ))}
-                    </ul>
-                </AppGrid>
-            </AppOverflow>
-        );
-    }
-    return null;
-};
+const ErrorsList = ({ title, errors }) => (
+    <AppOverflow>
+        <AppGrid title={title}>
+            <ul>
+                {errors.map(err => (
+                    <li key={err}>{err}</li>
+                ))}
+            </ul>
+        </AppGrid>
+    </AppOverflow>
+);
 
 export default {
-    renderIfFetchStatus,
-    renderIfNotAuthStatus,
-    renderIfErrorsStatus,
+    LoadingIndicator,
+    AuthNotice,
+    ErrorsList,
 };

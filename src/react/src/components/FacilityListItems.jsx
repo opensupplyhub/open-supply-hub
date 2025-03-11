@@ -122,7 +122,7 @@ const refreshListModalStyles = Object.freeze({
 const FacilityListItems = ({
     list,
     fetchingList,
-    error,
+    errors,
     downloadingCSV,
     downloadCSV,
     csvDownloadingError,
@@ -162,11 +162,11 @@ const FacilityListItems = ({
         );
     }
 
-    if (error?.length) {
+    if (errors?.length) {
         return (
             <AppGrid title={TITLE}>
                 <ul>
-                    {error.map(err => (
+                    {errors.map(err => (
                         <li key={err}>{err}</li>
                     ))}
                 </ul>
@@ -373,7 +373,7 @@ const FacilityListItems = ({
 
 FacilityListItems.defaultProps = {
     list: null,
-    error: null,
+    errors: null,
     csvDownloadingError: null,
     adminSearch: null,
     isAdminUser: false,
@@ -382,7 +382,7 @@ FacilityListItems.defaultProps = {
 FacilityListItems.propTypes = {
     list: facilityListPropType,
     fetchingList: bool.isRequired,
-    error: arrayOf(string),
+    errors: arrayOf(string),
     fetchList: func.isRequired,
     fetchListItems: func.isRequired,
     clearListItems: func.isRequired,
@@ -436,7 +436,7 @@ const mapStateToProps = ({
     return {
         list,
         fetchingList,
-        error: listError || itemsError,
+        errors: listError || itemsError,
         downloadingCSV,
         csvDownloadingError,
         userHasSignedIn: !user.isAnon,

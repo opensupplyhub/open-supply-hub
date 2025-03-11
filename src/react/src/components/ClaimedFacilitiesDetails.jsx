@@ -95,7 +95,7 @@ function ClaimedFacilitiesDetails({
         params: { claimID },
     },
     fetching,
-    error,
+    errors,
     data,
     getDetails,
     clearDetails,
@@ -223,18 +223,18 @@ function ClaimedFacilitiesDetails({
             });
     };
 
-    const {
-        renderIfFetchStatus,
-        renderIfNotAuthStatus,
-        renderIfErrorsStatus,
-    } = checkComponentStatus;
+    const { LoadingIndicator, AuthNotice, ErrorsList } = checkComponentStatus;
+    if (fetching) {
+        return <LoadingIndicator title={TITLE} />;
+    }
 
-    const fetchStatus = renderIfFetchStatus(fetching, TITLE);
-    if (fetchStatus) return fetchStatus;
-    const nonAuthStatus = renderIfNotAuthStatus(userHasSignedIn, TITLE);
-    if (nonAuthStatus) return nonAuthStatus;
-    const errorsStatus = renderIfErrorsStatus(error, TITLE);
-    if (errorsStatus) return errorsStatus;
+    if (!userHasSignedIn) {
+        return <AuthNotice title={TITLE} />;
+    }
+
+    if (errors) {
+        return <ErrorsList title={TITLE} errors={errors} />;
+    }
 
     if (!data) {
         return null;
@@ -595,7 +595,7 @@ function ClaimedFacilitiesDetails({
 
 ClaimedFacilitiesDetails.defaultProps = {
     user: USER_DEFAULT_STATE,
-    error: null,
+    errors: null,
     data: null,
     errorUpdating: null,
     sectorOptions: null,
@@ -605,7 +605,7 @@ ClaimedFacilitiesDetails.defaultProps = {
 ClaimedFacilitiesDetails.propTypes = {
     user: userPropType,
     fetching: bool.isRequired,
-    error: arrayOf(string),
+    errors: arrayOf(string),
     data: approvedFacilityClaimPropType,
     getDetails: func.isRequired,
     clearDetails: func.isRequired,
@@ -657,7 +657,7 @@ function mapStateToProps({
         user,
         fetching: fetchingData || fetchingSectors || fetchingParentCompanies,
         data,
-        error,
+        errors: error || errorUpdating,
         updating,
         errorUpdating,
         sectorOptions,
