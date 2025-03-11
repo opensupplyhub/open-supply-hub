@@ -197,16 +197,22 @@ def handle_external_match_process_result(id, result, request, should_create):
         match for match in queryset_f_m
         if match.status == match_object_type.PENDING
     ]
-    for item in pending_matches:
-        # Potential Match
-        return get_potential_match_result(f_l_item,
-                                          item,
-                                          len(pending_matches),
-                                          context,
-                                          should_create,
-                                          result)
 
-    return result
+    result_matches = []
+    for item in pending_matches:
+        # Potential Matches
+        result_matches.append(
+            get_potential_match_result(
+                f_l_item,
+                item,
+                len(pending_matches),
+                context,
+                should_create,
+                result
+            )
+        )
+
+    return result_matches
 
 
 def get_error_match_result(id, result):
