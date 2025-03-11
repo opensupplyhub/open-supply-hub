@@ -321,7 +321,6 @@ export const authRegisterFormRoute = '/auth/register';
 export const authResetPasswordFormRoute = '/auth/resetpassword/:uid';
 export const authConfirmRegistrationRoute = '/auth/confirm/:uid';
 export const contributeRoute = '/contribute';
-export const contributeNewRoute = '/contribute-new'; // TODO: Remove this in scope of https://opensupplyhub.atlassian.net/browse/OSDEV-1607
 export const multipleLocationRoute = '/contribute/multiple-locations';
 export const listsRoute = '/lists';
 export const facilityListItemsRoute = '/lists/:listID';
