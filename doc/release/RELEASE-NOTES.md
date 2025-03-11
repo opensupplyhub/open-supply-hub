@@ -63,6 +63,7 @@ Also was added sanitization on the server side by using the `Django-Bleach` libr
 ### What's new
 * [OSDEV-1814](https://opensupplyhub.atlassian.net/browse/OSDEV-1814) - Added toggle switch button for production location info page to render additional data if necessary. If toggle switch button is inactive (default behavior), additional data won't be send to the server along with name, address and country.
 * [OSDEV-1782](https://opensupplyhub.atlassian.net/browse/OSDEV-1782) - Added a confirmation dialog window that appears when a user tries to reject a moderation event. The dialog includes a WYSIWYG text editor where entering a message of at least 30 characters is required to confirm the rejection. If a user does not enter the required number of characters, the 'Reject' button is disabled, and a tooltip with a clear message appears when the mouse hovers over it.
+* [OSDEV-1607](https://opensupplyhub.atlassian.net/browse/OSDEV-1607) - Enabled SLC flow.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
