@@ -521,13 +521,13 @@ def send_slc_contribution_approval_email(
         'mail/slc_contribution_approval_body.html'
     )
 
-    is_contributor_claim = FacilityClaim.objects.filter(
+    has_contributor_claimed = FacilityClaim.objects.filter(
         facility=facility_list_item.facility,
         status=FacilityClaimStatuses.PENDING,
         contributor=moderation_event.contributor
     ).exists()
 
-    is_anyone_claim = FacilityClaim.objects.filter(
+    has_anyone_claimed = FacilityClaim.objects.filter(
         facility=facility_list_item.facility,
         status__in=[
             FacilityClaimStatuses.APPROVED,
@@ -536,8 +536,8 @@ def send_slc_contribution_approval_email(
     ).exists()
 
     approval_dictionary = {
-        'is_contributor_claim': is_contributor_claim,
-        'is_anyone_claim': is_anyone_claim,
+        'has_contributor_claimed': has_contributor_claimed,
+        'has_anyone_claimed': has_anyone_claimed,
         'pl_claim_url': make_claim_url(
             request,
             facility_list_item.facility

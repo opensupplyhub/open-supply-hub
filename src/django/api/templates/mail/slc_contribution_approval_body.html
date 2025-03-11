@@ -26,7 +26,7 @@
           <li>Public link: {{ location_url }}</li>
         </ul>
       </li>
-      {% if not is_anyone_claim %}
+      {% if not has_anyone_claimed %}
       <li>
         <p>
           <b>Claim your production location</b> to take control of
@@ -42,7 +42,7 @@
         </p>
       </li>
     </ol>
-    {% if is_contributor_claim %}
+    {% if has_contributor_claimed %}
     <p>
       <b>We will now review the documents you submitted to <a href="https://info.opensupplyhub.org/resources/claim-a-facility">claim the location</a>
       and either approve or deny the claim.</b> Review of claims typically takes 7 - 10 business days.
