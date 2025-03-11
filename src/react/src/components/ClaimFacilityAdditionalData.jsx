@@ -29,13 +29,18 @@ import { fetchSectorOptions } from '../actions/filterOptions';
 
 import { sectorOptionsPropType } from '../util/propTypes';
 
-import { getValueFromEvent, isValidNumberOfWorkers } from '../util/util';
+import {
+    getValueFromEvent,
+    isValidNumberOfWorkers,
+    getNumberOfWorkersValidationError,
+} from '../util/util';
 
 import { claimAFacilitySupportDocsFormStyles } from '../util/styles';
 
 import { claimAFacilityAdditionalDataFormFields } from '../util/constants';
 
 import COLOURS from '../util/COLOURS';
+import InputErrorText from './Contribute/InputErrorText';
 
 const infoTitleStyle = Object.freeze({
     paddingBottom: '10px',
@@ -291,6 +296,15 @@ function ClaimFacilityAdditionalData({
                     placeholder={numberOfWorkersForm.placeholder}
                     onChange={updateNumberOfWorkers}
                     disabled={fetching}
+                    helperText={
+                        !isValidNumberOfWorkers(numberOfWorkers) && (
+                            <InputErrorText
+                                text={getNumberOfWorkersValidationError(
+                                    numberOfWorkers,
+                                )}
+                            />
+                        )
+                    }
                 />
             </div>
             <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>

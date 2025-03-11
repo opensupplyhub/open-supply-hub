@@ -28,6 +28,7 @@ import ShowOnly from './ShowOnly';
 import CreatableInputOnly from './CreatableInputOnly';
 
 import COLOURS from '../util/COLOURS';
+import InputErrorText from './Contribute/InputErrorText';
 
 import {
     fetchClaimedFacilityDetails,
@@ -81,6 +82,7 @@ import {
     makeClaimGeocoderURL,
     logErrorToRollbar,
     isValidNumberOfWorkers,
+    getNumberOfWorkersValidationError,
 } from '../util/util';
 
 import {
@@ -178,6 +180,8 @@ const InputSection = ({
     hasValidationErrorFn = stubFalse,
     aside = null,
     selectPlaceholder = 'Select...',
+    helperText = '',
+    formHelperTextProps = {},
 }) => {
     let SelectComponent = null;
 
@@ -277,6 +281,8 @@ const InputSection = ({
                 onChange={onChange}
                 disabled={disabled}
                 error={hasValidationErrorFn()}
+                helperText={helperText}
+                FormHelperTextProps={formHelperTextProps}
             />
         </div>
     );
@@ -530,6 +536,17 @@ function ClaimedFacilitiesDetails({
                     disabled={updating}
                     hasValidationErrorFn={() =>
                         !isValidNumberOfWorkers(data.facility_workers_count)
+                    }
+                    helperText={
+                        !isValidNumberOfWorkers(
+                            data.facility_workers_count,
+                        ) && (
+                            <InputErrorText
+                                text={getNumberOfWorkersValidationError(
+                                    data.facility_workers_count,
+                                )}
+                            />
+                        )
                     }
                 />
                 <InputSection
