@@ -61,6 +61,7 @@ Also was added sanitization on the server side by using the `Django-Bleach` libr
 * [OSDEV-1838](https://opensupplyhub.atlassian.net/browse/OSDEV-1838) - Fixed an issue where the router redirected to an unsupported page when the OS ID contained a forward slash. The fix was implemented by encoding the OS ID value using the `encodeURIComponent()` function before passing it as a URL parameter.
 * [OSDEV-1840](https://opensupplyhub.atlassian.net/browse/OSDEV-1840) - Fixed the snapshot status checking procedure. This will prevent a crash when trying to restore a database from an inaccessible snapshot.
 * [OSDEV-1831](https://opensupplyhub.atlassian.net/browse/OSDEV-1831) - Updated copies of tooltips on the “Thank you for adding data” pop-up. The texts vary depending on the claim status for a particular location.
+* [OSDEV-1827](https://opensupplyhub.atlassian.net/browse/OSDEV-1827) - Fixed the condition logic for the email template when approving a contribution to an existing production location that has either been claimed or has a pending claim request.
 
 ### What's new
 * [OSDEV-1814](https://opensupplyhub.atlassian.net/browse/OSDEV-1814) - Added toggle switch button for production location info page to render additional data if necessary. If toggle switch button is inactive (default behavior), additional data won't be send to the server along with name, address and country.
