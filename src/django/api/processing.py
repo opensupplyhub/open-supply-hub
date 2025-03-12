@@ -286,13 +286,16 @@ def get_potential_match_result(match_item, items_count, context,
         ).data
     facility_dict['confidence'] = match_item.confidence
 
-    if match_item.confidence < AUTOMATIC_THRESHOLD or items_count > 1:
-        if should_create:
-            facility_dict['confirm_match_url'] = reverse(
-                'facility-match-confirm',
-                kwargs={'pk': match_item.id})
-            facility_dict['reject_match_url'] = reverse(
-                'facility-match-reject',
-                kwargs={'pk': match_item.id})
+    if (
+        (match_item.confidence < AUTOMATIC_THRESHOLD or items_count > 1)
+        and
+        should_create
+    ):
+        facility_dict['confirm_match_url'] = reverse(
+            'facility-match-confirm',
+            kwargs={'pk': match_item.id})
+        facility_dict['reject_match_url'] = reverse(
+            'facility-match-reject',
+            kwargs={'pk': match_item.id})
 
     return facility_dict
