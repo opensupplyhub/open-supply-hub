@@ -26,8 +26,8 @@ import { getValueFromEvent } from '../util/util';
 
 import {
     claimAFacilitySupportDocsFormStyles,
-    yourContactInfoTitleStyle,
-    yourContactInfoDescStyle,
+    titleStyle,
+    boldFontStyle,
 } from '../util/styles';
 
 import { claimAFacilitySupportDocsFormFields } from '../util/constants';
@@ -62,11 +62,11 @@ const ClaimFacilitySupportDocs = ({
 }) => (
     <>
         <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
-            <Typography variant="title" style={yourContactInfoTitleStyle}>
+            <Typography variant="title" style={titleStyle}>
                 Your Contact Information
                 <RequiredAsterisk />
             </Typography>
-            <Typography variant="subheading" style={yourContactInfoDescStyle}>
+            <Typography variant="subheading" style={boldFontStyle}>
                 To confirm your affiliation with this production location, your
                 name and job title are required in addition to one of the
                 following: business website showing your name and title,
@@ -147,16 +147,16 @@ const ClaimFacilitySupportDocs = ({
             />
         </div>
         <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
-            <Typography variant="title" style={yourContactInfoTitleStyle}>
+            <Typography variant="title" style={titleStyle}>
                 Business Contact Information
                 <RequiredAsterisk />
             </Typography>
-            <Typography variant="subheading" style={yourContactInfoDescStyle}>
+            <Typography variant="subheading" style={boldFontStyle}>
                 To confirm the name and address of the production location, at
                 least one of the following documents is required: utility bill,
                 business website, registration document, or LinkedIn profile.
             </Typography>
-            <Typography variant="subheading" style={yourContactInfoDescStyle}>
+            <Typography variant="subheading" style={boldFontStyle}>
                 Please make sure to provide enough documentation to confirm the
                 production location’s name AND address.
             </Typography>

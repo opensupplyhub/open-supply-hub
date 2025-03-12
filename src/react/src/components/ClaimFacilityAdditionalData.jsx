@@ -21,8 +21,8 @@ import { getValueFromEvent, isValidNumberOfWorkers } from '../util/util';
 
 import {
     claimAFacilitySupportDocsFormStyles,
-    claimedFacilitiesDetailsStyles,
-    yourContactInfoTitleStyle,
+    commonClaimFacilityFormStyles,
+    titleStyle,
 } from '../util/styles';
 
 import { claimAFacilityAdditionalDataFormFields } from '../util/constants';
@@ -58,10 +58,7 @@ function ClaimFacilityAdditionalData({
         <>
             <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
                 <InputLabel htmlFor={sectorsForm.id}>
-                    <Typography
-                        variant="title"
-                        style={yourContactInfoTitleStyle}
-                    >
+                    <Typography variant="title" style={titleStyle}>
                         {sectorsForm.label}
                     </Typography>
                 </InputLabel>
@@ -76,16 +73,13 @@ function ClaimFacilityAdditionalData({
                     isMultiSelect
                     selectOptions={sectorOptions || []}
                     selectPlaceholder={sectorsForm.placeholder}
-                    classes={claimedFacilitiesDetailsStyles}
+                    classes={commonClaimFacilityFormStyles}
                     isClaimFacilityAdditionalDataPage
                 />
             </div>
             <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
                 <InputLabel htmlFor={numberOfWorkersForm.id}>
-                    <Typography
-                        variant="title"
-                        style={yourContactInfoTitleStyle}
-                    >
+                    <Typography variant="title" style={titleStyle}>
                         {numberOfWorkersForm.label}
                     </Typography>
                 </InputLabel>
@@ -105,10 +99,7 @@ function ClaimFacilityAdditionalData({
             </div>
             <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
                 <InputLabel htmlFor={localLanguageNameForm.id}>
-                    <Typography
-                        variant="title"
-                        style={yourContactInfoTitleStyle}
-                    >
+                    <Typography variant="title" style={titleStyle}>
                         {localLanguageNameForm.label}
                     </Typography>
                 </InputLabel>
