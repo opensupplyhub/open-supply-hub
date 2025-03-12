@@ -221,7 +221,7 @@ def handle_potential_matches(
     should_create,
     result
 ):
-    return [
+    matches = [
         get_potential_match_result(
             f_l_item,
             match,
@@ -232,6 +232,8 @@ def handle_potential_matches(
         )
         for match in pending_matches
     ]
+    result['matches'] = matches
+    return result
 
 
 def get_error_match_result(id, result):
