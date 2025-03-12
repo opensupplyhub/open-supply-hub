@@ -128,8 +128,12 @@ def geocode_facility_list_item(item):
 
 def handle_external_match_process_result(id, result, request, should_create):
     context = {'request': request}
-    list_item_object_type = FacilityListItem if should_create else FacilityListItemTemp
-    match_object_type = FacilityMatch if should_create else FacilityMatchTemp
+    list_item_object_type = (
+        FacilityListItem if should_create else FacilityListItemTemp
+    )
+    match_object_type = (
+        FacilityMatch if should_create else FacilityMatchTemp
+    )
 
     f_l_item = wait_for_match_processing(id, list_item_object_type)
 
@@ -142,7 +146,7 @@ def handle_external_match_process_result(id, result, request, should_create):
     # No Match and Geocoder Returned No Results
     if not matches.exists():
         return get_error_match_result(f_l_item.id, result)
-    
+
     return process_matches(f_l_item, matches, context, should_create, result)
 
 
@@ -163,36 +167,72 @@ def wait_for_match_processing(id, list_item_object_type, timeout=25):
 
 
 def process_matches(f_l_item, matches, context, should_create, result):
-    automatic_matches = [m for m in matches if m.status == FacilityMatch.AUTOMATIC]
+    automatic_matches = [
+        m for m in matches if m.status == FacilityMatch.AUTOMATIC
+    ]
     if len(automatic_matches) == 1:
-        return handle_new_facility_or_automatic_match(f_l_item, automatic_matches[0], context, result)
+        return handle_new_facility_or_automatic_match(
+            f_l_item, automatic_matches[0], context, result
+        )
 
     # Potential Matches
-    pending_matches = [m for m in matches if m.status == FacilityMatch.PENDING]
+    pending_matches = [
+        m for m in matches if m.status == FacilityMatch.PENDING
+    ]
     if pending_matches:
-        return handle_potential_matches(f_l_item, pending_matches, context, should_create, result)
+        return handle_potential_matches(
+            f_l_item, pending_matches, context, should_create, result
+        )
 
     return result
 
 
 def handle_new_facility_or_automatic_match(f_l_item, match, context, result):
-    facility_id = getattr(f_l_item, 'facility_id', None) or getattr(f_l_item, 'facility', None)
+    facility_id = (
+        getattr(f_l_item, 'facility_id', None)
+        or
+        getattr(f_l_item, 'facility', None)
+    )
 
     # New Facility
     if facility_id is None:
         return get_new_facility_match_result(f_l_item.id, None, result)
-    if hasattr(f_l_item, 'facility') and f_l_item.facility.created_from == f_l_item:
+    if (
+        hasattr(f_l_item, 'facility')
+        and
+        f_l_item.facility.created_from == f_l_item
+    ):
         return get_new_facility_match_result(f_l_item.id, facility_id, result)
 
     # Automatic Match
-    return get_automatic_match_result(f_l_item.id, facility_id, match.confidence, context, result)
+    return get_automatic_match_result(
+            f_l_item.id,
+            facility_id,
+            match.confidence,
+            context,
+            result
+        )
 
 
-def handle_potential_matches(f_l_item, pending_matches, context, should_create, result):
+def handle_potential_matches(
+    f_l_item,
+    pending_matches,
+    context,
+    should_create,
+    result
+):
     return [
-        get_potential_match_result(f_l_item, match, len(pending_matches), context, should_create, result)
+        get_potential_match_result(
+            f_l_item,
+            match,
+            len(pending_matches),
+            context,
+            should_create,
+            result
+        )
         for match in pending_matches
     ]
+
 
 def get_error_match_result(id, result):
     result['status'] = FacilityListItem.ERROR_MATCHING
