@@ -1578,22 +1578,6 @@ export const makeAddLocationStyles = theme =>
 
 export const commonClaimFacilityFormStyles = theme =>
     Object.freeze({
-        containerStylesWithPadding: Object.freeze({
-            display: 'flex',
-            width: '100%',
-            justifyContent: 'space-between',
-            marginBottom: '100px',
-            padding: '10px 0 10px',
-        }),
-        containerStyles: Object.freeze({
-            display: 'flex',
-            width: '100%',
-            justifyContent: 'space-between',
-            marginBottom: '100px',
-        }),
-        formStyles: Object.freeze({
-            width: '60%',
-        }),
         headingStyles: Object.freeze({
             padding: '10px 0',
             display: 'flex',
