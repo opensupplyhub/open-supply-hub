@@ -241,19 +241,31 @@ function ClaimedFacilitiesDetails({
     }
 
     const countryOptions = createCountrySelectOptions(data.countries);
+    const styles = Object.freeze({
+        containerStyles: Object.freeze({
+            display: 'flex',
+            width: '100%',
+            justifyContent: 'space-between',
+            marginBottom: '100px',
+        }),
+        controlStyles: Object.freeze({
+            padding: '10px 0',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        }),
+        errorStyle: Object.freeze({ color: 'red' }),
+        widthStyle: Object.freeze({ width: '60%' }),
+    });
 
     return (
         <AppOverflow>
-            <AppGrid title="">
-                <div
-                    style={
-                        commonClaimFacilityFormStyles.containerStylesWithPadding
-                    }
-                >
-                    <div style={commonClaimFacilityFormStyles.formStyles}>
+            <AppGrid title={TITLE}>
+                <div style={styles.containerStyles}>
+                    <div style={styles.widthStyle}>
                         <Typography
                             variant="title"
-                            style={commonClaimFacilityFormStyles.headingStyles}
+                            style={styles.controlStyles}
                         >
                             Facility Details
                         </Typography>
@@ -262,7 +274,6 @@ function ClaimedFacilitiesDetails({
                             value={data.facility_name_native_language}
                             onChange={updateFacilityNameNativeLanguage}
                             disabled={updating}
-                            classes={commonClaimFacilityFormStyles}
                         />
                         <InputSection
                             label="Sector"
@@ -273,7 +284,6 @@ function ClaimedFacilitiesDetails({
                             isMultiSelect
                             selectOptions={sectorOptions || []}
                             selectPlaceholder="Select..."
-                            classes={commonClaimFacilityFormStyles}
                         />
                         <InputSection
                             label="Phone Number"
@@ -285,7 +295,6 @@ function ClaimedFacilitiesDetails({
                                 data.facility_phone_number_publicly_visible
                             }
                             onSwitchChange={updateFacilityPhoneVisibility}
-                            classes={commonClaimFacilityFormStyles}
                         />
                         <InputSection
                             label="Website"
@@ -304,7 +313,6 @@ function ClaimedFacilitiesDetails({
                             hasSwitch
                             switchValue={data.facility_website_publicly_visible}
                             onSwitchChange={updateFacilityWebsiteVisibility}
-                            classes={commonClaimFacilityFormStyles}
                         />
                         <InputSection
                             label="Description"
@@ -312,7 +320,6 @@ function ClaimedFacilitiesDetails({
                             multiline
                             onChange={updateFacilityDescription}
                             disabled={updating}
-                            classes={commonClaimFacilityFormStyles}
                         />
                         <ShowOnly when={!isEmpty(parentCompanyOptions)}>
                             <InputSection
@@ -328,7 +335,6 @@ function ClaimedFacilitiesDetails({
                                 disabled={updating}
                                 isSelect
                                 selectOptions={parentCompanyOptions}
-                                classes={commonClaimFacilityFormStyles}
                             />
                         </ShowOnly>
                         <ShowOnly when={!parentCompanyOptions}>
@@ -348,14 +354,12 @@ function ClaimedFacilitiesDetails({
                             value={data.facility_minimum_order_quantity}
                             onChange={updateFacilityMinimumOrder}
                             disabled={updating}
-                            classes={commonClaimFacilityFormStyles}
                         />
                         <InputSection
                             label="Average lead time"
                             value={data.facility_average_lead_time}
                             onChange={updateFacilityAverageLeadTime}
                             disabled={updating}
-                            classes={commonClaimFacilityFormStyles}
                         />
                         <InputSection
                             label="Number of workers"
@@ -367,7 +371,6 @@ function ClaimedFacilitiesDetails({
                                     data.facility_workers_count,
                                 )
                             }
-                            classes={commonClaimFacilityFormStyles}
                         />
                         <InputSection
                             label="Percentage of female workers"
@@ -391,7 +394,6 @@ function ClaimedFacilitiesDetails({
                                     },
                                 );
                             }}
-                            classes={commonClaimFacilityFormStyles}
                         />
                         <InputSection
                             label="Affiliations"
@@ -403,7 +405,6 @@ function ClaimedFacilitiesDetails({
                             selectOptions={mapDjangoChoiceTuplesToSelectOptions(
                                 data.affiliation_choices,
                             )}
-                            classes={commonClaimFacilityFormStyles}
                         />
                         <InputSection
                             label="Certifications/Standards/Regulations"
@@ -415,7 +416,6 @@ function ClaimedFacilitiesDetails({
                             selectOptions={mapDjangoChoiceTuplesToSelectOptions(
                                 data.certification_choices,
                             )}
-                            classes={commonClaimFacilityFormStyles}
                         />
                         <InputSection
                             label="Facility / Processing Types"
@@ -427,7 +427,6 @@ function ClaimedFacilitiesDetails({
                             selectOptions={mapDjangoChoiceTuplesToSelectOptions(
                                 data.production_type_choices,
                             )}
-                            classes={commonClaimFacilityFormStyles}
                         />
                         <InputSection
                             label="Product Types"
@@ -438,15 +437,16 @@ function ClaimedFacilitiesDetails({
                             isMultiSelect
                             isCreatable
                             selectPlaceholder="e.g. Jackets - Use <Enter> or <Tab> to add multiple values"
-                            classes={commonClaimFacilityFormStyles}
                         />
                         <Typography
                             variant="title"
-                            style={commonClaimFacilityFormStyles.headingStyles}
+                            className={
+                                commonClaimFacilityFormStyles.headingStyles
+                            }
                         >
                             Point of contact{' '}
                             <span
-                                style={
+                                className={
                                     commonClaimFacilityFormStyles.switchSectionStyles
                                 }
                             >
@@ -465,7 +465,6 @@ function ClaimedFacilitiesDetails({
                             value={data.point_of_contact_person_name}
                             onChange={updateContactPerson}
                             disabled={updating}
-                            classes={commonClaimFacilityFormStyles}
                         />
                         <InputSection
                             label="Email"
@@ -479,15 +478,16 @@ function ClaimedFacilitiesDetails({
 
                                 return !isEmail(data.point_of_contact_email);
                             }}
-                            classes={commonClaimFacilityFormStyles}
                         />
                         <Typography
                             variant="headline"
-                            style={commonClaimFacilityFormStyles.headingStyles}
+                            className={
+                                commonClaimFacilityFormStyles.headingStyles
+                            }
                         >
                             Office information{' '}
                             <span
-                                style={
+                                className={
                                     commonClaimFacilityFormStyles.switchSectionStyles
                                 }
                             >
@@ -500,7 +500,9 @@ function ClaimedFacilitiesDetails({
                             </span>
                         </Typography>
                         <aside
-                            style={commonClaimFacilityFormStyles.asideStyles}
+                            className={
+                                commonClaimFacilityFormStyles.asideStyles
+                            }
                         >
                             If different from facility address
                         </aside>
@@ -509,14 +511,12 @@ function ClaimedFacilitiesDetails({
                             value={data.office_official_name}
                             onChange={updateOfficeName}
                             disabled={updating}
-                            classes={commonClaimFacilityFormStyles}
                         />
                         <InputSection
                             label="Address"
                             value={data.office_address}
                             onChange={updateOfficeAddress}
                             disabled={updating}
-                            classes={commonClaimFacilityFormStyles}
                         />
                         <InputSection
                             label="Country"
@@ -525,23 +525,21 @@ function ClaimedFacilitiesDetails({
                             disabled={updating}
                             isSelect
                             selectOptions={countryOptions || []}
-                            classes={commonClaimFacilityFormStyles}
                         />
                         <InputSection
                             label="Phone number"
                             value={data.office_phone_number}
                             onChange={updateOfficePhone}
                             disabled={updating}
-                            classes={commonClaimFacilityFormStyles}
                         />
                         {errorUpdating && (
                             <div
-                                style={
+                                className={
                                     commonClaimFacilityFormStyles.errorStyles
                                 }
                             >
                                 <Typography variant="body1">
-                                    <span style={{ color: 'red' }}>
+                                    <span style={styles.errorStyle}>
                                         The following errors prevented updating
                                         the facility claim:
                                     </span>
@@ -549,7 +547,7 @@ function ClaimedFacilitiesDetails({
                                 <ul>
                                     {errorUpdating.map(err => (
                                         <li key={err}>
-                                            <span style={{ color: 'red' }}>
+                                            <span style={styles.errorStyle}>
                                                 {err}
                                             </span>
                                         </li>
@@ -558,7 +556,9 @@ function ClaimedFacilitiesDetails({
                             </div>
                         )}
                         <div
-                            style={commonClaimFacilityFormStyles.controlStyles}
+                            className={
+                                commonClaimFacilityFormStyles.controlStyles
+                            }
                         >
                             <Button
                                 onClick={saveForm}

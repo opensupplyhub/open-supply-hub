@@ -1576,85 +1576,86 @@ export const makeAddLocationStyles = theme =>
         }),
     });
 
-export const commonClaimFacilityFormStyles = Object.freeze({
-    containerStylesWithPadding: Object.freeze({
-        display: 'flex',
-        width: '100%',
-        justifyContent: 'space-between',
-        marginBottom: '100px',
-        padding: '10px 0 10px',
-    }),
-    formStyles: Object.freeze({
-        width: '60%',
-    }),
-    headingStyles: Object.freeze({
-        padding: '10px 0',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        color: COLOURS.NEAR_BLACK,
-        fontSize: '2.125rem',
-        fontWeight: '400',
-        lineHeight: '1.20588em',
-    }),
-    inputSectionStylesWithPadding: Object.freeze({
-        display: 'flex',
-        flexDirection: 'column',
-        width: '50%',
-        padding: '10px 0 10px',
-    }),
-    containerStyles: Object.freeze({
-        display: 'flex',
-        width: '100%',
-        justifyContent: 'space-between',
-        marginBottom: '100px',
-    }),
-    inputSectionStyles: Object.freeze({
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '10px 0',
-    }),
-    inputSectionLabelStyles: Object.freeze({
-        fontSize: '18px',
-        fontWeight: '400',
-        padding: '10px 0',
-        color: '#000',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    }),
-    inputSectionFieldStyles: Object.freeze({
-        width: '100%',
-    }),
-    switchSectionStyles: Object.freeze({
-        fontSize: '15px',
-        fontWeight: '400',
-        display: 'flex',
-        alignItems: 'center',
-        color: COLOURS.DARK_GREY,
-    }),
-    controlStyles: Object.freeze({
-        width: '100%',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '10px 0',
-    }),
-    errorStyles: Object.freeze({
-        width: '100%',
-        padding: '10px 0',
-        color: 'red',
-    }),
-    asideStyles: Object.freeze({
-        padding: '5px 20px 20px 0',
-    }),
-});
+export const commonClaimFacilityFormStyles = theme =>
+    Object.freeze({
+        containerStylesWithPadding: Object.freeze({
+            display: 'flex',
+            width: '100%',
+            justifyContent: 'space-between',
+            marginBottom: '100px',
+            padding: '10px 0 10px',
+        }),
+        containerStyles: Object.freeze({
+            display: 'flex',
+            width: '100%',
+            justifyContent: 'space-between',
+            marginBottom: '100px',
+        }),
+        formStyles: Object.freeze({
+            width: '60%',
+        }),
+        headingStyles: Object.freeze({
+            padding: '10px 0',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            color: COLOURS.NEAR_BLACK,
+            fontSize: '2.125rem',
+            fontWeight: theme.typography.fontWeightRegular,
+            lineHeight: '1.20588em',
+        }),
+        inputSectionStylesWithPadding: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+            width: '50%',
+            padding: '10px 0 10px',
+        }),
+        inputSectionStyles: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '10px 0',
+        }),
+        inputSectionLabelStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightRegular,
+            padding: '10px 0',
+            color: '#000',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        }),
+        inputSectionFieldStyles: Object.freeze({
+            width: '100%',
+        }),
+        switchSectionStyles: Object.freeze({
+            fontSize: '15px',
+            fontWeight: theme.typography.fontWeightRegular,
+            display: 'flex',
+            alignItems: 'center',
+            color: COLOURS.DARK_GREY,
+        }),
+        controlStyles: Object.freeze({
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '10px 0',
+        }),
+        errorStyles: Object.freeze({
+            width: '100%',
+            padding: '10px 0',
+            color: 'red',
+        }),
+        asideStyles: Object.freeze({
+            padding: '5px 20px 20px 0',
+        }),
+    });
 
 export const titleStyle = Object.freeze({
     paddingBottom: '10px',
     color: COLOURS.NEAR_BLACK,
     fontSize: '2.125rem',
-    fontWeight: '400',
+    fontWeight: 'bold',
     lineHeight: '1.20588em',
 });
 

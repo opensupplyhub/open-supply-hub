@@ -21,7 +21,6 @@ import { getValueFromEvent, isValidNumberOfWorkers } from '../util/util';
 
 import {
     claimAFacilitySupportDocsFormStyles,
-    commonClaimFacilityFormStyles,
     titleStyle,
 } from '../util/styles';
 
@@ -73,7 +72,6 @@ function ClaimFacilityAdditionalData({
                     isMultiSelect
                     selectOptions={sectorOptions || []}
                     selectPlaceholder={sectorsForm.placeholder}
-                    classes={commonClaimFacilityFormStyles}
                     isClaimFacilityAdditionalDataPage
                 />
             </div>

@@ -9,6 +9,7 @@ import {
     object,
     array,
 } from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
 import TextField from '@material-ui/core/TextField';
 import InputLabel from '@material-ui/core/InputLabel';
 import find from 'lodash/find';
@@ -23,22 +24,44 @@ import Select from 'react-select';
 import Creatable from 'react-select/creatable';
 import CreatableInputOnly from './CreatableInputOnly';
 import ShowOnly from './ShowOnly';
-import { getSelectStyles } from '../util/util';
-
-const controlStyles = getSelectStyles();
+import { commonClaimFacilityFormStyles } from '../util/styles';
+import COLOURS from '../util/COLOURS';
 
 const selectStyles = Object.freeze({
     input: provided =>
         Object.freeze({
             ...provided,
             padding: '10px',
+            borderRadius: '4',
         }),
     menu: provided =>
         Object.freeze({
             ...provided,
             zIndex: '2',
         }),
-    ...controlStyles,
+    control: (provided, state) => {
+        let borderColor;
+        if (state.isFocused) {
+            borderColor = COLOURS.PURPLE;
+        } else {
+            borderColor = provided.borderColor;
+        }
+
+        const boxShadow = state.isFocused
+            ? `inset 0 0 0 1px ${borderColor}`
+            : provided.boxShadow;
+
+        return {
+            ...provided,
+            minHeight: '56px',
+            borderColor,
+            boxShadow,
+            transition: 'box-shadow 0.2s',
+            '&:hover': {
+                borderColor: !state.isFocused && 'black',
+            },
+        };
+    },
 });
 
 const InputSection = ({
@@ -64,7 +87,7 @@ const InputSection = ({
 
     const asideNode = (
         <ShowOnly when={!isNull(aside)}>
-            <aside style={classes.asideStyles}>{aside}</aside>
+            <aside className={classes.asideStyles}>{aside}</aside>
         </ShowOnly>
     );
 
@@ -102,7 +125,7 @@ const InputSection = ({
         }
 
         return isClaimFacilityAdditionalDataPage ? (
-            <div style={classes.inputSectionStylesWithPadding}>
+            <div className={classes.inputSectionStylesWithPadding}>
                 {asideNode}
                 <SelectComponent
                     onChange={onChange}
@@ -115,8 +138,8 @@ const InputSection = ({
                 />
             </div>
         ) : (
-            <div style={classes.inputSectionStyles}>
-                <InputLabel style={classes.inputSectionLabelStyles}>
+            <div className={classes.inputSectionStyles}>
+                <InputLabel className={classes.inputSectionLabelStyles}>
                     {label}
                 </InputLabel>
                 {asideNode}
@@ -134,11 +157,11 @@ const InputSection = ({
     }
 
     return (
-        <div style={classes.inputSectionStyles}>
-            <InputLabel style={classes.inputSectionLabelStyles}>
+        <div className={classes.inputSectionStyles}>
+            <InputLabel className={classes.inputSectionLabelStyles}>
                 {isClaimFacilityAdditionalDataPage ? null : label}
                 {hasSwitch ? (
-                    <span style={classes.switchSectionStyles}>
+                    <span className={classes.switchSectionStyles}>
                         <Switch
                             color="primary"
                             onChange={onSwitchChange}
@@ -152,7 +175,7 @@ const InputSection = ({
             {asideNode}
             <TextField
                 variant="outlined"
-                style={classes.inputSectionFieldStyles}
+                className={classes.inputSectionFieldStyles}
                 value={value}
                 multiline={multiline}
                 rows={6}
@@ -202,4 +225,4 @@ InputSection.propTypes = {
     classes: object.isRequired,
 };
 
-export default InputSection;
+export default withStyles(commonClaimFacilityFormStyles)(InputSection);
