@@ -82,6 +82,7 @@ const {
     parseContribData,
     isRequiredFieldValid,
     getSelectStyles,
+    getNumberOfWorkersValidationError,
 } = require('../util/util');
 
 const {
@@ -2192,7 +2193,7 @@ describe('getSelectStyles', () => {
         boxShadow: 'none',
         color: 'blue',
       };
-    
+
     const stateFocused = { isFocused: true };
     const stateNotFocused = { isFocused: false };
 
@@ -2208,36 +2209,56 @@ describe('getSelectStyles', () => {
         expect(controlStyles.borderColor).toBe(COLOURS.PURPLE);
         expect(controlStyles.boxShadow).toBe(`inset 0 0 0 1px ${COLOURS.PURPLE}`);
     });
-    
+
     it('applies RED border when error state is true', () => {
         const styles = getSelectStyles(true);
         const controlStyles = styles.control(provided, stateFocused);
         expect(controlStyles.borderColor).toBe(COLOURS.RED);
     });
-    
+
     it('applies correct placeholder style when error state is true', () => {
         const styles = getSelectStyles(true);
         const placeholderStyles = styles.placeholder(provided);
         expect(placeholderStyles.opacity).toBe(0.7);
         expect(placeholderStyles.color).toBe(COLOURS.RED);
     });
-    
+
     it('uses the provided color for placeholder when error state is false', () => {
         const styles = getSelectStyles();
         const placeholderStyles = styles.placeholder(provided);
         expect(placeholderStyles.opacity).toBe(0.7);
         expect(placeholderStyles.color).toBe(provided.color);
     });
-    
+
     it('sets hover borderColor to "black" when not focused and no error', () => {
         const styles = getSelectStyles();
         const controlStyles = styles.control(provided, stateNotFocused);
         expect(controlStyles['&:hover']).toEqual({ borderColor: 'black' });
     });
-    
+
     it('sets hover borderColor to false when error state is true', () => {
         const styles = getSelectStyles(true);
         const controlStyles = styles.control(provided, stateNotFocused);
         expect(controlStyles['&:hover']).toEqual({ borderColor: false });
     });
+
+    it('clear error messages for number of workers field', () => {
+        const expectedValueOfZeroText =
+        'The value of zero is not valid. Enter a positive whole number or a valid range (e.g., 1-5).';
+        const expectedLessThenOrEqualText =
+            'Invalid range. The minimum value must be less than or equal to the maximum value.';
+        const expectedInvalidEntryText = 'Invalid entry. The value cannot start from zero.';
+        const expectedInvalidFormatText =
+            'Invalid format. Enter a whole number or a valid numeric range (e.g., 1-5).';
+
+        expect(getNumberOfWorkersValidationError('0')).toBe(expectedValueOfZeroText);
+        expect(getNumberOfWorkersValidationError('0-3')).toBe(expectedValueOfZeroText);
+        expect(getNumberOfWorkersValidationError('1-0')).toBe(expectedValueOfZeroText);
+        expect(getNumberOfWorkersValidationError('500-300')).toBe(expectedLessThenOrEqualText);
+        expect(getNumberOfWorkersValidationError('010')).toBe(expectedInvalidEntryText);
+        expect(getNumberOfWorkersValidationError('1-')).toBe(expectedInvalidFormatText);
+        expect(getNumberOfWorkersValidationError('some text or &$*_')).toBe(expectedInvalidFormatText);
+        expect(getNumberOfWorkersValidationError('3.9')).toBe(expectedInvalidFormatText);
+    });
+
 });
