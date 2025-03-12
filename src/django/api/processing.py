@@ -223,16 +223,16 @@ def handle_potential_matches(
 ):
     matches = [
         get_potential_match_result(
-            f_l_item,
-            match,
+            match_item,
             len(pending_matches),
             context,
             should_create,
-            result
         )
-        for match in pending_matches
+        for match_item in pending_matches
     ]
     result['matches'] = matches
+    result['item_id'] = f_l_item.id
+    result['status'] = f_l_item.status
     return result
 
 
@@ -272,30 +272,27 @@ def get_automatic_match_result(list_item_id, facility_id, confidence, context,
     return result
 
 
-def get_potential_match_result(list_item, item, items_count, context,
-                               should_create, result):
+def get_potential_match_result(match_item, items_count, context,
+                               should_create):
     from api.serializers import FacilityIndexDetailsSerializer
 
     AUTOMATIC_THRESHOLD = 0.8
 
-    facility = Facility.objects.get(id=item.facility_id)
+    facility = Facility.objects.get(id=match_item.facility_id)
     facility_index = FacilityIndex.objects.get(id=facility.id)
     facility_dict = FacilityIndexDetailsSerializer(
         facility_index,
         context=context
         ).data
-    facility_dict['confidence'] = item.confidence
+    facility_dict['confidence'] = match_item.confidence
 
-    if item.confidence < AUTOMATIC_THRESHOLD or items_count > 1:
+    if match_item.confidence < AUTOMATIC_THRESHOLD or items_count > 1:
         if should_create:
             facility_dict['confirm_match_url'] = reverse(
                 'facility-match-confirm',
-                kwargs={'pk': item.id})
+                kwargs={'pk': match_item.id})
             facility_dict['reject_match_url'] = reverse(
                 'facility-match-reject',
-                kwargs={'pk': item.id})
-    result['matches'].append(facility_dict)
-    result['item_id'] = list_item.id
-    result['status'] = list_item.status
+                kwargs={'pk': match_item.id})
 
-    return result
+    return facility_dict
