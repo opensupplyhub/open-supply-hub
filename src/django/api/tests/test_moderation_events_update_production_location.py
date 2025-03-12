@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from django.contrib.gis.geos import Point
 from django.test import override_settings
+from django.core import mail
 
 from api.constants import APIV1CommonErrorMessages, APIV1MatchTypes
 from api.models.facility.facility import Facility
@@ -167,6 +168,8 @@ class ModerationEventsUpdateProductionLocationTest(
             content_type="application/json",
         )
 
+        email = mail.outbox[0]
+        self.assertEqual(email.subject, "Great News: your OS ID is ready!")
         self.assert_success_response(response, 200, 'MATCHED')
 
     def test_successful_add_production_location_without_geocode_result(self):

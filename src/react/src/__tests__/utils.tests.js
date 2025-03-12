@@ -77,6 +77,11 @@ const {
     createUserDropdownLinks,
     createUploadFormErrorMessages,
     updateStateFromData,
+    getLastPathParameter,
+    generateRangeField,
+    parseContribData,
+    isRequiredFieldValid,
+    getSelectStyles,
 } = require('../util/util');
 
 const {
@@ -95,6 +100,8 @@ const {
     CLAIM_A_FACILITY,
     componentsWithErrorMessage,
 } = require('../util/constants');
+
+const COLOURS = require('../util/COLOURS').default;
 
 it('gets correct error message component', () => {
     const correctListName = 'New & Test Name - Location, [Ltd].';
@@ -1871,4 +1878,366 @@ it('should not call setter when dataKey is null', () => {
     };
     updateStateFromData(sampleObject, 'null_key', mockSetter);
     expect(mockSetter).not.toHaveBeenCalled();
+});
+
+it('extracts the ID from a valid URL without a trailing slash', () => {
+    const url = '/contribute/single-location/search/id/BD202034606B9SA';
+    expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
+});
+
+it('extracts the ID from a valid URL with a trailing slash', () => {
+    const url = '/contribute/single-location/search/id/BD202034606B9SA/';
+    expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
+});
+
+it('returns id when the URL ends at "id/" with no ID', () => {
+    const url = '/contribute/single-location/search/id/';
+    expect(getLastPathParameter(url)).toBe('id');
+});
+
+it('returns the correct ID when the URL contains query parameters', () => {
+    const url = '/contribute/single-location/search/id/BD202034606B9SA?foo=bar';
+    expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
+});
+
+it('returns the correct ID when the URL has multiple segments after "id/"', () => {
+    const url = '/contribute/single-location/search/id/BD202034606B9SA/extra';
+    expect(getLastPathParameter(url)).toBe('extra');
+});
+
+it('returns the whole string if no slashes exist', () => {
+    const url = 'BD202034606B9SA';
+    expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
+});
+
+it('returns empty string for an empty string', () => {
+    const url = '';
+    expect(getLastPathParameter(url)).toBe('');
+});
+
+it('returns empty string for a URL that only contains slashes', () => {
+    const url = '///';
+    expect(getLastPathParameter(url)).toBe('');
+});
+
+it('should return { min: value, max: value } when value is a number', () => {
+    expect(generateRangeField(10)).toEqual({ min: 10, max: 10 });
+    expect(generateRangeField(0)).toEqual({ min: 0, max: 0 });
+    expect(generateRangeField(-5)).toEqual({ min: -5, max: -5 });
+});
+
+it('should return { min, max } when value is a valid range string', () => {
+    expect(generateRangeField('10-20')).toEqual({ min: 10, max: 20 });
+    expect(generateRangeField('0-100')).toEqual({ min: 0, max: 100 });
+    expect(generateRangeField('-5-5')).toEqual({ min: 0, max: 5 });
+});
+
+it('should return { min: value, max: value } when value is a single string (not a range)', () => {
+    expect(generateRangeField('15')).toEqual({ min: 15, max: 15 });
+    expect(generateRangeField('test')).toEqual({ min: NaN, max: NaN });
+});
+
+it('should return { min: value, max: value } when value is an empty string', () => {
+    expect(generateRangeField('')).toEqual({ min: 0, max: 0 });
+});
+
+it('should return { min, max } correctly when value has extra spaces', () => {
+    expect(generateRangeField(' 10 - 20 ')).toEqual({ min: 10, max: 20 });
+    expect(generateRangeField('  5 -   15')).toEqual({ min: 5, max: 15 });
+});
+
+it('should return { min: value, max: value } for non-string and non-number values', () => {
+    expect(generateRangeField(null)).toEqual({ min: 0, max: 0 });
+    expect(generateRangeField(undefined)).toEqual({ min: NaN, max: NaN });
+    expect(generateRangeField({})).toEqual({ min: NaN, max: NaN });
+    expect(generateRangeField([])).toEqual({ min: 0, max: 0 });
+});
+
+it('should return the base fields correctly', () => {
+    const input = {
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: { value: 'US' },
+    };
+
+    const expectedOutput = {
+        source: 'SLC',
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: 'US',
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+
+it('should process array fields and keep non-empty values', () => {
+    const input = {
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: { value: 'US' },
+        sector: ['Waste Management'],
+        parentCompany: 'ParentCompanySingle',
+        productType: ['Shirts', 'Pants'],
+    };
+
+    const expectedOutput = {
+        source: 'SLC',
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: 'US',
+        sector: ['Waste Management'],
+        parent_company: 'ParentCompanySingle',
+        product_type: ['Shirts', 'Pants'],
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+it('should handle an empty array by not including the field', () => {
+    const input = {
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: { value: 'US' },
+        sector: [],
+    };
+
+    const expectedOutput = {
+        source: 'SLC',
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: 'US',
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+it('should handle number_of_workers correctly', () => {
+    const input = {
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: { value: 'US' },
+        numberOfWorkers: '15',
+    };
+
+    const expectedOutput = {
+        source: 'SLC',
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: 'US',
+        number_of_workers: { min: 15, max: 15 },
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+it('should remove empty fields while keeping valid ones', () => {
+    const input = {
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: { value: 'US' },
+        sector: [],
+        parentCompany: null,
+        productType: undefined,
+        locationType: ['RCRAInfo subtitle C (Hazardous waste handlers)'],
+    };
+
+    const expectedOutput = {
+        source: 'SLC',
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: 'US',
+        location_type: ['RCRAInfo subtitle C (Hazardous waste handlers)'],
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+it('should return only the source field if all other values are empty', () => {
+    const input = {
+        name: '',
+        address: '',
+        country: null,
+        sector: [],
+        parentCompany: '',
+        productType: undefined,
+        locationType: null,
+        processingType: '',
+        numberOfWorkers: null,
+    };
+
+    const expectedOutput = {
+        source: 'SLC',
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+it('should convert incoming object with camelCase keys into snake_case to conform request payload format', () => {
+    const input = {
+        name: 'AJAX AUTO DISMANTLERS INC',
+        address: '2895 3RD, SAN FRANCISCO, CA, 94107-0000',
+        country: {
+            value: 'US',
+            label: 'United States'
+        },
+        sector: [
+            {
+                value: 'Waste Management',
+                label: 'Waste Management'
+            },
+            {
+                value: 'Recycling',
+                label: 'Recycling'
+            }
+        ],
+        productType: [
+            {
+                label: 'Bottles',
+                value: 'Bottles'
+            },
+            {
+                label: 'Pockets',
+                value: 'Pockets'
+            },
+            {
+                label: 'Domestic goods',
+                value: 'Domestic goods'
+            }
+        ],
+        locationType: [
+            {
+                value: 'Warehousing / Distribution',
+                label: 'Warehousing / Distribution'
+            },
+            {
+                value: 'Final Product Assembly',
+                label: 'Final Product Assembly'
+            },
+            {
+                value: 'Office / HQ',
+                label: 'Office / HQ'
+            }
+        ],
+        processingType: [
+            {
+                value: 'Assembly',
+                label: 'Assembly'
+            },
+            {
+                value: 'Cut & Sew',
+                label: 'Cut & Sew'
+            },
+            {
+                value: 'Warehousing / Distribution',
+                label: 'Warehousing / Distribution'
+            }
+        ],
+        numberOfWorkers: "20-35",
+        parentCompany: "Ajax Parent Ltd."
+    };
+
+    const expectedOutput = {
+        name: 'AJAX AUTO DISMANTLERS INC',
+        address: '2895 3RD, SAN FRANCISCO, CA, 94107-0000',
+        sector: [
+            'Waste Management',
+            'Recycling'
+        ],
+        product_type: [
+            'Bottles',
+            'Pockets',
+            'Domestic goods'
+        ],
+        location_type: [
+            'Warehousing / Distribution',
+            'Final Product Assembly',
+            'Office / HQ'
+        ],
+        processing_type: [
+            'Assembly',
+            'Cut & Sew',
+            'Warehousing / Distribution'
+        ],
+        parent_company: 'Ajax Parent Ltd.',
+        number_of_workers: {
+            "min": 20,
+            "max": 35
+        },
+        country: 'US',
+        source: 'SLC'
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+describe('isRequiredFieldValid', () => {
+    it('should return true if the field has a value', () => {
+        expect(isRequiredFieldValid('test')).toBe(true);
+        expect(isRequiredFieldValid('  test  ')).toBe(true);
+        expect(isRequiredFieldValid('test test')).toBe(true);
+    });
+
+    it('should return false if the field has no value', () => {
+        expect(isRequiredFieldValid('')).toBe(false);
+        expect(isRequiredFieldValid('     ')).toBe(false);
+        expect(isRequiredFieldValid(null)).toBe(false);
+        expect(isRequiredFieldValid(undefined)).toBe(false);
+    });
+});
+
+describe('getSelectStyles', () => {
+    const provided = {
+        borderColor: 'grey',
+        boxShadow: 'none',
+        color: 'blue',
+      };
+    
+    const stateFocused = { isFocused: true };
+    const stateNotFocused = { isFocused: false };
+
+    it('returns an object with control and placeholder functions', () => {
+        const styles = getSelectStyles();
+        expect(typeof styles.control).toBe('function');
+        expect(typeof styles.placeholder).toBe('function');
+    });
+
+    it('applies PURPLE border and inset box shadow when focused and no error', () => {
+        const styles = getSelectStyles();
+        const controlStyles = styles.control(provided, stateFocused);
+        expect(controlStyles.borderColor).toBe(COLOURS.PURPLE);
+        expect(controlStyles.boxShadow).toBe(`inset 0 0 0 1px ${COLOURS.PURPLE}`);
+    });
+    
+    it('applies RED border when error state is true', () => {
+        const styles = getSelectStyles(true);
+        const controlStyles = styles.control(provided, stateFocused);
+        expect(controlStyles.borderColor).toBe(COLOURS.RED);
+    });
+    
+    it('applies correct placeholder style when error state is true', () => {
+        const styles = getSelectStyles(true);
+        const placeholderStyles = styles.placeholder(provided);
+        expect(placeholderStyles.opacity).toBe(0.7);
+        expect(placeholderStyles.color).toBe(COLOURS.RED);
+    });
+    
+    it('uses the provided color for placeholder when error state is false', () => {
+        const styles = getSelectStyles();
+        const placeholderStyles = styles.placeholder(provided);
+        expect(placeholderStyles.opacity).toBe(0.7);
+        expect(placeholderStyles.color).toBe(provided.color);
+    });
+    
+    it('sets hover borderColor to "black" when not focused and no error', () => {
+        const styles = getSelectStyles();
+        const controlStyles = styles.control(provided, stateNotFocused);
+        expect(controlStyles['&:hover']).toEqual({ borderColor: 'black' });
+    });
+    
+    it('sets hover borderColor to false when error state is true', () => {
+        const styles = getSelectStyles(true);
+        const controlStyles = styles.control(provided, stateNotFocused);
+        expect(controlStyles['&:hover']).toEqual({ borderColor: false });
+    });
 });

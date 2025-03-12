@@ -10,10 +10,10 @@ import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
 import AppGrid from './AppGrid';
+import RequireAuthNotice from './RequireAuthNotice';
 
 import { openInNewTab } from '../util/util';
 import {
-    authLoginFormRoute,
     InfoLink,
     InfoPaths,
     contributeProductionLocationRoute,
@@ -30,9 +30,10 @@ import SliceMessyFigure from './SliceMessyFigure';
 import SliceMessyDuoFigure from './SliceMessyDuoFigure';
 
 function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
+    const TITLE = 'Contribute';
     if (fetchingSessionSignIn) {
         return (
-            <AppGrid title="Contribute">
+            <AppGrid title={TITLE}>
                 <Grid container className="margin-bottom-64">
                     <Grid item xs={12}>
                         <CircularProgress />
@@ -43,17 +44,7 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
     }
 
     if (!userHasSignedIn) {
-        return (
-            <AppGrid title="Contribute">
-                <Grid container className="margin-bottom-64">
-                    <Grid item xs={12}>
-                        <Link to={authLoginFormRoute} href={authLoginFormRoute}>
-                            Log in to contribute to Open Supply Hub
-                        </Link>
-                    </Grid>
-                </Grid>
-            </AppGrid>
-        );
+        return <RequireAuthNotice title={TITLE} />;
     }
 
     return (
@@ -77,9 +68,9 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                             className={classes.cardTitle}
                         >
                             Upload a dataset with multiple production locations
-                            using a{' '}
+                            using{' '}
                             <span className={classes.highlight}>
-                                spreadsheet.
+                                a spreadsheet.
                             </span>
                         </Typography>
                         <Typography
@@ -163,7 +154,6 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                             component={Link}
                             className={classes.buttonStyle}
                             to={contributeProductionLocationRoute}
-                            disabled
                         >
                             Add a Single Location
                         </Button>

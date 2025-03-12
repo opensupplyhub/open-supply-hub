@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useHistory, useParams, useLocation } from 'react-router-dom';
 import { connect } from 'react-redux';
 import isEmpty from 'lodash/isEmpty';
 import { object, bool, func } from 'prop-types';
@@ -8,12 +8,15 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 
+import RequireAuthNotice from '../RequireAuthNotice';
+
 import {
     fetchProductionLocationByOsId,
     resetSingleProductionLocation,
 } from '../../actions/contributeProductionLocation';
 import { contributeProductionLocationRoute } from '../../util/constants';
 import { makeSearchByOsIdResultStyles } from '../../util/styles';
+import { useResetScrollPosition } from '../../util/hooks';
 import { productionLocationPropType } from '../../util/propTypes';
 
 import BackToSearchButton from './BackToSearchButton';
@@ -26,9 +29,15 @@ const SearchByOsIdResult = ({
     fetchProductionLocation,
     clearProductionLocation,
     classes,
+    userHasSignedIn,
+    fetchingSessionSignIn,
 }) => {
+    const TITLE = 'Production Location Search';
     const history = useHistory();
+    const location = useLocation();
     const { osID } = useParams();
+
+    useResetScrollPosition(location);
 
     useEffect(() => {
         if (osID) {
@@ -48,12 +57,16 @@ const SearchByOsIdResult = ({
         history.push(`${contributeProductionLocationRoute}?tab=os-id`);
     };
 
-    if (fetching) {
+    if (fetching || fetchingSessionSignIn) {
         return (
             <div className={classes.circularProgressContainerStyles}>
                 <CircularProgress />
             </div>
         );
+    }
+
+    if (!userHasSignedIn) {
+        return <RequireAuthNotice title={TITLE} />;
     }
 
     return (
@@ -63,7 +76,7 @@ const SearchByOsIdResult = ({
                 handleBackToSearch={handleBackToSearchByOsId}
             />
             <Typography component="h1" className={classes.mainTitleStyles}>
-                Production Location Search
+                {TITLE}
             </Typography>
 
             <Paper className={classes.resultContainerStyles}>
@@ -93,15 +106,23 @@ SearchByOsIdResult.propTypes = {
     fetchProductionLocation: func.isRequired,
     clearProductionLocation: func.isRequired,
     classes: object.isRequired,
+    userHasSignedIn: bool.isRequired,
+    fetchingSessionSignIn: bool.isRequired,
 };
 
 const mapStateToProps = ({
     contributeProductionLocation: {
         singleProductionLocation: { data, fetching },
     },
+    auth: {
+        user: { user },
+        session: { fetching: fetchingSessionSignIn },
+    },
 }) => ({
     data,
     fetching,
+    userHasSignedIn: !user.isAnon,
+    fetchingSessionSignIn,
 });
 
 const mapDispatchToProps = dispatch => ({

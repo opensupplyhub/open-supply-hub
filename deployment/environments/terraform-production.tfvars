@@ -20,8 +20,6 @@ rds_database_identifier = "opensupplyhub-enc-prd"
 rds_database_name = "opensupplyhub"
 rds_multi_az = false
 rds_storage_encrypted = true
-rds_allow_major_version_upgrade = true
-rds_apply_immediately = true
 
 app_ecs_desired_count = "10"
 app_ecs_deployment_min_percent = "100"
@@ -53,7 +51,7 @@ dedupe_hub_name = "deduplicate"
 dedupe_hub_version = 1
 app_cc_ecs_desired_count = 0
 app_dd_fargate_cpu = 4096
-app_dd_fargate_memory = 12288
+app_dd_fargate_memory = 16384
 app_dd_ecs_desired_count = 1
 django_log_level="DEBUG"
 

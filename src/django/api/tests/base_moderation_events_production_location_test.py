@@ -100,7 +100,7 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
                 },
             },
             status='PENDING',
-            source='API',
+            source='SLC',
             contributor=self.contributor,
         )
 
@@ -166,6 +166,10 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
         self.assertIsNotNone(moderation_event.status_change_date)
         self.assertEqual(moderation_event.os_id, response.data["os_id"])
         self.assertEqual(moderation_event.action_type, action_type)
+        self.assertEqual(
+            moderation_event.action_perform_by.id,
+            self.superuser.id
+        )
 
     def assert_source_creation(self, source):
         self.assertIsNotNone(source)

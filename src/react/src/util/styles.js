@@ -1,4 +1,4 @@
-import { OARColor } from './constants';
+import { OARColor, HEADER_HEIGHT } from './constants';
 import COLOURS from './COLOURS';
 import { multiValueBackgroundHandler } from './util';
 
@@ -411,7 +411,7 @@ export const makeSearchByOsIdResultStyles = theme =>
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            height: 'calc(100vh - 116px)',
+            height: `calc(100vh - ${HEADER_HEIGHT}px)`,
         }),
         mainContainerStyles: Object.freeze({
             backgroundColor: theme.palette.background.grey,
@@ -648,6 +648,9 @@ export const makeProductionLocationDialogStyles = theme =>
         claimButton: Object.freeze({
             backgroundColor: COLOURS.NAVIGATION,
             borderRadius: 0,
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
         }),
         claimButton_disabled: Object.freeze({
             paddingTop: '6px',
@@ -987,14 +990,13 @@ export const makeSearchByNameAddressTabStyles = theme =>
             fontSize: '36px',
             fontWeight: theme.typography.fontWeightSemiBoldPlus,
         }),
-        subTitleStyles: Object.freeze({
+        formFieldTitleStyles: Object.freeze({
             fontSize: '21px',
             fontWeight: theme.typography.fontWeightSemiBold,
-            margin: '8px 0 8px 0',
+            margin: '24px 0 8px 0',
         }),
         textInputStyles: Object.freeze({
             maxWidth: '528px',
-            marginBottom: '21px',
         }),
         selectStyles: Object.freeze({
             fontSize: '18px',
@@ -1014,10 +1016,16 @@ export const makeSearchByNameAddressTabStyles = theme =>
         notchedOutlineStyles: Object.freeze({
             borderRadius: 0,
         }),
+        helperTextStyles: Object.freeze({
+            margin: '8px 0 0 0',
+        }),
         buttonLabel: Object.freeze({
             fontSize: '18px',
             lineHeight: '20px',
             fontWeight: theme.typography.fontWeightExtraBold,
+        }),
+        errorWrapStyles: Object.freeze({
+            marginTop: '8px',
         }),
         searchButtonStyles: Object.freeze({
             width: '200px',
@@ -1025,7 +1033,7 @@ export const makeSearchByNameAddressTabStyles = theme =>
             borderRadius: 0,
             textTransform: 'none',
             backgroundColor: theme.palette.action.main,
-            marginTop: '26px',
+            marginTop: '24px',
             color: theme.palette.common.black,
             '&:hover': {
                 backgroundColor: theme.palette.action.dark,
@@ -1039,7 +1047,7 @@ export const makeSearchByNameAndAddressResultStyles = () =>
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            height: 'calc(100vh - 116px)',
+            height: `calc(100vh - ${HEADER_HEIGHT}px)`,
         }),
         backToSearchButtonContainerStyles: Object.freeze({
             padding: '48px 5% 0 5%',
@@ -1243,6 +1251,9 @@ export const makeProductionLocationDetailsStyles = theme => ({
         marginTop: '8px',
     }),
     locationHistoricalOsIdStyles: Object.freeze({
+        display: 'flex',
+        alignItems: 'center',
+        gap: '5px',
         fontSize: '14px',
         lineHeight: '20px',
         fontWeight: theme.typography.fontWeightBold,
@@ -1275,14 +1286,14 @@ export const productionLocationInfoStyles = theme =>
             width: '100%',
             alignItems: 'center',
         }),
-        marginRight: Object.freeze({
-            marginRight: '20px',
-        }),
         buttonsContainerStyles: Object.freeze({
             display: 'flex',
             flexDirection: 'row',
             width: '100%',
             justifyContent: 'center',
+        }),
+        switchButton: Object.freeze({
+            marginTop: '10px',
         }),
         selectStyles: Object.freeze({
             maxWidth: '528px',
@@ -1313,6 +1324,9 @@ export const productionLocationInfoStyles = theme =>
             padding: '0 110px',
             borderRadius: '0',
             boxShadow: 'none',
+        }),
+        errorWrapStyles: Object.freeze({
+            marginTop: '8px',
         }),
         mainContainerStyles: Object.freeze({
             background: theme.palette.background.grey,
@@ -1364,6 +1378,12 @@ export const productionLocationInfoStyles = theme =>
         notchedOutlineStyles: Object.freeze({
             borderRadius: '0',
         }),
+        circularProgressStyles: Object.freeze({
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: `calc(100vh - ${HEADER_HEIGHT}px)`,
+        }),
     });
 
 export const inputErrorText = theme =>
@@ -1371,6 +1391,7 @@ export const inputErrorText = theme =>
         errorTextWrapStyles: Object.freeze({
             display: 'flex',
             alignItems: 'center',
+            color: COLOURS.RED,
         }),
         iconInfoStyles: Object.freeze({
             fontSize: '16px',
@@ -1378,7 +1399,7 @@ export const inputErrorText = theme =>
             marginRight: '5px',
         }),
         inputErrorTextStyles: Object.freeze({
-            fontSize: '16px',
+            fontSize: '14px',
             fontWeight: theme.typography.fontWeightSemiBold,
             color: COLOURS.RED,
         }),
@@ -1406,17 +1427,16 @@ export const makeAddLocationStyles = theme =>
         title: Object.freeze({
             paddingLeft: '5%',
             paddingRight: '5%',
-            paddingTop: '25px',
+            paddingTop: '48px',
             color: COLOURS.NEAR_BLACK,
-            fontWeight: 'bold',
-            marginBottom: '1rem',
+            fontWeight: theme.typography.fontWeightExtraBold,
         }),
         description: Object.freeze({
             paddingLeft: '5%',
             paddingRight: '5%',
-            paddingTop: '5px',
-            marginBottom: '2rem',
-            fontWeight: 'bold',
+            paddingTop: '24px',
+            marginBottom: '32px',
+            fontWeight: theme.typography.fontWeightSemiBold,
         }),
         dataOptions: Object.freeze({
             display: 'flex',
@@ -1424,9 +1444,8 @@ export const makeAddLocationStyles = theme =>
             paddingRight: '5%',
             gap: '50px',
             paddingBottom: '5%',
-            flexWrap: 'wrap',
             flexDirection: 'row',
-            [theme.breakpoints.down('md')]: {
+            [theme.breakpoints.down('sm')]: {
                 flexDirection: 'column',
                 display: 'center',
             },
@@ -1435,7 +1454,7 @@ export const makeAddLocationStyles = theme =>
             backgroundColor: COLOURS.WHITE,
             boxShadow: 'none',
             padding: '60px 25px 25px 25px',
-            width: '45%',
+            width: '50%',
             position: 'relative',
             textAlign: 'center',
             display: 'flex',
@@ -1443,6 +1462,9 @@ export const makeAddLocationStyles = theme =>
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
+            [theme.breakpoints.down('sm')]: {
+                width: 'auto',
+            },
         }),
         cardTitle: Object.freeze({
             fontSize: '32px',
@@ -1451,7 +1473,7 @@ export const makeAddLocationStyles = theme =>
             textAlign: 'center',
             paddingTop: '15px',
             paddingBottom: '15px',
-            fontWeight: '300',
+            fontWeight: theme.typography.fontWeightRegular,
             lineHeight: '1.0',
         }),
         cardSub: Object.freeze({
@@ -1551,5 +1573,32 @@ export const makeAddLocationStyles = theme =>
                 right: '0px',
                 top: '20px',
             },
+        }),
+    });
+
+export const makeRejectModerationEventDialogStyles = () =>
+    Object.freeze({
+        dialogPaperStyles: Object.freeze({
+            overflowX: 'hidden',
+        }),
+        editorContainerStyles: Object.freeze({
+            border: `1px solid ${COLOURS.GREY}`,
+            borderRadius: '5px',
+            minHeight: '320px',
+            marginTop: '10px',
+            padding: '5px',
+        }),
+        editorStyles: Object.freeze({
+            padding: '5px',
+            maxHeight: '230px',
+            minHeight: '230px',
+        }),
+        dialogActionsStyles: Object.freeze({
+            display: 'flex',
+            justifyContent: 'space-evenly',
+            paddingBottom: '10px',
+        }),
+        buttonBaseStyles: Object.freeze({
+            width: '150px',
         }),
     });

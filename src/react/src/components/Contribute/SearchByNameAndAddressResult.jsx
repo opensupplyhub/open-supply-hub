@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { withStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
+
 import {
     fetchProductionLocations,
     resetProductionLocations,
@@ -11,6 +12,7 @@ import {
 import BackToSearchButton from './BackToSearchButton';
 import SearchByNameAndAddressNotFoundResult from './SearchByNameAndAddressNotFoundResult';
 import SearchByNameAndAddressSuccessResult from './SearchByNameAndAddressSuccessResult';
+import RequireAuthNotice from '../RequireAuthNotice';
 import {
     contributeProductionLocationRoute,
     MAX_LOCATIONS_TO_SHOW,
@@ -18,6 +20,7 @@ import {
 import history from '../../util/history';
 import { productionLocationPropType } from '../../util/propTypes';
 import { makeSearchByNameAndAddressResultStyles } from '../../util/styles';
+import { useResetScrollPosition } from '../../util/hooks';
 
 const SearchByNameAndAddressResult = ({
     data: productionLocations,
@@ -25,8 +28,13 @@ const SearchByNameAndAddressResult = ({
     fetchLocations,
     clearLocations,
     classes,
+    userHasSignedIn,
+    fetchingSessionSignIn,
 }) => {
+    const TITLE = 'Production Location Search';
     const location = useLocation();
+
+    useResetScrollPosition(location);
 
     useEffect(() => {
         const searchParams = new URLSearchParams(location.search);
@@ -41,13 +49,17 @@ const SearchByNameAndAddressResult = ({
         history.push(`${contributeProductionLocationRoute}?tab=name-address`);
     };
 
-    if (fetching) {
+    if (fetching || fetchingSessionSignIn) {
         return (
             <div className={classes.circularProgressContainerStyles}>
                 <CircularProgress />
             </div>
         );
     }
+    if (!userHasSignedIn) {
+        return <RequireAuthNotice title={TITLE} />;
+    }
+
     return (
         <>
             <div className={classes.backToSearchButtonContainerStyles}>
@@ -74,15 +86,23 @@ SearchByNameAndAddressResult.propTypes = {
     fetchLocations: func.isRequired,
     clearLocations: func.isRequired,
     classes: object.isRequired,
+    userHasSignedIn: bool.isRequired,
+    fetchingSessionSignIn: bool.isRequired,
 };
 
 const mapStateToProps = ({
+    auth: {
+        user: { user },
+        session: { fetching: fetchingSessionSignIn },
+    },
     contributeProductionLocation: {
         productionLocations: { data, fetching },
     },
 }) => ({
     data,
     fetching,
+    userHasSignedIn: !user.isAnon,
+    fetchingSessionSignIn,
 });
 const mapDispatchToProps = dispatch => ({
     fetchLocations: data => dispatch(fetchProductionLocations(data)),

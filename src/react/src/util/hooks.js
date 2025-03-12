@@ -374,3 +374,9 @@ export const useFileUploadHandler = ({
 
     return { fileInput };
 };
+
+export const useResetScrollPosition = location => {
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [location]);
+};

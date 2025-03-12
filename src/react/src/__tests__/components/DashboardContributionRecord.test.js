@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, useHistory } from 'react-router-dom';
-import { waitFor } from '@testing-library/react';
+import { waitFor, fireEvent } from '@testing-library/react';
 import DashboardContributionRecord from '../../components/Dashboard/DashboardContributionRecord';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import {
@@ -30,6 +30,19 @@ jest.mock('../../actions/dashboardContributionRecord', () => {
     fetchPotentialMatches: jest.fn(),
   };
 });
+
+jest.mock('../../components/Dashboard/RejectModerationEventDialog', () => ({
+  __esModule: true,
+  default: ({ isOpenDialog, closeDialog }) => (
+    <div>
+      {isOpenDialog && (
+        <button type="button" onClick={closeDialog}>
+          Close Dialog
+        </button>
+      )}
+    </div>
+  ),
+}));
 
 const mockHistoryPush = jest.fn();
 
@@ -277,11 +290,32 @@ describe('DashboardContributionRecord component', () => {
         },
       ],
     };
-  
+
     const { reduxStore } = renderComponent();
     reduxStore.dispatch(completeFetchPotentialMatches(matches));
 
     const res = reduxStore.getState().dashboardContributionRecord.potentialMatches.matches
     expect(res.length).toBe(3);
+  });
+
+  test('opens the RejectModerationEventDialog when the Reject Contribution button is clicked', () => {
+    const { getByRole } = renderComponent();
+
+    const rejectButton = getByRole('button', { name: /Reject Contribution/i });
+    fireEvent.click(rejectButton);
+
+    expect(getByRole('button', { name: /Close Dialog/i })).toBeInTheDocument();
+  });
+
+  test('closes the RejectModerationEventDialog when the close button is clicked', () => {
+    const { getByRole, queryByText } = renderComponent();
+
+    const rejectButton = getByRole('button', { name: /Reject Contribution/i });
+    fireEvent.click(rejectButton);
+
+    const closeButton = getByRole('button', { name: /Close Dialog/i });
+    fireEvent.click(closeButton);
+
+    expect(queryByText('Close Dialog')).not.toBeInTheDocument();
   });
 });

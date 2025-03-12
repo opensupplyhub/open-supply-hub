@@ -1,8 +1,10 @@
 import uuid
 from django.db import models
+from django_bleach.models import BleachField
 from api.models.contributor.contributor import Contributor
 from api.models.facility.facility import Facility
 from api.models.facility.facility_claim import FacilityClaim
+from api.models.user import User
 
 
 class ModerationEvent(models.Model):
@@ -126,6 +128,15 @@ class ModerationEvent(models.Model):
         help_text='Type of moderation action.'
     )
 
+    action_perform_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='moderation_event_action_perform_by',
+        help_text='Linked user id who performed the action.'
+    )
+
     source = models.CharField(
         max_length=3,
         choices=Source.choices,
@@ -135,6 +146,16 @@ class ModerationEvent(models.Model):
             'Source type of production location.'
             ' If request_type is CLAIM, no source type.'
         )
+    )
+
+    action_reason_text_cleaned = models.TextField(
+        blank=True,
+        help_text='Cleaned version of the action reason text.'
+    )
+
+    action_reason_text_raw = BleachField(
+        blank=True,
+        help_text='Raw version of the action reason text.'
     )
 
     def __str__(self):

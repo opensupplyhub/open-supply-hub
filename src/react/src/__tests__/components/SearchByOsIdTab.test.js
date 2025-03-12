@@ -64,7 +64,58 @@ describe('SearchByOsIdTab component', () => {
         fireEvent.click(getByRole('button', { name: /Search by ID/i }));
 
         expect(history.location.pathname).toBe(
-            '/contribute/production-location/search/id/CN2021250D1DTN7'
+            '/contribute/single-location/search/id/CN2021250D1DTN7'
+        );
+    });
+
+    it('should replace special characters in the URL with their encoded values', () => {
+        const { getByPlaceholderText, getByRole } = renderWithProviders(
+            <Router history={history}>
+                <SearchByOsIdTab />
+            </Router>
+        );
+        const input = getByPlaceholderText('Enter the OS ID');
+
+        fireEvent.change(input, { target: { value: 'CN2021250D1D/TN' } });
+        fireEvent.click(getByRole('button', { name: /Search by ID/i }));
+
+        expect(history.location.pathname).toBe(
+            '/contribute/single-location/search/id/CN2021250D1D%2FTN'
+        );
+
+        fireEvent.change(input, { target: { value: 'CN2021250D1D?TN' } });
+        fireEvent.click(getByRole('button', { name: /Search by ID/i }));
+
+        expect(history.location.pathname).toBe(
+            '/contribute/single-location/search/id/CN2021250D1D%3FTN'
+        );
+
+        fireEvent.change(input, { target: { value: 'CN2021250D1D#TN' } });
+        fireEvent.click(getByRole('button', { name: /Search by ID/i }));
+
+        expect(history.location.pathname).toBe(
+            '/contribute/single-location/search/id/CN2021250D1D%23TN'
+        );
+
+        fireEvent.change(input, { target: { value: 'CN2021250D1D$TN' } });
+        fireEvent.click(getByRole('button', { name: /Search by ID/i }));    
+
+        expect(history.location.pathname).toBe(
+            '/contribute/single-location/search/id/CN2021250D1D%24TN'
+        );
+
+        fireEvent.change(input, { target: { value: 'CN2021250D1D&TN' } });
+        fireEvent.click(getByRole('button', { name: /Search by ID/i }));
+
+        expect(history.location.pathname).toBe(
+            '/contribute/single-location/search/id/CN2021250D1D%26TN'
+        );
+
+        fireEvent.change(input, { target: { value: 'CN2021250D1D@TN' } });
+        fireEvent.click(getByRole('button', { name: /Search by ID/i }));
+
+        expect(history.location.pathname).toBe(
+            '/contribute/single-location/search/id/CN2021250D1D%40TN'
         );
     });
 

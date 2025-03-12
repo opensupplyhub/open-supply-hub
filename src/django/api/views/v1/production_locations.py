@@ -2,6 +2,7 @@ from typing import Tuple, List
 
 from django.http import QueryDict
 from django.db import transaction
+
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
@@ -36,6 +37,10 @@ from api.constants import (
     APIV1LocationContributionErrorMessages
 )
 from api.exceptions import ServiceUnavailableException
+from api.mail import (
+    send_slc_new_location_confirmation_email,
+    send_slc_additional_info_confirmation_email
+)
 
 
 class ProductionLocations(ViewSet):
@@ -149,6 +154,7 @@ class ProductionLocations(ViewSet):
             raise ServiceUnavailableException(
                 APIV1CommonErrorMessages.MAINTENANCE_MODE
             )
+
         if not isinstance(request.data, dict):
             data_type = type(request.data).__name__
             specific_error = APIV1LocationContributionErrorMessages \
@@ -180,6 +186,11 @@ class ProductionLocations(ViewSet):
                 result.errors,
                 status=result.status_code)
 
+        if result.moderation_event.source == ModerationEvent.Source.SLC:
+            send_slc_new_location_confirmation_email(
+                result.moderation_event
+            )
+
         return Response(
             {
                 'moderation_id': result.moderation_event.uuid,
@@ -196,6 +207,7 @@ class ProductionLocations(ViewSet):
             raise ServiceUnavailableException(
                 APIV1CommonErrorMessages.MAINTENANCE_MODE
             )
+
         if not Facility.objects.filter(id=pk).exists():
             specific_error = APIV1CommonErrorMessages.LOCATION_NOT_FOUND
             return Response(
@@ -233,6 +245,11 @@ class ProductionLocations(ViewSet):
             return Response(
                 result.errors,
                 status=result.status_code)
+
+        if result.moderation_event.source == ModerationEvent.Source.SLC:
+            send_slc_additional_info_confirmation_email(
+                result.moderation_event
+            )
 
         return Response(
             {

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { func, number, object, string } from 'prop-types';
+import { number, object, string } from 'prop-types';
 import { withStyles, withTheme } from '@material-ui/core/styles';
 import { useHistory } from 'react-router-dom';
 import {
@@ -26,7 +26,7 @@ import DialogTooltip from './DialogTooltip';
 import ProductionLocationDialogFields from './ProductionLocationDialogFields';
 import {
     mainRoute,
-    searchByNameAndAddressResultRoute,
+    contributeProductionLocationRoute,
     MODERATION_STATUSES_ENUM,
     PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM,
     EMPTY_PLACEHOLDER,
@@ -71,16 +71,22 @@ const getStatusBadgeClass = (classes, status) => {
     }
 };
 
-const getTooltipText = (claimStatus, moderationStatus) => {
-    if (moderationStatus === MODERATION_STATUSES_ENUM.PENDING) {
-        return "You'll be able to claim the location after the moderation is done.";
+const getPendingTooltipText = claimStatus => {
+    if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED) {
+        return 'Your submission is under review. You will receive a notification once the production location is live on OS Hub. You can proceed to submit a claim while your request is pending.';
     }
+    return 'Your submission is being reviewed. You will receive an email with your OS ID once the review is complete.';
+};
 
-    if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED) {
-        return 'Production location has been claimed already.';
+const getClaimTooltipText = claimStatus => {
+    switch (claimStatus) {
+        case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED:
+            return 'This location has already been claimed and therefore cannot be claimed again.';
+        case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.PENDING:
+            return 'This location cannot be claimed because a pending claim already exists.';
+        default:
+            return 'You will be able to claim this location once the review is complete.';
     }
-
-    return 'Claim is not available.';
 };
 
 const ProductionLocationDialog = ({
@@ -89,7 +95,6 @@ const ProductionLocationDialog = ({
     data,
     osID,
     moderationStatus,
-    handleShow,
     claimStatus,
 }) => {
     const history = useHistory();
@@ -98,6 +103,20 @@ const ProductionLocationDialog = ({
     const getIsMobileMemoized = useMemo(() => getIsMobile(innerWidth), [
         innerWidth,
     ]);
+
+    // Override browser's go back button when modal dialog is open
+    useEffect(() => {
+        const cleanupListener = history.listen((location, action) => {
+            if (action === 'POP') {
+                history.push(contributeProductionLocationRoute);
+            }
+        });
+
+        return () => {
+            cleanupListener();
+        };
+    }, [history]);
+
     useEffect(() => {
         setIsMobile(getIsMobileMemoized);
     }, [getIsMobileMemoized]);
@@ -126,19 +145,19 @@ const ProductionLocationDialog = ({
     const fieldSetNumber = round(size(filteredAdditionalFields) / 2);
 
     const isClaimable =
-        claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED &&
-        moderationStatus !== MODERATION_STATUSES_ENUM.PENDING;
+        claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED;
 
     const statusLabel = startCase(toLower(moderationStatus));
 
     const handleGoToMainPage = () => history.push(mainRoute);
-    const handleGoToSearchByNameAndAddressResult = () =>
-        history.push(searchByNameAndAddressResultRoute);
+    const handleGoToSearchByNameAndAddress = () =>
+        history.push(`${contributeProductionLocationRoute}?tab=name-address`);
 
     const deleteIcon =
         moderationStatus === MODERATION_STATUSES_ENUM.PENDING ? (
             <DialogTooltip
-                text="Your submission is under review. You will receive a notification once the production location is live on OS Hub. You can proceed to submit a claim while your request is pending."
+                text={getPendingTooltipText(claimStatus)}
+                aria-label="Pending status tooltip"
                 childComponent={infoIcon(classes)}
             />
         ) : null;
@@ -147,7 +166,7 @@ const ProductionLocationDialog = ({
         <>
             {isMobile ? (
                 <ProductionLocationDialogCloseButton
-                    handleShow={handleShow}
+                    handleGoToMainPage={handleGoToMainPage}
                     isMobile={isMobile}
                 />
             ) : null}
@@ -171,7 +190,7 @@ const ProductionLocationDialog = ({
                         </p>
                         {!isMobile ? (
                             <ProductionLocationDialogCloseButton
-                                handleShow={handleShow}
+                                handleGoToMainPage={handleGoToMainPage}
                                 isMobile={isMobile}
                             />
                         ) : null}
@@ -197,7 +216,7 @@ const ProductionLocationDialog = ({
                                 className={classes.leftContainerColumn}
                             >
                                 <Typography className={classes.label}>
-                                    Facility name
+                                    Location name
                                 </Typography>
                                 <Typography className={classes.primaryText}>
                                     {productionLocationName ||
@@ -274,7 +293,7 @@ const ProductionLocationDialog = ({
                             <Button
                                 variant="contained"
                                 color="secondary"
-                                onClick={handleGoToSearchByNameAndAddressResult}
+                                onClick={handleGoToSearchByNameAndAddress}
                                 className={classes.button}
                             >
                                 Submit another Location
@@ -289,10 +308,7 @@ const ProductionLocationDialog = ({
                                 </>
                             ) : (
                                 <DialogTooltip
-                                    text={getTooltipText(
-                                        claimStatus,
-                                        moderationStatus,
-                                    )}
+                                    text={getClaimTooltipText(claimStatus)}
                                     aria-label="Claim button tooltip"
                                     childComponent={claimButton({
                                         classes,
@@ -317,7 +333,6 @@ ProductionLocationDialog.propTypes = {
     data: object.isRequired,
     osID: string,
     moderationStatus: string.isRequired,
-    handleShow: func.isRequired,
     classes: object.isRequired,
     theme: object.isRequired,
     innerWidth: number.isRequired,

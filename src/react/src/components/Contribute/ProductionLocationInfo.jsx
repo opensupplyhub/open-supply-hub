@@ -1,25 +1,21 @@
-import React, {
-    useEffect,
-    useMemo,
-    useState,
-    useRef,
-    useCallback,
-} from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useParams, useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
-import { array, bool, func, number, object, shape, string } from 'prop-types';
+import { array, bool, func, number, object, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
-import { endsWith, isEmpty, isNil, omitBy, toString } from 'lodash';
+import { endsWith, isEmpty, toString } from 'lodash';
 import Button from '@material-ui/core/Button';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Paper from '@material-ui/core/Paper';
+import Switch from '@material-ui/core/Switch';
 import TextField from '@material-ui/core/TextField';
-import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
-import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
-import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
+import RequireAuthNotice from '../RequireAuthNotice';
 import StyledSelect from '../Filters/StyledSelect';
+import RequiredAsterisk from '../RequiredAsterisk';
 import { productionLocationInfoStyles } from '../../util/styles';
+import { useResetScrollPosition } from '../../util/hooks';
 import {
     countryOptionsPropType,
     facilityProcessingTypeOptionsPropType,
@@ -35,6 +31,7 @@ import {
     updateProductionLocation,
     fetchProductionLocationByOsId,
     resetPendingModerationEvent,
+    resetSingleProductionLocation,
 } from '../../actions/contributeProductionLocation';
 import {
     fetchSingleModerationEvent,
@@ -46,16 +43,16 @@ import {
     mapFacilityTypeOptions,
     mapProcessingTypeOptions,
     isValidNumberOfWorkers,
+    isRequiredFieldValid,
     convertRangeField,
     updateStateFromData,
+    getSelectStyles,
 } from '../../util/util';
 import {
     mockedSectors,
     productionLocationInfoRouteCommon,
-    searchByNameAndAddressResultRoute,
     MODERATION_STATUSES_ENUM,
 } from '../../util/constants';
-import COLOURS from '../../util/COLOURS';
 import ProductionLocationDialog from './ProductionLocationDialog';
 
 const ProductionLocationInfo = ({
@@ -76,11 +73,16 @@ const ProductionLocationInfo = ({
     singleModerationEventItemError,
     fetchProductionLocation,
     singleProductionLocationData,
+    singleProductionLocationFetching,
+    singleProductionLocationError,
     innerWidth,
-    searchParameters,
     handleCleanupContributionRecord,
     handleResetPendingModerationEvent,
+    handleResetSingleProductionLocation,
+    userHasSignedIn,
+    fetchingSessionSignIn,
 }) => {
+    const TITLE = 'Production Location Information';
     const location = useLocation();
     const history = useHistory();
     const { moderationID, osID } = useParams();
@@ -89,19 +91,55 @@ const ProductionLocationInfo = ({
     const nameInQuery = queryParams.get('name');
     const addressInQuery = queryParams.get('address');
     const countryInQuery = queryParams.get('country');
-    const [isExpanded, setIsExpanded] = useState(false);
     const [inputName, setInputName] = useState(nameInQuery ?? '');
     const [inputAddress, setInputAddress] = useState(addressInQuery ?? '');
     const [inputCountry, setInputCountry] = useState(null);
     const [nameTouched, setNameTouched] = useState(false);
     const [addressTouched, setAddressTouched] = useState(false);
+    const [countryTouched, setCountryTouched] = useState(false);
     const [sector, setSector] = useState('');
     const [productType, setProductType] = useState([]);
     const [locationType, setLocationType] = useState(null);
     const [processingType, setProcessingType] = useState(null);
     const [numberOfWorkers, setNumberOfWorkers] = useState('');
-    const [parentCompany, setParentCompany] = useState([]);
+    const [parentCompany, setParentCompany] = useState('');
     const customSelectComponents = { DropdownIndicator: null };
+    const isCountryError = countryTouched && !inputCountry?.value;
+
+    const fillAdditionalDataFields = () => {
+        setNumberOfWorkers(
+            convertRangeField(singleProductionLocationData.number_of_workers) ??
+                '',
+        );
+        updateStateFromData(singleProductionLocationData, 'sector', setSector);
+        updateStateFromData(
+            singleProductionLocationData,
+            'product_type',
+            setProductType,
+        );
+        updateStateFromData(
+            singleProductionLocationData,
+            'location_type',
+            setLocationType,
+        );
+        updateStateFromData(
+            singleProductionLocationData,
+            'processing_type',
+            setProcessingType,
+        );
+        setParentCompany(singleProductionLocationData.parent_company ?? '');
+    };
+
+    const resetAdditionalDataFields = () => {
+        setSector('');
+        setProductType([]);
+        setLocationType(null);
+        setProcessingType(null);
+        setNumberOfWorkers('');
+        setParentCompany('');
+    };
+
+    useResetScrollPosition(location);
 
     const inputData = useMemo(
         () => ({
@@ -128,46 +166,37 @@ const ProductionLocationInfo = ({
         ],
     );
 
-    const selectStyles = {
-        control: provided => ({
-            ...provided,
-            height: '56px',
-            borderRadius: '0',
-            '&:focus,&:active,&:focus-within': {
-                borderColor: COLOURS.PURPLE,
-                boxShadow: `inset 0 0 0 1px ${COLOURS.PURPLE}`,
-                transition: 'box-shadow 0.2s',
-            },
-            '&:hover': {
-                borderColor: 'black',
-            },
-        }),
-    };
-
     const [
         showProductionLocationDialog,
         setShowProductionLocationDialog,
     ] = useState(null);
 
-    const toggleExpand = () => {
-        setIsExpanded(!isExpanded);
-    };
     const handleNameChange = event => {
-        setNameTouched(true);
         setInputName(event.target.value);
     };
     const handleAddressChange = event => {
-        setAddressTouched(true);
         setInputAddress(event.target.value);
     };
-    const handleGoBack = useCallback(() => {
-        const { name, address, country } = searchParameters;
-        const filteredParams = omitBy({ name, address, country }, isNil);
-        const params = new URLSearchParams(filteredParams);
+    const handleParentCompanyChange = event => {
+        setParentCompany(event.target.value);
+    };
 
-        const url = `${searchByNameAndAddressResultRoute}?${params.toString()}`;
-        history.push(url);
-    }, [searchParameters, history]);
+    const handleNameBlur = () => {
+        setNameTouched(true);
+    };
+    const handleAddressBlur = () => {
+        setAddressTouched(true);
+    };
+    const handleCountryBlur = () => {
+        setCountryTouched(true);
+    };
+
+    const isFormValid = !!(
+        isRequiredFieldValid(inputName) &&
+        isRequiredFieldValid(inputAddress) &&
+        inputCountry?.value &&
+        isValidNumberOfWorkers(numberOfWorkers)
+    );
 
     let handleProductionLocation;
     switch (submitMethod) {
@@ -190,6 +219,19 @@ const ProductionLocationInfo = ({
             ? 'These fields are pre-filled with the data from your search, but you can edit them.'
             : '';
     const submitButtonText = submitMethod === 'POST' ? 'Submit' : 'Update';
+
+    const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
+    const onSwitchChange = () => {
+        setShowAdditionalInfo(prevShowAdditionalInfo => {
+            const newShowAdditionalInfo = !prevShowAdditionalInfo;
+            if (newShowAdditionalInfo) {
+                fillAdditionalDataFields();
+            } else {
+                resetAdditionalDataFields();
+            }
+            return newShowAdditionalInfo;
+        });
+    };
 
     useEffect(() => {
         if (submitMethod === 'PATCH' && osID) {
@@ -219,42 +261,12 @@ const ProductionLocationInfo = ({
         if (singleProductionLocationData && osID) {
             setInputName(singleProductionLocationData.name ?? '');
             setInputAddress(singleProductionLocationData.address ?? '');
-            setNumberOfWorkers(
-                convertRangeField(
-                    singleProductionLocationData.number_of_workers,
-                ) ?? '',
-            );
             if (singleProductionLocationData.country) {
                 setInputCountry({
                     value: singleProductionLocationData?.country.alpha_2,
                     label: singleProductionLocationData?.country.name,
                 });
             }
-            updateStateFromData(
-                singleProductionLocationData,
-                'sector',
-                setSector,
-            );
-            updateStateFromData(
-                singleProductionLocationData,
-                'product_type',
-                setProductType,
-            );
-            updateStateFromData(
-                singleProductionLocationData,
-                'location_type',
-                setLocationType,
-            );
-            updateStateFromData(
-                singleProductionLocationData,
-                'processing_type',
-                setProcessingType,
-            );
-            updateStateFromData(
-                singleProductionLocationData,
-                'parent_company',
-                setParentCompany,
-            );
         }
     }, [singleProductionLocationData, osID]);
 
@@ -350,7 +362,7 @@ const ProductionLocationInfo = ({
     }, [pendingModerationEventFetching, pendingModerationEventError]);
 
     useEffect(() => {
-        /* 
+        /*
         After first POST or PATCH v1/production-locations, there will be an error
         because moderation event should be re-indexed in the OpenSearch,
         so move this effect to the very end of event loop to make sure moderation event
@@ -378,11 +390,45 @@ const ProductionLocationInfo = ({
         moderationID,
     ]);
 
+    useEffect(
+        () => () => {
+            handleCleanupContributionRecord();
+            handleResetPendingModerationEvent();
+            handleResetSingleProductionLocation();
+        },
+        [],
+    );
+
+    useEffect(() => {
+        if (!isEmpty(singleProductionLocationError)) {
+            toast(singleProductionLocationError[0]);
+        }
+    }, [singleProductionLocationError]);
+    if (fetchingSessionSignIn) {
+        return (
+            <div className={classes.circularProgressContainerStyles}>
+                <CircularProgress />
+            </div>
+        );
+    }
+
+    if (!userHasSignedIn) {
+        return <RequireAuthNotice title={TITLE} />;
+    }
+
+    if (singleProductionLocationFetching) {
+        return (
+            <div className={classes.circularProgressStyles}>
+                <CircularProgress />
+            </div>
+        );
+    }
+
     return (
         <>
             <div className={classes.mainContainerStyles}>
                 <Typography component="h1" className={classes.headerStyles}>
-                    Production Location Information
+                    {TITLE}
                 </Typography>
                 <Typography className={classes.instructionStyles}>
                     {`Use the form below to edit the name, address, and country
@@ -396,8 +442,9 @@ const ProductionLocationInfo = ({
                             component="h2"
                             className={classes.titleStyles}
                         >
-                            Location Name
+                            Location Name <RequiredAsterisk />
                         </Typography>
+
                         <Typography
                             component="h4"
                             className={classes.subTitleStyles}
@@ -410,6 +457,7 @@ const ProductionLocationInfo = ({
                             className={classes.textInputStyles}
                             value={inputName}
                             onChange={handleNameChange}
+                            onBlur={handleNameBlur}
                             placeholder="Enter the name"
                             variant="outlined"
                             aria-label="Enter the name"
@@ -418,7 +466,7 @@ const ProductionLocationInfo = ({
                                     input: `
                                     ${
                                         nameTouched &&
-                                        isEmpty(inputName) &&
+                                        !isRequiredFieldValid(inputName) &&
                                         classes.errorStyle
                                     }`,
                                     notchedOutline:
@@ -427,12 +475,16 @@ const ProductionLocationInfo = ({
                             }}
                             helperText={
                                 nameTouched &&
-                                isEmpty(inputName) && <InputErrorText />
+                                !isRequiredFieldValid(inputName) && (
+                                    <InputErrorText />
+                                )
                             }
                             FormHelperTextProps={{
                                 className: classes.helperText,
                             }}
-                            error={nameTouched && isEmpty(inputName)}
+                            error={
+                                nameTouched && !isRequiredFieldValid(inputName)
+                            }
                         />
                     </div>
                     <div
@@ -442,7 +494,7 @@ const ProductionLocationInfo = ({
                             component="h2"
                             className={classes.titleStyles}
                         >
-                            Address
+                            Address <RequiredAsterisk />
                         </Typography>
                         <Typography
                             component="h4"
@@ -456,6 +508,7 @@ const ProductionLocationInfo = ({
                             className={classes.textInputStyles}
                             value={inputAddress}
                             onChange={handleAddressChange}
+                            onBlur={handleAddressBlur}
                             placeholder="Enter the full address"
                             variant="outlined"
                             aria-label="Enter the address"
@@ -464,7 +517,7 @@ const ProductionLocationInfo = ({
                                     input: `${classes.searchInputStyles}
                                 ${
                                     addressTouched &&
-                                    isEmpty(inputAddress) &&
+                                    !isRequiredFieldValid(inputAddress) &&
                                     classes.errorStyle
                                 }`,
                                     notchedOutline:
@@ -473,12 +526,17 @@ const ProductionLocationInfo = ({
                             }}
                             helperText={
                                 addressTouched &&
-                                isEmpty(inputAddress) && <InputErrorText />
+                                !isRequiredFieldValid(inputAddress) && (
+                                    <InputErrorText />
+                                )
                             }
                             FormHelperTextProps={{
                                 className: classes.helperText,
                             }}
-                            error={addressTouched && isEmpty(inputAddress)}
+                            error={
+                                addressTouched &&
+                                !isRequiredFieldValid(inputAddress)
+                            }
                         />
                     </div>
                     <div
@@ -488,7 +546,7 @@ const ProductionLocationInfo = ({
                             component="h2"
                             className={classes.titleStyles}
                         >
-                            Country
+                            Country <RequiredAsterisk />
                         </Typography>
                         <Typography
                             component="h4"
@@ -504,11 +562,17 @@ const ProductionLocationInfo = ({
                             options={countriesOptions || []}
                             value={inputCountry}
                             onChange={setInputCountry}
+                            onBlur={handleCountryBlur}
                             className={classes.selectStyles}
-                            styles={selectStyles}
+                            styles={getSelectStyles(isCountryError)}
                             placeholder="Country"
                             isMulti={false}
                         />
+                        {isCountryError && (
+                            <div className={classes.errorWrapStyles}>
+                                <InputErrorText />
+                            </div>
+                        )}
                     </div>
                     <hr className={classes.separator} />
                     <div
@@ -521,13 +585,17 @@ const ProductionLocationInfo = ({
                             >
                                 Additional information
                             </Typography>
-                            <IconButton onClick={toggleExpand}>
-                                {isExpanded ? (
-                                    <ArrowDropUpIcon />
-                                ) : (
-                                    <ArrowDropDownIcon />
-                                )}
-                            </IconButton>
+                            <Switch
+                                color="primary"
+                                onChange={onSwitchChange}
+                                checked={showAdditionalInfo}
+                                style={{ zIndex: 1 }}
+                                className={classes.switchButton}
+                                inputProps={{
+                                    'data-testid':
+                                        'switch-additional-info-fields',
+                                }}
+                            />
                         </div>
                         <Typography
                             component="h4"
@@ -537,7 +605,7 @@ const ProductionLocationInfo = ({
                             production location, including product types, number
                             of workers, parent company and more.
                         </Typography>
-                        {isExpanded && (
+                        {showAdditionalInfo && (
                             <>
                                 <div
                                     className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
@@ -567,7 +635,7 @@ const ProductionLocationInfo = ({
                                         }
                                         value={sector}
                                         onChange={setSector}
-                                        styles={selectStyles}
+                                        styles={getSelectStyles()}
                                         className={classes.selectStyles}
                                         placeholder="Select sector(s)"
                                     />
@@ -597,7 +665,7 @@ const ProductionLocationInfo = ({
                                         onChange={setProductType}
                                         placeholder="Enter product type(s)"
                                         aria-label="Enter product type(s)"
-                                        styles={selectStyles}
+                                        styles={getSelectStyles()}
                                         className={classes.selectStyles}
                                         components={customSelectComponents}
                                     />
@@ -630,7 +698,7 @@ const ProductionLocationInfo = ({
                                         )}
                                         value={locationType}
                                         onChange={setLocationType}
-                                        styles={selectStyles}
+                                        styles={getSelectStyles()}
                                         className={classes.selectStyles}
                                         placeholder="Select location type(s)"
                                     />
@@ -662,7 +730,7 @@ const ProductionLocationInfo = ({
                                         )}
                                         value={processingType}
                                         onChange={setProcessingType}
-                                        styles={selectStyles}
+                                        styles={getSelectStyles()}
                                         className={classes.selectStyles}
                                     />
                                 </div>
@@ -738,16 +806,20 @@ const ProductionLocationInfo = ({
                                         Enter the company that holds majority
                                         ownership for this production.
                                     </Typography>
-                                    <StyledSelect
-                                        creatable
-                                        name="Parent company"
+                                    <TextField
+                                        id="parent_company"
+                                        className={classes.textInputStyles}
                                         value={parentCompany}
-                                        onChange={setParentCompany}
+                                        onChange={handleParentCompanyChange}
                                         placeholder="Enter the parent company"
+                                        variant="outlined"
                                         aria-label="Parent company"
-                                        styles={selectStyles}
-                                        className={classes.selectStyles}
-                                        components={customSelectComponents}
+                                        InputProps={{
+                                            classes: {
+                                                notchedOutline:
+                                                    classes.notchedOutlineStyles,
+                                            },
+                                        }}
                                     />
                                 </div>
                             </>
@@ -756,7 +828,7 @@ const ProductionLocationInfo = ({
                     <div className={classes.buttonsContainerStyles}>
                         <Button
                             variant="outlined"
-                            onClick={handleGoBack}
+                            onClick={() => history.goBack()}
                             className={classes.goBackButtonStyles}
                         >
                             Go Back
@@ -768,6 +840,7 @@ const ProductionLocationInfo = ({
                                 handleProductionLocation(inputData, osID);
                             }}
                             className={classes.submitButtonStyles}
+                            disabled={!isFormValid}
                         >
                             {submitButtonText}
                         </Button>
@@ -785,7 +858,6 @@ const ProductionLocationInfo = ({
                         singleModerationEventItem?.cleaned_data
                     }
                     osID={osID || singleModerationEventItem?.os_id}
-                    handleShow={setShowProductionLocationDialog}
                     innerWidth={innerWidth}
                     moderationStatus={
                         pendingModerationEventData?.status ||
@@ -810,11 +882,8 @@ ProductionLocationInfo.defaultProps = {
     singleModerationEventItem: null,
     singleModerationEventItemFetching: false,
     singleModerationEventItemError: null,
-    searchParameters: shape({
-        name: null,
-        address: null,
-        country: null,
-    }),
+    singleProductionLocationFetching: false,
+    singleProductionLocationError: null,
 };
 
 ProductionLocationInfo.propTypes = {
@@ -833,16 +902,16 @@ ProductionLocationInfo.propTypes = {
     singleModerationEventItemError: array,
     fetchProductionLocation: func.isRequired,
     singleProductionLocationData: productionLocationPropType.isRequired,
+    singleProductionLocationFetching: bool,
+    singleProductionLocationError: array,
     submitMethod: string.isRequired,
     classes: object.isRequired,
     innerWidth: number.isRequired,
-    searchParameters: shape({
-        name: string,
-        address: string,
-        country: string,
-    }),
     handleCleanupContributionRecord: func.isRequired,
     handleResetPendingModerationEvent: func.isRequired,
+    handleResetSingleProductionLocation: func.isRequired,
+    userHasSignedIn: bool.isRequired,
+    fetchingSessionSignIn: bool.isRequired,
 };
 
 const mapStateToProps = ({
@@ -856,7 +925,11 @@ const mapStateToProps = ({
             fetching: pendingModerationEventFetching,
             error: pendingModerationEventError,
         },
-        singleProductionLocation: { data: singleProductionLocationData },
+        singleProductionLocation: {
+            data: singleProductionLocationData,
+            fetching: singleProductionLocationFetching,
+            error: singleProductionLocationError,
+        },
     },
     dashboardContributionRecord: {
         singleModerationEvent: {
@@ -868,7 +941,10 @@ const mapStateToProps = ({
     ui: {
         window: { innerWidth },
     },
-    searchParameters,
+    auth: {
+        user: { user },
+        session: { fetching: fetchingSessionSignIn },
+    },
 }) => ({
     countriesOptions,
     facilityProcessingTypeOptions,
@@ -879,8 +955,11 @@ const mapStateToProps = ({
     singleModerationEventItemFetching,
     singleModerationEventItemError,
     singleProductionLocationData,
+    singleProductionLocationFetching,
+    singleProductionLocationError,
     innerWidth,
-    searchParameters,
+    userHasSignedIn: !user.isAnon,
+    fetchingSessionSignIn,
 });
 
 function mapDispatchToProps(dispatch) {
@@ -900,6 +979,8 @@ function mapDispatchToProps(dispatch) {
             dispatch(cleanupContributionRecord()),
         handleResetPendingModerationEvent: () =>
             dispatch(resetPendingModerationEvent()),
+        handleResetSingleProductionLocation: () =>
+            dispatch(resetSingleProductionLocation()),
     };
 }
 

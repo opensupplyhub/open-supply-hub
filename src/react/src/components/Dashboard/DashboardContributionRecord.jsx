@@ -19,6 +19,7 @@ import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 
+import RejectModerationEventDialog from './RejectModerationEventDialog';
 import { makeDashboardContributionRecordStyles } from '../../util/styles';
 import {
     moderationEventsListItemPropType,
@@ -86,6 +87,10 @@ const DashboardContributionRecord = ({
 }) => {
     const prevSingleModerationEventItemRef = useRef();
     const [showBackdrop, setShowBackdrop] = useState(false);
+    const [
+        rejectModerationEventDialogIsOpen,
+        setRejectModerationEventDialogIsOpen,
+    ] = useState(false);
     const {
         productionLocationName,
         countryCode,
@@ -161,6 +166,14 @@ const DashboardContributionRecord = ({
         }
     }, [productionLocationName, countryCode, productionLocationAddress, osId]);
 
+    const handleRejectContribution = () => {
+        setRejectModerationEventDialogIsOpen(true);
+    };
+
+    const handleRejectModerationEventDialogClose = () => {
+        setRejectModerationEventDialogIsOpen(false);
+    };
+
     if (fetchModerationEventError) {
         return (
             <Typography variant="body2" className={classes.errorStyle}>
@@ -171,6 +184,8 @@ const DashboardContributionRecord = ({
 
     const moderationEventStatus = singleModerationEventItem.status || '';
     const moderationActionType = singleModerationEventItem.action_type || null;
+    const moderationActionPerformBy =
+        singleModerationEventItem.action_perform_by_id || null;
     const jsonResults = JSON.stringify(singleModerationEventItem, null, 2);
     const potentialMatchCount = matches.length || 0;
     // OSDEV-1445: automatic write claim into moderation-events table to be done in Q1
@@ -178,24 +193,6 @@ const DashboardContributionRecord = ({
     const isDisabled =
         moderationEventStatus === MODERATION_STATUSES_ENUM.REJECTED ||
         moderationEventStatus === MODERATION_STATUSES_ENUM.APPROVED;
-    let claimButtonTooltipText = '';
-
-    switch (moderationEventStatus) {
-        case MODERATION_STATUSES_ENUM.PENDING:
-            claimButtonTooltipText =
-                'A production location must be created before it can receive a claim request.';
-            break;
-        case MODERATION_STATUSES_ENUM.APPROVED:
-            claimButtonTooltipText =
-                "Production location hasn't received a claim yet.";
-            break;
-        case MODERATION_STATUSES_ENUM.REJECTED:
-            claimButtonTooltipText =
-                'Moderation event has been rejected, no claim request available.';
-            break;
-        default:
-            break;
-    }
 
     return (
         <>
@@ -231,9 +228,16 @@ const DashboardContributionRecord = ({
                         `}
             >
                 <Toolbar>
-                    <Typography variant="title">
-                        {moderationEventStatus}
-                    </Typography>
+                    {moderationActionPerformBy === null ? (
+                        <Typography variant="title">
+                            {moderationEventStatus}
+                        </Typography>
+                    ) : (
+                        <Typography variant="title">
+                            {moderationEventStatus} by user ID:{' '}
+                            {moderationActionPerformBy}
+                        </Typography>
+                    )}
                 </Toolbar>
             </AppBar>
             <Paper className={classes.container}>
@@ -396,11 +400,7 @@ const DashboardContributionRecord = ({
                 <Button
                     color="secondary"
                     variant="contained"
-                    onClick={() => {
-                        updateModerationEvent(
-                            MODERATION_STATUSES_ENUM.REJECTED,
-                        );
-                    }}
+                    onClick={handleRejectContribution}
                     className={classes.buttonStyles}
                     disabled={isDisabled || moderationEventFetching}
                 >
@@ -424,14 +424,15 @@ const DashboardContributionRecord = ({
                             {claimButtonTitle}
                         </Button>
                     ) : (
-                        <DialogTooltip
-                            text={claimButtonTooltipText}
-                            aria-label="Claim button tooltip"
-                            childComponent={claimButtonDisabled(classes)}
-                        />
+                        claimButtonDisabled(classes)
                     )}
                 </Grid>
             </Grid>
+            <RejectModerationEventDialog
+                updateModerationEvent={updateModerationEvent}
+                isOpenDialog={rejectModerationEventDialogIsOpen}
+                closeDialog={handleRejectModerationEventDialogClose}
+            />
         </>
     );
 };
@@ -490,8 +491,15 @@ const mapDispatchToProps = (
     push,
     fetchModerationEvent: () =>
         dispatch(fetchSingleModerationEvent(moderationID)),
-    updateModerationEvent: status =>
-        dispatch(updateSingleModerationEvent(moderationID, status)),
+    updateModerationEvent: (status, textCleaned, textRaw) =>
+        dispatch(
+            updateSingleModerationEvent(
+                moderationID,
+                status,
+                textCleaned,
+                textRaw,
+            ),
+        ),
     createProductionLocation: () =>
         dispatch(createProductionLocationFromModerationEvent(moderationID)),
     confirmPotentialMatch: osId =>

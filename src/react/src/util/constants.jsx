@@ -352,15 +352,15 @@ export const dashboardClaimsDetailsRoute = '/dashboard/claims/:claimID';
 export const aboutClaimedFacilitiesRoute = `${InfoLink}/${InfoPaths.claimedFacilities}`;
 export const contributeProductionLocationRoute = '/contribute/single-location';
 export const searchByOsIdResultRoute =
-    '/contribute/production-location/search/id/:osID';
+    '/contribute/single-location/search/id/:osID';
 export const searchByNameAndAddressResultRoute =
-    '/contribute/production-location/search/';
+    '/contribute/single-location/search/';
 export const productionLocationInfoRouteCommon =
-    '/contribute/production-location/info/';
+    '/contribute/single-location/info/';
 export const productionLocationInfoRouteCreate =
-    '/contribute/production-location/info/:moderationID?';
+    '/contribute/single-location/info/:moderationID?';
 export const productionLocationInfoRouteUpdate =
-    '/contribute/production-location/:osID/info/:moderationID?';
+    '/contribute/single-location/:osID/info/:moderationID?';
 
 export const contributeFieldsEnum = Object.freeze({
     name: 'name',
@@ -1350,6 +1350,7 @@ export const MODERATION_STATUSES_ENUM = Object.freeze({
 export const PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM = Object.freeze({
     CLAIMED: 'claimed',
     UNCLAIMED: 'unclaimed',
+    PENDING: 'pending',
 });
 
 export const MODERATION_ACTIONS_ENUM = Object.freeze({
@@ -1525,3 +1526,5 @@ export const mockedSectors = [
 ];
 
 export const MAX_LOCATIONS_TO_SHOW = 100;
+
+export const HEADER_HEIGHT = 116;

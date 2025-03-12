@@ -4,6 +4,9 @@ import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
 import flatten from 'lodash/flatten';
 import identity from 'lodash/identity';
+import split from 'lodash/split';
+import last from 'lodash/last';
+import snakeCase from 'lodash/snakeCase';
 import some from 'lodash/some';
 import size from 'lodash/size';
 import negate from 'lodash/negate';
@@ -20,6 +23,7 @@ import startsWith from 'lodash/startsWith';
 import head from 'lodash/head';
 import replace from 'lodash/replace';
 import trimEnd from 'lodash/trimEnd';
+import trim from 'lodash/trim';
 import range from 'lodash/range';
 import ceil from 'lodash/ceil';
 import toInteger from 'lodash/toInteger';
@@ -31,6 +35,8 @@ import filter from 'lodash/filter';
 import includes from 'lodash/includes';
 import join from 'lodash/join';
 import map from 'lodash/map';
+import mapValues from 'lodash/mapValues';
+import mapKeys from 'lodash/mapKeys';
 import uniq from 'lodash/uniq';
 import has from 'lodash/has';
 import { isURL, isInt } from 'validator';
@@ -292,7 +298,7 @@ export const makeProductionLocationFromModerationEventURL = (
 };
 
 export const makeContributeProductionLocationUpdateURL = osID =>
-    `/contribute/production-location/${osID}/info/`;
+    `/contribute/single-location/${osID}/info/`;
 
 export const makeGetModerationEventsWithQueryString = (
     qs,
@@ -1431,48 +1437,89 @@ export const openInNewTab = url => {
     if (newWindow) newWindow.opener = null;
 };
 
-const extractProductionLocationContributionValues = data => map(data, 'value');
-
-const generateRangeField = value => {
-    const [min, max] = value.split('-').map(Number);
-    return max !== undefined ? { min, max } : { min };
+const extractProductionLocationContributionValues = data => {
+    if (isArray(data)) {
+        return data.map(item => (item?.value ? item.value : item));
+    }
+    return data;
 };
+
+export const generateRangeField = value => {
+    if (typeof value === 'number') {
+        return { min: value, max: value };
+    }
+
+    if (typeof value === 'string' && value.includes('-')) {
+        const [min, max] = value.split('-').map(Number);
+        return max !== undefined ? { min, max } : { min };
+    }
+
+    return { min: Number(value), max: Number(value) };
+};
+
+const convertToSnakeFields = fields =>
+    mapKeys(fields, (value, key) => snakeCase(key));
+
+const filterNonEmptyFields = fields =>
+    mapValues(
+        pickBy(fields, value => !isEmpty(value)),
+        extractProductionLocationContributionValues,
+    );
 
 export const parseContribData = contribData => {
-    const {
-        name,
-        address,
-        country,
-        sector,
-        productType,
-        locationType,
-        processingType,
-        numberOfWorkers,
-        parentCompany,
-    } = contribData;
+    const { numberOfWorkers, country, ...fields } = contribData;
+    const countryValue = country?.value;
+
+    const parsedFields = convertToSnakeFields(filterNonEmptyFields(fields));
 
     return {
+        ...parsedFields,
+        ...(numberOfWorkers && {
+            number_of_workers: generateRangeField(numberOfWorkers),
+        }),
+        country: countryValue,
         source: DATA_SOURCES_ENUM.SLC,
-        name,
-        address,
-        country: country?.value,
-        sector: isArray(sector)
-            ? extractProductionLocationContributionValues(sector)
-            : [],
-        parent_company: isArray(parentCompany)
-            ? extractProductionLocationContributionValues(parentCompany)
-            : [],
-        product_type: isArray(productType)
-            ? extractProductionLocationContributionValues(productType)
-            : [],
-        location_type: isArray(locationType)
-            ? extractProductionLocationContributionValues(locationType)
-            : [],
-        processing_type: isArray(processingType)
-            ? extractProductionLocationContributionValues(processingType)
-            : [],
-        number_of_workers: numberOfWorkers
-            ? generateRangeField(numberOfWorkers)
-            : null,
     };
 };
+
+export const getLastPathParameter = url => {
+    if (typeof url !== 'string') return '';
+    const cleanUrl = url.split('?')[0];
+    return last(split(trimEnd(cleanUrl, '/'), '/')) || '';
+};
+
+export const isRequiredFieldValid = val => !isEmpty(trim(val));
+
+export const getSelectStyles = (isErrorState = false) => ({
+    control: (provided, state) => {
+        let borderColor;
+        if (isErrorState) {
+            borderColor = COLOURS.RED;
+        } else if (state.isFocused) {
+            borderColor = COLOURS.PURPLE;
+        } else {
+            borderColor = provided.borderColor;
+        }
+
+        const boxShadow = state.isFocused
+            ? `inset 0 0 0 1px ${borderColor}`
+            : provided.boxShadow;
+
+        return {
+            ...provided,
+            minHeight: '56px',
+            borderRadius: '0',
+            borderColor,
+            boxShadow,
+            transition: 'box-shadow 0.2s',
+            '&:hover': {
+                borderColor: !isErrorState && !state.isFocused && 'black',
+            },
+        };
+    },
+    placeholder: provided => ({
+        ...provided,
+        opacity: 0.7,
+        color: isErrorState ? COLOURS.RED : provided.color,
+    }),
+});

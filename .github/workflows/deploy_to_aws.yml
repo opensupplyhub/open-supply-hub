@@ -143,7 +143,7 @@ jobs:
           node-version: '14'
 
       - name: Cache dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: |
             src/react/node_modules
@@ -173,6 +173,10 @@ jobs:
           for id in $(aws cloudfront list-distributions --query "DistributionList.Items[*].Id" --output text); do
               domains=$(aws cloudfront get-distribution-config --id $id --query "DistributionConfig.Aliases.Items" --output text)
               if [[ "$domains" == "$CLOUDFRONT_DOMAIN" ]]; then
+                  if [ ! -z "$CLOUDFRONT_DISTRIBUTION_ID" ]; then
+                      echo "Error: Multiple CloudFront distributions found for domain: $CLOUDFRONT_DOMAIN"
+                      exit 1
+                  fi
                   echo "Found Distribution ID: $id for Domain: $CLOUDFRONT_DOMAIN"
                   CLOUDFRONT_DISTRIBUTION_ID=$id
               fi

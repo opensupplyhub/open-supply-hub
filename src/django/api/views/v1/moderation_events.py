@@ -11,6 +11,7 @@ from api.constants import (
     APIV1CommonErrorMessages,
     APIV1ModerationEventErrorMessages
 )
+from api.models.moderation_event import ModerationEvent
 from api.moderation_event_actions.approval.add_production_location \
     import AddProductionLocation
 from api.moderation_event_actions.approval.update_production_location \
@@ -27,10 +28,14 @@ from api.views.v1.opensearch_query_builder.moderation_events_query_builder \
     import ModerationEventsQueryBuilder
 from api.views.v1.opensearch_query_builder.opensearch_query_director import \
     OpenSearchQueryDirector
-
 from api.views.v1.utils import (
     handle_errors_decorator,
     serialize_params,
+)
+from api.mail import (
+    send_slc_contribution_approval_email,
+    send_slc_contribution_rejected_email,
+    send_production_location_creation_email
 )
 
 
@@ -116,18 +121,28 @@ class ModerationEvents(ViewSet):
         event = ModerationEventsService.fetch_moderation_event_by_uuid(pk)
 
         serializer = ModerationEventUpdateSerializer(
-            event, data=request.data, partial=True
+            instance=event,
+            data=request.data,
+            user=request.user,
+            partial=True
         )
-
         if not serializer.is_valid():
+            errors = serializer.errors.get(
+                "non_field_errors",
+                [serializer.errors]
+            )
             raise ValidationError(
                 {
                     "detail": APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
-                    "errors": [serializer.errors],
+                    "errors": errors,
                 }
             )
 
         serializer.save()
+        event.refresh_from_db()
+
+        if event.source == ModerationEvent.Source.SLC:
+            send_slc_contribution_rejected_email(request, event)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -136,18 +151,23 @@ class ModerationEvents(ViewSet):
         methods=['POST'],
         url_path='production-locations',
     )
-    def add_production_location(self, _, pk=None):
+    def add_production_location(self, request, pk=None):
         ModerationEventsService.validate_uuid(pk)
 
         event = ModerationEventsService.fetch_moderation_event_by_uuid(pk)
         ModerationEventsService.validate_moderation_status(event.status)
 
-        add_production_location_processor = AddProductionLocation(event)
+        add_production_location_processor = AddProductionLocation(
+            event, request.user
+        )
 
         try:
             item = add_production_location_processor.process_moderation_event()
         except Exception as error:
             return ModerationEventsService.handle_processing_error(error)
+
+        if event.source == ModerationEvent.Source.SLC:
+            send_production_location_creation_email(event, request)
 
         return Response(
             {"os_id": item.facility_id}, status=status.HTTP_201_CREATED
@@ -158,7 +178,7 @@ class ModerationEvents(ViewSet):
         methods=['PATCH'],
         url_path='production-locations/(?P<os_id>[^/.]+)',
     )
-    def update_production_location(self, _, pk=None, os_id=None):
+    def update_production_location(self, request, pk=None, os_id=None):
         ModerationEventsService.validate_uuid(pk)
 
         event = ModerationEventsService.fetch_moderation_event_by_uuid(pk)
@@ -168,7 +188,7 @@ class ModerationEvents(ViewSet):
         ModerationEventsService.validate_location_os_id(os_id)
 
         update_production_location_processor = UpdateProductionLocation(
-            event, os_id
+            event, request.user, os_id
         )
 
         try:
@@ -177,5 +197,8 @@ class ModerationEvents(ViewSet):
             )
         except Exception as error:
             return ModerationEventsService.handle_processing_error(error)
+
+        if event.source == ModerationEvent.Source.SLC:
+            send_slc_contribution_approval_email(request, event, item)
 
         return Response({"os_id": item.facility_id}, status=status.HTTP_200_OK)

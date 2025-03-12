@@ -10,32 +10,19 @@ import Typography from '@material-ui/core/Typography';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import StyledSelect from '../Filters/StyledSelect';
 import InputErrorText from './InputErrorText';
-import { searchByNameAndAddressResultRoute } from '../../util/constants';
-import COLOURS from '../../util/COLOURS';
-import { makeSearchByNameAddressTabStyles } from '../../util/styles';
-
-import { countryOptionsPropType } from '../../util/propTypes';
+import RequiredAsterisk from '../RequiredAsterisk';
 import { fetchCountryOptions } from '../../actions/filterOptions';
+import { searchByNameAndAddressResultRoute } from '../../util/constants';
+import { countryOptionsPropType } from '../../util/propTypes';
+import { makeSearchByNameAddressTabStyles } from '../../util/styles';
+import { getSelectStyles, isRequiredFieldValid } from '../../util/util';
 
-const selectStyles = {
-    control: provided => ({
-        ...provided,
-        height: '56px',
-        borderRadius: '0',
-        '&:focus,&:active,&:focus-within': {
-            borderColor: COLOURS.PURPLE,
-            boxShadow: `inset 0 0 0 1px ${COLOURS.PURPLE}`,
-            transition: 'box-shadow 0.2s',
-        },
-        '&:hover': {
-            borderColor: 'black',
-        },
-    }),
-    placeholder: provided => ({
-        ...provided,
-        opacity: 0.7,
-    }),
-};
+const FormFieldTitle = ({ label, classes }) => (
+    <Typography component="h4" className={classes.formFieldTitleStyles}>
+        {label}
+        <RequiredAsterisk />
+    </Typography>
+);
 
 const SearchByNameAndAddressTab = ({
     classes,
@@ -51,24 +38,27 @@ const SearchByNameAndAddressTab = ({
     const [addressTouched, setAddressTouched] = useState(false);
     const [countryTouched, setCountryTouched] = useState(false);
 
+    const isCountryError = countryTouched && !inputCountry?.value;
+
     const history = useHistory();
-    const isValid = val => {
-        if (val) {
-            return val.length > 0;
-        }
-        return false;
-    };
+
     const handleNameChange = event => {
-        setNameTouched(true);
         setInputName(event.target.value);
     };
     const handleAddressChange = event => {
-        setAddressTouched(true);
         setInputAddress(event.target.value);
     };
     const handleCountryChange = event => {
-        setCountryTouched(true);
         setInputCountry(event);
+    };
+    const handleNameBlur = () => {
+        setNameTouched(true);
+    };
+    const handleAddressBlur = () => {
+        setAddressTouched(true);
+    };
+    const handleCountryBlur = () => {
+        setCountryTouched(true);
     };
 
     const handleSearch = () => {
@@ -82,11 +72,12 @@ const SearchByNameAndAddressTab = ({
 
         history.push(url);
     };
-    const isFormValid =
-        isValid(inputName) &&
-        isValid(inputAddress) &&
-        countryTouched &&
-        isValid(inputCountry.value);
+
+    const isFormValid = !!(
+        isRequiredFieldValid(inputName) &&
+        isRequiredFieldValid(inputAddress) &&
+        inputCountry?.value
+    );
 
     useEffect(() => {
         if (!countriesData) {
@@ -117,23 +108,27 @@ const SearchByNameAndAddressTab = ({
                 <Typography component="h2" className={classes.titleStyles}>
                     Production Location Details
                 </Typography>
-                <Typography component="h4" className={classes.subTitleStyles}>
-                    Enter the Name
-                </Typography>
+                <FormFieldTitle label="Enter the Name" classes={classes} />
                 <TextField
                     id="name"
                     className={classes.textInputStyles}
                     value={inputName}
                     onChange={handleNameChange}
+                    onBlur={handleNameBlur}
                     placeholder="Type a name"
                     variant="outlined"
                     aria-label="Type a name"
+                    helperText={
+                        nameTouched &&
+                        !isRequiredFieldValid(inputName) && <InputErrorText />
+                    }
+                    error={nameTouched && !isRequiredFieldValid(inputName)}
                     InputProps={{
                         classes: {
                             input: `${classes.searchInputStyles}
                                 ${
                                     nameTouched &&
-                                    !isValid(inputName) &&
+                                    !isRequiredFieldValid(inputName) &&
                                     classes.errorStyle
                                 }`,
                             notchedOutline: classes.notchedOutlineStyles,
@@ -142,42 +137,49 @@ const SearchByNameAndAddressTab = ({
                             type: 'text',
                         },
                     }}
-                    helperText={
-                        nameTouched && !isValid(inputName) && <InputErrorText />
-                    }
-                    error={nameTouched && !isValid(inputName)}
+                    FormHelperTextProps={{
+                        classes: {
+                            root: classes.helperTextStyles,
+                        },
+                    }}
                 />
-                <Typography component="h4" className={classes.subTitleStyles}>
-                    Enter the Address
-                </Typography>
+                <FormFieldTitle label="Enter the Address" classes={classes} />
                 <TextField
                     id="address"
                     className={classes.textInputStyles}
                     value={inputAddress}
                     onChange={handleAddressChange}
+                    onBlur={handleAddressBlur}
                     placeholder="Address"
                     variant="outlined"
                     aria-label="Address"
+                    helperText={
+                        addressTouched &&
+                        !isRequiredFieldValid(inputAddress) && (
+                            <InputErrorText />
+                        )
+                    }
+                    error={
+                        addressTouched && !isRequiredFieldValid(inputAddress)
+                    }
                     InputProps={{
                         classes: {
                             input: `${classes.searchInputStyles}
                             ${
                                 addressTouched &&
-                                !isValid(inputAddress) &&
+                                !isRequiredFieldValid(inputAddress) &&
                                 classes.errorStyle
                             }`,
                             notchedOutline: classes.notchedOutlineStyles,
                         },
                     }}
-                    helperText={
-                        addressTouched &&
-                        !isValid(inputAddress) && <InputErrorText />
-                    }
-                    error={addressTouched && !isValid(inputAddress)}
+                    FormHelperTextProps={{
+                        classes: {
+                            root: classes.helperTextStyles,
+                        },
+                    }}
                 />
-                <Typography component="h4" className={classes.subTitleStyles}>
-                    Select the Country
-                </Typography>
+                <FormFieldTitle label="Select the Country" classes={classes} />
                 <StyledSelect
                     id="countries"
                     name="What's the country?"
@@ -186,11 +188,17 @@ const SearchByNameAndAddressTab = ({
                     options={countriesData || []}
                     value={inputCountry}
                     onChange={handleCountryChange}
+                    onBlur={handleCountryBlur}
                     className={classes.selectStyles}
-                    styles={selectStyles}
+                    styles={getSelectStyles(isCountryError)}
                     placeholder="What's the country?"
                     isMulti={false}
                 />
+                {isCountryError && (
+                    <div className={classes.errorWrapStyles}>
+                        <InputErrorText text="The country is missing from your search. Select the correct country from the drop down menu." />
+                    </div>
+                )}
 
                 <Button
                     color="secondary"
@@ -219,6 +227,11 @@ SearchByNameAndAddressTab.propTypes = {
     fetching: bool.isRequired,
     error: arrayOf(string),
     fetchCountries: func.isRequired,
+    classes: object.isRequired,
+};
+
+FormFieldTitle.propTypes = {
+    label: string.isRequired,
     classes: object.isRequired,
 };
 

@@ -3,8 +3,10 @@ import json
 from unittest.mock import Mock, patch
 from rest_framework.test import APITestCase
 from django.urls import reverse
+from django.core import mail
 from allauth.account.models import EmailAddress
 from waffle.testutils import override_switch
+from rest_framework import status
 
 from api.models.moderation_event import ModerationEvent
 from api.models.contributor.contributor import Contributor
@@ -135,24 +137,26 @@ class TestProductionLocationsCreate(APITestCase):
             'The request body is invalid.'
         )
         expected_specific_error = (
-            'Invalid data. Expected a dictionary (object), but got list.'
+            'The request body is invalid.'
         )
-        expected_error_field = 'non_field_errors'
+        expected_error_field = ('Invalid data. Expected a dictionary '
+                                '(object), but got list.')
 
         response = self.client.post(
             self.url,
             [1, 2, 3],
             content_type='application/json'
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code,
+                         status.HTTP_400_BAD_REQUEST)
 
         response_body_dict = json.loads(response.content)
         self.assertEqual(len(response_body_dict), 2)
 
         general_error = response_body_dict['detail']
         errors_list_length = len(response_body_dict['errors'])
-        specific_error = response_body_dict['errors'][0]['detail']
-        error_field = response_body_dict['errors'][0]['field']
+        specific_error = response_body_dict['detail']
+        error_field = response_body_dict['errors'][0]['detail']
         self.assertEqual(general_error, expected_general_error)
         self.assertEqual(errors_list_length, 1)
         self.assertEqual(specific_error, expected_specific_error)
@@ -182,6 +186,12 @@ class TestProductionLocationsCreate(APITestCase):
             valid_req_body,
             content_type='application/json'
         )
+        email = mail.outbox[0]
+        self.assertEqual(
+            email.subject,
+            "Thank You for Your Submission – "
+            "Your Data Is Now Being Reviewed"
+        )
         self.assertEqual(response.status_code, 202)
 
         response_body_dict = json.loads(response.content)
@@ -193,7 +203,6 @@ class TestProductionLocationsCreate(APITestCase):
             '%Y-%m-%dT%H:%M:%S.%f'
         ) + 'Z'
 
-        # Check the response.
         self.assertEqual(
             response_body_dict.get('moderation_status'),
             'PENDING'
@@ -221,19 +230,40 @@ class TestProductionLocationsCreate(APITestCase):
             'errors': [
                 {
                     'field': 'sector',
-                    'detail': ('Expected value for sector to be a string or a '
-                               "list of strings but got {'some_key': 1135}.")
+                    'detail':
+                        (
+                            'Field sector must be '
+                            'a string or a list of strings.'
+                        )
                 },
                 {
                     'field': 'location_type',
                     'detail': (
-                        'Expected value for location_type to be a '
-                        'string or a list of strings but got '
-                        "{'some_key': 1135}."
+                        'Field location_type must be a string'
+                        ' or a list of strings.'
                     )
+                },
+                {
+                    'field': 'number_of_workers',
+                    'errors': [
+                        {
+                            'field': 'min',
+                            'detail': (
+                                'Ensure this value is greater than'
+                                ' or equal to 1.'
+                            )
+                        },
+                        {
+                            'field': 'max',
+                            'detail': (
+                                'Ensure this value is greater than'
+                                ' or equal to 1.'
+                            )
+                        }
+                    ]
                 }
             ]
-        }
+         }
         initial_moderation_event_count = ModerationEvent.objects.count()
 
         invalid_req_body = json.dumps({
@@ -241,12 +271,16 @@ class TestProductionLocationsCreate(APITestCase):
             'name': 'Blue Horizon Facility',
             'address': '990 Spring Garden St., Philadelphia PA 19123',
             'country': 'US',
-            'sector': {'some_key': 1135},
+            'sector': {
+                'some_key': 1135
+            },
             'parent_company': 'string',
             'product_type': [
                 'string'
             ],
-            'location_type': {'some_key': 1135},
+            'location_type': {
+                'some_key': 1135
+            },
             'processing_type': [
                 'string'
             ],
@@ -265,10 +299,121 @@ class TestProductionLocationsCreate(APITestCase):
             invalid_req_body,
             content_type='application/json'
         )
-        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.status_code,
+                         status.HTTP_422_UNPROCESSABLE_ENTITY)
 
         response_body_dict = json.loads(response.content)
         self.assertEqual(response_body_dict, expected_response_body)
         # Ensure that no ModerationEvent record has been created.
         self.assertEqual(ModerationEvent.objects.count(),
                          initial_moderation_event_count)
+
+    @patch('api.geocoding.requests.get')
+    def test_moderation_event_not_created_with_invalid_parent_company(
+            self,
+            mock_get):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        expected_response_body = {
+            'detail': 'The request body is invalid.',
+            'errors': [
+                {
+                    'field': 'parent_company',
+                    'detail': (
+                        'Field parent_company must be a string,'
+                        ' not a number.'
+                    )
+                },
+            ]
+         }
+        initial_moderation_event_count = ModerationEvent.objects.count()
+
+        invalid_req_body = json.dumps({
+            'source': 'API',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'parent_company': 12345,
+        })
+
+        response = self.client.post(
+            self.url,
+            invalid_req_body,
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code,
+                         status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+        response_body_dict = json.loads(response.content)
+        self.assertEqual(response_body_dict, expected_response_body)
+        self.assertEqual(ModerationEvent.objects.count(),
+                         initial_moderation_event_count)
+
+    @patch('api.geocoding.requests.get')
+    def test_moderation_event_created_with_valid_char_field(
+            self,
+            mock_get):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        special_characters = '&@, \' _ #()'
+        numbers = '1234567890'
+        multi_lang_letters = '贾建龙ÖrmeTİCіїъыParentCompanyการผลิตהפָקָהผลิต'
+        valid_char_field = (
+            special_characters +
+            numbers +
+            multi_lang_letters
+        )
+
+        valid_req_body = json.dumps({
+            'source': 'SLC',
+            'name': valid_char_field,
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'parent_company': valid_char_field
+        })
+
+        response = self.client.post(
+            self.url,
+            valid_req_body,
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 202)
+
+        response_body_dict = json.loads(response.content)
+        response_moderation_id = response_body_dict.get('moderation_id')
+        moderation_event = ModerationEvent.objects.get(
+            pk=response_moderation_id
+        )
+        stringified_created_at = moderation_event.created_at.strftime(
+            '%Y-%m-%dT%H:%M:%S.%f'
+        ) + 'Z'
+
+        self.assertEqual(
+            response_body_dict.get('moderation_status'),
+            'PENDING'
+        )
+        self.assertEqual(
+            response_body_dict.get('created_at'),
+            stringified_created_at
+        )
+        self.assertEqual(
+            response_moderation_id,
+            str(moderation_event.uuid)
+        )
+        self.assertIn("cleaned_data", response_body_dict)
+        name = (
+            response_body_dict
+            .get('cleaned_data', {})
+            .get('name')
+        )
+        parent_company = (
+            response_body_dict
+            .get('cleaned_data', {})
+            .get('fields', {})
+            .get('parent_company')
+        )
+        self.assertEqual(len(response_body_dict), 4)
+        self.assertEqual(name, valid_char_field)
+        self.assertEqual(parent_company, valid_char_field)
