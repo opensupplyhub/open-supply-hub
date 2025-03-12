@@ -8,7 +8,7 @@ You can now:
 with clients and stakeholders:
     - OS ID: {{ os_id }}
     - Public link: {{ location_url }}
-{% if not is_claimed %}
+{% if not has_anyone_claimed %}
 2. Claim your production location to take control of
 your data and make it visible to more global partners. It’s free and only takes a few
 steps! Claim my production location now ({{ pl_claim_url }}).
@@ -17,7 +17,7 @@ steps! Claim my production location now ({{ pl_claim_url }}).
 2. Learn more about the OS ID and how to use it to advance your business in this Guide for Facilities (https://info.opensupplyhub.org/facilities).
 {% endif %}
 
-{% if is_claimed %}
+{% if has_contributor_claimed %}
 We will now review the documents you submitted to claim the location (https://info.opensupplyhub.org/resources/claim-a-facility)
 and either approve or deny the claim. Review of claims typically takes 7 - 10 business days.
 You will receive another email when this stage is complete.

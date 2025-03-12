@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { arrayOf, bool, func, string } from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
@@ -15,7 +16,7 @@ import {
 
 import { facilityClaimsListPropType } from '../util/propTypes';
 import checkComponentStatus from '../util/checkComponentStatus';
-import { mainRoute } from '../util/constants';
+import { contributeProductionLocationRoute } from '../util/constants';
 import { claimFacilitiesListStyle } from '../util/styles';
 
 function ClaimedFacilitiesList({
@@ -51,7 +52,6 @@ function ClaimedFacilitiesList({
     }
 
     if (data.length === 0) {
-        window.console.log(fetching, data);
         return (
             <AppOverflow>
                 <AppGrid title={TITLE}>
@@ -70,10 +70,11 @@ function ClaimedFacilitiesList({
                         <Button
                             variant="contained"
                             color="primary"
+                            component={Link}
                             style={claimFacilitiesListStyle.searchButton}
-                            to={mainRoute}
+                            to={`${contributeProductionLocationRoute}?tab=name-address`}
                         >
-                            Search
+                            Find My Production Location
                         </Button>
                     </div>
                 </AppGrid>

@@ -71,15 +71,22 @@ const getStatusBadgeClass = (classes, status) => {
     }
 };
 
-const getTooltipText = claimStatus => {
-    if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED) {
-        return 'Production location has been claimed already.';
+const getPendingTooltipText = claimStatus => {
+    if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED) {
+        return 'Your submission is under review. You will receive a notification once the production location is live on OS Hub. You can proceed to submit a claim while your request is pending.';
     }
-    if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.PENDING) {
-        return 'There is a pending claim for this production location.';
-    }
+    return 'Your submission is being reviewed. You will receive an email with your OS ID once the review is complete.';
+};
 
-    return "You'll be able to claim the location after the moderation is done.";
+const getClaimTooltipText = claimStatus => {
+    switch (claimStatus) {
+        case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED:
+            return 'This location has already been claimed and therefore cannot be claimed again.';
+        case PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.PENDING:
+            return 'This location cannot be claimed because a pending claim already exists.';
+        default:
+            return 'You will be able to claim this location once the review is complete.';
+    }
 };
 
 const ProductionLocationDialog = ({
@@ -149,7 +156,8 @@ const ProductionLocationDialog = ({
     const deleteIcon =
         moderationStatus === MODERATION_STATUSES_ENUM.PENDING ? (
             <DialogTooltip
-                text="Your submission is under review. You will receive a notification once the production location is live on OS Hub. You can proceed to submit a claim while your request is pending."
+                text={getPendingTooltipText(claimStatus)}
+                aria-label="Pending status tooltip"
                 childComponent={infoIcon(classes)}
             />
         ) : null;
@@ -300,7 +308,7 @@ const ProductionLocationDialog = ({
                                 </>
                             ) : (
                                 <DialogTooltip
-                                    text={getTooltipText(claimStatus)}
+                                    text={getClaimTooltipText(claimStatus)}
                                     aria-label="Claim button tooltip"
                                     childComponent={claimButton({
                                         classes,
