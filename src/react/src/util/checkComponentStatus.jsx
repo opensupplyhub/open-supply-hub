@@ -1,4 +1,5 @@
 import React from 'react';
+import { arrayOf, string } from 'prop-types';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import AppGrid from '../components/AppGrid';
 import AppOverflow from '../components/AppOverflow';
@@ -12,6 +13,10 @@ const LoadingIndicator = ({ title }) => (
     </AppOverflow>
 );
 
+LoadingIndicator.propTypes = {
+    title: string.isRequired,
+};
+
 const AuthNotice = ({ title }) => (
     <AppOverflow>
         <RequireAuthNotice
@@ -20,6 +25,10 @@ const AuthNotice = ({ title }) => (
         />
     </AppOverflow>
 );
+
+AuthNotice.propTypes = {
+    title: string.isRequired,
+};
 
 const ErrorsList = ({ title, errors }) => (
     <AppOverflow>
@@ -32,6 +41,15 @@ const ErrorsList = ({ title, errors }) => (
         </AppGrid>
     </AppOverflow>
 );
+
+ErrorsList.defaultProps = {
+    errors: null,
+};
+
+ErrorsList.propTypes = {
+    title: string.isRequired,
+    errors: arrayOf(string),
+};
 
 export default {
     LoadingIndicator,
