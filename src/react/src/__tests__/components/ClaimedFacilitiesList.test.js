@@ -23,7 +23,14 @@ describe('ClaimedFacilitiesList', () => {
             claimedFacilities: {
                 data: [],
                 fetching: false
-            }
+            },
+            auth: {
+                user:{
+                    user: {
+                        isAnon: false
+                    }
+                },
+            },
         };
 
         return renderWithProviders(
@@ -45,6 +52,7 @@ describe('ClaimedFacilitiesList', () => {
 
     test('renders the button with correct text and href if no claimed production locations are available', () => {
         const { getByRole } = renderComponent();
+        ///auth
 
         const button = getByRole('button', { name: /Find My Production Location/i });
         expect(button).toBeInTheDocument();
