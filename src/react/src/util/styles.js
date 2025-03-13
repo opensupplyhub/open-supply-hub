@@ -1602,3 +1602,22 @@ export const makeRejectModerationEventDialogStyles = () =>
             width: '150px',
         }),
     });
+
+export const textFieldErrorStyles = () =>
+    Object.freeze({
+        helperText: Object.freeze({ marginLeft: '0' }),
+        errorStyle: Object.freeze({ color: 'red' }),
+        textInputStyles: Object.freeze({
+            width: '100%',
+            borderRadius: '4px',
+        }),
+        titleStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: '400',
+            padding: '10px 0px',
+            color: 'rgb(0, 0, 0)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        }),
+    });
