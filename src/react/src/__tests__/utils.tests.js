@@ -5,6 +5,9 @@ const mapValues = require('lodash/mapValues');
 const isEqual = require('lodash/isEqual');
 const includes = require('lodash/includes');
 const turf = require('@turf/turf');
+const React =  require('react');
+const { render } =  require('@testing-library/react');
+const { BrowserRouter } =  require('react-router-dom');
 
 const {
     makeFacilityListsURL,
@@ -100,6 +103,10 @@ const {
     CLAIM_A_FACILITY,
     componentsWithErrorMessage,
 } = require('../util/constants');
+const {
+    LoadingIndicator,
+    AuthNotice,
+    ErrorsList,} = require('../util/checkComponentStatus').default;
 
 const COLOURS = require('../util/COLOURS').default;
 
@@ -2192,7 +2199,7 @@ describe('getSelectStyles', () => {
         boxShadow: 'none',
         color: 'blue',
       };
-    
+
     const stateFocused = { isFocused: true };
     const stateNotFocused = { isFocused: false };
 
@@ -2208,36 +2215,67 @@ describe('getSelectStyles', () => {
         expect(controlStyles.borderColor).toBe(COLOURS.PURPLE);
         expect(controlStyles.boxShadow).toBe(`inset 0 0 0 1px ${COLOURS.PURPLE}`);
     });
-    
+
     it('applies RED border when error state is true', () => {
         const styles = getSelectStyles(true);
         const controlStyles = styles.control(provided, stateFocused);
         expect(controlStyles.borderColor).toBe(COLOURS.RED);
     });
-    
+
     it('applies correct placeholder style when error state is true', () => {
         const styles = getSelectStyles(true);
         const placeholderStyles = styles.placeholder(provided);
         expect(placeholderStyles.opacity).toBe(0.7);
         expect(placeholderStyles.color).toBe(COLOURS.RED);
     });
-    
+
     it('uses the provided color for placeholder when error state is false', () => {
         const styles = getSelectStyles();
         const placeholderStyles = styles.placeholder(provided);
         expect(placeholderStyles.opacity).toBe(0.7);
         expect(placeholderStyles.color).toBe(provided.color);
     });
-    
+
     it('sets hover borderColor to "black" when not focused and no error', () => {
         const styles = getSelectStyles();
         const controlStyles = styles.control(provided, stateNotFocused);
         expect(controlStyles['&:hover']).toEqual({ borderColor: 'black' });
     });
-    
+
     it('sets hover borderColor to false when error state is true', () => {
         const styles = getSelectStyles(true);
         const controlStyles = styles.control(provided, stateNotFocused);
         expect(controlStyles['&:hover']).toEqual({ borderColor: false });
     });
 });
+
+describe('CheckComponentStatus components', () => {
+    const expectedTitle = 'Expected title';
+
+      it('renders LoadingIndicator with title', () => {
+          const { getByText } = render(<LoadingIndicator title={expectedTitle} />);
+
+          expect(getByText(expectedTitle)).toBeInTheDocument();
+      });
+
+      it('renders AuthNotice with title', () => {
+        const { getByText } = render(
+            <BrowserRouter>
+               <AuthNotice title={expectedTitle} />
+            </BrowserRouter>
+        )
+        expect(getByText(expectedTitle)).toBeInTheDocument();
+      });
+
+      it('renders ErrorsList with title and errors', () => {
+        const errors =  [
+         'This field is required!','The right must be greater than left.',
+        ] ;
+        const { getByText } = render(<ErrorsList title={expectedTitle} errors={errors}/>);
+
+        expect(getByText(expectedTitle)).toBeInTheDocument();
+        expect(getByText(errors[0])).toBeInTheDocument();
+        expect(getByText(errors[1])).toBeInTheDocument();
+      });
+
+  });
