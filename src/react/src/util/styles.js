@@ -191,20 +191,6 @@ export const claimAFacilityFormStyles = Object.freeze({
     }),
 });
 
-export const claimAFacilitySupportDocsFormStyles = Object.freeze({
-    textFieldStyles: Object.freeze({
-        width: '50%',
-        padding: '10px 0 10px',
-    }),
-    inputGroupStyles: Object.freeze({
-        width: '100%',
-        paddingTop: '50px',
-    }),
-    asideStyles: Object.freeze({
-        padding: '5px 20px 5px 0',
-    }),
-});
-
 export const makeSelectFilterStyles = (windowWidth, origin, color = OARColor) =>
     Object.freeze({
         multiValue: Object.freeze((provided, state) => {
@@ -1635,17 +1621,30 @@ export const commonClaimFacilityFormStyles = theme =>
         }),
     });
 
-export const titleStyle = Object.freeze({
-    paddingBottom: '10px',
-    color: COLOURS.NEAR_BLACK,
-    fontSize: '2.125rem',
-    fontWeight: 'bold',
-    lineHeight: '1.20588em',
-});
-
-export const boldFontStyle = Object.freeze({
-    fontWeight: 'bold',
-});
+export const claimFacilityCommonStyles = () =>
+    Object.freeze({
+        titleStyle: Object.freeze({
+            paddingBottom: '10px',
+            color: COLOURS.NEAR_BLACK,
+            fontSize: '2.125rem',
+            fontWeight: 'bold',
+            lineHeight: '1.20588em',
+        }),
+        boldFontStyle: Object.freeze({
+            fontWeight: 'bold',
+        }),
+        textFieldStyles: Object.freeze({
+            width: '50%',
+            padding: '10px 0 10px',
+        }),
+        inputGroupStyles: Object.freeze({
+            width: '100%',
+            paddingTop: '50px',
+        }),
+        asideStyles: Object.freeze({
+            padding: '5px 20px 5px 0',
+        }),
+    });
 
 export const claimFacilitiesListStyle = Object.freeze({
     searchButton: Object.freeze({

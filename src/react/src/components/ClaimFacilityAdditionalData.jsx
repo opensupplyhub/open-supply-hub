@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { bool, func, string, PropTypes } from 'prop-types';
+import { bool, func, string, PropTypes, object } from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
@@ -19,10 +20,7 @@ import { sectorOptionsPropType } from '../util/propTypes';
 
 import { getValueFromEvent, isValidNumberOfWorkers } from '../util/util';
 
-import {
-    claimAFacilitySupportDocsFormStyles,
-    titleStyle,
-} from '../util/styles';
+import { claimFacilityCommonStyles } from '../util/styles';
 
 import { claimAFacilityAdditionalDataFormFields } from '../util/constants';
 import InputSection from '../components/InputSection';
@@ -46,6 +44,7 @@ function ClaimFacilityAdditionalData({
     sectorOptions,
     fetchSectors,
     fetching,
+    classes,
 }) {
     useEffect(() => {
         if (!sectorOptions) {
@@ -55,9 +54,9 @@ function ClaimFacilityAdditionalData({
 
     return (
         <>
-            <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
+            <div className={classes.inputGroupStyles}>
                 <InputLabel htmlFor={sectorsForm.id}>
-                    <Typography variant="title" style={titleStyle}>
+                    <Typography variant="title" className={classes.titleStyle}>
                         {sectorsForm.label}
                     </Typography>
                 </InputLabel>
@@ -75,9 +74,9 @@ function ClaimFacilityAdditionalData({
                     isClaimFacilityAdditionalDataPage
                 />
             </div>
-            <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
+            <div className={classes.inputGroupStyles}>
                 <InputLabel htmlFor={numberOfWorkersForm.id}>
-                    <Typography variant="title" style={titleStyle}>
+                    <Typography variant="title" className={classes.titleStyle}>
                         {numberOfWorkersForm.label}
                     </Typography>
                 </InputLabel>
@@ -88,16 +87,16 @@ function ClaimFacilityAdditionalData({
                     id={numberOfWorkersForm.id}
                     error={!isValidNumberOfWorkers(numberOfWorkers)}
                     variant="outlined"
-                    style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
+                    className={classes.textFieldStyles}
                     value={numberOfWorkers}
                     placeholder={numberOfWorkersForm.placeholder}
                     onChange={updateNumberOfWorkers}
                     disabled={fetching}
                 />
             </div>
-            <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
+            <div className={classes.inputGroupStyles}>
                 <InputLabel htmlFor={localLanguageNameForm.id}>
-                    <Typography variant="title" style={titleStyle}>
+                    <Typography variant="title" className={classes.titleStyle}>
                         {localLanguageNameForm.label}
                     </Typography>
                 </InputLabel>
@@ -107,7 +106,7 @@ function ClaimFacilityAdditionalData({
                 <TextField
                     id={localLanguageNameForm.id}
                     variant="outlined"
-                    style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
+                    className={classes.textFieldStyles}
                     value={localLanguageName}
                     placeholder={localLanguageNameForm.placeholder}
                     onChange={updateLocalLanguageName}
@@ -132,6 +131,7 @@ ClaimFacilityAdditionalData.propTypes = {
     sectorOptions: sectorOptionsPropType,
     fetchSectors: func.isRequired,
     fetching: bool.isRequired,
+    classes: object.isRequired,
 };
 
 function mapStateToProps({
@@ -170,4 +170,4 @@ function mapDispatchToProps(dispatch) {
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(ClaimFacilityAdditionalData);
+)(withStyles(claimFacilityCommonStyles)(ClaimFacilityAdditionalData));
