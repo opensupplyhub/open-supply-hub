@@ -290,6 +290,16 @@ const InputSection = ({
     );
 };
 
+InputSection.defaultProps = {
+    helperText: '',
+    formHelperTextProps: {},
+};
+
+InputSection.propTypes = {
+    helperText: string,
+    formHelperTextProps: object,
+};
+
 const createCountrySelectOptions = memoize(
     mapDjangoChoiceTuplesToSelectOptions,
 );
@@ -542,9 +552,6 @@ function ClaimedFacilitiesDetails({
                     onChange={updateFacilityWorkersCount}
                     disabled={updating}
                     error={!isValidNumberOfWorkers(data.facility_workers_count)}
-                    hasValidationErrorFn={() =>
-                        !isValidNumberOfWorkers(data.facility_workers_count)
-                    }
                     helperText={
                         !isValidNumberOfWorkers(
                             data.facility_workers_count,
