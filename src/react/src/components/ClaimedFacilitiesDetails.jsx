@@ -30,7 +30,7 @@ import CreatableInputOnly from './CreatableInputOnly';
 
 import COLOURS from '../util/COLOURS';
 import InputErrorText from './Contribute/InputErrorText';
-import { textFieldErrorStyles } from './util/styles';
+import { textFieldErrorStyles } from '../util/styles';
 
 import {
     fetchClaimedFacilityDetails,
@@ -541,6 +541,7 @@ function ClaimedFacilitiesDetails({
                     value={data.facility_workers_count}
                     onChange={updateFacilityWorkersCount}
                     disabled={updating}
+                    error={!isValidNumberOfWorkers(data.facility_workers_count)}
                     hasValidationErrorFn={() =>
                         !isValidNumberOfWorkers(data.facility_workers_count)
                     }
