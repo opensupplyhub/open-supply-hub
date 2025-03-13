@@ -9,7 +9,6 @@ beforeAll(() => {
     window.scrollTo = jest.fn();
 });
 
-
 jest.mock("../../components/Filters/StyledSelect", () => (props) => {
     const { options = [], value, onChange, onBlur, placeholder } = props;
     return (

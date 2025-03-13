@@ -83,6 +83,7 @@ const {
     isRequiredFieldValid,
     getSelectStyles,
     getNumberOfWorkersValidationError,
+    isValidNumberOfWorkers,
 } = require('../util/util');
 
 const {
@@ -2261,4 +2262,11 @@ describe('getSelectStyles', () => {
         expect(getNumberOfWorkersValidationError('3.9')).toBe(expectedInvalidFormatText);
     });
 
+    it('valid numberOfWorkers has no errors, invalid shows error message', () => {
+        const expectedValueOfZeroText =
+        'The value of zero is not valid. Enter a positive whole number or a valid range (e.g., 1-5).';
+
+        expect(!isValidNumberOfWorkers('100') && getNumberOfWorkersValidationError('100')).toBe(false);
+        expect(!isValidNumberOfWorkers('0-300') && getNumberOfWorkersValidationError('0-300')).toBe(expectedValueOfZeroText);
+    });
 });
