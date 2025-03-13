@@ -25,7 +25,7 @@ import {
 
 import { getValueFromEvent } from '../util/util';
 
-import { claimFacilityCommonStyles } from '../util/styles';
+import { claimedFacilitiesDetailsStyles } from '../util/styles';
 
 import { claimAFacilitySupportDocsFormFields } from '../util/constants';
 
@@ -289,4 +289,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(withStyles(claimFacilityCommonStyles)(ClaimFacilitySupportDocs));
+)(withStyles(claimedFacilitiesDetailsStyles)(ClaimFacilitySupportDocs));

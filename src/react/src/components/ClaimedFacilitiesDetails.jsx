@@ -237,7 +237,7 @@ function ClaimedFacilitiesDetails({
         return <AuthNotice title={TITLE} />;
     }
 
-    if (errors) {
+    if (errors && errors.length > 0) {
         return <ErrorsList title={TITLE} errors={errors} />;
     }
 

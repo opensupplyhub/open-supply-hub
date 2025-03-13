@@ -1649,7 +1649,7 @@ export const commonClaimFacilityFormStyles = theme =>
         }),
     });
 
-export const claimFacilityCommonStyles = () =>
+export const claimedFacilitiesDetailsStyles = () =>
     Object.freeze({
         titleStyle: Object.freeze({
             paddingBottom: '10px',

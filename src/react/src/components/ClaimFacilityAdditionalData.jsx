@@ -20,7 +20,7 @@ import { sectorOptionsPropType } from '../util/propTypes';
 
 import { getValueFromEvent, isValidNumberOfWorkers } from '../util/util';
 
-import { claimFacilityCommonStyles } from '../util/styles';
+import { claimedFacilitiesDetailsStyles } from '../util/styles';
 
 import { claimAFacilityAdditionalDataFormFields } from '../util/constants';
 import InputSection from '../components/InputSection';
@@ -170,4 +170,4 @@ function mapDispatchToProps(dispatch) {
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(withStyles(claimFacilityCommonStyles)(ClaimFacilityAdditionalData));
+)(withStyles(claimedFacilitiesDetailsStyles)(ClaimFacilityAdditionalData));
