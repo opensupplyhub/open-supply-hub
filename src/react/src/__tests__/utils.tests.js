@@ -2242,7 +2242,9 @@ describe('getSelectStyles', () => {
         const controlStyles = styles.control(provided, stateNotFocused);
         expect(controlStyles['&:hover']).toEqual({ borderColor: false });
     });
+});
 
+describe('getNumberOfWorkersValidationError', () => {
     it('clear error messages for number of workers field', () => {
         const expectedValueOfZeroText =
         'The value of zero is not valid. Enter a positive whole number or a valid range (e.g., 1-5).';
@@ -2269,4 +2271,4 @@ describe('getSelectStyles', () => {
         expect(!isValidNumberOfWorkers('100') && getNumberOfWorkersValidationError('100')).toBe(false);
         expect(!isValidNumberOfWorkers('0-300') && getNumberOfWorkersValidationError('0-300')).toBe(expectedValueOfZeroText);
     });
-});
+ })
