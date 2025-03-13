@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { bool, func, string, PropTypes } from 'prop-types';
+import { bool, func, string, PropTypes, object } from 'prop-types';
 import { connect } from 'react-redux';
+import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import InputLabel from '@material-ui/core/InputLabel';
@@ -34,8 +35,10 @@ import {
     isValidNumberOfWorkers,
     getNumberOfWorkersValidationError,
 } from '../util/util';
-
-import { claimAFacilitySupportDocsFormStyles } from '../util/styles';
+import {
+    claimAFacilitySupportDocsFormStyles,
+    textFieldErrorStyles,
+} from '../util/styles';
 
 import { claimAFacilityAdditionalDataFormFields } from '../util/constants';
 
@@ -250,6 +253,7 @@ function ClaimFacilityAdditionalData({
     sectorOptions,
     fetchSectors,
     fetching,
+    classes,
 }) {
     useEffect(() => {
         if (!sectorOptions) {
@@ -305,6 +309,18 @@ function ClaimFacilityAdditionalData({
                             />
                         )
                     }
+                    FormHelperTextProps={{
+                        className: classes.helperText,
+                    }}
+                    InputProps={{
+                        classes: {
+                            input: `
+                                ${
+                                    !isValidNumberOfWorkers(numberOfWorkers) &&
+                                    classes.errorStyle
+                                }`,
+                        },
+                    }}
                 />
             </div>
             <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
@@ -344,6 +360,7 @@ ClaimFacilityAdditionalData.propTypes = {
     sectorOptions: sectorOptionsPropType,
     fetchSectors: func.isRequired,
     fetching: bool.isRequired,
+    classes: object.isRequired,
 };
 
 function mapStateToProps({
@@ -382,4 +399,4 @@ function mapDispatchToProps(dispatch) {
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(ClaimFacilityAdditionalData);
+)(withStyles(textFieldErrorStyles)(ClaimFacilityAdditionalData));
