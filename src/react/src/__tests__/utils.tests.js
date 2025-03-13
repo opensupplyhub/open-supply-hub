@@ -2258,13 +2258,15 @@ describe('CheckComponentStatus components', () => {
           expect(getByText(expectedTitle)).toBeInTheDocument();
       });
 
-      it('renders AuthNotice with title', () => {
+      it('renders AuthNotice with title and text', () => {
+        const text = 'Sign in to view your Open Supply Hub facility claims.';
         const { getByText } = render(
             <BrowserRouter>
                <AuthNotice title={expectedTitle} />
             </BrowserRouter>
         )
         expect(getByText(expectedTitle)).toBeInTheDocument();
+        expect(getByText(text)).toBeInTheDocument();
       });
 
       it('renders ErrorsList with title and errors', () => {
