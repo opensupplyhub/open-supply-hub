@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import { arrayOf, bool, func, string } from 'prop-types';
+import { arrayOf, bool, func, string, object } from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
@@ -132,6 +133,7 @@ function ClaimedFacilitiesDetails({
     fetchSectors,
     fetchParentCompanies,
     userHasSignedIn,
+    classes,
 }) {
     /* eslint-disable react-hooks/exhaustive-deps */
     // disabled because we want to use this as just
@@ -241,31 +243,15 @@ function ClaimedFacilitiesDetails({
     }
 
     const countryOptions = createCountrySelectOptions(data.countries);
-    const styles = Object.freeze({
-        containerStyles: Object.freeze({
-            display: 'flex',
-            width: '100%',
-            justifyContent: 'space-between',
-            marginBottom: '100px',
-        }),
-        controlStyles: Object.freeze({
-            padding: '10px 0',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-        }),
-        errorStyle: Object.freeze({ color: 'red' }),
-        widthStyle: Object.freeze({ width: '60%' }),
-    });
 
     return (
         <AppOverflow>
             <AppGrid title={TITLE}>
-                <div style={styles.containerStyles}>
-                    <div style={styles.widthStyle}>
+                <div className={classes.containerStyles}>
+                    <div className={classes.widthStyle}>
                         <Typography
                             variant="title"
-                            style={styles.controlStyles}
+                            className={classes.titleStyles}
                         >
                             Facility Details
                         </Typography>
@@ -440,16 +426,10 @@ function ClaimedFacilitiesDetails({
                         />
                         <Typography
                             variant="title"
-                            className={
-                                commonClaimFacilityFormStyles.headingStyles
-                            }
+                            className={classes.headingStyles}
                         >
                             Point of contact{' '}
-                            <span
-                                className={
-                                    commonClaimFacilityFormStyles.switchSectionStyles
-                                }
-                            >
+                            <span className={classes.switchSectionStyles}>
                                 <Switch
                                     color="primary"
                                     onChange={updateContactVisibility}
@@ -481,16 +461,10 @@ function ClaimedFacilitiesDetails({
                         />
                         <Typography
                             variant="headline"
-                            className={
-                                commonClaimFacilityFormStyles.headingStyles
-                            }
+                            className={classes.headingStyles}
                         >
                             Office information{' '}
-                            <span
-                                className={
-                                    commonClaimFacilityFormStyles.switchSectionStyles
-                                }
-                            >
+                            <span className={classes.switchSectionStyles}>
                                 <Switch
                                     color="primary"
                                     onChange={updateOfficeVisibility}
@@ -499,11 +473,7 @@ function ClaimedFacilitiesDetails({
                                 Publicly visible
                             </span>
                         </Typography>
-                        <aside
-                            className={
-                                commonClaimFacilityFormStyles.asideStyles
-                            }
-                        >
+                        <aside className={classes.asideStyles}>
                             If different from facility address
                         </aside>
                         <InputSection
@@ -533,13 +503,9 @@ function ClaimedFacilitiesDetails({
                             disabled={updating}
                         />
                         {errorUpdating && (
-                            <div
-                                className={
-                                    commonClaimFacilityFormStyles.errorStyles
-                                }
-                            >
+                            <div className={classes.errorStyles}>
                                 <Typography variant="body1">
-                                    <span style={styles.errorStyle}>
+                                    <span className={classes.errorTextStyle}>
                                         The following errors prevented updating
                                         the facility claim:
                                     </span>
@@ -547,7 +513,11 @@ function ClaimedFacilitiesDetails({
                                 <ul>
                                     {errorUpdating.map(err => (
                                         <li key={err}>
-                                            <span style={styles.errorStyle}>
+                                            <span
+                                                className={
+                                                    classes.errorTextStyle
+                                                }
+                                            >
                                                 {err}
                                             </span>
                                         </li>
@@ -555,11 +525,7 @@ function ClaimedFacilitiesDetails({
                                 </ul>
                             </div>
                         )}
-                        <div
-                            className={
-                                commonClaimFacilityFormStyles.controlStyles
-                            }
-                        >
+                        <div className={classes.controlStyles}>
                             <Button
                                 onClick={saveForm}
                                 variant="contained"
@@ -634,6 +600,7 @@ ClaimedFacilitiesDetails.propTypes = {
     parentCompanyOptions: parentCompanyOptionsPropType,
     fetchSectors: func.isRequired,
     userHasSignedIn: bool.isRequired,
+    classes: object.isRequired,
 };
 
 function mapStateToProps({
@@ -767,4 +734,4 @@ function mapDispatchToProps(
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(ClaimedFacilitiesDetails);
+)(withStyles(commonClaimFacilityFormStyles)(ClaimedFacilitiesDetails));

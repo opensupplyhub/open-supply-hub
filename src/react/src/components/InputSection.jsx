@@ -24,7 +24,7 @@ import Select from 'react-select';
 import Creatable from 'react-select/creatable';
 import CreatableInputOnly from './CreatableInputOnly';
 import ShowOnly from './ShowOnly';
-import { commonClaimFacilityFormStyles } from '../util/styles';
+import { inputSectionStyles } from '../util/styles';
 import COLOURS from '../util/COLOURS';
 
 const selectStyles = Object.freeze({
@@ -225,4 +225,4 @@ InputSection.propTypes = {
     classes: object.isRequired,
 };
 
-export default withStyles(commonClaimFacilityFormStyles)(InputSection);
+export default withStyles(inputSectionStyles)(InputSection);
