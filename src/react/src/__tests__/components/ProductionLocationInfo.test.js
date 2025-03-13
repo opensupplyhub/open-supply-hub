@@ -5,6 +5,11 @@ import { MemoryRouter, Route, BrowserRouter as Router } from "react-router-dom";
 import ProductionLocationInfo from "../../components/Contribute/ProductionLocationInfo";
 import renderWithProviders from "../../util/testUtils/renderWithProviders";
 
+beforeAll(() => {
+    window.scrollTo = jest.fn();
+});
+
+
 jest.mock("../../components/Filters/StyledSelect", () => (props) => {
     const { options = [], value, onChange, onBlur, placeholder } = props;
     return (
@@ -262,7 +267,7 @@ describe("ProductionLocationInfo component, test invalid incoming data for UPDAT
     const renderComponent = (props = {}) =>
         renderWithProviders(
             <MemoryRouter initialEntries={[`/contribute/single-location/${osID}/info/`]}>
-                <Route 
+                <Route
                     path="/contribute/single-location/:osID/info/"
                     component={() => <ProductionLocationInfo {...defaultProps} {...props} />}
                 />
@@ -272,8 +277,7 @@ describe("ProductionLocationInfo component, test invalid incoming data for UPDAT
 
     test("update button should be enabled when number of workers invalid but additional info is hidden", () => {
         const { getByRole, getByText, getByTestId, getByPlaceholderText, queryByText } = renderComponent();
-
-        expect(queryByText("Enter the number of workers as a number or range")).not.toBeInTheDocument();
+        expect(queryByText("The value of zero is not valid. Enter a positive whole number or a valid range (e.g., 1-5).")).not.toBeInTheDocument();
 
         const updateButton = getByRole("button", { name: /Update/i });
         expect(updateButton).toBeEnabled();
@@ -283,7 +287,7 @@ describe("ProductionLocationInfo component, test invalid incoming data for UPDAT
 
         const numberOfWorkersInput = getByPlaceholderText("Enter the number of workers as a number or range");
         expect(numberOfWorkersInput).toHaveAttribute("aria-invalid", "true");
-        expect(getByText("Enter the number of workers as a number or range")).toBeInTheDocument();
+        expect(getByText("The value of zero is not valid. Enter a positive whole number or a valid range (e.g., 1-5).")).toBeInTheDocument();
 
         expect(updateButton).toBeDisabled();
 
