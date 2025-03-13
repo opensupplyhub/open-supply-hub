@@ -19,7 +19,11 @@ import AppGrid from './AppGrid';
 
 import ClaimedFacilitiesDetailsSidebar from './ClaimedFacilitiesDetailsSidebar';
 import ShowOnly from './ShowOnly';
-import checkComponentStatus from '../util/checkComponentStatus';
+import {
+    LoadingIndicator,
+    AuthNotice,
+    ErrorsList,
+} from './CheckComponentStatus';
 import InputSection from '../components/InputSection';
 
 import {
@@ -225,7 +229,6 @@ function ClaimedFacilitiesDetails({
             });
     };
 
-    const { LoadingIndicator, AuthNotice, ErrorsList } = checkComponentStatus;
     if (fetching) {
         return <LoadingIndicator title={TITLE} />;
     }

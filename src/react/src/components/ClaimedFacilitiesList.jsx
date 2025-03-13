@@ -15,7 +15,11 @@ import {
 } from '../actions/claimedFacilities';
 
 import { facilityClaimsListPropType } from '../util/propTypes';
-import checkComponentStatus from '../util/checkComponentStatus';
+import {
+    LoadingIndicator,
+    AuthNotice,
+    ErrorsList,
+} from './CheckComponentStatus';
 import { contributeProductionLocationRoute } from '../util/constants';
 import { claimFacilitiesListStyle } from '../util/styles';
 
@@ -34,7 +38,6 @@ function ClaimedFacilitiesList({
         return () => clearClaimed();
     }, [getClaimed, clearClaimed]);
 
-    const { LoadingIndicator, AuthNotice, ErrorsList } = checkComponentStatus;
     if (fetching) {
         return <LoadingIndicator title={TITLE} />;
     }
