@@ -260,7 +260,7 @@ describe('ProductionLocationDialog tooltip messages for PENDING, CLAIMED and UNC
                 country: "BD"
             }
         }
-    }
+    };
 
     beforeEach(() => {
         useHistory.mockReturnValue({
@@ -269,90 +269,54 @@ describe('ProductionLocationDialog tooltip messages for PENDING, CLAIMED and UNC
         });
     });
 
-    test('renders claim button and pending badge tooltips when moderation event is pending and production location has been claimed', async () => {
-        const { getAllByTestId, getByRole, findByText } = render(
-            <Router>
-                <ProductionLocationDialog 
-                    classes={{}}
-                    data={defaultProps.data}
-                    osID={defaultProps.osID}
-                    moderationStatus={MODERATION_STATUSES_ENUM.PENDING}
-                    claimStatus={PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED}
-                />
-            </Router>
-        );
+    test.each([
+        [PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.CLAIMED, 
+            'Your submission is under review. You will receive a notification once the production location is live on OS Hub.', 
+            'This location has already been claimed and therefore cannot be claimed again.'],
+        [PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.PENDING, 
+            'Your submission is under review. You will receive a notification once the production location is live on OS Hub.', 
+            'This location cannot be claimed because a pending claim already exists.']
+    ])(
+        'renders claim button and pending badge tooltips when moderation event is pending and production location has status: %s',
+        async (claimStatus, expectedPendingTooltip, expectedClaimTooltip) => {
+            const { getAllByTestId, getByRole, findByText } = render(
+                <Router>
+                    <ProductionLocationDialog 
+                        classes={{}}
+                        data={defaultProps.data}
+                        osID={defaultProps.osID}
+                        moderationStatus={MODERATION_STATUSES_ENUM.PENDING}
+                        claimStatus={claimStatus}
+                    />
+                </Router>
+            );
 
-        const tooltipIcons = getAllByTestId('tooltip-icon');
+            const tooltipIcons = getAllByTestId('tooltip-icon');
 
-        // Pending icon tooltip message
-        fireEvent.mouseOver(tooltipIcons[0]);
+            // Pending icon tooltip message
+            fireEvent.mouseOver(tooltipIcons[0]);
 
-        const pendingTooltipText = await findByText(
-            'Your submission is being reviewed. You will receive an email with your OS ID once the review is complete.'
-        );
-        expect(pendingTooltipText).toBeInTheDocument();
+            const pendingTooltipText = await findByText(expectedPendingTooltip);
+            expect(pendingTooltipText).toBeInTheDocument();
 
-        fireEvent.mouseOut(tooltipIcons[0]);
-        expect(pendingTooltipText).not.toBeInTheDocument();
+            fireEvent.mouseOut(tooltipIcons[0]);
+            expect(pendingTooltipText).not.toBeInTheDocument();
 
-        // Claim button tooltip message
-        // Disabled claim button is an <a> tag wrapped into a <span> and doesn't contain 'disabled' attribute
-        const claimButton = getByRole('button', { name: /Continue to Claim/i });
-        expect(claimButton).toHaveAttribute('tabindex', '-1');
+            // Claim button tooltip message
+            const claimButton = getByRole('button', { name: /Continue to Claim/i });
+            expect(claimButton).toHaveAttribute('tabindex', '-1');
 
-        fireEvent.mouseOver(claimButton);
-        const claimTooltipText = await findByText(
-            'This location has already been claimed and therefore cannot be claimed again.'
-        );
-        expect(claimTooltipText).toBeInTheDocument();
+            fireEvent.mouseOver(claimButton);
+            const claimTooltipText = await findByText(expectedClaimTooltip);
+            expect(claimTooltipText).toBeInTheDocument();
 
-        fireEvent.mouseOut(claimButton);
-        expect(claimTooltipText).not.toBeInTheDocument();
-    });
-
-    test('renders claim button and pending badge tooltips when moderation event is pending and production location has pending claim', async () => {
-        const { getAllByTestId, getByRole, findByText } = render(
-            <Router>
-                <ProductionLocationDialog 
-                    classes={{}}
-                    data={defaultProps.data}
-                    osID={defaultProps.osID}
-                    moderationStatus={MODERATION_STATUSES_ENUM.PENDING}
-                    claimStatus={PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.PENDING}
-                />
-            </Router>
-        );
-
-        const tooltipIcons = getAllByTestId('tooltip-icon');
-
-        // Pending icon tooltip message
-        fireEvent.mouseOver(tooltipIcons[0]);
-
-        const pendingTooltipText = await findByText(
-            'Your submission is being reviewed. You will receive an email with your OS ID once the review is complete.'
-        );
-        expect(pendingTooltipText).toBeInTheDocument();
-
-        fireEvent.mouseOut(tooltipIcons[0]);
-        expect(pendingTooltipText).not.toBeInTheDocument();
-
-        // Claim button tooltip message
-        // Disabled claim button is an <a> tag wrapped into a <span> and doesn't contain 'disabled' attribute
-        const claimButton = getByRole('button', { name: /Continue to Claim/i });
-        expect(claimButton).toHaveAttribute('tabindex', '-1');
-
-        fireEvent.mouseOver(claimButton);
-        const claimTooltipText = await findByText(
-            'This location cannot be claimed because a pending claim already exists.'
-        );
-        expect(claimTooltipText).toBeInTheDocument();
-
-        fireEvent.mouseOut(claimButton);
-        expect(claimTooltipText).not.toBeInTheDocument();
-    });
+            fireEvent.mouseOut(claimButton);
+            expect(claimTooltipText).not.toBeInTheDocument();
+        }
+    );
 
     test('renders claim button and pending badge tooltips when moderation event is pending and production location is available for claim', async () => {
-        const { getAllByTestId, getByRole, findByText} = render(
+        const { getAllByTestId, getByRole, findByText } = render(
             <Router>
                 <ProductionLocationDialog 
                     classes={{}}
@@ -370,7 +334,7 @@ describe('ProductionLocationDialog tooltip messages for PENDING, CLAIMED and UNC
         fireEvent.mouseOver(tooltipIcons[0]);
 
         const pendingTooltipText = await findByText(
-            'Your submission is under review. You will receive a notification once the production location is live on OS Hub.'
+            'Your submission is under review. You will receive a notification once the production location is live on OS Hub. You can proceed to submit a claim while your request is pending.'
         );
         expect(pendingTooltipText).toBeInTheDocument();
 
@@ -382,4 +346,4 @@ describe('ProductionLocationDialog tooltip messages for PENDING, CLAIMED and UNC
         expect(claimButton).toHaveAttribute('href', `/facilities/${defaultProps.osID}/claim`);
         expect(claimButton).not.toBeDisabled();
     });
-})
+});
