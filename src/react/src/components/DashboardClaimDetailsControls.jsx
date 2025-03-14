@@ -26,6 +26,7 @@ import { facilityClaimStatusChoicesEnum } from '../util/constants';
 import { getValueFromEvent } from '../util/util';
 
 import { facilityClaimPropType } from '../util/propTypes';
+import COLOURS from '../util/COLOURS';
 
 const dialogTypesEnum = Object.freeze({
     APPROVE: 'APPROVE',
@@ -70,6 +71,10 @@ const dashboardClaimsControlsStyles = Object.freeze({
     }),
     statusLabelStyles: Object.freeze({
         padding: '1rem 0',
+        color: COLOURS.NEAR_BLACK,
+        fontSize: '2.125rem',
+        fontWeight: '400',
+        lineHeight: '1.20588em',
     }),
     dialogActionsStyles: Object.freeze({
         display: 'flex',
@@ -263,7 +268,7 @@ function DashboardClaimsDetailsControls({
                     Facility Claim ID {claimID}
                 </Typography>
                 <Typography
-                    variant="display1"
+                    variant="title"
                     style={dashboardClaimsControlsStyles.statusLabelStyles}
                 >
                     {status}

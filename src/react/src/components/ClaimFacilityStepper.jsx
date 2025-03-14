@@ -57,10 +57,13 @@ const popupDialogStyles = Object.freeze({
         padding: '35px',
     }),
     titleStyles: Object.freeze({
-        fontWeight: 'bold',
         margin: 'auto',
         textAlign: 'center',
         color: COLOURS.NEAR_BLACK,
+        paddingBottom: '10px',
+        fontSize: '2.125rem',
+        fontWeight: '400',
+        lineHeight: '1.20588em',
     }),
     contentStyles: Object.freeze({
         fontSize: '20px',
@@ -293,7 +296,7 @@ function ClaimFacilityStepper({
                     <div style={popupDialogStyles.containerStyles}>
                         <DialogContent>
                             <Typography
-                                variant="display1"
+                                variant="title"
                                 style={popupDialogStyles.titleStyles}
                             >
                                 Thank you for submitting your claim request!

@@ -1,6 +1,7 @@
 import React from 'react';
-import { bool, func, string, PropTypes } from 'prop-types';
+import { bool, func, string, PropTypes, object } from 'prop-types';
 import { connect } from 'react-redux';
+import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import InputLabel from '@material-ui/core/InputLabel';
@@ -24,21 +25,9 @@ import {
 
 import { getValueFromEvent } from '../util/util';
 
-import { claimAFacilitySupportDocsFormStyles } from '../util/styles';
+import { claimedFacilitiesDetailsStyles } from '../util/styles';
 
 import { claimAFacilitySupportDocsFormFields } from '../util/constants';
-
-import COLOURS from '../util/COLOURS';
-
-const yourContactInfoTitleStyle = Object.freeze({
-    paddingBottom: '10px',
-    color: COLOURS.NEAR_BLACK,
-    fontWeight: 'bold',
-});
-
-const yourContactInfoDescStyle = Object.freeze({
-    fontWeight: 'bold',
-});
 
 const {
     contactYourName,
@@ -67,14 +56,15 @@ const ClaimFacilitySupportDocs = ({
     updateUploadFiles,
     updateBusinessUploadFiles,
     fetching,
+    classes,
 }) => (
     <>
-        <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
-            <Typography variant="display1" style={yourContactInfoTitleStyle}>
+        <div className={classes.inputGroupStyles}>
+            <Typography variant="title" className={classes.boldTitleStyle}>
                 Your Contact Information
                 <RequiredAsterisk />
             </Typography>
-            <Typography variant="subheading" style={yourContactInfoDescStyle}>
+            <Typography variant="subheading" className={classes.boldFontStyle}>
                 To confirm your affiliation with this production location, your
                 name and job title are required in addition to one of the
                 following: business website showing your name and title,
@@ -82,7 +72,7 @@ const ClaimFacilitySupportDocs = ({
                 employment documentation.
             </Typography>
         </div>
-        <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
+        <div className={classes.inputGroupStyles}>
             <InputLabel htmlFor={contactYourName.id}>
                 <Typography variant="title">
                     {contactYourName.label}
@@ -94,14 +84,14 @@ const ClaimFacilitySupportDocs = ({
                 error={isEmpty(yourName)}
                 id={contactYourName.id}
                 variant="outlined"
-                style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
+                className={classes.textFieldStyles}
                 value={yourName}
                 placeholder={contactYourName.placeholder}
                 onChange={updateYourName}
                 disabled={fetching}
             />
         </div>
-        <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
+        <div className={classes.inputGroupStyles}>
             <InputLabel htmlFor={contactYourTitle.id}>
                 <Typography variant="title">
                     {contactYourTitle.label}
@@ -112,14 +102,14 @@ const ClaimFacilitySupportDocs = ({
                 error={isEmpty(yourTitle)}
                 id={contactYourTitle.id}
                 variant="outlined"
-                style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
+                className={classes.textFieldStyles}
                 value={yourTitle}
                 placeholder={contactYourTitle.placeholder}
                 onChange={updateYourTitle}
                 disabled={fetching}
             />
         </div>
-        <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
+        <div className={classes.inputGroupStyles}>
             <InputLabel htmlFor={contactYourBusinessWebsite.id}>
                 <Typography variant="title">
                     {contactYourBusinessWebsite.label}
@@ -132,14 +122,14 @@ const ClaimFacilitySupportDocs = ({
                     !isURL(yourBusinessWebsite),
                 ])}
                 variant="outlined"
-                style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
+                className={classes.textFieldStyles}
                 value={yourBusinessWebsite}
                 placeholder={contactYourBusinessWebsite.placeholder}
                 onChange={updateYourBusinessWebsite}
                 disabled={fetching}
             />
         </div>
-        <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
+        <div className={classes.inputGroupStyles}>
             <Typography variant="title">
                 {yourAdditionalDocumentationTitle.label}
             </Typography>
@@ -154,22 +144,22 @@ const ClaimFacilitySupportDocs = ({
                 updateUploadFiles={updateUploadFiles}
             />
         </div>
-        <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
-            <Typography variant="display1" style={yourContactInfoTitleStyle}>
+        <div className={classes.inputGroupStyles}>
+            <Typography variant="title" className={classes.boldTitleStyle}>
                 Business Contact Information
                 <RequiredAsterisk />
             </Typography>
-            <Typography variant="subheading" style={yourContactInfoDescStyle}>
+            <Typography variant="subheading" className={classes.boldFontStyle}>
                 To confirm the name and address of the production location, at
                 least one of the following documents is required: utility bill,
                 business website, registration document, or LinkedIn profile.
             </Typography>
-            <Typography variant="subheading" style={yourContactInfoDescStyle}>
+            <Typography variant="subheading" className={classes.boldFontStyle}>
                 Please make sure to provide enough documentation to confirm the
                 production location’s name AND address.
             </Typography>
         </div>
-        <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
+        <div className={classes.inputGroupStyles}>
             <InputLabel htmlFor={contactBusinessWebsite.id}>
                 <Typography variant="title">
                     {contactBusinessWebsite.label}
@@ -182,14 +172,14 @@ const ClaimFacilitySupportDocs = ({
                     !isURL(businessWebsite),
                 ])}
                 variant="outlined"
-                style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
+                className={classes.textFieldStyles}
                 value={businessWebsite}
                 placeholder={contactBusinessWebsite.placeholder}
                 onChange={updateBusinessWebsite}
                 disabled={fetching}
             />
         </div>
-        <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
+        <div className={classes.inputGroupStyles}>
             <InputLabel htmlFor={contactBusinessLinkedinProfile.id}>
                 <Typography variant="title">
                     {contactBusinessLinkedinProfile.label}
@@ -202,14 +192,14 @@ const ClaimFacilitySupportDocs = ({
                     !isURL(businessLinkedinProfile),
                 ])}
                 variant="outlined"
-                style={claimAFacilitySupportDocsFormStyles.textFieldStyles}
+                className={classes.textFieldStyles}
                 value={businessLinkedinProfile}
                 placeholder={contactBusinessLinkedinProfile.placeholder}
                 onChange={updateBusinessLinkedinProfile}
                 disabled={fetching}
             />
         </div>
-        <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
+        <div className={classes.inputGroupStyles}>
             <Typography variant="title">
                 {businessAdditionalDocumentationTitle.label}
             </Typography>
@@ -248,6 +238,7 @@ ClaimFacilitySupportDocs.propTypes = {
     updateUploadFiles: PropTypes.func.isRequired,
     updateBusinessUploadFiles: PropTypes.func.isRequired,
     fetching: bool.isRequired,
+    classes: object.isRequired,
 };
 
 const mapStateToProps = ({
@@ -298,4 +289,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(ClaimFacilitySupportDocs);
+)(withStyles(claimedFacilitiesDetailsStyles)(ClaimFacilitySupportDocs));

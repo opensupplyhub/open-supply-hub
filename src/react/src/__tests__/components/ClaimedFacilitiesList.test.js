@@ -23,7 +23,14 @@ describe('ClaimedFacilitiesList', () => {
             claimedFacilities: {
                 data: [],
                 fetching: false
-            }
+            },
+            auth: {
+                user:{
+                    user: {
+                        isAnon: false
+                    }
+                },
+            },
         };
 
         return renderWithProviders(

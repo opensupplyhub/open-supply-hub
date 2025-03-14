@@ -93,7 +93,7 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                             <MessyIcon className={classes.messyIcon} />
                             <div className={classes.messyContent}>
                                 <Typography
-                                    variant="display1"
+                                    variant="title"
                                     className={classes.messyTitle}
                                 >
                                     Have messy data?
