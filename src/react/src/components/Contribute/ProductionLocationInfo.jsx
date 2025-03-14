@@ -422,7 +422,6 @@ const ProductionLocationInfo = ({
             onClick={() => handleProductionLocation(inputData, osID)}
             className={classes.submitButtonStyles}
             disabled={!isFormValid}
-            aria-label="Submit button"
         >
             {submitButtonText}
         </Button>
