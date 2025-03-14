@@ -33,7 +33,7 @@ jest.mock('@material-ui/core/Tooltip', () => ({ children, title, open, onOpen, o
         onMouseOver={onOpen}
         onFocus={onOpen}
         onMouseOut={onClose}
-        onBlur={onClose}    
+        onBlur={onClose}
     >
         {children}
         {open && <div data-testid="tooltip">{title}</div>}
@@ -79,7 +79,7 @@ describe('RejectModerationEventDialog component', () => {
         
         expect(rejectButton).toBeDisabled();
       });
-      
+
     test('reject button is enabled when editor text is at least 30 characters and calls updateModerationEvent and closeDialog on click', async () => {
         const { getByRole, getByTestId } = renderWithProviders(
             <RejectModerationEventDialog {...defaultProps} />
@@ -96,7 +96,7 @@ describe('RejectModerationEventDialog component', () => {
         expect(rejectButton).toBeEnabled();
         
         fireEvent.click(rejectButton);
-        
+
         expect(mockUpdateModerationEvent).toHaveBeenCalledTimes(1);
         expect(mockUpdateModerationEvent).toHaveBeenCalledWith(
             MODERATION_STATUSES_ENUM.REJECTED,
@@ -137,7 +137,7 @@ describe('RejectModerationEventDialog component', () => {
         fireEvent.change(fakeEditor, { target: { value: validText } });
 
         expect(rejectButton).toBeEnabled();
-        
+
         fireEvent.mouseOver(rejectButton);
         expect(queryByText('Please provide a message with at least 30 characters.')).not.toBeInTheDocument();
     });
