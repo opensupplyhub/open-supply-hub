@@ -16,11 +16,22 @@ describe('CheckComponentStatus components', () => {
         expect(getByText(expectedTitle)).toBeInTheDocument();
     });
 
-    it('renders AuthNotice with title and text', () => {
-      const text = 'Sign in to view your Open Supply Hub facility claims.';
+    it('renders AuthNotice with title and default text', () => {
+      const defaultText = 'Sign in to view your Open Supply Hub facility claims.';
       const { getByText } = render(
           <Router>
-             <AuthNotice title={expectedTitle} />
+             <AuthNotice title={expectedTitle}/>
+          </Router>
+      )
+      expect(getByText(expectedTitle)).toBeInTheDocument();
+      expect(getByText(defaultText)).toBeInTheDocument();
+    });
+
+    it('renders AuthNotice with title and custom text', () => {
+      const text = 'Sign in to view your Open Supply Hub lists.';
+      const { getByText } = render(
+          <Router>
+             <AuthNotice title={expectedTitle} text={text}/>
           </Router>
       )
       expect(getByText(expectedTitle)).toBeInTheDocument();

@@ -17,17 +17,19 @@ LoadingIndicator.propTypes = {
     title: string.isRequired,
 };
 
-export const AuthNotice = ({ title }) => (
+export const AuthNotice = ({ title, text }) => (
     <AppOverflow>
-        <RequireAuthNotice
-            title={title}
-            text="Sign in to view your Open Supply Hub facility claims."
-        />
+        <RequireAuthNotice title={title} text={text} />
     </AppOverflow>
 );
 
+AuthNotice.defaultProps = {
+    text: 'Sign in to view your Open Supply Hub facility claims.',
+};
+
 AuthNotice.propTypes = {
     title: string.isRequired,
+    text: string,
 };
 
 export const ErrorsList = ({ title, errors }) => (

@@ -2,14 +2,12 @@ import React, { Component } from 'react';
 import { arrayOf, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
-import CircularProgress from '@material-ui/core/CircularProgress';
 
 import AppGrid from './AppGrid';
 import AppOverflow from './AppOverflow';
 import FacilityListsEmpty from './FacilityListsEmpty';
 import FacilityListsTable from './FacilityListsTable';
 import ShowOnly from './ShowOnly';
-import RequireAuthNotice from './RequireAuthNotice';
 
 import {
     fetchUserFacilityLists,
@@ -18,6 +16,11 @@ import {
 
 import { claimedFacilitiesRoute, InfoLink, InfoPaths } from '../util/constants';
 import { facilityListPropType } from '../util/propTypes';
+import {
+    LoadingIndicator,
+    AuthNotice,
+    ErrorsList,
+} from './CheckComponentStatus';
 
 class FacilityLists extends Component {
     componentDidMount() {
@@ -40,34 +43,20 @@ class FacilityLists extends Component {
         const TITLE = 'My Lists';
 
         if (fetching || fetchingSessionSignIn) {
-            return (
-                <AppGrid title={TITLE}>
-                    <CircularProgress size={50} />
-                </AppGrid>
-            );
+            return <LoadingIndicator title={TITLE} />;
         }
 
         if (!userHasSignedIn) {
             return (
-                <RequireAuthNotice
+                <AuthNotice
                     title={TITLE}
                     text="Sign in to view your Open Supply Hub lists"
                 />
             );
         }
 
-        if (errors?.length) {
-            return (
-                <AppGrid title={TITLE}>
-                    <ul>
-                        {errors.map(err => (
-                            <li key={err} style={{ color: 'red' }}>
-                                {err}
-                            </li>
-                        ))}
-                    </ul>
-                </AppGrid>
-            );
+        if (errors && errors.length > 0) {
+            return <ErrorsList title={TITLE} errors={errors} />;
         }
 
         const tableComponent =
