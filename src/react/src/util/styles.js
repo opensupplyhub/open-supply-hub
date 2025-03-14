@@ -1624,3 +1624,16 @@ export const textFieldErrorStyles = () =>
             alignItems: 'center',
         }),
     });
+
+export const makeStyledTooltipStyles = () =>
+    Object.freeze({
+        tooltip: {
+            color: 'rgba(0, 0, 0, 0.8)',
+            fontSize: '0.875rem',
+            backgroundColor: 'white',
+            border: 'solid rgba(0, 0, 0, 0.25)',
+            borderRadius: '10px',
+            padding: '10px',
+            lineHeight: '1',
+        },
+    });
