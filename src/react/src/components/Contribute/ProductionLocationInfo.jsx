@@ -11,6 +11,7 @@ import Paper from '@material-ui/core/Paper';
 import Switch from '@material-ui/core/Switch';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
+import Tooltip from '@material-ui/core/Tooltip';
 import RequireAuthNotice from '../RequireAuthNotice';
 import StyledSelect from '../Filters/StyledSelect';
 import RequiredAsterisk from '../RequiredAsterisk';
@@ -53,8 +54,23 @@ import {
     mockedSectors,
     productionLocationInfoRouteCommon,
     MODERATION_STATUSES_ENUM,
+    DISABLE_LIST_UPLOADING,
+    MAINTENANCE_MESSAGE,
 } from '../../util/constants';
 import ProductionLocationDialog from './ProductionLocationDialog';
+import FeatureFlag from '../FeatureFlag';
+
+const StyledTooltip = withStyles({
+    tooltip: {
+        color: 'rgba(0, 0, 0, 0.8)',
+        fontSize: '0.875rem',
+        backgroundColor: 'white',
+        border: 'solid rgba(0, 0, 0, 0.25)',
+        borderRadius: '10px',
+        padding: '10px',
+        lineHeight: '1',
+    },
+})(Tooltip);
 
 const ProductionLocationInfo = ({
     submitMethod,
@@ -405,6 +421,35 @@ const ProductionLocationInfo = ({
             toast(singleProductionLocationError[0]);
         }
     }, [singleProductionLocationError]);
+
+    const activeSubmitButton = (
+        <Button
+            color="secondary"
+            variant="contained"
+            onClick={() => handleProductionLocation(inputData, osID)}
+            className={classes.submitButtonStyles}
+            disabled={!isFormValid}
+            aria-label="Submit button"
+        >
+            {submitButtonText}
+        </Button>
+    );
+
+    const maintenanceSubmitButton = (
+        <StyledTooltip title={MAINTENANCE_MESSAGE} placement="top">
+            <div className={classes.submitButtonWrapperStyles}>
+                <Button
+                    className={classes.submitButtonStyles}
+                    disabled
+                    variant="contained"
+                    aria-label="Submit button disabled during maintenance"
+                >
+                    {submitButtonText}
+                </Button>
+            </div>
+        </StyledTooltip>
+    );
+
     if (fetchingSessionSignIn) {
         return (
             <div className={classes.circularProgressContainerStyles}>
@@ -840,17 +885,12 @@ const ProductionLocationInfo = ({
                         >
                             Go Back
                         </Button>
-                        <Button
-                            color="secondary"
-                            variant="contained"
-                            onClick={() => {
-                                handleProductionLocation(inputData, osID);
-                            }}
-                            className={classes.submitButtonStyles}
-                            disabled={!isFormValid}
+                        <FeatureFlag
+                            flag={DISABLE_LIST_UPLOADING}
+                            alternative={activeSubmitButton}
                         >
-                            {submitButtonText}
-                        </Button>
+                            {maintenanceSubmitButton}
+                        </FeatureFlag>
                     </div>
                 </Paper>
             </div>

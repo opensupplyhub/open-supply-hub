@@ -1361,6 +1361,9 @@ export const productionLocationInfoStyles = theme =>
             fontWeight: theme.typography.fontWeightExtraBold,
             border: '1px solid #0D1128',
         }),
+        submitButtonWrapperStyles: Object.freeze({
+            display: 'inline-block',
+        }),
         submitButtonStyles: Object.freeze({
             width: '200px',
             height: '49px',
