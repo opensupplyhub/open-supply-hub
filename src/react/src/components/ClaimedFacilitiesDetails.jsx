@@ -4,6 +4,7 @@ import { arrayOf, bool, func, string, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
+import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import Switch from '@material-ui/core/Switch';
 import flow from 'lodash/flow';
@@ -16,7 +17,6 @@ import { isEmail, isInt } from 'validator';
 import { toast } from 'react-toastify';
 import AppOverflow from './AppOverflow';
 import AppGrid from './AppGrid';
-
 import ClaimedFacilitiesDetailsSidebar from './ClaimedFacilitiesDetailsSidebar';
 import ShowOnly from './ShowOnly';
 import {
@@ -25,6 +25,7 @@ import {
     ErrorsList,
 } from './CheckComponentStatus';
 import InputSection from '../components/InputSection';
+import InputErrorText from '../components/Contribute/InputErrorText';
 
 import {
     fetchClaimedFacilityDetails,
@@ -56,6 +57,7 @@ import {
     updateClaimedFacilityOfficePhone,
     submitClaimedFacilityDetailsUpdate,
 } from '../actions/claimedFacilityDetails';
+
 import {
     fetchParentCompanyOptions,
     fetchSectorOptions,
@@ -67,7 +69,11 @@ import {
     sectorOptionsPropType,
     userPropType,
 } from '../util/propTypes';
-import { commonClaimFacilityFormStyles } from '../util/styles';
+
+import {
+    claimedFacilitiesDetailsStyles,
+    textFieldErrorStyles,
+} from '../util/styles';
 
 import apiRequest from '../util/apiRequest';
 
@@ -79,6 +85,7 @@ import {
     makeClaimGeocoderURL,
     logErrorToRollbar,
     isValidNumberOfWorkers,
+    getNumberOfWorkersValidationError,
 } from '../util/util';
 
 import {
@@ -94,6 +101,10 @@ const createCountrySelectOptions = memoize(
     mapDjangoChoiceTuplesToSelectOptions,
 );
 
+const mergedStyles = {
+    ...claimedFacilitiesDetailsStyles(),
+    ...textFieldErrorStyles(),
+};
 function ClaimedFacilitiesDetails({
     user,
     match: {
@@ -252,10 +263,7 @@ function ClaimedFacilitiesDetails({
             <AppGrid title={TITLE}>
                 <div className={classes.containerStyles}>
                     <div className={classes.widthStyle}>
-                        <Typography
-                            variant="title"
-                            className={classes.titleStyles}
-                        >
+                        <Typography variant="title">
                             Facility Details
                         </Typography>
                         <InputSection
@@ -350,16 +358,47 @@ function ClaimedFacilitiesDetails({
                             onChange={updateFacilityAverageLeadTime}
                             disabled={updating}
                         />
-                        <InputSection
-                            label="Number of workers"
+                        <Typography
+                            component="h2"
+                            className={classes.titleStyles}
+                        >
+                            Number of Workers
+                        </Typography>
+                        <TextField
+                            variant="outlined"
+                            className={classes.textInputStyles}
                             value={data.facility_workers_count}
                             onChange={updateFacilityWorkersCount}
                             disabled={updating}
-                            hasValidationErrorFn={() =>
+                            error={
                                 !isValidNumberOfWorkers(
                                     data.facility_workers_count,
                                 )
                             }
+                            helperText={
+                                !isValidNumberOfWorkers(
+                                    data.facility_workers_count,
+                                ) && (
+                                    <InputErrorText
+                                        text={getNumberOfWorkersValidationError(
+                                            data.facility_workers_count,
+                                        )}
+                                    />
+                                )
+                            }
+                            FormHelperTextProps={{
+                                className: classes.helperText,
+                            }}
+                            InputProps={{
+                                classes: {
+                                    input: `
+                                ${
+                                    !isValidNumberOfWorkers(
+                                        data.facility_workers_count,
+                                    ) && classes.errorStyle
+                                }`,
+                                },
+                            }}
                         />
                         <InputSection
                             label="Percentage of female workers"
@@ -737,4 +776,4 @@ function mapDispatchToProps(
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(withStyles(commonClaimFacilityFormStyles)(ClaimedFacilitiesDetails));
+)(withStyles(mergedStyles)(ClaimedFacilitiesDetails));

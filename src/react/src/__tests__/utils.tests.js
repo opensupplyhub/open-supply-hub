@@ -82,6 +82,8 @@ const {
     parseContribData,
     isRequiredFieldValid,
     getSelectStyles,
+    getNumberOfWorkersValidationError,
+    isValidNumberOfWorkers,
 } = require('../util/util');
 
 const {
@@ -2241,3 +2243,32 @@ describe('getSelectStyles', () => {
         expect(controlStyles['&:hover']).toEqual({ borderColor: false });
     });
 });
+
+describe('getNumberOfWorkersValidationError', () => {
+    it('clear error messages for number of workers field', () => {
+        const expectedValueOfZeroText =
+        'The value of zero is not valid. Enter a positive whole number or a valid range (e.g., 1-5).';
+        const expectedLessThenOrEqualText =
+            'Invalid range. The minimum value must be less than or equal to the maximum value.';
+        const expectedInvalidEntryText = 'Invalid entry. The value cannot start from zero.';
+        const expectedInvalidFormatText =
+            'Invalid format. Enter a whole number or a valid numeric range (e.g., 1-5).';
+
+        expect(getNumberOfWorkersValidationError('0')).toBe(expectedValueOfZeroText);
+        expect(getNumberOfWorkersValidationError('0-3')).toBe(expectedValueOfZeroText);
+        expect(getNumberOfWorkersValidationError('1-0')).toBe(expectedValueOfZeroText);
+        expect(getNumberOfWorkersValidationError('500-300')).toBe(expectedLessThenOrEqualText);
+        expect(getNumberOfWorkersValidationError('010')).toBe(expectedInvalidEntryText);
+        expect(getNumberOfWorkersValidationError('1-')).toBe(expectedInvalidFormatText);
+        expect(getNumberOfWorkersValidationError('some text or &$*_')).toBe(expectedInvalidFormatText);
+        expect(getNumberOfWorkersValidationError('3.9')).toBe(expectedInvalidFormatText);
+    });
+
+    it('valid numberOfWorkers has no errors, invalid shows error message', () => {
+        const expectedValueOfZeroText =
+        'The value of zero is not valid. Enter a positive whole number or a valid range (e.g., 1-5).';
+
+        expect(!isValidNumberOfWorkers('100') && getNumberOfWorkersValidationError('100')).toBe(false);
+        expect(!isValidNumberOfWorkers('0-300') && getNumberOfWorkersValidationError('0-300')).toBe(expectedValueOfZeroText);
+    });
+ })

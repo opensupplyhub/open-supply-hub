@@ -1599,64 +1599,30 @@ export const inputSectionStyles = theme =>
         }),
     });
 
-export const commonClaimFacilityFormStyles = theme =>
+export const claimedFacilitiesDetailsStyles = () =>
     Object.freeze({
-        containerStyles: Object.freeze({
-            display: 'flex',
-            width: '100%',
-            justifyContent: 'space-between',
-            marginBottom: '100px',
-        }),
-        titleStyles: Object.freeze({
-            padding: '10px 0',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-        }),
-        errorTextStyle: Object.freeze({ color: 'red' }),
-        widthStyle: Object.freeze({ width: '60%' }),
         headingStyles: Object.freeze({
             padding: '10px 0',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             color: COLOURS.NEAR_BLACK,
-            fontSize: '2.125rem',
-            fontWeight: theme.typography.fontWeightRegular,
+            fontWeight: '400',
             lineHeight: '1.20588em',
         }),
+        containerStyles: Object.freeze({
+            display: 'flex',
+            width: '100%',
+            justifyContent: 'space-between',
+            marginBottom: '100px',
+        }),
+        widthStyle: Object.freeze({ width: '60%' }),
         switchSectionStyles: Object.freeze({
             fontSize: '15px',
-            fontWeight: theme.typography.fontWeightRegular,
+            fontWeight: '400',
             display: 'flex',
             alignItems: 'center',
             color: COLOURS.DARK_GREY,
-        }),
-        controlStyles: Object.freeze({
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '10px 0',
-        }),
-        errorStyles: Object.freeze({
-            width: '100%',
-            padding: '10px 0',
-            color: 'red',
-        }),
-        asideStyles: Object.freeze({
-            padding: '5px 20px 20px 0',
-        }),
-    });
-
-export const claimedFacilitiesDetailsStyles = () =>
-    Object.freeze({
-        titleStyle: Object.freeze({
-            paddingBottom: '10px',
-            color: COLOURS.NEAR_BLACK,
-            fontSize: '2.125rem',
-            fontWeight: 'bold',
-            lineHeight: '1.20588em',
         }),
         boldFontStyle: Object.freeze({
             fontWeight: 'bold',
@@ -1671,6 +1637,13 @@ export const claimedFacilitiesDetailsStyles = () =>
         }),
         asideStyles: Object.freeze({
             padding: '5px 20px 5px 0',
+        }),
+        boldTitleStyle: Object.freeze({
+            paddingBottom: '10px',
+            color: COLOURS.NEAR_BLACK,
+            fontSize: '2.125rem',
+            fontWeight: 'bold',
+            lineHeight: '1.20588em',
         }),
     });
 
@@ -1710,5 +1683,24 @@ export const makeRejectModerationEventDialogStyles = () =>
         }),
         buttonBaseStyles: Object.freeze({
             width: '150px',
+        }),
+    });
+
+export const textFieldErrorStyles = () =>
+    Object.freeze({
+        helperText: Object.freeze({ marginLeft: '0' }),
+        errorStyle: Object.freeze({ color: 'red' }),
+        textInputStyles: Object.freeze({
+            width: '100%',
+            borderRadius: '4px',
+        }),
+        titleStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: '400',
+            padding: '10px 0px',
+            color: 'rgb(0, 0, 0)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
         }),
     });

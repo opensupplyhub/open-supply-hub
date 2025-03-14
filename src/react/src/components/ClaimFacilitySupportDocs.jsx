@@ -60,7 +60,7 @@ const ClaimFacilitySupportDocs = ({
 }) => (
     <>
         <div className={classes.inputGroupStyles}>
-            <Typography variant="title" className={classes.titleStyle}>
+            <Typography variant="title" className={classes.boldTitleStyle}>
                 Your Contact Information
                 <RequiredAsterisk />
             </Typography>
@@ -145,7 +145,7 @@ const ClaimFacilitySupportDocs = ({
             />
         </div>
         <div className={classes.inputGroupStyles}>
-            <Typography variant="title" className={classes.titleStyle}>
+            <Typography variant="title" className={classes.boldTitleStyle}>
                 Business Contact Information
                 <RequiredAsterisk />
             </Typography>

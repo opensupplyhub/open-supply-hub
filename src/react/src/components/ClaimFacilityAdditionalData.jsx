@@ -18,12 +18,20 @@ import { fetchSectorOptions } from '../actions/filterOptions';
 
 import { sectorOptionsPropType } from '../util/propTypes';
 
-import { getValueFromEvent, isValidNumberOfWorkers } from '../util/util';
+import {
+    getValueFromEvent,
+    isValidNumberOfWorkers,
+    getNumberOfWorkersValidationError,
+} from '../util/util';
 
-import { claimedFacilitiesDetailsStyles } from '../util/styles';
+import {
+    claimedFacilitiesDetailsStyles,
+    textFieldErrorStyles,
+} from '../util/styles';
 
 import { claimAFacilityAdditionalDataFormFields } from '../util/constants';
 import InputSection from '../components/InputSection';
+import InputErrorText from '../components/Contribute/InputErrorText';
 
 const {
     sectorsForm,
@@ -33,6 +41,11 @@ const {
     localLanguageNameForm,
     localLanguageNameDesc,
 } = claimAFacilityAdditionalDataFormFields;
+
+const mergedStyles = {
+    ...textFieldErrorStyles(),
+    ...claimedFacilitiesDetailsStyles(),
+};
 
 function ClaimFacilityAdditionalData({
     sectors,
@@ -56,7 +69,10 @@ function ClaimFacilityAdditionalData({
         <>
             <div className={classes.inputGroupStyles}>
                 <InputLabel htmlFor={sectorsForm.id}>
-                    <Typography variant="title" className={classes.titleStyle}>
+                    <Typography
+                        variant="title"
+                        className={classes.boldTitleStyle}
+                    >
                         {sectorsForm.label}
                     </Typography>
                 </InputLabel>
@@ -76,7 +92,10 @@ function ClaimFacilityAdditionalData({
             </div>
             <div className={classes.inputGroupStyles}>
                 <InputLabel htmlFor={numberOfWorkersForm.id}>
-                    <Typography variant="title" className={classes.titleStyle}>
+                    <Typography
+                        variant="title"
+                        className={classes.boldTitleStyle}
+                    >
                         {numberOfWorkersForm.label}
                     </Typography>
                 </InputLabel>
@@ -92,11 +111,35 @@ function ClaimFacilityAdditionalData({
                     placeholder={numberOfWorkersForm.placeholder}
                     onChange={updateNumberOfWorkers}
                     disabled={fetching}
+                    helperText={
+                        !isValidNumberOfWorkers(numberOfWorkers) && (
+                            <InputErrorText
+                                text={getNumberOfWorkersValidationError(
+                                    numberOfWorkers,
+                                )}
+                            />
+                        )
+                    }
+                    FormHelperTextProps={{
+                        className: classes.helperText,
+                    }}
+                    InputProps={{
+                        classes: {
+                            input: `
+                                ${
+                                    !isValidNumberOfWorkers(numberOfWorkers) &&
+                                    classes.errorStyle
+                                }`,
+                        },
+                    }}
                 />
             </div>
             <div className={classes.inputGroupStyles}>
                 <InputLabel htmlFor={localLanguageNameForm.id}>
-                    <Typography variant="title" className={classes.titleStyle}>
+                    <Typography
+                        variant="title"
+                        className={classes.boldTitleStyle}
+                    >
                         {localLanguageNameForm.label}
                     </Typography>
                 </InputLabel>
@@ -170,4 +213,4 @@ function mapDispatchToProps(dispatch) {
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(withStyles(claimedFacilitiesDetailsStyles)(ClaimFacilityAdditionalData));
+)(withStyles(mergedStyles)(ClaimFacilityAdditionalData));

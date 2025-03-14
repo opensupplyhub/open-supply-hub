@@ -47,6 +47,7 @@ import {
     convertRangeField,
     updateStateFromData,
     getSelectStyles,
+    getNumberOfWorkersValidationError,
 } from '../../util/util';
 import {
     mockedSectors,
@@ -762,14 +763,20 @@ const ProductionLocationInfo = ({
                                         className={classes.textInputStyles}
                                         value={numberOfWorkers}
                                         onChange={e =>
-                                            setNumberOfWorkers(e.target.value)
+                                            setNumberOfWorkers(
+                                                e.target.value.trim(),
+                                            )
                                         }
                                         placeholder="Enter the number of workers as a number or range"
                                         helperText={
                                             !isValidNumberOfWorkers(
                                                 numberOfWorkers,
                                             ) && (
-                                                <InputErrorText text="Enter the number of workers as a number or range" />
+                                                <InputErrorText
+                                                    text={getNumberOfWorkersValidationError(
+                                                        numberOfWorkers,
+                                                    )}
+                                                />
                                             )
                                         }
                                         FormHelperTextProps={{
