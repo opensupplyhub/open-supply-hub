@@ -1291,6 +1291,8 @@ export const productionLocationInfoStyles = theme =>
             flexDirection: 'row',
             width: '100%',
             justifyContent: 'center',
+            gap: '24px',
+            padding: '48px 0',
         }),
         switchButton: Object.freeze({
             marginTop: '10px',
@@ -1355,7 +1357,6 @@ export const productionLocationInfoStyles = theme =>
             height: '49px',
             borderRadius: 0,
             textTransform: 'none',
-            margin: '48px 20px 48px 0',
             fontSize: '18px',
             fontWeight: theme.typography.fontWeightExtraBold,
             border: '1px solid #0D1128',
@@ -1366,7 +1367,6 @@ export const productionLocationInfoStyles = theme =>
             borderRadius: 0,
             textTransform: 'none',
             backgroundColor: theme.palette.action.main,
-            margin: '48px 0',
             color: theme.palette.common.black,
             '&:hover': {
                 backgroundColor: theme.palette.action.dark,
