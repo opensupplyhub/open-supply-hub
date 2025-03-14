@@ -11,7 +11,7 @@ import Paper from '@material-ui/core/Paper';
 import Switch from '@material-ui/core/Switch';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
-import Tooltip from '@material-ui/core/Tooltip';
+// import Tooltip from '@material-ui/core/Tooltip';
 import RequireAuthNotice from '../RequireAuthNotice';
 import StyledSelect from '../Filters/StyledSelect';
 import RequiredAsterisk from '../RequiredAsterisk';
@@ -59,18 +59,19 @@ import {
 } from '../../util/constants';
 import ProductionLocationDialog from './ProductionLocationDialog';
 import FeatureFlag from '../FeatureFlag';
+import StyledTooltip from '../StyledTooltip';
 
-const StyledTooltip = withStyles({
-    tooltip: {
-        color: 'rgba(0, 0, 0, 0.8)',
-        fontSize: '0.875rem',
-        backgroundColor: 'white',
-        border: 'solid rgba(0, 0, 0, 0.25)',
-        borderRadius: '10px',
-        padding: '10px',
-        lineHeight: '1',
-    },
-})(Tooltip);
+// const StyledTooltip = withStyles({
+//     tooltip: {
+//         color: 'rgba(0, 0, 0, 0.8)',
+//         fontSize: '0.875rem',
+//         backgroundColor: 'white',
+//         border: 'solid rgba(0, 0, 0, 0.25)',
+//         borderRadius: '10px',
+//         padding: '10px',
+//         lineHeight: '1',
+//     },
+// })(Tooltip);
 
 const ProductionLocationInfo = ({
     submitMethod,
