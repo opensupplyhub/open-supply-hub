@@ -7,15 +7,14 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import IconButton from '@material-ui/core/IconButton';
 import InfoIcon from '@material-ui/icons/Info';
-import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import { withStyles } from '@material-ui/core/styles';
 
 import { userApiInfoTooltipTitles, IS_NOT_SET } from '../util/constants';
 
 import { fetchUserApiInfo } from '../actions/profile';
 import { userApiInfoPropType } from '../util/propTypes';
+import StyledTooltip from './StyledTooltip';
 
 const componentStyles = Object.freeze({
     withoutMargin: Object.freeze({
@@ -24,17 +23,6 @@ const componentStyles = Object.freeze({
     }),
 });
 
-const StyledTooltip = withStyles({
-    tooltip: {
-        color: 'rgba(0, 0, 0, 0.8)',
-        fontSize: '0.875rem',
-        backgroundColor: 'white',
-        border: 'solid rgba(0, 0, 0, 0.25)',
-        borderRadius: '10px',
-        padding: '10px',
-        lineHeight: '1',
-    },
-})(Tooltip);
 const UserAPIInfo = ({ error, data, fetching, getUserApiInfo }) => {
     useEffect(() => {
         getUserApiInfo();
