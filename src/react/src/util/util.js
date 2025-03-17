@@ -72,6 +72,7 @@ import {
     MODERATION_QUEUE,
     MODERATION_STATUS_COLORS,
     DATA_SOURCES_ENUM,
+    API_V1_ERROR_REQUEST_SOURCE_ENUM,
 } from './constants';
 
 import { createListItemCSV } from './util.listItemCSV';
@@ -665,6 +666,60 @@ export function logErrorAndDispatchFailure(
         return dispatch(failureAction(errorMessages));
     };
 }
+
+export const logErrorAndDispatchFailureApiV1 = (
+    error,
+    defaultMessage,
+    failureAction,
+) => dispatch => {
+    const { response } = error || {};
+    const { status, data } = response || {};
+    const errorObj = {
+        errorSource: null,
+        detail: defaultMessage,
+        errors: null,
+        rawData: null,
+    };
+
+    if (status && data) {
+        if (status >= 400 && status <= 499) {
+            console.log('CLIENT error');
+            errorObj.errorSource = API_V1_ERROR_REQUEST_SOURCE_ENUM.CLIENT;
+            errorObj.detail = data.detail;
+            errorObj.rawData = data;
+
+            if (!isEmpty(data.errors)) {
+                errorObj.errors = data.errors;
+            }
+
+            return dispatch(failureAction(errorObj));
+        }
+
+        if (status >= 500 && status <= 599) {
+            console.log('SERVER error');
+            errorObj.errorSource = API_V1_ERROR_REQUEST_SOURCE_ENUM.SERVER;
+            errorObj.rawData = data;
+
+            // Field "detail" and "errors" aren't always present in the V1 API
+            // response for 500 errors. In case of an unexpected error, it may
+            // return a different structure, such as HTML.
+            if (!isEmpty(data.detail)) {
+                errorObj.detail = data.detail;
+
+                if (!isEmpty(data.errors)) {
+                    errorObj.errors = data.errors;
+                }
+            }
+
+            window.console.warn(error);
+            return dispatch(failureAction(errorObj));
+        }
+    }
+
+    console.log('Unknown error');
+    window.console.warn(error);
+    return dispatch(failureAction(errorObj));
+};
 
 export const getValueFromEvent = ({ target: { value } }) => value;
 
@@ -1523,3 +1578,8 @@ export const getSelectStyles = (isErrorState = false) => ({
         color: isErrorState ? COLOURS.RED : provided.color,
     }),
 });
+
+export const snakeToTitleCase = str =>
+    str
+        .replace(/_/g, ' ') // Replace underscores with space.
+        .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize first letter of each word.

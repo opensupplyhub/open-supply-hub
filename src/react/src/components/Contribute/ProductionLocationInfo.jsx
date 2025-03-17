@@ -54,6 +54,7 @@ import {
     MODERATION_STATUSES_ENUM,
 } from '../../util/constants';
 import ProductionLocationDialog from './ProductionLocationDialog';
+import PostContributionSubmitErrorNotification from './PostContributionSubmitErrorNotification/PostContributionSubmitErrorNotification';
 
 const ProductionLocationInfo = ({
     submitMethod,
@@ -170,6 +171,11 @@ const ProductionLocationInfo = ({
         showProductionLocationDialog,
         setShowProductionLocationDialog,
     ] = useState(null);
+
+    const [
+        showPostSubmitErrorNotification,
+        setShowPostSubmitErrorNotification,
+    ] = useState(false);
 
     const handleNameChange = event => {
         setInputName(event.target.value);
@@ -357,7 +363,7 @@ const ProductionLocationInfo = ({
 
     useEffect(() => {
         if (!pendingModerationEventFetching && pendingModerationEventError) {
-            toast(toString(pendingModerationEventError));
+            setShowPostSubmitErrorNotification(true);
         }
     }, [pendingModerationEventFetching, pendingModerationEventError]);
 
@@ -404,6 +410,7 @@ const ProductionLocationInfo = ({
             toast(singleProductionLocationError[0]);
         }
     }, [singleProductionLocationError]);
+
     if (fetchingSessionSignIn) {
         return (
             <div className={classes.circularProgressContainerStyles}>
@@ -825,6 +832,14 @@ const ProductionLocationInfo = ({
                             </>
                         )}
                     </div>
+                    {showPostSubmitErrorNotification && (
+                        <PostContributionSubmitErrorNotification
+                            showNotification={
+                                setShowPostSubmitErrorNotification
+                            }
+                            errorObj={pendingModerationEventError}
+                        />
+                    )}
                     <div className={classes.buttonsContainerStyles}>
                         <Button
                             variant="outlined"
@@ -837,6 +852,7 @@ const ProductionLocationInfo = ({
                             color="secondary"
                             variant="contained"
                             onClick={() => {
+                                setShowPostSubmitErrorNotification(false);
                                 handleProductionLocation(inputData, osID);
                             }}
                             className={classes.submitButtonStyles}
