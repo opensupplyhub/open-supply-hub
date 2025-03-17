@@ -9,6 +9,7 @@ on:
         type: choice
         options:
         - Pre-prod
+        - Pentesting
         default: Pre-prod
 
 jobs:
