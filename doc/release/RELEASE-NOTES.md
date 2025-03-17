@@ -71,6 +71,7 @@ Also was added sanitization on the server side by using the `Django-Bleach` libr
 * [OSDEV-1786](https://opensupplyhub.atlassian.net/browse/OSDEV-1786) - Linked "My Claimed Facilities" page to SLC if no claimed production locations found, changed search button text.
 * [OSDEV-1607](https://opensupplyhub.atlassian.net/browse/OSDEV-1607) - Enabled SLC flow.
 * [OSDEV-1864](https://opensupplyhub.atlassian.net/browse/OSDEV-1864) - Disabled the 'Submit/Update' button on the SLC Production Location Information page when the `disable_list_uploading` feature flag is active.
+* [OSDEV-1867](https://opensupplyhub.atlassian.net/browse/OSDEV-1867) - Updated the 'Messy Data' link on the Contribute page to direct users to the Data Cleaning Service splash page instead of the old Preparing Data page.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
