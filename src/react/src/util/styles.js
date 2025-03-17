@@ -1291,6 +1291,8 @@ export const productionLocationInfoStyles = theme =>
             flexDirection: 'row',
             width: '100%',
             justifyContent: 'center',
+            gap: '24px',
+            padding: '48px 0',
         }),
         switchButton: Object.freeze({
             marginTop: '10px',
@@ -1355,10 +1357,12 @@ export const productionLocationInfoStyles = theme =>
             height: '49px',
             borderRadius: 0,
             textTransform: 'none',
-            margin: '48px 20px 48px 0',
             fontSize: '18px',
             fontWeight: theme.typography.fontWeightExtraBold,
             border: '1px solid #0D1128',
+        }),
+        submitButtonWrapperStyles: Object.freeze({
+            display: 'inline-block',
         }),
         submitButtonStyles: Object.freeze({
             width: '200px',
@@ -1366,7 +1370,6 @@ export const productionLocationInfoStyles = theme =>
             borderRadius: 0,
             textTransform: 'none',
             backgroundColor: theme.palette.action.main,
-            margin: '48px 0',
             color: theme.palette.common.black,
             '&:hover': {
                 backgroundColor: theme.palette.action.dark,
@@ -1601,4 +1604,36 @@ export const makeRejectModerationEventDialogStyles = () =>
         buttonBaseStyles: Object.freeze({
             width: '150px',
         }),
+    });
+
+export const textFieldErrorStyles = () =>
+    Object.freeze({
+        helperText: Object.freeze({ marginLeft: '0' }),
+        errorStyle: Object.freeze({ color: 'red' }),
+        textInputStyles: Object.freeze({
+            width: '100%',
+            borderRadius: '4px',
+        }),
+        titleStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: '400',
+            padding: '10px 0px',
+            color: 'rgb(0, 0, 0)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        }),
+    });
+
+export const makeStyledTooltipStyles = () =>
+    Object.freeze({
+        tooltip: {
+            color: 'rgba(0, 0, 0, 0.8)',
+            fontSize: '0.875rem',
+            backgroundColor: 'white',
+            border: 'solid rgba(0, 0, 0, 0.25)',
+            borderRadius: '10px',
+            padding: '10px',
+            lineHeight: '1',
+        },
     });
