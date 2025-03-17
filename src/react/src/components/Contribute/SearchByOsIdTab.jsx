@@ -31,9 +31,13 @@ const SearchByOsIdTab = ({ classes }) => {
     };
 
     const handleSearch = () => {
+        const encodedOsId = encodeURIComponent(inputOsId).replace(
+            /%2F/g,
+            '%252F',
+        );
         history.push(
             `/contribute/single-location/search/id/${encodeURIComponent(
-                inputOsId,
+                encodedOsId,
             )}`,
         );
     };
