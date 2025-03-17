@@ -75,20 +75,9 @@ const getStatusBadgeClass = (classes, status) => {
 };
 
 const getPendingTooltipText = claimStatus => {
-    const {
-        PENDING,
-        CLAIMED,
-        UNCLAIMED,
-    } = PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM;
-
-    if (claimStatus === PENDING || claimStatus === CLAIMED) {
-        return 'Your submission is under review. You will receive a notification once the production location is live on OS Hub.';
-    }
-
-    if (claimStatus === UNCLAIMED) {
+    if (claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED) {
         return 'Your submission is under review. You will receive a notification once the production location is live on OS Hub. You can proceed to submit a claim while your request is pending.';
     }
-
     return 'Your submission is being reviewed. You will receive an email with your OS ID once the review is complete.';
 };
 

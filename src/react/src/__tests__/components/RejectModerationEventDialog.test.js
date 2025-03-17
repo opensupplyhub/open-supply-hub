@@ -39,8 +39,8 @@ jest.mock('@material-ui/core/Tooltip', () => ({ children, title, open, onOpen, o
         {open && <div data-testid="tooltip">{title}</div>}
     </div>
 ));
-  
-  
+
+
 describe('RejectModerationEventDialog component', () => {
     const defaultProps = {
         updateModerationEvent: mockUpdateModerationEvent,
@@ -66,7 +66,7 @@ describe('RejectModerationEventDialog component', () => {
     test('calls closeDialog when "Cancel" button is clicked', () => {
         const { getByRole } = renderWithProviders(<RejectModerationEventDialog {...defaultProps} />);
         const cancelButton = getByRole('button', {name: /Cancel/i});
-        
+
         fireEvent.click(cancelButton);
         expect(mockCloseDialog).toHaveBeenCalledTimes(1);
     });
@@ -76,7 +76,7 @@ describe('RejectModerationEventDialog component', () => {
             <RejectModerationEventDialog {...defaultProps} />
         );
         const rejectButton = getByRole('button', {name: /Reject/i});
-        
+
         expect(rejectButton).toBeDisabled();
       });
 
@@ -94,7 +94,7 @@ describe('RejectModerationEventDialog component', () => {
         fireEvent.change(fakeEditor, { target: { value: validText } });
 
         expect(rejectButton).toBeEnabled();
-        
+
         fireEvent.click(rejectButton);
 
         expect(mockUpdateModerationEvent).toHaveBeenCalledTimes(1);
