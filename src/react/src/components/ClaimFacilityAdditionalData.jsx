@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { bool, func, string, PropTypes } from 'prop-types';
+import { bool, func, string, PropTypes, object } from 'prop-types';
 import { connect } from 'react-redux';
+import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import InputLabel from '@material-ui/core/InputLabel';
@@ -29,13 +30,20 @@ import { fetchSectorOptions } from '../actions/filterOptions';
 
 import { sectorOptionsPropType } from '../util/propTypes';
 
-import { getValueFromEvent, isValidNumberOfWorkers } from '../util/util';
-
-import { claimAFacilitySupportDocsFormStyles } from '../util/styles';
+import {
+    getValueFromEvent,
+    isValidNumberOfWorkers,
+    getNumberOfWorkersValidationError,
+} from '../util/util';
+import {
+    claimAFacilitySupportDocsFormStyles,
+    textFieldErrorStyles,
+} from '../util/styles';
 
 import { claimAFacilityAdditionalDataFormFields } from '../util/constants';
 
 import COLOURS from '../util/COLOURS';
+import InputErrorText from './Contribute/InputErrorText';
 
 const infoTitleStyle = Object.freeze({
     paddingBottom: '10px',
@@ -245,6 +253,7 @@ function ClaimFacilityAdditionalData({
     sectorOptions,
     fetchSectors,
     fetching,
+    classes,
 }) {
     useEffect(() => {
         if (!sectorOptions) {
@@ -291,6 +300,27 @@ function ClaimFacilityAdditionalData({
                     placeholder={numberOfWorkersForm.placeholder}
                     onChange={updateNumberOfWorkers}
                     disabled={fetching}
+                    helperText={
+                        !isValidNumberOfWorkers(numberOfWorkers) && (
+                            <InputErrorText
+                                text={getNumberOfWorkersValidationError(
+                                    numberOfWorkers,
+                                )}
+                            />
+                        )
+                    }
+                    FormHelperTextProps={{
+                        className: classes.helperText,
+                    }}
+                    InputProps={{
+                        classes: {
+                            input: `
+                                ${
+                                    !isValidNumberOfWorkers(numberOfWorkers) &&
+                                    classes.errorStyle
+                                }`,
+                        },
+                    }}
                 />
             </div>
             <div style={claimAFacilitySupportDocsFormStyles.inputGroupStyles}>
@@ -330,6 +360,7 @@ ClaimFacilityAdditionalData.propTypes = {
     sectorOptions: sectorOptionsPropType,
     fetchSectors: func.isRequired,
     fetching: bool.isRequired,
+    classes: object.isRequired,
 };
 
 function mapStateToProps({
@@ -368,4 +399,4 @@ function mapDispatchToProps(dispatch) {
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(ClaimFacilityAdditionalData);
+)(withStyles(textFieldErrorStyles)(ClaimFacilityAdditionalData));

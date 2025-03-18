@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import { arrayOf, bool, func, string } from 'prop-types';
+import { arrayOf, bool, func, string, object } from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
@@ -28,6 +29,8 @@ import ShowOnly from './ShowOnly';
 import CreatableInputOnly from './CreatableInputOnly';
 
 import COLOURS from '../util/COLOURS';
+import InputErrorText from './Contribute/InputErrorText';
+import { textFieldErrorStyles } from '../util/styles';
 
 import {
     fetchClaimedFacilityDetails,
@@ -81,6 +84,7 @@ import {
     makeClaimGeocoderURL,
     logErrorToRollbar,
     isValidNumberOfWorkers,
+    getNumberOfWorkersValidationError,
 } from '../util/util';
 
 import {
@@ -178,6 +182,8 @@ const InputSection = ({
     hasValidationErrorFn = stubFalse,
     aside = null,
     selectPlaceholder = 'Select...',
+    helperText = '',
+    formHelperTextProps = {},
 }) => {
     let SelectComponent = null;
 
@@ -277,9 +283,21 @@ const InputSection = ({
                 onChange={onChange}
                 disabled={disabled}
                 error={hasValidationErrorFn()}
+                helperText={helperText}
+                FormHelperTextProps={formHelperTextProps}
             />
         </div>
     );
+};
+
+InputSection.defaultProps = {
+    helperText: '',
+    formHelperTextProps: {},
+};
+
+InputSection.propTypes = {
+    helperText: string,
+    formHelperTextProps: object,
 };
 
 const createCountrySelectOptions = memoize(
@@ -328,6 +346,7 @@ function ClaimedFacilitiesDetails({
     parentCompanyOptions,
     fetchSectors,
     fetchParentCompanies,
+    classes,
 }) {
     /* eslint-disable react-hooks/exhaustive-deps */
     // disabled because we want to use this as just
@@ -523,14 +542,40 @@ function ClaimedFacilitiesDetails({
                     onChange={updateFacilityAverageLeadTime}
                     disabled={updating}
                 />
-                <InputSection
-                    label="Number of workers"
+                <Typography component="h2" className={classes.titleStyles}>
+                    Number of Workers
+                </Typography>
+                <TextField
+                    variant="outlined"
+                    className={classes.textInputStyles}
                     value={data.facility_workers_count}
                     onChange={updateFacilityWorkersCount}
                     disabled={updating}
-                    hasValidationErrorFn={() =>
-                        !isValidNumberOfWorkers(data.facility_workers_count)
+                    error={!isValidNumberOfWorkers(data.facility_workers_count)}
+                    helperText={
+                        !isValidNumberOfWorkers(
+                            data.facility_workers_count,
+                        ) && (
+                            <InputErrorText
+                                text={getNumberOfWorkersValidationError(
+                                    data.facility_workers_count,
+                                )}
+                            />
+                        )
                     }
+                    FormHelperTextProps={{
+                        className: classes.helperText,
+                    }}
+                    InputProps={{
+                        classes: {
+                            input: `
+                                ${
+                                    !isValidNumberOfWorkers(
+                                        data.facility_workers_count,
+                                    ) && classes.errorStyle
+                                }`,
+                        },
+                    }}
                 />
                 <InputSection
                     label="Percentage of female workers"
@@ -756,6 +801,7 @@ ClaimedFacilitiesDetails.propTypes = {
     sectorOptions: sectorOptionsPropType,
     parentCompanyOptions: parentCompanyOptionsPropType,
     fetchSectors: func.isRequired,
+    classes: object.isRequired,
 };
 
 function mapStateToProps({
@@ -888,4 +934,4 @@ function mapDispatchToProps(
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(ClaimedFacilitiesDetails);
+)(withStyles(textFieldErrorStyles)(ClaimedFacilitiesDetails));

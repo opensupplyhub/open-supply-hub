@@ -1205,6 +1205,44 @@ export const isValidNumberOfWorkers = value => {
     return false;
 };
 
+export const getNumberOfWorkersValidationError = value => {
+    const valueOfZeroText =
+        'The value of zero is not valid. Enter a positive whole number or a valid range (e.g., 1-5).';
+    const rangePattern = /^\d+-\d+$/;
+
+    if (parseInt(value, 10) === 0) {
+        return valueOfZeroText;
+    }
+
+    const invalidFormatText =
+        'Invalid format. Enter a whole number or a valid numeric range (e.g., 1-5).';
+
+    if (!isInt(value, 10) && !rangePattern.test(value)) {
+        return invalidFormatText;
+    }
+
+    const invalidEntryText = 'Invalid entry. The value cannot start from zero.';
+
+    if (!rangePattern.test(value)) {
+        return invalidEntryText;
+    }
+
+    const [start, end] = value.split('-');
+
+    if (!isInt(end.trim(), { min: 1, allow_leading_zeroes: false })) {
+        return valueOfZeroText;
+    }
+
+    const lessThenOrEqualText =
+        'Invalid range. The minimum value must be less than or equal to the maximum value.';
+
+    if (start >= end) {
+        return lessThenOrEqualText;
+    }
+
+    return invalidEntryText;
+};
+
 export const claimAFacilityFormIsValid = ({
     yourName,
     yourTitle,

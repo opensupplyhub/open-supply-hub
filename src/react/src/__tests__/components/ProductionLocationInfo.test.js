@@ -4,6 +4,14 @@ import { MemoryRouter, Route, BrowserRouter as Router } from "react-router-dom";
 
 import ProductionLocationInfo from "../../components/Contribute/ProductionLocationInfo";
 import renderWithProviders from "../../util/testUtils/renderWithProviders";
+import { MAINTENANCE_MESSAGE } from "../../util/constants";
+
+beforeAll(() => {
+    window.scrollTo = jest.fn();
+});
+
+jest.mock('@material-ui/core/Popper', () => ({ children }) => children);
+jest.mock('@material-ui/core/Portal', () => ({ children }) => children);
 
 jest.mock("../../components/Filters/StyledSelect", () => (props) => {
     const { options = [], value, onChange, onBlur, placeholder } = props;
@@ -47,19 +55,26 @@ describe("ProductionLocationInfo component, test input fields for POST v1/produc
             user: { user: { isAnon: false } },
             session: { fetching: false },
         },
+        featureFlags: {
+            flags: {
+                disable_list_uploading: false,
+            },
+            fetching: false,
+        }
+
     };
 
     const defaultProps = {
         submitMethod: "POST",
     };
 
-    const renderComponent = (props = {}) =>
+    const renderComponent = (props = {}, preloadedState = defaultState) =>
         renderWithProviders(
             <Router>
                 <ProductionLocationInfo {...defaultProps} {...props} />
             </Router>,
-            { preloadedState: defaultState },
-        )
+            { preloadedState },
+        );
 
     test("renders the production location form", () => {
         const { getByText, getByPlaceholderText, getAllByText, getByTestId } = renderComponent();
@@ -204,6 +219,55 @@ describe("ProductionLocationInfo component, test input fields for POST v1/produc
         expect(getByPlaceholderText("Enter the number of workers as a number or range")).toHaveAttribute("aria-invalid", "true");
         expect(submitButton).toBeDisabled();
     });
+
+    test("update button should be disabled when active feature flags include DISABLE_LIST_UPLOADING", () => {
+        const updatedState = {
+            ...defaultState,
+            featureFlags: {
+                ...defaultState.featureFlags,
+                flags: {
+                    ...defaultState.featureFlags.flags,
+                    disable_list_uploading: true,
+                },
+            },
+        };
+    
+        const { getByRole } = renderComponent({}, updatedState);
+        const submitButton = getByRole("button", { name: /Submit/i });
+        expect(submitButton).toBeDisabled();
+    });
+
+    test("shows tooltip on hover submit button when active feature flags include DISABLE_LIST_UPLOADING", () => {
+        const updatedState = {
+            ...defaultState,
+            featureFlags: {
+                ...defaultState.featureFlags,
+                flags: {
+                    ...defaultState.featureFlags.flags,
+                    disable_list_uploading: true,
+                },
+            },
+        };
+
+        const { getByRole } = renderComponent({}, updatedState);
+        const submitButton = getByRole("button", { name: /Submit/i });
+
+        expect(submitButton).toBeDisabled();
+
+        const noTooltipElement = document.querySelector(`[title="${MAINTENANCE_MESSAGE}"]`);
+
+        expect(noTooltipElement).toBeInTheDocument();
+        fireEvent.mouseOver(submitButton);
+
+        const tooltip = document.querySelector('[aria-describedby^="mui-tooltip-"]');
+
+        expect(tooltip).toBeInTheDocument();
+        fireEvent.mouseOut(submitButton);
+
+        const noTooltipElementAfter = document.querySelector(`[title="${MAINTENANCE_MESSAGE}"]`);
+
+        expect(noTooltipElementAfter).toBeInTheDocument();
+    });
 });
 
 describe("ProductionLocationInfo component, test invalid incoming data for UPDATE v1/production-locations", () => {
@@ -262,7 +326,7 @@ describe("ProductionLocationInfo component, test invalid incoming data for UPDAT
     const renderComponent = (props = {}) =>
         renderWithProviders(
             <MemoryRouter initialEntries={[`/contribute/single-location/${osID}/info/`]}>
-                <Route 
+                <Route
                     path="/contribute/single-location/:osID/info/"
                     component={() => <ProductionLocationInfo {...defaultProps} {...props} />}
                 />
@@ -272,8 +336,7 @@ describe("ProductionLocationInfo component, test invalid incoming data for UPDAT
 
     test("update button should be enabled when number of workers invalid but additional info is hidden", () => {
         const { getByRole, getByText, getByTestId, getByPlaceholderText, queryByText } = renderComponent();
-
-        expect(queryByText("Enter the number of workers as a number or range")).not.toBeInTheDocument();
+        expect(queryByText("The value of zero is not valid. Enter a positive whole number or a valid range (e.g., 1-5).")).not.toBeInTheDocument();
 
         const updateButton = getByRole("button", { name: /Update/i });
         expect(updateButton).toBeEnabled();
@@ -283,7 +346,7 @@ describe("ProductionLocationInfo component, test invalid incoming data for UPDAT
 
         const numberOfWorkersInput = getByPlaceholderText("Enter the number of workers as a number or range");
         expect(numberOfWorkersInput).toHaveAttribute("aria-invalid", "true");
-        expect(getByText("Enter the number of workers as a number or range")).toBeInTheDocument();
+        expect(getByText("The value of zero is not valid. Enter a positive whole number or a valid range (e.g., 1-5).")).toBeInTheDocument();
 
         expect(updateButton).toBeDisabled();
 

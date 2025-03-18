@@ -1,31 +1,18 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useParams, useHistory } from 'react-router-dom';
-import { withStyles } from '@material-ui/core/styles';
 import { array, bool, func, number, object, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 import { endsWith, isEmpty, toString } from 'lodash';
+
 import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Paper from '@material-ui/core/Paper';
 import Switch from '@material-ui/core/Switch';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
-import RequireAuthNotice from '../RequireAuthNotice';
-import StyledSelect from '../Filters/StyledSelect';
-import RequiredAsterisk from '../RequiredAsterisk';
-import { productionLocationInfoStyles } from '../../util/styles';
-import { useResetScrollPosition } from '../../util/hooks';
-import {
-    countryOptionsPropType,
-    facilityProcessingTypeOptionsPropType,
-    moderationEventsListItemPropType,
-    productionLocationPropType,
-} from '../../util/propTypes';
-import {
-    fetchCountryOptions,
-    fetchFacilityProcessingTypeOptions,
-} from '../../actions/filterOptions';
+import { withStyles } from '@material-ui/core/styles';
+
 import {
     createProductionLocation,
     updateProductionLocation,
@@ -37,7 +24,26 @@ import {
     fetchSingleModerationEvent,
     cleanupContributionRecord,
 } from '../../actions/dashboardContributionRecord';
-import InputErrorText from './InputErrorText';
+import {
+    fetchCountryOptions,
+    fetchFacilityProcessingTypeOptions,
+} from '../../actions/filterOptions';
+
+import {
+    mockedSectors,
+    productionLocationInfoRouteCommon,
+    MODERATION_STATUSES_ENUM,
+    DISABLE_LIST_UPLOADING,
+    MAINTENANCE_MESSAGE,
+} from '../../util/constants';
+import { useResetScrollPosition } from '../../util/hooks';
+import {
+    countryOptionsPropType,
+    facilityProcessingTypeOptionsPropType,
+    moderationEventsListItemPropType,
+    productionLocationPropType,
+} from '../../util/propTypes';
+import { productionLocationInfoStyles } from '../../util/styles';
 import {
     mapDjangoChoiceTuplesToSelectOptions,
     mapFacilityTypeOptions,
@@ -47,12 +53,16 @@ import {
     convertRangeField,
     updateStateFromData,
     getSelectStyles,
+    getNumberOfWorkersValidationError,
 } from '../../util/util';
-import {
-    mockedSectors,
-    productionLocationInfoRouteCommon,
-    MODERATION_STATUSES_ENUM,
-} from '../../util/constants';
+
+import FeatureFlag from '../FeatureFlag';
+import RequiredAsterisk from '../RequiredAsterisk';
+import StyledSelect from '../Filters/StyledSelect';
+import RequireAuthNotice from '../RequireAuthNotice';
+import StyledTooltip from '../StyledTooltip';
+
+import InputErrorText from './InputErrorText';
 import ProductionLocationDialog from './ProductionLocationDialog';
 import PostContributionSubmitErrorNotification from './PostContributionSubmitErrorNotification/PostContributionSubmitErrorNotification';
 
@@ -410,6 +420,36 @@ const ProductionLocationInfo = ({
             toast(singleProductionLocationError[0]);
         }
     }, [singleProductionLocationError]);
+
+    const activeSubmitButton = (
+        <Button
+            color="secondary"
+            variant="contained"
+            onClick={() => {
+                setShowPostSubmitErrorNotification(false);
+                handleProductionLocation(inputData, osID)}
+            }
+            className={classes.submitButtonStyles}
+            disabled={!isFormValid}
+        >
+            {submitButtonText}
+        </Button>
+    );
+
+    const maintenanceSubmitButton = (
+        <StyledTooltip title={MAINTENANCE_MESSAGE} placement="top">
+            <div className={classes.submitButtonWrapperStyles}>
+                <Button
+                    className={classes.submitButtonStyles}
+                    disabled
+                    variant="contained"
+                    aria-label="Submit button disabled during maintenance"
+                >
+                    {submitButtonText}
+                </Button>
+            </div>
+        </StyledTooltip>
+    );
 
     if (fetchingSessionSignIn) {
         return (
@@ -769,14 +809,20 @@ const ProductionLocationInfo = ({
                                         className={classes.textInputStyles}
                                         value={numberOfWorkers}
                                         onChange={e =>
-                                            setNumberOfWorkers(e.target.value)
+                                            setNumberOfWorkers(
+                                                e.target.value.trim(),
+                                            )
                                         }
                                         placeholder="Enter the number of workers as a number or range"
                                         helperText={
                                             !isValidNumberOfWorkers(
                                                 numberOfWorkers,
                                             ) && (
-                                                <InputErrorText text="Enter the number of workers as a number or range" />
+                                                <InputErrorText
+                                                    text={getNumberOfWorkersValidationError(
+                                                        numberOfWorkers,
+                                                    )}
+                                                />
                                             )
                                         }
                                         FormHelperTextProps={{
@@ -848,18 +894,12 @@ const ProductionLocationInfo = ({
                         >
                             Go Back
                         </Button>
-                        <Button
-                            color="secondary"
-                            variant="contained"
-                            onClick={() => {
-                                setShowPostSubmitErrorNotification(false);
-                                handleProductionLocation(inputData, osID);
-                            }}
-                            className={classes.submitButtonStyles}
-                            disabled={!isFormValid}
+                        <FeatureFlag
+                            flag={DISABLE_LIST_UPLOADING}
+                            alternative={activeSubmitButton}
                         >
-                            {submitButtonText}
-                        </Button>
+                            {maintenanceSubmitButton}
+                        </FeatureFlag>
                     </div>
                 </Paper>
             </div>
