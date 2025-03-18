@@ -3,6 +3,39 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.1.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 5, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+0168_add_api_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `ApiFacilityDownloadLimit` model to collect facility downloads data for a user.
+
+#### Schema changes
+* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - The `ApiFacilityDownloadLimit` model has been created. This model includes such fields: id, user_id, last_download_time, allowed_downloads, and download_count.
+
+### Code/API changes
+
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - The pages `My Claimed Facilities`, `Claimed Facility Details`, `My Lists`, and `My Lists/id` are now accessible only to authorized users. Additionally, styles have been refactored, an `InputSelect` component has been moved to the separate file, and input styling on the `Claimed Facility Details` page has been fixed.
+
+### What's new
+* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 1000 records per download + 10 downloads of facility data per month has been added for a registered free user.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.0.0
 
 ## Introduction
