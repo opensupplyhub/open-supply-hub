@@ -23,7 +23,7 @@ export const EMPTY_PLACEHOLDER = 'N/A';
 export const InfoPaths = {
     storiesResources: 'stories-resources',
     privacyPolicy: 'privacy-policy',
-    contribute: 'resources/preparing-data',
+    contribute: 'data-cleaning-service',
     dataQuality: 'resources/a-free-universal-id-matching-algorithm',
     claimedFacilities: 'stories-resources/claim-a-facility',
     termsOfService: 'terms-of-service',
