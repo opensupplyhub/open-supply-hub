@@ -22,6 +22,7 @@ class OpenSearchQueryDirector:
             V1_PARAMETERS_LIST.AFFILIATIONS: 'terms',
             V1_PARAMETERS_LIST.CERTIFICATIONS_STANDARDS_REGULATIONS: 'terms',
             V1_PARAMETERS_LIST.COORDINATES: 'geo_distance',
+            V1_PARAMETERS_LIST.GEO_POLYGON: 'geo_polygon',
             V1_PARAMETERS_LIST.CONTRIBUTOR_ID: 'terms',
             V1_PARAMETERS_LIST.REQUEST_TYPE: 'terms',
             V1_PARAMETERS_LIST.SOURCE: 'terms',
@@ -64,6 +65,10 @@ class OpenSearchQueryDirector:
             self.__add_range_query(field, query_params)
             return
 
+        if query_type == 'geo_polygon':
+            values = query_params.getlist(field)
+            self.__add_geo_polygon_query(field, values)
+
         if query_type == "geo_distance":
             lat = query_params.get(f"{field}[lat]")
             lng = query_params.get(f"{field}[lng]")
@@ -85,6 +90,9 @@ class OpenSearchQueryDirector:
             self.__builder.add_geo_distance(
                 field, float(lat), float(lng), distance
             )
+
+    def __add_geo_polygon_query(self, field, values):
+        self.__builder.add_geo_polygon(field, values)
 
     def __process_sorting(self, query_params):
         sort_by = query_params.get(V1_PARAMETERS_LIST.SORT_BY)

@@ -31,7 +31,7 @@ class V1UtilsTests(TestCase):
         self.assertEqual(serialized_params['percent_female_workers_min'], 20)
         self.assertEqual(serialized_params['percent_female_workers_max'], 80)
         self.assertEqual(serialized_params['coordinates_lat'], 12.34)
-        self.assertEqual(serialized_params['coordinates_lng'], 56.78)
+        self.assertEqual(serialized_params['coordinates_lon'], 56.78)
 
     def test_serialize_params_with_single_values(self):
         query_dict = QueryDict('', mutable=True)
