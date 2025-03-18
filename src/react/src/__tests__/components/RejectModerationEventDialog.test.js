@@ -40,7 +40,6 @@ jest.mock('@material-ui/core/Tooltip', () => ({ children, title, open, onOpen, o
     </div>
 ));
 
-
 describe('RejectModerationEventDialog component', () => {
     const defaultProps = {
         updateModerationEvent: mockUpdateModerationEvent,
