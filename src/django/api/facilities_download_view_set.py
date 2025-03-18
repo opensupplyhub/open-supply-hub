@@ -43,6 +43,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         (Maximum of 250 facilities per page.)
         """
         params = FacilityQueryParamsSerializer(data=request.query_params)
+        print('!!!!!!!!!!!!!!!!!!!')
 
         if not params.is_valid():
             raise ValidationError(params.errors)
