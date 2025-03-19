@@ -3,6 +3,36 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.1.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 5, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* *Describe migrations here.*
+
+#### Schema changes
+* *Describe schema changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* [OSDEV-1830](https://opensupplyhub.atlassian.net/browse/OSDEV-1830) - Updated implementation for `Production Location Info` page to input any values for `Location Type` and `Processing Type`, except when the sector is `Apparel` — in that case, enforce taxonomy filters.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.0.0
 
 ## Introduction
