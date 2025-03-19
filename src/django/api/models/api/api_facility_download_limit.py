@@ -1,6 +1,5 @@
 from simple_history.models import HistoricalRecords
 from django.db import models
-from django.utils import timezone
 from django.db.models import (
     BigAutoField,
 )
@@ -24,7 +23,7 @@ class ApiFacilityDownloadLimit(models.Model):
     )
     last_download_time = models.DateTimeField(
         null=True,
-        default=timezone.now,
+        blank=True,
         help_text='The date of the last download.'
     )
     allowed_downloads = models.PositiveIntegerField(

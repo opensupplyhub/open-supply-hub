@@ -94,8 +94,9 @@ function DownloadFacilitiesButton({
                     ''
                 ) : (
                     <p className={classes.downloadTooltip}>
-                        Downloads are supported only for searches resulting in
-                        10,000 facilities or less.
+                        Downloads are supported for searches resulting in 1,000
+                        production locations or less. Log in to download this
+                        dataset.
                     </p>
                 )
             }

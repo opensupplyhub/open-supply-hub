@@ -3,10 +3,12 @@ from typing import Union
 from django.contrib.auth.models import AnonymousUser
 from rest_framework.exceptions import ValidationError
 from rest_framework import viewsets, mixins
+from django.utils import timezone
 
 from api.pagination import PageAndSizePagination
 from api.models.facility.facility_index import FacilityIndex
 from api.models.user import User
+from api.models.api.api_facility_download_limit import ApiFacilityDownloadLimit
 from api.serializers.facility.facility_query_params_serializer import (
     FacilityQueryParamsSerializer)
 from api.serializers.facility.facility_download_serializer \
@@ -15,6 +17,7 @@ from api.serializers.facility.facility_download_serializer_embed_mode \
     import FacilityDownloadSerializerEmbedMode
 from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.constants import FacilitiesDownloadSettings
+from django.core.exceptions import ObjectDoesNotExist
 
 
 class FacilitiesDownloadViewSet(mixins.ListModelMixin,
@@ -42,8 +45,44 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         Returns a list of facilities in array format for a given query.
         (Maximum of 250 facilities per page.)
         """
+        # self.last_download_time = None
+        # self.allowed_downloads = 0
+        # self.download_count = 0
+
+        # apiFacilityDownloadLimit, created = ApiFacilityDownloadLimit.objects.get_or_create(
+        #     user=request.user,
+        #     defaults={
+        #         "last_download_time": timezone.now(),
+        #         "allowed_downloads": 10,
+        #         "download_count": 1,
+        #     }
+        # )
+        # if not created:
+        #     self.last_download_time = apiFacilityDownloadLimit.last_download_time
+        #     self.allowed_downloads = apiFacilityDownloadLimit.allowed_downloads
+        #     self.download_count = apiFacilityDownloadLimit.download_count
+
+        #     apiFacilityDownloadLimit.last_download_time = timezone.now()
+        #     apiFacilityDownloadLimit.download_count += 1
+        #     apiFacilityDownloadLimit.save()
+        # try:
+        #     apiFacilityDownloadLimit = ApiFacilityDownloadLimit.objects.get(user=request.user)
+        #     if apiFacilityDownloadLimit is None:
+        #         new_record = ApiFacilityDownloadLimit(
+        #             user=request.user,
+        #             last_download_time=timezone.now(),
+        #             allowed_downloads=10,
+        #             download_count=1,
+        #         )
+        #         new_record.save()
+        #     else:
+        #         self.last_download_time = apiFacilityDownloadLimit.last_download_time
+        #         self.allowed_downloads = apiFacilityDownloadLimit.allowed_downloads
+        #         self.download_count = apiFacilityDownloadLimit.download_count
+        # except ObjectDoesNotExist:
+        #     raise ValidationError("ObjectDoesNotExist")
+
         params = FacilityQueryParamsSerializer(data=request.query_params)
-        print('!!!!!!!!!!!!!!!!!!!')
 
         if not params.is_valid():
             raise ValidationError(params.errors)
