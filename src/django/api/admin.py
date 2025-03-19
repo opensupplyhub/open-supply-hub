@@ -172,6 +172,16 @@ class ApiLimitAdmin(admin.ModelAdmin):
         else:
             return []
 
+class ApiFacilityDownloadLimitAdmin(SimpleHistoryAdmin):
+    autocomplete_fields = ('user', )
+    # history_list_display = ('is_verified', 'verification_notes')
+    # search_fields = ('name', 'admin__email')
+
+    def get_ordering(self, request,obj=None):
+        if obj:
+            return ["user", ]
+        else:
+            return []
 
 class ExtendedFieldAdmin(admin.ModelAdmin):
     readonly_fields = ('contributor', 'facility', 'facility_list_item',
@@ -246,4 +256,4 @@ admin_site.register(models.RequestLog, RequestLogAdmin)
 admin_site.register(models.ApiLimit, ApiLimitAdmin)
 admin_site.register(models.Sector, SectorAdmin)
 admin_site.register(SectorGroup, SectorGroupAdmin)
-admin_site.register(models.ApiFacilityDownloadLimit, ApiLimitAdmin)
+admin_site.register(models.ApiFacilityDownloadLimit, ApiFacilityDownloadLimitAdmin)

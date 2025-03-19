@@ -8,7 +8,7 @@ from django.utils import timezone
 from api.pagination import PageAndSizePagination
 from api.models.facility.facility_index import FacilityIndex
 from api.models.user import User
-from api.models.api.api_facility_download_limit import ApiFacilityDownloadLimit
+# from api.models.api.api_facility_download_limit import ApiFacilityDownloadLimit
 from api.serializers.facility.facility_query_params_serializer import (
     FacilityQueryParamsSerializer)
 from api.serializers.facility.facility_download_serializer \
