@@ -52,10 +52,11 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
                 "download_count": 1,
             }
         )
-        # if not created:
-        #     facilityDownloadLimit.last_download_time = timezone.now()
-        #     facilityDownloadLimit.download_count += 1
-        #     facilityDownloadLimit.save()
+        if not created and facilityDownloadLimit.download_count < facilityDownloadLimit.allowed_downloads:
+            facilityDownloadLimit.last_download_time = timezone.now()
+            facilityDownloadLimit.download_count += 1
+            facilityDownloadLimit.save()
+
 
         self.last_download_time = facilityDownloadLimit.last_download_time
         self.allowed_downloads = facilityDownloadLimit.allowed_downloads
