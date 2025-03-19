@@ -142,22 +142,17 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
             }
         }
 
-    def add_geo_polygon(self, field, values):
-        print(f'@@@ geo_polygon: {values}')
-        pass
-        '''
-        Should be inside filter
-        Should not create new geo_polygon object each time
-        self.query_body['query']['bool']['filter'] = {
-            "geo_polygon": {
-                "point": {
-                    "points": [
-                        { "lat": 74.5627, "lon": 41.8645 },
-                        { "lat": 73.7562, "lon": 42.6526 },
-                        { "lat": 73.3245, "lon": 41.6189 },
-                        { "lat": 74.0060, "lon": 40.7128 }
-                    ]
-                }
-            }
-        }
-        '''
+    def add_geo_polygon(self, values):
+        if len(values) >= 1:
+            if "filter" not in self.query_body:
+                self.query_body["query"] = {"bool": {"filter": {}}}
+
+            if "geo_polygon" not in self.query_body["query"]["bool"]["filter"]:
+                self.query_body["query"]["bool"]["filter"]["geo_polygon"] = {"point": {"points": []}}
+
+            points = self.query_body["query"]["bool"]["filter"]["geo_polygon"]["point"]["points"]
+
+            for point in values:
+                lat, lon = map(float, point.split(","))
+                points.append({"lat": lat, "lon": lon})
+
