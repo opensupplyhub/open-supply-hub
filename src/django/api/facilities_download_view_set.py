@@ -8,7 +8,7 @@ from django.utils import timezone
 from api.pagination import PageAndSizePagination
 from api.models.facility.facility_index import FacilityIndex
 from api.models.user import User
-# from api.models.api.api_facility_download_limit import ApiFacilityDownloadLimit
+from api.models.facility_download_limit import FacilityDownloadLimit
 from api.serializers.facility.facility_query_params_serializer import (
     FacilityQueryParamsSerializer)
 from api.serializers.facility.facility_download_serializer \
@@ -45,30 +45,30 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         Returns a list of facilities in array format for a given query.
         (Maximum of 250 facilities per page.)
         """
-        # self.last_download_time = None
-        # self.allowed_downloads = 0
-        # self.download_count = 0
-
-        # apiFacilityDownloadLimit, created = ApiFacilityDownloadLimit.objects.get_or_create(
-        #     user=request.user,
-        #     defaults={
-        #         "last_download_time": timezone.now(),
-        #         "allowed_downloads": 10,
-        #         "download_count": 1,
-        #     }
-        # )
+        facilityDownloadLimit, created = FacilityDownloadLimit.objects.get_or_create(
+            user=request.user,
+            defaults={
+                "last_download_time": timezone.now(),
+                "download_count": 1,
+            }
+        )
         # if not created:
-        #     self.last_download_time = apiFacilityDownloadLimit.last_download_time
-        #     self.allowed_downloads = apiFacilityDownloadLimit.allowed_downloads
-        #     self.download_count = apiFacilityDownloadLimit.download_count
+        #     facilityDownloadLimit.last_download_time = timezone.now()
+        #     facilityDownloadLimit.download_count += 1
+        #     facilityDownloadLimit.save()
 
-        #     apiFacilityDownloadLimit.last_download_time = timezone.now()
-        #     apiFacilityDownloadLimit.download_count += 1
-        #     apiFacilityDownloadLimit.save()
+        self.last_download_time = facilityDownloadLimit.last_download_time
+        self.allowed_downloads = facilityDownloadLimit.allowed_downloads
+        self.download_count = facilityDownloadLimit.download_count
+        self.allowed_records_number = facilityDownloadLimit.allowed_records_number
+        print('!!!!!', self.last_download_time)
+        print('!!!!!', self.allowed_downloads)
+        print('!!!!!', self.download_count)
+        print('!!!!!', self.download_count)
         # try:
-        #     apiFacilityDownloadLimit = ApiFacilityDownloadLimit.objects.get(user=request.user)
-        #     if apiFacilityDownloadLimit is None:
-        #         new_record = ApiFacilityDownloadLimit(
+        #     facilityDownloadLimit = FacilityDownloadLimit.objects.get(user=request.user)
+        #     if facilityDownloadLimit is None:
+        #         new_record = FacilityDownloadLimit(
         #             user=request.user,
         #             last_download_time=timezone.now(),
         #             allowed_downloads=10,
