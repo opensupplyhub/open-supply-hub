@@ -34,3 +34,4 @@ class V1_PARAMETERS_LIST:
     AGGREGATION = 'aggregation'
     GEOHEX_GRID_PRECISION = 'geohex_grid_precision'
     GEO_BOUNDING_BOX = 'geo_bounding_box'
+    GEO_POLYGON = 'geo_polygon'

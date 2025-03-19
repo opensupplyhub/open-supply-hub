@@ -141,3 +141,18 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
                 }
             }
         }
+
+    def add_geo_polygon(self, values):
+        if len(values) >= 1:
+            if "filter" not in self.query_body:
+                self.query_body["query"] = {"bool": {"filter": {}}}
+
+            if "geo_polygon" not in self.query_body["query"]["bool"]["filter"]:
+                self.query_body["query"]["bool"]["filter"]["geo_polygon"] = {"point": {"points": []}}
+
+            points = self.query_body["query"]["bool"]["filter"]["geo_polygon"]["point"]["points"]
+
+            for point in values:
+                lat, lon = map(float, point.split(","))
+                points.append({"lat": lat, "lon": lon})
+

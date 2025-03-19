@@ -1,6 +1,5 @@
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 
-
 class OpenSearchQueryDirector:
     def __init__(self, builder):
         self.__builder = builder
@@ -22,6 +21,7 @@ class OpenSearchQueryDirector:
             V1_PARAMETERS_LIST.AFFILIATIONS: 'terms',
             V1_PARAMETERS_LIST.CERTIFICATIONS_STANDARDS_REGULATIONS: 'terms',
             V1_PARAMETERS_LIST.COORDINATES: 'geo_distance',
+            V1_PARAMETERS_LIST.GEO_POLYGON: 'geo_polygon',
             V1_PARAMETERS_LIST.CONTRIBUTOR_ID: 'terms',
             V1_PARAMETERS_LIST.REQUEST_TYPE: 'terms',
             V1_PARAMETERS_LIST.SOURCE: 'terms',
@@ -85,6 +85,9 @@ class OpenSearchQueryDirector:
             self.__builder.add_geo_distance(
                 field, float(lat), float(lng), distance
             )
+
+    def __add_geo_polygon_query(self, values):
+        self.__builder.add_geo_polygon(values)
 
     def __process_sorting(self, query_params):
         sort_by = query_params.get(V1_PARAMETERS_LIST.SORT_BY)
@@ -153,3 +156,7 @@ class OpenSearchQueryDirector:
             self.__builder.add_geo_bounding_box(
                 float(top), float(left), float(bottom), float(right)
             )
+
+        geo_polygon = query_params.getlist(V1_PARAMETERS_LIST.GEO_POLYGON)
+        if geo_polygon:
+            self.__add_geo_polygon_query(geo_polygon)
