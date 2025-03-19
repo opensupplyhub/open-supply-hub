@@ -65,7 +65,6 @@ class ProductionLocationsSerializer(Serializer):
     geo_bounding_box_bottom = FloatField(required=False)
     geo_bounding_box_right = FloatField(required=False)
     geo_polygon = ListField(
-        # child=CharField(validators=[GeoPolygonValidator().validate_opensearch_params]),
         child=CharField(required=False),
         required=False
     )
