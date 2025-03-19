@@ -158,9 +158,9 @@ describe("ProductionLocationInfo component, test input fields for POST v1/produc
         expect(getByText("Product Type(s)")).toBeInTheDocument();
         expect(getByText("Enter the type of products produced at this location. For example: Shirts, Laptops, Solar Panels.")).toBeInTheDocument();
         expect(getByText("Location Type(s)")).toBeInTheDocument();
-        expect(getByText("Select the location type(s) for this production location. For example: Final Product Assembly, Raw Materials Production or Processing, Office/HQ.")).toBeInTheDocument();
+        expect(getByText("Select or enter the location type(s) for this production location. For example: Final Product Assembly, Raw Materials Production or Processing, Office/HQ.")).toBeInTheDocument();
         expect(getByText("Processing Type(s)")).toBeInTheDocument();
-        expect(getByText("Select the type of processing activities that take place at this location. For example: Printing, Tooling, Assembly.")).toBeInTheDocument();
+        expect(getByText("Select or enter the type of processing activities that take place at this location. For example: Printing, Tooling, Assembly.")).toBeInTheDocument();
         expect(getByText("Number of Workers")).toBeInTheDocument();
         expect(getByText("Enter a number or a range for the number of people employed at the location. For example: 100, 100-150.")).toBeInTheDocument();
         expect(getByText("Parent Company")).toBeInTheDocument();
