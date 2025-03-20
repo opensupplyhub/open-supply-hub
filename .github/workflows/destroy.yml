@@ -48,6 +48,7 @@ jobs:
 
       - name: Delete Lambda@Edge function
         run: |
+          set -euo pipefail
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           REGION="us-east-1"
           LAMBDA_ARN="arn:aws:lambda:$REGION:$ACCOUNT_ID:function:funcOpenSupplyHub${{ vars.ENV_NAME }}RedirectToS3origin"
