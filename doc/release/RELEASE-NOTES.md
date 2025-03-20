@@ -25,7 +25,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe architecture/environment changes here.*
 
 ### Bugfix
+* [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - The pages `My Claimed Facilities`, `Claimed Facility Details`, `My Lists`, and `My Lists/id` are now accessible only to authorized users. Additionally, styles have been refactored, an `InputSelect` component has been moved to the separate file, and input styling on the `Claimed Facility Details` page has been fixed.
 * [OSDEV-1830](https://opensupplyhub.atlassian.net/browse/OSDEV-1830) - Updated implementation for `Production Location Info` page to input any values for `Location Type` and `Processing Type`, except when the sector is `Apparel` — in that case, enforce taxonomy filters.
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
@@ -94,6 +98,7 @@ Also was added sanitization on the server side by using the `Django-Bleach` libr
 * [OSDEV-1831](https://opensupplyhub.atlassian.net/browse/OSDEV-1831) - Updated copies of tooltips on the “Thank you for adding data” pop-up. The texts vary depending on the claim status for a particular location.
 * [OSDEV-1827](https://opensupplyhub.atlassian.net/browse/OSDEV-1827) - Fixed the condition logic for the email template when approving a contribution to an existing production location that has either been claimed or has a pending claim request.
 * [OSDEV-1781](https://opensupplyhub.atlassian.net/browse/OSDEV-1781) - A clear error messages for the number of workers field have been added to the SLC form and Claimed Facility Details page.
+* [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - All SLC pages have been made accessible only to authorized users.
 
 ### What's new
 * [OSDEV-1814](https://opensupplyhub.atlassian.net/browse/OSDEV-1814) - Added toggle switch button for production location info page to render additional data if necessary. If toggle switch button is inactive (default behavior), additional data won't be send to the server along with name, address and country.
@@ -131,7 +136,6 @@ Also was added sanitization on the server side by using the `Django-Bleach` libr
 * *Describe architecture/environment changes here.*
 
 ### Bugfix
-* [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - All SLC pages have been made accessible only to authorized users.
 * [OSDEV-1777](https://opensupplyhub.atlassian.net/browse/OSDEV-1777) - A consistent URL style was established across all pages of the SLC workflow. After the changes, the URL begins from `/contribute/single-location/`.
 * [OSDEV-1678](https://opensupplyhub.atlassian.net/browse/OSDEV-1678) - Added asterisks next to each required form field (Name, Address, and Country) on the "Production Location Information" page. Highlighted an empty field and displayed an error message if it loses focus.
 * [OSDEV-1778](https://opensupplyhub.atlassian.net/browse/OSDEV-1778) - Fixed the validation for number of workers field in POST, PATCH production locations API. The min field must be less than or equal to the max field.
