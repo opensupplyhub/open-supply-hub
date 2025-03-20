@@ -3,6 +3,37 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.1.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 5, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* *Describe migrations here.*
+
+#### Schema changes
+* *Describe schema changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - The pages `My Claimed Facilities`, `Claimed Facility Details`, `My Lists`, and `My Lists/id` are now accessible only to authorized users. Additionally, styles have been refactored, an `InputSelect` component has been moved to the separate file, and input styling on the `Claimed Facility Details` page has been fixed.
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* *Provide release instructions here.*
+
+
 ## Release 2.0.0
 
 ## Introduction
@@ -23,8 +54,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 Also was added sanitization on the server side by using the `Django-Bleach` library for the HTML content that is stored in the `action_reason_text_raw` field. The bleach filter was applied to the `action_reason_text_raw` value in the `slc_contribution_rejected_body.html` template.
 
 ### Architecture/Environment changes
-* [OSDEV-899](https://opensupplyhub.atlassian.net/browse/OSDEV-899) - Splitted the Django container into two components: FE (React) and BE (Django). Requests to the frontend (React) will be processed by the CDN (CloudFront), while requests to the API will be redirected to the Django container. This approach will allow for more efficient use of ECS cluster computing resources and improve frontend performance.
 * [OSDEV-1832](https://opensupplyhub.atlassian.net/browse/OSDEV-1832) - Increased the memory allocation for the `DedupeHub` container from `12GB` to `16GB` in terraform deployment configuration to address memory overload issues during facility reindexing for `Production` & `Pre-Production` environments.
+* [OSDEV-899](https://opensupplyhub.atlassian.net/browse/OSDEV-899) - Splitted the Django container into two components: FE (React) and BE (Django). Requests to the frontend (React) will be processed by the CDN (CloudFront), while requests to the API will be redirected to the Django container. This approach will allow for more efficient use of ECS cluster computing resources and improve frontend performance.
 
   The following endpoints will be redirected to the Django container:
   * tile/*
@@ -54,17 +85,25 @@ Also was added sanitization on the server side by using the `Django-Bleach` libr
 
 ### Bugfix
 * [OSDEV-1806](https://opensupplyhub.atlassian.net/browse/OSDEV-1806) - Refactored the Parent Company field validation. The field is now validated as a regular character field.
-* [OSDEV-1787](https://opensupplyhub.atlassian.net/browse/OSDEV-1787) - The tooltip messages for the Claim button have been removed for all statuses of moderation events on the `Contribution Record` page and changed according to the design on `Thanks for adding data for this production location` pop-up.
+* [OSDEV-1787](https://opensupplyhub.atlassian.net/browse/OSDEV-1787) - The tooltip messages for the Claim button have been removed for all statuses of moderation events on the `Contribution Record` page and changed according to the design on `Thanks for adding data for this production location` pop-up. Changed tooltip text for pending badge if existing production location has pending claim status or has been claimed already.
 * [OSDEV-1789](https://opensupplyhub.atlassian.net/browse/OSDEV-1789) - Fixed an issue where the scroll position was not resetting to the top when navigating through SLC workflow pages.
 * [OSDEV-1795](https://opensupplyhub.atlassian.net/browse/OSDEV-1795) - Resolved database connection issue after PostgreSQL 16.3 upgrade by upgrading pg8000 module version.
 * [OSDEV-1803](https://opensupplyhub.atlassian.net/browse/OSDEV-1803) - Updated text from `Facility Type` to `Location Type` and `Facility Name` to `Location Name` on the SLC `Thank You for Your Submission` page.
+* [OSDEV-1769](https://opensupplyhub.atlassian.net/browse/OSDEV-1769) - Fixed the response for potential matches for POST `api/facilities/?create=true`: applied an array of potential matches instead of returning a single potential match.
 * [OSDEV-1838](https://opensupplyhub.atlassian.net/browse/OSDEV-1838) - Fixed an issue where the router redirected to an unsupported page when the OS ID contained a forward slash. The fix was implemented by encoding the OS ID value using the `encodeURIComponent()` function before passing it as a URL parameter.
+* [OSDEV-1840](https://opensupplyhub.atlassian.net/browse/OSDEV-1840) - Fixed the snapshot status checking procedure. This will prevent a crash when trying to restore a database from an inaccessible snapshot.
+* [OSDEV-1831](https://opensupplyhub.atlassian.net/browse/OSDEV-1831) - Updated copies of tooltips on the “Thank you for adding data” pop-up. The texts vary depending on the claim status for a particular location.
+* [OSDEV-1827](https://opensupplyhub.atlassian.net/browse/OSDEV-1827) - Fixed the condition logic for the email template when approving a contribution to an existing production location that has either been claimed or has a pending claim request.
+* [OSDEV-1781](https://opensupplyhub.atlassian.net/browse/OSDEV-1781) - A clear error messages for the number of workers field have been added to the SLC form and Claimed Facility Details page.
+* [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - All SLC pages have been made accessible only to authorized users.
 
 ### What's new
 * [OSDEV-1814](https://opensupplyhub.atlassian.net/browse/OSDEV-1814) - Added toggle switch button for production location info page to render additional data if necessary. If toggle switch button is inactive (default behavior), additional data won't be send to the server along with name, address and country.
 * [OSDEV-1782](https://opensupplyhub.atlassian.net/browse/OSDEV-1782) - Added a confirmation dialog window that appears when a user tries to reject a moderation event. The dialog includes a WYSIWYG text editor where entering a message of at least 30 characters is required to confirm the rejection. If a user does not enter the required number of characters, the 'Reject' button is disabled, and a tooltip with a clear message appears when the mouse hovers over it.
 * [OSDEV-1786](https://opensupplyhub.atlassian.net/browse/OSDEV-1786) - Linked "My Claimed Facilities" page to SLC if no claimed production locations found, changed search button text.
 * [OSDEV-1607](https://opensupplyhub.atlassian.net/browse/OSDEV-1607) - Enabled SLC flow.
+* [OSDEV-1864](https://opensupplyhub.atlassian.net/browse/OSDEV-1864) - Disabled the 'Submit/Update' button on the SLC Production Location Information page when the `disable_list_uploading` feature flag is active.
+* [OSDEV-1867](https://opensupplyhub.atlassian.net/browse/OSDEV-1867) - Updated the 'Messy Data' link on the `Contribute` page and `List Upload` page to direct users to the `Data Cleaning Service splash` page instead of the old `Preparing Data` page.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
@@ -94,7 +133,6 @@ Also was added sanitization on the server side by using the `Django-Bleach` libr
 * *Describe architecture/environment changes here.*
 
 ### Bugfix
-* [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - All SLC pages have been made accessible only to authorized users.
 * [OSDEV-1777](https://opensupplyhub.atlassian.net/browse/OSDEV-1777) - A consistent URL style was established across all pages of the SLC workflow. After the changes, the URL begins from `/contribute/single-location/`.
 * [OSDEV-1678](https://opensupplyhub.atlassian.net/browse/OSDEV-1678) - Added asterisks next to each required form field (Name, Address, and Country) on the "Production Location Information" page. Highlighted an empty field and displayed an error message if it loses focus.
 * [OSDEV-1778](https://opensupplyhub.atlassian.net/browse/OSDEV-1778) - Fixed the validation for number of workers field in POST, PATCH production locations API. The min field must be less than or equal to the max field.

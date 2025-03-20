@@ -191,20 +191,6 @@ export const claimAFacilityFormStyles = Object.freeze({
     }),
 });
 
-export const claimAFacilitySupportDocsFormStyles = Object.freeze({
-    textFieldStyles: Object.freeze({
-        width: '50%',
-        padding: '10px 0 10px',
-    }),
-    inputGroupStyles: Object.freeze({
-        width: '100%',
-        paddingTop: '50px',
-    }),
-    asideStyles: Object.freeze({
-        padding: '5px 20px 5px 0',
-    }),
-});
-
 export const makeSelectFilterStyles = (windowWidth, origin, color = OARColor) =>
     Object.freeze({
         multiValue: Object.freeze((provided, state) => {
@@ -1291,6 +1277,8 @@ export const productionLocationInfoStyles = theme =>
             flexDirection: 'row',
             width: '100%',
             justifyContent: 'center',
+            gap: '24px',
+            padding: '48px 0',
         }),
         switchButton: Object.freeze({
             marginTop: '10px',
@@ -1355,10 +1343,12 @@ export const productionLocationInfoStyles = theme =>
             height: '49px',
             borderRadius: 0,
             textTransform: 'none',
-            margin: '48px 20px 48px 0',
             fontSize: '18px',
             fontWeight: theme.typography.fontWeightExtraBold,
             border: '1px solid #0D1128',
+        }),
+        submitButtonWrapperStyles: Object.freeze({
+            display: 'inline-block',
         }),
         submitButtonStyles: Object.freeze({
             width: '200px',
@@ -1366,7 +1356,6 @@ export const productionLocationInfoStyles = theme =>
             borderRadius: 0,
             textTransform: 'none',
             backgroundColor: theme.palette.action.main,
-            margin: '48px 0',
             color: theme.palette.common.black,
             '&:hover': {
                 backgroundColor: theme.palette.action.dark,
@@ -1576,6 +1565,103 @@ export const makeAddLocationStyles = theme =>
         }),
     });
 
+export const inputSectionStyles = theme =>
+    Object.freeze({
+        inputSectionFieldStyles: Object.freeze({
+            width: '100%',
+        }),
+        switchSectionStyles: Object.freeze({
+            fontSize: '15px',
+            fontWeight: theme.typography.fontWeightRegular,
+            display: 'flex',
+            alignItems: 'center',
+            color: COLOURS.DARK_GREY,
+        }),
+        inputSectionLabelStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightRegular,
+            padding: '10px 0',
+            color: '#000',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        }),
+        inputSectionStyles: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '10px 0',
+        }),
+        inputSectionStylesWithPadding: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+            width: '50%',
+            padding: '10px 0 10px',
+        }),
+        asideStyles: Object.freeze({
+            padding: '5px 20px 20px 0',
+        }),
+    });
+
+export const claimedFacilitiesDetailsStyles = () =>
+    Object.freeze({
+        headingStyles: Object.freeze({
+            padding: '10px 0',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            color: COLOURS.NEAR_BLACK,
+            fontWeight: '400',
+            lineHeight: '1.20588em',
+        }),
+        containerStyles: Object.freeze({
+            display: 'flex',
+            width: '100%',
+            justifyContent: 'space-between',
+            marginBottom: '100px',
+        }),
+        widthStyle: Object.freeze({ width: '60%' }),
+        switchSectionStyles: Object.freeze({
+            fontSize: '15px',
+            fontWeight: '400',
+            display: 'flex',
+            alignItems: 'center',
+            color: COLOURS.DARK_GREY,
+        }),
+        boldFontStyle: Object.freeze({
+            fontWeight: 'bold',
+        }),
+        textFieldStyles: Object.freeze({
+            width: '50%',
+            padding: '10px 0 10px',
+        }),
+        inputGroupStyles: Object.freeze({
+            width: '100%',
+            paddingTop: '50px',
+        }),
+        asideStyles: Object.freeze({
+            padding: '5px 20px 5px 0',
+        }),
+        boldTitleStyle: Object.freeze({
+            paddingBottom: '10px',
+            color: COLOURS.NEAR_BLACK,
+            fontSize: '2.125rem',
+            fontWeight: 'bold',
+            lineHeight: '1.20588em',
+        }),
+    });
+
+export const claimFacilitiesListStyle = Object.freeze({
+    searchButton: Object.freeze({
+        margin: '10px 0',
+    }),
+    bodyStyle: Object.freeze({
+        padding: '10px 0',
+        fontSize: 'calc(2* var(--rem))',
+        fontWeight: '400',
+        lineHeight: '1.20588em',
+    }),
+});
+
 export const makeRejectModerationEventDialogStyles = () =>
     Object.freeze({
         dialogPaperStyles: Object.freeze({
@@ -1601,4 +1687,36 @@ export const makeRejectModerationEventDialogStyles = () =>
         buttonBaseStyles: Object.freeze({
             width: '150px',
         }),
+    });
+
+export const textFieldErrorStyles = () =>
+    Object.freeze({
+        helperText: Object.freeze({ marginLeft: '0' }),
+        errorStyle: Object.freeze({ color: 'red' }),
+        textInputStyles: Object.freeze({
+            width: '100%',
+            borderRadius: '4px',
+        }),
+        titleStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: '400',
+            padding: '10px 0px',
+            color: 'rgb(0, 0, 0)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        }),
+    });
+
+export const makeStyledTooltipStyles = () =>
+    Object.freeze({
+        tooltip: {
+            color: 'rgba(0, 0, 0, 0.8)',
+            fontSize: '0.875rem',
+            backgroundColor: 'white',
+            border: 'solid rgba(0, 0, 0, 0.25)',
+            borderRadius: '10px',
+            padding: '10px',
+            lineHeight: '1',
+        },
     });
