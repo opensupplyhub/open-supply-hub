@@ -26,6 +26,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - The pages `My Claimed Facilities`, `Claimed Facility Details`, `My Lists`, and `My Lists/id` are now accessible only to authorized users. Additionally, styles have been refactored, an `InputSelect` component has been moved to the separate file, and input styling on the `Claimed Facility Details` page has been fixed.
+* [OSDEV-1886](https://opensupplyhub.atlassian.net/browse/OSDEV-1886) - Deleting Lambda@Edge function before destroying infrastructure. These changes are necessary so that infrastructure can be deleted using Terraform without receiving an error about a problem deleting a replicated function.
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
