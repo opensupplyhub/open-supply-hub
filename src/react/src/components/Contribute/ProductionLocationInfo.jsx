@@ -602,7 +602,7 @@ const ProductionLocationInfo = ({
                         </Typography>
                         <StyledSelect
                             id="country"
-                            name="Country"
+                            name="country"
                             aria-label="Country"
                             options={countriesOptions || []}
                             value={inputCountry}
@@ -705,7 +705,7 @@ const ProductionLocationInfo = ({
 
                                     <StyledSelect
                                         creatable
-                                        name="Product Type"
+                                        name="product-type"
                                         value={productType}
                                         onChange={setProductType}
                                         placeholder="Enter product type(s)"
@@ -736,7 +736,7 @@ const ProductionLocationInfo = ({
                                     {enabledTaxonomy ? (
                                         <StyledSelect
                                             id="location_type"
-                                            name="Location type"
+                                            name="location-type"
                                             aria-label="Location type"
                                             options={mapFacilityTypeOptions(
                                                 facilityProcessingTypeOptions ||
@@ -752,7 +752,7 @@ const ProductionLocationInfo = ({
                                     ) : (
                                         <StyledSelect
                                             creatable
-                                            name="Location type"
+                                            name="location-type"
                                             value={locationType || []}
                                             onChange={setLocationType}
                                             placeholder="Enter location type(s)"
@@ -784,7 +784,7 @@ const ProductionLocationInfo = ({
                                     {enabledTaxonomy ? (
                                         <StyledSelect
                                             id="processing_type"
-                                            name="Processing Type"
+                                            name="processing-type"
                                             aria-label="Processing Type"
                                             options={mapProcessingTypeOptions(
                                                 facilityProcessingTypeOptions ||
@@ -800,7 +800,7 @@ const ProductionLocationInfo = ({
                                     ) : (
                                         <StyledSelect
                                             creatable
-                                            name="Processing Type"
+                                            name="processing-type"
                                             value={processingType || []}
                                             onChange={setProcessingType}
                                             placeholder="Enter processing type(s)"

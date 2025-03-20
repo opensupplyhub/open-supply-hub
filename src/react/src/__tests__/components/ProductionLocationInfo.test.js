@@ -14,16 +14,19 @@ jest.mock('@material-ui/core/Popper', () => ({ children }) => children);
 jest.mock('@material-ui/core/Portal', () => ({ children }) => children);
 
 jest.mock("../../components/Filters/StyledSelect", () => (props) => {
-    const { options = [], value, onChange, onBlur, placeholder } = props;
+    const { options = [], value, onChange, onBlur, placeholder, name } = props;
+
     return (
         <select
-            data-testid="mocked-select"
+            data-testid={`mocked-select-${name}`}
             value={value ? value.value : ""}
             onChange={(e) => {
                 const selectedOption = options.find(
                     (opt) => opt.value === e.target.value,
                 );
-                onChange(selectedOption);
+                onChange(
+                    name === 'country' ? selectedOption : [selectedOption]
+                );
             }}
             onBlur={onBlur}
         >
@@ -100,7 +103,7 @@ describe("ProductionLocationInfo component, test input fields for POST v1/produc
         expect(addressInput).toBeInTheDocument();
         expect(addressInput).toHaveValue("");
 
-        const countrySelect = getByTestId("mocked-select");
+        const countrySelect = getByTestId("mocked-select-country");
         expect(countrySelect).toBeInTheDocument();
         expect(countrySelect).toHaveValue("");
 
@@ -116,7 +119,7 @@ describe("ProductionLocationInfo component, test input fields for POST v1/produc
 
         const nameInput = getByPlaceholderText("Enter the name");
         const addressInput = getByPlaceholderText("Enter the full address");
-        const countrySelect = getByTestId("mocked-select");
+        const countrySelect = getByTestId("mocked-select-country");
 
         fireEvent.blur(nameInput);
         fireEvent.blur(addressInput);
@@ -137,7 +140,7 @@ describe("ProductionLocationInfo component, test input fields for POST v1/produc
 
         const nameInput = getByPlaceholderText("Enter the name");
         const addressInput = getByPlaceholderText("Enter the full address");
-        const countrySelect = getByTestId("mocked-select");
+        const countrySelect = getByTestId("mocked-select-country");
 
         fireEvent.change(nameInput, { target: { value: "Test Name" } });
         fireEvent.change(addressInput, { target: { value: "Test Address" } });
@@ -184,7 +187,7 @@ describe("ProductionLocationInfo component, test input fields for POST v1/produc
 
         const nameInput = getByPlaceholderText("Enter the name");
         const addressInput = getByPlaceholderText("Enter the full address");
-        const countrySelect = getByTestId("mocked-select");
+        const countrySelect = getByTestId("mocked-select-country");
 
         fireEvent.change(nameInput, { target: { value: "Test Name" } });
         fireEvent.change(addressInput, { target: { value: "Test Address" } });
@@ -267,6 +270,22 @@ describe("ProductionLocationInfo component, test input fields for POST v1/produc
         const noTooltipElementAfter = document.querySelector(`[title="${MAINTENANCE_MESSAGE}"]`);
 
         expect(noTooltipElementAfter).toBeInTheDocument();
+    });
+
+    test("displays select or input for location and processing type fields", () => {
+        const { getByTestId, getByText } = renderComponent();
+
+        const switchButton = getByTestId("switch-additional-info-fields");
+        fireEvent.click(switchButton);
+    
+        expect(getByText("Enter location type(s)")).toBeInTheDocument();
+        expect(getByText("Enter processing type(s)")).toBeInTheDocument();
+
+        const sectorSelect = getByTestId("mocked-select-sector");
+        fireEvent.change(sectorSelect, { target: { value: 'Apparel' } });
+
+        expect(getByText("Select location type(s)")).toBeInTheDocument();
+        expect(getByText("Select processing type(s)")).toBeInTheDocument();
     });
 });
 
