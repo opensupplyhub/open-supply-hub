@@ -1,4 +1,5 @@
 import React from 'react';
+import { object, node, string, oneOfType } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
@@ -24,9 +25,7 @@ const ErrorContent = ({
                 {title}
             </Typography>
             {children}
-            <Typography className={classes.mainText}>
-                {supportInstructions}
-            </Typography>
+            <Typography>{supportInstructions}</Typography>
             {rawErrorData && (
                 <>
                     <TextField
@@ -58,6 +57,14 @@ const ErrorContent = ({
             )}
         </>
     );
+};
+
+ErrorContent.propTypes = {
+    title: string.isRequired,
+    supportInstructions: string.isRequired,
+    rawErrorData: oneOfType([object, string]).isRequired,
+    children: node.isRequired,
+    classes: object.isRequired,
 };
 
 export default withStyles(errorContentStyles)(ErrorContent);

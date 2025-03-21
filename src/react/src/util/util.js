@@ -73,6 +73,7 @@ import {
     MODERATION_STATUS_COLORS,
     DATA_SOURCES_ENUM,
     API_V1_ERROR_REQUEST_SOURCE_ENUM,
+    MAX_PRODUCT_TYPE_COUNT,
 } from './constants';
 
 import { createListItemCSV } from './util.listItemCSV';
@@ -683,7 +684,6 @@ export const logErrorAndDispatchFailureApiV1 = (
 
     if (status && data) {
         if (status >= 400 && status <= 499) {
-            console.log('CLIENT error');
             errorObj.errorSource = API_V1_ERROR_REQUEST_SOURCE_ENUM.CLIENT;
             errorObj.detail = data.detail;
             errorObj.rawData = data;
@@ -696,7 +696,6 @@ export const logErrorAndDispatchFailureApiV1 = (
         }
 
         if (status >= 500 && status <= 599) {
-            console.log('SERVER error');
             errorObj.errorSource = API_V1_ERROR_REQUEST_SOURCE_ENUM.SERVER;
             errorObj.rawData = data;
 
@@ -716,7 +715,6 @@ export const logErrorAndDispatchFailureApiV1 = (
         }
     }
 
-    console.log('Unknown error');
     window.console.warn(error);
     return dispatch(failureAction(errorObj));
 };
@@ -1204,6 +1202,9 @@ export const isValidNumberOfWorkers = value => {
 
     return false;
 };
+
+export const isValidProductType = value =>
+    value.length <= MAX_PRODUCT_TYPE_COUNT;
 
 export const getNumberOfWorkersValidationError = value => {
     const valueOfZeroText =

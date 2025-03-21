@@ -1,10 +1,11 @@
 import React from 'react';
 import isEmpty from 'lodash/isEmpty';
+import { func, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
-import Circle from '@material-ui/icons/Circle';
+import LensIcon from '@material-ui/icons/Lens';
 import Typography from '@material-ui/core/Typography';
 import NotificationContainer from './NotificationContainer';
 import ErrorContent from './ErrorContent';
@@ -41,22 +42,24 @@ const PostContributionSubmitErrorNotification = ({
                     >
                         {!isEmpty(errorNotificationContent.invalidFields) && (
                             <>
-                                <Typography className={classes.mainText}>
+                                <Typography>
                                     {
                                         ERROR_CONTENT_COPIES.validation
                                             .fieldErrorSubtitle
                                     }
                                 </Typography>
-                                <List
-                                    className={`${classes.mainText} ${classes.errorList}`}
-                                >
+                                <List className={classes.errorList}>
                                     {errorNotificationContent.invalidFields.map(
                                         field => (
                                             <ListItem key={field}>
                                                 <ListItemIcon>
-                                                    <Circle />
+                                                    <LensIcon
+                                                        className={
+                                                            classes.bulletIcon
+                                                        }
+                                                    />
                                                 </ListItemIcon>
-                                                {field}
+                                                <Typography>{field}</Typography>
                                             </ListItem>
                                         ),
                                     )}
@@ -67,22 +70,26 @@ const PostContributionSubmitErrorNotification = ({
                             errorNotificationContent.nonFieldErrorDetails,
                         ) && (
                             <>
-                                <Typography className={classes.mainText}>
+                                <Typography>
                                     {
                                         ERROR_CONTENT_COPIES.validation
                                             .nonFieldErrorSubtitle
                                     }
                                 </Typography>
-                                <List
-                                    className={`${classes.mainText} ${classes.errorList}`}
-                                >
+                                <List className={classes.errorList}>
                                     {errorNotificationContent.nonFieldErrorDetails.map(
                                         detail => (
                                             <ListItem key={detail}>
                                                 <ListItemIcon>
-                                                    <Circle />
+                                                    <LensIcon
+                                                        className={
+                                                            classes.bulletIcon
+                                                        }
+                                                    />
                                                 </ListItemIcon>
-                                                {detail}
+                                                <Typography>
+                                                    {detail}
+                                                </Typography>
                                             </ListItem>
                                         ),
                                     )}
@@ -105,12 +112,19 @@ const PostContributionSubmitErrorNotification = ({
                     }
                     rawErrorData={errorNotificationContent.rawData}
                 >
-                    <Typography className={classes.mainText}>
+                    <Typography>
                         {ERROR_CONTENT_COPIES.highLevel.subtitle}
                     </Typography>
-                    <Typography className={classes.mainText}>
-                        {errorNotificationContent.highLevelDetail}
-                    </Typography>
+                    <List className={classes.errorList}>
+                        <ListItem>
+                            <ListItemIcon>
+                                <LensIcon className={classes.bulletIcon} />
+                            </ListItemIcon>
+                            <Typography>
+                                {errorNotificationContent.highLevelDetail}
+                            </Typography>
+                        </ListItem>
+                    </List>
                 </ErrorContent>
             </NotificationContainer>
         );
@@ -129,9 +143,7 @@ const PostContributionSubmitErrorNotification = ({
                     }
                     rawErrorData={errorNotificationContent.rawData}
                 >
-                    <Typography className={classes.mainText}>
-                        {ERROR_CONTENT_COPIES.server.body}
-                    </Typography>
+                    <Typography>{ERROR_CONTENT_COPIES.server.body}</Typography>
                 </ErrorContent>
             </NotificationContainer>
         );
@@ -145,12 +157,16 @@ const PostContributionSubmitErrorNotification = ({
                     ERROR_CONTENT_COPIES.uknown.supportInstructions
                 }
             >
-                <Typography className={classes.mainText}>
-                    {ERROR_CONTENT_COPIES.uknown.body}
-                </Typography>
+                <Typography>{ERROR_CONTENT_COPIES.uknown.body}</Typography>
             </ErrorContent>
         </NotificationContainer>
     );
+};
+
+PostContributionSubmitErrorNotification.propTypes = {
+    showNotification: func.isRequired,
+    errorObj: object.isRequired,
+    classes: object.isRequired,
 };
 
 export default withStyles(postContributionSubmitErrorNotificationStyles)(

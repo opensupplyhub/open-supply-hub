@@ -14,10 +14,7 @@ const formPostContributionErrorNotificationContent = errorObj => {
         rawData: null,
     };
 
-    console.log('Log errorObj in formPostContributionErrorNotificationContent');
-    console.log(errorObj);
     if (errorObj.errorSource === API_V1_ERROR_REQUEST_SOURCE_ENUM.CLIENT) {
-        console.log('I am preparing the error content: Client error.');
         errorNotificationContent.errorType = errorObj.errorSource;
         errorNotificationContent.rawData = errorObj.rawData;
         if (!isEmpty(errorObj.errors)) {
@@ -47,13 +44,11 @@ const formPostContributionErrorNotificationContent = errorObj => {
     }
 
     if (errorObj.errorSource === API_V1_ERROR_REQUEST_SOURCE_ENUM.SERVER) {
-        console.log('I am preparing the error content: Server error.');
         errorNotificationContent.errorType = errorObj.errorSource;
         errorNotificationContent.rawData = errorObj.rawData;
         return errorNotificationContent;
     }
 
-    console.log('I am preparing the error content: Unknown error.');
     return errorNotificationContent;
 };
 

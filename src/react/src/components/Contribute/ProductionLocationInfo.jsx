@@ -427,8 +427,8 @@ const ProductionLocationInfo = ({
             variant="contained"
             onClick={() => {
                 setShowPostSubmitErrorNotification(false);
-                handleProductionLocation(inputData, osID)}
-            }
+                handleProductionLocation(inputData, osID);
+            }}
             className={classes.submitButtonStyles}
             disabled={!isFormValid}
         >
@@ -952,7 +952,7 @@ ProductionLocationInfo.propTypes = {
     facilityProcessingTypeOptions: facilityProcessingTypeOptionsPropType,
     pendingModerationEventData: moderationEventsListItemPropType,
     pendingModerationEventFetching: bool,
-    pendingModerationEventError: array,
+    pendingModerationEventError: object,
     singleModerationEventItem: moderationEventsListItemPropType,
     singleModerationEventItemFetching: bool,
     singleModerationEventItemError: array,

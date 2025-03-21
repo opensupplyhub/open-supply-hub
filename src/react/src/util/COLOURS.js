@@ -31,4 +31,5 @@ export default {
     PURPLE: '#8428FA',
 
     // Blacks
+    JET_BLACK: '#191919',
 };

@@ -1527,6 +1527,8 @@ export const mockedSectors = [
 
 export const MAX_LOCATIONS_TO_SHOW = 100;
 
+export const MAX_PRODUCT_TYPE_COUNT = 50;
+
 export const HEADER_HEIGHT = 116;
 
 export const API_V1_ERROR_REQUEST_SOURCE_ENUM = {
