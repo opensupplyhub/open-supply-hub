@@ -45,43 +45,20 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         Returns a list of facilities in array format for a given query.
         (Maximum of 250 facilities per page.)
         """
-        facilityDownloadLimit, created = FacilityDownloadLimit.objects.get_or_create(
+        facility_download_limit, created = FacilityDownloadLimit.objects.get_or_create(
             user=request.user,
             defaults={
-                "last_download_time": timezone.now(),
-                "download_count": 1,
+                "allowed_downloads": 10,
+                "download_count": 0,
+                "allowed_records_number": 1000,
             }
         )
-        if not created and facilityDownloadLimit.download_count < facilityDownloadLimit.allowed_downloads:
-            facilityDownloadLimit.last_download_time = timezone.now()
-            facilityDownloadLimit.download_count += 1
-            facilityDownloadLimit.save()
-
-
-        self.last_download_time = facilityDownloadLimit.last_download_time
-        self.allowed_downloads = facilityDownloadLimit.allowed_downloads
-        self.download_count = facilityDownloadLimit.download_count
-        self.allowed_records_number = facilityDownloadLimit.allowed_records_number
-        print('!!!!!', self.last_download_time)
-        print('!!!!!', self.allowed_downloads)
-        print('!!!!!', self.download_count)
-        print('!!!!!', self.download_count)
-        # try:
-        #     facilityDownloadLimit = FacilityDownloadLimit.objects.get(user=request.user)
-        #     if facilityDownloadLimit is None:
-        #         new_record = FacilityDownloadLimit(
-        #             user=request.user,
-        #             last_download_time=timezone.now(),
-        #             allowed_downloads=10,
-        #             download_count=1,
-        #         )
-        #         new_record.save()
-        #     else:
-        #         self.last_download_time = apiFacilityDownloadLimit.last_download_time
-        #         self.allowed_downloads = apiFacilityDownloadLimit.allowed_downloads
-        #         self.download_count = apiFacilityDownloadLimit.download_count
-        # except ObjectDoesNotExist:
-        #     raise ValidationError("ObjectDoesNotExist")
+        if not created:
+            if (self.is_same_month_as_last_download(facility_download_limit.last_download_time)
+                and facility_download_limit.download_count >= facility_download_limit.allowed_downloads):
+                raise ValidationError('You achieved your limit.')
+            elif not self.is_same_month_as_last_download(facility_download_limit.last_download_time):
+                self.reset_facility_download_limits_next_month(facility_download_limit)
 
         params = FacilityQueryParamsSerializer(data=request.query_params)
 
@@ -107,6 +84,8 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         if page_queryset is None:
             raise ValidationError("Invalid pageSize parameter")
 
+        self.update_facility_download_limit(facility_download_limit)
+
         list_serializer = self.get_serializer(page_queryset)
         rows = [f['row'] for f in list_serializer.data]
         headers = list_serializer.child.get_headers()
@@ -125,3 +104,25 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
             return False
 
         return True
+
+    def reset_facility_download_limits_next_month(
+        self,
+        facility_download_limit,
+    ):
+        facility_download_limit.last_download_time = timezone.now()
+        facility_download_limit.download_count = 0
+        facility_download_limit.save()
+
+    def is_same_month_as_last_download(self, last_download_time):
+        if not last_download_time:
+            return False
+
+        current_month = timezone.now().month
+        last_download_month = last_download_time.month
+
+        return current_month == last_download_month
+
+    def update_facility_download_limit(self, facility_download_limit):
+        facility_download_limit.last_download_time = timezone.now()
+        facility_download_limit.download_count += 1
+        facility_download_limit.save()

@@ -6,7 +6,6 @@ from .api.api_block import (
 )
 from .facility_download_limit import (
   FacilityDownloadLimit,
-  HistoricalFacilityDownloadLimit,
 )
 from .api.api_limit import (
   ApiLimit,

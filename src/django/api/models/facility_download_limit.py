@@ -1,9 +1,7 @@
-from simple_history.models import HistoricalRecords
 from django.db import models
 from django.db.models import (
     BigAutoField,
 )
-
 
 class FacilityDownloadLimit(models.Model):
     """
@@ -37,8 +35,7 @@ class FacilityDownloadLimit(models.Model):
         null=False,
         blank=False,
         default=1000,
-        help_text=('The number of facility records for a user can be '
-                   'made in a single download.')
+        help_text=('The maximum number of facility records a user can download in a single request.')
     )
     download_count = models.PositiveIntegerField(
         null=False,
@@ -47,5 +44,3 @@ class FacilityDownloadLimit(models.Model):
         help_text=('The number of facility data downloads a user '
                    'has already made in the current month.')
     )
-
-    history = HistoricalRecords()
