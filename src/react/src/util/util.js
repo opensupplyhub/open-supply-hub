@@ -72,6 +72,8 @@ import {
     MODERATION_QUEUE,
     MODERATION_STATUS_COLORS,
     DATA_SOURCES_ENUM,
+    API_V1_ERROR_REQUEST_SOURCE_ENUM,
+    MAX_PRODUCT_TYPE_COUNT,
 } from './constants';
 
 import { createListItemCSV } from './util.listItemCSV';
@@ -666,6 +668,57 @@ export function logErrorAndDispatchFailure(
     };
 }
 
+export const logErrorAndDispatchFailureApiV1 = (
+    error,
+    defaultMessage,
+    failureAction,
+) => dispatch => {
+    const { response } = error || {};
+    const { status, data } = response || {};
+    const errorObj = {
+        errorSource: null,
+        detail: defaultMessage,
+        errors: null,
+        rawData: null,
+    };
+
+    if (status && data) {
+        if (status >= 400 && status <= 499) {
+            errorObj.errorSource = API_V1_ERROR_REQUEST_SOURCE_ENUM.CLIENT;
+            errorObj.detail = data.detail;
+            errorObj.rawData = data;
+
+            if (!isEmpty(data.errors)) {
+                errorObj.errors = data.errors;
+            }
+
+            return dispatch(failureAction(errorObj));
+        }
+
+        if (status >= 500 && status <= 599) {
+            errorObj.errorSource = API_V1_ERROR_REQUEST_SOURCE_ENUM.SERVER;
+            errorObj.rawData = data;
+
+            // Field "detail" and "errors" aren't always present in the V1 API
+            // response for 500 errors. In case of an unexpected error, it may
+            // return a different structure, such as HTML.
+            if (!isEmpty(data.detail)) {
+                errorObj.detail = data.detail;
+
+                if (!isEmpty(data.errors)) {
+                    errorObj.errors = data.errors;
+                }
+            }
+
+            window.console.warn(error);
+            return dispatch(failureAction(errorObj));
+        }
+    }
+
+    window.console.warn(error);
+    return dispatch(failureAction(errorObj));
+};
+
 export const getValueFromEvent = ({ target: { value } }) => value;
 
 export const getIDFromEvent = ({ target: { id } }) => id;
@@ -1150,6 +1203,9 @@ export const isValidNumberOfWorkers = value => {
     return false;
 };
 
+export const isValidProductType = value =>
+    value.length <= MAX_PRODUCT_TYPE_COUNT;
+
 export const getNumberOfWorkersValidationError = value => {
     const valueOfZeroText =
         'The value of zero is not valid. Enter a positive whole number or a valid range (e.g., 1-5).';
@@ -1561,3 +1617,8 @@ export const getSelectStyles = (isErrorState = false) => ({
         color: isErrorState ? COLOURS.RED : provided.color,
     }),
 });
+
+export const snakeToTitleCase = str =>
+    str
+        .replace(/_/g, ' ') // Replace underscores with space.
+        .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize first letter of each word.

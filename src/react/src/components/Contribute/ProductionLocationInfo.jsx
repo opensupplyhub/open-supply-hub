@@ -64,6 +64,7 @@ import StyledTooltip from '../StyledTooltip';
 
 import InputErrorText from './InputErrorText';
 import ProductionLocationDialog from './ProductionLocationDialog';
+import PostContributionSubmitErrorNotification from './PostContributionSubmitErrorNotification/PostContributionSubmitErrorNotification';
 
 const ProductionLocationInfo = ({
     submitMethod,
@@ -180,6 +181,11 @@ const ProductionLocationInfo = ({
         showProductionLocationDialog,
         setShowProductionLocationDialog,
     ] = useState(null);
+
+    const [
+        showPostSubmitErrorNotification,
+        setShowPostSubmitErrorNotification,
+    ] = useState(false);
 
     const handleNameChange = event => {
         setInputName(event.target.value);
@@ -367,7 +373,7 @@ const ProductionLocationInfo = ({
 
     useEffect(() => {
         if (!pendingModerationEventFetching && pendingModerationEventError) {
-            toast(toString(pendingModerationEventError));
+            setShowPostSubmitErrorNotification(true);
         }
     }, [pendingModerationEventFetching, pendingModerationEventError]);
 
@@ -419,7 +425,10 @@ const ProductionLocationInfo = ({
         <Button
             color="secondary"
             variant="contained"
-            onClick={() => handleProductionLocation(inputData, osID)}
+            onClick={() => {
+                setShowPostSubmitErrorNotification(false);
+                handleProductionLocation(inputData, osID);
+            }}
             className={classes.submitButtonStyles}
             disabled={!isFormValid}
         >
@@ -869,6 +878,14 @@ const ProductionLocationInfo = ({
                             </>
                         )}
                     </div>
+                    {showPostSubmitErrorNotification && (
+                        <PostContributionSubmitErrorNotification
+                            showNotification={
+                                setShowPostSubmitErrorNotification
+                            }
+                            errorObj={pendingModerationEventError}
+                        />
+                    )}
                     <div className={classes.buttonsContainerStyles}>
                         <Button
                             variant="outlined"
@@ -935,7 +952,7 @@ ProductionLocationInfo.propTypes = {
     facilityProcessingTypeOptions: facilityProcessingTypeOptionsPropType,
     pendingModerationEventData: moderationEventsListItemPropType,
     pendingModerationEventFetching: bool,
-    pendingModerationEventError: array,
+    pendingModerationEventError: object,
     singleModerationEventItem: moderationEventsListItemPropType,
     singleModerationEventItemFetching: bool,
     singleModerationEventItemError: array,
