@@ -55,7 +55,9 @@
         "user-event": "2.0.1",
         "uuid": "^9.0.1",
         "validator": "13.7.0",
-        "xlsx": "0.18.5"
+        "xlsx": "0.18.5",
+        "formik": "2.4.6",
+        "yup": "1.6.1"
     },
     "scripts": {
         "start": "craco start",

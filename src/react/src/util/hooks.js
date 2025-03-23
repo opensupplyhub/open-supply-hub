@@ -1,4 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
 import get from 'lodash/get';
 import head from 'lodash/head';
 import last from 'lodash/last';
@@ -380,3 +382,53 @@ export const useResetScrollPosition = location => {
         window.scrollTo(0, 0);
     }, [location]);
 };
+
+export const useSingleLocationContributionForm = onSubmit =>
+    useFormik({
+        initialValues: {
+            name: '',
+            address: '',
+            country: null,
+            sector: '',
+            productType: [],
+            locationType: null,
+            processingType: null,
+            numberOfWorkers: '',
+            parentCompany: '',
+        },
+        validationSchema: Yup.object({
+            name: Yup.string()
+                .max(200, 'Name cannot exceed 200 characters')
+                .required('Name is required'),
+            address: Yup.string()
+                .max(200, 'Address cannot exceed 200 characters')
+                .required('Address is required'),
+            country: Yup.object().nullable().required('Country is required'),
+            numberOfWorkers: Yup.string()
+                .nullable()
+                .trim()
+                .matches(
+                    /^\d+$/,
+                    'Must be a positive integer or range (e.g., 100 or 50-200)',
+                )
+                .matches(/^\d+-\d+$/, 'Invalid range format (e.g., 50-200)')
+                .test(
+                    'valid-range',
+                    'Start value must be less than or equal to end value',
+                    value => {
+                        if (!value) return true;
+                        if (/^\d+-\d+$/.test(value)) {
+                            const [start, end] = value.split('-').map(Number);
+                            return start <= end;
+                        }
+                        return true;
+                    },
+                ),
+            productType: Yup.array().max(
+                4,
+                'At least one product type is required',
+            ),
+        }),
+        onSubmit,
+        validateOnMount: true,
+    });

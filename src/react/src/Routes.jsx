@@ -33,7 +33,7 @@ import Facilities from './components/Facilities';
 import ContributeProductionLocation from './components/Contribute/ContributeProductionLocation';
 import SearchByOsIdResult from './components/Contribute/SearchByOsIdResult';
 import SearchByNameAndAddressResult from './components/Contribute/SearchByNameAndAddressResult';
-import ProductionLocationInfo from './components/Contribute/ProductionLocationInfo';
+import ProductionLocationInfo from './components/Contribute/ProductionLocationInfoCopy';
 import withProductionLocationSubmit from './components/Contribute/HOC/withProductionLocationSubmit';
 
 import { sessionLogin } from './actions/auth';
