@@ -201,6 +201,7 @@ class APIErrorMessages:
 
 class FacilitiesDownloadSettings:
     DEFAULT_LIMIT = 1000
+    DEFAULT_ALLOWED_DOWNLOADS = 10
 
 
 class FacilitiesListSettings:

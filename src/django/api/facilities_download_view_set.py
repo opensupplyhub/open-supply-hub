@@ -17,7 +17,6 @@ from api.serializers.facility.facility_download_serializer_embed_mode \
     import FacilityDownloadSerializerEmbedMode
 from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.constants import FacilitiesDownloadSettings
-from django.core.exceptions import ObjectDoesNotExist
 
 
 class FacilitiesDownloadViewSet(mixins.ListModelMixin,
@@ -53,11 +52,10 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         facility_download_limit, _ = FacilityDownloadLimit.objects.get_or_create(
             user=request.user,
             defaults={
-                "allowed_downloads": 10,
                 "download_count": 0,
+                "allowed_downloads": FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS,
                 "allowed_records_number": FacilitiesDownloadSettings.DEFAULT_LIMIT,
                 "last_download_time": timezone.now(),
-                "download_count": 0
             }
         )
 
