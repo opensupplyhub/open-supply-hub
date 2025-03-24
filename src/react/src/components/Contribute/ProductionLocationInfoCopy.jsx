@@ -52,7 +52,7 @@ import {
     mapFacilityTypeOptions,
     mapProcessingTypeOptions,
     convertRangeField,
-    updateStateFromData,
+    transformDataForReactSelect,
     getSelectStyles,
 } from '../../util/util';
 
@@ -132,34 +132,39 @@ const ProductionLocationInfo = ({
     });
 
     const fillAdditionalDataFields = () => {
-        const fillSelectField = (key, formKey) => {
-            updateStateFromData(singleProductionLocationData, key, value =>
-                contributionForm.setFieldValue(formKey, value),
-            );
-        };
-
-        fillSelectField('sector', 'sector');
-        fillSelectField('product_type', 'productType');
-        fillSelectField('location_type', 'locationType');
-        fillSelectField('processing_type', 'processingType');
-        contributionForm.setFieldValue(
-            'numberOfWorkers',
-            convertRangeField(singleProductionLocationData.number_of_workers) ??
-                '',
-        );
-        // contributionForm.setFieldValue(
-        //     'parentCompany',
-        //     singleProductionLocationData.parent_company ?? '',
-        // );
+        contributionForm.setValues({
+            ...contributionForm.values,
+            sector: transformDataForReactSelect(
+                singleProductionLocationData,
+                'sector',
+            ),
+            productType: transformDataForReactSelect(
+                singleProductionLocationData,
+                'product_type',
+            ),
+            locationType: transformDataForReactSelect(
+                singleProductionLocationData,
+                'location_type',
+            ),
+            processingType: transformDataForReactSelect(
+                singleProductionLocationData,
+                'processing_type',
+            ),
+            numberOfWorkers:
+                convertRangeField(
+                    singleProductionLocationData.number_of_workers,
+                ) ?? '',
+            parentCompany: singleProductionLocationData.parent_company ?? '',
+        });
     };
 
     const resetAdditionalDataFields = () => {
         contributionForm.setValues({
             ...contributionForm.values,
-            sector: '',
+            sector: [],
             productType: [],
-            locationType: null,
-            processingType: null,
+            locationType: [],
+            processingType: [],
             numberOfWorkers: '',
             parentCompany: '',
         });
@@ -352,8 +357,6 @@ const ProductionLocationInfo = ({
         }
     }, [singleProductionLocationError]);
 
-    console.log('contributionForm.isValid');
-    console.log(contributionForm.isValid);
     const activeSubmitButton = (
         <Button
             color="secondary"
@@ -667,12 +670,33 @@ const ProductionLocationInfo = ({
                                                 value,
                                             )
                                         }
+                                        onBlur={() =>
+                                            contributionForm.setFieldTouched(
+                                                'productType',
+                                                true,
+                                            )
+                                        }
                                         placeholder="Enter product type(s)"
                                         aria-label="Enter product type(s)"
                                         styles={getSelectStyles()}
                                         className={classes.selectStyles}
                                         components={customSelectComponents}
                                     />
+                                    {contributionForm.touched.productType &&
+                                        contributionForm.errors.productType && (
+                                            <div
+                                                className={
+                                                    classes.errorWrapStyles
+                                                }
+                                            >
+                                                <InputErrorText
+                                                    text={
+                                                        contributionForm.errors
+                                                            .productType
+                                                    }
+                                                />
+                                            </div>
+                                        )}
                                 </div>
                                 <div
                                     className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
@@ -842,10 +866,39 @@ const ProductionLocationInfo = ({
                                         aria-label="Parent company"
                                         InputProps={{
                                             classes: {
+                                                input: `${
+                                                    contributionForm.touched
+                                                        .parentCompany &&
+                                                    contributionForm.errors
+                                                        .parentCompany &&
+                                                    classes.errorStyle
+                                                }`,
                                                 notchedOutline:
                                                     classes.notchedOutlineStyles,
                                             },
                                         }}
+                                        helperText={
+                                            contributionForm.touched
+                                                .parentCompany &&
+                                            contributionForm.errors
+                                                .parentCompany && (
+                                                <InputErrorText
+                                                    text={
+                                                        contributionForm.errors
+                                                            .parentCompany
+                                                    }
+                                                />
+                                            )
+                                        }
+                                        FormHelperTextProps={{
+                                            className: classes.helperText,
+                                        }}
+                                        error={
+                                            contributionForm.touched
+                                                .parentCompany &&
+                                            !!contributionForm.errors
+                                                .parentCompany
+                                        }
                                     />
                                 </div>
                             </>

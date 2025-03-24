@@ -6,6 +6,7 @@ import head from 'lodash/head';
 import last from 'lodash/last';
 import delay from 'lodash/delay';
 import L from 'leaflet';
+import { isInt } from 'validator';
 
 import {
     detailsZoomLevel,
@@ -14,7 +15,14 @@ import {
     maxVectorTileFacilitiesGridZoom,
 } from './constants.facilitiesMap';
 
-import { CONFIRM_ACTION, MERGE_ACTION, REJECT_ACTION } from './constants';
+import {
+    CONFIRM_ACTION,
+    MERGE_ACTION,
+    REJECT_ACTION,
+    MAX_PRODUCT_TYPE_COUNT,
+} from './constants';
+
+import { isCleanValueMeaningful } from './util';
 
 export const useUpdateLeafletMapImperatively = (
     resetButtonClickCount,
@@ -389,45 +397,88 @@ export const useSingleLocationContributionForm = onSubmit =>
             name: '',
             address: '',
             country: null,
-            sector: '',
+            sector: [],
             productType: [],
-            locationType: null,
-            processingType: null,
+            locationType: [],
+            processingType: [],
             numberOfWorkers: '',
             parentCompany: '',
         },
         validationSchema: Yup.object({
             name: Yup.string()
-                .max(200, 'Name cannot exceed 200 characters')
+                .trim()
+                .max(200, 'Name cannot exceed 200 characters.')
+                .test('not-a-number', 'Name cannot be a number.', value =>
+                    Number.isNaN(Number(value)),
+                )
+                .test(
+                    'meaningful-characters',
+                    'Name can’t solely consist of punctuation and whitespaces.',
+                    value => isCleanValueMeaningful(value),
+                )
                 .required('Name is required'),
             address: Yup.string()
-                .max(200, 'Address cannot exceed 200 characters')
-                .required('Address is required'),
-            country: Yup.object().nullable().required('Country is required'),
-            numberOfWorkers: Yup.string()
-                .nullable()
                 .trim()
-                .matches(
-                    /^\d+$/,
-                    'Must be a positive integer or range (e.g., 100 or 50-200)',
+                .max(200, 'Address cannot exceed 200 characters.')
+                .test('not-a-number', 'Address cannot be a number.', value =>
+                    Number.isNaN(Number(value)),
                 )
-                .matches(/^\d+-\d+$/, 'Invalid range format (e.g., 50-200)')
                 .test(
-                    'valid-range',
-                    'Start value must be less than or equal to end value',
+                    'meaningful-characters',
+                    'Address can’t solely consist of punctuation and whitespaces.',
+                    value => isCleanValueMeaningful(value),
+                )
+                .required('Address is required.'),
+            country: Yup.object().nullable().required('Country is required.'),
+            productType: Yup.array().max(
+                MAX_PRODUCT_TYPE_COUNT,
+                `Maximum of ${MAX_PRODUCT_TYPE_COUNT} product types allowed.`,
+            ),
+            numberOfWorkers: Yup.string()
+                .trim()
+                .test(
+                    'valid-format',
+                    'Invalid format. Enter a whole number or a valid numeric range (e.g., 1-5).',
                     value => {
                         if (!value) return true;
-                        if (/^\d+-\d+$/.test(value)) {
-                            const [start, end] = value.split('-').map(Number);
-                            return start <= end;
-                        }
-                        return true;
+                        const rangePattern = /^\d+-\d+$/;
+                        return isInt(value, 10) || rangePattern.test(value);
+                    },
+                )
+                .test(
+                    'non-zero',
+                    'The value of zero is not valid. Enter a positive whole number or a valid range (e.g., 1-5).',
+                    value => {
+                        if (!value) return true;
+                        return parseInt(value, 10) !== 0;
+                    },
+                )
+                .test(
+                    'valid-range',
+                    'Invalid range. The minimum value must be less than or equal to the maximum value.',
+                    value => {
+                        if (!value) return true;
+                        const rangePattern = /^\d+-\d+$/;
+                        if (!rangePattern.test(value)) return true;
+                        const [start, end] = value
+                            .split('-')
+                            .map(v => v.trim());
+                        return (
+                            isInt(end, {
+                                min: 1,
+                                allow_leading_zeroes: false,
+                            }) && parseInt(start, 10) <= parseInt(end, 10)
+                        );
                     },
                 ),
-            productType: Yup.array().max(
-                4,
-                'At least one product type is required',
-            ),
+            parentCompany: Yup.string()
+                .trim()
+                .max(200, 'Parent company cannot exceed 200 characters.')
+                .test(
+                    'not-a-number',
+                    'Parent company cannot be a number.',
+                    value => Number.isNaN(Number(value)),
+                ),
         }),
         onSubmit,
         validateOnMount: true,

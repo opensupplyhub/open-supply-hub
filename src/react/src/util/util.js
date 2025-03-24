@@ -45,6 +45,7 @@ import hash from 'object-hash';
 import * as XLSX from 'xlsx';
 import moment from 'moment';
 import removeAccents from 'remove-accents';
+import unidecode from 'unidecode';
 
 import {
     OTHER,
@@ -424,11 +425,12 @@ export const mapParamToReactSelectOption = param => {
     });
 };
 
-export const updateStateFromData = (obj, dataKey, setter) => {
+export const transformDataForReactSelect = (obj, dataKey) => {
     if (isArray(obj[dataKey]) && obj[dataKey].length > 0) {
         const transformedData = obj[dataKey].map(mapParamToReactSelectOption);
-        setter(transformedData);
+        return transformedData;
     }
+    return [];
 };
 
 export const createSelectOptionsFromParams = params => {
@@ -1618,3 +1620,17 @@ export const snakeToTitleCase = str =>
     str
         .replace(/_/g, ' ') // Replace underscores with space.
         .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize first letter of each word.
+
+export const isCleanValueMeaningful = value => {
+    if (typeof value !== 'string') return false;
+
+    let cleaned = unidecode(value);
+    cleaned = cleaned
+        .replace(/[\n\r\t]/g, ' ') // Normalize whitespace characters.
+        .replace(/[^\w\s]|_/g, '') // Remove all punctuation.
+        .replace(/\s+/g, ' ') // Collapse multiple spaces.
+        .trim() // Trim leading/trailing spaces.
+        .toLowerCase();
+
+    return cleaned.length > 0;
+};
