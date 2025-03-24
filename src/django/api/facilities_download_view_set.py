@@ -53,12 +53,13 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
                 "allowed_records_number": 1000,
             }
         )
-        if not created:
-            if (self.is_same_month_as_last_download(facility_download_limit.last_download_time)
-                and facility_download_limit.download_count >= facility_download_limit.allowed_downloads):
-                raise ValidationError('You achieved your limit.')
-            elif not self.is_same_month_as_last_download(facility_download_limit.last_download_time):
-                self.reset_facility_download_limits_next_month(facility_download_limit)
+
+        if (not created and self.is_same_month_as_last_download(facility_download_limit.last_download_time)
+            and facility_download_limit.download_count >= facility_download_limit.allowed_downloads):
+            raise ValidationError('You have reached the maximum number of facility downloads allowed this month. Please wait until next month to download more data.')
+        elif (not created
+             and not self.is_same_month_as_last_download(facility_download_limit.last_download_time)):
+            self.reset_facility_download_limits_next_month(facility_download_limit)
 
         params = FacilityQueryParamsSerializer(data=request.query_params)
 
@@ -70,8 +71,13 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
             .filter_by_query_params(request.query_params) \
             .order_by('name', 'address', 'id')
 
+        total_records = queryset.count()
+        page_size = int(request.query_params.get("pageSize", 100))
+        current_page = int(request.query_params.get("page", 1))
+        total_pages = (total_records // page_size) + (1 if total_records % page_size else 0)
+
         is_large_download_allowed = self.__can_user_download_over_limit(
-            queryset.count(), request.user
+            total_records, request.user
         )
         if (not is_large_download_allowed):
             raise ValidationError(
@@ -84,7 +90,8 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         if page_queryset is None:
             raise ValidationError("Invalid pageSize parameter")
 
-        self.update_facility_download_limit(facility_download_limit)
+        if current_page >= total_pages:
+            self.update_facility_download_limit(facility_download_limit)
 
         list_serializer = self.get_serializer(page_queryset)
         rows = [f['row'] for f in list_serializer.data]
@@ -105,15 +112,16 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
         return True
 
+    @staticmethod
     def reset_facility_download_limits_next_month(
-        self,
         facility_download_limit,
     ):
         facility_download_limit.last_download_time = timezone.now()
         facility_download_limit.download_count = 0
         facility_download_limit.save()
 
-    def is_same_month_as_last_download(self, last_download_time):
+    @staticmethod
+    def is_same_month_as_last_download(last_download_time) -> bool:
         if not last_download_time:
             return False
 
@@ -121,8 +129,9 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         last_download_month = last_download_time.month
 
         return current_month == last_download_month
-
-    def update_facility_download_limit(self, facility_download_limit):
+    @staticmethod
+    def update_facility_download_limit(facility_download_limit):
+        print('!!! UPDATE +1')
         facility_download_limit.last_download_time = timezone.now()
         facility_download_limit.download_count += 1
         facility_download_limit.save()

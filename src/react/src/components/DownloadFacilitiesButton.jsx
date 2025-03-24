@@ -65,7 +65,7 @@ function DownloadFacilitiesButton({
 
     useEffect(() => {
         if (requestedDownload && logDownloadError) {
-            toast('A problem prevented downloading the facilities');
+            toast(logDownloadError[0]);
             setRequestedDownload(false);
         }
     }, [logDownloadError, requestedDownload]);
