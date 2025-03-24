@@ -173,15 +173,16 @@ class ApiLimitAdmin(admin.ModelAdmin):
             return []
 
 class FacilityDownloadLimitAdmin(SimpleHistoryAdmin):
-    list_display = ("user", "allowed_downloads", "download_count","allowed_records_number", "last_download_time")
-    search_fields = ("user__username",)
-    autocomplete_fields = ("user", )
+    list_display = ('user', 'allowed_downloads','allowed_records_number', 'last_download_time', 'current_download_count')
+    search_fields = ('user__username',)
+    autocomplete_fields = ('user', )
 
     def get_ordering(self, request,obj=None):
         if obj:
-            return ["user", ]
+            return ['user', ]
         else:
             return []
+
 
 class ExtendedFieldAdmin(admin.ModelAdmin):
     readonly_fields = ('contributor', 'facility', 'facility_list_item',

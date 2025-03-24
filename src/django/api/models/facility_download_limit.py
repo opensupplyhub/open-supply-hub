@@ -42,5 +42,6 @@ class FacilityDownloadLimit(models.Model):
         blank=False,
         default=0,
         help_text=('The number of facility data downloads a user '
-                   'has already made in the current month.')
+                   'has already made in the current month.'),
+        verbose_name='Current download count',
     )
