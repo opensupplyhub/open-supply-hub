@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import { arrayOf, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
-import CircularProgress from '@material-ui/core/CircularProgress';
 
 import AppGrid from './AppGrid';
 import AppOverflow from './AppOverflow';
@@ -15,13 +14,13 @@ import {
     resetUserFacilityLists,
 } from '../actions/facilityLists';
 
-import {
-    authLoginFormRoute,
-    claimedFacilitiesRoute,
-    InfoLink,
-    InfoPaths,
-} from '../util/constants';
+import { claimedFacilitiesRoute, InfoLink, InfoPaths } from '../util/constants';
 import { facilityListPropType } from '../util/propTypes';
+import {
+    LoadingIndicator,
+    AuthNotice,
+    ErrorsList,
+} from './CheckComponentStatus';
 
 class FacilityLists extends Component {
     componentDidMount() {
@@ -36,42 +35,28 @@ class FacilityLists extends Component {
         const {
             facilityLists,
             fetching,
-            error,
+            errors,
             userHasSignedIn,
             fetchingSessionSignIn,
             myFacilitiesRoute,
         } = this.props;
+        const TITLE = 'My Lists';
 
-        if (fetching || fetchingSessionSignIn || error || !userHasSignedIn) {
-            const insetComponent = (() => {
-                if (fetching || fetchingSessionSignIn) {
-                    return <CircularProgress size={50} />;
-                }
+        if (fetching || fetchingSessionSignIn) {
+            return <LoadingIndicator title={TITLE} />;
+        }
 
-                if (!userHasSignedIn) {
-                    return (
-                        <Link to={authLoginFormRoute} href={authLoginFormRoute}>
-                            Sign in to view your Open Supply Hub lists
-                        </Link>
-                    );
-                }
+        if (!userHasSignedIn) {
+            return (
+                <AuthNotice
+                    title={TITLE}
+                    text="Sign in to view your Open Supply Hub lists"
+                />
+            );
+        }
 
-                if (error && error.length) {
-                    return (
-                        <ul>
-                            {error.map(err => (
-                                <li key={err} style={{ color: 'red' }}>
-                                    {err}
-                                </li>
-                            ))}
-                        </ul>
-                    );
-                }
-
-                return null;
-            })();
-
-            return <AppGrid title="My Lists">{insetComponent}</AppGrid>;
+        if (errors && errors.length > 0) {
+            return <ErrorsList title={TITLE} errors={errors} />;
         }
 
         const tableComponent =
@@ -119,13 +104,13 @@ class FacilityLists extends Component {
 }
 
 FacilityLists.defaultProps = {
-    error: null,
+    errors: null,
 };
 
 FacilityLists.propTypes = {
     facilityLists: arrayOf(facilityListPropType).isRequired,
     fetching: bool.isRequired,
-    error: arrayOf(string),
+    errors: arrayOf(string),
     fetchLists: func.isRequired,
     resetLists: func.isRequired,
     userHasSignedIn: bool.isRequired,
@@ -142,7 +127,7 @@ function mapStateToProps({
     return {
         facilityLists,
         fetching,
-        error,
+        errors: error,
         userHasSignedIn: !user.isAnon,
         fetchingSessionSignIn,
     };
