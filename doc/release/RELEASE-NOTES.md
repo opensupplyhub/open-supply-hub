@@ -22,7 +22,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe code/API changes here.*
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* [OSDEV-1899](https://opensupplyhub.atlassian.net/browse/OSDEV-1899) - Switched from using the `latest` tags to static versions for both `bitnami/kafka` and `bitnami/zookeeper`, which resolved compatibility issues during local & CI setup. Using pinned versions ensures stability and prevents unexpected behavior from upstream image changes.
 
 ### Bugfix
 * [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - The pages `My Claimed Facilities`, `Claimed Facility Details`, `My Lists`, and `My Lists/id` are now accessible only to authorized users. Additionally, styles have been refactored, an `InputSelect` component has been moved to the separate file, and input styling on the `Claimed Facility Details` page has been fixed.
