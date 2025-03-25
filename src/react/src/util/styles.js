@@ -1652,11 +1652,11 @@ export const claimedFacilitiesDetailsStyles = () =>
 
 export const claimFacilitiesListStyle = Object.freeze({
     searchButton: Object.freeze({
-        margin: '10px 0',
+        margin: '16px 0',
     }),
     bodyStyle: Object.freeze({
         padding: '10px 0',
-        fontSize: 'calc(2* var(--rem))',
+        fontSize: '21px',
         fontWeight: '400',
         lineHeight: '1.20588em',
     }),
