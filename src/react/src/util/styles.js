@@ -1656,7 +1656,7 @@ export const claimFacilitiesListStyle = Object.freeze({
     }),
     bodyStyle: Object.freeze({
         padding: '10px 0',
-        fontSize: '16pt',
+        fontSize: '21px',
         fontWeight: '400',
         lineHeight: '1.20588em',
     }),
