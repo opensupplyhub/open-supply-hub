@@ -9,6 +9,7 @@ from api.constants import FeatureGroups
 
 
 DEFAULT_LIMIT = 3
+DEFAULT_ALLOWED_DOWNLOADS = 1
 
 
 class FacilitiesDownloadViewSetTest(APITestCase):
@@ -468,6 +469,30 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         response = self.client.get(download_url)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(expected_error, response.json())
+
+    @patch('api.constants.FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS',
+           DEFAULT_ALLOWED_DOWNLOADS)
+    def test_user_cannot_download_over_allowed_downloads(self):
+        email = "test@example.com"
+        password = "example123"
+        user = User.objects.create(email=email)
+        user.set_password(password)
+        user.save()
+        self.client.login(email=email, password=password)
+        download_url = reverse("facilities-downloads-list")
+        expected_error = [('You have reached the maximum number of facility downloads allowed this month.'
+                                  'Please wait until next month to download more data.')]
+
+        first_response = self.client.get(download_url)
+
+        self.assertEqual(first_response.status_code, status.HTTP_200_OK)
+        rows = first_response.data.get("results", {}).get("rows", [])
+        self.assertEqual(len(rows), 18)
+
+        second_response = self.client.get(download_url)
+
+        self.assertEqual(second_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(expected_error, second_response.json())
 
     def test_api_user_can_download_over_limit(self):
         email = "test@example.com"
