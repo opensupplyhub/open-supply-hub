@@ -17,7 +17,6 @@ from api.serializers.facility.facility_download_serializer_embed_mode \
     import FacilityDownloadSerializerEmbedMode
 from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.constants import FacilitiesDownloadSettings
-from django.core.exceptions import ObjectDoesNotExist
 
 
 class FacilitiesDownloadViewSet(mixins.ListModelMixin,
@@ -45,26 +44,30 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         Returns a list of facilities in array format for a given query.
         (Maximum of 250 facilities per page.)
         """
-        facility_download_limit, created = FacilityDownloadLimit.objects.get_or_create(
-            user=request.user,
-            defaults={
-                "allowed_downloads": 10,
-                "download_count": 0,
-                "allowed_records_number": 1000,
-            }
-        )
-
-        if (not created and self.is_same_month_as_last_download(facility_download_limit.last_download_time)
-            and facility_download_limit.download_count >= facility_download_limit.allowed_downloads):
-            raise ValidationError('You have reached the maximum number of facility downloads allowed this month. Please wait until next month to download more data.')
-        elif (not created
-             and not self.is_same_month_as_last_download(facility_download_limit.last_download_time)):
-            self.reset_facility_download_limits_next_month(facility_download_limit)
-
         params = FacilityQueryParamsSerializer(data=request.query_params)
 
         if not params.is_valid():
             raise ValidationError(params.errors)
+
+        facility_download_limit, _ = FacilityDownloadLimit.objects.get_or_create(
+            user=request.user,
+            defaults={
+                "last_download_time": timezone.now(),
+                "allowed_downloads": FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS,
+                "download_count": 0,
+                "allowed_records_number": FacilitiesDownloadSettings.DEFAULT_LIMIT,
+            }
+        )
+
+        current_month = timezone.now().month
+        last_download_month = facility_download_limit.last_download_time.month
+
+        if current_month != last_download_month:
+            facility_download_limit.download_count = 0
+            facility_download_limit.last_download_time = timezone.now()
+        if facility_download_limit.download_count >= facility_download_limit.allowed_downloads:
+            raise ValidationError("""You have reached the maximum number of facility downloads allowed this month.
+                                  Please wait until next month to download more data.""")
 
         queryset = FacilityIndex \
             .objects \
@@ -72,26 +75,28 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
             .order_by('name', 'address', 'id')
 
         total_records = queryset.count()
-        page_size = int(request.query_params.get("pageSize", 100))
-        current_page = int(request.query_params.get("page", 1))
-        total_pages = (total_records // page_size) + (1 if total_records % page_size else 0)
 
         is_large_download_allowed = self.__can_user_download_over_limit(
-            total_records, request.user
+            total_records,
+            request.user,
+            facility_download_limit.allowed_records_number,
         )
         if (not is_large_download_allowed):
             raise ValidationError(
                 ('Downloads are supported only for searches resulting in '
-                 f'{FacilitiesDownloadSettings.DEFAULT_LIMIT} '
+                f'{facility_download_limit.allowed_records_number} '
                  'facilities or less.'))
 
         page_queryset = self.paginate_queryset(queryset)
 
         if page_queryset is None:
             raise ValidationError("Invalid pageSize parameter")
+        page_size = int(request.query_params.get("pageSize", 100))
+        current_page = int(request.query_params.get("page", 1))
+        total_pages = (total_records // page_size) + (1 if total_records % page_size else 0)
 
         if current_page >= total_pages:
-            self.update_facility_download_limit(facility_download_limit)
+            self.__update_facility_download_limit(facility_download_limit)
 
         list_serializer = self.get_serializer(page_queryset)
         rows = [f['row'] for f in list_serializer.data]
@@ -102,9 +107,11 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
     @staticmethod
     def __can_user_download_over_limit(
-            number: int,
-            user: Union[AnonymousUser, User]) -> bool:
-        is_over_limit = number > FacilitiesDownloadSettings.DEFAULT_LIMIT
+        number: int,
+        user: Union[AnonymousUser, User],
+        download_limit: int
+    ) -> bool:
+        is_over_limit = number > download_limit
         is_api_user = not user.is_anonymous and user.has_groups
 
         if not is_api_user and is_over_limit:
@@ -113,25 +120,9 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         return True
 
     @staticmethod
-    def reset_facility_download_limits_next_month(
-        facility_download_limit,
-    ):
-        facility_download_limit.last_download_time = timezone.now()
-        facility_download_limit.download_count = 0
-        facility_download_limit.save()
-
-    @staticmethod
-    def is_same_month_as_last_download(last_download_time) -> bool:
-        if not last_download_time:
-            return False
-
-        current_month = timezone.now().month
-        last_download_month = last_download_time.month
-
-        return current_month == last_download_month
-    @staticmethod
-    def update_facility_download_limit(facility_download_limit):
-        print('!!! UPDATE +1')
+    def __update_facility_download_limit(
+        facility_download_limit: FacilityDownloadLimit,
+    ) -> None:
         facility_download_limit.last_download_time = timezone.now()
         facility_download_limit.download_count += 1
         facility_download_limit.save()
