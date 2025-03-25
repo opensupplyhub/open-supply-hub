@@ -146,7 +146,6 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
         if "filter" not in self.query_body["query"]["bool"]:
             self.query_body["query"]["bool"]["filter"] = {}
 
-
         if len(values) >= 1:
             if "geo_polygon" not in self.query_body["query"]["bool"]["filter"]:
                 self.query_body["query"]["bool"]["filter"]["geo_polygon"] = {
