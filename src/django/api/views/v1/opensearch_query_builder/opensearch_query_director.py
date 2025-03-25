@@ -1,5 +1,6 @@
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 
+
 class OpenSearchQueryDirector:
     def __init__(self, builder):
         self.__builder = builder

@@ -31,11 +31,6 @@ def serialize_params(serializer_class, query_params):
         ]:
             new_key = key.replace(']', '').replace('[', '_')
             flattened_query_params[new_key] = value[0]
-            # Convert multi-value query parameter
-            # TODO: Probably you don't need to do extra serialization here
-            '''
-            elif key in [V1_PARAMETERS_LIST.GEO_POLYGON]:
-            '''
         # Prepare only single params
         elif key in [
             V1_PARAMETERS_LIST.ADDRESS,

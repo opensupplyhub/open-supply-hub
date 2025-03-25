@@ -23,20 +23,37 @@ class GeoPolygonValidator(OpenSearchValidationInterface):
             except (ValueError, TypeError):
                 errors.append({
                     "field": "geo_polygon",
-                    "detail": f"Invalid coordinate format: {point}. Must be 'lat,lon' as floats"
+                    "detail": (
+                        f"Invalid coordinate format: {point}. "
+                        "Must be 'lat,lon' as floats"
+                    )
                 })
                 continue
 
-            if not (CoordinateLimits.LAT_MIN <= lat <= CoordinateLimits.LAT_MAX):
+            if not (
+                CoordinateLimits.LAT_MIN <=
+                lat <=
+                CoordinateLimits.LAT_MAX
+            ):
                 errors.append({
                     "field": "geo_polygon",
-                    "detail": f"Invalid latitude {lat}. Must be between -90 and 90."
+                    "detail": (
+                        f"Invalid latitude {lat}. "
+                        "Must be between -90 and 90."
+                    )
                 })
 
-            if not (CoordinateLimits.LNG_MIN <= lon <= CoordinateLimits.LNG_MAX):
+            if not (
+                CoordinateLimits.LNG_MIN <=
+                lon <=
+                CoordinateLimits.LNG_MAX
+            ):
                 errors.append({
                     "field": "geo_polygon",
-                    "detail": f"Invalid longitude {lon}. Must be between -180 and 180."
+                    "detail": (
+                        f"Invalid longitude {lon}. "
+                        "Must be between -180 and 180."
+                    )
                 })
 
         return errors

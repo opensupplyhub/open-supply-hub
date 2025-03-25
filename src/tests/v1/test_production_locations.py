@@ -157,3 +157,54 @@ class ProductionLocationsTest(BaseAPITest):
         self.assertIsNotNone(result['data'])
         self.assertEqual(len(result['data']), 1)
         self.assertEqual(result['data'][0]['os_id'], 'US2020052SV22KJ')
+
+    def test_production_locations_geo_polygon(self):
+        inside_polygon = {
+            "sector": ["Retail"],
+            "address": "Inside Polygon Address",
+            "name": "Inside Polygon Location",
+            "country": {"alpha_2": "US"},
+            "os_id": "US202309INSIDE",
+            "coordinates": {
+                "lon": -73.3121232,
+                "lat": 40.7667421
+            },
+        }
+        
+        outside_polygon = {
+            "sector": ["Retail"],
+            "address": "Outside Polygon Address",
+            "name": "Outside Polygon Location",
+            "country": {"alpha_2": "US"},
+            "os_id": "US202309OUTSIDE",
+            "coordinates": {
+                "lon": -75.000000,
+                "lat": 42.000000
+            },
+        }
+
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=inside_polygon,
+            id=self.open_search_client.count()
+        )
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=outside_polygon,
+            id=self.open_search_client.count()
+        )
+        
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
+
+        query = "?geo_polygon=40.8193217,-73.0273466&geo_polygon=40.7667421,-73.3121232&geo_polygon=40.8459614,-73.5528312"
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/{query}",
+            headers=self.basic_headers,
+        )
+
+        result = response.json()
+        self.assertIsNotNone(result['data'])
+        self.assertEqual(len(result['data']), 1)
+        self.assertEqual(result['data'][0]['os_id'], "US202309INSIDE")

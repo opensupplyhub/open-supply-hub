@@ -280,3 +280,32 @@ class TestProductionLocationsQueryBuilder(TestCase):
             expected,
             self.builder.query_body['query']['bool']['filter']
         )
+
+    def test_add_geo_polygon(self):
+        values = [
+            "40.7128,-74.0060",
+            "35.7128,-78.0060",
+            "37.7128,-75.0060"
+        ]
+
+        self.builder.add_geo_polygon(values)
+
+        expected = {
+            'geo_polygon': {
+                'coordinates': {
+                    'points': [
+                        {'lat': 40.7128, 'lon': -74.0060},
+                        {'lat': 35.7128, 'lon': -78.0060},
+                        {'lat': 37.7128, 'lon': -75.0060},
+                    ]
+                }
+            }
+        }
+
+        self.assertIn(
+            'filter', self.builder.query_body['query']['bool']
+        )
+        self.assertEqual(
+            expected,
+            self.builder.query_body['query']['bool']['filter']
+        )
