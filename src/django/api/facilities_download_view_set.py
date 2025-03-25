@@ -1,7 +1,6 @@
 from typing import Union
 
 from django.contrib.auth.models import AnonymousUser
-from rest_framework.exceptions import ValidationError
 from rest_framework import viewsets, mixins
 from django.utils import timezone
 
@@ -17,6 +16,10 @@ from api.serializers.facility.facility_download_serializer_embed_mode \
     import FacilityDownloadSerializerEmbedMode
 from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.constants import FacilitiesDownloadSettings
+from rest_framework.exceptions import (
+    NotAuthenticated,
+    ValidationError,
+)
 
 
 class FacilitiesDownloadViewSet(mixins.ListModelMixin,
@@ -44,6 +47,9 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         Returns a list of facilities in array format for a given query.
         (Maximum of 250 facilities per page.)
         """
+        if request.user.is_anonymous:
+            raise NotAuthenticated()
+
         params = FacilityQueryParamsSerializer(data=request.query_params)
 
         if not params.is_valid():
@@ -76,11 +82,9 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
         total_records = queryset.count()
 
-        is_large_download_allowed = self.__can_user_download_over_limit(
-            total_records,
-            request.user,
-            facility_download_limit.allowed_records_number,
-        )
+        is_large_download_allowed = (total_records <= facility_download_limit.allowed_records_number
+                                     or request.user.has_groups)
+
         if (not is_large_download_allowed):
             raise ValidationError(
                 ('Downloads are supported only for searches resulting in '
@@ -104,20 +108,6 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         data = {'rows': rows, 'headers': headers}
         response = self.get_paginated_response(data)
         return response
-
-    @staticmethod
-    def __can_user_download_over_limit(
-        number: int,
-        user: Union[AnonymousUser, User],
-        download_limit: int
-    ) -> bool:
-        is_over_limit = number > download_limit
-        is_api_user = not user.is_anonymous and user.has_groups
-
-        if not is_api_user and is_over_limit:
-            return False
-
-        return True
 
     @staticmethod
     def __update_facility_download_limit(

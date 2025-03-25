@@ -14,7 +14,21 @@ DEFAULT_LIMIT = 3
 class FacilitiesDownloadViewSetTest(APITestCase):
     fixtures = ["facilities_index"]
 
+    def test_download_is_not_allowed_for_anonymous(self):
+        download_url = reverse("facilities-downloads-list")
+        response = self.client.get(download_url)
+        expected_error_message = 'Authentication credentials were not provided.'
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(expected_error_message,response.data['detail'])
+
     def test_queryset_ordering(self):
+        email = "test@example.com"
+        password = "example123"
+        user = User.objects.create(email=email)
+        user.set_password(password)
+        user.save()
+        self.client.login(email=email, password=password)
         download_url = reverse("facilities-downloads-list")
         expected_data = [
             [
@@ -374,6 +388,12 @@ class FacilitiesDownloadViewSetTest(APITestCase):
             self.assertListEqual(expected_facility, actual_facility)
 
     def test_pagination(self):
+        email = "test@example.com"
+        password = "example123"
+        user = User.objects.create(email=email)
+        user.set_password(password)
+        user.save()
+        self.client.login(email=email, password=password)
         download_url = reverse("facilities-downloads-list")
         page_size = {"pageSize": 5}
 
@@ -396,6 +416,12 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         self.assertEqual(response.data.get("next"), expected_next)
 
     def test_query_parameters(self):
+        email = "test@example.com"
+        password = "example123"
+        user = User.objects.create(email=email)
+        user.set_password(password)
+        user.save()
+        self.client.login(email=email, password=password)
         download_url = reverse("facilities-downloads-list")
         query_params = {"countries": "IN"}
         expected_data = [
@@ -429,6 +455,20 @@ class FacilitiesDownloadViewSetTest(APITestCase):
 
     @patch('api.constants.FacilitiesDownloadSettings.DEFAULT_LIMIT',
            DEFAULT_LIMIT)
+    def test_user_cannot_download_over_limit(self):
+        email = "test@example.com"
+        password = "example123"
+        user = User.objects.create(email=email)
+        user.set_password(password)
+        user.save()
+        self.client.login(email=email, password=password)
+        download_url = reverse("facilities-downloads-list")
+        expected_error = ['Downloads are supported only for searches resulting in 3 facilities or less.']
+
+        response = self.client.get(download_url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(expected_error, response.json())
+
     def test_api_user_can_download_over_limit(self):
         email = "test@example.com"
         password = "example123"
@@ -448,26 +488,3 @@ class FacilitiesDownloadViewSetTest(APITestCase):
 
         rows = response.data.get("results", {}).get("rows", [])
         self.assertGreater(len(rows), DEFAULT_LIMIT)
-
-    @patch('api.constants.FacilitiesDownloadSettings.DEFAULT_LIMIT',
-           DEFAULT_LIMIT)
-    def test_non_api_user_cannot_download_over_limit(self):
-        expected_error_message = (
-            'Downloads are supported only for searches resulting in '
-            f'{DEFAULT_LIMIT} facilities or less.'
-        )
-
-        email = "test@example.com"
-        password = "example123"
-        user = User.objects.create(email=email)
-        user.set_password(password)
-        user.save()
-        self.client.login(email=email, password=password)
-
-        download_url = reverse("facilities-downloads-list")
-
-        response = self.client.get(download_url)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-        response_data = response.json()
-        self.assertEqual(response_data[0], expected_error_message)
