@@ -27,6 +27,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Bugfix
 * [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - The pages `My Claimed Facilities`, `Claimed Facility Details`, `My Lists`, and `My Lists/id` are now accessible only to authorized users. Additionally, styles have been refactored, an `InputSelect` component has been moved to the separate file, and input styling on the `Claimed Facility Details` page has been fixed.
 * [OSDEV-1830](https://opensupplyhub.atlassian.net/browse/OSDEV-1830) - Updated implementation for `Production Location Info` page to input any values for `Location Type` and `Processing Type`, except when the sector is `Apparel` — in that case, enforce taxonomy filters.
+* [OSDEV-1861](https://opensupplyhub.atlassian.net/browse/OSDEV-1861) - On the `My Claimed Facilities` page, the help text font size was increased to `21px`, and the margin for the `FIND MY PRODUCTION LOCATION` button was increased to `16px` to improve readability.
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
