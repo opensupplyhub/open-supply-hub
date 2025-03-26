@@ -163,11 +163,11 @@ class ProductionLocationsTest(BaseAPITest):
             "sector": ["Retail"],
             "address": "Inside Polygon Address",
             "name": "Inside Polygon Location",
-            "country": {"alpha_2": "US"},
-            "os_id": "US202309INSIDE",
+            "country": {"alpha_2": "GL"},
+            "os_id": "GL202309INSIDE",
             "coordinates": {
-                "lon": -73.3121232,
-                "lat": 40.7667421
+                "lon": -47.0,
+                "lat": 78.0
             },
         }
         
@@ -198,7 +198,7 @@ class ProductionLocationsTest(BaseAPITest):
             index=self.production_locations_index_name
         )
 
-        query = "?geo_polygon=40.8193217,-73.0273466&geo_polygon=40.7667421,-73.3121232&geo_polygon=40.8459614,-73.5528312"
+        query = "?geo_polygon=79.318492,-39.36719&geo_polygon=79.280399,-55.39907&geo_polygon=77.57295,-55.512304&geo_polygon=77.598154,-38.396004"
         response = requests.get(
             f"{self.root_url}/api/v1/production-locations/{query}",
             headers=self.basic_headers,
@@ -207,4 +207,5 @@ class ProductionLocationsTest(BaseAPITest):
         result = response.json()
         self.assertIsNotNone(result['data'])
         self.assertEqual(len(result['data']), 1)
-        self.assertEqual(result['data'][0]['os_id'], "US202309INSIDE")
+        self.assertEqual(result['data'][0]['os_id'], "GL202309INSIDE")
+
