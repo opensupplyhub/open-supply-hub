@@ -30,7 +30,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1861](https://opensupplyhub.atlassian.net/browse/OSDEV-1861) - On the `My Claimed Facilities` page, the help text font size was increased to `21px`, and the margin for the `FIND MY PRODUCTION LOCATION` button was increased to `16px` to improve readability.
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* [OSDEV-1842](https://opensupplyhub.atlassian.net/browse/OSDEV-1842) - Removed the pre-filled information in the `Additional Information` section of the SLC `ProductionLocationInfo` page.
 
 ### Release instructions:
 * *Provide release instructions here.*
