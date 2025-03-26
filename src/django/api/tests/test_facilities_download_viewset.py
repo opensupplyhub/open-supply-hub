@@ -414,7 +414,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         self.assertEqual(response.data.get("count"), 18)
         self.assertIsNone(response.data.get("previous"))
         self.assertEqual(response.data.get("next"),
-                         "http://testserver/api/facilities-downloads/?page=2&pageSize=5")
+                         "https://testserver/api/facilities-downloads/?page=2&pageSize=5")
 
 
     def test_query_parameters(self):

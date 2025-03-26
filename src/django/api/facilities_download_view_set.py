@@ -71,7 +71,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         if (not is_large_download_allowed):
             raise ValidationError(
                 ('Downloads are supported only for searches resulting in '
-                  f'{facility_download_limit.allowed_records_number} '
+                f'{facility_download_limit.allowed_records_number} '
                  'facilities or less.'))
 
         page_queryset = self.paginate_queryset(queryset)
