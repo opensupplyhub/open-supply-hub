@@ -107,6 +107,7 @@ const ProductionLocationInfo = ({
     const [nameTouched, setNameTouched] = useState(false);
     const [addressTouched, setAddressTouched] = useState(false);
     const [countryTouched, setCountryTouched] = useState(false);
+    const [enabledTaxonomy, setEnabledTaxonomy] = useState(false);
     const [sector, setSector] = useState('');
     const [productType, setProductType] = useState([]);
     const [locationType, setLocationType] = useState(null);
@@ -400,6 +401,12 @@ const ProductionLocationInfo = ({
         moderationID,
     ]);
 
+    useEffect(() => {
+        setEnabledTaxonomy(
+            sector.length === 1 && sector[0].value === 'Apparel',
+        );
+    }, [sector]);
+
     useEffect(
         () => () => {
             handleCleanupContributionRecord();
@@ -595,7 +602,7 @@ const ProductionLocationInfo = ({
                         </Typography>
                         <StyledSelect
                             id="country"
-                            name="Country"
+                            name="country"
                             aria-label="Country"
                             options={countriesOptions || []}
                             value={inputCountry}
@@ -698,7 +705,7 @@ const ProductionLocationInfo = ({
 
                                     <StyledSelect
                                         creatable
-                                        name="Product Type"
+                                        name="product-type"
                                         value={productType}
                                         onChange={setProductType}
                                         placeholder="Enter product type(s)"
@@ -721,25 +728,40 @@ const ProductionLocationInfo = ({
                                         component="h4"
                                         className={classes.subTitleStyles}
                                     >
-                                        Select the location type(s) for this
-                                        production location. For example: Final
-                                        Product Assembly, Raw Materials
+                                        Select or enter the location type(s) for
+                                        this production location. For example:
+                                        Final Product Assembly, Raw Materials
                                         Production or Processing, Office/HQ.
                                     </Typography>
-                                    <StyledSelect
-                                        id="location_type"
-                                        name="Location type"
-                                        aria-label="Location type"
-                                        options={mapFacilityTypeOptions(
-                                            facilityProcessingTypeOptions || [],
-                                            processingType || [],
-                                        )}
-                                        value={locationType}
-                                        onChange={setLocationType}
-                                        styles={getSelectStyles()}
-                                        className={classes.selectStyles}
-                                        placeholder="Select location type(s)"
-                                    />
+                                    {enabledTaxonomy ? (
+                                        <StyledSelect
+                                            id="location_type"
+                                            name="location-type"
+                                            aria-label="Location type"
+                                            options={mapFacilityTypeOptions(
+                                                facilityProcessingTypeOptions ||
+                                                    [],
+                                                processingType || [],
+                                            )}
+                                            value={locationType}
+                                            onChange={setLocationType}
+                                            styles={getSelectStyles()}
+                                            className={classes.selectStyles}
+                                            placeholder="Select location type(s)"
+                                        />
+                                    ) : (
+                                        <StyledSelect
+                                            creatable
+                                            name="location-type"
+                                            value={locationType || []}
+                                            onChange={setLocationType}
+                                            placeholder="Enter location type(s)"
+                                            aria-label="Location type"
+                                            styles={getSelectStyles()}
+                                            className={classes.selectStyles}
+                                            components={customSelectComponents}
+                                        />
+                                    )}
                                 </div>
                                 <div
                                     className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
@@ -754,23 +776,40 @@ const ProductionLocationInfo = ({
                                         component="h4"
                                         className={classes.subTitleStyles}
                                     >
-                                        Select the type of processing activities
-                                        that take place at this location. For
-                                        example: Printing, Tooling, Assembly.
+                                        Select or enter the type of processing
+                                        activities that take place at this
+                                        location. For example: Printing,
+                                        Tooling, Assembly.
                                     </Typography>
-                                    <StyledSelect
-                                        id="processing_type"
-                                        name="Processing Type"
-                                        aria-label="Processing Type"
-                                        options={mapProcessingTypeOptions(
-                                            facilityProcessingTypeOptions || [],
-                                            locationType || [],
-                                        )}
-                                        value={processingType}
-                                        onChange={setProcessingType}
-                                        styles={getSelectStyles()}
-                                        className={classes.selectStyles}
-                                    />
+                                    {enabledTaxonomy ? (
+                                        <StyledSelect
+                                            id="processing_type"
+                                            name="processing-type"
+                                            aria-label="Processing Type"
+                                            options={mapProcessingTypeOptions(
+                                                facilityProcessingTypeOptions ||
+                                                    [],
+                                                locationType || [],
+                                            )}
+                                            value={processingType}
+                                            onChange={setProcessingType}
+                                            styles={getSelectStyles()}
+                                            className={classes.selectStyles}
+                                            placeholder="Select processing type(s)"
+                                        />
+                                    ) : (
+                                        <StyledSelect
+                                            creatable
+                                            name="processing-type"
+                                            value={processingType || []}
+                                            onChange={setProcessingType}
+                                            placeholder="Enter processing type(s)"
+                                            aria-label="Processing Type"
+                                            styles={getSelectStyles()}
+                                            className={classes.selectStyles}
+                                            components={customSelectComponents}
+                                        />
+                                    )}
                                 </div>
                                 <div
                                     className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}

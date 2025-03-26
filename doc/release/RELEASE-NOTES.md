@@ -13,19 +13,21 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe high-level database changes.*
 
 #### Migrations:
-0168_add_api_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `ApiFacilityDownloadLimit` model to collect facility downloads data for a user.
+* 0168_add_api_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
 
 #### Schema changes
-* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - The `ApiFacilityDownloadLimit` model has been created. This model includes such fields: id, user_id, last_download_time, allowed_downloads, and download_count.
+* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - The `FacilityDownloadLimit` model has been created. This model includes such fields: id, user_id, last_download_time, allowed_downloads, allowed_records_number, and download_count.
 
 ### Code/API changes
-
+* *Describe code/API changes here.*
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* [OSDEV-1899](https://opensupplyhub.atlassian.net/browse/OSDEV-1899) - Switched from using the `latest` tags to static versions for both `bitnami/kafka` and `bitnami/zookeeper`, which resolved compatibility issues during local & CI setup. Using pinned versions ensures stability and prevents unexpected behavior from upstream image changes.
 
 ### Bugfix
 * [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - The pages `My Claimed Facilities`, `Claimed Facility Details`, `My Lists`, and `My Lists/id` are now accessible only to authorized users. Additionally, styles have been refactored, an `InputSelect` component has been moved to the separate file, and input styling on the `Claimed Facility Details` page has been fixed.
+* [OSDEV-1830](https://opensupplyhub.atlassian.net/browse/OSDEV-1830) - Updated implementation for `Production Location Info` page to input any values for `Location Type` and `Processing Type`, except when the sector is `Apparel` — in that case, enforce taxonomy filters.
+* [OSDEV-1861](https://opensupplyhub.atlassian.net/browse/OSDEV-1861) - On the `My Claimed Facilities` page, the help text font size was increased to `21px`, and the margin for the `FIND MY PRODUCTION LOCATION` button was increased to `16px` to improve readability.
 
 ### What's new
 * [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 1000 records per download + 10 downloads of facility data per month has been added for a registered free user.
@@ -87,7 +89,7 @@ Also was added sanitization on the server side by using the `Django-Bleach` libr
 
 ### Bugfix
 * [OSDEV-1806](https://opensupplyhub.atlassian.net/browse/OSDEV-1806) - Refactored the Parent Company field validation. The field is now validated as a regular character field.
-* [OSDEV-1787](https://opensupplyhub.atlassian.net/browse/OSDEV-1787) - The tooltip messages for the Claim button have been removed for all statuses of moderation events on the `Contribution Record` page and changed according to the design on `Thanks for adding data for this production location` pop-up.
+* [OSDEV-1787](https://opensupplyhub.atlassian.net/browse/OSDEV-1787) - The tooltip messages for the Claim button have been removed for all statuses of moderation events on the `Contribution Record` page and changed according to the design on `Thanks for adding data for this production location` pop-up. Changed tooltip text for pending badge if existing production location has pending claim status or has been claimed already.
 * [OSDEV-1789](https://opensupplyhub.atlassian.net/browse/OSDEV-1789) - Fixed an issue where the scroll position was not resetting to the top when navigating through SLC workflow pages.
 * [OSDEV-1795](https://opensupplyhub.atlassian.net/browse/OSDEV-1795) - Resolved database connection issue after PostgreSQL 16.3 upgrade by upgrading pg8000 module version.
 * [OSDEV-1803](https://opensupplyhub.atlassian.net/browse/OSDEV-1803) - Updated text from `Facility Type` to `Location Type` and `Facility Name` to `Location Name` on the SLC `Thank You for Your Submission` page.
@@ -97,6 +99,7 @@ Also was added sanitization on the server side by using the `Django-Bleach` libr
 * [OSDEV-1831](https://opensupplyhub.atlassian.net/browse/OSDEV-1831) - Updated copies of tooltips on the “Thank you for adding data” pop-up. The texts vary depending on the claim status for a particular location.
 * [OSDEV-1827](https://opensupplyhub.atlassian.net/browse/OSDEV-1827) - Fixed the condition logic for the email template when approving a contribution to an existing production location that has either been claimed or has a pending claim request.
 * [OSDEV-1781](https://opensupplyhub.atlassian.net/browse/OSDEV-1781) - A clear error messages for the number of workers field have been added to the SLC form and Claimed Facility Details page.
+* [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - All SLC pages have been made accessible only to authorized users.
 
 ### What's new
 * [OSDEV-1814](https://opensupplyhub.atlassian.net/browse/OSDEV-1814) - Added toggle switch button for production location info page to render additional data if necessary. If toggle switch button is inactive (default behavior), additional data won't be send to the server along with name, address and country.
@@ -134,7 +137,6 @@ Also was added sanitization on the server side by using the `Django-Bleach` libr
 * *Describe architecture/environment changes here.*
 
 ### Bugfix
-* [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - All SLC pages have been made accessible only to authorized users.
 * [OSDEV-1777](https://opensupplyhub.atlassian.net/browse/OSDEV-1777) - A consistent URL style was established across all pages of the SLC workflow. After the changes, the URL begins from `/contribute/single-location/`.
 * [OSDEV-1678](https://opensupplyhub.atlassian.net/browse/OSDEV-1678) - Added asterisks next to each required form field (Name, Address, and Country) on the "Production Location Information" page. Highlighted an empty field and displayed an error message if it loses focus.
 * [OSDEV-1778](https://opensupplyhub.atlassian.net/browse/OSDEV-1778) - Fixed the validation for number of workers field in POST, PATCH production locations API. The min field must be less than or equal to the max field.

@@ -191,20 +191,6 @@ export const claimAFacilityFormStyles = Object.freeze({
     }),
 });
 
-export const claimAFacilitySupportDocsFormStyles = Object.freeze({
-    textFieldStyles: Object.freeze({
-        width: '50%',
-        padding: '10px 0 10px',
-    }),
-    inputGroupStyles: Object.freeze({
-        width: '100%',
-        paddingTop: '50px',
-    }),
-    asideStyles: Object.freeze({
-        padding: '5px 20px 5px 0',
-    }),
-});
-
 export const makeSelectFilterStyles = (windowWidth, origin, color = OARColor) =>
     Object.freeze({
         multiValue: Object.freeze((provided, state) => {
@@ -1578,6 +1564,103 @@ export const makeAddLocationStyles = theme =>
             },
         }),
     });
+
+export const inputSectionStyles = theme =>
+    Object.freeze({
+        inputSectionFieldStyles: Object.freeze({
+            width: '100%',
+        }),
+        switchSectionStyles: Object.freeze({
+            fontSize: '15px',
+            fontWeight: theme.typography.fontWeightRegular,
+            display: 'flex',
+            alignItems: 'center',
+            color: COLOURS.DARK_GREY,
+        }),
+        inputSectionLabelStyles: Object.freeze({
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightRegular,
+            padding: '10px 0',
+            color: '#000',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        }),
+        inputSectionStyles: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '10px 0',
+        }),
+        inputSectionStylesWithPadding: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+            width: '50%',
+            padding: '10px 0 10px',
+        }),
+        asideStyles: Object.freeze({
+            padding: '5px 20px 20px 0',
+        }),
+    });
+
+export const claimedFacilitiesDetailsStyles = () =>
+    Object.freeze({
+        headingStyles: Object.freeze({
+            padding: '10px 0',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            color: COLOURS.NEAR_BLACK,
+            fontWeight: '400',
+            lineHeight: '1.20588em',
+        }),
+        containerStyles: Object.freeze({
+            display: 'flex',
+            width: '100%',
+            justifyContent: 'space-between',
+            marginBottom: '100px',
+        }),
+        widthStyle: Object.freeze({ width: '60%' }),
+        switchSectionStyles: Object.freeze({
+            fontSize: '15px',
+            fontWeight: '400',
+            display: 'flex',
+            alignItems: 'center',
+            color: COLOURS.DARK_GREY,
+        }),
+        boldFontStyle: Object.freeze({
+            fontWeight: 'bold',
+        }),
+        textFieldStyles: Object.freeze({
+            width: '50%',
+            padding: '10px 0 10px',
+        }),
+        inputGroupStyles: Object.freeze({
+            width: '100%',
+            paddingTop: '50px',
+        }),
+        asideStyles: Object.freeze({
+            padding: '5px 20px 5px 0',
+        }),
+        boldTitleStyle: Object.freeze({
+            paddingBottom: '10px',
+            color: COLOURS.NEAR_BLACK,
+            fontSize: '2.125rem',
+            fontWeight: 'bold',
+            lineHeight: '1.20588em',
+        }),
+    });
+
+export const claimFacilitiesListStyle = Object.freeze({
+    searchButton: Object.freeze({
+        margin: '16px 0',
+    }),
+    bodyStyle: Object.freeze({
+        padding: '10px 0',
+        fontSize: '21px',
+        fontWeight: '400',
+        lineHeight: '1.20588em',
+    }),
+});
 
 export const makeRejectModerationEventDialogStyles = () =>
     Object.freeze({
