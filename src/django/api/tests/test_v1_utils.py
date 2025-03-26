@@ -21,7 +21,7 @@ class V1UtilsTests(TestCase):
             'percent_female_workers[min]': '20',
             'percent_female_workers[max]': '80',
             'coordinates[lat]': '12.34',
-            'coordinates[lng]': '56.78',
+            'coordinates[lon]': '56.78',
         })
         serialized_params, error_response = \
             serialize_params(ProductionLocationsSerializer, query_dict)
