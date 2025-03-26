@@ -50,8 +50,6 @@ import {
     mapProcessingTypeOptions,
     isValidNumberOfWorkers,
     isRequiredFieldValid,
-    convertRangeField,
-    updateStateFromData,
     getSelectStyles,
     getNumberOfWorkersValidationError,
 } from '../../util/util';
@@ -116,30 +114,6 @@ const ProductionLocationInfo = ({
     const [parentCompany, setParentCompany] = useState('');
     const customSelectComponents = { DropdownIndicator: null };
     const isCountryError = countryTouched && !inputCountry?.value;
-
-    const fillAdditionalDataFields = () => {
-        setNumberOfWorkers(
-            convertRangeField(singleProductionLocationData.number_of_workers) ??
-                '',
-        );
-        updateStateFromData(singleProductionLocationData, 'sector', setSector);
-        updateStateFromData(
-            singleProductionLocationData,
-            'product_type',
-            setProductType,
-        );
-        updateStateFromData(
-            singleProductionLocationData,
-            'location_type',
-            setLocationType,
-        );
-        updateStateFromData(
-            singleProductionLocationData,
-            'processing_type',
-            setProcessingType,
-        );
-        setParentCompany(singleProductionLocationData.parent_company ?? '');
-    };
 
     const resetAdditionalDataFields = () => {
         setSector('');
@@ -235,9 +209,7 @@ const ProductionLocationInfo = ({
     const onSwitchChange = () => {
         setShowAdditionalInfo(prevShowAdditionalInfo => {
             const newShowAdditionalInfo = !prevShowAdditionalInfo;
-            if (newShowAdditionalInfo) {
-                fillAdditionalDataFields();
-            } else {
+            if (!newShowAdditionalInfo) {
                 resetAdditionalDataFields();
             }
             return newShowAdditionalInfo;
