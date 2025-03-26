@@ -55,7 +55,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
         if facility_download_limit and facility_download_limit.download_count >= facility_download_limit.allowed_downloads:
             raise ValidationError('You have reached the maximum number of facility downloads allowed this month.'
-                                  'Please wait until next month to download more data.')
+                                  ' Please wait until next month to download more data.')
 
         queryset = FacilityIndex \
             .objects \
