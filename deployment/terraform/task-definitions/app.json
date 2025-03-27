@@ -63,8 +63,8 @@
     },
     "healthCheck": {
         "command": [
-          "CMD",
-          "curl -s -o /dev/null http://localhost:${app_port}/health-check/  || exit 1"
+            "CMD-SHELL",
+            "/usr/bin/curl http://localhost:8080/health-check/ || exit 1"
         ],
         "interval": 30,
         "timeout": 5,
