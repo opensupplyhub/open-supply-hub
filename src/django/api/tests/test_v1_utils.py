@@ -21,7 +21,7 @@ class V1UtilsTests(TestCase):
             'percent_female_workers[min]': '20',
             'percent_female_workers[max]': '80',
             'coordinates[lat]': '12.34',
-            'coordinates[lon]': '56.78',
+            'coordinates[lng]': '56.78',
         })
         serialized_params, error_response = \
             serialize_params(ProductionLocationsSerializer, query_dict)
@@ -31,7 +31,7 @@ class V1UtilsTests(TestCase):
         self.assertEqual(serialized_params['percent_female_workers_min'], 20)
         self.assertEqual(serialized_params['percent_female_workers_max'], 80)
         self.assertEqual(serialized_params['coordinates_lat'], 12.34)
-        self.assertEqual(serialized_params['coordinates_lon'], 56.78)
+        self.assertEqual(serialized_params['coordinates_lng'], 56.78)
 
     def test_serialize_params_with_single_values(self):
         query_dict = QueryDict('', mutable=True)
@@ -303,3 +303,99 @@ class V1UtilsTests(TestCase):
             },
             error_response['errors'],
         )
+
+    def test_serialize_geo_polygon_invalid_format(self):
+        query_dict = QueryDict('', mutable=True)
+        query_dict.setlist('geo_polygon', ['invalid_coordinate'])
+        _, error_response = serialize_params(
+            ProductionLocationsSerializer,
+            query_dict
+        )
+
+        self.assertIsNotNone(error_response)
+        print(f"### error_response: {error_response['errors']}")
+        self.assertEqual(
+            error_response['detail'],
+            "The request query is invalid."
+        )
+
+        self.assertIn(
+            {
+                'field': 'geo_polygon',
+                'detail': (
+                    'Invalid coordinate format: invalid_coordinate, '
+                    "must be 'lat,lon' as floats"
+                ),
+            },
+            error_response['errors'],
+        )
+
+    def test_serialize_geo_polygon_out_of_bounds(self):
+        query_dict = QueryDict('', mutable=True)
+        query_dict.setlist(
+            'geo_polygon',
+            ['91,45', '-91,100', '30,181', '45,-181']
+        )
+        _, error_response = serialize_params(
+            ProductionLocationsSerializer,
+            query_dict
+        )
+
+        self.assertIsNotNone(error_response)
+        self.assertEqual(
+            error_response['detail'],
+            "The request query is invalid."
+        )
+        self.assertIn(
+            {
+                'field': 'geo_polygon',
+                'detail': (
+                    'Invalid latitude 91.0, '
+                    'must be between -90 and 90.'
+                )
+            },
+            error_response['errors'],
+        )
+        self.assertIn(
+            {
+                'field': 'geo_polygon',
+                'detail': (
+                    'Invalid latitude -91.0, '
+                    'must be between -90 and 90.'
+                )
+            },
+            error_response['errors'],
+        )
+        self.assertIn(
+            {
+                'field': 'geo_polygon',
+                'detail': (
+                    'Invalid longitude 181.0, '
+                    'must be between -180 and 180.'
+                )
+            },
+            error_response['errors'],
+        )
+        self.assertIn(
+            {
+                'field': 'geo_polygon',
+                'detail': (
+                    'Invalid longitude -181.0, '
+                    'must be between -180 and 180.'
+                )
+            },
+            error_response['errors'],
+        )
+
+    def test_serialize_geo_polygon_valid(self):
+        query_dict = QueryDict('', mutable=True)
+        query_dict.setlist(
+            'geo_polygon',
+            ['40.7128,-74.0060', '34.0522,-118.2437', '51.5074,-0.1278']
+        )
+        _, error_response = serialize_params(
+            ProductionLocationsSerializer,
+            query_dict
+        )
+
+        self.assertIsNone(error_response)

@@ -24,8 +24,8 @@ class GeoPolygonValidator(OpenSearchValidationInterface):
                 errors.append({
                     "field": "geo_polygon",
                     "detail": (
-                        f"Invalid coordinate format: {point}. "
-                        "Must be 'lat,lon' as floats"
+                        f"Invalid coordinate format: {point}, "
+                        "must be 'lat,lon' as floats"
                     )
                 })
                 continue
@@ -38,8 +38,8 @@ class GeoPolygonValidator(OpenSearchValidationInterface):
                 errors.append({
                     "field": "geo_polygon",
                     "detail": (
-                        f"Invalid latitude {lat}. "
-                        "Must be between -90 and 90."
+                        f"Invalid latitude {lat}, "
+                        "must be between -90 and 90."
                     )
                 })
 
@@ -51,8 +51,8 @@ class GeoPolygonValidator(OpenSearchValidationInterface):
                 errors.append({
                     "field": "geo_polygon",
                     "detail": (
-                        f"Invalid longitude {lon}. "
-                        "Must be between -180 and 180."
+                        f"Invalid longitude {lon}, "
+                        "must be between -180 and 180."
                     )
                 })
 
