@@ -51,7 +51,7 @@ jobs:
 
       - name: Delete Lambda@Edge function for ${{ vars.ENV_NAME }}
         run: |
-          ./deployment/delete_lambda ${{ vars.ENV_NAME }}
+          ./deployment/delete_lambda ${{ vars.ENV_NAME }} ${{ vars.CLOUDFRONT_DOMAIN }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

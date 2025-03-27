@@ -5,6 +5,7 @@ set -euo pipefail
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 REGION="us-east-1"
 ENV_NAME=$1
+CLOUDFRONT_DOMAIN=$2
 LAMBDA_ARN="arn:aws:lambda:$REGION:$ACCOUNT_ID:function:funcOpenSupplyHub${ENV_NAME}RedirectToS3origin"
 LAMBDA_VERSION=$(aws lambda list-versions-by-function --function-name "$LAMBDA_ARN" --region "$REGION" | jq -r '.Versions | max_by(.Version) | .Version')
 
