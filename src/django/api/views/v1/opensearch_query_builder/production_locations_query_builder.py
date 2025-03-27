@@ -67,6 +67,10 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
             }
         })
 
+    def __init_filter(self):
+        if "filter" not in self.query_body["query"]["bool"]:
+            self.query_body["query"]["bool"]["filter"] = []
+
     def add_terms(self, field, values):
         if not values:
             return self.query_body
@@ -131,8 +135,7 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
         return self.query_body
 
     def add_geo_bounding_box(self, top, left, bottom, right):
-        if "filter" not in self.query_body["query"]["bool"]:
-            self.query_body["query"]["bool"]["filter"] = []
+        self.__init_filter()
 
         self.query_body['query']['bool']['filter'].append({
             'geo_bounding_box': {
@@ -146,8 +149,7 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
         })
 
     def add_geo_polygon(self, values):
-        if "filter" not in self.query_body["query"]["bool"]:
-            self.query_body["query"]["bool"]["filter"] = []
+        self.__init_filter()
 
         geo_polygon_filter = None
         for filter_item in self.query_body["query"]["bool"]["filter"]:

@@ -17,6 +17,15 @@ class GeoPolygonValidator(OpenSearchValidationInterface):
             })
             return errors
 
+        if geo_polygon_data and len(geo_polygon_data) < 3:
+            errors.append({
+                "field": "geo_polygon",
+                "detail": (
+                    "At least 3 points are required in "
+                    "geo_polygon to form a valid polygon."
+                )
+            })
+
         for point in geo_polygon_data:
             try:
                 lat, lon = map(float, point.split(","))

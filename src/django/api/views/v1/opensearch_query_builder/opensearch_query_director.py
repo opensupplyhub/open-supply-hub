@@ -156,5 +156,5 @@ class OpenSearchQueryDirector:
             )
 
         geo_polygon = query_params.getlist(V1_PARAMETERS_LIST.GEO_POLYGON)
-        if geo_polygon:
+        if geo_polygon and hasattr(self.__builder, 'add_geo_polygon'):
             self.__builder.add_geo_polygon(geo_polygon)

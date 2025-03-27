@@ -386,6 +386,33 @@ class V1UtilsTests(TestCase):
             error_response['errors'],
         )
 
+    def test_serialize_geo_polygon_not_enough_points(self):
+        query_dict = QueryDict('', mutable=True)
+        query_dict.setlist(
+            'geo_polygon',
+            ['91,45', '-91,100']
+        )
+        _, error_response = serialize_params(
+            ProductionLocationsSerializer,
+            query_dict
+        )
+
+        self.assertIsNotNone(error_response)
+        self.assertEqual(
+            error_response['detail'],
+            "The request query is invalid."
+        )
+        self.assertIn(
+            {
+                'field': 'geo_polygon',
+                'detail': (
+                    'At least 3 points are required in '
+                    'geo_polygon to form a valid polygon.'
+                )
+            },
+            error_response['errors'],
+        )
+
     def test_serialize_geo_polygon_valid(self):
         query_dict = QueryDict('', mutable=True)
         query_dict.setlist(
