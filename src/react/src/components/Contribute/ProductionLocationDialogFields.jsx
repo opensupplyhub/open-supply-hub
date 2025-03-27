@@ -2,6 +2,7 @@ import React from 'react';
 import { object, number } from 'prop-types';
 import { map, toPairs, isArray, slice } from 'lodash';
 import Typography from '@material-ui/core/Typography';
+import { snakeToTitleCase } from '../../util/util';
 
 const ProductionLocationDialogFields = ({
     filteredAdditionalFields,
@@ -18,8 +19,7 @@ const ProductionLocationDialogFields = ({
                 return key;
         }
     };
-    const formatLabel = key =>
-        key.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+    const formatLabel = key => snakeToTitleCase(key);
 
     const hasMinMaxEqual = value =>
         'min' in value && 'max' in value && value.min === value.max;

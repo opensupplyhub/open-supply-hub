@@ -38,13 +38,13 @@ import map from 'lodash/map';
 import mapValues from 'lodash/mapValues';
 import mapKeys from 'lodash/mapKeys';
 import uniq from 'lodash/uniq';
-import has from 'lodash/has';
 import { isURL, isInt } from 'validator';
 import { featureCollection, bbox } from '@turf/turf';
 import hash from 'object-hash';
 import * as XLSX from 'xlsx';
 import moment from 'moment';
 import removeAccents from 'remove-accents';
+import unidecode from 'unidecode';
 
 import {
     OTHER,
@@ -72,6 +72,7 @@ import {
     MODERATION_QUEUE,
     MODERATION_STATUS_COLORS,
     DATA_SOURCES_ENUM,
+    API_V1_ERROR_REQUEST_SOURCE_ENUM,
 } from './constants';
 
 import { createListItemCSV } from './util.listItemCSV';
@@ -423,13 +424,6 @@ export const mapParamToReactSelectOption = param => {
     });
 };
 
-export const updateStateFromData = (obj, dataKey, setter) => {
-    if (isArray(obj[dataKey]) && obj[dataKey].length > 0) {
-        const transformedData = obj[dataKey].map(mapParamToReactSelectOption);
-        setter(transformedData);
-    }
-};
-
 export const createSelectOptionsFromParams = params => {
     const paramsInArray = !isArray(params) ? [params] : params;
 
@@ -665,6 +659,57 @@ export function logErrorAndDispatchFailure(
         return dispatch(failureAction(errorMessages));
     };
 }
+
+export const logErrorAndDispatchFailureApiV1 = (
+    error,
+    defaultMessage,
+    failureAction,
+) => dispatch => {
+    const { response } = error || {};
+    const { status, data } = response || {};
+    const errorObj = {
+        errorSource: null,
+        detail: defaultMessage,
+        errors: null,
+        rawData: null,
+    };
+
+    if (status && data) {
+        if (status >= 400 && status <= 499) {
+            errorObj.errorSource = API_V1_ERROR_REQUEST_SOURCE_ENUM.CLIENT;
+            errorObj.detail = data.detail;
+            errorObj.rawData = data;
+
+            if (!isEmpty(data.errors)) {
+                errorObj.errors = data.errors;
+            }
+
+            return dispatch(failureAction(errorObj));
+        }
+
+        if (status >= 500 && status <= 599) {
+            errorObj.errorSource = API_V1_ERROR_REQUEST_SOURCE_ENUM.SERVER;
+            errorObj.rawData = data;
+
+            // Field "detail" and "errors" aren't always present in the V1 API
+            // response for 500 errors. In case of an unexpected error, it may
+            // return a different structure, such as HTML.
+            if (!isEmpty(data.detail)) {
+                errorObj.detail = data.detail;
+
+                if (!isEmpty(data.errors)) {
+                    errorObj.errors = data.errors;
+                }
+            }
+
+            window.console.warn(error);
+            return dispatch(failureAction(errorObj));
+        }
+    }
+
+    window.console.warn(error);
+    return dispatch(failureAction(errorObj));
+};
 
 export const getValueFromEvent = ({ target: { value } }) => value;
 
@@ -1111,19 +1156,6 @@ export const convertFeatureFlagsObjectToListOfActiveFlags = featureFlags =>
 export const checkWhetherUserHasDashboardAccess = user =>
     get(user, 'is_superuser', false);
 
-export const convertRangeField = rangeObj => {
-    if (isEmpty(rangeObj)) {
-        return null;
-    }
-    if (has(rangeObj, 'min') && has(rangeObj, 'max')) {
-        if (rangeObj.min === rangeObj.max) {
-            return rangeObj.min;
-        }
-        return `${rangeObj.min}-${rangeObj.max}`;
-    }
-    return !isNil(rangeObj.min) ? rangeObj.min : rangeObj.max;
-};
-
 export const isValidNumberOfWorkers = value => {
     if (isEmpty(value)) {
         return true;
@@ -1561,3 +1593,22 @@ export const getSelectStyles = (isErrorState = false) => ({
         color: isErrorState ? COLOURS.RED : provided.color,
     }),
 });
+
+export const snakeToTitleCase = str =>
+    str
+        .replace(/_/g, ' ') // Replace underscores with space.
+        .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize first letter of each word.
+
+export const isCleanValueMeaningful = value => {
+    if (typeof value !== 'string') return false;
+
+    let cleaned = unidecode(value);
+    cleaned = cleaned
+        .replace(/[\n\r\t]/g, ' ') // Normalize whitespace characters.
+        .replace(/[^\w\s]|_/g, '') // Remove all punctuation.
+        .replace(/\s+/g, ' ') // Collapse multiple spaces.
+        .trim() // Trim leading/trailing spaces.
+        .toLowerCase();
+
+    return cleaned.length > 0;
+};
