@@ -44,7 +44,6 @@ class OpenSearchQueryDirector:
         self.__process_aggregation(query_params)
         self.__process_filter(query_params)
 
-        print(f'@@@ Final query body: {self.__builder.get_final_query_body()}')
         return self.__builder.get_final_query_body()
 
     def __process_template_fields(self, query_params):
