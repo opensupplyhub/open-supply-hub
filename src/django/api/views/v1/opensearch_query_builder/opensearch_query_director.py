@@ -44,6 +44,7 @@ class OpenSearchQueryDirector:
         self.__process_aggregation(query_params)
         self.__process_filter(query_params)
 
+        print(f'@@@ Final query body: {self.__builder.get_final_query_body()}')
         return self.__builder.get_final_query_body()
 
     def __process_template_fields(self, query_params):
@@ -86,9 +87,6 @@ class OpenSearchQueryDirector:
             self.__builder.add_geo_distance(
                 field, float(lat), float(lng), distance
             )
-
-    def __add_geo_polygon_query(self, values):
-        self.__builder.add_geo_polygon(values)
 
     def __process_sorting(self, query_params):
         sort_by = query_params.get(V1_PARAMETERS_LIST.SORT_BY)
@@ -160,4 +158,4 @@ class OpenSearchQueryDirector:
 
         geo_polygon = query_params.getlist(V1_PARAMETERS_LIST.GEO_POLYGON)
         if geo_polygon:
-            self.__add_geo_polygon_query(geo_polygon)
+            self.__builder.add_geo_polygon(geo_polygon)
