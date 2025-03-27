@@ -49,7 +49,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Delete Lambda@Edge function
+      - name: Delete Lambda@Edge function for ${{ vars.ENV_NAME }}
         run: |
           ./deployment/delete_lambda ${{ vars.ENV_NAME }}
         env:
