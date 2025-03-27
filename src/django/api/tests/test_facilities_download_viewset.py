@@ -18,11 +18,11 @@ class FacilitiesDownloadViewSetTest(APITestCase):
     def setUp(self):
         self.download_url = reverse("facilities-downloads-list")
         self.email = "test@example.com"
-        self.password = "example123"
+        self.test_pass = "example123"
 
     def create_user(self, is_api_user=False):
         user = User.objects.create(email=self.email)
-        user.set_password(self.password)
+        user.set_password(self.test_pass)
         user.save()
 
         if is_api_user:
@@ -32,7 +32,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         return user
 
     def login_user(self, user):
-        self.client.login(email=user.email, password=self.password)
+        self.client.login(email=user.email, password=self.test_pass)
 
     def get_facility_downloads(self, params=None):
         return self.client.get(self.download_url, params or {})
