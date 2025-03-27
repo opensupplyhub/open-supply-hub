@@ -64,7 +64,7 @@
     "healthCheck": {
         "command": [
           "CMD",
-          "curl -s -o /dev/null -w '%{http_code}' http://localhost:${app_port}/health-check/  || exit 1"
+          "curl -s -o /dev/null http://localhost:${app_port}/health-check/  || exit 1"
         ],
         "interval": 30,
         "timeout": 5,
