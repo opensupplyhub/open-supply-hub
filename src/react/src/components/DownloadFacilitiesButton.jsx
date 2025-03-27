@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { arrayOf, string, bool } from 'prop-types';
 import { connect } from 'react-redux';
 import Button from '@material-ui/core/Button';
@@ -12,6 +12,7 @@ import { toast } from 'react-toastify';
 import downloadFacilities from '../actions/downloadFacilities';
 import DownloadIcon from './DownloadIcon';
 import ArrowDropDownIcon from './ArrowDropDownIcon';
+import { clearErrorText } from '../actions/logDownload';
 
 const downloadFacilitiesStyles = theme =>
     Object.freeze({
@@ -56,7 +57,6 @@ function DownloadFacilitiesButton({
     classes,
     theme,
 }) {
-    const [requestedDownload, setRequestedDownload] = useState(false);
     const [anchorEl, setAnchorEl] = React.useState(null);
 
     const actionContrastText = theme.palette.getContrastText(
@@ -64,11 +64,11 @@ function DownloadFacilitiesButton({
     );
 
     useEffect(() => {
-        if (requestedDownload && logDownloadError) {
+        if (logDownloadError) {
             toast(logDownloadError[0]);
-            setRequestedDownload(false);
+            dispatch(clearErrorText());
         }
-    }, [logDownloadError, requestedDownload]);
+    }, [logDownloadError]);
 
     const handleClick = event => setAnchorEl(event.currentTarget);
     const handleClose = () => setAnchorEl(null);
@@ -79,7 +79,6 @@ function DownloadFacilitiesButton({
 
     const selectFormatAndDownload = format => {
         if (!user.isAnon || isEmbedded) {
-            setRequestedDownload(true);
             handleDownload(format);
         } else {
             setLoginRequiredDialogIsOpen(true);
