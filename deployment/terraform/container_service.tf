@@ -471,7 +471,8 @@ module "app_autoscaling" {
   min_cpu_period            = var.app_ecs_min_cpu_period
   scale_target_max_capacity = var.app_ecs_scale_target_max_capacity
   scale_target_min_capacity = var.app_ecs_scale_target_min_capacity
-  cooldown                  = var.app_ecs_cooldown
+  cooldown_scale_up         = var.app_ecs_cooldown_scale_up
+  cooldown_scale_down       = var.app_ecs_cooldown_scale_down
 }
 
 

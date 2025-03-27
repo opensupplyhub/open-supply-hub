@@ -69,7 +69,13 @@ variable "sns_topic_arn" {
   default     = ""
 }
 
-variable "cooldown" {
+variable "cooldown_scale_up" {
+  description = "Cooldown period for scaling actions"
+  type        = number
+  default     = 60
+}
+
+variable "cooldown_scale_down" {
   description = "Cooldown period for scaling actions"
   type        = number
   default     = 60

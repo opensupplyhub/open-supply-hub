@@ -55,7 +55,7 @@ resource "aws_appautoscaling_policy" "scale_up_policy" {
   scalable_dimension = "ecs:service:DesiredCount"
   step_scaling_policy_configuration {
     adjustment_type         = "ChangeInCapacity"
-    cooldown                = var.cooldown
+    cooldown                = var.cooldown_scale_up
     metric_aggregation_type = "Maximum"
     step_adjustment {
       metric_interval_lower_bound = 0
@@ -75,7 +75,7 @@ resource "aws_appautoscaling_policy" "scale_down_policy" {
   scalable_dimension = "ecs:service:DesiredCount"
   step_scaling_policy_configuration {
     adjustment_type         = "ChangeInCapacity"
-    cooldown                = var.cooldown
+    cooldown                = var.cooldown_scale_down
     metric_aggregation_type = "Maximum"
     step_adjustment {
       metric_interval_upper_bound = 0

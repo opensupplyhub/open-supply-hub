@@ -747,7 +747,13 @@ variable "app_ecs_scale_target_min_capacity" {
   type        = number
 }
 
-variable "app_ecs_cooldown" {
+variable "app_ecs_cooldown_scale_up" {
+  description = "Cooldown period for scaling actions"
+  default     = 60
+  type        = number
+}
+
+variable "app_ecs_cooldown_scale_down" {
   description = "Cooldown period for scaling actions"
   default     = 60
   type        = number
