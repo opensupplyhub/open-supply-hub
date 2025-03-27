@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useParams, useHistory } from 'react-router-dom';
 import { array, bool, func, number, object, string } from 'prop-types';
 import { connect } from 'react-redux';
@@ -36,7 +36,10 @@ import {
     DISABLE_LIST_UPLOADING,
     MAINTENANCE_MESSAGE,
 } from '../../util/constants';
-import { useResetScrollPosition } from '../../util/hooks';
+import {
+    useResetScrollPosition,
+    useSingleLocationContributionForm,
+} from '../../util/hooks';
 import {
     countryOptionsPropType,
     facilityProcessingTypeOptionsPropType,
@@ -48,12 +51,9 @@ import {
     mapDjangoChoiceTuplesToSelectOptions,
     mapFacilityTypeOptions,
     mapProcessingTypeOptions,
-    isValidNumberOfWorkers,
-    isRequiredFieldValid,
     convertRangeField,
-    updateStateFromData,
+    transformDataForReactSelect,
     getSelectStyles,
-    getNumberOfWorkersValidationError,
 } from '../../util/util';
 
 import FeatureFlag from '../FeatureFlag';
@@ -98,84 +98,7 @@ const ProductionLocationInfo = ({
     const history = useHistory();
     const { moderationID, osID } = useParams();
 
-    const queryParams = new URLSearchParams(location.search);
-    const nameInQuery = queryParams.get('name');
-    const addressInQuery = queryParams.get('address');
-    const countryInQuery = queryParams.get('country');
-    const [inputName, setInputName] = useState(nameInQuery ?? '');
-    const [inputAddress, setInputAddress] = useState(addressInQuery ?? '');
-    const [inputCountry, setInputCountry] = useState(null);
-    const [nameTouched, setNameTouched] = useState(false);
-    const [addressTouched, setAddressTouched] = useState(false);
-    const [countryTouched, setCountryTouched] = useState(false);
-    const [sector, setSector] = useState('');
-    const [productType, setProductType] = useState([]);
-    const [locationType, setLocationType] = useState(null);
-    const [processingType, setProcessingType] = useState(null);
-    const [numberOfWorkers, setNumberOfWorkers] = useState('');
-    const [parentCompany, setParentCompany] = useState('');
-    const customSelectComponents = { DropdownIndicator: null };
-    const isCountryError = countryTouched && !inputCountry?.value;
-
-    const fillAdditionalDataFields = () => {
-        setNumberOfWorkers(
-            convertRangeField(singleProductionLocationData.number_of_workers) ??
-                '',
-        );
-        updateStateFromData(singleProductionLocationData, 'sector', setSector);
-        updateStateFromData(
-            singleProductionLocationData,
-            'product_type',
-            setProductType,
-        );
-        updateStateFromData(
-            singleProductionLocationData,
-            'location_type',
-            setLocationType,
-        );
-        updateStateFromData(
-            singleProductionLocationData,
-            'processing_type',
-            setProcessingType,
-        );
-        setParentCompany(singleProductionLocationData.parent_company ?? '');
-    };
-
-    const resetAdditionalDataFields = () => {
-        setSector('');
-        setProductType([]);
-        setLocationType(null);
-        setProcessingType(null);
-        setNumberOfWorkers('');
-        setParentCompany('');
-    };
-
     useResetScrollPosition(location);
-
-    const inputData = useMemo(
-        () => ({
-            name: inputName,
-            address: inputAddress,
-            country: inputCountry,
-            sector,
-            productType,
-            locationType,
-            processingType,
-            numberOfWorkers,
-            parentCompany,
-        }),
-        [
-            inputName,
-            inputAddress,
-            inputCountry,
-            sector,
-            productType,
-            locationType,
-            processingType,
-            numberOfWorkers,
-            parentCompany,
-        ],
-    );
 
     const [
         showProductionLocationDialog,
@@ -186,33 +109,6 @@ const ProductionLocationInfo = ({
         showPostSubmitErrorNotification,
         setShowPostSubmitErrorNotification,
     ] = useState(false);
-
-    const handleNameChange = event => {
-        setInputName(event.target.value);
-    };
-    const handleAddressChange = event => {
-        setInputAddress(event.target.value);
-    };
-    const handleParentCompanyChange = event => {
-        setParentCompany(event.target.value);
-    };
-
-    const handleNameBlur = () => {
-        setNameTouched(true);
-    };
-    const handleAddressBlur = () => {
-        setAddressTouched(true);
-    };
-    const handleCountryBlur = () => {
-        setCountryTouched(true);
-    };
-
-    const isFormValid = !!(
-        isRequiredFieldValid(inputName) &&
-        isRequiredFieldValid(inputAddress) &&
-        inputCountry?.value &&
-        isValidNumberOfWorkers(numberOfWorkers)
-    );
 
     let handleProductionLocation;
     switch (submitMethod) {
@@ -229,6 +125,52 @@ const ProductionLocationInfo = ({
             };
             break;
     }
+
+    const contributionForm = useSingleLocationContributionForm(values => {
+        setShowPostSubmitErrorNotification(false);
+        handleProductionLocation(values, osID);
+    });
+
+    const fillAdditionalDataFields = () => {
+        contributionForm.setValues({
+            ...contributionForm.values,
+            sector: transformDataForReactSelect(
+                singleProductionLocationData,
+                'sector',
+            ),
+            productType: transformDataForReactSelect(
+                singleProductionLocationData,
+                'product_type',
+            ),
+            locationType: transformDataForReactSelect(
+                singleProductionLocationData,
+                'location_type',
+            ),
+            processingType: transformDataForReactSelect(
+                singleProductionLocationData,
+                'processing_type',
+            ),
+            numberOfWorkers:
+                convertRangeField(
+                    singleProductionLocationData.number_of_workers,
+                ) ?? '',
+            parentCompany: singleProductionLocationData.parent_company ?? '',
+        });
+    };
+
+    const resetAdditionalDataFields = () => {
+        contributionForm.setValues({
+            ...contributionForm.values,
+            sector: [],
+            productType: [],
+            locationType: [],
+            processingType: [],
+            numberOfWorkers: '',
+            parentCompany: '',
+        });
+    };
+
+    const customSelectComponents = { DropdownIndicator: null };
 
     const instructionExtraMessage =
         submitMethod === 'PATCH'
@@ -275,14 +217,17 @@ const ProductionLocationInfo = ({
 
     useEffect(() => {
         if (singleProductionLocationData && osID) {
-            setInputName(singleProductionLocationData.name ?? '');
-            setInputAddress(singleProductionLocationData.address ?? '');
-            if (singleProductionLocationData.country) {
-                setInputCountry({
-                    value: singleProductionLocationData?.country.alpha_2,
-                    label: singleProductionLocationData?.country.name,
-                });
-            }
+            contributionForm.setValues({
+                ...contributionForm.values,
+                name: singleProductionLocationData.name ?? '',
+                address: singleProductionLocationData.address ?? '',
+                country: singleProductionLocationData.country
+                    ? {
+                          value: singleProductionLocationData?.country.alpha_2,
+                          label: singleProductionLocationData?.country.name,
+                      }
+                    : null,
+            });
         }
     }, [singleProductionLocationData, osID]);
 
@@ -309,15 +254,6 @@ const ProductionLocationInfo = ({
             fetchCountries();
         }
     }, [countriesOptions, fetchCountries]);
-
-    useEffect(() => {
-        if (countriesOptions && !isEmpty(countryInQuery)) {
-            const prefilledCountry = countriesOptions.filter(
-                el => el.value === countryInQuery,
-            );
-            setInputCountry(prefilledCountry[0]);
-        }
-    }, [countriesOptions]);
 
     useEffect(() => {
         if (!facilityProcessingTypeOptions) {
@@ -421,16 +357,29 @@ const ProductionLocationInfo = ({
         }
     }, [singleProductionLocationError]);
 
+    // The Formik library, which is used for the SLC form, doesn’t
+    // automatically re-run validation when the value of the product
+    // type and country field changes - unless the field is actively touched or
+    // blurred. This issue happens only when clicking the "x"
+    // (remove) button on a value inside the React Select
+    // multi-select field.
+    // A similar issue occurs with the country field - after setting
+    // the value, validation isn’t triggered to avoid showing an
+    // inappropriate error.
+    // Because of this, validation is manually triggered using
+    // useEffect and validateField.
+    useEffect(() => {
+        contributionForm.validateField('productType');
+        contributionForm.validateField('country');
+    }, [contributionForm.values.productType, contributionForm.values.country]);
+
     const activeSubmitButton = (
         <Button
             color="secondary"
             variant="contained"
-            onClick={() => {
-                setShowPostSubmitErrorNotification(false);
-                handleProductionLocation(inputData, osID);
-            }}
+            onClick={contributionForm.handleSubmit}
             className={classes.submitButtonStyles}
-            disabled={!isFormValid}
+            disabled={!contributionForm.isValid}
         >
             {submitButtonText}
         </Button>
@@ -502,9 +451,7 @@ const ProductionLocationInfo = ({
                         <TextField
                             id="name"
                             className={classes.textInputStyles}
-                            value={inputName}
-                            onChange={handleNameChange}
-                            onBlur={handleNameBlur}
+                            {...contributionForm.getFieldProps('name')}
                             placeholder="Enter the name"
                             variant="outlined"
                             aria-label="Enter the name"
@@ -512,8 +459,8 @@ const ProductionLocationInfo = ({
                                 classes: {
                                     input: `
                                     ${
-                                        nameTouched &&
-                                        !isRequiredFieldValid(inputName) &&
+                                        contributionForm.touched.name &&
+                                        contributionForm.errors.name &&
                                         classes.errorStyle
                                     }`,
                                     notchedOutline:
@@ -521,16 +468,19 @@ const ProductionLocationInfo = ({
                                 },
                             }}
                             helperText={
-                                nameTouched &&
-                                !isRequiredFieldValid(inputName) && (
-                                    <InputErrorText />
+                                contributionForm.touched.name &&
+                                contributionForm.errors.name && (
+                                    <InputErrorText
+                                        text={contributionForm.errors.name}
+                                    />
                                 )
                             }
                             FormHelperTextProps={{
                                 className: classes.helperText,
                             }}
                             error={
-                                nameTouched && !isRequiredFieldValid(inputName)
+                                contributionForm.touched.name &&
+                                !!contributionForm.errors.name
                             }
                         />
                     </div>
@@ -553,9 +503,7 @@ const ProductionLocationInfo = ({
                         <TextField
                             id="address"
                             className={classes.textInputStyles}
-                            value={inputAddress}
-                            onChange={handleAddressChange}
-                            onBlur={handleAddressBlur}
+                            {...contributionForm.getFieldProps('address')}
                             placeholder="Enter the full address"
                             variant="outlined"
                             aria-label="Enter the address"
@@ -563,8 +511,8 @@ const ProductionLocationInfo = ({
                                 classes: {
                                     input: `${classes.searchInputStyles}
                                 ${
-                                    addressTouched &&
-                                    !isRequiredFieldValid(inputAddress) &&
+                                    contributionForm.touched.address &&
+                                    contributionForm.errors.address &&
                                     classes.errorStyle
                                 }`,
                                     notchedOutline:
@@ -572,17 +520,19 @@ const ProductionLocationInfo = ({
                                 },
                             }}
                             helperText={
-                                addressTouched &&
-                                !isRequiredFieldValid(inputAddress) && (
-                                    <InputErrorText />
+                                contributionForm.touched.address &&
+                                contributionForm.errors.address && (
+                                    <InputErrorText
+                                        text={contributionForm.errors.address}
+                                    />
                                 )
                             }
                             FormHelperTextProps={{
                                 className: classes.helperText,
                             }}
                             error={
-                                addressTouched &&
-                                !isRequiredFieldValid(inputAddress)
+                                contributionForm.touched.address &&
+                                !!contributionForm.errors.address
                             }
                         />
                     </div>
@@ -607,19 +557,32 @@ const ProductionLocationInfo = ({
                             name="Country"
                             aria-label="Country"
                             options={countriesOptions || []}
-                            value={inputCountry}
-                            onChange={setInputCountry}
-                            onBlur={handleCountryBlur}
+                            value={contributionForm.values.country}
+                            onChange={value =>
+                                contributionForm.setFieldValue('country', value)
+                            }
+                            onBlur={() =>
+                                contributionForm.setFieldTouched(
+                                    'country',
+                                    true,
+                                )
+                            }
                             className={classes.selectStyles}
-                            styles={getSelectStyles(isCountryError)}
+                            styles={getSelectStyles(
+                                contributionForm.touched.country &&
+                                    !!contributionForm.errors.country,
+                            )}
                             placeholder="Country"
                             isMulti={false}
                         />
-                        {isCountryError && (
-                            <div className={classes.errorWrapStyles}>
-                                <InputErrorText />
-                            </div>
-                        )}
+                        {contributionForm.touched.country &&
+                            contributionForm.errors.country && (
+                                <div className={classes.errorWrapStyles}>
+                                    <InputErrorText
+                                        text={contributionForm.errors.country}
+                                    />
+                                </div>
+                            )}
                     </div>
                     <hr className={classes.separator} />
                     <div
@@ -680,8 +643,13 @@ const ProductionLocationInfo = ({
                                                 mockedSectors,
                                             ) || []
                                         }
-                                        value={sector}
-                                        onChange={setSector}
+                                        value={contributionForm.values.sector}
+                                        onChange={value =>
+                                            contributionForm.setFieldValue(
+                                                'sector',
+                                                value,
+                                            )
+                                        }
                                         styles={getSelectStyles()}
                                         className={classes.selectStyles}
                                         placeholder="Select sector(s)"
@@ -708,14 +676,47 @@ const ProductionLocationInfo = ({
                                     <StyledSelect
                                         creatable
                                         name="Product Type"
-                                        value={productType}
-                                        onChange={setProductType}
+                                        value={
+                                            contributionForm.values.productType
+                                        }
+                                        onChange={value =>
+                                            contributionForm.setFieldValue(
+                                                'productType',
+                                                value,
+                                            )
+                                        }
+                                        onBlur={() =>
+                                            contributionForm.setFieldTouched(
+                                                'productType',
+                                                true,
+                                            )
+                                        }
                                         placeholder="Enter product type(s)"
                                         aria-label="Enter product type(s)"
-                                        styles={getSelectStyles()}
+                                        styles={getSelectStyles(
+                                            contributionForm.touched
+                                                .productType &&
+                                                !!contributionForm.errors
+                                                    .productType,
+                                        )}
                                         className={classes.selectStyles}
                                         components={customSelectComponents}
                                     />
+                                    {contributionForm.touched.productType &&
+                                        contributionForm.errors.productType && (
+                                            <div
+                                                className={
+                                                    classes.errorWrapStyles
+                                                }
+                                            >
+                                                <InputErrorText
+                                                    text={
+                                                        contributionForm.errors
+                                                            .productType
+                                                    }
+                                                />
+                                            </div>
+                                        )}
                                 </div>
                                 <div
                                     className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
@@ -741,10 +742,18 @@ const ProductionLocationInfo = ({
                                         aria-label="Location type"
                                         options={mapFacilityTypeOptions(
                                             facilityProcessingTypeOptions || [],
-                                            processingType || [],
+                                            contributionForm.values
+                                                .processingType || [],
                                         )}
-                                        value={locationType}
-                                        onChange={setLocationType}
+                                        value={
+                                            contributionForm.values.locationType
+                                        }
+                                        onChange={value =>
+                                            contributionForm.setFieldValue(
+                                                'locationType',
+                                                value,
+                                            )
+                                        }
                                         styles={getSelectStyles()}
                                         className={classes.selectStyles}
                                         placeholder="Select location type(s)"
@@ -773,10 +782,19 @@ const ProductionLocationInfo = ({
                                         aria-label="Processing Type"
                                         options={mapProcessingTypeOptions(
                                             facilityProcessingTypeOptions || [],
-                                            locationType || [],
+                                            contributionForm.values
+                                                .locationType || [],
                                         )}
-                                        value={processingType}
-                                        onChange={setProcessingType}
+                                        value={
+                                            contributionForm.values
+                                                .processingType
+                                        }
+                                        onChange={value =>
+                                            contributionForm.setFieldValue(
+                                                'processingType',
+                                                value,
+                                            )
+                                        }
                                         styles={getSelectStyles()}
                                         className={classes.selectStyles}
                                     />
@@ -801,27 +819,27 @@ const ProductionLocationInfo = ({
                                     <TextField
                                         id="number_of_workers"
                                         error={
-                                            !isValidNumberOfWorkers(
-                                                numberOfWorkers,
-                                            )
+                                            contributionForm.touched
+                                                .numberOfWorkers &&
+                                            !!contributionForm.errors
+                                                .numberOfWorkers
                                         }
                                         variant="outlined"
                                         className={classes.textInputStyles}
-                                        value={numberOfWorkers}
-                                        onChange={e =>
-                                            setNumberOfWorkers(
-                                                e.target.value.trim(),
-                                            )
-                                        }
+                                        {...contributionForm.getFieldProps(
+                                            'numberOfWorkers',
+                                        )}
                                         placeholder="Enter the number of workers as a number or range"
                                         helperText={
-                                            !isValidNumberOfWorkers(
-                                                numberOfWorkers,
-                                            ) && (
+                                            contributionForm.errors
+                                                .numberOfWorkers &&
+                                            contributionForm.touched
+                                                .numberOfWorkers && (
                                                 <InputErrorText
-                                                    text={getNumberOfWorkersValidationError(
-                                                        numberOfWorkers,
-                                                    )}
+                                                    text={
+                                                        contributionForm.errors
+                                                            .numberOfWorkers
+                                                    }
                                                 />
                                             )
                                         }
@@ -832,9 +850,11 @@ const ProductionLocationInfo = ({
                                             classes: {
                                                 input: `
                                             ${
-                                                !isValidNumberOfWorkers(
-                                                    numberOfWorkers,
-                                                ) && classes.errorStyle
+                                                contributionForm.errors
+                                                    .numberOfWorkers &&
+                                                contributionForm.touched
+                                                    .numberOfWorkers &&
+                                                classes.errorStyle
                                             }`,
                                                 notchedOutline:
                                                     classes.notchedOutlineStyles,
@@ -862,17 +882,47 @@ const ProductionLocationInfo = ({
                                     <TextField
                                         id="parent_company"
                                         className={classes.textInputStyles}
-                                        value={parentCompany}
-                                        onChange={handleParentCompanyChange}
+                                        {...contributionForm.getFieldProps(
+                                            'parentCompany',
+                                        )}
                                         placeholder="Enter the parent company"
                                         variant="outlined"
                                         aria-label="Parent company"
                                         InputProps={{
                                             classes: {
+                                                input: `${
+                                                    contributionForm.touched
+                                                        .parentCompany &&
+                                                    contributionForm.errors
+                                                        .parentCompany &&
+                                                    classes.errorStyle
+                                                }`,
                                                 notchedOutline:
                                                     classes.notchedOutlineStyles,
                                             },
                                         }}
+                                        helperText={
+                                            contributionForm.touched
+                                                .parentCompany &&
+                                            contributionForm.errors
+                                                .parentCompany && (
+                                                <InputErrorText
+                                                    text={
+                                                        contributionForm.errors
+                                                            .parentCompany
+                                                    }
+                                                />
+                                            )
+                                        }
+                                        FormHelperTextProps={{
+                                            className: classes.helperText,
+                                        }}
+                                        error={
+                                            contributionForm.touched
+                                                .parentCompany &&
+                                            !!contributionForm.errors
+                                                .parentCompany
+                                        }
                                     />
                                 </div>
                             </>

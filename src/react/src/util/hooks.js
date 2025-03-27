@@ -6,7 +6,6 @@ import head from 'lodash/head';
 import last from 'lodash/last';
 import delay from 'lodash/delay';
 import L from 'leaflet';
-import { isInt } from 'validator';
 
 import {
     detailsZoomLevel,
@@ -406,28 +405,42 @@ export const useSingleLocationContributionForm = onSubmit =>
         },
         validationSchema: Yup.object({
             name: Yup.string()
-                .trim()
-                .max(200, 'Name cannot exceed 200 characters.')
-                .test('not-a-number', 'Name cannot be a number.', value =>
-                    Number.isNaN(Number(value)),
+                .test(
+                    'is-trimmed',
+                    'Remove leading and trailing spaces.',
+                    value => value == null || value === value.trim(),
                 )
+                .test('not-a-number', 'Name cannot be a number.', value => {
+                    if (value == null) return true;
+
+                    const numberPattern = /^-?(0|[1-9]\d*)(\.\d+)?$/;
+                    return !numberPattern.test(value);
+                })
                 .test(
                     'meaningful-characters',
                     'Name can’t solely consist of punctuation and whitespaces.',
-                    value => isCleanValueMeaningful(value),
+                    value => value == null || isCleanValueMeaningful(value),
                 )
-                .required('Name is required'),
+                .max(200, 'Name cannot exceed 200 characters.')
+                .required('Name is required.'),
             address: Yup.string()
-                .trim()
-                .max(200, 'Address cannot exceed 200 characters.')
-                .test('not-a-number', 'Address cannot be a number.', value =>
-                    Number.isNaN(Number(value)),
+                .test(
+                    'is-trimmed',
+                    'Remove leading and trailing spaces.',
+                    value => value == null || value === value.trim(),
                 )
+                .test('not-a-number', 'Address cannot be a number.', value => {
+                    if (value == null) return true;
+
+                    const numberPattern = /^-?(0|[1-9]\d*)(\.\d+)?$/;
+                    return !numberPattern.test(value);
+                })
                 .test(
                     'meaningful-characters',
                     'Address can’t solely consist of punctuation and whitespaces.',
-                    value => isCleanValueMeaningful(value),
+                    value => value == null || isCleanValueMeaningful(value),
                 )
+                .max(200, 'Address cannot exceed 200 characters.')
                 .required('Address is required.'),
             country: Yup.object().nullable().required('Country is required.'),
             productType: Yup.array().max(
@@ -435,50 +448,64 @@ export const useSingleLocationContributionForm = onSubmit =>
                 `Maximum of ${MAX_PRODUCT_TYPE_COUNT} product types allowed.`,
             ),
             numberOfWorkers: Yup.string()
-                .trim()
                 .test(
-                    'valid-format',
-                    'Invalid format. Enter a whole number or a valid numeric range (e.g., 1-5).',
-                    value => {
-                        if (!value) return true;
-                        const rangePattern = /^\d+-\d+$/;
-                        return isInt(value, 10) || rangePattern.test(value);
-                    },
+                    'is-trimmed',
+                    'Remove leading and trailing spaces.',
+                    value => value == null || value === value.trim(),
                 )
                 .test(
-                    'non-zero',
-                    'The value of zero is not valid. Enter a positive whole number or a valid range (e.g., 1-5).',
+                    'valid-format-and-range',
+                    'Enter a single positive number (e.g., 5) or a valid range (e.g., 3–10). The minimum value must be less than or equal to the maximum value, and both must be greater than or equal to 1.',
                     value => {
-                        if (!value) return true;
-                        return parseInt(value, 10) !== 0;
-                    },
-                )
-                .test(
-                    'valid-range',
-                    'Invalid range. The minimum value must be less than or equal to the maximum value.',
-                    value => {
-                        if (!value) return true;
-                        const rangePattern = /^\d+-\d+$/;
-                        if (!rangePattern.test(value)) return true;
-                        const [start, end] = value
-                            .split('-')
-                            .map(v => v.trim());
-                        return (
-                            isInt(end, {
-                                min: 1,
-                                allow_leading_zeroes: false,
-                            }) && parseInt(start, 10) <= parseInt(end, 10)
-                        );
+                        if (value == null) return true;
+
+                        const singleNumberPattern = /^\d+$/;
+                        const rangePattern = /^(\d+)-(\d+)$/;
+
+                        if (singleNumberPattern.test(value)) {
+                            return (
+                                !/^0/.test(value) && parseInt(value, 10) >= 1
+                            );
+                        }
+
+                        const match = value.match(rangePattern);
+                        if (match) {
+                            const [minStr, maxStr] = match.slice(1, 3);
+
+                            const min = parseInt(minStr, 10);
+                            const max = parseInt(maxStr, 10);
+
+                            if (/^0/.test(minStr) || /^0/.test(maxStr))
+                                return false;
+
+                            return min >= 1 && max >= 1 && min <= max;
+                        }
+
+                        return false;
                     },
                 ),
             parentCompany: Yup.string()
-                .trim()
-                .max(200, 'Parent company cannot exceed 200 characters.')
+                .test(
+                    'is-trimmed',
+                    'Remove leading and trailing spaces.',
+                    value => value == null || value === value.trim(),
+                )
                 .test(
                     'not-a-number',
                     'Parent company cannot be a number.',
-                    value => Number.isNaN(Number(value)),
-                ),
+                    value => {
+                        if (value == null) return true;
+
+                        const numberPattern = /^-?(0|[1-9]\d*)(\.\d+)?$/;
+                        return !numberPattern.test(value);
+                    },
+                )
+                .test(
+                    'meaningful-characters',
+                    'Parent company can’t solely consist of punctuation and whitespaces.',
+                    value => value == null || isCleanValueMeaningful(value),
+                )
+                .max(200, 'Parent company cannot exceed 200 characters.'),
         }),
         onSubmit,
         validateOnMount: true,
