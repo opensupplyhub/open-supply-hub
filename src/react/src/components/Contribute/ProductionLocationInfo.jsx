@@ -51,8 +51,6 @@ import {
     mapDjangoChoiceTuplesToSelectOptions,
     mapFacilityTypeOptions,
     mapProcessingTypeOptions,
-    convertRangeField,
-    transformDataForReactSelect,
     getSelectStyles,
 } from '../../util/util';
 
@@ -110,6 +108,8 @@ const ProductionLocationInfo = ({
         setShowPostSubmitErrorNotification,
     ] = useState(false);
 
+    const [enabledTaxonomy, setEnabledTaxonomy] = useState(false);
+
     let handleProductionLocation;
     switch (submitMethod) {
         case 'POST':
@@ -131,32 +131,13 @@ const ProductionLocationInfo = ({
         handleProductionLocation(values, osID);
     });
 
-    const fillAdditionalDataFields = () => {
-        contributionForm.setValues({
-            ...contributionForm.values,
-            sector: transformDataForReactSelect(
-                singleProductionLocationData,
-                'sector',
-            ),
-            productType: transformDataForReactSelect(
-                singleProductionLocationData,
-                'product_type',
-            ),
-            locationType: transformDataForReactSelect(
-                singleProductionLocationData,
-                'location_type',
-            ),
-            processingType: transformDataForReactSelect(
-                singleProductionLocationData,
-                'processing_type',
-            ),
-            numberOfWorkers:
-                convertRangeField(
-                    singleProductionLocationData.number_of_workers,
-                ) ?? '',
-            parentCompany: singleProductionLocationData.parent_company ?? '',
-        });
-    };
+    const customSelectComponents = { DropdownIndicator: null };
+
+    const instructionExtraMessage =
+        submitMethod === 'PATCH'
+            ? 'These fields are pre-filled with the data from your search, but you can edit them.'
+            : '';
+    const submitButtonText = submitMethod === 'POST' ? 'Submit' : 'Update';
 
     const resetAdditionalDataFields = () => {
         contributionForm.setValues({
@@ -170,21 +151,11 @@ const ProductionLocationInfo = ({
         });
     };
 
-    const customSelectComponents = { DropdownIndicator: null };
-
-    const instructionExtraMessage =
-        submitMethod === 'PATCH'
-            ? 'These fields are pre-filled with the data from your search, but you can edit them.'
-            : '';
-    const submitButtonText = submitMethod === 'POST' ? 'Submit' : 'Update';
-
     const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
     const onSwitchChange = () => {
         setShowAdditionalInfo(prevShowAdditionalInfo => {
             const newShowAdditionalInfo = !prevShowAdditionalInfo;
-            if (newShowAdditionalInfo) {
-                fillAdditionalDataFields();
-            } else {
+            if (!newShowAdditionalInfo) {
                 resetAdditionalDataFields();
             }
             return newShowAdditionalInfo;
@@ -342,6 +313,13 @@ const ProductionLocationInfo = ({
         moderationID,
     ]);
 
+    useEffect(() => {
+        setEnabledTaxonomy(
+            contributionForm.values.sector.length === 1 &&
+                contributionForm.values.sector[0].value === 'Apparel',
+        );
+    }, [contributionForm.values.sector]);
+
     useEffect(
         () => () => {
             handleCleanupContributionRecord();
@@ -357,17 +335,19 @@ const ProductionLocationInfo = ({
         }
     }, [singleProductionLocationError]);
 
-    // The Formik library, which is used for the SLC form, doesn’t
-    // automatically re-run validation when the value of the product
-    // type and country field changes - unless the field is actively touched or
-    // blurred. This issue happens only when clicking the "x"
-    // (remove) button on a value inside the React Select
-    // multi-select field.
-    // A similar issue occurs with the country field - after setting
-    // the value, validation isn’t triggered to avoid showing an
-    // inappropriate error.
-    // Because of this, validation is manually triggered using
-    // useEffect and validateField.
+    /*
+    The Formik library, which is used for the SLC form, doesn’t
+    automatically re-run validation when the value of the product
+    type and country field changes - unless the field is actively touched or
+    blurred. This issue happens only when clicking the "x"
+    (remove) button on a value inside the React Select
+    multi-select field.
+    A similar issue occurs with the country field - after setting
+    the value, validation isn’t triggered to avoid showing an
+    inappropriate error.
+    Because of this, validation is manually triggered using
+    useEffect and validateField.
+    */
     useEffect(() => {
         contributionForm.validateField('productType');
         contributionForm.validateField('country');
@@ -554,7 +534,7 @@ const ProductionLocationInfo = ({
                         </Typography>
                         <StyledSelect
                             id="country"
-                            name="Country"
+                            name="country"
                             aria-label="Country"
                             options={countriesOptions || []}
                             value={contributionForm.values.country}
@@ -675,7 +655,7 @@ const ProductionLocationInfo = ({
 
                                     <StyledSelect
                                         creatable
-                                        name="Product Type"
+                                        name="product-type"
                                         value={
                                             contributionForm.values.productType
                                         }
@@ -731,33 +711,57 @@ const ProductionLocationInfo = ({
                                         component="h4"
                                         className={classes.subTitleStyles}
                                     >
-                                        Select the location type(s) for this
-                                        production location. For example: Final
-                                        Product Assembly, Raw Materials
+                                        Select or enter the location type(s) for
+                                        this production location. For example:
+                                        Final Product Assembly, Raw Materials
                                         Production or Processing, Office/HQ.
                                     </Typography>
-                                    <StyledSelect
-                                        id="location_type"
-                                        name="Location type"
-                                        aria-label="Location type"
-                                        options={mapFacilityTypeOptions(
-                                            facilityProcessingTypeOptions || [],
-                                            contributionForm.values
-                                                .processingType || [],
-                                        )}
-                                        value={
-                                            contributionForm.values.locationType
-                                        }
-                                        onChange={value =>
-                                            contributionForm.setFieldValue(
-                                                'locationType',
-                                                value,
-                                            )
-                                        }
-                                        styles={getSelectStyles()}
-                                        className={classes.selectStyles}
-                                        placeholder="Select location type(s)"
-                                    />
+                                    {enabledTaxonomy ? (
+                                        <StyledSelect
+                                            id="location_type"
+                                            name="location-type"
+                                            aria-label="Location type"
+                                            options={mapFacilityTypeOptions(
+                                                facilityProcessingTypeOptions ||
+                                                    [],
+                                                contributionForm.values
+                                                    .processingType,
+                                            )}
+                                            value={
+                                                contributionForm.values
+                                                    .locationType
+                                            }
+                                            onChange={value =>
+                                                contributionForm.setFieldValue(
+                                                    'locationType',
+                                                    value,
+                                                )
+                                            }
+                                            styles={getSelectStyles()}
+                                            className={classes.selectStyles}
+                                            placeholder="Select location type(s)"
+                                        />
+                                    ) : (
+                                        <StyledSelect
+                                            creatable
+                                            name="location-type"
+                                            value={
+                                                contributionForm.values
+                                                    .locationType
+                                            }
+                                            onChange={value =>
+                                                contributionForm.setFieldValue(
+                                                    'locationType',
+                                                    value,
+                                                )
+                                            }
+                                            placeholder="Enter location type(s)"
+                                            aria-label="Location type"
+                                            styles={getSelectStyles()}
+                                            className={classes.selectStyles}
+                                            components={customSelectComponents}
+                                        />
+                                    )}
                                 </div>
                                 <div
                                     className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
@@ -772,32 +776,57 @@ const ProductionLocationInfo = ({
                                         component="h4"
                                         className={classes.subTitleStyles}
                                     >
-                                        Select the type of processing activities
-                                        that take place at this location. For
-                                        example: Printing, Tooling, Assembly.
+                                        Select or enter the type of processing
+                                        activities that take place at this
+                                        location. For example: Printing,
+                                        Tooling, Assembly.
                                     </Typography>
-                                    <StyledSelect
-                                        id="processing_type"
-                                        name="Processing Type"
-                                        aria-label="Processing Type"
-                                        options={mapProcessingTypeOptions(
-                                            facilityProcessingTypeOptions || [],
-                                            contributionForm.values
-                                                .locationType || [],
-                                        )}
-                                        value={
-                                            contributionForm.values
-                                                .processingType
-                                        }
-                                        onChange={value =>
-                                            contributionForm.setFieldValue(
-                                                'processingType',
-                                                value,
-                                            )
-                                        }
-                                        styles={getSelectStyles()}
-                                        className={classes.selectStyles}
-                                    />
+                                    {enabledTaxonomy ? (
+                                        <StyledSelect
+                                            id="processing_type"
+                                            name="processing-type"
+                                            aria-label="Processing Type"
+                                            options={mapProcessingTypeOptions(
+                                                facilityProcessingTypeOptions ||
+                                                    [],
+                                                contributionForm.values
+                                                    .locationType,
+                                            )}
+                                            value={
+                                                contributionForm.values
+                                                    .processingType
+                                            }
+                                            onChange={value =>
+                                                contributionForm.setFieldValue(
+                                                    'processingType',
+                                                    value,
+                                                )
+                                            }
+                                            styles={getSelectStyles()}
+                                            className={classes.selectStyles}
+                                            placeholder="Select processing type(s)"
+                                        />
+                                    ) : (
+                                        <StyledSelect
+                                            creatable
+                                            name="processing-type"
+                                            value={
+                                                contributionForm.values
+                                                    .processingType
+                                            }
+                                            onChange={value =>
+                                                contributionForm.setFieldValue(
+                                                    'processingType',
+                                                    value,
+                                                )
+                                            }
+                                            placeholder="Enter processing type(s)"
+                                            aria-label="Processing Type"
+                                            styles={getSelectStyles()}
+                                            className={classes.selectStyles}
+                                            components={customSelectComponents}
+                                        />
+                                    )}
                                 </div>
                                 <div
                                     className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}

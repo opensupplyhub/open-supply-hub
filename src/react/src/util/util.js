@@ -38,7 +38,6 @@ import map from 'lodash/map';
 import mapValues from 'lodash/mapValues';
 import mapKeys from 'lodash/mapKeys';
 import uniq from 'lodash/uniq';
-import has from 'lodash/has';
 import { isURL, isInt } from 'validator';
 import { featureCollection, bbox } from '@turf/turf';
 import hash from 'object-hash';
@@ -423,14 +422,6 @@ export const mapParamToReactSelectOption = param => {
         value: param,
         label: param,
     });
-};
-
-export const transformDataForReactSelect = (obj, dataKey) => {
-    if (isArray(obj[dataKey]) && obj[dataKey].length > 0) {
-        const transformedData = obj[dataKey].map(mapParamToReactSelectOption);
-        return transformedData;
-    }
-    return [];
 };
 
 export const createSelectOptionsFromParams = params => {
@@ -1164,19 +1155,6 @@ export const convertFeatureFlagsObjectToListOfActiveFlags = featureFlags =>
 
 export const checkWhetherUserHasDashboardAccess = user =>
     get(user, 'is_superuser', false);
-
-export const convertRangeField = rangeObj => {
-    if (isEmpty(rangeObj)) {
-        return null;
-    }
-    if (has(rangeObj, 'min') && has(rangeObj, 'max')) {
-        if (rangeObj.min === rangeObj.max) {
-            return rangeObj.min;
-        }
-        return `${rangeObj.min}-${rangeObj.max}`;
-    }
-    return !isNil(rangeObj.min) ? rangeObj.min : rangeObj.max;
-};
 
 export const isValidNumberOfWorkers = value => {
     if (isEmpty(value)) {

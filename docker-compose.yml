@@ -102,7 +102,7 @@ services:
       - proxynet
 
   zookeeper:
-    image: "bitnami/zookeeper:latest"
+    image: "bitnami/zookeeper:3.9"
     ports:
       - "2181:2181"
     environment:
@@ -111,7 +111,7 @@ services:
       - proxynet
 
   kafka:
-    image: "bitnami/kafka:latest"
+    image: "bitnami/kafka:3.9.0"
     ports:
       - "9092:9092"
     environment:
