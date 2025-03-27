@@ -455,7 +455,10 @@ export const useSingleLocationContributionForm = onSubmit =>
                 )
                 .test(
                     'valid-format-and-range',
-                    'Enter a single positive number (e.g., 5) or a valid range (e.g., 3–10). The minimum value must be less than or equal to the maximum value, and both must be greater than or equal to 1.',
+                    `Enter a single positive number (e.g., 5) or a valid range
+                    (e.g., 3–10). In a range, the minimum value must be less
+                    than or equal to the maximum, and both must be greater
+                    than or equal to 1.`,
                     value => {
                         if (value == null) return true;
 
@@ -502,7 +505,8 @@ export const useSingleLocationContributionForm = onSubmit =>
                 )
                 .test(
                     'meaningful-characters',
-                    'Parent company can’t solely consist of punctuation and whitespaces.',
+                    `Parent company can’t solely consist of punctuation and
+                    whitespaces.`,
                     value => value == null || isCleanValueMeaningful(value),
                 )
                 .max(200, 'Parent company cannot exceed 200 characters.'),
