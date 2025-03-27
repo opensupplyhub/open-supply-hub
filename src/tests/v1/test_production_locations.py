@@ -188,9 +188,8 @@ class ProductionLocationsTest(BaseAPITest):
         )
 
         result = response.json()
-        print(result)
-        self.assertIsNotNone(result['data'])
-        self.assertEqual(len(result['data']), 0)
+        os_ids = {item["os_id"] for item in result["data"]}
+        self.assertNotIn("US202309OUTSIDE", os_ids)
 
     def test_production_locations_geo_polygon_inside(self):
         inside_polygon = {

@@ -278,7 +278,7 @@ class TestProductionLocationsQueryBuilder(TestCase):
         )
         self.assertEqual(
             expected,
-            self.builder.query_body['query']['bool']['filter']
+            self.builder.query_body['query']['bool']['filter'][0]
         )
 
     def test_add_geo_polygon(self):
@@ -307,5 +307,5 @@ class TestProductionLocationsQueryBuilder(TestCase):
         )
         self.assertEqual(
             expected,
-            self.builder.query_body['query']['bool']['filter']
+            self.builder.query_body['query']['bool']['filter'][0]
         )

@@ -313,7 +313,6 @@ class V1UtilsTests(TestCase):
         )
 
         self.assertIsNotNone(error_response)
-        print(f"### error_response: {error_response['errors']}")
         self.assertEqual(
             error_response['detail'],
             "The request query is invalid."
