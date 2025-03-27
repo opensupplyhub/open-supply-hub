@@ -38,7 +38,7 @@ class ProductionLocationsSerializer(Serializer):
     search_after_id = CharField(required=False)
     search_after_value = CharField(required=False)
     coordinates_lat = FloatField(required=False)
-    coordinates_lon = FloatField(required=False)
+    coordinates_lng = FloatField(required=False)
     country = ListField(
         child=CharField(required=False),
         required=False
