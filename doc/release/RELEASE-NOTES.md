@@ -26,7 +26,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - The pages `My Claimed Facilities`, `Claimed Facility Details`, `My Lists`, and `My Lists/id` are now accessible only to authorized users. Additionally, styles have been refactored, an `InputSelect` component has been moved to the separate file, and input styling on the `Claimed Facility Details` page has been fixed.
-* [OSDEV-1886](https://opensupplyhub.atlassian.net/browse/OSDEV-1886) - Deleting Lambda@Edge function before destroying infrastructure. These changes are necessary so that infrastructure can be deleted using Terraform without receiving an error about a problem deleting a replicated function.
+* [OSDEV-1886](https://opensupplyhub.atlassian.net/browse/OSDEV-1886) - Created the script to run within the Destroy Environment GitHub workflow to delete the Lambda@Edge function before destroying the infrastructure. This ensures that Terraform can remove the infrastructure without encountering errors related to deleting a replicated function.
 * [OSDEV-1830](https://opensupplyhub.atlassian.net/browse/OSDEV-1830) - Updated implementation for `Production Location Info` page to input any values for `Location Type` and `Processing Type`, except when the sector is `Apparel` — in that case, enforce taxonomy filters.
 * [OSDEV-1861](https://opensupplyhub.atlassian.net/browse/OSDEV-1861) - On the `My Claimed Facilities` page, the help text font size was increased to `21px`, and the margin for the `FIND MY PRODUCTION LOCATION` button was increased to `16px` to improve readability.
 
