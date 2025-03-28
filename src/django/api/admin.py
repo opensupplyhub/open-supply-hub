@@ -172,8 +172,14 @@ class ApiLimitAdmin(admin.ModelAdmin):
         else:
             return []
 
+
 class FacilityDownloadLimitAdmin(admin.ModelAdmin):
-    list_display = ('user', 'allowed_downloads','allowed_records_number', 'last_download_time', 'download_count')
+    list_display = ('user',
+                    'allowed_downloads',
+                    'allowed_records_number',
+                    'last_download_time',
+                    'download_count'
+                    )
     search_fields = ('user__username',)
     autocomplete_fields = ('user', )
 
