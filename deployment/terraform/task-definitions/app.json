@@ -8,7 +8,7 @@
       "--workers=${gunicorn_workers}",
       "--timeout=${gunicorn_worker_timeout}",
       "--access-logfile=-",
-      "--access-logformat=%(t)s '%(r)s' %(s)s | %(M)sms",
+      "--access-logformat=%(t)s '%(r)s' %(s)s | %(M)sms | $(a)s",
       "--error-logfile=-",
       "--log-level=info",
       "--capture-output",
@@ -64,7 +64,7 @@
     "healthCheck": {
         "command": [
             "CMD-SHELL",
-            "/usr/bin/curl http://localhost:8080/health-check/ || exit 1"
+            "/usr/bin/curl -f http://localhost:${app_port}/health-check/ || exit 1"
         ],
         "interval": 30,
         "timeout": 5,
