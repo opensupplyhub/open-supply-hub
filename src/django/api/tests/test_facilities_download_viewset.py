@@ -8,7 +8,7 @@ from api.models.user import User
 from api.constants import FeatureGroups
 
 
-DEFAULT_LIMIT = 3
+FACILITIES_DOWNLOAD_LIMIT = 3
 DEFAULT_ALLOWED_DOWNLOADS = 1
 
 
@@ -455,7 +455,10 @@ class FacilitiesDownloadViewSetTest(APITestCase):
             expected_data
         )
 
-    @patch('api.constants.FacilitiesDownloadSettings.DEFAULT_LIMIT', DEFAULT_LIMIT)
+    @patch(
+            'api.constants.FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT',
+            FACILITIES_DOWNLOAD_LIMIT
+            )
     def test_user_cannot_download_over_limit(self):
         user = self.create_user()
         self.login_user(user)
@@ -487,7 +490,10 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                            ' more data.')]
                         )
 
-    @patch('api.constants.FacilitiesDownloadSettings.DEFAULT_LIMIT', DEFAULT_LIMIT)
+    @patch(
+            'api.constants.FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT',
+            FACILITIES_DOWNLOAD_LIMIT
+            )
     def test_api_user_can_download_over_limit(self):
         user = self.create_user(is_api_user=True)
         self.login_user(user)
@@ -496,5 +502,5 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreater(
             len(response.data.get("results", {}).get("rows", [])),
-            DEFAULT_LIMIT
+            FACILITIES_DOWNLOAD_LIMIT
         )

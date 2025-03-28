@@ -111,7 +111,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
                 "last_download_time": timezone.now(),
                 "allowed_downloads": FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS,
                 "download_count": 0,
-                "allowed_records_number": FacilitiesDownloadSettings.DEFAULT_LIMIT,
+                "allowed_records_number": FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT,
             }
         )
 
