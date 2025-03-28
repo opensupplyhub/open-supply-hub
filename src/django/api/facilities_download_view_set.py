@@ -2,6 +2,8 @@ from rest_framework import viewsets, mixins
 from django.utils import timezone
 from typing import Optional
 import math
+from django.db import transaction
+from django.db.models import F
 
 from api.pagination import PageAndSizePagination
 from api.models.facility.facility_index import FacilityIndex
@@ -128,6 +130,12 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
     def __update_facility_download_limit(
         facility_download_limit: FacilityDownloadLimit,
     ) -> None:
+        with transaction.atomic():
+            facility_download_limit.refresh_from_db()
+            if (facility_download_limit.download_count >=
+                facility_download_limit.allowed_downloads):
+                raise ValidationError("Concurrent limit exceeded.")
+
         facility_download_limit.last_download_time = timezone.now()
-        facility_download_limit.download_count += 1
+        facility_download_limit.download_count = F('download_count') + 1
         facility_download_limit.save()
