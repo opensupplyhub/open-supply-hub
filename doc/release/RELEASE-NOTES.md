@@ -13,10 +13,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe high-level database changes.*
 
 #### Migrations:
-* *Describe migrations here.*
+* 0168_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
 
 #### Schema changes
-* *Describe schema changes here.*
+* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - The `FacilityDownloadLimit` model has been created. This model includes such fields: id, user_id, last_download_time, allowed_downloads, allowed_records_number, and download_count.
 
 ### Code/API changes
 * *Describe code/API changes here.*
@@ -32,9 +32,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-1842](https://opensupplyhub.atlassian.net/browse/OSDEV-1842) - Removed the pre-filled information in the `Additional Information` section of the SLC `ProductionLocationInfo` page.
+* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 1000 records per download + 10 downloads of facility data per month has been added for a registered free user.
 
 ### Release instructions:
-* *Provide release instructions here.*
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
 
 
 ## Release 2.0.0
