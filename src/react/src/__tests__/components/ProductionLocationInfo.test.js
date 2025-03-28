@@ -364,6 +364,8 @@ describe("ProductionLocationInfo component, test invalid incoming data for UPDAT
         fireEvent.click(switchButton);
 
         const numberOfWorkersInput = getByPlaceholderText("Enter the number of workers as a number or range");
+        fireEvent.change(numberOfWorkersInput, { target: { value: '0-150' } });
+
         expect(numberOfWorkersInput).toHaveAttribute("aria-invalid", "true");
         expect(getByText("The value of zero is not valid. Enter a positive whole number or a valid range (e.g., 1-5).")).toBeInTheDocument();
 
