@@ -67,6 +67,10 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
             }
         })
 
+    def __init_filter(self):
+        if "filter" not in self.query_body["query"]["bool"]:
+            self.query_body["query"]["bool"]["filter"] = []
+
     def add_terms(self, field, values):
         if not values:
             return self.query_body
@@ -131,7 +135,9 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
         return self.query_body
 
     def add_geo_bounding_box(self, top, left, bottom, right):
-        self.query_body['query']['bool']['filter'] = {
+        self.__init_filter()
+
+        self.query_body['query']['bool']['filter'].append({
             'geo_bounding_box': {
                 'coordinates': {
                     'top': top,
@@ -140,4 +146,24 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
                     'right': right,
                 }
             }
-        }
+        })
+
+    def add_geo_polygon(self, values):
+        self.__init_filter()
+
+        geo_polygon_filter = None
+        for filter_item in self.query_body["query"]["bool"]["filter"]:
+            if "geo_polygon" in filter_item:
+                geo_polygon_filter = filter_item["geo_polygon"]
+                break
+
+        if geo_polygon_filter is None:
+            geo_polygon_filter = {"coordinates": {"points": []}}
+            self.query_body["query"]["bool"]["filter"].append({
+                "geo_polygon": geo_polygon_filter
+            })
+
+        points = geo_polygon_filter["coordinates"]["points"]
+        for point in values:
+            lat, lon = map(float, point.split(","))
+            points.append({"lat": lat, "lon": lon})

@@ -22,6 +22,8 @@ from api.serializers.v1.opensearch_common_validators. \
 from api.constants import APIV1CommonErrorMessages
 from api.serializers.v1.opensearch_common_validators.\
     geo_bounding_box_validator import GeoBoundingBoxValidator
+from api.serializers.v1.opensearch_common_validators.\
+    geo_polygon_validator import GeoPolygonValidator
 
 
 class ProductionLocationsSerializer(Serializer):
@@ -62,6 +64,10 @@ class ProductionLocationsSerializer(Serializer):
     geo_bounding_box_left = FloatField(required=False)
     geo_bounding_box_bottom = FloatField(required=False)
     geo_bounding_box_right = FloatField(required=False)
+    geo_polygon = ListField(
+        child=CharField(required=False),
+        required=False
+    )
 
     def validate(self, data):
         validators = [
@@ -71,6 +77,7 @@ class ProductionLocationsSerializer(Serializer):
             CoordinatesValidator(),
             CountryValidator(),
             GeoBoundingBoxValidator(),
+            GeoPolygonValidator(),
         ]
 
         error_list_builder = OpenSearchErrorListBuilder(validators)
