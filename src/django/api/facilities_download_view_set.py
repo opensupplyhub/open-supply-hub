@@ -136,6 +136,6 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
                 facility_download_limit.allowed_downloads):
                 raise ValidationError("Concurrent limit exceeded.")
 
-        facility_download_limit.last_download_time = timezone.now()
-        facility_download_limit.download_count = F('download_count') + 1
-        facility_download_limit.save()
+            facility_download_limit.last_download_time = timezone.now()
+            facility_download_limit.download_count = F('download_count') + 1
+            facility_download_limit.save()
