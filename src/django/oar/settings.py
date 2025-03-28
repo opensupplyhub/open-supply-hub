@@ -67,6 +67,7 @@ ALLOWED_HOSTS = [
     '.openapparel.org',
     '.opensupplyhub.org',
     '.os-hub.net',
+    'localhost',
 ]
 
 if DEBUG:
