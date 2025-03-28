@@ -13,6 +13,7 @@ from django.core import exceptions
 
 from ...models import Contributor, FacilityClaim, User
 from ..embed_config import EmbedConfigSerializer
+from api.models.facility_download_limit import FacilityDownloadLimit
 
 
 class UserSerializer(ModelSerializer):
@@ -139,3 +140,13 @@ class UserSerializer(ModelSerializer):
                 'approved': None,
                 'pending': None,
             }
+
+    def get_facility_downloads_limit(self, user):
+        facility_download_limit = FacilityDownloadLimit.objects.get(
+            user=user
+        )
+
+        if facility_download_limit is not None:
+            return facility_download_limit.allowed_records_number
+
+        return None

@@ -51,7 +51,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         if not params.is_valid():
             raise ValidationError(params.errors)
 
-        facility_download_limit = self.__get_user_download_limit(request.user)
+        facility_download_limit = FacilityDownloadLimit.get_or_create_user_download_limit(request.user)
 
         if facility_download_limit and facility_download_limit.download_count >= facility_download_limit.allowed_downloads:
             raise ValidationError('You have reached the maximum number of facility downloads allowed this month.'
@@ -84,44 +84,12 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         total_pages = (total_records // page_size) + (1 if total_records % page_size else 0)
 
         if facility_download_limit and current_page >= total_pages:
-            self.__update_facility_download_limit(facility_download_limit)
+            facility_download_limit.increment_download_count()
 
         list_serializer = self.get_serializer(page_queryset)
         rows = [f['row'] for f in list_serializer.data]
         headers = list_serializer.child.get_headers()
         data = {'rows': rows, 'headers': headers}
         response = self.get_paginated_response(data)
+
         return response
-
-    @staticmethod
-    def __get_user_download_limit(user) -> Optional[FacilityDownloadLimit]:
-        if user.has_groups: # if user is an API user we don't want to impose limits
-            return None
-
-        facility_download_limit, _ = FacilityDownloadLimit.objects.get_or_create(
-            user=user,
-            defaults={
-                "last_download_time": timezone.now(),
-                "allowed_downloads": FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS,
-                "download_count": 0,
-                "allowed_records_number": FacilitiesDownloadSettings.DEFAULT_LIMIT,
-            }
-        )
-
-        current_month = timezone.now().month
-        last_download_month = facility_download_limit.last_download_time.month
-
-        if current_month != last_download_month:
-            facility_download_limit.download_count = 0
-            facility_download_limit.last_download_time = timezone.now()
-
-        return facility_download_limit
-
-
-    @staticmethod
-    def __update_facility_download_limit(
-        facility_download_limit: FacilityDownloadLimit,
-    ) -> None:
-        facility_download_limit.last_download_time = timezone.now()
-        facility_download_limit.download_count += 1
-        facility_download_limit.save()
