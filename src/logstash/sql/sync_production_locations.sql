@@ -484,6 +484,17 @@ SELECT
     )
   ) AS country_value,
   (
+    SELECT json_agg(json_build_object('contributor_id', id, 'contributor_type', contrib_type))::TEXT
+    FROM (
+        SELECT DISTINCT ac.id, ac.contrib_type
+        FROM api_source as1
+        LEFT JOIN api_contributor ac ON as1.contributor_id = ac.id AND as1.is_active AND as1.is_public
+        LEFT JOIN api_facilitylistitem fli ON fli.source_id = as1.id
+        LEFT JOIN api_facilitymatch afm ON afm.facility_list_item_id = fli.id
+        WHERE fli.facility_id = af.id AND afm.status != 'PENDING' AND afm.is_active AND ac.id IS NOT NULL
+    ) AS subquery
+  ) AS contributors_value,
+  (
     SELECT
       ARRAY_AGG(afc2.status)
     FROM

@@ -194,6 +194,17 @@
               "type": "keyword"
             }
           }
+        },
+        "contributors": {
+          "type": "nested",
+          "properties": {
+            "contributor_id": {
+              "type": "integer"
+            },
+            "contributor_type": {
+              "type": "keyword"
+            }
+          }
         }
       }
     }
