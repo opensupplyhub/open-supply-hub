@@ -13,6 +13,7 @@ import negate from 'lodash/negate';
 import omitBy from 'lodash/omitBy';
 import isEmpty from 'lodash/isEmpty';
 import isNumber from 'lodash/isNumber';
+import isString from 'lodash/isString';
 import isNil from 'lodash/isNil';
 import intersection from 'lodash/intersection';
 import values from 'lodash/values';
@@ -45,6 +46,11 @@ import * as XLSX from 'xlsx';
 import moment from 'moment';
 import removeAccents from 'remove-accents';
 import unidecode from 'unidecode';
+import {
+    object as objectYup,
+    string as stringYup,
+    array as arrayYup,
+} from 'yup';
 
 import {
     OTHER,
@@ -73,6 +79,7 @@ import {
     MODERATION_STATUS_COLORS,
     DATA_SOURCES_ENUM,
     API_V1_ERROR_REQUEST_SOURCE_ENUM,
+    SLC_FORM_CONSTRAINTS,
 } from './constants';
 
 import { createListItemCSV } from './util.listItemCSV';
@@ -680,7 +687,7 @@ export const logErrorAndDispatchFailureApiV1 = (
             errorObj.detail = data.detail;
             errorObj.rawData = data;
 
-            if (!isEmpty(data.errors)) {
+            if (isArray(data.errors) && !isEmpty(data.errors)) {
                 errorObj.errors = data.errors;
             }
 
@@ -694,10 +701,10 @@ export const logErrorAndDispatchFailureApiV1 = (
             // Field "detail" and "errors" aren't always present in the V1 API
             // response for 500 errors. In case of an unexpected error, it may
             // return a different structure, such as HTML.
-            if (!isEmpty(data.detail)) {
+            if (isString(data.detail) && !isEmpty(data.detail)) {
                 errorObj.detail = data.detail;
 
-                if (!isEmpty(data.errors)) {
+                if (isArray(data.errors) && !isEmpty(data.errors)) {
                     errorObj.errors = data.errors;
                 }
             }
@@ -1599,7 +1606,9 @@ export const snakeToTitleCase = str =>
         .replace(/_/g, ' ') // Replace underscores with space.
         .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize first letter of each word.
 
-export const isCleanValueMeaningful = value => {
+// SLC form validation schema.
+
+const isCleanValueMeaningful = value => {
     if (typeof value !== 'string') return false;
 
     let cleaned = unidecode(value);
@@ -1612,3 +1621,80 @@ export const isCleanValueMeaningful = value => {
 
     return cleaned.length > 0;
 };
+
+const slcTextFieldValidation = stringYup()
+    .test(
+        'is-trimmed',
+        'Remove leading and trailing spaces.',
+        value => value == null || value === value.trim(),
+    )
+    .test(
+        'not-a-number',
+        ({ label }) => `${label} cannot be a number.`,
+        value => {
+            if (value == null) return true;
+            const numberPattern = /^-?(0|[1-9]\d*)(\.\d+)?$/;
+            return !numberPattern.test(value);
+        },
+    )
+    .test(
+        'meaningful-characters',
+        ({ label }) =>
+            `${label} can’t solely consist of punctuation and whitespaces.`,
+        value => value == null || isCleanValueMeaningful(value),
+    )
+    .max(
+        SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH,
+        ({ label }) =>
+            `${label} cannot exceed ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters.`,
+    );
+
+export const slcValidationSchema = objectYup({
+    name: slcTextFieldValidation.required('Name is required.').label('Name'),
+    address: slcTextFieldValidation
+        .required('Address is required.')
+        .label('Address'),
+    country: objectYup().nullable().required('Country is required.'),
+    productType: arrayYup().max(
+        SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT,
+        `Maximum of ${SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT} product types allowed.`,
+    ),
+    numberOfWorkers: stringYup()
+        .test(
+            'is-trimmed',
+            'Remove leading and trailing spaces.',
+            value => value == null || value === value.trim(),
+        )
+        .test(
+            'valid-format-and-range',
+            `Enter a single positive number (e.g., 5) or a valid range
+            (e.g., 3–10). In a range, the minimum value must be less
+            than or equal to the maximum, and both must be greater
+            than or equal to 1.`,
+            value => {
+                if (value == null) return true;
+
+                const singleNumberPattern = /^\d+$/;
+                const rangePattern = /^(\d+)-(\d+)$/;
+
+                if (singleNumberPattern.test(value)) {
+                    return !/^0/.test(value) && parseInt(value, 10) >= 1;
+                }
+
+                const match = value.match(rangePattern);
+                if (match) {
+                    const [minStr, maxStr] = match.slice(1, 3);
+
+                    const min = parseInt(minStr, 10);
+                    const max = parseInt(maxStr, 10);
+
+                    if (/^0/.test(minStr) || /^0/.test(maxStr)) return false;
+
+                    return min >= 1 && max >= 1 && min <= max;
+                }
+
+                return false;
+            },
+        ),
+    parentCompany: slcTextFieldValidation.label('Parent company'),
+});

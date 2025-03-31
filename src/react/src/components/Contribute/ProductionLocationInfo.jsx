@@ -96,6 +96,8 @@ const ProductionLocationInfo = ({
     const history = useHistory();
     const { moderationID, osID } = useParams();
 
+    const customSelectComponents = { DropdownIndicator: null };
+
     useResetScrollPosition(location);
 
     const [
@@ -130,8 +132,6 @@ const ProductionLocationInfo = ({
         setShowPostSubmitErrorNotification(false);
         handleProductionLocation(values, osID);
     });
-
-    const customSelectComponents = { DropdownIndicator: null };
 
     const instructionExtraMessage =
         submitMethod === 'PATCH'

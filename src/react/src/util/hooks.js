@@ -1,6 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useFormik } from 'formik';
-import * as Yup from 'yup';
 import get from 'lodash/get';
 import head from 'lodash/head';
 import last from 'lodash/last';
@@ -14,14 +13,9 @@ import {
     maxVectorTileFacilitiesGridZoom,
 } from './constants.facilitiesMap';
 
-import {
-    CONFIRM_ACTION,
-    MERGE_ACTION,
-    REJECT_ACTION,
-    MAX_PRODUCT_TYPE_COUNT,
-} from './constants';
+import { CONFIRM_ACTION, MERGE_ACTION, REJECT_ACTION } from './constants';
 
-import { isCleanValueMeaningful } from './util';
+import { slcValidationSchema } from './util';
 
 export const useUpdateLeafletMapImperatively = (
     resetButtonClickCount,
@@ -403,114 +397,7 @@ export const useSingleLocationContributionForm = onSubmit =>
             numberOfWorkers: '',
             parentCompany: '',
         },
-        validationSchema: Yup.object({
-            name: Yup.string()
-                .test(
-                    'is-trimmed',
-                    'Remove leading and trailing spaces.',
-                    value => value == null || value === value.trim(),
-                )
-                .test('not-a-number', 'Name cannot be a number.', value => {
-                    if (value == null) return true;
-
-                    const numberPattern = /^-?(0|[1-9]\d*)(\.\d+)?$/;
-                    return !numberPattern.test(value);
-                })
-                .test(
-                    'meaningful-characters',
-                    'Name can’t solely consist of punctuation and whitespaces.',
-                    value => value == null || isCleanValueMeaningful(value),
-                )
-                .max(200, 'Name cannot exceed 200 characters.')
-                .required('Name is required.'),
-            address: Yup.string()
-                .test(
-                    'is-trimmed',
-                    'Remove leading and trailing spaces.',
-                    value => value == null || value === value.trim(),
-                )
-                .test('not-a-number', 'Address cannot be a number.', value => {
-                    if (value == null) return true;
-
-                    const numberPattern = /^-?(0|[1-9]\d*)(\.\d+)?$/;
-                    return !numberPattern.test(value);
-                })
-                .test(
-                    'meaningful-characters',
-                    'Address can’t solely consist of punctuation and whitespaces.',
-                    value => value == null || isCleanValueMeaningful(value),
-                )
-                .max(200, 'Address cannot exceed 200 characters.')
-                .required('Address is required.'),
-            country: Yup.object().nullable().required('Country is required.'),
-            productType: Yup.array().max(
-                MAX_PRODUCT_TYPE_COUNT,
-                `Maximum of ${MAX_PRODUCT_TYPE_COUNT} product types allowed.`,
-            ),
-            numberOfWorkers: Yup.string()
-                .test(
-                    'is-trimmed',
-                    'Remove leading and trailing spaces.',
-                    value => value == null || value === value.trim(),
-                )
-                .test(
-                    'valid-format-and-range',
-                    `Enter a single positive number (e.g., 5) or a valid range
-                    (e.g., 3–10). In a range, the minimum value must be less
-                    than or equal to the maximum, and both must be greater
-                    than or equal to 1.`,
-                    value => {
-                        if (value == null) return true;
-
-                        const singleNumberPattern = /^\d+$/;
-                        const rangePattern = /^(\d+)-(\d+)$/;
-
-                        if (singleNumberPattern.test(value)) {
-                            return (
-                                !/^0/.test(value) && parseInt(value, 10) >= 1
-                            );
-                        }
-
-                        const match = value.match(rangePattern);
-                        if (match) {
-                            const [minStr, maxStr] = match.slice(1, 3);
-
-                            const min = parseInt(minStr, 10);
-                            const max = parseInt(maxStr, 10);
-
-                            if (/^0/.test(minStr) || /^0/.test(maxStr))
-                                return false;
-
-                            return min >= 1 && max >= 1 && min <= max;
-                        }
-
-                        return false;
-                    },
-                ),
-            parentCompany: Yup.string()
-                .test(
-                    'is-trimmed',
-                    'Remove leading and trailing spaces.',
-                    value => value == null || value === value.trim(),
-                )
-                .test(
-                    'not-a-number',
-                    'Parent company cannot be a number.',
-                    value => {
-                        if (value == null) return true;
-
-                        const numberPattern = /^-?(0|[1-9]\d*)(\.\d+)?$/;
-                        return !numberPattern.test(value);
-                    },
-                )
-                .test(
-                    'meaningful-characters',
-                    `Parent company can’t solely consist of punctuation and
-                    whitespaces.`,
-                    value => value == null || isCleanValueMeaningful(value),
-                )
-                .max(200, 'Parent company cannot exceed 200 characters.'),
-        }),
+        validationSchema: slcValidationSchema,
         onSubmit,
         validateOnMount: true,
     });
