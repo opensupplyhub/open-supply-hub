@@ -509,3 +509,16 @@ class FacilitiesDownloadViewSetTest(APITestCase):
             len(response.data.get("results", {}).get("rows", [])),
             FACILITIES_DOWNLOAD_LIMIT
         )
+
+    @patch(
+        "api.constants.FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS",
+        DEFAULT_ALLOWED_DOWNLOADS,
+    )
+    def test_api_user_not_limited_by_download_count(self):
+        user = self.create_user(is_api_user=True)
+        self.login_user(user)
+
+        # Make multiple downloads that would exceed the limit for regular users
+        for _ in range(DEFAULT_ALLOWED_DOWNLOADS + 1):
+            response = self.get_facility_downloads()
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
