@@ -34,7 +34,7 @@ class GeoPolygonValidator(OpenSearchValidationInterface):
                     "field": "geo_polygon",
                     "detail": (
                         f"Invalid coordinate format: {point}, "
-                        "must be 'lat,lon' as floats"
+                        "must be 'lat,lon' as floats."
                     )
                 })
                 continue

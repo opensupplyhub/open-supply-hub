@@ -323,7 +323,7 @@ class V1UtilsTests(TestCase):
                 'field': 'geo_polygon',
                 'detail': (
                     'Invalid coordinate format: invalid_coordinate, '
-                    "must be 'lat,lon' as floats"
+                    "must be 'lat,lon' as floats."
                 ),
             },
             error_response['errors'],
