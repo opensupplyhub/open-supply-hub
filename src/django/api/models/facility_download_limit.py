@@ -33,7 +33,7 @@ class FacilityDownloadLimit(models.Model):
         help_text=('The number of facility data downloads a user '
                    'can make per month.')
     )
-    allowed_records_number=models.PositiveIntegerField(
+    allowed_records_number = models.PositiveIntegerField(
         null=False,
         blank=False,
         default=1000,

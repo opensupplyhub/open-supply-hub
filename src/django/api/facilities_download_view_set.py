@@ -56,13 +56,15 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
             raise ValidationError(params.errors)
 
         facility_download_limit = self.__get_user_download_limit(request.user)
+        count = facility_download_limit.download_count
+        allowed_count = facility_download_limit.allowed_downloads
 
         if (facility_download_limit
-            and facility_download_limit.download_count >= facility_download_limit.allowed_downloads
+            and count >= allowed_count
             ):
-            raise ValidationError('You have reached the maximum number of facility downloads'
-                                  ' allowed this month. Please wait until next month to download'
-                                   ' more data.')
+            raise ValidationError('You have reached the maximum number of facility'
+                                  ' downloads allowed this month. Please wait until'
+                                  ' next month to download more data.')
 
         queryset = FacilityIndex \
             .objects \
@@ -70,11 +72,12 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
             .order_by('name', 'address', 'id')
 
         total_records = queryset.count()
+        allowed_number = facility_download_limit.allowed_records_number
 
         is_large_download_allowed = (
             not facility_download_limit
             or (facility_download_limit
-                and total_records <= facility_download_limit.allowed_records_number)
+                and total_records <= allowed_number)
         )
 
         if (not is_large_download_allowed):
@@ -104,16 +107,21 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
     @staticmethod
     def __get_user_download_limit(user) -> Optional[FacilityDownloadLimit]:
-        if user.has_groups:  # if user is an API user we don't want to impose limits
+        if user.has_groups:  # if user is an API user we don't want to
+            # impose limits
             return None
 
         facility_download_limit, _ = FacilityDownloadLimit.objects.get_or_create(
             user=user,
             defaults={
                 "last_download_time": timezone.now(),
-                "allowed_downloads": FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS,
+                "allowed_downloads": (
+                    FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS
+                ),
                 "download_count": 0,
-                "allowed_records_number": FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT,
+                "allowed_records_number": (
+                    FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT
+                ),
             }
         )
 

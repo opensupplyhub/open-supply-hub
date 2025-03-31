@@ -419,7 +419,6 @@ class FacilitiesDownloadViewSetTest(APITestCase):
             "https://testserver/api/facilities-downloads/?page=2&pageSize=5"
         )
 
-
     def test_query_parameters(self):
         user = self.create_user()
         self.login_user(user)
@@ -456,9 +455,9 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         )
 
     @patch(
-            'api.constants.FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT',
-            FACILITIES_DOWNLOAD_LIMIT
-            )
+        'api.constants.FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT',
+        FACILITIES_DOWNLOAD_LIMIT
+    )
     def test_user_cannot_download_over_limit(self):
         user = self.create_user()
         self.login_user(user)
@@ -466,8 +465,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         response = self.get_facility_downloads()
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.json(),
-                         [('Downloads are supported only for searches resulting'
-                           ' in 3 facilities or less.')]
+                         [('Downloads are supported only for searches '
+                           'resulting in 3 facilities or less.')]
                            )
 
     @patch(
@@ -480,20 +479,26 @@ class FacilitiesDownloadViewSetTest(APITestCase):
 
         first_response = self.get_facility_downloads()
         self.assertEqual(first_response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(first_response.data.get("results", {}).get("rows", [])), 18)
+        self.assertEqual(
+            len(first_response.data.get("results", {}).get("rows", [])),
+            18
+        )
 
         second_response = self.get_facility_downloads()
-        self.assertEqual(second_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            second_response.status_code,
+            status.HTTP_400_BAD_REQUEST
+        )
         self.assertEqual(second_response.json(),
-                         [('You have reached the maximum number of facility downloads'
-                           ' allowed this month. Please wait until next month to download'
-                           ' more data.')]
+                         [('You have reached the maximum number of facility'
+                           ' downloads allowed this month. Please wait until'
+                           ' next month to download more data.')]
                         )
 
     @patch(
-            'api.constants.FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT',
-            FACILITIES_DOWNLOAD_LIMIT
-            )
+        'api.constants.FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT',
+        FACILITIES_DOWNLOAD_LIMIT
+    )
     def test_api_user_can_download_over_limit(self):
         user = self.create_user(is_api_user=True)
         self.login_user(user)
