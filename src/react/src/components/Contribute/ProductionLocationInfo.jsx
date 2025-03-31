@@ -199,6 +199,14 @@ const ProductionLocationInfo = ({
                       }
                     : null,
             });
+            contributionForm.setTouched(
+                {
+                    name: true,
+                    address: true,
+                    country: true,
+                },
+                false,
+            );
         }
     }, [singleProductionLocationData, osID]);
 
@@ -431,7 +439,19 @@ const ProductionLocationInfo = ({
                         <TextField
                             id="name"
                             className={classes.textInputStyles}
-                            {...contributionForm.getFieldProps('name')}
+                            value={contributionForm.values.name}
+                            onChange={e => {
+                                contributionForm.setFieldValue(
+                                    'name',
+                                    e.target.value,
+                                );
+                                contributionForm.setFieldTouched(
+                                    'name',
+                                    true,
+                                    false,
+                                );
+                            }}
+                            onBlur={contributionForm.handleBlur}
                             placeholder="Enter the name"
                             variant="outlined"
                             aria-label="Enter the name"
@@ -483,7 +503,19 @@ const ProductionLocationInfo = ({
                         <TextField
                             id="address"
                             className={classes.textInputStyles}
-                            {...contributionForm.getFieldProps('address')}
+                            value={contributionForm.values.address}
+                            onChange={e => {
+                                contributionForm.setFieldValue(
+                                    'address',
+                                    e.target.value,
+                                );
+                                contributionForm.setFieldTouched(
+                                    'address',
+                                    true,
+                                    false,
+                                );
+                            }}
+                            onBlur={contributionForm.handleBlur}
                             placeholder="Enter the full address"
                             variant="outlined"
                             aria-label="Enter the address"
@@ -538,9 +570,17 @@ const ProductionLocationInfo = ({
                             aria-label="Country"
                             options={countriesOptions || []}
                             value={contributionForm.values.country}
-                            onChange={value =>
-                                contributionForm.setFieldValue('country', value)
-                            }
+                            onChange={value => {
+                                contributionForm.setFieldValue(
+                                    'country',
+                                    value,
+                                );
+                                contributionForm.setFieldTouched(
+                                    'country',
+                                    true,
+                                    false,
+                                );
+                            }}
                             onBlur={() =>
                                 contributionForm.setFieldTouched(
                                     'country',
@@ -659,18 +699,17 @@ const ProductionLocationInfo = ({
                                         value={
                                             contributionForm.values.productType
                                         }
-                                        onChange={value =>
+                                        onChange={value => {
                                             contributionForm.setFieldValue(
                                                 'productType',
                                                 value,
-                                            )
-                                        }
-                                        onBlur={() =>
+                                            );
                                             contributionForm.setFieldTouched(
                                                 'productType',
                                                 true,
-                                            )
-                                        }
+                                                false,
+                                            );
+                                        }}
                                         placeholder="Enter product type(s)"
                                         aria-label="Enter product type(s)"
                                         styles={getSelectStyles(
@@ -855,9 +894,21 @@ const ProductionLocationInfo = ({
                                         }
                                         variant="outlined"
                                         className={classes.textInputStyles}
-                                        {...contributionForm.getFieldProps(
-                                            'numberOfWorkers',
-                                        )}
+                                        value={
+                                            contributionForm.values
+                                                .numberOfWorkers
+                                        }
+                                        onChange={e => {
+                                            contributionForm.setFieldValue(
+                                                'numberOfWorkers',
+                                                e.target.value,
+                                            );
+                                            contributionForm.setFieldTouched(
+                                                'numberOfWorkers',
+                                                true,
+                                                false,
+                                            );
+                                        }}
                                         placeholder="Enter the number of workers as a number or range"
                                         helperText={
                                             contributionForm.errors
@@ -911,9 +962,21 @@ const ProductionLocationInfo = ({
                                     <TextField
                                         id="parent_company"
                                         className={classes.textInputStyles}
-                                        {...contributionForm.getFieldProps(
-                                            'parentCompany',
-                                        )}
+                                        value={
+                                            contributionForm.values
+                                                .parentCompany
+                                        }
+                                        onChange={e => {
+                                            contributionForm.setFieldValue(
+                                                'parentCompany',
+                                                e.target.value,
+                                            );
+                                            contributionForm.setFieldTouched(
+                                                'parentCompany',
+                                                true,
+                                                false,
+                                            );
+                                        }}
                                         placeholder="Enter the parent company"
                                         variant="outlined"
                                         aria-label="Parent company"
