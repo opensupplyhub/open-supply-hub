@@ -464,10 +464,11 @@ class FacilitiesDownloadViewSetTest(APITestCase):
 
         response = self.get_facility_downloads()
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.json(),
-                         [('Downloads are supported only for searches '
-                           'resulting in 3 facilities or less.')]
-                        )
+        self.assertEqual(
+            response.json(),
+            [('Downloads are supported only for searches '
+            'resulting in 3 facilities or less.')]
+        )
 
     @patch(
         "api.constants.FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS",
@@ -491,10 +492,15 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         )
         self.assertEqual(
             second_response.json(),
-            [('You have reached the maximum number of facility'
-            ' downloads allowed this month. Please wait until'
-            ' next month to download more data.')]
+            [
+                (
+                    'You have reached the maximum number of facility'
+                    ' downloads allowed this month. Please wait until'
+                    ' next month to download more data.'
+                )
+            ]
         )
+
 
     @patch(
         'api.constants.FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT',

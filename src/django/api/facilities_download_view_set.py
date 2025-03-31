@@ -111,18 +111,18 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
         facility_download_limit, _ = FacilityDownloadLimit.objects \
             .get_or_create(
-            user=user,
-            defaults={
-                "last_download_time": timezone.now(),
-                "allowed_downloads": (
-                    FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS
-                ),
-                "download_count": 0,
-                "allowed_records_number": (
-                    FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT
-                ),
-            }
-        )
+                user=user,
+                defaults={
+                    "last_download_time": timezone.now(),
+                    "allowed_downloads": (
+                        FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS
+                    ),
+                    "download_count": 0,
+                    "allowed_records_number": (
+                        FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT
+                    ),
+                }
+            )
 
         current_month = timezone.now().month
         last_download_month = facility_download_limit.last_download_time.month
@@ -135,8 +135,8 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
     @staticmethod
     def __update_facility_download_limit(
-            facility_download_limit: FacilityDownloadLimit,
-        ) -> None:
+        facility_download_limit: FacilityDownloadLimit,
+    ) -> None:
         with transaction.atomic():
             facility_download_limit.refresh_from_db()
             if (facility_download_limit.download_count >=
