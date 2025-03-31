@@ -416,7 +416,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         self.assertIsNone(response.data.get("previous"))
         self.assertEqual(
             response.data.get("next"),
-            "https://testserver/api/facilities-downloads/?page=2&pageSize=5"
+            "http://testserver/api/facilities-downloads/?page=2&pageSize=5"
         )
 
     def test_query_parameters(self):
@@ -458,7 +458,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         'api.constants.FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT',
         FACILITIES_DOWNLOAD_LIMIT
     )
-    def test_user_cannot_download_over_limit(self):
+    def test_user_cannot_download_over_records_limit(self):
         user = self.create_user()
         self.login_user(user)
 
