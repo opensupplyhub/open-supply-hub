@@ -44,7 +44,7 @@ function ContributeList({ userHasSignedIn, fetchingSessionSignIn }) {
 
                         <p>
                             <a
-                                href={`${InfoLink}/${InfoPaths.contribute}`}
+                                href={`${InfoLink}/${InfoPaths.preparingData}`}
                                 target="_blank"
                                 rel="noreferrer"
                             >
