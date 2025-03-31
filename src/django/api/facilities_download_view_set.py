@@ -58,12 +58,14 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         facility_download_limit = self.__get_user_download_limit(request.user)
         fdl = facility_download_limit
 
-        if (fdl
+        if (
+            fdl
             and fdl.download_count >= fdl.allowed_downloads
-            ):
-            raise ValidationError('You have reached the maximum number of facility'
-                                  ' downloads allowed this month. Please wait until'
-                                  ' next month to download more data.')
+        ):
+            raise ValidationError('You have reached the maximum number of '
+                                  'facility downloads allowed this month. '
+                                  'Please wait until next month to download '
+                                  'more data.')
 
         queryset = FacilityIndex \
             .objects \
@@ -107,7 +109,8 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
             # impose limits
             return None
 
-        facility_download_limit, _ = FacilityDownloadLimit.objects.get_or_create(
+        facility_download_limit, _ = FacilityDownloadLimit.objects \
+            .get_or_create(
             user=user,
             defaults={
                 "last_download_time": timezone.now(),
@@ -132,8 +135,8 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
     @staticmethod
     def __update_facility_download_limit(
-        facility_download_limit: FacilityDownloadLimit,
-    ) -> None:
+            facility_download_limit: FacilityDownloadLimit,
+        ) -> None:
         with transaction.atomic():
             facility_download_limit.refresh_from_db()
             if (facility_download_limit.download_count >=
