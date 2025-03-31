@@ -1,6 +1,8 @@
 from rest_framework import viewsets, mixins
 from django.utils import timezone
-from typing import Optional
+from typing import Optional, Union
+
+from django.contrib.auth.models import AnonymousUser
 import math
 from django.db import transaction
 from django.db.models import F
@@ -8,6 +10,7 @@ from django.db.models import F
 from api.pagination import PageAndSizePagination
 from api.models.facility.facility_index import FacilityIndex
 from api.models.facility_download_limit import FacilityDownloadLimit
+from api.models.user import User
 from api.serializers.facility.facility_query_params_serializer import (
     FacilityQueryParamsSerializer)
 from api.serializers.facility.facility_download_serializer \
@@ -16,10 +19,7 @@ from api.serializers.facility.facility_download_serializer_embed_mode \
     import FacilityDownloadSerializerEmbedMode
 from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.constants import FacilitiesDownloadSettings
-from rest_framework.exceptions import (
-    NotAuthenticated,
-    ValidationError,
-)
+from rest_framework.exceptions import ValidationError
 
 
 class FacilitiesDownloadViewSet(mixins.ListModelMixin,
@@ -47,9 +47,6 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         Returns a list of facilities in array format for a given query.
         (Maximum of 250 facilities per page.)
         """
-        if request.user.is_anonymous:
-            raise NotAuthenticated()
-
         params = FacilityQueryParamsSerializer(data=request.query_params)
 
         if not params.is_valid():
@@ -104,9 +101,13 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         return response
 
     @staticmethod
-    def __get_user_download_limit(user) -> Optional[FacilityDownloadLimit]:
-        if user.has_groups:  # if user is an API user we don't want to
-            # impose limits
+    def __get_user_download_limit(
+        user: Union[AnonymousUser, User]
+        ) -> Optional[FacilityDownloadLimit]:
+        is_api_user = not user.is_anonymous and user.has_groups
+
+        # if user is an API user we don't want to impose limits
+        if is_api_user:
             return None
 
         facility_download_limit, _ = FacilityDownloadLimit.objects \

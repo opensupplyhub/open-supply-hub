@@ -37,13 +37,6 @@ class FacilitiesDownloadViewSetTest(APITestCase):
     def get_facility_downloads(self, params=None):
         return self.client.get(self.download_url, params or {})
 
-    def test_download_is_not_allowed_for_anonymous(self):
-        response = self.client.get(self.download_url)
-
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(response.data['detail'],
-                         'Authentication credentials were not provided.')
-
     def test_queryset_ordering(self):
         user = self.create_user()
         self.login_user(user)
