@@ -3,6 +3,37 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.2.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 19, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* *Describe migrations here.*
+
+#### Schema changes
+* *Describe schema changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* [OSDEV-1896](https://opensupplyhub.atlassian.net/browse/OSDEV-1896) - The session cookie is limited to 24 hours. After this period, the user session expires, and the user needs to log in again.
+
+### Bugfix
+* *Describe bugfix changes here.*
+
+### What's new
+* *Describe what's new changes here.*
+
+### Release instructions:
+* *Provide release instructions here.*
+
+
 ## Release 2.1.0
 
 ## Introduction
