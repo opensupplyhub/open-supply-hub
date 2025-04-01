@@ -19,7 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe schema changes here.*
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-1894](https://opensupplyhub.atlassian.net/browse/OSDEV-1894) - Enabled `Secure` attribute of csrf token and session id.
 
 ### Architecture/Environment changes
 * [OSDEV-1896](https://opensupplyhub.atlassian.net/browse/OSDEV-1896) - The session cookie is limited to 24 hours. After this period, the user session expires, and the user needs to log in again.
