@@ -151,7 +151,7 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
     def add_geo_polygon(self, values):
         self.__init_filter()
 
-        new_geo_polygon = {
+        geo_polygon = {
             "geo_polygon": {
                 "coordinates": {
                     "points": [
@@ -166,11 +166,4 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
             }
         }
 
-        # Remove the existing geo_polygon filter, if present,
-        # to maintain immutability.
-        self.query_body["query"]["bool"]["filter"] = [
-            f for f in self.query_body["query"]["bool"]["filter"]
-            if "geo_polygon" not in f
-        ]
-
-        self.query_body["query"]["bool"]["filter"].append(new_geo_polygon)
+        self.query_body["query"]["bool"]["filter"].append(geo_polygon)
