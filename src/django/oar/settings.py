@@ -149,6 +149,9 @@ SESSION_COOKIE_AGE = 86400 # 24 hours in seconds
 
 AUTH_USER_MODEL = 'api.User'
 
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+
 REST_AUTH_SERIALIZERS = {
     'USER_DETAILS_SERIALIZER': 'api.serializers.UserSerializer',
     'PASSWORD_RESET_SERIALIZER': 'api.serializers.UserPasswordResetSerializer',
