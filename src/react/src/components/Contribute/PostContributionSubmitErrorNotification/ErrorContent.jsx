@@ -59,10 +59,14 @@ const ErrorContent = ({
     );
 };
 
+ErrorContent.defaultProps = {
+    rawErrorData: null,
+};
+
 ErrorContent.propTypes = {
     title: string.isRequired,
     supportInstructions: string.isRequired,
-    rawErrorData: oneOfType([object, string]).isRequired,
+    rawErrorData: oneOfType([object, string]),
     children: node.isRequired,
     classes: object.isRequired,
 };
