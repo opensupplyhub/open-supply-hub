@@ -9,8 +9,27 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: April 19, 2025
 
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* *Describe migrations here.*
+
+#### Schema changes
+* *Describe schema changes here.*
+
 ### Code/API changes
+* [OSDEV-1894](https://opensupplyhub.atlassian.net/browse/OSDEV-1894) - Enabled `Secure` attribute of csrf token and session id.
 * [OSDEV-1201](https://opensupplyhub.atlassian.net/browse/OSDEV-1201) - Added support of `geo_polygon` parameter for GET `v1/production-locations` endpoint.
+
+### Architecture/Environment changes
+* [OSDEV-1896](https://opensupplyhub.atlassian.net/browse/OSDEV-1896) - The session cookie is limited to 24 hours. After this period, the user session expires, and the user needs to log in again.
+
+### Bugfix
+* *Describe bugfix changes here.*
+
+### What's new
+* *Describe what's new changes here.*
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
