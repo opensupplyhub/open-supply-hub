@@ -877,18 +877,20 @@ class FacilitiesViewSet(ListModelMixin,
                         already uploaded {MAX_ATTACHMENT_AMOUNT} attachments.'
                     )
 
-            user_has_pending_claims = (
-                FacilityClaim
-                .objects
-                .filter(status=FacilityClaimStatuses.PENDING)
-                .filter(facility=facility)
-                .filter(contributor=contributor)
-                .count() > 0
-            )
+            existing_claim = FacilityClaim.objects.filter(
+                Q(status=FacilityClaimStatuses.PENDING) |
+                Q(status=FacilityClaimStatuses.APPROVED),
+                facility=facility
+            ).values_list("status", flat=True)
 
-            if user_has_pending_claims:
+            if FacilityClaimStatuses.PENDING in existing_claim:
                 raise BadRequestException(
-                    'User already has a pending claim on this facility'
+                    'There is already a pending claim on this facility'
+                )
+
+            if FacilityClaimStatuses.APPROVED in existing_claim:
+                raise BadRequestException(
+                    'There is already an approved claim on this facility'
                 )
 
             facility_claim = (
