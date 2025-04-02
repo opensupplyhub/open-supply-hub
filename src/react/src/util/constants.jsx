@@ -24,6 +24,7 @@ export const InfoPaths = {
     storiesResources: 'stories-resources',
     privacyPolicy: 'privacy-policy',
     contribute: 'data-cleaning-service',
+    preparingData: 'resources/preparing-data',
     dataQuality: 'resources/a-free-universal-id-matching-algorithm',
     claimedFacilities: 'stories-resources/claim-a-facility',
     termsOfService: 'terms-of-service',
