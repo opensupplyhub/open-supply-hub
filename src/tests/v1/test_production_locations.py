@@ -2,7 +2,6 @@ import requests
 from .base_api_test \
     import BaseAPITest
 
-from rest_framework import status
 
 class ProductionLocationsTest(BaseAPITest):
 
@@ -11,7 +10,7 @@ class ProductionLocationsTest(BaseAPITest):
             f"{self.root_url}/api/v1/production-locations/",
             headers=self.basic_headers,
         )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, 200)
 
     def test_production_locations_exact(self):
         # Index a document
@@ -276,7 +275,7 @@ class ProductionLocationsTest(BaseAPITest):
             headers=self.basic_headers,
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, 200)
 
         result = response.json()
         self.assertIsNotNone(result['data'])
@@ -294,7 +293,7 @@ class ProductionLocationsTest(BaseAPITest):
             headers=self.basic_headers,
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, 400)
 
         result = response.json()
         self.assertEqual(result['detail'], 'The request query is invalid.')
