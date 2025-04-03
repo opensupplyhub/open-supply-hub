@@ -65,7 +65,18 @@ def serialize_params(serializer_class, query_params):
                     print(f'error_data as dict: {error_data}')
                     error_response['errors'].append({
                         'field': field,
-                        'detail': next(iter(error_data.values()))[0]
+                        'detail': (
+                            next(iter(error_data.values()))[0]
+                            if (
+                                error_data and next(
+                                    iter(error_data.values()), []
+                                )
+                            )
+                            else (
+                                APIV1CommonErrorMessages
+                                .COMMON_REQ_PARAMETER_ERROR
+                            )
+                        )
                     })
                 else:
                     error_response['errors'].append({
