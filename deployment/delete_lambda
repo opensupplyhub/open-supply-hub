@@ -8,6 +8,7 @@ ENV_NAME=$1
 CLOUDFRONT_DOMAIN=$2
 LAMBDA_ARN="arn:aws:lambda:$REGION:$ACCOUNT_ID:function:funcOpenSupplyHub${ENV_NAME}RedirectToS3origin"
 LAMBDA_VERSION=$(aws lambda list-versions-by-function --function-name "$LAMBDA_ARN" --region "$REGION" | jq -r '.Versions | max_by(.Version) | .Version')
+DISTRIBUTION_ID=""
 
 for id in $(aws cloudfront list-distributions --query "DistributionList.Items[*].Id" --output text); do
   domains=$(aws cloudfront get-distribution-config --id $id --query "DistributionConfig.Aliases.Items" --output text)
