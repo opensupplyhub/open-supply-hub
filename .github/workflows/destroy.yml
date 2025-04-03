@@ -39,6 +39,7 @@ jobs:
   destroy_lambda_edge_function:
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env }}
+    needs: clean_ecr_repositories
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -60,7 +61,7 @@ jobs:
   destroy:
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env }}
-    needs: clean_ecr_repositories
+    needs: destroy_lambda_edge_function
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
