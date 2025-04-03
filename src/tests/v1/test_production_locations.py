@@ -2,6 +2,7 @@ import requests
 from .base_api_test \
     import BaseAPITest
 
+from rest_framework import status
 
 class ProductionLocationsTest(BaseAPITest):
 
@@ -10,7 +11,7 @@ class ProductionLocationsTest(BaseAPITest):
             f"{self.root_url}/api/v1/production-locations/",
             headers=self.basic_headers,
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_production_locations_exact(self):
         # Index a document
@@ -275,9 +276,28 @@ class ProductionLocationsTest(BaseAPITest):
             headers=self.basic_headers,
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         result = response.json()
         self.assertIsNotNone(result['data'])
         self.assertGreater(len(result['data']), 0)
+
+    def test_production_locations_with_missed_geo_polygon_value(self):
+        query = (
+            "?geo_polygon=79.318492,-39.36719&"
+            "geo_polygon=79.280399,-55.39907&"
+            "geo_polygon=&geo_polygon="
+        )
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/{query}",
+            headers=self.basic_headers,
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        result = response.json()
+        self.assertEqual(result['detail'], 'The request query is invalid.')
+        self.assertEqual(result['errors'][0]['field'], 'geo_polygon')
+        self.assertEqual(result['errors'][0]['detail'], 'This field may not be blank.')
 
