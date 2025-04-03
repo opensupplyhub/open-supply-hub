@@ -62,7 +62,6 @@ def serialize_params(serializer_class, query_params):
                         'detail': error_data[0].capitalize()
                     })
                 elif isinstance(error_data, dict):
-                    print(f'error_data as dict: {error_data}')
                     error_response['errors'].append({
                         'field': field,
                         'detail': (
@@ -77,6 +76,11 @@ def serialize_params(serializer_class, query_params):
                                 .COMMON_REQ_PARAMETER_ERROR
                             )
                         )
+                    })
+                elif isinstance(error_data, str):
+                    error_response['errors'].append({
+                        'field': field,
+                        'detail': error_data.capitalize()
                     })
                 else:
                     error_response['errors'].append({
