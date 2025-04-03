@@ -1,24 +1,32 @@
 from rest_framework import serializers
 from django.core.validators import URLValidator
-from django.core.serializers import (
-    CharField,
-    FileField,
-    ListField,
-    Serializer,
-    ValidationError
-)
+from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 from datetime import datetime
 import os
 
 from api.models import FacilityClaim
 from api.constants import FacilityClaimStatuses
+from api.helpers.helpers import validate_workers_count
+from api.serializers.facility.utils import add_http_prefix_to_url
 
-# TODO: reuse number of workers validator
-def validate_workers_count(value):
-    if value and not value.isdigit():
-        raise ValidationError("Number of workers must be a number.")
-    return value
+
+def validate_your_business_website(self, value):
+    return add_http_prefix_to_url(value)
+
+def validate_business_website(self, value):
+    return add_http_prefix_to_url(value)
+
+def validate_business_linkedin_profile(self, value):
+    return add_http_prefix_to_url(value)
+
+def validate_workers(value):
+    try:
+        if not value or not validate_workers_count(value):
+            return None
+        return value
+    except (ValueError, TypeError):
+        return None
 
 def validate_files(files):
     ALLOWED_ATTACHMENT_EXTENSIONS = {".jpg", ".png", ".pdf"}
@@ -38,45 +46,45 @@ def validate_files(files):
     
     return files
 
-class FacilityCreateClaimSerializer(Serializer):
-    your_name = CharField(max_length=255)
-    your_title = CharField(
+class FacilityCreateClaimSerializer(serializers.Serializer):
+    your_name = serializers.CharField(max_length=255)
+    your_title = serializers.CharField(
         max_length=255,
         required=False,
         allow_blank=True
     )
-    your_business_website = CharField(
+    your_business_website = serializers.CharField(
         max_length=255,
         required=False,
         allow_blank=True, 
         validators=[URLValidator()]
     )
-    business_website = CharField(
+    business_website = serializers.CharField(
         max_length=255,
         required=False,
         allow_blank=True,
         validators=[URLValidator()]
     )
-    business_linkedin_profile = CharField(
+    business_linkedin_profile = serializers.CharField(
         max_length=255,
         required=False,
         allow_blank=True,
         validators=[URLValidator()]
     )
-    sectors = ListField(
-        child=CharField(),
+    sectors = serializers.ListField(
+        child=serializers.CharField(),
         required=False
     )
-    number_of_workers = CharField(
+    number_of_workers = serializers.CharField(
         required=False,
-        validators=[validate_workers_count]
+        validators=[validate_workers]
     )
-    local_language_name = CharField(
+    local_language_name = serializers.CharField(
         required=False,
         allow_blank=True
     )
-    files = ListField(
-        child=FileField(),
+    files = serializers.ListField(
+        child=serializers.FileField(),
         required=False,
         validators=[validate_files]
     )

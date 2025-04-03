@@ -852,6 +852,7 @@ class FacilitiesViewSet(ListModelMixin,
             )
             serializer.is_valid(raise_exception=True)
             validated_data = serializer.validated_data
+            files = request.FILES.getlist('files')
 
             # Check if claim peding or approved before do any write operations
             existing_claim = FacilityClaim.objects.filter(
@@ -870,7 +871,7 @@ class FacilitiesViewSet(ListModelMixin,
                     'There is already an approved claim on this facility'
                 )
 
-            # Create facilty claim object before save
+            # Create facility claim object before save
             facility_claim = FacilityClaim.objects.create(
                 facility=facility,
                 contributor=request.user.contributor,
@@ -893,21 +894,6 @@ class FacilitiesViewSet(ListModelMixin,
                     'sector',
                     facility_claim.sectors
                 )
-
-            # TODO: reuse number of workers
-            try:
-                workers_count = facility_claim.facility_workers_count
-
-                if len(workers_count) == 0:
-                    workers_count = None
-                elif not validate_workers_count(workers_count):
-                    workers_count = None
-
-            except (ValueError, TypeError):
-                workers_count = None
-
-            # TODO: refactor this logic
-            facility_claim.facility_workers_count = workers_count
 
             # Save facility
             facility_claim.save()

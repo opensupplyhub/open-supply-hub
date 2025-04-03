@@ -338,3 +338,9 @@ def format_sectors(items,
                                  reverse=True)
 
     return claim_sectors + depromote_unspecified_items(sorted_item_sectors)
+
+# TODO: apply test for this function
+def add_http_prefix_to_url(value):
+    if value and not value.startswith(("http://", "https://")):
+        value = f"http://{value}"
+    return value
