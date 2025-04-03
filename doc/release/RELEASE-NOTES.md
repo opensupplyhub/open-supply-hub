@@ -20,6 +20,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-1894](https://opensupplyhub.atlassian.net/browse/OSDEV-1894) - Enabled `Secure` attribute of csrf token and session id.
+* [OSDEV-1201](https://opensupplyhub.atlassian.net/browse/OSDEV-1201) - Added support of `geo_polygon` parameter for GET `v1/production-locations` endpoint.
 
 ### Architecture/Environment changes
 * [OSDEV-1896](https://opensupplyhub.atlassian.net/browse/OSDEV-1896) - The session cookie is limited to 24 hours. After this period, the user session expires, and the user needs to log in again.
@@ -42,18 +43,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: April 5, 2025
 
-### Database changes
-* *Describe high-level database changes.*
-
-#### Migrations:
-* *Describe migrations here.*
-
-#### Schema changes
-* *Describe schema changes here.*
-
-### Code/API changes
-* *Describe code/API changes here.*
-
 ### Architecture/Environment changes
 * [OSDEV-1899](https://opensupplyhub.atlassian.net/browse/OSDEV-1899) - Switched from using the `latest` tags to static versions for both `bitnami/kafka` and `bitnami/zookeeper`, which resolved compatibility issues during local & CI setup. Using pinned versions ensures stability and prevents unexpected behavior from upstream image changes.
 
@@ -68,7 +57,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1842](https://opensupplyhub.atlassian.net/browse/OSDEV-1842) - Removed the pre-filled information in the `Additional Information` section of the SLC `ProductionLocationInfo` page.
 
 ### Release instructions:
-* *Provide release instructions here.*
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
 
 
 ## Release 2.0.0
