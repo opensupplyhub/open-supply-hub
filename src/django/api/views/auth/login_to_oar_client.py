@@ -37,7 +37,7 @@ class LoginToOARClient(LoginView):
                 'Your account is not verified. '
                 'Check your email for a confirmation link.'
             )
-        
+
         serialized_data = UserSerializer(user).data
         csrf_token = get_token(request)
         serialized_data['csrfToken'] = csrf_token
