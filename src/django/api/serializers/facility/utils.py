@@ -344,5 +344,5 @@ def add_http_prefix_to_url(value: str) -> str:
     if isinstance(value, str) and not value.startswith(
         ("http://", "https://")
     ):
-        value = f"http://{value}"
+        value = f"https://{value}"
     return value
