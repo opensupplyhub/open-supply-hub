@@ -12,12 +12,6 @@ from contricleaner.lib.exceptions.handler_not_set_error \
     import HandlerNotSetError
 
 from api.exceptions import ServiceUnavailableException
-from api.helpers.helpers import validate_workers_count
-from oar.settings import (
-    MAX_ATTACHMENT_SIZE_IN_BYTES,
-    MAX_ATTACHMENT_AMOUNT,
-    ALLOWED_ATTACHMENT_EXTENSIONS
-)
 
 from rest_framework.mixins import (
     ListModelMixin,
@@ -90,6 +84,7 @@ from ...serializers import (
     FacilityMergeQueryParamsSerializer,
     FacilityQueryParamsSerializer,
     FacilityUpdateLocationParamsSerializer,
+    FacilityCreateClaimSerializer
 )
 from api.serializers.facility.facility_list_page_parameter_serializer \
     import FacilityListPageParameterSerializer
@@ -845,84 +840,56 @@ class FacilitiesViewSet(ListModelMixin,
             facility = Facility.objects.get(pk=pk)
             contributor = request.user.contributor
 
-            contact_person = request.data.get('your_name')
-            job_title = request.data.get('your_title')
-            website = request.data.get('your_business_website')
-            business_website = request.data.get('business_website')
-            linkedin_profile = request.data.get('business_linkedin_profile')
-            sectors = request.data.getlist('sectors')
-            number_of_workers = request.data.get('number_of_workers')
-            local_language_name = request.data.get('local_language_name')
+            serializer = FacilityCreateClaimSerializer(
+                data=request.data,
+                context={"facility": facility}
+            )
+            serializer.is_valid(raise_exception=True)
+            validated_data = serializer.validated_data
             files = request.FILES.getlist('files')
 
-            for file in files:
-                extension = file.name.split('.')[-1].lower()
-                if f".{extension}" not in ALLOWED_ATTACHMENT_EXTENSIONS:
-                    raise ValidationError(
-                        f'{file.name} could not be uploaded because \
-                        it is not in a supported format.',
-                    )
+            existing_claim = FacilityClaim.objects.filter(
+                Q(status=FacilityClaimStatuses.PENDING) |
+                Q(status=FacilityClaimStatuses.APPROVED),
+                facility=facility
+            ).values_list("status", flat=True)
 
-                if file.size > MAX_ATTACHMENT_SIZE_IN_BYTES:
-                    mb = MAX_ATTACHMENT_SIZE_IN_BYTES / (1024*1024)
-                    raise ValidationError(
-                        '{} exceeds the maximum size of \
-                        {:.1f}MB.'.format(file.name, mb)
-                    )
-
-                if (len(files) > MAX_ATTACHMENT_AMOUNT):
-                    raise ValidationError(
-                        f'{file.name} could not be uploaded because there is a maximum of \
-                        {MAX_ATTACHMENT_AMOUNT} attachments and you have \
-                        already uploaded {MAX_ATTACHMENT_AMOUNT} attachments.'
-                    )
-
-            user_has_pending_claims = (
-                FacilityClaim
-                .objects
-                .filter(status=FacilityClaimStatuses.PENDING)
-                .filter(facility=facility)
-                .filter(contributor=contributor)
-                .count() > 0
-            )
-
-            if user_has_pending_claims:
+            if FacilityClaimStatuses.PENDING in existing_claim:
                 raise BadRequestException(
-                    'User already has a pending claim on this facility'
+                    'There is already a pending claim on this facility'
                 )
 
-            facility_claim = (
-                FacilityClaim
-                .objects
-                .create(
-                    facility=facility,
-                    contributor=contributor,
-                    contact_person=contact_person,
-                    job_title=job_title,
-                    website=website,
-                    facility_website=business_website,
-                    linkedin_profile=linkedin_profile,
+            if FacilityClaimStatuses.APPROVED in existing_claim:
+                raise BadRequestException(
+                    'There is already an approved claim on this facility'
+                )
+
+            facility_claim = FacilityClaim.objects.create(
+                facility=facility,
+                contributor=request.user.contributor,
+                contact_person=validated_data["your_name"],
+                job_title=validated_data.get("your_title"),
+                website=validated_data.get("your_business_website"),
+                facility_website=validated_data.get("business_website"),
+                linkedin_profile=validated_data.get(
+                    "business_linkedin_profile"
+                ),
+                facility_name_native_language=validated_data.get(
+                    "local_language_name"
+                ),
+                facility_workers_count=validated_data.get(
+                    "number_of_workers"
                 )
             )
 
-            if len(sectors) > 0:
-                setattr(facility_claim, 'sector', sectors)
-
-            try:
-                workers_count = number_of_workers
-
-                if len(workers_count) == 0:
-                    workers_count = None
-                elif not validate_workers_count(workers_count):
-                    workers_count = None
-
-            except (ValueError, TypeError):
-                workers_count = None
-
-            facility_claim.facility_workers_count = workers_count
-
-            facility_claim.\
-                facility_name_native_language = local_language_name
+            if validated_data.get("sectors"):
+                facility_claim.sectors = validated_data["sectors"]
+                if len(facility_claim.sectors) > 0:
+                    setattr(
+                        facility_claim,
+                        'sector',
+                        facility_claim.sectors,
+                    )
 
             facility_claim.save()
 

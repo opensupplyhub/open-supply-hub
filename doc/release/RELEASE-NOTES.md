@@ -26,7 +26,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1896](https://opensupplyhub.atlassian.net/browse/OSDEV-1896) - The session cookie is limited to 24 hours. After this period, the user session expires, and the user needs to log in again.
 
 ### Bugfix
-* *Describe bugfix changes here.*
+* [OSDEV-1893](https://opensupplyhub.atlassian.net/browse/OSDEV-1893) - Prevented sending a claim request to `/api/facilities/{os_id}/claim/` for facilities that are pending or approved. Added BE validators to handle incoming claim data.
 
 ### What's new
 * *Describe what's new changes here.*
