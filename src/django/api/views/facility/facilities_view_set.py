@@ -886,11 +886,14 @@ class FacilitiesViewSet(ListModelMixin,
                 "number_of_workers"
             )
 
-            if len(facility_claim.sectors) > 0:
+            if (
+                hasattr(facility_claim, 'sectors')
+                and len(facility_claim.sectors) > 0
+            ):
                 setattr(
                     facility_claim,
                     'sector',
-                    facility_claim.sectors
+                    facility_claim.sectors,
                 )
 
             facility_claim.save()
