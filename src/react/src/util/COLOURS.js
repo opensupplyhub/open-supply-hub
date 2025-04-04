@@ -29,4 +29,7 @@ export default {
     // Purples
     LIGHT_PURPLE: '#8428FA21',
     PURPLE: '#8428FA',
+
+    // Blacks
+    JET_BLACK: '#191919',
 };
