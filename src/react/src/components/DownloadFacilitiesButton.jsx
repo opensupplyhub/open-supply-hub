@@ -93,9 +93,9 @@ function DownloadFacilitiesButton({
                     ''
                 ) : (
                     <p className={classes.downloadTooltip}>
-                        Downloads are supported for searches resulting in 1,000
-                        production locations or less. Log in to download this
-                        dataset.
+                        Downloads are supported for searches resulting in{' '}
+                        {user.allowed_records_number} production locations or
+                        less. Log in to download this dataset.
                     </p>
                 )
             }
