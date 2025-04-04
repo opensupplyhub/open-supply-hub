@@ -3,6 +3,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.response import Response
 from rest_auth.views import LoginView
 from django.contrib.auth import authenticate, login
+from django.middleware.csrf import get_token
 
 from ...serializers.user.user_serializer import UserSerializer
 
@@ -37,7 +38,11 @@ class LoginToOARClient(LoginView):
                 'Check your email for a confirmation link.'
             )
 
-        return Response(UserSerializer(user).data)
+        serialized_data = UserSerializer(user).data
+        csrf_token = get_token(request)
+        serialized_data['csrfToken'] = csrf_token
+
+        return Response(serialized_data)
 
     def get(self, request, *args, **kwargs):
         if not request.user.is_active:
