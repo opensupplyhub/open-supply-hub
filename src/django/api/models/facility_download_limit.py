@@ -3,10 +3,12 @@ from django.db.models import (
     BigAutoField,
 )
 
+
 class FacilityDownloadLimit(models.Model):
     """
-    Stores the number of facility data downloads, the timestamp of the last download,
-    and the monthly download limit for a registered free user.
+    Stores the number of facility data downloads, the timestamp
+    of the last download, and the monthly download limit for a
+    registered free user.
     """
     id = BigAutoField(
         auto_created=True,
@@ -31,11 +33,12 @@ class FacilityDownloadLimit(models.Model):
         help_text=('The number of facility data downloads a user '
                    'can make per month.')
     )
-    allowed_records_number=models.PositiveIntegerField(
+    allowed_records_number = models.PositiveIntegerField(
         null=False,
         blank=False,
         default=1000,
-        help_text=('The maximum number of facility records a user can download in a single request.')
+        help_text=('The maximum number of facility records a user '
+                   'can download in a single request.')
     )
     download_count = models.PositiveIntegerField(
         null=False,
