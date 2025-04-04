@@ -11,7 +11,7 @@ const ERROR_CONTENT_COPIES = {
     highLevel: {
         title: 'Data submission failed.',
         subtitle:
-            'Your request could not be processed. It seems there was an issue with the information you provided. Please check your input and try again. Please see the details below:',
+            'Your request could not be processed due to an issue with the information provided. Please review your entries and try again. Please see the details below:',
         supportInstructions:
             "If you can't resolve the issue by updating the field values, please contact the OS Hub team and provide the following data:",
     },
@@ -25,7 +25,7 @@ const ERROR_CONTENT_COPIES = {
     uknown: {
         title: 'Oops! Something went wrong.',
         body:
-            'Something went wrong, but we couldn’t identify the exact cause. This might be related to your network connection or an unexpected problem on our end. Please check your internet connection and try again.',
+            'An unknown error has occurred. Please check your internet connection and try again.',
         supportInstructions:
             'If the issue continues, feel free to contact our support team.',
     },

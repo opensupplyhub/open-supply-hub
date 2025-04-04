@@ -1625,7 +1625,7 @@ const isCleanValueMeaningful = value => {
 const slcTextFieldValidation = stringYup()
     .test(
         'is-trimmed',
-        'Remove leading and trailing spaces.',
+        'Remove spaces at start and end of text.',
         value => value == null || value === value.trim(),
     )
     .test(
@@ -1639,8 +1639,7 @@ const slcTextFieldValidation = stringYup()
     )
     .test(
         'meaningful-characters',
-        ({ label }) =>
-            `${label} can’t solely consist of punctuation and whitespaces.`,
+        ({ label }) => `${label} cannot contain only spaces or symbols.`,
         value => value == null || isCleanValueMeaningful(value),
     )
     .max(
@@ -1662,15 +1661,14 @@ export const slcValidationSchema = objectYup({
     numberOfWorkers: stringYup()
         .test(
             'is-trimmed',
-            'Remove leading and trailing spaces.',
+            'Remove spaces at start and end of entry.',
             value => value == null || value === value.trim(),
         )
         .test(
             'valid-format-and-range',
             `Enter a single positive number (e.g., 5) or a valid range
             (e.g., 3–10). In a range, the minimum value must be less
-            than or equal to the maximum, and both must be greater
-            than or equal to 1.`,
+            than or equal to the maximum, and both must be at least 1.`,
             value => {
                 if (value == null) return true;
 
