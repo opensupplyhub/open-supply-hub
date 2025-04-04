@@ -877,24 +877,19 @@ class FacilitiesViewSet(ListModelMixin,
                 facility_name_native_language=validated_data.get(
                     "local_language_name"
                 ),
+                facility_workers_count=validated_data.get(
+                    "number_of_workers"
+                )
             )
 
             if validated_data.get("sectors"):
                 facility_claim.sectors = validated_data["sectors"]
-
-            facility_claim.facility_workers_count = validated_data.get(
-                "number_of_workers"
-            )
-
-            if (
-                hasattr(facility_claim, 'sectors')
-                and len(facility_claim.sectors) > 0
-            ):
-                setattr(
-                    facility_claim,
-                    'sector',
-                    facility_claim.sectors,
-                )
+                if len(facility_claim.sectors) > 0:
+                    setattr(
+                        facility_claim,
+                        'sector',
+                        facility_claim.sectors,
+                    )
 
             facility_claim.save()
 
