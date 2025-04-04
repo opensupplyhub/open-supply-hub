@@ -140,7 +140,8 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
     ) -> None:
         with transaction.atomic():
             facility_download_limit.refresh_from_db()
-            if (facility_download_limit.download_count >=
+            if (
+                facility_download_limit.download_count >=
                 facility_download_limit.allowed_downloads
             ):
                 raise ValidationError("Concurrent limit exceeded.")
