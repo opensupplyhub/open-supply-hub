@@ -222,6 +222,7 @@ class APIV1CommonErrorMessages:
         'An unexpected error occurred while processing the request.'
     )
     COMMON_REQ_QUERY_ERROR = 'The request query is invalid.'
+    COMMON_REQ_PARAMETER_ERROR = 'The request parameter is invalid.'
     MAINTENANCE_MODE = (
         'Open Supply Hub is undergoing maintenance and not accepting new data '
         'at the moment. Please try again in a few minutes.'
