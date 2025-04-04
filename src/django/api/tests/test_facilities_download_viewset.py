@@ -460,7 +460,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         self.assertEqual(
             response.json(),
             [('Downloads are supported only for searches '
-            'resulting in 3 facilities or less.')]
+              'resulting in 3 facilities or less.')]
         )
 
     @patch(
@@ -493,7 +493,6 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 )
             ]
         )
-
 
     @patch(
         'api.constants.FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT',
