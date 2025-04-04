@@ -11,7 +11,7 @@ from waffle import switch_is_active
 from django.contrib.auth import password_validation
 from django.core import exceptions
 
-from ...models import Contributor, FacilityClaim, User
+from ...models import Contributor, FacilityClaim, User, FacilityDownloadLimit
 from ..embed_config import EmbedConfigSerializer
 
 
@@ -27,6 +27,7 @@ class UserSerializer(ModelSerializer):
     embed_config = SerializerMethodField()
     claimed_facility_ids = SerializerMethodField()
     embed_level = SerializerMethodField()
+    allowed_records_number = SerializerMethodField()
 
     class Meta:
         model = User
@@ -139,3 +140,10 @@ class UserSerializer(ModelSerializer):
                 'approved': None,
                 'pending': None,
             }
+
+    def get_allowed_records_number(self, user):
+        try:
+            return FacilityDownloadLimit.objects.get(user=user)\
+                .allowed_records_number
+        except FacilityDownloadLimit.DoesNotExist:
+            return None

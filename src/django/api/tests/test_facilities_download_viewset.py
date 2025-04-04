@@ -26,7 +26,9 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         user.save()
 
         if is_api_user:
-            group = Group.objects.get(name=FeatureGroups.CAN_SUBMIT_FACILITY)
+            group = Group.objects.get(
+                name=FeatureGroups.CAN_SUBMIT_FACILITY
+            )
             user.groups.add(group)
 
         return user
@@ -521,3 +523,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         for _ in range(DEFAULT_ALLOWED_DOWNLOADS + 1):
             response = self.get_facility_downloads()
             self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreater(
+            len(response.data.get("results", {}).get("rows", [])),
+            DEFAULT_ALLOWED_DOWNLOADS
+        )
+

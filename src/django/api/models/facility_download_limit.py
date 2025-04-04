@@ -1,7 +1,10 @@
+from typing import Optional
 from django.db import models
 from django.db.models import (
     BigAutoField,
 )
+from django.utils import timezone
+from api.constants import FacilitiesDownloadSettings
 
 
 class FacilityDownloadLimit(models.Model):
@@ -48,3 +51,32 @@ class FacilityDownloadLimit(models.Model):
                    'has already made in the current month.'),
         verbose_name='Current download count',
     )
+
+    def increment_download_count(self):
+        self.last_download_time = timezone.now()
+        self.download_count += 1
+        self.save()
+
+    @staticmethod
+    def get_or_create_user_download_limit(user) -> Optional["FacilityDownloadLimit"]:
+        if user.has_groups: # if user is an API user we don't want to impose limits
+            return None
+
+        facility_download_limit, _ = FacilityDownloadLimit.objects.get_or_create(
+            user=user,
+            defaults={
+                "last_download_time": timezone.now(),
+                "allowed_downloads": FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS,
+                "download_count": 0,
+                "allowed_records_number": FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT,
+            }
+        )
+
+        current_month = timezone.now().month
+        last_download_month = facility_download_limit.last_download_time.month
+
+        if current_month != last_download_month:
+            facility_download_limit.download_count = 0
+            facility_download_limit.last_download_time = timezone.now()
+
+        return facility_download_limit

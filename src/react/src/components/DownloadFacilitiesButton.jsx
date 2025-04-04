@@ -12,7 +12,7 @@ import { toast } from 'react-toastify';
 import downloadFacilities from '../actions/downloadFacilities';
 import DownloadIcon from './DownloadIcon';
 import ArrowDropDownIcon from './ArrowDropDownIcon';
-import { clearErrorText } from '../actions/logDownload';
+import { hideLogDownloadError } from '../actions/logDownload';
 
 const downloadFacilitiesStyles = theme =>
     Object.freeze({
@@ -64,9 +64,9 @@ function DownloadFacilitiesButton({
     );
 
     useEffect(() => {
-        if (logDownloadError) {
+        if (Array.isArray(logDownloadError) && logDownloadError.length > 0) {
             toast(logDownloadError[0]);
-            dispatch(clearErrorText());
+            dispatch(hideLogDownloadError());
         }
     }, [logDownloadError]);
 
@@ -93,9 +93,9 @@ function DownloadFacilitiesButton({
                     ''
                 ) : (
                     <p className={classes.downloadTooltip}>
-                        Downloads are supported for searches resulting in 1,000
-                        production locations or less. Log in to download this
-                        dataset.
+                        Downloads are supported for searches resulting in{' '}
+                        {user.allowed_records_number} production locations or
+                        less. Log in to download this dataset.
                     </p>
                 )
             }
