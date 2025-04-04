@@ -5,7 +5,7 @@ import {
     startLogDownload,
     failLogDownload,
     completeLogDownload,
-    clearErrorText,
+    hideLogDownloadError,
 } from '../actions/logDownload';
 
 const initialState = Object.freeze({
@@ -30,7 +30,7 @@ export default createReducer(
                 fetching: { $set: false },
                 error: { $set: initialState.error },
             }),
-        [clearErrorText]: state =>
+        [hideLogDownloadError]: state =>
             update(state, {
                 error: { $set: initialState.error },
             }),
