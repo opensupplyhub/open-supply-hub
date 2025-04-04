@@ -22,6 +22,7 @@ class OpenSearchQueryDirector:
             V1_PARAMETERS_LIST.AFFILIATIONS: 'terms',
             V1_PARAMETERS_LIST.CERTIFICATIONS_STANDARDS_REGULATIONS: 'terms',
             V1_PARAMETERS_LIST.COORDINATES: 'geo_distance',
+            V1_PARAMETERS_LIST.GEO_POLYGON: 'geo_polygon',
             V1_PARAMETERS_LIST.CONTRIBUTOR_ID: 'terms',
             V1_PARAMETERS_LIST.REQUEST_TYPE: 'terms',
             V1_PARAMETERS_LIST.SOURCE: 'terms',
@@ -153,3 +154,7 @@ class OpenSearchQueryDirector:
             self.__builder.add_geo_bounding_box(
                 float(top), float(left), float(bottom), float(right)
             )
+
+        geo_polygon = query_params.getlist(V1_PARAMETERS_LIST.GEO_POLYGON)
+        if geo_polygon and hasattr(self.__builder, 'add_geo_polygon'):
+            self.__builder.add_geo_polygon(geo_polygon)
