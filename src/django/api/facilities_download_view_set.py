@@ -107,7 +107,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         is_api_user = not user.is_anonymous and user.has_groups
 
         # if user is an API user we don't want to impose limits
-        if is_api_user:
+        if is_api_user or user.is_anonymous:
             return None
 
         facility_download_limit, _ = FacilityDownloadLimit.objects \
