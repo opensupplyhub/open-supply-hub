@@ -12,12 +12,6 @@ from contricleaner.lib.exceptions.handler_not_set_error \
     import HandlerNotSetError
 
 from api.exceptions import ServiceUnavailableException
-from api.helpers.helpers import validate_workers_count
-from oar.settings import (
-    MAX_ATTACHMENT_SIZE_IN_BYTES,
-    MAX_ATTACHMENT_AMOUNT,
-    ALLOWED_ATTACHMENT_EXTENSIONS
-)
 
 from rest_framework.mixins import (
     ListModelMixin,
@@ -854,7 +848,6 @@ class FacilitiesViewSet(ListModelMixin,
             validated_data = serializer.validated_data
             files = request.FILES.getlist('files')
 
-            # Check if claim peding or approved before do any write operations
             existing_claim = FacilityClaim.objects.filter(
                 Q(status=FacilityClaimStatuses.PENDING) |
                 Q(status=FacilityClaimStatuses.APPROVED),
@@ -871,7 +864,6 @@ class FacilitiesViewSet(ListModelMixin,
                     'There is already an approved claim on this facility'
                 )
 
-            # Create facility claim object before save
             facility_claim = FacilityClaim.objects.create(
                 facility=facility,
                 contributor=request.user.contributor,
@@ -879,14 +871,20 @@ class FacilitiesViewSet(ListModelMixin,
                 job_title=validated_data.get("your_title"),
                 website=validated_data.get("your_business_website"),
                 facility_website=validated_data.get("business_website"),
-                linkedin_profile=validated_data.get("business_linkedin_profile"),
-                facility_name_native_language=validated_data.get("local_language_name"),
+                linkedin_profile=validated_data.get(
+                    "business_linkedin_profile"
+                ),
+                facility_name_native_language=validated_data.get(
+                    "local_language_name"
+                ),
             )
 
             if validated_data.get("sectors"):
                 facility_claim.sectors = validated_data["sectors"]
 
-            facility_claim.facility_workers_count = validated_data.get("number_of_workers")
+            facility_claim.facility_workers_count = validated_data.get(
+                "number_of_workers"
+            )
 
             if len(facility_claim.sectors) > 0:
                 setattr(
@@ -895,10 +893,8 @@ class FacilitiesViewSet(ListModelMixin,
                     facility_claim.sectors
                 )
 
-            # Save facility
             facility_claim.save()
 
-            # Save file(s) in S3 after successful claim save
             for file in files:
                 timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
                 milliseconds = datetime.now().strftime('%f')[:-3]
@@ -914,7 +910,6 @@ class FacilitiesViewSet(ListModelMixin,
                     claim_attachment=file
                 )
 
-            # Send confirmation email
             send_claim_facility_confirmation_email(request, facility_claim)
             Facility.update_facility_updated_at_field(facility.id)
 
