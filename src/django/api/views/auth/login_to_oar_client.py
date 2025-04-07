@@ -38,6 +38,7 @@ class LoginToOARClient(LoginView):
                 'Check your email for a confirmation link.'
             )
 
+        # Adding the CSRF token to the serialized data
         serialized_data = UserSerializer(user).data
         csrf_token = get_token(request)
         serialized_data['csrfToken'] = csrf_token

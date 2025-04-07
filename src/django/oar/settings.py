@@ -154,6 +154,8 @@ SESSION_COOKIE_SECURE = True
 
 # https://docs.djangoproject.com/en/5.1/ref/settings/#csrf-cookie-httponly
 CSRF_COOKIE_HTTPONLY = True
+# https://docs.djangoproject.com/en/5.1/ref/settings/#csrf-use-sessions
+CSRF_USE_SESSIONS = True
 
 REST_AUTH_SERIALIZERS = {
     'USER_DETAILS_SERIALIZER': 'api.serializers.UserSerializer',

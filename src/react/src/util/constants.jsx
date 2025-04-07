@@ -20,6 +20,8 @@ export const InfoLink = 'https://info.opensupplyhub.org';
 
 export const EMPTY_PLACEHOLDER = 'N/A';
 
+export const CSRF_TOKEN_KEY = 'csrfToken';
+
 export const InfoPaths = {
     storiesResources: 'stories-resources',
     privacyPolicy: 'privacy-policy',

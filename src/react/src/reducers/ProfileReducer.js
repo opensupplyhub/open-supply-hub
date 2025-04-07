@@ -35,6 +35,7 @@ import {
     registrationFieldsEnum,
     profileFieldsEnum,
     profileSummaryFieldsEnum,
+    CSRF_TOKEN_KEY,
 } from '../util/constants';
 
 const initialState = Object.freeze({
@@ -130,7 +131,7 @@ const completeGettingAPIToken = (state, payload) =>
 
 const handleLogin = (state, { id, email, csrfToken }) => {
     if (csrfToken) {
-        window.localStorage.setItem('csrfToken', csrfToken);
+        window.localStorage.setItem(CSRF_TOKEN_KEY, csrfToken);
     }
 
     if (id !== state.profile.id) {
@@ -145,7 +146,7 @@ const handleLogin = (state, { id, email, csrfToken }) => {
 };
 
 const handleLogout = state => {
-    window.localStorage.removeItem('csrfToken');
+    window.localStorage.removeItem(CSRF_TOKEN_KEY);
 
     return update(state, {
         profile: {
