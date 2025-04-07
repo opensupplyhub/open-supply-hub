@@ -839,6 +839,9 @@ class FacilitiesViewSet(ListModelMixin,
         try:
             facility = Facility.objects.get(pk=pk)
             contributor = request.user.contributor
+            files = request.FILES.getlist('files')
+
+            self.__check_existing_claims(facility)
 
             serializer = FacilityCreateClaimSerializer(
                 data=request.data,
@@ -846,27 +849,10 @@ class FacilitiesViewSet(ListModelMixin,
             )
             serializer.is_valid(raise_exception=True)
             validated_data = serializer.validated_data
-            files = request.FILES.getlist('files')
-
-            existing_claim = FacilityClaim.objects.filter(
-                Q(status=FacilityClaimStatuses.PENDING) |
-                Q(status=FacilityClaimStatuses.APPROVED),
-                facility=facility
-            ).values_list("status", flat=True)
-
-            if FacilityClaimStatuses.PENDING in existing_claim:
-                raise BadRequestException(
-                    'There is already a pending claim on this facility'
-                )
-
-            if FacilityClaimStatuses.APPROVED in existing_claim:
-                raise BadRequestException(
-                    'There is already an approved claim on this facility'
-                )
 
             facility_claim = FacilityClaim.objects.create(
                 facility=facility,
-                contributor=request.user.contributor,
+                contributor=contributor,
                 contact_person=validated_data["your_name"],
                 job_title=validated_data.get("your_title"),
                 website=validated_data.get("your_business_website"),
@@ -879,60 +865,75 @@ class FacilitiesViewSet(ListModelMixin,
                 ),
                 facility_workers_count=validated_data.get(
                     "number_of_workers"
-                )
+                ),
             )
 
-            if validated_data.get("sectors"):
-                facility_claim.sectors = validated_data["sectors"]
-                if len(facility_claim.sectors) > 0:
-                    setattr(
-                        facility_claim,
-                        'sector',
-                        facility_claim.sectors,
-                    )
+            sectors = validated_data.get("sectors")
+            if sectors:
+                facility_claim.sectors = sectors
+                if sectors:
+                    setattr(facility_claim, 'sector', sectors)
 
             facility_claim.save()
 
             for file in files:
-                timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-                milliseconds = datetime.now().strftime('%f')[:-3]
-                timestamp_ms = f'{timestamp}{milliseconds}'
-                file_name, file_extension = os.path.splitext(file.name)
-                file.name = (
-                    f'{slugify(file_name, allow_unicode=True)}-'
-                    f'{contributor.name}-{timestamp_ms}{file_extension}'
-                )
-                FacilityClaimAttachments.objects.create(
-                    claim=facility_claim,
-                    file_name=f'{slugify(file_name)}.{file_extension}',
-                    claim_attachment=file
+                self.__handle_file_upload(
+                    file,
+                    contributor.name,
+                    facility_claim
                 )
 
             send_claim_facility_confirmation_email(request, facility_claim)
             Facility.update_facility_updated_at_field(facility.id)
 
-            approved = (
-                FacilityClaim
-                .objects
-                .filter(status=FacilityClaimStatuses.APPROVED)
-                .filter(contributor=contributor)
-                .values_list('facility__id', flat=True)
-            )
-            pending = (
-                FacilityClaim
-                .objects
-                .filter(status=FacilityClaimStatuses.PENDING)
-                .filter(contributor=contributor)
-                .values_list('facility__id', flat=True)
-            )
+            approved = FacilityClaim.objects.filter(
+                status=FacilityClaimStatuses.APPROVED,
+                contributor=contributor
+            ).values_list('facility__id', flat=True)
+
+            pending = FacilityClaim.objects.filter(
+                status=FacilityClaimStatuses.PENDING,
+                contributor=contributor
+            ).values_list('facility__id', flat=True)
+
             return Response({
                 'pending': pending,
                 'approved': approved,
             })
-        except Facility.DoesNotExist as exc:
-            raise NotFound() from exc
-        except Contributor.DoesNotExist as exc:
-            raise NotFound() from exc
+
+        except (Facility.DoesNotExist, Contributor.DoesNotExist):
+            raise NotFound()
+
+    def __check_existing_claims(self, facility):
+        existing = FacilityClaim.objects.filter(
+            Q(status=FacilityClaimStatuses.PENDING) |
+            Q(status=FacilityClaimStatuses.APPROVED),
+            facility=facility
+        ).values_list("status", flat=True)
+
+        if FacilityClaimStatuses.PENDING in existing:
+            raise BadRequestException(
+                'There is already a pending claim on this facility'
+            )
+        if FacilityClaimStatuses.APPROVED in existing:
+            raise BadRequestException(
+                'There is already an approved claim on this facility'
+            )
+
+    def __handle_file_upload(self, file, contributor_name, facility_claim):
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')[:-3]
+        file_name, file_extension = os.path.splitext(file.name)
+
+        file.name = (
+            f'{slugify(file_name, allow_unicode=True)}-'
+            f'{contributor_name}-{timestamp}{file_extension}'
+        )
+
+        FacilityClaimAttachments.objects.create(
+            claim=facility_claim,
+            file_name=f'{slugify(file_name)}.{file_extension}',
+            claim_attachment=file
+        )
 
     @swagger_auto_schema(auto_schema=None, methods=['GET'])
     @action(detail=False, methods=['GET'],
