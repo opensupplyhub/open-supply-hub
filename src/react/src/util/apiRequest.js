@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { CSRF_TOKEN_KEY } from './constants';
 
-// Used to make authenticated HTTP requests to Django.
 // A legacy user CSRF token implementation is needed to prevent
 // functional issues until the next session expiration.
 axios.defaults.xsrfHeaderName = 'X-CSRFToken';
@@ -12,8 +11,10 @@ const apiRequest = axios.create({
     },
 });
 
-// Not related to CSRF protection, but this is the appropriate place to set the
-// client key header used to authenticate anonymous API requests.
+// Appropriate place to set the client key header 'X-OAR-Client-Key'
+// used to authenticate anonymous API requests.
+// Set 'X-CSRFToken' for CSRF protection when
+// making unsafe HTTP requests.
 apiRequest.interceptors.request.use(config => {
     const headers = {
         ...config.headers,
