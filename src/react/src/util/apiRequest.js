@@ -2,6 +2,8 @@ import axios from 'axios';
 import { CSRF_TOKEN_KEY } from './constants';
 
 // Used to make authenticated HTTP requests to Django
+axios.defaults.xsrfHeaderName = 'X-CSRFToken';
+axios.defaults.xsrfCookieName = 'csrftoken';
 const apiRequest = axios.create({
     headers: {
         credentials: 'same-origin',
