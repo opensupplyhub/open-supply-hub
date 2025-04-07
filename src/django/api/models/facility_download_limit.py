@@ -58,25 +58,33 @@ class FacilityDownloadLimit(models.Model):
         self.save()
 
     @staticmethod
-    def get_or_create_user_download_limit(user) -> Optional["FacilityDownloadLimit"]:
+    def get_or_create_user_download_limit(
+            user
+        ) -> Optional["FacilityDownloadLimit"]:
         is_api_user = not user.is_anonymous and user.has_groups
 
         if is_api_user or user.is_anonymous:
             # if user is an API user we don't want to impose limits
             return None
 
-        facility_download_limit, _ = FacilityDownloadLimit.objects.get_or_create(
-            user=user,
-            defaults={
-                "last_download_time": timezone.now(),
-                "allowed_downloads": FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS,
-                "download_count": 0,
-                "allowed_records_number": FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT,
-            }
-        )
+        facility_download_limit, _ = FacilityDownloadLimit \
+            .objects.get_or_create(
+                user=user,
+                defaults={
+                    "last_download_time": timezone.now(),
+                    "allowed_downloads": (
+                        FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS
+                    ),
+                    "download_count": 0,
+                    "allowed_records_number": (
+                        FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT
+                    ),
+                }
+            )
 
         current_month = timezone.now().month
-        last_download_month = facility_download_limit.last_download_time.month
+        last_download_month = facility_download_limit \
+            .last_download_time.month
 
         if current_month != last_download_month:
             facility_download_limit.download_count = 0

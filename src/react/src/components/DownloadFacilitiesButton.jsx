@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { arrayOf, string, bool } from 'prop-types';
+import { arrayOf, string, bool, shape, number } from 'prop-types';
 import { connect } from 'react-redux';
 import Button from '@material-ui/core/Button';
 import Menu from '@material-ui/core/Menu';
@@ -156,6 +156,9 @@ DownloadFacilitiesButton.propTypes = {
     allowLargeDownloads: bool,
     disabled: bool,
     logDownloadError: arrayOf(string),
+    user: shape({
+        allowed_records_number: number.isRequired,
+    }).isRequired,
 };
 
 function mapStateToProps({

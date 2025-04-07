@@ -527,4 +527,3 @@ class FacilitiesDownloadViewSetTest(APITestCase):
             len(response.data.get("results", {}).get("rows", [])),
             DEFAULT_ALLOWED_DOWNLOADS
         )
-

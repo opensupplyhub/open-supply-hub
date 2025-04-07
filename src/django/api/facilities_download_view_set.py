@@ -1,16 +1,9 @@
 from rest_framework import viewsets, mixins
-from django.utils import timezone
-from typing import Optional, Union
-
-from django.contrib.auth.models import AnonymousUser
 import math
-from django.db import transaction
-from django.db.models import F
 
 from api.pagination import PageAndSizePagination
 from api.models.facility.facility_index import FacilityIndex
 from api.models.facility_download_limit import FacilityDownloadLimit
-from api.models.user import User
 from api.serializers.facility.facility_query_params_serializer import (
     FacilityQueryParamsSerializer)
 from api.serializers.facility.facility_download_serializer \
@@ -18,7 +11,6 @@ from api.serializers.facility.facility_download_serializer \
 from api.serializers.facility.facility_download_serializer_embed_mode \
     import FacilityDownloadSerializerEmbedMode
 from api.serializers.utils import get_embed_contributor_id_from_query_params
-from api.constants import FacilitiesDownloadSettings
 from rest_framework.exceptions import ValidationError
 
 
@@ -53,7 +45,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
             raise ValidationError(params.errors)
 
         facility_download_limit = FacilityDownloadLimit \
-        .get_or_create_user_download_limit(request.user)
+            .get_or_create_user_download_limit(request.user)
         fdl = facility_download_limit
 
         if (
