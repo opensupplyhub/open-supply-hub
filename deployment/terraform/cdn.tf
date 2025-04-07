@@ -677,7 +677,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
 resource "aws_cloudfront_function" "add_security_headers" {
   name    = "${local.frontend_bucket_name}-add-security-headers"
-  runtime = "cloudfront-js-2.0"
+  runtime = "cloudfront-js-1.0"
   comment = "Add security headers to CloudFront responses"
   publish = true
   code    = file("cloudfront/add_security_headers.js")
