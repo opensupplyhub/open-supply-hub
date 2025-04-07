@@ -3,7 +3,6 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.response import Response
 from rest_auth.views import LoginView
 from django.contrib.auth import authenticate, login
-from django.middleware.csrf import get_token
 
 from ...serializers.user.user_serializer import UserSerializer
 
