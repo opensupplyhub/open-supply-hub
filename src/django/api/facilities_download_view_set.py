@@ -112,10 +112,11 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         facility_download_limit, _ = FacilityDownloadLimit.objects \
             .get_or_create(user=user)
 
-        current_month = timezone.now().month
-        last_download_month = facility_download_limit.last_download_time.month
+        current_date = timezone.now()
+        last_download_date = facility_download_limit.last_download_time
 
-        if current_month != last_download_month:
+        if (current_date.month != last_download_date.month or
+            current_date.year != last_download_date.year):
             facility_download_limit.download_count = 0
             facility_download_limit.last_download_time = timezone.now()
             facility_download_limit.save()
