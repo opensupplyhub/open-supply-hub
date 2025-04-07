@@ -39,8 +39,8 @@ class LoginToOARClient(LoginView):
             )
 
         # Adding the CSRF token to the serialized data
+        csrf_token = request.META["CSRF_COOKIE"]
         serialized_data = UserSerializer(user).data
-        csrf_token = get_token(request)
         serialized_data['csrfToken'] = csrf_token
 
         return Response(serialized_data)
