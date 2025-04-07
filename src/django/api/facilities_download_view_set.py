@@ -21,6 +21,7 @@ from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.constants import FacilitiesDownloadSettings
 from rest_framework.exceptions import ValidationError
 
+
 class FacilitiesDownloadViewSet(mixins.ListModelMixin,
                                 viewsets.GenericViewSet):
     """

@@ -59,7 +59,10 @@ class FacilityDownloadLimit(models.Model):
 
     @staticmethod
     def get_or_create_user_download_limit(user) -> Optional["FacilityDownloadLimit"]:
-        if user.has_groups: # if user is an API user we don't want to impose limits
+        is_api_user = not user.is_anonymous and user.has_groups
+
+        if is_api_user or user.is_anonymous:
+            # if user is an API user we don't want to impose limits
             return None
 
         facility_download_limit, _ = FacilityDownloadLimit.objects.get_or_create(

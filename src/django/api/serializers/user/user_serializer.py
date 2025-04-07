@@ -6,7 +6,7 @@ from rest_framework.serializers import (
     SerializerMethodField,
     ValidationError,
 )
-from api.constants import FacilityClaimStatuses
+from api.constants import FacilitiesDownloadSettings, FacilityClaimStatuses
 from waffle import switch_is_active
 from django.contrib.auth import password_validation
 from django.core import exceptions
@@ -146,4 +146,4 @@ class UserSerializer(ModelSerializer):
             return FacilityDownloadLimit.objects.get(user=user)\
                 .allowed_records_number
         except FacilityDownloadLimit.DoesNotExist:
-            return None
+            return FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT
