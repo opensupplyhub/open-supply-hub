@@ -18,7 +18,6 @@ from api.serializers.facility.facility_download_serializer \
 from api.serializers.facility.facility_download_serializer_embed_mode \
     import FacilityDownloadSerializerEmbedMode
 from api.serializers.utils import get_embed_contributor_id_from_query_params
-from api.constants import FacilitiesDownloadSettings
 from rest_framework.exceptions import ValidationError
 
 
@@ -72,7 +71,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         total_records = queryset.count()
 
         is_large_download_allowed = not facility_download_limit or (
-            total_records <= facility_download_limit.allowed_records_number
+            total_records < facility_download_limit.allowed_records_number
         )
 
         if (not is_large_download_allowed):
