@@ -55,7 +55,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
         if (
             facility_download_limit
-            and facility_download_limit.download_count >= facility_download_limit.allowed_downloads # noqa: E501
+            and facility_download_limit.download_count >= facility_download_limit.allowed_downloads  # noqa: E501
         ):
             raise ValidationError('You have reached the maximum number of '
                                   'facility downloads allowed this month. '
@@ -114,8 +114,10 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         current_date = timezone.now()
         last_download_date = facility_download_limit.last_download_time
 
-        if (current_date.month != last_download_date.month or
-            current_date.year != last_download_date.year):
+        if (
+            current_date.month != last_download_date.month or
+            current_date.year != last_download_date.year
+        ):
             facility_download_limit.download_count = 0
             facility_download_limit.last_download_time = timezone.now()
             facility_download_limit.save()
