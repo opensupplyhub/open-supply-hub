@@ -329,15 +329,10 @@ describe("ProductionLocationInfo component, test invalid incoming data for UPDAT
                     claim_status: 'unclaimed',
                     sector: ['Apparel'],
                     number_of_workers: {
-                        max: 0,
-                        min: 150
+                        max: 150,
+                        min: 0
                     },
-                    product_type: ['Accessories'],
-                    parent_company: 'Noman Group',
-                    processing_type: [
-                        'Spinning',
-                        'Wet Processing'
-                    ],
+                    product_type: ['Accessories']
                 },
                 fetching: false,
                 error: null
@@ -370,26 +365,31 @@ describe("ProductionLocationInfo component, test invalid incoming data for UPDAT
             { preloadedState: defaultState },
         )
 
-    test("additional information shouldn’t be filled in, even if data for all the fields is returned from the backend", async () => {
+    test("update button should be enabled when number of workers invalid but additional info is hidden", async () => {
         const { getByRole, getByText, getByTestId, getByPlaceholderText, queryByText } = renderComponent();
-        // expect(queryByText("Enter a single positive number (e.g., 5) or a valid range (e.g., 3–10). In a range, the minimum value must be less than or equal to the maximum, and both must be at least 1.")).not.toBeInTheDocument();
+        const numberOfWorkersError = "Enter a single positive number " +
+            "(e.g., 5) or a valid range (e.g., 3–10). In a range, the " +
+            "minimum value must be less than or equal to the maximum, " +
+            "and both must be at least 1.";
 
-        // const updateButton = getByRole("button", { name: /Update/i });
-        // await waitFor(() => expect(updateButton).toBeEnabled());
+        await waitFor(() => expect(queryByText(numberOfWorkersError)).not.toBeInTheDocument());
 
-        // const switchButton = getByTestId("switch-additional-info-fields");
-        // fireEvent.click(switchButton);
+        const updateButton = getByRole("button", { name: /Update/i });
+        await waitFor(() => expect(updateButton).toBeEnabled());
 
-        // const numberOfWorkersInput = getByPlaceholderText("Enter the number of workers as a number or range");
-        // fireEvent.change(numberOfWorkersInput, { target: { value: '0-150' } });
+        const switchButton = getByTestId("switch-additional-info-fields");
+        fireEvent.click(switchButton);
 
-        // expect(numberOfWorkersInput).toHaveAttribute("aria-invalid", "true");
-        // expect(getByText("The value of zero is not valid. Enter a positive whole number or a valid range (e.g., 1-5).")).toBeInTheDocument();
+        const numberOfWorkersInput = getByPlaceholderText("Enter the number of workers as a number or range");
+        fireEvent.change(numberOfWorkersInput, { target: { value: '0-150' } });
 
-        // expect(updateButton).toBeDisabled();
+        await waitFor(() => expect(numberOfWorkersInput).toHaveAttribute("aria-invalid", "true"));
+        expect(getByText(numberOfWorkersError)).toBeInTheDocument();
 
-        // fireEvent.click(switchButton);
-        // expect(queryByText("Enter the number of workers as a number or range")).not.toBeInTheDocument();
-        // expect(updateButton).toBeEnabled();
+        await waitFor(() => expect(updateButton).toBeDisabled());
+
+        fireEvent.click(switchButton);
+        await waitFor(() => expect(queryByText("Enter the number of workers as a number or range")).not.toBeInTheDocument());
+        expect(updateButton).toBeEnabled();
     });
 });

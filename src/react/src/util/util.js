@@ -1666,9 +1666,9 @@ export const slcValidationSchema = objectYup({
         )
         .test(
             'valid-format-and-range',
-            `Enter a single positive number (e.g., 5) or a valid range
-            (e.g., 3–10). In a range, the minimum value must be less
-            than or equal to the maximum, and both must be at least 1.`,
+            'Enter a single positive number (e.g., 5) or a valid range ' +
+                '(e.g., 3–10). In a range, the minimum value must be less ' +
+                'than or equal to the maximum, and both must be at least 1.',
             value => {
                 if (value == null) return true;
 
