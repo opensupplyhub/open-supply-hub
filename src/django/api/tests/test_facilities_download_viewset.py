@@ -431,15 +431,15 @@ class FacilitiesDownloadViewSetTest(APITestCase):
            DEFAULT_LIMIT)
     def test_api_user_can_download_over_limit(self):
         email = "test@example.com"
-        password = "example123"
+        test_pass = "example123"
         user = User.objects.create(email=email)
-        user.set_password(password)
+        user.set_password(test_pass)
         group = Group.objects.get(
             name=FeatureGroups.CAN_SUBMIT_FACILITY,
         )
         user.groups.set([group.id])
         user.save()
-        self.client.login(email=email, password=password)
+        self.client.login(email=email, password=test_pass)
 
         download_url = reverse("facilities-downloads-list")
 
@@ -458,11 +458,11 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         )
 
         email = "test@example.com"
-        password = "example123"
+        test_pass = "example123"
         user = User.objects.create(email=email)
-        user.set_password(password)
+        user.set_password(test_pass)
         user.save()
-        self.client.login(email=email, password=password)
+        self.client.login(email=email, password=test_pass)
 
         download_url = reverse("facilities-downloads-list")
 
