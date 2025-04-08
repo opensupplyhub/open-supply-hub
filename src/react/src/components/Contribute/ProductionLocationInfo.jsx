@@ -130,7 +130,7 @@ const ProductionLocationInfo = ({
 
     const contributionForm = useSingleLocationContributionForm(values => {
         setShowPostSubmitErrorNotification(false);
-        handleProductionLocation(values, osID);
+        handleProductionLocation(values);
     });
 
     const instructionExtraMessage =

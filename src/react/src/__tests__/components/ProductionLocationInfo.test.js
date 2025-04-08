@@ -299,6 +299,69 @@ describe("ProductionLocationInfo component, test input fields for POST v1/produc
         expect(getByText("Select location type(s)")).toBeInTheDocument();
         expect(getByText("Select processing type(s)")).toBeInTheDocument();
     });
+
+    test("shows a post-submit error and hides it on close", async () => {
+        const errorTitle = "Data submission failed.";
+        const nonFieldErrorSubtitle = "We encountered non-field specific " +
+            "errors, which may be related to multiple fields or the " +
+            "entire form. Please see them below:";
+        const errorSupportInstructions = "If you can't resolve the issue " +
+            "by updating the field values, please contact the OS Hub " +
+            "team and provide the following data:";
+
+        const updatedState = {
+            ...defaultState,
+            contributeProductionLocation: {
+                pendingModerationEvent: {
+                    data: {},
+                    fetching: false,
+                    error: {
+                        errorSource: "CLIENT",
+                        detail: "The request body is invalid.",
+                        errors: [
+                            {
+                                field: "non_field_errors",
+                                detail: "Invalid data. Expected a dictionary (object), but got dict."
+                            }
+                        ],
+                        rawData: {
+                            detail: "The request body is invalid.",
+                            errors: [
+                                {
+                                    field: "non_field_errors",
+                                    detail: "Invalid data. Expected a dictionary (object), but got dict."
+                                }
+                            ]
+                        }
+                    }
+                },
+                singleProductionLocation: {
+                    data: {},
+                    fetching: false,
+                    error: null,
+                },
+            },
+        };
+
+        const { getByText, getByLabelText, queryByText } = renderComponent({}, updatedState);
+
+        expect(getByText(errorTitle)).toBeInTheDocument();
+        expect(getByText(nonFieldErrorSubtitle)).toBeInTheDocument();
+        expect(getByText(errorSupportInstructions)).toBeInTheDocument();
+        expect(getByText(
+            "Invalid data. Expected a dictionary (object), but got dict."
+        )).toBeInTheDocument();
+
+        const closeButton = getByLabelText(/close/i)
+        fireEvent.click(closeButton)
+
+        expect(queryByText(errorTitle)).not.toBeInTheDocument();
+        expect(queryByText(nonFieldErrorSubtitle)).not.toBeInTheDocument();
+        expect(queryByText(errorSupportInstructions)).not.toBeInTheDocument();
+        expect(queryByText(
+            "Invalid data. Expected a dictionary (object), but got dict."
+        )).not.toBeInTheDocument();
+    });
 });
 
 describe("ProductionLocationInfo component, test invalid incoming data for UPDATE v1/production-locations", () => {
