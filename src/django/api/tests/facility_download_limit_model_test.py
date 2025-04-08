@@ -14,7 +14,7 @@ class FacilityDownloadLimitModelTest(TestCase):
     def test_create_default_facility_download_limit_record(self):
         expected_time = timezone.now()
         facility_download_limit = FacilityDownloadLimit \
-          .get_or_create_user_download_limit(self.user)
+            .get_or_create_user_download_limit(self.user)
 
         # Strip seconds and microseconds
         dt1_trimmed = expected_time.replace(second=0, microsecond=0)

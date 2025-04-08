@@ -4,11 +4,6 @@ from django.forms import ValidationError
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import BigAutoField, F
-from django.db import models
-from django.utils import timezone
-from django.db.models import (
-    BigAutoField,
-)
 from api.constants import FacilitiesDownloadSettings
 
 
