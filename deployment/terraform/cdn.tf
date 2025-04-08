@@ -155,11 +155,6 @@ resource "aws_cloudfront_distribution" "cdn" {
       lambda_arn = aws_lambda_function.redirect_to_s3_origin.qualified_arn
     }
 
-    function_association {
-      event_type   = "viewer-response"
-      function_arn = aws_cloudfront_function.add_security_headers.arn
-    }
-
     compress               = false
     viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 0
@@ -673,12 +668,4 @@ resource "aws_cloudfront_distribution" "cdn" {
     Project     = var.project
     Environment = var.environment
   }
-}
-
-resource "aws_cloudfront_function" "add_security_headers" {
-  name    = "add-security-headers"
-  runtime = "cloudfront-js-1.0"
-  comment = "Add security headers to CloudFront responses"
-  publish = true
-  code    = file("cloudfront/add_security_headers.js")
 }
