@@ -124,19 +124,23 @@ class FacilityClaimAdminDashboardTest(APITestCase):
         self.facility_second.save(update_fields=['updated_at'])
 
     @override_switch("claim_a_facility", active=True)
-    def test_user_cannot_submit_second_facility_claim_with_one_pending(self):
+    def test_user_cannot_submit_first_facility_claim_with_one_pending(self):
         self.client.logout()
         self.client.login(email=self.email, password=self.password)
 
         error_response = self.client.post(
             "/api/facilities/{}/claim/".format(self.facility_first.id),
             {
-                "your_name": "your_name",
-                "contact_person": "contact_person",
-                "company_name": "company_name",
-                "website": "http://example.com",
-                "facility_description": "facility_description",
-                "verification_method": "verification_method",
+                "your_name": "ClaimantName",
+                "your_title": "Owner",
+                "your_business_website":
+                    "https://your-business-website.com",
+                "business_linkedin_profile":
+                    "https://www.linkedin.com/in/my-profile",
+                "business_website": "https://www.business-website.com",
+                "sectors": "Apparel",
+                "number_of_workers": "15-30",
+                "local_language_name": "LocalName",
             },
         )
 
@@ -144,7 +148,7 @@ class FacilityClaimAdminDashboardTest(APITestCase):
 
         self.assertEqual(
             error_response.json()["detail"],
-            "There is already a pending claim on this facility",
+            "There is already a pending claim on this facility.",
         )
 
     @override_switch("claim_a_facility", active=True)
@@ -171,12 +175,16 @@ class FacilityClaimAdminDashboardTest(APITestCase):
         error_response = self.client.post(
             "/api/facilities/{}/claim/".format(self.facility_second.id),
             {
-                "your_name": "your_name",
-                "contact_person": "contact_person",
-                "company_name": "company_name",
-                "website": "http://example.com",
-                "facility_description": "facility_description",
-                "verification_method": "verification_method",
+                "your_name": "ClaimantName",
+                "your_title": "Owner",
+                "your_business_website":
+                    "https://www.your-business-website.com",
+                "business_linkedin_profile":
+                    "https://www.linkedin.com/in/my-profile",
+                "business_website": "https://www.business-website.com",
+                "sectors": "Apparel",
+                "number_of_workers": "15-30",
+                "local_language_name": "LocalName",
             },
         )
 
@@ -184,7 +192,100 @@ class FacilityClaimAdminDashboardTest(APITestCase):
 
         self.assertEqual(
             error_response.json()["detail"],
-            "There is already an approved claim on this facility",
+            "There is already an approved claim on this facility.",
+        )
+
+    @override_switch("claim_a_facility", active=True)
+    def test_user_cannot_submit_first_facility_without_your_name_field(self):
+        self.client.logout()
+        self.client.login(email=self.email, password=self.password)
+
+        error_response = self.client.post(
+            "/api/facilities/{}/claim/".format(self.facility_first.id),
+            {
+                "your_title": "Owner",
+                "your_business_website":
+                    "https://www.your-business-website.com",
+                "business_linkedin_profile":
+                    "https://www.linkedin.com/in/my-profile",
+                "business_website": "https://www.business-website.com",
+                "sectors": "Apparel",
+                "number_of_workers": "15-30",
+                "local_language_name": "LocalName",
+            },
+        )
+
+        self.assertEqual(400, error_response.status_code)
+
+        self.assertEqual(
+            error_response.json(),
+            {
+                "your_name": [
+                    "This field is required."
+                ]
+            },
+        )
+
+    @override_switch("claim_a_facility", active=True)
+    def test_user_cannot_submit_first_facility_without_your_title_field(self):
+        self.client.logout()
+        self.client.login(email=self.email, password=self.password)
+
+        error_response = self.client.post(
+            "/api/facilities/{}/claim/".format(self.facility_first.id),
+            {
+                "your_name": "ClaimantName",
+                "your_business_website":
+                    "https://www.your-business-website.com",
+                "business_linkedin_profile":
+                    "https://www.linkedin.com/in/my-profile",
+                "business_website": "https://www.business-website.com",
+                "sectors": "Apparel",
+                "number_of_workers": "15-30",
+                "local_language_name": "LocalName",
+            },
+        )
+
+        self.assertEqual(400, error_response.status_code)
+
+        self.assertEqual(
+            error_response.json(),
+            {
+                "your_title": [
+                    "This field is required."
+                ]
+            },
+        )
+
+    @override_switch("claim_a_facility", active=True)
+    def test_user_cannot_submit_first_facility_without_linkedin_field(self):
+        self.client.logout()
+        self.client.login(email=self.email, password=self.password)
+
+        error_response = self.client.post(
+            "/api/facilities/{}/claim/".format(self.facility_first.id),
+            {
+                "your_name": "ClaimantName",
+                "your_title": "Owner",
+                "your_business_website":
+                    "https://www.your-business-website.com",
+                "business_website":
+                    "https://www.business-website.com",
+                "sectors": "Apparel",
+                "number_of_workers": "15-30",
+                "local_language_name": "LocalName",
+            },
+        )
+
+        self.assertEqual(400, error_response.status_code)
+
+        self.assertEqual(
+            error_response.json(),
+            {
+                "business_linkedin_profile": [
+                    "This field is required."
+                ]
+            },
         )
 
     @override_switch("claim_a_facility", active=True)

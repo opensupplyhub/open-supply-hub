@@ -841,8 +841,6 @@ class FacilitiesViewSet(ListModelMixin,
             contributor = request.user.contributor
             files = request.FILES.getlist('files')
 
-            self.__check_existing_claims(facility)
-
             serializer = FacilityCreateClaimSerializer(
                 data=request.data,
                 context={"facility": facility}
@@ -903,22 +901,6 @@ class FacilitiesViewSet(ListModelMixin,
 
         except (Facility.DoesNotExist, Contributor.DoesNotExist):
             raise NotFound()
-
-    def __check_existing_claims(self, facility):
-        existing = FacilityClaim.objects.filter(
-            Q(status=FacilityClaimStatuses.PENDING) |
-            Q(status=FacilityClaimStatuses.APPROVED),
-            facility=facility
-        ).values_list("status", flat=True)
-
-        if FacilityClaimStatuses.PENDING in existing:
-            raise BadRequestException(
-                'There is already a pending claim on this facility'
-            )
-        if FacilityClaimStatuses.APPROVED in existing:
-            raise BadRequestException(
-                'There is already an approved claim on this facility'
-            )
 
     def __handle_file_upload(self, file, contributor_name, facility_claim):
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')[:-3]

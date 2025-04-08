@@ -3,6 +3,7 @@ import os
 from rest_framework import serializers
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
+from ...exceptions import BadRequestException
 
 from api.models import FacilityClaim
 from api.constants import FacilityClaimStatuses
@@ -25,8 +26,10 @@ def validate_workers(value):
 
 
 def validate_url_field(field_name, value):
-    value = add_http_prefix_to_url(value)
+    if value == "":
+        return value
 
+    value = add_http_prefix_to_url(value)
     validator = URLValidator()
     try:
         validator(value)
@@ -60,11 +63,15 @@ def validate_files(files):
 
 
 class FacilityCreateClaimSerializer(serializers.Serializer):
-    your_name = serializers.CharField(max_length=255)
+    your_name = serializers.CharField(
+        max_length=255,
+        required=True,
+        allow_blank=False,
+    )
     your_title = serializers.CharField(
         max_length=255,
-        required=False,
-        allow_blank=True
+        required=True,
+        allow_blank=False,
     )
     your_business_website = serializers.CharField(
         max_length=255,
@@ -78,7 +85,7 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
     )
     business_linkedin_profile = serializers.CharField(
         max_length=255,
-        required=False,
+        required=True,
         allow_blank=True,
     )
     sectors = serializers.ListField(
@@ -120,11 +127,11 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         ).values_list("status", flat=True)
 
         if FacilityClaimStatuses.PENDING in existing_claim:
-            raise ValidationError(
+            raise BadRequestException(
                 "There is already a pending claim on this facility."
             )
         if FacilityClaimStatuses.APPROVED in existing_claim:
-            raise ValidationError(
+            raise BadRequestException(
                 "There is already an approved claim on this facility."
             )
 
