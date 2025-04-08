@@ -6,16 +6,16 @@ from api.models.facility_download_limit import FacilityDownloadLimit
 class UserSerializerTest(APITestCase):
     def setUp(self):
         self.email = "test@example.com"
-        self.password = "example123"
+        self.test_pass = "example123"
         self.user = User.objects.create(email=self.email)
         self.user.set_password(self.password)
         self.user.save()
-        self.client.login(email=self.email, password=self.password)
+        self.client.login(email=self.email, password=self.test_pass)
 
     def test_get_default_allowed_records_number(self):
         response = self.client.post(
             "/user-login/",
-            {'email': self.email, 'password': self.password},
+            {'email': self.email, 'password': self.test_pass},
             format="json",
         )
 
@@ -33,7 +33,7 @@ class UserSerializerTest(APITestCase):
         )
         response = self.client.post(
             "/user-login/",
-            {'email': self.email, 'password': self.password},
+            {'email': self.email, 'password': self.test_pass},
             format="json",
         )
         self.assertEqual(response.status_code, 200)
