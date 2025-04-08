@@ -59,7 +59,7 @@ class FacilityClaimAdminDashboardTest(APITestCase):
             address="AddressSecond",
             country_code="US",
             sector=["Apparel"],
-            row_index=1,
+            row_index=2,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source,
         )
@@ -112,11 +112,16 @@ class FacilityClaimAdminDashboardTest(APITestCase):
         self.client.login(email="superuser@example.com", password="superuser")
         self.current_time = timezone.now()
 
-    def set_up_updated_at_field(self):
-        """Helper method to set updated_at field older than now"""
+    """Helper methods to set updated_at field older than now"""
+    def set_up_first_updated_at_field(self):
         self.facility_first.updated_at = '2019-03-24 02:23:22.195 +0100'
         self.old_updated_at = self.facility_first.updated_at
         self.facility_first.save(update_fields=['updated_at'])
+
+    def set_up_second_updated_at_field(self):
+        self.facility_second.updated_at = '2019-03-24 02:23:22.195 +0100'
+        self.old_updated_at = self.facility_second.updated_at
+        self.facility_second.save(update_fields=['updated_at'])
 
     @override_switch("claim_a_facility", active=True)
     def test_user_cannot_submit_second_facility_claim_with_one_pending(self):
@@ -144,11 +149,27 @@ class FacilityClaimAdminDashboardTest(APITestCase):
 
     @override_switch("claim_a_facility", active=True)
     def test_user_cannot_submit_second_facility_claim_with_one_approved(self):
+        self.client.post(
+            "/api/facility-claims/{}/approve/".format(
+                self.facility_claim_second.id
+            )
+        )
+
+        updated_facility_claim = FacilityClaim.objects.get(
+            pk=self.facility_claim_second.id
+        )
+
+        self.assertEqual(
+            FacilityClaimStatuses.APPROVED,
+            updated_facility_claim.status,
+        )
+
+        self.set_up_second_updated_at_field()
         self.client.logout()
         self.client.login(email=self.email, password=self.password)
 
         error_response = self.client.post(
-            "/api/facilities/{}/claim/".format(self.facility_first.id),
+            "/api/facilities/{}/claim/".format(self.facility_second.id),
             {
                 "your_name": "your_name",
                 "contact_person": "contact_person",
@@ -163,12 +184,12 @@ class FacilityClaimAdminDashboardTest(APITestCase):
 
         self.assertEqual(
             error_response.json()["detail"],
-            "There is already a pending claim on this facility",
+            "There is already an approved claim on this facility",
         )
 
     @override_switch("claim_a_facility", active=True)
     def test_approve_claim_and_email_claimant_and_contributors(self):
-        self.set_up_updated_at_field()
+        self.set_up_first_updated_at_field()
 
         self.assertEqual(len(mail.outbox), 0)
 
@@ -258,7 +279,7 @@ class FacilityClaimAdminDashboardTest(APITestCase):
 
     @override_switch("claim_a_facility", active=True)
     def test_deny_facility_claim(self):
-        self.set_up_updated_at_field()
+        self.set_up_first_updated_at_field()
         self.assertEqual(len(mail.outbox), 0)
 
         response = self.client.post(
@@ -303,7 +324,7 @@ class FacilityClaimAdminDashboardTest(APITestCase):
 
     @override_switch("claim_a_facility", active=True)
     def test_revoke_facility_claim(self):
-        self.set_up_updated_at_field()
+        self.set_up_first_updated_at_field()
         self.assertEqual(len(mail.outbox), 0)
 
         error_response = self.client.post(
