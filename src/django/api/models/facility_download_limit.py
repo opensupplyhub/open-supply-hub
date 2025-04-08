@@ -1,8 +1,9 @@
+from typing import Optional
 from django.db import models
+from django.forms import ValidationError
 from django.utils import timezone
-from django.db.models import (
-    BigAutoField,
-)
+from django.db import transaction
+from django.db.models import BigAutoField, F
 from api.constants import FacilitiesDownloadSettings
 
 
@@ -51,3 +52,51 @@ class FacilityDownloadLimit(models.Model):
                    'has already made in the current month.'),
         verbose_name='Current download count',
     )
+
+    def increment_download_count(self):
+        with transaction.atomic():
+            self.refresh_from_db()
+            if (
+                self.download_count >=
+                self.allowed_downloads
+            ):
+                raise ValidationError("Concurrent limit exceeded.")
+
+        self.last_download_time = timezone.now()
+        self.download_count = F('download_count') + 1
+        self.save()
+
+    @staticmethod
+    def get_or_create_user_download_limit(
+        user
+    ) -> Optional["FacilityDownloadLimit"]:
+        is_api_user = not user.is_anonymous and user.has_groups
+
+        if is_api_user or user.is_anonymous:
+            # if user is an API user we don't want to impose limits
+            return None
+
+        facility_download_limit, _ = FacilityDownloadLimit \
+            .objects.get_or_create(
+                user=user,
+                defaults={
+                    "last_download_time": timezone.now(),
+                    "allowed_downloads": (
+                        FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS
+                    ),
+                    "download_count": 0,
+                    "allowed_records_number": (
+                        FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT
+                    ),
+                }
+            )
+
+        current_month = timezone.now().month
+        last_download_month = facility_download_limit \
+            .last_download_time.month
+
+        if current_month != last_download_month:
+            facility_download_limit.download_count = 0
+            facility_download_limit.last_download_time = timezone.now()
+
+        return facility_download_limit

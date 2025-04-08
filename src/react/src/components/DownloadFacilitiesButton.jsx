@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { arrayOf, string, bool } from 'prop-types';
+import { arrayOf, string, bool, shape, number } from 'prop-types';
 import { connect } from 'react-redux';
 import Button from '@material-ui/core/Button';
 import Menu from '@material-ui/core/Menu';
@@ -93,9 +93,9 @@ function DownloadFacilitiesButton({
                     ''
                 ) : (
                     <p className={classes.downloadTooltip}>
-                        Downloads are supported for searches resulting in 1,000
-                        production locations or less. Log in to download this
-                        dataset.
+                        Downloads are supported for searches resulting in{' '}
+                        {user.allowed_records_number} production locations or
+                        less. Log in to download this dataset.
                     </p>
                 )
             }
@@ -156,6 +156,9 @@ DownloadFacilitiesButton.propTypes = {
     allowLargeDownloads: bool,
     disabled: bool,
     logDownloadError: arrayOf(string),
+    user: shape({
+        allowed_records_number: number.isRequired,
+    }).isRequired,
 };
 
 function mapStateToProps({
