@@ -13,10 +13,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe high-level database changes.*
 
 #### Migrations:
-* *Describe migrations here.*
+* 0168_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
 
 #### Schema changes
-* *Describe schema changes here.*
+* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - The `FacilityDownloadLimit` model has been created. This model includes such fields: id, user_id, last
 
 ### Code/API changes
 * [OSDEV-1894](https://opensupplyhub.atlassian.net/browse/OSDEV-1894) - Enabled `Secure` attribute of csrf token and session id.
@@ -29,7 +29,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1893](https://opensupplyhub.atlassian.net/browse/OSDEV-1893) - Prevented sending a claim request to `/api/facilities/{os_id}/claim/` for facilities that are pending or approved. Added BE validators to handle incoming claim data.
 
 ### What's new
-* *Describe what's new changes here.*
+* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 1000 records per download + 10 downloads of facility data per month has been added for a registered free user.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
