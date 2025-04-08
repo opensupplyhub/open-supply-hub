@@ -4,7 +4,6 @@ __pycache__/
 .csv
 .xlsx
 
-
 # Terraform
 .terraform
 .terraform/
@@ -13,11 +12,9 @@ __pycache__/
 *.tfstate.backup
 .terraform.lock*
 
-
 # Ansible
 deployment/ansible/roles/azavea.*
 *.retry
-
 
 # JS
 node_modules/
@@ -30,7 +27,6 @@ build/
 coverage/
 yarn-error.log
 
-
 # Django App
 src/django/static
 src/django/coverage
@@ -42,10 +38,8 @@ src/dedupe-hub/api/coverage
 src/django/*.csv
 src/django/*.xlsx
 
-
 # macOS
 .DS_Store
-
 
 # VSCode
 .vscode
@@ -73,14 +67,12 @@ research/dedupe/gazetteer/gazetteer_training.json
 tools/endpoint_comp/facility_ids/*
 tools/endpoint_comp/reports/*
 
-
 # Lambda
 # deployment/terraform/lambda-functions/**/*.zip
 deployment/terraform/lambda-functions/**/*.out
 deployment/terraform/lambda-functions/**/src/*
 !deployment/terraform/lambda-functions/alert_batch_failures/src/alert_batch_failures.py
 !deployment/terraform/lambda-functions/alert_sfn_failures/src/alert_sfn_failures.py
-
 
 # Environments
 .env
@@ -93,3 +85,4 @@ venv.bak/
 db.dump
 latest_prod.dump
 dumps
+.python-version
