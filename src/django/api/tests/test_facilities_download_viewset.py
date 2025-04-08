@@ -6,45 +6,16 @@ from unittest.mock import patch
 
 from api.models.user import User
 from api.constants import FeatureGroups
-from api.models.facility_download_limit import FacilityDownloadLimit
 
-# Override constants different from production value for easier testing
-FACILITIES_DOWNLOAD_LIMIT = 3
-DEFAULT_ALLOWED_DOWNLOADS = 1
+
+DEFAULT_LIMIT = 3
 
 
 class FacilitiesDownloadViewSetTest(APITestCase):
     fixtures = ["facilities_index"]
 
-    def setUp(self):
-        self.download_url = reverse("facilities-downloads-list")
-        self.email = "test@example.com"
-        self.test_pass = "example123"
-
-    def create_user(self, is_api_user=False):
-        user = User.objects.create(email=self.email)
-        user.set_password(self.test_pass)
-        user.save()
-
-        if is_api_user:
-            group = Group.objects.get(name=FeatureGroups.CAN_SUBMIT_FACILITY)
-            user.groups.add(group)
-
-        return user
-
-    def login_user(self, user):
-        self.client.login(email=user.email, password=self.test_pass)
-
-    def get_facility_downloads(self, params=None):
-        return self.client.get(self.download_url, params or {})
-
     def test_queryset_ordering(self):
-        user = self.create_user()
-        self.login_user(user)
-
-        response = self.get_facility_downloads()
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
+        download_url = reverse("facilities-downloads-list")
         expected_data = [
             [
                 "1",
@@ -394,32 +365,39 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "False",
             ],
         ]
-        actual_data = response.data.get("results", {}).get("rows", [])
+        response = self.client.get(download_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        for expected, actual in zip(expected_data, actual_data):
-            self.assertListEqual(expected, actual)
+        rows = response.data.get("results", {}).get("rows", [])
+
+        for expected_facility, actual_facility in zip(expected_data, rows):
+            self.assertListEqual(expected_facility, actual_facility)
 
     def test_pagination(self):
-        user = self.create_user()
-        self.login_user(user)
+        download_url = reverse("facilities-downloads-list")
+        page_size = {"pageSize": 5}
 
-        response = self.get_facility_downloads({"pageSize": 5})
-
+        response = self.client.get(download_url, page_size)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data.get("count"), 18)
+
+        self.assertIn("count", response.data)
+        self.assertIn("next", response.data)
+        self.assertIn("previous", response.data)
+        self.assertIn("results", response.data)
+
+        expected_count = 18
+        self.assertEqual(response.data.get("count"), expected_count)
+
         self.assertIsNone(response.data.get("previous"))
-        self.assertEqual(
-            response.data.get("next"),
+
+        expected_next = (
             "http://testserver/api/facilities-downloads/?page=2&pageSize=5"
         )
+        self.assertEqual(response.data.get("next"), expected_next)
 
     def test_query_parameters(self):
-        user = self.create_user()
-        self.login_user(user)
-
-        response = self.get_facility_downloads({"countries": "IN"})
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        download_url = reverse("facilities-downloads-list")
+        query_params = {"countries": "IN"}
         expected_data = [
             [
                 "2",
@@ -443,90 +421,53 @@ class FacilitiesDownloadViewSetTest(APITestCase):
             ],
         ]
 
-        self.assertEqual(
-            response.data.get("results", {}).get("rows", []),
-            expected_data
-        )
-
-    @patch(
-        'api.constants.FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT',
-        FACILITIES_DOWNLOAD_LIMIT
-    )
-    def test_user_cannot_download_over_records_limit(self):
-        user = self.create_user()
-        self.login_user(user)
-        FacilityDownloadLimit.objects.create(
-            user=user,
-            allowed_records_number=FACILITIES_DOWNLOAD_LIMIT
-        )
-        response = self.get_facility_downloads()
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            response.json(),
-            [('Downloads are supported only for searches '
-              'resulting in 3 facilities or less.')]
-        )
-
-    @patch(
-        'api.constants.FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS',
-        DEFAULT_ALLOWED_DOWNLOADS
-    )
-    def test_user_cannot_download_over_allowed_downloads(self):
-        user = self.create_user()
-        self.login_user(user)
-        FacilityDownloadLimit.objects.create(
-            user=user,
-            allowed_downloads=DEFAULT_ALLOWED_DOWNLOADS
-        )
-
-        first_response = self.get_facility_downloads()
-        self.assertEqual(first_response.status_code, status.HTTP_200_OK)
-        self.assertEqual(
-            len(first_response.data.get("results", {}).get("rows", [])),
-            18
-        )
-
-        second_response = self.get_facility_downloads()
-        self.assertEqual(
-            second_response.status_code,
-            status.HTTP_400_BAD_REQUEST
-        )
-        self.assertEqual(
-            second_response.json(),
-            [
-                (
-                    'You have reached the maximum number of facility'
-                    ' downloads allowed this month. Please wait until'
-                    ' next month to download more data.'
-                )
-            ]
-        )
-
-    @patch(
-        'api.constants.FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT',
-        FACILITIES_DOWNLOAD_LIMIT
-    )
-    def test_api_user_can_download_over_limit(self):
-        user = self.create_user(is_api_user=True)
-        self.login_user(user)
-
-        response = self.get_facility_downloads()
+        response = self.client.get(download_url, query_params)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertGreater(
-            len(response.data.get("results", {}).get("rows", [])),
-            FACILITIES_DOWNLOAD_LIMIT
+
+        rows = response.data.get("results", {}).get("rows", [])
+        self.assertEqual(rows, expected_data)
+
+    @patch('api.constants.FacilitiesDownloadSettings.DEFAULT_LIMIT',
+           DEFAULT_LIMIT)
+    def test_api_user_can_download_over_limit(self):
+        email = "test@example.com"
+        password = "example123"
+        user = User.objects.create(email=email)
+        user.set_password(password)
+        group = Group.objects.get(
+            name=FeatureGroups.CAN_SUBMIT_FACILITY,
+        )
+        user.groups.set([group.id])
+        user.save()
+        self.client.login(email=email, password=password)
+
+        download_url = reverse("facilities-downloads-list")
+
+        response = self.client.get(download_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        rows = response.data.get("results", {}).get("rows", [])
+        self.assertGreater(len(rows), DEFAULT_LIMIT)
+
+    @patch('api.constants.FacilitiesDownloadSettings.DEFAULT_LIMIT',
+           DEFAULT_LIMIT)
+    def test_non_api_user_cannot_download_over_limit(self):
+        expected_error_message = (
+            'Downloads are supported only for searches resulting in '
+            f'{DEFAULT_LIMIT} facilities or less.'
         )
 
-    @patch(
-        "api.constants.FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS",
-        DEFAULT_ALLOWED_DOWNLOADS,
-    )
-    def test_api_user_not_limited_by_download_count(self):
-        user = self.create_user(is_api_user=True)
-        self.login_user(user)
+        email = "test@example.com"
+        password = "example123"
+        user = User.objects.create(email=email)
+        user.set_password(password)
+        user.save()
+        self.client.login(email=email, password=password)
 
-        # Make multiple downloads that would exceed the limit for regular users
-        for _ in range(DEFAULT_ALLOWED_DOWNLOADS + 1):
-            response = self.get_facility_downloads()
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
+        download_url = reverse("facilities-downloads-list")
+
+        response = self.client.get(download_url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        response_data = response.json()
+        self.assertEqual(response_data[0], expected_error_message)
