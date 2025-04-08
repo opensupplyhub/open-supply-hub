@@ -6,8 +6,9 @@ from unittest.mock import patch
 
 from api.models.user import User
 from api.constants import FeatureGroups
-from api.models.facility_download_limit import \
-    FacilityDownloadLimit  # noqa: F401
+from api.models.facility_download_limit import FacilityDownloadLimit
+
+# Override constants different from production value for easier testing
 FACILITIES_DOWNLOAD_LIMIT = 3
 DEFAULT_ALLOWED_DOWNLOADS = 1
 
