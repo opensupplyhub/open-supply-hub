@@ -155,6 +155,12 @@ resource "aws_cloudfront_distribution" "cdn" {
       lambda_arn = aws_lambda_function.redirect_to_s3_origin.qualified_arn
     }
 
+    lambda_function_association {
+      event_type   = "viewer-response"
+      lambda_arn   = aws_lambda_function.add_security_headers.qualified_arn
+      include_body = false
+    }
+
     compress               = false
     viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 0
