@@ -1,9 +1,11 @@
 from typing import Optional
 from django.db import models
-from django.db.models import (
-    BigAutoField,
-)
+from django.forms import ValidationError
 from django.utils import timezone
+from django.db import transaction
+from django.db.models import (
+    BigAutoField, F,
+)
 from api.constants import FacilitiesDownloadSettings
 
 
@@ -25,21 +27,22 @@ class FacilityDownloadLimit(models.Model):
         help_text='The user to whom the download limit applies.'
     )
     last_download_time = models.DateTimeField(
-        null=True,
-        blank=True,
+        null=False,
+        blank=False,
+        default=timezone.now,
         help_text='The date of the last download.'
     )
     allowed_downloads = models.PositiveIntegerField(
         null=False,
         blank=False,
-        default=10,
+        default=FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS,
         help_text=('The number of facility data downloads a user '
                    'can make per month.')
     )
     allowed_records_number = models.PositiveIntegerField(
         null=False,
         blank=False,
-        default=1000,
+        default=FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT,
         help_text=('The maximum number of facility records a user '
                    'can download in a single request.')
     )
@@ -53,8 +56,16 @@ class FacilityDownloadLimit(models.Model):
     )
 
     def increment_download_count(self):
+        with transaction.atomic():
+            self.refresh_from_db()
+            if (
+                self.download_count >=
+                self.allowed_downloads
+            ):
+                raise ValidationError("Concurrent limit exceeded.")
+
         self.last_download_time = timezone.now()
-        self.download_count += 1
+        self.download_count = F('download_count') + 1
         self.save()
 
     @staticmethod

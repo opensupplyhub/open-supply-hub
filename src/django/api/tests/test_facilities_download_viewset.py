@@ -6,8 +6,8 @@ from unittest.mock import patch
 
 from api.models.user import User
 from api.constants import FeatureGroups
-
-
+from api.models.facility_download_limit import \
+    FacilityDownloadLimit  # noqa: F401
 FACILITIES_DOWNLOAD_LIMIT = 3
 DEFAULT_ALLOWED_DOWNLOADS = 1
 
@@ -456,8 +456,12 @@ class FacilitiesDownloadViewSetTest(APITestCase):
     def test_user_cannot_download_over_records_limit(self):
         user = self.create_user()
         self.login_user(user)
-
+        FacilityDownloadLimit.objects.create(
+            user=user,
+            allowed_records_number=FACILITIES_DOWNLOAD_LIMIT
+        )
         response = self.get_facility_downloads()
+
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.json(),
@@ -466,12 +470,16 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         )
 
     @patch(
-        "api.constants.FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS",
-        DEFAULT_ALLOWED_DOWNLOADS,
+        'api.constants.FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS',
+        DEFAULT_ALLOWED_DOWNLOADS
     )
     def test_user_cannot_download_over_allowed_downloads(self):
         user = self.create_user()
         self.login_user(user)
+        FacilityDownloadLimit.objects.create(
+            user=user,
+            allowed_downloads=DEFAULT_ALLOWED_DOWNLOADS
+        )
 
         first_response = self.get_facility_downloads()
         self.assertEqual(first_response.status_code, status.HTTP_200_OK)

@@ -46,11 +46,10 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
         facility_download_limit = FacilityDownloadLimit \
             .get_or_create_user_download_limit(request.user)
-        fdl = facility_download_limit
 
         if (
-            fdl
-            and fdl.download_count >= fdl.allowed_downloads
+            facility_download_limit
+            and facility_download_limit.download_count >= facility_download_limit.allowed_downloads  # noqa: E501
         ):
             raise ValidationError('You have reached the maximum number of '
                                   'facility downloads allowed this month. '
