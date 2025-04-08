@@ -33,10 +33,10 @@ def validate_url_field(field_name, value):
     validator = URLValidator()
     try:
         validator(value)
-    except ValidationError:
+    except ValidationError as err:
         raise serializers.ValidationError(
             f"Enter a valid URL for '{field_name}'."
-        )
+        ) from err
 
     return value
 

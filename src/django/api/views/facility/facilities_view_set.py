@@ -899,8 +899,8 @@ class FacilitiesViewSet(ListModelMixin,
                 'approved': approved,
             })
 
-        except (Facility.DoesNotExist, Contributor.DoesNotExist):
-            raise NotFound()
+        except (Facility.DoesNotExist, Contributor.DoesNotExist) as exc:
+            raise NotFound() from exc
 
     def __handle_file_upload(self, file, contributor_name, facility_claim):
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')[:-3]
