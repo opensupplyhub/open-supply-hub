@@ -5,7 +5,7 @@ from django.contrib.auth.models import Group
 from unittest.mock import patch
 
 from api.models.user import User
-from api.constants import FeatureGroups
+from api.constants import FacilitiesDownloadSettings, FeatureGroups
 from api.models.facility_download_limit import FacilityDownloadLimit
 
 # Override constants different from production value for easier testing
@@ -535,4 +535,31 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         self.assertGreater(
             len(response.data.get("results", {}).get("rows", [])),
             DEFAULT_ALLOWED_DOWNLOADS
+        )
+
+    def test_user_without_download_limit_record(self):
+        user = self.create_user()
+        self.login_user(user)
+        # Ensure no FacilityDownloadLimit record exists
+        self.assertEqual(
+            FacilityDownloadLimit.objects.filter(user=user).count(),
+            0
+        )
+        # User should be able to download
+        response = self.get_facility_downloads()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # A FacilityDownloadLimit record should be created with default values
+        self.assertEqual(
+            FacilityDownloadLimit.objects.filter(user=user).count(),
+            1
+        )
+        limit = FacilityDownloadLimit.objects.get(user=user)
+        self.assertEqual(limit.download_count, 1)  # First download counted
+        self.assertEqual(
+            limit.allowed_downloads,
+            FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS
+        )
+        self.assertEqual(
+            limit.allowed_records_number,
+            FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT
         )
