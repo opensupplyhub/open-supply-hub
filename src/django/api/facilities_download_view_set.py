@@ -1,15 +1,11 @@
-from rest_framework import viewsets, mixins
-from django.utils import timezone
-from typing import Optional, Union
+from typing import Union
 
 from django.contrib.auth.models import AnonymousUser
-import math
-from django.db import transaction
-from django.db.models import F
+from rest_framework.exceptions import ValidationError
+from rest_framework import viewsets, mixins
 
 from api.pagination import PageAndSizePagination
 from api.models.facility.facility_index import FacilityIndex
-from api.models.facility_download_limit import FacilityDownloadLimit
 from api.models.user import User
 from api.serializers.facility.facility_query_params_serializer import (
     FacilityQueryParamsSerializer)
@@ -18,7 +14,7 @@ from api.serializers.facility.facility_download_serializer \
 from api.serializers.facility.facility_download_serializer_embed_mode \
     import FacilityDownloadSerializerEmbedMode
 from api.serializers.utils import get_embed_contributor_id_from_query_params
-from rest_framework.exceptions import ValidationError
+from api.constants import FacilitiesDownloadSettings
 
 
 class FacilitiesDownloadViewSet(mixins.ListModelMixin,
@@ -51,45 +47,24 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         if not params.is_valid():
             raise ValidationError(params.errors)
 
-        facility_download_limit = self.__get_user_download_limit(request.user)
-
-        if (
-            facility_download_limit
-            and facility_download_limit.download_count >= facility_download_limit.allowed_downloads  # noqa: E501
-        ):
-            raise ValidationError('You have reached the maximum number of '
-                                  'facility downloads allowed this month. '
-                                  'Please wait until next month to download '
-                                  'more data.')
-
         queryset = FacilityIndex \
             .objects \
             .filter_by_query_params(request.query_params) \
             .order_by('name', 'address', 'id')
 
-        total_records = queryset.count()
-
-        is_large_download_allowed = not facility_download_limit or (
-            total_records <= facility_download_limit.allowed_records_number
+        is_large_download_allowed = self.__can_user_download_over_limit(
+            queryset.count(), request.user
         )
-
         if (not is_large_download_allowed):
             raise ValidationError(
                 ('Downloads are supported only for searches resulting in '
-                 f'{facility_download_limit.allowed_records_number} '
+                 f'{FacilitiesDownloadSettings.DEFAULT_LIMIT} '
                  'facilities or less.'))
 
         page_queryset = self.paginate_queryset(queryset)
 
         if page_queryset is None:
             raise ValidationError("Invalid pageSize parameter")
-
-        page_size = int(request.query_params.get("pageSize", 100))
-        current_page = int(request.query_params.get("page", 1))
-        total_pages = math.ceil(total_records / page_size)
-
-        if facility_download_limit and current_page >= total_pages:
-            self.__update_facility_download_limit(facility_download_limit)
 
         list_serializer = self.get_serializer(page_queryset)
         rows = [f['row'] for f in list_serializer.data]
@@ -99,43 +74,13 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         return response
 
     @staticmethod
-    def __get_user_download_limit(
-        user: Union[AnonymousUser, User]
-    ) -> Optional[FacilityDownloadLimit]:
+    def __can_user_download_over_limit(
+            number: int,
+            user: Union[AnonymousUser, User]) -> bool:
+        is_over_limit = number > FacilitiesDownloadSettings.DEFAULT_LIMIT
         is_api_user = not user.is_anonymous and user.has_groups
 
-        # if user is an API user we don't want to impose limits
-        if is_api_user or user.is_anonymous:
-            return None
+        if not is_api_user and is_over_limit:
+            return False
 
-        facility_download_limit, _ = FacilityDownloadLimit.objects \
-            .get_or_create(user=user)
-
-        current_date = timezone.now()
-        last_download_date = facility_download_limit.last_download_time
-
-        if (
-            current_date.month != last_download_date.month or
-            current_date.year != last_download_date.year
-        ):
-            facility_download_limit.download_count = 0
-            facility_download_limit.last_download_time = timezone.now()
-            facility_download_limit.save()
-
-        return facility_download_limit
-
-    @staticmethod
-    def __update_facility_download_limit(
-        facility_download_limit: FacilityDownloadLimit,
-    ) -> None:
-        with transaction.atomic():
-            facility_download_limit.refresh_from_db()
-            if (
-                facility_download_limit.download_count >=
-                facility_download_limit.allowed_downloads
-            ):
-                raise ValidationError("Concurrent limit exceeded.")
-
-            facility_download_limit.last_download_time = timezone.now()
-            facility_download_limit.download_count = F('download_count') + 1
-            facility_download_limit.save()
+        return True
