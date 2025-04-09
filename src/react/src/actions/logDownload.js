@@ -14,7 +14,6 @@ import {
 export const startLogDownload = createAction('START_LOG_DOWNLOAD');
 export const failLogDownload = createAction('FAIL_LOG_DOWNLOAD');
 export const completeLogDownload = createAction('COMPLETE_LOG_DOWNLOAD');
-export const hideLogDownloadError = createAction('HIDE_LOG_DOWNLOAD_ERROR');
 
 export function logDownload(format, options) {
     return async (dispatch, getState) => {
