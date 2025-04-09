@@ -6,6 +6,8 @@ import time
 
 logger = logging.getLogger(__name__)
 
+INGESTION_PIPELINE_ID = "nlp_index_pipeline"
+
 
 class Command(BaseCommand):
     help = "Configure OpenSearch settings for the application."
@@ -112,3 +114,37 @@ class Command(BaseCommand):
         else:
             logger.info("Model with ID '%s' already exists.",
                         model_id.value)
+
+        ingestion_pipeline_id = Settings.get(
+            name=Settings.Name.OS_INGESTION_PIPELINE_ID,
+            description="Ingestion pipeline for OpenSearch embedding generation model.",
+            value=INGESTION_PIPELINE_ID,
+        )
+
+        ingestion_pipeline_res = opensearch.client.ingest.put_pipeline(
+            id=ingestion_pipeline_id.value,
+            body={
+                "description": "An NLP ingestion pipeline!",
+                "processors": [
+                    {
+                        "text_embedding": {
+                            "model_id": model_id.value,
+                            "field_map": {
+                                "name": "name_embedding",
+                                "address": "address_embedding",
+                            },
+                        },
+                    },
+                ],
+            },
+        )
+
+        if not ingestion_pipeline_res["acknowledged"]:
+            logger.error(
+                "Failed to configure ingestion pipeline, update not acknowledged!")
+            raise RuntimeError("Failed to configure ingestion pipeline!")
+        else:
+            logger.info(
+                "Ingestion pipeline with ID '%s' updated successfully!",
+                ingestion_pipeline_id.value,
+            )
