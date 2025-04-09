@@ -149,3 +149,64 @@ resource "aws_cloudwatch_log_group" "redirect_to_s3_origin" {
   name              = "/aws/lambda/func${local.short}RedirectToS3origin"
   retention_in_days = 14
 }
+
+# 
+# Add security headers
+#
+data "aws_iam_policy_document" "lambda_edge_add_security_headers_assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com", "edgelambda.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+data "aws_iam_policy_document" "lambda_edge_add_security_headers_exec_role_policy" {
+  statement {
+    sid = "1"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+    resources = [
+      "arn:aws:logs:*:*:*"
+    ]
+  }
+}
+
+resource "aws_iam_role" "lambda_edge_add_security_headers" {
+  name               = "role${local.short}AddSecurityHeaders"
+  assume_role_policy = data.aws_iam_policy_document.lambda_edge_add_security_headers_assume_role.json
+}
+
+resource "aws_iam_role_policy" "lambda_edge_add_security_headers_exec_role" {
+  role   = aws_iam_role.lambda_edge_add_security_headers.id
+  policy = data.aws_iam_policy_document.lambda_edge_add_security_headers_exec_role_policy.json
+}
+
+resource "aws_lambda_function" "add_security_headers" {
+  filename         = "lambda-functions/add_security_headers/add_security_headers.zip"
+  source_code_hash = filebase64sha256("lambda-functions/add_security_headers/add_security_headers.zip")
+  function_name    = "func${local.short}AddSecurityHeaders"
+  role             = aws_iam_role.lambda_edge_add_security_headers.arn
+  handler          = "index.handler"
+  publish          = true
+  runtime          = "nodejs18.x"
+  provider         = aws.certificates
+
+  depends_on = [
+    aws_iam_role.lambda_edge_add_security_headers,
+    aws_cloudwatch_log_group.add_security_headers,
+  ]
+}
+
+resource "aws_cloudwatch_log_group" "add_security_headers" {
+  name              = "/aws/lambda/func${local.short}AddSecurityHeaders"
+  retention_in_days = 14
+}
