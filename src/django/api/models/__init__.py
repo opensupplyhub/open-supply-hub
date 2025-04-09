@@ -4,6 +4,9 @@ from .api.api_block import (
   ApiBlock,
   HistoricalApiBlock,
 )
+from .facility_download_limit import (
+  FacilityDownloadLimit,
+)
 from .api.api_limit import (
   ApiLimit,
   HistoricalApiLimit,
