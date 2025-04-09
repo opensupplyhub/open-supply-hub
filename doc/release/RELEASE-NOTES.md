@@ -24,6 +24,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [OSDEV-1896](https://opensupplyhub.atlassian.net/browse/OSDEV-1896) - The session cookie is limited to 24 hours. After this period, the user session expires, and the user needs to log in again.
+* [OSDEV-1897](https://opensupplyhub.atlassian.net/browse/OSDEV-1897) - A Lambda@Edge function was added to dynamically set the following response headers on the CloudFront side, depending on whether embed mode is active:
+    * `X-Frame-Options: DENY`
+    * `Content-Security-Policy: frame-ancestors 'none'`
 
 ### Bugfix
 * *Describe bugfix changes here.*
