@@ -7,6 +7,7 @@ import time
 logger = logging.getLogger(__name__)
 
 INGESTION_PIPELINE_ID = "nlp_index_pipeline"
+SEARCH_PIPELINE_ID = "nlp_search_pipeline"
 
 
 class Command(BaseCommand):
@@ -147,4 +148,39 @@ class Command(BaseCommand):
             logger.info(
                 "Ingestion pipeline with ID '%s' updated successfully!",
                 ingestion_pipeline_id.value,
+            )
+
+        search_pipeline_id = Settings.get(
+            name=Settings.Name.OS_SEARCH_PIPELINE_ID,
+            description="Search pipeline for OpenSearch hybrid search.",
+            value=SEARCH_PIPELINE_ID,
+        )
+
+        search_pipeline_res = opensearch.client.search_pipeline.put(
+            id=search_pipeline_id.value,
+            body={
+                "description": "Post processor for hybrid search.",
+                "phase_results_processors": [
+                    {
+                        "normalization-processor": {
+                            "normalization": {
+                                "technique": "min_max"
+                            },
+                            "combination": {
+                                "technique": "arithmetic_mean"
+                            }
+                        }
+                    }
+                ]
+            }
+        )
+
+        if not search_pipeline_res["acknowledged"]:
+            logger.error(
+                "Failed to configure search pipeline, update not acknowledged!")
+            raise RuntimeError("Failed to configure search pipeline!")
+        else:
+            logger.info(
+                "Search pipeline with ID '%s' updated successfully!",
+                search_pipeline_id.value,
             )
