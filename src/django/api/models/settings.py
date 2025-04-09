@@ -11,6 +11,7 @@ class Settings(models.Model):
         OS_SENTENCE_TRANSFORMER_MODEL_ID = 'os_sentence_transformer_model_id', 'OS Sentence Transformer Model ID'
         OS_SENTENCE_TRANSFORMER_MODEL_NAME = 'os_sentence_transformer_model_name', 'OS Sentence Transformer Model Name'
         OS_INGESTION_PIPELINE_ID = 'os_ingestion_pipeline_id', 'OS Ingestion Pipeline ID'
+        OS_SEARCH_PIPELINE_ID = 'os_search_pipeline_id', 'OS Search Pipeline ID'
 
     name = models.CharField(
         max_length=255,
