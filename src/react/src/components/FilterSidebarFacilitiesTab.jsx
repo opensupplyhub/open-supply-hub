@@ -355,7 +355,7 @@ function FilterSidebarFacilitiesTab({
                         alternative={
                             <DownloadFacilitiesButton
                                 disabled={
-                                    facilitiesCount >=
+                                    facilitiesCount >
                                     FACILITIES_DOWNLOAD_DEFAULT_LIMIT
                                 }
                                 setLoginRequiredDialogIsOpen={
