@@ -116,6 +116,55 @@ class Command(BaseCommand):
             logger.info("Model with ID '%s' already exists.",
                         model_id.value)
 
+        search_models_res = opensearch.client.plugins.ml.search_models(
+            body={
+                "query": {
+                    "ids": {
+                        "values": [
+                            model_id.value,
+                        ],
+                    },
+                },
+            },
+        )
+
+        model = search_models_res["hits"]["hits"][0]["_source"]
+
+        if model["model_state"] != "DEPLOYED":
+            logger.info(
+                "Deploying model with ID '%s'.",
+                model_id.value,
+            )
+            deploy_res = opensearch.client.plugins.ml.deploy_model(
+                model_id=model_id.value,
+            )
+
+            while True:
+                task_res = opensearch.client.plugins.ml.get_task(
+                    task_id=deploy_res["task_id"],
+                )
+
+                if task_res["state"] == "COMPLETED":
+                    logger.info("Model with ID '%s' deployed successfully!",
+                                model_id.value)
+                    break
+
+                if task_res["state"] == "FAILED":
+                    logger.error(
+                        "Model deployment with ID '%s' failed! Task state: '%s'",
+                        model_id.value,
+                        task_res["state"],
+                    )
+                    raise RuntimeError("Model deployment failed!")
+
+                logger.info(
+                    "Waiting for model deployment with ID '%s'! Task state: '%s'",
+                    model_id.value,
+                    task_res["state"],
+                )
+
+                time.sleep(2)
+
         ingestion_pipeline_id = Settings.get(
             name=Settings.Name.OS_INGESTION_PIPELINE_ID,
             description="Ingestion pipeline for OpenSearch embedding generation model.",
@@ -184,3 +233,5 @@ class Command(BaseCommand):
                 "Search pipeline with ID '%s' updated successfully!",
                 search_pipeline_id.value,
             )
+
+        logger.info("OpenSearch settings configured successfully!")
