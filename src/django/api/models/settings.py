@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class Settings(models.Model):
     """
     Model to store app settings.
