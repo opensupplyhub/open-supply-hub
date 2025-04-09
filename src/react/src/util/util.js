@@ -39,6 +39,8 @@ import map from 'lodash/map';
 import mapValues from 'lodash/mapValues';
 import mapKeys from 'lodash/mapKeys';
 import uniq from 'lodash/uniq';
+import startCase from 'lodash/startCase';
+import toLower from 'lodash/toLower';
 import { isURL, isInt } from 'validator';
 import { featureCollection, bbox } from '@turf/turf';
 import hash from 'object-hash';
@@ -1601,10 +1603,7 @@ export const getSelectStyles = (isErrorState = false) => ({
     }),
 });
 
-export const snakeToTitleCase = str =>
-    str
-        .replace(/_/g, ' ') // Replace underscores with space.
-        .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize first letter of each word.
+export const snakeToTitleCase = str => startCase(toLower(str));
 
 // SLC form validation schema.
 
@@ -1633,6 +1632,7 @@ const slcTextFieldValidation = stringYup()
         ({ label }) => `${label} cannot be a number.`,
         value => {
             if (value == null) return true;
+
             const numberPattern = /^-?(0|[1-9]\d*)(\.\d+)?$/;
             return !numberPattern.test(value);
         },

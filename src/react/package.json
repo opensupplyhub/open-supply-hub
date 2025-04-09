@@ -17,6 +17,7 @@
         "draft-js": "^0.11.7",
         "draftjs-to-html": "^0.9.1",
         "file-saver": "2.0.0",
+        "formik": "2.4.6",
         "http-proxy-middleware": "0.19.1",
         "immutability-helper": "2.9.0",
         "leaflet": "1.5.1",
@@ -52,13 +53,12 @@
         "remove-accents": "^0.5.0",
         "sass": "^1.54.9",
         "typeface-darker-grotesque": "^1.1.13",
+        "unidecode": "1.1.0",
         "user-event": "2.0.1",
         "uuid": "^9.0.1",
         "validator": "13.7.0",
         "xlsx": "0.18.5",
-        "formik": "2.4.6",
-        "yup": "1.6.1",
-        "unidecode": "1.1.0"
+        "yup": "1.6.1"
     },
     "scripts": {
         "start": "craco start",

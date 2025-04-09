@@ -2223,7 +2223,7 @@ describe('snakeToTitleCase', () => {
     });
 
     it('handles input with multiple underscores', () => {
-        expect(snakeToTitleCase('one__two___three')).toBe('One  Two   Three');
+        expect(snakeToTitleCase('one__two___three')).toBe('One Two Three');
     });
 
     it('handles already capitalized input', () => {

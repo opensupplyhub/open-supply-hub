@@ -321,7 +321,7 @@ describe("ProductionLocationInfo component, test input fields for POST v1/produc
                         errors: [
                             {
                                 field: "non_field_errors",
-                                detail: "Invalid data. Expected a dictionary (object), but got dict."
+                                detail: "Invalid data. Expected a dictionary (object), but got list."
                             }
                         ],
                         rawData: {
@@ -329,7 +329,7 @@ describe("ProductionLocationInfo component, test input fields for POST v1/produc
                             errors: [
                                 {
                                     field: "non_field_errors",
-                                    detail: "Invalid data. Expected a dictionary (object), but got dict."
+                                    detail: "Invalid data. Expected a dictionary (object), but got list."
                                 }
                             ]
                         }
@@ -349,7 +349,7 @@ describe("ProductionLocationInfo component, test input fields for POST v1/produc
         expect(getByText(nonFieldErrorSubtitle)).toBeInTheDocument();
         expect(getByText(errorSupportInstructions)).toBeInTheDocument();
         expect(getByText(
-            "Invalid data. Expected a dictionary (object), but got dict."
+            "Invalid data. Expected a dictionary (object), but got list."
         )).toBeInTheDocument();
 
         const closeButton = getByLabelText(/close/i)
@@ -359,7 +359,7 @@ describe("ProductionLocationInfo component, test input fields for POST v1/produc
         expect(queryByText(nonFieldErrorSubtitle)).not.toBeInTheDocument();
         expect(queryByText(errorSupportInstructions)).not.toBeInTheDocument();
         expect(queryByText(
-            "Invalid data. Expected a dictionary (object), but got dict."
+            "Invalid data. Expected a dictionary (object), but got list."
         )).not.toBeInTheDocument();
     });
 });
