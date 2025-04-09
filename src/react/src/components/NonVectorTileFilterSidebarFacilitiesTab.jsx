@@ -228,7 +228,7 @@ function NonVectorTileFilterSidebarFacilitiesTab({
                         alternative={
                             <DownloadFacilitiesButton
                                 disabled={
-                                    facilitiesCount >
+                                    facilitiesCount >=
                                     FACILITIES_DOWNLOAD_DEFAULT_LIMIT
                                 }
                                 setLoginRequiredDialogIsOpen={

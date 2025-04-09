@@ -93,13 +93,7 @@ export default function downloadFacilities(format, { isEmbedded }) {
                         failFetchDownloadFacilities,
                     ),
                 );
-                dispatch(
-                    logErrorAndDispatchFailure(
-                        err,
-                        'An error prevented the facilities download',
-                        failLogDownload,
-                    ),
-                );
+                dispatch(failLogDownload());
             });
     };
 }
