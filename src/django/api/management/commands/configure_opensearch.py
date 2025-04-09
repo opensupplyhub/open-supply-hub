@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from api.services.opensearch.opensearch import OpenSearchServiceConnection
+from api.models.settings import Settings
 import logging
 
 logger = logging.getLogger(__name__)
@@ -34,3 +35,25 @@ class Command(BaseCommand):
             raise RuntimeError("Failed to configure cluster settings!")
 
         logger.info("Cluster settings configured successfully!")
+
+        model_group_id = Settings.get(
+            description = "Model group ID for OpenSearch embedding generation model.",
+            name= Settings.Name.OS_SENTENCE_TRANSFORMER_GROUP_ID,
+        )
+
+        if not model_group_id.value:
+            logger.info("Creating model group ID for OpenSearch embedding generation model.")
+            model_reg_res = opensearch.client.plugins.ml.register_model_group(
+                body={
+                    "name": "NLP_Models",
+                    "description": "A model group for NLP models.",
+                },
+            )
+            model_group_id.value = model_reg_res["model_group_id"]
+            model_group_id.save()
+        else:
+            logger.info("Model group ID already exists.")
+
+
+
+        logger.info(model_group_id)
