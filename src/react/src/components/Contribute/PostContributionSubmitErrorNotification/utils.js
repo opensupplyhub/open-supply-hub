@@ -6,23 +6,21 @@ import { API_V1_ERROR_REQUEST_SOURCE_ENUM } from '../../../util/constants';
 import { snakeToTitleCase } from '../../../util/util';
 
 const formPostContributionErrorNotificationContent = errorObj => {
+    const { errorSource, rawData, errors, detail } = errorObj;
+
     const errorNotificationContent = {
-        errorType: null,
+        errorType: errorSource,
+        rawData,
         invalidFields: null,
         nonFieldErrorDetails: null,
         highLevelDetail: null,
-        rawData: null,
     };
 
-    if (errorObj.errorSource === API_V1_ERROR_REQUEST_SOURCE_ENUM.CLIENT) {
-        errorNotificationContent.errorType = errorObj.errorSource;
-        errorNotificationContent.rawData = errorObj.rawData;
-        if (!isEmpty(errorObj.errors)) {
-            const partitionCondition = error =>
-                error.field !== 'non_field_errors';
+    if (errorSource === API_V1_ERROR_REQUEST_SOURCE_ENUM.CLIENT) {
+        if (!isEmpty(errors)) {
             const [fieldSpecificErrors, nonFieldErrors] = partition(
-                errorObj.errors,
-                partitionCondition,
+                errors,
+                error => error.field !== 'non_field_errors',
             );
 
             if (!isEmpty(fieldSpecificErrors)) {
@@ -32,21 +30,15 @@ const formPostContributionErrorNotificationContent = errorObj => {
                     ),
                 );
             }
+
             if (!isEmpty(nonFieldErrors)) {
                 errorNotificationContent.nonFieldErrorDetails = uniq(
                     nonFieldErrors.map(error => error.detail),
                 );
             }
         } else {
-            errorNotificationContent.highLevelDetail = errorObj.detail;
+            errorNotificationContent.highLevelDetail = detail;
         }
-        return errorNotificationContent;
-    }
-
-    if (errorObj.errorSource === API_V1_ERROR_REQUEST_SOURCE_ENUM.SERVER) {
-        errorNotificationContent.errorType = errorObj.errorSource;
-        errorNotificationContent.rawData = errorObj.rawData;
-        return errorNotificationContent;
     }
 
     return errorNotificationContent;

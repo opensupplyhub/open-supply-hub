@@ -19,18 +19,16 @@ const PostContributionSubmitErrorNotification = ({
     errorObj,
     classes,
 }) => {
-    const errorNotificationContent = formPostContributionErrorNotificationContent(
-        errorObj,
-    );
+    const {
+        errorType,
+        rawData,
+        invalidFields,
+        nonFieldErrorDetails,
+        highLevelDetail,
+    } = formPostContributionErrorNotificationContent(errorObj);
 
-    if (
-        errorNotificationContent.errorType ===
-        API_V1_ERROR_REQUEST_SOURCE_ENUM.CLIENT
-    ) {
-        if (
-            !isEmpty(errorNotificationContent.invalidFields) ||
-            !isEmpty(errorNotificationContent.nonFieldErrorDetails)
-        ) {
+    if (errorType === API_V1_ERROR_REQUEST_SOURCE_ENUM.CLIENT) {
+        if (!isEmpty(invalidFields) || !isEmpty(nonFieldErrorDetails)) {
             return (
                 <NotificationContainer showNotification={showNotification}>
                     <ErrorContent
@@ -38,9 +36,9 @@ const PostContributionSubmitErrorNotification = ({
                         supportInstructions={
                             ERROR_CONTENT_COPIES.validation.supportInstructions
                         }
-                        rawErrorData={errorNotificationContent.rawData}
+                        rawErrorData={rawData}
                     >
-                        {!isEmpty(errorNotificationContent.invalidFields) && (
+                        {!isEmpty(invalidFields) && (
                             <>
                                 <Typography>
                                     {
@@ -49,26 +47,22 @@ const PostContributionSubmitErrorNotification = ({
                                     }
                                 </Typography>
                                 <List className={classes.errorList}>
-                                    {errorNotificationContent.invalidFields.map(
-                                        field => (
-                                            <ListItem key={field}>
-                                                <ListItemIcon>
-                                                    <LensIcon
-                                                        className={
-                                                            classes.bulletIcon
-                                                        }
-                                                    />
-                                                </ListItemIcon>
-                                                <Typography>{field}</Typography>
-                                            </ListItem>
-                                        ),
-                                    )}
+                                    {invalidFields.map(field => (
+                                        <ListItem key={field}>
+                                            <ListItemIcon>
+                                                <LensIcon
+                                                    className={
+                                                        classes.bulletIcon
+                                                    }
+                                                />
+                                            </ListItemIcon>
+                                            <Typography>{field}</Typography>
+                                        </ListItem>
+                                    ))}
                                 </List>
                             </>
                         )}
-                        {!isEmpty(
-                            errorNotificationContent.nonFieldErrorDetails,
-                        ) && (
+                        {!isEmpty(nonFieldErrorDetails) && (
                             <>
                                 <Typography>
                                     {
@@ -77,22 +71,18 @@ const PostContributionSubmitErrorNotification = ({
                                     }
                                 </Typography>
                                 <List className={classes.errorList}>
-                                    {errorNotificationContent.nonFieldErrorDetails.map(
-                                        detail => (
-                                            <ListItem key={detail}>
-                                                <ListItemIcon>
-                                                    <LensIcon
-                                                        className={
-                                                            classes.bulletIcon
-                                                        }
-                                                    />
-                                                </ListItemIcon>
-                                                <Typography>
-                                                    {detail}
-                                                </Typography>
-                                            </ListItem>
-                                        ),
-                                    )}
+                                    {nonFieldErrorDetails.map(detail => (
+                                        <ListItem key={detail}>
+                                            <ListItemIcon>
+                                                <LensIcon
+                                                    className={
+                                                        classes.bulletIcon
+                                                    }
+                                                />
+                                            </ListItemIcon>
+                                            <Typography>{detail}</Typography>
+                                        </ListItem>
+                                    ))}
                                 </List>
                             </>
                         )}
@@ -110,7 +100,7 @@ const PostContributionSubmitErrorNotification = ({
                     supportInstructions={
                         ERROR_CONTENT_COPIES.highLevel.supportInstructions
                     }
-                    rawErrorData={errorNotificationContent.rawData}
+                    rawErrorData={rawData}
                 >
                     <Typography>
                         {ERROR_CONTENT_COPIES.highLevel.subtitle}
@@ -120,9 +110,7 @@ const PostContributionSubmitErrorNotification = ({
                             <ListItemIcon>
                                 <LensIcon className={classes.bulletIcon} />
                             </ListItemIcon>
-                            <Typography>
-                                {errorNotificationContent.highLevelDetail}
-                            </Typography>
+                            <Typography>{highLevelDetail}</Typography>
                         </ListItem>
                     </List>
                 </ErrorContent>
@@ -130,10 +118,7 @@ const PostContributionSubmitErrorNotification = ({
         );
     }
 
-    if (
-        errorNotificationContent.errorType ===
-        API_V1_ERROR_REQUEST_SOURCE_ENUM.SERVER
-    ) {
+    if (errorType === API_V1_ERROR_REQUEST_SOURCE_ENUM.SERVER) {
         return (
             <NotificationContainer showNotification={showNotification}>
                 <ErrorContent
@@ -141,7 +126,7 @@ const PostContributionSubmitErrorNotification = ({
                     supportInstructions={
                         ERROR_CONTENT_COPIES.server.supportInstructions
                     }
-                    rawErrorData={errorNotificationContent.rawData}
+                    rawErrorData={rawData}
                 >
                     <Typography>{ERROR_CONTENT_COPIES.server.body}</Typography>
                 </ErrorContent>
