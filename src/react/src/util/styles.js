@@ -567,6 +567,7 @@ export const makeProductionLocationDialogStyles = theme =>
         primaryText: Object.freeze({
             marginBottom: '20px',
             minHeight: '32px',
+            wordBreak: 'break-word',
         }),
         osIDText: Object.freeze({
             display: 'inline-block',
