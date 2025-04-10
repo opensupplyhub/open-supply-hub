@@ -7,7 +7,7 @@ resource "aws_s3_bucket" "react" {
   force_destroy = true
 
   tags = {
-    Name        = local.frontend_bucket_name
+    Name = local.frontend_bucket_name
   }
 }
 
@@ -109,22 +109,22 @@ resource "aws_cloudfront_distribution" "cdn" {
     }
 
     custom_header {
-        name = "X-CloudFront-Auth"
-        value = var.cloudfront_auth_token
+      name  = "X-CloudFront-Auth"
+      value = var.cloudfront_auth_token
     }
   }
 
   origin {
-    domain_name              = aws_s3_bucket.react.bucket_regional_domain_name
-    origin_id                = "originS3"
+    domain_name = aws_s3_bucket.react.bucket_regional_domain_name
+    origin_id   = "originS3"
 
     s3_origin_config {
       origin_access_identity = aws_cloudfront_origin_access_identity.react.cloudfront_access_identity_path
     }
 
     custom_header {
-        name = "X-CloudFront-Auth"
-        value = var.cloudfront_auth_token
+      name  = "X-CloudFront-Auth"
+      value = var.cloudfront_auth_token
     }
   }
 
@@ -152,7 +152,13 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     lambda_function_association {
       event_type = "viewer-request"
-      lambda_arn = "${aws_lambda_function.redirect_to_s3_origin.qualified_arn}"
+      lambda_arn = aws_lambda_function.redirect_to_s3_origin.qualified_arn
+    }
+
+    lambda_function_association {
+      event_type   = "viewer-response"
+      lambda_arn   = aws_lambda_function.add_security_headers.qualified_arn
+      include_body = false
     }
 
     compress               = false
@@ -170,7 +176,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     forwarded_values {
       query_string = true
-      headers = ["Referer"]
+      headers      = ["Referer"]
 
       cookies {
         forward = "none"
