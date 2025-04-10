@@ -2,16 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { number, object, string } from 'prop-types';
 import { withStyles, withTheme } from '@material-ui/core/styles';
 import { useHistory } from 'react-router-dom';
-import {
-    assign,
-    isArray,
-    isEmpty,
-    pickBy,
-    round,
-    size,
-    startCase,
-    toLower,
-} from 'lodash';
+import { assign, isArray, isEmpty, pickBy, round, size } from 'lodash';
 import Button from '@material-ui/core/Button';
 import Chip from '@material-ui/core/Chip';
 import Typography from '@material-ui/core/Typography';
@@ -32,7 +23,11 @@ import {
     EMPTY_PLACEHOLDER,
 } from '../../util/constants';
 import { makeProductionLocationDialogStyles } from '../../util/styles';
-import { getIsMobile, makeClaimFacilityLink } from '../../util/util';
+import {
+    getIsMobile,
+    makeClaimFacilityLink,
+    snakeToTitleCase,
+} from '../../util/util';
 
 const infoIcon = classes => (
     <InfoOutlinedIcon
@@ -162,7 +157,7 @@ const ProductionLocationDialog = ({
     const isClaimable =
         claimStatus === PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM.UNCLAIMED;
 
-    const statusLabel = startCase(toLower(moderationStatus));
+    const statusLabel = snakeToTitleCase(moderationStatus);
 
     const handleGoToMainPage = () => history.push(mainRoute);
     const handleGoToSearchByNameAndAddress = () =>

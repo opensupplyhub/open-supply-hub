@@ -13,6 +13,7 @@ import negate from 'lodash/negate';
 import omitBy from 'lodash/omitBy';
 import isEmpty from 'lodash/isEmpty';
 import isNumber from 'lodash/isNumber';
+import isString from 'lodash/isString';
 import isNil from 'lodash/isNil';
 import intersection from 'lodash/intersection';
 import values from 'lodash/values';
@@ -38,13 +39,20 @@ import map from 'lodash/map';
 import mapValues from 'lodash/mapValues';
 import mapKeys from 'lodash/mapKeys';
 import uniq from 'lodash/uniq';
-import has from 'lodash/has';
+import startCase from 'lodash/startCase';
+import toLower from 'lodash/toLower';
 import { isURL, isInt } from 'validator';
 import { featureCollection, bbox } from '@turf/turf';
 import hash from 'object-hash';
 import * as XLSX from 'xlsx';
 import moment from 'moment';
 import removeAccents from 'remove-accents';
+import unidecode from 'unidecode';
+import {
+    object as objectYup,
+    string as stringYup,
+    array as arrayYup,
+} from 'yup';
 
 import {
     OTHER,
@@ -72,6 +80,8 @@ import {
     MODERATION_QUEUE,
     MODERATION_STATUS_COLORS,
     DATA_SOURCES_ENUM,
+    API_V1_ERROR_REQUEST_SOURCE_ENUM,
+    SLC_FORM_CONSTRAINTS,
 } from './constants';
 
 import { createListItemCSV } from './util.listItemCSV';
@@ -423,13 +433,6 @@ export const mapParamToReactSelectOption = param => {
     });
 };
 
-export const updateStateFromData = (obj, dataKey, setter) => {
-    if (isArray(obj[dataKey]) && obj[dataKey].length > 0) {
-        const transformedData = obj[dataKey].map(mapParamToReactSelectOption);
-        setter(transformedData);
-    }
-};
-
 export const createSelectOptionsFromParams = params => {
     const paramsInArray = !isArray(params) ? [params] : params;
 
@@ -665,6 +668,57 @@ export function logErrorAndDispatchFailure(
         return dispatch(failureAction(errorMessages));
     };
 }
+
+export const logErrorAndDispatchFailureApiV1 = (
+    error,
+    defaultMessage,
+    failureAction,
+) => dispatch => {
+    const { response } = error || {};
+    const { status, data } = response || {};
+    const errorObj = {
+        errorSource: null,
+        detail: defaultMessage,
+        errors: null,
+        rawData: null,
+    };
+
+    if (status && data) {
+        if (status >= 400 && status <= 499) {
+            errorObj.errorSource = API_V1_ERROR_REQUEST_SOURCE_ENUM.CLIENT;
+            errorObj.detail = data.detail;
+            errorObj.rawData = data;
+
+            if (isArray(data.errors) && !isEmpty(data.errors)) {
+                errorObj.errors = data.errors;
+            }
+
+            return dispatch(failureAction(errorObj));
+        }
+
+        if (status >= 500 && status <= 599) {
+            errorObj.errorSource = API_V1_ERROR_REQUEST_SOURCE_ENUM.SERVER;
+            errorObj.rawData = data;
+
+            // Field "detail" and "errors" aren't always present in the V1 API
+            // response for 500 errors. In case of an unexpected error, it may
+            // return a different structure, such as HTML.
+            if (isString(data.detail) && !isEmpty(data.detail)) {
+                errorObj.detail = data.detail;
+
+                if (isArray(data.errors) && !isEmpty(data.errors)) {
+                    errorObj.errors = data.errors;
+                }
+            }
+
+            window.console.warn(error);
+            return dispatch(failureAction(errorObj));
+        }
+    }
+
+    window.console.warn(error);
+    return dispatch(failureAction(errorObj));
+};
 
 export const getValueFromEvent = ({ target: { value } }) => value;
 
@@ -1111,19 +1165,6 @@ export const convertFeatureFlagsObjectToListOfActiveFlags = featureFlags =>
 export const checkWhetherUserHasDashboardAccess = user =>
     get(user, 'is_superuser', false);
 
-export const convertRangeField = rangeObj => {
-    if (isEmpty(rangeObj)) {
-        return null;
-    }
-    if (has(rangeObj, 'min') && has(rangeObj, 'max')) {
-        if (rangeObj.min === rangeObj.max) {
-            return rangeObj.min;
-        }
-        return `${rangeObj.min}-${rangeObj.max}`;
-    }
-    return !isNil(rangeObj.min) ? rangeObj.min : rangeObj.max;
-};
-
 export const isValidNumberOfWorkers = value => {
     if (isEmpty(value)) {
         return true;
@@ -1560,4 +1601,98 @@ export const getSelectStyles = (isErrorState = false) => ({
         opacity: 0.7,
         color: isErrorState ? COLOURS.RED : provided.color,
     }),
+});
+
+export const snakeToTitleCase = str => startCase(toLower(str));
+
+// SLC form validation schema.
+
+const isCleanValueMeaningful = value => {
+    if (typeof value !== 'string') return false;
+
+    let cleaned = unidecode(value);
+    cleaned = cleaned
+        .replace(/[\n\r\t]/g, ' ') // Normalize whitespace characters.
+        .replace(/[^\w\s]|_/g, '') // Remove all punctuation.
+        .replace(/\s+/g, ' ') // Collapse multiple spaces.
+        .trim() // Trim leading/trailing spaces.
+        .toLowerCase();
+
+    return cleaned.length > 0;
+};
+
+const slcTextFieldValidation = stringYup()
+    .test(
+        'is-trimmed',
+        'Remove spaces at start and end of text.',
+        value => value == null || value === value.trim(),
+    )
+    .test(
+        'not-a-number',
+        ({ label }) => `${label} cannot be a number.`,
+        value => {
+            if (value == null) return true;
+
+            const numberPattern = /^-?(0|[1-9]\d*)(\.\d+)?$/;
+            return !numberPattern.test(value);
+        },
+    )
+    .test(
+        'meaningful-characters',
+        ({ label }) => `${label} cannot contain only spaces or symbols.`,
+        value => value == null || isCleanValueMeaningful(value),
+    )
+    .max(
+        SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH,
+        ({ label }) =>
+            `${label} cannot exceed ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters.`,
+    );
+
+export const slcValidationSchema = objectYup({
+    name: slcTextFieldValidation.required('Name is required.').label('Name'),
+    address: slcTextFieldValidation
+        .required('Address is required.')
+        .label('Address'),
+    country: objectYup().nullable().required('Country is required.'),
+    productType: arrayYup().max(
+        SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT,
+        `Maximum of ${SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT} product types allowed.`,
+    ),
+    numberOfWorkers: stringYup()
+        .test(
+            'is-trimmed',
+            'Remove spaces at start and end of entry.',
+            value => value == null || value === value.trim(),
+        )
+        .test(
+            'valid-format-and-range',
+            'Enter a single positive number (e.g., 5) or a valid range ' +
+                '(e.g., 3–10). In a range, the minimum value must be less ' +
+                'than or equal to the maximum, and both must be at least 1.',
+            value => {
+                if (value == null) return true;
+
+                const singleNumberPattern = /^\d+$/;
+                const rangePattern = /^(\d+)-(\d+)$/;
+
+                if (singleNumberPattern.test(value)) {
+                    return !/^0/.test(value) && parseInt(value, 10) >= 1;
+                }
+
+                const match = value.match(rangePattern);
+                if (match) {
+                    const [minStr, maxStr] = match.slice(1, 3);
+
+                    const min = parseInt(minStr, 10);
+                    const max = parseInt(maxStr, 10);
+
+                    if (/^0/.test(minStr) || /^0/.test(maxStr)) return false;
+
+                    return min >= 1 && max >= 1 && min <= max;
+                }
+
+                return false;
+            },
+        ),
+    parentCompany: slcTextFieldValidation.label('Parent company'),
 });
