@@ -97,9 +97,6 @@
                         }
                     }
                 },
-                "geo_hash": {
-                    "type": "keyword"
-                },
                 "business_url": {
                     "type": "text",
                     "fields": {
