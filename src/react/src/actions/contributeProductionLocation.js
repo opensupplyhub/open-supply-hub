@@ -3,6 +3,7 @@ import { createAction } from 'redux-act';
 import apiRequest from '../util/apiRequest';
 import {
     logErrorAndDispatchFailure,
+    logErrorAndDispatchFailureApiV1,
     makeProductionLocationURL,
     parseContribData,
     makeGetProductionLocationsForPotentialMatches,
@@ -75,7 +76,7 @@ export function createProductionLocation(contribData) {
             return dispatch(completeCreateProductionLocation(data));
         } catch (err) {
             return dispatch(
-                logErrorAndDispatchFailure(
+                logErrorAndDispatchFailureApiV1(
                     err,
                     'An error prevented creating production location',
                     failCreateProductionLocation,
@@ -99,7 +100,7 @@ export function updateProductionLocation(contribData, osID) {
             return dispatch(completeUpdateProductionLocation(data));
         } catch (err) {
             return dispatch(
-                logErrorAndDispatchFailure(
+                logErrorAndDispatchFailureApiV1(
                     err,
                     'An error prevented updating production location',
                     failUpdateProductionLocation,
