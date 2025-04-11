@@ -17,7 +17,6 @@ const claimAttachmentsUploaderStyles = Object.freeze({
         border: '2px dashed rgb(129, 214, 144)',
         textAlign: 'center',
         cursor: 'pointer',
-        width: '95%',
     }),
     fileInputHidden: Object.freeze({
         display: 'none',

@@ -30,10 +30,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1895](https://opensupplyhub.atlassian.net/browse/OSDEV-1895) - Updated the rules to send the `csrftoken` cookie with the `HttpOnly` flag to the user. Implemented logic to retrieve the `csrftoken` upon user login and save it to `localStorage`. Added functionality to set the `csrftoken` from `localStorage` in Axios headers.
 
 ### Bugfix
-* *Describe bugfix changes here.*
+* [OSDEV-1893](https://opensupplyhub.atlassian.net/browse/OSDEV-1893) - Prevented sending a claim request to `/api/facilities/{os_id}/claim/` for facilities that are pending or approved. Added BE validators to handle incoming claim data.
 
 ### What's new
-* *Describe what's new changes here.*
+* [OSDEV-1706](https://opensupplyhub.atlassian.net/browse/OSDEV-1706) - Implemented backend error handling for SLC form submission and created the UI to display post-submit errors in a user-friendly way. Aligned SLC form validation with backend rules to ensure maximum consistency.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:

@@ -1530,4 +1530,14 @@ export const mockedSectors = [
 
 export const MAX_LOCATIONS_TO_SHOW = 100;
 
+export const SLC_FORM_CONSTRAINTS = Object.freeze({
+    MAX_PRODUCT_TYPE_COUNT: 50,
+    MAX_STRING_LENGTH: 200,
+});
+
 export const HEADER_HEIGHT = 116;
+
+export const API_V1_ERROR_REQUEST_SOURCE_ENUM = {
+    CLIENT: 'CLIENT',
+    SERVER: 'SERVER',
+};
