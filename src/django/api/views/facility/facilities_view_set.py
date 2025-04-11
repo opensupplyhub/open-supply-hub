@@ -913,7 +913,7 @@ class FacilitiesViewSet(ListModelMixin,
 
         FacilityClaimAttachments.objects.create(
             claim=facility_claim,
-            file_name=f'{slugify(file_name)}.{file_extension}',
+            file_name=f'{slugify(file_name)}{file_extension}',
             claim_attachment=file
         )
 
