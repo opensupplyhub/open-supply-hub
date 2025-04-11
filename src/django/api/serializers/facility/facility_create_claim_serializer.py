@@ -44,19 +44,19 @@ def validate_url_field(field_name, value):
 
 def validate_files(files):
     if len(files) > MAX_ATTACHMENT_AMOUNT:
-        raise ValidationError(
+        raise DRFValidationError(
             f"Maximum {MAX_ATTACHMENT_AMOUNT} attachments allowed."
         )
 
     for file in files:
         extension = os.path.splitext(file.name)[-1].lower()
         if extension not in ALLOWED_ATTACHMENT_EXTENSIONS:
-            raise ValidationError(
+            raise DRFValidationError(
                 f"{file.name} has an unsupported file type."
             )
 
         if file.size > MAX_ATTACHMENT_SIZE_IN_BYTES:
-            raise ValidationError(
+            raise DRFValidationError(
                 f"{file.name} exceeds the 5MB size limit."
             )
 
