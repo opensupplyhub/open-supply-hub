@@ -2,7 +2,8 @@ import os
 
 from rest_framework import serializers
 from django.core.validators import URLValidator
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError as DRFValidationError
+from django.core.exceptions import ValidationError as DjangoValidationError
 from ...exceptions import BadRequestException
 
 from api.models import FacilityClaim
@@ -33,8 +34,8 @@ def validate_url_field(field_name, value):
     validator = URLValidator()
     try:
         validator(value)
-    except ValidationError as err:
-        raise serializers.ValidationError(
+    except DjangoValidationError as err:
+        raise DRFValidationError(
             f"Enter a valid URL for '{field_name}'."
         ) from err
 
