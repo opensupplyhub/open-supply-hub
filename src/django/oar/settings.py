@@ -145,8 +145,13 @@ ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = False
 ACCOUNT_EMAIL_SUBJECT_PREFIX = ''
+# https://docs.djangoproject.com/en/3.2/ref/settings/#session-cookie-age
+SESSION_COOKIE_AGE = 86400 # 24 hours in seconds
 
 AUTH_USER_MODEL = 'api.User'
+
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 
 REST_AUTH_SERIALIZERS = {
     'USER_DETAILS_SERIALIZER': 'api.serializers.UserSerializer',

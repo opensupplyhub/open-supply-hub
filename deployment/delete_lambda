@@ -2,27 +2,41 @@
 
 set -euo pipefail
 
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-REGION="us-east-1"
+if [[ $# -ne 3 ]]; then
+  echo "Usage: $0 <ENV_NAME> <CLOUDFRONT_DOMAIN> <FUNCTION_SUFFIX>"
+  echo "Example: $0 PreProd cdn.example.com RedirectToS3origin"
+  exit 1
+fi
+
 ENV_NAME=$1
 CLOUDFRONT_DOMAIN=$2
-LAMBDA_ARN="arn:aws:lambda:$REGION:$ACCOUNT_ID:function:funcOpenSupplyHub${ENV_NAME}RedirectToS3origin"
-LAMBDA_VERSION=$(aws lambda list-versions-by-function --function-name "$LAMBDA_ARN" --region "$REGION" | jq -r '.Versions | max_by(.Version) | .Version')
+FUNCTION_SUFFIX=$3
 
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+REGION="us-east-1"
+LAMBDA_NAME="funcOpenSupplyHub${ENV_NAME}${FUNCTION_SUFFIX}"
+LAMBDA_ARN="arn:aws:lambda:$REGION:$ACCOUNT_ID:function:$LAMBDA_NAME"
+
+echo "Deleting Lambda function: $LAMBDA_NAME"
+
+LAMBDA_VERSION=$(aws lambda list-versions-by-function --function-name "$LAMBDA_ARN" --region "$REGION" | jq -r '.Versions | max_by(.Version | tonumber) | .Version')
+
+DISTRIBUTION_ID=""
 for id in $(aws cloudfront list-distributions --query "DistributionList.Items[*].Id" --output text); do
   domains=$(aws cloudfront get-distribution-config --id $id --query "DistributionConfig.Aliases.Items" --output text)
   if [[ "$domains" == "$CLOUDFRONT_DOMAIN" ]]; then
-      if [ ! -z "$DISTRIBUTION_ID" ]; then
-          echo "Error: Multiple CloudFront distributions found for domain: $CLOUDFRONT_DOMAIN"
-          exit 1
-      fi
-      echo "Found Distribution ID: $id for Domain: $CLOUDFRONT_DOMAIN"
-      DISTRIBUTION_ID=$id
+    if [ -n "$DISTRIBUTION_ID" ]; then
+      echo "Error: Multiple CloudFront distributions found for domain: $CLOUDFRONT_DOMAIN"
+      exit 1
+    fi
+    echo "Found Distribution ID: $id for Domain: $CLOUDFRONT_DOMAIN"
+    DISTRIBUTION_ID=$id
   fi
 done
+
 if [ -z "$DISTRIBUTION_ID" ]; then
-echo "Error: No CloudFront distribution found for domain: $CLOUDFRONT_DOMAIN"
-exit 1
+  echo "Error: No CloudFront distribution found for domain: $CLOUDFRONT_DOMAIN"
+  exit 1
 fi
 
 echo "Fetching CloudFront distribution configuration..."
@@ -44,18 +58,17 @@ echo "CloudFront distribution updated. Proceeding with Lambda function deletion.
 VERSIONS=$(aws lambda list-versions-by-function --function-name "$LAMBDA_ARN" --region "$REGION" | jq -r '.Versions[].Version')
 for version in $VERSIONS; do
   if [[ "$version" != "\$LATEST" ]]; then
-      echo "Deleting Lambda version: $version"
-      aws lambda delete-function --function-name "$LAMBDA_ARN:$version" --region "$REGION"
+    echo "Deleting Lambda version: $version"
+    aws lambda delete-function --function-name "$LAMBDA_ARN:$version" --region "$REGION"
   fi
 done
 
 echo "Lambda function deletion initiated. Verifying..."
 
-while true;
-do
+while true; do
   if ! aws lambda get-function --function-name "$LAMBDA_ARN" --region "$REGION" 2>/dev/null; then
-      echo "Lambda function successfully deleted."
-      break
+    echo "Lambda function successfully deleted."
+    break
   fi
   echo "Waiting for Lambda function to be deleted..."
   sleep 30

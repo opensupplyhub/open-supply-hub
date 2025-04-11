@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
+import { useFormik } from 'formik';
 import get from 'lodash/get';
 import head from 'lodash/head';
 import last from 'lodash/last';
@@ -13,6 +14,8 @@ import {
 } from './constants.facilitiesMap';
 
 import { CONFIRM_ACTION, MERGE_ACTION, REJECT_ACTION } from './constants';
+
+import { slcValidationSchema } from './util';
 
 export const useUpdateLeafletMapImperatively = (
     resetButtonClickCount,
@@ -380,3 +383,21 @@ export const useResetScrollPosition = location => {
         window.scrollTo(0, 0);
     }, [location]);
 };
+
+export const useSingleLocationContributionForm = onSubmit =>
+    useFormik({
+        initialValues: {
+            name: '',
+            address: '',
+            country: null,
+            sector: [],
+            productType: [],
+            locationType: [],
+            processingType: [],
+            numberOfWorkers: '',
+            parentCompany: '',
+        },
+        validationSchema: slcValidationSchema,
+        onSubmit,
+        validateOnMount: true,
+    });

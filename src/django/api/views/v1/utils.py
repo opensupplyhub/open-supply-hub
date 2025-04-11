@@ -55,11 +55,40 @@ def serialize_params(serializer_class, query_params):
         if 'detail' not in params.errors and 'errors' not in params.errors:
             error_response['detail'] = \
                 APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR
-            for field, error_list in params.errors.items():
-                error_response['errors'].append({
-                    'field': field,
-                    'detail': error_list[0].capitalize()
-                })
+            for field, error_data in params.errors.items():
+                if isinstance(error_data, list):
+                    error_response['errors'].append({
+                        'field': field,
+                        'detail': error_data[0].capitalize()
+                    })
+                elif isinstance(error_data, dict):
+                    error_response['errors'].append({
+                        'field': field,
+                        'detail': (
+                            next(iter(error_data.values()))[0]
+                            if (
+                                error_data and next(
+                                    iter(error_data.values()), []
+                                )
+                            )
+                            else (
+                                APIV1CommonErrorMessages
+                                .COMMON_REQ_PARAMETER_ERROR
+                            )
+                        )
+                    })
+                elif isinstance(error_data, str):
+                    error_response['errors'].append({
+                        'field': field,
+                        'detail': error_data.capitalize()
+                    })
+                else:
+                    error_response['errors'].append({
+                        'field': field,
+                        'detail': (
+                            APIV1CommonErrorMessages.COMMON_REQ_PARAMETER_ERROR
+                        )
+                    })
 
         # Handle errors that come from serializers
         detail_errors = params.errors.get('detail')
