@@ -27,6 +27,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1897](https://opensupplyhub.atlassian.net/browse/OSDEV-1897) - A Lambda@Edge function was added to dynamically set the following response headers on the CloudFront side, depending on whether embed mode is active:
     * `X-Frame-Options: DENY`
     * `Content-Security-Policy: frame-ancestors 'none'`
+* [OSDEV-1895](https://opensupplyhub.atlassian.net/browse/OSDEV-1895) - Updated the rules to send the `csrftoken` cookie with the `HttpOnly` flag to the user. Implemented logic to retrieve the `csrftoken` upon user login and save it to `localStorage`. Added functionality to set the `csrftoken` from `localStorage` in Axios headers.
 
 ### Bugfix
 * [OSDEV-1893](https://opensupplyhub.atlassian.net/browse/OSDEV-1893) - Prevented sending a claim request to `/api/facilities/{os_id}/claim/` for facilities that are pending or approved. Added BE validators to handle incoming claim data.
