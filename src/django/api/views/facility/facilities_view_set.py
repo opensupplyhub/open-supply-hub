@@ -867,8 +867,7 @@ class FacilitiesViewSet(ListModelMixin,
             )
 
             sectors = validated_data.get("sectors")
-            if sectors:
-                facility_claim.sectors = sectors
+            if len(sectors) > 0:
                 setattr(facility_claim, 'sector', sectors)
 
             facility_claim.save()
