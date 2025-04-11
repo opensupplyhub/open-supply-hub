@@ -457,6 +457,25 @@ resource "aws_ecs_service" "app" {
   depends_on = [aws_lb_listener.app]
 }
 
+module "app_autoscaling" {
+  source = "./aws-ecs-service-autoscaling"
+
+  name_prefix               = "${local.short}App"
+  ecs_cluster_name          = aws_ecs_cluster.app.name
+  ecs_service_name          = aws_ecs_service.app.name
+  max_cpu_threshold         = var.app_ecs_max_cpu_threshold
+  min_cpu_threshold         = var.app_ecs_min_cpu_threshold
+  max_cpu_evaluation_period = var.app_ecs_max_cpu_evaluation_period
+  min_cpu_evaluation_period = var.app_ecs_min_cpu_evaluation_period
+  max_cpu_period            = var.app_ecs_max_cpu_period
+  min_cpu_period            = var.app_ecs_min_cpu_period
+  scale_target_max_capacity = var.app_ecs_scale_target_max_capacity
+  scale_target_min_capacity = var.app_ecs_scale_target_min_capacity
+  cooldown_scale_up         = var.app_ecs_cooldown_scale_up
+  cooldown_scale_down       = var.app_ecs_cooldown_scale_down
+}
+
+
 resource "aws_ecs_service" "app_cc" {
   name            = "${local.short}AppCC"
   cluster         = aws_ecs_cluster.app.id
