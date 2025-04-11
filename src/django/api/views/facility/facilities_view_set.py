@@ -869,8 +869,7 @@ class FacilitiesViewSet(ListModelMixin,
             sectors = validated_data.get("sectors")
             if sectors:
                 facility_claim.sectors = sectors
-                if sectors:
-                    setattr(facility_claim, 'sector', sectors)
+                setattr(facility_claim, 'sector', sectors)
 
             facility_claim.save()
 
@@ -884,23 +883,25 @@ class FacilitiesViewSet(ListModelMixin,
             send_claim_facility_confirmation_email(request, facility_claim)
             Facility.update_facility_updated_at_field(facility.id)
 
-            approved = FacilityClaim.objects.filter(
-                status=FacilityClaimStatuses.APPROVED,
-                contributor=contributor
-            ).values_list('facility__id', flat=True)
+            statuses = {
+                'approved': FacilityClaimStatuses.APPROVED,
+                'pending': FacilityClaimStatuses.PENDING,
+            }
 
-            pending = FacilityClaim.objects.filter(
-                status=FacilityClaimStatuses.PENDING,
-                contributor=contributor
-            ).values_list('facility__id', flat=True)
+            results = {
+                key: FacilityClaim.objects.filter(
+                    status=value,
+                    contributor=contributor
+                ).values_list('facility__id', flat=True)
+                for key, value in statuses.items()
+            }
 
-            return Response({
-                'pending': pending,
-                'approved': approved,
-            })
+            return Response(results)
 
-        except (Facility.DoesNotExist, Contributor.DoesNotExist) as exc:
-            raise NotFound() from exc
+        except Facility.DoesNotExist as exc:
+            raise NotFound(detail='Facility not found.') from exc
+        except Contributor.DoesNotExist as exc:
+            raise NotFound(detail='Contributor not found.') from exc
 
     def __handle_file_upload(self, file, contributor_name, facility_claim):
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')[:-3]
