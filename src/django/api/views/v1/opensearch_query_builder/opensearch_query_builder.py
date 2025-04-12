@@ -19,7 +19,7 @@ class OpenSearchQueryBuilder(ABC):
         match_query = {
             'match': {field: {'query': value, 'fuzziness': fuzziness}}
         }
-        self.query_body['query']['bool']['must'].append(match_query)
+        self.query_body['query']['bool']['should'].append(match_query)
 
     def add_range(self, field, query_params):
         if field in {
@@ -142,7 +142,7 @@ class OpenSearchQueryBuilder(ABC):
 
     def _build_os_id(self, values):
         # Build a query to search in both os_id and historical_os_id.keyword
-        self.query_body['query']['bool']['must'].append(
+        self.query_body['query']['bool']['should'].append(
             {
                 'bool': {
                     'should': [

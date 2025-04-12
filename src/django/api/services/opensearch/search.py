@@ -81,9 +81,10 @@ class OpenSearchService(SearchInterface):
         else:
             return obj
 
-    def search_index(self, index_name, query_body):
+    def search_index(self, index_name, query_body, params={}):
         try:
-            response = self.__client.search(body=query_body, index=index_name)
+            response = self.__client.search(
+                body=query_body, index=index_name, params=params)
             return self.__prepare_opensearch_response(response)
 
         except OpenSearchException as e:

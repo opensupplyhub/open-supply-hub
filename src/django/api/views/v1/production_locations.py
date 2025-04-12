@@ -8,6 +8,7 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
 from waffle import switch_is_active
+from api.models.settings import Settings
 
 from api.views.v1.utils import (
     serialize_params,
@@ -47,10 +48,12 @@ class ProductionLocations(ViewSet):
     swagger_schema = None
 
     @staticmethod
-    def __init_opensearch() -> Tuple[OpenSearchService,
-                                     OpenSearchQueryDirector]:
+    def __init_opensearch(model_id: str = None) -> Tuple[OpenSearchService,
+                                                         OpenSearchQueryDirector]:
         opensearch_service = OpenSearchService()
-        opensearch_query_builder = ProductionLocationsQueryBuilder()
+        opensearch_query_builder = ProductionLocationsQueryBuilder(
+            model_id=model_id,
+        )
         opensearch_query_director = OpenSearchQueryDirector(
             opensearch_query_builder
         )
@@ -113,15 +116,57 @@ class ProductionLocations(ViewSet):
         if error_response:
             return Response(error_response, status=status.HTTP_400_BAD_REQUEST)
 
+        record_linkage_enabled = switch_is_active('enable_record_linkage')
+        os_model_id = None
+        os_search_pipeline_id = None
+
+        if record_linkage_enabled:
+            try:
+                model_id = Settings.objects.filter(
+                    name=Settings.Name.OS_SENTENCE_TRANSFORMER_MODEL_ID).get()
+                os_model_id = model_id.value
+            except Settings.DoesNotExist:
+                return Response(
+                    data={
+                        "detail": "The OpenSearch model id is not set in the settings.",
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+            try:
+                model_id = Settings.objects.filter(
+                    name=Settings.Name.OS_SENTENCE_TRANSFORMER_MODEL_ID).get()
+                search_pipeline_id = Settings.objects.filter(
+                    name=Settings.Name.OS_SEARCH_PIPELINE_ID).get()
+
+                os_search_pipeline_id = search_pipeline_id.value
+            except Settings.DoesNotExist:
+                return Response(
+                    data={
+                        "detail": "The OpenSearch search pipeline id is not set in the settings.",
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
         opensearch_service, opensearch_query_director = \
-            self.__init_opensearch()
+            self.__init_opensearch(
+                model_id=os_model_id,
+            )
         query_body = opensearch_query_director.build_query(
             request.GET,
         )
+
+        params = {}
+
+        if record_linkage_enabled and os_search_pipeline_id:
+            params["search_pipeline"] = os_search_pipeline_id
+
         response = opensearch_service.search_index(
             OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
             query_body,
+            params,
         )
+
         return Response(response)
 
     @handle_errors_decorator

@@ -6,8 +6,8 @@ class OpenSearchQueryDirector:
         self.__builder = builder
         self.__opensearch_template_fields = {
             V1_PARAMETERS_LIST.DESCRIPTION: 'match',
-            V1_PARAMETERS_LIST.ADDRESS: 'match',
-            V1_PARAMETERS_LIST.NAME: 'match',
+            V1_PARAMETERS_LIST.ADDRESS: 'hybrid_match',
+            V1_PARAMETERS_LIST.NAME: 'hybrid_match',
             V1_PARAMETERS_LIST.OS_ID: 'terms',
             V1_PARAMETERS_LIST.LOCAL_NAME: 'match',
             V1_PARAMETERS_LIST.COUNTRY: 'terms',
@@ -56,6 +56,12 @@ class OpenSearchQueryDirector:
             self.__add_match_query(field, value)
             return
 
+        if query_type == "hybrid_match":
+            value = query_params.get(field)
+            self.__add_match_query(field, value)
+            self.__add_neural_match_query(field, value)
+            return
+
         if query_type == "terms":
             values = query_params.getlist(field)
             self.__add_terms_query(field, values)
@@ -74,6 +80,10 @@ class OpenSearchQueryDirector:
     def __add_match_query(self, field, value):
         if value:
             self.__builder.add_match(field, value, fuzziness='2')
+
+    def __add_neural_match_query(self, field, value):
+        if value:
+            self.__builder.add_neural_match(field, value)
 
     def __add_terms_query(self, field, values):
         self.__builder.add_terms(field, values)

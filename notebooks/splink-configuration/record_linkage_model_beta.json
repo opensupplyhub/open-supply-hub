@@ -1,11 +1,11 @@
 {
     "link_type": "dedupe_only",
-    "probability_two_random_records_match": 0.05,
+    "probability_two_random_records_match": 4.599205891373415e-05,
     "retain_matching_columns": true,
     "retain_intermediate_calculation_columns": true,
     "additional_columns_to_retain": [],
     "sql_dialect": "duckdb",
-    "linker_uid": "hh4wtzjf",
+    "linker_uid": "7q9cqsdu",
     "em_convergence": 0.0001,
     "max_iterations": 25,
     "bayes_factor_column_prefix": "bf_",
@@ -21,35 +21,6 @@
     ],
     "comparisons": [
         {
-            "output_column_name": "geocoded_location_type",
-            "comparison_levels": [
-                {
-                    "sql_condition": "\"geocoded_location_type_l\" IS NULL OR \"geocoded_location_type_r\" IS NULL",
-                    "label_for_charts": "geocoded_location_type is NULL",
-                    "fix_m_probability": false,
-                    "fix_u_probability": false,
-                    "is_null_level": true
-                },
-                {
-                    "sql_condition": "\"geocoded_location_type_l\" = \"geocoded_location_type_r\"",
-                    "label_for_charts": "Exact match on geocoded_location_type",
-                    "m_probability": 0.7164681211667694,
-                    "u_probability": 0.46485786994887734,
-                    "fix_m_probability": false,
-                    "fix_u_probability": false
-                },
-                {
-                    "sql_condition": "ELSE",
-                    "label_for_charts": "All other comparisons",
-                    "m_probability": 0.2835318788332305,
-                    "u_probability": 0.5351421300511227,
-                    "fix_m_probability": false,
-                    "fix_u_probability": false
-                }
-            ],
-            "comparison_description": "ExactMatch"
-        },
-        {
             "output_column_name": "name",
             "comparison_levels": [
                 {
@@ -62,32 +33,58 @@
                 {
                     "sql_condition": "\"name_l\" = \"name_r\"",
                     "label_for_charts": "Exact match on name",
-                    "m_probability": 5.284837097616776e-05,
-                    "u_probability": 7.581212502869736e-07,
+                    "m_probability": 0.00024394394554031818,
+                    "u_probability": 6.640830515545935e-07,
+                    "fix_m_probability": false,
+                    "fix_u_probability": false,
+                    "tf_adjustment_column": "name",
+                    "tf_adjustment_weight": 1.0
+                },
+                {
+                    "sql_condition": "jaro_winkler_similarity(\"name_l\", \"name_r\") >= 0.96",
+                    "label_for_charts": "Jaro-Winkler distance of name >= 0.96",
+                    "m_probability": 0.00036079919273327273,
+                    "u_probability": 8.301038144432419e-08,
+                    "fix_m_probability": false,
+                    "fix_u_probability": false
+                },
+                {
+                    "sql_condition": "jaro_winkler_similarity(\"name_l\", \"name_r\") >= 0.92",
+                    "label_for_charts": "Jaro-Winkler distance of name >= 0.92",
+                    "m_probability": 0.0006521596622696647,
+                    "u_probability": 2.656332206218374e-06,
                     "fix_m_probability": false,
                     "fix_u_probability": false
                 },
                 {
                     "sql_condition": "jaro_winkler_similarity(\"name_l\", \"name_r\") >= 0.9",
                     "label_for_charts": "Jaro-Winkler distance of name >= 0.9",
-                    "m_probability": 0.0008516185028869113,
-                    "u_probability": 7.284556361453094e-06,
+                    "m_probability": 0.0009215561987228814,
+                    "u_probability": 3.7354671649945886e-06,
                     "fix_m_probability": false,
                     "fix_u_probability": false
                 },
                 {
                     "sql_condition": "jaro_winkler_similarity(\"name_l\", \"name_r\") >= 0.7",
                     "label_for_charts": "Jaro-Winkler distance of name >= 0.7",
-                    "m_probability": 0.024863848075879314,
-                    "u_probability": 0.0025941920331015514,
+                    "m_probability": 0.0512764357703663,
+                    "u_probability": 0.002693437846723987,
+                    "fix_m_probability": false,
+                    "fix_u_probability": false
+                },
+                {
+                    "sql_condition": "jaro_winkler_similarity(\"name_l\", \"name_r\") >= 0.5",
+                    "label_for_charts": "Jaro-Winkler distance of name >= 0.5",
+                    "m_probability": 0.5378621248071523,
+                    "u_probability": 0.3194906051340593,
                     "fix_m_probability": false,
                     "fix_u_probability": false
                 },
                 {
                     "sql_condition": "ELSE",
                     "label_for_charts": "All other comparisons",
-                    "m_probability": 0.9742316850502576,
-                    "u_probability": 0.9973977652892867,
+                    "m_probability": 0.4086829804232155,
+                    "u_probability": 0.6778088181264125,
                     "fix_m_probability": false,
                     "fix_u_probability": false
                 }
@@ -107,32 +104,58 @@
                 {
                     "sql_condition": "\"address_l\" = \"address_r\"",
                     "label_for_charts": "Exact match on address",
-                    "m_probability": 0.0024353356073736035,
-                    "u_probability": 1.944745815953541e-06,
+                    "m_probability": 0.016273579010074014,
+                    "u_probability": 2.9895917363698284e-06,
+                    "fix_m_probability": false,
+                    "fix_u_probability": false,
+                    "tf_adjustment_column": "address",
+                    "tf_adjustment_weight": 1.0
+                },
+                {
+                    "sql_condition": "jaccard(\"address_l\", \"address_r\") >= 0.96",
+                    "label_for_charts": "Jaccard distance of 'address >= 0.96'",
+                    "m_probability": 0.001577094879983645,
+                    "u_probability": 3.321768595966476e-07,
+                    "fix_m_probability": false,
+                    "fix_u_probability": false
+                },
+                {
+                    "sql_condition": "jaccard(\"address_l\", \"address_r\") >= 0.92",
+                    "label_for_charts": "Jaccard distance of 'address >= 0.92'",
+                    "m_probability": 0.0039546460559331895,
+                    "u_probability": 2.325238017176533e-06,
                     "fix_m_probability": false,
                     "fix_u_probability": false
                 },
                 {
                     "sql_condition": "jaccard(\"address_l\", \"address_r\") >= 0.9",
                     "label_for_charts": "Jaccard distance of 'address >= 0.9'",
-                    "m_probability": 0.0017901454811506841,
-                    "u_probability": 1.746975055009113e-06,
+                    "m_probability": 0.0029534310568953425,
+                    "u_probability": 1.9930611575798856e-06,
                     "fix_m_probability": false,
                     "fix_u_probability": false
                 },
                 {
                     "sql_condition": "jaccard(\"address_l\", \"address_r\") >= 0.7",
                     "label_for_charts": "Jaccard distance of 'address >= 0.7'",
-                    "m_probability": 0.060503151754341865,
-                    "u_probability": 0.0009310717807328758,
+                    "m_probability": 0.1567206342279767,
+                    "u_probability": 0.0010451114445059525,
+                    "fix_m_probability": false,
+                    "fix_u_probability": false
+                },
+                {
+                    "sql_condition": "jaccard(\"address_l\", \"address_r\") >= 0.5",
+                    "label_for_charts": "Jaccard distance of 'address >= 0.5'",
+                    "m_probability": 0.3417089506114143,
+                    "u_probability": 0.06966114140287256,
                     "fix_m_probability": false,
                     "fix_u_probability": false
                 },
                 {
                     "sql_condition": "ELSE",
                     "label_for_charts": "All other comparisons",
-                    "m_probability": 0.935271367157134,
-                    "u_probability": 0.9990652364983962,
+                    "m_probability": 0.47681166415772275,
+                    "u_probability": 0.9292861070848507,
                     "fix_m_probability": false,
                     "fix_u_probability": false
                 }
@@ -140,56 +163,18 @@
             "comparison_description": "JaccardAtThresholds"
         },
         {
-            "output_column_name": "geocoded_address",
+            "output_column_name": "lat_lng",
             "comparison_levels": [
                 {
-                    "sql_condition": "\"geocoded_address_l\" IS NULL OR \"geocoded_address_r\" IS NULL",
-                    "label_for_charts": "geocoded_address is NULL",
+                    "sql_condition": "\"geocoded_location_type_l\" IS NULL OR \"geocoded_location_type_r\" IS NULL",
+                    "label_for_charts": "geocoded_location_type is NULL",
                     "fix_m_probability": false,
                     "fix_u_probability": false,
                     "is_null_level": true
                 },
                 {
-                    "sql_condition": "\"geocoded_address_l\" = \"geocoded_address_r\"",
-                    "label_for_charts": "Exact match on geocoded_address",
-                    "m_probability": 0.020979310968135993,
-                    "u_probability": 2.1375872880648517e-05,
-                    "fix_m_probability": false,
-                    "fix_u_probability": false
-                },
-                {
-                    "sql_condition": "jaro_winkler_similarity(\"geocoded_address_l\", \"geocoded_address_r\") >= 0.9",
-                    "label_for_charts": "Jaro-Winkler distance of geocoded_address >= 0.9",
-                    "m_probability": 0.007831285020574195,
-                    "u_probability": 1.3535452353257364e-05,
-                    "fix_m_probability": false,
-                    "fix_u_probability": false
-                },
-                {
-                    "sql_condition": "jaro_winkler_similarity(\"geocoded_address_l\", \"geocoded_address_r\") >= 0.7",
-                    "label_for_charts": "Jaro-Winkler distance of geocoded_address >= 0.7",
-                    "m_probability": 0.23497738148407846,
-                    "u_probability": 0.0039363981966252645,
-                    "fix_m_probability": false,
-                    "fix_u_probability": false
-                },
-                {
-                    "sql_condition": "ELSE",
-                    "label_for_charts": "All other comparisons",
-                    "m_probability": 0.7362120225272115,
-                    "u_probability": 0.9960286904781408,
-                    "fix_m_probability": false,
-                    "fix_u_probability": false
-                }
-            ],
-            "comparison_description": "JaroWinklerAtThresholds"
-        },
-        {
-            "output_column_name": "lat_lng",
-            "comparison_levels": [
-                {
-                    "sql_condition": "(\"lat_l\" IS NULL OR \"lat_r\" IS NULL) OR (\"lng_l\" IS NULL OR \"lng_r\" IS NULL)",
-                    "label_for_charts": "(lat is NULL) OR (lng is NULL)",
+                    "sql_condition": "geocoded_location_type_l NOT IN ('ROOFTOP', 'RANGE_INTERPOLATED', 'APPROXIMATE') OR geocoded_location_type_r NOT IN ('ROOFTOP', 'RANGE_INTERPOLATED', 'APPROXIMATE')",
+                    "label_for_charts": "Geocoding condition",
                     "fix_m_probability": false,
                     "fix_u_probability": false,
                     "is_null_level": true
@@ -197,61 +182,53 @@
                 {
                     "sql_condition": "\n        cast(\n            acos(\n                \n        case\n            when (\n        sin( radians(\"lat_l\") ) * sin( radians(\"lat_r\") ) +\n        cos( radians(\"lat_l\") ) * cos( radians(\"lat_r\") )\n            * cos( radians(\"lng_r\" - \"lng_l\") )\n    ) > 1 then 1\n            when (\n        sin( radians(\"lat_l\") ) * sin( radians(\"lat_r\") ) +\n        cos( radians(\"lat_l\") ) * cos( radians(\"lat_r\") )\n            * cos( radians(\"lng_r\" - \"lng_l\") )\n    ) < -1 then -1\n            else (\n        sin( radians(\"lat_l\") ) * sin( radians(\"lat_r\") ) +\n        cos( radians(\"lat_l\") ) * cos( radians(\"lat_r\") )\n            * cos( radians(\"lng_r\" - \"lng_l\") )\n    )\n        end\n    \n            ) * 6371\n            as float\n        )\n     <= 0.005",
                     "label_for_charts": "Distance less than 0.005km",
-                    "m_probability": 0.018801752227460035,
-                    "u_probability": 1.7700483104526296e-05,
+                    "m_probability": 0.2196326826927343,
+                    "u_probability": 0.010076313254797362,
                     "fix_m_probability": false,
                     "fix_u_probability": false
                 },
                 {
                     "sql_condition": "\n        cast(\n            acos(\n                \n        case\n            when (\n        sin( radians(\"lat_l\") ) * sin( radians(\"lat_r\") ) +\n        cos( radians(\"lat_l\") ) * cos( radians(\"lat_r\") )\n            * cos( radians(\"lng_r\" - \"lng_l\") )\n    ) > 1 then 1\n            when (\n        sin( radians(\"lat_l\") ) * sin( radians(\"lat_r\") ) +\n        cos( radians(\"lat_l\") ) * cos( radians(\"lat_r\") )\n            * cos( radians(\"lng_r\" - \"lng_l\") )\n    ) < -1 then -1\n            else (\n        sin( radians(\"lat_l\") ) * sin( radians(\"lat_r\") ) +\n        cos( radians(\"lat_l\") ) * cos( radians(\"lat_r\") )\n            * cos( radians(\"lng_r\" - \"lng_l\") )\n    )\n        end\n    \n            ) * 6371\n            as float\n        )\n     <= 0.1",
                     "label_for_charts": "Distance less than 0.1km",
-                    "m_probability": 0.002903232528821878,
-                    "u_probability": 1.944745815953541e-06,
+                    "m_probability": 0.029440540081440505,
+                    "u_probability": 0.001407720234126102,
                     "fix_m_probability": false,
                     "fix_u_probability": false
                 },
                 {
                     "sql_condition": "\n        cast(\n            acos(\n                \n        case\n            when (\n        sin( radians(\"lat_l\") ) * sin( radians(\"lat_r\") ) +\n        cos( radians(\"lat_l\") ) * cos( radians(\"lat_r\") )\n            * cos( radians(\"lng_r\" - \"lng_l\") )\n    ) > 1 then 1\n            when (\n        sin( radians(\"lat_l\") ) * sin( radians(\"lat_r\") ) +\n        cos( radians(\"lat_l\") ) * cos( radians(\"lat_r\") )\n            * cos( radians(\"lng_r\" - \"lng_l\") )\n    ) < -1 then -1\n            else (\n        sin( radians(\"lat_l\") ) * sin( radians(\"lat_r\") ) +\n        cos( radians(\"lat_l\") ) * cos( radians(\"lat_r\") )\n            * cos( radians(\"lng_r\" - \"lng_l\") )\n    )\n        end\n    \n            ) * 6371\n            as float\n        )\n     <= 0.152",
                     "label_for_charts": "Distance less than 0.152km",
-                    "m_probability": 0.0014715981342082343,
-                    "u_probability": 1.4832807070832092e-06,
+                    "m_probability": 0.013279737258509772,
+                    "u_probability": 0.0004445432318292954,
                     "fix_m_probability": false,
                     "fix_u_probability": false
                 },
                 {
                     "sql_condition": "\n        cast(\n            acos(\n                \n        case\n            when (\n        sin( radians(\"lat_l\") ) * sin( radians(\"lat_r\") ) +\n        cos( radians(\"lat_l\") ) * cos( radians(\"lat_r\") )\n            * cos( radians(\"lng_r\" - \"lng_l\") )\n    ) > 1 then 1\n            when (\n        sin( radians(\"lat_l\") ) * sin( radians(\"lat_r\") ) +\n        cos( radians(\"lat_l\") ) * cos( radians(\"lat_r\") )\n            * cos( radians(\"lng_r\" - \"lng_l\") )\n    ) < -1 then -1\n            else (\n        sin( radians(\"lat_l\") ) * sin( radians(\"lat_r\") ) +\n        cos( radians(\"lat_l\") ) * cos( radians(\"lat_r\") )\n            * cos( radians(\"lng_r\" - \"lng_l\") )\n    )\n        end\n    \n            ) * 6371\n            as float\n        )\n     <= 1.0",
                     "label_for_charts": "Distance less than 1.0km",
-                    "m_probability": 0.02738597397625715,
-                    "u_probability": 3.513727186112669e-05,
+                    "m_probability": 0.1968270309160579,
+                    "u_probability": 0.00829814032748018,
                     "fix_m_probability": false,
                     "fix_u_probability": false
                 },
                 {
                     "sql_condition": "\n        cast(\n            acos(\n                \n        case\n            when (\n        sin( radians(\"lat_l\") ) * sin( radians(\"lat_r\") ) +\n        cos( radians(\"lat_l\") ) * cos( radians(\"lat_r\") )\n            * cos( radians(\"lng_r\" - \"lng_l\") )\n    ) > 1 then 1\n            when (\n        sin( radians(\"lat_l\") ) * sin( radians(\"lat_r\") ) +\n        cos( radians(\"lat_l\") ) * cos( radians(\"lat_r\") )\n            * cos( radians(\"lng_r\" - \"lng_l\") )\n    ) < -1 then -1\n            else (\n        sin( radians(\"lat_l\") ) * sin( radians(\"lat_r\") ) +\n        cos( radians(\"lat_l\") ) * cos( radians(\"lat_r\") )\n            * cos( radians(\"lng_r\" - \"lng_l\") )\n    )\n        end\n    \n            ) * 6371\n            as float\n        )\n     <= 5",
                     "label_for_charts": "Distance less than 5km",
-                    "m_probability": 0.21852525195868966,
-                    "u_probability": 0.00029807349853674356,
+                    "m_probability": 0.538232310891923,
+                    "u_probability": 0.08701933763058457,
                     "fix_m_probability": false,
                     "fix_u_probability": false
                 },
                 {
                     "sql_condition": "\n        cast(\n            acos(\n                \n        case\n            when (\n        sin( radians(\"lat_l\") ) * sin( radians(\"lat_r\") ) +\n        cos( radians(\"lat_l\") ) * cos( radians(\"lat_r\") )\n            * cos( radians(\"lng_r\" - \"lng_l\") )\n    ) > 1 then 1\n            when (\n        sin( radians(\"lat_l\") ) * sin( radians(\"lat_r\") ) +\n        cos( radians(\"lat_l\") ) * cos( radians(\"lat_r\") )\n            * cos( radians(\"lng_r\" - \"lng_l\") )\n    ) < -1 then -1\n            else (\n        sin( radians(\"lat_l\") ) * sin( radians(\"lat_r\") ) +\n        cos( radians(\"lat_l\") ) * cos( radians(\"lat_r\") )\n            * cos( radians(\"lng_r\" - \"lng_l\") )\n    )\n        end\n    \n            ) * 6371\n            as float\n        )\n     <= 30",
                     "label_for_charts": "Distance less than 30km",
-                    "m_probability": 0.7308511807835314,
-                    "u_probability": 0.002805477129377182,
-                    "fix_m_probability": false,
-                    "fix_u_probability": false
-                },
-                {
-                    "sql_condition": "ELSE",
-                    "label_for_charts": "All other comparisons",
-                    "m_probability": 6.101039103164918e-05,
-                    "u_probability": 0.9968401835905973,
+                    "m_probability": 0.002587698159334381,
+                    "u_probability": 0.8927539453211825,
                     "fix_m_probability": false,
                     "fix_u_probability": false
                 }
             ],
-            "comparison_description": "DistanceInKMAtThresholds"
+            "comparison_description": "CustomComparison"
         }
     ]
 }
