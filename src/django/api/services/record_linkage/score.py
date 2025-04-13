@@ -12,7 +12,7 @@ from api.services.record_linkage.matchers import (
 class ConfidenceCalculator():
     records_df: pd.DataFrame
     record: dict
-    name_confidence: float = 0.28
+    name_confidence: float = 0.18
     address_confidence: float = 0.15
     geocoded_location_type_confidence: float = 0.02
     geocoded_address_confidence: float = 0.05
@@ -25,11 +25,11 @@ class ConfidenceCalculator():
 
     def __calculate_confidence_weights(self):
         if self.record['geocoded_location_type'] is "ROOFTOP":
-            self.name_confidence = 0.18
+            self.name_confidence = 0.16
             self.address_confidence = 0.2
             self.geocoded_location_type_confidence = 0.02
             self.geocoded_address_confidence = 0.05
-            self.distance_confidence = 0.15
+            self.distance_confidence = 0.17
             self.score_confidence = 0.4
             return
 
