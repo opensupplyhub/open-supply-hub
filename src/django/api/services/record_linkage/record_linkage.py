@@ -1,14 +1,7 @@
 from typing import List, Dict
-from geopy.distance import geodesic
 from api.geocoding import geocode_address
 from operator import itemgetter
-from api.services.record_linkage.matchers import (
-    NameMatcher,
-    AddressMatcher,
-    GeocodedLocationTypMatcher,
-    DistanceMatcher,
-    OpenSeachScoreMatcher
-)
+from api.services.record_linkage.score import ConfidenceCalculator
 import pandas as pd
 import numpy as np
 import os
@@ -104,56 +97,9 @@ class RecordLinker():
             record["geocoded_location_type"] = geocoding_result["geocoded_location_type"]
             record["lat"] = geocoding_result["lat"]
             record["lng"] = geocoding_result["lng"]
+            record["geocoded_address"] = geocoding_result["geocoded_address"]
 
-        self.records_df["name_confidence"] = self.records_df["name"].apply(
-            lambda row_name: NameMatcher.match(
-                row_name,
-                name
-            ),
-        )
-        self.records_df["address_confidence"] = self.records_df["address"].apply(
-            lambda row_address: AddressMatcher.match(
-                row_address,
-                address
-            ),
-        )
-        self.records_df["geocoded_address_confidence"] = self.records_df["geocoded_address"].apply(
-            lambda row_geocoded_address: AddressMatcher.match(
-                row_geocoded_address,
-                address
-            )
-        )
-        self.records_df["geocoded_location_type_confidence"] = self.records_df["geocoded_location_type"].apply(
-            lambda row_geocoded_location_type: GeocodedLocationTypMatcher.match(
-                row_geocoded_location_type,
-                geocoding_result["geocoded_location_type"]
-            )
-        )
-        self.records_df["distance_in_km"] = self.records_df.apply(
-            lambda row: geodesic(
-                (row["lat"], row["lng"]),
-                (record["lat"], record["lng"])
-            ).km,
-            axis=1
-        )
-        self.records_df["distance_confidence"] = self.records_df["distance_in_km"].apply(
-            lambda row_distance: DistanceMatcher.match(
-                row_distance
-            ),
-        )
-
-        self.records_df["score_confidence"] = self.records_df["score"].apply(
-            lambda row_score: OpenSeachScoreMatcher.match(
-                row_score
-            ),
-        )
-
-        self.records_df["confidence_score"] = self.records_df["name_confidence"] * 0.28 + \
-            self.records_df["address_confidence"] * 0.15 + \
-            self.records_df["geocoded_location_type_confidence"] * 0.02 + \
-            self.records_df["geocoded_address_confidence"] * 0.05 + \
-            self.records_df["distance_confidence"] * 0.1 + \
-            self.records_df["score_confidence"] * 0.5
+        self.records_df = ConfidenceCalculator(self.records_df, record).score()
 
         for _, row in self.records_df.iterrows():
             os_id = row["os_id"]
