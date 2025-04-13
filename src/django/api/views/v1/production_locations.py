@@ -168,14 +168,15 @@ class ProductionLocations(ViewSet):
             params,
         )
 
-        linker = RecordLinker(
-            records=response["data"],
-        )
-        records = linker.predict(
-            name=request.GET.get("name"),
-            address=request.GET.get("address"),
-            country_code=request.GET.get("country"),
-        )
+        if record_linkage_enabled:
+            linker = RecordLinker(
+                records=response["data"],
+            )
+            response["data"] = linker.predict(
+                name=request.GET.get("name"),
+                address=request.GET.get("address"),
+                country_code=request.GET.get("country"),
+            )
 
         return Response(response)
 

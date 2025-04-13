@@ -10,7 +10,7 @@ import copy
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class RecordLinker():
+class SplinkLinker():
     linker: Linker
     records: List[Dict[str, any]]
     records_index: Dict[str, int]
