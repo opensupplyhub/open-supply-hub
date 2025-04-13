@@ -10,7 +10,7 @@ class OpenSearchQueryDirector:
             V1_PARAMETERS_LIST.NAME: 'hybrid_match',
             V1_PARAMETERS_LIST.OS_ID: 'terms',
             V1_PARAMETERS_LIST.LOCAL_NAME: 'match',
-            V1_PARAMETERS_LIST.COUNTRY: 'terms',
+            V1_PARAMETERS_LIST.COUNTRY: 'filter',
             V1_PARAMETERS_LIST.SECTOR: 'terms',
             V1_PARAMETERS_LIST.PRODUCT_TYPE: 'terms',
             V1_PARAMETERS_LIST.PROCESSING_TYPE: 'terms',
@@ -67,6 +67,11 @@ class OpenSearchQueryDirector:
             self.__add_terms_query(field, values)
             return
 
+        if query_type == "filter":
+            value = query_params.get(field)
+            self.__add_filter_query(field, value)
+            return
+
         if query_type == "range":
             self.__add_range_query(field, query_params)
             return
@@ -87,6 +92,9 @@ class OpenSearchQueryDirector:
 
     def __add_terms_query(self, field, values):
         self.__builder.add_terms(field, values)
+
+    def __add_filter_query(self, field, value):
+        self.__builder.add_filter(field, value)
 
     def __add_range_query(self, field, query_params):
         self.__builder.add_range(field, query_params)
@@ -166,5 +174,6 @@ class OpenSearchQueryDirector:
             )
 
         geo_polygon = query_params.getlist(V1_PARAMETERS_LIST.GEO_POLYGON)
+
         if geo_polygon and hasattr(self.__builder, 'add_geo_polygon'):
             self.__builder.add_geo_polygon(geo_polygon)

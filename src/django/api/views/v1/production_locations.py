@@ -14,6 +14,7 @@ from api.views.v1.utils import (
     serialize_params,
     handle_errors_decorator,
 )
+from api.services.record_linkage.record_linkage import RecordLinker
 from api.services.opensearch.search import OpenSearchService
 from api.views.v1.opensearch_query_builder.production_locations_query_builder \
     import ProductionLocationsQueryBuilder
@@ -165,6 +166,15 @@ class ProductionLocations(ViewSet):
             OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
             query_body,
             params,
+        )
+
+        linker = RecordLinker(
+            records=response["data"],
+        )
+        records = linker.predict(
+            name=request.GET.get("name"),
+            address=request.GET.get("address"),
+            country_code=request.GET.get("country"),
         )
 
         return Response(response)

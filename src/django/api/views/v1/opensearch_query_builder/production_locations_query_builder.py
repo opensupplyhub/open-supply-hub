@@ -85,7 +85,6 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
 
         if field == V1_PARAMETERS_LIST.OS_ID:
             self._build_os_id(values)
-
         else:
             terms_field = self.build_options.get(
                 field, lambda x: f'{x}.keyword'
@@ -94,6 +93,20 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
             self.query_body['query']['bool']['should'].append(
                 {'terms': {terms_field: values}}
             )
+
+    def add_filter(self, field, value):
+        if not value:
+            return self.query_body
+
+        self.__init_filter()
+
+        filter_field = self.build_options.get(
+            field, lambda x: f'{x}.keyword'
+        )(field)
+
+        self.query_body['query']['bool']['filter'].append(
+            {'term': {filter_field: value}}
+        )
 
     def add_neural_match(self, field, value):
         if not value or not self.model_id:

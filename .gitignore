@@ -92,3 +92,4 @@ db.dump
 latest_prod.dump
 dumps
 production_locations_ds.csv
+notebooks/splink-configuration/*.csv
