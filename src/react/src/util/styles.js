@@ -1227,8 +1227,33 @@ export const makeConfirmNotFoundLocationDialogStyles = theme =>
 
 export const makeProductionLocationDetailsStyles = theme => ({
     confidenceScoreContainerStyles: Object.freeze({
-        display: 'inline-block',
+        display: 'inline-flex',
         marginLeft: '10px',
+        border: '1px solid black',
+        borderRadius: '6px',
+        padding: '1px',
+    }),
+    confidenceScoreTextStyles: Object.freeze({
+        paddingRight: '5px',
+        paddingLeft: '2px',
+        fontSize: '0.7rem',
+        lineHeight: '1.3rem',
+    }),
+    confidenceScoreContainerHighestStyles: Object.freeze({
+        backgroundColor: 'rgb(224, 245, 227)',
+        border: '1px solid rgb(76, 175, 80)',
+    }),
+    confidenceScoreContainerHighStyles: Object.freeze({
+        backgroundColor: 'rgb(224, 239, 245)',
+        border: '1px solid rgb(33, 150, 243)',
+    }),
+    confidenceScoreContainerModerateStyles: Object.freeze({
+        backgroundColor: 'rgb(255, 245, 229)',
+        border: '1px solid rgb(255, 193, 7)',
+    }),
+    confidenceScoreContainerLowStyles: Object.freeze({
+        backgroundColor: 'rgb(255, 234, 234)',
+        border: '1px solid rgb(244, 67, 54)',
     }),
     locationNameStyles: Object.freeze({
         fontSize: '36px',

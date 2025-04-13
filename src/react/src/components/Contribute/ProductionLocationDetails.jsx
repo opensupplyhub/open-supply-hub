@@ -27,31 +27,46 @@ const ProductionLocationDetails = ({
         historicalOsId => historicalOsId === osIdSearchParameter,
     );
 
-    let confidenceScoreClassName = classes.confidenceScoreContainerLowStyles;
-    let confidenceScoreIcon = <ArrowDownward />;
+    let confidenceScoreParams = {
+        className: classes.confidenceScoreContainerLowStyles,
+        icon: <ArrowDownward fontSize="small" />,
+        text: 'Low',
+    };
 
     if (confidenceScore > 0.85) {
-        confidenceScoreClassName =
-            classes.confidenceScoreContainerHighestStyles;
-        confidenceScoreIcon = <ArrowUpward />;
+        confidenceScoreParams = {
+            className: classes.confidenceScoreContainerHighestStyles,
+            icon: <ArrowUpward fontSize="small" />,
+            text: 'Highest',
+        };
     } else if (confidenceScore > 0.7) {
-        confidenceScoreClassName = classes.confidenceScoreContainerHighStyles;
-        confidenceScoreIcon = <CallMade />;
-    } else if (confidenceScore > 0.5) {
-        confidenceScoreClassName =
-            classes.confidenceScoreContainerModerateStyles;
-        confidenceScoreIcon = <ArrowForward />;
+        confidenceScoreParams = {
+            className: classes.confidenceScoreContainerHighStyles,
+            icon: <CallMade fontSize="small" />,
+            text: 'High',
+        };
+    } else if (confidenceScore > 0.6) {
+        confidenceScoreParams = {
+            className: classes.confidenceScoreContainerModerateStyles,
+            icon: <ArrowForward fontSize="small" />,
+            text: 'Moderate',
+        };
     }
 
     return (
         <div className="location-details-container">
-            <Typography
-                component="h3"
-                className={`${classes.locationNameStyles} ${confidenceScoreClassName}`}
-            >
+            <Typography component="h3" className={classes.locationNameStyles}>
                 {name}
-                <div className={classes.confidenceScoreContainerStyles}>
-                    {confidenceScoreIcon}
+                <div
+                    className={`${classes.confidenceScoreContainerStyles} ${confidenceScoreParams.className}`}
+                >
+                    {confidenceScoreParams.icon}
+                    <Typography
+                        component="div"
+                        className={classes.confidenceScoreTextStyles}
+                    >
+                        {confidenceScoreParams.text}
+                    </Typography>
                 </div>
             </Typography>
             <Typography
