@@ -24,7 +24,15 @@ class ConfidenceCalculator():
         self.record = record
 
     def __calculate_confidence_weights(self):
-        pass
+        if self.record['geocoded_location_type'] is "ROOFTOP":
+            self.name_confidence = 0.18
+            self.address_confidence = 0.2
+            self.geocoded_location_type_confidence = 0.02
+            self.geocoded_address_confidence = 0.05
+            self.distance_confidence = 0.15
+            self.score_confidence = 0.4
+            return
+
 
     def __calculate_confidence_scores(self):
         self.records_df["name_confidence"] = self.records_df["name"].apply(
@@ -63,7 +71,6 @@ class ConfidenceCalculator():
                 row_distance
             ),
         )
-
         self.records_df["score_confidence"] = self.records_df["score"].apply(
             lambda row_score: OpenSeachScoreMatcher.match(
                 row_score

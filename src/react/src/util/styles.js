@@ -1226,6 +1226,10 @@ export const makeConfirmNotFoundLocationDialogStyles = theme =>
     });
 
 export const makeProductionLocationDetailsStyles = theme => ({
+    confidenceScoreContainerStyles: Object.freeze({
+        display: 'inline-block',
+        marginLeft: '10px',
+    }),
     locationNameStyles: Object.freeze({
         fontSize: '36px',
         lineHeight: '44px',
