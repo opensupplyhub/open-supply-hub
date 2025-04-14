@@ -31,7 +31,7 @@ describe('DownloadFacilitiesButton component', () => {
     setLoginRequiredDialogIsOpen: false,
     allowLargeDownloads: false,
     isEmbedded: true,
-    handleDownload: handleDownload,
+    handleDownload,
   };
 
   const createMockStore = (customState = {}) => {
@@ -48,7 +48,7 @@ describe('DownloadFacilitiesButton component', () => {
       embeddedMap: { embed: true },
       ...customState,
     };
-    return createStore((_) => initialState);
+    return createStore(() => initialState);
   };
 
   const theme = createMuiTheme({
