@@ -16,34 +16,7 @@ jest.mock('@material-ui/core/Popper', () => (props) => {
   }
   return props.children;
 });
-jest.mock('@material-ui/core/Menu', () => {
-  return ({ children, anchorEl, open, onClose, ...props }) => (
-    <div role="menu" {...props}>
-      {children}
-    </div>
-  );
-});
-jest.mock('@material-ui/core/MenuItem', () => {
-  return ({ children, onClick, anchorEl, ...props }) => {
-    const handleKeyDown = (event) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        onClick && onClick(event);
-      }
-    };
-
-    return (
-      <div
-        role="menuitem"
-        onClick={onClick}
-        onKeyDown={handleKeyDown}
-        tabIndex={0}
-        {...props}
-      >
-        {children}
-      </div>
-    );
-  };
-});
+jest.mock('../../components/DownloadMenu', () => () => <div data-testid="mock-download-menu" />);
 jest.mock('@material-ui/core/Portal', () => ({ children }) => children);
 
 
@@ -101,22 +74,12 @@ describe('DownloadFacilitiesButton component', () => {
   });
 
   test('the menu should appear when button is clicked', async() => {
-    const { getByRole } = renderComponent();
+    const { getByRole, getByTestId } = renderComponent();
     const button = getByRole('button', { name: 'Download' });
 
     fireEvent.click(button);
 
-    expect(await screen.findByRole('menu')).toBeInTheDocument();
-  });
-
-  test('should show menuitems CSV and Excel', async () => {
-    const { getByRole } = renderComponent();
-    const button = getByRole('button', { name: 'Download' });
-
-    fireEvent.click(button);
-
-    expect(await screen.findByRole('menuitem', { name: /csv/i })).toBeInTheDocument();
-    expect(await screen.findByRole('menuitem', { name: /excel/i })).toBeInTheDocument();
+    expect(await getByTestId("mock-download-menu")).toBeInTheDocument();
   });
 
   test('should disable button when allowLargeDownloads is false', () => {

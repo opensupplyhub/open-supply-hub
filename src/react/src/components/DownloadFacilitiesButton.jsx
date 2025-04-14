@@ -2,8 +2,6 @@ import React, { useEffect } from 'react';
 import { arrayOf, string, bool, shape, number } from 'prop-types';
 import { connect } from 'react-redux';
 import Button from '@material-ui/core/Button';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
 import Tooltip from '@material-ui/core/Tooltip';
 import { withStyles, withTheme } from '@material-ui/core/styles';
 
@@ -13,6 +11,7 @@ import downloadFacilities from '../actions/downloadFacilities';
 import DownloadIcon from './DownloadIcon';
 import ArrowDropDownIcon from './ArrowDropDownIcon';
 import { hideLogDownloadError } from '../actions/logDownload';
+import DownloadMenu from '../components/DownloadMenu';
 
 const fallbackForTest = {
     main: 'rgb(255, 207, 63)',
@@ -133,19 +132,11 @@ const DownloadFacilitiesButton = ({
                         />
                     </div>
                 </Button>
-                <Menu
-                    id="download-menu"
+                <DownloadMenu
                     anchorEl={anchorEl}
-                    open={Boolean(anchorEl)}
                     onClose={handleClose}
-                >
-                    <MenuItem onClick={() => selectFormatAndDownload('csv')}>
-                        CSV
-                    </MenuItem>
-                    <MenuItem onClick={() => selectFormatAndDownload('xlsx')}>
-                        Excel
-                    </MenuItem>
-                </Menu>
+                    onSelectFormat={selectFormatAndDownload}
+                />
             </div>
         </Tooltip>
     );
