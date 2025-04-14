@@ -55,11 +55,11 @@ echo "Dump database"
 TEMPORARY_INSTANCE_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier $TEMPORARY_INSTANCE_ID --query 'DBInstances[0].Endpoint.Address' --output text)
 echo "$TEMPORARY_INSTANCE_ENDPOINT:5432:$DATABASE_NAME:$DATABASE_USERNAME:$DATABASE_PASSWORD" > ~/.pgpass
 chmod 600 ~/.pgpass
-pg_dump --clean --no-owner --no-privileges -Fc -h $TEMPORARY_INSTANCE_ENDPOINT  -d $DATABASE_NAME -U $DATABASE_USERNAME -p 5432 -f /dumps/osh_prod_large_anonimized.dump -w --verbose
+pg_dump --clean --no-owner --no-privileges -Fc -h $TEMPORARY_INSTANCE_ENDPOINT -d $DATABASE_NAME -U $DATABASE_USERNAME -p 5432 -f /dumps/osh_prod_large_anonymized.dump -w --verbose
 ls -la /dumps
 echo "Dump database is finished"
 echo "Copy dump to S3"
-aws s3 cp /dumps/osh_prod_large_anonimized.dump s3://oshub-dumps-anonymized/osh_prod_large_anon.dump
+aws s3 cp /dumps/osh_prod_large_anonymized.dump s3://oshub-dumps-anonymized/osh_prod_large_anon.dump
 
 echo "Delete temporary database instance"
 aws rds delete-db-instance \
