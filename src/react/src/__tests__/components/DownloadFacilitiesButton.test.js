@@ -48,7 +48,7 @@ describe('DownloadFacilitiesButton component', () => {
       embeddedMap: { embed: true },
       ...customState,
     };
-    return createStore((state) => initialState);
+    return createStore((_) => initialState);
   };
 
   const theme = createMuiTheme({
@@ -57,7 +57,7 @@ describe('DownloadFacilitiesButton component', () => {
             main: 'rgb(255, 207, 63)',
             dark: 'rgb(178, 144, 44)',
           },
-          getContrastText: jest.fn(() => '#fff'),
+          getContrastText: jest.fn(() => 'rgb(255, 207, 63)'),
       },
     });
 
