@@ -3,26 +3,26 @@ import { render, fireEvent, screen } from '@testing-library/react';
 import DownloadMenu from '../../components/DownloadMenu';
 
 jest.mock('@material-ui/core/Menu', () => {
-  return ({ children, open, anchorEl, ...rest }) => {
+  return ({ children, open, anchorEl, onClose, ...rest }) => {
     if (!open) return null;
     return (
       <div role="menu" data-testid="mock-menu" {...rest}>
         {children}
+        <button onClick={onClose} data-testid="menu-close-button">Close Menu</button>
       </div>
     );
   };
 });
 
 jest.mock('@material-ui/core/MenuItem', () => {
-  return ({ children, onClick, ...props }) => (
-  <button
-    role="menuitem"
-    onClick={onClick}
-    type="button"
-    {...props}
-  >
-    {children}
-  </button>
+  return ({ onClick, ...props }) => (
+    <button
+      role="menuitem"
+      onClick={onClick}
+      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick?.(e)}
+      tabIndex={0}
+      {...props}
+    />
   );
 });
 
@@ -61,4 +61,22 @@ describe('DownloadMenu component', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: /excel/i }));
     expect(onSelectFormat).toHaveBeenCalledWith('xlsx');
   });
+
+  test('calls onClose when menu is closed', () => {
+    const mockOnClose = jest.fn();
+
+    render(
+      <DownloadMenu
+        anchorEl={document.createElement('div')}
+        onClose={mockOnClose}
+        onSelectFormat={jest.fn()}
+      />
+    );
+
+    const closeBtn = screen.getByTestId('menu-close-button');
+    fireEvent.click(closeBtn);
+
+    expect(mockOnClose).toHaveBeenCalled();
+  });
+
 });
