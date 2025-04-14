@@ -85,7 +85,6 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         if facility_download_limit and current_page >= total_pages:
             facility_download_limit.increment_download_count()
 
-
         list_serializer = self.get_serializer(page_queryset)
         rows = [f['row'] for f in list_serializer.data]
         headers = list_serializer.child.get_headers()

@@ -3,6 +3,7 @@ from rest_framework.test import APITestCase
 from api.constants import FacilitiesDownloadSettings
 from api.models.facility_download_limit import FacilityDownloadLimit
 
+
 class UserSerializerTest(APITestCase):
     def setUp(self):
         self.email = "test@example.com"
