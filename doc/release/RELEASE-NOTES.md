@@ -30,6 +30,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-1893](https://opensupplyhub.atlassian.net/browse/OSDEV-1893) - Prevented sending a claim request to `/api/facilities/{os_id}/claim/` for facilities that are pending or approved. Added BE validators to handle incoming claim data.
+* [OSDEV-1933](https://opensupplyhub.atlassian.net/browse/OSDEV-1933) - Fixed typo errors in the resource names of the OpenSupplyHubTest-AnonymizedDatabaseDump cluster.
 
 ### What's new
 * [OSDEV-1706](https://opensupplyhub.atlassian.net/browse/OSDEV-1706) - Implemented backend error handling for SLC form submission and created the UI to display post-submit errors in a user-friendly way. Aligned SLC form validation with backend rules to ensure maximum consistency.
