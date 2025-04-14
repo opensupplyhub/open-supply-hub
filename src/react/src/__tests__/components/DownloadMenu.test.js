@@ -15,14 +15,14 @@ jest.mock('@material-ui/core/Menu', () => {
 
 jest.mock('@material-ui/core/MenuItem', () => {
   return ({ children, onClick, ...props }) => (
-    <div
-      role="menuitem"
-      onClick={onClick}
-      tabIndex={0}
-      {...props}
-    >
-      {children}
-    </div>
+  <button
+    role="menuitem"
+    onClick={onClick}
+    type="button"
+    {...props}
+  >
+    {children}
+  </button>
   );
 });
 
