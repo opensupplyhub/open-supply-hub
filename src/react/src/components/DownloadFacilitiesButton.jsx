@@ -1,9 +1,7 @@
 import React, { useEffect } from 'react';
-import { arrayOf, string, bool } from 'prop-types';
+import { arrayOf, string, bool, shape, number } from 'prop-types';
 import { connect } from 'react-redux';
 import Button from '@material-ui/core/Button';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
 import Tooltip from '@material-ui/core/Tooltip';
 import { withStyles, withTheme } from '@material-ui/core/styles';
 
@@ -13,6 +11,7 @@ import downloadFacilities from '../actions/downloadFacilities';
 import DownloadIcon from './DownloadIcon';
 import ArrowDropDownIcon from './ArrowDropDownIcon';
 import { hideLogDownloadError } from '../actions/logDownload';
+import DownloadMenu from '../components/DownloadMenu';
 
 const downloadFacilitiesStyles = theme =>
     Object.freeze({
@@ -44,7 +43,7 @@ const downloadFacilitiesStyles = theme =>
         },
     });
 
-function DownloadFacilitiesButton({
+const DownloadFacilitiesButton = ({
     /* from state */
     dispatch,
     isEmbedded,
@@ -56,7 +55,7 @@ function DownloadFacilitiesButton({
     setLoginRequiredDialogIsOpen,
     classes,
     theme,
-}) {
+}) => {
     const [anchorEl, setAnchorEl] = React.useState(null);
 
     const actionContrastText = theme.palette.getContrastText(
@@ -85,22 +84,18 @@ function DownloadFacilitiesButton({
         }
         handleClose();
     };
+    const tooltipTitle = allowLargeDownloads ? (
+        ''
+    ) : (
+        <p className={classes.downloadTooltip}>
+            Downloads are supported for searches resulting in{' '}
+            {user.allowed_records_number} production locations or less. Log in
+            to download this dataset.
+        </p>
+    );
 
     return (
-        <Tooltip
-            title={
-                allowLargeDownloads ? (
-                    ''
-                ) : (
-                    <p className={classes.downloadTooltip}>
-                        Downloads are supported for searches resulting in 1,000
-                        production locations or less. Log in to download this
-                        dataset.
-                    </p>
-                )
-            }
-            placement="left"
-        >
+        <Tooltip title={tooltipTitle} placement="left">
             <div>
                 <Button
                     disabled={disabled}
@@ -128,23 +123,15 @@ function DownloadFacilitiesButton({
                         />
                     </div>
                 </Button>
-                <Menu
-                    id="download-menu"
+                <DownloadMenu
                     anchorEl={anchorEl}
-                    open={Boolean(anchorEl)}
                     onClose={handleClose}
-                >
-                    <MenuItem onClick={() => selectFormatAndDownload('csv')}>
-                        CSV
-                    </MenuItem>
-                    <MenuItem onClick={() => selectFormatAndDownload('xlsx')}>
-                        Excel
-                    </MenuItem>
-                </Menu>
+                    onSelectFormat={selectFormatAndDownload}
+                />
             </div>
         </Tooltip>
     );
-}
+};
 
 DownloadFacilitiesButton.defaultProps = {
     allowLargeDownloads: false,
@@ -156,6 +143,9 @@ DownloadFacilitiesButton.propTypes = {
     allowLargeDownloads: bool,
     disabled: bool,
     logDownloadError: arrayOf(string),
+    user: shape({
+        allowed_records_number: number.isRequired,
+    }).isRequired,
 };
 
 function mapStateToProps({
