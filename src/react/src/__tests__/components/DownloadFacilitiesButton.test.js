@@ -24,11 +24,25 @@ jest.mock('@material-ui/core/Menu', () => {
   );
 });
 jest.mock('@material-ui/core/MenuItem', () => {
-  return ({ children, onClick, anchorEl, ...props }) => (
-    <div role="menuitem" onClick={onClick} {...props}>
-      {children}
-    </div>
-  );
+  return ({ children, onClick, anchorEl, ...props }) => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        onClick && onClick(event);
+      }
+    };
+
+    return (
+      <div
+        role="menuitem"
+        onClick={onClick}
+        onKeyDown={handleKeyDown}
+        tabIndex={0}
+        {...props}
+      >
+        {children}
+      </div>
+    );
+  };
 });
 jest.mock('@material-ui/core/Portal', () => ({ children }) => children);
 
