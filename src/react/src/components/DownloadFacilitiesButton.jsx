@@ -14,6 +14,11 @@ import DownloadIcon from './DownloadIcon';
 import ArrowDropDownIcon from './ArrowDropDownIcon';
 import { hideLogDownloadError } from '../actions/logDownload';
 
+const fallbackForTest = {
+    main: 'rgb(255, 207, 63)',
+    dark: 'rgb(178, 144, 44)',
+    fontFamily: 'Darker Grotesque, sans-serif',
+};
 const downloadFacilitiesStyles = theme =>
     Object.freeze({
         listHeaderButtonStyles: Object.freeze({
@@ -21,12 +26,15 @@ const downloadFacilitiesStyles = theme =>
             margin: '5px 0',
             marginRight: '1em',
             backgroundColor: theme.palette.action.main,
-            color: theme.palette.getContrastText(theme.palette.action.main),
+            color: theme.palette.getContrastText(
+                theme.palette.action.main || fallbackForTest.main,
+            ),
             fontSize: '16px',
             fontWeight: 900,
             lineHeight: '20px',
             '&:hover': {
-                backgroundColor: theme.palette.action.dark,
+                backgroundColor:
+                    theme.palette.action.dark || fallbackForTest.dark,
             },
         }),
         buttonText: Object.freeze({
@@ -35,7 +43,8 @@ const downloadFacilitiesStyles = theme =>
         }),
         downloadTooltip: {
             fontSize: '0.875rem',
-            fontFamily: theme.typography.fontFamily,
+            fontFamily:
+                theme.typography.fontFamily || fallbackForTest.fontFamily,
         },
         buttonContent: {
             display: 'flex',
@@ -44,7 +53,7 @@ const downloadFacilitiesStyles = theme =>
         },
     });
 
-function DownloadFacilitiesButton({
+const DownloadFacilitiesButton = ({
     /* from state */
     dispatch,
     isEmbedded,
@@ -56,11 +65,11 @@ function DownloadFacilitiesButton({
     setLoginRequiredDialogIsOpen,
     classes,
     theme,
-}) {
+}) => {
     const [anchorEl, setAnchorEl] = React.useState(null);
 
     const actionContrastText = theme.palette.getContrastText(
-        theme.palette.action.main,
+        theme.palette.action.main || fallbackForTest.main,
     );
 
     useEffect(() => {
@@ -85,22 +94,18 @@ function DownloadFacilitiesButton({
         }
         handleClose();
     };
+    const tooltipTitle = allowLargeDownloads ? (
+        ''
+    ) : (
+        <p className={classes.downloadTooltip}>
+            Downloads are supported for searches resulting in{' '}
+            {user.allowed_records_number} production locations or less. Log in
+            to download this dataset.
+        </p>
+    );
 
     return (
-        <Tooltip
-            title={
-                allowLargeDownloads ? (
-                    ''
-                ) : (
-                    <p className={classes.downloadTooltip}>
-                        Downloads are supported for searches resulting in{' '}
-                        {user.allowed_records_number} production locations or
-                        less. Log in to download this dataset.
-                    </p>
-                )
-            }
-            placement="left"
-        >
+        <Tooltip title={tooltipTitle} placement="left">
             <div>
                 <Button
                     disabled={disabled}
@@ -144,7 +149,7 @@ function DownloadFacilitiesButton({
             </div>
         </Tooltip>
     );
-}
+};
 
 DownloadFacilitiesButton.defaultProps = {
     allowLargeDownloads: false,
