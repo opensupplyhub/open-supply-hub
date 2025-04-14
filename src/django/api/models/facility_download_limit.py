@@ -62,9 +62,9 @@ class FacilityDownloadLimit(models.Model):
             ):
                 raise ValidationError("Concurrent limit exceeded.")
 
-        self.last_download_time = timezone.now()
-        self.download_count = F('download_count') + 1
-        self.save()
+            self.last_download_time = timezone.now()
+            self.download_count = F('download_count') + 1
+            self.save()
 
     @staticmethod
     def get_or_create_user_download_limit(
