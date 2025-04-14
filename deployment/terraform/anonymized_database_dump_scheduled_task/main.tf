@@ -42,9 +42,9 @@ data "aws_iam_policy_document" "this" {
   }
 }
 
-module "anonimized_database_dump_cluster" {
+module "anonymized_database_dump_cluster" {
   source = "github.com/cn-terraform/terraform-aws-ecs-cluster?ref=1.0.11"
-  name   = join("-", [local.short, "AmonymizedDatabaseDump"])
+  name   = join("-", [local.short, "AnonymizedDatabaseDump"])
 }
 
 resource "aws_ssm_parameter" "database_password" {
@@ -113,7 +113,7 @@ module "database_anonymizer_task" {
   name_prefix                                 = "anonymized-database-dump-task"
   event_rule_name                             = "anonymized-database-dump-rule"
   event_rule_schedule_expression              = var.anonymized_database_schedule_expression
-  ecs_cluster_arn                             = module.anonimized_database_dump_cluster.aws_ecs_cluster_cluster_arn
+  ecs_cluster_arn                             = module.anonymized_database_dump_cluster.aws_ecs_cluster_cluster_arn
   event_target_ecs_target_subnets             = var.anonymized_database_subnet_ids
   event_target_ecs_target_security_groups     = var.anonymized_database_security_group_ids
   event_target_ecs_target_task_definition_arn = module.anonymized_database_dump_task_definition.aws_ecs_task_definition_td_arn
