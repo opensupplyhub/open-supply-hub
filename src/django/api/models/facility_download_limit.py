@@ -57,7 +57,7 @@ class FacilityDownloadLimit(models.Model):
         with transaction.atomic():
             self.refresh_from_db()
             if (
-                self.download_count >=
+                self.download_count >
                 self.allowed_downloads
             ):
                 raise ValidationError("Concurrent limit exceeded.")
@@ -91,12 +91,18 @@ class FacilityDownloadLimit(models.Model):
                 }
             )
 
-        current_month = timezone.now().month
+        current_date = timezone.now()
         last_download_month = facility_download_limit \
             .last_download_time.month
+        last_download_year = facility_download_limit \
+            .last_download_time.year
 
-        if current_month != last_download_month:
+        if (
+            current_date.month != last_download_month or
+            current_date.year != last_download_year
+        ):
             facility_download_limit.download_count = 0
             facility_download_limit.last_download_time = timezone.now()
+            facility_download_limit.save()
 
         return facility_download_limit
