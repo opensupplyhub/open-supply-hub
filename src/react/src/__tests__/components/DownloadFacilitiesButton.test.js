@@ -21,11 +21,13 @@ jest.mock('@material-ui/core/Portal', () => ({ children }) => children);
 
 
 describe('DownloadFacilitiesButton component', () => {
+  const expectedTooltipText =
+  'Downloads are supported for searches resulting in 1000 production locations or less. Log in to download this dataset.';
   const handleDownload = jest.fn();
   const defaultProps = {
     disabled: false,
     setLoginRequiredDialogIsOpen: false,
-    allowLargeDownloads: true,
+    allowLargeDownloads: false,
     isEmbedded: true,
     handleDownload: handleDownload,
   };
@@ -82,17 +84,34 @@ describe('DownloadFacilitiesButton component', () => {
     expect(await getByTestId("mock-download-menu")).toBeInTheDocument();
   });
 
-  test('should disable button when allowLargeDownloads is false', () => {
+  test('should show tooltip if allowLargeDownloads is false', async () => {
     const { getByRole } = renderComponent({ allowLargeDownloads: false });
     const button = getByRole('button', { name: 'Download' });
 
     expect(button).toBeEnabled();
+
+    fireEvent.mouseOver(button);
+
+    await waitFor(() =>
+      expect(screen.getByText(expectedTooltipText)).toBeInTheDocument()
+    );
+  });
+
+  test('should not show tooltip if allowLargeDownloads is true', async () => {
+    const { getByRole } = renderComponent({ allowLargeDownloads: true });
+    const button = getByRole('button', { name: 'Download' });
+
+    expect(button).toBeEnabled();
+
+    fireEvent.mouseOver(button);
+
+    await waitFor(() =>
+      expect(screen.queryByText(expectedTooltipText)).not.toBeInTheDocument()
+    );
   });
 
   test('should show default allowed_records_number in the tooltip when button is disabled', async () => {
     const { getByRole } = renderComponent({ allowLargeDownloads: false, disabled: true});
-    const expectedText =
-    'Downloads are supported for searches resulting in 1000 production locations or less. Log in to download this dataset.';
 
     const button = getByRole('button', { name: 'Download' });
     expect(button).toBeDisabled();
@@ -100,7 +119,7 @@ describe('DownloadFacilitiesButton component', () => {
     fireEvent.mouseOver(button);
 
     await waitFor(() =>
-      expect(screen.getByText(expectedText)).toBeInTheDocument()
+      expect(screen.getByText(expectedTooltipText)).toBeInTheDocument()
     );
   });
 

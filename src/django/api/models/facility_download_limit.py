@@ -57,7 +57,7 @@ class FacilityDownloadLimit(models.Model):
         with transaction.atomic():
             self.refresh_from_db()
             if (
-                self.download_count >
+                self.download_count >=
                 self.allowed_downloads
             ):
                 raise ValidationError("Concurrent limit exceeded.")
