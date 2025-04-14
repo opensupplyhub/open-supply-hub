@@ -1,8 +1,10 @@
 import React from 'react';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react';
-import DownloadFacilitiesButton from '../../components/DownloadFacilitiesButton';
+import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import { Provider } from 'react-redux';
 import { createStore } from 'redux';
+import DownloadFacilitiesButton from '../../components/DownloadFacilitiesButton';
+
 
 jest.mock('../../components/DownloadIcon', () => () => <svg data-testid="download-icon" />);
 jest.mock('@material-ui/core/Popper', () => (props) => {
@@ -49,14 +51,27 @@ describe('DownloadFacilitiesButton component', () => {
     return createStore((state) => initialState);
   };
 
+  const theme = createMuiTheme({
+    palette: {
+          action: {
+            main: 'rgb(255, 207, 63)',
+            dark: 'rgb(178, 144, 44)',
+          },
+          getContrastText: jest.fn(() => '#fff'),
+      },
+    });
+
+
   const renderComponent = (props = {}, customState = {}) => {
     const container = document.createElement('div');
     document.body.appendChild(container);
 
     const result = render(
-      <Provider store={createMockStore(customState)}>
-        <DownloadFacilitiesButton {...defaultProps} {...props} />
-      </Provider>,
+      <MuiThemeProvider theme={theme}>
+        <Provider store={createMockStore(customState)}>
+          <DownloadFacilitiesButton {...defaultProps} {...props} />
+        </Provider>,
+      </MuiThemeProvider>,
       { container }
     );
 

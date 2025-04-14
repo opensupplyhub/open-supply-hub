@@ -13,11 +13,6 @@ import ArrowDropDownIcon from './ArrowDropDownIcon';
 import { hideLogDownloadError } from '../actions/logDownload';
 import DownloadMenu from '../components/DownloadMenu';
 
-const fallbackForTest = {
-    main: 'rgb(255, 207, 63)',
-    dark: 'rgb(178, 144, 44)',
-    fontFamily: 'Darker Grotesque, sans-serif',
-};
 const downloadFacilitiesStyles = theme =>
     Object.freeze({
         listHeaderButtonStyles: Object.freeze({
@@ -25,15 +20,12 @@ const downloadFacilitiesStyles = theme =>
             margin: '5px 0',
             marginRight: '1em',
             backgroundColor: theme.palette.action.main,
-            color: theme.palette.getContrastText(
-                theme.palette.action.main || fallbackForTest.main,
-            ),
+            color: theme.palette.getContrastText(theme.palette.action.main),
             fontSize: '16px',
             fontWeight: 900,
             lineHeight: '20px',
             '&:hover': {
-                backgroundColor:
-                    theme.palette.action.dark || fallbackForTest.dark,
+                backgroundColor: theme.palette.action.dark,
             },
         }),
         buttonText: Object.freeze({
@@ -42,8 +34,7 @@ const downloadFacilitiesStyles = theme =>
         }),
         downloadTooltip: {
             fontSize: '0.875rem',
-            fontFamily:
-                theme.typography.fontFamily || fallbackForTest.fontFamily,
+            fontFamily: theme.typography.fontFamily,
         },
         buttonContent: {
             display: 'flex',
@@ -68,7 +59,7 @@ const DownloadFacilitiesButton = ({
     const [anchorEl, setAnchorEl] = React.useState(null);
 
     const actionContrastText = theme.palette.getContrastText(
-        theme.palette.action.main || fallbackForTest.main,
+        theme.palette.action.main,
     );
 
     useEffect(() => {
