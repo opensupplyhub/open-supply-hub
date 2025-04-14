@@ -2,29 +2,28 @@ import React from 'react';
 import { render, fireEvent, screen } from '@testing-library/react';
 import DownloadMenu from '../../components/DownloadMenu';
 
-jest.mock('@material-ui/core/Menu', () => {
-  return ({ children, open, anchorEl, onClose, ...rest }) => {
+jest.mock('@material-ui/core/Menu', () =>  ({ children, open, anchorEl, onClose, ...rest }) => {
     if (!open) return null;
     return (
       <div role="menu" data-testid="mock-menu" {...rest}>
         {children}
-        <button onClick={onClose} data-testid="menu-close-button">Close Menu</button>
+        <button type="button" onClick={onClose} data-testid="menu-close-button">Close Menu</button>
       </div>
     );
-  };
-});
+  }
+);
 
-jest.mock('@material-ui/core/MenuItem', () => {
-  return ({ onClick, ...props }) => (
+jest.mock('@material-ui/core/MenuItem', () => ({ onClick, ...props }) => (
     <button
+     type="button"
       role="menuitem"
       onClick={onClick}
       onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick?.(e)}
       tabIndex={0}
       {...props}
     />
-  );
-});
+  )
+);
 
 describe('DownloadMenu component', () => {
   const onClose = jest.fn();
