@@ -8,7 +8,7 @@ class UserSerializerTest(APITestCase):
         self.email = "test@example.com"
         self.test_pass = "example123"
         self.user = User.objects.create(email=self.email)
-        self.user.set_password(self.password)
+        self.user.set_password(self.test_pass)
         self.user.save()
         self.client.login(email=self.email, password=self.test_pass)
 
