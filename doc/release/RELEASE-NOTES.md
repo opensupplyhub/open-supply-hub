@@ -3,6 +3,39 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.3.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: May 3, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* *Describe migrations here.*
+
+#### Schema changes
+* *Describe schema changes here.*
+
+### Code/API changes
+* *Describe Code/API changes here.*
+
+### Architecture/Environment changes
+* [OSDEV-1895](https://opensupplyhub.atlassian.net/browse/OSDEV-1895) - Updated the rules to send the `csrftoken` cookie with the `HttpOnly` flag to the user. Implemented logic to retrieve the `csrftoken` upon user login and save it to `localStorage`. Added functionality to set the `csrftoken` from `localStorage` in Axios headers.
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here.*
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.2.0
 
 ## Introduction
@@ -27,7 +60,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1897](https://opensupplyhub.atlassian.net/browse/OSDEV-1897) - A Lambda@Edge function was added to dynamically set the following response headers on the CloudFront side, depending on whether embed mode is active:
     * `X-Frame-Options: DENY`
     * `Content-Security-Policy: frame-ancestors 'none'`
-* [OSDEV-1895](https://opensupplyhub.atlassian.net/browse/OSDEV-1895) - Updated the rules to send the `csrftoken` cookie with the `HttpOnly` flag to the user. Implemented logic to retrieve the `csrftoken` upon user login and save it to `localStorage`. Added functionality to set the `csrftoken` from `localStorage` in Axios headers.
 
 ### Bugfix
 * [OSDEV-1893](https://opensupplyhub.atlassian.net/browse/OSDEV-1893) - Prevented sending a claim request to `/api/facilities/{os_id}/claim/` for facilities that are pending or approved. Added BE validators to handle incoming claim data.
