@@ -57,6 +57,9 @@ class GeocodedLocationTypMatcher():
         if location_type_a == location_type_b:
             return 1.0
 
+        if location_type_a == "ROOFTOP":
+            return 1
+
         return 0.0
 
 
