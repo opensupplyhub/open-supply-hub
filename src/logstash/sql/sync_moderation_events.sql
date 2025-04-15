@@ -3,6 +3,7 @@ SELECT
 	ame.os_id AS os_id_value,
 	ame.contributor_id,
 	ac.name AS contributor_name,
+	au.email  AS contributor_email,
 	ame.claim_id AS claim_id_value,
 	ame.cleaned_data::TEXT AS cleaned_data_value,
 	ame.request_type,
@@ -18,6 +19,9 @@ FROM
 LEFT JOIN api_contributor AS ac
 ON
 	ac.id = ame.contributor_id
+LEFT JOIN api_user AS au
+ON
+	au.id = ac.admin_id
 WHERE
 	ame.updated_at > :sql_last_value
 	AND ame.updated_at < CURRENT_TIMESTAMP
