@@ -25,6 +25,25 @@ class TestProductionLocationsQueryBuilder(TestCase):
             self.builder.query_body['query']['bool']['must']
             )
 
+    def test_add_match_phrase(self):
+        self.builder.add_match_phrase(
+            'address',
+            'Land plot number 115, map sheet number 03, Cadastral map of Son Ha commune, Son Ha commune, Nho Quan district, Ninh Binh province, Vietnam',
+            slop=4
+        )
+        expected = {
+            "match_phrase": {
+            "address": {
+                    "query": "Land plot number 115, map sheet number 03, Cadastral map of Son Ha commune, Son Ha commune, Nho Quan district, Ninh Binh province, Vietnam",
+                    "slop": 4
+                }
+            }
+        }
+        self.assertIn(
+            expected,
+            self.builder.query_body['query']['bool']['must']
+            )
+
     def test_add_terms_for_standard_field(self):
         self.builder.add_terms('country', ['US', 'CA'])
         expected = {'terms': {'country.alpha_2': ['US', 'CA']}}
