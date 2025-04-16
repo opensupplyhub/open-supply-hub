@@ -20,6 +20,7 @@ import DashboardModerationQueue from './Dashboard/DashboardModerationQueue';
 import DashboardContributionRecord from './Dashboard/DashboardContributionRecord';
 import FeatureFlag from './FeatureFlag';
 import RouteNotFound from './RouteNotFound';
+import RequireAuthNotice from './RequireAuthNotice';
 
 import { checkWhetherUserHasDashboardAccess } from '../util/util';
 
@@ -55,7 +56,7 @@ const dashboardStyles = Object.freeze({
     }),
 });
 
-const DASHBOARD_TITLE = 'Dashboard';
+const TITLE = 'Dashboard';
 
 const makeClickableSecondaryLink = ({ route, screenTitle }) => (
     <React.Fragment>
@@ -76,12 +77,25 @@ const makeClickableDashboardLinkFn = (screenTitle, secondaryLink) => () => (
     </span>
 );
 
-function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
+function Dashboard({
+    userWithAccessHasSignedIn,
+    fetchingSessionSignIn,
+    userHasSignedIn,
+}) {
     if (fetchingSessionSignIn) {
         return (
-            <AppGrid title="">
+            <AppGrid title={TITLE}>
                 <CircularProgress />
             </AppGrid>
+        );
+    }
+
+    if (!userHasSignedIn) {
+        return (
+            <RequireAuthNotice
+                title={TITLE}
+                text="Sign in to view your Open Supply Hub Dashboard"
+            />
         );
     }
 
@@ -97,7 +111,7 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
             </FeatureFlag>
             <Link to={dashboardDeleteFacilityRoute}>Delete a Facility</Link>
             <Link to={dashboardMergeFacilitiesRoute}>Merge Two Facilities</Link>
-            {/* <Link to={dashboardModerationQueueRoute}>Moderation Queue</Link> */}
+            <Link to={dashboardModerationQueueRoute}>Moderation Queue</Link>
             <Link to={dashboardAdjustFacilityMatchesRoute}>
                 Adjust Facility Matches
             </Link>
@@ -130,7 +144,7 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
                             render={() => (
                                 <FeatureFlag
                                     flag={CLAIM_A_FACILITY}
-                                    alternative={DASHBOARD_TITLE}
+                                    alternative={TITLE}
                                 >
                                     {makeClickableDashboardLinkFn(
                                         'Facility Claim Details',
@@ -148,7 +162,7 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
                             render={() => (
                                 <FeatureFlag
                                     flag={CLAIM_A_FACILITY}
-                                    alternative={DASHBOARD_TITLE}
+                                    alternative={TITLE}
                                 >
                                     {makeClickableDashboardLinkFn(
                                         'Facility Claims',
@@ -230,6 +244,10 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
                             path={dashboardContributionRecordRoute}
                             render={makeClickableDashboardLinkFn(
                                 'Contribution Record',
+                                {
+                                    route: dashboardModerationQueueRoute,
+                                    screenTitle: 'Moderation Queue',
+                                },
                             )}
                         />
                     </Switch>
@@ -334,6 +352,7 @@ function Dashboard({ userWithAccessHasSignedIn, fetchingSessionSignIn }) {
 Dashboard.propTypes = {
     userWithAccessHasSignedIn: bool.isRequired,
     fetchingSessionSignIn: bool.isRequired,
+    userHasSignedIn: bool.isRequired,
 };
 function mapStateToProps({
     auth: {
@@ -344,6 +363,7 @@ function mapStateToProps({
     return {
         userWithAccessHasSignedIn: checkWhetherUserHasDashboardAccess(user),
         fetchingSessionSignIn: fetching,
+        userHasSignedIn: !user.isAnon,
     };
 }
 export default connect(mapStateToProps)(Dashboard);

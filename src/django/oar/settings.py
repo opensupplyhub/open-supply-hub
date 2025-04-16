@@ -16,6 +16,8 @@ import requests
 from django.core.exceptions import ImproperlyConfigured
 from corsheaders.defaults import default_headers
 
+from api.constants import NON_FIELD_ERRORS_KEY
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -129,6 +131,7 @@ INSTALLED_APPS = [
     'api',
     'web',
     'ecsmanage',
+    'django_bleach',
 ]
 
 # For allauth
@@ -141,8 +144,13 @@ ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = False
 ACCOUNT_EMAIL_SUBJECT_PREFIX = ''
+# https://docs.djangoproject.com/en/3.2/ref/settings/#session-cookie-age
+SESSION_COOKIE_AGE = 86400 # 24 hours in seconds
 
 AUTH_USER_MODEL = 'api.User'
+
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 
 REST_AUTH_SERIALIZERS = {
     'USER_DETAILS_SERIALIZER': 'api.serializers.UserSerializer',
@@ -171,7 +179,11 @@ REST_FRAMEWORK = {
         'sustained': '10000/day',
         'data_upload': '30/minute',
         'tiles': '300/minute',
-    }
+    },
+    # By default, the value of NON_FIELD_ERRORS_KEY is 'non_field_errors'.
+    # It is being redefined to ensure 100% consistency between custom error
+    # messages and Django's built-in ones.
+    'NON_FIELD_ERRORS_KEY': NON_FIELD_ERRORS_KEY
 }
 
 SWAGGER_SETTINGS = {
@@ -557,3 +569,19 @@ ALWAYS_GENERATE_SLOW_REPORT = True  # Generate report only when requested using 
 
 KAFKA_BOOTSTRAP_SERVERS = os.getenv('KAFKA_BOOTSTRAP_SERVERS', '') # Kafka servers to connect
 KAFKA_TOPIC_DEDUPE_BASIC_NAME = os.getenv('KAFKA_TOPIC_DEDUPE_BASIC_NAME', '') # Kafka Dedupe Hub Topic
+
+# Django Bleach settings
+# https://django-bleach.readthedocs.io/en/latest/
+BLEACH_ALLOWED_TAGS = [
+    'p', 'br', 'em', 'strong', 'ins', 'del', 'code', 'sup', 'sub',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre',
+    'ul', 'ol', 'li', 'a',
+]
+
+BLEACH_ALLOWED_ATTRIBUTES = {
+    'a': ['href', 'target', 'title'],
+}
+
+BLEACH_STRIP_TAGS = True
+
+BLEACH_STRIP_COMMENTS = True

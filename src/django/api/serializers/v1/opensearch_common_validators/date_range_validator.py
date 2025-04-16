@@ -13,7 +13,7 @@ class DateRangeValidator(OpenSearchValidationInterface):
         if date_gte and date_lt and date_gte > date_lt:
             errors.append({
                 "field": "date_gte",
-                "message": (
+                "detail": (
                     "The 'date_gte' must be "
                     "less than or equal to 'date_lt'."
                 )

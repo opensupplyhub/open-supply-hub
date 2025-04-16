@@ -1,4 +1,3 @@
-import unittest
 from django.test import TestCase
 from api.views.v1.opensearch_query_builder. \
     production_locations_query_builder import ProductionLocationsQueryBuilder
@@ -21,20 +20,6 @@ class TestProductionLocationsQueryBuilder(TestCase):
     def test_add_match(self):
         self.builder.add_match('name', 'test', fuzziness=1)
         expected = {'match': {'name': {'query': 'test', 'fuzziness': 1}}}
-        self.assertIn(
-            expected,
-            self.builder.query_body['query']['bool']['must']
-            )
-
-    def test_add_multi_match(self):
-        self.builder.add_multi_match('test query')
-        expected = {
-            'multi_match': {
-                'query': 'test query',
-                'fields': ['name^2', 'address', 'description', 'local_name'],
-                'fuzziness': 2
-            }
-        }
         self.assertIn(
             expected,
             self.builder.query_body['query']['bool']['must']
@@ -181,6 +166,11 @@ class TestProductionLocationsQueryBuilder(TestCase):
         expected = {'name.keyword': {'order': 'desc'}}
         self.assertIn(expected, self.builder.query_body['sort'])
 
+    def test_add_sort_with_default_order(self):
+        self.builder.add_sort('name')
+        expected = {'name.keyword': {'order': 'asc'}}
+        self.assertIn(expected, self.builder.query_body['sort'])
+
     def test_add_search_after(self):
         search_after_value = 'test_value'
         search_after_id = 'test_id'
@@ -214,6 +204,108 @@ class TestProductionLocationsQueryBuilder(TestCase):
         }
         self.assertEqual(final_query, expected)
 
+    def test_add_multi_match(self):
+        self.builder.add_multi_match(
+            'test query'
+        )
+        expected = {
+            'multi_match': {
+                'query': 'test query',
+                'fields': ['name^2', 'address', 'description', 'local_name'],
+                'fuzziness': 2,
+            }
+        }
+        self.assertIn(
+            expected, self.builder.query_body['query']['bool']['must']
+        )
 
-if __name__ == '__main__':
-    unittest.main()
+    def test_add_aggregations_with_precision(self):
+        aggregation = 'geohex_grid'
+        geohex_grid_precision = 5
+        self.builder.add_aggregations(
+            aggregation,
+            geohex_grid_precision
+        )
+        expected = {
+            'grouped': {
+                'geohex_grid': {
+                    'field': 'coordinates',
+                    'precision': geohex_grid_precision
+                }
+            }
+        }
+        self.assertIn('aggregations', self.builder.query_body)
+        self.assertEqual(expected, self.builder.query_body['aggregations'])
+
+    def test_add_aggregations_without_precision(self):
+        aggregation = 'geohex_grid'
+        self.builder.add_aggregations(
+            aggregation
+        )
+        expected = {
+            'grouped': {
+                'geohex_grid': {'field': 'coordinates'}
+            }
+        }
+        self.assertIn('aggregations', self.builder.query_body)
+        self.assertEqual(expected, self.builder.query_body['aggregations'])
+
+    def test_add_aggregations_where_aggregation_is_not_geohex_grid(self):
+        aggregation = 'test_aggregation'
+        self.builder.add_aggregations(
+            aggregation
+        )
+        self.assertNotIn('aggregations', self.builder.query_body)
+
+    def test_add_geo_bounding_box(self):
+        top = 40.7128
+        left = -74.0060
+        bottom = 35.7128
+        right = -78.0060
+        self.builder.add_geo_bounding_box(top, left, bottom, right)
+        expected = {
+            'geo_bounding_box': {
+                'coordinates': {
+                    'top': top,
+                    'left': left,
+                    'bottom': bottom,
+                    'right': right,
+                }
+            }
+        }
+        self.assertIn(
+            'filter', self.builder.query_body['query']['bool']
+        )
+        self.assertEqual(
+            expected,
+            self.builder.query_body['query']['bool']['filter'][0]
+        )
+
+    def test_add_geo_polygon(self):
+        values = [
+            "40.7128,-74.0060",
+            "35.7128,-78.0060",
+            "37.7128,-75.0060"
+        ]
+
+        self.builder.add_geo_polygon(values)
+
+        expected = {
+            'geo_polygon': {
+                'coordinates': {
+                    'points': [
+                        {'lat': 40.7128, 'lon': -74.0060},
+                        {'lat': 35.7128, 'lon': -78.0060},
+                        {'lat': 37.7128, 'lon': -75.0060},
+                    ]
+                }
+            }
+        }
+
+        self.assertIn(
+            'filter', self.builder.query_body['query']['bool']
+        )
+        self.assertEqual(
+            expected,
+            self.builder.query_body['query']['bool']['filter'][0]
+        )

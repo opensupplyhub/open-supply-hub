@@ -16,7 +16,7 @@ on:
           - production
         default: sandbox
       clear-opensearch:
-        description: 'Clear OpenSearch indexes'
+        description: 'Clear the custom OpenSearch indexes and templates'
         required: false
         type: boolean
         default: false

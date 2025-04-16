@@ -12,8 +12,7 @@ class ModerationEventsTest(BaseAPITest):
                 headers=self.basic_headers,
             )
 
-        result = response.json()
-        self.assertEqual(result['count'], 0)
+        self.assertEqual(response.status_code, 404)
 
         moderation_id = '1f35a90f-70a0-4c3e-8e06-2ed8e1fc6800'
         response = requests.get(
@@ -22,8 +21,7 @@ class ModerationEventsTest(BaseAPITest):
             )
 
         result = response.json()
-        self.assertEqual(result['count'], 1)
-        self.assertEqual(result['data'][0]['moderation_id'], moderation_id)
+        self.assertEqual(result['moderation_id'], moderation_id)
 
     def test_moderation_events_status(self):
         response = requests.get(
@@ -148,7 +146,7 @@ class ModerationEventsTest(BaseAPITest):
         )
         self.assertEqual(response.status_code, 400)
         result = response.json()
-        self.assertEqual(result['message'], 'The Request Query Is Invalid.')
+        self.assertEqual(result['detail'], 'The request query is invalid.')
 
     def test_search_after_pagination(self):
         # Step 1: Get the first set of results
@@ -195,7 +193,7 @@ class ModerationEventsTest(BaseAPITest):
             f"?sort_by=created_at&order_by=asc"
             f"&search_after[value]={invalid_search_after_value}&search_after[id]={invalid_search_after_id}"
         )
-        
+
         response = requests.get(
             f"{self.root_url}/api/v1/moderation-events/{query}",
             headers=self.basic_headers,
@@ -217,10 +215,10 @@ class ModerationEventsTest(BaseAPITest):
         self.assertEqual(response.status_code, 400)
 
         error = result['errors'][0]
-        self.assertEqual(error['field'], 'Date_Gte')
+        self.assertEqual(error['field'], 'date_gte')
         self.assertEqual(
-            error['message'],
-            "The 'Date_Gte' Must Be Less Than Or Equal To 'Date_Lt'."
+            error['detail'],
+            "The 'date_gte' must be less than or equal to 'date_lt'."
         )
 
     def test_valid_country(self):
@@ -247,8 +245,8 @@ class ModerationEventsTest(BaseAPITest):
         self.assertEqual(len(result['errors']), 1)
 
         error = result['errors'][0]
-        self.assertEqual(error['field'], 'Country')
-        self.assertEqual(error['message'], "'Usa' Is Not A Valid Alpha-2 Country Code.")
+        self.assertEqual(error['field'], 'country')
+        self.assertEqual(error['detail'], "'usa' is not a valid alpha-2 country code.")
 
     def test_valid_moderation_id(self):
         valid_moderation_id = '3b50d60f-85b2-4a17-9f8d-5d3e1fc68198'
@@ -274,5 +272,5 @@ class ModerationEventsTest(BaseAPITest):
         self.assertEqual(len(result['errors']), 1)
 
         error = result['errors'][0]
-        self.assertEqual(error['field'], 'Moderation_Id')
-        self.assertEqual(error['message'], "Invalid Uuid(S): 123!.")
+        self.assertEqual(error['field'], 'moderation_id')
+        self.assertEqual(error['detail'], "Invalid uuid(s): 123!.")

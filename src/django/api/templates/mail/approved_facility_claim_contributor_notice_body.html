@@ -2,30 +2,41 @@
 <html lang="en">
     <head>
         <title>
-            An OS Hub facility on one of your facility lists has been claimed
+            A facility you contributed to OS Hub has been claimed!
         </title>
     </head>
     <body>
         <p>
-            Hi,
+            Hello,
         </p>
         <p>
-            You're receiving this email because we approved a facility claim
-            for a facility appearing on one of your facility lists.
+            One of the facilities you have contributed to Open Supply Hub (OS Hub) <a href="https://info.opensupplyhub.org/resources/claim-a-facility">has been claimed!</a>
         </p>
         <p>
-            The facility is:
+            <strong>The facility is:</strong>
         </p>
         <ul>
             <li>
-                Facility: {{ facility_name }}, {{ facility_address }}, {{ facility_country }}
+                <strong>Facility:</strong> {{ facility_name }}, {{ facility_address }}, {{ facility_country }}
             </li>
             <li>
-                Facility URL: {{ facility_url }}
+                <strong>Facility URL:</strong> {{ facility_url }}
             </li>
         </ul>
         <p>
-            Best wishes,
+            This means that the facility owner/management (the claimant) is now sharing data about their operations on OS Hub directly. 
+            To claim their facility, the claimant had to provide information allowing the OS Hub team to confirm the facility name, address, and the claimant’s affiliation with it. 
+        </p>
+        <p>
+            This now allows them to add additional details like parent company, description, MOQs, products, number of workers, and contact info on the OS Hub facility profile. 
+            All data contributed by the claimant will have a special icon next to it, to show it is coming directly from the facility.
+        </p>        
+        <p>
+            If you want to encourage more facilities to complete this process, you can reach out to them to let them know that they are listed on the Open Supply Hub and can claim their profile.
+            <a href="https://info.opensupplyhub.org/resources/encourage-your-facilities-to-claim-their-profiles">Check out some sample text you can use here</a>. 
+        </p>        
+        <p>
+            Best Regards,
         </p>
         {% include "mail/signature_block.html" %}
     </body>

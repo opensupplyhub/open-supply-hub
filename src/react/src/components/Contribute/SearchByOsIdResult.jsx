@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useHistory, useParams, useLocation } from 'react-router-dom';
 import { connect } from 'react-redux';
-import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
 import { object, bool, func } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -9,12 +8,15 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 
+import RequireAuthNotice from '../RequireAuthNotice';
+
 import {
     fetchProductionLocationByOsId,
     resetSingleProductionLocation,
 } from '../../actions/contributeProductionLocation';
 import { contributeProductionLocationRoute } from '../../util/constants';
 import { makeSearchByOsIdResultStyles } from '../../util/styles';
+import { useResetScrollPosition } from '../../util/hooks';
 import { productionLocationPropType } from '../../util/propTypes';
 
 import BackToSearchButton from './BackToSearchButton';
@@ -27,27 +29,23 @@ const SearchByOsIdResult = ({
     fetchProductionLocation,
     clearProductionLocation,
     classes,
+    userHasSignedIn,
+    fetchingSessionSignIn,
 }) => {
-    const location = useLocation();
+    const TITLE = 'Production Location Search';
     const history = useHistory();
+    const location = useLocation();
+    const { osID } = useParams();
+
+    useResetScrollPosition(location);
 
     useEffect(() => {
-        const osId = new URLSearchParams(location.search).get('os_id');
-
-        if (osId) {
-            fetchProductionLocation(osId);
+        if (osID) {
+            fetchProductionLocation(osID);
         }
-    }, [location.search, fetchProductionLocation]);
+    }, [osID, fetchProductionLocation]);
 
-    const locationData = get(data, 'data[0]', {});
-    const isLocationDataAvailable = !isEmpty(locationData);
-    const {
-        name,
-        os_id: osId,
-        historical_os_id: historicalOsIds,
-        address,
-        country: { name: countryName } = {},
-    } = locationData;
+    const isLocationDataAvailable = !isEmpty(data);
 
     const handleBackToSearchByNameAddress = () => {
         clearProductionLocation();
@@ -59,12 +57,16 @@ const SearchByOsIdResult = ({
         history.push(`${contributeProductionLocationRoute}?tab=os-id`);
     };
 
-    if (fetching) {
+    if (fetching || fetchingSessionSignIn) {
         return (
             <div className={classes.circularProgressContainerStyles}>
                 <CircularProgress />
             </div>
         );
+    }
+
+    if (!userHasSignedIn) {
+        return <RequireAuthNotice title={TITLE} />;
     }
 
     return (
@@ -74,17 +76,13 @@ const SearchByOsIdResult = ({
                 handleBackToSearch={handleBackToSearchByOsId}
             />
             <Typography component="h1" className={classes.mainTitleStyles}>
-                Production Location Search
+                {TITLE}
             </Typography>
 
             <Paper className={classes.resultContainerStyles}>
                 {isLocationDataAvailable ? (
                     <SearchByOsIdSuccessResult
-                        name={name}
-                        osId={osId}
-                        historicalOsIds={historicalOsIds}
-                        address={address}
-                        countryName={countryName}
+                        productionLocation={data}
                         handleBackToSearchByNameAddress={
                             handleBackToSearchByNameAddress
                         }
@@ -102,26 +100,29 @@ const SearchByOsIdResult = ({
     );
 };
 
-SearchByOsIdResult.defaultProps = {
-    data: {},
-    fetching: false,
-};
-
 SearchByOsIdResult.propTypes = {
-    data: productionLocationPropType,
-    fetching: bool,
+    data: productionLocationPropType.isRequired,
+    fetching: bool.isRequired,
     fetchProductionLocation: func.isRequired,
     clearProductionLocation: func.isRequired,
     classes: object.isRequired,
+    userHasSignedIn: bool.isRequired,
+    fetchingSessionSignIn: bool.isRequired,
 };
 
 const mapStateToProps = ({
     contributeProductionLocation: {
         singleProductionLocation: { data, fetching },
     },
+    auth: {
+        user: { user },
+        session: { fetching: fetchingSessionSignIn },
+    },
 }) => ({
     data,
     fetching,
+    userHasSignedIn: !user.isAnon,
+    fetchingSessionSignIn,
 });
 
 const mapDispatchToProps = dispatch => ({

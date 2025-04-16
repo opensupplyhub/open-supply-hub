@@ -20,7 +20,7 @@ class CountryValidator(OpenSearchValidationInterface):
             if not re.match(valid_country_value_regexp, country):
                 errors.append({
                     "field": "country",
-                    "message":
+                    "detail":
                         f"'{country}' is not a valid alpha-2 country code."
                 })
 

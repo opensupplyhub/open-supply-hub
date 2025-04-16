@@ -75,7 +75,16 @@ const {
     removeDuplicatesFromOtherLocationsData,
     makeGetSectorsURL,
     createUserDropdownLinks,
-    createUploadFormErrorMessages
+    createUploadFormErrorMessages,
+    getLastPathParameter,
+    generateRangeField,
+    parseContribData,
+    isRequiredFieldValid,
+    getSelectStyles,
+    getNumberOfWorkersValidationError,
+    isValidNumberOfWorkers,
+    snakeToTitleCase,
+    slcValidationSchema,
 } = require('../util/util');
 
 const {
@@ -94,6 +103,8 @@ const {
     CLAIM_A_FACILITY,
     componentsWithErrorMessage,
 } = require('../util/constants');
+
+const COLOURS = require('../util/COLOURS').default;
 
 it('gets correct error message component', () => {
     const correctListName = 'New & Test Name - Location, [Ltd].';
@@ -1803,5 +1814,765 @@ it('should return an array with claimed facility link if active feature flag is 
     expect(result).toContainEqual({
         label: 'My Facilities',
         href: '/claimed',
+    });
+});
+
+it('extracts the ID from a valid URL without a trailing slash', () => {
+    const url = '/contribute/single-location/search/id/BD202034606B9SA';
+    expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
+});
+
+it('extracts the ID from a valid URL with a trailing slash', () => {
+    const url = '/contribute/single-location/search/id/BD202034606B9SA/';
+    expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
+});
+
+it('returns id when the URL ends at "id/" with no ID', () => {
+    const url = '/contribute/single-location/search/id/';
+    expect(getLastPathParameter(url)).toBe('id');
+});
+
+it('returns the correct ID when the URL contains query parameters', () => {
+    const url = '/contribute/single-location/search/id/BD202034606B9SA?foo=bar';
+    expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
+});
+
+it('returns the correct ID when the URL has multiple segments after "id/"', () => {
+    const url = '/contribute/single-location/search/id/BD202034606B9SA/extra';
+    expect(getLastPathParameter(url)).toBe('extra');
+});
+
+it('returns the whole string if no slashes exist', () => {
+    const url = 'BD202034606B9SA';
+    expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
+});
+
+it('returns empty string for an empty string', () => {
+    const url = '';
+    expect(getLastPathParameter(url)).toBe('');
+});
+
+it('returns empty string for a URL that only contains slashes', () => {
+    const url = '///';
+    expect(getLastPathParameter(url)).toBe('');
+});
+
+it('should return { min: value, max: value } when value is a number', () => {
+    expect(generateRangeField(10)).toEqual({ min: 10, max: 10 });
+    expect(generateRangeField(0)).toEqual({ min: 0, max: 0 });
+    expect(generateRangeField(-5)).toEqual({ min: -5, max: -5 });
+});
+
+it('should return { min, max } when value is a valid range string', () => {
+    expect(generateRangeField('10-20')).toEqual({ min: 10, max: 20 });
+    expect(generateRangeField('0-100')).toEqual({ min: 0, max: 100 });
+    expect(generateRangeField('-5-5')).toEqual({ min: 0, max: 5 });
+});
+
+it('should return { min: value, max: value } when value is a single string (not a range)', () => {
+    expect(generateRangeField('15')).toEqual({ min: 15, max: 15 });
+    expect(generateRangeField('test')).toEqual({ min: NaN, max: NaN });
+});
+
+it('should return { min: value, max: value } when value is an empty string', () => {
+    expect(generateRangeField('')).toEqual({ min: 0, max: 0 });
+});
+
+it('should return { min, max } correctly when value has extra spaces', () => {
+    expect(generateRangeField(' 10 - 20 ')).toEqual({ min: 10, max: 20 });
+    expect(generateRangeField('  5 -   15')).toEqual({ min: 5, max: 15 });
+});
+
+it('should return { min: value, max: value } for non-string and non-number values', () => {
+    expect(generateRangeField(null)).toEqual({ min: 0, max: 0 });
+    expect(generateRangeField(undefined)).toEqual({ min: NaN, max: NaN });
+    expect(generateRangeField({})).toEqual({ min: NaN, max: NaN });
+    expect(generateRangeField([])).toEqual({ min: 0, max: 0 });
+});
+
+it('should return the base fields correctly', () => {
+    const input = {
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: { value: 'US' },
+    };
+
+    const expectedOutput = {
+        source: 'SLC',
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: 'US',
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+
+it('should process array fields and keep non-empty values', () => {
+    const input = {
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: { value: 'US' },
+        sector: ['Waste Management'],
+        parentCompany: 'ParentCompanySingle',
+        productType: ['Shirts', 'Pants'],
+    };
+
+    const expectedOutput = {
+        source: 'SLC',
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: 'US',
+        sector: ['Waste Management'],
+        parent_company: 'ParentCompanySingle',
+        product_type: ['Shirts', 'Pants'],
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+it('should handle an empty array by not including the field', () => {
+    const input = {
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: { value: 'US' },
+        sector: [],
+    };
+
+    const expectedOutput = {
+        source: 'SLC',
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: 'US',
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+it('should handle number_of_workers correctly', () => {
+    const input = {
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: { value: 'US' },
+        numberOfWorkers: '15',
+    };
+
+    const expectedOutput = {
+        source: 'SLC',
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: 'US',
+        number_of_workers: { min: 15, max: 15 },
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+it('should remove empty fields while keeping valid ones', () => {
+    const input = {
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: { value: 'US' },
+        sector: [],
+        parentCompany: null,
+        productType: undefined,
+        locationType: ['RCRAInfo subtitle C (Hazardous waste handlers)'],
+    };
+
+    const expectedOutput = {
+        source: 'SLC',
+        name: 'KELLY- MOORE PAINT CO INC',
+        address: '710 AUZERAIS AVE, SAN JOSE, CA, 95126',
+        country: 'US',
+        location_type: ['RCRAInfo subtitle C (Hazardous waste handlers)'],
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+it('should return only the source field if all other values are empty', () => {
+    const input = {
+        name: '',
+        address: '',
+        country: null,
+        sector: [],
+        parentCompany: '',
+        productType: undefined,
+        locationType: null,
+        processingType: '',
+        numberOfWorkers: null,
+    };
+
+    const expectedOutput = {
+        source: 'SLC',
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+it('should convert incoming object with camelCase keys into snake_case to conform request payload format', () => {
+    const input = {
+        name: 'AJAX AUTO DISMANTLERS INC',
+        address: '2895 3RD, SAN FRANCISCO, CA, 94107-0000',
+        country: {
+            value: 'US',
+            label: 'United States'
+        },
+        sector: [
+            {
+                value: 'Waste Management',
+                label: 'Waste Management'
+            },
+            {
+                value: 'Recycling',
+                label: 'Recycling'
+            }
+        ],
+        productType: [
+            {
+                label: 'Bottles',
+                value: 'Bottles'
+            },
+            {
+                label: 'Pockets',
+                value: 'Pockets'
+            },
+            {
+                label: 'Domestic goods',
+                value: 'Domestic goods'
+            }
+        ],
+        locationType: [
+            {
+                value: 'Warehousing / Distribution',
+                label: 'Warehousing / Distribution'
+            },
+            {
+                value: 'Final Product Assembly',
+                label: 'Final Product Assembly'
+            },
+            {
+                value: 'Office / HQ',
+                label: 'Office / HQ'
+            }
+        ],
+        processingType: [
+            {
+                value: 'Assembly',
+                label: 'Assembly'
+            },
+            {
+                value: 'Cut & Sew',
+                label: 'Cut & Sew'
+            },
+            {
+                value: 'Warehousing / Distribution',
+                label: 'Warehousing / Distribution'
+            }
+        ],
+        numberOfWorkers: "20-35",
+        parentCompany: "Ajax Parent Ltd."
+    };
+
+    const expectedOutput = {
+        name: 'AJAX AUTO DISMANTLERS INC',
+        address: '2895 3RD, SAN FRANCISCO, CA, 94107-0000',
+        sector: [
+            'Waste Management',
+            'Recycling'
+        ],
+        product_type: [
+            'Bottles',
+            'Pockets',
+            'Domestic goods'
+        ],
+        location_type: [
+            'Warehousing / Distribution',
+            'Final Product Assembly',
+            'Office / HQ'
+        ],
+        processing_type: [
+            'Assembly',
+            'Cut & Sew',
+            'Warehousing / Distribution'
+        ],
+        parent_company: 'Ajax Parent Ltd.',
+        number_of_workers: {
+            "min": 20,
+            "max": 35
+        },
+        country: 'US',
+        source: 'SLC'
+    };
+
+    expect(parseContribData(input)).toEqual(expectedOutput);
+});
+
+describe('isRequiredFieldValid', () => {
+    it('should return true if the field has a value', () => {
+        expect(isRequiredFieldValid('test')).toBe(true);
+        expect(isRequiredFieldValid('  test  ')).toBe(true);
+        expect(isRequiredFieldValid('test test')).toBe(true);
+    });
+
+    it('should return false if the field has no value', () => {
+        expect(isRequiredFieldValid('')).toBe(false);
+        expect(isRequiredFieldValid('     ')).toBe(false);
+        expect(isRequiredFieldValid(null)).toBe(false);
+        expect(isRequiredFieldValid(undefined)).toBe(false);
+    });
+});
+
+describe('getSelectStyles', () => {
+    const provided = {
+        borderColor: 'grey',
+        boxShadow: 'none',
+        color: 'blue',
+      };
+
+    const stateFocused = { isFocused: true };
+    const stateNotFocused = { isFocused: false };
+
+    it('returns an object with control and placeholder functions', () => {
+        const styles = getSelectStyles();
+        expect(typeof styles.control).toBe('function');
+        expect(typeof styles.placeholder).toBe('function');
+    });
+
+    it('applies PURPLE border and inset box shadow when focused and no error', () => {
+        const styles = getSelectStyles();
+        const controlStyles = styles.control(provided, stateFocused);
+        expect(controlStyles.borderColor).toBe(COLOURS.PURPLE);
+        expect(controlStyles.boxShadow).toBe(`inset 0 0 0 1px ${COLOURS.PURPLE}`);
+    });
+
+    it('applies RED border when error state is true', () => {
+        const styles = getSelectStyles(true);
+        const controlStyles = styles.control(provided, stateFocused);
+        expect(controlStyles.borderColor).toBe(COLOURS.RED);
+    });
+
+    it('applies correct placeholder style when error state is true', () => {
+        const styles = getSelectStyles(true);
+        const placeholderStyles = styles.placeholder(provided);
+        expect(placeholderStyles.opacity).toBe(0.7);
+        expect(placeholderStyles.color).toBe(COLOURS.RED);
+    });
+
+    it('uses the provided color for placeholder when error state is false', () => {
+        const styles = getSelectStyles();
+        const placeholderStyles = styles.placeholder(provided);
+        expect(placeholderStyles.opacity).toBe(0.7);
+        expect(placeholderStyles.color).toBe(provided.color);
+    });
+
+    it('sets hover borderColor to "black" when not focused and no error', () => {
+        const styles = getSelectStyles();
+        const controlStyles = styles.control(provided, stateNotFocused);
+        expect(controlStyles['&:hover']).toEqual({ borderColor: 'black' });
+    });
+
+    it('sets hover borderColor to false when error state is true', () => {
+        const styles = getSelectStyles(true);
+        const controlStyles = styles.control(provided, stateNotFocused);
+        expect(controlStyles['&:hover']).toEqual({ borderColor: false });
+    });
+});
+
+describe('getNumberOfWorkersValidationError', () => {
+    it('clear error messages for number of workers field', () => {
+        const expectedValueOfZeroText =
+        'The value of zero is not valid. Enter a positive whole number or a valid range (e.g., 1-5).';
+        const expectedLessThenOrEqualText =
+            'Invalid range. The minimum value must be less than or equal to the maximum value.';
+        const expectedInvalidEntryText = 'Invalid entry. The value cannot start from zero.';
+        const expectedInvalidFormatText =
+            'Invalid format. Enter a whole number or a valid numeric range (e.g., 1-5).';
+
+        expect(getNumberOfWorkersValidationError('0')).toBe(expectedValueOfZeroText);
+        expect(getNumberOfWorkersValidationError('0-3')).toBe(expectedValueOfZeroText);
+        expect(getNumberOfWorkersValidationError('1-0')).toBe(expectedValueOfZeroText);
+        expect(getNumberOfWorkersValidationError('500-300')).toBe(expectedLessThenOrEqualText);
+        expect(getNumberOfWorkersValidationError('010')).toBe(expectedInvalidEntryText);
+        expect(getNumberOfWorkersValidationError('1-')).toBe(expectedInvalidFormatText);
+        expect(getNumberOfWorkersValidationError('some text or &$*_')).toBe(expectedInvalidFormatText);
+        expect(getNumberOfWorkersValidationError('3.9')).toBe(expectedInvalidFormatText);
+    });
+
+    it('valid numberOfWorkers has no errors, invalid shows error message', () => {
+        const expectedValueOfZeroText =
+        'The value of zero is not valid. Enter a positive whole number or a valid range (e.g., 1-5).';
+
+        expect(!isValidNumberOfWorkers('100') && getNumberOfWorkersValidationError('100')).toBe(false);
+        expect(!isValidNumberOfWorkers('0-300') && getNumberOfWorkersValidationError('0-300')).toBe(expectedValueOfZeroText);
+    });
+ })
+
+describe('snakeToTitleCase', () => {
+    it('converts snake_case to Title Case', () => {
+        expect(snakeToTitleCase('hello_world')).toBe('Hello World');
+        expect(snakeToTitleCase('my_variable_name')).toBe('My Variable Name');
+    });
+
+    it('returns an empty string when input is empty', () => {
+        expect(snakeToTitleCase('')).toBe('');
+    });
+
+    it('handles single-word input', () => {
+        expect(snakeToTitleCase('word')).toBe('Word');
+    });
+
+    it('handles input with multiple underscores', () => {
+        expect(snakeToTitleCase('one__two___three')).toBe('One Two Three');
+    });
+
+    it('handles already capitalized input', () => {
+        expect(snakeToTitleCase('Already_Title_Case')).toBe('Already Title Case');
+    });
+});
+
+describe('slcValidationSchema', () => {
+    const trimTextValidationError = 'Remove spaces at start and end of text.';
+    const numberOfWorkersValidationError = 'Enter a single positive number ' +
+        '(e.g., 5) or a valid range (e.g., 3–10). In a range, the minimum ' +
+        'value must be less than or equal to the maximum, and both must ' +
+        'be at least 1.';
+
+    it('passes when all fields are valid', async () => {
+        const data = {
+            name: 'Factory X',
+            address: '456 Main Ave',
+            country: { value: 'PL', label: 'Poland' },
+            numberOfWorkers: '10-100',
+            productType: [{label: 'Shirts', value: 'Shirts'}],
+            parentCompany: 'Global Parent',
+        };
+        await expect(slcValidationSchema.validate(data)).resolves.toEqual(data);
+    });
+
+    // Name field.
+    it('fails when name is missing', async () => {
+        const data = {
+            address: '742 Evergreen Terrace',
+            country: { value: 'AI', label: 'Anguilla' }
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow('Name is required.');
+    });
+
+    it('fails when name has trailing and leading spaces', async () => {
+        const data = {
+            name: ' Silverline Textiles Co. ',
+            address: '742 Evergreen Terrace',
+            country: { value: 'AI', label: 'Anguilla' }
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(trimTextValidationError);
+    });
+
+    it('fails when name is a positive integer', async () => {
+        const data = {
+            name: '43546547',
+            address: '742 Evergreen Terrace',
+            country: { value: 'AI', label: 'Anguilla' }
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Name cannot be a number.'
+        );
+    });
+
+    it('fails when name is a negative integer', async () => {
+        const data = {
+            name: '-43546547',
+            address: '742 Evergreen Terrace',
+            country: { value: 'AI', label: 'Anguilla' }
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Name cannot be a number.'
+        );
+    });
+
+    it('fails when name is a float number', async () => {
+        const data = {
+            name: '-43546547.2',
+            address: '742 Evergreen Terrace',
+            country: { value: 'AI', label: 'Anguilla' }
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Name cannot be a number.'
+        );
+    });
+    
+    it('fails when name is only spaces or symbols', async () => {
+        const data = {
+            name: "!!!&^#*#*(#(@# &@ %?/~ &#'",
+            address: '742 Evergreen Terrace',
+            country: { value: 'AI', label: 'Anguilla' }
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Name cannot contain only spaces or symbols.'
+        );
+    });
+
+    it('fails when name exceeds 200 characters', async () => {
+        const data = {
+            name: 'The International Association for Sustainable Manufacturing and Textile Innovation Research Collaborative of North-East Asia and Global Development Solutions Unlimited Partners Incorporated The International Association',
+            address: '742 Evergreen Terrace',
+            country: { value: 'AI', label: 'Anguilla' }
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Name cannot exceed 200 characters.'
+        );
+    });
+
+    // Address field.
+    it('fails when address is missing', async () => {
+        const data = {
+            name: 'Silverline Textiles Co.',
+            country: { value: 'AI', label: 'Anguilla' }
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow('Address is required.');
+    });
+
+    it('fails when address has trailing and leading spaces', async () => {
+        const data = {
+            name: 'Silverline Textiles Co.',
+            address: ' 742 Evergreen Terrace ',
+            country: { value: 'AI', label: 'Anguilla' }
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            trimTextValidationError
+        );
+    });
+
+    it('fails when address is a positive integer', async () => {
+        const data = {
+            name: 'Silverline Textiles Co.',
+            address: '43546547',
+            country: { value: 'AI', label: 'Anguilla' }
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Address cannot be a number.'
+        );
+    });
+
+    it('fails when address is a negative integer', async () => {
+        const data = {
+            name: 'Silverline Textiles Co.',
+            address: '-43546547',
+            country: { value: 'AI', label: 'Anguilla' }
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Address cannot be a number.'
+        );
+    });
+
+    it('fails when address is a float number', async () => {
+        const data = {
+            name: 'Silverline Textiles Co.',
+            address: '-43546547.2',
+            country: { value: 'AI', label: 'Anguilla' }
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Address cannot be a number.'
+        );
+    });
+    
+    it('fails when address is only spaces or symbols', async () => {
+        const data = {
+            name: 'Silverline Textiles Co.',
+            address: "!!!&^#*#*(#(@# &@ %?/~ &#'",
+            country: { value: 'AI', label: 'Anguilla' }
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Address cannot contain only spaces or symbols.'
+        );
+    });
+
+    it('fails when address exceeds 200 characters', async () => {
+        const data = {
+            name: 'Silverline Textiles Co.',
+            address: '1283 Hollow Pine Industrial Estate, Block C, Floor 4, Unit 17B, Riverside Tech Park, Northbridge District, Westonborough, State of Orlanda, ZIP 84930-2298, United States of Arcania, United States of Arcania',
+            country: { value: 'AI', label: 'Anguilla' }
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Address cannot exceed 200 characters.'
+        );
+    });
+
+    // Country field.
+    it('fails when country is missing', async () => {
+        const data = { name: 'Valid', address: '123 Street' };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Country is required.'
+        );
+    });
+
+    // Product type field.
+    it('fails when more than 50 values are provided in the product type field', async () => {
+        const data = {
+            name: 'Valid Name',
+            address: '123 Street',
+            country: { value: 'AI', label: 'Anguilla' },
+            productType: new Array(51).fill('Shoes'),
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Maximum of 50 product types allowed.'
+        );
+    });
+
+    // Number of workers field.
+    it('fails when number of workers has trailing and leading spaces', async () => {
+        const data = {
+            name: 'Silverline Textiles Co.',
+            address: '742 Evergreen Terrace',
+            country: { value: 'AI', label: 'Anguilla' },
+            numberOfWorkers: '1 '
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Remove spaces at start and end of entry.'
+        );
+    });
+
+    it('fails when number of workers is 0', async () => {
+        const data = {
+            name: 'Silverline Textiles Co.',
+            address: '742 Evergreen Terrace',
+            country: { value: 'AI', label: 'Anguilla' },
+            numberOfWorkers: '0'
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            numberOfWorkersValidationError
+        );
+    });
+    
+    it('fails when number of workers is a reverse range', async () => {
+        const data = {
+            name: 'Silverline Textiles Co.',
+            address: '742 Evergreen Terrace',
+            country: { value: 'AI', label: 'Anguilla' },
+            numberOfWorkers: '100-5'
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            numberOfWorkersValidationError
+        );
+    });
+    
+    it('fails when number of workers starts with 0', async () => {
+        const data = {
+            name: 'Silverline Textiles Co.',
+            address: '742 Evergreen Terrace',
+            country: { value: 'AI', label: 'Anguilla' },
+            numberOfWorkers: '01-05'
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            numberOfWorkersValidationError
+        );
+    });
+    
+    it('fails when number of workers format is invalid (range with dash only)', async () => {
+        const data = {
+            name: 'Silverline Textiles Co.',
+            address: '742 Evergreen Terrace',
+            country: { value: 'AI', label: 'Anguilla' },
+            numberOfWorkers: '1-' };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            numberOfWorkersValidationError
+        );
+    });
+    
+    it('fails when number of workers format is invalid (non-numeric)', async () => {
+        const data = {
+            name: 'Silverline Textiles Co.',
+            address: '742 Evergreen Terrace',
+            country: { value: 'AI', label: 'Anguilla' },
+            numberOfWorkers: 'abc'
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            numberOfWorkersValidationError
+        );
+    });
+    
+    it('fails when number of workers has decimal', async () => {
+        const data = {
+            name: 'Silverline Textiles Co.',
+            address: '742 Evergreen Terrace',
+            country: { value: 'US' },
+            numberOfWorkers: '3.5'
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            numberOfWorkersValidationError
+        );
+    });
+
+    // Parent company field.
+    it('fails when parent company has trailing and leading spaces', async () => {
+        const data = {
+            name: 'Silverline Textiles Co.',
+            address: '742 Evergreen Terrace',
+            country: { value: 'AI', label: 'Anguilla' },
+            parentCompany: ' Global Parent '
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            trimTextValidationError
+        );
+    });
+
+    it('fails when parent company is a positive integer', async () => {
+        const data = {
+            name: 'Silverline Textiles Co.',
+            address: '742 Evergreen Terrace',
+            country: { value: 'AI', label: 'Anguilla' },
+            parentCompany: '3435345'
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Parent company cannot be a number.'
+        );
+    });
+
+    it('fails when parent company is a negative integer', async () => {
+        const data = {
+            name: 'Silverline Textiles Co.',
+            address: '742 Evergreen Terrace',
+            country: { value: 'AI', label: 'Anguilla' },
+            parentCompany: '-3435345'
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Parent company cannot be a number.'
+        );
+    });
+
+    it('fails when parent company is a float number', async () => {
+        const data = {
+            name: 'Silverline Textiles Co.',
+            address: '742 Evergreen Terrace',
+            country: { value: 'AI', label: 'Anguilla' },
+            parentCompany: '-3435345.3232'
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Parent company cannot be a number.'
+        );
+    });
+    
+    it('fails when parent company is only spaces or symbols', async () => {
+        const data = {
+            name: 'Silverline Textiles Co.',
+            address: '742 Evergreen Terrace',
+            country: { value: 'AI', label: 'Anguilla' },
+            parentCompany: "!!!&^#*#*(#(@# &@ %?/~ &#'",
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Parent company cannot contain only spaces or symbols.'
+        );
+    });
+
+    it('fails when parent company exceeds 200 characters', async () => {
+        const data = {
+            name: 'Silverline Textiles Co.',
+            address: '742 Evergreen Terrace',
+            country: { value: 'AI', label: 'Anguilla' },
+            parentCompany: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip.',
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Parent company cannot exceed 200 characters.'
+        );
     });
 });

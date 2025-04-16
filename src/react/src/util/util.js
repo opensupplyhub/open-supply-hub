@@ -4,12 +4,16 @@ import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
 import flatten from 'lodash/flatten';
 import identity from 'lodash/identity';
+import split from 'lodash/split';
+import last from 'lodash/last';
+import snakeCase from 'lodash/snakeCase';
 import some from 'lodash/some';
 import size from 'lodash/size';
 import negate from 'lodash/negate';
 import omitBy from 'lodash/omitBy';
 import isEmpty from 'lodash/isEmpty';
 import isNumber from 'lodash/isNumber';
+import isString from 'lodash/isString';
 import isNil from 'lodash/isNil';
 import intersection from 'lodash/intersection';
 import values from 'lodash/values';
@@ -20,6 +24,7 @@ import startsWith from 'lodash/startsWith';
 import head from 'lodash/head';
 import replace from 'lodash/replace';
 import trimEnd from 'lodash/trimEnd';
+import trim from 'lodash/trim';
 import range from 'lodash/range';
 import ceil from 'lodash/ceil';
 import toInteger from 'lodash/toInteger';
@@ -31,13 +36,23 @@ import filter from 'lodash/filter';
 import includes from 'lodash/includes';
 import join from 'lodash/join';
 import map from 'lodash/map';
+import mapValues from 'lodash/mapValues';
+import mapKeys from 'lodash/mapKeys';
 import uniq from 'lodash/uniq';
+import startCase from 'lodash/startCase';
+import toLower from 'lodash/toLower';
 import { isURL, isInt } from 'validator';
 import { featureCollection, bbox } from '@turf/turf';
 import hash from 'object-hash';
 import * as XLSX from 'xlsx';
 import moment from 'moment';
 import removeAccents from 'remove-accents';
+import unidecode from 'unidecode';
+import {
+    object as objectYup,
+    string as stringYup,
+    array as arrayYup,
+} from 'yup';
 
 import {
     OTHER,
@@ -64,6 +79,9 @@ import {
     listParsingErrorMappings,
     MODERATION_QUEUE,
     MODERATION_STATUS_COLORS,
+    DATA_SOURCES_ENUM,
+    API_V1_ERROR_REQUEST_SOURCE_ENUM,
+    SLC_FORM_CONSTRAINTS,
 } from './constants';
 
 import { createListItemCSV } from './util.listItemCSV';
@@ -224,7 +242,7 @@ export const makeMergeTwoFacilitiesAPIURL = (targetOSID, toMergeOSID) =>
 export const makeGetFacilitiesCountURL = () => '/api/facilities/count/';
 
 export const makeGetAPIFeatureFlagsURL = () => '/api-feature-flags/';
-// TODO: handle &sort_by=contributors_desc at the end of a query
+
 export const makeGetFacilityClaimsURLWithQueryString = qs =>
     `/api/facility-claims/?${qs}`;
 export const makeGetFacilityClaimByClaimIDURL = claimID =>
@@ -257,13 +275,91 @@ export const makeContributorEmbedConfigURL = contributorId =>
     `/api/contributor-embed-configs/${contributorId}/`;
 export const makeNonStandardFieldsURL = () => '/api/nonstandard-fields/';
 
-export const makeGetProductionLocationByOsIdURL = osID =>
-    `/api/v1/production-locations/${osID}/`;
+export const makeProductionLocationURL = (osID = '') => {
+    const osIDPathParameter = osID ? `${osID}/` : '';
+    return `/api/v1/production-locations/${osIDPathParameter}`;
+};
+
+export const makeGetProductionLocationsForPotentialMatches = (
+    productionLocationName,
+    address,
+    countryCode,
+    limit,
+) => {
+    const params = new URLSearchParams();
+
+    if (productionLocationName) params.append('name', productionLocationName);
+    if (address) params.append('address', address);
+    if (countryCode) params.append('country', countryCode);
+    if (limit) params.append('size', limit);
+
+    return `/api/v1/production-locations/?${params.toString()}`;
+};
+
+export const makeModerationEventRecordURL = moderationID =>
+    `/api/v1/moderation-events/${moderationID}/`;
+
+export const makeProductionLocationFromModerationEventURL = (
+    moderationID,
+    osID = '',
+) => {
+    const osIDPathParameter = osID ? `${osID}/` : '';
+    return `/api/v1/moderation-events/${moderationID}/production-locations/${osIDPathParameter}`;
+};
+
+export const makeContributeProductionLocationUpdateURL = osID =>
+    `/contribute/single-location/${osID}/info/`;
+
+export const makeGetModerationEventsWithQueryString = (
+    qs,
+    page,
+    pageSize,
+    sortBy,
+    orderBy,
+) =>
+    `/api/v1/moderation-events/?${qs}&sort_by=${sortBy}&order_by=${orderBy}&from=${
+        page * pageSize
+    }&size=${pageSize}`;
 
 export const getValueFromObject = ({ value }) => value;
 
 const createCompactSortedQuerystringInputObject = (inputObject = []) =>
     compact(inputObject.map(getValueFromObject).slice().sort());
+
+export const createQueryStringFromModerationQueueFilters = (
+    { dataSources = [], moderationStatuses = [], countries = [] },
+    afterDate = '',
+    beforeDate = '',
+) => {
+    const createRepeatedKeys = (key, valueArr) =>
+        valueArr.map(value => `${key}=${encodeURIComponent(value)}`).join('&');
+
+    const inputForQueryString = Object.freeze({
+        source: dataSources,
+        status: moderationStatuses,
+        country: countries,
+        date_gte: afterDate,
+        date_lt: beforeDate,
+    });
+
+    return Object.entries(inputForQueryString)
+        .reduce((acc, [key, value]) => {
+            if (value && (Array.isArray(value) ? value.length > 0 : true)) {
+                if (Array.isArray(value)) {
+                    acc.push(
+                        createRepeatedKeys(
+                            key,
+                            createCompactSortedQuerystringInputObject(value),
+                        ),
+                    );
+                } else {
+                    acc.push(`${key}=${encodeURIComponent(value)}`);
+                }
+            }
+            return acc;
+        }, [])
+        .join('&');
+};
 
 export const createQueryStringFromSearchFilters = (
     {
@@ -573,6 +669,57 @@ export function logErrorAndDispatchFailure(
     };
 }
 
+export const logErrorAndDispatchFailureApiV1 = (
+    error,
+    defaultMessage,
+    failureAction,
+) => dispatch => {
+    const { response } = error || {};
+    const { status, data } = response || {};
+    const errorObj = {
+        errorSource: null,
+        detail: defaultMessage,
+        errors: null,
+        rawData: null,
+    };
+
+    if (status && data) {
+        if (status >= 400 && status <= 499) {
+            errorObj.errorSource = API_V1_ERROR_REQUEST_SOURCE_ENUM.CLIENT;
+            errorObj.detail = data.detail;
+            errorObj.rawData = data;
+
+            if (isArray(data.errors) && !isEmpty(data.errors)) {
+                errorObj.errors = data.errors;
+            }
+
+            return dispatch(failureAction(errorObj));
+        }
+
+        if (status >= 500 && status <= 599) {
+            errorObj.errorSource = API_V1_ERROR_REQUEST_SOURCE_ENUM.SERVER;
+            errorObj.rawData = data;
+
+            // Field "detail" and "errors" aren't always present in the V1 API
+            // response for 500 errors. In case of an unexpected error, it may
+            // return a different structure, such as HTML.
+            if (isString(data.detail) && !isEmpty(data.detail)) {
+                errorObj.detail = data.detail;
+
+                if (isArray(data.errors) && !isEmpty(data.errors)) {
+                    errorObj.errors = data.errors;
+                }
+            }
+
+            window.console.warn(error);
+            return dispatch(failureAction(errorObj));
+        }
+    }
+
+    window.console.warn(error);
+    return dispatch(failureAction(errorObj));
+};
+
 export const getValueFromEvent = ({ target: { value } }) => value;
 
 export const getIDFromEvent = ({ target: { id } }) => id;
@@ -689,6 +836,42 @@ const mapSingleChoiceValueToSelectOption = value =>
 export const mapDjangoChoiceTuplesValueToSelectOptions = data =>
     Object.freeze(data.map(mapSingleChoiceValueToSelectOption));
 
+export const mapProcessingTypeOptions = (fPTypes, fTypes) => {
+    let pTypes = [];
+    if (fTypes.length === 0) {
+        pTypes = fPTypes.map(type => type.processingTypes).flat();
+    } else {
+        // When there are facility types, only return the
+        // processing types that are under those facility types
+        fTypes.forEach(fType => {
+            fPTypes.forEach(fPType => {
+                if (fType.value === fPType.facilityType) {
+                    pTypes = pTypes.concat(fPType.processingTypes);
+                }
+            });
+        });
+    }
+    return mapDjangoChoiceTuplesValueToSelectOptions(uniq(pTypes.sort()));
+};
+
+export const mapFacilityTypeOptions = (fPTypes, pTypes) => {
+    let fTypes = [];
+    if (pTypes.length === 0) {
+        fTypes = fPTypes.map(type => type.facilityType);
+    } else {
+        // When there are processing types, only return the
+        // facility types that have those processing types
+        pTypes.forEach(pType => {
+            fPTypes.forEach(fPType => {
+                if (fPType.processingTypes.includes(pType.value)) {
+                    fTypes = fTypes.concat(fPType.facilityType);
+                }
+            });
+        });
+    }
+    return mapDjangoChoiceTuplesValueToSelectOptions(uniq(fTypes.sort()));
+};
+
 export const mapSectorGroupsToSelectOptions = data =>
     Object.freeze(
         data.map(group => ({
@@ -714,7 +897,7 @@ export const makeFacilityClaimDetailsLink = claimID =>
     `/dashboard/claims/${claimID}`;
 
 export const makeContributionRecordLink = moderationID =>
-    `/dashboard/moderation-queue/contribution-record/${moderationID}`;
+    `/dashboard/moderation-queue/${moderationID}`;
 
 export const makeDashboardContributorListLink = ({
     contributorID,
@@ -982,31 +1165,68 @@ export const convertFeatureFlagsObjectToListOfActiveFlags = featureFlags =>
 export const checkWhetherUserHasDashboardAccess = user =>
     get(user, 'is_superuser', false);
 
-export const validateNumberOfWorkers = value => {
+export const isValidNumberOfWorkers = value => {
     if (isEmpty(value)) {
-        return false;
+        return true;
     }
 
-    const singleNumberPattern = /^\d+$/;
     const rangePattern = /^\d+-\d+$/;
 
-    if (singleNumberPattern.test(value)) {
-        return false;
+    if (isInt(value.trim(), { min: 1, allow_leading_zeroes: false })) {
+        return true;
     }
 
     if (rangePattern.test(value)) {
         const [start, end] = value.split('-');
 
         if (
-            isInt(start.trim(), { min: 0 }) &&
-            isInt(end.trim(), { min: 0 }) &&
+            isInt(start.trim(), { min: 1, allow_leading_zeroes: false }) &&
+            isInt(end.trim(), { min: 1, allow_leading_zeroes: false }) &&
             parseInt(start, 10) <= parseInt(end, 10)
         ) {
-            return false;
+            return true;
         }
     }
 
-    return true;
+    return false;
+};
+
+export const getNumberOfWorkersValidationError = value => {
+    const valueOfZeroText =
+        'The value of zero is not valid. Enter a positive whole number or a valid range (e.g., 1-5).';
+    const rangePattern = /^\d+-\d+$/;
+
+    if (parseInt(value, 10) === 0) {
+        return valueOfZeroText;
+    }
+
+    const invalidFormatText =
+        'Invalid format. Enter a whole number or a valid numeric range (e.g., 1-5).';
+
+    if (!isInt(value, 10) && !rangePattern.test(value)) {
+        return invalidFormatText;
+    }
+
+    const invalidEntryText = 'Invalid entry. The value cannot start from zero.';
+
+    if (!rangePattern.test(value)) {
+        return invalidEntryText;
+    }
+
+    const [start, end] = value.split('-');
+
+    if (!isInt(end.trim(), { min: 1, allow_leading_zeroes: false })) {
+        return valueOfZeroText;
+    }
+
+    const lessThenOrEqualText =
+        'Invalid range. The minimum value must be less than or equal to the maximum value.';
+
+    if (start >= end) {
+        return lessThenOrEqualText;
+    }
+
+    return invalidEntryText;
 };
 
 export const claimAFacilityFormIsValid = ({
@@ -1020,7 +1240,7 @@ export const claimAFacilityFormIsValid = ({
 }) =>
     every([!isEmpty(yourName), !isEmpty(yourTitle)], identity) &&
     some([isEmpty(yourBusinessWebsite), isURL(yourBusinessWebsite)]) &&
-    !validateNumberOfWorkers(numberOfWorkers) &&
+    isValidNumberOfWorkers(numberOfWorkers) &&
     every([
         isEmpty(businessWebsite) ||
             (!isEmpty(businessWebsite) && isURL(businessWebsite)),
@@ -1269,6 +1489,7 @@ export function sort(array, comparator) {
 }
 
 export const formatDate = (date, format) => moment(date).format(format);
+export const formatUTCDate = (date, format) => moment.utc(date).format(format);
 
 export const replaceListParsingErrorMessages = errors =>
     errors.map(
@@ -1294,3 +1515,184 @@ export const openInNewTab = url => {
     const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
     if (newWindow) newWindow.opener = null;
 };
+
+const extractProductionLocationContributionValues = data => {
+    if (isArray(data)) {
+        return data.map(item => (item?.value ? item.value : item));
+    }
+    return data;
+};
+
+export const generateRangeField = value => {
+    if (typeof value === 'number') {
+        return { min: value, max: value };
+    }
+
+    if (typeof value === 'string' && value.includes('-')) {
+        const [min, max] = value.split('-').map(Number);
+        return max !== undefined ? { min, max } : { min };
+    }
+
+    return { min: Number(value), max: Number(value) };
+};
+
+const convertToSnakeFields = fields =>
+    mapKeys(fields, (value, key) => snakeCase(key));
+
+const filterNonEmptyFields = fields =>
+    mapValues(
+        pickBy(fields, value => !isEmpty(value)),
+        extractProductionLocationContributionValues,
+    );
+
+export const parseContribData = contribData => {
+    const { numberOfWorkers, country, ...fields } = contribData;
+    const countryValue = country?.value;
+
+    const parsedFields = convertToSnakeFields(filterNonEmptyFields(fields));
+
+    return {
+        ...parsedFields,
+        ...(numberOfWorkers && {
+            number_of_workers: generateRangeField(numberOfWorkers),
+        }),
+        country: countryValue,
+        source: DATA_SOURCES_ENUM.SLC,
+    };
+};
+
+export const getLastPathParameter = url => {
+    if (typeof url !== 'string') return '';
+    const cleanUrl = url.split('?')[0];
+    return last(split(trimEnd(cleanUrl, '/'), '/')) || '';
+};
+
+export const isRequiredFieldValid = val => !isEmpty(trim(val));
+
+export const getSelectStyles = (isErrorState = false) => ({
+    control: (provided, state) => {
+        let borderColor;
+        if (isErrorState) {
+            borderColor = COLOURS.RED;
+        } else if (state.isFocused) {
+            borderColor = COLOURS.PURPLE;
+        } else {
+            borderColor = provided.borderColor;
+        }
+
+        const boxShadow = state.isFocused
+            ? `inset 0 0 0 1px ${borderColor}`
+            : provided.boxShadow;
+
+        return {
+            ...provided,
+            minHeight: '56px',
+            borderRadius: '0',
+            borderColor,
+            boxShadow,
+            transition: 'box-shadow 0.2s',
+            '&:hover': {
+                borderColor: !isErrorState && !state.isFocused && 'black',
+            },
+        };
+    },
+    placeholder: provided => ({
+        ...provided,
+        opacity: 0.7,
+        color: isErrorState ? COLOURS.RED : provided.color,
+    }),
+});
+
+export const snakeToTitleCase = str => startCase(toLower(str));
+
+// SLC form validation schema.
+
+const isCleanValueMeaningful = value => {
+    if (typeof value !== 'string') return false;
+
+    let cleaned = unidecode(value);
+    cleaned = cleaned
+        .replace(/[\n\r\t]/g, ' ') // Normalize whitespace characters.
+        .replace(/[^\w\s]|_/g, '') // Remove all punctuation.
+        .replace(/\s+/g, ' ') // Collapse multiple spaces.
+        .trim() // Trim leading/trailing spaces.
+        .toLowerCase();
+
+    return cleaned.length > 0;
+};
+
+const slcTextFieldValidation = stringYup()
+    .test(
+        'is-trimmed',
+        'Remove spaces at start and end of text.',
+        value => value == null || value === value.trim(),
+    )
+    .test(
+        'not-a-number',
+        ({ label }) => `${label} cannot be a number.`,
+        value => {
+            if (value == null) return true;
+
+            const numberPattern = /^-?(0|[1-9]\d*)(\.\d+)?$/;
+            return !numberPattern.test(value);
+        },
+    )
+    .test(
+        'meaningful-characters',
+        ({ label }) => `${label} cannot contain only spaces or symbols.`,
+        value => value == null || isCleanValueMeaningful(value),
+    )
+    .max(
+        SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH,
+        ({ label }) =>
+            `${label} cannot exceed ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters.`,
+    );
+
+export const slcValidationSchema = objectYup({
+    name: slcTextFieldValidation.required('Name is required.').label('Name'),
+    address: slcTextFieldValidation
+        .required('Address is required.')
+        .label('Address'),
+    country: objectYup().nullable().required('Country is required.'),
+    productType: arrayYup().max(
+        SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT,
+        `Maximum of ${SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT} product types allowed.`,
+    ),
+    numberOfWorkers: stringYup()
+        .test(
+            'is-trimmed',
+            'Remove spaces at start and end of entry.',
+            value => value == null || value === value.trim(),
+        )
+        .test(
+            'valid-format-and-range',
+            'Enter a single positive number (e.g., 5) or a valid range ' +
+                '(e.g., 3–10). In a range, the minimum value must be less ' +
+                'than or equal to the maximum, and both must be at least 1.',
+            value => {
+                if (value == null) return true;
+
+                const singleNumberPattern = /^\d+$/;
+                const rangePattern = /^(\d+)-(\d+)$/;
+
+                if (singleNumberPattern.test(value)) {
+                    return !/^0/.test(value) && parseInt(value, 10) >= 1;
+                }
+
+                const match = value.match(rangePattern);
+                if (match) {
+                    const [minStr, maxStr] = match.slice(1, 3);
+
+                    const min = parseInt(minStr, 10);
+                    const max = parseInt(maxStr, 10);
+
+                    if (/^0/.test(minStr) || /^0/.test(maxStr)) return false;
+
+                    return min >= 1 && max >= 1 && min <= max;
+                }
+
+                return false;
+            },
+        ),
+    parentCompany: slcTextFieldValidation.label('Parent company'),
+});

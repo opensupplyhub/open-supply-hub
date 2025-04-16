@@ -5,52 +5,115 @@ import ContributeProductionLocation from '../../components/Contribute/Contribute
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 
 jest.mock('../../components/Contribute/SearchByOsIdTab', () => () => <div>Mocked SearchByOsIdTab</div>);
+jest.mock('../../components/Contribute/SearchByNameAndAddressTab', () => () => <div>Mocked SearchByNameAndAddressTab</div>);
 
 describe('ContributeProductionLocation component', () => {
-    const renderComponent = (initialEntries = ['/']) => 
+    const mockAuthorizedState = {
+        auth: {
+            user: { user: { isAnon: false } },
+            session: { fetching: false },
+        },
+    };
+
+    const mockNotAuthorizedState = {
+        auth: {
+            user: { user: { isAnon: true } },
+            session: { fetching: false },
+        },
+    };
+
+    const renderComponent = (preloadedState = {}, queryParams = '') =>
         renderWithProviders(
-            <MemoryRouter initialEntries={initialEntries}>
+            <MemoryRouter initialEntries={[`/contribute/single-location${queryParams}`]}>
                 <ContributeProductionLocation />
-            </MemoryRouter>
+            </MemoryRouter>,
+            { preloadedState }
         );
 
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('renders for the unauthorized user', () => {
+        const  expectedTitle = 'Production Location Search'
+        const { getByText, getByRole } = renderComponent(mockNotAuthorizedState);
+        const linkElement = getByRole('link', { name: /Log in to contribute to Open Supply Hub/i });
+
+        expect(linkElement).toBeInTheDocument();
+        expect(linkElement).toHaveAttribute('href', '/auth/login');
+        expect(getByText('Log in to contribute to Open Supply Hub')).toBeInTheDocument();
+        expect(getByText(expectedTitle)).toBeInTheDocument();
+    });
+
+    it('renders for the authorized user', () => {
+        const  expectedTitle = 'Production Location Search'
+        const { getByText, getByRole } = renderComponent(mockAuthorizedState);
+        const title = getByText(expectedTitle);
+        const nameAddressTab = getByRole('tab', { name: /Search by name and address/i });
+        const osIdTab = getByRole('tab', { name: /Search by OS ID/i });
+
+        expect(title).toBeInTheDocument();
+        expect(nameAddressTab).toBeInTheDocument();
+        expect(osIdTab).toBeInTheDocument();
+    });
+
     it('renders with the correct title', () => {
-        const { getByText } = renderComponent();
+        const { getByText } = renderComponent(mockAuthorizedState);
         expect(getByText('Production Location Search')).toBeInTheDocument();
     });
 
-    it('renders the OS ID tab as selected by default', () => {
-        const { getByRole } = renderComponent();
-        const osIdTab = getByRole('tab', { name: /Search by OS ID/i });
-        expect(osIdTab).toHaveAttribute('aria-selected', 'true');
+    it('renders the Name and Address tab as selected by default', () => {
+        const { getByRole } = renderComponent(mockAuthorizedState);
+        const nameAddressTab = getByRole('tab', { name: /Search by name and address/i });
+        expect(nameAddressTab).toHaveAttribute('aria-selected', 'true');
     });
 
-    it('renders the Name and Address tab as unselected by default', () => {
-        const { getByRole } = renderComponent();
-        const nameAddressTab = getByRole('tab', { name: /Search by name and address/i });
-        expect(nameAddressTab).toHaveAttribute('aria-selected', 'false');
+    it('renders the OS ID tab as unselected by default', () => {
+        const { getByRole } = renderComponent(mockAuthorizedState);
+        const osIdTab = getByRole('tab', { name: /Search by OS ID/i });
+        expect(osIdTab).toHaveAttribute('aria-selected', 'false');
     });
 
     it('changes the tab when clicked and updates the URL', () => {
-        const { getByRole, getByText } = renderComponent();
+        const { getByRole } = renderComponent(mockAuthorizedState);
 
-        const nameAddressTab = getByRole('tab', { name: /Search by Name and Address/i });
-        fireEvent.click(nameAddressTab);
+        const nameAddressTab = getByRole('tab', { name: /Search by name and address/i });
+        const osIdTab = getByRole('tab', { name: /Search by OS ID/i });
 
         expect(nameAddressTab).toHaveAttribute('aria-selected', 'true');
-        expect(getByRole('tab', { name: /Search by OS ID/i })).toHaveAttribute('aria-selected', 'false');
-        expect(getByText('Search by Name and Address Tab')).toBeInTheDocument();
+        fireEvent.click(osIdTab);
+        expect(osIdTab).toHaveAttribute('aria-selected', 'true');
+        expect(nameAddressTab).toHaveAttribute('aria-selected', 'false');
+    });
+
+    it('renders SearchByNameAndAddressTab when Name and Address tab is selected', () => {
+        const { getByText } = renderComponent(mockAuthorizedState);
+        expect(getByText('Mocked SearchByNameAndAddressTab')).toBeInTheDocument();
     });
 
     it('renders SearchByOsIdTab when OS ID tab is selected', () => {
-        const { getByText } = renderComponent();
-        expect(getByText('Mocked SearchByOsIdTab')).toBeInTheDocument();
-    });        
-
-    it('handles invalid tab and defaults to OS ID tab', () => {
-        const { getByRole } = renderComponent(['contribute/production-location?tab=invalid-tab']);
+        const { getByText, getByRole } = renderComponent(mockAuthorizedState);
         const osIdTab = getByRole('tab', { name: /Search by OS ID/i });
-        
-        expect(osIdTab).toHaveAttribute('aria-selected', 'true');
+
+        fireEvent.click(osIdTab);
+        expect(getByText('Mocked SearchByOsIdTab')).toBeInTheDocument();
+    });
+
+    it('handles invalid tab and defaults to Name and Address tab', () => {
+        const { getByRole } = renderComponent(mockAuthorizedState,'?tab=invalid-tab');
+        const nameAddressTab = getByRole('tab', { name: /Search by name and address/i });
+
+        expect(nameAddressTab).toHaveAttribute('aria-selected', 'true');
+    });
+
+    it('renders loading indicator when fetching session', () => {
+        const loadingState = {
+            auth: {
+                user: { user: { isAnon: true } },
+                session: { fetching: true },
+            },
+        };
+        const { getByRole } = renderComponent(loadingState);
+        expect(getByRole('progressbar')).toBeInTheDocument();
     });
 });

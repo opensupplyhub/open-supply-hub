@@ -64,13 +64,11 @@ class IsAllowedHost(permissions.BasePermission):
 
 
 class IsRegisteredAndConfirmed(permissions.BasePermission):
-    message = 'Insufficient permissions'
+    message = ('User must be registered and have confirmed their email to '
+               'access.')
 
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
-            return False
-
-        if not request.user.is_active:
             return False
 
         if not request.user.did_register_and_confirm_email:
@@ -80,6 +78,8 @@ class IsRegisteredAndConfirmed(permissions.BasePermission):
 
 
 class IsSuperuser(IsRegisteredAndConfirmed):
+    message = 'Only the moderator can perform this action.'
+
     def has_permission(self, request, view):
         is_registered = super().has_permission(request, view)
         return is_registered and request.user.is_superuser

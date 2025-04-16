@@ -21,24 +21,29 @@ class RowFacilityTypeSerializerTest(TestCase):
                ['Blending|Knitting|Blending', 'Coating, Knitting']}
         current = {}
         validated = self.serializer.validate(row, current)
+
         self.assertEqual(
-            validated,
-            {
-                'facility_type': {
-                    'raw_values': [
-                        'Blending|Knitting|Blending',
-                        'Coating, Knitting'
-                    ],
-                    'processed_values': {'Blending', 'Knitting', 'Coating'},
-                },
-                'processing_type': {
-                    'raw_values': [
-                        'Blending|Knitting|Blending',
-                        'Coating, Knitting'
-                    ],
-                    'processed_values': {'Blending', 'Knitting', 'Coating'},
-                },
-            },
+            validated['facility_type']['raw_values'],
+            ['Blending|Knitting|Blending', 'Coating, Knitting']
+        )
+
+        # For 'processed_values', check that they contain the same values
+        # (ignoring order).
+        self.assertCountEqual(
+            validated['facility_type']['processed_values'],
+            ['Blending', 'Knitting', 'Coating']
+        )
+
+        self.assertEqual(
+            validated['processing_type']['raw_values'],
+            ['Blending|Knitting|Blending', 'Coating, Knitting']
+        )
+
+        # For 'processed_values', check that they contain the same values
+        # (ignoring order).
+        self.assertCountEqual(
+            validated['processing_type']['processed_values'],
+            ['Blending', 'Knitting', 'Coating']
         )
 
     def test_validate_with_processing_type_only(self):
@@ -50,11 +55,11 @@ class RowFacilityTypeSerializerTest(TestCase):
             {
                 'facility_type': {
                     'raw_values': 'Knitting',
-                    'processed_values': {'Knitting'},
+                    'processed_values': ['Knitting'],
                 },
                 'processing_type': {
                     'raw_values': 'Knitting',
-                    'processed_values': {'Knitting'},
+                    'processed_values': ['Knitting'],
                 },
             },
         )
@@ -68,11 +73,11 @@ class RowFacilityTypeSerializerTest(TestCase):
             {
                 'facility_type': {
                     'raw_values': 'Blending',
-                    'processed_values': {'Blending'},
+                    'processed_values': ['Blending'],
                 },
                 'processing_type': {
                     'raw_values': 'Blending',
-                    'processed_values': {'Blending'},
+                    'processed_values': ['Blending'],
                 },
             },
         )
@@ -86,11 +91,11 @@ class RowFacilityTypeSerializerTest(TestCase):
             {
                 'facility_type': {
                     'raw_values': 'Blending',
-                    'processed_values': {'Blending'},
+                    'processed_values': ['Blending'],
                 },
                 'processing_type': {
                     'raw_values': 'Knitting',
-                    'processed_values': {'Knitting'},
+                    'processed_values': ['Knitting'],
                 },
             },
         )
@@ -106,6 +111,7 @@ class RowFacilityTypeSerializerTest(TestCase):
                     {
                         'message': 'Expected value for facility_type to be a '
                         'string or a list of strings but got 123.',
+                        'field': 'facility_type',
                         'type': 'ValueError',
                     },
                 ],

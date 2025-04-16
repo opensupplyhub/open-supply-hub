@@ -201,7 +201,7 @@ class FacilityListItemTemp(models.Model):
         FacilityListItemTemp.objects.create(
             id=item.id,
             source=item.source,
-            facility_id=item.facility,
+            facility_id=item.facility_id,
             geocoded_point=item.geocoded_point,
             geocoded_address=item.geocoded_address,
             row_index=item.row_index,

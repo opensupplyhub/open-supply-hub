@@ -43,7 +43,7 @@ class CompositeRowSerializerTest(TestCase):
             'sector': 'Apparel',
             'product_type': 'product one',
             'extra_1': 'Extra data',
-            'facility_type': 'Blending|Knitting'
+            'facility_type': 'Knitting'
         }
 
         serialized_row = self.composite_row_serializer \
@@ -53,12 +53,12 @@ class CompositeRowSerializerTest(TestCase):
             'fields': {
                 'product_type': ['product one'],
                 'facility_type': {
-                    'raw_values': 'Blending|Knitting',
-                    'processed_values': {'Knitting', 'Blending'},
+                    'raw_values': 'Knitting',
+                    'processed_values': ['Knitting'],
                 },
                 'processing_type': {
-                    'raw_values': 'Blending|Knitting',
-                    'processed_values': {'Knitting', 'Blending'},
+                    'raw_values': 'Knitting',
+                    'processed_values': ['Knitting'],
                 },
                 'country': 'United States',
                 'extra_1': 'Extra data',
@@ -94,7 +94,7 @@ class CompositeRowSerializerTest(TestCase):
             "extra_6": "‹NanoTech› Technologies",
             'extra_7': "Nantong, Jackbeanie,, Headwear! & Garment Co. Ltd.",
             "extra_8": "\"Baker Street 221B.   , this is a test\"",
-            "facility_type": "Blending|Knitting"
+            "facility_type": "Blending"
         }
         serialized_row = self.composite_row_serializer \
             .validate(facility_source_uncleaned)
@@ -103,12 +103,12 @@ class CompositeRowSerializerTest(TestCase):
             "fields": {
                 "product_type": ["product one"],
                 "facility_type": {
-                    "raw_values": "Blending|Knitting",
-                    "processed_values": {"Knitting", "Blending"},
+                    "raw_values": "Blending",
+                    "processed_values": ["Blending"],
                 },
                 "processing_type": {
-                    "raw_values": "Blending|Knitting",
-                    "processed_values": {"Knitting", "Blending"},
+                    "raw_values": "Blending",
+                    "processed_values": ["Blending"],
                 },
                 "extra_5": "Global Manufactoring",
                 "country": "United States",

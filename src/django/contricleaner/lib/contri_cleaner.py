@@ -23,6 +23,7 @@ from contricleaner.lib.handlers.pre_validation_handler \
     import PreValidationHandler
 from contricleaner.lib.handlers.serialization_handler \
     import SerializationHandler
+from contricleaner.constants import NON_FIELD_ERRORS_KEY
 
 
 class ContriCleaner:
@@ -54,6 +55,7 @@ class ContriCleaner:
         except ParsingError as err:
             return ListDTO(errors=[{
                 'message': str(err),
+                'field': NON_FIELD_ERRORS_KEY,
                 'type': 'ParsingError',
             }])
 

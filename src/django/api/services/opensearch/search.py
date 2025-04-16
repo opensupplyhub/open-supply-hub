@@ -9,10 +9,10 @@ logger = logging.getLogger(__name__)
 class OpenSearchServiceException(Exception):
     def __init__(
         self,
-        message="An unexpected error occurred while processing the request."
+        detail="An unexpected error occurred while processing the request."
     ):
-        self.message = message
-        super().__init__(self.message)
+        self.detail = detail
+        super().__init__(self.detail)
 
 
 class OpenSearchService(SearchInterface):
@@ -46,10 +46,25 @@ class OpenSearchService(SearchInterface):
             else:
                 logger.warning(f"Missing '_source' in hit: {hit}")
 
-        return {
+        response_data = {
             "count": total_hits,
-            "data": data
+            "data": data,
         }
+
+        geohex_buckets = (
+            response.get("aggregations", {})
+            .get("grouped", {})
+            .get("buckets", [])
+        )
+
+        if geohex_buckets:
+            response_data.update({
+                "aggregations": {
+                    "geohex_grid": geohex_buckets
+                }
+            })
+
+        return response_data
 
     @staticmethod
     def __remove_null_values(obj):

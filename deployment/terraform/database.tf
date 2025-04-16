@@ -76,30 +76,32 @@ resource "aws_db_parameter_group" "default" {
 }
 
 module "database_enc" {
-  source = "github.com/opensupplyhub/terraform-aws-postgresql-rds?ref=3.0.3"
+  source = "github.com/opensupplyhub/terraform-aws-postgresql-rds?ref=3.2.0"
 
-  vpc_id                     = module.vpc.id
-  allocated_storage          = var.rds_allocated_storage
-  engine_version             = var.rds_engine_version
-  instance_type              = var.rds_instance_type
-  storage_type               = var.rds_storage_type
-  database_identifier        = var.rds_database_identifier
-  database_name              = var.rds_database_name
-  database_username          = var.rds_database_username
-  database_password          = var.rds_database_password
-  backup_retention_period    = var.rds_backup_retention_period
-  backup_window              = var.rds_backup_window
-  maintenance_window         = var.rds_maintenance_window
-  auto_minor_version_upgrade = var.rds_auto_minor_version_upgrade
-  final_snapshot_identifier  = join("-", [var.rds_final_snapshot_identifier, formatdate("YYYYMMDDhhmmss", timestamp())])
-  skip_final_snapshot        = var.rds_skip_final_snapshot
-  copy_tags_to_snapshot      = var.rds_copy_tags_to_snapshot
-  multi_availability_zone    = var.rds_multi_az
-  storage_encrypted          = var.rds_storage_encrypted
-  subnet_group               = aws_db_subnet_group.default.name
-  parameter_group            = aws_db_parameter_group.default.name
-  deletion_protection        = var.rds_deletion_protection
-  snapshot_identifier        = var.snapshot_identifier
+  vpc_id                      = module.vpc.id
+  allocated_storage           = var.rds_allocated_storage
+  engine_version              = var.rds_engine_version
+  instance_type               = var.rds_instance_type
+  storage_type                = var.rds_storage_type
+  database_identifier         = var.rds_database_identifier
+  database_name               = var.rds_database_name
+  database_username           = var.rds_database_username
+  database_password           = var.rds_database_password
+  backup_retention_period     = var.rds_backup_retention_period
+  backup_window               = var.rds_backup_window
+  maintenance_window          = var.rds_maintenance_window
+  auto_minor_version_upgrade  = var.rds_auto_minor_version_upgrade
+  allow_major_version_upgrade = var.rds_allow_major_version_upgrade
+  apply_immediately           = var.rds_apply_immediately
+  final_snapshot_identifier   = join("-", [var.rds_final_snapshot_identifier, formatdate("YYYYMMDDhhmmss", timestamp())])
+  skip_final_snapshot         = var.rds_skip_final_snapshot
+  copy_tags_to_snapshot       = var.rds_copy_tags_to_snapshot
+  multi_availability_zone     = var.rds_multi_az
+  storage_encrypted           = var.rds_storage_encrypted
+  subnet_group                = aws_db_subnet_group.default.name
+  parameter_group             = aws_db_parameter_group.default.name
+  deletion_protection         = var.rds_deletion_protection
+  snapshot_identifier         = var.snapshot_identifier
 
   alarm_cpu_threshold                = var.rds_cpu_threshold_percent
   alarm_disk_queue_threshold         = var.rds_disk_queue_threshold

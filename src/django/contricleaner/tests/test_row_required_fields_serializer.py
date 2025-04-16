@@ -56,11 +56,13 @@ class RowRequiredFieldsSerializerTest(TestCase):
             {
                 'message': ('There is a problem with the name: Ensure this '
                             'value has at most 200 characters. (it has 239)'),
+                'field': 'name',
                 'type': 'ValidationError',
             },
             {
                 'message': ('There is a problem with the address: Ensure this '
                             'value has at most 200 characters. (it has 254)'),
+                'field': 'address',
                 'type': 'ValidationError'
             },
         ]

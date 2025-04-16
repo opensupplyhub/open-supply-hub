@@ -1,13 +1,12 @@
 {% block content %}
-Hi there,
+Hello,
 
-We’re writing to notify you that you have reached your access limit for the
-OS Hub API and your use of the API has now been blocked. To purchase more queries,
-please complete this short form (https://docs.google.com/forms/d/e/1FAIpQLSdJax3sVHw1IeDkBs0tmfQonWaX8SiR9UYlqXUfk0rLH73Y3w/viewform)
-letting us know which new package you would like and a member of the OS Hub Team
-will be in touch to arrange payment and access.
+You have reached your access limit for the Open Supply Hub (OS Hub) API, and your access has been temporarily blocked. 
 
-Best wishes,
+To purchase additional queries, please contact our support team directly at support@opensupplyhub.org. 
+We will assist you in selecting a package and arranging payment promptly.
+
+Best Regards,
 
 {% include "mail/signature_block.txt" %}
 {% endblock content %}

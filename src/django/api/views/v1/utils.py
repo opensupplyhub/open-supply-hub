@@ -1,14 +1,14 @@
 import logging
 from functools import wraps
+
 from rest_framework.response import Response
 from rest_framework import status
+
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 from api.services.opensearch.search import OpenSearchServiceException
+from api.constants import APIV1CommonErrorMessages, NON_FIELD_ERRORS_KEY
 
 logger = logging.getLogger(__name__)
-
-
-COMMON_ERROR_MESSAGE = 'The request query is invalid.'
 
 
 def serialize_params(serializer_class, query_params):
@@ -23,7 +23,11 @@ def serialize_params(serializer_class, query_params):
             f'{V1_PARAMETERS_LIST.COORDINATES}[lat]',
             f'{V1_PARAMETERS_LIST.COORDINATES}[lng]',
             f'{V1_PARAMETERS_LIST.SEARCH_AFTER}[id]',
-            f'{V1_PARAMETERS_LIST.SEARCH_AFTER}[value]'
+            f'{V1_PARAMETERS_LIST.SEARCH_AFTER}[value]',
+            f'{V1_PARAMETERS_LIST.GEO_BOUNDING_BOX}[top]',
+            f'{V1_PARAMETERS_LIST.GEO_BOUNDING_BOX}[left]',
+            f'{V1_PARAMETERS_LIST.GEO_BOUNDING_BOX}[bottom]',
+            f'{V1_PARAMETERS_LIST.GEO_BOUNDING_BOX}[right]',
         ]:
             new_key = key.replace(']', '').replace('[', '_')
             flattened_query_params[new_key] = value[0]
@@ -35,7 +39,9 @@ def serialize_params(serializer_class, query_params):
             V1_PARAMETERS_LIST.ORDER_BY,
             V1_PARAMETERS_LIST.SIZE,
             V1_PARAMETERS_LIST.DATE_GTE,
-            V1_PARAMETERS_LIST.DATE_LT
+            V1_PARAMETERS_LIST.DATE_LT,
+            V1_PARAMETERS_LIST.GEOHEX_GRID_PRECISION,
+            V1_PARAMETERS_LIST.AGGREGATION,
         ]:
             flattened_query_params[key] = value[0]
         else:
@@ -44,25 +50,55 @@ def serialize_params(serializer_class, query_params):
     params = serializer_class(data=flattened_query_params)
 
     if not params.is_valid():
-        error_response = {'message': None, 'errors': []}
+        error_response = {'detail': None, 'errors': []}
         # Handle common validation errors.
-        if 'message' not in params.errors and 'errors' not in params.errors:
-            error_response['message'] = COMMON_ERROR_MESSAGE
-            for field, error_list in params.errors.items():
-                error_response['errors'].append({
-                    'field': field,
-                    'message': error_list[0].title()
-                })
+        if 'detail' not in params.errors and 'errors' not in params.errors:
+            error_response['detail'] = \
+                APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR
+            for field, error_data in params.errors.items():
+                if isinstance(error_data, list):
+                    error_response['errors'].append({
+                        'field': field,
+                        'detail': error_data[0].capitalize()
+                    })
+                elif isinstance(error_data, dict):
+                    error_response['errors'].append({
+                        'field': field,
+                        'detail': (
+                            next(iter(error_data.values()))[0]
+                            if (
+                                error_data and next(
+                                    iter(error_data.values()), []
+                                )
+                            )
+                            else (
+                                APIV1CommonErrorMessages
+                                .COMMON_REQ_PARAMETER_ERROR
+                            )
+                        )
+                    })
+                elif isinstance(error_data, str):
+                    error_response['errors'].append({
+                        'field': field,
+                        'detail': error_data.capitalize()
+                    })
+                else:
+                    error_response['errors'].append({
+                        'field': field,
+                        'detail': (
+                            APIV1CommonErrorMessages.COMMON_REQ_PARAMETER_ERROR
+                        )
+                    })
 
         # Handle errors that come from serializers
-        message_errors = params.errors.get('message')
-        if message_errors:
-            error_response['message'] = message_errors[0].title()
-        if 'message' in params.errors and 'errors' in params.errors:
+        detail_errors = params.errors.get('detail')
+        if detail_errors:
+            error_response['detail'] = detail_errors[0].capitalize()
+        if 'detail' in params.errors and 'errors' in params.errors:
             for error_item in params.errors.get('errors', []):
                 error_response['errors'].append({
-                    'field': error_item.get('field', '').title(),
-                    'message': error_item.get('message', '').title()
+                    'field': error_item.get('field', ''),
+                    'detail': error_item.get('detail', '').capitalize()
                 })
 
         return None, error_response
@@ -74,11 +110,11 @@ def handle_value_error(e):
     logger.error(f'Error processing request: {e}')
     return Response(
         {
-            "message": COMMON_ERROR_MESSAGE,
+            "detail": APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR,
             "errors": [
                 {
-                    "field": "general",
-                    "message": (
+                    "field": NON_FIELD_ERRORS_KEY,
+                    "detail": (
                         "There was a problem processing your request. "
                         "Please check your input."
                     )
@@ -93,7 +129,7 @@ def handle_opensearch_exception(e):
     logger.error(f'Internal server error: {e}')
     return Response(
         {
-            "message": f"{e}"
+            "detail": f"{e}"
         },
         status=status.HTTP_500_INTERNAL_SERVER_ERROR
     )
@@ -111,16 +147,17 @@ def handle_errors_decorator(view_func):
     return _wrapped_view
 
 
-def handle_path_error(field, message, status_code):
-    return Response(
-        {
-            "message": "The request path parameter is invalid.",
-            "errors": [
-                {
-                    "field": field,
-                    "message": message
-                }
-            ]
-        },
-        status=status_code
-    )
+def create_error_detail(
+        field,
+        detail,
+        general_detail="The request path parameter is invalid."
+):
+    return {
+        "detail": general_detail,
+        "errors": [
+            {
+                "field": field,
+                "detail": detail,
+            }
+        ]
+    }

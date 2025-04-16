@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
-import { bool, func, string, object } from 'prop-types';
+import React, { useState, useEffect, useRef } from 'react';
+import { connect, useDispatch } from 'react-redux';
+import { bool, func, string, object, number, array } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
@@ -14,57 +14,182 @@ import DatePicker from '../DatePicker';
 import {
     fetchModerationEvents,
     downloadModerationEvents,
+    clearModerationEvents,
+    updateModerationEventsPage,
+    updateAfterDate,
+    updateBeforeDate,
 } from '../../actions/dashboardModerationQueue';
 import { fetchCountryOptions } from '../../actions/filterOptions';
-import { moderationEventsPropType } from '../../util/propTypes';
+import { moderationEventsListPropType } from '../../util/propTypes';
 import { makeDashboardModerationQueueStyles } from '../../util/styles';
-import { MODERATION_QUEUE } from '../../util/constants';
+import {
+    MODERATION_QUEUE,
+    MODERATION_INITIAL_PAGE_INDEX,
+    MODERATION_DEFAULT_ROWS_PER_PAGE,
+} from '../../util/constants';
+
+const DATE_RANGE_ERROR =
+    "The 'After Date' should be earlier than or the same as " +
+    "the 'Before Date'. Please adjust the dates.";
+
+const DATE_FORMAT_ERROR =
+    "The date format is invalid. Please use the format 'DD-MM-YYYY'.";
 
 const DashboardModerationQueue = ({
-    events,
+    moderationEventsList,
+    count,
+    page,
+    maxPage,
+    pageSize,
+    sort,
+    afterDate,
+    beforeDate,
+    dataSources,
+    moderationStatuses,
+    countries,
     fetching,
-    fetchEvents,
+    handleFetchModerationEvents,
     error,
     downloadEvents,
     downloadEventsError,
     fetchCountries,
     classes,
 }) => {
-    const [afterDate, setAfterDate] = useState('');
-    const [beforeDate, setBeforeDate] = useState('');
     const [afterDateError, setAfterDateError] = useState(false);
     const [beforeDateError, setBeforeDateError] = useState(false);
+    const [errorDateText, setErrorDateText] = useState('');
+    const isFirstRender = useRef(true);
+    const prevDataSources = useRef(dataSources);
+    const prevModerationStatuses = useRef(moderationStatuses);
+    const prevCountries = useRef(countries);
+
+    const dispatch = useDispatch();
+
+    const dateRegexFormat = /^\d{4}-\d{2}-\d{2}$/;
 
     useEffect(() => {
-        fetchEvents();
+        handleFetchModerationEvents();
         fetchCountries();
-    }, [fetchEvents, fetchCountries]);
+    }, [handleFetchModerationEvents, fetchCountries]);
+
+    const wasNotEmptyAndNowEmpty = (prev, current) =>
+        prev?.current?.length > 0 && current?.length === 0;
+
+    const isValidDate = date =>
+        typeof date === 'string' &&
+        (date.length === 0 || dateRegexFormat.test(date));
+    const isValidDateRange = (firstDate, secondDate) =>
+        firstDate.length === 0 ||
+        secondDate.length === 0 ||
+        firstDate >= secondDate;
+
+    useEffect(() => {
+        /*
+         Fetch data if prev filters were not empty but
+         become empty after user click on select field.
+         This will resolve conflict of when we want to fetch data
+         when filters are removing in UI at the moment
+        */
+        const wasNotEmptyAndNowEmptyDataSources = wasNotEmptyAndNowEmpty(
+            prevDataSources,
+            dataSources,
+        );
+        const wasNotEmptyAndNowEmptyModerationStatuses = wasNotEmptyAndNowEmpty(
+            prevModerationStatuses,
+            moderationStatuses,
+        );
+        const wasNotEmptyAndNowEmptyCountries = wasNotEmptyAndNowEmpty(
+            prevCountries,
+            countries,
+        );
+
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+        } else if (
+            dataSources.length > 0 ||
+            wasNotEmptyAndNowEmptyDataSources ||
+            moderationStatuses.length > 0 ||
+            wasNotEmptyAndNowEmptyModerationStatuses ||
+            countries.length > 0 ||
+            wasNotEmptyAndNowEmptyCountries
+        ) {
+            dispatch(clearModerationEvents());
+            dispatch(
+                updateModerationEventsPage({
+                    page: MODERATION_INITIAL_PAGE_INDEX,
+                    maxPage: MODERATION_INITIAL_PAGE_INDEX,
+                    pageSize,
+                }),
+            );
+            handleFetchModerationEvents();
+        }
+
+        prevDataSources.current = dataSources;
+        prevModerationStatuses.current = moderationStatuses;
+        prevCountries.current = countries;
+    }, [dataSources, moderationStatuses, countries]);
 
     const handleAfterDateChange = date => {
-        if (!beforeDate || date <= beforeDate) {
-            setAfterDate(date);
-            setAfterDateError(false);
-        } else {
-            setAfterDate('');
+        setAfterDateError(false);
+        setBeforeDateError(false);
+        if (!isValidDate(date)) {
+            dispatch(updateAfterDate(null));
+            setErrorDateText(DATE_FORMAT_ERROR);
             setAfterDateError(true);
+            return;
         }
+        if (!isValidDateRange(beforeDate, date)) {
+            dispatch(updateAfterDate(date));
+            setErrorDateText(DATE_RANGE_ERROR);
+            setAfterDateError(true);
+            return;
+        }
+
+        dispatch(updateAfterDate(date));
+        dispatch(clearModerationEvents());
+        dispatch(
+            updateModerationEventsPage({
+                page: MODERATION_INITIAL_PAGE_INDEX,
+                maxPage: MODERATION_INITIAL_PAGE_INDEX,
+                pageSize,
+            }),
+        );
+        handleFetchModerationEvents();
     };
 
     const handleBeforeDateChange = date => {
-        if (!afterDate || date >= afterDate) {
-            setBeforeDate(date);
-            setBeforeDateError(false);
-        } else {
-            setBeforeDate('');
+        setAfterDateError(false);
+        setBeforeDateError(false);
+        if (!isValidDate(date)) {
+            dispatch(updateBeforeDate(null));
+            setErrorDateText(DATE_FORMAT_ERROR);
             setBeforeDateError(true);
+            return;
         }
+        if (!isValidDateRange(date, afterDate)) {
+            dispatch(updateBeforeDate(date));
+            setErrorDateText(DATE_RANGE_ERROR);
+            setBeforeDateError(true);
+            return;
+        }
+
+        dispatch(updateBeforeDate(date));
+        dispatch(clearModerationEvents());
+        dispatch(
+            updateModerationEventsPage({
+                page: MODERATION_INITIAL_PAGE_INDEX,
+                maxPage: MODERATION_INITIAL_PAGE_INDEX,
+                pageSize,
+            }),
+        );
+        handleFetchModerationEvents();
     };
 
     if (error) {
         return <Typography>{error}</Typography>;
     }
 
-    const eventsCount = events?.length || 0;
+    const moderationEventsCount = count;
 
     const sharedFilterProps = {
         isDisabled: fetching,
@@ -77,7 +202,7 @@ const DashboardModerationQueue = ({
             <div className={classes.dashboardFilters}>
                 <DashboardDownloadDataButton
                     fetching={fetching}
-                    downloadPayload={events || []}
+                    downloadPayload={moderationEventsList || []}
                     downloadData={downloadEvents}
                     downloadError={downloadEventsError}
                 />
@@ -111,37 +236,64 @@ const DashboardModerationQueue = ({
                 </Grid>
                 {(afterDateError || beforeDateError) && (
                     <Typography color="error" className={classes.errorText}>
-                        The &apos;After Date&apos; should be earlier than or the
-                        same as the &apos;Before Date&apos;. Please adjust the
-                        dates.
+                        {errorDateText}
                     </Typography>
                 )}
             </div>
 
             <Grid item className={classes.numberResults}>
-                {eventsCount} results
+                {moderationEventsCount} results
             </Grid>
 
             <DashboardModerationQueueListTable
                 fetching={fetching}
-                events={events}
+                moderationEventsList={moderationEventsList}
+                count={count}
+                page={page}
+                maxPage={maxPage}
+                pageSize={pageSize}
+                sort={sort}
+                fetchModerationEvents={handleFetchModerationEvents}
             />
         </Paper>
     );
 };
 
 DashboardModerationQueue.defaultProps = {
-    events: [],
+    moderationEventsList: [],
+    count: 0,
+    page: MODERATION_INITIAL_PAGE_INDEX,
+    maxPage: MODERATION_INITIAL_PAGE_INDEX,
+    pageSize: MODERATION_DEFAULT_ROWS_PER_PAGE,
+    sort: {
+        sortBy: 'created_at',
+        orderBy: 'desc',
+    },
+    afterDate: '',
+    beforeDate: '',
+    dataSources: [],
+    moderationStatuses: [],
+    countries: [],
     error: null,
     downloadEventsError: null,
 };
 
 DashboardModerationQueue.propTypes = {
-    events: moderationEventsPropType,
+    moderationEventsList: moderationEventsListPropType,
+    count: number,
+    page: number,
+    maxPage: number,
+    pageSize: number,
+    sort: object,
+    afterDate: string,
+    beforeDate: string,
+    dataSources: array,
+    moderationStatuses: array,
+    countries: array,
     fetching: bool.isRequired,
     error: string,
     downloadEventsError: string,
-    fetchEvents: func.isRequired,
+    handleFetchModerationEvents: func.isRequired,
     fetchCountries: func.isRequired,
     downloadEvents: func.isRequired,
     classes: object.isRequired,
@@ -149,18 +301,40 @@ DashboardModerationQueue.propTypes = {
 
 const mapStateToProps = ({
     dashboardModerationQueue: {
-        moderationEvents: { events, fetching, error },
+        moderationEvents: {
+            moderationEventsList,
+            count,
+            page,
+            maxPage,
+            pageSize,
+            sort,
+            afterDate,
+            beforeDate,
+            fetching,
+            error,
+        },
         moderationEventsDownloadStatus: { error: downloadEventsError },
     },
+    filters: { dataSources, moderationStatuses, countries },
 }) => ({
-    events,
+    moderationEventsList,
+    count,
+    page,
+    maxPage,
+    pageSize,
+    sort,
+    afterDate,
+    beforeDate,
+    dataSources,
+    moderationStatuses,
+    countries,
     fetching,
     error,
     downloadEventsError,
 });
 
 const mapDispatchToProps = dispatch => ({
-    fetchEvents: () => dispatch(fetchModerationEvents()),
+    handleFetchModerationEvents: () => dispatch(fetchModerationEvents()),
     fetchCountries: () => dispatch(fetchCountryOptions()),
     downloadEvents: moderationEvents =>
         dispatch(downloadModerationEvents(moderationEvents)),

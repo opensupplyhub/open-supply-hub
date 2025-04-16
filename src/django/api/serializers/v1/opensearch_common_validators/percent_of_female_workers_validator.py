@@ -16,7 +16,7 @@ class PercentOfFemaleWorkersValidator(OpenSearchValidationInterface):
                 percent_female_workers_max is not None):
             errors.append({
                 "field": "percent_female_workers",
-                "message": "Both min and max percentages must be provided."
+                "detail": "Both min and max percentages must be provided."
             })
 
         if percent_female_workers_min is not None and \
@@ -25,12 +25,12 @@ class PercentOfFemaleWorkersValidator(OpenSearchValidationInterface):
                     0 < percent_female_workers_max <= 100):
                 errors.append({
                     "field": "percent_female_workers",
-                    "message": "Percentages must be between 0 and 100."
+                    "detail": "Percentages must be between 0 and 100."
                 })
             if percent_female_workers_min > percent_female_workers_max:
                 errors.append({
                     "field": "percent_female_workers",
-                    "message": (
+                    "detail": (
                         "Minimum percentage must be less than or equal to "
                         "maximum percentage."
                     )

@@ -38,15 +38,16 @@ class RowFacilityTypeSerializer(RowSerializer):
             if value and not is_valid_type(value):
                 facility_type_errors.append(
                     {
-                        "message": "Expected value for {} to be a string "
-                        "or a list of strings but "
-                        "got {}.".format(field, value),
-                        "type": "ValueError",
+                        'message': 'Expected value for {} to be a string '
+                        'or a list of strings but '
+                        'got {}.'.format(field, value),
+                        'field': field,
+                        'type': 'ValueError',
                     }
                 )
 
         if facility_type_errors:
-            current["errors"].extend(facility_type_errors)
+            current['errors'].extend(facility_type_errors)
             return current
 
         if facility_type_processing_type:

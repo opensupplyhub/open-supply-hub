@@ -7,7 +7,7 @@ import FacilityDetailsDetail from './FacilityDetailsDetail';
 import TitledDrawer from './TitledDrawer';
 import ShowOnly from './ShowOnly';
 
-const detailssStyles = theme =>
+const detailsStyles = theme =>
     Object.freeze({
         item: {
             paddingTop: theme.spacing.unit * 3,
@@ -109,4 +109,4 @@ const FacilityDetailsItem = ({
     );
 };
 
-export default withStyles(detailssStyles)(FacilityDetailsItem);
+export default withStyles(detailsStyles)(FacilityDetailsItem);

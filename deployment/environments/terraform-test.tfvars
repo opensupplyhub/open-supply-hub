@@ -13,15 +13,14 @@ cloudfront_price_class = "PriceClass_All"
 bastion_ami = "ami-0bb3fad3c0286ebd5"
 bastion_instance_type = "t3.nano"
 
-rds_allocated_storage = "128"
-rds_engine_version = "12"
-rds_parameter_group_family = "postgres12"
+rds_allocated_storage = "256"
+rds_engine_version = "16"
+rds_parameter_group_family = "postgres16"
 rds_instance_type = "db.t3.xlarge"
 rds_database_identifier = "opensupplyhub-enc-tst"
 rds_database_name = "opensupplyhub"
 rds_multi_az = false
 rds_storage_encrypted = true
-snapshot_identifier = "opensupplyhub-rds-tst"
 
 anonymized_database_instance_type = "db.t3.2xlarge"
 anonymized_database_identifier = "database-anonymizer"
@@ -32,7 +31,7 @@ app_ecs_desired_count = "2"
 app_ecs_deployment_min_percent = "100"
 app_ecs_deployment_max_percent = "400"
 app_fargate_cpu = "2048"
-app_fargate_memory = "8192"
+app_fargate_memory = "4096"
 
 app_dd_fargate_cpu = "4096"
 app_dd_fargate_memory = "8192"

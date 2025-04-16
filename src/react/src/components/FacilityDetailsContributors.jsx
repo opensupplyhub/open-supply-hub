@@ -6,7 +6,7 @@ import FacilityDetailsShowContributorsButton from './FacilityDetailsShowContribu
 
 import { splitContributorsIntoPublicAndNonPublic } from '../util/util';
 
-const detailssStyles = theme =>
+const detailsStyles = theme =>
     Object.freeze({
         root: {
             color: '#191919',
@@ -53,4 +53,4 @@ const FacilityDetailsContributors = ({ classes, contributors }) => {
         </div>
     );
 };
-export default withStyles(detailssStyles)(FacilityDetailsContributors);
+export default withStyles(detailsStyles)(FacilityDetailsContributors);

@@ -287,9 +287,9 @@ export function fetchFacilityProcessingTypeOptions() {
 
         return apiRequest
             .get(makeGetFacilitiesTypeProcessingTypeURL())
-            .then(({ data }) => {
-                dispatch(completeFetchFacilityProcessingTypeOptions(data));
-            })
+            .then(({ data }) =>
+                dispatch(completeFetchFacilityProcessingTypeOptions(data)),
+            )
             .catch(err =>
                 dispatch(
                     logErrorAndDispatchFailure(
@@ -309,9 +309,9 @@ export function fetchNumberOfWorkersOptions() {
         return apiRequest
             .get(makeGetNumberOfWorkersURL())
             .then(({ data }) => mapDjangoChoiceTuplesValueToSelectOptions(data))
-            .then(data => {
-                dispatch(completeFetchNumberOfWorkersTypeOptions(data));
-            })
+            .then(data =>
+                dispatch(completeFetchNumberOfWorkersTypeOptions(data)),
+            )
             .catch(err =>
                 dispatch(
                     logErrorAndDispatchFailure(

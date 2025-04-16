@@ -23,7 +23,7 @@ from api.serializers.v1.opensearch_common_validators. \
     countries_validator import CountryValidator
 from api.serializers.v1.opensearch_common_validators. \
     date_range_validator import DateRangeValidator
-from api.views.v1.utils import COMMON_ERROR_MESSAGE
+from api.constants import APIV1CommonErrorMessages
 
 
 class ModerationEventsSerializer(Serializer):
@@ -41,6 +41,10 @@ class ModerationEventsSerializer(Serializer):
     )
     date_gte = DateField(input_formats=['%Y-%m-%d'], required=False)
     date_lt = DateField(input_formats=['%Y-%m-%d'], required=False)
+    request_type = ListField(
+        child=CharField(required=False),
+        required=False
+    )
     source = ListField(
         child=CharField(required=False),
         required=False
@@ -86,7 +90,7 @@ class ModerationEventsSerializer(Serializer):
         if errors:
             # [OSDEV-1441] Pass error msg to the Rollbar here
             raise ValidationError({
-                "message": COMMON_ERROR_MESSAGE,
+                "detail": APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR,
                 "errors": errors
             })
 

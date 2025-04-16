@@ -14,6 +14,7 @@ import RegisterForm from './components/RegisterForm';
 import ResetPasswordForm from './components/ResetPasswordForm';
 import LoginForm from './components/LoginForm';
 import Contribute from './components/Contribute';
+import AddLocationData from './components/AddLocationData';
 import Homepage from './components/Homepage';
 import FacilityLists from './components/FacilityLists';
 import FacilityListItems from './components/FacilityListItems';
@@ -31,6 +32,9 @@ import ExternalRedirect from './components/ExternalRedirect';
 import Facilities from './components/Facilities';
 import ContributeProductionLocation from './components/Contribute/ContributeProductionLocation';
 import SearchByOsIdResult from './components/Contribute/SearchByOsIdResult';
+import SearchByNameAndAddressResult from './components/Contribute/SearchByNameAndAddressResult';
+import ProductionLocationInfo from './components/Contribute/ProductionLocationInfo';
+import withProductionLocationSubmit from './components/Contribute/HOC/withProductionLocationSubmit';
 
 import { sessionLogin } from './actions/auth';
 import { fetchFeatureFlags } from './actions/featureFlags';
@@ -44,6 +48,7 @@ import {
     authRegisterFormRoute,
     authResetPasswordFormRoute,
     authConfirmRegistrationRoute,
+    multipleLocationRoute,
     contributeRoute,
     listsRoute,
     facilityListItemsRoute,
@@ -57,7 +62,18 @@ import {
     InfoPaths,
     contributeProductionLocationRoute,
     searchByOsIdResultRoute,
+    searchByNameAndAddressResultRoute,
+    productionLocationInfoRouteCreate,
+    productionLocationInfoRouteUpdate,
 } from './util/constants';
+
+// Pre-wrapping components outside of Routes to prevent redundant re-renders on component mount
+const WrappedProductionLocationInfoUpdate = withProductionLocationSubmit(
+    ProductionLocationInfo,
+);
+const WrappedProductionLocationInfoCreate = withProductionLocationSubmit(
+    ProductionLocationInfo,
+);
 
 class Routes extends Component {
     componentDidMount() {
@@ -84,7 +100,11 @@ class Routes extends Component {
                 <Router history={history}>
                     <div className="App">
                         {!embed ? <Navbar /> : null}
-                        <main style={mainPanelStyle} className="mainPanel">
+                        <main
+                            style={mainPanelStyle}
+                            className="mainPanel"
+                            id="mainPanel"
+                        >
                             <Switch>
                                 <Route
                                     exact
@@ -139,8 +159,13 @@ class Routes extends Component {
                                 />
                                 <Route
                                     exact
-                                    path={contributeRoute}
+                                    path={multipleLocationRoute}
                                     component={Contribute}
+                                />
+                                <Route
+                                    exact
+                                    path={contributeRoute}
+                                    component={AddLocationData}
                                 />
                                 <Route
                                     path={dashboardRoute}
@@ -168,6 +193,25 @@ class Routes extends Component {
                                     exact
                                     path={searchByOsIdResultRoute}
                                     component={SearchByOsIdResult}
+                                />
+                                <Route
+                                    exact
+                                    path={searchByNameAndAddressResultRoute}
+                                    component={SearchByNameAndAddressResult}
+                                />
+                                <Route
+                                    exact
+                                    path={productionLocationInfoRouteUpdate}
+                                    component={
+                                        WrappedProductionLocationInfoUpdate
+                                    }
+                                />
+                                <Route
+                                    exact
+                                    path={productionLocationInfoRouteCreate}
+                                    component={
+                                        WrappedProductionLocationInfoCreate
+                                    }
                                 />
                                 <Route exact path="/about/processing">
                                     <ExternalRedirect

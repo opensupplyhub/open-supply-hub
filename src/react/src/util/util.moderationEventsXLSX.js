@@ -1,5 +1,5 @@
 import { EMPTY_PLACEHOLDER, DATE_FORMATS } from './constants';
-import { formatDate } from './util';
+import { formatUTCDate } from './util';
 
 const xlsxHeaders = Object.freeze([
     'Created Date',
@@ -15,19 +15,19 @@ const xlsxHeaders = Object.freeze([
 const formatModerationEventsDataForXLSX = moderationEvents =>
     [xlsxHeaders].concat(
         moderationEvents.map(moderationEvent => [
-            formatDate(moderationEvent.created_at, DATE_FORMATS.LONG),
-            moderationEvent.name,
-            moderationEvent.country.name,
+            formatUTCDate(moderationEvent.created_at, DATE_FORMATS.LONG),
+            moderationEvent.cleaned_data.name,
+            moderationEvent.cleaned_data.country.name,
             moderationEvent.contributor_name,
             moderationEvent.source,
-            moderationEvent.moderation_status,
-            moderationEvent.moderation_decision_date !== null
-                ? formatDate(
-                      moderationEvent.moderation_decision_date,
+            moderationEvent.status,
+            moderationEvent.status_change_date !== null
+                ? formatUTCDate(
+                      moderationEvent.status_change_date,
                       DATE_FORMATS.LONG,
                   )
                 : EMPTY_PLACEHOLDER,
-            formatDate(moderationEvent.updated_at, DATE_FORMATS.LONG),
+            formatUTCDate(moderationEvent.updated_at, DATE_FORMATS.LONG),
         ]),
     );
 

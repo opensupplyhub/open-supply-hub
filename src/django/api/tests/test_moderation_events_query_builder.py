@@ -1,4 +1,3 @@
-import unittest
 from django.test import TestCase
 from api.views.v1.opensearch_query_builder. \
     moderation_events_query_builder import ModerationEventsQueryBuilder
@@ -88,6 +87,26 @@ class TestModerationEventsQueryBuilder(TestCase):
         expected = {'created_at': {'order': 'asc'}}
         self.assertIn(expected, self.builder.query_body['sort'])
 
+    def test_add_sort_with_default_order(self):
+        self.builder.add_sort('created_at')
+        expected = {'created_at': {'order': 'desc'}}
+        self.assertIn(expected, self.builder.query_body['sort'])
+
+    def test_add_sort_name(self):
+        self.builder.add_sort('name', 'asc')
+        expected = {'cleaned_data.name': {'order': 'asc'}}
+        self.assertIn(expected, self.builder.query_body['sort'])
+
+    def test_add_sort_address(self):
+        self.builder.add_sort('address', 'asc')
+        expected = {'cleaned_data.address': {'order': 'asc'}}
+        self.assertIn(expected, self.builder.query_body['sort'])
+
+    def test_add_sort_country(self):
+        self.builder.add_sort('country', 'asc')
+        expected = {'cleaned_data.country.name': {'order': 'asc'}}
+        self.assertIn(expected, self.builder.query_body['sort'])
+
     def test_add_search_after(self):
         search_after_value = '2023-11-21T10:00:00'
         search_after_id = '123e4567-e89b-12d3-a456-426614174000'
@@ -116,7 +135,3 @@ class TestModerationEventsQueryBuilder(TestCase):
             'sort': []
         }
         self.assertEqual(final_query, expected)
-
-
-if __name__ == '__main__':
-    unittest.main()

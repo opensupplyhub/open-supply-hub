@@ -14,7 +14,7 @@ class NumberOfWorkersValidator(OpenSearchValidationInterface):
                 (min_value is None and max_value is not None)):
             errors.append({
                 "field": "number_of_workers",
-                "message": (
+                "detail": (
                     "The value must be a valid object with `min` and `max` "
                     "properties."
                 )
@@ -24,7 +24,7 @@ class NumberOfWorkersValidator(OpenSearchValidationInterface):
                 min_value > max_value):
             errors.append({
                 "field": "number_of_workers",
-                "message": (
+                "detail": (
                     "Minimum value must be less than or equal "
                     "to maximum value."
                 )

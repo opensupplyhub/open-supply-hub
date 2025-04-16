@@ -11,16 +11,25 @@ export default {
 
     // Reds
     LIGHT_RED: '#FFEAEA',
+    RED: '#F44336',
 
     // Grays and Neutrals
-    WHITE: '#fff',
+    WHITE: '#FFF',
     GREY: '#D2D2D2',
     LIGHT_GREY: '#F9F7F7',
     DARK_GREY: '#6E707E',
-    DARK_SLATE_GRAY: '#3D4153',
+    DARK_SLATE_GREY: '#3D4153',
     NEAR_BLACK: '#0D1128',
 
     // Accent Colors
     NAVIGATION: '#FCCF3F',
     PALE_LIGHT_YELLOW: '#FFF2CE',
+    ACCENT_GREY: '#E7E8EA',
+
+    // Purples
+    LIGHT_PURPLE: '#8428FA21',
+    PURPLE: '#8428FA',
+
+    // Blacks
+    JET_BLACK: '#191919',
 };

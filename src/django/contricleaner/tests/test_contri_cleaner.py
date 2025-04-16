@@ -50,11 +50,11 @@ class ContriCleanerTest(TestCase):
                     'product_type': ['Jeans'],
                     'facility_type': {
                         'raw_values': 'Embellishment',
-                        'processed_values': {'Embellishment'},
+                        'processed_values': ['Embellishment'],
                     },
                     'processing_type': {
                         'raw_values': 'Embellishment',
-                        'processed_values': {'Embellishment'},
+                        'processed_values': ['Embellishment'],
                     },
                     'facility_type_processing_type': 'Embellishment',
                     'sector_product_type': 'Apparel|Jeans',
@@ -111,11 +111,11 @@ class ContriCleanerTest(TestCase):
                     'product_type': ['Jeans'],
                     'facility_type': {
                         'raw_values': 'Embellishment',
-                        'processed_values': {'Embellishment'},
+                        'processed_values': ['Embellishment'],
                     },
                     'processing_type': {
                         'raw_values': 'Embellishment',
-                        'processed_values': {'Embellishment'},
+                        'processed_values': ['Embellishment'],
                     },
                     'facility_type_processing_type': 'Embellishment',
                     'sector_product_type': 'Apparel|Jeans',
@@ -160,6 +160,7 @@ class ContriCleanerTest(TestCase):
             'your file to an Excel or UTF-8 CSV and reupload.'
         )
         expected_error_type = 'ParsingError'
+        expected_error_field = 'non_field_errors'
 
         temp_uploaded_file_stub = MagicMock(spec=File)
         temp_uploaded_file_stub.name = 'mocked_file_name.txt'
@@ -170,9 +171,11 @@ class ContriCleanerTest(TestCase):
         error_dict = contri_cleaner_processed_data.errors[0]
         error_message = error_dict['message']
         error_type = error_dict['type']
+        error_field = error_dict['field']
 
         self.assertEqual(error_message, expected_error_message)
         self.assertEqual(error_type, expected_error_type)
+        self.assertEqual(error_field, expected_error_field)
 
     def test_valid_json_processing(self):
         json_data = {

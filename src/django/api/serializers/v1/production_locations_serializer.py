@@ -19,12 +19,18 @@ from api.serializers.v1.opensearch_common_validators. \
     percent_of_female_workers_validator import PercentOfFemaleWorkersValidator
 from api.serializers.v1.opensearch_common_validators. \
     coordinates_validator import CoordinatesValidator
-from api.views.v1.utils import COMMON_ERROR_MESSAGE
+from api.constants import APIV1CommonErrorMessages
+from api.serializers.v1.opensearch_common_validators.\
+    geo_bounding_box_validator import GeoBoundingBoxValidator
+from api.serializers.v1.opensearch_common_validators.\
+    geo_polygon_validator import GeoPolygonValidator
 
 
 class ProductionLocationsSerializer(Serializer):
     # These params are checking considering serialize_params output
     size = IntegerField(required=False)
+    address = CharField(required=False)
+    description = CharField(required=False)
     number_of_workers_min = IntegerField(required=False)
     number_of_workers_max = IntegerField(required=False)
     percent_female_workers_min = FloatField(required=False)
@@ -45,6 +51,23 @@ class ProductionLocationsSerializer(Serializer):
         choices=['asc', 'desc'],
         required=False
     )
+    aggregation = ChoiceField(
+        choices=['geohex_grid'],
+        required=False,
+    )
+    geohex_grid_precision = IntegerField(
+        min_value=0,
+        max_value=15,
+        required=False,
+    )
+    geo_bounding_box_top = FloatField(required=False)
+    geo_bounding_box_left = FloatField(required=False)
+    geo_bounding_box_bottom = FloatField(required=False)
+    geo_bounding_box_right = FloatField(required=False)
+    geo_polygon = ListField(
+        child=CharField(required=False),
+        required=False
+    )
 
     def validate(self, data):
         validators = [
@@ -53,6 +76,8 @@ class ProductionLocationsSerializer(Serializer):
             PercentOfFemaleWorkersValidator(),
             CoordinatesValidator(),
             CountryValidator(),
+            GeoBoundingBoxValidator(),
+            GeoPolygonValidator(),
         ]
 
         error_list_builder = OpenSearchErrorListBuilder(validators)
@@ -61,7 +86,7 @@ class ProductionLocationsSerializer(Serializer):
         if errors:
             # [OSDEV-1441] Pass error msg to the Rollbar here
             raise ValidationError({
-                "message": COMMON_ERROR_MESSAGE,
+                "detail": APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR,
                 "errors": errors
             })
 

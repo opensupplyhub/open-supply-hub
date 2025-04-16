@@ -1,4 +1,4 @@
-FROM postgis/postgis:12-3.4-alpine
+FROM postgis/postgis:16-3.4-alpine
 
 WORKDIR /opt/
 
@@ -31,9 +31,7 @@ RUN chmod 644 ~/.ssh/known_hosts
 
 
 COPY ./do_dump.sh ./do_dump.sh
-COPY ./initdb.sql /docker-entrypoint-initdb.d
 
 VOLUME /keys
-# ENTRYPOINT [ "docker-entrypoint.sh" ]
-CMD ["sh", "do_dump.sh"]
 
+CMD ["sh", "do_dump.sh"]

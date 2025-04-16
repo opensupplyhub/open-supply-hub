@@ -83,16 +83,19 @@ class RowSectorSerializerTest(TestCase):
                 {
                     'message': 'Expected value for sector to be a string or a '
                     'list of strings but got 1.',
+                    'field': 'sector',
                     'type': 'ValueError',
                 },
                 {
                     'message': 'Expected value for product_type to be a '
                     'string or a list of strings but got 2.',
+                    'field': 'product_type',
                     'type': 'ValueError',
                 },
                 {
                     'message': 'Expected value for sector_product_type to be '
                     'a string or a list of strings but got 3.',
+                    'field': 'sector_product_type',
                     'type': 'ValueError',
                 },
             ],
@@ -115,6 +118,7 @@ class RowSectorSerializerTest(TestCase):
                 {
                     'message': 'You may submit a maximum of 50 product types, '
                     'not 60.',
+                    'field': 'product_type',
                     'type': 'ValidationError',
                 }
             ],
@@ -139,6 +143,7 @@ class RowSectorSerializerTest(TestCase):
                     'message': ('There is a problem with the sector values: '
                                 'Ensure that each value has at most 50 '
                                 'characters.'),
+                    'field': 'sector',
                     'type': 'ValidationError',
                 }
             ],

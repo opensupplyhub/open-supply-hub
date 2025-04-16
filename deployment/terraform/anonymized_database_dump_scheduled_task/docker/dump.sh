@@ -13,12 +13,26 @@ aws rds copy-db-snapshot \
     --kms-key-id $KMS_KEY_ID --output text
 
 echo "Waiting for snapshot $ANONYMIZED_SNAPSHOT_ID to enter 'available' state..."
+export ATTEMPT=0
+export MAX_ATTEMPT=600
 while true
 do
-    aws rds wait db-snapshot-available --db-snapshot-identifier $ANONYMIZED_SNAPSHOT_ID
-    if echo $? == 0; then
+    export SNAPSHOT_STATUS=$(aws rds describe-db-snapshots --db-snapshot-identifier $ANONYMIZED_SNAPSHOT_ID --query 'DBSnapshots[0].Status' --output text)
+    if [[ $SNAPSHOT_STATUS == "available" ]];
+    then
+        echo "Snapshot $ANONYMIZED_SNAPSHOT_ID is now available."
         break
+    else
+        echo "Snapshot $ANONYMIZED_SNAPSHOT_ID status is: $SNAPSHOT_STATUS. Waiting..."
     fi
+    if [[ $ATTEMPT -le $MAX_ATTEMPT ]];
+    then
+        sleep 60s
+    else
+        echo "Snapshot creation timed out"
+        exit 1
+    fi
+    ATTEMPT=$((ATTEMPT + 1))
 done
 echo "Copying shared snapshot is finished"
 
@@ -41,11 +55,11 @@ echo "Dump database"
 TEMPORARY_INSTANCE_ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier $TEMPORARY_INSTANCE_ID --query 'DBInstances[0].Endpoint.Address' --output text)
 echo "$TEMPORARY_INSTANCE_ENDPOINT:5432:$DATABASE_NAME:$DATABASE_USERNAME:$DATABASE_PASSWORD" > ~/.pgpass
 chmod 600 ~/.pgpass
-pg_dump --clean --no-owner --no-privileges -Fc -h $TEMPORARY_INSTANCE_ENDPOINT  -d $DATABASE_NAME -U $DATABASE_USERNAME -p 5432 -f /dumps/osh_prod_large_anonimized.dump -w --verbose
+pg_dump --clean --no-owner --no-privileges -Fc -h $TEMPORARY_INSTANCE_ENDPOINT -d $DATABASE_NAME -U $DATABASE_USERNAME -p 5432 -f /dumps/osh_prod_large_anonymized.dump -w --verbose
 ls -la /dumps
 echo "Dump database is finished"
 echo "Copy dump to S3"
-aws s3 cp /dumps/osh_prod_large_anonimized.dump s3://oshub-dumps-anonymized/osh_prod_large_anon.dump
+aws s3 cp /dumps/osh_prod_large_anonymized.dump s3://oshub-dumps-anonymized/osh_prod_large_anon.dump
 
 echo "Delete temporary database instance"
 aws rds delete-db-instance \

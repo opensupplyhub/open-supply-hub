@@ -32,7 +32,9 @@ const SearchByOsIdTab = ({ classes }) => {
 
     const handleSearch = () => {
         history.push(
-            `/contribute/production-location/search/?os_id=${inputOsId}`,
+            `/contribute/single-location/search/id/${encodeURIComponent(
+                inputOsId,
+            )}`,
         );
     };
 

@@ -17,7 +17,7 @@ class SizeValidator(OpenSearchValidationInterface):
             if size <= 0 or size > size_limit:
                 errors.append({
                     "field": "size",
-                    "message": (
+                    "detail": (
                         f"Size must be a positive integer less than or equal "
                         f"to {size_limit}."
                     )
@@ -25,7 +25,7 @@ class SizeValidator(OpenSearchValidationInterface):
         except ValueError:
             errors.append({
                 "field": "size",
-                "message": "Size must be a valid integer."
+                "detail": "Size must be a valid integer."
             })
 
         return errors

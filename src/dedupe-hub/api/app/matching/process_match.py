@@ -5,7 +5,6 @@ from typing import List
 from app.matching.DTOs.facility_list_item_dto import FacilityListItemDict
 from app.matching.DTOs.facility_match_dto import FacilityMatchDTO
 
-# initialize logger
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 log = logging.getLogger(__name__)

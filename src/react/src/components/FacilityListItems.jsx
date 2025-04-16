@@ -18,6 +18,7 @@ import FacilityListItemsEmpty from './FacilityListItemsEmpty';
 import FacilityListItemsTable from './FacilityListItemsTable';
 import FacilityListControls from './FacilityListControls';
 import ListUploadErrors from './ListUploadErrors';
+import RequireAuthNotice from './RequireAuthNotice';
 
 import {
     createPaginationOptionsFromQueryString,
@@ -37,7 +38,6 @@ import {
     listsRoute,
     facilityListItemsRoute,
     facilityListItemStatusChoicesEnum,
-    authLoginFormRoute,
     dashboardListsRoute,
     matchResponsibilityEnum,
 } from '../util/constants';
@@ -122,7 +122,7 @@ const refreshListModalStyles = Object.freeze({
 const FacilityListItems = ({
     list,
     fetchingList,
-    error,
+    errors,
     downloadingCSV,
     downloadCSV,
     csvDownloadingError,
@@ -136,6 +136,7 @@ const FacilityListItems = ({
     isListOwner,
     listParsingErrorsExist,
 }) => {
+    const TITLE = 'Unable to retrieve that list';
     const history = useHistory();
 
     useEffect(() => {
@@ -152,21 +153,20 @@ const FacilityListItems = ({
         );
     }
 
-    if (error && error.length) {
-        if (!userHasSignedIn) {
-            return (
-                <AppGrid title="Unable to retrieve that list">
-                    <Link to={authLoginFormRoute}>
-                        Sign in to view your Open Supply Hub lists
-                    </Link>
-                </AppGrid>
-            );
-        }
-
+    if (!userHasSignedIn) {
         return (
-            <AppGrid title="Unable to retrieve that list">
+            <RequireAuthNotice
+                title={TITLE}
+                text="Sign in to view your Open Supply Hub lists"
+            />
+        );
+    }
+
+    if (errors?.length) {
+        return (
+            <AppGrid title={TITLE}>
                 <ul>
-                    {error.map(err => (
+                    {errors.map(err => (
                         <li key={err}>{err}</li>
                     ))}
                 </ul>
@@ -226,6 +226,8 @@ const FacilityListItems = ({
     const backRoute = isAdminUser
         ? `${dashboardListsRoute}${adminSearch || ''}`
         : listsRoute;
+
+    const handleGoToMainPage = () => history.push(mainRoute);
 
     const listHeader = (
         <>
@@ -312,7 +314,7 @@ const FacilityListItems = ({
                 <Button
                     variant="outlined"
                     color="secondary"
-                    onClick={() => history.push(mainRoute)}
+                    onClick={handleGoToMainPage}
                 >
                     Go to the main page
                 </Button>
@@ -371,7 +373,7 @@ const FacilityListItems = ({
 
 FacilityListItems.defaultProps = {
     list: null,
-    error: null,
+    errors: null,
     csvDownloadingError: null,
     adminSearch: null,
     isAdminUser: false,
@@ -380,7 +382,7 @@ FacilityListItems.defaultProps = {
 FacilityListItems.propTypes = {
     list: facilityListPropType,
     fetchingList: bool.isRequired,
-    error: arrayOf(string),
+    errors: arrayOf(string),
     fetchList: func.isRequired,
     fetchListItems: func.isRequired,
     clearListItems: func.isRequired,
@@ -434,7 +436,7 @@ const mapStateToProps = ({
     return {
         list,
         fetchingList,
-        error: listError || itemsError,
+        errors: listError || itemsError,
         downloadingCSV,
         csvDownloadingError,
         userHasSignedIn: !user.isAnon,

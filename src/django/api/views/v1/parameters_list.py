@@ -31,3 +31,7 @@ class V1_PARAMETERS_LIST:
     MODERATION_ID = 'moderation_id'
     DATE_GTE = 'date_gte'
     DATE_LT = 'date_lt'
+    AGGREGATION = 'aggregation'
+    GEOHEX_GRID_PRECISION = 'geohex_grid_precision'
+    GEO_BOUNDING_BOX = 'geo_bounding_box'
+    GEO_POLYGON = 'geo_polygon'

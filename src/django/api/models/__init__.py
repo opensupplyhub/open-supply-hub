@@ -61,7 +61,7 @@ from .extended_field import (
   ExtendedField,
   HistoricalExtendedField
 )
-from .nonstandart_field import NonstandardField
+from .nonstandard_field import NonstandardField
 from .product_type import ProductType
 from .production_type import ProductionType
 from .request_log import RequestLog

@@ -192,8 +192,8 @@ class NumberOfWorkersRanges:
     }]
 
 
-class ErrorMessages:
-    GEOCODED_NO_RESULTS = "The address you submitted can not be geocoded."
+class APIErrorMessages:
+    GEOCODED_NO_RESULTS = 'The address you submitted can not be geocoded.'
     MAINTENANCE_MODE = ('Open Supply Hub is undergoing maintenance and '
                         'not accepting new data at the moment. Please '
                         'try again in a few minutes.')
@@ -201,3 +201,70 @@ class ErrorMessages:
 
 class FacilitiesDownloadSettings:
     DEFAULT_LIMIT = 10000
+
+
+class FacilitiesListSettings:
+    DEFAULT_PAGE_LIMIT = 100
+
+
+class CoordinateLimits:
+    LAT_MIN = -90
+    LAT_MAX = 90
+    LNG_MIN = -180
+    LNG_MAX = 180
+
+
+# API v1
+class APIV1CommonErrorMessages:
+    COMMON_REQ_BODY_ERROR = 'The request body is invalid.'
+    COMMON_INTERNAL_ERROR = (
+        'An unexpected error occurred while processing the request.'
+    )
+    COMMON_REQ_QUERY_ERROR = 'The request query is invalid.'
+    COMMON_REQ_PARAMETER_ERROR = 'The request parameter is invalid.'
+    MAINTENANCE_MODE = (
+        'Open Supply Hub is undergoing maintenance and not accepting new data '
+        'at the moment. Please try again in a few minutes.'
+    )
+    LOCATION_NOT_FOUND = 'The location with the given id was not found.'
+    LOCATION_ID_NOT_VALID = 'The value must be a valid id.'
+
+
+class APIV1LocationContributionErrorMessages:
+    GEOCODED_NO_RESULTS = (
+        'A valid address could not be found for the provided country and '
+        'address. This may be due to incorrect, incomplete, or ambiguous '
+        'information. Please verify and try again.'
+    )
+
+    @staticmethod
+    def invalid_data_type_error(data_type: str) -> str:
+        return ('Invalid data. Expected a dictionary (object), '
+                f'but got {data_type}.')
+
+
+class APIV1ModerationEventErrorMessages:
+    EVENT_NOT_FOUND = 'Moderation event not found.'
+    EVENT_NOT_PENDING = 'The moderation event should be in PENDING status.'
+    INVALID_UUID_FORMAT = 'Invalid UUID format.'
+
+
+# If the error isn’t field-specific, the non_field_errors key will be used
+# for issues spanning multiple fields or related to the overall data
+# object.
+NON_FIELD_ERRORS_KEY = 'non_field_errors'
+
+
+class APIV1LocationContributionKeys:
+    LNG = 'lng'
+    LAT = 'lat'
+
+
+class APIV1MatchTypes:
+    NEW_PRODUCTION_LOCATION = 'moderation_event_new_production_location'
+    CONFIRMED_MATCH = 'moderation_event_confirmed_match'
+
+
+LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX = (
+    '[API V1 Location Contribution Approval]'
+)

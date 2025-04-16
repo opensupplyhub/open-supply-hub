@@ -37,6 +37,14 @@ class ContributorsListAPIEndpointTest(TestCase):
         self.contrib_six_name = "contributor with one good and one error item"
         self.contrib_seven_name = "contributor with create=False API source"
 
+        self.contrib_one_type = "Brand / Retailer"
+        self.contrib_two_type = "Multi-Stakeholder Initiative"
+        self.contrib_three_type = "Union"
+        self.contrib_four_type = "Brand / Retailer"
+        self.contrib_five_type = "Multi-Stakeholder Initiative"
+        self.contrib_six_type = "Test"
+        self.contrib_seven_type = "Union"
+
         self.country_code = "US"
         self.list_one_name = "one"
         self.list_one_b_name = "one-b"
@@ -57,43 +65,44 @@ class ContributorsListAPIEndpointTest(TestCase):
         self.contrib_one = Contributor.objects.create(
             admin=self.user_one,
             name=self.contrib_one_name,
-            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+            contrib_type=self.contrib_one_type,
         )
 
         self.contrib_two = Contributor.objects.create(
             admin=self.user_two,
             name=self.contrib_two_name,
-            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+            contrib_type=self.contrib_two_type,
         )
 
         self.contrib_three = Contributor.objects.create(
             admin=self.user_three,
             name=self.contrib_three_name,
-            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+            contrib_type=self.contrib_three_type,
         )
 
         self.contrib_four = Contributor.objects.create(
             admin=self.user_four,
             name=self.contrib_four_name,
-            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+            contrib_type=self.contrib_four_type,
         )
 
         self.contrib_five = Contributor.objects.create(
             admin=self.user_five,
             name=self.contrib_five_name,
-            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+            contrib_type=self.contrib_five_type,
         )
 
         self.contrib_six = Contributor.objects.create(
             admin=self.user_six,
             name=self.contrib_six_name,
             contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+            other_contrib_type=self.contrib_six_type,
         )
 
         self.contrib_seven = Contributor.objects.create(
             admin=self.user_seven,
             name=self.contrib_seven_name,
-            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+            contrib_type=self.contrib_seven_type,
         )
 
         self.list_one = FacilityList.objects.create(
@@ -216,10 +225,16 @@ class ContributorsListAPIEndpointTest(TestCase):
         response = self.client.get("/api/contributors/")
         response_data = response.json()
         contributor_names = list(zip(*response_data))[1]
+        contributor_types = list(zip(*response_data))[2]
 
         self.assertIn(
             self.contrib_one_name,
             contributor_names,
+        )
+
+        self.assertIn(
+            self.contrib_one_type,
+            contributor_types,
         )
 
         self.assertNotIn(
@@ -245,6 +260,11 @@ class ContributorsListAPIEndpointTest(TestCase):
         self.assertIn(
             self.contrib_six_name,
             contributor_names,
+        )
+
+        self.assertIn(
+            self.contrib_six_type,
+            contributor_types,
         )
 
         self.assertEqual(

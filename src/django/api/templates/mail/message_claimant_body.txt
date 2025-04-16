@@ -1,5 +1,5 @@
 {% block content %}
-Hi,
+Hello,
 
 You're receiving this email because you were listed as the contact for a facility claim request on Open Supply Hub.
 
@@ -16,7 +16,7 @@ Action Items:
 
 Please reply to this message with the requested items. From there, we can process this straight away. We'll review the materials and get in touch if we need any additional information.
 
-Best wishes,
+Best Regards,
 
 {% include "mail/claims_team_signature_block.html" %}
 {% endblock content %}

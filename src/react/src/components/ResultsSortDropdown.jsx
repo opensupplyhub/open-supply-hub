@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { string, func, shape, oneOfType, node } from 'prop-types';
 import { withRouter } from 'react-router';
 import { connect } from 'react-redux';
 
@@ -6,7 +7,10 @@ import ReactSelect from 'react-select';
 import { Grid, withStyles } from '@material-ui/core';
 import InputLabel from '@material-ui/core/InputLabel';
 
-import { optionsForSortingResults } from '../util/constants';
+import {
+    optionsForSortingResults,
+    DEFAULT_SORT_OPTION_INDEX,
+} from '../util/constants';
 import { updateSortAlgorithm } from '../actions/filters';
 import { fetchFacilities } from '../actions/facilities';
 
@@ -50,50 +54,70 @@ const resultsSortDropdownStyles = theme =>
         },
     });
 
-const ResultsSortDropdown = ({ classes, sortAlgorithm, updateSort }) => (
-    <Grid container>
-        <Grid item>
-            <InputLabel
-                shrink={false}
-                htmlFor="sort-select"
-                className={classes.selectLabel}
-            >
-                Sort By:
-            </InputLabel>
-        </Grid>
-        <Grid item className={classes.selectWrapper}>
-            <ReactSelect
-                id="sort-select"
-                name="sort-select"
-                className={`notranslate ${classes.select}`}
-                classNamePrefix="select"
-                styles={selectStyles}
-                components={{
-                    IndicatorSeparator: null,
-                }}
-                isSearchable={false}
-                value={sortAlgorithm}
-                options={optionsForSortingResults}
-                onChange={updateSort}
-            />
-        </Grid>
-    </Grid>
-);
+const ResultsSortDropdown = ({ classes, sortAlgorithm, updateSort }) => {
+    useEffect(() => {
+        if (!sortAlgorithm) {
+            updateSort(optionsForSortingResults[DEFAULT_SORT_OPTION_INDEX]);
+        }
+    }, [sortAlgorithm, updateSort]);
 
-function mapStateToProps({ filters: { sortAlgorithm } }) {
-    return {
-        sortAlgorithm,
-    };
-}
+    return (
+        <Grid container>
+            <Grid item>
+                <InputLabel
+                    shrink={false}
+                    htmlFor="sort-select"
+                    className={classes.selectLabel}
+                >
+                    Sort By:
+                </InputLabel>
+            </Grid>
+            <Grid item className={classes.selectWrapper}>
+                <ReactSelect
+                    id="sort-select"
+                    name="sort-select"
+                    className={`notranslate ${classes.select}`}
+                    classNamePrefix="select"
+                    styles={selectStyles}
+                    components={{
+                        IndicatorSeparator: null,
+                    }}
+                    isSearchable={false}
+                    value={sortAlgorithm}
+                    options={optionsForSortingResults}
+                    onChange={updateSort}
+                />
+            </Grid>
+        </Grid>
+    );
+};
 
-function mapDispatchToProps(dispatch, { history: { push } }) {
-    return {
-        updateSort: v => {
-            dispatch(updateSortAlgorithm(v));
-            dispatch(fetchFacilities({ pushNewRoute: push }));
-        },
-    };
-}
+ResultsSortDropdown.propTypes = {
+    classes: shape({
+        selectLabel: string.isRequired,
+        selectWrapper: string.isRequired,
+        select: string.isRequired,
+    }).isRequired,
+    sortAlgorithm: oneOfType([
+        shape({
+            value: string.isRequired,
+            label: oneOfType([node, string]).isRequired,
+        }).isRequired,
+        string,
+    ]).isRequired,
+    updateSort: func.isRequired,
+};
+
+const mapStateToProps = ({ filters }) => ({
+    sortAlgorithm: filters.sortAlgorithm,
+});
+
+const mapDispatchToProps = (dispatch, { history: { push } }) => ({
+    updateSort: v => {
+        dispatch(updateSortAlgorithm(v));
+        dispatch(fetchFacilities({ pushNewRoute: push }));
+    },
+});
 
 export default withRouter(
     connect(
