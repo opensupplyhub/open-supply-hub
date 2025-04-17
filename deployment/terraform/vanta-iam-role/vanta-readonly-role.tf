@@ -22,12 +22,12 @@ data "aws_iam_policy_document" "assume_role" {
     effect  = "Allow"
     actions = ["sts:AssumeRole"]
     principals {
-      identifiers = ["arn:aws:iam::956993596390:role/scanner"]
-      type = "AWS"
+      identifiers = var.vanta_assumed_role_principals
+      type        = "AWS"
     }
     condition {
-      test = "StringEquals"
-      values = ["6B0581B993278C8"]
+      test     = "StringEquals"
+      values   = var.vanta_assumed_role_external_ids
       variable = "sts:ExternalId"
     }
   }
