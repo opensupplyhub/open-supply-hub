@@ -700,11 +700,13 @@ variable "google_drive_shared_directory_id" {
 }
 
 variable "vanta_assumed_role_external_ids" {
-  type    = list
-  default = []
+  type      = list
+  default   = []
+  sensitive = true
 }
 
 variable "vanta_assumed_role_principals" {
-  type    = list
-  default = []
+  type      = list
+  default   = []
+  sensitive = true
 }
