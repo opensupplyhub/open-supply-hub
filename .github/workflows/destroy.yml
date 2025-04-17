@@ -36,40 +36,40 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: "eu-west-1"
 
-  destroy_lambda_edge_functions:
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env }}
-    needs: clean_ecr_repositories
-    steps:
-      - name: Get Environment Name for ${{ vars.ENV_NAME }}
-        id: get_env_name
-        uses: Entepotenz/change-string-case-action-min-dependencies@v1
-        with:
-          string: ${{ vars.ENV_NAME }}
+  # destroy_lambda_edge_functions:
+  #   runs-on: ubuntu-latest
+  #   environment: ${{ inputs.deploy-env }}
+  #   needs: clean_ecr_repositories
+  #   steps:
+  #     - name: Get Environment Name for ${{ vars.ENV_NAME }}
+  #       id: get_env_name
+  #       uses: Entepotenz/change-string-case-action-min-dependencies@v1
+  #       with:
+  #         string: ${{ vars.ENV_NAME }}
 
-      - name: Checkout repo
-        uses: actions/checkout@v4
+  #     - name: Checkout repo
+  #       uses: actions/checkout@v4
 
-      - name: Delete Lambda@Edge function RedirectToS3origin for ${{ vars.ENV_NAME }}
-        run: |
-          ./deployment/delete_lambda ${{ vars.ENV_NAME }} ${{ vars.CLOUDFRONT_DOMAIN }} RedirectToS3origin
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "us-east-1"
+  #     - name: Delete Lambda@Edge function RedirectToS3origin for ${{ vars.ENV_NAME }}
+  #       run: |
+  #         ./deployment/delete_lambda ${{ vars.ENV_NAME }} ${{ vars.CLOUDFRONT_DOMAIN }} RedirectToS3origin
+  #       env:
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         AWS_DEFAULT_REGION: "us-east-1"
 
-      - name: Delete Lambda@Edge function AddSecurityHeaders for ${{ vars.ENV_NAME }}
-        run: |
-          ./deployment/delete_lambda ${{ vars.ENV_NAME }} ${{ vars.CLOUDFRONT_DOMAIN }} AddSecurityHeaders
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "us-east-1"
+  #     - name: Delete Lambda@Edge function AddSecurityHeaders for ${{ vars.ENV_NAME }}
+  #       run: |
+  #         ./deployment/delete_lambda ${{ vars.ENV_NAME }} ${{ vars.CLOUDFRONT_DOMAIN }} AddSecurityHeaders
+  #       env:
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         AWS_DEFAULT_REGION: "us-east-1"
 
   destroy:
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env }}
-    needs: destroy_lambda_edge_functions
+    needs: clean_ecr_repositories
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
