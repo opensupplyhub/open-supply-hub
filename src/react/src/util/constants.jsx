@@ -1073,7 +1073,28 @@ export const EXTENDED_FIELD_TYPES = [
         fieldName: 'native_language_name',
         formatValue: v => v,
     },
+    {
+        label: 'DUNS ID',
+        fieldName: 'duns_id',
+        formatValue: ({ id }) => id,
+    },
+    {
+        label: 'LEI ID',
+        fieldName: 'lei_id',
+        formatValue: ({ id }) => id,
+    },
+    {
+        label: 'RBA ID',
+        fieldName: 'rba_id',
+        formatValue: ({ id }) => id,
+    },
 ];
+
+export const RBA_EXTENDED_FIELDS = Object.freeze([
+    'duns_id',
+    'lei_id',
+    'rba_id',
+]);
 
 export const SILVER_MAP_STYLE = [
     {

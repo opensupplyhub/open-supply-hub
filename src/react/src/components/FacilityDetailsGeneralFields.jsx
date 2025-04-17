@@ -13,6 +13,7 @@ import { formatAttribution } from '../util/util';
 
 import {
     EXTENDED_FIELD_TYPES,
+    RBA_EXTENDED_FIELDS,
     CLAIM_A_FACILITY,
     REPORT_A_FACILITY,
 } from '../util/constants';
@@ -184,9 +185,21 @@ const FacilityDetailsLocationFields = ({
                             />
                         </Grid>
                     )}
-                    {embed
-                        ? renderEmbedFields()
-                        : EXTENDED_FIELD_TYPES.map(renderExtendedField)}
+                    {embed ? (
+                        renderEmbedFields()
+                    ) : (
+                        <FeatureFlag
+                            flag="rba_instance"
+                            alternative={EXTENDED_FIELD_TYPES.filter(
+                                field =>
+                                    !RBA_EXTENDED_FIELDS.includes(
+                                        field.fieldName,
+                                    ),
+                            ).map(renderExtendedField)}
+                        >
+                            {EXTENDED_FIELD_TYPES.map(renderExtendedField)}
+                        </FeatureFlag>
+                    )}
                     <FeatureFlag flag={REPORT_A_FACILITY}>
                         <ShowOnly when={!!activityReport}>
                             <FacilityDetailsItem
