@@ -3,11 +3,11 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
-## Release 2.2.0
+## Release 2.3.0
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: April 19, 2025
+* Release date: May 3, 2025
 
 ### Database changes
 * *Describe high-level database changes.*
@@ -17,6 +17,28 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Schema changes
 * *Describe schema changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* [OSDEV-1935](https://opensupplyhub.atlassian.net/browse/OSDEV-1935) - Added terraform module for creating IAM roles in production and test AWS accounts to enable integration with Vanta auditor.
+
+### Bugfix
+* [OSDEV-1943](https://opensupplyhub.atlassian.net/browse/OSDEV-1943) - Fixed flickering behavior when opening the SLC form to contribute to an existing production location by marking fields as touched if they match the fetched data, ensuring smoother UI during re-renders.
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* *Provide release instructions here.*
+
+
+## Release 2.2.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 19, 2025
 
 ### Code/API changes
 * [OSDEV-1894](https://opensupplyhub.atlassian.net/browse/OSDEV-1894) - Enabled `Secure` attribute of csrf token and session id.
@@ -30,6 +52,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-1893](https://opensupplyhub.atlassian.net/browse/OSDEV-1893) - Prevented sending a claim request to `/api/facilities/{os_id}/claim/` for facilities that are pending or approved. Added BE validators to handle incoming claim data.
+* [OSDEV-1933](https://opensupplyhub.atlassian.net/browse/OSDEV-1933) - Fixed typo errors in the resource names of the OpenSupplyHubTest-AnonymizedDatabaseDump cluster.
 
 ### What's new
 * [OSDEV-1706](https://opensupplyhub.atlassian.net/browse/OSDEV-1706) - Implemented backend error handling for SLC form submission and created the UI to display post-submit errors in a user-friendly way. Aligned SLC form validation with backend rules to ensure maximum consistency.
