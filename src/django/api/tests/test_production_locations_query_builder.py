@@ -23,18 +23,28 @@ class TestProductionLocationsQueryBuilder(TestCase):
         self.assertIn(
             expected,
             self.builder.query_body['query']['bool']['must']
-            )
+        )
 
     def test_add_match_phrase(self):
         self.builder.add_match_phrase(
             'address',
-            'Land plot number 115, map sheet number 03, Cadastral map of Son Ha commune, Son Ha commune, Nho Quan district, Ninh Binh province, Vietnam',
+            (
+                'Land plot number 115, map sheet number 03'
+                ', Cadastral map of '
+                'Son Ha commune, Son Ha commune, Nho Quan district, '
+                'Ninh Binh province, Vietnam'
+            ),
             slop=4
         )
         expected = {
             "match_phrase": {
-            "address": {
-                    "query": "Land plot number 115, map sheet number 03, Cadastral map of Son Ha commune, Son Ha commune, Nho Quan district, Ninh Binh province, Vietnam",
+                "address": {
+                    "query": (
+                        'Land plot number 115, map sheet number 03'
+                        ', Cadastral map of '
+                        'Son Ha commune, Son Ha commune, Nho Quan district, '
+                        'Ninh Binh province, Vietnam'
+                    ),
                     "slop": 4
                 }
             }
@@ -42,7 +52,7 @@ class TestProductionLocationsQueryBuilder(TestCase):
         self.assertIn(
             expected,
             self.builder.query_body['query']['bool']['must']
-            )
+        )
 
     def test_add_terms_for_standard_field(self):
         self.builder.add_terms('country', ['US', 'CA'])
@@ -145,7 +155,7 @@ class TestProductionLocationsQueryBuilder(TestCase):
         self.assertIn(
             expected,
             self.builder.query_body['query']['bool']['must']
-            )
+        )
 
     def test_add_range_for_percent_female_workers(self):
         self.builder.add_range(
@@ -165,7 +175,7 @@ class TestProductionLocationsQueryBuilder(TestCase):
         self.assertIn(
             expected,
             self.builder.query_body['query']['bool']['must']
-            )
+        )
 
     def test_add_geo_distance(self):
         self.builder.add_geo_distance('location', 40.7128, -74.0060, '10km')
@@ -178,7 +188,7 @@ class TestProductionLocationsQueryBuilder(TestCase):
         self.assertIn(
             expected,
             self.builder.query_body['query']['bool']['must']
-            )
+        )
 
     def test_add_sort(self):
         self.builder.add_sort('name', 'desc')
