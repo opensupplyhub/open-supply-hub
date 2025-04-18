@@ -16,20 +16,20 @@ bastion_instance_type = "t3.nano"
 rds_allocated_storage = "256"
 rds_engine_version = "16"
 rds_parameter_group_family = "postgres16"
-rds_instance_type = "db.m6in.4xlarge"
+rds_instance_type = "db.t3.micro"
 rds_database_identifier = "opensupplyhub-enc-pp"
 rds_database_name = "opensupplyhub"
 rds_multi_az = false
 rds_storage_encrypted = true
 
-app_ecs_desired_count = "10"
+app_ecs_desired_count = "1"
 app_ecs_deployment_min_percent = "100"
 app_ecs_deployment_max_percent = "400"
-app_fargate_cpu = "2048"
-app_fargate_memory = "4096"
+app_fargate_cpu = "512"
+app_fargate_memory = "1024"
 
-cli_fargate_cpu = "2048"
-cli_fargate_memory = "8192"
+cli_fargate_cpu = "256"
+cli_fargate_memory = "124"
 
 gunicorn_worker_timeout = "240"
 
@@ -51,11 +51,11 @@ dedupe_hub_live = true
 dedupe_hub_name = "deduplicate"
 dedupe_hub_version = 1
 app_cc_ecs_desired_count = 0
-app_dd_fargate_cpu = 4096
-app_dd_fargate_memory = 16384
+app_dd_fargate_cpu = 2048
+app_dd_fargate_memory = 4096
 app_dd_ecs_desired_count = 1
 
-opensearch_instance_type = "m6g.large.search"
+opensearch_instance_type = "t3.small.search"
 
 app_logstash_fargate_cpu = 256
 app_logstash_fargate_memory = 2048
