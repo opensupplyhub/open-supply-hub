@@ -373,6 +373,144 @@ SELECT
         )
       )
   ) AS number_of_workers_value,
+  (
+    SELECT
+      COALESCE(
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+          WHERE
+            ae.field_name = 'rba_id'
+            AND ae.facility_claim_id = afc.id
+        ),
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+            LEFT JOIN api_facilitylistitem afli ON afli.id = af.created_from_id
+          WHERE
+            ae.field_name = 'rba_id'
+            AND ae.facility_list_item_id = af.created_from_id
+            AND EXISTS (
+              SELECT
+                1
+              FROM
+                jsonb_array_elements(afli.processing_results) AS elem
+              WHERE
+                elem ->> 'action' = 'promote_match'
+            )
+        ),
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+          WHERE
+            ae.facility_id = af.id
+            AND ae.facility_claim_id IS NULL
+            AND ae.field_name = 'rba_id'
+          ORDER BY
+            created_at DESC
+          LIMIT
+            1
+        )
+      )
+  ) AS rba_id_value,
+  (
+    SELECT
+      COALESCE(
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+          WHERE
+            ae.field_name = 'duns_id'
+            AND ae.facility_claim_id = afc.id
+        ),
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+            LEFT JOIN api_facilitylistitem afli ON afli.id = af.created_from_id
+          WHERE
+            ae.field_name = 'duns_id'
+            AND ae.facility_list_item_id = af.created_from_id
+            AND EXISTS (
+              SELECT
+                1
+              FROM
+                jsonb_array_elements(afli.processing_results) AS elem
+              WHERE
+                elem ->> 'action' = 'promote_match'
+            )
+        ),
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+          WHERE
+            ae.facility_id = af.id
+            AND ae.facility_claim_id IS NULL
+            AND ae.field_name = 'duns_id'
+          ORDER BY
+            created_at DESC
+          LIMIT
+            1
+        )
+      )
+  ) AS duns_id_value,
+  (
+    SELECT
+      COALESCE(
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+          WHERE
+            ae.field_name = 'lei_id'
+            AND ae.facility_claim_id = afc.id
+        ),
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+            LEFT JOIN api_facilitylistitem afli ON afli.id = af.created_from_id
+          WHERE
+            ae.field_name = 'lei_id'
+            AND ae.facility_list_item_id = af.created_from_id
+            AND EXISTS (
+              SELECT
+                1
+              FROM
+                jsonb_array_elements(afli.processing_results) AS elem
+              WHERE
+                elem ->> 'action' = 'promote_match'
+            )
+        ),
+        (
+          SELECT
+            ae.value::TEXT
+          FROM
+            api_extendedfield ae
+          WHERE
+            ae.facility_id = af.id
+            AND ae.facility_claim_id IS NULL
+            AND ae.field_name = 'lei_id'
+          ORDER BY
+            created_at DESC
+          LIMIT
+            1
+        )
+      )
+  ) AS lei_id_value,
   ST_Y (
     COALESCE(
       afc.facility_location,

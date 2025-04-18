@@ -18,6 +18,12 @@ class ExtendedField(models.Model):
     PARENT_COMPANY = 'parent_company'
     FACILITY_TYPE = 'facility_type'
     PROCESSING_TYPE = 'processing_type'
+    ADDITIONAL_IDENTIFIERS = 'additional_identifiers'
+    RBA_ID = 'rba_id'
+    DUNS_ID ='duns_id'
+    LEI_ID = 'lei_id'
+
+
 
     FIELD_CHOICES = (
         (NAME, NAME),
@@ -27,7 +33,11 @@ class ExtendedField(models.Model):
         (FACILITY_TYPE, FACILITY_TYPE),
         (PROCESSING_TYPE, PROCESSING_TYPE),
         (PRODUCT_TYPE, PRODUCT_TYPE),
-        (PARENT_COMPANY, PARENT_COMPANY))
+        (PARENT_COMPANY, PARENT_COMPANY),
+        (ADDITIONAL_IDENTIFIERS,ADDITIONAL_IDENTIFIERS),
+        (RBA_ID,RBA_ID),
+        (DUNS_ID,DUNS_ID),
+        (LEI_ID ,LEI_ID))
 
     contributor = models.ForeignKey(
         'Contributor',

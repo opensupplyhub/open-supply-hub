@@ -194,6 +194,19 @@
               "type": "keyword"
             }
           }
+        },
+        "additional_identifiers": {
+          "properties": {
+            "rba_id": {
+              "type": "keyword"
+            },
+            "duns_id": {
+              "type": "keyword"
+            },
+            "lei_id": {
+              "type": "keyword"
+            }
+          }
         }
       }
     }
