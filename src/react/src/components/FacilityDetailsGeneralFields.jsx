@@ -13,9 +13,10 @@ import { formatAttribution } from '../util/util';
 
 import {
     EXTENDED_FIELD_TYPES,
-    RBA_EXTENDED_FIELDS,
+    ADDITIONAL_IDENTIFIERS,
     CLAIM_A_FACILITY,
     REPORT_A_FACILITY,
+    SHOW_ADDITIONAL_IDENTIFIERS,
 } from '../util/constants';
 
 const locationFieldsStyles = theme =>
@@ -163,6 +164,23 @@ const FacilityDetailsLocationFields = ({
         [data],
     );
 
+    const renderExtendedFields = () => {
+        const extendedFieldsWithoutAdditionalIdentifiers = EXTENDED_FIELD_TYPES.filter(
+            field => !ADDITIONAL_IDENTIFIERS.includes(field.fieldName),
+        );
+
+        return (
+            <FeatureFlag
+                flag={SHOW_ADDITIONAL_IDENTIFIERS}
+                alternative={extendedFieldsWithoutAdditionalIdentifiers.map(
+                    renderExtendedField,
+                )}
+            >
+                {EXTENDED_FIELD_TYPES.map(renderExtendedField)}
+            </FeatureFlag>
+        );
+    };
+
     return (
         <div className={classes.root}>
             <div className={classes.contentContainer}>
@@ -185,21 +203,7 @@ const FacilityDetailsLocationFields = ({
                             />
                         </Grid>
                     )}
-                    {embed ? (
-                        renderEmbedFields()
-                    ) : (
-                        <FeatureFlag
-                            flag="rba_instance"
-                            alternative={EXTENDED_FIELD_TYPES.filter(
-                                field =>
-                                    !RBA_EXTENDED_FIELDS.includes(
-                                        field.fieldName,
-                                    ),
-                            ).map(renderExtendedField)}
-                        >
-                            {EXTENDED_FIELD_TYPES.map(renderExtendedField)}
-                        </FeatureFlag>
-                    )}
+                    {embed ? renderEmbedFields() : renderExtendedFields()}
                     <FeatureFlag flag={REPORT_A_FACILITY}>
                         <ShowOnly when={!!activityReport}>
                             <FacilityDetailsItem
