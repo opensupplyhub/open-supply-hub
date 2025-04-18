@@ -35,3 +35,4 @@ class V1_PARAMETERS_LIST:
     GEOHEX_GRID_PRECISION = 'geohex_grid_precision'
     GEO_BOUNDING_BOX = 'geo_bounding_box'
     GEO_POLYGON = 'geo_polygon'
+    ADDITIONAL_IDENTIFIERS = 'additional-identifiers'

@@ -2,6 +2,8 @@ from api.serializers.v1.coordinates_serializer \
   import CoordinatesSerializer
 from api.serializers.v1.number_of_workers_serializer \
   import NumberOfWorkersSerializer
+from api.serializers.v1.additional_identifiers_serializer \
+  import AdditionalIdentifiersSerializer
 from api.serializers.v1.string_or_list_field import StringOrListField
 from rest_framework import serializers
 
@@ -52,6 +54,10 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
             'required': 'The lat and lng fields are required!',
             'invalid': 'Field coordinates must be a valid geopoint.'
         },
+    )
+    additional_identifiers = AdditionalIdentifiersSerializer(
+        required=False,
+        error_messages={},
     )
 
     def _validate_string_field(self, data, field_name):

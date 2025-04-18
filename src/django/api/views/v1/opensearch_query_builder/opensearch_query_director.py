@@ -30,6 +30,7 @@ class OpenSearchQueryDirector:
             V1_PARAMETERS_LIST.MODERATION_ID: 'terms',
             V1_PARAMETERS_LIST.DATE_GTE: 'range',
             V1_PARAMETERS_LIST.DATE_LT: 'range',
+            V1_PARAMETERS_LIST.ADDITIONAL_IDENTIFIERS: 'terms',
         }
 
     def build_query(self, query_params):

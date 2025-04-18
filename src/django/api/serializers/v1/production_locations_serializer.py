@@ -68,6 +68,10 @@ class ProductionLocationsSerializer(Serializer):
         child=CharField(required=False),
         required=False
     )
+    additional_identifiers_rba_id = CharField(required=False)
+    additional_identifiers_duns_id = CharField(required=False)
+    additional_identifiers_lei_id = CharField(required=False)
+
 
     def validate(self, data):
         validators = [
