@@ -22,7 +22,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe code/API changes here.*
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* [OSDEV-1935](https://opensupplyhub.atlassian.net/browse/OSDEV-1935) - Added terraform module for creating IAM roles in production and test AWS accounts to enable integration with Vanta auditor.
 
 ### Bugfix
 * [OSDEV-1914](https://opensupplyhub.atlassian.net/browse/OSDEV-1914) - Fixed an issue with fuzzy search on fields containing long text. Replaced the `match` query with `match_phrase` for such cases to improve accuracy. Replaced regular text with a toast component to display server errors for fetched potential matches.
