@@ -1,4 +1,3 @@
-/* eslint no-unused-vars: 0 */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
@@ -468,6 +467,7 @@ DashboardContributionRecord.propTypes = {
     classes: object.isRequired,
     fetchModerationEventError: string,
     fetchPotentialMatchError: string,
+    handleCleanupContributionRecord: func.isRequired,
 };
 
 const mapStateToProps = ({
