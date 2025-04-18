@@ -199,16 +199,43 @@ const ProductionLocationInfo = ({
                       }
                     : null,
             });
-            contributionForm.setTouched(
-                {
-                    name: true,
-                    address: true,
-                    country: true,
-                },
-                false,
-            );
         }
     }, [singleProductionLocationData, osID]);
+
+    useEffect(() => {
+        if (singleProductionLocationData && osID) {
+            const { name, address, country } = singleProductionLocationData;
+            const {
+                name: formName,
+                address: formAddress,
+                country: formCountry,
+            } = contributionForm.values;
+
+            const isSame =
+                formName === name &&
+                formAddress === address &&
+                formCountry?.value === country?.alpha_2;
+
+            if (isSame) {
+                /*
+                If the current form values match the fetched data, manually
+                mark these fields as touched to ensure UI updates behave
+                correctly and prevent flicker from Formik revalidation on
+                rerenders.
+                */
+                contributionForm.setTouched(
+                    { name: true, address: true, country: true },
+                    false,
+                );
+            }
+        }
+    }, [
+        contributionForm.values.name,
+        contributionForm.values.address,
+        contributionForm.values.country,
+        singleProductionLocationData,
+        osID,
+    ]);
 
     const prevModerationIDRef = useRef();
     useEffect(() => {
