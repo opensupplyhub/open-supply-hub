@@ -93,3 +93,6 @@ venv.bak/
 db.dump
 latest_prod.dump
 dumps
+
+*.~
+*.bak
