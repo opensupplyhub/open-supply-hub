@@ -18,6 +18,7 @@ RUN set -ex \
     gettext \
     postgresql-client-15 \
     git \
+    curl \
     " \
     && apt-get update && apt-get install -y $buildDeps $deps --no-install-recommends \
     && pip install --no-cache-dir -r requirements.txt \
