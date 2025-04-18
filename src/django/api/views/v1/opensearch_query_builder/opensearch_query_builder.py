@@ -21,6 +21,12 @@ class OpenSearchQueryBuilder(ABC):
         }
         self.query_body['query']['bool']['must'].append(match_query)
 
+    def add_match_phrase(self, field, value, slop):
+        match_query = {
+            'match_phrase': {field: {'query': value, 'slop': slop}}
+        }
+        self.query_body['query']['bool']['must'].append(match_query)
+
     def add_range(self, field, query_params):
         if field in {
             V1_PARAMETERS_LIST.NUMBER_OF_WORKERS,

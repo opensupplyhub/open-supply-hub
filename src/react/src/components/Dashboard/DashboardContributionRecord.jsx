@@ -31,6 +31,7 @@ import {
     updateSingleModerationEvent,
     createProductionLocationFromModerationEvent,
     confirmPotentialMatchFromModerationEvent,
+    cleanupContributionRecord,
 } from '../../actions/dashboardContributionRecord';
 import { makeClaimFacilityLink, makeFacilityDetailLink } from '../../util/util';
 import DialogTooltip from './../Contribute/DialogTooltip';
@@ -84,6 +85,7 @@ const DashboardContributionRecord = ({
     fetchMatches,
     moderationEventFetching,
     fetchPotentialMatchError,
+    handleCleanupContributionRecord,
 }) => {
     const prevSingleModerationEventItemRef = useRef();
     const [showBackdrop, setShowBackdrop] = useState(false);
@@ -132,6 +134,12 @@ const DashboardContributionRecord = ({
     }, []);
 
     useEffect(() => {
+        if (fetchPotentialMatchError) {
+            toast(fetchPotentialMatchError);
+        }
+    }, [fetchPotentialMatchError]);
+
+    useEffect(() => {
         if (!isEmpty(singleModerationEventItem) && hasPrefetchedData) {
             if (moderationEventFetching) {
                 setShowBackdrop(true);
@@ -165,6 +173,13 @@ const DashboardContributionRecord = ({
             });
         }
     }, [productionLocationName, countryCode, productionLocationAddress, osId]);
+
+    useEffect(
+        () => () => {
+            handleCleanupContributionRecord();
+        },
+        [],
+    );
 
     const handleRejectContribution = () => {
         setRejectModerationEventDialogIsOpen(true);
@@ -257,9 +272,6 @@ const DashboardContributionRecord = ({
                 Potential Matches ({potentialMatchCount})
             </Typography>
 
-            {fetchPotentialMatchError && (
-                <Typography>{fetchPotentialMatchError}</Typography>
-            )}
             <div className={classes.potentialMatchesBlock}>
                 <Divider className={classes.dividerStyle} />
 
@@ -455,6 +467,7 @@ DashboardContributionRecord.propTypes = {
     classes: object.isRequired,
     fetchModerationEventError: string,
     fetchPotentialMatchError: string,
+    handleCleanupContributionRecord: func.isRequired,
 };
 
 const mapStateToProps = ({
@@ -505,6 +518,8 @@ const mapDispatchToProps = (
     confirmPotentialMatch: osId =>
         dispatch(confirmPotentialMatchFromModerationEvent(moderationID, osId)),
     fetchMatches: data => dispatch(fetchPotentialMatches(data)),
+    handleCleanupContributionRecord: () =>
+        dispatch(cleanupContributionRecord()),
 });
 
 export default connect(
