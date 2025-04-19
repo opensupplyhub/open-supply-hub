@@ -20,6 +20,7 @@ def create_nonstandard_fields(
         'address',
         'lat',
         'lng',
+        'additional_ids',
     ]
     nonstandard_fields = filter(
         lambda f: f.lower() not in standard_fields, new_fields
