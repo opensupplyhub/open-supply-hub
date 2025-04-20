@@ -74,6 +74,7 @@ if DEBUG:
     ALLOWED_HOSTS.append('django')
     ALLOWED_HOSTS.append('app')
     ALLOWED_HOSTS.append('contricleaner')
+    ALLOWED_HOSTS.append('pr-generator-tunnel-93j708ca.devinapps.com')
 
 if not DEBUG and BATCH_MODE == '':
     # Within EC2, the Elastic Load Balancer HTTP health check will use the
