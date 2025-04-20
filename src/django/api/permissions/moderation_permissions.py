@@ -1,4 +1,4 @@
-from api.permissions import IsRegisteredAndConfirmed, IsSuperuser
+from api.permissions import IsSuperuser
 from rest_framework import permissions
 
 
@@ -32,7 +32,4 @@ class IsModeratorOrContributor(permissions.BasePermission):
         if request.user.is_superuser:
             return True
         
-        if obj.contributor and obj.contributor.admin:
-            return request.user == obj.contributor.admin
-        
-        return False
+        return IsModerationEventContributor().has_object_permission(request, view, obj)
