@@ -1,4 +1,3 @@
-from api.permissions import IsSuperuser
 from rest_framework import permissions
 
 
@@ -14,12 +13,20 @@ class IsModerationEventContributor(permissions.BasePermission):
         return False
 
 
-class IsModerator(IsSuperuser):
+class IsModerator(permissions.BasePermission):
     """
     Permission class to check if the user is a moderator.
-    Inherits from IsSuperuser which already checks if the user is a superuser.
     """
     message = 'Only moderators can access this resource.'
+
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
+
+        if not request.user.did_register_and_confirm_email:
+            return False
+
+        return request.user.is_superuser
 
 
 class IsModeratorOrContributor(permissions.BasePermission):
