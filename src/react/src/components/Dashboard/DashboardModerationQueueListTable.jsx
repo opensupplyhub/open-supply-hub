@@ -174,7 +174,8 @@ function DashboardModerationQueueListTable({
                                                 {contributorName}
                                             </TableCell>
                                             <TableCell padding="dense">
-                                                {contributorEmail || EMPTY_PLACEHOLDER}
+                                                {contributorEmail ||
+                                                    EMPTY_PLACEHOLDER}
                                             </TableCell>
                                             <TableCell>{source}</TableCell>
                                             <TableCell
