@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from api.models.contributor.contributor import Contributor
-from api.models.moderation_event import ModerationEvent, ModerationEventStatus
+from api.models.moderation_event import ModerationEvent
 from api.services.opensearch.search import OpenSearchServiceConnection
 from api.views.v1.index_names import OpenSearchIndexNames
 
@@ -43,6 +43,6 @@ class Command(BaseCommand):
 
         for i in range(5):
             event = ModerationEvent.objects.create(
-                contributor=contributor, status=ModerationEventStatus.PENDING)
+                contributor=contributor, status=ModerationEvent.Status.PENDING)
             self.stdout.write(self.style.SUCCESS(
                 f'Created moderation event {event.uuid} for contributor {contributor.admin.email}'))
