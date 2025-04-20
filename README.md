@@ -22,7 +22,7 @@ Open Supply Hub (OS Hub) is a tool to identify every goods production facility w
 
 - [Docker](https://docs.docker.com/desktop/install/mac-install/)
 - [Git](https://git-scm.com/downloads)
-- [Shellcheck](https://www.shellcheck.net)
+- [Shellcheck](https://www.shellcheck.net) (required for running bash script linter)
   - `brew install shellcheck`
 
 
