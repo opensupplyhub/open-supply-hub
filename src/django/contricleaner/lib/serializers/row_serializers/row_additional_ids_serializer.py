@@ -1,20 +1,11 @@
 import re
+from contricleaner.constants import AdditionalIDs
 from contricleaner.lib.serializers.row_serializers.row_serializer import (
     RowSerializer,
 )
 
 
 class RowAdditionalIdsSerializer(RowSerializer):
-    __DUNS_ID = 'duns_id'
-    __LEI_ID = 'lei_id'
-    __RBA_ID = 'rba_id'
-
-    __ALLOWED_KEYS = {
-        __DUNS_ID,
-        __LEI_ID,
-        __RBA_ID,
-    }
-
     __DUNS_RE = re.compile(r'^\d{9}$')
     __LEI_RE = re.compile(r'^[A-Z0-9]{18}[0-9]{2}$')
 
@@ -37,12 +28,12 @@ class RowAdditionalIdsSerializer(RowSerializer):
             return current
 
         for key, value in additional_ids.items():
-            if key not in self.__ALLOWED_KEYS:
+            if key not in AdditionalIDs.ALLOWED_KEYS:
                 current['errors'].append(
                     {
                         'message': f'Unexpected key {key} in additional_ids. '
                         'The allowed keys are: '
-                        f'{", ".join(self.__ALLOWED_KEYS)}.',
+                        f'{", ".join(AdditionalIDs.ALLOWED_KEYS)}.',
                         'field': 'additional_ids',
                         'type': 'KeyError',
                     }
@@ -60,7 +51,9 @@ class RowAdditionalIdsSerializer(RowSerializer):
                 )
                 continue
 
-            if key == self.__DUNS_ID and not self.__is_valid_duns(value):
+            if key == AdditionalIDs.DUNS_ID and not self.__is_valid_duns(
+                value
+            ):
                 current['errors'].append(
                     {
                         'message': f'Invalid `duns_id`: {value}. '
@@ -70,7 +63,9 @@ class RowAdditionalIdsSerializer(RowSerializer):
                     }
                 )
 
-            elif key == self.__LEI_ID and not self.__is_valid_lei(value):
+            elif key == AdditionalIDs.LEI_ID and not self.__is_valid_lei(
+                value
+            ):
                 current['errors'].append(
                     {
                         'message': f'Invalid `lei_id`: {value}. '
@@ -82,7 +77,9 @@ class RowAdditionalIdsSerializer(RowSerializer):
                     }
                 )
 
-            elif key == self.__RBA_ID and not self.__is_valid_rba(value):
+            elif key == AdditionalIDs.RBA_ID and not self.__is_valid_rba(
+                value
+            ):
                 current['errors'].append(
                     {
                         'message': f'Invalid `rba_id`: {value}. '
