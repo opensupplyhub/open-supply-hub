@@ -1365,6 +1365,7 @@ export const MODERATION_QUEUE_HEAD_CELLS = Object.freeze([
     { id: 'name', label: 'Location Name' },
     { id: 'country', label: 'Country' },
     { id: 'contributor_name', label: 'Contributor' },
+    { id: 'contributor_id', label: 'Contributor ID' },
     { id: 'source', label: 'Source Type' },
     { id: 'status', label: 'Moderation Status' },
     { id: 'status_change_date', label: 'Moderation Decision Date' },

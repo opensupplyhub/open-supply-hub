@@ -141,6 +141,7 @@ function DashboardModerationQueueListTable({
                                         created_at: createdAt,
                                         cleaned_data: cleanedData,
                                         contributor_name: contributorName,
+                                        contributor_id: contributorId,
                                         source,
                                         status: moderationStatus,
                                         status_change_date: moderationDecisionDate,
@@ -171,6 +172,9 @@ function DashboardModerationQueueListTable({
                                             </TableCell>
                                             <TableCell>
                                                 {contributorName}
+                                            </TableCell>
+                                            <TableCell padding="dense">
+                                                {contributorId || EMPTY_PLACEHOLDER}
                                             </TableCell>
                                             <TableCell>{source}</TableCell>
                                             <TableCell
