@@ -59,9 +59,9 @@ def moderation_event_update_handler_for_opensearch(
 
     opensearch = OpenSearchServiceConnection()
     
-    contributor_id = None
-    if instance.contributor:
-        contributor_id = instance.contributor.id
+    contributor_email = None
+    if instance.contributor and instance.contributor.admin:
+        contributor_email = instance.contributor.admin.email
     
     try:
         response = opensearch.client.update(
@@ -72,7 +72,7 @@ def moderation_event_update_handler_for_opensearch(
                     "uuid": str(instance.uuid),
                     "status": str(instance.status),
                     "os": instance.os.id if instance.os else None,
-                    "contributor_id": contributor_id
+                    "contributor_email": contributor_email
                 }
             },
         )

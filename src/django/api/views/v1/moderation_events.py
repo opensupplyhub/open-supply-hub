@@ -16,7 +16,8 @@ from api.moderation_event_actions.approval.add_production_location \
     import AddProductionLocation
 from api.moderation_event_actions.approval.update_production_location \
     import UpdateProductionLocation
-from api.permissions import IsRegisteredAndConfirmed, IsSuperuser
+from api.permissions import IsRegisteredAndConfirmed
+from api.permissions.moderation_permissions import IsModerator, IsModeratorOrContributor
 from api.serializers.v1.moderation_event_update_serializer \
     import ModerationEventUpdateSerializer
 from api.serializers.v1.moderation_events_serializer \
@@ -45,9 +46,11 @@ class ModerationEvents(ViewSet):
 
     def get_permissions(self):
         action_permissions = {
-            'partial_update': [IsSuperuser],
-            'add_production_location': [IsSuperuser],
-            'update_production_location': [IsSuperuser],
+            'list': [IsModerator],
+            'retrieve': [IsModeratorOrContributor],
+            'partial_update': [IsModerator],
+            'add_production_location': [IsModerator],
+            'update_production_location': [IsModerator],
         }
 
         permission_classes = action_permissions.get(
