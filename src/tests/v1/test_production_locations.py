@@ -369,8 +369,6 @@ class ProductionLocationsTest(BaseAPITest):
             },
         }
         expected_additional_id = {
-            "rba_id": "",
-            "duns_id": "",
             "lei_id": "529900T8BM49AURSDO55"
         }
         self.open_search_client.index(

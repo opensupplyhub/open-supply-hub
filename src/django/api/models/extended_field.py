@@ -24,7 +24,6 @@ class ExtendedField(models.Model):
     LEI_ID = 'lei_id'
 
 
-
     FIELD_CHOICES = (
         (NAME, NAME),
         (ADDRESS, ADDRESS),

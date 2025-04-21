@@ -70,6 +70,7 @@ def get_product_type_extendedfield_value(field_value):
         'raw_values':  field_value,
     }
 
+
 def get_additional_identifiers_extendedfield_value(field_value):
 
     return {
@@ -110,12 +111,12 @@ def create_extendedfield(field, field_value, item, contributor):
 
             for field_name, value in additional_fields.items():
                 if value:
-                    parsed_value = get_additional_identifiers_extendedfield_value(value)
+                    parsed = get_additional_identifiers_extendedfield_value(value)
                     ExtendedField.objects.create(
                         contributor=contributor,
                         facility_list_item=item,
                         field_name=field_name,
-                        value=parsed_value
+                        value=parsed
                     )
             return
 
