@@ -36,7 +36,7 @@ class OpenSearchService(SearchInterface):
 
         total_hits = response.get("hits", {}).get("total", {}).get("value", 0)
         hits = response.get("hits", {}).get("hits", [])
-        print('!!!', hits)
+
         data = []
         for hit in hits:
             if "_source" in hit:
