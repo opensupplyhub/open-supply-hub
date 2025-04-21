@@ -698,3 +698,15 @@ variable "google_drive_shared_directory_id" {
   sensitive   = true
   description = "The ID of the shared directory in Google Drive"
 }
+
+variable "vanta_assumed_role_external_ids" {
+  type      = list
+  default   = []
+  sensitive = true
+}
+
+variable "vanta_assumed_role_principals" {
+  type      = list
+  default   = []
+  sensitive = true
+}
