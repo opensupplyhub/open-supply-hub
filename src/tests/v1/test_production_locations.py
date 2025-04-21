@@ -359,16 +359,18 @@ class ProductionLocationsTest(BaseAPITest):
             "country": {
                 "alpha_2": "US"
             },
-            "os_id": "UC3020952SV27JF",
+            "os_id": "KD2940782NR27PL",
             "coordinates": {
-                "lon": 90.378162,
-                "lat": 24.1166236
+                "lon": 89.378163,
+                "lat": 35.1176236
             },
             "additional_identifiers": {
                 "lei_id": "529900T8BM49AURSDO55"
             },
         }
         expected_additional_id = {
+            "rba_id": "",
+            "duns_id": "",
             "lei_id": "529900T8BM49AURSDO55"
         }
         self.open_search_client.index(
@@ -380,7 +382,7 @@ class ProductionLocationsTest(BaseAPITest):
             index=self.production_locations_index_name
         )
 
-        search_os_id = "UC3020952SV27JF"
+        search_os_id = "KD2940782NR27PL"
         query = f"?size=1&os_id={search_os_id}"
 
         response = requests.get(

@@ -20,7 +20,7 @@ class ExtendedField(models.Model):
     PROCESSING_TYPE = 'processing_type'
     ADDITIONAL_IDENTIFIERS = 'additional_identifiers'
     RBA_ID = 'rba_id'
-    DUNS_ID ='duns_id'
+    DUNS_ID = 'duns_id'
     LEI_ID = 'lei_id'
 
 
@@ -34,10 +34,10 @@ class ExtendedField(models.Model):
         (PROCESSING_TYPE, PROCESSING_TYPE),
         (PRODUCT_TYPE, PRODUCT_TYPE),
         (PARENT_COMPANY, PARENT_COMPANY),
-        (ADDITIONAL_IDENTIFIERS,ADDITIONAL_IDENTIFIERS),
-        (RBA_ID,RBA_ID),
-        (DUNS_ID,DUNS_ID),
-        (LEI_ID ,LEI_ID))
+        (ADDITIONAL_IDENTIFIERS, ADDITIONAL_IDENTIFIERS),
+        (RBA_ID, RBA_ID),
+        (DUNS_ID, DUNS_ID),
+        (LEI_ID, LEI_ID))
 
     contributor = models.ForeignKey(
         'Contributor',
