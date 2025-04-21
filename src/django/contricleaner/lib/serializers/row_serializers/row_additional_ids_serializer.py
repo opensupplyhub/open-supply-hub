@@ -33,7 +33,7 @@ class RowAdditionalIdsSerializer(RowSerializer):
                     {
                         'message': f'Unexpected key {key} in additional_ids. '
                         'The allowed keys are: '
-                        f'{", ".join(AdditionalIDs.ALLOWED_KEYS)}.',
+                        f'{", ".join(sorted(AdditionalIDs.ALLOWED_KEYS))}.',
                         'field': 'additional_ids',
                         'type': 'KeyError',
                     }
