@@ -41,7 +41,7 @@ const contributorsDrawerStyles = theme =>
             paddingBottom: theme.spacing.unit,
         },
         primaryText: {
-            wordWrap: 'break-word',
+            overflowWrap: 'break-word',
         },
         link: {
             color: theme.palette.primary.main,
