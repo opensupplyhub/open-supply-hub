@@ -19,7 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe schema changes here.*
 
 ### Code/API changes
-* [OSDEV-1926](https://opensupplyhub.atlassian.net/browse/OSDEV-1926) - Introduced support for submitting additional identifiers when uploading a new production location or modifying an existing one. The system now supports three types of identifiers: DUNS (Data Universal Numbering System), LEI (Legal Entity Identifier), and RBA Online ID.
+* [OSDEV-1926](https://opensupplyhub.atlassian.net/browse/OSDEV-1926) - Introduced support for submitting additional identifiers when uploading a new production location or modifying an existing one. Additional identifiers can now be added via the API (POST `api/facilities/`, POST a`pi/v1/production-locations/`, PATCH a`pi/v1/production-locations/{os_id}/`) or through list uploads. The system currently supports three types of identifiers: DUNS (Data Universal Numbering System), LEI (Legal Entity Identifier), and RBA Online ID. The provided identifiers are stored as standalone fields in the `api_extendedfields` table.
 
 ### Architecture/Environment changes
 * [OSDEV-1935](https://opensupplyhub.atlassian.net/browse/OSDEV-1935) - Added terraform module for creating IAM roles in production and test AWS accounts to enable integration with Vanta auditor.
