@@ -1077,17 +1077,17 @@ export const EXTENDED_FIELD_TYPES = [
     {
         label: 'DUNS ID',
         fieldName: 'duns_id',
-        formatValue: ({ id }) => id,
+        formatValue: value => value.raw_value,
     },
     {
         label: 'LEI ID',
         fieldName: 'lei_id',
-        formatValue: ({ id }) => id,
+        formatValue: value => value.raw_value,
     },
     {
         label: 'RBA ID',
         fieldName: 'rba_id',
-        formatValue: ({ id }) => id,
+        formatValue: value => value.raw_value,
     },
 ];
 

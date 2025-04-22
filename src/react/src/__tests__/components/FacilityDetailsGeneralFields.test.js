@@ -71,7 +71,7 @@ describe('FacilityDetailsGeneralFields component: test rendering of additional i
                         id: 83087,
                         is_verified: false,
                         value: {
-                            id: 2120383532,
+                            raw_value: 2120383532,
                         },
                         created_at: '2022-04-01T10:49:15.174025Z',
                         updated_at: '2022-04-01T10:58:25.043413Z',
@@ -88,7 +88,7 @@ describe('FacilityDetailsGeneralFields component: test rendering of additional i
                         id: 83087,
                         is_verified: false,
                         value: {
-                            id: '529900T8BM49AURSDO55',
+                            raw_value: '529900T8BM49AURSDO55',
                         },
                         created_at: '2022-04-01T10:49:15.174025Z',
                         updated_at: '2022-04-01T10:58:25.043413Z',
@@ -105,7 +105,7 @@ describe('FacilityDetailsGeneralFields component: test rendering of additional i
                         id: 83087,
                         is_verified: false,
                         value: {
-                            id:
+                            raw_value:
                                 'F342E6157BD84B70AB40BF9A6C0C19E1F342E6157BD84B70AB40BF9A6C0C19E1F342E6157BD84B70AB40BF9A6C0C19E1F342E6157BD84B70AB40BF9A6C0C19E1F342E6157BD84B70AB40BF9A6C0C19E1F342E6157BD84B70AB40BF9A6C0C19E',
                         },
                         created_at: '2022-04-01T10:49:15.174025Z',

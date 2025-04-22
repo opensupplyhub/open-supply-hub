@@ -13,7 +13,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe high-level database changes.*
 
 #### Migrations:
-* *Describe migrations here.*
+* 0168_introduce_show_additional_identifiers_switch.py - This migration introduces a new switch called `show_additional_identifiers`, which will be used on the production location profile page to show or hide additional identifiers of the production location.
 
 #### Schema changes
 * *Describe schema changes here.*
@@ -26,9 +26,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-1943](https://opensupplyhub.atlassian.net/browse/OSDEV-1943) - Fixed flickering behavior when opening the SLC form to contribute to an existing production location by marking fields as touched if they match the fetched data, ensuring smoother UI during re-renders.
+* [OSDEV-1930](https://opensupplyhub.atlassian.net/browse/OSDEV-1930) - Updated the styles of primary text in the data points UI and the location details contributor drawer on the location profile page, as well as the hash in the React error boundary component, to prevent overflow on the page or within its field location. Replaced the deprecated `word-wrap` CSS property with the supported `overflow-wrap` CSS property.
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* [OSDEV-1930](https://opensupplyhub.atlassian.net/browse/OSDEV-1930) - Implemented front-end logic to display additional identifiers such as RBA, LEI, and DUNS IDs as data points on the production location profile page, once the `show_additional_identifiers` feature flag is returned with a true value from the backend.
 
 ### Release instructions:
 * *Provide release instructions here.*
@@ -170,21 +171,6 @@ Also was added sanitization on the server side by using the `Django-Bleach` libr
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: March 8, 2025
-
-### Database changes
-* *Describe high-level database changes.*
-
-#### Migrations:
-* *Describe migrations here.*
-
-#### Schema changes
-* *Describe schema changes here.*
-
-### Code/API changes
-* *Describe code/API changes here.*
-
-### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
 
 ### Bugfix
 * [OSDEV-1777](https://opensupplyhub.atlassian.net/browse/OSDEV-1777) - A consistent URL style was established across all pages of the SLC workflow. After the changes, the URL begins from `/contribute/single-location/`.
