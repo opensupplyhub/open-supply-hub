@@ -38,7 +38,7 @@ class LoginToOARClient(LoginView):
             )
 
         # Adding the CSRF token to the serialized data response to store it
-        # in local storage for future use and include it in header requests,
+        # in local storage for future use and include it in request headers,
         # as access to cookies has been restricted by the HttpOnly flag.
         csrf_token = request.META["CSRF_COOKIE"]
         serialized_data = UserSerializer(user).data
