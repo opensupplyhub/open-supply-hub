@@ -418,6 +418,7 @@ class TestProductionLocationsCreate(APITestCase):
         self.assertEqual(name, valid_char_field)
         self.assertEqual(parent_company, valid_char_field)
 
+    @patch('api.geocoding.requests.get')
     def test_moderation_event_created_with_valid_additional_ids(
         self, mock_get
     ):
