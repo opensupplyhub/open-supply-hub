@@ -16,8 +16,6 @@ class ExtendedField(models.Model):
     PROCESSING_TYPE = 'processing_type'
     PRODUCT_TYPE = 'product_type'
     PARENT_COMPANY = 'parent_company'
-    FACILITY_TYPE = 'facility_type'
-    PROCESSING_TYPE = 'processing_type'
     DUNS_ID = 'duns_id'
     LEI_ID = 'lei_id'
     RBA_ID = 'rba_id'
