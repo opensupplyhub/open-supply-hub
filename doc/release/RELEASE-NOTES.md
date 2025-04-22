@@ -19,7 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe schema changes here.*
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-1892](https://opensupplyhub.atlassian.net/browse/OSDEV-1892) - Implemented access restrictions for the `GET /v1/moderation-events/` and `GET /v1/moderation-events/{moderation_id}` endpoints so that only the contribution owner or a moderator can access them. Updated the `Logstash` configuration for the `moderation-events` index to include the `contributor_email` field when sending data to `OpenSearch`.
 
 ### Architecture/Environment changes
 * [OSDEV-1935](https://opensupplyhub.atlassian.net/browse/OSDEV-1935) - Added terraform module for creating IAM roles in production and test AWS accounts to enable integration with Vanta auditor.
@@ -31,7 +31,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
 
 ### Release instructions:
-* *Provide release instructions here.*
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to update the index mapping for the `moderation-events` index after adding the new field `contributor_email`. The `production-locations` will also be affected since it will clean all of our custom indexes and templates within the OpenSearch cluster.
 
 
 ## Release 2.2.0
