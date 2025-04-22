@@ -29,7 +29,7 @@ app_fargate_cpu = "512"
 app_fargate_memory = "1024"
 
 cli_fargate_cpu = "256"
-cli_fargate_memory = "124"
+cli_fargate_memory = "1024"
 
 gunicorn_worker_timeout = "240"
 
