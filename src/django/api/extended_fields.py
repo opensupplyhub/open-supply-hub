@@ -67,14 +67,14 @@ def get_parent_company_extendedfield_value(field_value):
 def get_product_type_extendedfield_value(field_value):
 
     return {
-        'raw_values':  field_value,
+        'raw_values': field_value,
     }
 
 
 def get_additional_ids_extendedfield_value(field_value):
 
     return {
-        'raw_value':  field_value,
+        'raw_value': field_value,
     }
 
 
