@@ -418,7 +418,12 @@ class TestProductionLocationsCreate(APITestCase):
         self.assertEqual(name, valid_char_field)
         self.assertEqual(parent_company, valid_char_field)
 
-    def test_moderation_event_created_with_valid_additional_ids(self):
+    def test_moderation_event_created_with_valid_additional_ids(
+        self, mock_get
+    ):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
         additional_ids = {
             'duns_id': '123456789',
             'lei_id': '12345678901234567890',
