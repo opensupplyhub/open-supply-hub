@@ -7,7 +7,7 @@ from contricleaner.lib.serializers.row_serializers.row_serializer import (
 
 class RowAdditionalIdsSerializer(RowSerializer):
     __DUNS_RE = re.compile(r'^\d{9}$')
-    __LEI_RE = re.compile(r'^[A-Z0-9]{18}[0-9]{2}$')
+    __LEI_RE = re.compile(r'^[A-Z0-9]{18}\d{2}$')
 
     def validate(self, row: dict, current: dict) -> dict:
         additional_ids = row.get('additional_ids')
