@@ -10,31 +10,31 @@ class RowAdditionalIdsSerializer(RowSerializer):
     __LEI_RE = re.compile(r'^[A-Z0-9]{18}\d{2}$')
 
     def validate(self, row: dict, current: dict) -> dict:
-        additional_ids = row.get('additional_ids')
+        additional_identifiers = row.get('additional_identifiers')
 
-        if additional_ids is None:
+        if additional_identifiers is None:
             return current
 
-        if not isinstance(additional_ids, dict):
+        if not isinstance(additional_identifiers, dict):
             current['errors'].append(
                 {
-                    'message': 'Expected value for additional_ids to be '
-                    f'a dict but got {additional_ids}.',
-                    'field': 'additional_ids',
+                    'message': 'Expected value for additional_identifiers to '
+                    f'be a dict but got {additional_identifiers}.',
+                    'field': 'additional_identifiers',
                     'type': 'ValueError',
                 }
             )
 
             return current
 
-        for key, value in additional_ids.items():
+        for key, value in additional_identifiers.items():
             if key not in AdditionalIDs.ALLOWED_KEYS:
                 current['errors'].append(
                     {
-                        'message': f'Unexpected key {key} in additional_ids. '
-                        'The allowed keys are: '
+                        'message': f'Unexpected key {key} in '
+                        'additional_identifiers. The allowed keys are: '
                         f'{", ".join(sorted(AdditionalIDs.ALLOWED_KEYS))}.',
-                        'field': 'additional_ids',
+                        'field': 'additional_identifiers',
                         'type': 'KeyError',
                     }
                 )
@@ -45,7 +45,7 @@ class RowAdditionalIdsSerializer(RowSerializer):
                     {
                         'message': f'Expected value for {key} to be a string '
                         f'but got {type(value).__name__}.',
-                        'field': 'additional_ids',
+                        'field': 'additional_identifiers',
                         'type': 'ValueError',
                     }
                 )
@@ -58,7 +58,7 @@ class RowAdditionalIdsSerializer(RowSerializer):
                     {
                         'message': f'Invalid `duns_id`: {value}. '
                         'It should be a 9-digit number.',
-                        'field': 'additional_ids',
+                        'field': 'additional_identifiers',
                         'type': 'ValueError',
                     }
                 )
@@ -72,7 +72,7 @@ class RowAdditionalIdsSerializer(RowSerializer):
                         'It should be a 20-character string '
                         'with 18 alphanumeric characters followed by '
                         '2 digits.',
-                        'field': 'additional_ids',
+                        'field': 'additional_identifiers',
                         'type': 'ValueError',
                     }
                 )
@@ -85,7 +85,7 @@ class RowAdditionalIdsSerializer(RowSerializer):
                         'message': f'Invalid `rba_id`: {value}. '
                         'It should be a string with a maximum length of 255 '
                         'characters.',
-                        'field': 'additional_ids',
+                        'field': 'additional_identifiers',
                         'type': 'ValueError',
                     }
                 )
