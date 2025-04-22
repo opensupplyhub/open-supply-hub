@@ -94,5 +94,6 @@ db.dump
 latest_prod.dump
 dumps
 
+# Backup and temporary files
 *.~
 *.bak
