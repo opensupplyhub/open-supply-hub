@@ -104,7 +104,10 @@ class ModerationEvents(ViewSet):
         ModerationEventsService.validate_uuid(pk)
 
         event = ModerationEventsService.fetch_moderation_event_by_uuid(pk)
-        role = ModerationEventsService.validate_restriction_role(request, event)
+        role = ModerationEventsService.validate_restriction_role(
+            request,
+            event
+        )
         if role == ModerationEventsService.Role.UNKNOWN:
             raise PermissionDenied(
                 detail=APIV1ModerationEventErrorMessages.PERMISSION_DENIED
