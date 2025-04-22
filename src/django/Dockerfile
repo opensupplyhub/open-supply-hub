@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 python:3.7-slim-bookworm
+FROM --platform=linux/amd64 python:3.8-slim-bookworm
 
 RUN mkdir -p /usr/local/src/static/static
 WORKDIR /usr/local/src
@@ -18,6 +18,8 @@ RUN set -ex \
     gettext \
     postgresql-client-15 \
     git \
+    libmemcached-dev \
+    zlib1g-dev \
     " \
     && apt-get update && apt-get install -y $buildDeps $deps --no-install-recommends \
     && pip install --no-cache-dir -r requirements.txt \

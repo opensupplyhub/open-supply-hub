@@ -4,7 +4,6 @@ __pycache__/
 .csv
 .xlsx
 
-
 # Terraform
 .terraform
 .terraform/
@@ -41,7 +40,6 @@ src/dedupe-hub/api/coverage
 ## Test artifacts
 src/django/*.csv
 src/django/*.xlsx
-
 
 # macOS
 .DS_Store
@@ -93,3 +91,5 @@ venv.bak/
 db.dump
 latest_prod.dump
 dumps
+production_locations_ds.csv
+notebooks/splink-configuration/*.csv

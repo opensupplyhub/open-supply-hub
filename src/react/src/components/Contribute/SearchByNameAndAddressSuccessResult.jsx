@@ -91,6 +91,9 @@ const SearchByNameAndAddressSuccessResult = ({
                                 name={productionLocation.name}
                                 address={productionLocation.address}
                                 countryName={productionLocation.country.name}
+                                confidenceScore={
+                                    productionLocation.confidence_score
+                                }
                             />
                             <Button
                                 variant="contained"
