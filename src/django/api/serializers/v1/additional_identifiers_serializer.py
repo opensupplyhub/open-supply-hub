@@ -7,9 +7,4 @@ class AdditionalIdentifiersSerializer(serializers.Serializer):
     lei_id = serializers.CharField(required=False)
 
     def validate(self, data):
-        errors = []
-
-        if len(errors) > 0:
-            raise serializers.ValidationError(errors)
-
         return data

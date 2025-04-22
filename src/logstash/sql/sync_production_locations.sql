@@ -646,4 +646,4 @@ WHERE
   af.updated_at > :sql_last_value
   AND af.updated_at < CURRENT_TIMESTAMP
 ORDER BY
-  af.updated_at ASC
+  af.updated_at ASC // NOSONAR
