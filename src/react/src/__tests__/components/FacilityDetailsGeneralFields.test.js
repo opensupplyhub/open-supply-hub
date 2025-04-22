@@ -200,14 +200,14 @@ describe('FacilityDetailsGeneralFields component: test rendering of additional i
         expect(getByText('Moon company')).toBeInTheDocument();
 
         expect(getByText('LEI ID')).toBeInTheDocument();
-        expect(getByText('2120383532')).toBeInTheDocument();
-        expect(getByText('RBA ID')).toBeInTheDocument();
         expect(getByText('529900T8BM49AURSDO55')).toBeInTheDocument();
-        expect(getByText('DUNS ID')).toBeInTheDocument();
+        expect(getByText('RBA ID')).toBeInTheDocument();
         expect(
             getByText(
                 'F342E6157BD84B70AB40BF9A6C0C19E1F342E6157BD84B70AB40BF9A6C0C19E1F342E6157BD84B70AB40BF9A6C0C19E1F342E6157BD84B70AB40BF9A6C0C19E1F342E6157BD84B70AB40BF9A6C0C19E1F342E6157BD84B70AB40BF9A6C0C19E',
             ),
         ).toBeInTheDocument();
+        expect(getByText('DUNS ID')).toBeInTheDocument();
+        expect(getByText('2120383532')).toBeInTheDocument();
     });
 });
