@@ -19,7 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe schema changes here.*
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-1926](https://opensupplyhub.atlassian.net/browse/OSDEV-1926) - Introduced support for submitting additional identifiers when uploading a new production location or modifying an existing one. The system now supports three types of identifiers: DUNS (Data Universal Numbering System), LEI (Legal Entity Identifier), and RBA Online ID.
 
 ### Architecture/Environment changes
 * [OSDEV-1935](https://opensupplyhub.atlassian.net/browse/OSDEV-1935) - Added terraform module for creating IAM roles in production and test AWS accounts to enable integration with Vanta auditor.
