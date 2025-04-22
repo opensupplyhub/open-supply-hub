@@ -74,7 +74,11 @@ class OpenSearchQueryDirector:
 
     def __add_match_query(self, field, value):
         if value:
-            self.__builder.add_match(field, value, fuzziness='2')
+            tokens = value.split()
+            if len(tokens) > 12 or len(value) > 180:
+                self.__builder.add_match_phrase(field, value, slop=3)
+            else:
+                self.__builder.add_match(field, value, fuzziness=2)
 
     def __add_terms_query(self, field, values):
         self.__builder.add_terms(field, values)
