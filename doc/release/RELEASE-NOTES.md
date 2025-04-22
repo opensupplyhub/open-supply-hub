@@ -27,12 +27,17 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Bugfix
 * [OSDEV-1943](https://opensupplyhub.atlassian.net/browse/OSDEV-1943) - Fixed flickering behavior when opening the SLC form to contribute to an existing production location by marking fields as touched if they match the fetched data, ensuring smoother UI during re-renders.
 * [OSDEV-1930](https://opensupplyhub.atlassian.net/browse/OSDEV-1930) - Updated the styles of primary and secondary text in the data points UI and the location details contributor drawer on the location profile page, as well as the hash in the React error boundary component, to prevent overflow on the page or within its field location. Replaced the deprecated `word-wrap` CSS property with the supported `overflow-wrap` CSS property.
+* [OSDEV-1914](https://opensupplyhub.atlassian.net/browse/OSDEV-1914) - The following changes have been made:
+    * Fixed an issue with fuzzy search on fields containing long text. Replaced the `match` query with `match_phrase` (with a configurable `slop` parameter) for such cases to improve accuracy for the GET `/api/v1/production-locations/` endpoint.
+    * Replaced regular text with a toast component to display server errors when fetching potential matches on the Contribution Record page of the Moderation queue dashboard.
 
 ### What's new
 * [OSDEV-1930](https://opensupplyhub.atlassian.net/browse/OSDEV-1930) - Implemented front-end logic to display additional identifiers such as RBA, LEI, and DUNS IDs as data points on the production location profile page, once the `show_additional_identifiers` feature flag is returned with a true value from the backend.
 
 ### Release instructions:
-* *Provide release instructions here.*
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
 
 
 ## Release 2.2.0
