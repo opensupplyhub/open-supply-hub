@@ -66,13 +66,14 @@ echo "Updating CloudFront distribution to detach Lambda@Edge..."
 aws cloudfront update-distribution \
   --id $DISTRIBUTION_ID \
   --distribution-config file://new-config.json \
-  --if-match $ETAG
+  --if-match $ETAG 2>&1
 
 echo "Waiting for CloudFront distribution deployment..."
 aws cloudfront wait distribution-deployed --id "$DISTRIBUTION_ID"
 
 echo "CloudFront distribution updated. Proceeding with Lambda function deletion..."
 
+set +e
 VERSIONS=$(aws lambda list-versions-by-function --function-name "$LAMBDA_ARN" --region "$REGION" | jq -r '.Versions[].Version')
 for version in $VERSIONS; do
   if [[ "$version" != "\$LATEST" ]]; then
