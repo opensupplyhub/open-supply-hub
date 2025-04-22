@@ -39,16 +39,34 @@ if [ -z "$DISTRIBUTION_ID" ]; then
   exit 1
 fi
 
-echo "Fetching CloudFront distribution configuration..."
-json=$(aws cloudfront get-distribution-config --id "$DISTRIBUTION_ID")
-ETAG=$(echo "$json" | jq -r '.ETag')
-CONFIG=$(echo "$json" | jq '.DistributionConfig')
+echo "Fetching current distribution config..."
+aws cloudfront get-distribution-config --id $DISTRIBUTION_ID > full-config.json
 
-CONFIG=$(echo "$CONFIG" | jq '(.DefaultCacheBehavior.LambdaFunctionAssociations.Items) |= map(select(.LambdaFunctionARN != "$LAMBDA_ARN:$LAMBDA_VERSION"))')
+ETAG=$(cat full-config.json | jq -r '.ETag')
+echo "ETag: $ETAG"
+
+cat full-config.json | jq '.DistributionConfig' > dist-config.json
+
+cat dist-config.json | jq --arg NAME "$LAMBDA_NAME" '
+  .DefaultCacheBehavior.LambdaFunctionAssociations |=
+    {
+      "Quantity": (
+        .Items
+        | map(select(.LambdaFunctionARN | contains($NAME) | not))
+        | length
+      ),
+      "Items": (
+        .Items
+        | map(select(.LambdaFunctionARN | contains($NAME) | not))
+      )
+    }
+' > new-config.json
 
 echo "Updating CloudFront distribution to detach Lambda@Edge..."
-UPDATED_CONFIG=$(echo "$CONFIG" | jq -c '.')
-aws cloudfront update-distribution --id "$DISTRIBUTION_ID" --if-match "$ETAG" --distribution-config "$UPDATED_CONFIG"
+aws cloudfront update-distribution \
+  --id $DISTRIBUTION_ID \
+  --distribution-config file://new-config.json \
+  --if-match $ETAG
 
 echo "Waiting for CloudFront distribution deployment..."
 aws cloudfront wait distribution-deployed --id "$DISTRIBUTION_ID"
