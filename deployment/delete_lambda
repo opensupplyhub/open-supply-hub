@@ -77,19 +77,25 @@ VERSIONS=$(aws lambda list-versions-by-function --function-name "$LAMBDA_ARN" --
 for version in $VERSIONS; do
   if [[ "$version" != "\$LATEST" ]]; then
     echo "Deleting Lambda version: $version"
-    aws lambda delete-function --function-name "$LAMBDA_ARN:$version" --region "$REGION"
-  fi
-done
+    while true; do
+      DELETE_RESPONSE=$(aws lambda delete-function --function-name "$LAMBDA_ARN:$version" --region "$REGION" 2>&1)
+      EXIT_CODE=$?
 
-echo "Lambda function deletion initiated. Verifying..."
+      if [ $EXIT_CODE -eq 0 ]; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - Function deleted successfully! 🎉"
+        exit 0
+      fi
 
-while true; do
-  if ! aws lambda get-function --function-name "$LAMBDA_ARN" --region "$REGION" 2>/dev/null; then
-    echo "Lambda function successfully deleted."
-    break
+      if echo "$DELETE_RESPONSE" | grep -q "because it is a replicated function"; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - Function still replicated. Waiting 5 minutes..."
+        sleep 300
+      else
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - Unexpected error:"
+        echo "$DELETE_RESPONSE"
+        exit 1
+      fi
+    done
   fi
-  echo "Waiting for Lambda function to be deleted..."
-  sleep 30
 done
 
 echo "Process completed successfully."
