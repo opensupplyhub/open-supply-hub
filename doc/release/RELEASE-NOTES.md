@@ -16,7 +16,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe migrations here.*
 
 #### Schema changes
-* [OSDEV-1927](https://opensupplyhub.atlassian.net/browse/OSDEV-1927) - Added additional identifiers DUNS , RBA Online ID and LEI to the `/v1/production-locations/` and GET `/v1/production-locations/{os_id}/` endpoints.
+* [OSDEV-1927](https://opensupplyhub.atlassian.net/browse/OSDEV-1927) - Added additional identifiers (DUNS , RBA Online ID and LEI) to the `/v1/production-locations/` and GET `/v1/production-locations/{os_id}/` endpoints.
 
 ### Code/API changes
 * *Describe code/API changes here.*
