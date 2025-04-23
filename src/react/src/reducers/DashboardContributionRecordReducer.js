@@ -72,7 +72,7 @@ export default createReducer(
             update(state, {
                 potentialMatches: {
                     fetching: { $set: initialState.potentialMatches.fetching },
-                    error: { $set: error },
+                    error: { $set: Array.isArray(error) ? error[0] : error },
                 },
             }),
         [completeFetchPotentialMatches]: (state, payload) =>

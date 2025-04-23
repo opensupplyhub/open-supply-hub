@@ -20,14 +20,14 @@ const detailsStyles = theme =>
             paddingTop: theme.spacing.unit,
         },
         primaryText: {
-            wordWrap: 'break-word',
+            overflowWrap: 'anywhere',
             fontWeight: 500,
             fontSize: '18px',
             lineHeight: '21px',
             paddingTop: theme.spacing.unit,
         },
         secondaryText: {
-            wordWrap: 'break-word',
+            overflowWrap: 'anywhere',
             fontWeight: 500,
             fontSize: '14px',
             lineHeight: '17px',

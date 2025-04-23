@@ -3,20 +3,50 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
-## Release 2.2.0
+## Release 2.3.0
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: April 19, 2025
+* Release date: May 3, 2025
 
 ### Database changes
 * *Describe high-level database changes.*
 
 #### Migrations:
-* 0168_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
+* 0168_introduce_show_additional_identifiers_switch.py - This migration introduces a new switch called `show_additional_identifiers`, which will be used on the production location profile page to show or hide additional identifiers of the production location.
+* 0169_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
 
 #### Schema changes
 * [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - The `FacilityDownloadLimit` model has been created. This model includes such fields: id, user_id, last
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* [OSDEV-1935](https://opensupplyhub.atlassian.net/browse/OSDEV-1935) - Added terraform module for creating IAM roles in production and test AWS accounts to enable integration with Vanta auditor.
+* [OSDEV-1895](https://opensupplyhub.atlassian.net/browse/OSDEV-1895) - Updated the rules to send the `csrftoken` cookie with the `HttpOnly` flag to the user. Implemented logic to retrieve the `csrftoken` upon user login and save it to `localStorage`. Added functionality to set the `csrftoken` from `localStorage` in Axios headers.
+
+### Bugfix
+* [OSDEV-1943](https://opensupplyhub.atlassian.net/browse/OSDEV-1943) - Fixed flickering behavior when opening the SLC form to contribute to an existing production location by marking fields as touched if they match the fetched data, ensuring smoother UI during re-renders.
+* [OSDEV-1930](https://opensupplyhub.atlassian.net/browse/OSDEV-1930) - Updated the styles of primary and secondary text in the data points UI and the location details contributor drawer on the location profile page, as well as the hash in the React error boundary component, to prevent overflow on the page or within its field location. Replaced the deprecated `word-wrap` CSS property with the supported `overflow-wrap` CSS property.
+* [OSDEV-1914](https://opensupplyhub.atlassian.net/browse/OSDEV-1914) - The following changes have been made:
+    * Fixed an issue with fuzzy search on fields containing long text. Replaced the `match` query with `match_phrase` (with a configurable `slop` parameter) for such cases to improve accuracy for the GET `/api/v1/production-locations/` endpoint.
+    * Replaced regular text with a toast component to display server errors when fetching potential matches on the Contribution Record page of the Moderation queue dashboard.
+
+### What's new
+* [OSDEV-1930](https://opensupplyhub.atlassian.net/browse/OSDEV-1930) - Implemented front-end logic to display additional identifiers such as RBA, LEI, and DUNS IDs as data points on the production location profile page, once the `show_additional_identifiers` feature flag is returned with a true value from the backend.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
+## Release 2.2.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 19, 2025
 
 ### Code/API changes
 * [OSDEV-1894](https://opensupplyhub.atlassian.net/browse/OSDEV-1894) - Enabled `Secure` attribute of csrf token and session id.
@@ -149,21 +179,6 @@ Also was added sanitization on the server side by using the `Django-Bleach` libr
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: March 8, 2025
-
-### Database changes
-* *Describe high-level database changes.*
-
-#### Migrations:
-* *Describe migrations here.*
-
-#### Schema changes
-* *Describe schema changes here.*
-
-### Code/API changes
-* *Describe code/API changes here.*
-
-### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
 
 ### Bugfix
 * [OSDEV-1777](https://opensupplyhub.atlassian.net/browse/OSDEV-1777) - A consistent URL style was established across all pages of the SLC workflow. After the changes, the URL begins from `/contribute/single-location/`.
