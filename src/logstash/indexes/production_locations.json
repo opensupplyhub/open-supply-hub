@@ -195,15 +195,26 @@
             }
           }
         },
-        "additional_identifiers": {
-          "properties": {
-            "rba_id": {
+        "rba_id": {
+          "type": "text",
+          "fields": {
+            "keyword": {
               "type": "keyword"
-            },
-            "duns_id": {
+            }
+          }
+        },
+        "duns_id": {
+          "type": "text",
+          "fields": {
+            "keyword": {
               "type": "keyword"
-            },
-            "lei_id": {
+            }
+          }
+        },
+        "lei_id": {
+          "type": "text",
+          "fields": {
+            "keyword": {
               "type": "keyword"
             }
           }

@@ -67,14 +67,7 @@ def get_parent_company_extendedfield_value(field_value):
 def get_product_type_extendedfield_value(field_value):
 
     return {
-        'raw_values': field_value,
-    }
-
-
-def get_additional_ids_extendedfield_value(field_value):
-
-    return {
-        'raw_value': field_value,
+        'raw_values':  field_value,
     }
 
 
@@ -85,57 +78,30 @@ def all_values_empty(value):
     return False
 
 
-def _is_valid_field_value(value):
-    return value is not None and value != "" and not all_values_empty(value)
-
-
-def _handle_additional_identifiers(field_value, item, contributor):
-    additional_fields = {
-        ExtendedField.DUNS_ID: field_value.get("duns_id"),
-        ExtendedField.RBA_ID: field_value.get("rba_id"),
-        ExtendedField.LEI_ID: field_value.get("lei_id"),
-    }
-
-    for field_name, value in additional_fields.items():
-        if value:
-            parsed = get_additional_ids_extendedfield_value(value)
-            ExtendedField.objects.create(
-                contributor=contributor,
-                facility_list_item=item,
-                field_name=field_name,
-                value=parsed
-            )
-
-
 def create_extendedfield(field, field_value, item, contributor):
-    if not _is_valid_field_value(field_value):
-        return
-
-    if field == ExtendedField.ADDITIONAL_IDENTIFIERS:
-        _handle_additional_identifiers(field_value, item, contributor)
-        return
-
-    if field == ExtendedField.NUMBER_OF_WORKERS:
-        field_value = extract_int_range_value(field_value)
-    elif field == ExtendedField.PARENT_COMPANY:
-        field_value = get_parent_company_extendedfield_value(field_value)
-    elif field == ExtendedField.PRODUCT_TYPE:
-        field_value = get_product_type_extendedfield_value(field_value)
-    elif (field == ExtendedField.FACILITY_TYPE or
-            field == ExtendedField.PROCESSING_TYPE):
-        field_value = (
-            get_facility_and_processing_type_extendfield_value(
-                field_value,
-                item.sector
+    if field_value is not None and field_value != "" \
+            and not all_values_empty(field_value):
+        if field == ExtendedField.NUMBER_OF_WORKERS:
+            field_value = extract_int_range_value(field_value)
+        elif field == ExtendedField.PARENT_COMPANY:
+            field_value = get_parent_company_extendedfield_value(field_value)
+        elif field == ExtendedField.PRODUCT_TYPE:
+            field_value = get_product_type_extendedfield_value(field_value)
+        elif (field == ExtendedField.FACILITY_TYPE or
+              field == ExtendedField.PROCESSING_TYPE):
+            field_value = (
+                get_facility_and_processing_type_extendfield_value(
+                    field_value,
+                    item.sector
+                )
             )
-        )
 
-    ExtendedField.objects.create(
-        contributor=contributor,
-        facility_list_item=item,
-        field_name=field,
-        value=field_value
-    )
+        ExtendedField.objects.create(
+            contributor=contributor,
+            facility_list_item=item,
+            field_name=field,
+            value=field_value
+        )
 
 
 RAW_DATA_FIELDS = (ExtendedField.NUMBER_OF_WORKERS,
@@ -143,8 +109,7 @@ RAW_DATA_FIELDS = (ExtendedField.NUMBER_OF_WORKERS,
                    ExtendedField.PARENT_COMPANY,
                    ExtendedField.PRODUCT_TYPE,
                    ExtendedField.FACILITY_TYPE,
-                   ExtendedField.PROCESSING_TYPE,
-                   ExtendedField.ADDITIONAL_IDENTIFIERS,)
+                   ExtendedField.PROCESSING_TYPE)
 
 
 def create_extendedfields_for_single_item(item, raw_data):
