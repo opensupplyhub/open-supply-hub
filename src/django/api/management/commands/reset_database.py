@@ -11,4 +11,5 @@ class Command(BaseCommand):
         call_command('enable_switches')
         call_command('process_fixtures')
         call_command('assign_groups')
-        call_command('make_token')
+        call_command('make_token', user_id=2, is_admin=True)
+        call_command('make_token', user_id=3, is_admin=False)
