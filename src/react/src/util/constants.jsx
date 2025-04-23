@@ -20,6 +20,8 @@ export const InfoLink = 'https://info.opensupplyhub.org';
 
 export const EMPTY_PLACEHOLDER = 'N/A';
 
+export const CSRF_TOKEN_KEY = 'csrfToken';
+
 export const InfoPaths = {
     storiesResources: 'stories-resources',
     privacyPolicy: 'privacy-policy',
@@ -561,6 +563,7 @@ export const EMBEDDED_MAP_FLAG = 'embedded_map';
 export const EXTENDED_PROFILE_FLAG = 'extended_profile';
 export const DEFAULT_SEARCH_TEXT = 'Facility Name or OS ID';
 export const DISABLE_LIST_UPLOADING = 'disable_list_uploading';
+export const SHOW_ADDITIONAL_IDENTIFIERS = 'show_additional_identifiers';
 
 export const DEFAULT_COUNTRY_CODE = 'IE';
 
@@ -1073,7 +1076,28 @@ export const EXTENDED_FIELD_TYPES = [
         fieldName: 'native_language_name',
         formatValue: v => v,
     },
+    {
+        label: 'DUNS ID',
+        fieldName: 'duns_id',
+        formatValue: value => value.raw_value,
+    },
+    {
+        label: 'LEI ID',
+        fieldName: 'lei_id',
+        formatValue: value => value.raw_value,
+    },
+    {
+        label: 'RBA ID',
+        fieldName: 'rba_id',
+        formatValue: value => value.raw_value,
+    },
 ];
+
+export const ADDITIONAL_IDENTIFIERS = Object.freeze([
+    'duns_id',
+    'lei_id',
+    'rba_id',
+]);
 
 export const SILVER_MAP_STYLE = [
     {
