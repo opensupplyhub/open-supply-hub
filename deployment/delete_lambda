@@ -19,8 +19,6 @@ LAMBDA_ARN="arn:aws:lambda:$REGION:$ACCOUNT_ID:function:$LAMBDA_NAME"
 
 echo "Deleting Lambda function: $LAMBDA_NAME"
 
-LAMBDA_VERSION=$(aws lambda list-versions-by-function --function-name "$LAMBDA_ARN" --region "$REGION" | jq -r '.Versions | map(select(.Version != "$LATEST")) | max_by(.Version | tonumber) | .Version')
-
 DISTRIBUTION_ID=""
 for id in $(aws cloudfront list-distributions --query "DistributionList.Items[*].Id" --output text); do
   domains=$(aws cloudfront get-distribution-config --id $id --query "DistributionConfig.Aliases.Items" --output text)
