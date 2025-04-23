@@ -14,9 +14,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Migrations:
 * 0168_introduce_show_additional_identifiers_switch.py - This migration introduces a new switch called `show_additional_identifiers`, which will be used on the production location profile page to show or hide additional identifiers of the production location.
+* 0169_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
 
 #### Schema changes
-* *Describe schema changes here.*
+* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - The `FacilityDownloadLimit` model has been created. This model includes such fields: id, user_id, last
 
 ### Code/API changes
 * *Describe code/API changes here.*
@@ -62,6 +63,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1933](https://opensupplyhub.atlassian.net/browse/OSDEV-1933) - Fixed typo errors in the resource names of the OpenSupplyHubTest-AnonymizedDatabaseDump cluster.
 
 ### What's new
+* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 1000 records per download + 10 downloads of facility data per month has been added for a registered free user.
 * [OSDEV-1706](https://opensupplyhub.atlassian.net/browse/OSDEV-1706) - Implemented backend error handling for SLC form submission and created the UI to display post-submit errors in a user-friendly way. Aligned SLC form validation with backend rules to ensure maximum consistency.
 
 ### Release instructions:
