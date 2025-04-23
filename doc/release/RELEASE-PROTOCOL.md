@@ -58,6 +58,8 @@ This document outlines the SDLC pillars of the opensupplyhub monorepo, as well a
 | v2.0.0 | March 18, 2025 | March 22, 2025 | @Roman Stolar |
 | v2.1.0 | April 1, 2025 | April 5, 2025 | @Nessa Drew |
 | v2.2.0 | April 15, 2025 | April 19, 2025 | @Nessa Drew |
+| v2.3.0 | April 29, 2025 | May 3, 2025 | @Oleksandr Mazur |
+| v2.4.0 | May 13, 2025 | May 17, 2025 | @Oleksandr Mazur |
 
 ## General Information
 
@@ -222,7 +224,7 @@ On Monday after each release, current metrics should be checked by QA engineer.
 2. [Contribot](https://spdfn.slack.com/archives/C04EDHR643E):
     - Make sure that new uploads are displayed in Contribot and they are similar to the Contributor List Approval Queue in Monday
 3. [~~Kamino~~](https://34.241.25.221/kamino/bk): (not relevant)
-    - ~~Successfully logged with valid OS HUb admin credentials and re-directed to Kamino's.~~ 
+    - ~~Successfully logged with valid OS HUb admin credentials and re-directed to Kamino's.~~
 2. [~~Looker~~](https://lookerstudio.google.com/u/1/reporting/b242ab63-6cfd-4d49-98ca-88ad84a47208/page/clbkD): (not relevant)
     - ~~`duplicate_ratio_perc` ~ 2 (+- 0.1)~~
     - ~~`estimated_duplicates` ~ 4000-6000~~

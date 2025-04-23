@@ -30,6 +30,7 @@ import {
     EXTENDED_PROFILE_FLAG,
     DISABLE_LIST_UPLOADING,
     facilityClaimStatusChoicesEnum,
+    SHOW_ADDITIONAL_IDENTIFIERS,
 } from './constants';
 
 export const registrationFormValuesPropType = shape({
@@ -357,6 +358,7 @@ export const featureFlagPropType = oneOf([
     EXTENDED_PROFILE_FLAG,
     ALLOW_LARGE_DOWNLOADS,
     DISABLE_LIST_UPLOADING,
+    SHOW_ADDITIONAL_IDENTIFIERS,
 ]);
 
 export const facilityClaimsListPropType = arrayOf(
