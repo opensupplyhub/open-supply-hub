@@ -9,10 +9,12 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--user-id', type=int, required=True, help='ID of the user')
         parser.add_argument('--is-admin', type=bool, required=True, help='Grant superuser and staff rights')
+        parser.add_argument('--token-key', type=str, required=True, help='Token key to set manually')
 
     def handle(self, *args, **options):
         user_id = options['user_id']
         is_admin = options['is_admin']
+        token_key = options['token_key']
 
         call_command(
             'shell',
@@ -25,7 +27,7 @@ class Command(BaseCommand):
                 f"user.is_superuser = {str(is_admin)};"
                 "user.save();"
                 "token = Token.objects.create(user=user,"
-                "key='1d18b962d6f976b0b7e8fcf9fcc39b56cf278051');"
+                f"key='{token_key}');"
                 "print(f'Token for {user.email}: {token.key}')"
             )
         )
