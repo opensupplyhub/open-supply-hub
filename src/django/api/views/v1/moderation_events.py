@@ -49,6 +49,7 @@ class ModerationEvents(ViewSet):
 
     def get_permissions(self):
         action_permissions = {
+            'list': [IsSuperuser],
             'partial_update': [IsSuperuser],
             'add_production_location': [IsSuperuser],
             'update_production_location': [IsSuperuser],
@@ -72,11 +73,6 @@ class ModerationEvents(ViewSet):
 
     @handle_errors_decorator
     def list(self, request):
-        role = ModerationEventsService.validate_restriction_role(request)
-        if role != ModerationEventsService.Role.MODERATOR:
-            raise PermissionDenied(
-                detail=APIV1ModerationEventErrorMessages.PERMISSION_DENIED
-            )
         _, error_response = serialize_params(
             ModerationEventsSerializer,
             request.GET
@@ -104,11 +100,11 @@ class ModerationEvents(ViewSet):
         ModerationEventsService.validate_uuid(pk)
 
         event = ModerationEventsService.fetch_moderation_event_by_uuid(pk)
-        role = ModerationEventsService.validate_restriction_role(
+        access_allowed = ModerationEventsService.is_user_access_allowed(
             request,
             event
         )
-        if role == ModerationEventsService.Role.UNKNOWN:
+        if not access_allowed:
             raise PermissionDenied(
                 detail=APIV1ModerationEventErrorMessages.PERMISSION_DENIED
             )

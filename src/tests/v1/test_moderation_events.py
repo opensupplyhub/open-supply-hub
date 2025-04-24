@@ -33,7 +33,7 @@ class ModerationEventsTest(BaseAPITest):
         self.assertIn('data', result)
         self.assertIsInstance(result['data'], list)
     
-    def test_moderation_events_restriction(self):
+    def test_moderation_events_permissions_by_admin(self):
         response = requests.get(
             f"{self.root_url}/api/v1/moderation-events/",
             headers=self.basic_headers,
@@ -57,10 +57,10 @@ class ModerationEventsTest(BaseAPITest):
         result = response.json()
         self.assertEqual(
             result['detail'],
-            'You do not have permission to perform this action.'
+            'Only the moderator can perform this action.'
         )
     
-    def test_moderation_events_exact_restriction(self):
+    def test_moderation_events_permissions_by_ownership(self):
         custom_headers = {
             'Content-Type': 'application/json',
             'Authorization': f'Token {self.user_token}',

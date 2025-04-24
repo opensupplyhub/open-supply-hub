@@ -1,7 +1,7 @@
 import logging
-from enum import Enum
 
 from rest_framework.exceptions import NotFound, ParseError
+from rest_framework.request import Request
 
 from api.constants import (
     LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX,
@@ -20,10 +20,6 @@ log = logging.getLogger(__name__)
 
 
 class ModerationEventsService:
-    class Role(Enum):
-        MODERATOR = 'moderator'
-        OWNER = 'owner'
-        UNKNOWN = 'unknown'
 
     @staticmethod
     def validate_uuid(value):
@@ -83,18 +79,15 @@ class ModerationEventsService:
         raise InternalServerErrorException()
 
     @staticmethod
-    def validate_restriction_role(
-        request,
-        event: ModerationEvent = None
-    ):
-        if request.user.is_superuser:
-            return ModerationEventsService.Role.MODERATOR
-
+    def is_user_access_allowed(
+        request: Request,
+        event: ModerationEvent
+    ) -> bool:
         if (
-            event
-            and
+            request.user.is_superuser
+            or
             request.user.contributor.id == event.contributor.id
         ):
-            return ModerationEventsService.Role.OWNER
+            return True
 
-        return ModerationEventsService.Role.UNKNOWN
+        return False
