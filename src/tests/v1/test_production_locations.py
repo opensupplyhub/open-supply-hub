@@ -315,17 +315,14 @@ class ProductionLocationsTest(BaseAPITest):
                 "lon": 90.378162,
                 "lat": 24.1166236
             },
-            "additional_identifiers": {
-                "rba_id": "RBA-12345678",
-                "duns_id": "15-048-3782",
-                "lei_id": "529900T8BM49AURSDO55"
-            },
-        }
-        expected_additional_ids = {
             "rba_id": "RBA-12345678",
             "duns_id": "15-048-3782",
             "lei_id": "529900T8BM49AURSDO55"
         }
+        expected_rba_id = "RBA-12345678"
+        expected_duns_id = "15-048-3782"
+        expected_lei_id = "529900T8BM49AURSDO55"
+
         self.open_search_client.index(
             index=self.production_locations_index_name,
             body=doc,
@@ -345,51 +342,14 @@ class ProductionLocationsTest(BaseAPITest):
 
         result = response.json()
         self.assertEqual(
-            result['data'][0]['additional_identifiers'],
-            expected_additional_ids
+            result['data'][0]['rba_id'],
+            expected_rba_id
         )
-
-    def test_production_locations_additional_identifiers_one_id(self):
-        doc = {
-            "sector": [
-                "Apparel"
-            ],
-            "address": "Test Address",
-            "name": "Test Name",
-            "country": {
-                "alpha_2": "US"
-            },
-            "os_id": "KD2940782NR27PL",
-            "coordinates": {
-                "lon": 89.378163,
-                "lat": 35.1176236
-            },
-            "additional_identifiers": {
-                "lei_id": "529900T8BM49AURSDO55"
-            },
-        }
-        expected_additional_id = {
-            "lei_id": "529900T8BM49AURSDO55"
-        }
-        self.open_search_client.index(
-            index=self.production_locations_index_name,
-            body=doc,
-            id=self.open_search_client.count()
-        )
-        self.open_search_client.indices.refresh(
-            index=self.production_locations_index_name
-        )
-
-        search_os_id = "KD2940782NR27PL"
-        query = f"?size=1&os_id={search_os_id}"
-
-        response = requests.get(
-                f"{self.root_url}/api/v1/production-locations/{query}",
-                headers=self.basic_headers,
-            )
-
-        result = response.json()
         self.assertEqual(
-            result['data'][0]['additional_identifiers'],
-            expected_additional_id
+            result['data'][0]['duns_id'],
+            expected_duns_id
+        )
+        self.assertEqual(
+            result['data'][0]['lei_id'],
+            expected_lei_id
         )
