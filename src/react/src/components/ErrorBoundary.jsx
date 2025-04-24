@@ -10,7 +10,7 @@ const styles = {
         background: '#e6e6e6',
         padding: '20px',
         width: '100%',
-        wordWrap: 'break-word',
+        overflowWrap: 'break-word',
         margin: 'auto',
         fontSize: '12px',
         letterSpacing: '1px',
