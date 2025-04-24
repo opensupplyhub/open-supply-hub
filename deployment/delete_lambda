@@ -71,6 +71,10 @@ aws cloudfront wait distribution-deployed --id "$DISTRIBUTION_ID"
 
 echo "CloudFront distribution updated. Proceeding with Lambda function deletion..."
 
+# Adding the set +e command is necessary to ensure that the script does not terminate on an error,
+# allowing us to handle the exit code of the Lambda function deletion command manually.
+set +e
+
 VERSIONS=$(aws lambda list-versions-by-function --function-name "$LAMBDA_ARN" --region "$REGION" | jq -r '.Versions[].Version')
 for version in $VERSIONS; do
   if [[ "$version" != "\$LATEST" ]]; then
