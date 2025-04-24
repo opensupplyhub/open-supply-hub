@@ -1,6 +1,7 @@
 import logging
 
 from rest_framework.exceptions import NotFound, ParseError
+from rest_framework.request import Request
 
 from api.constants import (
     LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX,
@@ -19,6 +20,7 @@ log = logging.getLogger(__name__)
 
 
 class ModerationEventsService:
+
     @staticmethod
     def validate_uuid(value):
         if not ModerationIdValidator.is_valid_uuid(value):
@@ -75,3 +77,17 @@ class ModerationEventsService:
             f'Error: {str(error_message)}'
         )
         raise InternalServerErrorException()
+
+    @staticmethod
+    def is_user_access_allowed(
+        request: Request,
+        event: ModerationEvent
+    ) -> bool:
+        if (
+            request.user.is_superuser
+            or
+            request.user.contributor.id == event.contributor.id
+        ):
+            return True
+
+        return False
