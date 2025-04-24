@@ -316,11 +316,11 @@ class ProductionLocationsTest(BaseAPITest):
                 "lat": 24.1166236
             },
             "rba_id": "RBA-12345678",
-            "duns_id": "15-048-3782",
+            "duns_id": "150483782",
             "lei_id": "529900T8BM49AURSDO55"
         }
         expected_rba_id = "RBA-12345678"
-        expected_duns_id = "15-048-3782"
+        expected_duns_id = "150483782"
         expected_lei_id = "529900T8BM49AURSDO55"
 
         self.open_search_client.index(
