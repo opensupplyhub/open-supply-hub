@@ -2,20 +2,16 @@ require 'json'
 
 def filter(event)
   lei_id = event.get('lei_id_value')
-  lei_id_value = ""
 
   if lei_id
     begin
       parsed = JSON.parse(lei_id)
-      if parsed['raw_value']
-        lei_id_value = parsed['raw_value'].strip
+      if parsed['raw_value'] && !parsed['raw_value'].strip.empty?
+        event.set('lei_id', parsed['raw_value'].strip)
       end
-    rescue JSON::ParserError => e
-      lei_id_value = ""
+    rescue JSON::ParserError
     end
   end
-
-  event.set('lei_id', lei_id_value)
 
   return [event]
 end
@@ -30,32 +26,32 @@ test 'valid JSON sets trimmed raw_value correctly' do
   end
 end
 
-test 'invalid JSON sets lei_id to empty string' do
+test 'invalid JSON does not set lei_id' do
   in_event do
     { 'lei_id_value' => '{invalid_json}' }
   end
 
-  expect('returns empty string') do |events|
-    events[0].get('lei_id') == ''
+  expect('field is not present') do |events|
+    !events[0].include?('lei_id')
   end
 end
 
-test 'missing raw_value sets lei_id to empty string' do
+test 'missing raw_value does not set lei_id' do
   in_event do
     { 'lei_id_value' => '{"something": "else"}' }
   end
 
-  expect('returns empty string') do |events|
-    events[0].get('lei_id') == ''
+  expect('field is not present') do |events|
+    !events[0].include?('lei_id')
   end
 end
 
-test 'no input sets lei_id to empty string' do
+test 'no input does not set lei_id' do
   in_event do
     {}
   end
 
-  expect('returns empty string') do |events|
-    events[0].get('lei_id') == ''
+  expect('field is not present') do |events|
+    !events[0].include?('lei_id')
   end
 end

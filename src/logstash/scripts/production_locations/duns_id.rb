@@ -2,20 +2,16 @@ require 'json'
 
 def filter(event)
   duns_id = event.get('duns_id_value')
-  duns_id_value = ""
 
   if duns_id
     begin
       parsed = JSON.parse(duns_id)
-      if parsed['raw_value']
-        duns_id_value = parsed['raw_value'].strip
+      if parsed['raw_value'] && !parsed['raw_value'].strip.empty?
+        event.set('duns_id', parsed['raw_value'].strip)
       end
-    rescue JSON::ParserError => e
-      duns_id_value = ""
+    rescue JSON::ParserError
     end
   end
-
-  event.set('duns_id', duns_id_value)
 
   return [event]
 end
@@ -30,32 +26,32 @@ test 'valid JSON sets trimmed raw_value correctly' do
   end
 end
 
-test 'invalid JSON sets duns_id to empty string' do
+test 'invalid JSON does not set duns_id' do
   in_event do
     { 'duns_id_value' => '{invalid_json}' }
   end
 
-  expect('returns empty string') do |events|
-    events[0].get('duns_id') == ''
+  expect('field is not present') do |events|
+    !events[0].include?('duns_id')
   end
 end
 
-test 'missing raw_value sets duns_id to empty string' do
+test 'missing raw_value does not set duns_id' do
   in_event do
     { 'duns_id_value' => '{"something": "else"}' }
   end
 
-  expect('returns empty string') do |events|
-    events[0].get('duns_id') == ''
+  expect('field is not present') do |events|
+    !events[0].include?('duns_id')
   end
 end
 
-test 'no input sets duns_id to empty string' do
+test 'no input does not set duns_id' do
   in_event do
     {}
   end
 
-  expect('returns empty string') do |events|
-    events[0].get('duns_id') == ''
+  expect('field is not present') do |events|
+    !events[0].include?('duns_id')
   end
 end

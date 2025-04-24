@@ -381,15 +381,6 @@ SELECT
             ae.value::TEXT
           FROM
             api_extendedfield ae
-          WHERE
-            ae.field_name = 'rba_id'
-            AND ae.facility_claim_id = afc.id
-        ),
-        (
-          SELECT
-            ae.value::TEXT
-          FROM
-            api_extendedfield ae
             LEFT JOIN api_facilitylistitem afli ON afli.id = af.created_from_id
           WHERE
             ae.field_name = 'rba_id'
@@ -427,15 +418,6 @@ SELECT
             ae.value::TEXT
           FROM
             api_extendedfield ae
-          WHERE
-            ae.field_name = 'duns_id'
-            AND ae.facility_claim_id = afc.id
-        ),
-        (
-          SELECT
-            ae.value::TEXT
-          FROM
-            api_extendedfield ae
             LEFT JOIN api_facilitylistitem afli ON afli.id = af.created_from_id
           WHERE
             ae.field_name = 'duns_id'
@@ -468,15 +450,6 @@ SELECT
   (
     SELECT
       COALESCE(
-        (
-          SELECT
-            ae.value::TEXT
-          FROM
-            api_extendedfield ae
-          WHERE
-            ae.field_name = 'lei_id'
-            AND ae.facility_claim_id = afc.id
-        ),
         (
           SELECT
             ae.value::TEXT
