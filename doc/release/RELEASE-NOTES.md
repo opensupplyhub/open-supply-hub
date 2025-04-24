@@ -19,6 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe schema changes here.*
 
 ### Code/API changes
+* [OSDEV-1926](https://opensupplyhub.atlassian.net/browse/OSDEV-1926) - Introduced support for submitting additional identifiers when uploading a new production location or modifying an existing one. Additional identifiers can now be added via the API (POST `api/facilities/`, POST a`pi/v1/production-locations/`, PATCH a`pi/v1/production-locations/{os_id}/`) or through list uploads. The system currently supports three types of identifiers: DUNS (Data Universal Numbering System), LEI (Legal Entity Identifier), and RBA Online ID. The provided identifiers are stored as standalone fields in the `api_extendedfields` table.
 * [OSDEV-1927](https://opensupplyhub.atlassian.net/browse/OSDEV-1927) - Added additional identifiers (DUNS , RBA Online ID and LEI) to the GET `/v1/production-locations/` and GET `/v1/production-locations/{os_id}/` endpoints.
 
 ### Architecture/Environment changes
@@ -31,6 +32,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1914](https://opensupplyhub.atlassian.net/browse/OSDEV-1914) - The following changes have been made:
     * Fixed an issue with fuzzy search on fields containing long text. Replaced the `match` query with `match_phrase` (with a configurable `slop` parameter) for such cases to improve accuracy for the GET `/api/v1/production-locations/` endpoint.
     * Replaced regular text with a toast component to display server errors when fetching potential matches on the Contribution Record page of the Moderation queue dashboard.
+* [OSDEV-1886](https://opensupplyhub.atlassian.net/browse/OSDEV-1886) - Fixed the script to run within the Destroy Environment GitHub workflow to delete the Lambda@Edge functions before destroying the infrastructure.
 
 ### What's new
 * [OSDEV-1930](https://opensupplyhub.atlassian.net/browse/OSDEV-1930) - Implemented front-end logic to display additional identifiers such as RBA, LEI, and DUNS IDs as data points on the production location profile page, once the `show_additional_identifiers` feature flag is returned with a true value from the backend.

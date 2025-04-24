@@ -3,6 +3,8 @@ from typing import List, Dict
 from contricleaner.lib.dto.list_dto import ListDTO
 from contricleaner.lib.dto.row_dto import RowDTO
 from contricleaner.lib.handlers.list_row_handler import ListRowHandler
+from contricleaner.lib.serializers.row_serializers.\
+    row_additional_ids_serializer import RowAdditionalIdsSerializer
 from contricleaner.lib.serializers.row_serializers.composite_row_serializer \
     import RowSerializer
 from contricleaner.lib.serializers.row_serializers.composite_row_serializer \
@@ -21,8 +23,7 @@ from contricleaner.lib.serializers.row_serializers.\
 from contricleaner.lib.serializers.row_serializers.row_sector_serializer \
     import RowSectorSerializer
 from contricleaner.lib.serializers.row_serializers \
-    .row_required_fields_serializer \
-    import RowRequiredFieldsSerializer
+    .row_required_fields_serializer import RowRequiredFieldsSerializer
 from contricleaner.lib.serializers.row_serializers.row_coordinates_serializer \
     import RowCoordinatesSerializer
 
@@ -65,6 +66,7 @@ class SerializationHandler(ListRowHandler):
             RowRequiredFieldsSerializer(),
             RowFacilityTypeSerializer(split_pattern),
             RowCoordinatesSerializer(),
+            RowAdditionalIdsSerializer(),
             RowEmptySerializer(),
         )
 
