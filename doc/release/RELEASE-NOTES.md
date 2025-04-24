@@ -31,7 +31,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1914](https://opensupplyhub.atlassian.net/browse/OSDEV-1914) - The following changes have been made:
     * Fixed an issue with fuzzy search on fields containing long text. Replaced the `match` query with `match_phrase` (with a configurable `slop` parameter) for such cases to improve accuracy for the GET `/api/v1/production-locations/` endpoint.
     * Replaced regular text with a toast component to display server errors when fetching potential matches on the Contribution Record page of the Moderation queue dashboard.
-* [OSDEV-1886](https://opensupplyhub.atlassian.net/browse/OSDEV-1886) - Fixed the script to run within the Destroy Environment GitHub workflow to delete the Lambda@Edge functions before destroying the infrastructure.
+* [OSDEV-1886](https://opensupplyhub.atlassian.net/browse/OSDEV-1886)
+    * Fixed the script to run within the Destroy Environment GitHub workflow to delete the Lambda@Edge functions before destroying the infrastructure.
+    * Implemented prevention of forced script termination during the deletion of Lambda@Edge functions. The exit code is now managed internally, ensuring proper handling without abrupt script termination.
 
 ### What's new
 * [OSDEV-1930](https://opensupplyhub.atlassian.net/browse/OSDEV-1930) - Implemented front-end logic to display additional identifiers such as RBA, LEI, and DUNS IDs as data points on the production location profile page, once the `show_additional_identifiers` feature flag is returned with a true value from the backend.
