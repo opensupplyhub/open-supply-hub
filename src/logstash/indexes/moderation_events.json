@@ -22,6 +22,9 @@
         "contributor_name": {
           "type": "keyword"
         },
+        "contributor_email": {
+          "type": "keyword"
+        },
         "claim_id": {
           "type": "keyword"
         },
