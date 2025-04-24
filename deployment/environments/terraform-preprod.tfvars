@@ -29,10 +29,11 @@ app_fargate_cpu = "2048"
 app_fargate_memory = "4096"
 
 app_ecs_max_cpu_threshold         = 85
-app_ecs_min_cpu_threshold         = 30
+app_ecs_min_cpu_threshold         = 15
 app_ecs_scale_target_max_capacity = 10
 app_ecs_scale_target_min_capacity = 5
-app_ecs_cooldown                  = 120
+app_ecs_cooldown_scale_down       = 300
+app_ecs_cooldown_scale_up         = 180
 
 cli_fargate_cpu = "2048"
 cli_fargate_memory = "8192"
