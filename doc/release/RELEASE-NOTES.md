@@ -19,7 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe schema changes here.*
 
 ### Code/API changes
-* [OSDEV-1926](https://opensupplyhub.atlassian.net/browse/OSDEV-1926) - Introduced support for submitting additional identifiers when uploading a new production location or modifying an existing one. Additional identifiers can now be added via the API (POST `api/facilities/`, POST a`pi/v1/production-locations/`, PATCH a`pi/v1/production-locations/{os_id}/`) or through list uploads. The system currently supports three types of identifiers: DUNS (Data Universal Numbering System), LEI (Legal Entity Identifier), and RBA Online ID. The provided identifiers are stored as standalone fields in the `api_extendedfields` table.
+* [OSDEV-1926](https://opensupplyhub.atlassian.net/browse/OSDEV-1926) - Introduced support for submitting additional identifiers when uploading a new production location or modifying an existing one. Additional identifiers can now be added via the API (POST `api/facilities/`, POST `api/v1/production-locations/`, PATCH `api/v1/production-locations/{os_id}/`) or through list uploads. The system currently supports three types of identifiers: DUNS (Data Universal Numbering System), LEI (Legal Entity Identifier), and RBA Online ID. The provided identifiers are stored as standalone fields in the `api_extendedfields` table.
 * [OSDEV-1927](https://opensupplyhub.atlassian.net/browse/OSDEV-1927) - Added additional identifiers (DUNS , RBA Online ID and LEI) to the GET `/v1/production-locations/` and GET `/v1/production-locations/{os_id}/` endpoints.
 
 ### Architecture/Environment changes
