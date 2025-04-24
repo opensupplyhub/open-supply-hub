@@ -224,3 +224,4 @@ To run the Playwright tests, use the following command:
 ```
 docker compose -f docker-compose.tests.yml run --rm --build --entrypoint "npx playwright test -c playwright.config.ts" playwright-test
 ```
+
