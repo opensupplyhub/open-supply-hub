@@ -90,8 +90,11 @@ class ModerationEventsService:
         if request.user.is_superuser:
             return ModerationEventsService.Role.MODERATOR
 
-        if event:
-            if request.user.contributor.id == event.contributor.id:
-                return ModerationEventsService.Role.OWNER
+        if (
+            event
+            and
+            request.user.contributor.id == event.contributor.id
+        ):
+            return ModerationEventsService.Role.OWNER
 
         return ModerationEventsService.Role.UNKNOWN
