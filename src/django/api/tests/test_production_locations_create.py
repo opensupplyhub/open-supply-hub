@@ -417,3 +417,58 @@ class TestProductionLocationsCreate(APITestCase):
         self.assertEqual(len(response_body_dict), 4)
         self.assertEqual(name, valid_char_field)
         self.assertEqual(parent_company, valid_char_field)
+
+    @patch('api.geocoding.requests.get')
+    def test_moderation_event_created_with_valid_additional_ids(
+        self, mock_get
+    ):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        valid_req_body = json.dumps(
+            {
+                'source': 'SLC',
+                'name': 'Blue Horizon Facility',
+                'address': '990 Spring Garden St., Philadelphia PA 19123',
+                'country': 'US',
+                'duns_id': '123456789',
+                'lei_id': '12345678901234567890',
+                'rba_id': '1234567890123456789012345678901234567890',
+            }
+        )
+
+        response = self.client.post(
+            self.url, valid_req_body, content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 202)
+
+        response_body_dict = json.loads(response.content)
+        response_moderation_id = response_body_dict.get('moderation_id')
+        moderation_event = ModerationEvent.objects.get(
+            pk=response_moderation_id
+        )
+
+        self.assertEqual(
+            response_body_dict.get('moderation_status'), 'PENDING'
+        )
+        self.assertEqual(response_moderation_id, str(moderation_event.uuid))
+        self.assertIn("cleaned_data", response_body_dict)
+        self.assertEqual(len(response_body_dict), 4)
+        self.assertIn('duns_id', moderation_event.cleaned_data['raw_json'])
+        self.assertIn('lei_id', moderation_event.cleaned_data['raw_json'])
+        self.assertIn('rba_id', moderation_event.cleaned_data['raw_json'])
+        self.assertIn("lei_id", moderation_event.cleaned_data['fields'])
+
+        self.assertEqual(
+            moderation_event.cleaned_data['fields']['lei_id'],
+            '12345678901234567890',
+        )
+        self.assertIn("rba_id", moderation_event.cleaned_data['fields'])
+        self.assertEqual(
+            moderation_event.cleaned_data['fields']['rba_id'],
+            '1234567890123456789012345678901234567890',
+        )
+        self.assertIn("duns_id", moderation_event.cleaned_data['fields'])
+        self.assertEqual(
+            moderation_event.cleaned_data['fields']['duns_id'], '123456789'
+        )
