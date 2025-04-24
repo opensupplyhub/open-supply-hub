@@ -425,19 +425,15 @@ class TestProductionLocationsCreate(APITestCase):
         mock_get.return_value = Mock(ok=True, status_code=200)
         mock_get.return_value.json.return_value = geocoding_data
 
-        additional_identifiers = {
-            'duns_id': '123456789',
-            'lei_id': '12345678901234567890',
-            'rba_id': '1234567890123456789012345678901234567890',
-        }
-
         valid_req_body = json.dumps(
             {
                 'source': 'SLC',
                 'name': 'Blue Horizon Facility',
                 'address': '990 Spring Garden St., Philadelphia PA 19123',
                 'country': 'US',
-                'additional_identifiers': additional_identifiers,
+                'duns_id': '123456789',
+                'lei_id': '12345678901234567890',
+                'rba_id': '1234567890123456789012345678901234567890',
             }
         )
 
@@ -458,15 +454,9 @@ class TestProductionLocationsCreate(APITestCase):
         self.assertEqual(response_moderation_id, str(moderation_event.uuid))
         self.assertIn("cleaned_data", response_body_dict)
         self.assertEqual(len(response_body_dict), 4)
-        self.assertIn(
-            "additional_identifiers", moderation_event.cleaned_data['raw_json']
-        )
-        self.assertDictEqual(
-            moderation_event.cleaned_data['raw_json'][
-                'additional_identifiers'
-            ],
-            additional_identifiers,
-        )
+        self.assertIn('duns_id', moderation_event.cleaned_data['raw_json'])
+        self.assertIn('lei_id', moderation_event.cleaned_data['raw_json'])
+        self.assertIn('rba_id', moderation_event.cleaned_data['raw_json'])
         self.assertIn("lei_id", moderation_event.cleaned_data['fields'])
 
         self.assertEqual(
