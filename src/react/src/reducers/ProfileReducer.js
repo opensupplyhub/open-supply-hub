@@ -35,6 +35,7 @@ import {
     registrationFieldsEnum,
     profileFieldsEnum,
     profileSummaryFieldsEnum,
+    CSRF_TOKEN_KEY,
 } from '../util/constants';
 
 const initialState = Object.freeze({
@@ -128,7 +129,11 @@ const completeGettingAPIToken = (state, payload) =>
         },
     });
 
-const handleLogin = (state, { id, email }) => {
+const handleLogin = (state, { id, email, csrfToken }) => {
+    if (csrfToken) {
+        window.localStorage.setItem(CSRF_TOKEN_KEY, csrfToken);
+    }
+
     if (id !== state.profile.id) {
         return state;
     }
@@ -136,6 +141,17 @@ const handleLogin = (state, { id, email }) => {
     return update(state, {
         profile: {
             email: { $set: email },
+        },
+    });
+};
+
+const handleLogout = state => {
+    window.localStorage.removeItem(CSRF_TOKEN_KEY);
+
+    return update(state, {
+        profile: {
+            email: { $set: initialState.profile.email },
+            password: { $set: initialState.profile.password },
         },
     });
 };
@@ -166,13 +182,7 @@ export default createReducer(
             }),
         [completeSessionLogin]: handleLogin,
         [completeSubmitLoginForm]: handleLogin,
-        [completeSubmitLogOut]: state =>
-            update(state, {
-                profile: {
-                    email: { $set: initialState.profile.email },
-                    password: { $set: initialState.profile.password },
-                },
-            }),
+        [completeSubmitLogOut]: handleLogout,
         [startFetchUserProfile]: state =>
             update(state, {
                 fetching: { $set: true },
