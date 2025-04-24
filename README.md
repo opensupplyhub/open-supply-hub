@@ -224,10 +224,3 @@ To run the Playwright tests, use the following command:
 ```
 docker compose -f docker-compose.tests.yml run --rm --build --entrypoint "npx playwright test -c playwright.config.ts" playwright-test
 ```
-
-### Ruby Tests
-
-To run the Ruby tests for logstash filters, use the following command:
-```
-ruby src/logstash/scripts/test/run_all.rb
-```

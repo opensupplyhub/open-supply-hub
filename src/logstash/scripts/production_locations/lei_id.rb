@@ -19,3 +19,43 @@ def filter(event)
 
   return [event]
 end
+
+test 'valid JSON sets trimmed raw_value correctly' do
+  in_event do
+    { 'lei_id_value' => '{"raw_value": " 529900T8BM49AURSDO55 "}' }
+  end
+
+  expect('returns trimmed string') do |events|
+    events[0].get('lei_id') == '529900T8BM49AURSDO55'
+  end
+end
+
+test 'invalid JSON sets lei_id to empty string' do
+  in_event do
+    { 'lei_id_value' => '{invalid_json}' }
+  end
+
+  expect('returns empty string') do |events|
+    events[0].get('lei_id') == ''
+  end
+end
+
+test 'missing raw_value sets lei_id to empty string' do
+  in_event do
+    { 'lei_id_value' => '{"something": "else"}' }
+  end
+
+  expect('returns empty string') do |events|
+    events[0].get('lei_id') == ''
+  end
+end
+
+test 'no input sets lei_id to empty string' do
+  in_event do
+    {}
+  end
+
+  expect('returns empty string') do |events|
+    events[0].get('lei_id') == ''
+  end
+end
