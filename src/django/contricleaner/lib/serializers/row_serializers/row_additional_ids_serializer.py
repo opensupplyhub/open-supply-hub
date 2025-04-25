@@ -32,7 +32,7 @@ class RowAdditionalIdsSerializer(RowSerializer):
                 current['errors'].append(
                     {
                         'message': f'Invalid `duns_id`: {value}. '
-                        'It should be a 9-digit number.',
+                        'It should be a string of 9 digits.',
                         'field': key,
                         'type': 'ValueError',
                     }
