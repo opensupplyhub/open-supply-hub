@@ -20,8 +20,8 @@ apiRequest.interceptors.request.use(config => {
         ...config.headers,
         'X-OAR-Client-Key': window.ENVIRONMENT.OAR_CLIENT_KEY,
         'X-CSRFToken':
-            config.headers['X-CSRFToken'] ||
             window.localStorage.getItem(CSRF_TOKEN_KEY) ||
+            config.headers['X-CSRFToken'] ||
             undefined,
     };
 
