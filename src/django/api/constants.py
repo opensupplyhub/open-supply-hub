@@ -197,6 +197,9 @@ class APIErrorMessages:
     MAINTENANCE_MODE = ('Open Supply Hub is undergoing maintenance and '
                         'not accepting new data at the moment. Please '
                         'try again in a few minutes.')
+    TEMPORARILY_UNAVAILABLE = (
+        'The endpoint is temporarily unavailable. Please try again later.'
+    )
 
 
 class FacilitiesDownloadSettings:

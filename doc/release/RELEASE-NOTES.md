@@ -3,6 +3,29 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.2.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 25, 2025
+
+### Database changes
+
+#### Migrations:
+* 0168_introduce_a_switch_to_block_location_downloads.py - This migration introduces a new switch called `block_location_downloads`, which will be used to block the usage of the `api/facilities-downloads/` GET endpoint when necessary.
+
+### Code/API changes
+* [OSDEV-1961](https://opensupplyhub.atlassian.net/browse/OSDEV-1961) - Implemented logic to utilize the `block_location_downloads` switch. When enabled, it restricts access to the `api/facilities-downloads/` GET endpoint to prevent bulk downloads.
+
+### Architecture/Environment changes
+* [OSDEV-1961](https://opensupplyhub.atlassian.net/browse/OSDEV-1961) - Enabled IP address logging for the Django ECS task.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.2.0
 
 ## Introduction
