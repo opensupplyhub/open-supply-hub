@@ -3,6 +3,7 @@ from typing import Union
 from django.contrib.auth.models import AnonymousUser
 from rest_framework.exceptions import ValidationError
 from rest_framework import viewsets, mixins
+from waffle import switch_is_active
 
 from api.pagination import PageAndSizePagination
 from api.models.facility.facility_index import FacilityIndex
@@ -15,6 +16,8 @@ from api.serializers.facility.facility_download_serializer_embed_mode \
     import FacilityDownloadSerializerEmbedMode
 from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.constants import FacilitiesDownloadSettings
+from api.exceptions import ServiceUnavailableException
+from api.constants import APIErrorMessages
 
 
 class FacilitiesDownloadViewSet(mixins.ListModelMixin,
@@ -42,6 +45,11 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         Returns a list of facilities in array format for a given query.
         (Maximum of 250 facilities per page.)
         """
+        if switch_is_active('block_location_downloads'):
+            raise ServiceUnavailableException(
+                APIErrorMessages.TEMPORARILY_UNAVAILABLE
+            )
+
         params = FacilityQueryParamsSerializer(data=request.query_params)
 
         if not params.is_valid():
