@@ -300,3 +300,56 @@ class ProductionLocationsTest(BaseAPITest):
         self.assertEqual(result['errors'][0]['field'], 'geo_polygon')
         self.assertEqual(result['errors'][0]['detail'], 'This field may not be blank.')
 
+    def test_production_locations_additional_identifiers(self):
+        doc = {
+            "sector": [
+                "Apparel"
+            ],
+            "address": "Test Address",
+            "name": "Test Name",
+            "country": {
+                "alpha_2": "US"
+            },
+            "os_id": "UC3020952SV27JF",
+            "coordinates": {
+                "lon": 90.378162,
+                "lat": 24.1166236
+            },
+            "rba_id": "RBA-12345678",
+            "duns_id": "150483782",
+            "lei_id": "529900T8BM49AURSDO55"
+        }
+        expected_rba_id = "RBA-12345678"
+        expected_duns_id = "150483782"
+        expected_lei_id = "529900T8BM49AURSDO55"
+
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=doc,
+            id=self.open_search_client.count()
+        )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
+
+        search_os_id = "UC3020952SV27JF"
+        query = f"?size=1&os_id={search_os_id}"
+
+        response = requests.get(
+                f"{self.root_url}/api/v1/production-locations/{query}",
+                headers=self.basic_headers,
+            )
+
+        result = response.json()
+        self.assertEqual(
+            result['data'][0]['rba_id'],
+            expected_rba_id
+        )
+        self.assertEqual(
+            result['data'][0]['duns_id'],
+            expected_duns_id
+        )
+        self.assertEqual(
+            result['data'][0]['lei_id'],
+            expected_lei_id
+        )
