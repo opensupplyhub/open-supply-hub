@@ -1,4 +1,5 @@
 from typing import Union
+import logging
 
 from django.contrib.auth.models import AnonymousUser
 from rest_framework.exceptions import ValidationError
@@ -18,6 +19,8 @@ from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.constants import FacilitiesDownloadSettings
 from api.exceptions import ServiceUnavailableException
 from api.constants import APIErrorMessages
+
+logger = logging.getLogger(__name__)
 
 
 class FacilitiesDownloadViewSet(mixins.ListModelMixin,
@@ -54,6 +57,8 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
         if not params.is_valid():
             raise ValidationError(params.errors)
+
+        logger.info(f'User ID: {request.user.id}')
 
         queryset = FacilityIndex \
             .objects \
