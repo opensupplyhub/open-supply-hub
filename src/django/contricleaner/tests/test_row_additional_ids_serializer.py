@@ -60,7 +60,7 @@ class RowAdditionalIdsSerializerTest(TestCase):
         self.assertEqual(len(result["errors"]), 1)
         self.assertEqual(
             result["errors"][0]["message"],
-            "Invalid `duns_id`: 12345678. It should be a 9-digit number.",
+            "Invalid `duns_id`: 12345678. It should be a string of 9 digits.",
         )
         self.assertEqual(result["errors"][0]["field"], "duns_id")
         self.assertEqual(result["errors"][0]["type"], "ValueError")
