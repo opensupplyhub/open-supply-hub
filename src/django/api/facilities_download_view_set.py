@@ -58,7 +58,9 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         if not params.is_valid():
             raise ValidationError(params.errors)
 
-        logger.info(f'User ID: {request.user.id}')
+        logger.info(
+            f'Facility downloads request for User ID: {request.user.id}'
+        )
 
         queryset = FacilityIndex \
             .objects \
