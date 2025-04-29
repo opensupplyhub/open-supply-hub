@@ -10,13 +10,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Release date: May 3, 2025
 
 ### Database changes
-* *Describe high-level database changes.*
 
 #### Migrations:
-* 0168_introduce_show_additional_identifiers_switch.py - This migration introduces a new switch called `show_additional_identifiers`, which will be used on the production location profile page to show or hide additional identifiers of the production location.
-
-#### Schema changes
-* *Describe schema changes here.*
+* 0169_introduce_show_additional_identifiers_switch.py - This migration introduces a new switch called `show_additional_identifiers`, which will be used on the production location profile page to show or hide additional identifiers of the production location.
 
 ### Code/API changes
 * [OSDEV-1926](https://opensupplyhub.atlassian.net/browse/OSDEV-1926) - Introduced support for submitting additional identifiers when uploading a new production location or modifying an existing one. Additional identifiers can now be added via the API (POST `api/facilities/`, POST `api/v1/production-locations/`, PATCH `api/v1/production-locations/{os_id}/`) or through list uploads. The system currently supports three types of identifiers: DUNS (Data Universal Numbering System), LEI (Legal Entity Identifier), and RBA Online ID. The provided identifiers are stored as standalone fields in the `api_extendedfields` table.
@@ -46,6 +42,29 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `migrate`
     * `reindex_database`
 * Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to update the index mapping for the `production-locations` index after adding the new fields `rba_id`, `duns_id`, `lei_id` and for the `moderation-events` index after adding the new field `contributor_email`.
+
+
+## Release 2.2.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 25, 2025
+
+### Database changes
+
+#### Migrations:
+* 0168_introduce_a_switch_to_block_location_downloads.py - This migration introduces a new switch called `block_location_downloads`, which will be used to block the usage of the `api/facilities-downloads/` GET endpoint when necessary.
+
+### Code/API changes
+* [OSDEV-1961](https://opensupplyhub.atlassian.net/browse/OSDEV-1961) - Implemented logic to utilize the `block_location_downloads` switch. When enabled, it restricts access to the `api/facilities-downloads/` GET endpoint to prevent bulk downloads.
+
+### Architecture/Environment changes
+* [OSDEV-1961](https://opensupplyhub.atlassian.net/browse/OSDEV-1961) - Enabled IP address logging for the Django ECS task.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
 
 
 ## Release 2.2.0
