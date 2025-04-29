@@ -23,6 +23,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [OSDEV-1960](https://opensupplyhub.atlassian.net/browse/OSDEV-1960) - Disabled deletion protection and final snapshot creation for the RDS instance when it is deleted in the pre-prod environment.
+* [OSDEV-1746](https://opensupplyhub.atlassian.net/browse/OSDEV-1746) - Implemented auto-scaling to dynamically adjust instance count based on load metrics for cost-efficient resource utilization and high availability.
 
 ### Bugfix
 * *Describe bugfix here.*
@@ -53,7 +54,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Architecture/Environment changes
 * [OSDEV-1935](https://opensupplyhub.atlassian.net/browse/OSDEV-1935) - Added terraform module for creating IAM roles in production and test AWS accounts to enable integration with Vanta auditor.
 * [OSDEV-1895](https://opensupplyhub.atlassian.net/browse/OSDEV-1895) - Updated the rules to send the `csrftoken` cookie with the `HttpOnly` flag to the user. Implemented logic to retrieve the `csrftoken` upon user login and save it to `localStorage`. Added functionality to set the `csrftoken` from `localStorage` in Axios headers.
-* [OSDEV-1746](https://opensupplyhub.atlassian.net/browse/OSDEV-1746) - Implemented auto-scaling to dynamically adjust instance count based on load metrics for cost-efficient resource utilization and high availability.
 
 ### Bugfix
 * [OSDEV-1943](https://opensupplyhub.atlassian.net/browse/OSDEV-1943) - Fixed flickering behavior when opening the SLC form to contribute to an existing production location by marking fields as touched if they match the fetched data, ensuring smoother UI during re-renders.
