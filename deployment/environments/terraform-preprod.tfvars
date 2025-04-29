@@ -21,6 +21,8 @@ rds_database_identifier = "opensupplyhub-enc-pp"
 rds_database_name = "opensupplyhub"
 rds_multi_az = false
 rds_storage_encrypted = true
+rds_skip_final_snapshot = true
+rds_deletion_protection = false
 
 app_ecs_desired_count = "10"
 app_ecs_deployment_min_percent = "100"
