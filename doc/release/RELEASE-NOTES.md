@@ -3,6 +3,37 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.4.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: May 17, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* *Describe migrations here.*
+
+#### Schema changes
+* *Describe schema changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* [OSDEV-1960](https://opensupplyhub.atlassian.net/browse/OSDEV-1960) - Disabled deletion protection and final snapshot creation for the RDS instance when it is deleted in the pre-prod environment.
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* *Provide release instructions here.*
+
+
 ## Release 2.3.0
 
 ## Introduction
@@ -10,16 +41,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Release date: May 3, 2025
 
 ### Database changes
-* *Describe high-level database changes.*
 
 #### Migrations:
-* 0168_introduce_show_additional_identifiers_switch.py - This migration introduces a new switch called `show_additional_identifiers`, which will be used on the production location profile page to show or hide additional identifiers of the production location.
-
-#### Schema changes
-* *Describe schema changes here.*
+* 0169_introduce_show_additional_identifiers_switch.py - This migration introduces a new switch called `show_additional_identifiers`, which will be used on the production location profile page to show or hide additional identifiers of the production location.
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-1926](https://opensupplyhub.atlassian.net/browse/OSDEV-1926) - Introduced support for submitting additional identifiers when uploading a new production location or modifying an existing one. Additional identifiers can now be added via the API (POST `api/facilities/`, POST `api/v1/production-locations/`, PATCH `api/v1/production-locations/{os_id}/`) or through list uploads. The system currently supports three types of identifiers: DUNS (Data Universal Numbering System), LEI (Legal Entity Identifier), and RBA Online ID. The provided identifiers are stored as standalone fields in the `api_extendedfields` table.
+* [OSDEV-1927](https://opensupplyhub.atlassian.net/browse/OSDEV-1927) - Added additional identifiers (DUNS , RBA Online ID and LEI) to the GET `/v1/production-locations/` and GET `/v1/production-locations/{os_id}/` endpoints.
+* [OSDEV-1892](https://opensupplyhub.atlassian.net/browse/OSDEV-1892) - Implemented access restrictions for the `GET /v1/moderation-events/` and `GET /v1/moderation-events/{moderation_id}` endpoints so that only the contribution owner or a moderator can access them. Updated the `Logstash` configuration for the `moderation-events` index to include the `contributor_email` field when sending data to `OpenSearch`.
 
 ### Architecture/Environment changes
 * [OSDEV-1935](https://opensupplyhub.atlassian.net/browse/OSDEV-1935) - Added terraform module for creating IAM roles in production and test AWS accounts to enable integration with Vanta auditor.
@@ -32,10 +61,36 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1914](https://opensupplyhub.atlassian.net/browse/OSDEV-1914) - The following changes have been made:
     * Fixed an issue with fuzzy search on fields containing long text. Replaced the `match` query with `match_phrase` (with a configurable `slop` parameter) for such cases to improve accuracy for the GET `/api/v1/production-locations/` endpoint.
     * Replaced regular text with a toast component to display server errors when fetching potential matches on the Contribution Record page of the Moderation queue dashboard.
-* [OSDEV-1886](https://opensupplyhub.atlassian.net/browse/OSDEV-1886) - Fixed the script to run within the Destroy Environment GitHub workflow to delete the Lambda@Edge functions before destroying the infrastructure.
+* [OSDEV-1886](https://opensupplyhub.atlassian.net/browse/OSDEV-1886)
+    * Fixed the script to run within the Destroy Environment GitHub workflow to delete the Lambda@Edge functions before destroying the infrastructure.
+    * Implemented prevention of forced script termination during the deletion of Lambda@Edge functions. The exit code is now managed internally, ensuring proper handling without abrupt script termination.
 
 ### What's new
 * [OSDEV-1930](https://opensupplyhub.atlassian.net/browse/OSDEV-1930) - Implemented front-end logic to display additional identifiers such as RBA, LEI, and DUNS IDs as data points on the production location profile page, once the `show_additional_identifiers` feature flag is returned with a true value from the backend.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to update the index mapping for the `production-locations` index after adding the new fields `rba_id`, `duns_id`, `lei_id` and for the `moderation-events` index after adding the new field `contributor_email`.
+
+
+## Release 2.2.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 25, 2025
+
+### Database changes
+
+#### Migrations:
+* 0168_introduce_a_switch_to_block_location_downloads.py - This migration introduces a new switch called `block_location_downloads`, which will be used to block the usage of the `api/facilities-downloads/` GET endpoint when necessary.
+
+### Code/API changes
+* [OSDEV-1961](https://opensupplyhub.atlassian.net/browse/OSDEV-1961) - Implemented logic to utilize the `block_location_downloads` switch. When enabled, it restricts access to the `api/facilities-downloads/` GET endpoint to prevent bulk downloads.
+
+### Architecture/Environment changes
+* [OSDEV-1961](https://opensupplyhub.atlassian.net/browse/OSDEV-1961) - Enabled IP address logging for the Django ECS task.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:

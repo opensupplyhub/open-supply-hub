@@ -95,6 +95,14 @@ def create_extendedfield(field, field_value, item, contributor):
                     item.sector
                 )
             )
+        elif (
+            field == ExtendedField.DUNS_ID
+            or field == ExtendedField.LEI_ID
+            or field == ExtendedField.RBA_ID
+        ):
+            field_value = {
+                'raw_value': field_value,
+            }
 
         ExtendedField.objects.create(
             contributor=contributor,
@@ -104,12 +112,17 @@ def create_extendedfield(field, field_value, item, contributor):
         )
 
 
-RAW_DATA_FIELDS = (ExtendedField.NUMBER_OF_WORKERS,
-                   ExtendedField.NATIVE_LANGUAGE_NAME,
-                   ExtendedField.PARENT_COMPANY,
-                   ExtendedField.PRODUCT_TYPE,
-                   ExtendedField.FACILITY_TYPE,
-                   ExtendedField.PROCESSING_TYPE)
+RAW_DATA_FIELDS = (
+    ExtendedField.NUMBER_OF_WORKERS,
+    ExtendedField.NATIVE_LANGUAGE_NAME,
+    ExtendedField.PARENT_COMPANY,
+    ExtendedField.PRODUCT_TYPE,
+    ExtendedField.FACILITY_TYPE,
+    ExtendedField.PROCESSING_TYPE,
+    ExtendedField.DUNS_ID,
+    ExtendedField.LEI_ID,
+    ExtendedField.RBA_ID,
+)
 
 
 def create_extendedfields_for_single_item(item, raw_data):

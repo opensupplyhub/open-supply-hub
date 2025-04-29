@@ -8,7 +8,7 @@
       "--workers=${gunicorn_workers}",
       "--timeout=${gunicorn_worker_timeout}",
       "--access-logfile=-",
-      "--access-logformat=%(t)s '%(r)s' %(s)s | %(M)sms | %(a)s",
+      "--access-logformat=%({X-Forwarded-For}i)s %(t)s '%(r)s' %(s)s | %(M)sms",
       "--error-logfile=-",
       "--log-level=info",
       "--capture-output",
