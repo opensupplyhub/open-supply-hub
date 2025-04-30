@@ -3,6 +3,21 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.4.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: May 17, 2025
+
+### Architecture/Environment changes
+* [OSDEV-1949](https://opensupplyhub.atlassian.net/browse/OSDEV-1949) - Setup IP blocking / whitelisting capability for the platform.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.3.0
 
 ## Introduction

@@ -710,3 +710,8 @@ variable "vanta_assumed_role_principals" {
   default   = []
   sensitive = true
 }
+
+variable "cloudfront_distribution_id" {
+  description = "CloudFront distribution ID for specific environment"
+  type        = string
+}
