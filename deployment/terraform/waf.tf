@@ -1,10 +1,4 @@
-provider "aws" {
-  alias  = "us-east-1"
-  region = "us-east-1"
-}
-
 resource "aws_wafv2_ip_set" "ip_whitelist" {
-  provider           = aws.us-east-1
   name               = "whitelist-ipset"
   description        = "Allowed IPs"
   scope              = "CLOUDFRONT"
@@ -17,7 +11,6 @@ resource "aws_wafv2_ip_set" "ip_whitelist" {
 }
 
 resource "aws_wafv2_web_acl" "web_acl" {
-  provider    = aws.us-east-1
   name        = "waf-acl"
   description = "Allow only whitelisted IPs"
   scope       = "CLOUDFRONT"
