@@ -53,5 +53,3 @@ resource "aws_wafv2_web_acl_association" "dev_association" {
   web_acl_arn  = aws_wafv2_web_acl.web_acl.arn
 }
 
-data "aws_caller_identity" "current" {}
-
