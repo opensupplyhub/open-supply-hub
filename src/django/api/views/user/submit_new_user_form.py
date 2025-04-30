@@ -61,8 +61,8 @@ class SubmitNewUserForm(CreateAPIView):
 
             complete_signup(self.request._request, user, 'optional', None)
 
-            # Adding the CSRF token to the response to store it
-            # in local storage for future use and include it in request headers,
+            # Adding the CSRF token to the response to store it in
+            # local storage for future use and include it in request headers,
             # as access to cookies has been restricted by the HttpOnly flag.
             csrf_token = request.META["CSRF_COOKIE"]
             response_data = {
