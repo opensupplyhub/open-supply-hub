@@ -29,7 +29,7 @@ class SubmitNewUserFormTest(APITestCase):
         def patched_validate(self, data):
             data = data.copy()
             data.pop('groups', None)
-            data.pop('user_permissions', None) 
+            data.pop('user_permissions', None)
             return orig_validate(self, data)
 
         UserSerializer.validate = patched_validate
