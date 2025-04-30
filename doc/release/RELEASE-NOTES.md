@@ -23,7 +23,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [OSDEV-1960](https://opensupplyhub.atlassian.net/browse/OSDEV-1960) - Disabled deletion protection and final snapshot creation for the RDS instance when it is deleted in the pre-prod environment.
-* [OSDEV-1746](https://opensupplyhub.atlassian.net/browse/OSDEV-1746) - Implemented auto-scaling to dynamically adjust instance count based on load metrics for cost-efficient resource utilization and high availability.
+* [OSDEV-1746](https://opensupplyhub.atlassian.net/browse/OSDEV-1746) - Implemented auto-scaling to dynamically adjust the Django instance count based on load metrics for cost-efficient resource utilization and high availability.
 
 ### Bugfix
 * *Describe bugfix here.*
