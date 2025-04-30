@@ -212,8 +212,7 @@ In case there is a need to run additional command in the terminal of the Django 
 ### Shut down the pre-prod environment
 
 1. Shutting down the pre-prod environment starts after passing all QA checklist items for the pre-prod.
-2. First step is to destroy pre-prod DB Instance manually via RDS -> Databases -> `opensupplyhub-enc-pp`. Press Modify -> Enable deletion protection=false. Then select Delete in Actions.
-3. Finally, to shut down the Pre-prod the responsible person have to select `Destroy Environment` in the Actions menu. Press run workflow with `main` branch and select `Pre-prod` env.
+2. To shut down the Pre-prod the responsible person have to select `Destroy Environment` in the Actions menu. Press run workflow with `main` branch and select `Pre-prod` env.
 
 ### Post Release Notes
 
