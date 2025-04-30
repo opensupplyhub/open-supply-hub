@@ -57,6 +57,6 @@ resource "aws_wafv2_web_acl" "web_acl" {
 # TODO: switch distribution id to RBA
 resource "aws_wafv2_web_acl_association" "dev_association" {
   provider     = aws.us-east-1
-  resource_arn = "arn:aws:cloudfront::distribution/EM27HGWEBI6LI"
+  resource_arn = "arn:aws:cloudfront::distribution/${var.cloudfront_distribution_id}"
   web_acl_arn  = aws_wafv2_web_acl.web_acl.arn
 }
