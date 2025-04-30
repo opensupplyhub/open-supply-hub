@@ -55,7 +55,7 @@ resource "aws_wafv2_web_acl" "web_acl" {
 }
 
 # TODO: switch distribution id to RBA
-resource "aws_caller_identity" "current" {}
+data "aws_caller_identity" "current" {}
 
 resource "aws_wafv2_web_acl_association" "dev_association" {
   provider     = aws.us-east-1
