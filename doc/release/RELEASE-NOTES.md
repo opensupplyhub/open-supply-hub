@@ -9,13 +9,30 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: May 17, 2025
 
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* *Describe migrations here.*
+
+#### Schema changes
+* *Describe schema changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
 ### Architecture/Environment changes
+* [OSDEV-1960](https://opensupplyhub.atlassian.net/browse/OSDEV-1960) - Disabled deletion protection and final snapshot creation for the RDS instance when it is deleted in the pre-prod environment.
 * [OSDEV-1949](https://opensupplyhub.atlassian.net/browse/OSDEV-1949) - Setup IP blocking / whitelisting capability for the platform.
 
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
 ### Release instructions:
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
+* *Provide release instructions here.*
 
 
 ## Release 2.3.0
