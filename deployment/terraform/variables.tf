@@ -710,3 +710,8 @@ variable "vanta_assumed_role_principals" {
   default   = []
   sensitive = true
 }
+
+variable "ip_whitelist" {
+  type    = list(string)
+  default = []
+}

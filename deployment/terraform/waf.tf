@@ -11,7 +11,8 @@ resource "aws_wafv2_ip_set" "ip_whitelist" {
   description        = "Allowed IPs"
   scope              = "CLOUDFRONT"
   ip_address_version = "IPV4"
-  addresses          = ["37.110.160.0/20"]
+  # If no ip addresses in the whitelist, enable traffic for all
+  addresses = length(var.ip_whitelist) > 0 ? var.ip_whitelist : ["0.0.0.0/0"]
 }
 
 resource "aws_wafv2_web_acl" "web_acl" {
