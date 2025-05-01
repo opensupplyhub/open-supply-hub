@@ -675,5 +675,5 @@ resource "aws_cloudfront_distribution" "cdn" {
     Environment = var.environment
   }
 
-  web_acl_id = aws_wafv2_web_acl.web_acl.arn
+  web_acl_id = aws_wafv2_web_acl.web_acl[0].arn
 }

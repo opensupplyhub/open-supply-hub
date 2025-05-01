@@ -4,18 +4,19 @@ provider "aws" {
 }
 
 resource "aws_wafv2_ip_set" "ip_whitelist" {
+  # Should be RBA environment in the future
+  count              = var.environment == "Development" ? 1 : 0
   provider           = aws.us-east-1
   name               = "whitelist-ipset"
   description        = "Allowed IPs"
   scope              = "CLOUDFRONT"
   ip_address_version = "IPV4"
-
-  addresses = [
-    "37.110.160.0/20",
-  ]
+  addresses          = ["37.110.160.0/20"]
 }
 
 resource "aws_wafv2_web_acl" "web_acl" {
+  # Should be RBA environment in the future
+  count       = var.environment == "Development" ? 1 : 0
   provider    = aws.us-east-1
   name        = "waf-acl"
   description = "Allow only whitelisted IPs"
