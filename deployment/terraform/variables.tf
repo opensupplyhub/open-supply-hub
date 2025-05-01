@@ -715,3 +715,8 @@ variable "ip_whitelist" {
   type    = list(string)
   default = []
 }
+
+variable "ip_denylist" {
+  type    = list(string)
+  default = []
+}
