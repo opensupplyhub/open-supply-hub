@@ -5,7 +5,7 @@ provider "aws" {
 
 resource "aws_wafv2_ip_set" "ip_whitelist" {
   # Should be RBA environment in the future
-  count              = var.environment == "Development" ? 1 : 0
+  for_each = var.environment == "Development" ? { dev = "dev" } : {}
   provider           = aws.us-east-1
   name               = "whitelist-ipset"
   description        = "Allowed IPs"
@@ -16,7 +16,7 @@ resource "aws_wafv2_ip_set" "ip_whitelist" {
 
 resource "aws_wafv2_web_acl" "web_acl" {
   # Should be RBA environment in the future
-  count       = var.environment == "Development" ? 1 : 0
+  for_each = var.environment == "Development" ? { dev = "dev" } : {}
   provider    = aws.us-east-1
   name        = "waf-acl"
   description = "Allow only whitelisted IPs"
@@ -36,7 +36,7 @@ resource "aws_wafv2_web_acl" "web_acl" {
 
     statement {
       ip_set_reference_statement {
-        arn = aws_wafv2_ip_set.ip_whitelist[0].arn
+        arn = aws_wafv2_ip_set.ip_whitelist["dev"].arn
       }
     }
 

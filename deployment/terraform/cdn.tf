@@ -675,6 +675,6 @@ resource "aws_cloudfront_distribution" "cdn" {
     Environment = var.environment
   }
 
-  # TODO: uncomment later
-  # web_acl_id = aws_wafv2_web_acl.web_acl[0].arn
+  # Should be RBA environment in the future
+  web_acl_id = try(aws_wafv2_web_acl.web_acl["dev"].arn, null)
 }
