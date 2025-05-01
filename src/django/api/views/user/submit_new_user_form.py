@@ -2,7 +2,7 @@ from allauth.account.utils import complete_signup
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
-from rest_framework.status import HTTP_204_NO_CONTENT
+from rest_framework.status import HTTP_200_OK
 from django.db import transaction
 
 from ...models import Contributor, User
@@ -61,4 +61,12 @@ class SubmitNewUserForm(CreateAPIView):
 
             complete_signup(self.request._request, user, 'optional', None)
 
-            return Response(status=HTTP_204_NO_CONTENT)
+            # Adding the CSRF token to the response to store it in
+            # local storage for future use and include it in request headers,
+            # as access to cookies has been restricted by the HttpOnly flag.
+            csrf_token = request.META["CSRF_COOKIE"]
+            response_data = {
+                "csrfToken": csrf_token
+            }
+
+            return Response(response_data, status=HTTP_200_OK)
