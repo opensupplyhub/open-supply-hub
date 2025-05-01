@@ -61,7 +61,7 @@ resource "aws_wafv2_web_acl" "web_acl" {
 
   rule {
     name     = "AllowWhitelistedIPs"
-    priority = 0
+    priority = 1
 
     action {
       allow {}
