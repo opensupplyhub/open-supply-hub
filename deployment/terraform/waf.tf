@@ -12,7 +12,7 @@ resource "aws_wafv2_ip_set" "ip_whitelist" {
   scope              = "CLOUDFRONT"
   ip_address_version = "IPV4"
   # If no ip addresses in the whitelist, enable traffic for all
-  addresses = length(var.ip_whitelist) > 0 ? var.ip_whitelist : ["0.0.0.0/0"]
+  addresses = length(var.ip_whitelist) > 0 ? var.ip_whitelist : ["10.255.255.255/32"]
 }
 
 resource "aws_wafv2_ip_set" "ip_denylist" {
@@ -23,7 +23,7 @@ resource "aws_wafv2_ip_set" "ip_denylist" {
   scope               = "CLOUDFRONT"
   ip_address_version  = "IPV4"
   # If no ip addresses in the denylist, enable traffic for all
-  addresses           = length(var.ip_denylist) > 0 ? var.ip_denylist : ["0.0.0.0/0"]
+  addresses           = length(var.ip_denylist) > 0 ? var.ip_denylist : ["10.255.255.255/32"]
 }
 
 resource "aws_wafv2_web_acl" "web_acl" {
