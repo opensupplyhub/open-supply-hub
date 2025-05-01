@@ -36,7 +36,7 @@ resource "aws_wafv2_web_acl" "web_acl" {
 
     statement {
       ip_set_reference_statement {
-        arn = aws_wafv2_ip_set.ip_whitelist.arn
+        arn = aws_wafv2_ip_set.ip_whitelist[0].arn
       }
     }
 
