@@ -71,7 +71,6 @@ ALLOWED_HOSTS = [
 ]
 
 if DEBUG:
-    ALLOWED_HOSTS.append('localhost')
     ALLOWED_HOSTS.append('django')
     ALLOWED_HOSTS.append('app')
     ALLOWED_HOSTS.append('contricleaner')
