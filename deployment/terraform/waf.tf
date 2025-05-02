@@ -62,7 +62,7 @@ resource "aws_wafv2_web_acl" "web_acl" {
       }
       statement {
         ip_set_reference_statement {
-          arn = aws_wafv2_ip_set.ip_denylist[0].arn
+          arn = aws_wafv2_ip_set.ip_denylist.arn
         }
       }
       visibility_config {
@@ -83,7 +83,7 @@ resource "aws_wafv2_web_acl" "web_acl" {
       }
       statement {
         ip_set_reference_statement {
-          arn = aws_wafv2_ip_set.ip_whitelist[0].arn
+          arn = aws_wafv2_ip_set.ip_whitelist.arn
         }
       }
       visibility_config {
