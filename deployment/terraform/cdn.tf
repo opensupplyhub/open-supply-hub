@@ -1,6 +1,5 @@
 locals {
   frontend_bucket_name = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-frontend-${var.aws_region}"
-  is_dev = var.environment == "Development"
 }
 
 resource "aws_s3_bucket" "react" {
@@ -676,6 +675,5 @@ resource "aws_cloudfront_distribution" "cdn" {
     Environment = var.environment
   }
 
-  # Should be RBA environment in the future
-  web_acl_id = local.is_dev ? aws_wafv2_web_acl.web_acl["dev"].arn : null
+  web_acl_id = contains(keys(aws_wafv2_web_acl.web_acl), var.environment) ? aws_wafv2_web_acl.web_acl[var.environment].arn : null
 }

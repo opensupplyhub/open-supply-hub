@@ -3,80 +3,104 @@ provider "aws" {
   region = "us-east-1"
 }
 
+locals {
+  is_whitelist_enabled = length(var.ip_whitelist) > 0
+  is_denylist_enabled  = length(var.ip_denylist) > 0
+
+  environment_enabled = toset(["Development", "Production", "Preprod", "Staging", "Test"])
+  is_env_enabled      = contains(local.environment_enabled, var.environment)
+
+  web_acl_default_action = local.is_whitelist_enabled ? "block" : "allow"
+}
+
+resource "null_resource" "validate_ip_sets" {
+  count = (local.is_whitelist_enabled && local.is_denylist_enabled) ? 1 : 0
+
+  provisioner "local-exec" {
+    command = "echo 'ERROR: You cannot define both ip_whitelist and ip_denylist at the same time.' && exit 1"
+  }
+}
+
 resource "aws_wafv2_ip_set" "ip_whitelist" {
-  # Should be RBA environment in the future
-  for_each = var.environment == "Development" ? { dev = "dev" } : {}
+  count              = local.is_whitelist_enabled && local.is_env_enabled ? 1 : 0
   provider           = aws.us-east-1
   name               = "whitelist-ipset"
   description        = "Allowed IPs"
   scope              = "CLOUDFRONT"
   ip_address_version = "IPV4"
-  # If no ip addresses in the whitelist, enable traffic for all
-  addresses = length(var.ip_whitelist) > 0 ? var.ip_whitelist : ["10.255.255.255/32"]
+  addresses          = var.ip_whitelist
 }
 
 resource "aws_wafv2_ip_set" "ip_denylist" {
-  for_each            = var.environment == "Development" ? { dev = "dev" } : {}
-  provider            = aws.us-east-1
-  name                = "denylist-ipset"
-  description         = "Blocked IPs"
-  scope               = "CLOUDFRONT"
-  ip_address_version  = "IPV4"
-  # If no ip addresses in the denylist, enable traffic for all
-  addresses           = length(var.ip_denylist) > 0 ? var.ip_denylist : ["10.255.255.255/32"]
+  count              = local.is_denylist_enabled && local.is_env_enabled ? 1 : 0
+  provider           = aws.us-east-1
+  name               = "denylist-ipset"
+  description        = "Blocked IPs"
+  scope              = "CLOUDFRONT"
+  ip_address_version = "IPV4"
+  addresses          = var.ip_denylist
 }
 
 resource "aws_wafv2_web_acl" "web_acl" {
-  # Should be RBA environment in the future
-  for_each = var.environment == "Development" ? { dev = "dev" } : {}
+  count       = local.is_env_enabled ? 1 : 0
   provider    = aws.us-east-1
   name        = "waf-acl"
-  description = "Allow only whitelisted IPs"
+  description = "Web ACL for environment ${var.environment}"
   scope       = "CLOUDFRONT"
 
-  default_action {
-    allow {}
+  dynamic "rule" {
+    for_each = local.is_denylist_enabled ? [true] : []
+    content {
+      name     = "BlockDenylistedIPs"
+      priority = 0
+      action {
+        block {}
+      }
+      statement {
+        ip_set_reference_statement {
+          arn = aws_wafv2_ip_set.ip_denylist[0].arn
+        }
+      }
+      visibility_config {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "BlockDenylistedIPs"
+        sampled_requests_enabled   = true
+      }
+    }
   }
 
-  rule {
-    name     = "BlockDenylistedIPs"
-    priority = 0
+  dynamic "rule" {
+    for_each = local.is_whitelist_enabled ? [true] : []
+    content {
+      name     = "AllowWhitelistedIPs"
+      priority = 0
+      action {
+        allow {}
+      }
+      statement {
+        ip_set_reference_statement {
+          arn = aws_wafv2_ip_set.ip_whitelist[0].arn
+        }
+      }
+      visibility_config {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "AllowWhitelistedIPs"
+        sampled_requests_enabled   = true
+      }
+    }
+  }
 
-    action {
+  dynamic "default_action" {
+    for_each = local.is_whitelist_enabled ? [true] : []
+    content {
       block {}
     }
-
-    statement {
-      ip_set_reference_statement {
-        arn = aws_wafv2_ip_set.ip_denylist["dev"].arn
-      }
-    }
-
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "BlockDenylistedIPs"
-      sampled_requests_enabled   = true
-    }
   }
 
-  rule {
-    name     = "AllowWhitelistedIPs"
-    priority = 1
-
-    action {
+  dynamic "default_action" {
+    for_each = !local.is_whitelist_enabled ? [true] : []
+    content {
       allow {}
-    }
-
-    statement {
-      ip_set_reference_statement {
-        arn = aws_wafv2_ip_set.ip_whitelist["dev"].arn
-      }
-    }
-
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "AllowWhitelistedIPs"
-      sampled_requests_enabled   = true
     }
   }
 
