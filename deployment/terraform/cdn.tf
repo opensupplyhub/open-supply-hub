@@ -675,5 +675,5 @@ resource "aws_cloudfront_distribution" "cdn" {
     Environment = var.environment
   }
 
-  web_acl_id = contains(keys(aws_wafv2_web_acl.web_acl), var.environment) ? aws_wafv2_web_acl.web_acl[var.environment].arn : null
+  web_acl_id = try(aws_wafv2_web_acl.web_acl[var.environment].arn, null)
 }
