@@ -34,7 +34,6 @@ resource "aws_wafv2_ip_set" "ip_whitelist" {
   scope              = "CLOUDFRONT"
   ip_address_version = "IPV4"
   addresses          = var.ip_whitelist
-  depends_on = [aws_wafv2_web_acl.web_acl]
 }
 
 resource "aws_wafv2_ip_set" "ip_denylist" {
@@ -44,7 +43,6 @@ resource "aws_wafv2_ip_set" "ip_denylist" {
   scope              = "CLOUDFRONT"
   ip_address_version = "IPV4"
   addresses          = var.ip_denylist
-  depends_on = [aws_wafv2_web_acl.web_acl]
 }
 
 resource "aws_wafv2_web_acl" "web_acl" {
