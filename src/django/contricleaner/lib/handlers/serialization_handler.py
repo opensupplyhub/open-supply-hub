@@ -11,8 +11,8 @@ from contricleaner.lib.serializers.row_serializers.composite_row_serializer \
     import RowSerializer
 from contricleaner.lib.serializers.row_serializers.composite_row_serializer \
     import CompositeRowSerializer
-from contricleaner.lib.client_abstractions.sector_cache_interface import (
-    SectorCacheInterface
+from django.contricleaner.lib.client_abstractions.cache_interface import (
+    CacheInterface
 )
 from contricleaner.lib.serializers.row_serializers.row_clean_field_serializer \
     import RowCleanFieldSerializer
@@ -32,7 +32,7 @@ from contricleaner.lib.serializers.row_serializers.row_coordinates_serializer \
 
 class SerializationHandler(ListRowHandler):
 
-    def __init__(self, sector_cache: SectorCacheInterface) -> None:
+    def __init__(self, sector_cache: CacheInterface) -> None:
         self.__sector_cache = sector_cache
 
     def handle(self, rows: List[Dict]) -> ListDTO:

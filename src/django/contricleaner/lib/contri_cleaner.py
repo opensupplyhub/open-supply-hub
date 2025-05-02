@@ -3,8 +3,8 @@ from typing import Union, List, Dict
 
 from django.core.files.base import File
 
-from contricleaner.lib.client_abstractions.sector_cache_interface import (
-    SectorCacheInterface
+from django.contricleaner.lib.client_abstractions.cache_interface import (
+    CacheInterface
 )
 from contricleaner.lib.parsers.parsing_executor import (
     ParsingExecutor
@@ -33,17 +33,17 @@ class ContriCleaner:
 
     def __init__(self,
                  data: Union[File, Dict],
-                 sector_cache: SectorCacheInterface) -> None:
+                 sector_cache: CacheInterface) -> None:
         unsupported_data_value_type_message = ('The data value type should be '
                                                'either dict or File.')
         unsupported_sector_cache_value_type_message = (
-            'The sector_cache value type should be SectorCacheInterface.')
+            'The sector_cache value type should be CacheInterface.')
         assert isinstance(
             data,
             (dict, File)
         ), unsupported_data_value_type_message
         assert isinstance(
-            sector_cache, SectorCacheInterface
+            sector_cache, CacheInterface
         ), unsupported_sector_cache_value_type_message
 
         self.__data = data

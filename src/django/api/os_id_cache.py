@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta
 from api.models import Facility
-from contricleaner.lib.client_abstractions.sector_cache_interface import (
-    SectorCacheInterface
+from django.contricleaner.lib.client_abstractions.cache_interface import (
+    CacheInterface
 )
 
 
-class OSIDCache(SectorCacheInterface):
-    REFRESH_INTERVAL = timedelta(seconds=600)
+class OSIDCache(CacheInterface):
+    REFRESH_INTERVAL = timedelta(seconds=300)
 
     def __init__(self) -> None:
         self.map = None
@@ -25,6 +25,6 @@ class OSIDCache(SectorCacheInterface):
             self.refetch_os_ids()
 
     @property
-    def sector_map(self):
+    def value_map(self):
         self.refresh_if_needed()
         return self.map

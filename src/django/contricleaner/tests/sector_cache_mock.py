@@ -1,9 +1,9 @@
-from contricleaner.lib.client_abstractions.sector_cache_interface import (
-    SectorCacheInterface
+from django.contricleaner.lib.client_abstractions.cache_interface import (
+    CacheInterface
 )
 
 
-class SectorCacheMock(SectorCacheInterface):
+class SectorCacheMock(CacheInterface):
     def __init__(self):
         # One sector was set to a very long string to test that the
         # validation of long sector values works.
@@ -26,5 +26,5 @@ class SectorCacheMock(SectorCacheInterface):
         }
 
     @property
-    def sector_map(self):
+    def value_map(self):
         return self._sector_map
