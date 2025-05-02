@@ -16,18 +16,22 @@ class RowParentCompanyOSIDSerializer(RowSerializer):
         if not value:
             return current
         
-        if not isinstance(value, str):
+        if not isinstance(value, (str, list)):
             current['errors'].append(
                 {
                     'message': f'Expected value for {field} to be a '
-                    f'string but got {type(value).__name__}.',
+                    f'string or list but got {type(value).__name__}.',
                     'field': field,
                     'type': 'ValueError',
                 }
             )
             return current
         
-        parent_company_os_id_values = split_values(value, self.split_pattern)
+        if isinstance(value, list):
+            parent_company_os_id_values = value
+        else:
+            parent_company_os_id_values = split_values(value, self.split_pattern)
+
         for os_id in parent_company_os_id_values:
             if not self.__is_valid_os_id(os_id):
                 current['errors'].append(
