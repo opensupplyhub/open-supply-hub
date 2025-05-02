@@ -10,14 +10,15 @@ locals {
   environment_enabled = toset(["Development", "Production", "Preprod", "Staging", "Test"])
   is_env_enabled      = contains(local.environment_enabled, var.environment)
 
-  web_acl_default_action = local.is_whitelist_enabled ? "block" : "allow"
+  invalid_config = local.is_whitelist_enabled && local.is_denylist_enabled
+  waf_enabled = local.is_env_enabled && (local.is_whitelist_enabled || local.is_denylist_enabled)
 }
 
-resource "null_resource" "validate_ip_sets" {
-  count = (local.is_whitelist_enabled && local.is_denylist_enabled) ? 1 : 0
+resource "null_resource" "validate_ip_list_exclusivity" {
+  count = local.invalid_config ? 1 : 0
 
   provisioner "local-exec" {
-    command = "echo 'ERROR: You cannot define both ip_whitelist and ip_denylist at the same time.' && exit 1"
+    command = "echo 'ERROR: Only one of ip_whitelist or ip_denylist should be defined.' && exit 1"
   }
 }
 
@@ -42,9 +43,9 @@ resource "aws_wafv2_ip_set" "ip_denylist" {
 }
 
 resource "aws_wafv2_web_acl" "web_acl" {
-  count       = local.is_env_enabled ? 1 : 0
+  for_each = local.waf_enabled ? { (var.environment) = var.environment } : {}
   provider    = aws.us-east-1
-  name        = "waf-acl"
+  name        = "${var.environment}-web-acl"
   description = "Web ACL for environment ${var.environment}"
   scope       = "CLOUDFRONT"
 
@@ -106,7 +107,7 @@ resource "aws_wafv2_web_acl" "web_acl" {
 
   visibility_config {
     cloudwatch_metrics_enabled = true
-    metric_name                = "WebACL"
+    metric_name                = "${var.environment}-web-acl-metrics"
     sampled_requests_enabled   = true
   }
 }
