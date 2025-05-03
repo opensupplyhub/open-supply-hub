@@ -66,7 +66,7 @@ const formatActivityReports = data => {
     return [formattedReports[0], formattedReports.slice(1)];
 };
 
-const FacilityDetailsLocationFields = ({
+const FacilityDetailsGeneralFields = ({
     classes,
     data,
     nameField,
@@ -232,4 +232,4 @@ const FacilityDetailsLocationFields = ({
     );
 };
 
-export default withStyles(locationFieldsStyles)(FacilityDetailsLocationFields);
+export default withStyles(locationFieldsStyles)(FacilityDetailsGeneralFields);
