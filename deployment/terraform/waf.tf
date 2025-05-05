@@ -9,12 +9,6 @@ locals {
 
   conflicting_lists = local.is_whitelist_enabled && local.is_denylist_enabled
 
-  waf_enabled = local.is_whitelist_enabled || local.is_denylist_enabled
-  web_acl_default_action = local.is_whitelist_enabled ? "block" : "allow"
-
-  ip_set_addresses = local.is_whitelist_enabled ? var.ip_whitelist : (
-                     local.is_denylist_enabled ? var.ip_denylist : [])
-
   ip_set_type = local.is_whitelist_enabled ? "whitelist" : (
                 local.is_denylist_enabled ? "denylist" : "")
 }
@@ -28,26 +22,29 @@ resource "null_resource" "validate_ip_lists" {
 }
 
 resource "aws_wafv2_ip_set" "ip_whitelist" {
-  provider           = aws.us-east-1
-  name               = "whitelist-ipset"
-  description        = "Allowed IPs"
-  scope              = "CLOUDFRONT"
+  count             = local.is_whitelist_enabled ? 1 : 0
+  provider          = aws.us-east-1
+  name              = "whitelist-ipset"
+  description       = "Allowed IPs"
+  scope             = "CLOUDFRONT"
   ip_address_version = "IPV4"
-  addresses          = var.ip_whitelist
+  addresses         = var.ip_whitelist
 }
 
 resource "aws_wafv2_ip_set" "ip_denylist" {
-  provider           = aws.us-east-1
-  name               = "denylist-ipset"
-  description        = "Blocked IPs"
-  scope              = "CLOUDFRONT"
+  count             = local.is_denylist_enabled ? 1 : 0
+  provider          = aws.us-east-1
+  name              = "denylist-ipset"
+  description       = "Blocked IPs"
+  scope             = "CLOUDFRONT"
   ip_address_version = "IPV4"
-  addresses          = var.ip_denylist
+  addresses         = var.ip_denylist
 }
 
 resource "aws_wafv2_web_acl" "web_acl" {
-  for_each = local.waf_enabled ? { (var.environment) = var.environment } : {}
-  provider    = aws.us-east-1
+  for_each = var.waf_enabled ? { (var.environment) = var.environment } : {}
+  provider = aws.us-east-1
+
   name        = "${var.environment}-web-acl"
   description = "Web ACL for environment ${var.environment}"
   scope       = "CLOUDFRONT"
@@ -62,7 +59,7 @@ resource "aws_wafv2_web_acl" "web_acl" {
       }
       statement {
         ip_set_reference_statement {
-          arn = aws_wafv2_ip_set.ip_denylist.arn
+          arn = aws_wafv2_ip_set.ip_denylist[0].arn
         }
       }
       visibility_config {
@@ -83,7 +80,7 @@ resource "aws_wafv2_web_acl" "web_acl" {
       }
       statement {
         ip_set_reference_statement {
-          arn = aws_wafv2_ip_set.ip_whitelist.arn
+          arn = aws_wafv2_ip_set.ip_whitelist[0].arn
         }
       }
       visibility_config {
@@ -102,7 +99,7 @@ resource "aws_wafv2_web_acl" "web_acl" {
   }
 
   dynamic "default_action" {
-    for_each = !local.is_whitelist_enabled ? [true] : []
+    for_each = local.is_whitelist_enabled ? [] : [true]
     content {
       allow {}
     }

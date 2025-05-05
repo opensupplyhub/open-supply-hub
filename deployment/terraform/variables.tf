@@ -720,3 +720,9 @@ variable "ip_denylist" {
   type    = list(string)
   default = []
 }
+
+variable "waf_enabled" {
+  type        = bool
+  description = "Whether to enable WAF regardless of ip_whitelist/ip_denylist"
+  default     = false
+}
