@@ -723,6 +723,5 @@ variable "ip_denylist" {
 
 variable "waf_enabled" {
   type        = bool
-  description = "Whether to enable WAF regardless of ip_whitelist/ip_denylist"
   default     = false
 }
