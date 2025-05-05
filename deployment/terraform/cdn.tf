@@ -677,9 +677,4 @@ resource "aws_cloudfront_distribution" "cdn" {
   }
 
   web_acl_id = var.waf_enabled ? aws_wafv2_web_acl.web_acl[0].arn : null
-
-  lifecycle {
-    # Avoid unnecessary re-creations
-    ignore_changes = [web_acl_id]
-  }
 }
