@@ -18,10 +18,10 @@ class OSIDLookUp(LookUpInterface):
             return {key: None}
 
     def bulk_get(self, keys: list) -> dict:
-        map = {}
+        result_map = {}
         filter_field = f"{self.lookup_field}__in"
         facilities = Facility.objects.filter(**{filter_field: keys})
         ids_list = [facility.id for facility in facilities]
         for key in keys:
-            map[key] = key if key in ids_list else None
-        return map
+            result_map[key] = key if key in ids_list else None
+        return result_map
