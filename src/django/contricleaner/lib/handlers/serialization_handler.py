@@ -14,6 +14,9 @@ from contricleaner.lib.serializers.row_serializers.composite_row_serializer \
 from contricleaner.lib.client_abstractions.cache_interface import (
     CacheInterface
 )
+from contricleaner.lib.client_abstractions.lookup_interface import (
+    LookUpInterface
+)
 from contricleaner.lib.serializers.row_serializers.row_clean_field_serializer \
     import RowCleanFieldSerializer
 from contricleaner.lib.serializers.row_serializers.row_country_serializer \
@@ -35,10 +38,10 @@ class SerializationHandler(ListRowHandler):
     def __init__(
             self,
             sector_cache: CacheInterface,
-            os_id_cache: CacheInterface
+            os_id_lookup: LookUpInterface
     ) -> None:
         self.__sector_cache = sector_cache
-        self.__os_id_cache = os_id_cache
+        self.__os_id_lookup = os_id_lookup
 
     def handle(self, rows: List[Dict]) -> ListDTO:
         serialized_rows = []
@@ -74,7 +77,10 @@ class SerializationHandler(ListRowHandler):
             RowFacilityTypeSerializer(split_pattern),
             RowCoordinatesSerializer(),
             RowAdditionalIdsSerializer(),
-            RowParentCompanyOSIDSerializer(self.__os_id_cache, split_pattern),
+            RowParentCompanyOSIDSerializer(
+                self.__os_id_lookup,
+                split_pattern
+            ),
             RowEmptySerializer(),
         )
 

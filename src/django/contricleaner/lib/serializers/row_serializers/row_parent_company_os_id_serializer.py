@@ -3,18 +3,18 @@ from contricleaner.lib.helpers.split_values import split_values
 from contricleaner.lib.serializers.row_serializers.row_serializer import (
     RowSerializer,
 )
-from contricleaner.lib.client_abstractions.cache_interface import (
-    CacheInterface
+from contricleaner.lib.client_abstractions.lookup_interface import (
+    LookUpInterface
 )
 
 
 class RowParentCompanyOSIDSerializer(RowSerializer):
     def __init__(
             self,
-            os_id_cache: CacheInterface,
+            os_id_lookup: LookUpInterface,
             split_pattern: str
     ) -> None:
-        self.os_id_cache = os_id_cache
+        self.os_id_lookup = os_id_lookup
         self.split_pattern = split_pattern
 
     def validate(self, row: dict, current: dict) -> dict:
@@ -36,11 +36,12 @@ class RowParentCompanyOSIDSerializer(RowSerializer):
             return current
         
         if isinstance(value, list):
-            parent_company_os_id_values = value
+            origin_values = value
         else:
-            parent_company_os_id_values = split_values(value, self.split_pattern)
+            origin_values = split_values(value, self.split_pattern)
 
-        for os_id in parent_company_os_id_values:
+        valid_os_ids = []
+        for os_id in origin_values:
             if not self.__is_valid_os_id(os_id):
                 current['errors'].append(
                     {
@@ -50,24 +51,27 @@ class RowParentCompanyOSIDSerializer(RowSerializer):
                         'type': 'ValidationError',
                     }
                 )
-            elif not self.__is_os_id_exist(os_id):
+            else:
+                valid_os_ids.append(os_id)
+        
+        result_map = self.os_id_lookup.bulk_get(
+            valid_os_ids
+        )
+        for key, value in result_map.items():
+            if value is None:
                 current['errors'].append(
                     {
-                        'message': f'The OS ID {os_id} for {field} '
+                        'message': f'The OS ID {key} for {field} '
                         f'does not related to any production location.',
                         'field': field,
                         'type': 'ValidationError',
                     }
                 )
 
-        current[field] = parent_company_os_id_values
+        current[field] = origin_values
 
         return current
     
     def __is_valid_os_id(self, value: str) -> bool:
         os_id_regex = re.compile('[A-Z]{2}[0-9]{7}[A-Z0-9]{6}')
         return bool(os_id_regex.fullmatch(value))
-    
-    def __is_os_id_exist(self, value: str) -> bool:
-        os_id_map = self.os_id_cache.value_map
-        return value.lower() in os_id_map

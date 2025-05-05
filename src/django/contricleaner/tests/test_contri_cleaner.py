@@ -11,7 +11,7 @@ from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.dto.list_dto import ListDTO
 from contricleaner.lib.dto.row_dto import RowDTO
 from contricleaner.tests.sector_cache_mock import SectorCacheMock
-from contricleaner.tests.os_id_cache_mock import OSIDCacheMock
+from contricleaner.tests.os_id_lookup_mock import OSIDLookUpMock
 
 
 class ContriCleanerTest(TestCase):
@@ -85,7 +85,7 @@ class ContriCleanerTest(TestCase):
         contri_cleaner = ContriCleaner(
             uploaded_file,
             SectorCacheMock(),
-            OSIDCacheMock()
+            OSIDLookUpMock()
         )
         processed_list = contri_cleaner.process_data()
 
@@ -154,7 +154,7 @@ class ContriCleanerTest(TestCase):
         contri_cleaner = ContriCleaner(
             uploaded_file,
             SectorCacheMock(),
-            OSIDCacheMock()
+            OSIDLookUpMock()
         )
         processed_list = contri_cleaner.process_data()
 
@@ -176,7 +176,7 @@ class ContriCleanerTest(TestCase):
 
         contri_cleaner = ContriCleaner(temp_uploaded_file_stub,
                                        SectorCacheMock(),
-                                       OSIDCacheMock())
+                                       OSIDLookUpMock())
         contri_cleaner_processed_data = contri_cleaner.process_data()
         error_dict = contri_cleaner_processed_data.errors[0]
         error_message = error_dict['message']
@@ -218,7 +218,7 @@ class ContriCleanerTest(TestCase):
         contri_cleaner = ContriCleaner(
             json_data,
             SectorCacheMock(),
-            OSIDCacheMock()
+            OSIDLookUpMock()
         )
         processed_list = contri_cleaner.process_data()
 
