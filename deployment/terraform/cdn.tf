@@ -93,7 +93,7 @@ resource "aws_cloudfront_distribution" "cdn" {
   depends_on = [
     aws_s3_bucket.logs,
     aws_s3_bucket.react,
-    var.waf_enabled ? aws_wafv2_web_acl.web_acl : null
+    var.waf_enabled ? aws_wafv2_web_acl.web_acl[0].arn : null
   ]
 
   default_root_object = "index.html"
