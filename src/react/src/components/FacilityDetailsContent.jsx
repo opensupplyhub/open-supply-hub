@@ -116,6 +116,7 @@ const formatIfListAndRemoveDuplicates = (value, fieldName = '') => {
 /* eslint-disable camelcase */
 const formatExtendedField = ({
     value,
+    field_name,
     created_at,
     contributor_name,
     is_from_claim,
@@ -123,8 +124,12 @@ const formatExtendedField = ({
     id,
     formatValue = v => v,
 }) => {
-    const primary = formatIfListAndRemoveDuplicates(formatValue(value));
+    const primary = formatIfListAndRemoveDuplicates(
+        formatValue(value),
+        field_name,
+    );
     const secondary = formatAttribution(created_at, contributor_name);
+
     return {
         primary,
         secondary,
@@ -134,6 +139,7 @@ const formatExtendedField = ({
         key: id || primary + secondary,
     };
 };
+
 const filterByUniqueField = (data, extendedFieldName) =>
     uniqBy(
         get(data, `properties.extended_fields.${extendedFieldName}`, []).map(
