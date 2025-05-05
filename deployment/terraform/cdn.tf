@@ -92,7 +92,8 @@ resource "aws_cloudfront_origin_access_identity" "react" {
 resource "aws_cloudfront_distribution" "cdn" {
   depends_on = [
     aws_s3_bucket.logs,
-    aws_s3_bucket.react
+    aws_s3_bucket.react,
+    aws_wafv2_web_acl.web_acl
   ]
 
   default_root_object = "index.html"
@@ -676,4 +677,9 @@ resource "aws_cloudfront_distribution" "cdn" {
   }
 
   web_acl_id = var.waf_enabled ? aws_wafv2_web_acl.web_acl[0].arn : null
+
+  lifecycle {
+    # Avoid unnecessary re-creations
+    ignore_changes = [web_acl_id]
+  }
 }

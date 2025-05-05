@@ -110,4 +110,8 @@ resource "aws_wafv2_web_acl" "web_acl" {
     metric_name                = "${var.environment}-web-acl-metrics"
     sampled_requests_enabled   = true
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
