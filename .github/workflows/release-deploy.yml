@@ -14,6 +14,7 @@ on:
         options:
           - sandbox
           - production
+          - rba
         default: sandbox
       clear-opensearch:
         description: 'Clear the custom OpenSearch indexes and templates'
@@ -45,6 +46,9 @@ jobs:
           if [[ ${{ github.event.inputs.deploy-env }} = "production" ]];
           then
             ENV="Production"
+          elif [[ ${{ github.event.inputs.deploy-env }} = "rba" ]];
+          then
+            ENV="Rba"
           else
             ENV="Staging"
           fi

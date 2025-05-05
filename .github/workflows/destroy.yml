@@ -9,6 +9,7 @@ on:
         type: choice
         options:
         - Pre-prod
+        - Rba
         default: Pre-prod
 
 jobs:
@@ -83,6 +84,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'opensupplyhub/ci-deployment'
+          ref: 'OSDEV-1947-add-new-environment-for-rba'
           path: 'terraform-config'
           token: ${{ secrets.PAT }}
 
