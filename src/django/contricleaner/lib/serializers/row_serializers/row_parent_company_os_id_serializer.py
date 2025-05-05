@@ -6,6 +6,7 @@ from contricleaner.lib.serializers.row_serializers.row_serializer import (
 from contricleaner.lib.client_abstractions.lookup_interface import (
     LookUpInterface
 )
+from contricleaner.constants import MAX_PARENT_COMPANY_OS_ID_COUNT
 
 
 class RowParentCompanyOSIDSerializer(RowSerializer):
@@ -39,6 +40,19 @@ class RowParentCompanyOSIDSerializer(RowSerializer):
             origin_values = value
         else:
             origin_values = split_values(value, self.split_pattern)
+        
+        if len(origin_values) > MAX_PARENT_COMPANY_OS_ID_COUNT:
+            current['errors'].append(
+                {
+                    'message': 'You may submit a maximum of {} '
+                    'parent_company_os_id, not {}.'.format(
+                        MAX_PARENT_COMPANY_OS_ID_COUNT, len(origin_values)
+                    ),
+                    'field': field,
+                    'type': 'ValidationError',
+                }
+            )
+            return current
 
         valid_os_ids = []
         for os_id in origin_values:
