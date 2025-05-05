@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { Redirect, withRouter } from 'react-router';
+import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import get from 'lodash/get';
@@ -87,14 +88,30 @@ const detailsStyles = theme =>
         },
     });
 
-const formatIfListAndRemoveDuplicates = value =>
-    Array.isArray(value)
-        ? [...new Set(value)].map(v => (
-              <span style={{ margin: 0, display: 'block' }} key={v}>
-                  {v}
-              </span>
-          ))
-        : value;
+const blockStyle = Object.freeze({
+    margin: 0,
+    display: 'block',
+});
+
+const formatIfListAndRemoveDuplicates = (value, fieldName = '') => {
+    if (!Array.isArray(value)) {
+        return value;
+    }
+
+    const uniqueValues = [...new Set(value)];
+
+    return uniqueValues.map(v =>
+        fieldName === 'parent_company_os_id' ? (
+            <Link to={`/facilities/${v}`} key={v} style={blockStyle}>
+                {v}
+            </Link>
+        ) : (
+            <span style={blockStyle} key={v}>
+                {v}
+            </span>
+        ),
+    );
+};
 
 /* eslint-disable camelcase */
 const formatExtendedField = ({
