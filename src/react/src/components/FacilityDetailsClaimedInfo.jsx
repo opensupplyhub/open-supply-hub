@@ -7,6 +7,7 @@ import Grid from '@material-ui/core/Grid';
 
 import FacilityDetailsItem from './FacilityDetailsItem';
 
+import formatIfListAndRemoveDuplicates from '../util/renderUtils';
 import { addProtocolToWebsiteURLIfMissing } from '../util/util';
 
 const ClaimInfoSection = ({ label, value, fullWidth }) =>
@@ -16,7 +17,7 @@ const ClaimInfoSection = ({ label, value, fullWidth }) =>
         </Grid>
     );
 
-export default function FacilityDetailsClaimedInfo({ data, formatListItem }) {
+export default function FacilityDetailsClaimedInfo({ data }) {
     if (!data) {
         return null;
     }
@@ -74,7 +75,9 @@ export default function FacilityDetailsClaimedInfo({ data, formatListItem }) {
                 value={
                     facility.affiliations &&
                     facility.affiliations.length &&
-                    formatListItem(orderBy(facility.affiliations, identity))
+                    formatIfListAndRemoveDuplicates(
+                        orderBy(facility.certifications, identity),
+                    )
                 }
             />
             <ClaimInfoSection
@@ -82,7 +85,9 @@ export default function FacilityDetailsClaimedInfo({ data, formatListItem }) {
                 value={
                     facility.certifications &&
                     facility.certifications.length &&
-                    formatListItem(orderBy(facility.certifications, identity))
+                    formatIfListAndRemoveDuplicates(
+                        orderBy(facility.certifications, identity),
+                    )
                 }
             />
         </>

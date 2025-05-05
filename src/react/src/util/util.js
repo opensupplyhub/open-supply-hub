@@ -84,8 +84,8 @@ import {
     SLC_FORM_CONSTRAINTS,
 } from './constants';
 
+import formatIfListAndRemoveDuplicates from './renderUtils';
 import { createListItemCSV } from './util.listItemCSV';
-
 import { createFacilitiesCSV, formatDataForCSV } from './util.facilitiesCSV';
 import formatFacilityClaimsDataForXLSX from './util.facilityClaimsXLSX';
 import formatModerationEventsDataForXLSX from './util.moderationEventsXLSX';
@@ -1696,3 +1696,30 @@ export const slcValidationSchema = objectYup({
         ),
     parentCompany: slcTextFieldValidation.label('Parent company'),
 });
+
+/* eslint-disable camelcase */
+export const formatExtendedField = ({
+    value,
+    field_name,
+    created_at,
+    contributor_name,
+    is_from_claim,
+    is_verified,
+    id,
+    formatValue = v => v,
+}) => {
+    const primary = formatIfListAndRemoveDuplicates(
+        formatValue(value),
+        field_name,
+    );
+    const secondary = formatAttribution(created_at, contributor_name);
+
+    return {
+        primary,
+        secondary,
+        embeddedSecondary: formatAttribution(created_at),
+        isVerified: is_verified,
+        isFromClaim: is_from_claim,
+        key: id || primary + secondary,
+    };
+};

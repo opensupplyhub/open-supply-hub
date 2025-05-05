@@ -9,7 +9,7 @@ import FacilityDetailsItem from './FacilityDetailsItem';
 import FacilityDetailsClaimedInfo from './FacilityDetailsClaimedInfo';
 import ShowOnly from './ShowOnly';
 import FeatureFlag from './FeatureFlag';
-import { formatAttribution } from '../util/util';
+import { formatAttribution, formatExtendedField } from '../util/util';
 
 import {
     EXTENDED_FIELD_TYPES,
@@ -73,8 +73,6 @@ const FacilityDetailsGeneralFields = ({
     otherNames,
     embed,
     embedConfig,
-    formatExtendedField,
-    formatIfListAndRemoveDuplicates,
     hideSectorData,
     isClaimed,
 }) => {
@@ -222,7 +220,6 @@ const FacilityDetailsGeneralFields = ({
                         <ShowOnly when={isClaimed}>
                             <FacilityDetailsClaimedInfo
                                 data={data.properties.claim_info}
-                                formatListItem={formatIfListAndRemoveDuplicates}
                             />
                         </ShowOnly>
                     </FeatureFlag>

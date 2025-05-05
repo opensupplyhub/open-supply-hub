@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
 import { Redirect, withRouter } from 'react-router';
-import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import get from 'lodash/get';
@@ -35,6 +34,7 @@ import {
     makeClaimFacilityLink,
     getLocationWithoutEmbedParam,
     formatAttribution,
+    formatExtendedField,
 } from '../util/util';
 
 const detailsStyles = theme =>
@@ -87,58 +87,6 @@ const detailsStyles = theme =>
             fontFamily: theme.typography.fontFamily,
         },
     });
-
-const blockStyle = Object.freeze({
-    margin: 0,
-    display: 'block',
-});
-
-const formatIfListAndRemoveDuplicates = (value, fieldName = '') => {
-    if (!Array.isArray(value)) {
-        return value;
-    }
-
-    const uniqueValues = [...new Set(value)];
-
-    return uniqueValues.map(v =>
-        fieldName === 'parent_company_os_id' ? (
-            <Link to={`/facilities/${v}`} key={v} style={blockStyle}>
-                {v}
-            </Link>
-        ) : (
-            <span style={blockStyle} key={v}>
-                {v}
-            </span>
-        ),
-    );
-};
-
-/* eslint-disable camelcase */
-const formatExtendedField = ({
-    value,
-    field_name,
-    created_at,
-    contributor_name,
-    is_from_claim,
-    is_verified,
-    id,
-    formatValue = v => v,
-}) => {
-    const primary = formatIfListAndRemoveDuplicates(
-        formatValue(value),
-        field_name,
-    );
-    const secondary = formatAttribution(created_at, contributor_name);
-
-    return {
-        primary,
-        secondary,
-        embeddedSecondary: formatAttribution(created_at),
-        isVerified: is_verified,
-        isFromClaim: is_from_claim,
-        key: id || primary + secondary,
-    };
-};
 
 const filterByUniqueField = (data, extendedFieldName) =>
     uniqBy(
@@ -285,10 +233,6 @@ const FacilityDetailsContent = ({
                     nameField={nameField}
                     otherNames={otherNames}
                     embedConfig={embedConfig}
-                    formatExtendedField={formatExtendedField}
-                    formatIfListAndRemoveDuplicates={
-                        formatIfListAndRemoveDuplicates
-                    }
                     hideSectorData={hideSectorData}
                     isClaimed={isClaimed}
                 />
