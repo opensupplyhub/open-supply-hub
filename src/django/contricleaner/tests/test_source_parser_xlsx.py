@@ -22,6 +22,7 @@ from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.dto.list_dto import ListDTO
 from contricleaner.lib.dto.row_dto import RowDTO
 from contricleaner.tests.sector_cache_mock import SectorCacheMock
+from contricleaner.tests.os_id_cache_mock import OSIDCacheMock
 
 
 class SourceParserXLSXTest(TestCase):
@@ -220,7 +221,11 @@ class SourceParserXLSXTest(TestCase):
             file_content = xlsx_file.read()
             uploaded_file = SimpleUploadedFile('test.xlsx', file_content)
 
-        contri_cleaner = ContriCleaner(uploaded_file, SectorCacheMock())
+        contri_cleaner = ContriCleaner(
+            uploaded_file,
+            SectorCacheMock(),
+            OSIDCacheMock()
+        )
         processed_list = contri_cleaner.process_data()
 
         self.assertEqual(processed_list.rows, expected_processed_list.rows)

@@ -3,9 +3,10 @@ from typing import Union, List, Dict
 
 from django.core.files.base import File
 
-from django.contricleaner.lib.client_abstractions.cache_interface import (
+from contricleaner.lib.client_abstractions.cache_interface import (
     CacheInterface
 )
+from api.os_id_cache import OSIDCache
 from contricleaner.lib.parsers.parsing_executor import (
     ParsingExecutor
 )
@@ -33,7 +34,8 @@ class ContriCleaner:
 
     def __init__(self,
                  data: Union[File, Dict],
-                 sector_cache: CacheInterface) -> None:
+                 sector_cache: CacheInterface,
+                 os_id_cache: CacheInterface) -> None:
         unsupported_data_value_type_message = ('The data value type should be '
                                                'either dict or File.')
         unsupported_sector_cache_value_type_message = (
@@ -48,6 +50,7 @@ class ContriCleaner:
 
         self.__data = data
         self.__sector_cache = sector_cache
+        self.__os_id_cache = os_id_cache
 
     def process_data(self) -> ListDTO:
         try:
@@ -94,7 +97,10 @@ class ContriCleaner:
     def __setup_handlers(self) -> ListRowHandler:
         handlers = (
             PreValidationHandler(),
-            SerializationHandler(self.__sector_cache)
+            SerializationHandler(
+                self.__sector_cache,
+                self.__os_id_cache
+            )
         )
         for index in range(len(handlers) - 1):
             handlers[index].set_next(handlers[index + 1])

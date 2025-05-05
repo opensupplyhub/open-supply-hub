@@ -19,6 +19,7 @@ from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.dto.list_dto import ListDTO
 from contricleaner.lib.dto.row_dto import RowDTO
 from contricleaner.tests.sector_cache_mock import SectorCacheMock
+from contricleaner.tests.os_id_cache_mock import OSIDCacheMock
 
 
 class SourceParserCSVTest(TestCase):
@@ -146,7 +147,11 @@ class SourceParserCSVTest(TestCase):
             file_content = csv_file.read()
             uploaded_file = SimpleUploadedFile('test.csv', file_content)
 
-        contri_cleaner = ContriCleaner(uploaded_file, SectorCacheMock())
+        contri_cleaner = ContriCleaner(
+            uploaded_file,
+            SectorCacheMock(),
+            OSIDCacheMock()
+        )
         processed_list = contri_cleaner.process_data()
 
         self.assertEqual(processed_list.rows, expected_processed_list.rows)
@@ -167,7 +172,11 @@ class SourceParserCSVTest(TestCase):
             file_content = csv_file.read()
             uploaded_file = SimpleUploadedFile('test.csv', file_content)
 
-        contri_cleaner = ContriCleaner(uploaded_file, SectorCacheMock())
+        contri_cleaner = ContriCleaner(
+            uploaded_file,
+            SectorCacheMock(),
+            OSIDCacheMock()
+        )
         processed_data = contri_cleaner.process_data()
 
         error_dict = processed_data.errors[0]

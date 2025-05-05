@@ -75,6 +75,7 @@ from ...mail import send_claim_facility_confirmation_email
 from ...pagination import FacilitiesGeoJSONPagination
 from ...permissions import IsRegisteredAndConfirmed, IsSuperuser
 from ...sector_cache import SectorCache
+from api.os_id_cache import OSIDCache
 from ...serializers import (
     FacilityIndexSerializer,
     FacilityIndexDetailsSerializer,
@@ -607,7 +608,11 @@ class FacilitiesViewSet(ListModelMixin,
         if not public_submission and not private_allowed:
             raise PermissionDenied('Cannot submit a private facility')
 
-        contri_cleaner = ContriCleaner(request.data, SectorCache())
+        contri_cleaner = ContriCleaner(
+            request.data,
+            SectorCache(),
+            OSIDCache()
+        )
         try:
             contri_cleaner_processed_data = contri_cleaner.process_data()
         except HandlerNotSetError as err:

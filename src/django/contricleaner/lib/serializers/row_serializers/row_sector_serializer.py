@@ -5,7 +5,7 @@ from contricleaner.lib.helpers.is_valid_type import (
     is_valid_type,
 )
 from contricleaner.lib.helpers.split_values import split_values
-from django.contricleaner.lib.client_abstractions.cache_interface import (
+from contricleaner.lib.client_abstractions.cache_interface import (
     CacheInterface
 )
 from contricleaner.lib.serializers.row_serializers.row_serializer \

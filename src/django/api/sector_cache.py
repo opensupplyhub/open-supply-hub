@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from api.models import Sector
-from django.contricleaner.lib.client_abstractions.cache_interface import (
+from contricleaner.lib.client_abstractions.cache_interface import (
     CacheInterface
 )
 

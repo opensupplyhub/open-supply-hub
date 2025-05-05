@@ -3,10 +3,18 @@ from contricleaner.lib.helpers.split_values import split_values
 from contricleaner.lib.serializers.row_serializers.row_serializer import (
     RowSerializer,
 )
+from contricleaner.lib.client_abstractions.cache_interface import (
+    CacheInterface
+)
 
 
 class RowParentCompanyOSIDSerializer(RowSerializer):
-    def __init__(self, split_pattern: str) -> None:
+    def __init__(
+            self,
+            os_id_cache: CacheInterface,
+            split_pattern: str
+    ) -> None:
+        self.os_id_cache = os_id_cache
         self.split_pattern = split_pattern
 
     def validate(self, row: dict, current: dict) -> dict:
@@ -42,6 +50,15 @@ class RowParentCompanyOSIDSerializer(RowSerializer):
                         'type': 'ValidationError',
                     }
                 )
+            elif not self.__is_os_id_exist(os_id):
+                current['errors'].append(
+                    {
+                        'message': f'The OS ID {os_id} for {field} '
+                        f'does not related to any production location.',
+                        'field': field,
+                        'type': 'ValidationError',
+                    }
+                )
 
         current[field] = parent_company_os_id_values
 
@@ -50,3 +67,7 @@ class RowParentCompanyOSIDSerializer(RowSerializer):
     def __is_valid_os_id(self, value: str) -> bool:
         os_id_regex = re.compile('[A-Z]{2}[0-9]{7}[A-Z0-9]{6}')
         return bool(os_id_regex.fullmatch(value))
+    
+    def __is_os_id_exist(self, value: str) -> bool:
+        os_id_map = self.os_id_cache.value_map
+        return value.lower() in os_id_map
