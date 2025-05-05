@@ -60,6 +60,16 @@
             "awslogs-region": "${aws_region}",
             "awslogs-stream-prefix": "django"
         }
+    },
+    "healthCheck": {
+        "command": [
+            "CMD-SHELL",
+            "/usr/bin/curl -f http://localhost:${app_port}/health-check/ || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 30
     }
   }
 ]

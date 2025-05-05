@@ -67,10 +67,10 @@ ALLOWED_HOSTS = [
     '.openapparel.org',
     '.opensupplyhub.org',
     '.os-hub.net',
+    'localhost',
 ]
 
 if DEBUG:
-    ALLOWED_HOSTS.append('localhost')
     ALLOWED_HOSTS.append('django')
     ALLOWED_HOSTS.append('app')
     ALLOWED_HOSTS.append('contricleaner')
