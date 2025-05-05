@@ -13,12 +13,30 @@ locals {
                 local.is_denylist_enabled ? "denylist" : "")
 }
 
-resource "null_resource" "validate_ip_lists" {
-  count = local.conflicting_lists ? 1 : 0
+resource "null_resource" "detach_waf_acl" {
+  triggers = {
+    waf_enabled   = var.waf_enabled
+    web_acl_id    = var.waf_enabled ? aws_wafv2_web_acl.web_acl[var.environment].id : ""
+  }
 
   provisioner "local-exec" {
-    command = "echo 'ERROR: ip_whitelist and ip_denylist cannot both be set' && exit 1"
+    when    = destroy
+    command = var.waf_enabled ? "echo 'No need to detach WAF because it is still enabled.'" : <<EOT
+      echo "Detaching WAF from CloudFront..."
+      aws cloudfront update-distribution \
+        --id ${var.cloudfront_distribution_id} \
+        --distribution-config "$(
+          aws cloudfront get-distribution-config --id ${var.cloudfront_distribution_id} \
+            --query 'DistributionConfig' --output json | jq '.WebACLId=""'
+        )" \
+        --if-match $(
+          aws cloudfront get-distribution-config --id ${var.cloudfront_distribution_id} \
+            --query 'ETag' --output text
+        )
+    EOT
   }
+
+  depends_on = var.waf_enabled ? [aws_wafv2_web_acl.web_acl] : []
 }
 
 resource "aws_wafv2_ip_set" "ip_whitelist" {
