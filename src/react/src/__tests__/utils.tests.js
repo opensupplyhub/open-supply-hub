@@ -2611,7 +2611,7 @@ describe('formatExtendedField', () => {
             value,
             field_name: 'parent_company_os_id',
         });
-        console.log('result >>>', result);
+
         expect(result.primary).toHaveLength(2);
         result.primary.forEach((element, idx) => {
             expect(element.type.displayName || element.type.name).toBe('Link');
