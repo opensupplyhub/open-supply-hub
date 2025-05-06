@@ -70,13 +70,37 @@ jobs:
 
       - name: Validate whitelist and denylist usage
         run: |
-          whitelist=$(terraform -chdir=deployment/infra output -json ip_whitelist | jq length)
-          denylist=$(terraform -chdir=deployment/infra output -json ip_denylist | jq length)
-    
-          if [ "$whitelist" -gt 0 ] && [ "$denylist" -gt 0 ]; then
+          extract_array() {
+            local var_name="$1"
+            awk -v key="$var_name" '
+              $1 == key && $2 == "=" {
+                inside=1
+                next
+              }
+              inside {
+                if ($0 ~ /\]/) {
+                  buffer = buffer $0
+                  print buffer
+                  exit
+                } else {
+                  buffer = buffer $0
+                }
+              }
+            ' deployment/environments/${{ env.TFVAR_NAME }} | tr -d '[:space:]'
+          }
+      
+          ip_whitelist=$(extract_array "ip_whitelist")
+          ip_denylist=$(extract_array "ip_denylist")
+      
+          echo "ip_whitelist: $ip_whitelist"
+          echo "ip_denylist: $ip_denylist"
+      
+          if [[ -n "$ip_whitelist" && "$ip_whitelist" != "[]" && -n "$ip_denylist" && "$ip_denylist" != "[]" ]]; then
             echo "ERROR: You cannot define both ip_whitelist and ip_denylist!"
             exit 1
           fi
+        env:
+          TFVAR_NAME: terraform-${{ steps.get_env_name.outputs.lowercase }}.tfvars
 
       - name: Terraform Plan for ${{ vars.ENV_NAME }}
         run: ./deployment/infra plan
