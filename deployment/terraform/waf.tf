@@ -14,29 +14,26 @@ locals {
 }
 
 resource "null_resource" "detach_waf_acl" {
-  triggers = {
-    waf_enabled   = var.waf_enabled
-    web_acl_id    = var.waf_enabled ? aws_wafv2_web_acl.web_acl[var.environment].id : ""
-  }
+  count = var.waf_enabled ? 0 : 1
 
   provisioner "local-exec" {
-    when    = destroy
-    command = var.waf_enabled ? "echo 'No need to detach WAF because it is still enabled.'" : <<EOT
+    command = <<EOT
       echo "Detaching WAF from CloudFront..."
+      CONFIG=$(aws cloudfront get-distribution-config --id ${var.cloudfront_distribution_id})
+      ETAG=$(echo "$CONFIG" | jq -r '.ETag')
+      DIST=$(echo "$CONFIG" | jq '.DistributionConfig | .WebACLId = ""')
+      
       aws cloudfront update-distribution \
         --id ${var.cloudfront_distribution_id} \
-        --distribution-config "$(
-          aws cloudfront get-distribution-config --id ${var.cloudfront_distribution_id} \
-            --query 'DistributionConfig' --output json | jq '.WebACLId=""'
-        )" \
-        --if-match $(
-          aws cloudfront get-distribution-config --id ${var.cloudfront_distribution_id} \
-            --query 'ETag' --output text
-        )
+        --if-match "$ETAG" \
+        --distribution-config "$DIST"
     EOT
   }
 
-  depends_on = var.waf_enabled ? [aws_wafv2_web_acl.web_acl] : []
+  # Ensure this runs before WebACL is destroyed
+  depends_on = [
+    aws_cloudfront_distribution.cdn
+  ]
 }
 
 resource "aws_wafv2_ip_set" "ip_whitelist" {
