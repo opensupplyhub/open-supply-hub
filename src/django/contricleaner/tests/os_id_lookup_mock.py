@@ -11,11 +11,12 @@ class OSIDLookUpMock(LookUpInterface):
         return {key: key}
 
     def bulk_get(self, keys: list) -> dict:
-        self.map = {
-            'YX1234567ABCD8E': None
-        }
+        self.map = {}
 
         for key in keys:
-            self.map[key] = key
+            if 'XY' in key:
+                self.map[key] = None
+            else:
+                self.map[key] = key
 
         return self.map
