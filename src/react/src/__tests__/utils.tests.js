@@ -2614,8 +2614,8 @@ describe('formatExtendedField', () => {
 
         expect(result.primary).toHaveLength(2);
         result.primary.forEach((element, idx) => {
-            expect(element.type.displayName || element.type.name).toBe('Link');
-            expect(element.props.to).toBe(`/facilities/${value[idx]}`);
+            expect(element.type).toBe('a');
+            expect(element.props.href).toBe(`/facilities/${value[idx]}`);
             expect(element.props.children).toBe(value[idx]);
         });
     });
