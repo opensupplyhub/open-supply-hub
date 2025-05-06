@@ -6,7 +6,7 @@ const blockStyle = Object.freeze({
     display: 'block',
 });
 
-export const formatIfListAndRemoveDuplicates = (value, fieldName = '') => {
+const formatIfListAndRemoveDuplicates = (value, fieldName = '') => {
     if (!Array.isArray(value)) {
         return value;
     }
