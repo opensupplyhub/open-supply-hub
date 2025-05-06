@@ -70,4 +70,4 @@ app_logstash_fargate_cpu = 256
 app_logstash_fargate_memory = 2048
 
 cloudfront_distribution_id = "EM27HGWEBI6LI"
-waf_enabled = true
+waf_enabled = false
