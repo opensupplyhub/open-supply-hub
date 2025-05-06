@@ -675,5 +675,5 @@ resource "aws_cloudfront_distribution" "cdn" {
     Environment = var.environment
   }
 
-  web_acl_id = var.waf_enabled ? aws_wafv2_web_acl.web_acl[0].arn : null
+  web_acl_id = var.waf_enabled ? aws_wafv2_web_acl.web_acl[var.environment].arn : null
 }
