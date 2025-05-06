@@ -6,7 +6,10 @@ from contricleaner.lib.serializers.row_serializers.row_serializer import (
 from contricleaner.lib.client_abstractions.lookup_interface import (
     LookUpInterface
 )
-from contricleaner.constants import MAX_PARENT_COMPANY_OS_ID_COUNT
+from contricleaner.constants import (
+    MAX_PARENT_COMPANY_OS_ID_COUNT,
+    PARENT_COMPANY_OS_ID_FIELD
+)
 
 
 class RowParentCompanyOSIDSerializer(RowSerializer):
@@ -19,28 +22,27 @@ class RowParentCompanyOSIDSerializer(RowSerializer):
         self.split_pattern = split_pattern
 
     def validate(self, row: dict, current: dict) -> dict:
-        field = 'parent_company_os_id'
-        value = row.get(field)
+        value = row.get(PARENT_COMPANY_OS_ID_FIELD)
 
         if not value:
             return current
-        
+
         if not isinstance(value, (str, list)):
             current['errors'].append(
                 {
-                    'message': f'Expected value for {field} to be a '
-                    f'string or list but got {type(value).__name__}.',
-                    'field': field,
+                    'message': f'Expected value for {PARENT_COMPANY_OS_ID_FIELD} '
+                    f'to be a string or list but got {type(value).__name__}.',
+                    'field': PARENT_COMPANY_OS_ID_FIELD,
                     'type': 'ValueError',
                 }
             )
             return current
-        
+
         if isinstance(value, list):
             origin_values = value
         else:
             origin_values = split_values(value, self.split_pattern)
-        
+
         if len(origin_values) > MAX_PARENT_COMPANY_OS_ID_COUNT:
             current['errors'].append(
                 {
@@ -48,7 +50,7 @@ class RowParentCompanyOSIDSerializer(RowSerializer):
                     'parent_company_os_id, not {}.'.format(
                         MAX_PARENT_COMPANY_OS_ID_COUNT, len(origin_values)
                     ),
-                    'field': field,
+                    'field': PARENT_COMPANY_OS_ID_FIELD,
                     'type': 'ValidationError',
                 }
             )
@@ -59,15 +61,15 @@ class RowParentCompanyOSIDSerializer(RowSerializer):
             if not self.__is_valid_os_id(os_id):
                 current['errors'].append(
                     {
-                        'message': f'Expected value for {field} should '
-                        f'match OS ID format but got {os_id}',
-                        'field': field,
+                        'message': f'Expected value for {PARENT_COMPANY_OS_ID_FIELD} '
+                        f'should match OS ID format but got {os_id}',
+                        'field': PARENT_COMPANY_OS_ID_FIELD,
                         'type': 'ValidationError',
                     }
                 )
             else:
                 valid_os_ids.append(os_id)
-        
+
         result_map = self.os_id_lookup.bulk_get(
             valid_os_ids
         )
@@ -75,17 +77,17 @@ class RowParentCompanyOSIDSerializer(RowSerializer):
             if value is None:
                 current['errors'].append(
                     {
-                        'message': f'The OS ID {key} for {field} '
+                        'message': f'The OS ID {key} for {PARENT_COMPANY_OS_ID_FIELD} '
                         f'does not related to any production location.',
-                        'field': field,
+                        'field': PARENT_COMPANY_OS_ID_FIELD,
                         'type': 'ValidationError',
                     }
                 )
 
-        current[field] = origin_values
+        current[PARENT_COMPANY_OS_ID_FIELD] = origin_values
 
         return current
-    
+
     def __is_valid_os_id(self, value: str) -> bool:
         os_id_regex = re.compile('[A-Z]{2}[0-9]{7}[A-Z0-9]{6}')
         return bool(os_id_regex.fullmatch(value))

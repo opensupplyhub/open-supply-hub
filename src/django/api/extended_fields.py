@@ -63,11 +63,13 @@ def get_parent_company_extendedfield_value(field_value):
             'name': field_value
         }
 
+
 def get_parent_company_os_id_extendedfield_value(field_value):
 
     return {
         'raw_values':  field_value,
     }
+
 
 def get_product_type_extendedfield_value(field_value):
 
@@ -91,7 +93,9 @@ def create_extendedfield(field, field_value, item, contributor):
         elif field == ExtendedField.PARENT_COMPANY:
             field_value = get_parent_company_extendedfield_value(field_value)
         elif field == ExtendedField.PARENT_COMPANY_OS_ID:
-            field_value = get_parent_company_os_id_extendedfield_value(field_value)
+            field_value = get_parent_company_os_id_extendedfield_value(
+                field_value
+            )
         elif field == ExtendedField.PRODUCT_TYPE:
             field_value = get_product_type_extendedfield_value(field_value)
         elif (field == ExtendedField.FACILITY_TYPE or

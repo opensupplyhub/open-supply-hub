@@ -1,3 +1,4 @@
+from typing import Any
 from api.models import Facility
 from contricleaner.lib.client_abstractions.lookup_interface import (
     LookUpInterface
@@ -9,7 +10,7 @@ class OSIDLookUp(LookUpInterface):
     def __init__(self) -> None:
         super().__init__(lookup_field="id")
 
-    def get(self, key: str) -> dict:
+    def get(self, key: Any) -> dict:
         lookup = {f"{self.lookup_field}__iexact": key}
         try:
             facility = Facility.objects.get(**lookup)
