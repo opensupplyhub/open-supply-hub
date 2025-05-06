@@ -94,10 +94,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup AWS CLI + JQ
-        run: |
-          sudo apt-get update && sudo apt-get install -y jq awscli
-
       - name: Detach WAF if disabled
         id: detach
         run: |
