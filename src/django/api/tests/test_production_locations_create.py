@@ -502,7 +502,7 @@ class TestProductionLocationsCreate(APITestCase):
         self.assertEqual(
             moderation_event.cleaned_data['fields']['duns_id'], '123456789'
         )
-    
+
     @patch('api.geocoding.requests.get')
     def test_moderation_event_created_with_valid_parent_company_os_id(
         self, mock_get
