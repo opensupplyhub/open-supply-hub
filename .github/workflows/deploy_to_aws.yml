@@ -84,8 +84,57 @@ jobs:
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           AWS_DEFAULT_REGION: "eu-west-1"
 
-  apply:
+  detach-waf-if-needed:
     needs: init-and-plan
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
+    outputs:
+      waf-detached: ${{ steps.detach.outputs.waf_detached }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup AWS CLI + JQ
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq awscli
+
+      - name: Detach WAF if disabled
+        id: detach
+        run: |
+          set -e
+
+          # Use Terraform to output the waf_enabled and cloudfront distribution ID
+          waf_enabled=$(terraform -chdir=deployment/infra output -raw waf_enabled || echo "false")
+          distribution_id=$(terraform -chdir=deployment/infra output -raw cloudfront_distribution_id || echo "")
+
+          echo "waf_enabled=$waf_enabled"
+          echo "distribution_id=$distribution_id"
+
+          if [[ "$waf_enabled" == "false" && "$distribution_id" != "" ]]; then
+            echo "WAF is disabled. Attempting to detach WebACL from CloudFront..."
+
+            etag=$(aws cloudfront get-distribution-config --id "$distribution_id" --query 'ETag' --output text)
+            config=$(aws cloudfront get-distribution-config --id "$distribution_id" --query 'DistributionConfig' --output json)
+            updated_config=$(echo "$config" | jq '.WebACLId = ""')
+
+            aws cloudfront update-distribution \
+              --id "$distribution_id" \
+              --distribution-config "$updated_config" \
+              --if-match "$etag"
+
+            echo "WAF detached successfully."
+            echo "waf_detached=true" >> $GITHUB_OUTPUT
+          else
+            echo "No detachment necessary."
+            echo "waf_detached=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
+
+  apply:
+    needs: [init-and-plan, detach-waf-if-needed]
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
     if: ${{ inputs.deploy-plan-only == false }}

@@ -13,29 +13,6 @@ locals {
                 local.is_denylist_enabled ? "denylist" : "")
 }
 
-resource "null_resource" "detach_waf_acl" {
-  count = var.waf_enabled ? 0 : 1
-
-  provisioner "local-exec" {
-    command = <<EOT
-      echo "Detaching WAF from CloudFront..."
-      CONFIG=$(aws cloudfront get-distribution-config --id ${var.cloudfront_distribution_id})
-      ETAG=$(echo "$CONFIG" | jq -r '.ETag')
-      DIST=$(echo "$CONFIG" | jq '.DistributionConfig | .WebACLId = ""')
-      
-      aws cloudfront update-distribution \
-        --id ${var.cloudfront_distribution_id} \
-        --if-match "$ETAG" \
-        --distribution-config "$DIST"
-    EOT
-  }
-
-  # Ensure this runs before WebACL is destroyed
-  depends_on = [
-    aws_cloudfront_distribution.cdn
-  ]
-}
-
 resource "aws_wafv2_ip_set" "ip_whitelist" {
   count             = local.is_whitelist_enabled ? 1 : 0
   provider          = aws.us-east-1
