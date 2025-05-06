@@ -76,7 +76,7 @@ export default function FacilityDetailsClaimedInfo({ data }) {
                     facility.affiliations &&
                     facility.affiliations.length &&
                     formatIfListAndRemoveDuplicates(
-                        orderBy(facility.certifications, identity),
+                        orderBy(facility.affiliations, identity),
                     )
                 }
             />
