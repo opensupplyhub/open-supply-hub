@@ -68,6 +68,16 @@ jobs:
           terraform_version: 1.5.0
           terraform_wrapper: false
 
+      - name: Validate whitelist and denylist usage
+        run: |
+          whitelist=$(terraform -chdir=deployment/infra output -json ip_whitelist | jq length)
+          denylist=$(terraform -chdir=deployment/infra output -json ip_denylist | jq length)
+    
+          if [ "$whitelist" -gt 0 ] && [ "$denylist" -gt 0 ]; then
+            echo "ERROR: You cannot define both ip_whitelist and ip_denylist!"
+            exit 1
+          fi
+
       - name: Terraform Plan for ${{ vars.ENV_NAME }}
         run: ./deployment/infra plan
         env:

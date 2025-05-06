@@ -6,16 +6,6 @@ provider "aws" {
 locals {
   is_whitelist_enabled = length(var.ip_whitelist) > 0
   is_denylist_enabled  = length(var.ip_denylist) > 0
-
-  conflicting_lists = local.is_whitelist_enabled && local.is_denylist_enabled
-}
-
-resource "null_resource" "validate_ip_lists" {
-  count = local.conflicting_lists ? 1 : 0
-
-  provisioner "local-exec" {
-    command = "echo 'ERROR: ip_whitelist and ip_denylist cannot both be set' && exit 1"
-  }
 }
 
 resource "aws_wafv2_ip_set" "ip_whitelist" {
