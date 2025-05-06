@@ -33,7 +33,7 @@ class RowParentCompanyOSIDSerializerTest(TestCase):
         self.assertIsNotNone(err)
         self.assertEqual(err['type'], 'ValueError')
         self.assertIn(
-            'Expected value for parent_company_os_id to be ' 
+            'Expected value for parent_company_os_id to be '
             'a string or list but got int.',
             err['message'],
         )
@@ -104,7 +104,7 @@ class RowParentCompanyOSIDSerializerTest(TestCase):
             'does not related to any production location.',
         )
         self.assertEqual(result["errors"][0]["type"], "ValidationError")
-    
+
     def test_valid_parent_company_os_id(self):
         row = {
             "parent_company_os_id": "US2025125QGXB8G",
