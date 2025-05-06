@@ -30,7 +30,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe bugfix here.*
 
 ### What's new
-* [OSDEV-1953](https://opensupplyhub.atlassian.net/browse/OSDEV-1953) - Implemented UI logic to display parent company OS ID fields on the facility profile page, which are links to the corresponding facility pages. 
+* [OSDEV-1953](https://opensupplyhub.atlassian.net/browse/OSDEV-1953) - Implemented UI logic to display parent company OS ID fields on the facility profile page as links to the corresponding facility pages.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
