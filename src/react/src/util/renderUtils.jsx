@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 
 const blockStyle = Object.freeze({
     margin: 0,
@@ -15,15 +14,15 @@ const formatIfListAndRemoveDuplicates = (value, fieldName = '') => {
 
     return uniqueValues.map(v =>
         fieldName === 'parent_company_os_id' ? (
-            <Link
-                to={`/facilities/${v}`}
+            <a
+                href={`/facilities/${v}`}
                 key={v}
                 style={blockStyle}
                 target="_blank"
                 rel="noopener noreferrer"
             >
                 {v}
-            </Link>
+            </a>
         ) : (
             <span style={blockStyle} key={v}>
                 {v}
