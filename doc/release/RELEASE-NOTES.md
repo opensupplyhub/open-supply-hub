@@ -24,6 +24,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Architecture/Environment changes
 * [OSDEV-1960](https://opensupplyhub.atlassian.net/browse/OSDEV-1960) - Disabled deletion protection and final snapshot creation for the RDS instance when it is deleted in the pre-prod environment.
 * [OSDEV-1949](https://opensupplyhub.atlassian.net/browse/OSDEV-1949) - Setup IP blocking / whitelisting capability for the platform.
+* [OSDEV-1746](https://opensupplyhub.atlassian.net/browse/OSDEV-1746) - Implemented auto-scaling to dynamically adjust the Django instance count based on load metrics for cost-efficient resource utilization and high availability.
+* The subdomain `a.os-hub.net` was removed from the CORS_ALLOWED_ORIGIN_REGEXES list in the Django application. This change was made because the subdomain was deleted from AWS Route 53 and is no longer in use.
 
 ### Bugfix
 * *Describe bugfix here.*
@@ -32,7 +34,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
 
 ### Release instructions:
-* *Provide release instructions here.*
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
 
 
 ## Release 2.3.0
