@@ -30,6 +30,8 @@ extract_array() {
   ' "$TFVARS_FILE"
 }
 
+cat "$TFVARS_FILE"
+
 ip_whitelist=$(extract_array "ip_whitelist" | tr -d '[]", \n')
 ip_denylist=$(extract_array "ip_denylist" | tr -d '[]", \n')
 
