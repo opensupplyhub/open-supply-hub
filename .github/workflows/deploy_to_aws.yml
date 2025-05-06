@@ -86,48 +86,62 @@ jobs:
 
   detach-waf-if-needed:
     needs: init-and-plan
+    if: ${{ inputs.deploy-plan-only == false }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
-    outputs:
-      waf-detached: ${{ steps.detach.outputs.waf_detached }}
     steps:
-      - name: Checkout
+      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+        id: get_env_name
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
+        with:
+          string: ${{ vars.ENV_NAME }}
+
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Detach WAF if disabled
-        id: detach
+      - name: Checkout config repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'opensupplyhub/ci-deployment'
+          path: 'terraform-config'
+          token: ${{ secrets.PAT }}
+
+      - name: Copy tfvars for ${{ vars.ENV_NAME }}
         run: |
-          set -e
+          cat "terraform-config/environments/${{ env.TFVAR_NAME }}"  "deployment/environments/${{ env.TFVAR_NAME }}" > "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
+        env:
+          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
+          TFVAR_NAME: terraform-${{ steps.get_env_name.outputs.lowercase }}.tfvars
 
-          # Use Terraform to output the waf_enabled and cloudfront distribution ID
-          waf_enabled=$(terraform -chdir=deployment/infra output -raw waf_enabled || echo "false")
-          distribution_id=$(terraform -chdir=deployment/infra output -raw cloudfront_distribution_id || echo "")
+      - name: Parse waf_enabled and distribution_id
+        run: |
+          waf_enabled=$(grep -E '^waf_enabled\s*=' deployment/environments/${{ env.TFVAR_NAME }} | awk '{print $3}')
+          distribution_id=$(grep -E '^cloudfront_distribution_id\s*=' deployment/environments/${{ env.TFVAR_NAME }} | awk -F= '{gsub(/"/, "", $2); print $2}' | xargs)
 
-          echo "waf_enabled=$waf_enabled"
-          echo "distribution_id=$distribution_id"
+          echo "WAF Enabled: $waf_enabled"
+          echo "Distribution ID: $distribution_id"
 
-          if [[ "$waf_enabled" == "false" && "$distribution_id" != "" ]]; then
-            echo "WAF is disabled. Attempting to detach WebACL from CloudFront..."
+          if [[ "$waf_enabled" == "false" && -n "$distribution_id" ]]; then
+            echo "Detaching WAF from CloudFront distribution $distribution_id"
+            config=$(aws cloudfront get-distribution-config --id "$distribution_id")
+            etag=$(echo "$config" | jq -r '.ETag')
+            dist=$(echo "$config" | jq '.DistributionConfig | .WebACLId = ""')
 
-            etag=$(aws cloudfront get-distribution-config --id "$distribution_id" --query 'ETag' --output text)
-            config=$(aws cloudfront get-distribution-config --id "$distribution_id" --query 'DistributionConfig' --output json)
-            updated_config=$(echo "$config" | jq '.WebACLId = ""')
+            echo "$dist" > updated_config.json
 
             aws cloudfront update-distribution \
               --id "$distribution_id" \
-              --distribution-config "$updated_config" \
-              --if-match "$etag"
-
-            echo "WAF detached successfully."
-            echo "waf_detached=true" >> $GITHUB_OUTPUT
+              --if-match "$etag" \
+              --distribution-config file://updated_config.json
           else
-            echo "No detachment necessary."
-            echo "waf_detached=false" >> $GITHUB_OUTPUT
+            echo "Skipping WAF detachment"
           fi
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: "eu-west-1"
+          TFVAR_NAME: terraform-${{ steps.get_env_name.outputs.lowercase }}.tfvars
+          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
 
   apply:
     needs: [init-and-plan, detach-waf-if-needed]
