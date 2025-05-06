@@ -284,7 +284,7 @@ resource "aws_cloudwatch_event_rule" "export_csv_schedule" {
   name                = "rule${local.short}ExportCsvSchedule"
   description         = "Runs the export_csv job on a schedule"
   schedule_expression = var.export_csv_schedule_expression
-  state               = var.export_csv_enabled ? "ENABLED" : "DISABLED"
+  is_enabled          = var.export_csv_enabled
 }
 
 resource "aws_cloudwatch_event_target" "export_csv" {
