@@ -30,8 +30,9 @@ class RowParentCompanyOSIDSerializer(RowSerializer):
         if not isinstance(value, (str, list)):
             current['errors'].append(
                 {
-                    'message': f'Expected value for {PARENT_COMPANY_OS_ID_FIELD} '
-                    f'to be a string or list but got {type(value).__name__}.',
+                    'message': 'Expected value for '
+                    f'{PARENT_COMPANY_OS_ID_FIELD} to be a '
+                    f'string or list but got {type(value).__name__}.',
                     'field': PARENT_COMPANY_OS_ID_FIELD,
                     'type': 'ValueError',
                 }
@@ -61,8 +62,9 @@ class RowParentCompanyOSIDSerializer(RowSerializer):
             if not self.__is_valid_os_id(os_id):
                 current['errors'].append(
                     {
-                        'message': f'Expected value for {PARENT_COMPANY_OS_ID_FIELD} '
-                        f'should match OS ID format but got {os_id}',
+                        'message': 'Expected value for '
+                        f'{PARENT_COMPANY_OS_ID_FIELD} should '
+                        f'match OS ID format but got {os_id}',
                         'field': PARENT_COMPANY_OS_ID_FIELD,
                         'type': 'ValidationError',
                     }
@@ -77,8 +79,9 @@ class RowParentCompanyOSIDSerializer(RowSerializer):
             if value is None:
                 current['errors'].append(
                     {
-                        'message': f'The OS ID {key} for {PARENT_COMPANY_OS_ID_FIELD} '
-                        f'does not related to any production location.',
+                        'message': f'The OS ID {key} for '
+                        f'{PARENT_COMPANY_OS_ID_FIELD} does not '
+                        f'related to any production location.',
                         'field': PARENT_COMPANY_OS_ID_FIELD,
                         'type': 'ValidationError',
                     }
