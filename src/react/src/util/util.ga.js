@@ -34,7 +34,7 @@ export const maybeGetReactAppGoogleAnalyticsKey = () => {
     const gaKey = env(REACT_APP_GOOGLE_ANALYTICS_KEY);
     const environment = env('ENVIRONMENT');
 
-    if (!environment || environment === 'development') {
+    if (!environment || environment === 'local') {
         return null;
     }
 
