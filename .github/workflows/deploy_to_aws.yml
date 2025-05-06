@@ -70,8 +70,8 @@ jobs:
 
       - name: Validate whitelist and denylist usage
         run: |
-          cat "terraform-config/environments/${{ env.TFVAR_NAME }}"  "deployment/environments/${{env.TFVAR_NAME}}"  > "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars" 
-          && scripts/validate_ip_lists.sh deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars
+          cat "terraform-config/environments/${{ env.TFVAR_NAME }}" "deployment/environments/${{ env.TFVAR_NAME }}" > "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
+          scripts/validate_ip_lists.sh deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars
         env:
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           TFVAR_NAME: terraform-${{ steps.get_env_name.outputs.lowercase }}.tfvars
