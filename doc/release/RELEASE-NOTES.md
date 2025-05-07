@@ -19,7 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe schema changes here.*
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-1952](https://opensupplyhub.atlassian.net/browse/OSDEV-1952) - Added support for including `parent_company_os_id` when creating or updating a production location. This field can now be submitted via the API (`POST /api/facilities/`, `POST /api/v1/production-locations/`, `PATCH /api/v1/production-locations/{os_id}/`) or through list uploads. The `parent_company_os_id` values are stored as standalone fields in the `api_extendedfields` table.
 
 ### Architecture/Environment changes
 * [OSDEV-1960](https://opensupplyhub.atlassian.net/browse/OSDEV-1960) - Disabled deletion protection and final snapshot creation for the RDS instance when it is deleted in the pre-prod environment.

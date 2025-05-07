@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta
 from api.models import Sector
-from contricleaner.lib.client_abstractions.sector_cache_interface import (
-    SectorCacheInterface
+from contricleaner.lib.client_abstractions.cache_interface import (
+    CacheInterface
 )
 
 
-class SectorCache(SectorCacheInterface):
+class SectorCache(CacheInterface):
     REFRESH_INTERVAL = timedelta(seconds=300)
 
     def __init__(self) -> None:
@@ -25,6 +25,6 @@ class SectorCache(SectorCacheInterface):
             self.refetch_sectors()
 
     @property
-    def sector_map(self):
+    def value_map(self):
         self.refresh_if_needed()
         return self.map
