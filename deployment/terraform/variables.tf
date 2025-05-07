@@ -779,6 +779,10 @@ variable "ip_whitelist" {
 variable "ip_denylist" {
   type    = list(string)
   default = []
+  validation {
+    condition     = length(var.ip_denylist) == 0 || length(var.ip_whitelist) == 0
+    error_message = "Only one of ip_whitelist or ip_denylist can be defined."
+  }
 }
 
 variable cloudfront_distribution_id {

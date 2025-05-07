@@ -11,21 +11,27 @@ locals {
 resource "aws_wafv2_ip_set" "ip_whitelist" {
   count             = local.is_whitelist_enabled ? 1 : 0
   provider          = aws.us-east-1
-  name              = "whitelist-ipset"
+  name = "${lower(var.environment)}-whitelist-ipset"
   description       = "Allowed IPs"
   scope             = "CLOUDFRONT"
   ip_address_version = "IPV4"
   addresses         = var.ip_whitelist
+  tags = { 
+    Environment = var.environment
+  }
 }
 
 resource "aws_wafv2_ip_set" "ip_denylist" {
   count             = local.is_denylist_enabled ? 1 : 0
   provider          = aws.us-east-1
-  name              = "denylist-ipset"
+  name = "${lower(var.environment)}-denylist-ipset"
   description       = "Blocked IPs"
   scope             = "CLOUDFRONT"
   ip_address_version = "IPV4"
   addresses         = var.ip_denylist
+  tags = {
+    Environment = var.environment
+  }
 }
 
 resource "aws_wafv2_web_acl" "web_acl" {
