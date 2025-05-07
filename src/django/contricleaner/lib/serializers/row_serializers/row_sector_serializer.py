@@ -5,8 +5,8 @@ from contricleaner.lib.helpers.is_valid_type import (
     is_valid_type,
 )
 from contricleaner.lib.helpers.split_values import split_values
-from contricleaner.lib.client_abstractions.sector_cache_interface import (
-    SectorCacheInterface
+from contricleaner.lib.client_abstractions.cache_interface import (
+    CacheInterface
 )
 from contricleaner.lib.serializers.row_serializers.row_serializer \
     import RowSerializer
@@ -16,7 +16,7 @@ class RowSectorSerializer(RowSerializer):
     __valid_field_value_lengths = {'sector_value': 50}
 
     def __init__(
-        self, sector_cache: SectorCacheInterface, split_pattern: str
+        self, sector_cache: CacheInterface, split_pattern: str
     ) -> None:
         self.sector_cache = sector_cache
         self.split_pattern = split_pattern
@@ -81,7 +81,7 @@ class RowSectorSerializer(RowSerializer):
         return current
 
     def parse_all_values(self, all_values):
-        sector_map = self.sector_cache.sector_map
+        sector_map = self.sector_cache.value_map
         sectors = []
         product_types = []
         for value in all_values:
