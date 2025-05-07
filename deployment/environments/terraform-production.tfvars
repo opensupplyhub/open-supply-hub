@@ -66,3 +66,6 @@ opensearch_instance_type = "m6g.large.search"
 
 app_logstash_fargate_cpu = 256
 app_logstash_fargate_memory = 2048
+
+cloudfront_distribution_id = "E1T77G0FPWDMYV"
+waf_enabled = false
