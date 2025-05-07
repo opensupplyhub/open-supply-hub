@@ -101,7 +101,7 @@ class RowParentCompanyOSIDSerializerTest(TestCase):
         self.assertEqual(
             result["errors"][0]["message"],
             f'The OS ID {wrong_os_id} for parent_company_os_id '
-            'does not related to any production location.',
+            'does not relate to any production location.',
         )
         self.assertEqual(result["errors"][0]["type"], "ValidationError")
 
