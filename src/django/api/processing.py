@@ -20,6 +20,7 @@ from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.exceptions.handler_not_set_error \
     import HandlerNotSetError
 from api.sector_cache import SectorCache
+from api.os_id_lookup import OSIDLookup
 from api.facility_actions.processing_facility_executor import (
     ProcessingFacilityExecutor
 )
@@ -40,7 +41,11 @@ def parse_production_location_list(location_list: FacilityList):
     parsing_started = str(timezone.now())
     logger.info('[List Upload] Started CC Parse process!')
 
-    contri_cleaner = ContriCleaner(location_list.file, SectorCache())
+    contri_cleaner = ContriCleaner(
+        location_list.file,
+        SectorCache(),
+        OSIDLookup()
+    )
     internal_errors = []
     processing_input = {
         'facility_list': location_list,

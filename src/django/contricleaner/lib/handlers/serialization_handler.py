@@ -5,12 +5,17 @@ from contricleaner.lib.dto.row_dto import RowDTO
 from contricleaner.lib.handlers.list_row_handler import ListRowHandler
 from contricleaner.lib.serializers.row_serializers.\
     row_additional_ids_serializer import RowAdditionalIdsSerializer
+from contricleaner.lib.serializers.row_serializers.\
+    row_parent_company_os_id_serializer import RowParentCompanyOSIDSerializer
 from contricleaner.lib.serializers.row_serializers.composite_row_serializer \
     import RowSerializer
 from contricleaner.lib.serializers.row_serializers.composite_row_serializer \
     import CompositeRowSerializer
-from contricleaner.lib.client_abstractions.sector_cache_interface import (
-    SectorCacheInterface
+from contricleaner.lib.client_abstractions.cache_interface import (
+    CacheInterface
+)
+from contricleaner.lib.client_abstractions.lookup_interface import (
+    LookupInterface
 )
 from contricleaner.lib.serializers.row_serializers.row_clean_field_serializer \
     import RowCleanFieldSerializer
@@ -30,8 +35,13 @@ from contricleaner.lib.serializers.row_serializers.row_coordinates_serializer \
 
 class SerializationHandler(ListRowHandler):
 
-    def __init__(self, sector_cache: SectorCacheInterface) -> None:
+    def __init__(
+            self,
+            sector_cache: CacheInterface,
+            os_id_lookup: LookupInterface
+    ) -> None:
         self.__sector_cache = sector_cache
+        self.__os_id_lookup = os_id_lookup
 
     def handle(self, rows: List[Dict]) -> ListDTO:
         serialized_rows = []
@@ -67,6 +77,10 @@ class SerializationHandler(ListRowHandler):
             RowFacilityTypeSerializer(split_pattern),
             RowCoordinatesSerializer(),
             RowAdditionalIdsSerializer(),
+            RowParentCompanyOSIDSerializer(
+                self.__os_id_lookup,
+                split_pattern
+            ),
             RowEmptySerializer(),
         )
 
