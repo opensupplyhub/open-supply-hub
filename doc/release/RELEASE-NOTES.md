@@ -23,7 +23,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [OSDEV-1960](https://opensupplyhub.atlassian.net/browse/OSDEV-1960) - Disabled deletion protection and final snapshot creation for the RDS instance when it is deleted in the pre-prod environment.
-* [OSDEV-1949](https://opensupplyhub.atlassian.net/browse/OSDEV-1949) - Setup IP blocking / whitelisting capability for the platform.
+* [OSDEV-1949](https://opensupplyhub.atlassian.net/browse/OSDEV-1949) - Attached whitelist rules and deny rules and infrastructure changes: 
+    - Bump Terraform version from 1.4.0 to 1.5.0
+    - Made `waf_enabled` terraform flag variable.
+    - Added `cloudfront_distribution_id` terraform variable.
+    - Created a separate job `detach-waf-if-needed` in Deploy to AWS action. This is needed to prevent Terraform race condition when it tries to delete the AWS WAF before AWS has fully detached it from the CloudFront distribution, even though `web_acl_id` is set to`null`.
+    - Applied validation in the `init-and-plan` action if `ip_denylist` and `ip_whitelist` are present. Only whitelist or denylist should be defined per environment.
 * [OSDEV-1746](https://opensupplyhub.atlassian.net/browse/OSDEV-1746) - Implemented auto-scaling to dynamically adjust the Django instance count based on load metrics for cost-efficient resource utilization and high availability.
 * The subdomain `a.os-hub.net` was removed from the CORS_ALLOWED_ORIGIN_REGEXES list in the Django application. This change was made because the subdomain was deleted from AWS Route 53 and is no longer in use.
 
