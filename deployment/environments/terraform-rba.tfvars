@@ -21,7 +21,7 @@ rds_database_name = "opensupplyhub"
 rds_multi_az = false
 rds_storage_encrypted = true
 
-app_ecs_desired_count = "10"
+app_ecs_desired_count = "4"
 app_ecs_deployment_min_percent = "100"
 app_ecs_deployment_max_percent = "400"
 app_ecs_grace_period_seconds = "420"
@@ -30,8 +30,8 @@ app_fargate_memory = "4096"
 
 app_ecs_max_cpu_threshold         = 85
 app_ecs_min_cpu_threshold         = 15
-app_ecs_scale_target_max_capacity = 10
-app_ecs_scale_target_min_capacity = 5
+app_ecs_scale_target_max_capacity = 4
+app_ecs_scale_target_min_capacity = 2
 app_ecs_cooldown_scale_down       = 300
 app_ecs_cooldown_scale_up         = 180
 
