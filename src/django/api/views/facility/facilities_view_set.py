@@ -75,7 +75,7 @@ from ...mail import send_claim_facility_confirmation_email
 from ...pagination import FacilitiesGeoJSONPagination
 from ...permissions import IsRegisteredAndConfirmed, IsSuperuser
 from ...sector_cache import SectorCache
-from ...os_id_lookup import OSIDLookUp
+from ...os_id_lookup import OSIDLookup
 from ...serializers import (
     FacilityIndexSerializer,
     FacilityIndexDetailsSerializer,
@@ -611,7 +611,7 @@ class FacilitiesViewSet(ListModelMixin,
         contri_cleaner = ContriCleaner(
             request.data,
             SectorCache(),
-            OSIDLookUp()
+            OSIDLookup()
         )
         try:
             contri_cleaner_processed_data = contri_cleaner.process_data()

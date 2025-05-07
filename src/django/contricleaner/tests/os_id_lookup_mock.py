@@ -1,9 +1,9 @@
 from contricleaner.lib.client_abstractions.lookup_interface import (
-    LookUpInterface
+    LookupInterface
 )
 
 
-class OSIDLookUpMock(LookUpInterface):
+class OSIDLookupMock(LookupInterface):
     def __init__(self) -> None:
         super().__init__(lookup_field="id")
 

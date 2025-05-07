@@ -1,6 +1,6 @@
 from contricleaner.lib.serializers.row_serializers.\
     row_parent_company_os_id_serializer import RowParentCompanyOSIDSerializer
-from contricleaner.tests.os_id_lookup_mock import OSIDLookUpMock
+from contricleaner.tests.os_id_lookup_mock import OSIDLookupMock
 from django.test import TestCase
 
 
@@ -8,7 +8,7 @@ class RowParentCompanyOSIDSerializerTest(TestCase):
     def setUp(self):
         split_pattern = r', |,|\|'
         self.serializer = RowParentCompanyOSIDSerializer(
-            OSIDLookUpMock(),
+            OSIDLookupMock(),
             split_pattern
         )
         self.current = {"errors": []}

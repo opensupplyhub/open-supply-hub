@@ -1,11 +1,11 @@
 from typing import Any
 from api.models import Facility
 from contricleaner.lib.client_abstractions.lookup_interface import (
-    LookUpInterface
+    LookupInterface
 )
 
 
-class OSIDLookUp(LookUpInterface):
+class OSIDLookup(LookupInterface):
 
     def __init__(self) -> None:
         super().__init__(lookup_field="id")
@@ -22,7 +22,7 @@ class OSIDLookUp(LookUpInterface):
         result_map = {}
         filter_field = f"{self.lookup_field}__in"
         facilities = Facility.objects.filter(**{filter_field: keys})
-        ids_list = [facility.id for facility in facilities]
+        ids_set = {facility.id for facility in facilities}
         for key in keys:
-            result_map[key] = key if key in ids_list else None
+            result_map[key] = key if key in ids_set else None
         return result_map

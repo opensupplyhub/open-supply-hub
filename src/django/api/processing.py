@@ -20,7 +20,7 @@ from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.exceptions.handler_not_set_error \
     import HandlerNotSetError
 from api.sector_cache import SectorCache
-from api.os_id_lookup import OSIDLookUp
+from api.os_id_lookup import OSIDLookup
 from api.facility_actions.processing_facility_executor import (
     ProcessingFacilityExecutor
 )
@@ -44,7 +44,7 @@ def parse_production_location_list(location_list: FacilityList):
     contri_cleaner = ContriCleaner(
         location_list.file,
         SectorCache(),
-        OSIDLookUp()
+        OSIDLookup()
     )
     internal_errors = []
     processing_input = {

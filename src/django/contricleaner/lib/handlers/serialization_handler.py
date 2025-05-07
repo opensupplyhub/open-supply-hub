@@ -15,7 +15,7 @@ from contricleaner.lib.client_abstractions.cache_interface import (
     CacheInterface
 )
 from contricleaner.lib.client_abstractions.lookup_interface import (
-    LookUpInterface
+    LookupInterface
 )
 from contricleaner.lib.serializers.row_serializers.row_clean_field_serializer \
     import RowCleanFieldSerializer
@@ -38,7 +38,7 @@ class SerializationHandler(ListRowHandler):
     def __init__(
             self,
             sector_cache: CacheInterface,
-            os_id_lookup: LookUpInterface
+            os_id_lookup: LookupInterface
     ) -> None:
         self.__sector_cache = sector_cache
         self.__os_id_lookup = os_id_lookup

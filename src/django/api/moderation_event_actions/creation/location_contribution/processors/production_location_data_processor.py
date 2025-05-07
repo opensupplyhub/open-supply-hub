@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Any
 from rest_framework import status
 
 from api.sector_cache import SectorCache
-from api.os_id_lookup import OSIDLookUp
+from api.os_id_lookup import OSIDLookup
 from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.exceptions.handler_not_set_error \
     import HandlerNotSetError
@@ -56,7 +56,7 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         contri_cleaner = ContriCleaner(
             mapped_data,
             SectorCache(),
-            OSIDLookUp()
+            OSIDLookup()
         )
         try:
             cc_processed_data = contri_cleaner.process_data()

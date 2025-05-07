@@ -7,7 +7,7 @@ from contricleaner.lib.client_abstractions.cache_interface import (
     CacheInterface
 )
 from contricleaner.lib.client_abstractions.lookup_interface import (
-    LookUpInterface
+    LookupInterface
 )
 from contricleaner.lib.parsers.parsing_executor import (
     ParsingExecutor
@@ -37,7 +37,7 @@ class ContriCleaner:
     def __init__(self,
                  data: Union[File, Dict],
                  sector_cache: CacheInterface,
-                 os_id_lookup: LookUpInterface) -> None:
+                 os_id_lookup: LookupInterface) -> None:
         unsupported_data_value_type_message = ('The data value type should be '
                                                'either dict or File.')
         unsupported_sector_cache_value_type_message = (

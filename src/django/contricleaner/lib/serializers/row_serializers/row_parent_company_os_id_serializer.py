@@ -4,7 +4,7 @@ from contricleaner.lib.serializers.row_serializers.row_serializer import (
     RowSerializer,
 )
 from contricleaner.lib.client_abstractions.lookup_interface import (
-    LookUpInterface
+    LookupInterface
 )
 from contricleaner.constants import (
     MAX_PARENT_COMPANY_OS_ID_COUNT,
@@ -13,9 +13,11 @@ from contricleaner.constants import (
 
 
 class RowParentCompanyOSIDSerializer(RowSerializer):
+    __OS_ID_RE = re.compile('[A-Z]{2}[0-9]{7}[A-Z0-9]{6}')
+
     def __init__(
             self,
-            os_id_lookup: LookUpInterface,
+            os_id_lookup: LookupInterface,
             split_pattern: str
     ) -> None:
         self.os_id_lookup = os_id_lookup
@@ -39,10 +41,11 @@ class RowParentCompanyOSIDSerializer(RowSerializer):
             )
             return current
 
-        if isinstance(value, list):
-            origin_values = value
-        else:
-            origin_values = split_values(value, self.split_pattern)
+        origin_values = (
+            value
+            if isinstance(value, list)
+            else split_values(value, self.split_pattern)
+        )
 
         if len(origin_values) > MAX_PARENT_COMPANY_OS_ID_COUNT:
             current['errors'].append(
@@ -81,7 +84,7 @@ class RowParentCompanyOSIDSerializer(RowSerializer):
                     {
                         'message': f'The OS ID {key} for '
                         f'{PARENT_COMPANY_OS_ID_FIELD} does not '
-                        f'related to any production location.',
+                        f'relate to any production location.',
                         'field': PARENT_COMPANY_OS_ID_FIELD,
                         'type': 'ValidationError',
                     }
@@ -92,5 +95,4 @@ class RowParentCompanyOSIDSerializer(RowSerializer):
         return current
 
     def __is_valid_os_id(self, value: str) -> bool:
-        os_id_regex = re.compile('[A-Z]{2}[0-9]{7}[A-Z0-9]{6}')
-        return bool(os_id_regex.fullmatch(value))
+        return bool(self.__OS_ID_RE.fullmatch(value))

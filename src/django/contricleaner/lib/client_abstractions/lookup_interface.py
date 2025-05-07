@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 
-class LookUpInterface(ABC):
+class LookupInterface(ABC):
     def __init__(self, lookup_field: str):
         self.lookup_field = lookup_field
 
