@@ -5,27 +5,27 @@ const blockStyle = Object.freeze({
     display: 'block',
 });
 
-const renderUniqueListItems = (value, fieldName = '') => {
-    if (!Array.isArray(value)) {
-        return value;
+const renderUniqueListItems = (fieldValue, fieldName = '') => {
+    if (!Array.isArray(fieldValue)) {
+        return fieldValue;
     }
 
-    const uniqueValues = [...new Set(value)];
+    const uniqueValues = [...new Set(fieldValue)];
 
-    return uniqueValues.map(v =>
+    return uniqueValues.map(value =>
         fieldName === 'parent_company_os_id' ? (
             <a
-                href={`/facilities/${v}`}
-                key={v}
+                href={`/facilities/${value}`}
+                key={value}
                 style={blockStyle}
                 target="_blank"
                 rel="noopener noreferrer"
             >
-                {v}
+                {value}
             </a>
         ) : (
-            <span style={blockStyle} key={v}>
-                {v}
+            <span style={blockStyle} key={value}>
+                {value}
             </span>
         ),
     );

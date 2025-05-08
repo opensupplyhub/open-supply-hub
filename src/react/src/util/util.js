@@ -1706,7 +1706,7 @@ export const formatExtendedField = ({
     contributor_name,
     is_from_claim,
     is_verified,
-    formatValue = v => v,
+    formatValue = rawValue => rawValue,
 }) => {
     const primary = renderUniqueListItems(formatValue(value), field_name);
     const secondary = formatAttribution(created_at, contributor_name);
