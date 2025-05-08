@@ -2623,7 +2623,7 @@ describe('formatExtendedField', () => {
             ...baseProps,
             value: ['ABC'],
             field_name: 'test_field',
-            formatValue: v => v.map(s => s.toLowerCase()),
+            formatValue:  rawValue => rawValue.map(string => string.toLowerCase()),
         });
 
         expect(result.primary).toHaveLength(1);
