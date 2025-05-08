@@ -2584,7 +2584,6 @@ describe('formatExtendedField', () => {
         contributor_name: 'Test Contributor',
         is_verified: true,
         is_from_claim: false,
-        id: '12345',
     };
 
     it('formats value with default formatter and fallback key', () => {
@@ -2598,7 +2597,6 @@ describe('formatExtendedField', () => {
         expect(result.embeddedSecondary).toBe('October 1, 2025');
         expect(result.isVerified).toBe(true);
         expect(result.isFromClaim).toBe(false);
-        expect(result.key).toBe('12345');
         expect(result.primary).toHaveLength(2);
         expect(result.primary[0].props.children).toBe('Alpha');
         expect(result.primary[1].props.children).toBe('Beta');
@@ -2654,6 +2652,5 @@ describe('formatExtendedField', () => {
         expect(result.embeddedSecondary).toBe('October 1, 2025');
         expect(result.isVerified).toBe(true);
         expect(result.isFromClaim).toBe(false);
-        expect(result.key).toBe('12345');
     });
 });
