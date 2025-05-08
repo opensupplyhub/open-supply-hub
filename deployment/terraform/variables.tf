@@ -787,10 +787,6 @@ variable "ip_denylist" {
   }
 }
 
-variable cloudfront_distribution_id {
-  type = string
-}
-
 variable "waf_enabled" {
   type        = bool
   default     = false

@@ -65,5 +65,4 @@ opensearch_instance_type = "t3.small.search"
 app_logstash_fargate_cpu = 256
 app_logstash_fargate_memory = 2048
 
-cloudfront_distribution_id = "E2V9F106B0JAKS"
 waf_enabled = false

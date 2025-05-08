@@ -123,22 +123,22 @@ jobs:
 
       - name: Parse waf_enabled and distribution_id
         run: |
+          CLOUDFRONT_DISTRIBUTION_ID=$(./scripts/find_cloudfront_distribution_id.sh "$CLOUDFRONT_DOMAIN")
           waf_enabled=$(grep -E '^waf_enabled\s*=' deployment/environments/${{ env.TFVAR_NAME }} | awk '{print $3}')
-          distribution_id=$(grep -E '^cloudfront_distribution_id\s*=' deployment/environments/${{ env.TFVAR_NAME }} | awk -F= '{gsub(/"/, "", $2); print $2}' | xargs)
 
           echo "WAF Enabled: $waf_enabled"
-          echo "Distribution ID: $distribution_id"
+          echo "Distribution ID: $CLOUDFRONT_DISTRIBUTION_ID"
 
-          if [[ "$waf_enabled" == "false" && -n "$distribution_id" ]]; then
-            echo "Detaching WAF from CloudFront distribution $distribution_id"
-            config=$(aws cloudfront get-distribution-config --id "$distribution_id")
+          if [[ "$waf_enabled" == "false" && -n "$CLOUDFRONT_DISTRIBUTION_ID" ]]; then
+            echo "Detaching WAF from CloudFront distribution $CLOUDFRONT_DISTRIBUTION_ID"
+            config=$(aws cloudfront get-distribution-config --id "$CLOUDFRONT_DISTRIBUTION_ID")
             etag=$(echo "$config" | jq -r '.ETag')
             dist=$(echo "$config" | jq '.DistributionConfig | .WebACLId = ""')
 
             echo "$dist" > updated_config.json
 
             aws cloudfront update-distribution \
-              --id "$distribution_id" \
+              --id "$CLOUDFRONT_DISTRIBUTION_ID" \
               --if-match "$etag" \
               --distribution-config file://updated_config.json
           else
@@ -150,6 +150,7 @@ jobs:
           AWS_DEFAULT_REGION: "eu-west-1"
           TFVAR_NAME: terraform-${{ steps.get_env_name.outputs.lowercase }}.tfvars
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
+          CLOUDFRONT_DOMAIN: ${{ vars.CLOUDFRONT_DOMAIN }}
 
   apply:
     needs: [init-and-plan, detach-waf-if-needed]
@@ -237,23 +238,13 @@ jobs:
           AWS_DEFAULT_REGION: "eu-west-1"
           CLOUDFRONT_DOMAIN: ${{ vars.CLOUDFRONT_DOMAIN }}
         run: |
-          for id in $(aws cloudfront list-distributions --query "DistributionList.Items[*].Id" --output text); do
-              domains=$(aws cloudfront get-distribution-config --id $id --query "DistributionConfig.Aliases.Items" --output text)
-              if [[ "$domains" == "$CLOUDFRONT_DOMAIN" ]]; then
-                  if [ ! -z "$CLOUDFRONT_DISTRIBUTION_ID" ]; then
-                      echo "Error: Multiple CloudFront distributions found for domain: $CLOUDFRONT_DOMAIN"
-                      exit 1
-                  fi
-                  echo "Found Distribution ID: $id for Domain: $CLOUDFRONT_DOMAIN"
-                  CLOUDFRONT_DISTRIBUTION_ID=$id
-              fi
-          done
+          CLOUDFRONT_DISTRIBUTION_ID=$(./scripts/find_cloudfront_distribution_id.sh "$CLOUDFRONT_DOMAIN")
           if [ -z "$CLOUDFRONT_DISTRIBUTION_ID" ]; then
             echo "Error: No CloudFront distribution found for domain: $CLOUDFRONT_DOMAIN"
             exit 1
           fi
           aws s3 sync src/react/build/ s3://$FRONTEND_BUCKET-$AWS_DEFAULT_REGION/ --delete
-          aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
+          aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/*"
 
   build_and_push_docker_image:
     needs: build_and_push_react_app
