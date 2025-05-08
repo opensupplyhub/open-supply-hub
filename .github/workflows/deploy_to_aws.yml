@@ -344,7 +344,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
       - name: Restore database for ${{ vars.ENV_NAME }}
-        if: ${{ (vars.ENV_NAME == 'Preprod' && vars.ENV_NAME == 'Test') && inputs.restore-db == true}}
+        if: ${{ (vars.ENV_NAME == 'Preprod' || vars.ENV_NAME == 'Test') && inputs.restore-db == true}}
         run: |
           cd ./src/anon-tools
           mkdir -p ./keys
