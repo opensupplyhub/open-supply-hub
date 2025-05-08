@@ -48,7 +48,7 @@ jobs:
             ENV="Production"
           elif [[ ${{ github.event.inputs.deploy-env }} = "rba" ]];
           then
-            ENV="Rba"
+            ENV="RBA"
           else
             ENV="Staging"
           fi
