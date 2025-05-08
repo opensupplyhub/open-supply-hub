@@ -1091,6 +1091,11 @@ export const EXTENDED_FIELD_TYPES = [
         fieldName: 'rba_id',
         formatValue: value => value.raw_value,
     },
+    {
+        label: 'Parent Company OS ID',
+        fieldName: 'parent_company_os_id',
+        formatValue: value => value.raw_values,
+    },
 ];
 
 export const ADDITIONAL_IDENTIFIERS = Object.freeze([
