@@ -781,10 +781,6 @@ variable "ip_denylist" {
   type    = list(string)
   default = []
   description = "List of IP addresses to block through the AWS WAF"
-  validation {
-    condition     = length(var.ip_denylist) == 0 || length(var.ip_whitelist) == 0
-    error_message = "Only one of ip_whitelist or ip_denylist can be defined."
-  }
 }
 
 variable "waf_enabled" {
