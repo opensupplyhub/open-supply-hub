@@ -11,7 +11,6 @@ for id in $(aws cloudfront list-distributions --query "DistributionList.Items[*]
       echo "Error: Multiple CloudFront distributions found for domain: $domain" >&2
       exit 1
     fi
-    echo "Found Distribution ID: $id for Domain: $domain"
     found_id="$id"
   fi
 done

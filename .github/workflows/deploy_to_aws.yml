@@ -121,7 +121,7 @@ jobs:
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           TFVAR_NAME: terraform-${{ steps.get_env_name.outputs.lowercase }}.tfvars
 
-      - name: Parse waf_enabled and distribution_id
+      - name: Check whether AWS WAF enabled and find CloudFront distribution id
         run: |
           CLOUDFRONT_DISTRIBUTION_ID=$(./scripts/find_cloudfront_distribution_id.sh "$CLOUDFRONT_DOMAIN")
           waf_enabled=$(grep -E '^waf_enabled\s*=' deployment/environments/${{ env.TFVAR_NAME }} | awk '{print $3}')
