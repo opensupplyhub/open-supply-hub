@@ -35,7 +35,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe bugfix here.*
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* [OSDEV-1953](https://opensupplyhub.atlassian.net/browse/OSDEV-1953) - Implemented UI logic to display parent company OS ID fields as links on the production location profile page, directing to the corresponding production location pages in a new tab.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
