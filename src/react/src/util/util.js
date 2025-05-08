@@ -48,6 +48,7 @@ import * as XLSX from 'xlsx';
 import moment from 'moment';
 import removeAccents from 'remove-accents';
 import unidecode from 'unidecode';
+import { v4 as uuidv4 } from 'uuid';
 import {
     object as objectYup,
     string as stringYup,
@@ -1705,7 +1706,6 @@ export const formatExtendedField = ({
     contributor_name,
     is_from_claim,
     is_verified,
-    id,
     formatValue = v => v,
 }) => {
     const primary = formatIfListAndRemoveDuplicates(
@@ -1720,6 +1720,6 @@ export const formatExtendedField = ({
         embeddedSecondary: formatAttribution(created_at),
         isVerified: is_verified,
         isFromClaim: is_from_claim,
-        key: id || primary + secondary,
+        key: uuidv4(),
     };
 };
