@@ -85,7 +85,7 @@ import {
     SLC_FORM_CONSTRAINTS,
 } from './constants';
 
-import formatIfListAndRemoveDuplicates from './renderUtils';
+import renderUniqueListItems from './renderUtils';
 import { createListItemCSV } from './util.listItemCSV';
 import { createFacilitiesCSV, formatDataForCSV } from './util.facilitiesCSV';
 import formatFacilityClaimsDataForXLSX from './util.facilityClaimsXLSX';
@@ -1708,10 +1708,7 @@ export const formatExtendedField = ({
     is_verified,
     formatValue = v => v,
 }) => {
-    const primary = formatIfListAndRemoveDuplicates(
-        formatValue(value),
-        field_name,
-    );
+    const primary = renderUniqueListItems(formatValue(value), field_name);
     const secondary = formatAttribution(created_at, contributor_name);
 
     return {

@@ -5,7 +5,7 @@ const blockStyle = Object.freeze({
     display: 'block',
 });
 
-const formatIfListAndRemoveDuplicates = (value, fieldName = '') => {
+const renderUniqueListItems = (value, fieldName = '') => {
     if (!Array.isArray(value)) {
         return value;
     }
@@ -31,4 +31,4 @@ const formatIfListAndRemoveDuplicates = (value, fieldName = '') => {
     );
 };
 
-export default formatIfListAndRemoveDuplicates;
+export default renderUniqueListItems;
