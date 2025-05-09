@@ -776,3 +776,20 @@ variable "vanta_assumed_role_principals" {
   default   = []
   sensitive = true
 }
+
+variable "ip_whitelist" {
+  type    = list(string)
+  default = []
+  description = "List of IP addresses to allow through the AWS WAF"
+}
+
+variable "ip_denylist" {
+  type    = list(string)
+  default = []
+  description = "List of IP addresses to block through the AWS WAF"
+}
+
+variable "waf_enabled" {
+  type        = bool
+  default     = false
+}
