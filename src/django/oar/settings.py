@@ -34,7 +34,7 @@ ENVIRONMENT = os.getenv('DJANGO_ENV', 'Local')
 DEBUG = (ENVIRONMENT == 'Local')
 
 VALID_ENVIRONMENTS = ('Production', 'Staging', 'Development', 'Test',
-                      'Preprod', 'Local')
+                      'Preprod', 'Rba', 'Local')
 if ENVIRONMENT not in VALID_ENVIRONMENTS:
     raise ImproperlyConfigured(
         'Invalid ENVIRONMENT provided, must be one of {}'
@@ -427,6 +427,24 @@ ECSMANAGE_ENVIRONMENTS = {
         },
         'AWS_REGION': 'eu-west-1',
     },
+    'rba': {
+        'TASK_DEFINITION_NAME': 'OpenSupplyHubRbaAppCLI',
+        'CONTAINER_NAME': 'django',
+        'CLUSTER_NAME': 'ecsOpenSupplyHubRbaCluster',
+        'LAUNCH_TYPE': 'FARGATE',
+        'PLATFORM_VERSION': '1.4.0',
+        'SECURITY_GROUP_TAGS': {
+            'Name': 'sgAppEcsService',
+            'Environment': 'Rba',
+            'Project': 'OpenSupplyHub'
+        },
+        'SUBNET_TAGS': {
+            'Name': 'PrivateSubnet',
+            'Environment': 'Rba',
+            'Project': 'OpenSupplyHub'
+        },
+        'AWS_REGION': 'eu-west-1',
+    },
     'test': {
         'TASK_DEFINITION_NAME': 'OpenSupplyHubTestAppCLI',
         'CONTAINER_NAME': 'django',
@@ -513,8 +531,11 @@ if OAR_CLIENT_KEY is None:
         'Invalid OAR_CLIENT_KEY provided, must be set')
 
 # Hubspot settings
-HUBSPOT_API_KEY = os.getenv('HUBSPOT_API_KEY')
-HUBSPOT_SUBSCRIPTION_ID = os.getenv('HUBSPOT_SUBSCRIPTION_ID')
+raw_hubspot_key = os.getenv('HUBSPOT_API_KEY')
+HUBSPOT_API_KEY = raw_hubspot_key if raw_hubspot_key else None
+
+raw_hubspot_id = os.getenv('HUBSPOT_SUBSCRIPTION_ID')
+HUBSPOT_SUBSCRIPTION_ID = raw_hubspot_id if raw_hubspot_id else None
 
 # CORS
 # Regex defining which endpoints enable CORS

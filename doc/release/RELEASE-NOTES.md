@@ -30,9 +30,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     - Applied validation in the `init-and-plan` action if `ip_denylist` and `ip_whitelist` are present. Only whitelist or denylist should be defined per environment.
 * [OSDEV-1746](https://opensupplyhub.atlassian.net/browse/OSDEV-1746) - Implemented auto-scaling to dynamically adjust the Django instance count based on load metrics for cost-efficient resource utilization and high availability.
 * The subdomain `a.os-hub.net` was removed from the CORS_ALLOWED_ORIGIN_REGEXES list in the Django application. This change was made because the subdomain was deleted from AWS Route 53 and is no longer in use.
+* [OSDEV-1947](https://opensupplyhub.atlassian.net/browse/OSDEV-1947) - The following changes have been made:
+    * Introduced infrastructure changes to support deployment of the RBA environment. Included it in the CD pipelines in the same way as Production and Staging, which means the RBA environment can now be deployed via Git tags just like Production and Staging.
+    * Created the `export_csv_enabled` infrastructure switch to disable the Amazon EventBridge scheduler for the CSV export job in the RBA environment, as exporting the database to CSV is not needed in that environment.
 
 ### Bugfix
-* *Describe bugfix here.*
+* [OSDEV-1947](https://opensupplyhub.atlassian.net/browse/OSDEV-1947) - Fixed a bug related to an incorrect environment check in the FE app, which attempted to identify the local environment by comparing it with `development`. However, the environment had been renamed to `local` some time ago and was no longer passed as `development` from the BE during local development.
 
 ### What's new
 * [OSDEV-1953](https://opensupplyhub.atlassian.net/browse/OSDEV-1953) - Implemented UI logic to display parent company OS ID fields as links on the production location profile page, directing to the corresponding production location pages in a new tab.
