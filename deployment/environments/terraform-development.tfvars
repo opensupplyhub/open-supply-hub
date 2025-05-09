@@ -69,4 +69,4 @@ opensearch_instance_type = "t3.small.search"
 app_logstash_fargate_cpu = 256
 app_logstash_fargate_memory = 2048
 
-waf_enabled = false
+waf_enabled = true
