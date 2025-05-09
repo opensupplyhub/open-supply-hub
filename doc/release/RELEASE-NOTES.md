@@ -9,15 +9,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: May 17, 2025
 
-### Database changes
-* *Describe high-level database changes.*
-
-#### Migrations:
-* *Describe migrations here.*
-
-#### Schema changes
-* *Describe schema changes here.*
-
 ### Code/API changes
 * [OSDEV-1952](https://opensupplyhub.atlassian.net/browse/OSDEV-1952) - Added support for including `parent_company_os_id` when creating or updating a production location. This field can now be submitted via the API (`POST /api/facilities/`, `POST /api/v1/production-locations/`, `PATCH /api/v1/production-locations/{os_id}/`) or through list uploads. The `parent_company_os_id` values are stored as standalone fields in the `api_extendedfields` table.
 
@@ -170,7 +161,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Release date: March 22, 2025
 
 ### Database changes
-* *Describe high-level database changes.*
 
 #### Migrations:
 * 0167_add_moderationevent_action_reason_text_fields.py - This migration adds new fields `action_reason_text_cleaned` and  `action_reason_text_raw` to the existing table `api_moderationevent`.
