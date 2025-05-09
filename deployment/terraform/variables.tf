@@ -681,6 +681,12 @@ variable "anonymized_database_password" {
   sensitive = true
 }
 
+variable "export_csv_enabled" {
+  description = "Toggle to enable or disable the export csv scheduled job"
+  type        = bool
+  default     = true
+}
+
 variable "export_csv_schedule_expression" {
   type        = string
   default     = "cron(0 0 1 * ? *)"

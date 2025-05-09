@@ -18,7 +18,8 @@ def environment(request):
     }
 
     # Add Environment variable, lowered for easier comparison
-    # One of `development`, `testing`, `staging`, `production`
+    # One of `development`, `test`, `preprod`, `rba`,
+    # `local`, `staging`, `production`
     environment['ENVIRONMENT'] = settings.ENVIRONMENT.lower()
 
     environment['OAR_CLIENT_KEY'] = settings.OAR_CLIENT_KEY
