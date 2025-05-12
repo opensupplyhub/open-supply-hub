@@ -9,7 +9,6 @@ on:
         type: choice
         options:
         - Pre-prod
-        - RBA
         default: Pre-prod
 
 jobs:
