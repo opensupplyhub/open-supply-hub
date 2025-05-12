@@ -17,6 +17,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1949](https://opensupplyhub.atlassian.net/browse/OSDEV-1949) - Attached whitelist rules and deny rules and infrastructure changes: 
     - Bump Terraform version from 1.4.0 to 1.5.0
     - Made `waf_enabled` terraform flag variable.
+    - Enabled AWS WAF for all environments, including RBA.
     - Created a separate job `detach-waf-if-needed` in Deploy to AWS action. This is needed to prevent Terraform race condition when it tries to delete the AWS WAF before AWS has fully detached it from the CloudFront distribution, even though `web_acl_id` is set to`null`.
     - Applied validation in the `init-and-plan` action if `ip_denylist` and `ip_whitelist` are present. Only whitelist or denylist should be defined per environment.
 * [OSDEV-1746](https://opensupplyhub.atlassian.net/browse/OSDEV-1746) - Implemented auto-scaling to dynamically adjust the Django instance count based on load metrics for cost-efficient resource utilization and high availability.
