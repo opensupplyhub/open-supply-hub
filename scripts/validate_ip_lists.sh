@@ -33,9 +33,6 @@ extract_array() {
 ip_whitelist=$(extract_array "ip_whitelist" | tr -d '[]", \n')
 ip_denylist=$(extract_array "ip_denylist" | tr -d '[]", \n')
 
-echo "Extracted whitelist: $ip_whitelist"
-echo "Extracted denylist: $ip_denylist"
-
 if [[ -n "$ip_whitelist" && -n "$ip_denylist" ]]; then
   echo "ERROR: You cannot define both ip_whitelist and ip_denylist!"
   exit 1
