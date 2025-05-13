@@ -976,24 +976,6 @@ export const SocialMediaLinks = [
         href: 'https://www.linkedin.com/company/open-supply-hub/',
     },
     {
-        label: 'Twitter',
-        Icon: () => (
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="17"
-                viewBox="0 0 20 17"
-            >
-                <path
-                    d="M17.944 4.048c.013.178.013.356.013.533 0 5.419-4.124 11.663-11.663 11.663-2.322 0-4.48-.673-6.294-1.84.33.038.647.05.99.05a8.21 8.21 0 0 0 5.089-1.75A4.106 4.106 0 0 1 2.246 9.86c.254.038.508.064.774.064.368 0 .736-.05 1.079-.14A4.1 4.1 0 0 1 .812 5.761v-.05c.546.304 1.18.495 1.853.52A4.096 4.096 0 0 1 .838 2.817c0-.761.203-1.46.558-2.068a11.651 11.651 0 0 0 8.452 4.29 4.627 4.627 0 0 1-.102-.94A4.097 4.097 0 0 1 13.846 0a4.09 4.09 0 0 1 2.994 1.294 8.07 8.07 0 0 0 2.602-.99 4.088 4.088 0 0 1-1.802 2.26A8.217 8.217 0 0 0 20 1.928a8.811 8.811 0 0 1-2.056 2.12Z"
-                    fill="#FFF"
-                    fillRule="nonzero"
-                />
-            </svg>
-        ),
-        href: 'https://twitter.com/OpenSupplyHub',
-    },
-    {
         label: 'YouTube',
         Icon: () => (
             <svg
@@ -1027,7 +1009,7 @@ export const SocialMediaLinks = [
                 />
             </svg>
         ),
-        href: 'https://github.com/opensupplyhub/pyoshub',
+        href: 'https://github.com/opensupplyhub/open-supply-hub',
     },
 ];
 
