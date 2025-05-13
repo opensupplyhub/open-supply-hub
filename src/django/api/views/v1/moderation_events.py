@@ -16,6 +16,7 @@ from api.constants import (
     APIV1ModerationEventErrorMessages
 )
 from api.models.moderation_event import ModerationEvent
+from api.models.facility.facility import Facility
 from api.moderation_event_actions.approval.add_production_location \
     import AddProductionLocation
 from api.moderation_event_actions.approval.update_production_location \
@@ -215,5 +216,7 @@ class ModerationEvents(ViewSet):
 
         if event.source == ModerationEvent.Source.SLC:
             send_slc_contribution_approval_email(request, event, item)
+
+        Facility.update_facility_updated_at_field(item.facility_id)
 
         return Response({"os_id": item.facility_id}, status=status.HTTP_200_OK)

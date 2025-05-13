@@ -3,6 +3,30 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.5.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: May 31, 2025
+
+### Code/API changes
+* *Describe Code/API changes*
+
+### Architecture/Environment changes
+* *Describe Architecture/Environment changes*
+
+### Bugfix
+* [OSDEV-1981](https://opensupplyhub.atlassian.net/browse/OSDEV-1981) - Fixed an issue where the `updated_at` field in the `api_facility` table was not modified when related dependency data changed, resulting in outdated or invalid data being stored in `OpenSearch`.
+
+### What's new
+* *Describe What's new*
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.4.0
 
 ## Introduction
