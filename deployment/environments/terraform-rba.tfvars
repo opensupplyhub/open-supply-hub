@@ -68,3 +68,5 @@ app_logstash_fargate_cpu = 256
 app_logstash_fargate_memory = 2048
 
 export_csv_enabled = false
+
+waf_enabled = true
