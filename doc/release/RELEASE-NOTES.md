@@ -3,6 +3,37 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.5.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: May 31, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* *Describe migrations here.*
+
+#### Schema changes
+* *Describe schema changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* [OSDEV-1882](https://opensupplyhub.atlassian.net/browse/OSDEV-1882) - Fixed an issue where the scroll position was not resetting to the top when navigating to `Upload` page.
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* *Provide release instructions here.*
+
+
 ## Release 2.4.0
 
 ## Introduction
@@ -14,7 +45,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [OSDEV-1960](https://opensupplyhub.atlassian.net/browse/OSDEV-1960) - Disabled deletion protection and final snapshot creation for the RDS instance when it is deleted in the pre-prod environment.
-* [OSDEV-1949](https://opensupplyhub.atlassian.net/browse/OSDEV-1949) - Attached whitelist rules and deny rules and infrastructure changes: 
+* [OSDEV-1949](https://opensupplyhub.atlassian.net/browse/OSDEV-1949) - Attached whitelist rules and deny rules and infrastructure changes:
     - Bump Terraform version from 1.4.0 to 1.5.0
     - Made `waf_enabled` terraform flag variable.
     - Enabled AWS WAF for all environments, including RBA.
