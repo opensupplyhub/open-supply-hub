@@ -9,17 +9,27 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: May 31, 2025
 
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* *Describe migrations here.*
+
+#### Schema changes
+* *Describe schema changes here.*
+
 ### Code/API changes
-* *Describe Code/API changes*
+* *Describe code/API changes here.*
 
 ### Architecture/Environment changes
-* *Describe Architecture/Environment changes*
+* *Describe architecture/environment changes here.*
 
 ### Bugfix
+* [OSDEV-1882](https://opensupplyhub.atlassian.net/browse/OSDEV-1882) - Fixed an issue where the scroll position was not resetting to the top when navigating to the `Upload` page related to the list upload functionality.
 * [OSDEV-1981](https://opensupplyhub.atlassian.net/browse/OSDEV-1981) - Fixed an issue where the `updated_at` field in the `api_facility` table was not modified when related dependency data changed, resulting in outdated or invalid data being stored in `OpenSearch`.
 
 ### What's new
-* *Describe What's new*
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
@@ -38,7 +48,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [OSDEV-1960](https://opensupplyhub.atlassian.net/browse/OSDEV-1960) - Disabled deletion protection and final snapshot creation for the RDS instance when it is deleted in the pre-prod environment.
-* [OSDEV-1949](https://opensupplyhub.atlassian.net/browse/OSDEV-1949) - Attached whitelist rules and deny rules and infrastructure changes: 
+* [OSDEV-1949](https://opensupplyhub.atlassian.net/browse/OSDEV-1949) - Attached whitelist rules and deny rules and infrastructure changes:
     - Bump Terraform version from 1.4.0 to 1.5.0
     - Made `waf_enabled` terraform flag variable.
     - Enabled AWS WAF for all environments, including RBA.
