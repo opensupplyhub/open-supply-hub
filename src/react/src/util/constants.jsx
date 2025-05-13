@@ -25,7 +25,7 @@ export const CSRF_TOKEN_KEY = 'csrfToken';
 export const InfoPaths = {
     storiesResources: 'stories-resources',
     privacyPolicy: 'privacy-policy',
-    contribute: 'data-cleaning-service',
+    dataCleaningService: 'data-cleaning-service',
     preparingData: 'resources/preparing-data',
     dataQuality: 'resources/a-free-universal-id-matching-algorithm',
     claimedFacilities: 'stories-resources/claim-a-facility',
@@ -821,6 +821,11 @@ export const NavbarItems = [
                             type: 'link',
                             label: 'API',
                             href: `${InfoLink}/${InfoPaths.api}`,
+                        },
+                        {
+                            type: 'link',
+                            label: 'Data Cleaning Service',
+                            href: `${InfoLink}/${InfoPaths.dataCleaningService}`,
                         },
                         {
                             type: 'link',
