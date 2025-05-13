@@ -1597,7 +1597,6 @@ class FacilitiesViewSet(ListModelMixin,
                     match.save()
 
         context = {'request': request}
-
         facility_index = FacilityIndex.objects.get(id=facility.id)
         facility_data = FacilityIndexDetailsSerializer(
             facility_index, context=context).data
