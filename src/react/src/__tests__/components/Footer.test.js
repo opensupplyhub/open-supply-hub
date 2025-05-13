@@ -48,9 +48,6 @@ test('Footer component', () => {
     const linkedinLink = screen.getByText('LinkedIn');
     expect(linkedinLink.parentElement).toHaveAttribute('href', 'https://www.linkedin.com/company/open-supply-hub/');
 
-    const twitterLink = screen.getByText('Twitter');
-    expect(twitterLink.parentElement).toHaveAttribute('href', 'https://twitter.com/OpenSupplyHub');
-
     const youtubeLink = screen.getByText('YouTube');
     expect(youtubeLink.parentElement).toHaveAttribute('href', 'https://www.youtube.com/channel/UCy-66mcBwX2wlUM6kvKUrGw');
 
