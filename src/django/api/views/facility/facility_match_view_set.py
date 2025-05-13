@@ -191,6 +191,13 @@ class FacilityMatchViewSet(RetrieveModelMixin, GenericViewSet):
 
         response_data = FacilityListItemSerializer(facility_list_item).data
 
+        # Call `update` rather than use `save` to make sure that
+        # django-simple-history won't log the changes
+        facility_query = Facility.objects.filter(
+            pk=facility_match.facility.id
+        )
+        facility_query.update(updated_at=timezone.now())
+
         if facility_list_item.source.source_type == Source.LIST:
             response_data['list_statuses'] = (
                 facility_list_item
