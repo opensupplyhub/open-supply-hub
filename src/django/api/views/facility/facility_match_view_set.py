@@ -191,7 +191,6 @@ class FacilityMatchViewSet(RetrieveModelMixin, GenericViewSet):
 
         response_data = FacilityListItemSerializer(facility_list_item).data
 
-
         if facility_list_item.source.source_type == Source.LIST:
             response_data['list_statuses'] = (
                 facility_list_item
