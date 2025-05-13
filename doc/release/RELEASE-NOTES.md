@@ -28,7 +28,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1882](https://opensupplyhub.atlassian.net/browse/OSDEV-1882) - Fixed an issue where the scroll position was not resetting to the top when navigating to the `Upload` page related to the list upload functionality.
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* [OSDEV-1998](https://opensupplyhub.atlassian.net/browse/OSDEV-1998) - The following changes were made:
+    * Added an additional "Data Cleaning Service" subheader to the "How It Works" > "Premium Features" section.
+    * Updated the list of supported languages/countries under the "globe" icon (added support for Chinese and changed the order).
+    * Removed the Twitter icon from the social media icons/links in the footer.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
