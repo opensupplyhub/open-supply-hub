@@ -52,5 +52,5 @@ test('Footer component', () => {
     expect(youtubeLink.parentElement).toHaveAttribute('href', 'https://www.youtube.com/channel/UCy-66mcBwX2wlUM6kvKUrGw');
 
     const githubLink = screen.getByText('Github');
-    expect(githubLink.parentElement).toHaveAttribute('href', 'https://github.com/opensupplyhub/pyoshub');
+    expect(githubLink.parentElement).toHaveAttribute('href', 'https://github.com/opensupplyhub/open-supply-hub');
 });
