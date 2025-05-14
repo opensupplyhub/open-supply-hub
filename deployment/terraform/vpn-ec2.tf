@@ -31,7 +31,7 @@ resource "aws_instance" "vpn_ec2" {
 resource "aws_security_group" "vpn_sg" {
   name        = "vpn-ec2-sg"
   description = "Allow WireGuard UDP traffic"
-  vpc_id      = your_vpc_id_here
+  vpc_id      = module.vpc.id
 
   ingress {
     from_port   = 51820
