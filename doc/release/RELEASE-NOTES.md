@@ -26,6 +26,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-1882](https://opensupplyhub.atlassian.net/browse/OSDEV-1882) - Fixed an issue where the scroll position was not resetting to the top when navigating to the `Upload` page related to the list upload functionality.
+* Updated the `Deploy to AWS` GitHub workflow to rely on the required `deploy-env` input instead of inferring the `environment` from the tag name. Previously, this approach was necessary because the `[Release] Deploy` workflow did not trigger `Deploy to AWS` via the API with the specified `environment` - it only created a tag that triggered the workflow automatically. With the latest changes, the `environment` is now explicitly passed in the `[Release] Deploy` workflow. It has also been confirmed that no branch or input combination can result in an undefined `environment`. As a result, the fallback to `None` for the `environment` value was removed from the `Deploy to AWS` workflow.
 
 ### What's new
 * [OSDEV-1998](https://opensupplyhub.atlassian.net/browse/OSDEV-1998) - The following changes were made:
