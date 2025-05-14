@@ -118,7 +118,7 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
                                 className={classes.secondaryButton}
                                 onClick={() =>
                                     openInNewTab(
-                                        `${InfoLink}/${InfoPaths.contribute}`,
+                                        `${InfoLink}/${InfoPaths.dataCleaningService}`,
                                     )
                                 }
                             >

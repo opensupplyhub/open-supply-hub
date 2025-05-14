@@ -49,6 +49,13 @@ function Submenu() {
                     <span>বাংলা</span>
                 </a>
                 <a
+                    className="nav-submenu__link nav-submenu__link--lighter-font-weight"
+                    href="https://info.opensupplyhub.org/facilities-chinese"
+                    target=""
+                >
+                    <span>简体中文</span>
+                </a>
+                <a
                     className="nav-submenu__link nav-submenu__link"
                     href="https://info.opensupplyhub.org/india"
                     target=""
@@ -60,21 +67,14 @@ function Submenu() {
                     href="https://info.opensupplyhub.org/brasil"
                     target=""
                 >
-                    <span>Portuguese</span>
+                    <span>Português</span>
                 </a>
                 <a
                     className="nav-submenu__link "
                     href="https://info.opensupplyhub.org/turkey"
                     target=""
                 >
-                    <span>Türkiye</span>
-                </a>
-                <a
-                    className="nav-submenu__link "
-                    href="https://info.opensupplyhub.org/vietnam"
-                    target=""
-                >
-                    <span>Tiếng Việt</span>
+                    <span>Türkçe</span>
                 </a>
             </div>
         </div>
