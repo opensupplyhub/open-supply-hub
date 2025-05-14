@@ -162,11 +162,17 @@ class ModerationEventsUpdateProductionLocationTest(
 
     def test_successful_update_production_location(self):
         self.login_as_superuser()
+        old_updated_at = self.facility_one.updated_at
+
         response = self.client.patch(
             self.get_url(),
             data=json.dumps({"os_id": self.os_id}),
             content_type="application/json",
         )
+
+        self.facility_one.refresh_from_db()
+        new_updated_at = self.facility_one.updated_at
+        self.assertGreater(new_updated_at, old_updated_at)
 
         email = mail.outbox[0]
         self.assertEqual(email.subject, "Great News: your OS ID is ready!")
