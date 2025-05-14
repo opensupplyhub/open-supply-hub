@@ -120,9 +120,9 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
         self.facility_two_history_url = "/api/facilities/{}/history/".format(
             self.facility_two.id
         )
-    
+
     def filter_out_manual_updated_at_action(self, data):
-        # Filter out action where we manually trigger 
+        # Filter out action where we manually trigger
         # 'updated_at' field in 'api_facility' table
         # by using update_facility_updated_at_field method
         return [
