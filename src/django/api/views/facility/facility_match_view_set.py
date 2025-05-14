@@ -191,14 +191,7 @@ class FacilityMatchViewSet(RetrieveModelMixin, GenericViewSet):
 
         response_data = FacilityListItemSerializer(facility_list_item).data
 
-        # Call `update` rather than use `save` to make sure that
-        # django-simple-history won't log the changes as we
-        # only need it to trigger Logstash sql sync and don't
-        # want to break confirm match association history logic
-        facility_query = Facility.objects.filter(
-            pk=facility_match.facility.id
-        )
-        facility_query.update(updated_at=timezone.now())
+        Facility.update_facility_updated_at_field(facility_match.facility.id)
 
         if facility_list_item.source.source_type == Source.LIST:
             response_data['list_statuses'] = (

@@ -120,6 +120,16 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
         self.facility_two_history_url = "/api/facilities/{}/history/".format(
             self.facility_two.id
         )
+    
+    def filter_out_manual_updated_at_action(self, data):
+        # Filter out action where we manually trigger 
+        # 'updated_at' field in 'api_facility' table
+        # by using update_facility_updated_at_field method
+        return [
+            item for item in data
+            if not (item.get("action") == "OTHER"
+                    and item.get("changes") == {})
+        ]
 
     @override_flag(FeatureGroups.CAN_GET_FACILITY_HISTORY, active=True)
     def test_serializes_deleted_facility_history(self):
@@ -495,13 +505,15 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
 
         data = json.loads(confirmed_match_response.content)
 
+        filtered_data = self.filter_out_manual_updated_at_action(data)
+
         self.assertEqual(
-            data[0]["action"],
+            filtered_data[0]["action"],
             "ASSOCIATE",
         )
 
         self.assertEqual(
-            data[0]["detail"],
+            filtered_data[0]["detail"],
             "Associate facility {} with {} via list {}".format(
                 self.facility_two.id,
                 self.contributor.name,
@@ -510,7 +522,7 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
         )
 
         self.assertEqual(
-            len(data),
+            len(filtered_data),
             3,
         )
 
@@ -525,8 +537,10 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
 
         data = json.loads(confirmed_match_response.content)
 
+        filtered_data = self.filter_out_manual_updated_at_action(data)
+
         self.assertEqual(
-            data[0]["detail"],
+            filtered_data[0]["detail"],
             "Associate facility {} with an Other".format(
                 self.facility_two.id,
             ),
@@ -572,13 +586,15 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
 
         data = json.loads(removed_match_response.content)
 
+        filtered_data = self.filter_out_manual_updated_at_action(data)
+
         self.assertEqual(
-            data[0]["action"],
+            filtered_data[0]["action"],
             "DISSOCIATE",
         )
 
         self.assertEqual(
-            data[0]["detail"],
+            filtered_data[0]["detail"],
             "Dissociate facility {} from {} via list {}".format(
                 self.facility_two.id,
                 self.contributor.name,
@@ -587,7 +603,7 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
         )
 
         self.assertEqual(
-            len(data),
+            len(filtered_data),
             4,
         )
 
@@ -602,8 +618,10 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
 
         data = json.loads(confirmed_match_response.content)
 
+        filtered_data = self.filter_out_manual_updated_at_action(data)
+
         self.assertEqual(
-            data[0]["detail"],
+            filtered_data[0]["detail"],
             "Dissociate facility {} from an Other".format(
                 self.facility_two.id,
             ),
@@ -702,12 +720,13 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
             200,
         )
         data = json.loads(history_response.content)
+        filtered_data = self.filter_out_manual_updated_at_action(data)
         self.assertEqual(
-            data[0]["action"],
+            filtered_data[0]["action"],
             "DISSOCIATE",
         )
         self.assertEqual(
-            data[0]["detail"],
+            filtered_data[0]["detail"],
             "Dissociate facility {} from {} via list {}".format(
                 self.facility_two.id,
                 self.contributor.name,
