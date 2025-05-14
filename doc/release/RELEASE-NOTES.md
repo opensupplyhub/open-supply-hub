@@ -29,7 +29,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Updated the `Deploy to AWS` GitHub workflow to rely on the required `deploy-env` input instead of inferring the `environment` from the tag name. Previously, this approach was necessary because the `[Release] Deploy` workflow did not trigger `Deploy to AWS` via the API with the specified `environment` - it only created a tag that triggered the workflow automatically. With the latest changes, the `environment` is now explicitly passed in the `[Release] Deploy` workflow. It has also been confirmed that no branch or input combination can result in an undefined `environment`. As a result, the fallback to `None` for the `environment` value was removed from the `Deploy to AWS` workflow.
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* [OSDEV-1998](https://opensupplyhub.atlassian.net/browse/OSDEV-1998) - The following changes were made:
+    * Added an additional "Data Cleaning Service" subheader to the "How It Works" > "Premium Features" section.
+    * Updated the list of supported languages/countries under the "globe" icon (added support for Chinese and changed the order).
+    * Removed the Twitter icon from the social media icons/links in the footer.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
