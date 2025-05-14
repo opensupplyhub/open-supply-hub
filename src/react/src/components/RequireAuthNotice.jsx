@@ -11,7 +11,13 @@ export default function RequireAuthNotice({ title, text }) {
         <AppGrid title={title}>
             <Grid container className="margin-bottom-64">
                 <Grid item xs={12}>
-                    <Link to={authLoginFormRoute} href={authLoginFormRoute}>
+                    <Link
+                        to={{
+                            pathname: authLoginFormRoute,
+                            state: { prevPath: window.location.pathname },
+                        }}
+                        href={authLoginFormRoute}
+                    >
                         {text}
                     </Link>
                 </Grid>
