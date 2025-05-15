@@ -217,6 +217,4 @@ class ModerationEvents(ViewSet):
         if event.source == ModerationEvent.Source.SLC:
             send_slc_contribution_approval_email(request, event, item)
 
-        Facility.update_facility_updated_at_field(item.facility_id)
-
         return Response({"os_id": item.facility_id}, status=status.HTTP_200_OK)
