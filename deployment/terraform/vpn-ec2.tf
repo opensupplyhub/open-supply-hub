@@ -22,13 +22,6 @@ resource "aws_instance" "vpn_ec2" {
 
   vpc_security_group_ids = [aws_security_group.vpn_sg.id]
 
-  instance_market_options {
-    market_type = "spot"
-    spot_options {
-      max_price = 0.0031
-    }
-  }
-
   tags = {
     Name = "vpn_ec2"
   }
