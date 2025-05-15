@@ -6,6 +6,7 @@ from api.constants import (
 )
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_match import FacilityMatch
+from api.models.facility.facility import Facility
 from api.models.moderation_event import ModerationEvent
 from api.models.user import User
 from api.moderation_event_actions.approval.event_approval_template import (
@@ -43,3 +44,7 @@ class UpdateProductionLocation(EventApprovalTemplate):
 
     def _get_action_type(self):
         return ModerationEvent.ActionType.MATCHED
+
+    @staticmethod
+    def _update_facility_updated_at(facility_id: str) -> None:
+        Facility.update_facility_updated_at_field(facility_id)
