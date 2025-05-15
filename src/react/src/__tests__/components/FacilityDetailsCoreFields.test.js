@@ -1,9 +1,9 @@
 import React from 'react';
 import { waitFor } from "@testing-library/react";
-import renderWithProviders from '../../util/testUtils/renderWithProviders';
-import FacilityDetailsCoreFields from '../../components/FacilityDetailsCoreFields';
 import { toast } from 'react-toastify';
+import FacilityDetailsCoreFields from '../../components/FacilityDetailsCoreFields';
 import { facilityDetailsActions } from '../../util/constants';
+import renderWithProviders from '../../util/testUtils/renderWithProviders';
 
 jest.mock('react-toastify', () => ({
     toast: jest.fn(),
