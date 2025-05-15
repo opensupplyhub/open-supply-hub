@@ -13,16 +13,21 @@ data "aws_ami" "aws_ami_vpn_ec2" {
 
 # TODO: create only for RBA environment, Development is for testing
 resource "aws_instance" "vpn_ec2" {
-  count = var.environment == "Development" ? 1 : 0
-  ami = data.aws_ami.aws_ami_vpn_ec2.id
+  count         = var.environment == "Development" ? 1 : 0
+  ami           = data.aws_ami.aws_ami_vpn_ec2.id
+  instance_type = "t4g.nano"
+  subnet_id     = module.vpc.public_subnets[0]
+
+  associate_public_ip_address = true
+
+  vpc_security_group_ids = [aws_security_group.vpn_sg.id]
+
   instance_market_options {
     market_type = "spot"
     spot_options {
       max_price = 0.0031
     }
   }
-  vpc_security_group_ids = [aws_security_group.vpn_sg.id]
-  instance_type = "t4g.nano"
 
   tags = {
     Name = "vpn_ec2"
@@ -57,7 +62,6 @@ resource "aws_security_group" "vpn_sg" {
   }
 }
 
-# Static IP address, which is reachable from the internet
 resource "aws_eip" "vpn_eip" {
   count  = var.environment == "Development" ? 1 : 0
   domain = "vpc"
