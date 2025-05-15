@@ -93,6 +93,7 @@ const DashboardContributionRecord = ({
         rejectModerationEventDialogIsOpen,
         setRejectModerationEventDialogIsOpen,
     ] = useState(false);
+    const [selectedMatchId, setSelectedMatchId] = useState(null);
     const {
         productionLocationName,
         countryCode,
@@ -189,6 +190,10 @@ const DashboardContributionRecord = ({
         setRejectModerationEventDialogIsOpen(false);
     };
 
+    const handleSelectMatch = matchOsId => {
+        setSelectedMatchId(matchOsId === selectedMatchId ? null : matchOsId);
+    };
+
     if (fetchModerationEventError) {
         return (
             <Typography variant="body2" className={classes.errorStyle}>
@@ -201,7 +206,6 @@ const DashboardContributionRecord = ({
     const moderationActionType = singleModerationEventItem.action_type || null;
     const moderationActionPerformBy =
         singleModerationEventItem.action_perform_by_id || null;
-    const jsonResults = JSON.stringify(singleModerationEventItem, null, 2);
     const potentialMatchCount = matches.length || 0;
     // OSDEV-1445: automatic write claim into moderation-events table to be done in Q1
     const hasClaimID = singleModerationEventItem.claim_id;
@@ -263,7 +267,71 @@ const DashboardContributionRecord = ({
                             className={classes.loaderStyles}
                         />
                     ) : (
-                        <pre>{jsonResults}</pre>
+                        <Grid container spacing={3}>
+                            <Grid item xs={12}>
+                                <Typography
+                                    variant="subtitle1"
+                                    className={classes.fieldTitle}
+                                >
+                                    Contribution Details
+                                </Typography>
+                                <Paper className={classes.fieldPaper}>
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={12} sm={6}>
+                                            <Typography
+                                                variant="body2"
+                                                className={classes.fieldLabel}
+                                            >
+                                                Name:
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                {singleModerationEventItem
+                                                    .cleaned_data?.name ||
+                                                    'N/A'}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <Typography
+                                                variant="body2"
+                                                className={classes.fieldLabel}
+                                            >
+                                                Address:
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                {singleModerationEventItem
+                                                    .cleaned_data?.address ||
+                                                    'N/A'}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <Typography
+                                                variant="body2"
+                                                className={classes.fieldLabel}
+                                            >
+                                                Country:
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                {singleModerationEventItem
+                                                    .cleaned_data?.country
+                                                    ?.name || 'N/A'}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <Typography
+                                                variant="body2"
+                                                className={classes.fieldLabel}
+                                            >
+                                                Contributor:
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                {singleModerationEventItem.contributor_name ||
+                                                    'N/A'}
+                                            </Typography>
+                                        </Grid>
+                                    </Grid>
+                                </Paper>
+                            </Grid>
+                        </Grid>
                     )}
                 </div>
             </Paper>
@@ -299,10 +367,18 @@ const DashboardContributionRecord = ({
                                 ) => (
                                     <React.Fragment key={matchOsId}>
                                         <ListItem
-                                            className={
+                                            className={`${
+                                                classes.listItemStyle
+                                            } ${
                                                 osId === matchOsId
-                                                    ? `${classes.listItemStyle} ${classes.listItemStyle_confirmed}`
-                                                    : classes.listItemStyle
+                                                    ? classes.listItemStyle_confirmed
+                                                    : selectedMatchId ===
+                                                      matchOsId
+                                                    ? classes.listItemStyle_selected
+                                                    : ''
+                                            }`}
+                                            onClick={() =>
+                                                handleSelectMatch(matchOsId)
                                             }
                                         >
                                             <div>
@@ -345,25 +421,47 @@ const DashboardContributionRecord = ({
                                                 />
                                             </div>
                                             {!isDisabled ? (
-                                                <Button
-                                                    color="secondary"
-                                                    variant="contained"
-                                                    className={
-                                                        classes.confirmButtonStyles
-                                                    }
-                                                    disabled={
-                                                        moderationEventFetching
-                                                    }
-                                                    onClick={() => {
-                                                        confirmPotentialMatch(
-                                                            matchOsId,
-                                                        );
-                                                    }}
-                                                >
-                                                    {
-                                                        confirmPotentialMatchButtonTitle
-                                                    }
-                                                </Button>
+                                                <div>
+                                                    <Button
+                                                        color="secondary"
+                                                        variant="contained"
+                                                        className={
+                                                            classes.confirmButtonStyles
+                                                        }
+                                                        disabled={
+                                                            moderationEventFetching
+                                                        }
+                                                        onClick={() => {
+                                                            confirmPotentialMatch(
+                                                                matchOsId,
+                                                            );
+                                                        }}
+                                                    >
+                                                        {
+                                                            confirmPotentialMatchButtonTitle
+                                                        }
+                                                    </Button>
+                                                    <Button
+                                                        color="primary"
+                                                        variant="outlined"
+                                                        className={
+                                                            classes.viewCompareButtonStyles
+                                                        }
+                                                        onClick={e => {
+                                                            e.stopPropagation();
+                                                            handleSelectMatch(
+                                                                matchOsId,
+                                                            );
+                                                        }}
+                                                    >
+                                                        {`${
+                                                            selectedMatchId ===
+                                                            matchOsId
+                                                                ? 'Hide'
+                                                                : 'View'
+                                                        } Comparison`}
+                                                    </Button>
+                                                </div>
                                             ) : (
                                                 <DialogTooltip
                                                     text={
@@ -440,6 +538,139 @@ const DashboardContributionRecord = ({
                     )}
                 </Grid>
             </Grid>
+            {selectedMatchId && (
+                <Paper className={classes.container}>
+                    <Typography variant="title" className={classes.title}>
+                        Side-by-Side Comparison
+                    </Typography>
+                    <div className={classes.comparisonContainer}>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12}>
+                                <Grid container spacing={2}>
+                                    <Grid item xs={4}>
+                                        <Typography
+                                            variant="subtitle1"
+                                            className={classes.fieldTitle}
+                                        >
+                                            Field
+                                        </Typography>
+                                    </Grid>
+                                    <Grid item xs={4}>
+                                        <Typography
+                                            variant="subtitle1"
+                                            className={classes.fieldTitle}
+                                        >
+                                            Contribution Record
+                                        </Typography>
+                                    </Grid>
+                                    <Grid item xs={4}>
+                                        <Typography
+                                            variant="subtitle1"
+                                            className={classes.fieldTitle}
+                                        >
+                                            Potential Match
+                                        </Typography>
+                                    </Grid>
+                                </Grid>
+                            </Grid>
+
+                            {/* Field rows for comparison */}
+                            {['name', 'address', 'country'].map(field => {
+                                const selectedMatch = matches.find(
+                                    match => match.os_id === selectedMatchId,
+                                );
+                                if (!selectedMatch) return null;
+
+                                let contributionValue = '';
+                                let matchValue = '';
+
+                                if (field === 'name') {
+                                    contributionValue =
+                                        singleModerationEventItem.cleaned_data
+                                            ?.name || 'N/A';
+                                    matchValue = selectedMatch.name || 'N/A';
+                                } else if (field === 'address') {
+                                    contributionValue =
+                                        singleModerationEventItem.cleaned_data
+                                            ?.address || 'N/A';
+                                    matchValue = selectedMatch.address || 'N/A';
+                                } else if (field === 'country') {
+                                    contributionValue =
+                                        singleModerationEventItem.cleaned_data
+                                            ?.country?.name || 'N/A';
+                                    matchValue =
+                                        selectedMatch.country?.name ||
+                                        selectedMatch.country ||
+                                        'N/A';
+                                }
+
+                                const isMatch =
+                                    contributionValue.toLowerCase() ===
+                                    matchValue.toLowerCase();
+
+                                return (
+                                    <Grid item xs={12} key={field}>
+                                        <Grid container spacing={2}>
+                                            <Grid item xs={4}>
+                                                <Typography
+                                                    variant="body1"
+                                                    className={
+                                                        classes.fieldLabel
+                                                    }
+                                                >
+                                                    {field
+                                                        .charAt(0)
+                                                        .toUpperCase() +
+                                                        field.slice(1)}
+                                                    :
+                                                </Typography>
+                                            </Grid>
+                                            <Grid item xs={4}>
+                                                <Typography variant="body1">
+                                                    {contributionValue}
+                                                </Typography>
+                                            </Grid>
+                                            <Grid item xs={4}>
+                                                <div
+                                                    className={
+                                                        classes.matchValueContainer
+                                                    }
+                                                >
+                                                    <Typography variant="body1">
+                                                        {matchValue}
+                                                    </Typography>
+                                                    {isMatch ? (
+                                                        <span
+                                                            className={
+                                                                classes.matchIcon
+                                                            }
+                                                        >
+                                                            ✓
+                                                        </span>
+                                                    ) : (
+                                                        <span
+                                                            className={
+                                                                classes.noMatchIcon
+                                                            }
+                                                        >
+                                                            ✗
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </Grid>
+                                        </Grid>
+                                        <Divider
+                                            className={
+                                                classes.innerDividerStyle
+                                            }
+                                        />
+                                    </Grid>
+                                );
+                            })}
+                        </Grid>
+                    </div>
+                </Paper>
+            )}
             <RejectModerationEventDialog
                 updateModerationEvent={updateModerationEvent}
                 isOpenDialog={rejectModerationEventDialogIsOpen}
