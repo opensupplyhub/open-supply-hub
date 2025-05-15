@@ -47,7 +47,7 @@ resource "aws_security_group" "vpn_sg" {
     from_port   = 51820
     to_port     = 51820
     protocol    = "udp"
-    cidr_blocks = ["0.0.0.0/0"] # TODO: restrict to known IPs
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
