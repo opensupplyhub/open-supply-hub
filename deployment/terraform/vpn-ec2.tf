@@ -23,8 +23,13 @@ resource "aws_instance" "vpn_ec2" {
   }
   vpc_security_group_ids = [aws_security_group.vpn_sg.id]
   instance_type = "t4g.nano"
+
   tags = {
     Name = "vpn_ec2"
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 
@@ -63,10 +68,3 @@ resource "aws_eip_association" "eip_assoc" {
   instance_id   = aws_instance.vpn_ec2[0].id
   allocation_id = aws_eip.vpn_eip[0].id
 }
-
-# TODO:
-# 1. Configure security groups, open ports for WireGuard with Custom UDP type, define port range.
-# 2. Create access keys to connect to the instance if needed.
-# 3. Obtain (or create) external IP-address and associate it with instance.
-# 4. Install WireGuard in EC2 instance (example https://github.com/pprometey/wireguard_aws), probably bash script required.
-# 5. Forward requests that set in ip_whitelist to specific ECS instance.
