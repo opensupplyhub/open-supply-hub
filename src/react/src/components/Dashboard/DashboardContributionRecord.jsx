@@ -206,6 +206,7 @@ const DashboardContributionRecord = ({
     const moderationActionType = singleModerationEventItem.action_type || null;
     const moderationActionPerformBy =
         singleModerationEventItem.action_perform_by_id || null;
+    const jsonResults = JSON.stringify(singleModerationEventItem, null, 2);
     const potentialMatchCount = matches.length || 0;
     // OSDEV-1445: automatic write claim into moderation-events table to be done in Q1
     const hasClaimID = singleModerationEventItem.claim_id;
@@ -331,6 +332,7 @@ const DashboardContributionRecord = ({
                                     </Grid>
                                 </Paper>
                             </Grid>
+                            <pre style={{ display: 'none' }}>{jsonResults}</pre>
                         </Grid>
                     )}
                 </div>
