@@ -44,7 +44,7 @@ class UpdateProductionLocation(EventApprovalTemplate):
 
     def _get_action_type(self):
         return ModerationEvent.ActionType.MATCHED
-    
+
     @staticmethod
     def _update_facility_updated_at(facility_id: str) -> None:
         Facility.update_facility_updated_at_field(facility_id)
