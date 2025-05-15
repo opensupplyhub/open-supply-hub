@@ -16,7 +16,7 @@ resource "aws_instance" "vpn_ec2" {
   count         = var.environment == "Development" ? 1 : 0
   ami           = data.aws_ami.aws_ami_vpn_ec2.id
   instance_type = "t4g.nano"
-  subnet_id     = module.vpc.public_subnets[0]
+  subnet_id = module.vpc.public_subnet_ids[count.index]
 
   associate_public_ip_address = true
 
