@@ -369,14 +369,16 @@ const DashboardContributionRecord = ({
                                         <ListItem
                                             className={`${
                                                 classes.listItemStyle
-                                            } ${
-                                                osId === matchOsId
-                                                    ? classes.listItemStyle_confirmed
-                                                    : selectedMatchId ===
-                                                      matchOsId
-                                                    ? classes.listItemStyle_selected
-                                                    : ''
-                                            }`}
+                                            } ${(() => {
+                                                if (osId === matchOsId)
+                                                    return classes.listItemStyle_confirmed;
+                                                if (
+                                                    selectedMatchId ===
+                                                    matchOsId
+                                                )
+                                                    return classes.listItemStyle_selected;
+                                                return '';
+                                            })()}`}
                                             onClick={() =>
                                                 handleSelectMatch(matchOsId)
                                             }
@@ -464,11 +466,11 @@ const DashboardContributionRecord = ({
                                                 </div>
                                             ) : (
                                                 <DialogTooltip
-                                                    text={
-                                                        osId === matchOsId
-                                                            ? `Moderation event data has been already matched to this production location.`
-                                                            : `You can't confirm potential match when moderation event is ${moderationEventStatus.toLowerCase()}.`
-                                                    }
+                                                    text={(() => {
+                                                        if (osId === matchOsId)
+                                                            return `Moderation event data has been already matched to this production location.`;
+                                                        return `You can't confirm potential match when moderation event is ${moderationEventStatus.toLowerCase()}.`;
+                                                    })()}
                                                     aria-label="Confirm potential match button tooltip"
                                                     childComponent={confirmPotentialMatchButtonDisabled(
                                                         classes,
