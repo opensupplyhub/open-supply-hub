@@ -16,7 +16,6 @@ from api.constants import (
     APIV1ModerationEventErrorMessages
 )
 from api.models.moderation_event import ModerationEvent
-from api.models.facility.facility import Facility
 from api.moderation_event_actions.approval.add_production_location \
     import AddProductionLocation
 from api.moderation_event_actions.approval.update_production_location \
