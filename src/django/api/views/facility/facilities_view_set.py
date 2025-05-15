@@ -1596,6 +1596,8 @@ class FacilitiesViewSet(ListModelMixin,
                             facility)
                     match.save()
 
+        Facility.update_facility_updated_at_field(facility.id)
+
         context = {'request': request}
         facility_index = FacilityIndex.objects.get(id=facility.id)
         facility_data = FacilityIndexDetailsSerializer(
@@ -1652,6 +1654,8 @@ class FacilitiesViewSet(ListModelMixin,
             ) from exc
 
         facility_activity_report.save()
+
+        Facility.update_facility_updated_at_field(facility.id)
 
         serializer = FacilityActivityReportSerializer(facility_activity_report)
         return Response(serializer.data)

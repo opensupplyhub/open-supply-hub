@@ -137,6 +137,8 @@ class EventApprovalTemplate(ABC):
             'Moderation Event updated.'
         )
 
+        self._update_facility_updated_at(item.facility.id)
+
         return item
 
     @staticmethod
@@ -323,4 +325,9 @@ class EventApprovalTemplate(ABC):
     @staticmethod
     def _create_new_facility(item: FacilityListItem, facility_id: str) -> None:
         """Hook method to create a new facility."""
+        pass
+
+    @staticmethod
+    def _update_facility_updated_at(facility_id: str) -> None:
+        """Hook method to update a facility updated_at field."""
         pass
