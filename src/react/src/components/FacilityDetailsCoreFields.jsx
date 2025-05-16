@@ -18,7 +18,7 @@ import CopySearch from './CopySearch';
 import { facilityDetailsActions } from '../util/constants';
 
 import {
-    makeReportADataIssueEmailLink,
+    makeContributeProductionLocationUpdateURL,
     makeReportADuplicateEmailLink,
     makeDisputeClaimEmailLink,
 } from '../util/util';
@@ -126,7 +126,7 @@ const FacilityDetailsCoreFields = ({
             </MenuItem>
             <MenuItem onClick={handleClose}>
                 <a
-                    href={makeReportADataIssueEmailLink(osId)}
+                    href={makeContributeProductionLocationUpdateURL(osId)}
                     target="_blank"
                     rel="noreferrer"
                     className={classes.menuLink}

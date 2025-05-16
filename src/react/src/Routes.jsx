@@ -13,7 +13,7 @@ import EmbeddedFooter from './components/EmbeddedFooter';
 import RegisterForm from './components/RegisterForm';
 import ResetPasswordForm from './components/ResetPasswordForm';
 import LoginForm from './components/LoginForm';
-import Contribute from './components/Contribute';
+import ContributeList from './components/ContributeList';
 import AddLocationData from './components/AddLocationData';
 import Homepage from './components/Homepage';
 import FacilityLists from './components/FacilityLists';
@@ -160,7 +160,7 @@ class Routes extends Component {
                                 <Route
                                     exact
                                     path={multipleLocationRoute}
-                                    component={Contribute}
+                                    component={ContributeList}
                                 />
                                 <Route
                                     exact

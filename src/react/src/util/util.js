@@ -1009,9 +1009,6 @@ export const makePaginatedFacilityListItemsDetailLinkWithRowCount = (
 export const makeSliceArgumentsForTablePagination = (page, rowsPerPage) =>
     Object.freeze([page * rowsPerPage, (page + 1) * rowsPerPage]);
 
-export const makeReportADataIssueEmailLink = osId =>
-    `mailto:data@opensupplyhub.org?subject=Reporting a data issue on ID ${osId}`;
-
 export const makeDisputeClaimEmailLink = osId =>
     `mailto:claims@opensupplyhub.org?subject=Disputing a claim of facility ID ${osId}`;
 

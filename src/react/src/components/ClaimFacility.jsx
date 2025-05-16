@@ -2,8 +2,7 @@ import React, { useEffect } from 'react';
 import { arrayOf, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import Grid from '@material-ui/core/Grid';
-import { Link, Route } from 'react-router-dom';
+import { Route } from 'react-router-dom';
 
 import AppGrid from '../components/AppGrid';
 import AppOverflow from '../components/AppOverflow';
@@ -16,9 +15,8 @@ import {
 
 import { facilityDetailsPropType } from '../util/propTypes';
 
-import { authLoginFormRoute } from '../util/constants';
-
 import COLOURS from '../util/COLOURS';
+import RequireAuthNotice from './RequireAuthNotice';
 
 const claimFacilityContainerStyles = Object.freeze({
     containerStyles: Object.freeze({
@@ -34,9 +32,6 @@ const appStyles = Object.freeze({
 });
 
 const ClaimFacility = ({
-    history: {
-        location: { pathname },
-    },
     data,
     fetching,
     error,
@@ -58,22 +53,10 @@ const ClaimFacility = ({
 
     if (!userHasSignedIn) {
         return (
-            <AppGrid title="Claim this production location">
-                <Grid container className="margin-bottom-64">
-                    <Grid item xs={12}>
-                        <Link
-                            to={{
-                                pathname: authLoginFormRoute,
-                                state: { prevPath: pathname },
-                            }}
-                            href={authLoginFormRoute}
-                        >
-                            Login to claim a production location on Open Supply
-                            Hub
-                        </Link>
-                    </Grid>
-                </Grid>
-            </AppGrid>
+            <RequireAuthNotice
+                title="Claim this production location"
+                text="Log in to claim a production location on Open Supply Hub"
+            />
         );
     }
 
