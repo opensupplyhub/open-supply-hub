@@ -27,9 +27,12 @@ resource "aws_instance" "vpn_ec2" {
     Name = "vpn_ec2"
   }
 
+  # TODO: Enable this rule once WireGuard setup
+  /*
   lifecycle {
     prevent_destroy = true
   }
+  */
 }
 
 resource "aws_security_group" "vpn_sg" {
