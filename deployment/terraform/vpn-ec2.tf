@@ -19,6 +19,7 @@ resource "aws_instance" "vpn_ec2" {
   subnet_id = module.vpc.public_subnet_ids[count.index]
 
   associate_public_ip_address = true
+  key_name                    = var.aws_key_name
 
   vpc_security_group_ids = [aws_security_group.vpn_sg.id]
 
