@@ -233,4 +233,4 @@ describe('FacilityDetailsCoreFields component', () => {
             expect(queryByText(facilityDetailsActions.DISPUTE_CLAIM)).not.toBeInTheDocument();
         });
     });
-})
+});
