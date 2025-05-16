@@ -160,7 +160,7 @@ describe('FacilityDetailsCoreFields component', () => {
         expect(getByTestId('report-dialog')).toBeInTheDocument();
     });
 
-    test('clicking "Suggest an Edit" renders correct link and closes the menu', () => {
+    test('clicking "Suggest an Edit" renders correct link and closes the menu', async () => {
         const { getByRole, queryByText } = renderWithProviders(
             <FacilityDetailsCoreFields {...defaultProps} />,
         );
@@ -181,12 +181,12 @@ describe('FacilityDetailsCoreFields component', () => {
 
         suggestAnEditLink.click();
 
-        waitFor(() => {
+        await waitFor(() => {
             expect(queryByText(facilityDetailsActions.SUGGEST_AN_EDIT)).not.toBeInTheDocument();
         });
     });
 
-    test('clicking "Report as Duplicate" opens correct mailto link and closes the menu', () => {
+    test('clicking "Report as Duplicate" opens correct mailto link and closes the menu', async () => {
         const { getByRole, queryByText } = renderWithProviders(
             <FacilityDetailsCoreFields {...defaultProps} />,
         );
@@ -205,12 +205,12 @@ describe('FacilityDetailsCoreFields component', () => {
 
         reportAsDuplicateLink.click();
 
-        waitFor(() => {
+        await waitFor(() => {
             expect(queryByText(facilityDetailsActions.REPORT_AS_DUPLICATE)).not.toBeInTheDocument();
         });
     });
 
-    test('clicking "Dispute Claim" opens correct mailto link and closes the menu', () => {
+    test('clicking "Dispute Claim" opens correct mailto link and closes the menu', async () => {
         const { getByRole, queryByText } = renderWithProviders(
             <FacilityDetailsCoreFields {...defaultProps} isClaimed />,
         );
@@ -229,7 +229,7 @@ describe('FacilityDetailsCoreFields component', () => {
         
         disputeClaimLink.click();
         
-        waitFor(() => {
+        await waitFor(() => {
             expect(queryByText(facilityDetailsActions.DISPUTE_CLAIM)).not.toBeInTheDocument();
         });
     });
