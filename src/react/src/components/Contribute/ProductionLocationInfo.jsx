@@ -394,7 +394,9 @@ const ProductionLocationInfo = ({
             variant="contained"
             onClick={contributionForm.handleSubmit}
             className={classes.submitButtonStyles}
-            disabled={!contributionForm.isValid}
+            disabled={
+                !contributionForm.isValid || pendingModerationEventFetching
+            }
         >
             {submitButtonText}
         </Button>
