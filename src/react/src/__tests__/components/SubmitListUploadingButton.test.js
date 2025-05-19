@@ -6,7 +6,7 @@ import { Provider } from "react-redux";
 import configureMockStore from 'redux-mock-store'
 import thunk from 'redux-thunk'
 
-import ContributeList from '../../components/Contribute';
+import ContributeList from '../../components/ContributeList';
 import { MAINTENANCE_MESSAGE } from '../../util/constants';
 
 jest.mock('@material-ui/core/Popper', () => ({ children }) => children);
