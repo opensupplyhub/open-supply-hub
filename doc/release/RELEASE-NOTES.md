@@ -34,6 +34,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Added an additional "Data Cleaning Service" subheader to the "How It Works" > "Premium Features" section.
     * Updated the list of supported languages/countries under the "globe" icon (added support for Chinese and changed the order).
     * Removed the Twitter icon from the social media icons/links in the footer.
+* [OSDEV-1122](https://opensupplyhub.atlassian.net/browse/OSDEV-1122) - The following changes were made:
+    * Updated the behavior of the `Suggest an Edit` button on production location profile pages. The button now opens the Production Location Information page of the SLC workflow in a new tab, allowing users to suggest edits without having to re-search for the facility.
+    * Fixed redirection for unauthenticated users. If a user is not logged in and clicks `Suggest an Edit` button they are now redirected to the correct workflow step after logging in, instead of being taken to the home page. This fix applies to all steps within the Contribute workflow.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
