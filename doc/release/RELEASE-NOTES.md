@@ -22,7 +22,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe code/API changes here.*
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* [OSDEV-1992](https://opensupplyhub.atlassian.net/browse/OSDEV-1992) - Provisioned a dedicated EC2 instance to host WireGuard VPN service, enabling authorized users to bypass AWS WAF when accessing the RBA instance.
 
 ### Bugfix
 * [OSDEV-1882](https://opensupplyhub.atlassian.net/browse/OSDEV-1882) - Fixed an issue where the scroll position was not resetting to the top when navigating to the `Upload` page related to the list upload functionality.
