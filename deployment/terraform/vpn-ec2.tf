@@ -11,6 +11,34 @@ data "aws_ami" "aws_ami_vpn_ec2" {
   }
 }
 
+data "aws_iam_policy_document" "vpn_instance_assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "vpn_instance" {
+  name               = "vpn${local.short}InstanceRole"
+  assume_role_policy = data.aws_iam_policy_document.vpn_instance_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "vpn_instance_ssm" {
+  role       = aws_iam_role.vpn_instance.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "vpn_instance" {
+  name = aws_iam_role.vpn_instance.name
+  role = aws_iam_role.vpn_instance.name
+}
+
 # TODO: create only for RBA environment
 resource "aws_instance" "vpn_ec2" {
   count         = var.environment == "Development" ? 1 : 0
@@ -20,11 +48,12 @@ resource "aws_instance" "vpn_ec2" {
 
   associate_public_ip_address = true
   key_name                    = var.aws_key_name
+  iam_instance_profile        = aws_iam_instance_profile.vpn_instance.name
 
   vpc_security_group_ids = [aws_security_group.vpn_sg.id]
 
   tags = {
-    Name        = "vpn-ec2-${var.environment}"
+    Name        = "Bastion-vpn-ec2-${var.environment}"
     Environment = var.environment
     Service     = "vpn"
   }
