@@ -11,12 +11,12 @@ data "aws_ami" "aws_ami_vpn_ec2" {
   }
 }
 
-# TODO: create only for RBA environment, Development is for testing
+# TODO: create only for RBA environment
 resource "aws_instance" "vpn_ec2" {
   count         = var.environment == "Development" ? 1 : 0
   ami           = data.aws_ami.aws_ami_vpn_ec2.id
   instance_type = "t4g.nano"
-  subnet_id = module.vpc.public_subnet_ids[count.index]
+  subnet_id     = module.vpc.public_subnet_ids[count.index]
 
   associate_public_ip_address = true
   key_name                    = var.aws_key_name
@@ -24,15 +24,14 @@ resource "aws_instance" "vpn_ec2" {
   vpc_security_group_ids = [aws_security_group.vpn_sg.id]
 
   tags = {
-    Name = "vpn_ec2"
+    Name        = "vpn-ec2-${var.environment}"
+    Environment = var.environment
+    Service     = "vpn"
   }
 
-  # TODO: Enable this rule once WireGuard setup
-  /*
   lifecycle {
     prevent_destroy = true
   }
-  */
 }
 
 resource "aws_security_group" "vpn_sg" {
@@ -58,7 +57,7 @@ resource "aws_security_group" "vpn_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # TODO: change later
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
