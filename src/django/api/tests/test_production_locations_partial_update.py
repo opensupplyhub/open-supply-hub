@@ -112,10 +112,15 @@ class TestProductionLocationsPartialUpdate(APITestCase):
         mock_get.return_value.json.return_value = geocoding_data
 
         # Simulate 30 requests.
-        for _ in range(30):
+        for i in range(30):
+            dynamic_valid_req_body = json.dumps({
+                'name': f'Blue Horizon Facility {i}',
+                'address': '990 Spring Garden St., Philadelphia PA 19123',
+                'country': 'US'
+            })
             response = self.client.patch(
                 self.url,
-                self.common_valid_req_body,
+                dynamic_valid_req_body,
                 content_type='application/json'
             )
             self.assertEqual(response.status_code, 202)

@@ -52,8 +52,13 @@ class DuplicateThrottle(BaseThrottle):
 
         if not request.user.is_authenticated:
             return False
-
-        data_str = str(sorted(request.data.items()))
+        
+        data = request.data
+        data_str = (
+            str(data)
+            if isinstance(data, list)
+            else str(sorted(data.items()))
+        )
         data_hash = hashlib.sha256(data_str.encode()).hexdigest()
         cache_key = f"duplicate:{request.user.id}:{data_hash}"
 
