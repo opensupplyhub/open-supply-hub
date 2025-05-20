@@ -52,7 +52,7 @@ class DuplicateThrottle(BaseThrottle):
 
         if not request.user.is_authenticated:
             return False
-        
+
         data = request.data
         data_str = (
             str(data)
