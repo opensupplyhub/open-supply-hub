@@ -30,7 +30,10 @@ from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
     import CreateModerationEventDTO
 from api.models.moderation_event import ModerationEvent
 from api.models.facility.facility import Facility
-from api.throttles import DataUploadThrottle
+from api.throttles import (
+    DataUploadThrottle,
+    DuplicateThrottle
+)
 from api.constants import (
     APIV1CommonErrorMessages,
     NON_FIELD_ERRORS_KEY,
@@ -83,7 +86,7 @@ class ProductionLocations(ViewSet):
     def get_throttles(self):
         if (self.action == 'create'
                 or self.action == 'partial_update'):
-            return [DataUploadThrottle()]
+            return [DataUploadThrottle(), DuplicateThrottle()]
 
         # Call the parent method to use the default throttling setup in the
         # settings.py file.

@@ -1,5 +1,15 @@
-from django.core.cache import caches
-from rest_framework.throttling import UserRateThrottle
+import hashlib
+from django.utils import timezone
+from django.core.cache import (
+    caches,
+    cache
+)
+from rest_framework.throttling import (
+    UserRateThrottle,
+    BaseThrottle
+)
+from rest_framework.exceptions import Throttled
+from oar.settings import DUPLICATE_THROTTLE_TIMEOUT
 
 
 class UserCustomRateThrottle(UserRateThrottle):
@@ -33,3 +43,29 @@ class SustainedRateThrottle(UserCustomRateThrottle):
 class DataUploadThrottle(UserCustomRateThrottle):
     scope = 'data_upload'
     model_rate_field = 'data_upload_rate'
+
+
+class DuplicateThrottle(BaseThrottle):
+    def allow_request(self, request, view):
+        if request.method not in ["POST", "PATCH"]:
+            return True
+
+        if not request.user.is_authenticated:
+            return False
+
+        data_str = str(sorted(request.data.items()))
+        data_hash = hashlib.sha256(data_str.encode()).hexdigest()
+        cache_key = f"duplicate:{request.user.id}:{data_hash}"
+
+        if cache.get(cache_key):
+            raise Throttled(
+                detail="Duplicate request submitted, please try again later."
+            )
+
+        cache.set(
+            cache_key,
+            timezone.now(),
+            timeout=DUPLICATE_THROTTLE_TIMEOUT
+        )
+        return True
+
