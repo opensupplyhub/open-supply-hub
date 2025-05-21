@@ -39,9 +39,15 @@ resource "aws_iam_instance_profile" "vpn_instance" {
   role = aws_iam_role.vpn_instance.name
 }
 
-# TODO: create only for RBA environment
+data "template_file" "wireguard_compose" {
+  template = file("${path.module}/wireguard/docker-compose.yml")
+  vars = {
+    wg_host = aws_eip.vpn_eip[0].public_ip
+  }
+}
+
 resource "aws_instance" "vpn_ec2" {
-  count         = var.environment == "Test" ? 1 : 0
+  count         = var.environment == "Development" ? 1 : 0
   ami           = data.aws_ami.aws_ami_vpn_ec2.id
   instance_type = "t4g.nano"
   subnet_id     = module.vpc.public_subnet_ids[count.index]
@@ -51,6 +57,34 @@ resource "aws_instance" "vpn_ec2" {
   iam_instance_profile        = aws_iam_instance_profile.vpn_instance.name
 
   vpc_security_group_ids = [aws_security_group.vpn_sg.id]
+
+  user_data = <<-EOF
+    #!/bin/bash
+    set -e
+
+    # Install Docker and Docker Compose
+    sudo yum update -y
+    sudo yum install -y docker
+    sudo systemctl enable docker
+    sudo systemctl start docker
+    sudo usermod -aG docker ec2-user
+    sudo mkdir -p /usr/libexec/docker/cli-plugins
+    sudo curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-aarch64 \
+      -o /usr/libexec/docker/cli-plugins/docker-compose
+    sudo chmod +x /usr/libexec/docker/cli-plugins/docker-compose
+
+    # Create directory for WireGuard
+    sudo mkdir -p /opt/wireguard
+    cd /opt/wireguard
+
+    # Create docker-compose.yml with the correct WG_HOST
+    cat > docker-compose.yml << 'EOC'
+    ${data.template_file.wireguard_compose.rendered}
+    EOC
+
+    # Start WireGuard
+    sudo docker compose up -d
+  EOF
 
   tags = {
     Name        = "Bastion-vpn-ec2-${var.environment}"
@@ -103,12 +137,12 @@ resource "aws_security_group" "vpn_sg" {
 }
 
 resource "aws_eip" "vpn_eip" {
-  count  = var.environment == "Test" ? 1 : 0
+  count  = var.environment == "Development" ? 1 : 0
   domain = "vpc"
 }
 
 resource "aws_eip_association" "eip_assoc" {
-  count         = var.environment == "Test" ? 1 : 0
+  count         = var.environment == "Development" ? 1 : 0
   instance_id   = aws_instance.vpn_ec2[0].id
   allocation_id = aws_eip.vpn_eip[0].id
 }
