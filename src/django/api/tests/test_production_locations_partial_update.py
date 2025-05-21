@@ -158,6 +158,58 @@ class TestProductionLocationsPartialUpdate(APITestCase):
         throttled_response_body_dict = json.loads(throttled_response.content)
         self.assertEqual(throttled_response.status_code, 429)
         self.assertEqual(len(throttled_response_body_dict), 1)
+    
+    @patch('api.geocoding.requests.get')
+    def test_duplicate_throttling_is_applied(self, mock_get):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        # Simulate 2 duplicate requests.
+        # First should be successfull.
+        response = self.client.patch(
+            self.url,
+            self.common_valid_req_body,
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 202)
+
+        response_body_dict = json.loads(response.content)
+        response_moderation_id = response_body_dict.get('moderation_id')
+        moderation_event = ModerationEvent.objects.get(
+            pk=response_moderation_id
+        )
+        stringified_created_at = moderation_event.created_at.strftime(
+            '%Y-%m-%dT%H:%M:%S.%f'
+        ) + 'Z'
+
+        self.assertEqual(
+            response_body_dict.get('moderation_status'),
+            'PENDING'
+        )
+        self.assertEqual(
+            response_body_dict.get('created_at'),
+            stringified_created_at
+        )
+        self.assertEqual(
+            response_body_dict.get('os_id'),
+            self.production_location.id
+        )
+        self.assertIn("cleaned_data", response_body_dict)
+        self.assertEqual(len(response_body_dict), 5)
+
+        # Second should be throttled.
+        throttled_response = self.client.patch(
+            self.url,
+            self.common_valid_req_body,
+            content_type='application/json'
+        )
+        throttled_response_body_dict = json.loads(throttled_response.content)
+        self.assertEqual(throttled_response.status_code, 429)
+        self.assertEqual(len(throttled_response_body_dict), 1)
+        self.assertEqual(
+            throttled_response_body_dict["detail"],
+            "Duplicate request submitted, please try again later."
+        )
 
     @override_switch('disable_list_uploading', active=True)
     def test_client_cannot_patch_when_upload_is_blocked(self):
