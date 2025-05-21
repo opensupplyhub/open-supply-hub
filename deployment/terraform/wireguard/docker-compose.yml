@@ -1,5 +1,3 @@
-#volumes:
-  # etc_wireguard:
 services:
   wg-easy:
     environment:
@@ -8,8 +6,6 @@ services:
       - WG_PERSISTENT_KEEPALIVE=25
     image: ghcr.io/wg-easy/wg-easy:14
     container_name: wg-easy
-    #volumes:
-      # - etc_wireguard:/etc/wireguard
     ports:
       - "51820:51820/udp"
       - "51821:51821/tcp"
