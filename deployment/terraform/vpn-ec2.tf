@@ -40,9 +40,10 @@ resource "aws_iam_instance_profile" "vpn_instance" {
 }
 
 data "template_file" "wireguard_compose" {
+  count    = var.environment == "Test" ? 1 : 0
   template = file("${path.module}/wireguard/docker-compose.yml")
   vars = {
-    wg_host = aws_eip.vpn_eip[0].public_ip
+    wg_host = var.environment == "Test" ? aws_eip.vpn_eip[0].public_ip : ""
   }
 }
 
@@ -79,7 +80,7 @@ resource "aws_instance" "vpn_ec2" {
 
     # Create docker-compose.yml with the correct WG_HOST
     cat > docker-compose.yml << 'EOC'
-    ${data.template_file.wireguard_compose.rendered}
+    ${data.template_file.wireguard_compose[0].rendered}
     EOC
 
     # Start WireGuard
