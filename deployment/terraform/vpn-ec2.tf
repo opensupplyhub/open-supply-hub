@@ -95,7 +95,7 @@ resource "aws_instance" "vpn_ec2" {
 }
 
 resource "aws_security_group" "vpn_sg" {
-  name        = "vpn-ec2-sg"
+  name        = "vpn-ec2-sg-${var.environment}"
   description = "Allow WireGuard UDP traffic"
   vpc_id      = module.vpc.id
 
@@ -140,6 +140,11 @@ resource "aws_security_group" "vpn_sg" {
 resource "aws_eip" "vpn_eip" {
   count  = var.environment == "Test" ? 1 : 0
   domain = "vpc"
+  tags = {
+    Name        = "vpn-eip-${var.environment}"
+    Environment = var.environment
+    Service     = "vpn"
+  }
 }
 
 resource "aws_eip_association" "eip_assoc" {
