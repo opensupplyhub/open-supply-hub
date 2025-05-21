@@ -147,7 +147,7 @@ class TestProductionLocationsCreate(APITestCase):
         throttled_response_body_dict = json.loads(throttled_response.content)
         self.assertEqual(throttled_response.status_code, 429)
         self.assertEqual(len(throttled_response_body_dict), 1)
-    
+
     @patch('api.geocoding.requests.get')
     def test_duplicate_throttling_is_applied(self, mock_get):
         mock_get.return_value = Mock(ok=True, status_code=200)
