@@ -1,9 +1,7 @@
 import hashlib
+import json
 from django.utils import timezone
-from django.core.cache import (
-    caches,
-    cache
-)
+from django.core.cache import caches
 from rest_framework.throttling import (
     UserRateThrottle,
     BaseThrottle
@@ -46,6 +44,15 @@ class DataUploadThrottle(UserCustomRateThrottle):
 
 
 class DuplicateThrottle(BaseThrottle):
+    cache = caches['api_throttling']
+    MAX_REQUEST_SIZE = 1024 * 1024  # 1MB limit
+
+    def _serialize_data(self, data):
+        try:
+            return json.dumps(data, sort_keys=True)
+        except (TypeError, ValueError):
+            return str(data)
+
     def allow_request(self, request, view):
         if request.method not in ["POST", "PATCH"]:
             return True
@@ -53,21 +60,24 @@ class DuplicateThrottle(BaseThrottle):
         if not request.user.is_authenticated:
             return False
 
-        data = request.data
-        data_str = (
-            str(data)
-            if isinstance(data, list)
-            else str(sorted(data.items()))
-        )
+        if not request.data:
+            return True
+
+        data_str = self._serialize_data(request.data)
+        if len(data_str.encode()) > self.MAX_REQUEST_SIZE:
+            raise Throttled(
+                detail="Request data too large. Maximum size is 1MB."
+            )
+
         data_hash = hashlib.sha256(data_str.encode()).hexdigest()
         cache_key = f"duplicate:{request.user.id}:{data_hash}"
 
-        if cache.get(cache_key):
+        if self.cache.get(cache_key):
             raise Throttled(
                 detail="Duplicate request submitted, please try again later."
             )
 
-        cache.set(
+        self.cache.set(
             cache_key,
             timezone.now(),
             timeout=DUPLICATE_THROTTLE_TIMEOUT
