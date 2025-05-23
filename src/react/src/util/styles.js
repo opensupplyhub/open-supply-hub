@@ -902,6 +902,43 @@ export const makeDashboardContributionRecordStyles = theme =>
         claimTooltipWrapper: Object.freeze({
             cursor: 'not-allowed',
         }),
+        comparisonContainer: Object.freeze({
+            padding: '20px 0',
+        }),
+        fieldTitle: Object.freeze({
+            fontWeight: theme.typography.fontWeightBold,
+            marginBottom: '8px',
+        }),
+        fieldLabel: Object.freeze({
+            color: theme.palette.text.secondary,
+            fontWeight: theme.typography.fontWeightMedium,
+        }),
+        fieldPaper: Object.freeze({
+            padding: '16px',
+            backgroundColor: '#f5f5f5',
+        }),
+        matchValueContainer: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+        }),
+        matchIcon: Object.freeze({
+            color: COLOURS.MINT_GREEN,
+            fontWeight: 'bold',
+            marginLeft: '8px',
+        }),
+        noMatchIcon: Object.freeze({
+            color: COLOURS.LIGHT_RED,
+            fontWeight: 'bold',
+            marginLeft: '8px',
+        }),
+        listItemStyle_selected: Object.freeze({
+            backgroundColor: COLOURS.PALE_LIGHT_YELLOW,
+        }),
+        viewCompareButtonStyles: Object.freeze({
+            marginLeft: '8px',
+            padding: '6px 12px',
+        }),
     });
 
 export const makeDashboardModerationQueueStyles = theme =>
