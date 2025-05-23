@@ -108,14 +108,6 @@ resource "aws_security_group" "vpn_sg" {
   }
 
   ingress {
-    from_port   = 51821
-    to_port     = 51821
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "WireGuard management access (WebUI)"
-  }
-
-  ingress {
     from_port       = 22
     to_port         = 22
     protocol        = "tcp"
