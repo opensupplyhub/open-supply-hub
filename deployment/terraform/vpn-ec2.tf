@@ -77,12 +77,9 @@ resource "aws_instance" "vpn_ec2" {
     sudo mkdir -p /opt/wireguard
     cd /opt/wireguard
 
-    # Get the instance's public IP
-    PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
-
-    # Create docker-compose.yml with the public IP
-    cat > docker-compose.yml << EOC
-    ${replace(data.template_file.wireguard_compose[0].rendered, "PRIVATE_IP_PLACEHOLDER", "$PUBLIC_IP")}
+    # Create docker-compose.yml
+    cat > docker-compose.yml << 'EOC'
+    ${data.template_file.wireguard_compose[0].rendered}
     EOC
 
     # Start WireGuard
