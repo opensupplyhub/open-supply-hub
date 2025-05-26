@@ -40,15 +40,15 @@ resource "aws_iam_instance_profile" "vpn_instance" {
 }
 
 data "template_file" "wireguard_compose" {
-  count    = var.environment == "Development" ? 1 : 0
+  count    = var.environment == "Rba" ? 1 : 0
   template = file("${path.module}/wireguard/docker-compose.yml")
   vars = {
-    wg_host = var.environment == "Development" ? aws_eip.vpn_eip[0].public_ip : ""
+    wg_host = var.environment == "Rba" ? aws_eip.vpn_eip[0].public_ip : ""
   }
 }
 
 resource "aws_instance" "vpn_ec2" {
-  count         = var.environment == "Development" ? 1 : 0
+  count         = var.environment == "Rba" ? 1 : 0
   ami           = data.aws_ami.aws_ami_vpn_ec2.id
   instance_type = "t4g.nano"
   subnet_id     = module.vpc.public_subnet_ids[count.index]
@@ -139,7 +139,7 @@ resource "aws_security_group" "vpn_sg" {
 }
 
 resource "aws_eip" "vpn_eip" {
-  count    = var.environment == "Development" ? 1 : 0
+  count    = var.environment == "Rba" ? 1 : 0
   domain   = "vpc"
 
   tags = {
@@ -150,7 +150,7 @@ resource "aws_eip" "vpn_eip" {
 }
 
 resource "aws_eip_association" "eip_assoc" {
-  count         = var.environment == "Development" ? 1 : 0
+  count         = var.environment == "Rba" ? 1 : 0
   instance_id   = aws_instance.vpn_ec2[0].id
   allocation_id = aws_eip.vpn_eip[0].id
 }
