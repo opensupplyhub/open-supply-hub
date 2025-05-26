@@ -4,7 +4,10 @@ on:
   push:
     branches:
       - main
-      - 'releases/**'
+      - 'release/**'
+    create:
+      branches-ignore:
+        - 'releases/**'
 
   workflow_dispatch:
     inputs:
