@@ -93,17 +93,6 @@ resource "aws_instance" "vpn_ec2" {
   }
 }
 
-resource "aws_eip" "vpn_eip" {
-  count    = var.environment == "Development" ? 1 : 0
-  domain   = "vpc"
-
-  tags = {
-    Name        = "vpn-eip-${var.environment}"
-    Environment = var.environment
-    Service     = "vpn"
-  }
-}
-
 resource "aws_security_group" "vpn_sg" {
   name        = "vpn-ec2-sg-${var.environment}"
   description = "Security group for WireGuard VPN instance"
@@ -146,4 +135,21 @@ resource "aws_security_group" "vpn_sg" {
     Environment = var.environment
     Service     = "vpn"
   }
+}
+
+resource "aws_eip" "vpn_eip" {
+  count    = var.environment == "Development" ? 1 : 0
+  domain   = "vpc"
+
+  tags = {
+    Name        = "vpn-eip-${var.environment}"
+    Environment = var.environment
+    Service     = "vpn"
+  }
+}
+
+resource "aws_eip_association" "eip_assoc" {
+  count         = var.environment == "Development" ? 1 : 0
+  instance_id   = aws_instance.vpn_ec2[0].id
+  allocation_id = aws_eip.vpn_eip[0].id
 }
