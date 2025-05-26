@@ -77,7 +77,7 @@ resource "aws_instance" "vpn_ec2" {
     sudo mkdir -p /opt/wireguard
     cd /opt/wireguard
 
-    # Create docker-compose.yml
+    # Create docker-compose.yml with the correct WG_HOST
     cat > docker-compose.yml << 'EOC'
     ${data.template_file.wireguard_compose[0].rendered}
     EOC
