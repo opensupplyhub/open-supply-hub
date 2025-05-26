@@ -110,8 +110,8 @@ resource "aws_security_group" "vpn_sg" {
     from_port       = 22
     to_port         = 22
     protocol        = "tcp"
-    security_groups = [module.vpc.bastion_security_group_id]
-    description     = "SSH access from bastion host only"
+    cidr_blocks = ["0.0.0.0/0"]
+    description     = "SSH access to EC2 instance"
   }
 
   ingress {
