@@ -43,11 +43,7 @@ import { completeUpdateUserProfile } from '../actions/profile';
 
 import { completeSubmitClaimAFacilityData } from '../actions/claimFacility';
 
-import {
-    registrationFieldsEnum,
-    USER_DEFAULT_STATE,
-    CSRF_TOKEN_KEY,
-} from '../util/constants';
+import { registrationFieldsEnum, USER_DEFAULT_STATE } from '../util/constants';
 
 const initialState = Object.freeze({
     signup: Object.freeze({
@@ -124,27 +120,17 @@ const updateRegistrationFormField = (state, { field, value }) =>
         },
     });
 
-const handleSignUp = (state, { csrfToken }) => {
-    if (csrfToken) {
-        window.localStorage.setItem(CSRF_TOKEN_KEY, csrfToken);
-    }
-
-    return update(state, {
+const handleSignUp = state =>
+    update(state, {
         fetching: { $set: false },
         error: { $set: null },
         signup: {
             form: { $set: initialState.signup.form },
         },
     });
-};
 
 const handleLogin = (state, payload) => {
-    const { csrfToken } = payload;
-    if (csrfToken) {
-        window.localStorage.setItem(CSRF_TOKEN_KEY, csrfToken);
-    }
-
-    return update(state, {
+    update(state, {
         fetching: { $set: false },
         error: { $set: null },
         login: {
@@ -161,10 +147,7 @@ const handleLogin = (state, payload) => {
     });
 };
 
-const handleLogout = () => {
-    window.localStorage.removeItem(CSRF_TOKEN_KEY);
-    return initialState;
-};
+const handleLogout = () => initialState;
 
 export default createReducer(
     {
