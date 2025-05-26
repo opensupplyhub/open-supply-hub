@@ -5,9 +5,9 @@ on:
     branches:
       - main
       - 'release/**'
-    create:
-      branches-ignore:
-        - 'releases/**'
+  create:
+    branches-ignore:
+      - 'releases/**'
 
   workflow_dispatch:
     inputs:
