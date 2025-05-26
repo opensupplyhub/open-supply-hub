@@ -43,7 +43,7 @@ data "template_file" "wireguard_compose" {
   count    = var.environment == "Development" ? 1 : 0
   template = file("${path.module}/wireguard/docker-compose.yml")
   vars = {
-    wg_host = var.environment == "Development" ? aws_instance.vpn_ec2[0].private_ip : ""
+    wg_host = var.environment == "Development" ? "PRIVATE_IP_PLACEHOLDER" : ""
   }
 }
 
@@ -77,9 +77,9 @@ resource "aws_instance" "vpn_ec2" {
     sudo mkdir -p /opt/wireguard
     cd /opt/wireguard
 
-    # Create docker-compose.yml with the correct WG_HOST
+    # Create initial docker-compose.yml
     cat > docker-compose.yml << 'EOC'
-    ${data.template_file.wireguard_compose[0].rendered}
+    ${replace(data.template_file.wireguard_compose[0].rendered, "PRIVATE_IP_PLACEHOLDER", aws_instance.vpn_ec2[0].private_ip)}
     EOC
 
     # Start WireGuard
