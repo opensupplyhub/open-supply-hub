@@ -139,8 +139,8 @@ resource "aws_security_group" "vpn_sg" {
 }
 
 resource "aws_eip" "vpn_eip" {
-  count    = var.environment == "Rba" ? 1 : 0
-  domain   = "vpc"
+  count  = var.environment == "Rba" ? 1 : 0
+  domain = "vpc"
 
   tags = {
     Name        = "vpn-eip-${var.environment}"
