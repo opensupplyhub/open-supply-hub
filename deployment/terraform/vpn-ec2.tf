@@ -91,16 +91,11 @@ resource "aws_instance" "vpn_ec2" {
     Environment = var.environment
     Service     = "vpn"
   }
-
-  lifecycle {
-    ignore_changes = [user_data]
-  }
 }
 
 resource "aws_eip" "vpn_eip" {
   count    = var.environment == "Development" ? 1 : 0
   domain   = "vpc"
-  instance = aws_instance.vpn_ec2[0].id
 
   tags = {
     Name        = "vpn-eip-${var.environment}"
