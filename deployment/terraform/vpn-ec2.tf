@@ -105,11 +105,10 @@ resource "null_resource" "update_wireguard_config" {
     connection {
       type        = "ssh"
       user        = "ec2-user"
-      private_key = file("${path.module}/../../.ssh/${var.aws_key_name}.pem")
       host        = aws_instance.vpn_ec2[0].private_ip
       bastion_host = module.vpc.bastion_hostname
       bastion_user = "ec2-user"
-      bastion_private_key = file("${path.module}/../../.ssh/${var.aws_key_name}.pem")
+      agent       = true
     }
 
     inline = [
