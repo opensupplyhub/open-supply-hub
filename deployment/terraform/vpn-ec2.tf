@@ -43,7 +43,7 @@ data "template_file" "wireguard_compose" {
   count    = var.environment == "Development" ? 1 : 0
   template = file("${path.module}/wireguard/docker-compose.yml")
   vars = {
-    wg_host = var.environment == "Development" ? "PRIVATE_IP_PLACEHOLDER" : ""
+    wg_host = var.environment == "Development" ? aws_eip.vpn_eip[0].public_ip : ""
   }
 }
 
@@ -51,7 +51,7 @@ resource "aws_instance" "vpn_ec2" {
   count         = var.environment == "Development" ? 1 : 0
   ami           = data.aws_ami.aws_ami_vpn_ec2.id
   instance_type = "t4g.nano"
-  subnet_id     = module.vpc.private_subnet_ids[count.index]
+  subnet_id     = module.vpc.public_subnet_ids[count.index]
 
   key_name             = var.aws_key_name
   iam_instance_profile = aws_iam_instance_profile.vpn_instance.name
@@ -77,9 +77,12 @@ resource "aws_instance" "vpn_ec2" {
     sudo mkdir -p /opt/wireguard
     cd /opt/wireguard
 
-    # Create initial docker-compose.yml
-    cat > docker-compose.yml << 'EOC'
-    ${data.template_file.wireguard_compose[0].rendered}
+    # Get the instance's public IP
+    PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+
+    # Create docker-compose.yml with the public IP
+    cat > docker-compose.yml << EOC
+    ${replace(data.template_file.wireguard_compose[0].rendered, "PRIVATE_IP_PLACEHOLDER", "$PUBLIC_IP")}
     EOC
 
     # Start WireGuard
@@ -91,34 +94,22 @@ resource "aws_instance" "vpn_ec2" {
     Environment = var.environment
     Service     = "vpn"
   }
+
+  lifecycle {
+    ignore_changes = [user_data]
+  }
 }
 
-resource "null_resource" "update_wireguard_config" {
-  count = var.environment == "Development" ? 1 : 0
+resource "aws_eip" "vpn_eip" {
+  count    = var.environment == "Development" ? 1 : 0
+  domain   = "vpc"
+  instance = aws_instance.vpn_ec2[0].id
 
-  triggers = {
-    instance_id = aws_instance.vpn_ec2[0].id
-    private_ip  = aws_instance.vpn_ec2[0].private_ip
+  tags = {
+    Name        = "vpn-eip-${var.environment}"
+    Environment = var.environment
+    Service     = "vpn"
   }
-
-  provisioner "remote-exec" {
-    connection {
-      type        = "ssh"
-      user        = "ec2-user"
-      host        = aws_instance.vpn_ec2[0].private_ip
-      bastion_host = module.vpc.bastion_hostname
-      bastion_user = "ec2-user"
-    }
-
-    inline = [
-      "cd /opt/wireguard",
-      "sed -i 's/PRIVATE_IP_PLACEHOLDER/${aws_instance.vpn_ec2[0].private_ip}/' docker-compose.yml",
-      "sudo docker compose down",
-      "sudo docker compose up -d"
-    ]
-  }
-
-  depends_on = [aws_instance.vpn_ec2]
 }
 
 resource "aws_security_group" "vpn_sg" {
