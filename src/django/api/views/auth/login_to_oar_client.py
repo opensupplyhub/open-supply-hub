@@ -37,9 +37,7 @@ class LoginToOARClient(LoginView):
                 'Check your email for a confirmation link.'
             )
 
-        serialized_data = UserSerializer(user).data
-
-        return Response(serialized_data)
+        return Response(UserSerializer(user).data)
 
     def get(self, request, *args, **kwargs):
         if not request.user.is_active:

@@ -120,35 +120,6 @@ const updateRegistrationFormField = (state, { field, value }) =>
         },
     });
 
-const handleSignUp = state =>
-    update(state, {
-        fetching: { $set: false },
-        error: { $set: null },
-        signup: {
-            form: { $set: initialState.signup.form },
-        },
-    });
-
-const handleLogin = (state, payload) => {
-    update(state, {
-        fetching: { $set: false },
-        error: { $set: null },
-        login: {
-            form: { $set: initialState.login.form },
-        },
-        user: {
-            user: {
-                $merge: {
-                    ...payload,
-                    isAnon: false,
-                },
-            },
-        },
-    });
-};
-
-const handleLogout = () => initialState;
-
 export default createReducer(
     {
         [updateSignUpFormInput]: updateRegistrationFormField,
@@ -199,8 +170,30 @@ export default createReducer(
                     error: { $set: payload },
                 },
             }),
-        [completeSubmitSignUpForm]: handleSignUp,
-        [completeSubmitLoginForm]: handleLogin,
+        [completeSubmitSignUpForm]: state =>
+            update(state, {
+                fetching: { $set: false },
+                error: { $set: null },
+                signup: {
+                    form: { $set: initialState.signup.form },
+                },
+            }),
+        [completeSubmitLoginForm]: (state, payload) =>
+            update(state, {
+                fetching: { $set: false },
+                error: { $set: null },
+                login: {
+                    form: { $set: initialState.login.form },
+                },
+                user: {
+                    user: {
+                        $merge: {
+                            ...payload,
+                            isAnon: false,
+                        },
+                    },
+                },
+            }),
         [startSessionLogin]: state =>
             update(state, {
                 session: {
@@ -231,7 +224,7 @@ export default createReducer(
             update(state, {
                 forgotPassword: { $set: initialState.forgotPassword },
             }),
-        [completeSubmitLogOut]: handleLogout,
+        [completeSubmitLogOut]: () => initialState,
         [openForgotPasswordDialog]: state =>
             update(state, {
                 forgotPassword: {
