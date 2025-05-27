@@ -103,4 +103,3 @@ class LoginToOARClientTest(APITestCase):
                 'Check your email for a confirmation link.',
             )
             mock_send_confirmation.assert_called_once()
-
