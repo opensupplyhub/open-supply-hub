@@ -5,9 +5,6 @@ on:
     branches:
       - main
       - 'releases/**'
-  create:
-    branches-ignore:
-      - 'releases/**'
 
   workflow_dispatch:
     inputs:
@@ -40,7 +37,23 @@ on:
         default: false
 
 jobs:
+  check-base:
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.basecheck.outputs.skip }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get base branch of release
+        id: basecheck
+        run: scripts/check_release_branch.sh
+
   init-and-plan:
+    needs: check-base
+    if: needs.check-base.outputs.skip == 'false'
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     steps:
