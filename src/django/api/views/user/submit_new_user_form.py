@@ -2,7 +2,7 @@ from allauth.account.utils import complete_signup
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK
+from rest_framework.status import HTTP_204_NO_CONTENT
 from django.db import transaction
 
 from ...models import Contributor, User
@@ -61,4 +61,4 @@ class SubmitNewUserForm(CreateAPIView):
 
             complete_signup(self.request._request, user, 'optional', None)
 
-            return Response(status=HTTP_200_OK)
+            return Response(status=HTTP_204_NO_CONTENT)
