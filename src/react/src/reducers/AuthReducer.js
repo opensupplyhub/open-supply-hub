@@ -120,6 +120,32 @@ const updateRegistrationFormField = (state, { field, value }) =>
         },
     });
 
+const updateSignUpFormField = state =>
+    update(state, {
+        fetching: { $set: false },
+        error: { $set: null },
+        signup: {
+            form: { $set: initialState.signup.form },
+        },
+    });
+
+const updateLoginFormField = (state, payload) =>
+    update(state, {
+        fetching: { $set: false },
+        error: { $set: null },
+        login: {
+            form: { $set: initialState.login.form },
+        },
+        user: {
+            user: {
+                $merge: {
+                    ...payload,
+                    isAnon: false,
+                },
+            },
+        },
+    });
+
 export default createReducer(
     {
         [updateSignUpFormInput]: updateRegistrationFormField,
@@ -170,30 +196,8 @@ export default createReducer(
                     error: { $set: payload },
                 },
             }),
-        [completeSubmitSignUpForm]: state =>
-            update(state, {
-                fetching: { $set: false },
-                error: { $set: null },
-                signup: {
-                    form: { $set: initialState.signup.form },
-                },
-            }),
-        [completeSubmitLoginForm]: (state, payload) =>
-            update(state, {
-                fetching: { $set: false },
-                error: { $set: null },
-                login: {
-                    form: { $set: initialState.login.form },
-                },
-                user: {
-                    user: {
-                        $merge: {
-                            ...payload,
-                            isAnon: false,
-                        },
-                    },
-                },
-            }),
+        [completeSubmitSignUpForm]: updateSignUpFormField,
+        [completeSubmitLoginForm]: updateLoginFormField,
         [startSessionLogin]: state =>
             update(state, {
                 session: {
