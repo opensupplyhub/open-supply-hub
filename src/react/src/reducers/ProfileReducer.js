@@ -140,6 +140,14 @@ const handleLogin = (state, { id, email }) => {
     });
 };
 
+const handleLogout = state =>
+    update(state, {
+        profile: {
+            email: { $set: initialState.profile.email },
+            password: { $set: initialState.profile.password },
+        },
+    });
+
 export default createReducer(
     {
         [startFetchAPIToken]: startFetchingToken,
@@ -166,13 +174,7 @@ export default createReducer(
             }),
         [completeSessionLogin]: handleLogin,
         [completeSubmitLoginForm]: handleLogin,
-        [completeSubmitLogOut]: state =>
-            update(state, {
-                profile: {
-                    email: { $set: initialState.profile.email },
-                    password: { $set: initialState.profile.password },
-                },
-            }),
+        [completeSubmitLogOut]: handleLogout,
         [startFetchUserProfile]: state =>
             update(state, {
                 fetching: { $set: true },
