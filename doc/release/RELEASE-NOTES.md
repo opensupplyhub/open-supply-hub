@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: May 31, 2025
 
+### Code/API changes
+* [OSDEV-2017](https://opensupplyhub.atlassian.net/browse/OSDEV-2017) - CSRF (Cross-Site Request Forgery) protection has been disabled across the application. CSRF middleware has been removed from the request pipeline. All affected endpoints are now accessible without requiring CSRF tokens.
+
 ### Architecture/Environment changes
 * [OSDEV-1992](https://opensupplyhub.atlassian.net/browse/OSDEV-1992) - Provisioned a dedicated EC2 instance to host WireGuard VPN service, enabling authorized users to bypass AWS WAF when accessing the RBA instance.
 
