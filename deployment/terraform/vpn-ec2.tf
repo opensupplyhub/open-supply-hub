@@ -53,8 +53,9 @@ resource "aws_instance" "vpn_ec2" {
   instance_type = "t4g.nano"
   subnet_id     = module.vpc.public_subnet_ids[count.index]
 
-  key_name             = var.aws_key_name
-  iam_instance_profile = aws_iam_instance_profile.vpn_instance.name
+  associate_public_ip_address = true
+  key_name                    = var.aws_key_name
+  iam_instance_profile        = aws_iam_instance_profile.vpn_instance.name
 
   vpc_security_group_ids = [aws_security_group.vpn_sg.id]
 
@@ -95,7 +96,7 @@ resource "aws_instance" "vpn_ec2" {
 
 resource "aws_security_group" "vpn_sg" {
   name        = "vpn-ec2-sg-${var.environment}"
-  description = "Security group for WireGuard VPN instance"
+  description = "Allow WireGuard UDP traffic"
   vpc_id      = module.vpc.id
 
   ingress {
@@ -110,17 +111,8 @@ resource "aws_security_group" "vpn_sg" {
     from_port       = 22
     to_port         = 22
     protocol        = "tcp"
-    cidr_blocks     = var.external_access_cidr_blocks
     security_groups = [module.vpc.bastion_security_group_id]
-    description     = "SSH access to EC2 instance"
-  }
-
-  ingress {
-    from_port       = 51821
-    to_port         = 51821
-    protocol        = "tcp"
-    security_groups = [module.vpc.bastion_security_group_id]
-    description     = "WireGuard UI access from bastion host only"
+    description     = "SSH access from bastion host only"
   }
 
   egress {
@@ -128,7 +120,6 @@ resource "aws_security_group" "vpn_sg" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow all outbound traffic"
   }
 
   tags = {
