@@ -37,14 +37,7 @@ class LoginToOARClient(LoginView):
                 'Check your email for a confirmation link.'
             )
 
-        # Adding the CSRF token to the serialized data response to store it
-        # in local storage for future use and include it in request headers,
-        # as access to cookies has been restricted by the HttpOnly flag.
-        csrf_token = request.META["CSRF_COOKIE"]
-        serialized_data = UserSerializer(user).data
-        serialized_data['csrfToken'] = csrf_token
-
-        return Response(serialized_data)
+        return Response(UserSerializer(user).data)
 
     def get(self, request, *args, **kwargs):
         if not request.user.is_active:

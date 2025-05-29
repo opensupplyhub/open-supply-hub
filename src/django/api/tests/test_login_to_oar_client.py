@@ -103,16 +103,3 @@ class LoginToOARClientTest(APITestCase):
                 'Check your email for a confirmation link.',
             )
             mock_send_confirmation.assert_called_once()
-
-    def test_login_compare_csrf_token(self):
-        self.create_email_address(verified=True)
-        response = self.client.post(
-            self.login_url, {'email': self.email, 'password': self.password}
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['email'], self.email)
-
-        csrf_token_cookie = response.client.cookies.get('csrftoken')
-        csrf_token_data = response.data['csrfToken']
-
-        self.assertEqual(csrf_token_cookie.value, csrf_token_data)
