@@ -2,11 +2,9 @@ from rest_framework import viewsets, mixins
 from django.utils import timezone
 from typing import Optional, Union
 
-from django.contrib.auth.models import AnonymousUser
 import math
 from django.db import transaction
 from django.db.models import F
-from typing import Union
 import logging
 
 from django.contrib.auth.models import AnonymousUser
@@ -26,7 +24,6 @@ from api.serializers.facility.facility_download_serializer_embed_mode \
     import FacilityDownloadSerializerEmbedMode
 from api.serializers.utils import get_embed_contributor_id_from_query_params
 from rest_framework.exceptions import ValidationError
-from api.constants import FacilitiesDownloadSettings
 from api.exceptions import ServiceUnavailableException
 from api.constants import APIErrorMessages
 
