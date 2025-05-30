@@ -3,7 +3,11 @@ from typing import Tuple
 from django.http import QueryDict
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError, NotFound
+from rest_framework.exceptions import (
+    ValidationError,
+    NotFound,
+    PermissionDenied,
+)
 from rest_framework.viewsets import ViewSet
 from rest_framework.decorators import action
 
@@ -45,6 +49,7 @@ class ModerationEvents(ViewSet):
 
     def get_permissions(self):
         action_permissions = {
+            'list': [IsSuperuser],
             'partial_update': [IsSuperuser],
             'add_production_location': [IsSuperuser],
             'update_production_location': [IsSuperuser],
@@ -91,8 +96,18 @@ class ModerationEvents(ViewSet):
         return Response(response)
 
     @handle_errors_decorator
-    def retrieve(self, _,  pk=None):
+    def retrieve(self, request,  pk=None):
         ModerationEventsService.validate_uuid(pk)
+
+        event = ModerationEventsService.fetch_moderation_event_by_uuid(pk)
+        access_allowed = ModerationEventsService.is_user_access_allowed(
+            request,
+            event
+        )
+        if not access_allowed:
+            raise PermissionDenied(
+                detail=APIV1ModerationEventErrorMessages.PERMISSION_DENIED
+            )
 
         opensearch_service, opensearch_query_director = \
             self.__init_opensearch()

@@ -9,7 +9,7 @@ import FacilityDetailsItem from './FacilityDetailsItem';
 import FacilityDetailsClaimedInfo from './FacilityDetailsClaimedInfo';
 import ShowOnly from './ShowOnly';
 import FeatureFlag from './FeatureFlag';
-import { formatAttribution } from '../util/util';
+import { formatAttribution, formatExtendedField } from '../util/util';
 
 import {
     EXTENDED_FIELD_TYPES,
@@ -66,15 +66,13 @@ const formatActivityReports = data => {
     return [formattedReports[0], formattedReports.slice(1)];
 };
 
-const FacilityDetailsLocationFields = ({
+const FacilityDetailsGeneralFields = ({
     classes,
     data,
     nameField,
     otherNames,
     embed,
     embedConfig,
-    formatExtendedField,
-    formatIfListAndRemoveDuplicates,
     hideSectorData,
     isClaimed,
 }) => {
@@ -222,7 +220,6 @@ const FacilityDetailsLocationFields = ({
                         <ShowOnly when={isClaimed}>
                             <FacilityDetailsClaimedInfo
                                 data={data.properties.claim_info}
-                                formatListItem={formatIfListAndRemoveDuplicates}
                             />
                         </ShowOnly>
                     </FeatureFlag>
@@ -232,4 +229,4 @@ const FacilityDetailsLocationFields = ({
     );
 };
 
-export default withStyles(locationFieldsStyles)(FacilityDetailsLocationFields);
+export default withStyles(locationFieldsStyles)(FacilityDetailsGeneralFields);

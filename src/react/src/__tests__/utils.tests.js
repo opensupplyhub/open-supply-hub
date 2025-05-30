@@ -49,7 +49,6 @@ const {
     getNumberFromParsedQueryStringParamOrUseDefault,
     createPaginationOptionsFromQueryString,
     createParamsFromQueryString,
-    makeReportADataIssueEmailLink,
     makeFeatureCollectionFromSingleFeature,
     createConfirmFacilityListItemMatchURL,
     createRejectFacilityListItemMatchURL,
@@ -85,6 +84,7 @@ const {
     isValidNumberOfWorkers,
     snakeToTitleCase,
     slcValidationSchema,
+    formatExtendedField,
 } = require('../util/util');
 
 const {
@@ -1144,13 +1144,6 @@ it('creates params from a query string', () => {
     const expectedParamsForIgnoredArg = {};
     expect(createParamsFromQueryString(ignoredArgQueryString))
         .toEqual(expectedParamsForIgnoredArg);
-});
-
-it('creates an email link for reporting a data issue for a facility with a given OS ID', () => {
-    const osID = 'osID';
-    const expectedMatch = 'mailto:data@opensupplyhub.org?subject=Reporting a data issue on ID osID';
-
-    expect(makeReportADataIssueEmailLink(osID)).toBe(expectedMatch);
 });
 
 it('creates a geojson FeatureCollection from a single geojson Feature', () => {
@@ -2574,5 +2567,82 @@ describe('slcValidationSchema', () => {
         await expect(slcValidationSchema.validate(data)).rejects.toThrow(
             'Parent company cannot exceed 200 characters.'
         );
+    });
+});
+
+describe('formatExtendedField', () => {
+    const baseProps = {
+        created_at: '2025-10-01T12:00:00Z',
+        contributor_name: 'Test Contributor',
+        is_verified: true,
+        is_from_claim: false,
+    };
+
+    it('formats value with default formatter and fallback key', () => {
+        const result = formatExtendedField({
+            ...baseProps,
+            value: ['Alpha', 'Beta'],
+            field_name: 'native_language_name',
+        });
+
+        expect(result.secondary).toBe('October 1, 2025 by Test Contributor');
+        expect(result.embeddedSecondary).toBe('October 1, 2025');
+        expect(result.isVerified).toBe(true);
+        expect(result.isFromClaim).toBe(false);
+        expect(result.primary).toHaveLength(2);
+        expect(result.primary[0].props.children).toBe('Alpha');
+        expect(result.primary[1].props.children).toBe('Beta');
+    });
+
+    it('formats parent_company_os_id values as links', () => {
+        const value = ['US202511345DVTE', 'US202511345DFSD'];
+        const result = formatExtendedField({
+            ...baseProps,
+            value,
+            field_name: 'parent_company_os_id',
+        });
+
+        expect(result.primary).toHaveLength(2);
+        result.primary.forEach((element, idx) => {
+            expect(element.type).toBe('a');
+            expect(element.props.href).toBe(`/facilities/${value[idx]}`);
+            expect(element.props.children).toBe(value[idx]);
+        });
+    });
+
+    it('uses custom formatValue function', () => {
+        const result = formatExtendedField({
+            ...baseProps,
+            value: ['ABC'],
+            field_name: 'test_field',
+            formatValue:  rawValue => rawValue.map(string => string.toLowerCase()),
+        });
+
+        expect(result.primary).toHaveLength(1);
+        expect(result.primary[0].props.children).toBe('abc');
+    });
+
+    it('handles empty value array', () => {
+        const result = formatExtendedField({
+            ...baseProps,
+            value: [],
+            field_name: 'test_field',
+        });
+
+        expect(result.primary).toHaveLength(0);
+    });
+
+    it('handles non-array value', () => {
+        const result = formatExtendedField({
+            ...baseProps,
+            value: 'SingleValue',
+            field_name: 'test_field',
+        });
+
+        expect(result.primary).toBe('SingleValue');
+        expect(result.secondary).toBe('October 1, 2025 by Test Contributor');
+        expect(result.embeddedSecondary).toBe('October 1, 2025');
+        expect(result.isVerified).toBe(true);
+        expect(result.isFromClaim).toBe(false);
     });
 });

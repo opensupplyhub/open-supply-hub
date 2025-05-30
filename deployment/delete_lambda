@@ -19,8 +19,6 @@ LAMBDA_ARN="arn:aws:lambda:$REGION:$ACCOUNT_ID:function:$LAMBDA_NAME"
 
 echo "Deleting Lambda function: $LAMBDA_NAME"
 
-LAMBDA_VERSION=$(aws lambda list-versions-by-function --function-name "$LAMBDA_ARN" --region "$REGION" | jq -r '.Versions | max_by(.Version | tonumber) | .Version')
-
 DISTRIBUTION_ID=""
 for id in $(aws cloudfront list-distributions --query "DistributionList.Items[*].Id" --output text); do
   domains=$(aws cloudfront get-distribution-config --id $id --query "DistributionConfig.Aliases.Items" --output text)
@@ -39,39 +37,67 @@ if [ -z "$DISTRIBUTION_ID" ]; then
   exit 1
 fi
 
-echo "Fetching CloudFront distribution configuration..."
-json=$(aws cloudfront get-distribution-config --id "$DISTRIBUTION_ID")
-ETAG=$(echo "$json" | jq -r '.ETag')
-CONFIG=$(echo "$json" | jq '.DistributionConfig')
+echo "Fetching current distribution config..."
+aws cloudfront get-distribution-config --id $DISTRIBUTION_ID > full-config.json
 
-CONFIG=$(echo "$CONFIG" | jq 'del(.DefaultCacheBehavior.LambdaFunctionAssociations.Items[] | select(.LambdaFunctionARN == "'$LAMBDA_ARN':'$LAMBDA_VERSION'"))')
+ETAG=$(cat full-config.json | jq -r '.ETag')
+echo "ETag: $ETAG"
+
+cat full-config.json | jq '.DistributionConfig' > dist-config.json
+
+cat dist-config.json | jq --arg NAME "$LAMBDA_NAME" '
+  .DefaultCacheBehavior.LambdaFunctionAssociations |=
+    {
+      "Quantity": (
+        .Items
+        | map(select(.LambdaFunctionARN | contains($NAME) | not))
+        | length
+      ),
+      "Items": (
+        .Items
+        | map(select(.LambdaFunctionARN | contains($NAME) | not))
+      )
+    }
+' > new-config.json
 
 echo "Updating CloudFront distribution to detach Lambda@Edge..."
-UPDATED_CONFIG=$(echo "$CONFIG" | jq -c '.')
-aws cloudfront update-distribution --id "$DISTRIBUTION_ID" --if-match "$ETAG" --distribution-config "$UPDATED_CONFIG"
+aws cloudfront update-distribution \
+  --id $DISTRIBUTION_ID \
+  --distribution-config file://new-config.json \
+  --if-match $ETAG 2>&1
 
 echo "Waiting for CloudFront distribution deployment..."
 aws cloudfront wait distribution-deployed --id "$DISTRIBUTION_ID"
 
 echo "CloudFront distribution updated. Proceeding with Lambda function deletion..."
 
+# Adding the set +e command is necessary to ensure that the script does not terminate on an error,
+# allowing us to handle the exit code of the Lambda function deletion command ourselves.
+set +e
+
 VERSIONS=$(aws lambda list-versions-by-function --function-name "$LAMBDA_ARN" --region "$REGION" | jq -r '.Versions[].Version')
 for version in $VERSIONS; do
   if [[ "$version" != "\$LATEST" ]]; then
     echo "Deleting Lambda version: $version"
-    aws lambda delete-function --function-name "$LAMBDA_ARN:$version" --region "$REGION"
-  fi
-done
+    while true; do
+      DELETE_RESPONSE=$(aws lambda delete-function --function-name "$LAMBDA_ARN:$version" --region "$REGION" 2>&1)
+      EXIT_CODE=$?
 
-echo "Lambda function deletion initiated. Verifying..."
+      if [ $EXIT_CODE -eq 0 ]; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - Function deleted successfully! 🎉"
+        break
+      fi
 
-while true; do
-  if ! aws lambda get-function --function-name "$LAMBDA_ARN" --region "$REGION" 2>/dev/null; then
-    echo "Lambda function successfully deleted."
-    break
+      if echo "$DELETE_RESPONSE" | grep -q "because it is a replicated function"; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - Function still replicated. Waiting 5 minutes..."
+        sleep 300
+      else
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - Unexpected error:"
+        echo "$DELETE_RESPONSE"
+        exit 1
+      fi
+    done
   fi
-  echo "Waiting for Lambda function to be deleted..."
-  sleep 30
 done
 
 echo "Process completed successfully."

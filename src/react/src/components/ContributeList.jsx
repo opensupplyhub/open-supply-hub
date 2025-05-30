@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, Route } from 'react-router-dom';
+import { Link, Route, useLocation } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { bool } from 'prop-types';
 import Grid from '@material-ui/core/Grid';
@@ -12,9 +12,12 @@ import ContributeForm from './ContributeForm';
 import RequireAuthNotice from './RequireAuthNotice';
 
 import { listsRoute, InfoLink, InfoPaths } from '../util/constants';
+import { useResetScrollPosition } from '../util/hooks';
 
 function ContributeList({ userHasSignedIn, fetchingSessionSignIn }) {
     const TITLE = 'Contribute';
+    const location = useLocation();
+    useResetScrollPosition(location);
 
     if (fetchingSessionSignIn) {
         return (

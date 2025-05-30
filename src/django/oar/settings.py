@@ -34,7 +34,7 @@ ENVIRONMENT = os.getenv('DJANGO_ENV', 'Local')
 DEBUG = (ENVIRONMENT == 'Local')
 
 VALID_ENVIRONMENTS = ('Production', 'Staging', 'Development', 'Test',
-                      'Preprod', 'Local')
+                      'Preprod', 'Rba', 'Local')
 if ENVIRONMENT not in VALID_ENVIRONMENTS:
     raise ImproperlyConfigured(
         'Invalid ENVIRONMENT provided, must be one of {}'
@@ -67,10 +67,10 @@ ALLOWED_HOSTS = [
     '.openapparel.org',
     '.opensupplyhub.org',
     '.os-hub.net',
+    'localhost',
 ]
 
 if DEBUG:
-    ALLOWED_HOSTS.append('localhost')
     ALLOWED_HOSTS.append('django')
     ALLOWED_HOSTS.append('app')
     ALLOWED_HOSTS.append('contricleaner')
@@ -149,11 +149,7 @@ SESSION_COOKIE_AGE = 86400 # 24 hours in seconds
 
 AUTH_USER_MODEL = 'api.User'
 
-CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
-
-# https://docs.djangoproject.com/en/5.1/ref/settings/#csrf-cookie-httponly
-CSRF_COOKIE_HTTPONLY = True
 
 REST_AUTH_SERIALIZERS = {
     'USER_DETAILS_SERIALIZER': 'api.serializers.UserSerializer',
@@ -165,7 +161,7 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'rollbar.contrib.django_rest_framework.post_exception_handler',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+        'api.authentication.CsrfExemptSessionAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'api.permissions.IsAuthenticatedOrWebClient',
@@ -207,7 +203,6 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     # Clickjacking protection is turned off to allow iframes:
@@ -427,6 +422,24 @@ ECSMANAGE_ENVIRONMENTS = {
         },
         'AWS_REGION': 'eu-west-1',
     },
+    'rba': {
+        'TASK_DEFINITION_NAME': 'OpenSupplyHubRbaAppCLI',
+        'CONTAINER_NAME': 'django',
+        'CLUSTER_NAME': 'ecsOpenSupplyHubRbaCluster',
+        'LAUNCH_TYPE': 'FARGATE',
+        'PLATFORM_VERSION': '1.4.0',
+        'SECURITY_GROUP_TAGS': {
+            'Name': 'sgAppEcsService',
+            'Environment': 'Rba',
+            'Project': 'OpenSupplyHub'
+        },
+        'SUBNET_TAGS': {
+            'Name': 'PrivateSubnet',
+            'Environment': 'Rba',
+            'Project': 'OpenSupplyHub'
+        },
+        'AWS_REGION': 'eu-west-1',
+    },
     'test': {
         'TASK_DEFINITION_NAME': 'OpenSupplyHubTestAppCLI',
         'CONTAINER_NAME': 'django',
@@ -489,6 +502,7 @@ MAX_ATTACHMENT_SIZE_IN_BYTES = 5 * 1024 * 1024 # 5 MB
 MAX_ATTACHMENT_AMOUNT = 10
 ALLOWED_ATTACHMENT_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.pdf']
 TILE_CACHE_MAX_AGE_IN_SECONDS = 60 * 60 * 24 * 365 # 1 year. Also in deployment/terraform/cdn.tf  # NOQA
+DUPLICATE_THROTTLE_TIMEOUT = 900 # 15 minutes
 
 GOOGLE_SERVER_SIDE_API_KEY = os.getenv('GOOGLE_SERVER_SIDE_API_KEY')
 if GOOGLE_SERVER_SIDE_API_KEY is None:
@@ -513,8 +527,11 @@ if OAR_CLIENT_KEY is None:
         'Invalid OAR_CLIENT_KEY provided, must be set')
 
 # Hubspot settings
-HUBSPOT_API_KEY = os.getenv('HUBSPOT_API_KEY')
-HUBSPOT_SUBSCRIPTION_ID = os.getenv('HUBSPOT_SUBSCRIPTION_ID')
+raw_hubspot_key = os.getenv('HUBSPOT_API_KEY')
+HUBSPOT_API_KEY = raw_hubspot_key if raw_hubspot_key else None
+
+raw_hubspot_id = os.getenv('HUBSPOT_SUBSCRIPTION_ID')
+HUBSPOT_SUBSCRIPTION_ID = raw_hubspot_id if raw_hubspot_id else None
 
 # CORS
 # Regex defining which endpoints enable CORS
@@ -534,7 +551,6 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://\w+\.opensupplyhub\.org$",
     r"^https://oar\.niceandserious\.com$",
     r"^https://dev\.os-hub\.net$",
-    r"^https://a\.os-hub\.net$",
     r"^http://localhost",
     r"http://127.0.0.1",
 ]

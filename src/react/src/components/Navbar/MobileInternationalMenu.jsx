@@ -59,6 +59,15 @@ export default function MobileInternationalMenu({
                 <div className="mobile-nav__item">
                     <a
                         className="mobile-nav-link mobile-nav-link--lighter-font-weight"
+                        href="https://info.opensupplyhub.org/facilities-chinese"
+                        target=""
+                    >
+                        简体中文
+                    </a>
+                </div>
+                <div className="mobile-nav__item">
+                    <a
+                        className="mobile-nav-link mobile-nav-link--lighter-font-weight"
                         href="https://info.opensupplyhub.org/india"
                         target=""
                     >
@@ -71,7 +80,7 @@ export default function MobileInternationalMenu({
                         href="https://info.opensupplyhub.org/brasil"
                         target=""
                     >
-                        Portuguese
+                        Português
                     </a>
                 </div>
                 <div className="mobile-nav__item">
@@ -80,16 +89,7 @@ export default function MobileInternationalMenu({
                         href="https://info.opensupplyhub.org/turkey"
                         target=""
                     >
-                        Türkiye
-                    </a>
-                </div>
-                <div className="mobile-nav__item">
-                    <a
-                        className="mobile-nav-link "
-                        href="https://info.opensupplyhub.org/vietnam"
-                        target=""
-                    >
-                        Tiếng Việt
+                        Türkçe
                     </a>
                 </div>
             </div>

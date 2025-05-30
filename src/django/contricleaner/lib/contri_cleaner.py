@@ -3,8 +3,11 @@ from typing import Union, List, Dict
 
 from django.core.files.base import File
 
-from contricleaner.lib.client_abstractions.sector_cache_interface import (
-    SectorCacheInterface
+from contricleaner.lib.client_abstractions.cache_interface import (
+    CacheInterface
+)
+from contricleaner.lib.client_abstractions.lookup_interface import (
+    LookupInterface
 )
 from contricleaner.lib.parsers.parsing_executor import (
     ParsingExecutor
@@ -33,21 +36,23 @@ class ContriCleaner:
 
     def __init__(self,
                  data: Union[File, Dict],
-                 sector_cache: SectorCacheInterface) -> None:
+                 sector_cache: CacheInterface,
+                 os_id_lookup: LookupInterface) -> None:
         unsupported_data_value_type_message = ('The data value type should be '
                                                'either dict or File.')
         unsupported_sector_cache_value_type_message = (
-            'The sector_cache value type should be SectorCacheInterface.')
+            'The sector_cache value type should be CacheInterface.')
         assert isinstance(
             data,
             (dict, File)
         ), unsupported_data_value_type_message
         assert isinstance(
-            sector_cache, SectorCacheInterface
+            sector_cache, CacheInterface
         ), unsupported_sector_cache_value_type_message
 
         self.__data = data
         self.__sector_cache = sector_cache
+        self.__os_id_lookup = os_id_lookup
 
     def process_data(self) -> ListDTO:
         try:
@@ -94,7 +99,10 @@ class ContriCleaner:
     def __setup_handlers(self) -> ListRowHandler:
         handlers = (
             PreValidationHandler(),
-            SerializationHandler(self.__sector_cache)
+            SerializationHandler(
+                self.__sector_cache,
+                self.__os_id_lookup
+            )
         )
         for index in range(len(handlers) - 1):
             handlers[index].set_next(handlers[index + 1])

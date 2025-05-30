@@ -69,7 +69,7 @@ jobs:
   destroy:
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env }}
-    needs: destroy_lambda_edge_function
+    needs: destroy_lambda_edge_functions
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -96,7 +96,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.4.0
+          terraform_version: 1.5.0
           terraform_wrapper: false
 
       - name: Terraform destroy for ${{ vars.ENV_NAME }}

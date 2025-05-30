@@ -48,6 +48,7 @@ import * as XLSX from 'xlsx';
 import moment from 'moment';
 import removeAccents from 'remove-accents';
 import unidecode from 'unidecode';
+import { v4 as uuidv4 } from 'uuid';
 import {
     object as objectYup,
     string as stringYup,
@@ -84,8 +85,8 @@ import {
     SLC_FORM_CONSTRAINTS,
 } from './constants';
 
+import renderUniqueListItems from './renderUtils';
 import { createListItemCSV } from './util.listItemCSV';
-
 import { createFacilitiesCSV, formatDataForCSV } from './util.facilitiesCSV';
 import formatFacilityClaimsDataForXLSX from './util.facilityClaimsXLSX';
 import formatModerationEventsDataForXLSX from './util.moderationEventsXLSX';
@@ -1008,9 +1009,6 @@ export const makePaginatedFacilityListItemsDetailLinkWithRowCount = (
 export const makeSliceArgumentsForTablePagination = (page, rowsPerPage) =>
     Object.freeze([page * rowsPerPage, (page + 1) * rowsPerPage]);
 
-export const makeReportADataIssueEmailLink = osId =>
-    `mailto:data@opensupplyhub.org?subject=Reporting a data issue on ID ${osId}`;
-
 export const makeDisputeClaimEmailLink = osId =>
     `mailto:claims@opensupplyhub.org?subject=Disputing a claim of facility ID ${osId}`;
 
@@ -1696,3 +1694,26 @@ export const slcValidationSchema = objectYup({
         ),
     parentCompany: slcTextFieldValidation.label('Parent company'),
 });
+
+/* eslint-disable camelcase */
+export const formatExtendedField = ({
+    value,
+    field_name,
+    created_at,
+    contributor_name,
+    is_from_claim,
+    is_verified,
+    formatValue = rawValue => rawValue,
+}) => {
+    const primary = renderUniqueListItems(formatValue(value), field_name);
+    const secondary = formatAttribution(created_at, contributor_name);
+
+    return {
+        primary,
+        secondary,
+        embeddedSecondary: formatAttribution(created_at),
+        isVerified: is_verified,
+        isFromClaim: is_from_claim,
+        key: uuidv4(),
+    };
+};

@@ -32,6 +32,63 @@ class ModerationEventsTest(BaseAPITest):
         self.assertEqual(response.status_code, 200)
         self.assertIn('data', result)
         self.assertIsInstance(result['data'], list)
+    
+    def test_moderation_events_permissions_by_admin(self):
+        response = requests.get(
+            f"{self.root_url}/api/v1/moderation-events/",
+            headers=self.basic_headers,
+        )
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+        self.assertIn('data', result)
+        self.assertIsInstance(result['data'], list)
+
+        custom_headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Token {self.user_token}',
+            'Host': f'localhost:{self.port}'
+        }
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/moderation-events/",
+            headers=custom_headers,
+        )
+        self.assertEqual(response.status_code, 403)
+        result = response.json()
+        self.assertEqual(
+            result['detail'],
+            'Only the moderator can perform this action.'
+        )
+    
+    def test_moderation_events_permissions_by_ownership(self):
+        custom_headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Token {self.user_token}',
+            'Host': f'localhost:{self.port}'
+        }
+
+        own_mod_id = '1f35a90f-70a0-4c3e-8e06-2ed8e1fc67ed'
+        response = requests.get(
+                f"{self.root_url}/api/v1/moderation-events/{own_mod_id}",
+                headers=custom_headers,
+            )
+
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+        self.assertEqual(result['moderation_id'], own_mod_id)
+
+        other_mod_id = '1f35a90f-70a0-4c3e-8e06-2ed8e1fc67ee'
+        response = requests.get(
+                f"{self.root_url}/api/v1/moderation-events/{other_mod_id}",
+                headers=custom_headers,
+            )
+
+        self.assertEqual(response.status_code, 403)
+        result = response.json()
+        self.assertEqual(
+            result['detail'],
+            'You do not have permission to perform this action.'
+        )
 
     def test_filter_by_status(self):
         status = "APPROVED"
