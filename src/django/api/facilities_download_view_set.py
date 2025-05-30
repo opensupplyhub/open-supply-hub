@@ -1,21 +1,12 @@
-from rest_framework import viewsets, mixins
-from django.utils import timezone
-from typing import Optional, Union
-
 import math
-from django.db import transaction
-from django.db.models import F
 import logging
 
-from django.contrib.auth.models import AnonymousUser
 from rest_framework.exceptions import ValidationError
 from rest_framework import viewsets, mixins
 from waffle import switch_is_active
-
 from api.pagination import PageAndSizePagination
 from api.models.facility.facility_index import FacilityIndex
 from api.models.facility_download_limit import FacilityDownloadLimit
-from api.models.user import User
 from api.serializers.facility.facility_query_params_serializer import (
     FacilityQueryParamsSerializer)
 from api.serializers.facility.facility_download_serializer \
@@ -65,7 +56,8 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         if not params.is_valid():
             raise ValidationError(params.errors)
 
-        facility_download_limit = self.__get_user_download_limit(request.user)
+        facility_download_limit = FacilityDownloadLimit \
+            .get_or_create_user_download_limit(request.user)
 
         if (
             facility_download_limit
@@ -106,7 +98,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         total_pages = math.ceil(total_records / page_size)
 
         if facility_download_limit and current_page >= total_pages:
-            self.__update_facility_download_limit(facility_download_limit)
+            facility_download_limit.increment_download_count()
 
         list_serializer = self.get_serializer(page_queryset)
         rows = [f['row'] for f in list_serializer.data]
@@ -114,45 +106,3 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         data = {'rows': rows, 'headers': headers}
         response = self.get_paginated_response(data)
         return response
-
-    @staticmethod
-    def __get_user_download_limit(
-        user: Union[AnonymousUser, User]
-    ) -> Optional[FacilityDownloadLimit]:
-        is_api_user = not user.is_anonymous and user.has_groups
-
-        # if user is an API user we don't want to impose limits
-        if is_api_user or user.is_anonymous:
-            return None
-
-        facility_download_limit, _ = FacilityDownloadLimit.objects \
-            .get_or_create(user=user)
-
-        current_date = timezone.now()
-        last_download_date = facility_download_limit.last_download_time
-
-        if (
-            current_date.month != last_download_date.month or
-            current_date.year != last_download_date.year
-        ):
-            facility_download_limit.download_count = 0
-            facility_download_limit.last_download_time = timezone.now()
-            facility_download_limit.save()
-
-        return facility_download_limit
-
-    @staticmethod
-    def __update_facility_download_limit(
-        facility_download_limit: FacilityDownloadLimit,
-    ) -> None:
-        with transaction.atomic():
-            facility_download_limit.refresh_from_db()
-            if (
-                facility_download_limit.download_count >=
-                facility_download_limit.allowed_downloads
-            ):
-                raise ValidationError("Concurrent limit exceeded.")
-
-            facility_download_limit.last_download_time = timezone.now()
-            facility_download_limit.download_count = F('download_count') + 1
-            facility_download_limit.save()
