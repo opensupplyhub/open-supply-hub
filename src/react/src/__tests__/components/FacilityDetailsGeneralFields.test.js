@@ -1,8 +1,9 @@
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import FacilityDetailsGeneralFields from '../../components/FacilityDetailsGeneralFields';
 
-describe('FacilityDetailsGeneralFields component: test rendering of additional identifiers', () => {
+describe('FacilityDetailsGeneralFields component', () => {
     const mockData = {
         id: 'US202510850SQCV',
         type: 'Feature',
@@ -118,6 +119,44 @@ describe('FacilityDetailsGeneralFields component: test rendering of additional i
                         verified_count: 0,
                     },
                 ],
+                parent_company_os_id: [
+                    {
+                        id: 83088,
+                        is_verified: false,
+                        value: {
+                            raw_values: [
+                                'US202510850SQCV',
+                                'US202511345DVTE',
+                            ],
+                        },
+                        created_at: '2025-05-01T10:49:15.174025Z',
+                        updated_at: '2025-05-01T10:58:25.043413Z',
+                        contributor_name: 'Test Org',
+                        contributor_id: 1139,
+                        value_count: 1,
+                        is_from_claim: false,
+                        field_name: 'parent_company_os_id',
+                        verified_count: 0,
+                    },
+                    {
+                        id: 83089,
+                        is_verified: false,
+                        value: {
+                            raw_values: [
+                                'BD2025108DNTPFS',
+                                'CN202510809MKXG',
+                            ],
+                        },
+                        created_at: '2025-05-01T10:49:15.174025Z',
+                        updated_at: '2025-05-01T10:58:25.043413Z',
+                        contributor_name: 'Test Org',
+                        contributor_id: 1139,
+                        value_count: 1,
+                        is_from_claim: false,
+                        field_name: 'parent_company_os_id',
+                        verified_count: 0,
+                    }
+                ],
             },
             created_from: {
                 created_at: '2025-04-18T11:21:15.877648Z',
@@ -137,21 +176,24 @@ describe('FacilityDetailsGeneralFields component: test rendering of additional i
         },
     };
 
-    const handleFormat = ({ value, formatValue }) => ({
-        primary: formatValue(value),
-    });
-
     const defaultProps = {
         data: mockData,
         nameField: { primary: 'Nice production location LTD' },
         otherNames: [],
         embed: false,
         embedConfig: {},
-        formatExtendedField: handleFormat,
-        formatIfListAndRemoveDuplicates: jest.fn(),
         hideSectorData: false,
         isClaimed: false,
     };
+
+
+    const renderComponent = (props = {}, preloadedState = {}) =>
+        renderWithProviders(
+            <MemoryRouter>
+                <FacilityDetailsGeneralFields {...defaultProps} {...props} />
+            </MemoryRouter>,
+            { preloadedState },
+        );
 
     test('renders only non-additional identifier extended fields when the show_additional_identifiers feature flag is false', () => {
         const preloadedState = {
@@ -162,18 +204,16 @@ describe('FacilityDetailsGeneralFields component: test rendering of additional i
                 },
             },
         };
-        const {
-            getByText,
-            queryByText,
-        } = renderWithProviders(
-            <FacilityDetailsGeneralFields {...defaultProps} />,
-            { preloadedState },
-        );
+
+        const { getByText, queryByText} = renderComponent({}, preloadedState);
 
         expect(getByText('Name')).toBeInTheDocument();
         expect(getByText('Nice production location LTD')).toBeInTheDocument();
         expect(getByText('Parent Company')).toBeInTheDocument();
         expect(getByText('Moon company')).toBeInTheDocument();
+        expect(getByText('Parent Company OS ID')).toBeInTheDocument();
+        expect(getByText('US202510850SQCV')).toBeInTheDocument();
+        expect(getByText('US202511345DVTE')).toBeInTheDocument();
 
         expect(queryByText('LEI ID')).not.toBeInTheDocument();
         expect(queryByText('RBA ID')).not.toBeInTheDocument();
@@ -189,10 +229,8 @@ describe('FacilityDetailsGeneralFields component: test rendering of additional i
                 },
             },
         };
-        const { getByText } = renderWithProviders(
-            <FacilityDetailsGeneralFields {...defaultProps} />,
-            { preloadedState },
-        );
+        
+        const { getByText} = renderComponent({}, preloadedState);
 
         expect(getByText('Name')).toBeInTheDocument();
         expect(getByText('Nice production location LTD')).toBeInTheDocument();
@@ -209,5 +247,68 @@ describe('FacilityDetailsGeneralFields component: test rendering of additional i
         ).toBeInTheDocument();
         expect(getByText('DUNS ID')).toBeInTheDocument();
         expect(getByText('2120383532')).toBeInTheDocument();
+    });
+
+    test('renders parent company os id with multiple values', () => {
+        const { getByText, queryByText } = renderComponent();
+        
+        expect(getByText('Parent Company OS ID')).toBeInTheDocument();
+        expect(getByText('US202510850SQCV')).toBeInTheDocument();
+        expect(getByText('US202511345DVTE')).toBeInTheDocument();
+        const firstParentOsIdLink = getByText('US202510850SQCV');
+        expect(firstParentOsIdLink.closest('a')).toHaveAttribute(
+            'href',
+            '/facilities/US202510850SQCV',
+        );
+        const secondParentOsIdLink = getByText('US202511345DVTE');
+        expect(secondParentOsIdLink.closest('a')).toHaveAttribute(
+            'href',
+            '/facilities/US202511345DVTE',
+        );
+        expect(queryByText('BD2025108DNTPFS')).not.toBeInTheDocument();
+        expect(queryByText('CN202510809MKXG')).not.toBeInTheDocument();
+        expect(queryByText('1 more entry')).toBeInTheDocument();
+    });
+
+    test('renders parent company os id with multiple values and shows more entries', () => {
+        const { getByText } = renderComponent();
+
+        const getMoreEntriesButton = getByText('1 more entry');
+        expect(getMoreEntriesButton).toBeInTheDocument();
+        getMoreEntriesButton.click();
+        expect(getByText('BD2025108DNTPFS')).toBeInTheDocument();
+        expect(getByText('CN202510809MKXG')).toBeInTheDocument();
+        const firstParentOsIdLink = getByText('BD2025108DNTPFS');
+        expect(firstParentOsIdLink.closest('a')).toHaveAttribute(
+            'href',
+            '/facilities/BD2025108DNTPFS',
+        );
+        const secondParentOsIdLink = getByText('CN202510809MKXG');
+        expect(secondParentOsIdLink.closest('a')).toHaveAttribute(
+            'href',
+            '/facilities/CN202510809MKXG',
+        );
+    });
+
+    test('renders sector data when hideSectorData is false', () => {
+        const { getByText } = renderComponent();
+
+        expect(getByText('Sector')).toBeInTheDocument();
+        expect(getByText('Unspecified')).toBeInTheDocument();
+    });
+
+    test('does not render sector data when hideSectorData is true', () => {
+        const { queryByText } = renderComponent({
+            hideSectorData: true,
+        });
+
+        expect(queryByText('Sector')).not.toBeInTheDocument();
+    });
+
+    test('renders the name field correctly', () => {
+        const { getByText } = renderComponent();
+
+        expect(getByText('Name')).toBeInTheDocument();
+        expect(getByText('Nice production location LTD')).toBeInTheDocument();
     });
 });

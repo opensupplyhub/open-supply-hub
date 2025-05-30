@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         Switch.objects.get(name='show_additional_identifiers').delete()
 
     dependencies = [
-        ('api', '0167_add_moderationevent_action_reason_text_fields'),
+        ('api', '0168_introduce_a_switch_to_block_location_downloads'),
     ]
 
     operations = [

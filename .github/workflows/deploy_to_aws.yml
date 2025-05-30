@@ -18,6 +18,7 @@ on:
         - Pre-prod
         - Staging
         - Production
+        - RBA
         default: Development
       deploy-plan-only:
         description: 'Plan only'
@@ -38,7 +39,7 @@ on:
 jobs:
   init-and-plan:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -65,8 +66,16 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.4.0
+          terraform_version: 1.5.0
           terraform_wrapper: false
+
+      - name: Validate whitelist and denylist usage
+        run: |
+          cat "terraform-config/environments/${{ env.TFVAR_NAME }}" "deployment/environments/${{ env.TFVAR_NAME }}" > "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
+          scripts/validate_ip_lists.sh deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars
+        env:
+          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
+          TFVAR_NAME: terraform-${{ steps.get_env_name.outputs.lowercase }}.tfvars
 
       - name: Terraform Plan for ${{ vars.ENV_NAME }}
         run: ./deployment/infra plan
@@ -84,10 +93,70 @@ jobs:
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           AWS_DEFAULT_REGION: "eu-west-1"
 
-  apply:
+  detach-waf-if-needed:
     needs: init-and-plan
+    if: ${{ inputs.deploy-plan-only == false }}
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
+    steps:
+      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+        id: get_env_name
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
+        with:
+          string: ${{ vars.ENV_NAME }}
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Checkout config repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'opensupplyhub/ci-deployment'
+          path: 'terraform-config'
+          token: ${{ secrets.PAT }}
+
+      - name: Copy tfvars for ${{ vars.ENV_NAME }}
+        run: |
+          cat "terraform-config/environments/${{ env.TFVAR_NAME }}"  "deployment/environments/${{ env.TFVAR_NAME }}" > "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
+        env:
+          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
+          TFVAR_NAME: terraform-${{ steps.get_env_name.outputs.lowercase }}.tfvars
+
+      - name: Check whether AWS WAF enabled and find CloudFront distribution id
+        run: |
+          CLOUDFRONT_DISTRIBUTION_ID=$(./scripts/find_cloudfront_distribution_id.sh "$CLOUDFRONT_DOMAIN")
+          waf_enabled=$(grep -E '^waf_enabled\s*=' deployment/environments/${{ env.TFVAR_NAME }} | awk '{print $3}')
+
+          echo "WAF Enabled: $waf_enabled"
+          echo "Distribution ID: $CLOUDFRONT_DISTRIBUTION_ID"
+
+          if [[ "$waf_enabled" == "false" && -n "$CLOUDFRONT_DISTRIBUTION_ID" ]]; then
+            echo "Detaching WAF from CloudFront distribution $CLOUDFRONT_DISTRIBUTION_ID"
+            config=$(aws cloudfront get-distribution-config --id "$CLOUDFRONT_DISTRIBUTION_ID")
+            etag=$(echo "$config" | jq -r '.ETag')
+            dist=$(echo "$config" | jq '.DistributionConfig | .WebACLId = ""')
+
+            echo "$dist" > updated_config.json
+
+            aws cloudfront update-distribution \
+              --id "$CLOUDFRONT_DISTRIBUTION_ID" \
+              --if-match "$etag" \
+              --distribution-config file://updated_config.json
+          else
+            echo "Skipping WAF detachment"
+          fi
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
+          TFVAR_NAME: terraform-${{ steps.get_env_name.outputs.lowercase }}.tfvars
+          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
+          CLOUDFRONT_DOMAIN: ${{ vars.CLOUDFRONT_DOMAIN }}
+
+  apply:
+    needs: [init-and-plan, detach-waf-if-needed]
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -99,7 +168,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.4.0
+          terraform_version: 1.5.0
           terraform_wrapper: false
 
       - name: Checkout
@@ -125,7 +194,7 @@ jobs:
   build_and_push_react_app:
     needs: apply
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -170,28 +239,18 @@ jobs:
           AWS_DEFAULT_REGION: "eu-west-1"
           CLOUDFRONT_DOMAIN: ${{ vars.CLOUDFRONT_DOMAIN }}
         run: |
-          for id in $(aws cloudfront list-distributions --query "DistributionList.Items[*].Id" --output text); do
-              domains=$(aws cloudfront get-distribution-config --id $id --query "DistributionConfig.Aliases.Items" --output text)
-              if [[ "$domains" == "$CLOUDFRONT_DOMAIN" ]]; then
-                  if [ ! -z "$CLOUDFRONT_DISTRIBUTION_ID" ]; then
-                      echo "Error: Multiple CloudFront distributions found for domain: $CLOUDFRONT_DOMAIN"
-                      exit 1
-                  fi
-                  echo "Found Distribution ID: $id for Domain: $CLOUDFRONT_DOMAIN"
-                  CLOUDFRONT_DISTRIBUTION_ID=$id
-              fi
-          done
+          CLOUDFRONT_DISTRIBUTION_ID=$(./scripts/find_cloudfront_distribution_id.sh "$CLOUDFRONT_DOMAIN")
           if [ -z "$CLOUDFRONT_DISTRIBUTION_ID" ]; then
             echo "Error: No CloudFront distribution found for domain: $CLOUDFRONT_DOMAIN"
             exit 1
           fi
           aws s3 sync src/react/build/ s3://$FRONTEND_BUCKET-$AWS_DEFAULT_REGION/ --delete
-          aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
+          aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/*"
 
   build_and_push_docker_image:
     needs: build_and_push_react_app
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -285,7 +344,7 @@ jobs:
   create_kafka_topic:
     needs: build_and_push_docker_image
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -307,7 +366,7 @@ jobs:
   stop_logstash:
     needs: create_kafka_topic
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -331,7 +390,7 @@ jobs:
   restore_database:
     needs: stop_logstash
     runs-on: self-hosted
-    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     if:  ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -342,7 +401,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
       - name: Restore database for ${{ vars.ENV_NAME }}
-        if: ${{ (vars.ENV_NAME != 'Production' && vars.ENV_NAME != 'Staging' && vars.ENV_NAME != 'Development') && inputs.restore-db == true}}
+        if: ${{ (vars.ENV_NAME == 'Preprod' || vars.ENV_NAME == 'Test') && inputs.restore-db == true}}
         run: |
           cd ./src/anon-tools
           mkdir -p ./keys
@@ -377,7 +436,7 @@ jobs:
   update_services:
     needs: restore_database
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -403,7 +462,7 @@ jobs:
   post_deploy:
     needs: update_services
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -424,7 +483,7 @@ jobs:
   clear_opensearch:
     needs: post_deploy
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -484,7 +543,7 @@ jobs:
   start_logstash:
     needs: clear_opensearch
     runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') || (startsWith(github.ref_name, 'production-') && 'Production') || (startsWith(github.ref_name, 'sandbox-') && 'Staging') || 'None' }}
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}

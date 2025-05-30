@@ -8,7 +8,7 @@
       "--workers=${gunicorn_workers}",
       "--timeout=${gunicorn_worker_timeout}",
       "--access-logfile=-",
-      "--access-logformat=%(t)s '%(r)s' %(s)s | %(M)sms",
+      "--access-logformat=%({X-Forwarded-For}i)s %(t)s '%(r)s' %(s)s | %(M)sms",
       "--error-logfile=-",
       "--log-level=info",
       "--capture-output",
@@ -60,6 +60,16 @@
             "awslogs-region": "${aws_region}",
             "awslogs-stream-prefix": "django"
         }
+    },
+    "healthCheck": {
+        "command": [
+            "CMD-SHELL",
+            "/usr/bin/curl -f http://localhost:${app_port}/health-check/ || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 30
     }
   }
 ]

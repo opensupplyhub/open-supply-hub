@@ -58,8 +58,20 @@ This document outlines the SDLC pillars of the opensupplyhub monorepo, as well a
 | v2.0.0 | March 18, 2025 | March 22, 2025 | @Roman Stolar |
 | v2.1.0 | April 1, 2025 | April 5, 2025 | @Nessa Drew |
 | v2.2.0 | April 15, 2025 | April 19, 2025 | @Nessa Drew |
-| v2.3.0 | April 29, 2025 | May 3, 2025 | @Oleksandr Mazur |
-| v2.4.0 | May 13, 2025 | May 17, 2025 | @Oleksandr Mazur |
+| v2.3.0 | April 25, 2025 | May 3, 2025 | @Oleksandr Mazur |
+| v2.4.0 | May 9, 2025 | May 17, 2025 | @Oleksandr Mazur |
+| v2.5.0 | May 23, 2025 | May 31, 2025 | @Vadim Kovalenko |
+| v2.6.0 | June 6, 2025 | June 14, 2025 | @Vadim Kovalenko |
+| v2.7.0 | June 20, 2025 | June 28, 2025 | @Roman Stolar |
+| v2.8.0 | July 4, 2025 | July 12, 2025 | @Roman Stolar |
+| v2.9.0 | July 18, 2025 | July 26, 2025 | @Vlad Shapik |
+| v2.10.0 | August 1, 2025 | August 9, 2025 | @Vlad Shapik |
+| v2.11.0 | August 15, 2025 | August 23, 2025 | @Roman Stolar |
+| v2.12.0 | August 29, 2025 | September 6, 2025 | @Roman Stolar |
+| v2.13.0 | September 12, 2025 | September 20, 2025 | @Nessa Drew |
+| v2.14.0 | September 26, 2025 | October 4, 2025 | @Nessa Drew |
+| v2.15.0 | October 10, 2025 | October 18, 2025 | @Oleksandr Mazur |
+| v2.16.0 | October 24, 2025 | November 1, 2025 | @Oleksandr Mazur |
 
 ## General Information
 
@@ -118,14 +130,14 @@ Each new feature should reside in its own branch, which can be pushed to the cen
 
 #### Release branches and tags
 
-Once `main` has acquired enough features for a release (or a predetermined release date is approaching), you run the `Release [Init]` GitHub workflow that creates a new release branch with a version number for the release. The release version number for release branches includes only the major and minor versions.
+Once `main` has acquired enough features for a release (or a predetermined release date is approaching), you run the `[Release] Init` GitHub workflow that creates a new release branch with a version number for the release. The release version number for release branches includes only the major and minor versions.
 
-When the release branch is ready for release, the `Release [Deploy]` workflow should be run for each environment, such as sandbox and production. This workflow will create two Git tags, each with a version number.
+When the release branch is ready for release, the `[Release] Deploy` workflow should be run for each environment, such as sandbox and production. This workflow will create two Git tags, each with a version number.
 This workflow will also initiate the Deploy to AWS workflow and pass it the necessary parameters. If you need to clear the custom OpenSearch indexes and tenplates during deployment, you need to select the `Clear the custom OpenSearch indexes and templates` checkbox.
 
 #### Hotfix branches
 
-Hotfix branches are utilized to quickly patch production and sandbox releases. They resemble release branches and feature branches, except they are based on a release branch instead of `main`. This is the branch that should fork directly from a release branch. As soon as the fix is complete, it should be merged into the release branch and, if the fix isn't dirty, into `main` as well. After manually running the `Release [Deploy]` workflow, two new tags with increased patch versions will be created, and the new version will be shipped to sandbox and production environments.
+Hotfix branches are utilized to quickly patch production and sandbox releases. They resemble release branches and feature branches, except they are based on a release branch instead of `main`. This is the branch that should fork directly from a release branch. As soon as the fix is complete, it should be merged into the release branch and, if the fix isn't dirty, into `main` as well. After manually running the `[Release] Deploy` workflow, two new tags with increased patch versions will be created, and the new version will be shipped to sandbox and production environments.
 This workflow will also initiate the Deploy to AWS workflow and pass it the necessary parameters. If you need to clear the custom OpenSearch indexes and templates during deployment, you need to select the `Clear the custom OpenSearch indexes and templates` checkbox.
 
 #### Quick-fix branches
@@ -150,12 +162,13 @@ Make sure that:
 
 ### Code Freeze
 
-1. Code freeze occurs every Tuesday following two weeks of development for a new release version. To enhance communication within the team, all stakeholders must be notified about the code freeze two working days before the code freeze by the responsible person for the release.
-2. Before initiating the code freeze process, ensure that all commands required for the deployment process (e.g., `migrate` or `reindex_database` or `index_facilities_new`) are included in the `post_deployment` command.
-3. On the day of the code freeze, the responsible person has to run the `Release [Init]` workflow from the `main` branch, specifying the major and minor versions of the release. Subsequently, the `releases/v.X.Y` branch will be created and automatically deployed to the running pre-prod environment via the `Deploy to AWS` workflow.
-4. After a successful deployment, you should copy the ARN of the `terraform` user from the AWS IAM console. Navigate to the AWS console's search input, type "IAM", and open the IAM console. In the IAM console, find and click on the "Users" tab. In the list of available users, locate the `terraform` user, click on it, and on that page, you will find its ARN. After copying this value, go to the AWS OpenSearch console in the same way you accessed the IAM console. Open the available domains and locate the domain for the preprod environment. Open it, then navigate to the security configuration and click "Edit". Find the section titled "Fine-grained access control", and under this section, you will find an "IAM ARN" input field. Paste the copied ARN into this field and save the changes. It may take several minutes to apply. Make sure that the "Configuration change status" field has green status.
-5. You need to run the `DB - Save Anonymized DB` workflow (if this job did not run on the same or the previous day). Once the Anonymized DB is successfully saved, run the `DB - Apply Anonymized DB` workflow to ensure that testing will be conducted with up-to-date data. Be sure to select the `Pre-prod` environment and the `releases/v.X.Y` branch before running the `DB - Apply Anonymized DB` workflow.
-6. In case there is a need to run a command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Migration+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5DHow-to-correctly-run-migrations-for-our-four-environments%3F---Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
+1. The default day for the code freeze is Friday, the last working day of the two-week development. However, the actual date of the code freeze is flexible and may be set earlier. The main objective is to prevent untested changes from being included in the release. To enhance communication within the team, all stakeholders must be notified about the code freeze in the `#data_x_product` Slack channel at least one working day in advance by the person responsible for the release.
+2. Before initiating the code freeze process, the responsible person must ensure that all commands required for deployment (e.g., `migrate`, `reindex_database`, `index_facilities_new`) are included in the `post_deployment` command, and that the `RELEASE-NOTES.md` file does not contain any sections with template text.
+3. On the day of the code freeze, the responsible person must run the `[Release] Init` workflow from the main branch, specifying the major and minor versions of the release. This action creates the `releases/v.X.Y` branch and automatically triggers deployment to the Pre-prod environment via the `Deploy to AWS` workflow. The responsible person must immediately stop this deployment manually to prevent it from proceeding.
+4. On Tuesday, following the code freeze, the responsible person must run the `Deploy to AWS` workflow for the Pre-prod environment from the release branch. 
+5. After a successful deployment, the responsible person must copy the ARN of the `terraform` user from the AWS IAM console. To do this, navigate to the AWS console's search input, type "IAM", and open the IAM console. In the IAM console, access the "Users" tab, locate the `terraform` user, click on it, and copy the ARN provided on that page. Then, navigate to the AWS OpenSearch console using the same method. Open the list of available domains, locate the domain for the Pre-prod environment, and open it. Navigate to the security configuration section and click "Edit". Find the section titled "Fine-grained access control", locate the "IAM ARN" input field, paste the copied ARN into the field, and save the changes. It may take several minutes for the changes to apply. The responsible person must ensure that the "Configuration change status" field displays a green status after the update.
+6. Next, the responsible person must run the `DB - Save Anonymized DB` workflow (if it has not already run on the same day or the previous day). Once the anonymized database is successfully saved, the `DB - Apply Anonymized DB` workflow must be executed to ensure that testing is conducted with up-to-date data. Before running this workflow, the responsible person must select the `Pre-prod` environment and the `releases/v.X.Y` branch. During the `post_deploy` job of the `DB - Apply Anonymized DB` workflow, it is necessary to review the appropriate BetterStack monitor to confirm that no downtime has occurred. If any downtime is detected, the responsible person must notify the stakeholders in the `#data_x_product` Slack channel about the potential downtime in the Production environment during the release.
+7. In case there is a need to run a command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Django+container+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only-------How-can-we-manually-execute-commands-within-the-Django-container-for-our-environments%3F--Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
 
 ### QA process
 
@@ -187,23 +200,23 @@ On Saturday (release day), the QA team should create two additional test cycles 
 1. To enhance communication within the team, the responsible person for the release must notify all stakeholders about the release two working days before its scheduled date and in 1-2 hours to prevent any actions on the environment on which the deployment is carried out.
 2. On the designated time and day, before triggering the workflow on the Production environment, the responsible person must manually activate the `disable_list_uploading` switch, as mentioned in [Block loading of new production locations](#block-loading-production-locations).
 3. The responsible person have to take db snapshot manually via Amazon RDS in the `Snapshots` tab with name `env-db-MM-DD-YYYY` (examples: `stg-db-05-18-2025` and `prd-db-05-18-2025`).
-4. Then the responsible person runs the `Release [Deploy]` workflow for the sandbox and production environments from the release branch. They need to fill in the full release tag version (`X.Y.Z`) and choose the environment. If the responsible person need to clear the custom OpenSearch indexes and templates during deployment, they must select the `Clear the custom OpenSearch indexes and templates` checkbox.
+4. Then the responsible person runs the `[Release] Deploy` workflow for the sandbox and production environments from the release branch. They need to fill in the full release tag version (`X.Y.Z`) and choose the environment. If the responsible person need to clear the custom OpenSearch indexes and templates during deployment, they must select the `Clear the custom OpenSearch indexes and templates` checkbox.
 ℹ️ Note, that `Deploy to AWS` workflow will be triggered <strong>automatically</strong> for the sandbox and production environments respectively.
 5. After completing the triggered workflows, the responsible person must open the AWS console and verify that all tasks of the `OpenSupplyHubStagingAppDD`, `OpenSupplyHubStagingApp`, `OpenSupplyHubStagingAppLogstash`, `OpenSupplyHubProductionAppDD`, `OpenSupplyHubProductionApp` and `OpenSupplyHubProductionAppLogstash` services in the `ecsOpenSupplyHubStagingCluster` and `ecsOpenSupplyHubProductionCluster` Amazon ECS clusters, respectively, have been restarted.
 6. Additionally, it is necessary to check the OpenSearch domains and their statuses, such as Domain Processing Status, Configuration Change Status, and Cluster Health, to ensure they are green (which indicates that everything is fine). Use the Amazon OpenSearch Service console to check this.
 7. The responsible person also needs to check that DedupeHub is up and running. To do this, they should open CloudWatch via the AWS console, navigate to the Log groups section in the menu, open logOpenSupplyHubProductionAppDD and logOpenSupplyHubStagingAppDD, then open the latest log stream of each log group. Ensure that there is a recent message: `INFO: Application startup complete.`
 If there is no such message and DedupeHub hangs, you need to reload it (perhaps several times), as mentioned in [Reloading the DedupeHub](#reloading-the-dedupehub).
 8. Once the aforementioned steps are successfully completed, the person responsible for the release should also verify that all actions included in the post_deployment command have been successfully executed. Here is the [instructions](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/280788993/Checking+successful+application+of+post-deployment+actions+in+the+test+environment).
-In case there is a need to run additional command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Migration+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5D%5BhardBreak%5DHow-to-correctly-run-migrations-for-our-four-environments%3F---Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
+In case there is a need to run additional command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Django+container+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only-------How-can-we-manually-execute-commands-within-the-Django-container-for-our-environments%3F--Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
 9. Make inactive the `disable_list_uploading` switch (on Production).
 10. Notify the QA Engineer that the new version has been released, and they can commence smoke testing.
-11. The QA Engineer must notify stakeholders in the *#data_x_product* Slack channel when testing is complete in the sandbox and in the production, as well as issues, if any encountered during testing.
-12. Upon completing the release, the responsible person must notify stakeholders in the *#data_x_product* Slack channel that the releases to sandbox and production have concluded. Additionally, update the *Unreleased* version's status in Jira.
+11. The QA Engineer must notify stakeholders in the `#data_x_product` Slack channel when testing is complete in the sandbox and in the production, as well as issues, if any encountered during testing.
+12. Upon completing the release, the responsible person must notify stakeholders in the `#data_x_product` Slack channel that the releases to sandbox and production have concluded. Additionally, update the *Unreleased* version's status in Jira.
 
 ### Hotfixes
 
 - To deploy a hotfix to pre-prod, you should fork from the latest release branch, and after preparing the fix, merge it back. Merging will trigger the `Deploy to AWS` workflow that will deploy the hotfix to the **running** pre-prod environment.
-- To release a hotfix to production and staging, you should fork from the latest release branch, and after preparing the fix, merge it back. For production you have to make active the `disable_list_uploading` switch. The last step is to execute the `Release [Deploy]` workflow for each environment separately, which will deploy the fix to these two environments. If you need to clear the custom OpenSearch indexes and templates during deployment, you must select the `Clear the custom OpenSearch indexes and templates` checkbox. At the end for production make inactive the `disable_list_uploading` switch.
+- To release a hotfix to production and staging, you should fork from the latest release branch, and after preparing the fix, merge it back. For production you have to make active the `disable_list_uploading` switch. The last step is to execute the `[Release] Deploy` workflow for each environment separately, which will deploy the fix to these two environments. If you need to clear the custom OpenSearch indexes and templates during deployment, you must select the `Clear the custom OpenSearch indexes and templates` checkbox. At the end for production make inactive the `disable_list_uploading` switch.
 
 ### Quick-fixes
 
@@ -212,8 +225,7 @@ In case there is a need to run additional command in the terminal of the Django 
 ### Shut down the pre-prod environment
 
 1. Shutting down the pre-prod environment starts after passing all QA checklist items for the pre-prod.
-2. First step is to destroy pre-prod DB Instance manually via RDS -> Databases -> `opensupplyhub-enc-pp`. Press Modify -> Enable deletion protection=false. Then select Delete in Actions.
-3. Finally, to shut down the Pre-prod the responsible person have to select `Destroy Environment` in the Actions menu. Press run workflow with `main` branch and select `Pre-prod` env.
+2. To shut down the Pre-prod the responsible person have to select `Destroy Environment` in the Actions menu. Press run workflow with `main` branch and select `Pre-prod` env.
 
 ### Post Release Notes
 

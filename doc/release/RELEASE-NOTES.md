@@ -3,6 +3,105 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.6.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: July 14, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* 0169_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
+
+#### Schema changes
+* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - The `FacilityDownloadLimit` model has been created. This model includes such fields: id, user_id, last_download_time, allowed_downloads, allowed_records_number, last_download_time, download_count.
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 1000 records per download + 10 downloads of facility data per month has been added for a registered free user.
+
+### Release instructions:
+* *Provide release instructions here.*
+
+
+## Release 2.5.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: May 31, 2025
+
+### Code/API changes
+* [OSDEV-2017](https://opensupplyhub.atlassian.net/browse/OSDEV-2017) - CSRF (Cross-Site Request Forgery) protection has been disabled across the application. CSRF middleware has been removed from the request pipeline. All affected endpoints are now accessible without requiring CSRF tokens.
+
+### Architecture/Environment changes
+* [OSDEV-1992](https://opensupplyhub.atlassian.net/browse/OSDEV-1992) - Provisioned a dedicated EC2 instance to host WireGuard VPN service, enabling authorized users to bypass AWS WAF when accessing the RBA instance.
+
+### Bugfix
+* [OSDEV-1882](https://opensupplyhub.atlassian.net/browse/OSDEV-1882) - Fixed an issue where the scroll position was not resetting to the top when navigating to the `Upload` page related to the list upload functionality.
+* Updated the `Deploy to AWS` GitHub workflow to rely on the required `deploy-env` input instead of inferring the `environment` from the tag name. Previously, this approach was necessary because the `[Release] Deploy` workflow did not trigger `Deploy to AWS` via the API with the specified `environment` - it only created a tag that triggered the workflow automatically. With the latest changes, the `environment` is now explicitly passed in the `[Release] Deploy` workflow. It has also been confirmed that no branch or input combination can result in an undefined `environment`. As a result, the fallback to `None` for the `environment` value was removed from the `Deploy to AWS` workflow.
+* [OSDEV-1981](https://opensupplyhub.atlassian.net/browse/OSDEV-1981) - Fixed an issue where the `updated_at` field in the `api_facility` table was not modified when related dependency data changed, resulting in outdated or invalid data being stored in `OpenSearch`.
+* [OSDEV-1939](https://opensupplyhub.atlassian.net/browse/OSDEV-1939) - Disable the submit button during SLC contribution submission or update to prevent duplicate requests. Implemented a basic throttle class `DuplicateThrottle` to prevent duplicate data for `POST` and `PATCH` requests on the `production-location` endpoints.
+
+### What's new
+* [OSDEV-1998](https://opensupplyhub.atlassian.net/browse/OSDEV-1998) - The following changes were made:
+    * Added an additional "Data Cleaning Service" subheader to the "How It Works" > "Premium Features" section.
+    * Updated the list of supported languages/countries under the "globe" icon (added support for Chinese and changed the order).
+    * Removed the Twitter icon from the social media icons/links in the footer.
+* [OSDEV-1122](https://opensupplyhub.atlassian.net/browse/OSDEV-1122) - The following changes were made:
+    * Updated the behavior of the `Suggest an Edit` button on production location profile pages. The button now opens the Production Location Information page of the SLC workflow in a new tab, allowing users to suggest edits without having to re-search for the facility.
+    * Fixed redirection for unauthenticated users. If a user is not logged in and clicks `Suggest an Edit` button they are now redirected to the correct workflow step after logging in, instead of being taken to the home page. This fix applies to all steps within the Contribute workflow.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
+## Release 2.4.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: May 17, 2025
+
+### Code/API changes
+* [OSDEV-1952](https://opensupplyhub.atlassian.net/browse/OSDEV-1952) - Added support for including `parent_company_os_id` when creating or updating a production location. This field can now be submitted via the API (`POST /api/facilities/`, `POST /api/v1/production-locations/`, `PATCH /api/v1/production-locations/{os_id}/`) or through list uploads. The `parent_company_os_id` values are stored as standalone fields in the `api_extendedfields` table.
+
+### Architecture/Environment changes
+* [OSDEV-1960](https://opensupplyhub.atlassian.net/browse/OSDEV-1960) - Disabled deletion protection and final snapshot creation for the RDS instance when it is deleted in the pre-prod environment.
+* [OSDEV-1949](https://opensupplyhub.atlassian.net/browse/OSDEV-1949) - Attached whitelist rules and deny rules and infrastructure changes:
+    - Bump Terraform version from 1.4.0 to 1.5.0
+    - Made `waf_enabled` terraform flag variable.
+    - Enabled AWS WAF for all environments, including RBA.
+    - Created a separate job `detach-waf-if-needed` in Deploy to AWS action. This is needed to prevent Terraform race condition when it tries to delete the AWS WAF before AWS has fully detached it from the CloudFront distribution, even though `web_acl_id` is set to`null`.
+    - Applied validation in the `init-and-plan` action if `ip_denylist` and `ip_whitelist` are present. Only whitelist or denylist should be defined per environment.
+* [OSDEV-1746](https://opensupplyhub.atlassian.net/browse/OSDEV-1746) - Implemented auto-scaling to dynamically adjust the Django instance count based on load metrics for cost-efficient resource utilization and high availability.
+* The subdomain `a.os-hub.net` was removed from the CORS_ALLOWED_ORIGIN_REGEXES list in the Django application. This change was made because the subdomain was deleted from AWS Route 53 and is no longer in use.
+* [OSDEV-1947](https://opensupplyhub.atlassian.net/browse/OSDEV-1947) - The following changes have been made:
+    * Introduced infrastructure changes to support deployment of the RBA environment. Included it in the CD pipelines in the same way as Production and Staging, which means the RBA environment can now be deployed via Git tags just like Production and Staging.
+    * Created the `export_csv_enabled` infrastructure switch to disable the Amazon EventBridge scheduler for the CSV export job in the RBA environment, as exporting the database to CSV is not needed in that environment.
+
+### Bugfix
+* [OSDEV-1947](https://opensupplyhub.atlassian.net/browse/OSDEV-1947) - Fixed a bug related to an incorrect environment check in the FE app, which attempted to identify the local environment by comparing it with `development`. However, the environment had been renamed to `local` some time ago and was no longer passed as `development` from the BE during local development.
+
+### What's new
+* [OSDEV-1953](https://opensupplyhub.atlassian.net/browse/OSDEV-1953) - Implemented UI logic to display parent company OS ID fields as links on the production location profile page, directing to the corresponding production location pages in a new tab.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.3.0
 
 ## Introduction
@@ -10,17 +109,18 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Release date: May 3, 2025
 
 ### Database changes
-* *Describe high-level database changes.*
 
 #### Migrations:
 * 0168_introduce_show_additional_identifiers_switch.py - This migration introduces a new switch called `show_additional_identifiers`, which will be used on the production location profile page to show or hide additional identifiers of the production location.
 * 0169_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
 
 #### Schema changes
-* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - The `FacilityDownloadLimit` model has been created. This model includes such fields: id, user_id, last
+* 0169_introduce_show_additional_identifiers_switch.py - This migration introduces a new switch called `show_additional_identifiers`, which will be used on the production location profile page to show or hide additional identifiers of the production location.
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-1926](https://opensupplyhub.atlassian.net/browse/OSDEV-1926) - Introduced support for submitting additional identifiers when uploading a new production location or modifying an existing one. Additional identifiers can now be added via the API (POST `api/facilities/`, POST `api/v1/production-locations/`, PATCH `api/v1/production-locations/{os_id}/`) or through list uploads. The system currently supports three types of identifiers: DUNS (Data Universal Numbering System), LEI (Legal Entity Identifier), and RBA Online ID. The provided identifiers are stored as standalone fields in the `api_extendedfields` table.
+* [OSDEV-1927](https://opensupplyhub.atlassian.net/browse/OSDEV-1927) - Added additional identifiers (DUNS , RBA Online ID and LEI) to the GET `/v1/production-locations/` and GET `/v1/production-locations/{os_id}/` endpoints.
+* [OSDEV-1892](https://opensupplyhub.atlassian.net/browse/OSDEV-1892) - Implemented access restrictions for the `GET /v1/moderation-events/` and `GET /v1/moderation-events/{moderation_id}` endpoints so that only the contribution owner or a moderator can access them. Updated the `Logstash` configuration for the `moderation-events` index to include the `contributor_email` field when sending data to `OpenSearch`.
 
 ### Architecture/Environment changes
 * [OSDEV-1935](https://opensupplyhub.atlassian.net/browse/OSDEV-1935) - Added terraform module for creating IAM roles in production and test AWS accounts to enable integration with Vanta auditor.
@@ -32,9 +132,36 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1914](https://opensupplyhub.atlassian.net/browse/OSDEV-1914) - The following changes have been made:
     * Fixed an issue with fuzzy search on fields containing long text. Replaced the `match` query with `match_phrase` (with a configurable `slop` parameter) for such cases to improve accuracy for the GET `/api/v1/production-locations/` endpoint.
     * Replaced regular text with a toast component to display server errors when fetching potential matches on the Contribution Record page of the Moderation queue dashboard.
+* [OSDEV-1886](https://opensupplyhub.atlassian.net/browse/OSDEV-1886)
+    * Fixed the script to run within the Destroy Environment GitHub workflow to delete the Lambda@Edge functions before destroying the infrastructure.
+    * Implemented prevention of forced script termination during the deletion of Lambda@Edge functions. The exit code is now managed internally, ensuring proper handling without abrupt script termination.
 
 ### What's new
 * [OSDEV-1930](https://opensupplyhub.atlassian.net/browse/OSDEV-1930) - Implemented front-end logic to display additional identifiers such as RBA, LEI, and DUNS IDs as data points on the production location profile page, once the `show_additional_identifiers` feature flag is returned with a true value from the backend.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to update the index mapping for the `production-locations` index after adding the new fields `rba_id`, `duns_id`, `lei_id` and for the `moderation-events` index after adding the new field `contributor_email`.
+
+
+## Release 2.2.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 25, 2025
+
+### Database changes
+
+#### Migrations:
+* 0168_introduce_a_switch_to_block_location_downloads.py - This migration introduces a new switch called `block_location_downloads`, which will be used to block the usage of the `api/facilities-downloads/` GET endpoint when necessary.
+
+### Code/API changes
+* [OSDEV-1961](https://opensupplyhub.atlassian.net/browse/OSDEV-1961) - Implemented logic to utilize the `block_location_downloads` switch. When enabled, it restricts access to the `api/facilities-downloads/` GET endpoint to prevent bulk downloads.
+
+### Architecture/Environment changes
+* [OSDEV-1961](https://opensupplyhub.atlassian.net/browse/OSDEV-1961) - Enabled IP address logging for the Django ECS task.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
@@ -104,7 +231,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Release date: March 22, 2025
 
 ### Database changes
-* *Describe high-level database changes.*
 
 #### Migrations:
 * 0167_add_moderationevent_action_reason_text_fields.py - This migration adds new fields `action_reason_text_cleaned` and  `action_reason_text_raw` to the existing table `api_moderationevent`.

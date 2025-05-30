@@ -5,12 +5,17 @@ from rest_framework.test import APITestCase
 from django.urls import reverse
 from django.core import mail
 from allauth.account.models import EmailAddress
+from django.contrib.gis.geos import Point
 from waffle.testutils import override_switch
 from rest_framework import status
 
 from api.models.moderation_event import ModerationEvent
 from api.models.contributor.contributor import Contributor
+from api.models.facility.facility_list import FacilityList
+from api.models.facility.facility_list_item import FacilityListItem
+from api.models.source import Source
 from api.models.user import User
+from api.models.facility.facility import Facility
 from api.views.v1.url_names import URLNames
 from api.tests.test_data import geocoding_data
 
@@ -34,13 +39,38 @@ class TestProductionLocationsCreate(APITestCase):
             user=self.user, email=user_email, verified=True, primary=True
         )
 
-        Contributor.objects.create(
+        contributor = Contributor.objects.create(
             admin=self.user,
             name='test contributor 1',
             contrib_type=Contributor.OTHER_CONTRIB_TYPE,
         )
 
         self.login(user_email, user_password)
+
+        list = FacilityList.objects.create(
+            header='header', file_name='one', name='New List Test'
+        )
+        source = Source.objects.create(
+            source_type=Source.LIST,
+            facility_list=list,
+            contributor=contributor
+        )
+        list_item = FacilityListItem.objects.create(
+            name='Gamma Tech Manufacturing Plant',
+            address='1574 Quantum Avenue, Building 4B, Technopolis',
+            country_code='YT',
+            sector=['Apparel'],
+            row_index=1,
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=source
+        )
+        self.production_location = Facility.objects.create(
+            name=list_item.name,
+            address=list_item.address,
+            country_code=list_item.country_code,
+            location=Point(0, 0),
+            created_from=list_item
+        )
 
     def login(self, email: str, password: str) -> None:
         self.client.logout()
@@ -75,10 +105,15 @@ class TestProductionLocationsCreate(APITestCase):
         mock_get.return_value.json.return_value = geocoding_data
 
         # Simulate 30 requests.
-        for _ in range(30):
+        for i in range(30):
+            dynamic_valid_req_body = json.dumps({
+                'name': f'Blue Horizon Facility {i}',
+                'address': '990 Spring Garden St., Philadelphia PA 19123',
+                'country': 'US'
+            })
             response = self.client.post(
                 self.url,
-                self.common_valid_req_body,
+                dynamic_valid_req_body,
                 content_type='application/json'
             )
             self.assertEqual(response.status_code, 202)
@@ -112,6 +147,54 @@ class TestProductionLocationsCreate(APITestCase):
         throttled_response_body_dict = json.loads(throttled_response.content)
         self.assertEqual(throttled_response.status_code, 429)
         self.assertEqual(len(throttled_response_body_dict), 1)
+
+    @patch('api.geocoding.requests.get')
+    def test_duplicate_throttling_is_applied(self, mock_get):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        # Simulate 2 duplicate requests.
+        # First should be successfull.
+        response = self.client.post(
+            self.url,
+            self.common_valid_req_body,
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 202)
+
+        response_body_dict = json.loads(response.content)
+        response_moderation_id = response_body_dict.get('moderation_id')
+        moderation_event = ModerationEvent.objects.get(
+            pk=response_moderation_id
+        )
+        stringified_created_at = moderation_event.created_at.strftime(
+            '%Y-%m-%dT%H:%M:%S.%f'
+        ) + 'Z'
+
+        self.assertEqual(
+            response_body_dict.get('moderation_status'),
+            'PENDING'
+        )
+        self.assertEqual(
+            response_body_dict.get('created_at'),
+            stringified_created_at
+        )
+        self.assertIn("cleaned_data", response_body_dict)
+        self.assertEqual(len(response_body_dict), 4)
+
+        # Second should be throttled.
+        throttled_response = self.client.post(
+            self.url,
+            self.common_valid_req_body,
+            content_type='application/json'
+        )
+        throttled_response_body_dict = json.loads(throttled_response.content)
+        self.assertEqual(throttled_response.status_code, 429)
+        self.assertEqual(len(throttled_response_body_dict), 1)
+        self.assertEqual(
+            throttled_response_body_dict["detail"],
+            "Duplicate request submitted, please try again later."
+        )
 
     @override_switch('disable_list_uploading', active=True)
     def test_client_cannot_post_when_upload_is_blocked(self):
@@ -417,3 +500,101 @@ class TestProductionLocationsCreate(APITestCase):
         self.assertEqual(len(response_body_dict), 4)
         self.assertEqual(name, valid_char_field)
         self.assertEqual(parent_company, valid_char_field)
+
+    @patch('api.geocoding.requests.get')
+    def test_moderation_event_created_with_valid_additional_ids(
+        self, mock_get
+    ):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        valid_req_body = json.dumps(
+            {
+                'source': 'SLC',
+                'name': 'Blue Horizon Facility',
+                'address': '990 Spring Garden St., Philadelphia PA 19123',
+                'country': 'US',
+                'duns_id': '123456789',
+                'lei_id': '12345678901234567890',
+                'rba_id': '1234567890123456789012345678901234567890',
+            }
+        )
+
+        response = self.client.post(
+            self.url, valid_req_body, content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 202)
+
+        response_body_dict = json.loads(response.content)
+        response_moderation_id = response_body_dict.get('moderation_id')
+        moderation_event = ModerationEvent.objects.get(
+            pk=response_moderation_id
+        )
+
+        self.assertEqual(
+            response_body_dict.get('moderation_status'), 'PENDING'
+        )
+        self.assertEqual(response_moderation_id, str(moderation_event.uuid))
+        self.assertIn("cleaned_data", response_body_dict)
+        self.assertEqual(len(response_body_dict), 4)
+        self.assertIn('duns_id', moderation_event.cleaned_data['raw_json'])
+        self.assertIn('lei_id', moderation_event.cleaned_data['raw_json'])
+        self.assertIn('rba_id', moderation_event.cleaned_data['raw_json'])
+        self.assertIn("lei_id", moderation_event.cleaned_data['fields'])
+
+        self.assertEqual(
+            moderation_event.cleaned_data['fields']['lei_id'],
+            '12345678901234567890',
+        )
+        self.assertIn("rba_id", moderation_event.cleaned_data['fields'])
+        self.assertEqual(
+            moderation_event.cleaned_data['fields']['rba_id'],
+            '1234567890123456789012345678901234567890',
+        )
+        self.assertIn("duns_id", moderation_event.cleaned_data['fields'])
+        self.assertEqual(
+            moderation_event.cleaned_data['fields']['duns_id'], '123456789'
+        )
+
+    @patch('api.geocoding.requests.get')
+    def test_moderation_event_created_with_valid_parent_company_os_id(
+        self, mock_get
+    ):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        valid_req_body = json.dumps(
+            {
+                'source': 'SLC',
+                'name': 'Lenexa',
+                'address': '9700 Commerce Parkway',
+                'country': 'US',
+                'parent_company_os_id': [self.production_location.id],
+            }
+        )
+
+        response = self.client.post(
+            self.url, valid_req_body, content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 202)
+
+        response_body_dict = json.loads(response.content)
+        response_moderation_id = response_body_dict.get('moderation_id')
+        moderation_event = ModerationEvent.objects.get(
+            pk=response_moderation_id
+        )
+
+        self.assertEqual(
+            response_body_dict.get('moderation_status'), 'PENDING'
+        )
+        self.assertEqual(response_moderation_id, str(moderation_event.uuid))
+        self.assertIn("cleaned_data", response_body_dict)
+        self.assertIn('parent_company_os_id',
+                      moderation_event.cleaned_data['raw_json'])
+        self.assertIn("parent_company_os_id",
+                      moderation_event.cleaned_data['fields'])
+
+        self.assertEqual(
+            moderation_event.cleaned_data['fields']['parent_company_os_id'],
+            [self.production_location.id],
+        )

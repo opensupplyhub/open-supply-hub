@@ -34,6 +34,7 @@ import {
     makeClaimFacilityLink,
     getLocationWithoutEmbedParam,
     formatAttribution,
+    formatExtendedField,
 } from '../util/util';
 
 const detailsStyles = theme =>
@@ -87,36 +88,6 @@ const detailsStyles = theme =>
         },
     });
 
-const formatIfListAndRemoveDuplicates = value =>
-    Array.isArray(value)
-        ? [...new Set(value)].map(v => (
-              <span style={{ margin: 0, display: 'block' }} key={v}>
-                  {v}
-              </span>
-          ))
-        : value;
-
-/* eslint-disable camelcase */
-const formatExtendedField = ({
-    value,
-    created_at,
-    contributor_name,
-    is_from_claim,
-    is_verified,
-    id,
-    formatValue = v => v,
-}) => {
-    const primary = formatIfListAndRemoveDuplicates(formatValue(value));
-    const secondary = formatAttribution(created_at, contributor_name);
-    return {
-        primary,
-        secondary,
-        embeddedSecondary: formatAttribution(created_at),
-        isVerified: is_verified,
-        isFromClaim: is_from_claim,
-        key: id || primary + secondary,
-    };
-};
 const filterByUniqueField = (data, extendedFieldName) =>
     uniqBy(
         get(data, `properties.extended_fields.${extendedFieldName}`, []).map(
@@ -262,10 +233,6 @@ const FacilityDetailsContent = ({
                     nameField={nameField}
                     otherNames={otherNames}
                     embedConfig={embedConfig}
-                    formatExtendedField={formatExtendedField}
-                    formatIfListAndRemoveDuplicates={
-                        formatIfListAndRemoveDuplicates
-                    }
                     hideSectorData={hideSectorData}
                     isClaimed={isClaimed}
                 />
