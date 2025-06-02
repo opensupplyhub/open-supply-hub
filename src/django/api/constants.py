@@ -178,8 +178,8 @@ class OriginSource:
     RBA = "rba"
 
     CHOICES = [
-        (OSHUB, 'OS Hub instance'),
-        (RBA, 'RBA instance'),
+        (OSHUB, ' OS Hub'),
+        (RBA, 'RBA'),
     ]
 
 
