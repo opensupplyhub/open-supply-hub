@@ -1,7 +1,10 @@
 from simple_history.models import HistoricalRecords
 from django.db import models
 
-from ...constants import MatchResponsibility
+from ...constants import (
+    MatchResponsibility,
+    OriginSource
+)
 from ...helpers.helpers import prefix_a_an
 
 from .contributor_manager import ContributorManager
@@ -111,6 +114,12 @@ class Contributor(models.Model):
         default=MatchResponsibility.MODERATOR,
         max_length=12,
         help_text="Who is responsible for moderating this contributor's data"
+    )
+    origin_source = models.CharField(
+        choices=OriginSource.CHOICES,
+        default=OriginSource.OSHUB,
+        max_length=200,
+        help_text="The environment value where instance running"
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

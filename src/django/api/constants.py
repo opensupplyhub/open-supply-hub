@@ -173,6 +173,16 @@ class MatchResponsibility:
     ]
 
 
+class OriginSource:
+    OSHUB = "os_hub"
+    RBA = "rba"
+
+    CHOICES = [
+        (OSHUB, 'OS Hub instance'),
+        (RBA, 'RBA instance'),
+    ]
+
+
 class NumberOfWorkersRanges:
     STANDARD_RANGES = [{
         'min': 0,
