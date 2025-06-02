@@ -1,16 +1,16 @@
 from django.db.migrations import Migration, RunPython
 
-from api.models.source import Source
-from api.models.facility.facility_list import FacilityList
-from api.models.facility.facility_list_item import FacilityListItem
-from api.models.facility.facility_match import FacilityMatch
-
 
 def remove_sources_without_contributor_and_related_data(apps, schema_editor):
     """
     Remove records from the Source table where the contributor is null
     and remove all data related to these records
     """
+
+    FacilityList = apps.get_model("api", "FacilityList")
+    FacilityListItem = apps.get_model("api", "FacilityListItem")
+    FacilityMatch = apps.get_model("api", "FacilityMatch")
+    Source = apps.get_model("api", "Source")
 
     sources_without_contributor = Source.objects.filter(
         contributor=None
