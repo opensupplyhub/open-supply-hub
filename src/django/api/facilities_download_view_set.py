@@ -73,7 +73,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         if (not is_large_download_allowed):
             raise ValidationError(
                 ('Downloads are supported only for searches resulting in '
-                 f'{FacilitiesDownloadSettings.DEFAULT_LIMIT} '
+                 f'{FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT} '
                  'facilities or less.'))
 
         page_queryset = self.paginate_queryset(queryset)
@@ -92,7 +92,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
     def __can_user_download_over_limit(
             number: int,
             user: Union[AnonymousUser, User]) -> bool:
-        is_over_limit = number > FacilitiesDownloadSettings.DEFAULT_LIMIT
+        is_over_limit = number > FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT
         is_api_user = not user.is_anonymous and user.has_groups
 
         if not is_api_user and is_over_limit:

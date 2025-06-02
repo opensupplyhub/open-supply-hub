@@ -8,7 +8,7 @@ from api.models.user import User
 from api.constants import FeatureGroups
 
 
-DEFAULT_LIMIT = 3
+FACILITIES_DOWNLOAD_LIMIT = 3
 
 
 class FacilitiesDownloadViewSetTest(APITestCase):
@@ -427,8 +427,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         rows = response.data.get("results", {}).get("rows", [])
         self.assertEqual(rows, expected_data)
 
-    @patch('api.constants.FacilitiesDownloadSettings.DEFAULT_LIMIT',
-           DEFAULT_LIMIT)
+    @patch('api.constants.FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT',
+           FACILITIES_DOWNLOAD_LIMIT)
     def test_api_user_can_download_over_limit(self):
         email = "test@example.com"
         test_pass = "example123"
@@ -447,14 +447,14 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         rows = response.data.get("results", {}).get("rows", [])
-        self.assertGreater(len(rows), DEFAULT_LIMIT)
+        self.assertGreater(len(rows), FACILITIES_DOWNLOAD_LIMIT)
 
-    @patch('api.constants.FacilitiesDownloadSettings.DEFAULT_LIMIT',
-           DEFAULT_LIMIT)
+    @patch('api.constants.FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT',
+           FACILITIES_DOWNLOAD_LIMIT)
     def test_non_api_user_cannot_download_over_limit(self):
         expected_error_message = (
             'Downloads are supported only for searches resulting in '
-            f'{DEFAULT_LIMIT} facilities or less.'
+            f'{FACILITIES_DOWNLOAD_LIMIT} facilities or less.'
         )
 
         email = "test@example.com"
