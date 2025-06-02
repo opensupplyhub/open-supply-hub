@@ -123,20 +123,15 @@ class OpenSearchQueryDirector:
         if size:
             self.__builder.add_size(size)
 
-    # TODO: Update this
     def __process_multi_match(self, query_params):
         multi_match_query = query_params.get(V1_PARAMETERS_LIST.QUERY)
         if multi_match_query and hasattr(self.__builder, 'add_multi_match'):
-            # self.__builder.add_multi_match(multi_match_query)
             tokens = multi_match_query.split()
-            # TODO
-            if len(tokens) > 12 or len(multi_match_query) > 180:
-                # TODO: start refactoring from here
-                self.__builder.add_match_phrase(field, value, slop=3)
+            if len(tokens) > 12 or len(multi_match_query) > 50:
+                self.__builder.add_multi_match(multi_match_query, slop=3)
             else:
                 self.__builder.add_multi_match(multi_match_query)
 
-    # TODO: Update this
     def __process_aggregation(self, query_params):
         aggregation = query_params.get(V1_PARAMETERS_LIST.AGGREGATION)
         geohex_grid_precision = query_params.get(
