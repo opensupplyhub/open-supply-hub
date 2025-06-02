@@ -32,7 +32,7 @@ import { facilityCollectionPropType } from '../util/propTypes';
 
 import {
     ALLOW_LARGE_DOWNLOADS,
-    FACILITIES_DOWNLOAD_DEFAULT_LIMIT,
+    FACILITIES_DOWNLOAD_LIMIT,
     authLoginFormRoute,
     authRegisterFormRoute,
 } from '../util/constants';
@@ -228,8 +228,7 @@ function NonVectorTileFilterSidebarFacilitiesTab({
                         alternative={
                             <DownloadFacilitiesButton
                                 disabled={
-                                    facilitiesCount >=
-                                    FACILITIES_DOWNLOAD_DEFAULT_LIMIT
+                                    facilitiesCount >= FACILITIES_DOWNLOAD_LIMIT
                                 }
                                 setLoginRequiredDialogIsOpen={
                                     setLoginRequiredDialogIsOpen

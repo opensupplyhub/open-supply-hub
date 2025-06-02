@@ -49,7 +49,7 @@ import {
     authLoginFormRoute,
     authRegisterFormRoute,
     ALLOW_LARGE_DOWNLOADS,
-    FACILITIES_DOWNLOAD_DEFAULT_LIMIT,
+    FACILITIES_DOWNLOAD_LIMIT,
 } from '../util/constants';
 
 import { makeFacilityDetailLink } from '../util/util';
@@ -355,8 +355,7 @@ function FilterSidebarFacilitiesTab({
                         alternative={
                             <DownloadFacilitiesButton
                                 disabled={
-                                    facilitiesCount >=
-                                    FACILITIES_DOWNLOAD_DEFAULT_LIMIT
+                                    facilitiesCount >= FACILITIES_DOWNLOAD_LIMIT
                                 }
                                 setLoginRequiredDialogIsOpen={
                                     setLoginRequiredDialogIsOpen
