@@ -7,30 +7,34 @@ def remove_sources_without_contributor_and_related_data(apps, schema_editor):
     and remove all data related to these records
     """
 
-    FacilityList = apps.get_model("api", "FacilityList")
-    FacilityListItem = apps.get_model("api", "FacilityListItem")
-    FacilityMatch = apps.get_model("api", "FacilityMatch")
-    Source = apps.get_model("api", "Source")
+    facility_list_model = apps.get_model("api", "FacilityList")
+    facility_list_item_model = apps.get_model("api", "FacilityListItem")
+    facility_match_model = apps.get_model("api", "FacilityMatch")
+    source_model = apps.get_model("api", "Source")
 
-    sources_without_contributor = Source.objects.filter(
+    sources_without_contributor = source_model.objects.filter(
         contributor=None
     ).order_by("-id")
 
     for source in sources_without_contributor:
-        facility_list = FacilityList.objects.get(id=source.facility_list.id)
-        facility_list_items = FacilityListItem.objects.filter(
+        facility_list = facility_list_model.objects.get(
+            id=source.facility_list.id
+        )
+        facility_list_items = facility_list_item_model.objects.filter(
             source_id=source.id
         )
 
         for facility_list_item in facility_list_items:
-            FacilityMatch.objects.filter(
+            facility_match_model.objects.filter(
                 facility_list_item_id=facility_list_item.id
             ).delete()
             facility = facility_list_item.facility
 
             if facility.created_from_id == facility_list_item.id:
                 replacement_item = (
-                    FacilityListItem.objects.filter(facility_id=facility.id)
+                    facility_list_item_model.objects.filter(
+                        facility_id=facility.id
+                    )
                     .exclude(id=facility_list_item.id)
                     .last()
                 )
