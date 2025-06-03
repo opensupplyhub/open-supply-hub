@@ -6,7 +6,7 @@ provider "aws" {
 locals {
   # Regex patterns for IP validation
   ipv4_cidr_pattern = "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
-  ipv6_cidr_pattern = ":"
+  ipv6_cidr_pattern = "^([0-9a-fA-F]{1,4}:){1,7}[0-9a-fA-F]{1,4}/[0-9]{1,3}$"
 
   ipv4_whitelist = [
     for ip in var.ip_whitelist :
