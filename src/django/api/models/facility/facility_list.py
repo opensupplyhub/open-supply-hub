@@ -1,7 +1,10 @@
 from django.db import models
 from django.db.models import JSONField
 
-from api.constants import MatchResponsibility
+from api.constants import (
+    MatchResponsibility,
+    OriginSource
+)
 
 
 class FacilityList(models.Model):
@@ -90,6 +93,12 @@ class FacilityList(models.Model):
         blank=True,
         help_text=('List-level and internal errors logged during background '
                    'parsing of the list.')
+    )
+    origin_source = models.CharField(
+        choices=OriginSource.CHOICES,
+        default=OriginSource.OSHUB,
+        max_length=200,
+        help_text="The environment value where instance running"
     )
 
     def __str__(self):

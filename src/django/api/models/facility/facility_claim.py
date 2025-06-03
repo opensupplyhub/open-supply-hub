@@ -6,7 +6,10 @@ from django.contrib.postgres import fields as postgres
 from django.db import models
 
 from countries.lib.countries import COUNTRY_CHOICES
-from api.constants import FacilityClaimStatuses
+from api.constants import (
+    FacilityClaimStatuses,
+    OriginSource
+)
 from ...constants import Affiliations, Certifications
 from ...facility_type_processing_type import ALL_FACILITY_TYPE_CHOICES
 
@@ -390,6 +393,12 @@ class FacilityClaim(models.Model):
         null=True,
         blank=True,
         help_text='The sector(s) for goods made at the facility',
+    )
+    origin_source = models.CharField(
+        choices=OriginSource.CHOICES,
+        default=OriginSource.OSHUB,
+        max_length=200,
+        help_text="The environment value where instance running"
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
