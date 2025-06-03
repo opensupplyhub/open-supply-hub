@@ -4,21 +4,25 @@ provider "aws" {
 }
 
 locals {
+  # Regex patterns for IP validation
+  ipv4_cidr_pattern = "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
+  ipv6_cidr_pattern = ":"
+
   ipv4_whitelist = [
     for ip in var.ip_whitelist :
-    ip if can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$", ip))
+    ip if can(regex(local.ipv4_cidr_pattern, ip)) && can(cidrhost(ip, 0))
   ]
   ipv6_whitelist = [
     for ip in var.ip_whitelist :
-    ip if can(regex(":", ip)) && can(cidrhost(ip, 0))
+    ip if can(regex(local.ipv6_cidr_pattern, ip)) && can(cidrhost(ip, 0))
   ]
   ipv4_denylist = [
     for ip in var.ip_denylist :
-    ip if can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$", ip))
+    ip if can(regex(local.ipv4_cidr_pattern, ip)) && can(cidrhost(ip, 0))
   ]
   ipv6_denylist = [
     for ip in var.ip_denylist :
-    ip if can(regex(":", ip)) && can(cidrhost(ip, 0))
+    ip if can(regex(local.ipv6_cidr_pattern, ip)) && can(cidrhost(ip, 0))
   ]
   is_whitelist_enabled = length(local.ipv4_whitelist) > 0 || length(local.ipv6_whitelist) > 0
   is_denylist_enabled  = length(local.ipv4_denylist)  > 0 || length(local.ipv6_denylist)  > 0
