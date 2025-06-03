@@ -63,7 +63,7 @@ class Migration(migrations.Migration):
                 on_delete=models.PROTECT,
                 null=True,
                 editable=False,
-                related_name='facility_list_items_by_uuid',
+                related_name='facility_list_items',
                 help_text='The UUID of the source from which this item was created.',
             ),
         ),
@@ -90,7 +90,49 @@ class Migration(migrations.Migration):
                 on_delete=models.PROTECT,
                 null=False,
                 editable=False,
-                related_name='facility_list_items_by_uuid',
+                related_name='facility_list_items',
+                help_text='The UUID of the source from which this item was created.',
+            ),
+        ),
+
+        migrations.AddField(
+            model_name='facilitylistitemtemp',
+            name='source_uuid',
+            field=models.ForeignKey(
+                to='api.source',
+                to_field='uuid',
+                db_column='source_uuid',
+                on_delete=models.PROTECT,
+                null=True,
+                editable=False,
+                related_name='facility_list_items_temp',
+                help_text='The UUID of the source from which this item was created.',
+            ),
+        ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_facilitylistitemtemp AS flit
+                SET source_uuid = s.uuid
+                FROM api_source AS s
+                WHERE flit.source_id = s.id;
+            """,
+            reverse_sql="""
+                UPDATE api_facilitylistitemtemp AS flit
+                SET source_uuid = NULL
+                WHERE flit.source_uuid IS NOT NULL;
+            """,
+        ),
+        migrations.AlterField(
+            model_name='facilitylistitemtemp',
+            name='source_uuid',
+            field=models.ForeignKey(
+                to='api.source',
+                to_field='uuid',
+                db_column='source_uuid',
+                on_delete=models.PROTECT,
+                null=False,
+                editable=False,
+                related_name='facility_list_items_temp',
                 help_text='The UUID of the source from which this item was created.',
             ),
         ),
