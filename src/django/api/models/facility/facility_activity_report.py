@@ -1,5 +1,6 @@
 from simple_history.models import HistoricalRecords
 from django.db import models
+from ...constants import OriginSource
 
 
 class FacilityActivityReport(models.Model):
@@ -80,6 +81,12 @@ class FacilityActivityReport(models.Model):
         null=True,
         blank=True,
         verbose_name='status change date',
+    )
+    origin_source = models.CharField(
+        choices=OriginSource.CHOICES,
+        default=OriginSource.OSHUB,
+        max_length=200,
+        help_text="The environment value where instance running"
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

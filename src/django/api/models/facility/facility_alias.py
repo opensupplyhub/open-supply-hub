@@ -1,5 +1,6 @@
 from simple_history.models import HistoricalRecords
 from django.db import models
+from ...constants import OriginSource
 
 
 class FacilityAlias(models.Model):
@@ -34,6 +35,12 @@ class FacilityAlias(models.Model):
         max_length=6,
         choices=REASON_CHOICES,
         help_text='The reason why this alias was created'
+    )
+    origin_source = models.CharField(
+        choices=OriginSource.CHOICES,
+        default=OriginSource.OSHUB,
+        max_length=200,
+        help_text="The environment value where instance running"
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
