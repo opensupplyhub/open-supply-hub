@@ -4,9 +4,6 @@ provider "aws" {
 }
 
 locals {
-  is_whitelist_enabled = length(var.ip_whitelist) > 0
-  is_denylist_enabled  = length(var.ip_denylist) > 0
-  ip_list_conflict = local.is_whitelist_enabled && local.is_denylist_enabled
   ipv4_whitelist = [
     for ip in var.ip_whitelist :
     ip if can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$", ip))
@@ -23,6 +20,9 @@ locals {
     for ip in var.ip_denylist :
     ip if can(regex(":", ip)) && can(cidrhost(ip, 0))
   ]
+  is_whitelist_enabled = length(local.ipv4_whitelist) > 0 || length(local.ipv6_whitelist) > 0
+  is_denylist_enabled  = length(local.ipv4_denylist)  > 0 || length(local.ipv6_denylist)  > 0
+  ip_list_conflict = local.is_whitelist_enabled && local.is_denylist_enabled
 }
 
 resource "null_resource" "validate_ip_lists" {
