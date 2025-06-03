@@ -85,119 +85,119 @@ resource "aws_wafv2_ip_set" "ipv6_denylist" {
   }
 }
 
-# resource "aws_wafv2_web_acl" "web_acl" {
-#   for_each = var.waf_enabled ? { (var.environment) = var.environment } : {}
-#   provider = aws.us-east-1
-# 
-#   name        = "${var.environment}-web-acl"
-#   description = "Web ACL for environment ${var.environment}"
-#   scope       = "CLOUDFRONT"
-# 
-#   dynamic "rule" {
-#     for_each = local.is_denylist_enabled && length(local.ipv4_denylist) > 0 ? [true] : []
-#     content {
-#       name     = "BlockDenylistedIPv4"
-#       priority = 0
-#       action {
-#         block {}
-#       }
-#       statement {
-#         ip_set_reference_statement {
-#           arn = aws_wafv2_ip_set.ipv4_denylist[0].arn
-#         }
-#       }
-#       visibility_config {
-#         cloudwatch_metrics_enabled = true
-#         metric_name                = "BlockDenylistedIPv4"
-#         sampled_requests_enabled   = true
-#       }
-#     }
-#   }
-# 
-#   dynamic "rule" {
-#     for_each = local.is_denylist_enabled && length(local.ipv6_denylist) > 0 ? [true] : []
-#     content {
-#       name     = "BlockDenylistedIPv6"
-#       priority = 1
-#       action {
-#         block {}
-#       }
-#       statement {
-#         ip_set_reference_statement {
-#           arn = aws_wafv2_ip_set.ipv6_denylist[0].arn
-#         }
-#       }
-#       visibility_config {
-#         cloudwatch_metrics_enabled = true
-#         metric_name                = "BlockDenylistedIPv6"
-#         sampled_requests_enabled   = true
-#       }
-#     }
-#   }
-# 
-#   dynamic "rule" {
-#     for_each = local.is_whitelist_enabled && length(local.ipv4_whitelist) > 0 ? [true] : []
-#     content {
-#       name     = "AllowWhitelistedIPv4"
-#       priority = 2
-#       action {
-#         allow {}
-#       }
-#       statement {
-#         ip_set_reference_statement {
-#           arn = aws_wafv2_ip_set.ipv4_whitelist[0].arn
-#         }
-#       }
-#       visibility_config {
-#         cloudwatch_metrics_enabled = true
-#         metric_name                = "AllowWhitelistedIPv4"
-#         sampled_requests_enabled   = true
-#       }
-#     }
-#   }
-# 
-#   dynamic "rule" {
-#     for_each = local.is_whitelist_enabled && length(local.ipv6_whitelist) > 0 ? [true] : []
-#     content {
-#       name     = "AllowWhitelistedIPv6"
-#       priority = 3
-#       action {
-#         allow {}
-#       }
-#       statement {
-#         ip_set_reference_statement {
-#           arn = aws_wafv2_ip_set.ipv6_whitelist[0].arn
-#         }
-#       }
-#       visibility_config {
-#         cloudwatch_metrics_enabled = true
-#         metric_name                = "AllowWhitelistedIPv6"
-#         sampled_requests_enabled   = true
-#       }
-#     }
-#   }
-# 
-#   dynamic "default_action" {
-#     for_each = local.is_whitelist_enabled ? [true] : []
-#     content {
-#       block {}
-#     }
-#   }
-# 
-#   dynamic "default_action" {
-#     for_each = local.is_whitelist_enabled ? [] : [true]
-#     content {
-#       allow {}
-#     }
-#   }
-# 
-#   visibility_config {
-#     cloudwatch_metrics_enabled = true
-#     metric_name                = "${var.environment}-web-acl-metrics"
-#     sampled_requests_enabled   = true
-#   }
-# 
-#   lifecycle {
-#     create_before_destroy = true
-#   }
-# }
+resource "aws_wafv2_web_acl" "web_acl" {
+  for_each = var.waf_enabled ? { (var.environment) = var.environment } : {}
+  provider = aws.us-east-1
+
+  name        = "${var.environment}-web-acl"
+  description = "Web ACL for environment ${var.environment}"
+  scope       = "CLOUDFRONT"
+
+  dynamic "rule" {
+    for_each = local.is_denylist_enabled && length(local.ipv4_denylist) > 0 ? [true] : []
+    content {
+      name     = "BlockDenylistedIPv4"
+      priority = 0
+      action {
+        block {}
+      }
+      statement {
+        ip_set_reference_statement {
+          arn = aws_wafv2_ip_set.ipv4_denylist[0].arn
+        }
+      }
+      visibility_config {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "BlockDenylistedIPv4"
+        sampled_requests_enabled   = true
+      }
+    }
+  }
+
+  dynamic "rule" {
+    for_each = local.is_denylist_enabled && length(local.ipv6_denylist) > 0 ? [true] : []
+    content {
+      name     = "BlockDenylistedIPv6"
+      priority = 1
+      action {
+        block {}
+      }
+      statement {
+        ip_set_reference_statement {
+          arn = aws_wafv2_ip_set.ipv6_denylist[0].arn
+        }
+      }
+      visibility_config {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "BlockDenylistedIPv6"
+        sampled_requests_enabled   = true
+      }
+    }
+  }
+
+  dynamic "rule" {
+    for_each = local.is_whitelist_enabled && length(local.ipv4_whitelist) > 0 ? [true] : []
+    content {
+      name     = "AllowWhitelistedIPv4"
+      priority = 2
+      action {
+        allow {}
+      }
+      statement {
+        ip_set_reference_statement {
+          arn = aws_wafv2_ip_set.ipv4_whitelist[0].arn
+        }
+      }
+      visibility_config {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "AllowWhitelistedIPv4"
+        sampled_requests_enabled   = true
+      }
+    }
+  }
+
+  dynamic "rule" {
+    for_each = local.is_whitelist_enabled && length(local.ipv6_whitelist) > 0 ? [true] : []
+    content {
+      name     = "AllowWhitelistedIPv6"
+      priority = 3
+      action {
+        allow {}
+      }
+      statement {
+        ip_set_reference_statement {
+          arn = aws_wafv2_ip_set.ipv6_whitelist[0].arn
+        }
+      }
+      visibility_config {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "AllowWhitelistedIPv6"
+        sampled_requests_enabled   = true
+      }
+    }
+  }
+
+  dynamic "default_action" {
+    for_each = local.is_whitelist_enabled ? [true] : []
+    content {
+      block {}
+    }
+  }
+
+  dynamic "default_action" {
+    for_each = local.is_whitelist_enabled ? [] : [true]
+    content {
+      allow {}
+    }
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "${var.environment}-web-acl-metrics"
+    sampled_requests_enabled   = true
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
