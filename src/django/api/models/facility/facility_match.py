@@ -1,6 +1,7 @@
 from simple_history.models import HistoricalRecords
 
 from django.db import models
+from ...constants import OriginSource
 
 
 class FacilityMatch(models.Model):
@@ -63,6 +64,12 @@ class FacilityMatch(models.Model):
         help_text=('A facility match is_active if its associated list item '
                    'not been removed; when a list item is removed, this '
                    'field will be set to False.')
+    )
+    origin_source = models.CharField(
+        choices=OriginSource.CHOICES,
+        default=OriginSource.OSHUB,
+        max_length=200,
+        help_text="The environment value where instance running"
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
