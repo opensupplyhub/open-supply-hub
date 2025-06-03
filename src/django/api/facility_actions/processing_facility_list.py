@@ -95,6 +95,7 @@ class ProcessingFacilityList(ProcessingFacility):
             raw_header=header_str,
             sector=[],
             source=source,
+            source_uuid=source
         )
 
     def __handle_cc_internal_errors(self) -> None:
