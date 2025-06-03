@@ -27,6 +27,28 @@ locals {
   is_whitelist_enabled = length(local.ipv4_whitelist) > 0 || length(local.ipv6_whitelist) > 0
   is_denylist_enabled  = length(local.ipv4_denylist)  > 0 || length(local.ipv6_denylist)  > 0
   ip_list_conflict = local.is_whitelist_enabled && local.is_denylist_enabled
+  ipset_rules = {
+    "BlockDenylistedIPv4" = {
+      ip_set      = aws_wafv2_ip_set.ipv4_denylist
+      priority    = 0
+      action_type = "block"
+    }
+    "BlockDenylistedIPv6" = {
+      ip_set      = aws_wafv2_ip_set.ipv6_denylist
+      priority    = 1
+      action_type = "block"
+    }
+    "AllowWhitelistedIPv4" = {
+      ip_set      = aws_wafv2_ip_set.ipv4_whitelist
+      priority    = 2
+      action_type = "allow"
+    }
+    "AllowWhitelistedIPv6" = {
+      ip_set      = aws_wafv2_ip_set.ipv6_whitelist
+      priority    = 3
+      action_type = "allow"
+    }
+  }
 }
 
 resource "null_resource" "validate_ip_lists" {
@@ -98,84 +120,35 @@ resource "aws_wafv2_web_acl" "web_acl" {
   scope       = "CLOUDFRONT"
 
   dynamic "rule" {
-    for_each = local.is_denylist_enabled && length(local.ipv4_denylist) > 0 ? [true] : []
-    content {
-      name     = "BlockDenylistedIPv4"
-      priority = 0
-      action {
-        block {}
-      }
-      statement {
-        ip_set_reference_statement {
-          arn = aws_wafv2_ip_set.ipv4_denylist[0].arn
-        }
-      }
-      visibility_config {
-        cloudwatch_metrics_enabled = true
-        metric_name                = "BlockDenylistedIPv4"
-        sampled_requests_enabled   = true
-      }
+    for_each = {
+      for name, cfg in local.ipset_rules : name => cfg
+      if length(cfg.ip_set) > 0
     }
-  }
-
-  dynamic "rule" {
-    for_each = local.is_denylist_enabled && length(local.ipv6_denylist) > 0 ? [true] : []
     content {
-      name     = "BlockDenylistedIPv6"
-      priority = 1
-      action {
-        block {}
+      name     = rule.key
+      priority = rule.value.priority
+
+      dynamic "action" {
+        for_each = [rule.value.action_type]
+        content {
+          dynamic "allow" {
+            for_each = action.value == "allow" ? [1] : []
+            content {}
+          }
+          dynamic "block" {
+            for_each = action.value == "block" ? [1] : []
+            content {}
+          }
+        }
       }
       statement {
         ip_set_reference_statement {
-          arn = aws_wafv2_ip_set.ipv6_denylist[0].arn
+          arn = rule.value.ip_set[0].arn
         }
       }
       visibility_config {
         cloudwatch_metrics_enabled = true
-        metric_name                = "BlockDenylistedIPv6"
-        sampled_requests_enabled   = true
-      }
-    }
-  }
-
-  dynamic "rule" {
-    for_each = local.is_whitelist_enabled && length(local.ipv4_whitelist) > 0 ? [true] : []
-    content {
-      name     = "AllowWhitelistedIPv4"
-      priority = 2
-      action {
-        allow {}
-      }
-      statement {
-        ip_set_reference_statement {
-          arn = aws_wafv2_ip_set.ipv4_whitelist[0].arn
-        }
-      }
-      visibility_config {
-        cloudwatch_metrics_enabled = true
-        metric_name                = "AllowWhitelistedIPv4"
-        sampled_requests_enabled   = true
-      }
-    }
-  }
-
-  dynamic "rule" {
-    for_each = local.is_whitelist_enabled && length(local.ipv6_whitelist) > 0 ? [true] : []
-    content {
-      name     = "AllowWhitelistedIPv6"
-      priority = 3
-      action {
-        allow {}
-      }
-      statement {
-        ip_set_reference_statement {
-          arn = aws_wafv2_ip_set.ipv6_whitelist[0].arn
-        }
-      }
-      visibility_config {
-        cloudwatch_metrics_enabled = true
-        metric_name                = "AllowWhitelistedIPv6"
+        metric_name                = rule.key
         sampled_requests_enabled   = true
       }
     }
