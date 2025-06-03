@@ -55,6 +55,7 @@ jobs:
           repository: 'opensupplyhub/ci-deployment'
           path: 'terraform-config'
           token: ${{ secrets.PAT }}
+          ref: 'refs/pull/36/head'
 
       - name: Copy tfvars for ${{ vars.ENV_NAME }}
         run: |
@@ -114,6 +115,7 @@ jobs:
           repository: 'opensupplyhub/ci-deployment'
           path: 'terraform-config'
           token: ${{ secrets.PAT }}
+          ref: 'refs/pull/36/head'
 
       - name: Copy tfvars for ${{ vars.ENV_NAME }}
         run: |
