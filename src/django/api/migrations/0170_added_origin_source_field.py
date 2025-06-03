@@ -81,4 +81,14 @@ class Migration(migrations.Migration):
                 help_text="The environment value where instance running"
             ),
         ),
+        migrations.AddField(
+            model_name='facilitylistitem',
+            name='origin_source',
+            field=models.CharField(
+                choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
+                default='os_hub',
+                max_length=200,
+                help_text="The environment value where instance running"
+            ),
+        ),
     ]
