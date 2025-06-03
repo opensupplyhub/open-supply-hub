@@ -177,7 +177,7 @@ class FacilityListItemTemp(models.Model):
         on_delete=models.PROTECT,
         null=False,
         editable=False,
-        related_name='facility_list_items',
+        related_name='facility_list_items_temp',
         help_text=(
             'The UUID of the source from which this item was created.'
         ),
