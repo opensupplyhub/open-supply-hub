@@ -81,6 +81,7 @@ class ContributorFieldsApiTest(APITestCase):
             raw_header="country,name,address,extra_1",
             raw_json=get_raw_json(raw_data, "country,name,address,extra_1"),
             raw_data=raw_data,
+            source_uuid=self.list_source,
         )
 
         self.facility = Facility.objects.create(
@@ -125,6 +126,7 @@ class ContributorFieldsApiTest(APITestCase):
             geocoded_point=Point(0, 0),
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.api_source,
+            source_uuid=self.api_source,
         )
         self.facility_two = Facility.objects.create(
             country_code=self.api_list_item.country_code,
@@ -280,6 +282,7 @@ class ContributorFieldsApiTest(APITestCase):
             geocoded_point=Point(0, 0),
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.api_source,
+            source_uuid=self.api_source,
         )
         new_item.facility = self.facility_two
         new_item.save()
@@ -336,6 +339,7 @@ class ContributorFieldsApiTest(APITestCase):
             geocoded_point=Point(0, 0),
             status=FacilityListItem.CONFIRMED_MATCH,
             source=api_source_two,
+            source_uuid=api_source_two,
         )
         new_item.facility = self.facility_two
         new_item.save()

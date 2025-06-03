@@ -45,6 +45,7 @@ class FacilityClaimChangesTest(TestCase):
             row_index=1,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source,
+            source_uuid=self.source,
         )
 
         self.facility = Facility.objects.create(

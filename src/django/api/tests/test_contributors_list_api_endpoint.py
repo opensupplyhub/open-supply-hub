@@ -120,6 +120,7 @@ class ContributorsListAPIEndpointTest(TestCase):
             source=self.source_one,
             sector=[],
             status=FacilityListItem.MATCHED,
+            source_uuid=self.source_one,
         )
 
         self.list_one_b = FacilityList.objects.create(
@@ -137,6 +138,7 @@ class ContributorsListAPIEndpointTest(TestCase):
             source=self.source_one_b,
             sector=[],
             status=FacilityListItem.MATCHED,
+            source_uuid=self.source_one_b,
         )
 
         # Contributor two has no lists
@@ -180,6 +182,7 @@ class ContributorsListAPIEndpointTest(TestCase):
             source=self.source_five,
             sector=[],
             status=FacilityListItem.ERROR_PARSING,
+            source_uuid=self.source_five,
         )
 
         self.list_six = FacilityList.objects.create(
@@ -197,6 +200,7 @@ class ContributorsListAPIEndpointTest(TestCase):
             source=self.source_six,
             sector=[],
             status=FacilityListItem.ERROR_PARSING,
+            source_uuid=self.source_six,
         )
 
         self.list_item_six_b = FacilityListItem.objects.create(
@@ -204,6 +208,7 @@ class ContributorsListAPIEndpointTest(TestCase):
             source=self.source_six,
             sector=[],
             status=FacilityListItem.MATCHED,
+            source_uuid=self.source_six,
         )
 
         # Test to ensure contributors don't appear in the list if all of their
@@ -219,6 +224,7 @@ class ContributorsListAPIEndpointTest(TestCase):
             source=self.source_seven,
             sector=[],
             status=FacilityListItem.MATCHED,
+            source_uuid=self.source_seven,
         )
 
     def test_contributors_list_has_only_contributors_with_active_lists(self):
