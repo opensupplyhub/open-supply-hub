@@ -206,7 +206,6 @@ class FacilitiesDownloadSettings:
     FACILITIES_DOWNLOAD_LIMIT = 10000
 
 
-
 class FacilitiesListSettings:
     DEFAULT_PAGE_LIMIT = 100
 
