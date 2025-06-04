@@ -1301,6 +1301,7 @@ export const USER_DEFAULT_STATE = Object.freeze({
     is_superuser: false,
     is_staff: false,
     is_moderation_mode: false,
+    allowed_records_number: FACILITIES_DOWNLOAD_LIMIT,
 });
 
 export const facilityClaimStepsNames = Object.freeze({

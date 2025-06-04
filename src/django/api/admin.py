@@ -175,11 +175,9 @@ class ApiLimitAdmin(admin.ModelAdmin):
 
 class FacilityDownloadLimitAdmin(admin.ModelAdmin):
     list_display = ('user',
-                    'free_download_records_limit',
-                    'paid_download_records_limit',
-                    'remaining_free_records',
-                    'remaining_paid_records',
-                    'limit_update_date',
+                    'free_download_records',
+                    'paid_download_records',
+                    'updated_at',
                     )
     search_fields = ('user__username',)
     autocomplete_fields = ('user', )
