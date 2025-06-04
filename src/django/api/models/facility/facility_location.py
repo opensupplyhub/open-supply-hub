@@ -1,5 +1,6 @@
 from django.contrib.gis.db import models as gis_models
 from django.db import models
+from ...constants import OriginSource
 
 
 class FacilityLocation(models.Model):
@@ -30,6 +31,12 @@ class FacilityLocation(models.Model):
         on_delete=models.PROTECT,
         help_text=('An optional reference to the contributor who submitted '
                    'the new location')
+    )
+    origin_source = models.CharField(
+        choices=OriginSource.CHOICES,
+        default=OriginSource.OSHUB,
+        max_length=200,
+        help_text="The environment value where instance running"
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
