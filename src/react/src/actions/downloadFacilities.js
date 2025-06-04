@@ -9,6 +9,7 @@ import {
     makeGetFacilitiesDownloadURLWithQueryString,
     createQueryStringFromSearchFilters,
 } from '../util/util';
+import { completeSubmitLoginForm } from '../actions/auth';
 
 import { FACILITIES_DOWNLOAD_REQUEST_PAGE_SIZE } from '../util/constants';
 
@@ -75,6 +76,9 @@ export default function downloadFacilities(format, { isEmbedded }) {
         const {
             filters,
             embeddedMap: { embed },
+            auth: {
+                user: { user },
+            },
         } = getState();
 
         const qs = createQueryStringFromSearchFilters(filters, embed, detail);
@@ -84,6 +88,12 @@ export default function downloadFacilities(format, { isEmbedded }) {
             .then(({ data }) => {
                 dispatch(completeFetchDownloadFacilities(data));
                 dispatch(logDownload(format, { isEmbedded }));
+                dispatch(
+                    completeSubmitLoginForm({
+                        allowed_records_number:
+                            user.allowed_records_number - data.count,
+                    }),
+                );
             })
             .catch(err => {
                 dispatch(
