@@ -22,7 +22,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe code/API changes here.*
 
 ### Architecture/Environment changes
-* [OSDEV-1925](https://opensupplyhub.atlassian.net/browse/OSDEV-1925) - Deploy to Pre-prod on `release/*` branch creation is prohibited.
+* [OSDEV-1925](https://opensupplyhub.atlassian.net/browse/OSDEV-1925) - This PR disables the automatic execution of the `Deploy to AWS` pipeline on `releases/*` branch creation via the `[Release] Init` pipeline, while retaining automatic execution on push events to the same branch.
+* [OSDEV-2035](https://opensupplyhub.atlassian.net/browse/OSDEV-2035) - Added IPv6 rules for ip whitelist and denylist.
 
 ### Bugfix
 * *Describe bugfix here.*
@@ -39,6 +40,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: May 31, 2025
+
+### Code/API changes
+* [OSDEV-2017](https://opensupplyhub.atlassian.net/browse/OSDEV-2017) - CSRF (Cross-Site Request Forgery) protection has been disabled across the application. CSRF middleware has been removed from the request pipeline. All affected endpoints are now accessible without requiring CSRF tokens.
 
 ### Architecture/Environment changes
 * [OSDEV-1992](https://opensupplyhub.atlassian.net/browse/OSDEV-1992) - Provisioned a dedicated EC2 instance to host WireGuard VPN service, enabling authorized users to bypass AWS WAF when accessing the RBA instance.

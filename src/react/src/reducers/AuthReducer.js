@@ -43,11 +43,7 @@ import { completeUpdateUserProfile } from '../actions/profile';
 
 import { completeSubmitClaimAFacilityData } from '../actions/claimFacility';
 
-import {
-    registrationFieldsEnum,
-    USER_DEFAULT_STATE,
-    CSRF_TOKEN_KEY,
-} from '../util/constants';
+import { registrationFieldsEnum, USER_DEFAULT_STATE } from '../util/constants';
 
 const initialState = Object.freeze({
     signup: Object.freeze({
@@ -124,27 +120,17 @@ const updateRegistrationFormField = (state, { field, value }) =>
         },
     });
 
-const handleSignUp = (state, { csrfToken }) => {
-    if (csrfToken) {
-        window.localStorage.setItem(CSRF_TOKEN_KEY, csrfToken);
-    }
-
-    return update(state, {
+const updateSignUpFormField = state =>
+    update(state, {
         fetching: { $set: false },
         error: { $set: null },
         signup: {
             form: { $set: initialState.signup.form },
         },
     });
-};
 
-const handleLogin = (state, payload) => {
-    const { csrfToken } = payload;
-    if (csrfToken) {
-        window.localStorage.setItem(CSRF_TOKEN_KEY, csrfToken);
-    }
-
-    return update(state, {
+const updateLoginFormField = (state, payload) =>
+    update(state, {
         fetching: { $set: false },
         error: { $set: null },
         login: {
@@ -159,12 +145,6 @@ const handleLogin = (state, payload) => {
             },
         },
     });
-};
-
-const handleLogout = () => {
-    window.localStorage.removeItem(CSRF_TOKEN_KEY);
-    return initialState;
-};
 
 export default createReducer(
     {
@@ -216,8 +196,8 @@ export default createReducer(
                     error: { $set: payload },
                 },
             }),
-        [completeSubmitSignUpForm]: handleSignUp,
-        [completeSubmitLoginForm]: handleLogin,
+        [completeSubmitSignUpForm]: updateSignUpFormField,
+        [completeSubmitLoginForm]: updateLoginFormField,
         [startSessionLogin]: state =>
             update(state, {
                 session: {
@@ -248,7 +228,7 @@ export default createReducer(
             update(state, {
                 forgotPassword: { $set: initialState.forgotPassword },
             }),
-        [completeSubmitLogOut]: handleLogout,
+        [completeSubmitLogOut]: () => initialState,
         [openForgotPasswordDialog]: state =>
             update(state, {
                 forgotPassword: {
