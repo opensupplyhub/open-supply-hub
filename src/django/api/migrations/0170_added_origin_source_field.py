@@ -131,4 +131,39 @@ class Migration(migrations.Migration):
                 help_text="The environment value where instance running"
             ),
         ),
+        migrations.AddField(
+            model_name='historicalcontributor',
+            name='origin_source',
+            field=models.CharField(choices=[('os_hub', ' OS Hub'), ('rba', 'RBA')], default='os_hub', help_text='The environment value where instance running', max_length=200),
+        ),
+        migrations.AddField(
+            model_name='historicalextendedfield',
+            name='origin_source',
+            field=models.CharField(choices=[('os_hub', ' OS Hub'), ('rba', 'RBA')], default='os_hub', help_text='The environment value where instance running', max_length=200),
+        ),
+        migrations.AddField(
+            model_name='historicalfacility',
+            name='origin_source',
+            field=models.CharField(choices=[('os_hub', ' OS Hub'), ('rba', 'RBA')], default='os_hub', help_text='The environment value where instance running', max_length=200),
+        ),
+        migrations.AddField(
+            model_name='historicalfacilityactivityreport',
+            name='origin_source',
+            field=models.CharField(choices=[('os_hub', ' OS Hub'), ('rba', 'RBA')], default='os_hub', help_text='The environment value where instance running', max_length=200),
+        ),
+        migrations.AddField(
+            model_name='historicalfacilityalias',
+            name='origin_source',
+            field=models.CharField(choices=[('os_hub', ' OS Hub'), ('rba', 'RBA')], default='os_hub', help_text='The environment value where instance running', max_length=200),
+        ),
+        migrations.AddField(
+            model_name='historicalfacilityclaim',
+            name='origin_source',
+            field=models.CharField(choices=[('os_hub', ' OS Hub'), ('rba', 'RBA')], default='os_hub', help_text='The environment value where instance running', max_length=200),
+        ),
+        migrations.AddField(
+            model_name='historicalfacilitymatch',
+            name='origin_source',
+            field=models.CharField(choices=[('os_hub', ' OS Hub'), ('rba', 'RBA')], default='os_hub', help_text='The environment value where instance running', max_length=200),
+        ),
     ]
