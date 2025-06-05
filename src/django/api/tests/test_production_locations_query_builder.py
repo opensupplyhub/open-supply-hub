@@ -248,6 +248,24 @@ class TestProductionLocationsQueryBuilder(TestCase):
             expected, self.builder.query_body['query']['bool']['must']
         )
 
+        self.builder.reset()
+        self.builder.add_multi_match(
+            'Mount Isa Mines Limited Copper Refineries Pty Ltd CRL', slop=3
+        )
+        expected_with_slop = {
+            'multi_match': {
+                'query': 'Mount Isa Mines Limited Copper Refineries Pty Ltd CRL',
+                'fields': ['name^2', 'address', 'description', 'local_name'],
+                'type': 'phrase',
+                'slop': 3
+            }
+        }
+        self.assertIn(
+            expected_with_slop, self.builder.query_body['query']['bool']['must']
+        )
+        multi_match_query = self.builder.query_body['query']['bool']['must'][0]['multi_match']
+        self.assertNotIn('fuzziness', multi_match_query)
+
     def test_add_aggregations_with_precision(self):
         aggregation = 'geohex_grid'
         geohex_grid_precision = 5

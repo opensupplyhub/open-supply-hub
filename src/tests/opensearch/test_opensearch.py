@@ -103,3 +103,43 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
             body=query
         )
         self.assertGreater(response['hits']['total']['value'], 0)
+
+    def test_search_document_with_long_query(self):
+            doc = {
+                "sector": [
+                    "Apparel"
+                ],
+                "address": "12 KNIGHT STREET, PORTSMITH, QLD 4870",
+                "name": "TINAROO CREEK WINES PTY LTD",
+                "country": {
+                    "alpha_2": "AU"
+                },
+                "os_id": "VN2025093077Q64",
+                "coordinates": {
+                    "lat": -16.940004,
+                    "lng": 145.7628965
+                },
+            }
+            self.client.index(
+                index=self.production_locations_index_name,
+                body=doc,
+                id=self.client.count()
+            )
+            self.client.indices.refresh(index=self.production_locations_index_name)
+
+            query_text = "Mount Isa Mines Limited Copper Refineries Pty Ltd CRL"
+            query = {
+                'query': {
+                    'multi_match': {
+                        'query': query_text,
+                        'fields': ['name^2', 'address', 'description', 'local_name'],
+                        'type': 'phrase',
+                        'slop': 3
+                    }
+                }
+            }
+            response = self.client.search(
+                index=self.production_locations_index_name,
+                body=query
+            )
+            self.assertGreater(response['hits']['total']['value'], 0)
