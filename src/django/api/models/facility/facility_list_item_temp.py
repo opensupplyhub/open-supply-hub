@@ -170,18 +170,6 @@ class FacilityListItemTemp(models.Model):
         help_text='The version of Dedupe Hub instance that used.')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    source_uuid = models.ForeignKey(
-        'Source',
-        to_field='uuid',
-        db_column='source_uuid',
-        on_delete=models.PROTECT,
-        null=False,
-        editable=False,
-        related_name='facility_list_items_temp',
-        help_text=(
-            'The UUID of the source from which this item was created.'
-        ),
-    )
 
     @property
     def has_active_complete_match(self):
@@ -227,6 +215,5 @@ class FacilityListItemTemp(models.Model):
             sector=item.sector,
             processing_results=item.processing_results,
             processing_started_at=item.processing_started_at,
-            processing_completed_at=item.processing_completed_at,
-            source_uuid=item.source
+            processing_completed_at=item.processing_completed_at
         )
