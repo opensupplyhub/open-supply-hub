@@ -125,6 +125,7 @@ class OpenSearchQueryDirector:
 
     def __process_multi_match(self, query_params):
         multi_match_query = query_params.get(V1_PARAMETERS_LIST.QUERY)
+
         if multi_match_query and hasattr(self.__builder, 'add_multi_match'):
             tokens = multi_match_query.split()
             if len(tokens) > 12 or len(multi_match_query) > 50:
