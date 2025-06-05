@@ -31,6 +31,26 @@ def revert_updating_indexing_functions(apps, schema_editor):
         ])
 
 
+def introduce_sql_triggers(apps, schema_editor):
+    """
+    Introduce SQL triggers for origin_source field.
+    """
+    helper.run_sql_files(['0170_create_origin_source_triggers.sql'])
+
+
+def revert_sql_triggers(apps, schema_editor):
+    helper.run_sql_files(['0170_revert_origin_source_triggers.sql'])
+
+
+def create_origin_source_function(apps, schema_editor):
+    '''
+    This function create the set_origin_source function
+    to used by the triggers.
+    '''
+
+    helper.run_sql_files(['0170_set_origin_source.sql'])
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -63,7 +83,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                # default='os_hub',
+                null=True,
                 max_length=200,
                 help_text="The environment value where instance running"
             ),
@@ -183,7 +204,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', ' OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                # default='os_hub',
+                null=True,
                 help_text='The environment value where instance running',
                 max_length=200
             ),
@@ -229,5 +251,8 @@ class Migration(migrations.Migration):
             ),
         ),
         RunPython(update_indexing_functions,
-                  revert_updating_indexing_functions)
+                  revert_updating_indexing_functions),
+        RunPython(create_origin_source_function),
+        RunPython(introduce_sql_triggers,
+                  revert_sql_triggers)
     ]

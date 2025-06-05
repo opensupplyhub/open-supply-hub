@@ -4,6 +4,9 @@ import json
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 
+from django.conf import settings
+from django.db import connection
+
 from rest_framework.authentication import get_authorization_header
 from rest_framework.authtoken.models import Token
 
@@ -106,6 +109,19 @@ class RequestMeterMiddleware:
                                             'associated contributor'}),
                                 content_type='application/json',
                                 status=402)
+
+        response = self.get_response(request)
+        return response
+
+
+class OriginSourceMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.default_origin_source = getattr(settings, 'INSTANCE_SOURCE', 'os_hub')
+
+    def __call__(self, request):
+        with connection.cursor() as cursor:
+            cursor.execute("SET app.origin_source TO %s", [self.default_origin_source])
 
         response = self.get_response(request)
         return response
