@@ -22,6 +22,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe code/API changes here.*
 
 ### Architecture/Environment changes
+* [OSDEV-1925](https://opensupplyhub.atlassian.net/browse/OSDEV-1925) - This PR disables the automatic execution of the `Deploy to AWS` pipeline on `releases/*` branch creation via the `[Release] Init` pipeline, while retaining automatic execution on push events to the same branch.
 * [OSDEV-2035](https://opensupplyhub.atlassian.net/browse/OSDEV-2035) - Added IPv6 rules for ip whitelist and denylist.
 
 ### Bugfix
