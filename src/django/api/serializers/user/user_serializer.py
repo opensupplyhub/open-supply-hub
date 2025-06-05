@@ -28,6 +28,7 @@ class UserSerializer(ModelSerializer):
     claimed_facility_ids = SerializerMethodField()
     embed_level = SerializerMethodField()
     allowed_records_number = SerializerMethodField()
+    is_free_limit_expired = SerializerMethodField()
 
     class Meta:
         model = User
@@ -143,7 +144,15 @@ class UserSerializer(ModelSerializer):
 
     def get_allowed_records_number(self, user):
         try:
-            limits = FacilityDownloadLimit.objects.get(user=user)
-            return limits.free_download_records + limits.paid_download_records
+            limit = FacilityDownloadLimit.objects.get(user=user)
+            return limit.free_download_records + limit.paid_download_records
         except FacilityDownloadLimit.DoesNotExist:
             return FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT
+
+    def get_is_free_limit_expired(self, user):
+        try:
+            limit = FacilityDownloadLimit.objects.get(user=user)
+            return limit.is_free_limit_expired()
+        except FacilityDownloadLimit.DoesNotExist:
+            return True
+

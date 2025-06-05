@@ -355,7 +355,8 @@ function FilterSidebarFacilitiesTab({
                             <DownloadFacilitiesButton
                                 disabled={
                                     facilitiesCount >
-                                    user.allowed_records_number
+                                        user.allowed_records_number &&
+                                    !user.is_free_limit_expired
                                 }
                                 setLoginRequiredDialogIsOpen={
                                     setLoginRequiredDialogIsOpen

@@ -68,6 +68,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
         facility_download_limit = FacilityDownloadLimit \
             .get_or_create_user_download_limit(request.user)
+
         current_page = int(request.query_params.get("page", 1))
 
         if (
@@ -102,7 +103,8 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         response = self.get_paginated_response(data)
 
         records_to_subtract = len(data['rows'])
-
+        print('!!! Limit', facility_download_limit)
+        # print('!!! exp', facility_download_limit.is_free_limit_expired())
         if facility_download_limit:
             facility_download_limit.register_download(records_to_subtract)
 
