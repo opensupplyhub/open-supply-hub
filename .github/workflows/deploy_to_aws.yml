@@ -37,7 +37,30 @@ on:
         default: false
 
 jobs:
+  check-base:
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.basecheck.outputs.skip }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get base branch of release
+        id: basecheck
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual trigger detected — setting skip to false"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          else
+            echo "Automatic trigger — running check_release_branch.sh"
+            scripts/check_release_branch.sh
+          fi
+
   init-and-plan:
+    needs: check-base
+    if: needs.check-base.outputs.skip == 'false'
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     steps:
