@@ -62,6 +62,12 @@ class Command(BaseCommand):
             required=True,
         )
         parser.add_argument(
+            "--tab_id",
+            type=int,
+            help="The numeric ID of the Google Sheet tab to load data from.",
+            required=True,
+        )
+        parser.add_argument(
             "--sheet_name",
             type=str,
             help="The name of the Google Sheet to load data from.",
@@ -113,7 +119,7 @@ class Command(BaseCommand):
         if not columns:
             raise ValueError("No columns specified for data loading.")
 
-        SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
+        SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
         base64_gdrive_creds = os.getenv("GOOGLE_SERVICE_ACCOUNT_CREDS_BASE64")
 
@@ -169,6 +175,7 @@ class Command(BaseCommand):
 
         for row in rows:
             logger.info(f"Processing row: '{row_idx}'")
+            row_idx += 1
             record = {}
 
             for col_idx, column in enumerate(columns):
@@ -255,10 +262,44 @@ class Command(BaseCommand):
                 break
 
             if ec_result.errors:
+                ModerationEvent.objects.filter(
+                    uuid=ec_result.moderation_event.uuid
+                ).update(
+                    status=ModerationEvent.Status.REJECTED.value,
+                    action_reason_text_cleaned="direct upload error",
+                    action_reason_text_raw="<p>direct upload error</p>\n"
+                )
+                mark_row(
+                    service=service,
+                    spreadsheet_id=sheet_id,
+                    tab_id=options["tab_id"],
+                    row_index=row_idx - 1,
+                    num_columns=len(columns) + 1,
+                    col_index=columns.index("error"),
+                    message=json.dumps(ec_result.errors),
+                    format={
+                        "backgroundColor": {
+                            "red": 1.0,
+                            "green": 0.8,
+                            "blue": 0.8,
+                        },
+                    },
+                )
                 logger.error(
                     f"Error processing row {row_idx}: {json.dumps(ec_result.errors)}"
                 )
-                break
+                continue
+            elif "error" in record and record["error"]:
+                mark_row(
+                    service=service,
+                    spreadsheet_id=sheet_id,
+                    tab_id=options["tab_id"],
+                    row_index=row_idx - 1,
+                    num_columns=len(columns) + 1,
+                    col_index=columns.index("error"),
+                    message="",
+
+                )
 
             processor = AddProductionLocationWithOsID(
                 ec_result.moderation_event,
@@ -283,3 +324,67 @@ class Command(BaseCommand):
                     f"Error processing row {row_idx}: {str(error)}"
                 )
                 break
+
+
+def mark_row(
+        service,
+        spreadsheet_id,
+        tab_id,
+        row_index,
+        num_columns,
+        col_index,
+        message,
+        format={}):
+    """
+    Highlights the specified row in red and sets an error message in the given column.
+    - service: Google Sheets API service object
+    - spreadsheet_id: The spreadsheet ID
+    - tab_id: The numeric sheet ID (not the name)
+    - row_index: Zero-based row index to highlight
+    - num_columns: Number of columns to highlight (e.g., len(columns))
+    - col_index: Zero-based column index to write the error message
+    - message: The error message to write
+    - format: a dictionary containing the background color to apply
+    """
+    requests = [
+        {
+            "repeatCell": {
+                "range": {
+                    "sheetId": tab_id,
+                    "startRowIndex": row_index,
+                    "endRowIndex": row_index + 1,
+                    "startColumnIndex": 0,
+                    "endColumnIndex": num_columns,
+                },
+                "cell": {
+                    "userEnteredFormat": format,
+                },
+                "fields": "userEnteredFormat.backgroundColor",
+            }
+        },
+        {
+            "updateCells": {
+                "rows": [
+                    {
+                        "values": [
+                            {
+                                "userEnteredValue": {
+                                    "stringValue": message,
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "fields": "userEnteredValue",
+                "start": {
+                    "sheetId": tab_id,
+                    "rowIndex": row_index,
+                    "columnIndex": col_index,
+                }
+            }
+        }
+    ]
+    body = {"requests": requests}
+    service.spreadsheets().batchUpdate(
+        spreadsheetId=spreadsheet_id, body=body
+    ).execute()
