@@ -26,7 +26,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2035](https://opensupplyhub.atlassian.net/browse/OSDEV-2035) - Added IPv6 rules for ip whitelist and denylist.
 
 ### Bugfix
-* *Describe bugfix here.*
+TODO: move to the next release notes
+* [OSDEV-2033](https://opensupplyhub.atlassian.net/browse/OSDEV-2033) - Added support for the `slop` parameter in `multi_match` queries when using strings longer than 50 symbols or 12 tokens in GET `v1/production-locations?query=` endpoint.
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
