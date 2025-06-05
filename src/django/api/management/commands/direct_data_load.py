@@ -262,13 +262,6 @@ class Command(BaseCommand):
                 break
 
             if ec_result.errors:
-                ModerationEvent.objects.filter(
-                    uuid=ec_result.moderation_event.uuid
-                ).update(
-                    status=ModerationEvent.Status.REJECTED.value,
-                    action_reason_text_cleaned="direct upload error",
-                    action_reason_text_raw="<p>direct upload error</p>\n"
-                )
                 mark_row(
                     service=service,
                     spreadsheet_id=sheet_id,
@@ -320,6 +313,13 @@ class Command(BaseCommand):
                     f"Processed row: {row_idx} successfully: {item.facility_id}"
                 )
             except Exception as error:
+                ModerationEvent.objects.filter(
+                    uuid=ec_result.moderation_event.uuid
+                ).update(
+                    status=ModerationEvent.Status.REJECTED.value,
+                    action_reason_text_cleaned="direct upload error",
+                    action_reason_text_raw="<p>direct upload error</p>\n"
+                )
                 logger.error(
                     f"Error processing row {row_idx}: {str(error)}"
                 )
