@@ -254,16 +254,21 @@ class TestProductionLocationsQueryBuilder(TestCase):
         )
         expected_with_slop = {
             'multi_match': {
-                'query': 'Mount Isa Mines Limited Copper Refineries Pty Ltd CRL',
+                'query': (
+                    'Mount Isa Mines Limited Copper Refineries Pty Ltd '
+                    'CRL'
+                ),
                 'fields': ['name^2', 'address', 'description', 'local_name'],
                 'type': 'phrase',
                 'slop': 3
             }
         }
         self.assertIn(
-            expected_with_slop, self.builder.query_body['query']['bool']['must']
+            expected_with_slop,
+            self.builder.query_body['query']['bool']['must']
         )
-        multi_match_query = self.builder.query_body['query']['bool']['must'][0]['multi_match']
+        must_clauses = self.builder.query_body['query']['bool']['must']
+        multi_match_query = must_clauses[0]['multi_match']
         self.assertNotIn('fuzziness', multi_match_query)
 
     def test_add_aggregations_with_precision(self):
