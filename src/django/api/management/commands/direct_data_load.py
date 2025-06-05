@@ -93,6 +93,9 @@ class Command(BaseCommand):
             help="Comma-separated list of columns to read from the Google Sheet in particular order.",
             required=True,
         )
+        parser.add_argument(
+            '--re_geocode', dest='re_geocode', action='store_true')
+        parser.set_defaults(re_geocode=False)
 
     def handle(self, *args, **options):
         user_id = options["user_id"]
@@ -171,11 +174,11 @@ class Command(BaseCommand):
             )
 
         logger.info(f"Data fetched successfully: '{len(rows)}' rows")
-        row_idx = options["start_row"]
+        row_idx = options["start_row"] - 1
 
         for row in rows:
-            logger.info(f"Processing row: '{row_idx}'")
             row_idx += 1
+            logger.info(f"Processing row: '{row_idx}'")
             record = {}
 
             for col_idx, column in enumerate(columns):
@@ -215,6 +218,19 @@ class Command(BaseCommand):
                     "lat": record["lat"],
                     "lng": record["lng"],
                 }
+
+            if not options["re_geocode"] and facility and facility.location:
+                raw_data["coordinates"] = {
+                    "lat": facility.location.coords[1],
+                    "lng": facility.location.coords[0],
+                }
+                logger.info(
+                    f"Using existing coordinates for facility {facility.id} in row {row_idx}"
+                )
+            else:
+                logger.info(
+                    f"Will be geocoding address for row {row_idx}: {raw_data.get('address')}"
+                )
 
             if "sector" in record and record["sector"]:
                 raw_data["sector"] = record["sector"]
