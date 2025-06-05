@@ -1,5 +1,18 @@
-from django.db import migrations, models
 import uuid
+from django.db import connection
+from django.db import migrations, models
+
+from api.migrations._migration_helper import MigrationHelper
+
+helper = MigrationHelper(connection)
+
+
+def drop_triggers(apps, schema_editor):
+    helper.run_sql_files(['table_triggers/drop_table_triggers.sql'])
+
+
+def create_triggers(apps, schema_editor):
+    helper.run_sql_files(['table_triggers/create_table_triggers.sql'])
 
 
 class Migration(migrations.Migration):
@@ -9,6 +22,12 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # Drops triggers.
+        migrations.RunPython(
+            code=drop_triggers,
+            reverse_code=migrations.RunPython.noop,
+        ),
+
         # Adds a UUID field to the Source model and updates the FacilityListItem model to reference this UUID.
         migrations.AddField(
             model_name='source',
@@ -95,45 +114,9 @@ class Migration(migrations.Migration):
             ),
         ),
 
-        migrations.AddField(
-            model_name='facilitylistitemtemp',
-            name='source_uuid',
-            field=models.ForeignKey(
-                to='api.source',
-                to_field='uuid',
-                db_column='source_uuid',
-                on_delete=models.PROTECT,
-                null=True,
-                editable=False,
-                related_name='facility_list_items_temp',
-                help_text='The UUID of the source from which this item was created.',
-            ),
-        ),
-        migrations.RunSQL(
-            sql="""
-                UPDATE api_facilitylistitemtemp AS flit
-                SET source_uuid = s.uuid
-                FROM api_source AS s
-                WHERE flit.source_id = s.id;
-            """,
-            reverse_sql="""
-                UPDATE api_facilitylistitemtemp AS flit
-                SET source_uuid = NULL
-                WHERE flit.source_uuid IS NOT NULL;
-            """,
-        ),
-        migrations.AlterField(
-            model_name='facilitylistitemtemp',
-            name='source_uuid',
-            field=models.ForeignKey(
-                to='api.source',
-                to_field='uuid',
-                db_column='source_uuid',
-                on_delete=models.PROTECT,
-                null=False,
-                editable=False,
-                related_name='facility_list_items_temp',
-                help_text='The UUID of the source from which this item was created.',
-            ),
+        # Recreate triggers.
+        migrations.RunPython(
+            code=create_triggers,
+            reverse_code=migrations.RunPython.noop,
         ),
     ]
