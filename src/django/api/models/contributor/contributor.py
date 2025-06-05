@@ -124,7 +124,9 @@ class Contributor(models.Model):
     )
 
     objects = ContributorManager.as_manager()
-    history = HistoricalRecords()
+    history = HistoricalRecords(
+        excluded_fields=['uuid']
+    )
 
     def __str__(self):
         return '{name} ({id})'.format(**self.__dict__)
