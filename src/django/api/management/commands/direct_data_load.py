@@ -94,8 +94,19 @@ class Command(BaseCommand):
             required=True,
         )
         parser.add_argument(
-            '--re_geocode', dest='re_geocode', action='store_true')
+            '--re_geocode',
+            dest='re_geocode',
+            action='store_true',
+            help="Force re-geocoding of addresses even if coordinates already exist.",
+        )
         parser.set_defaults(re_geocode=False)
+        parser.add_argument(
+            '--skip_existing',
+            dest='skip_existing',
+            action='store_true',
+            help="Skip existing facilities in the database.",
+        )
+        parser.set_defaults(skip_existing=False)
 
     def handle(self, *args, **options):
         user_id = options["user_id"]
@@ -196,6 +207,12 @@ class Command(BaseCommand):
                     logger.info(
                         f"Facility with os_id '{record['os_id']}' does not exist in row: '{row_idx}'."
                     )
+
+            if options["skip_existing"] and facility:
+                logger.info(
+                    f"Skipping existing facility with os_id '{record['os_id']}' in row: '{row_idx}'."
+                )
+                continue
 
             raw_data = {
                 "source": ModerationEvent.Source.API.value,
