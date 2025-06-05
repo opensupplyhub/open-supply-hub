@@ -228,7 +228,8 @@ class Command(BaseCommand):
                 raw_data["address"] = record["address"]
 
             if "country" in record and record["country"]:
-                raw_data["country"] = record["country"]
+                raw_data["country"] = record["country"].replace(
+                    '\u00a0', ' ')  # fix non-breaking space
 
             if "lat" in record and "lng" in record and record["lat"] and record["lng"]:
                 raw_data["coordinates"] = {
