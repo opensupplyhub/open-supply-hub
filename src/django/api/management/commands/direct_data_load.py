@@ -19,6 +19,7 @@ from api.moderation_event_actions.approval.add_production_location \
     import AddProductionLocation
 from api.moderation_event_actions.approval.update_production_location \
     import UpdateProductionLocation
+import string
 
 
 class AddProductionLocationWithOsID(AddProductionLocation):
@@ -61,9 +62,23 @@ class Command(BaseCommand):
             required=True,
         )
         parser.add_argument(
-            "--range",
+            "--sheet_name",
             type=str,
-            help="The range of cells to read from the Google Sheet.",
+            help="The name of the Google Sheet to load data from.",
+            required=True
+        )
+        parser.add_argument(
+            "--start_row",
+            type=int,
+            help="The row number to start reading from the Google Sheet (1-based index).",
+            default=2,
+            required=False,
+        )
+        parser.add_argument(
+            "--end_row",
+            type=int,
+            help="The row number to stop reading from the Google Sheet (1-based index).",
+            default=None,
             required=True,
         )
         parser.add_argument(
@@ -125,14 +140,21 @@ class Command(BaseCommand):
         )
 
         logger.info("Built Google Sheets service")
+        col_names = [col_name.upper() for col_name in list(
+            string.ascii_uppercase[:len(columns)])]
+        col_range = f'{options["sheet_name"]}!{col_names[0]}{options["start_row"]}:{col_names[len(col_names) - 1]}{options["end_row"]}'
+
+        logger.info(
+            f"Fetching data from Google Sheet with ID: '{sheet_id}' and range: '{col_range}'"
+        )
 
         result = service.spreadsheets().values().get(
             spreadsheetId=sheet_id,
-            range=options["range"],  # Adjust the range as needed
+            range=col_range,
         ).execute()
 
         logger.info(
-            f"Fetched data from Google Sheet with ID: '{sheet_id}' and range: '{options['range']}'"
+            f"Fetched data from Google Sheet with ID: '{sheet_id}' and range: '{col_range}'"
         )
 
         rows = result.get("values", [])
@@ -143,9 +165,10 @@ class Command(BaseCommand):
             )
 
         logger.info(f"Data fetched successfully: '{len(rows)}' rows")
+        row_idx = options["start_row"]
 
-        for idx, row in enumerate(rows):
-            logger.info(f"Processing row: '{idx + 1}'")
+        for row in rows:
+            logger.info(f"Processing row: '{row_idx}'")
             record = {}
 
             for col_idx, column in enumerate(columns):
@@ -161,7 +184,7 @@ class Command(BaseCommand):
                     facility = Facility.objects.get(id=record["os_id"])
                 except Facility.DoesNotExist:
                     logger.info(
-                        f"Facility with os_id '{record['os_id']}' does not exist."
+                        f"Facility with os_id '{record['os_id']}' does not exist in row: '{row_idx}'."
                     )
 
             raw_data = {
@@ -227,13 +250,13 @@ class Command(BaseCommand):
                     event_dto)
             except Exception as error:
                 logger.error(
-                    f"Error creating moderation event for row {idx + 1}: {str(error)}"
+                    f"Error creating moderation event for row {row_idx}: {str(error)}"
                 )
                 break
 
             if ec_result.errors:
                 logger.error(
-                    f"Error processing row {idx + 1}: {json.dumps(ec_result.errors)}"
+                    f"Error processing row {row_idx}: {json.dumps(ec_result.errors)}"
                 )
                 break
 
@@ -253,10 +276,10 @@ class Command(BaseCommand):
             try:
                 item = processor.process_moderation_event()
                 logger.info(
-                    f"Processed row {idx + 1} successfully: {item.facility_id}"
+                    f"Processed row: {row_idx} successfully: {item.facility_id}"
                 )
             except Exception as error:
                 logger.error(
-                    f"Error processing row {idx + 1}: {str(error)}"
+                    f"Error processing row {row_idx}: {str(error)}"
                 )
                 break
