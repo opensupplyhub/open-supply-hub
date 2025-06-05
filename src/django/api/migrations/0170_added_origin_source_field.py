@@ -180,6 +180,16 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AddField(
+            model_name='user',
+            name='origin_source',
+            field=models.CharField(
+                choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
+                null=True,
+                max_length=200,
+                help_text="The environment value where instance running"
+            ),
+        ),
+        migrations.AddField(
             model_name='historicalcontributor',
             name='origin_source',
             field=models.CharField(

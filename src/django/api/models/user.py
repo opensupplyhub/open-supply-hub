@@ -10,6 +10,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 
 from api.constants import FeatureGroups
+from ..constants import OriginSource
 
 
 def get_default_rate(rate):
@@ -138,6 +139,12 @@ class User(AbstractBaseUser, PermissionsMixin):
             "Maximum allowed facility upload rate for this user. "
             "This applies to only API Facility uploads."
         )
+    )
+    origin_source = models.CharField(
+        choices=OriginSource.CHOICES,
+        null=True,
+        max_length=200,
+        help_text="The environment value where instance running"
     )
 
     def save(self, *args, **kwargs):
