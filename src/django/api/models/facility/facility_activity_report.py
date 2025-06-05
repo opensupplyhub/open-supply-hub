@@ -83,6 +83,16 @@ class FacilityActivityReport(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    reported_by_contributor_uuid = models.ForeignKey(
+        'Contributor',
+        to_field='uuid',
+        db_column='reported_by_contributor_uuid',
+        on_delete=models.PROTECT,
+        null=False,
+        editable=False,
+        related_name='facility_activity_reports',
+        help_text='The UUID of the contributor who reported the change.'
+    )
 
     history = HistoricalRecords()
 
