@@ -173,6 +173,22 @@ class ApiLimitAdmin(admin.ModelAdmin):
             return []
 
 
+class FacilityDownloadLimitAdmin(admin.ModelAdmin):
+    list_display = ('user',
+                    'free_download_records',
+                    'paid_download_records',
+                    'updated_at',
+                    )
+    search_fields = ('user__username',)
+    autocomplete_fields = ('user', )
+
+    def get_ordering(self, request, obj=None):
+        if obj:
+            return ['user', ]
+        else:
+            return []
+
+
 class ExtendedFieldAdmin(admin.ModelAdmin):
     readonly_fields = ('contributor', 'facility', 'facility_list_item',
                        'facility_claim')
@@ -246,3 +262,4 @@ admin_site.register(models.RequestLog, RequestLogAdmin)
 admin_site.register(models.ApiLimit, ApiLimitAdmin)
 admin_site.register(models.Sector, SectorAdmin)
 admin_site.register(SectorGroup, SectorGroupAdmin)
+admin_site.register(models.FacilityDownloadLimit, FacilityDownloadLimitAdmin)

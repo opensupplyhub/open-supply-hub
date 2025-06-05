@@ -62,6 +62,8 @@ export const userPropType = shape({
     is_superuser: bool.isRequired,
     is_staff: bool.isRequired,
     is_moderation_mode: bool.isRequired,
+    allowed_records_number: number.isRequired,
+    is_free_limit_expired: bool.isRequired,
 });
 
 export const profileFormValuesPropType = shape(
