@@ -117,11 +117,18 @@ class RequestMeterMiddleware:
 class OriginSourceMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
-        self.default_origin_source = getattr(settings, 'INSTANCE_SOURCE', 'os_hub')
+        self.default_origin_source = getattr(
+            settings,
+            'INSTANCE_SOURCE',
+            'os_hub'
+        )
 
     def __call__(self, request):
         with connection.cursor() as cursor:
-            cursor.execute("SET app.origin_source TO %s", [self.default_origin_source])
+            cursor.execute(
+                "SET app.origin_source TO %s",
+                [self.default_origin_source]
+            )
 
         response = self.get_response(request)
         return response
