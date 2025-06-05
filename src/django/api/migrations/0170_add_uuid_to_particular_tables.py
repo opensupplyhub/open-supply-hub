@@ -8,11 +8,15 @@ helper = MigrationHelper(connection)
 
 
 def drop_triggers(apps, schema_editor):
+    print("→ starting to drop table triggers…")
     helper.run_sql_files(['table_triggers/drop_table_triggers.sql'])
+    print("✓ table triggers dropped successfully")
 
 
 def create_triggers(apps, schema_editor):
+    print("→ starting to create table triggers…")
     helper.run_sql_files(['table_triggers/create_table_triggers.sql'])
+    print("✓ table triggers created successfully")
 
 
 class Migration(migrations.Migration):
@@ -25,7 +29,7 @@ class Migration(migrations.Migration):
         # Drops triggers.
         migrations.RunPython(
             code=drop_triggers,
-            reverse_code=migrations.RunPython.noop,
+            reverse_code=create_triggers,
         ),
 
         # Adds a UUID field to the Source model and updates the FacilityListItem model to reference this UUID.
@@ -50,11 +54,7 @@ class Migration(migrations.Migration):
                 SET uuid = gen_random_uuid()
                 WHERE uuid IS NULL;
             """,
-            reverse_sql="""
-                UPDATE api_source
-                SET uuid = NULL
-                WHERE uuid IS NOT NULL;
-            """,
+            reverse_sql=migrations.RunSQL.noop,
         ),
         migrations.RunPython(
             code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
@@ -93,11 +93,7 @@ class Migration(migrations.Migration):
                 FROM api_source AS s
                 WHERE fli.source_id = s.id;
             """,
-            reverse_sql="""
-                UPDATE api_facilitylistitem AS fli
-                SET source_uuid = NULL
-                WHERE fli.source_uuid IS NOT NULL;
-            """,
+            reverse_sql=migrations.RunSQL.noop,
         ),
         migrations.AlterField(
             model_name='facilitylistitem',
@@ -117,6 +113,6 @@ class Migration(migrations.Migration):
         # Recreate triggers.
         migrations.RunPython(
             code=create_triggers,
-            reverse_code=migrations.RunPython.noop,
+            reverse_code=drop_triggers,
         ),
     ]
