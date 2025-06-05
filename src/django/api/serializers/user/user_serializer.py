@@ -155,4 +155,3 @@ class UserSerializer(ModelSerializer):
             return limit.is_free_limit_expired()
         except FacilityDownloadLimit.DoesNotExist:
             return True
-

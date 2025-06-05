@@ -7,6 +7,7 @@ from api.constants import FacilitiesDownloadSettings
 # from datetime import timedelta
 from datetime import datetime
 
+
 class FacilityDownloadLimit(models.Model):
     """
     Stores the number of facility records allowed for free download per
@@ -60,9 +61,9 @@ class FacilityDownloadLimit(models.Model):
         with transaction.atomic():
             self.refresh_from_db()
             if self.free_download_records >= records_to_subtract:
-                self.free_download_records = self.free_download_records - records_to_subtract
+                self.free_download_records = self.free_download_records - records_to_subtract  # noqa: E501
             else:
-                remaining_records = records_to_subtract - self.free_download_records
+                remaining_records = records_to_subtract - self.free_download_records  # noqa: E501
                 self.free_download_records = 0
                 self.paid_download_records -= remaining_records
             self.save()
@@ -79,9 +80,9 @@ class FacilityDownloadLimit(models.Model):
 
         facility_download_limit, _ = FacilityDownloadLimit \
             .objects.get_or_create(user=user)
-        print('!!!', facility_download_limit.is_free_limit_expired())
+
         if (facility_download_limit.is_free_limit_expired()):
-            facility_download_limit.free_download_records = FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT
+            facility_download_limit.free_download_records = FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT  # noqa: E501
             facility_download_limit.updated_at = timezone.now()
             facility_download_limit.save()
         return facility_download_limit

@@ -74,21 +74,24 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         if (
             current_page == 1 and
             facility_download_limit
-            and (facility_download_limit.free_download_records + facility_download_limit.paid_download_records) < total_records # noqa: E501
+            and (facility_download_limit.free_download_records + facility_download_limit.paid_download_records) == 0  # noqa: E501
         ):
             raise ValidationError('You have reached the maximum number of '
-                                  'facility downloads permitted for this year, '
-                                  'both free and paid. Please wait until the '
-                                  'start of the next calendar year to access '
-                                  'additional data or to order new records for '
-                                  'download.')
+                                  'facility downloads permitted for this year'
+                                  ', both free and paid. Please wait until '
+                                  'the start of the next calendar year to '
+                                  'access additional data or to order new '
+                                  'records for download.')
 
-        is_large_download_allowed = not facility_download_limit or total_records > FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT,
+        is_large_download_allowed = (
+            not facility_download_limit or
+            total_records <= FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT
+        )
 
         if (not is_large_download_allowed):
             raise ValidationError(
                 ('Downloads are supported only for searches resulting in '
-                 f'{facility_download_limit.free_download_records + facility_download_limit.paid_download_records} '
+                 f'{facility_download_limit.free_download_records + facility_download_limit.paid_download_records} '  # noqa: E501
                  'facilities or less.'))
 
         page_queryset = self.paginate_queryset(queryset)
@@ -103,8 +106,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         response = self.get_paginated_response(data)
 
         records_to_subtract = len(data['rows'])
-        print('!!! Limit', facility_download_limit)
-        # print('!!! exp', facility_download_limit.is_free_limit_expired())
+
         if facility_download_limit:
             facility_download_limit.register_download(records_to_subtract)
 
