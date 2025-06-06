@@ -17,7 +17,7 @@ class Contributor(Base):
     embed_config_id = Column(Integer, nullable=False)
     embed_level = Column(Integer, nullable=False)
     match_responsibility = Column(String, nullable=False, default="moderator")
-    origin_source = Column(String, nullable=False, default="os_hub")
+    origin_source = Column(String, nullable=True)
     created_at = Column(TIMESTAMP(timezone=True),
                        nullable=False, server_default=func.now())
     updated_at = Column(TIMESTAMP(timezone=True),
