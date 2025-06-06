@@ -60,6 +60,7 @@ class SerializeOtherLocationsTest(FacilityAPITestCaseBase):
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.other_source,
             facility=self.facility,
+            source_uuid=self.other_source,
         )
 
         self.other_match = FacilityMatch.objects.create(

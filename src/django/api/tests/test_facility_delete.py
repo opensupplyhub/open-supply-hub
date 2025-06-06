@@ -77,6 +77,7 @@ class FacilityDeleteTest(APITestCase):
             source=self.source,
             row_index=1,
             status=FacilityListItem.CONFIRMED_MATCH,
+            source_uuid=self.source,
         )
 
         self.facility = Facility.objects.create(
@@ -191,6 +192,7 @@ class FacilityDeleteTest(APITestCase):
             status=FacilityListItem.MATCHED,
             facility=self.facility,
             source=source_2,
+            source_uuid=source_2,
         )
 
         match_2 = FacilityMatch.objects.create(
@@ -223,6 +225,7 @@ class FacilityDeleteTest(APITestCase):
             row_index=1,
             status=FacilityListItem.MATCHED,
             facility=self.facility,
+            source_uuid=source_3,
         )
 
         match_3 = FacilityMatch.objects.create(
@@ -293,6 +296,7 @@ class FacilityDeleteTest(APITestCase):
             status=FacilityListItem.MATCHED,
             facility=self.facility,
             source=source_2,
+            source_uuid=source_2,
         )
 
         match_2 = FacilityMatch.objects.create(
@@ -325,6 +329,7 @@ class FacilityDeleteTest(APITestCase):
             row_index=1,
             status=FacilityListItem.MATCHED,
             facility=self.facility,
+            source_uuid=source_3,
         )
 
         match_3 = FacilityMatch.objects.create(
@@ -403,6 +408,7 @@ class FacilityDeleteTest(APITestCase):
             status=FacilityListItem.MATCHED,
             facility=self.facility,
             source=source_2,
+            source_uuid=source_2,
         )
 
         FacilityMatch.objects.create(
@@ -461,6 +467,7 @@ class FacilityDeleteTest(APITestCase):
             status=FacilityListItem.MATCHED,
             facility=self.facility,
             source=source_2,
+            source_uuid=source_2,
         )
 
         FacilityMatch.objects.create(
@@ -510,6 +517,7 @@ class FacilityDeleteTest(APITestCase):
             status=FacilityListItem.MATCHED,
             facility=self.facility,
             source=source_2,
+            source_uuid=source_2,
         )
 
         FacilityMatch.objects.create(
@@ -555,6 +563,7 @@ class FacilityDeleteTest(APITestCase):
             row_index=1,
             status=FacilityListItem.MATCHED,
             source=source_2,
+            source_uuid=source_2,
         )
 
         FacilityMatch.objects.create(

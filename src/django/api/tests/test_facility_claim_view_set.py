@@ -75,6 +75,7 @@ class FacilityClaimViewSetTest(APITestCase):
             row_index=1,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_first,
+            source_uuid=self.source_first,
         )
 
         self.list_item_second = FacilityListItem.objects.create(
@@ -85,6 +86,7 @@ class FacilityClaimViewSetTest(APITestCase):
             row_index=1,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_second,
+            source_uuid=self.source_second,
         )
 
         self.list_item_third = FacilityListItem.objects.create(
@@ -95,6 +97,7 @@ class FacilityClaimViewSetTest(APITestCase):
             row_index=1,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_second,
+            source_uuid=self.source_second,
         )
 
         self.facility_first = Facility.objects.create(

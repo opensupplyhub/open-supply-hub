@@ -68,6 +68,7 @@ class FacilityMatchPromoteTest(APITestCase):
             geocoded_point=self.location_one,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_one,
+            source_uuid=self.source_one,
         )
 
         self.facility_one = Facility.objects.create(
@@ -116,6 +117,7 @@ class FacilityMatchPromoteTest(APITestCase):
             geocoded_point=self.location_two,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_two,
+            source_uuid=self.source_two,
         )
 
         self.match_two = FacilityMatch.objects.create(
@@ -135,6 +137,7 @@ class FacilityMatchPromoteTest(APITestCase):
             row_index=2,
             geocoded_point=Point(3, 3),
             status=FacilityListItem.MATCHED,
+            source_uuid=self.source_one,
         )
 
         self.other_facility = Facility.objects.create(
@@ -261,6 +264,7 @@ class FacilityMatchPromoteTest(APITestCase):
             geocoded_point=self.location_one,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=single_source,
+            source_uuid=single_source,
         )
 
         single_match = FacilityMatch.objects.create(

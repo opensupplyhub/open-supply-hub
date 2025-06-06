@@ -1643,6 +1643,7 @@ class FacilitiesViewSet(ListModelMixin,
             facility=facility,
             reported_by_user=request.user,
             reported_by_contributor=contributor,
+            reported_by_contributor_uuid=contributor,
             closure_state=request.data.get('closure_state'),
             reason_for_report=request.data.get('reason_for_report'))
 

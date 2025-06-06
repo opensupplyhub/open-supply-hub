@@ -49,6 +49,7 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
             source=self.source_one,
             row_index=1,
             status=FacilityListItem.CONFIRMED_MATCH,
+            source_uuid=self.source_one,
         )
 
         self.facility = Facility.objects.create(

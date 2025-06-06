@@ -179,6 +179,7 @@ class EventApprovalTemplate(ABC):
                     'is_geocoded': False,
                 }
             ],
+            source_uuid=source
         )
 
     def __set_geocoded_location(

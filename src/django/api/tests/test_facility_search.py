@@ -51,6 +51,7 @@ class FacilitySearchTest(FacilityAPITestCaseBase):
             geocoded_point=Point(0, 0),
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_two,
+            source_uuid=self.source_two,
         )
 
         self.facility_two = Facility.objects.create(
@@ -85,6 +86,7 @@ class FacilitySearchTest(FacilityAPITestCaseBase):
             geocoded_point=Point(0, 0),
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_two_b,
+            source_uuid=self.source_two_b,
         )
 
         self.match_two_b = FacilityMatch.objects.create(

@@ -53,6 +53,7 @@ class SectorsViewTest(FacilityAPITestCaseBase):
             geocoded_point=Point(0, 0),
             status=FacilityListItem.MATCHED,
             source=self.source_2,
+            source_uuid=self.source_2,
         )
 
         self.facility_2 = Facility.objects.create(

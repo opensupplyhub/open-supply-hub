@@ -61,6 +61,7 @@ class FacilityNamesAddressesAndContributorsTest(TestCase):
             row_index=1,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_one,
+            source_uuid=self.source_one,
         )
 
         self.list_two = FacilityList.objects.create(
@@ -83,6 +84,7 @@ class FacilityNamesAddressesAndContributorsTest(TestCase):
             row_index="2",
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_two,
+            source_uuid=self.source_two,
         )
 
         self.facility = Facility.objects.create(

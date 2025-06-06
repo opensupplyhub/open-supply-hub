@@ -1,0 +1,581 @@
+import uuid
+from django.db import connection
+from django.db import migrations, models
+
+from api.migrations._migration_helper import MigrationHelper
+
+helper = MigrationHelper(connection)
+
+
+def drop_triggers(apps, schema_editor):
+    print("→ starting to drop table triggers…")
+    helper.run_sql_files(['table_triggers/drop_table_triggers.sql'])
+    print("✓ table triggers dropped successfully")
+
+
+def create_triggers(apps, schema_editor):
+    print("→ starting to create table triggers…")
+    helper.run_sql_files(['table_triggers/create_table_triggers.sql'])
+    print("✓ table triggers created successfully")
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('api', '0169_introduce_show_additional_identifiers_switch'),
+    ]
+
+    operations = [
+        # Drops triggers.
+        migrations.RunPython(
+            code=drop_triggers,
+            reverse_code=create_triggers,
+        ),
+        # Adds a UUID field to the Source model.
+        migrations.AddField(
+            model_name='source',
+            name='uuid',
+            field=models.UUIDField(
+                null=True,
+                editable=False,
+                help_text='Unique identifier for the source.',
+            ),
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print(
+                "→ starting SQL back-fill of uuid…"
+            ),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_source
+                SET uuid = gen_random_uuid()
+                WHERE uuid IS NULL;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.AlterField(
+            model_name='source',
+            name='uuid',
+            field=models.UUIDField(
+                null=False,
+                default=uuid.uuid4,
+                unique=True,
+                editable=False,
+                help_text='Unique identifier for the source.',
+            ),
+        ),
+        # Adds a UUID field to the Contributor model.
+        migrations.AddField(
+            model_name='contributor',
+            name='uuid',
+            field=models.UUIDField(
+                null=True,
+                editable=False,
+                help_text='Unique identifier for the contributor.',
+            ),
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print(
+                "→ starting SQL back-fill of contributor uuid…"
+            ),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_contributor
+                SET uuid = gen_random_uuid()
+                WHERE uuid IS NULL;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.AlterField(
+            model_name='contributor',
+            name='uuid',
+            field=models.UUIDField(
+                null=False,
+                default=uuid.uuid4,
+                unique=True,
+                editable=False,
+                help_text='Unique identifier for the contributor.',
+            ),
+        ),
+        # Adds a UUID field to the ExtendedField model.
+        migrations.AddField(
+            model_name='extendedfield',
+            name='uuid',
+            field=models.UUIDField(
+                null=True,
+                editable=False,
+                help_text='Unique identifier for the extended field.',
+            ),
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print(
+                "→ starting SQL back-fill of extended field uuid…"
+            ),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_extendedfield
+                SET uuid = gen_random_uuid()
+                WHERE uuid IS NULL;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.AlterField(
+            model_name='extendedfield',
+            name='uuid',
+            field=models.UUIDField(
+                null=False,
+                default=uuid.uuid4,
+                unique=True,
+                editable=False,
+                help_text='Unique identifier for the extended field.',
+            ),
+        ),
+        # Adds a UUID field to the Facility model.
+        migrations.AddField(
+            model_name='facility',
+            name='uuid',
+            field=models.UUIDField(
+                null=True,
+                editable=False,
+                help_text='Unique identifier for the facility.',
+            ),
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print(
+                "→ starting SQL back-fill of facility uuid…"
+            ),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_facility
+                SET uuid = gen_random_uuid()
+                WHERE uuid IS NULL;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.AlterField(
+            model_name='facility',
+            name='uuid',
+            field=models.UUIDField(
+                null=False,
+                default=uuid.uuid4,
+                unique=True,
+                editable=False,
+                help_text='Unique identifier for the facility.',
+            ),
+        ),
+        # Adds a UUID field to the FacilityActivityReport model.
+        migrations.AddField(
+            model_name='facilityactivityreport',
+            name='uuid',
+            field=models.UUIDField(
+                null=True,
+                editable=False,
+                help_text='Unique identifier for the facility activity report.',
+            ),
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print(
+                "→ starting SQL back-fill of facility activity report uuid…"
+            ),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_facilityactivityreport
+                SET uuid = gen_random_uuid()
+                WHERE uuid IS NULL;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.AlterField(
+            model_name='facilityactivityreport',
+            name='uuid',
+            field=models.UUIDField(
+                null=False,
+                default=uuid.uuid4,
+                unique=True,
+                editable=False,
+                help_text='Unique identifier for the facility activity report.',
+            ),
+        ),
+        # Adds a UUID field to the FacilityAlias model.
+        migrations.AddField(
+            model_name='facilityalias',
+            name='uuid',
+            field=models.UUIDField(
+                null=True,
+                editable=False,
+                help_text='Unique identifier for the facility alias.',
+            ),
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print(
+                "→ starting SQL back-fill of facility alias uuid…"
+            ),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_facilityalias
+                SET uuid = gen_random_uuid()
+                WHERE uuid IS NULL;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.AlterField(
+            model_name='facilityalias',
+            name='uuid',
+            field=models.UUIDField(
+                null=False,
+                default=uuid.uuid4,
+                unique=True,
+                editable=False,
+                help_text='Unique identifier for the facility alias.',
+            ),
+        ),
+        # Adds a UUID field to the FacilityClaim model.
+        migrations.AddField(
+            model_name='facilityclaim',
+            name='uuid',
+            field=models.UUIDField(
+                null=True,
+                editable=False,
+                help_text='Unique identifier for the facility claim.',
+            ),
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print(
+                "→ starting SQL back-fill of facility claim uuid…"
+            ),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_facilityclaim
+                SET uuid = gen_random_uuid()
+                WHERE uuid IS NULL;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.AlterField(
+            model_name='facilityclaim',
+            name='uuid',
+            field=models.UUIDField(
+                null=False,
+                default=uuid.uuid4,
+                unique=True,
+                editable=False,
+                help_text='Unique identifier for the facility claim.',
+            ),
+        ),
+        # Adds a UUID field to the FacilityList model.
+        migrations.AddField(
+            model_name='facilitylist',
+            name='uuid',
+            field=models.UUIDField(
+                null=True,
+                editable=False,
+                help_text='Unique identifier for the facility list.',
+            ),
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print(
+                "→ starting SQL back-fill of facility list uuid…"
+            ),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_facilitylist
+                SET uuid = gen_random_uuid()
+                WHERE uuid IS NULL;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.AlterField(
+            model_name='facilitylist',
+            name='uuid',
+            field=models.UUIDField(
+                null=False,
+                default=uuid.uuid4,
+                unique=True,
+                editable=False,
+                help_text='Unique identifier for the facility list.',
+            ),
+        ),
+        # Adds a UUID field to the FacilityListItem model.
+        migrations.AddField(
+            model_name='facilitylistitem',
+            name='uuid',
+            field=models.UUIDField(
+                null=True,
+                editable=False,
+                help_text='Unique identifier for the facility list item.',
+            ),
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print(
+                "→ starting SQL back-fill of facility list item uuid…"
+            ),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_facilitylistitem
+                SET uuid = gen_random_uuid()
+                WHERE uuid IS NULL;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.AlterField(
+            model_name='facilitylistitem',
+            name='uuid',
+            field=models.UUIDField(
+                null=False,
+                default=uuid.uuid4,
+                unique=True,
+                editable=False,
+                help_text='Unique identifier for the facility list item.',
+            ),
+        ),
+        # Adds a UUID field to the FacilityLocation model.
+        migrations.AddField(
+            model_name='facilitylocation',
+            name='uuid',
+            field=models.UUIDField(
+                null=True,
+                editable=False,
+                help_text='Unique identifier for the facility location.',
+            ),
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print(
+                "→ starting SQL back-fill of facility location uuid…"
+            ),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_facilitylocation
+                SET uuid = gen_random_uuid()
+                WHERE uuid IS NULL;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.AlterField(
+            model_name='facilitylocation',
+            name='uuid',
+            field=models.UUIDField(
+                null=False,
+                default=uuid.uuid4,
+                unique=True,
+                editable=False,
+                help_text='Unique identifier for the facility location.',
+            ),
+        ),
+        # Adds a UUID field to the FacilityMatch model.
+        migrations.AddField(
+            model_name='facilitymatch',
+            name='uuid',
+            field=models.UUIDField(
+                null=True,
+                editable=False,
+                help_text='Unique identifier for the facility match.',
+            ),
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print(
+                "→ starting SQL back-fill of facility match uuid…"
+            ),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_facilitymatch
+                SET uuid = gen_random_uuid()
+                WHERE uuid IS NULL;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.AlterField(
+            model_name='facilitymatch',
+            name='uuid',
+            field=models.UUIDField(
+                null=False,
+                default=uuid.uuid4,
+                unique=True,
+                editable=False,
+                help_text='Unique identifier for the facility match.',
+            ),
+        ),
+        # Adds a UUID field to the ProductType model.
+        migrations.AddField(
+            model_name='producttype',
+            name='uuid',
+            field=models.UUIDField(
+                null=True,
+                editable=False,
+                help_text='Unique identifier for the product type.',
+            ),
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print(
+                "→ starting SQL back-fill of product type uuid…"
+            ),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_producttype
+                SET uuid = gen_random_uuid()
+                WHERE uuid IS NULL;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.AlterField(
+            model_name='producttype',
+            name='uuid',
+            field=models.UUIDField(
+                null=False,
+                default=uuid.uuid4,
+                unique=True,
+                editable=False,
+                help_text='Unique identifier for the product type.',
+            ),
+        ),
+        # Adds a UUID field to the Sector model.
+        migrations.AddField(
+            model_name='sector',
+            name='uuid',
+            field=models.UUIDField(
+                null=True,
+                editable=False,
+                help_text='Unique identifier for the sector.',
+            ),
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print(
+                "→ starting SQL back-fill of sector uuid…"
+            ),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_sector
+                SET uuid = gen_random_uuid()
+                WHERE uuid IS NULL;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.AlterField(
+            model_name='sector',
+            name='uuid',
+            field=models.UUIDField(
+                null=False,
+                default=uuid.uuid4,
+                unique=True,
+                editable=False,
+                help_text='Unique identifier for the sector.',
+            ),
+        ),
+        #  Add a UUID field to the SectorGroup model.
+        migrations.AddField(
+            model_name='sectorgroup',
+            name='uuid',
+            field=models.UUIDField(
+                null=True,
+                editable=False,
+                help_text='Unique identifier for the sector group.',
+            ),
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print(
+                "→ starting SQL back-fill of sector group uuid…"
+            ),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_sectorgroup
+                SET uuid = gen_random_uuid()
+                WHERE uuid IS NULL;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.AlterField(
+            model_name='sectorgroup',
+            name='uuid',
+            field=models.UUIDField(
+                null=False,
+                default=uuid.uuid4,
+                unique=True,
+                editable=False,
+                help_text='Unique identifier for the sector group.',
+            ),
+        ),
+    ]
+

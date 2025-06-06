@@ -85,6 +85,7 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             row_index=1,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_one,
+            source_uuid=self.source_one,
         )
 
         self.list_two = FacilityList.objects.create(
@@ -117,6 +118,7 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             row_index="2",
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_two,
+            source_uuid=self.source_two,
         )
 
         self.list_item_tree = FacilityListItem.objects.create(
@@ -127,6 +129,7 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             row_index="2",
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_three,
+            source_uuid=self.source_three,
         )
 
         self.facility = Facility.objects.create(
@@ -271,6 +274,7 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             status=FacilityListItem.CONFIRMED_MATCH,
             facility=self.facility,
             source=source_three,
+            source_uuid=source_three,
         )
 
         FacilityMatch.objects.create(
@@ -401,6 +405,7 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             facility=self.facility,
             reported_by_user=self.user_one,
             reported_by_contributor=self.contrib_one,
+            reported_by_contributor_uuid=self.contrib_one,
             reason_for_report="reason",
             closure_state=FacilityActivityReport.CLOSED,
             status=FacilityActivityReport.PENDING,
