@@ -204,7 +204,8 @@ class Command(BaseCommand):
 
             if "os_id" not in record:
                 raise ValueError(
-                    f"Column 'os_id' is required but not found, row: '{row_idx}'"
+                    "Column 'os_id' is required" +
+                    f"but not found, row: '{row_idx}'"
                 )
 
             try:
