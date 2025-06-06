@@ -5,4 +5,4 @@ class FacilityClaim(Base):
     __tablename__ = 'api_facilityclaim'
 
     id = Column(Integer, primary_key=True)
-    origin_source = Column(String, nullable=True, blank=True)
+    origin_source = Column(String, nullable=True)

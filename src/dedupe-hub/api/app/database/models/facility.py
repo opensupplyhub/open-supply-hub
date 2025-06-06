@@ -16,7 +16,7 @@ class Facility(Base):
     is_closed = Column(Boolean, nullable=True)
     new_os_id = Column(String, nullable=True)
     has_inexact_coordinates = Column(Boolean, nullable=False, default=False)
-    origin_source = Column(String, nullable=True, blank=True)
+    origin_source = Column(String, nullable=True)
     created_at = Column(TIMESTAMP(timezone=True),
                        nullable=False, server_default=func.now())
     updated_at = Column(TIMESTAMP(timezone=True),
