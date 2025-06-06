@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
     arrayOf,
     bool,
@@ -95,7 +95,62 @@ const ContributeForm = ({
         toast,
     });
 
-    const selectFile = () => fileInput.current.click();
+    // Initialize Dromo when component mounts
+    useEffect(() => {
+        if (window.DromoUploader) {
+            // Initialize Dromo with API key and schema ID
+            window.dromoUploader = new window.DromoUploader(
+                'ee427cf5-da27-4f28-a260-c9a17d02ad30', // Frontend API key
+                '6f3e129c-d724-4b80-b2c9-8e54b47e8017', // Schema ID
+            );
+
+            // Set up callback to handle results from Dromo
+            window.dromoUploader.onResults(results => {
+                // Convert the Dromo results into a CSV file
+                const headers = Object.keys(results[0]).join(',');
+                const rows = results.map(row => Object.values(row).join(','));
+                const csvContent = [headers, ...rows].join('\n');
+
+                // Create a File object from the CSV content
+                const csvBlob = new Blob([csvContent], { type: 'text/csv' });
+                const csvFile = new File(
+                    [csvBlob],
+                    `${name || 'facility-data'}.csv`,
+                    { type: 'text/csv' },
+                );
+
+                // Manually set the file to the fileInput ref
+                if (fileInput && fileInput.current) {
+                    // Create a DataTransfer to set files
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(csvFile);
+                    fileInput.current.files = dataTransfer.files;
+
+                    // Update the filename in the UI
+                    updateFileName(fileInput);
+                }
+
+                return 'Data processed successfully!';
+            });
+        }
+
+        // Clean up when component unmounts
+        return () => {
+            if (window.dromoUploader) {
+                window.dromoUploader.onResults(null);
+            }
+        };
+    }, [fileInput, updateFileName, name]);
+
+    const selectFile = () => {
+        if (window.dromoUploader) {
+            window.dromoUploader.open();
+        } else {
+            // Fallback to traditional file input if Dromo isn't available
+            fileInput.current.click();
+        }
+    };
+
     const updateSelectedFileName = () => updateFileName(fileInput);
     const handleUploadList = () => uploadList(fileInput);
 
@@ -151,6 +206,14 @@ const ContributeForm = ({
                     Select Facility List File
                 </MaterialButton>
                 <p style={contributeFormStyles.fileNameText}>{filename}</p>
+                <p
+                    style={{
+                        fontSize: '12px',
+                        marginTop: '8px',
+                    }}
+                >
+                    Upload CSV or Excel files using our enhanced file selector
+                </p>
                 <input
                     type="file"
                     accept=".csv,.xlsx"
