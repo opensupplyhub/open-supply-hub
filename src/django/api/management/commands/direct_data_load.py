@@ -200,13 +200,17 @@ class Command(BaseCommand):
 
             facility = None
 
-            if "os_id" in record and record["os_id"]:
-                try:
-                    facility = Facility.objects.get(id=record["os_id"])
-                except Facility.DoesNotExist:
-                    logger.info(
-                        f"Facility with os_id '{record['os_id']}' does not exist in row: '{row_idx}'."
-                    )
+            if "os_id" not in record:
+                raise ValueError(
+                    f"Column 'os_id' is required but not found in the row: '{row_idx}'"
+                )
+
+            try:
+                facility = Facility.objects.get(id=record["os_id"])
+            except Facility.DoesNotExist:
+                logger.info(
+                    f"Facility with os_id '{record['os_id']}' does not exist in row: '{row_idx}'."
+                )
 
             if options["skip_existing"] and facility:
                 logger.info(
@@ -243,11 +247,11 @@ class Command(BaseCommand):
                     "lng": facility.location.coords[0],
                 }
                 logger.info(
-                    f"Using existing coordinates for facility {facility.id} in row {row_idx}"
+                    f"Using existing coordinates for facility '{facility.id}' in row '{row_idx}'"
                 )
             else:
                 logger.info(
-                    f"Will be geocoding address for row {row_idx}: {raw_data.get('address')}"
+                    f"Will be geocoding the address for row '{row_idx}': '{raw_data.get('address')}'"
                 )
 
             if "sector" in record and record["sector"]:
@@ -287,11 +291,10 @@ class Command(BaseCommand):
                 event_dto.request_type = ModerationEvent.RequestType.UPDATE.value
 
             try:
-                ec_result = me_creator.perform_event_creation(
-                    event_dto)
+                ec_result = me_creator.perform_event_creation(event_dto)
             except Exception as error:
                 logger.error(
-                    f"Error creating moderation event for row {row_idx}: {str(error)}"
+                    f"Error creating moderation event for row '{row_idx}': '{str(error)}'"
                 )
                 break
 
@@ -313,7 +316,7 @@ class Command(BaseCommand):
                     },
                 )
                 logger.error(
-                    f"Error processing row {row_idx}: {json.dumps(ec_result.errors)}"
+                    f"Error processing row '{row_idx}': '{json.dumps(ec_result.errors)}'"
                 )
                 continue
             elif "error" in record and record["error"]:
@@ -325,7 +328,6 @@ class Command(BaseCommand):
                     num_columns=len(columns) + 1,
                     col_index=columns.index("error"),
                     message="",
-
                 )
 
             processor = AddProductionLocationWithOsID(
@@ -344,7 +346,7 @@ class Command(BaseCommand):
             try:
                 item = processor.process_moderation_event()
                 logger.info(
-                    f"Processed row: {row_idx} successfully: {item.facility_id}"
+                    f"Processed row: '{row_idx}' successfully: '{item.facility_id}'"
                 )
             except Exception as error:
                 ModerationEvent.objects.filter(
@@ -355,7 +357,7 @@ class Command(BaseCommand):
                     action_reason_text_raw="<p>direct upload error</p>\n"
                 )
                 logger.error(
-                    f"Error processing row {row_idx}: {str(error)}"
+                    f"Error processing row '{row_idx}': '{str(error)}'"
                 )
                 break
 
@@ -378,7 +380,7 @@ def mark_row(
     - num_columns: Number of columns to highlight (e.g., len(columns))
     - col_index: Zero-based column index to write the error message
     - message: The error message to write
-    - format: a dictionary containing the background color to apply
+    - format: a dictionary containing the formatting to be applied to the row
     """
     requests = [
         {

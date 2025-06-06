@@ -398,8 +398,8 @@ data "template_file" "direct_data_load_job_definition" {
     google_server_side_api_key          = var.google_server_side_api_key
     oar_client_key                      = var.oar_client_key
     external_domain                     = local.domain_name
-    batch_job_queue_name                = "queue${local.short}ExportCsv"
-    batch_job_def_name                  = "job${local.short}ExportCsv"
+    batch_job_queue_name                = "queue${local.short}DDLoad"
+    batch_job_def_name                  = "job${local.short}DDLoad"
     log_group_name                      = "log${local.short}Batch"
     google_service_account_creds_base64 = var.google_service_account_creds_base64
     google_drive_shared_directory_id    = var.google_drive_shared_directory_id
