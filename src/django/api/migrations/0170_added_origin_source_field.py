@@ -69,6 +69,15 @@ class Migration(migrations.Migration):
                 help_text="The environment value where instance running"
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_contributor
+                SET origin_source = 'os_hub'
+                WHERE origin_source IS NULL OR origin_source = '';
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+
         migrations.AddField(
             model_name='extendedfield',
             name='origin_source',
@@ -80,6 +89,15 @@ class Migration(migrations.Migration):
                 help_text="The environment value where instance running"
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_extendedfield
+                SET origin_source = 'os_hub'
+                WHERE origin_source IS NULL OR origin_source = '';
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+
         migrations.AddField(
             model_name='facility',
             name='origin_source',
@@ -91,6 +109,15 @@ class Migration(migrations.Migration):
                 help_text="The environment value where instance running"
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_facility
+                SET origin_source = 'os_hub'
+                WHERE origin_source IS NULL OR origin_source = '';
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+
         migrations.AddField(
             model_name='facilityactivityreport',
             name='origin_source',
@@ -102,6 +129,15 @@ class Migration(migrations.Migration):
                 help_text="The environment value where instance running"
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_facilityactivityreport
+                SET origin_source = 'os_hub'
+                WHERE origin_source IS NULL OR origin_source = '';
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+
         migrations.AddField(
             model_name='facilityalias',
             name='origin_source',
@@ -113,6 +149,15 @@ class Migration(migrations.Migration):
                 help_text="The environment value where instance running"
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_facilityalias
+                SET origin_source = 'os_hub'
+                WHERE origin_source IS NULL OR origin_source = '';
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+
         migrations.AddField(
             model_name='facilityclaim',
             name='origin_source',
@@ -124,6 +169,15 @@ class Migration(migrations.Migration):
                 help_text="The environment value where instance running"
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_facilityclaim
+                SET origin_source = 'os_hub'
+                WHERE origin_source IS NULL OR origin_source = '';
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+
         migrations.AddField(
             model_name='facilitylist',
             name='origin_source',
@@ -135,6 +189,15 @@ class Migration(migrations.Migration):
                 help_text="The environment value where instance running"
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_facilitylist
+                SET origin_source = 'os_hub'
+                WHERE origin_source IS NULL OR origin_source = '';
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+
         migrations.AddField(
             model_name='facilitylistitem',
             name='origin_source',
@@ -146,6 +209,15 @@ class Migration(migrations.Migration):
                 help_text="The environment value where instance running"
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_facilitylistitem
+                SET origin_source = 'os_hub'
+                WHERE origin_source IS NULL OR origin_source = '';
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+
         migrations.AddField(
             model_name='facilitymatch',
             name='origin_source',
@@ -157,6 +229,15 @@ class Migration(migrations.Migration):
                 help_text="The environment value where instance running"
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_facilitymatch
+                SET origin_source = 'os_hub'
+                WHERE origin_source IS NULL OR origin_source = '';
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+
         migrations.AddField(
             model_name='source',
             name='origin_source',
@@ -168,6 +249,15 @@ class Migration(migrations.Migration):
                 help_text="The environment value where instance running"
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_source
+                SET origin_source = 'os_hub'
+                WHERE origin_source IS NULL OR origin_source = '';
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+
         migrations.AddField(
             model_name='facilityindex',
             name='origin_source',
@@ -179,6 +269,15 @@ class Migration(migrations.Migration):
                 help_text="The environment value where instance running"
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_facilityindex
+                SET origin_source = 'os_hub'
+                WHERE origin_source IS NULL OR origin_source = '';
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+
         migrations.AddField(
             model_name='facilitylocation',
             name='origin_source',
@@ -190,6 +289,15 @@ class Migration(migrations.Migration):
                 help_text="The environment value where instance running"
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_facilitylocation
+                SET origin_source = 'os_hub'
+                WHERE origin_source IS NULL OR origin_source = '';
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+
         migrations.AddField(
             model_name='user',
             name='origin_source',
@@ -201,6 +309,15 @@ class Migration(migrations.Migration):
                 help_text="The environment value where instance running"
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_user
+                SET origin_source = 'os_hub'
+                WHERE origin_source IS NULL OR origin_source = '';
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+
         migrations.AddField(
             model_name='historicalcontributor',
             name='origin_source',
