@@ -1,3 +1,4 @@
+import uuid
 from simple_history.models import HistoricalRecords
 from django.db import models
 
@@ -61,7 +62,8 @@ class FacilityActivityReport(models.Model):
         blank=False,
         choices=STATUS_CHOICES,
         default=PENDING,
-        help_text='The current status of the report.')
+        help_text='The cur3993' \
+        'rent status of the report.')
     status_change_reason = models.TextField(
         null=True,
         blank=True,
@@ -83,16 +85,23 @@ class FacilityActivityReport(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    reported_by_contributor_uuid = models.ForeignKey(
-        'Contributor',
-        to_field='uuid',
-        db_column='reported_by_contributor_uuid',
-        on_delete=models.PROTECT,
+    uuid = models.UUIDField(
         null=False,
+        default=uuid.uuid4,
+        unique=True,
         editable=False,
-        related_name='facility_activity_reports',
-        help_text='The UUID of the contributor who reported the change.'
+        help_text='Unique identifier for the facility activity report.'
     )
+    # reported_by_contributor_uuid = models.ForeignKey(
+    #     'Contributor',
+    #     to_field='uuid',
+    #     db_column='reported_by_contributor_uuid',
+    #     on_delete=models.PROTECT,
+    #     null=False,
+    #     editable=False,
+    #     related_name='facility_activity_reports',
+    #     help_text='The UUID of the contributor who reported the change.'
+    # )
 
     history = HistoricalRecords()
 

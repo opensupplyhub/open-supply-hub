@@ -187,5 +187,43 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the facility.',
             ),
         ),
-
+        # Adds a UUID field to the FacilityActivityReport model.
+        migrations.AddField(
+            model_name='facilityactivityreport',
+            name='uuid',
+            field=models.UUIDField(
+                null=True,  
+                editable=False,
+                help_text='Unique identifier for the facility activity report.',
+            ),
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print(
+                "→ starting SQL back-fill of facility activity report uuid…"
+            ),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_facilityactivityreport
+                SET uuid = gen_random_uuid()
+                WHERE uuid IS NULL;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.AlterField(
+            model_name='facilityactivityreport',
+            name='uuid',
+            field=models.UUIDField(
+                null=False,
+                default=uuid.uuid4,
+                unique=True,
+                editable=False,
+                help_text='Unique identifier for the facility activity report.',
+            ),
+        ),
     ]
