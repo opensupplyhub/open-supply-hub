@@ -1,3 +1,4 @@
+import uuid
 from itertools import groupby
 
 from api.constants import FacilityClaimStatuses
@@ -69,6 +70,13 @@ class Facility(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the facility.'
+    )
 
     @property
     def ids_of_public_contributors(self):
