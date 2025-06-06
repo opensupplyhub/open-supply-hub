@@ -329,6 +329,15 @@ class Migration(migrations.Migration):
                 max_length=200
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_historicalcontributor
+                SET origin_source = 'os_hub'
+                WHERE origin_source IS NULL OR origin_source = '';
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+
         migrations.AddField(
             model_name='historicalextendedfield',
             name='origin_source',
@@ -340,6 +349,15 @@ class Migration(migrations.Migration):
                 max_length=200
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_historicalextendedfield
+                SET origin_source = 'os_hub'
+                WHERE origin_source IS NULL OR origin_source = '';
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+
         migrations.AddField(
             model_name='historicalfacility',
             name='origin_source',
@@ -351,6 +369,15 @@ class Migration(migrations.Migration):
                 max_length=200
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_historicalfacility
+                SET origin_source = 'os_hub'
+                WHERE origin_source IS NULL OR origin_source = '';
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+
         migrations.AddField(
             model_name='historicalfacilityactivityreport',
             name='origin_source',
@@ -362,6 +389,15 @@ class Migration(migrations.Migration):
                 max_length=200
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_historicalfacilityactivityreport
+                SET origin_source = 'os_hub'
+                WHERE origin_source IS NULL OR origin_source = '';
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+
         migrations.AddField(
             model_name='historicalfacilityalias',
             name='origin_source',
@@ -373,6 +409,15 @@ class Migration(migrations.Migration):
                 max_length=200
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_historicalfacilityalias
+                SET origin_source = 'os_hub'
+                WHERE origin_source IS NULL OR origin_source = '';
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+
         migrations.AddField(
             model_name='historicalfacilityclaim',
             name='origin_source',
@@ -384,6 +429,15 @@ class Migration(migrations.Migration):
                 max_length=200
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_historicalfacilityclaim
+                SET origin_source = 'os_hub'
+                WHERE origin_source IS NULL OR origin_source = '';
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+
         migrations.AddField(
             model_name='historicalfacilitymatch',
             name='origin_source',
@@ -395,6 +449,15 @@ class Migration(migrations.Migration):
                 max_length=200
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_historicalfacilitymatch
+                SET origin_source = 'os_hub'
+                WHERE origin_source IS NULL OR origin_source = '';
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+
         RunPython(update_indexing_functions,
                   revert_updating_indexing_functions),
         RunPython(create_origin_source_function),
