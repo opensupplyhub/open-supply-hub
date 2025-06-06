@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.db.models import JSONField
 
@@ -90,6 +91,13 @@ class FacilityList(models.Model):
         blank=True,
         help_text=('List-level and internal errors logged during background '
                    'parsing of the list.')
+    )
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the facility list.'
     )
 
     def __str__(self):
