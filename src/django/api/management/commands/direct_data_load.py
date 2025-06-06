@@ -204,19 +204,21 @@ class Command(BaseCommand):
 
             if "os_id" not in record:
                 raise ValueError(
-                    f"Column 'os_id' is required but not found in the row: '{row_idx}'"
+                    f"Column 'os_id' is required but not found, row: '{row_idx}'"
                 )
 
             try:
                 facility = Facility.objects.get(id=record["os_id"])
             except Facility.DoesNotExist:
                 logger.info(
-                    f"Facility does not exist os_id: '{record['os_id']}' row: '{row_idx}'."
+                    "Facility does not exist" +
+                    f" os_id: '{record['os_id']}' row: '{row_idx}'."
                 )
 
             if options["skip_existing"] and facility:
                 logger.info(
-                    f"Skipping facility with os_id: '{record['os_id']}' row: '{row_idx}'."
+                    "Skipping facility with os_id: " +
+                    f"'{record['os_id']}' row: '{row_idx}'."
                 )
                 continue
 
@@ -263,8 +265,9 @@ class Command(BaseCommand):
                 raw_data["sector"] = record["sector"]
 
             if "facility_type" in record and record["facility_type"]:
+                facility_type = record["facility_type"].split(",")
                 raw_data["location_type"] = [
-                    f_type.strip() for f_type in record["facility_type"].split(",")
+                    f_type.strip() for f_type in facility_type
                 ]
 
             if "processing_type" in record and record["processing_type"]:
@@ -279,7 +282,9 @@ class Command(BaseCommand):
                     p_type.strip() for p_type in product_type
                 ]
 
-            if "parent_company_os_id" in record and record["parent_company_os_id"]:
+            has_parent_company = "parent_company_os_id" in record
+
+            if has_parent_company and record["parent_company_os_id"]:
                 pc_os_id = record["parent_company_os_id"].split(",")
                 raw_data["parent_company_os_id"] = [
                     p_id.strip() for p_id in pc_os_id
@@ -303,7 +308,8 @@ class Command(BaseCommand):
                 ec_result = me_creator.perform_event_creation(event_dto)
             except Exception as error:
                 logger.error(
-                    f"Error creating event row:'{row_idx}': err: '{str(error)}'"
+                    "Error creating event" +
+                    f"row:'{row_idx}': err: '{str(error)}'"
                 )
                 break
 
@@ -325,7 +331,8 @@ class Command(BaseCommand):
                     },
                 )
                 logger.error(
-                    f"Error in row '{row_idx}': '{json.dumps(ec_result.errors)}'"
+                    "Error in row" +
+                    f"'{row_idx}': '{json.dumps(ec_result.errors)}'"
                 )
                 continue
             elif "error" in record and record["error"]:
