@@ -1,3 +1,4 @@
+import uuid
 from countries.lib.countries import COUNTRY_CHOICES
 
 from django.contrib.gis.db import models as gis_models
@@ -162,18 +163,25 @@ class FacilityListItem(models.Model):
         help_text='The cleaned address of the facility.')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    source_uuid = models.ForeignKey(
-        'Source',
-        to_field='uuid',
-        db_column='source_uuid',
-        on_delete=models.PROTECT,
+    uuid = models.UUIDField(
         null=False,
+        default=uuid.uuid4,
+        unique=True,
         editable=False,
-        related_name='facility_list_items',
-        help_text=(
-            'The UUID of the source from which this item was created.'
-        ),
+        help_text='Unique identifier for the facility list item.'
     )
+    # source_uuid = models.ForeignKey(
+    #     'Source',
+    #     to_field='uuid',
+    #     db_column='source_uuid',
+    #     on_delete=models.PROTECT,
+    #     null=False,
+    #     editable=False,
+    #     related_name='facility_list_items',
+    #     help_text=(
+    #         'The UUID of the source from which this item was created.'
+    #     ),
+    # )
 
     @property
     def has_active_complete_match(self):
