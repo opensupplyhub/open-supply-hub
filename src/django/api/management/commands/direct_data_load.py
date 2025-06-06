@@ -76,28 +76,28 @@ class Command(BaseCommand):
         parser.add_argument(
             "--start_row",
             type=int,
-            help="The row number to start reading from the Google Sheet (1-based index).",
+            help="The row number to start from (1-based index).",
             default=2,
             required=False,
         )
         parser.add_argument(
             "--end_row",
             type=int,
-            help="The row number to stop reading from the Google Sheet (1-based index).",
+            help="The row number to stop reading from (1-based index).",
             default=None,
             required=True,
         )
         parser.add_argument(
             "--columns",
             type=str,
-            help="Comma-separated list of columns to read from the Google Sheet in particular order.",
+            help="Comma-separated list of columns to read from.",
             required=True,
         )
         parser.add_argument(
             '--re_geocode',
             dest='re_geocode',
             action='store_true',
-            help="Force re-geocoding of addresses even if coordinates already exist.",
+            help="Force re-geocoding of addresses every time.",
         )
         parser.set_defaults(re_geocode=False)
         parser.add_argument(
@@ -162,10 +162,12 @@ class Command(BaseCommand):
         logger.info("Built Google Sheets service")
         col_names = [col_name.upper() for col_name in list(
             string.ascii_uppercase[:len(columns)])]
-        col_range = f'{options["sheet_name"]}!{col_names[0]}{options["start_row"]}:{col_names[len(col_names) - 1]}{options["end_row"]}'
+        start_range = f"{col_names[0]}{options["start_row"]}"
+        end_range = f"{col_names[len(col_names) - 1]}{options["end_row"]}"
+        col_range = f'{options["sheet_name"]}!{start_range}:{end_range}'
 
         logger.info(
-            f"Fetching data from Google Sheet with ID: '{sheet_id}' and range: '{col_range}'"
+            f"Fetching data from sheet ID: '{sheet_id}' range: '{col_range}'"
         )
 
         result = service.spreadsheets().values().get(
@@ -174,14 +176,14 @@ class Command(BaseCommand):
         ).execute()
 
         logger.info(
-            f"Fetched data from Google Sheet with ID: '{sheet_id}' and range: '{col_range}'"
+            f"Fetched data from sheet ID: '{sheet_id}' range: '{col_range}'"
         )
 
         rows = result.get("values", [])
 
         if not rows:
             raise ValueError(
-                "No data found in the spreadsheet. Please check the range and sheet ID."
+                "No data found in the spreadsheet."
             )
 
         logger.info(f"Data fetched successfully: '{len(rows)}' rows")
@@ -209,12 +211,12 @@ class Command(BaseCommand):
                 facility = Facility.objects.get(id=record["os_id"])
             except Facility.DoesNotExist:
                 logger.info(
-                    f"Facility with os_id '{record['os_id']}' does not exist in row: '{row_idx}'."
+                    f"Facility does not exist os_id: '{record['os_id']}' row: '{row_idx}'."
                 )
 
             if options["skip_existing"] and facility:
                 logger.info(
-                    f"Skipping existing facility with os_id '{record['os_id']}' in row: '{row_idx}'."
+                    f"Skipping facility with os_id: '{record['os_id']}' row: '{row_idx}'."
                 )
                 continue
 
@@ -235,7 +237,9 @@ class Command(BaseCommand):
                 raw_data["country"] = record["country"].replace(
                     '\u00a0', ' ')  # fix non-breaking space
 
-            if "lat" in record and "lng" in record and record["lat"] and record["lng"]:
+            has_lat_lng = "lat" in record and "lng" in record
+
+            if has_lat_lng and record["lat"] and record["lng"]:
                 raw_data["coordinates"] = {
                     "lat": record["lat"],
                     "lng": record["lng"],
@@ -247,11 +251,11 @@ class Command(BaseCommand):
                     "lng": facility.location.coords[0],
                 }
                 logger.info(
-                    f"Using existing coordinates for facility '{facility.id}' in row '{row_idx}'"
+                    f"Setting coordinates ID: '{facility.id}' row: '{row_idx}'"
                 )
             else:
                 logger.info(
-                    f"Will be geocoding the address for row '{row_idx}': '{raw_data.get('address')}'"
+                    f"Geocoding ID: '{record.get("os_id")}' row: '{row_idx}'"
                 )
 
             if "sector" in record and record["sector"]:
@@ -263,38 +267,42 @@ class Command(BaseCommand):
                 ]
 
             if "processing_type" in record and record["processing_type"]:
+                processing_type = record["processing_type"].split(",")
                 raw_data["processing_type"] = [
-                    p_type.strip() for p_type in record["processing_type"].split(",")
+                    p_type.strip() for p_type in processing_type
                 ]
 
             if "product_type" in record and record["product_type"]:
+                product_type = record["product_type"].split(",")
                 raw_data["product_type"] = [
-                    p_type.strip() for p_type in record["product_type"].split(",")
+                    p_type.strip() for p_type in product_type
                 ]
 
             if "parent_company_os_id" in record and record["parent_company_os_id"]:
+                pc_os_id = record["parent_company_os_id"].split(",")
                 raw_data["parent_company_os_id"] = [
-                    p_id.strip() for p_id in record["parent_company_os_id"].split(",")
+                    p_id.strip() for p_id in pc_os_id
                 ]
 
             me_creator = ModerationEventCreator(
                 LocationContribution(),
             )
+            req_types = ModerationEvent.RequestType
             event_dto = CreateModerationEventDTO(
                 contributor=contributor,
                 raw_data=raw_data,
-                request_type=ModerationEvent.RequestType.CREATE.value
+                request_type=req_types.CREATE.value
             )
 
             if facility:
                 event_dto.os = facility
-                event_dto.request_type = ModerationEvent.RequestType.UPDATE.value
+                event_dto.request_type = req_types.UPDATE.value
 
             try:
                 ec_result = me_creator.perform_event_creation(event_dto)
             except Exception as error:
                 logger.error(
-                    f"Error creating moderation event for row '{row_idx}': '{str(error)}'"
+                    f"Error creating event row:'{row_idx}': err: '{str(error)}'"
                 )
                 break
 
@@ -316,7 +324,7 @@ class Command(BaseCommand):
                     },
                 )
                 logger.error(
-                    f"Error processing row '{row_idx}': '{json.dumps(ec_result.errors)}'"
+                    f"Error in row '{row_idx}': '{json.dumps(ec_result.errors)}'"
                 )
                 continue
             elif "error" in record and record["error"]:
@@ -346,7 +354,7 @@ class Command(BaseCommand):
             try:
                 item = processor.process_moderation_event()
                 logger.info(
-                    f"Processed row: '{row_idx}' successfully: '{item.facility_id}'"
+                    f"Processed row: '{row_idx}' ID: '{item.facility_id}'"
                 )
             except Exception as error:
                 ModerationEvent.objects.filter(
@@ -372,7 +380,7 @@ def mark_row(
         message,
         format={}):
     """
-    Highlights the specified row in red and sets an error message in the given column.
+    Highlights the specified row in red and sets an error message.
     - service: Google Sheets API service object
     - spreadsheet_id: The spreadsheet ID
     - tab_id: The numeric sheet ID (not the name)
