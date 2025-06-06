@@ -109,15 +109,15 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
                 "sector": [
                     "Apparel"
                 ],
-                "address": "12 KNIGHT STREET, PORTSMITH, QLD 4870",
-                "name": "TINAROO CREEK WINES PTY LTD",
+                "address": "Mount Isa Mines Limited Copper Refineries",
+                "name": "Copper Refineries Pty Ltd Mount Isa Mines Limited CRL",
                 "country": {
                     "alpha_2": "AU"
                 },
                 "os_id": "VN2025093077Q64",
                 "coordinates": {
                     "lat": -16.940004,
-                    "lng": 145.7628965
+                    "lon": 145.7628965
                 },
             }
             self.client.index(
@@ -142,4 +142,4 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
                 index=self.production_locations_index_name,
                 body=query
             )
-            self.assertGreater(response['hits']['total']['value'], 0)
+            self.assertEqual(response['hits']['total']['value'], 1)
