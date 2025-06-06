@@ -1,3 +1,4 @@
+import uuid
 from simple_history.models import HistoricalRecords
 from django.db import models
 
@@ -83,6 +84,14 @@ class ExtendedField(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the extended field.'
+    )
+
     history = HistoricalRecords()
 
     def __str__(self):

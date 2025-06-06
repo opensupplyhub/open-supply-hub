@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
             code=drop_triggers,
             reverse_code=create_triggers,
         ),
-        # Adds a UUID field to the Source model and updates the FacilityListItem model to reference this UUID.
+        # Adds a UUID field to the Source model.
         migrations.AddField(
             model_name='source',
             name='uuid',
@@ -68,43 +68,6 @@ class Migration(migrations.Migration):
                 unique=True,
                 editable=False,
                 help_text='Unique identifier for the source.',
-            ),
-        ),
-        migrations.AddField(
-            model_name='facilitylistitem',
-            name='source_uuid',
-            field=models.ForeignKey(
-                to='api.source',
-                to_field='uuid',
-                db_column='source_uuid',
-                on_delete=models.PROTECT,
-                null=True,
-                editable=False,
-                related_name='facility_list_items',
-                help_text='The UUID of the source from which this item was created.',
-            ),
-        ),
-        migrations.RunSQL(
-            sql="""
-                UPDATE api_facilitylistitem AS fli
-                SET source_uuid = s.uuid
-                FROM api_source AS s
-                WHERE fli.source_id = s.id;
-            """,
-            reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.AlterField(
-            model_name='facilitylistitem',
-            name='source_uuid',
-            field=models.ForeignKey(
-                to='api.source',
-                to_field='uuid',
-                db_column='source_uuid',
-                on_delete=models.PROTECT,
-                null=False,
-                editable=False,
-                related_name='facility_list_items',
-                help_text='The UUID of the source from which this item was created.',
             ),
         ),
         # Adds a UUID field to the Contributor model.
@@ -146,71 +109,44 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the contributor.',
             ),
         ),
+        # Adds a UUID field to the ExtendedField model.
         migrations.AddField(
-            model_name='facilityactivityreport',
-            name='reported_by_contributor_uuid',
-            field=models.ForeignKey(
-                to='api.contributor',
-                to_field='uuid',
-                db_column='reported_by_contributor_uuid',
-                on_delete=models.PROTECT,
+            model_name='extendedfield',
+            name='uuid',
+            field=models.UUIDField(
                 null=True,
                 editable=False,
-                related_name='facility_activity_reports',
-                help_text='The UUID of the contributor who reported the change.',
+                help_text='Unique identifier for the extended field.',
             ),
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print(
+                "→ starting SQL back-fill of extended field uuid…"
+            ),
+            reverse_code=migrations.RunPython.noop,
         ),
         migrations.RunSQL(
             sql="""
-                UPDATE api_facilityactivityreport AS far
-                SET reported_by_contributor_uuid = c.uuid
-                FROM api_contributor AS c
-                WHERE far.reported_by_contributor_id = c.id;
+                UPDATE api_extendedfield
+                SET uuid = gen_random_uuid()
+                WHERE uuid IS NULL;
             """,
             reverse_sql=migrations.RunSQL.noop,
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
+            reverse_code=migrations.RunPython.noop,
         ),
         migrations.AlterField(
-            model_name='facilityactivityreport',
-            name='reported_by_contributor_uuid',
-            field=models.ForeignKey(
-                to='api.contributor',
-                to_field='uuid',
-                db_column='reported_by_contributor_uuid',
-                on_delete=models.PROTECT,
+            model_name='extendedfield',
+            name='uuid',
+            field=models.UUIDField(
                 null=False,
+                default=uuid.uuid4,
+                unique=True,
                 editable=False,
-                related_name='facility_activity_reports',
-                help_text='The UUID of the contributor who reported the change.',
+                help_text='Unique identifier for the extended field.',
             ),
         ),
-        migrations.AddField(
-            model_name='historicalfacilityactivityreport',
-            name='reported_by_contributor_uuid',
-            field=models.ForeignKey(
-                blank=True,
-                db_column='reported_by_contributor_uuid',
-                db_constraint=False,
-                editable=False,
-                help_text='The UUID of the contributor who reported the change.',
-                null=True,
-                on_delete=models.DO_NOTHING,
-                related_name='+',
-                to='api.contributor',
-                to_field='uuid',
-            ),
-        ),
-        migrations.RunSQL(
-            sql="""
-                UPDATE api_historicalfacilityactivityreport AS hfar
-                SET reported_by_contributor_uuid = c.uuid
-                FROM api_contributor AS c
-                WHERE hfar.reported_by_contributor_id = c.id;
-            """,
-            reverse_sql=migrations.RunSQL.noop,
-        ),
-        # Recreate triggers.
-        migrations.RunPython(
-            code=create_triggers,
-            reverse_code=drop_triggers,
-        ),
+
     ]
