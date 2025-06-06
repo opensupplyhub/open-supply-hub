@@ -410,6 +410,11 @@ variable "batch_export_csv_ce_min_vcpus" {
   default = 0
 }
 
+variable "batch_direct_data_load_ce_min_vcpus" {
+  type    = number
+  default = 2
+}
+
 variable "batch_notifications_ce_desired_vcpus" {
   default = "0"
 }
@@ -417,6 +422,11 @@ variable "batch_notifications_ce_desired_vcpus" {
 variable "batch_export_csv_ce_desired_vcpus" {
   type    = number
   default = 0
+}
+
+variable "batch_direct_data_load_ce_desired_vcpus" {
+  type    = number
+  default = 4
 }
 
 variable "batch_notifications_ce_max_vcpus" {
@@ -427,6 +437,12 @@ variable "batch_export_csv_ce_max_vcpus" {
   type    = number
   default = 4
 }
+
+variable "batch_direct_data_load_ce_max_vcpus" {
+  type    = number
+  default = 4
+}
+
 
 variable "batch_notifications_ce_instance_types" {
   type = list(string)
@@ -766,30 +782,60 @@ variable "app_ecs_cooldown_scale_down" {
 }
 
 variable "vanta_assumed_role_external_ids" {
-  type      = list
+  type      = list(any)
   default   = []
   sensitive = true
 }
 
 variable "vanta_assumed_role_principals" {
-  type      = list
+  type      = list(any)
   default   = []
   sensitive = true
 }
 
 variable "ip_whitelist" {
-  type    = list(string)
-  default = []
+  type        = list(string)
+  default     = []
   description = "List of IP addresses to allow through the AWS WAF"
 }
 
 variable "ip_denylist" {
-  type    = list(string)
-  default = []
+  type        = list(string)
+  default     = []
   description = "List of IP addresses to block through the AWS WAF"
 }
 
 variable "waf_enabled" {
-  type        = bool
-  default     = false
+  type    = bool
+  default = false
 }
+
+
+### DIRECT DATA LOAD VARIABLES - START ###
+
+variable "direct_data_load_sheet_id" {
+  type        = string
+  description = "Google Sheet ID for direct data load"
+}
+
+variable "direct_data_load_contributor_id" {
+  type        = number
+  description = "Contributor ID for direct data load"
+}
+
+variable "direct_data_load_user_id" {
+  type        = number
+  description = "User ID for direct data load"
+}
+
+variable "direct_data_load_sheet_name" {
+  type        = string
+  description = "Name of the Google Sheet for direct data load"
+}
+
+variable "direct_data_load_tab_id" {
+  type        = number
+  description = "Tab ID of the Google Sheet for direct data load"
+}
+
+### DIRECT DATA LOAD VARIABLES - END ###

@@ -352,3 +352,73 @@ resource "aws_cloudwatch_log_group" "batch" {
   name              = "log${local.short}Batch"
   retention_in_days = 0
 }
+
+resource "aws_batch_compute_environment" "direct_data_load" {
+  depends_on                      = [aws_iam_role_policy_attachment.batch_policy]
+  compute_environment_name_prefix = "batch${local.short}DDLoadComputeEnvironment"
+  type                            = "MANAGED"
+  state                           = "ENABLED"
+  service_role                    = aws_iam_role.container_instance_batch.arn
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  compute_resources {
+    type          = "FARGATE"
+    min_vcpus     = var.batch_direct_data_load_ce_min_vcpus
+    desired_vcpus = var.batch_direct_data_load_ce_desired_vcpus
+    max_vcpus     = var.batch_direct_data_load_ce_max_vcpus
+    subnets       = module.vpc.private_subnet_ids
+  }
+}
+
+resource "aws_batch_job_queue" "direct_data_load" {
+  name                 = "queue${local.short}DirectDataLoad"
+  priority             = 1
+  state                = "ENABLED"
+  compute_environments = [aws_batch_compute_environment.direct_data_load.arn]
+}
+
+
+data "template_file" "direct_data_load_job_definition" {
+  template = file("job-definitions/direct_data_load.json")
+
+  vars = {
+    image_url                           = "${module.ecr_repository_batch.repository_url}:${var.image_tag}"
+    aws_region                          = var.aws_region
+    aws_storage_bucket_name             = local.files_bucket_name
+    postgres_host                       = aws_route53_record.database.name
+    postgres_port                       = module.database_enc.port
+    postgres_user                       = var.rds_database_username
+    postgres_password                   = var.rds_database_password
+    postgres_db                         = var.rds_database_name
+    environment                         = var.environment
+    django_secret_key                   = var.django_secret_key
+    google_server_side_api_key          = var.google_server_side_api_key
+    oar_client_key                      = var.oar_client_key
+    external_domain                     = local.domain_name
+    batch_job_queue_name                = "queue${local.short}ExportCsv"
+    batch_job_def_name                  = "job${local.short}ExportCsv"
+    log_group_name                      = "log${local.short}Batch"
+    google_service_account_creds_base64 = var.google_service_account_creds_base64
+    google_drive_shared_directory_id    = var.google_drive_shared_directory_id
+    sheet_id                            = var.direct_data_load_sheet_id
+    contributor_id                      = var.direct_data_load_contributor_id
+    user_id                             = var.direct_data_load_user_id
+    sheet_name                          = var.direct_data_load_sheet_name
+    tab_id                              = var.direct_data_load_tab_id
+  }
+}
+
+resource "aws_batch_job_definition" "direct_data_load" {
+  name           = "job${local.short}DirectDataLoad"
+  type           = "container"
+  propagate_tags = true
+
+  container_properties = data.template_file.direct_data_load_job_definition.rendered
+
+  retry_strategy {
+    attempts = 2
+  }
+}
