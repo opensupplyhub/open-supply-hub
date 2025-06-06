@@ -1,3 +1,4 @@
+import uuid
 from simple_history.models import HistoricalRecords
 
 from django.db import models
@@ -66,6 +67,13 @@ class FacilityMatch(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the facility match.'
+    )
 
     history = HistoricalRecords()
 
