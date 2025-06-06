@@ -16,7 +16,7 @@ locals {
   ]
   ipv4_denylist = [
     for ip in var.ip_denylist :
-    ip if can(cidrhost(ip, 0)) && length(split(".", split("/", ip)[0])) == 4
+    ip if can(regex(local.ipv4_cidr_pattern, ip)) && can(cidrhost(ip, 0))
   ]
   ipv6_denylist = [
     for ip in var.ip_denylist :
