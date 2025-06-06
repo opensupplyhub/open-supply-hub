@@ -13,7 +13,7 @@ class FacilityList(Base):
     replaces_id = Column(Integer, nullable=False)
     match_responsibility = Column(String, nullable=False, default="moderator")
     file = Column(String, nullable=True)
-    origin_source = Column(String, nullable=False, default="os_hub")
+    origin_source = Column(String, nullable=True, blank=True)
     created_at = Column(TIMESTAMP(timezone=True),
                        nullable=False, server_default=func.now())
     updated_at = Column(TIMESTAMP(timezone=True),

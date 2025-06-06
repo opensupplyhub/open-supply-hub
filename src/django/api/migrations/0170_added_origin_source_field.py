@@ -63,7 +63,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                blank=True,
+                null=True,
                 max_length=200,
                 help_text="The environment value where instance running"
             ),
@@ -73,7 +74,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                blank=True,
+                null=True,
                 max_length=200,
                 help_text="The environment value where instance running"
             ),
@@ -83,7 +85,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                blank=True,
+                null=True,
                 max_length=200,
                 help_text="The environment value where instance running"
             ),
@@ -93,7 +96,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                blank=True,
+                null=True,
                 max_length=200,
                 help_text="The environment value where instance running"
             ),
@@ -103,7 +107,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                blank=True,
+                null=True,
                 max_length=200,
                 help_text="The environment value where instance running"
             ),
@@ -113,7 +118,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                blank=True,
+                null=True,
                 max_length=200,
                 help_text="The environment value where instance running"
             ),
@@ -123,7 +129,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                blank=True,
+                null=True,
                 max_length=200,
                 help_text="The environment value where instance running"
             ),
@@ -133,7 +140,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                blank=True,
+                null=True,
                 max_length=200,
                 help_text="The environment value where instance running"
             ),
@@ -143,7 +151,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                blank=True,
+                null=True,
                 max_length=200,
                 help_text="The environment value where instance running"
             ),
@@ -153,7 +162,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                blank=True,
+                null=True,
                 max_length=200,
                 help_text="The environment value where instance running"
             ),
@@ -163,7 +173,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                blank=True,
+                null=True,
                 max_length=200,
                 help_text="The environment value where instance running"
             ),
@@ -173,7 +184,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                blank=True,
+                null=True,
                 max_length=200,
                 help_text="The environment value where instance running"
             ),
@@ -183,7 +195,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                blank=True,
+                null=True,
                 max_length=200,
                 help_text="The environment value where instance running"
             ),
@@ -193,7 +206,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', ' OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                blank=True,
+                null=True,
                 help_text='The environment value where instance running',
                 max_length=200
             ),
@@ -203,7 +217,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', ' OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                blank=True,
+                null=True,
                 help_text='The environment value where instance running',
                 max_length=200
             ),
@@ -213,7 +228,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', ' OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                blank=True,
+                null=True,
                 help_text='The environment value where instance running',
                 max_length=200
             ),
@@ -223,7 +239,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', ' OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                blank=True,
+                null=True,
                 help_text='The environment value where instance running',
                 max_length=200
             ),
@@ -233,7 +250,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', ' OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                blank=True,
+                null=True,
                 help_text='The environment value where instance running',
                 max_length=200
             ),
@@ -243,7 +261,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', ' OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                blank=True,
+                null=True,
                 help_text='The environment value where instance running',
                 max_length=200
             ),
@@ -253,7 +272,8 @@ class Migration(migrations.Migration):
             name='origin_source',
             field=models.CharField(
                 choices=[('os_hub', ' OS Hub'), ('rba', 'RBA')],
-                default='os_hub',
+                blank=True,
+                null=True,
                 help_text='The environment value where instance running',
                 max_length=200
             ),

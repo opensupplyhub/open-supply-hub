@@ -42,7 +42,7 @@ class FacilityListItem(Base):
     facility_id = Column(String, ForeignKey('api_facility.id'), nullable=True)
     clean_name = Column(String, nullable=False)
     clean_address = Column(String, nullable=False)
-    origin_source = Column(String, nullable=False, default="os_hub")
+    origin_source = Column(String, nullable=True, blank=True)
     created_at = Column(TIMESTAMP(timezone=True),
                        nullable=False, server_default=func.now())
     updated_at = Column(TIMESTAMP(timezone=True),

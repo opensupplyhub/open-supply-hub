@@ -396,7 +396,8 @@ class FacilityClaim(models.Model):
     )
     origin_source = models.CharField(
         choices=OriginSource.CHOICES,
-        default=OriginSource.OSHUB,
+        blank=True,
+        null=True,
         max_length=200,
         help_text="The environment value where instance running"
     )
