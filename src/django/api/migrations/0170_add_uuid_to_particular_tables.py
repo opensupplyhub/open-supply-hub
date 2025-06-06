@@ -538,5 +538,44 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the sector.',
             ),
         ),
+        #  Add a UUID field to the SectorGroup model.
+        migrations.AddField(
+            model_name='sectorgroup',
+            name='uuid',
+            field=models.UUIDField(
+                null=True,
+                editable=False,
+                help_text='Unique identifier for the sector group.',
+            ),
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print(
+                "→ starting SQL back-fill of sector group uuid…"
+            ),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_sectorgroup
+                SET uuid = gen_random_uuid()
+                WHERE uuid IS NULL;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.AlterField(
+            model_name='sectorgroup',
+            name='uuid',
+            field=models.UUIDField(
+                null=False,
+                default=uuid.uuid4,
+                unique=True,
+                editable=False,
+                help_text='Unique identifier for the sector group.',
+            ),
+        ),
     ]
 
