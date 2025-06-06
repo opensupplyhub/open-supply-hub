@@ -162,8 +162,8 @@ class Command(BaseCommand):
         logger.info("Built Google Sheets service")
         col_names = [col_name.upper() for col_name in list(
             string.ascii_uppercase[:len(columns)])]
-        start_range = f"{col_names[0]}{options["start_row"]}"
-        end_range = f"{col_names[len(col_names) - 1]}{options["end_row"]}"
+        start_range = f'{col_names[0]}{options["start_row"]}'
+        end_range = f'{col_names[len(col_names) - 1]}{options["end_row"]}'
         col_range = f'{options["sheet_name"]}!{start_range}:{end_range}'
 
         logger.info(
@@ -254,8 +254,9 @@ class Command(BaseCommand):
                     f"Setting coordinates ID: '{facility.id}' row: '{row_idx}'"
                 )
             else:
+                os_id = record["os_id"]
                 logger.info(
-                    f"Geocoding ID: '{record.get("os_id")}' row: '{row_idx}'"
+                    f"Geocoding ID: '{os_id}' row: '{row_idx}'"
                 )
 
             if "sector" in record and record["sector"]:
