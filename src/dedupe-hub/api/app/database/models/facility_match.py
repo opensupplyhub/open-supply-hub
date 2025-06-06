@@ -20,7 +20,7 @@ class FacilityMatch(Base):
     confidence = Column(DECIMAL, nullable=False, default=0.0)
     status = Column(String, nullable=False, default='PENDING')
     is_active = Column(Boolean, nullable=False, default=True)
-    origin_source = Column(String, nullable=True)
+    origin_source = Column(String, nullable=False, default="os_hub")
     created_at = Column(TIMESTAMP(timezone=True),
                        nullable=False, default=func.now(), server_default=func.now())
     updated_at = Column(TIMESTAMP(timezone=True),

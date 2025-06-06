@@ -34,7 +34,7 @@ class FacilityLocation(models.Model):
     )
     origin_source = models.CharField(
         choices=OriginSource.CHOICES,
-        null=True,
+        default=OriginSource.OSHUB,
         max_length=200,
         help_text="The environment value where instance running"
     )

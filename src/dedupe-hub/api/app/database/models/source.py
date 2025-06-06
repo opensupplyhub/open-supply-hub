@@ -10,7 +10,7 @@ class Source(Base):
     facility_list_id = Column(Integer, nullable=False)
     is_active = Column(Boolean, nullable=False, default=True)
     create = Column(Boolean, nullable=False, default=True)
-    origin_source = Column(String, nullable=True)
+    origin_source = Column(String, nullable=False, default="os_hub")
     created_at = Column(TIMESTAMP(timezone=True),
                        nullable=False, server_default=func.now())
     updated_at = Column(TIMESTAMP(timezone=True),
