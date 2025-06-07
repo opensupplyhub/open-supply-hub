@@ -84,7 +84,6 @@ class Command(BaseCommand):
             "--end_row",
             type=int,
             help="The row number to stop reading from (1-based index).",
-            default=None,
             required=True,
         )
         parser.add_argument(
