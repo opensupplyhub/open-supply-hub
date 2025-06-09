@@ -21,7 +21,6 @@ def close_list(list_id, user_id):
             facility=facility,
             reported_by_user=user,
             reported_by_contributor=contributor,
-            reported_by_contributor_uuid=contributor,
             reason_for_report=reason,
             closure_state="CLOSED",
             approved_at=now,
