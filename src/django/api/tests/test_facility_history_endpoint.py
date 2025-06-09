@@ -867,7 +867,6 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
             geocoded_point=Point(0, 0),
             status=FacilityListItem.CONFIRMED_MATCH,
             source=source,
-            source_uuid=source,
         )
 
         facility = Facility.objects.create(

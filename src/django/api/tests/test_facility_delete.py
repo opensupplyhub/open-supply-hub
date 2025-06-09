@@ -191,7 +191,6 @@ class FacilityDeleteTest(APITestCase):
             status=FacilityListItem.MATCHED,
             facility=self.facility,
             source=source_2,
-            source_uuid=source_2,
         )
 
         match_2 = FacilityMatch.objects.create(
@@ -224,7 +223,6 @@ class FacilityDeleteTest(APITestCase):
             row_index=1,
             status=FacilityListItem.MATCHED,
             facility=self.facility,
-            source_uuid=source_3,
         )
 
         match_3 = FacilityMatch.objects.create(
@@ -295,7 +293,6 @@ class FacilityDeleteTest(APITestCase):
             status=FacilityListItem.MATCHED,
             facility=self.facility,
             source=source_2,
-            source_uuid=source_2,
         )
 
         match_2 = FacilityMatch.objects.create(
@@ -328,7 +325,6 @@ class FacilityDeleteTest(APITestCase):
             row_index=1,
             status=FacilityListItem.MATCHED,
             facility=self.facility,
-            source_uuid=source_3,
         )
 
         match_3 = FacilityMatch.objects.create(
@@ -407,7 +403,6 @@ class FacilityDeleteTest(APITestCase):
             status=FacilityListItem.MATCHED,
             facility=self.facility,
             source=source_2,
-            source_uuid=source_2,
         )
 
         FacilityMatch.objects.create(
@@ -466,7 +461,6 @@ class FacilityDeleteTest(APITestCase):
             status=FacilityListItem.MATCHED,
             facility=self.facility,
             source=source_2,
-            source_uuid=source_2,
         )
 
         FacilityMatch.objects.create(
@@ -516,7 +510,6 @@ class FacilityDeleteTest(APITestCase):
             status=FacilityListItem.MATCHED,
             facility=self.facility,
             source=source_2,
-            source_uuid=source_2,
         )
 
         FacilityMatch.objects.create(
@@ -562,7 +555,6 @@ class FacilityDeleteTest(APITestCase):
             row_index=1,
             status=FacilityListItem.MATCHED,
             source=source_2,
-            source_uuid=source_2,
         )
 
         FacilityMatch.objects.create(

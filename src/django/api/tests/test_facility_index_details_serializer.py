@@ -271,7 +271,6 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             status=FacilityListItem.CONFIRMED_MATCH,
             facility=self.facility,
             source=source_three,
-            source_uuid=source_three,
         )
 
         FacilityMatch.objects.create(

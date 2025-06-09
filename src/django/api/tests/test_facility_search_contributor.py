@@ -114,7 +114,6 @@ class FacilitySearchContributorTest(FacilityAPITestCaseBase):
             status=FacilityListItem.CONFIRMED_MATCH,
             source=source_two,
             facility=self.facility,
-            source_uuid=source_two,
         )
 
         FacilityMatch.objects.create(
@@ -139,7 +138,6 @@ class FacilitySearchContributorTest(FacilityAPITestCaseBase):
             status=FacilityListItem.CONFIRMED_MATCH,
             source=source_three,
             facility=self.facility,
-            source_uuid=source_three,
         )
 
         FacilityMatch.objects.create(

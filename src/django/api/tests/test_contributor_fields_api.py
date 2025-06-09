@@ -336,7 +336,6 @@ class ContributorFieldsApiTest(APITestCase):
             geocoded_point=Point(0, 0),
             status=FacilityListItem.CONFIRMED_MATCH,
             source=api_source_two,
-            source_uuid=api_source_two,
         )
         new_item.facility = self.facility_two
         new_item.save()

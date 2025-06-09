@@ -261,7 +261,6 @@ class FacilityMatchPromoteTest(APITestCase):
             geocoded_point=self.location_one,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=single_source,
-            source_uuid=single_source,
         )
 
         single_match = FacilityMatch.objects.create(
