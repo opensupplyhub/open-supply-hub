@@ -403,7 +403,9 @@ class FacilityClaim(models.Model):
         help_text='Unique identifier for the facility claim.'
     )
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(
+        excluded_fields=['uuid']
+    )
 
     default_change_includes = (
         'facility_name_english',
