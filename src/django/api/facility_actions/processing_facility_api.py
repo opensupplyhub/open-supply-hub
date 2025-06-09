@@ -162,7 +162,6 @@ class ProcessingFacilityAPI(ProcessingFacility):
             clean_address=row.clean_address,
             country_code=row.country_code,
             sector=row.sector,
-            source_uuid=source
         )
 
     def __handle_validation_errors(self) -> Response:
