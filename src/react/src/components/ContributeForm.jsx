@@ -211,9 +211,11 @@ const ContributeForm = ({
                     <MaterialButton
                         onClick={openDromoUploader}
                         type="button"
-                        variant="outlined"
-                        color="secondary"
-                        className="outlined-button"
+                        variant="contained"
+                        style={{
+                            backgroundColor: '#62CC74',
+                            color: 'white',
+                        }}
                         disableRipple
                     >
                         Beta Self Service Upload
