@@ -88,7 +88,9 @@ class Facility(models.Model):
             .contributors
         )
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(
+        excluded_fields=['uuid']
+    )
     objects = FacilityManager()
 
     def __str__(self):
