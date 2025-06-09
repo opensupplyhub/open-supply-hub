@@ -7,6 +7,27 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
     def setUp(self):
         super().setUp()
         self.client: OpenSearch = self.getClient()
+        self._cleanup_index()
+
+    def tearDown(self):
+        self._cleanup_index()
+        super().tearDown()
+
+    def _cleanup_index(self):
+        """Clean up all documents in the test index"""
+        try:
+            self.client.delete_by_query(
+                index=self.production_locations_index_name,
+                body={
+                    "query": {
+                        "match_all": {}
+                    }
+                },
+                refresh=True
+            )
+            self.client.indices.refresh(index=self.production_locations_index_name)
+        except Exception as e:
+            print(f"Warning: Failed to cleanup index: {e}")
 
     def test_connection(self):
         health = self.client.cluster.health()
@@ -114,27 +135,38 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
                 "country": {
                     "alpha_2": "AU"
                 },
-                "os_id": "VN2025093077Q64",
+                "os_id": "AU2025093077Q64",
                 "coordinates": {
                     "lat": -16.940004,
                     "lon": 145.7628965
                 },
+                "description": "Mount Isa Mines Limited Copper Refineries Pty Ltd CRL",
+                "local_name": "Mount Isa Mines Limited Copper Refineries Pty Ltd CRL"
             }
             self.client.index(
                 index=self.production_locations_index_name,
                 body=doc,
-                id=self.client.count()
+                id=self.client.count(),
+                refresh=True
             )
-            self.client.indices.refresh(index=self.production_locations_index_name)
 
             query_text = "Mount Isa Mines Limited Copper Refineries Pty Ltd CRL"
             query = {
                 'query': {
-                    'multi_match': {
-                        'query': query_text,
-                        'fields': ['name^2', 'address', 'description', 'local_name'],
-                        'type': 'phrase',
-                        'slop': 3
+                    'bool': {
+                        'must': [
+                            {
+                                'multi_match': {
+                                    'query': query_text,
+                                    'fields': ['name^3', 'address^2', 'description^2', 'local_name^2'],
+                                    'type': 'phrase',
+                                    'slop': 2
+                                }
+                            }
+                        ],
+                        'filter': [
+                            {'term': {'country.alpha_2': 'AU'}}
+                        ]
                     }
                 }
             }
@@ -142,4 +174,5 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
                 index=self.production_locations_index_name,
                 body=query
             )
+            print(response)
             self.assertEqual(response['hits']['total']['value'], 1)
