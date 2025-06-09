@@ -410,11 +410,6 @@ variable "batch_export_csv_ce_min_vcpus" {
   default = 0
 }
 
-variable "batch_direct_data_load_ce_min_vcpus" {
-  type    = number
-  default = 2
-}
-
 variable "batch_notifications_ce_desired_vcpus" {
   default = "0"
 }
