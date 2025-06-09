@@ -40,7 +40,6 @@ class CloseListTest(TestCase):
             source=self.source_one,
             sector=[],
             status=FacilityListItem.MATCHED,
-            source_uuid=self.source_one,
         )
 
         self.facility_one = Facility.objects.create(
@@ -58,7 +57,6 @@ class CloseListTest(TestCase):
             source=self.source_one,
             sector=[],
             status=FacilityListItem.MATCHED,
-            source_uuid=self.source_one,
         )
 
         self.facility_one_b = Facility.objects.create(
@@ -86,7 +84,6 @@ class CloseListTest(TestCase):
             source=self.source_two,
             sector=[],
             status=FacilityListItem.MATCHED,
-            source_uuid=self.source_two,
         )
 
         self.facility_two = Facility.objects.create(

@@ -48,7 +48,6 @@ class FacilityListItemTest(APITestCase):
                 source=self.source,
                 row_index=i,
                 status=possible_status,
-                source_uuid=self.source,
             )
 
         self.client.login(email=self.email, password=self.password)

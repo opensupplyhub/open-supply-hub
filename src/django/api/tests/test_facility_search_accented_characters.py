@@ -49,7 +49,6 @@ class FacilitySearchAccentedCharactersTest(TestCase):
             row_index=1,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_one,
-            source_uuid=self.source_one,
         )
 
         self.list_item_two = FacilityListItem.objects.create(
@@ -60,7 +59,6 @@ class FacilitySearchAccentedCharactersTest(TestCase):
             row_index=1,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_one,
-            source_uuid=self.source_one,
         )
 
         self.facility_first = Facility.objects.create(

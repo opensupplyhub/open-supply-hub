@@ -64,7 +64,6 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
             geocoded_point=Point(0, 0),
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_two,
-            source_uuid=self.source_two,
         )
 
         self.facility_two = Facility.objects.create(
@@ -108,7 +107,6 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
             geocoded_point=Point(12, 34),
             status=FacilityListItem.POTENTIAL_MATCH,
             source=self.source_for_confirm_or_remove,
-            source_uuid=self.source_for_confirm_or_remove,
         )
 
         self.match_for_confirm_or_remove = FacilityMatch.objects.create(

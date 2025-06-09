@@ -52,7 +52,6 @@ class FacilityClaimAdminDashboardTest(APITestCase):
             row_index=1,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source,
-            source_uuid=self.source,
         )
 
         self.list_item_second = FacilityListItem.objects.create(
@@ -63,7 +62,6 @@ class FacilityClaimAdminDashboardTest(APITestCase):
             row_index=2,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source,
-            source_uuid=self.source,
         )
 
         self.facility_first = Facility.objects.create(

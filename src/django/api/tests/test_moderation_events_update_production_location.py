@@ -39,7 +39,6 @@ class ModerationEventsUpdateProductionLocationTest(
             geocoded_point=Point(0, 0),
             status=FacilityListItem.MATCHED,
             source=self.source,
-            source_uuid=self.source,
         )
 
         self.os_id = "GB2024338H7FA8R"

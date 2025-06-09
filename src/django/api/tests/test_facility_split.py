@@ -63,7 +63,6 @@ class FacilitySplitTest(APITestCase):
             geocoded_point=Point(0, 0),
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_one,
-            source_uuid=self.source_one,
         )
 
         self.facility_one = Facility.objects.create(
@@ -110,7 +109,6 @@ class FacilitySplitTest(APITestCase):
             geocoded_point=Point(0, 0),
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_two,
-            source_uuid=self.source_two,
         )
 
         self.match_two = FacilityMatch.objects.create(

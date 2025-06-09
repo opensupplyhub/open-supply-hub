@@ -77,7 +77,6 @@ class FacilityDeleteTest(APITestCase):
             source=self.source,
             row_index=1,
             status=FacilityListItem.CONFIRMED_MATCH,
-            source_uuid=self.source,
         )
 
         self.facility = Facility.objects.create(

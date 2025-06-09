@@ -75,7 +75,6 @@ class FacilityMergeTest(APITestCase):
             row_index=1,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_1,
-            source_uuid=self.source_1,
         )
 
         self.facility_1 = Facility.objects.create(
@@ -133,7 +132,6 @@ class FacilityMergeTest(APITestCase):
             row_index=1,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_2,
-            source_uuid=self.source_2,
         )
 
         self.facility_2 = Facility.objects.create(
@@ -187,7 +185,6 @@ class FacilityMergeTest(APITestCase):
             status=FacilityListItem.CONFIRMED_MATCH,
             facility=self.facility_2,
             source=self.source_3,
-            source_uuid=self.source_3,
         )
 
         self.extended_field_1 = ExtendedField.objects.create(
@@ -406,7 +403,6 @@ class FacilityMergeTest(APITestCase):
             row_index=1,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_3,
-            source_uuid=self.source_3,
         )
 
         facility_3 = Facility.objects.create(

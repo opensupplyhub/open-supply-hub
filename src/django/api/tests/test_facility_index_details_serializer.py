@@ -85,7 +85,6 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             row_index=1,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_one,
-            source_uuid=self.source_one,
         )
 
         self.list_two = FacilityList.objects.create(
@@ -118,7 +117,6 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             row_index="2",
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_two,
-            source_uuid=self.source_two,
         )
 
         self.list_item_tree = FacilityListItem.objects.create(
@@ -129,7 +127,6 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             row_index="2",
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.source_three,
-            source_uuid=self.source_three,
         )
 
         self.facility = Facility.objects.create(

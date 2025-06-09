@@ -42,7 +42,6 @@ class FacilityCreateAPITest(APITestCase):
             geocoded_point=Point(0, 0),
             status=FacilityListItem.MATCHED,
             source=self.source_one,
-            source_uuid=self.source_one,
         )
 
         self.facility_one = Facility.objects.create(
@@ -70,7 +69,6 @@ class FacilityCreateAPITest(APITestCase):
             status=FacilityListItem.MATCHED,
             source=self.source_two,
             facility=self.facility_one,
-            source_uuid=self.source_two,
         )
 
         self.match_two = FacilityMatch.objects.create(
@@ -97,7 +95,6 @@ class FacilityCreateAPITest(APITestCase):
             geocoded_point=Point(0, 0),
             status=FacilityListItem.POTENTIAL_MATCH,
             source=self.source_three,
-            source_uuid=self.source_three,
         )
 
         self.match_three = FacilityMatch.objects.create(
@@ -124,7 +121,6 @@ class FacilityCreateAPITest(APITestCase):
             geocoded_point=Point(0, 0),
             status=FacilityListItem.MATCHED,
             source=self.source_four,
-            source_uuid=self.source_four,
         )
 
         self.match_four = FacilityMatch.objects.create(
