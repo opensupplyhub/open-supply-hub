@@ -92,7 +92,7 @@ class FacilityActivityReport(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(excluded_fields=['origin_source'])
 
     def __str__(self):
         return ('FacilityActivityReport {id} - Facility {facility_id}, '

@@ -405,7 +405,7 @@ class FacilityClaim(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(excluded_fields=['origin_source'])
 
     default_change_includes = (
         'facility_name_english',

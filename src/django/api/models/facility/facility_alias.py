@@ -46,7 +46,7 @@ class FacilityAlias(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(excluded_fields=['origin_source'])
 
     def __str__(self):
         return f'{self.os_id} -> {self.facility}'

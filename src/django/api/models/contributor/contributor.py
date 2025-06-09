@@ -127,7 +127,7 @@ class Contributor(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     objects = ContributorManager.as_manager()
-    history = HistoricalRecords()
+    history = HistoricalRecords(excluded_fields=['origin_source'])
 
     def __str__(self):
         return '{name} ({id})'.format(**self.__dict__)

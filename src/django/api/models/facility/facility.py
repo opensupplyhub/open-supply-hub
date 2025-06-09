@@ -90,7 +90,7 @@ class Facility(models.Model):
             .contributors
         )
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(excluded_fields=['origin_source'])
     objects = FacilityManager()
 
     def __str__(self):
