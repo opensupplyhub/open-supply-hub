@@ -92,18 +92,10 @@ class FacilityActivityReport(models.Model):
         editable=False,
         help_text='Unique identifier for the facility activity report.'
     )
-    # reported_by_contributor_uuid = models.ForeignKey(
-    #     'Contributor',
-    #     to_field='uuid',
-    #     db_column='reported_by_contributor_uuid',
-    #     on_delete=models.PROTECT,
-    #     null=False,
-    #     editable=False,
-    #     related_name='facility_activity_reports',
-    #     help_text='The UUID of the contributor who reported the change.'
-    # )
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(
+        excluded_fields=['uuid']
+    )
 
     def __str__(self):
         return ('FacilityActivityReport {id} - Facility {facility_id}, '
