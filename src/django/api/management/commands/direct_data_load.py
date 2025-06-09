@@ -314,7 +314,7 @@ class Command(BaseCommand):
                 break
 
             if ec_result.errors:
-                mark_row(
+                __mark_row(
                     service=service,
                     spreadsheet_id=sheet_id,
                     tab_id=options["tab_id"],
@@ -336,7 +336,7 @@ class Command(BaseCommand):
                 )
                 continue
             elif "error" in record and record["error"]:
-                mark_row(
+                __mark_row(
                     service=service,
                     spreadsheet_id=sheet_id,
                     tab_id=options["tab_id"],
@@ -378,7 +378,7 @@ class Command(BaseCommand):
                 break
 
 
-def mark_row(
+def __mark_row(
         service,
         spreadsheet_id,
         tab_id,
