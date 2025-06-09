@@ -1,4 +1,5 @@
 from django.db import models
+from ..constants import OriginSource
 
 
 class ProductType(models.Model):
@@ -8,4 +9,11 @@ class ProductType(models.Model):
         null=False,
         blank=False,
         help_text='A suggested value for product type'
+    )
+    origin_source = models.CharField(
+        choices=OriginSource.CHOICES,
+        blank=True,
+        null=True,
+        max_length=200,
+        help_text="The environment value where instance running"
     )
