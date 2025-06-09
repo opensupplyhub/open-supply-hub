@@ -9,7 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: Jun 28, 2025
 
-### What's new
+### Architecture/Environment changes
 * [OSDEV-1951](https://opensupplyhub.atlassian.net/browse/OSDEV-1951) - Added a new `direct_data_load` command and related infrastructure to support loading data directly from a Google Sheet into the platform.
 
 ### Release instructions:
