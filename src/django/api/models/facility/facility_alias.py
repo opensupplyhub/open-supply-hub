@@ -46,7 +46,9 @@ class FacilityAlias(models.Model):
         help_text='Unique identifier for the facility alias.'
     )
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(
+        excluded_fields=['uuid']
+    )
 
     def __str__(self):
         return f'{self.os_id} -> {self.facility}'
