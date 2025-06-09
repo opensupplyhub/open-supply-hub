@@ -1,13 +1,20 @@
 CREATE OR REPLACE FUNCTION set_origin_source()
 RETURNS trigger AS $$
+DECLARE
+    origin TEXT;
 BEGIN
-    IF NEW.origin_source IS NULL THEN
-        BEGIN
-            NEW.origin_source := current_setting('app.origin_source', true);
-        EXCEPTION WHEN others THEN
-            NEW.origin_source := 'os_hub';
-        END;
-    END IF;
-    RETURN NEW;
+    BEGIN
+        origin := current_setting('app.origin_source', true);
+    EXCEPTION WHEN others THEN
+        origin := 'os_hub';
+    END;
+
+    EXECUTE format(
+        'UPDATE %I SET origin_source = $1 WHERE origin_source IS NULL',
+        TG_TABLE_NAME
+    )
+    USING origin;
+
+    RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
