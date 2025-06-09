@@ -414,9 +414,10 @@ data "template_file" "direct_data_load_job_definition" {
 }
 
 resource "aws_batch_job_definition" "direct_data_load" {
-  name           = "job${local.short}DirectDataLoad"
-  type           = "container"
-  propagate_tags = true
+  name                  = "job${local.short}DirectDataLoad"
+  type                  = "container"
+  propagate_tags        = true
+  platform_capabilities = ["FARGATE"]
 
   container_properties = data.template_file.direct_data_load_job_definition.rendered
 
