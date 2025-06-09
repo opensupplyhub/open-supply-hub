@@ -56,18 +56,6 @@ class Source(models.Model):
         editable=False,
         help_text='Unique identifier for the source.'
     )
-    # contributor_uuid = models.ForeignKey(
-    #     'Contributor',
-    #     to_field='uuid',
-    #     db_column='contributor_uuid',
-    #     on_delete=models.SET_NULL,
-    #     null=True,
-    #     editable=False,
-    #     related_name='sources',
-    #     help_text=(
-    #         'The UUID of the contributor who submitted the facility data.'
-    #     ),
-    # )
 
     @property
     def display_name(self):
