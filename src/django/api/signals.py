@@ -3,7 +3,7 @@ import json
 
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
-from opensearchpy.exceptions import ConnectionError
+from opensearchpy.exceptions import ConnectionError, NotFoundError
 
 from api.models.facility.facility import Facility
 from api.models.moderation_event import ModerationEvent
@@ -76,6 +76,12 @@ def moderation_event_update_handler_for_opensearch(
             "Lost connection to OpenSearch cluster."
         )
         raise
+    except NotFoundError:
+        log.error(
+            "[Moderation Event Updating] "
+            "ModerationEvent not found in OpenSearch."
+        )
+        return
 
     if response and response.get('result') == 'not_found':
         error_log_message = (
