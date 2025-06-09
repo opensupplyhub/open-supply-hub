@@ -365,11 +365,10 @@ resource "aws_batch_compute_environment" "direct_data_load" {
   }
 
   compute_resources {
-    type          = "FARGATE"
-    min_vcpus     = var.batch_direct_data_load_ce_min_vcpus
-    desired_vcpus = var.batch_direct_data_load_ce_desired_vcpus
-    max_vcpus     = var.batch_direct_data_load_ce_max_vcpus
-    subnets       = module.vpc.private_subnet_ids
+    type      = "FARGATE"
+    min_vcpus = var.batch_direct_data_load_ce_min_vcpus
+    max_vcpus = var.batch_direct_data_load_ce_max_vcpus
+    subnets   = module.vpc.private_subnet_ids
   }
 }
 
