@@ -98,7 +98,6 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.contrib_list_source,
             raw_data=raw_data,
-            source_uuid=self.contrib_list_source,
         )
 
         self.contrib_facility = Facility.objects.create(
@@ -150,7 +149,6 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             geocoded_point=Point(0, 0),
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.contrib_api_source,
-            source_uuid=self.contrib_api_source,
         )
         self.contrib_facility_two = Facility.objects.create(
             name="Item",

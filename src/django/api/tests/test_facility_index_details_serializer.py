@@ -402,7 +402,6 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             facility=self.facility,
             reported_by_user=self.user_one,
             reported_by_contributor=self.contrib_one,
-            reported_by_contributor_uuid=self.contrib_one,
             reason_for_report="reason",
             closure_state=FacilityActivityReport.CLOSED,
             status=FacilityActivityReport.PENDING,

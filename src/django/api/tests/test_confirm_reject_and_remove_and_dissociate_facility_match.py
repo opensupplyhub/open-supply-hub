@@ -55,7 +55,6 @@ class ConfirmRejectAndRemoveAndDissociateFacilityMatchTest(TestCase):
             row_index=1,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.prior_source,
-            source_uuid=self.prior_source,
         )
 
         self.prior_facility_one = Facility.objects.create(
@@ -81,7 +80,6 @@ class ConfirmRejectAndRemoveAndDissociateFacilityMatchTest(TestCase):
             row_index=2,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=self.prior_source,
-            source_uuid=self.prior_source,
         )
 
         self.prior_facility_two = Facility.objects.create(
@@ -143,7 +141,6 @@ class ConfirmRejectAndRemoveAndDissociateFacilityMatchTest(TestCase):
             geocoded_point=Point(0, 0),
             status=FacilityListItem.POTENTIAL_MATCH,
             source=self.current_source,
-            source_uuid=self.current_source,
         )
 
         self.potential_facility_match_one = FacilityMatch.objects.create(
