@@ -57,3 +57,53 @@ CREATE TRIGGER trg_set_origin_source_user
 BEFORE INSERT ON api_user
 FOR EACH ROW
 EXECUTE FUNCTION set_origin_source();
+
+CREATE TRIGGER trg_set_origin_source_user
+BEFORE INSERT ON api_producttype
+FOR EACH ROW
+EXECUTE FUNCTION set_origin_source();
+
+CREATE TRIGGER trg_set_origin_source_user
+BEFORE INSERT ON api_sector
+FOR EACH ROW
+EXECUTE FUNCTION set_origin_source();
+
+CREATE TRIGGER trg_set_origin_source_user
+BEFORE INSERT ON api_sectorgroup
+FOR EACH ROW
+EXECUTE FUNCTION set_origin_source();
+
+CREATE TRIGGER trg_set_origin_source_user
+BEFORE INSERT ON api_historicalcontributor
+FOR EACH ROW
+EXECUTE FUNCTION set_origin_source();
+
+CREATE TRIGGER trg_set_origin_source_user
+BEFORE INSERT ON api_historicalextendedfield
+FOR EACH ROW
+EXECUTE FUNCTION set_origin_source();
+
+CREATE TRIGGER trg_set_origin_source_user
+BEFORE INSERT ON api_historicalfacility
+FOR EACH ROW
+EXECUTE FUNCTION set_origin_source();
+
+CREATE TRIGGER trg_set_origin_source_user
+BEFORE INSERT ON api_historicalfacilityactivityreport
+FOR EACH ROW
+EXECUTE FUNCTION set_origin_source();
+
+CREATE TRIGGER trg_set_origin_source_user
+BEFORE INSERT ON api_historicalfacilityalias
+FOR EACH ROW
+EXECUTE FUNCTION set_origin_source();
+
+CREATE TRIGGER trg_set_origin_source_user
+BEFORE INSERT ON api_historicalfacilityclaim
+FOR EACH ROW
+EXECUTE FUNCTION set_origin_source();
+
+CREATE TRIGGER trg_set_origin_source_user
+BEFORE INSERT ON api_historicalfacilitymatch
+FOR EACH ROW
+EXECUTE FUNCTION set_origin_source();
