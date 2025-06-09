@@ -170,18 +170,6 @@ class FacilityListItem(models.Model):
         editable=False,
         help_text='Unique identifier for the facility list item.'
     )
-    # source_uuid = models.ForeignKey(
-    #     'Source',
-    #     to_field='uuid',
-    #     db_column='source_uuid',
-    #     on_delete=models.PROTECT,
-    #     null=False,
-    #     editable=False,
-    #     related_name='facility_list_items',
-    #     help_text=(
-    #         'The UUID of the source from which this item was created.'
-    #     ),
-    # )
 
     @property
     def has_active_complete_match(self):
