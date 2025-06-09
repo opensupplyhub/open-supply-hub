@@ -62,8 +62,7 @@ class FacilityActivityReport(models.Model):
         blank=False,
         choices=STATUS_CHOICES,
         default=PENDING,
-        help_text='The cur3993' \
-        'rent status of the report.')
+        help_text='The current status of the report.')
     status_change_reason = models.TextField(
         null=True,
         blank=True,
