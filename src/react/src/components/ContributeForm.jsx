@@ -143,11 +143,13 @@ const ContributeForm = ({
     }, [fileInput, updateFileName, name]);
 
     const selectFile = () => {
+        // Use only traditional file input for the main button
+        fileInput.current.click();
+    };
+
+    const openDromoUploader = () => {
         if (window.dromoUploader) {
             window.dromoUploader.open();
-        } else {
-            // Fallback to traditional file input if Dromo isn't available
-            fileInput.current.click();
         }
     };
 
@@ -195,16 +197,28 @@ const ContributeForm = ({
         <div className="control-panel__group">
             {formInputs}
             <div className="form__field">
-                <MaterialButton
-                    onClick={selectFile}
-                    type="button"
-                    variant="outlined"
-                    color="primary"
-                    className="outlined-button"
-                    disableRipple
-                >
-                    Select Facility List File
-                </MaterialButton>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <MaterialButton
+                        onClick={selectFile}
+                        type="button"
+                        variant="outlined"
+                        color="primary"
+                        className="outlined-button"
+                        disableRipple
+                    >
+                        Select Facility List File
+                    </MaterialButton>
+                    <MaterialButton
+                        onClick={openDromoUploader}
+                        type="button"
+                        variant="outlined"
+                        color="secondary"
+                        className="outlined-button"
+                        disableRipple
+                    >
+                        Beta Self Service Upload
+                    </MaterialButton>
+                </div>
                 <p style={contributeFormStyles.fileNameText}>{filename}</p>
                 <p
                     style={{
