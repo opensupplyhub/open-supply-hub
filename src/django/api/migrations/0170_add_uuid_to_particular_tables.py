@@ -31,45 +31,6 @@ class Migration(migrations.Migration):
             code=drop_triggers,
             reverse_code=create_triggers,
         ),
-        # Adds a UUID field to the Source model.
-        migrations.AddField(
-            model_name='source',
-            name='uuid',
-            field=models.UUIDField(
-                null=True,
-                editable=False,
-                help_text='Unique identifier for the source.',
-            ),
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print(
-                "→ starting SQL back-fill of uuid…"
-            ),
-            reverse_code=migrations.RunPython.noop,
-        ),
-        migrations.RunSQL(
-            sql="""
-                UPDATE api_source
-                SET uuid = gen_random_uuid()
-                WHERE uuid IS NULL;
-            """,
-            reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
-            reverse_code=migrations.RunPython.noop,
-        ),
-        migrations.AlterField(
-            model_name='source',
-            name='uuid',
-            field=models.UUIDField(
-                null=False,
-                default=uuid.uuid4,
-                unique=True,
-                editable=False,
-                help_text='Unique identifier for the source.',
-            ),
-        ),
         # Adds a UUID field to the Contributor model.
         migrations.AddField(
             model_name='contributor',
@@ -389,7 +350,7 @@ class Migration(migrations.Migration):
             field=models.UUIDField(
                 null=True,
                 editable=False,
-                help_text='Unique identifier for the facility location.',
+                help_text='Unique identifier for the facility location change.',
             ),
         ),
         migrations.RunPython(
@@ -418,7 +379,7 @@ class Migration(migrations.Migration):
                 default=uuid.uuid4,
                 unique=True,
                 editable=False,
-                help_text='Unique identifier for the facility location.',
+                help_text='Unique identifier for the facility location change.',
             ),
         ),
         # Adds a UUID field to the FacilityMatch model.
@@ -460,25 +421,25 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the facility match.',
             ),
         ),
-        # Adds a UUID field to the ProductType model.
+        # Adds a UUID field to the Source model.
         migrations.AddField(
-            model_name='producttype',
+            model_name='source',
             name='uuid',
             field=models.UUIDField(
                 null=True,
                 editable=False,
-                help_text='Unique identifier for the product type.',
+                help_text='Unique identifier for the source.',
             ),
         ),
         migrations.RunPython(
             code=lambda apps, schema_editor: print(
-                "→ starting SQL back-fill of product type uuid…"
+                "→ starting SQL back-fill of uuid…"
             ),
             reverse_code=migrations.RunPython.noop,
         ),
         migrations.RunSQL(
             sql="""
-                UPDATE api_producttype
+                UPDATE api_source
                 SET uuid = gen_random_uuid()
                 WHERE uuid IS NULL;
             """,
@@ -489,92 +450,14 @@ class Migration(migrations.Migration):
             reverse_code=migrations.RunPython.noop,
         ),
         migrations.AlterField(
-            model_name='producttype',
+            model_name='source',
             name='uuid',
             field=models.UUIDField(
                 null=False,
                 default=uuid.uuid4,
                 unique=True,
                 editable=False,
-                help_text='Unique identifier for the product type.',
-            ),
-        ),
-        # Adds a UUID field to the Sector model.
-        migrations.AddField(
-            model_name='sector',
-            name='uuid',
-            field=models.UUIDField(
-                null=True,
-                editable=False,
-                help_text='Unique identifier for the sector.',
-            ),
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print(
-                "→ starting SQL back-fill of sector uuid…"
-            ),
-            reverse_code=migrations.RunPython.noop,
-        ),
-        migrations.RunSQL(
-            sql="""
-                UPDATE api_sector
-                SET uuid = gen_random_uuid()
-                WHERE uuid IS NULL;
-            """,
-            reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
-            reverse_code=migrations.RunPython.noop,
-        ),
-        migrations.AlterField(
-            model_name='sector',
-            name='uuid',
-            field=models.UUIDField(
-                null=False,
-                default=uuid.uuid4,
-                unique=True,
-                editable=False,
-                help_text='Unique identifier for the sector.',
-            ),
-        ),
-        #  Add a UUID field to the SectorGroup model.
-        migrations.AddField(
-            model_name='sectorgroup',
-            name='uuid',
-            field=models.UUIDField(
-                null=True,
-                editable=False,
-                help_text='Unique identifier for the sector group.',
-            ),
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print(
-                "→ starting SQL back-fill of sector group uuid…"
-            ),
-            reverse_code=migrations.RunPython.noop,
-        ),
-        migrations.RunSQL(
-            sql="""
-                UPDATE api_sectorgroup
-                SET uuid = gen_random_uuid()
-                WHERE uuid IS NULL;
-            """,
-            reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
-            reverse_code=migrations.RunPython.noop,
-        ),
-        migrations.AlterField(
-            model_name='sectorgroup',
-            name='uuid',
-            field=models.UUIDField(
-                null=False,
-                default=uuid.uuid4,
-                unique=True,
-                editable=False,
-                help_text='Unique identifier for the sector group.',
+                help_text='Unique identifier for the source.',
             ),
         ),
         # Add a UUID field to the User model.
@@ -616,44 +499,4 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the user.',
             ),
         ),
-        # Add a UUID field to the Version model.
-        migrations.AddField(
-            model_name='version',
-            name='uuid',
-            field=models.UUIDField(
-                null=True,
-                editable=False,
-                help_text='Unique identifier for the version.',
-            ),
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print(
-                "→ starting SQL back-fill of version uuid…"
-            ),
-            reverse_code=migrations.RunPython.noop,
-        ),
-        migrations.RunSQL(
-            sql="""
-                UPDATE api_version
-                SET uuid = gen_random_uuid()
-                WHERE uuid IS NULL;
-            """,
-            reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
-            reverse_code=migrations.RunPython.noop,
-        ),
-        migrations.AlterField(
-            model_name='version',
-            name='uuid',
-            field=models.UUIDField(
-                null=False,
-                default=uuid.uuid4,
-                unique=True,
-                editable=False,
-                help_text='Unique identifier for the version.',
-            ),
-        ),
     ]
-
