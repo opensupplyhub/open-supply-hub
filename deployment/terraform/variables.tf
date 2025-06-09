@@ -443,7 +443,6 @@ variable "batch_direct_data_load_ce_max_vcpus" {
   default = 4
 }
 
-
 variable "batch_notifications_ce_instance_types" {
   type = list(string)
 
