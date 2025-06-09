@@ -192,8 +192,8 @@ def get_change_diff_for_history_entry(entry):
                 new_repr = safe_serialize(new_val)
 
                 if (
-                    old_repr != new_repr 
-                    and is_json_serializable(old_repr) 
+                    old_repr != new_repr
+                    and is_json_serializable(old_repr)
                     and is_json_serializable(new_repr)
                 ):
                     changes[name] = {
