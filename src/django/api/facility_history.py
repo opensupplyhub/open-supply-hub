@@ -1,3 +1,5 @@
+import json
+
 from api.constants import (
     FacilityHistoryActions,
     ProcessingAction,
@@ -12,6 +14,17 @@ from api.models import (
 )
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import F
+from django.core.serializers.json import DjangoJSONEncoder
+
+SIMPLE_HISTORY_IGNORE_FIELDS = {
+    'history_id',
+    'history_date',
+    'history_type',
+    'history_user',
+    'origin_source',
+    'created_at',
+    'updated_at',
+}
 
 
 def anonymous_source_name(source):
@@ -141,19 +154,64 @@ def create_geojson_diff_for_location_change(entry):
     }
 
 
+def safe_serialize(value):
+    if hasattr(value, 'pk'):
+        return value.pk
+    if hasattr(value, 'id'):
+        return value.id
+    return str(value)
+
+
+def is_json_serializable(value):
+    try:
+        json.dumps(value, cls=DjangoJSONEncoder)
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
 def get_change_diff_for_history_entry(entry):
     if entry.prev_record is None:
         return {}
 
-    delta = entry.diff_against(entry.prev_record)
-    changes = {}
+    try:
+        delta = entry.diff_against(entry.prev_record)
+    except KeyError as e:
+        if str(e) == "'origin_source'":
+            changes = {}
+            for field in entry._meta.fields:
+                name = field.name
 
+                if name in SIMPLE_HISTORY_IGNORE_FIELDS:
+                    continue
+
+                old_val = getattr(entry.prev_record, name, None)
+                new_val = getattr(entry, name, None)
+
+                old_repr = safe_serialize(old_val)
+                new_repr = safe_serialize(new_val)
+
+                if old_repr != new_repr and is_json_serializable(old_repr) and is_json_serializable(new_repr):
+                    changes[name] = {
+                        'old': old_repr,
+                        'new': new_repr,
+                    }
+
+            return changes
+
+        raise
+
+    changes = {}
     for change in delta.changes:
-        if change.field not in ['created_at', 'updated_at']:
-            changes[change.field] = {
-                'old': change.old,
-                'new': change.new,
-            }
+        if change.field not in SIMPLE_HISTORY_IGNORE_FIELDS:
+            old_val = safe_serialize(change.old)
+            new_val = safe_serialize(change.new)
+
+            if old_val != new_val and is_json_serializable(old_val) and is_json_serializable(new_val):
+                changes[change.field] = {
+                    'old': old_val,
+                    'new': new_val,
+                }
 
     return changes
 
