@@ -58,52 +58,52 @@ AFTER INSERT ON api_user
 FOR EACH ROW
 EXECUTE FUNCTION set_origin_source();
 
-CREATE TRIGGER trg_set_origin_source_user
+CREATE TRIGGER trg_set_origin_source_producttype
 AFTER INSERT ON api_producttype
 FOR EACH ROW
 EXECUTE FUNCTION set_origin_source();
 
-CREATE TRIGGER trg_set_origin_source_user
+CREATE TRIGGER trg_set_origin_source_sector
 AFTER INSERT ON api_sector
 FOR EACH ROW
 EXECUTE FUNCTION set_origin_source();
 
-CREATE TRIGGER trg_set_origin_source_user
+CREATE TRIGGER trg_set_origin_source_sectorgroup
 AFTER INSERT ON api_sectorgroup
 FOR EACH ROW
 EXECUTE FUNCTION set_origin_source();
 
-CREATE TRIGGER trg_set_origin_source_user
+CREATE TRIGGER trg_set_origin_source_historicalcontributor
 AFTER INSERT ON api_historicalcontributor
 FOR EACH ROW
 EXECUTE FUNCTION set_origin_source();
 
-CREATE TRIGGER trg_set_origin_source_user
+CREATE TRIGGER trg_set_origin_source_historicalextendedfield
 AFTER INSERT ON api_historicalextendedfield
 FOR EACH ROW
 EXECUTE FUNCTION set_origin_source();
 
-CREATE TRIGGER trg_set_origin_source_user
+CREATE TRIGGER trg_set_origin_source_historicalfacility
 AFTER INSERT ON api_historicalfacility
 FOR EACH ROW
 EXECUTE FUNCTION set_origin_source();
 
-CREATE TRIGGER trg_set_origin_source_user
+CREATE TRIGGER trg_set_origin_source_historicalfacilityactivityreport
 AFTER INSERT ON api_historicalfacilityactivityreport
 FOR EACH ROW
 EXECUTE FUNCTION set_origin_source();
 
-CREATE TRIGGER trg_set_origin_source_user
+CREATE TRIGGER trg_set_origin_source_historicalfacilityalias
 AFTER INSERT ON api_historicalfacilityalias
 FOR EACH ROW
 EXECUTE FUNCTION set_origin_source();
 
-CREATE TRIGGER trg_set_origin_source_user
+CREATE TRIGGER trg_set_origin_source_historicalfacilityclaim
 AFTER INSERT ON api_historicalfacilityclaim
 FOR EACH ROW
 EXECUTE FUNCTION set_origin_source();
 
-CREATE TRIGGER trg_set_origin_source_user
+CREATE TRIGGER trg_set_origin_source_historicalfacilitymatch
 AFTER INSERT ON api_historicalfacilitymatch
 FOR EACH ROW
 EXECUTE FUNCTION set_origin_source();
