@@ -69,4 +69,3 @@ app_logstash_fargate_memory = 2048
 
 export_csv_enabled = false
 
-waf_enabled = true
