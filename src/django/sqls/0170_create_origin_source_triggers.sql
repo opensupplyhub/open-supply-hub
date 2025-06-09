@@ -58,21 +58,6 @@ BEFORE INSERT ON api_user
 FOR EACH ROW
 EXECUTE FUNCTION set_origin_source();
 
-CREATE TRIGGER trg_set_origin_source_producttype
-BEFORE INSERT ON api_producttype
-FOR EACH ROW
-EXECUTE FUNCTION set_origin_source();
-
-CREATE TRIGGER trg_set_origin_source_sector
-BEFORE INSERT ON api_sector
-FOR EACH ROW
-EXECUTE FUNCTION set_origin_source();
-
-CREATE TRIGGER trg_set_origin_source_sectorgroup
-BEFORE INSERT ON api_sectorgroup
-FOR EACH ROW
-EXECUTE FUNCTION set_origin_source();
-
 CREATE TRIGGER trg_set_origin_source_historicalcontributor
 BEFORE INSERT ON api_historicalcontributor
 FOR EACH ROW

@@ -319,65 +319,6 @@ class Migration(migrations.Migration):
         ),
 
         migrations.AddField(
-            model_name='producttype',
-            name='origin_source',
-            field=models.CharField(
-                choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
-                blank=True,
-                null=True,
-                max_length=200,
-                help_text="The environment value where instance running"
-            ),
-        ),
-        migrations.RunSQL(
-            sql="""
-                UPDATE api_producttype
-                SET origin_source = 'os_hub'
-                WHERE origin_source IS NULL OR origin_source = '';
-            """,
-            reverse_sql=migrations.RunSQL.noop,
-        ),
-
-        migrations.AddField(
-            model_name='sector',
-            name='origin_source',
-            field=models.CharField(
-                choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
-                blank=True,
-                null=True,
-                max_length=200,
-                help_text="The environment value where instance running"
-            ),
-        ),
-        migrations.RunSQL(
-            sql="""
-                UPDATE api_sector
-                SET origin_source = 'os_hub'
-                WHERE origin_source IS NULL OR origin_source = '';
-            """,
-            reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.AddField(
-            model_name='sectorgroup',
-            name='origin_source',
-            field=models.CharField(
-                choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
-                blank=True,
-                null=True,
-                max_length=200,
-                help_text="The environment value where instance running"
-            ),
-        ),
-        migrations.RunSQL(
-            sql="""
-                UPDATE api_sectorgroup
-                SET origin_source = 'os_hub'
-                WHERE origin_source IS NULL OR origin_source = '';
-            """,
-            reverse_sql=migrations.RunSQL.noop,
-        ),
-
-        migrations.AddField(
             model_name='historicalcontributor',
             name='origin_source',
             field=models.CharField(
