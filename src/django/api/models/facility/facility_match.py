@@ -75,7 +75,9 @@ class FacilityMatch(models.Model):
         help_text='Unique identifier for the facility match.'
     )
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(
+        excluded_fields=['uuid']
+    )
 
     @property
     def source(self):
