@@ -58,7 +58,7 @@ class TestProductionLocationsPartialUpdate(APITestCase):
             sector=['Apparel'],
             row_index=1,
             status=FacilityListItem.CONFIRMED_MATCH,
-            source=source,
+            source=source
         )
         self.production_location = Facility.objects.create(
             name=list_item.name,
