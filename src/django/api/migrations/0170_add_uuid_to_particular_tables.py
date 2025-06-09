@@ -616,5 +616,44 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the user.',
             ),
         ),
+        # Add a UUID field to the Version model.
+        migrations.AddField(
+            model_name='version',
+            name='uuid',
+            field=models.UUIDField(
+                null=True,
+                editable=False,
+                help_text='Unique identifier for the version.',
+            ),
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print(
+                "→ starting SQL back-fill of version uuid…"
+            ),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.RunSQL(
+            sql="""
+                UPDATE api_version
+                SET uuid = gen_random_uuid()
+                WHERE uuid IS NULL;
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+        migrations.RunPython(
+            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
+            reverse_code=migrations.RunPython.noop,
+        ),
+        migrations.AlterField(
+            model_name='version',
+            name='uuid',
+            field=models.UUIDField(
+                null=False,
+                default=uuid.uuid4,
+                unique=True,
+                editable=False,
+                help_text='Unique identifier for the version.',
+            ),
+        ),
     ]
 
