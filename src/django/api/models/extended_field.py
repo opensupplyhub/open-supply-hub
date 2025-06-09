@@ -92,7 +92,9 @@ class ExtendedField(models.Model):
         help_text='Unique identifier for the extended field.'
     )
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(
+        exclude_fields=['uuid']
+    )
 
     def __str__(self):
         return (
