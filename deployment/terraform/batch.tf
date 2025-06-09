@@ -368,6 +368,10 @@ resource "aws_batch_compute_environment" "direct_data_load" {
     type      = "FARGATE"
     max_vcpus = var.batch_direct_data_load_ce_max_vcpus
     subnets   = module.vpc.private_subnet_ids
+
+    security_group_ids = [
+      aws_security_group.batch.id,
+    ]
   }
 }
 
