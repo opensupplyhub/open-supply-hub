@@ -229,8 +229,9 @@ function NonVectorTileFilterSidebarFacilitiesTab({
                             <DownloadFacilitiesButton
                                 disabled={
                                     facilitiesCount >
-                                        user.allowed_records_number &&
-                                    !user.is_free_limit_expired
+                                    user.allowed_records_number
+                                    //     &&
+                                    // user.is_free_limit_active
                                 }
                                 setLoginRequiredDialogIsOpen={
                                     setLoginRequiredDialogIsOpen

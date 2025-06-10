@@ -87,8 +87,8 @@ const DownloadFacilitiesButton = ({
     ) : (
         <p className={classes.downloadTooltip}>
             Downloads are supported for searches resulting in{' '}
-            {user.allowed_records_number} production locations or less. Log in
-            to download this dataset.
+            {user.allowed_records_number} production locations or less.
+            {user.isAnon && ' Log in to download this dataset.'}
         </p>
     );
 
@@ -143,6 +143,7 @@ DownloadFacilitiesButton.propTypes = {
     logDownloadError: arrayOf(string),
     user: shape({
         allowed_records_number: number.isRequired,
+        isAnon: bool.isRequired,
     }).isRequired,
 };
 
