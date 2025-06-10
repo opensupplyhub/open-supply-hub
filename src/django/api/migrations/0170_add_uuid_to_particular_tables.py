@@ -540,12 +540,36 @@ class Migration(migrations.Migration):
         ),
         migrations.RunSQL(
             sql="""
+                ALTER TABLE api_facility
+                  ALTER COLUMN uuid
+                  SET DEFAULT gen_random_uuid();
+            """,
+            reverse_sql="""
+                ALTER TABLE api_facility
+                  ALTER COLUMN uuid
+                  DROP DEFAULT;
+            """,
+        ),
+        migrations.RunSQL(
+            sql="""
                 ALTER TABLE api_facilityindex
                   ALTER COLUMN uuid
                   SET DEFAULT gen_random_uuid();
             """,
             reverse_sql="""
                 ALTER TABLE api_facilityindex
+                  ALTER COLUMN uuid
+                  DROP DEFAULT;
+            """,
+        ),
+        migrations.RunSQL(
+            sql="""
+                ALTER TABLE api_facilitymatch
+                  ALTER COLUMN uuid
+                  SET DEFAULT gen_random_uuid();
+            """,
+            reverse_sql="""
+                ALTER TABLE api_facilitymatch
                   ALTER COLUMN uuid
                   DROP DEFAULT;
             """,
