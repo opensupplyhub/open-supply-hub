@@ -56,7 +56,7 @@ class SubmitNewUserForm(CreateAPIView):
                 other_contrib_type=other_contrib_type,
             )
 
-            # FacilityDownloadLimit.get_or_create_user_download_limit(user)
+            FacilityDownloadLimit.get_or_create_user_download_limit(user)
 
             if user.should_receive_newsletter:
                 add_user_to_mailing_list(user.email, name, contrib_type)

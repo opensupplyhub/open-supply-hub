@@ -95,7 +95,6 @@ export default function downloadFacilities(format, { isEmbedded }) {
                 //         : user.allowed_records_number - data.count;
                 dispatch(completeFetchDownloadFacilities(data));
                 dispatch(logDownload(format, { isEmbedded }));
-                // window.location.reload();
                 // dispatch(
                 //     completeSubmitLoginForm({
                 //         allowed_records_number: recordsNumber,
