@@ -103,8 +103,11 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
             index=self.production_locations_index_name,
             body=query
         )
-        print(response)
         self.assertGreater(response['hits']['total']['value'], 0)
+        self.assertEqual(
+            response['hits']['hits'][0]['_source']['address'],
+            "Land plot number 115, map sheet number 03, Cadastral map of Son Ha commune, Son Ha commune, Nho Quan district, Ninh Binh province, Vietnam"
+        )
 
     def test_search_document_with_long_query(self):
             doc = {
@@ -156,5 +159,8 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
                 index=self.production_locations_index_name,
                 body=query
             )
-            print(response)
             self.assertEqual(response['hits']['total']['value'], 1)
+            self.assertEqual(
+                response['hits']['hits'][0]['_source']['address'],
+                "Mount Isa Mines Limited Copper Refineries"
+            )
