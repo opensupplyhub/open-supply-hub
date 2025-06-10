@@ -7,27 +7,6 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
     def setUp(self):
         super().setUp()
         self.client: OpenSearch = self.getClient()
-        self._cleanup_index()
-
-    def tearDown(self):
-        self._cleanup_index()
-        super().tearDown()
-
-    def _cleanup_index(self):
-        """Clean up all documents in the test index"""
-        try:
-            self.client.delete_by_query(
-                index=self.production_locations_index_name,
-                body={
-                    "query": {
-                        "match_all": {}
-                    }
-                },
-                refresh=True
-            )
-            self.client.indices.refresh(index=self.production_locations_index_name)
-        except Exception as e:
-            print(f"Warning: Failed to cleanup index: {e}")
 
     def test_connection(self):
         health = self.client.cluster.health()
@@ -38,12 +17,12 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
         response = self.client.index(
             index=self.production_locations_index_name,
             body=doc,
-            id=self.client.count()
+            id=self.client.count(),
+            refresh=True
         )
         self.assertEqual(response['result'], 'created')
 
     def test_search_document(self):
-        # Index a document
         doc = {
             "sector": [
                 "Apparel"
@@ -63,11 +42,11 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
         self.client.index(
             index=self.production_locations_index_name,
             body=doc,
-            id=self.client.count()
+            id=self.client.count(),
+            refresh=True
         )
         self.client.indices.refresh(index=self.production_locations_index_name)
 
-        # Search for the document
         query = {
             'query': {
                 'match': {
@@ -100,7 +79,8 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
         self.client.index(
             index=self.production_locations_index_name,
             body=doc,
-            id=self.client.count()
+            id=self.client.count(),
+            refresh=True
         )
         self.client.indices.refresh(index=self.production_locations_index_name)
 
@@ -123,6 +103,7 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
             index=self.production_locations_index_name,
             body=query
         )
+        print(response)
         self.assertGreater(response['hits']['total']['value'], 0)
 
     def test_search_document_with_long_query(self):

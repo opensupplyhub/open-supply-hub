@@ -51,28 +51,6 @@ class ProductionLocationsTest(BaseAPITest):
         self.assertEqual(result['data'][0]['os_id'], 'BD2020052SV22HT')
 
     def test_production_locations_country(self):
-        doc = {
-            "sector": ["Apparel"],
-            "address": "Test Address",
-            "name": "Test Facility",
-            "country": {
-                "name": "United States",
-                "alpha_2": "US",
-                "alpha_3": "USA",
-                "numeric": "840"
-            },
-            "os_id": "US2020052SV22HT",
-            "coordinates": {
-                "lon": -75.000000,
-                "lat": 40.000000
-            }
-        }
-        self.open_search_client.index(
-            index=self.production_locations_index_name,
-            body=doc,
-            id=self.open_search_client.count(),
-            refresh=True
-        )
 
         response = requests.get(
                 f"{self.root_url}/api/v1/production-locations/",
@@ -248,26 +226,6 @@ class ProductionLocationsTest(BaseAPITest):
         self.assertEqual(result['data'][0]['os_id'], "GL202309INSIDE")
 
     def test_production_locations_with_more_than_hundred_points(self):
-        doc = {
-            "sector": ["Apparel"],
-            "address": "Test Address",
-            "name": "Test Facility",
-            "country": {
-                "alpha_2": "US"
-            },
-            "os_id": "US2020052SV22HT",
-            "coordinates": {
-                "lon": 0.0,
-                "lat": 45.0
-            }
-        }
-        self.open_search_client.index(
-            index=self.production_locations_index_name,
-            body=doc,
-            id=self.open_search_client.count(),
-            refresh=True
-        )
-
         query = (
             "?geo_polygon=71.0,-25.0&geo_polygon=70.5,-22.0&geo_polygon=70.0,-19.0"
             "&geo_polygon=69.5,-16.0&geo_polygon=69.0,-13.0&geo_polygon=68.5,-10.0"
