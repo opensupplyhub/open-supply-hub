@@ -18,7 +18,7 @@ from api.models import (
 
 
 class Command(BaseCommand):
-    help = "Set origin_source = 'os_hub' on all tables where it is NULL or empty."
+    help = "Set origin_source on all tables where it is NULL or empty."
 
     def handle(self, *args, **options):
         models_to_update = [
@@ -38,9 +38,12 @@ class Command(BaseCommand):
 
         for model in models_to_update:
             updated = model.objects.filter(
-                models.Q(origin_source__isnull=True) | models.Q(origin_source='')
+                models.Q(origin_source__isnull=True)
+                | models.Q(origin_source='')
             ).update(origin_source='os_hub')
 
             self.stdout.write(
-                self.style.SUCCESS(f"{model.__name__}: {updated} rows updated.")
+                self.style.SUCCESS(
+                    f"{model.__name__}: {updated} rows updated."
+                )
             )
