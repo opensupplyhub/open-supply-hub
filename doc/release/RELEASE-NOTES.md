@@ -3,6 +3,37 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.7.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: Jun 28, 2025
+
+### Architecture/Environment changes
+
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+## Release 2.6.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: Jun 14, 2025
+
+### Architecture/Environment changes
+* [OSDEV-1925](https://opensupplyhub.atlassian.net/browse/OSDEV-1925) - This PR disables the automatic execution of the `Deploy to AWS` pipeline on `releases/*` branch creation via the `[Release] Init` pipeline, while retaining automatic execution on push events to the same branch.
+* [OSDEV-2035](https://opensupplyhub.atlassian.net/browse/OSDEV-2035) - Added IPv6 rules for ip whitelist and denylist.
+* [OSDEV-1951](https://opensupplyhub.atlassian.net/browse/OSDEV-1951) - Added a new `direct_data_load` command and related infrastructure to support loading data directly from a Google Sheet into the platform.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.5.0
 
 ## Introduction
