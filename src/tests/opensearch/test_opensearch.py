@@ -130,6 +130,7 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
                 id=self.client.count(),
                 refresh=True
             )
+            self.client.indices.refresh(index=self.production_locations_index_name)
 
             query_text = "Mount Isa Mines Limited Copper Refineries Pty Ltd CRL"
             query = {
