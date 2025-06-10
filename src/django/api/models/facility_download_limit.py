@@ -4,7 +4,11 @@ from django.utils import timezone
 from django.db import transaction
 from django.db.models import BigAutoField
 from api.constants import FacilitiesDownloadSettings
-from datetime import timedelta
+from datetime import timedelta, datetime
+from django.utils.timezone import make_aware
+
+def release_initial_date():
+    return make_aware(datetime(2025, 6, 28))
 
 
 class FacilityDownloadLimit(models.Model):
@@ -40,8 +44,8 @@ class FacilityDownloadLimit(models.Model):
     updated_at = models.DateTimeField(
         null=False,
         blank=False,
-        auto_now=True,
-        help_text='The date when the free limit was updated.'
+        default=release_initial_date,
+        help_text='The date when the free limit was set or updated.'
     )
 
     def is_free_limit_active(self):

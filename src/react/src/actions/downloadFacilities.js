@@ -9,11 +9,11 @@ import {
     makeGetFacilitiesDownloadURLWithQueryString,
     createQueryStringFromSearchFilters,
 } from '../util/util';
-import { completeSubmitLoginForm } from '../actions/auth';
+// import { completeSubmitLoginForm } from '../actions/auth';
 
 import {
     FACILITIES_DOWNLOAD_REQUEST_PAGE_SIZE,
-    FACILITIES_DOWNLOAD_LIMIT,
+    // FACILITIES_DOWNLOAD_LIMIT,
 } from '../util/constants';
 
 export const startFetchDownloadFacilities = createAction(
@@ -79,9 +79,9 @@ export default function downloadFacilities(format, { isEmbedded }) {
         const {
             filters,
             embeddedMap: { embed },
-            auth: {
-                user: { user },
-            },
+            // auth: {
+            //     user: { user },
+            // },
         } = getState();
 
         const qs = createQueryStringFromSearchFilters(filters, embed, detail);
@@ -89,17 +89,18 @@ export default function downloadFacilities(format, { isEmbedded }) {
         return apiRequest
             .get(makeGetFacilitiesDownloadURLWithQueryString(qs, pageSize))
             .then(({ data }) => {
-                const recordsNumber =
-                    user.allowed_records_number === 0
-                        ? FACILITIES_DOWNLOAD_LIMIT - data.count
-                        : user.allowed_records_number - data.count;
+                // const recordsNumber =
+                //     user.allowed_records_number === 0
+                //         ? FACILITIES_DOWNLOAD_LIMIT - data.count
+                //         : user.allowed_records_number - data.count;
                 dispatch(completeFetchDownloadFacilities(data));
                 dispatch(logDownload(format, { isEmbedded }));
-                dispatch(
-                    completeSubmitLoginForm({
-                        allowed_records_number: recordsNumber,
-                    }),
-                );
+                // window.location.reload();
+                // dispatch(
+                //     completeSubmitLoginForm({
+                //         allowed_records_number: recordsNumber,
+                //     }),
+                // );
             })
             .catch(err => {
                 dispatch(
