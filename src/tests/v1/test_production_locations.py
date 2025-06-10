@@ -5,6 +5,17 @@ from .base_api_test \
 
 class ProductionLocationsTest(BaseAPITest):
 
+    def setUp(self):
+        super().setUp()
+
+        if self.open_search_client.indices.exists(index=self.production_locations_index_name):
+            self.open_search_client.indices.delete(index=self.production_locations_index_name)
+        self.open_search_client.indices.create(index=self.production_locations_index_name)
+
+    def tearDown(self):
+        if self.open_search_client.indices.exists(index=self.production_locations_index_name):
+            self.open_search_client.indices.delete(index=self.production_locations_index_name)
+
     def test_production_locations_status(self):
         response = requests.get(
             f"{self.root_url}/api/v1/production-locations/",
@@ -33,7 +44,8 @@ class ProductionLocationsTest(BaseAPITest):
         self.open_search_client.index(
             index=self.production_locations_index_name,
             body=doc,
-            id=self.open_search_client.count()
+            id=self.open_search_client.count(),
+            refresh=True
         )
         self.open_search_client.indices.refresh(
             index=self.production_locations_index_name
@@ -85,7 +97,8 @@ class ProductionLocationsTest(BaseAPITest):
         self.open_search_client.index(
             index=self.production_locations_index_name,
             body=doc,
-            id=self.open_search_client.count()
+            id=self.open_search_client.count(),
+            refresh=True
         )
         self.open_search_client.indices.refresh(
             index=self.production_locations_index_name
@@ -138,7 +151,8 @@ class ProductionLocationsTest(BaseAPITest):
         self.open_search_client.index(
             index=self.production_locations_index_name,
             body=doc,
-            id=self.open_search_client.count()
+            id=self.open_search_client.count(),
+            refresh=True
         )
         self.open_search_client.indices.refresh(
             index=self.production_locations_index_name
@@ -174,7 +188,8 @@ class ProductionLocationsTest(BaseAPITest):
         self.open_search_client.index(
             index=self.production_locations_index_name,
             body=outside_polygon,
-            id=self.open_search_client.count()
+            id=self.open_search_client.count(),
+            refresh=True
         )
 
         self.open_search_client.indices.refresh(
@@ -207,7 +222,8 @@ class ProductionLocationsTest(BaseAPITest):
         self.open_search_client.index(
             index=self.production_locations_index_name,
             body=inside_polygon,
-            id=self.open_search_client.count()
+            id=self.open_search_client.count(),
+            refresh=True
         )
 
         self.open_search_client.indices.refresh(
@@ -326,7 +342,8 @@ class ProductionLocationsTest(BaseAPITest):
         self.open_search_client.index(
             index=self.production_locations_index_name,
             body=doc,
-            id=self.open_search_client.count()
+            id=self.open_search_client.count(),
+            refresh=True
         )
         self.open_search_client.indices.refresh(
             index=self.production_locations_index_name
