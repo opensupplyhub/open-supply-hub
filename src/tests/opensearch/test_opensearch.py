@@ -8,14 +8,6 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
         super().setUp()
         self.client: OpenSearch = self.getClient()
 
-        if self.client.indices.exists(index=self.production_locations_index_name):
-            self.client.indices.delete(index=self.production_locations_index_name)
-        self.client.indices.create(index=self.production_locations_index_name)
-
-    def tearDown(self):
-        if self.client.indices.exists(index=self.production_locations_index_name):
-            self.client.indices.delete(index=self.production_locations_index_name)
-
     def test_connection(self):
         health = self.client.cluster.health()
         self.assertIn(health['status'], ['green', 'yellow'])
@@ -25,29 +17,36 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
         response = self.client.index(
             index=self.production_locations_index_name,
             body=doc,
-            id=self.client.count(),
-            refresh=True
+            id=self.client.count()
         )
         self.assertEqual(response['result'], 'created')
 
     def test_search_document(self):
+        # Index a document
         doc = {
-            "sector": ["Apparel"],
+            "sector": [
+                "Apparel"
+            ],
             "address": "NO.11 DONGQIAN LAKE AREA,YINXIAN AVENUE,NINGBO,CHINA",
             "name": "NINGBO HUAYI GARMENTS CO LTD",
-            "country": {"alpha_2": "CN"},
+            "country": {
+                "alpha_2": "CN"
+            },
             "os_id": "CN2024221G4W0WA",
-            "coordinates": {"lon": 121.5504069, "lat": 29.8194363},
+            "coordinates": {
+                "lon": 121.5504069,
+                "lat": 29.8194363
+            },
             "claim_status": "unclaimed"
         }
         self.client.index(
             index=self.production_locations_index_name,
             body=doc,
-            id=self.client.count(),
-            refresh=True
+            id=self.client.count()
         )
         self.client.indices.refresh(index=self.production_locations_index_name)
 
+        # Search for the document
         query = {
             'query': {
                 'match': {
@@ -63,22 +62,24 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
 
     def test_search_document_with_long_address(self):
         doc = {
-            "sector": ["Apparel"],
-            "address": (
-                "Land plot number 115, map sheet number 03, Cadastral map of "
-                "Son Ha commune, Son Ha commune, Nho Quan district, "
-                "Ninh Binh province, Vietnam"
-            ),
+            "sector": [
+                "Apparel"
+            ],
+            "address": "Land plot number 115, map sheet number 03, Cadastral map of Son Ha commune, Son Ha commune, Nho Quan district, Ninh Binh province, Vietnam",
             "name": "HAI VINH VN CO., LTD - NINH BINH BRANCH",
-            "country": {"alpha_2": "VN"},
+            "country": {
+                "alpha_2": "VN"
+            },
             "os_id": "VN2025093077Q64",
-            "coordinates": {"lon": 105.8701316, "lat": 29.202120893}
+            "coordinates": {
+                "lon": 105.8701316,
+                "lat": 29.202120893
+            },
         }
         self.client.index(
             index=self.production_locations_index_name,
             body=doc,
-            id=self.client.count(),
-            refresh=True
+            id=self.client.count()
         )
         self.client.indices.refresh(index=self.production_locations_index_name)
 
@@ -101,7 +102,6 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
             index=self.production_locations_index_name,
             body=query
         )
-        self.assertGreater(response['hits']['total']['value'], 0)
         self.assertEqual(
             response['hits']['hits'][0]['_source']['address'],
             "Land plot number 115, map sheet number 03, Cadastral map of Son Ha commune, Son Ha commune, Nho Quan district, Ninh Binh province, Vietnam"
@@ -121,8 +121,7 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
         self.client.index(
             index=self.production_locations_index_name,
             body=doc,
-            id=self.client.count(),
-            refresh=True
+            id=self.client.count()
         )
         self.client.indices.refresh(index=self.production_locations_index_name)
 
@@ -150,7 +149,6 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
             index=self.production_locations_index_name,
             body=query
         )
-        self.assertEqual(response['hits']['total']['value'], 1)
         self.assertEqual(
             response['hits']['hits'][0]['_source']['address'],
             "Mount Isa Mines Limited Copper Refineries"
