@@ -7,6 +7,7 @@ from api.constants import FacilitiesDownloadSettings
 from datetime import timedelta, datetime
 from django.utils.timezone import make_aware
 
+
 def release_initial_date():
     return make_aware(datetime(2025, 6, 28))
 

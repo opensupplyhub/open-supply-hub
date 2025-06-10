@@ -24,7 +24,7 @@ jest.mock('@material-ui/core/Portal', () => ({ children }) => children);
 
 describe('DownloadFacilitiesButton component', () => {
   const expectedTooltipText =
-  'Downloads are supported for searches resulting in 1000 production locations or less. Log in to download this dataset.';
+  'Downloads are supported for searches resulting in 10000 production locations or less.';
   const handleDownload = jest.fn();
   const defaultProps = {
     disabled: false,
