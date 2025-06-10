@@ -538,4 +538,21 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the user.',
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                ALTER TABLE api_facilityindex
+                  ALTER COLUMN uuid
+                  SET DEFAULT gen_random_uuid();
+            """,
+            reverse_sql="""
+                ALTER TABLE api_facilityindex
+                  ALTER COLUMN uuid
+                  DROP DEFAULT;
+            """,
+        ),
+        # Recreate table triggers.
+        migrations.RunPython(
+            code=create_triggers,
+            reverse_code=drop_triggers,
+        ),
     ]
