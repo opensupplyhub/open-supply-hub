@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.gis.db import models as gis_models
 from django.contrib.postgres import fields as postgres
 from django.contrib.postgres.indexes import GinIndex
@@ -200,6 +201,13 @@ class FacilityIndex(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        help_text='Unique identifier for the facility index.'
+    )
 
     objects = FacilityIndexNewManager()
 
