@@ -11,6 +11,13 @@ class Source(models.Model):
         (SINGLE, SINGLE),
     )
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the source.'
+    )
     contributor = models.ForeignKey(
         'Contributor',
         null=True,
@@ -49,13 +56,6 @@ class Source(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    uuid = models.UUIDField(
-        null=False,
-        default=uuid.uuid4,
-        unique=True,
-        editable=False,
-        help_text='Unique identifier for the source.'
-    )
 
     @property
     def display_name(self):
