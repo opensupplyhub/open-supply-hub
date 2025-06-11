@@ -26,6 +26,13 @@ class Facility(models.Model):
         editable=False,
         db_index=True,
         help_text='The OS ID of a facility.')
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the facility.'
+    )
     name = models.CharField(
         max_length=200,
         null=False,
@@ -70,13 +77,6 @@ class Facility(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
-    uuid = models.UUIDField(
-        null=False,
-        default=uuid.uuid4,
-        unique=True,
-        editable=False,
-        help_text='Unique identifier for the facility.'
-    )
 
     @property
     def ids_of_public_contributors(self):
