@@ -300,7 +300,7 @@ class Migration(migrations.Migration):
                 unique=True,
                 editable=False,
                 help_text='Unique identifier for the facility index.',
-            ),  
+            ),
         ),
         migrations.RunSQL(
             sql="""
@@ -389,7 +389,7 @@ class Migration(migrations.Migration):
                 ALTER TABLE api_facilitylistitem
                     ALTER COLUMN uuid
                     SET DEFAULT gen_random_uuid();
-            """,    
+            """,
             reverse_sql="""
                 ALTER TABLE api_facilitylistitem
                     ALTER COLUMN uuid
