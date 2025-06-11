@@ -8,15 +8,11 @@ helper = MigrationHelper(connection)
 
 
 def drop_triggers(apps, schema_editor):
-    print("→ starting to drop table triggers…")
     helper.run_sql_files(['0170_drop_table_triggers.sql'])
-    print("✓ table triggers dropped successfully")
 
 
 def create_triggers(apps, schema_editor):
-    print("→ starting to create table triggers…")
     helper.run_sql_files(['0170_create_table_triggers.sql'])
-    print("✓ table triggers created successfully")
 
 
 class Migration(migrations.Migration):
@@ -41,12 +37,6 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the contributor.',
             ),
         ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print(
-                "→ starting SQL back-fill of contributor uuid…"
-            ),
-            reverse_code=migrations.RunPython.noop,
-        ),
         migrations.RunSQL(
             sql="""
                 UPDATE api_contributor
@@ -54,10 +44,6 @@ class Migration(migrations.Migration):
                 WHERE uuid IS NULL;
             """,
             reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
-            reverse_code=migrations.RunPython.noop,
         ),
         migrations.AlterField(
             model_name='contributor',
@@ -92,12 +78,6 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the extended field.',
             ),
         ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print(
-                "→ starting SQL back-fill of extended field uuid…"
-            ),
-            reverse_code=migrations.RunPython.noop,
-        ),
         migrations.RunSQL(
             sql="""
                 UPDATE api_extendedfield
@@ -105,10 +85,6 @@ class Migration(migrations.Migration):
                 WHERE uuid IS NULL;
             """,
             reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
-            reverse_code=migrations.RunPython.noop,
         ),
         migrations.AlterField(
             model_name='extendedfield',
@@ -143,12 +119,6 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the facility.',
             ),
         ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print(
-                "→ starting SQL back-fill of facility uuid…"
-            ),
-            reverse_code=migrations.RunPython.noop,
-        ),
         migrations.RunSQL(
             sql="""
                 UPDATE api_facility
@@ -156,10 +126,6 @@ class Migration(migrations.Migration):
                 WHERE uuid IS NULL;
             """,
             reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
-            reverse_code=migrations.RunPython.noop,
         ),
         migrations.AlterField(
             model_name='facility',
@@ -194,12 +160,6 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the facility activity report.',
             ),
         ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print(
-                "→ starting SQL back-fill of facility activity report uuid…"
-            ),
-            reverse_code=migrations.RunPython.noop,
-        ),
         migrations.RunSQL(
             sql="""
                 UPDATE api_facilityactivityreport
@@ -207,10 +167,6 @@ class Migration(migrations.Migration):
                 WHERE uuid IS NULL;
             """,
             reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
-            reverse_code=migrations.RunPython.noop,
         ),
         migrations.AlterField(
             model_name='facilityactivityreport',
@@ -245,12 +201,6 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the facility alias.',
             ),
         ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print(
-                "→ starting SQL back-fill of facility alias uuid…"
-            ),
-            reverse_code=migrations.RunPython.noop,
-        ),
         migrations.RunSQL(
             sql="""
                 UPDATE api_facilityalias
@@ -258,10 +208,6 @@ class Migration(migrations.Migration):
                 WHERE uuid IS NULL;
             """,
             reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
-            reverse_code=migrations.RunPython.noop,
         ),
         migrations.AlterField(
             model_name='facilityalias',
@@ -296,12 +242,6 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the facility claim.',
             ),
         ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print(
-                "→ starting SQL back-fill of facility claim uuid…"
-            ),
-            reverse_code=migrations.RunPython.noop,
-        ),
         migrations.RunSQL(
             sql="""
                 UPDATE api_facilityclaim
@@ -309,10 +249,6 @@ class Migration(migrations.Migration):
                 WHERE uuid IS NULL;
             """,
             reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
-            reverse_code=migrations.RunPython.noop,
         ),
         migrations.AlterField(
             model_name='facilityclaim',
@@ -347,12 +283,6 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the facility index.',
             ),
         ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print(
-                "→ starting SQL back-fill of facility index uuid…"
-            ),
-            reverse_code=migrations.RunPython.noop,
-        ),
         migrations.RunSQL(
             sql="""
                 UPDATE api_facilityindex
@@ -360,10 +290,6 @@ class Migration(migrations.Migration):
                 WHERE uuid IS NULL;
             """,
             reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
-            reverse_code=migrations.RunPython.noop,
         ),
         migrations.AlterField(
             model_name='facilityindex',
@@ -398,12 +324,6 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the facility list.',
             ),
         ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print(
-                "→ starting SQL back-fill of facility list uuid…"
-            ),
-            reverse_code=migrations.RunPython.noop,
-        ),
         migrations.RunSQL(
             sql="""
                 UPDATE api_facilitylist
@@ -411,10 +331,6 @@ class Migration(migrations.Migration):
                 WHERE uuid IS NULL;
             """,
             reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
-            reverse_code=migrations.RunPython.noop,
         ),
         migrations.AlterField(
             model_name='facilitylist',
@@ -449,12 +365,6 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the facility list item.',
             ),
         ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print(
-                "→ starting SQL back-fill of facility list item uuid…"
-            ),
-            reverse_code=migrations.RunPython.noop,
-        ),
         migrations.RunSQL(
             sql="""
                 UPDATE api_facilitylistitem
@@ -462,10 +372,6 @@ class Migration(migrations.Migration):
                 WHERE uuid IS NULL;
             """,
             reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
-            reverse_code=migrations.RunPython.noop,
         ),
         migrations.AlterField(
             model_name='facilitylistitem',
@@ -500,12 +406,6 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the facility location change.',
             ),
         ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print(
-                "→ starting SQL back-fill of facility location uuid…"
-            ),
-            reverse_code=migrations.RunPython.noop,
-        ),
         migrations.RunSQL(
             sql="""
                 UPDATE api_facilitylocation
@@ -513,10 +413,6 @@ class Migration(migrations.Migration):
                 WHERE uuid IS NULL;
             """,
             reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
-            reverse_code=migrations.RunPython.noop,
         ),
         migrations.AlterField(
             model_name='facilitylocation',
@@ -551,12 +447,6 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the facility match.',
             ),
         ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print(
-                "→ starting SQL back-fill of facility match uuid…"
-            ),
-            reverse_code=migrations.RunPython.noop,
-        ),
         migrations.RunSQL(
             sql="""
                 UPDATE api_facilitymatch
@@ -564,10 +454,6 @@ class Migration(migrations.Migration):
                 WHERE uuid IS NULL;
             """,
             reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
-            reverse_code=migrations.RunPython.noop,
         ),
         migrations.AlterField(
             model_name='facilitymatch',
@@ -602,12 +488,6 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the source.',
             ),
         ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print(
-                "→ starting SQL back-fill of uuid…"
-            ),
-            reverse_code=migrations.RunPython.noop,
-        ),
         migrations.RunSQL(
             sql="""
                 UPDATE api_source
@@ -615,10 +495,6 @@ class Migration(migrations.Migration):
                 WHERE uuid IS NULL;
             """,
             reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
-            reverse_code=migrations.RunPython.noop,
         ),
         migrations.AlterField(
             model_name='source',
@@ -653,12 +529,6 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the user.',
             ),
         ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print(
-                "→ starting SQL back-fill of user uuid…"
-            ),
-            reverse_code=migrations.RunPython.noop,
-        ),
         migrations.RunSQL(
             sql="""
                 UPDATE api_user
@@ -666,10 +536,6 @@ class Migration(migrations.Migration):
                 WHERE uuid IS NULL;
             """,
             reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.RunPython(
-            code=lambda apps, schema_editor: print("✓ SQL back-fill complete"),
-            reverse_code=migrations.RunPython.noop, 
         ),
         migrations.AlterField(
             model_name='user',
