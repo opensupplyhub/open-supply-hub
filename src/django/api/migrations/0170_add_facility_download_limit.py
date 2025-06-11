@@ -3,7 +3,7 @@
 from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
-from django.utils.timezone import make_aware
+from django.utils import timezone
 
 
 class Migration(migrations.Migration):
@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False)),
                 ('free_download_records', models.PositiveIntegerField(default=10000, help_text='The number of facilities a user can download per calendar year for free.')),
                 ('paid_download_records', models.PositiveIntegerField(default=0, help_text='The number of paid facilities that the user can download.')),
-                ('updated_at', models.DateTimeField(default=lambda: make_aware(datetime(2025, 6, 28)), help_text='The date when the free limit was set or updated.')),
+                ('updated_at', models.DateTimeField(default=timezone.now, help_text='The date when the free limit was set or updated.')),
             ],
         ),
         migrations.AddField(

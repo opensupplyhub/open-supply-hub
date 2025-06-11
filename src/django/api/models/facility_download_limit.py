@@ -45,7 +45,7 @@ class FacilityDownloadLimit(models.Model):
     updated_at = models.DateTimeField(
         null=False,
         blank=False,
-        default=release_initial_date,
+        default=timezone.now,
         help_text='The date when the free limit was set or updated.'
     )
 
@@ -66,7 +66,8 @@ class FacilityDownloadLimit(models.Model):
 
     @staticmethod
     def get_or_create_user_download_limit(
-        user
+        user,
+        custom_date
     ) -> Optional["FacilityDownloadLimit"]:
         is_api_user = not user.is_anonymous and user.has_groups
 
@@ -74,8 +75,10 @@ class FacilityDownloadLimit(models.Model):
             # if user is an API user we don't want to impose limits
             return None
 
+        defaults = {'updated_at': custom_date } if custom_date else {}
+
         facility_download_limit, _ = FacilityDownloadLimit \
-            .objects.get_or_create(user=user)
+            .objects.get_or_create(user=user, defaults=defaults)
 
         if (not facility_download_limit.is_free_limit_active()):
             facility_download_limit.free_download_records = FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT  # noqa: E501

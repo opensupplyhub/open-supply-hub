@@ -3,6 +3,8 @@ import logging
 from rest_framework.exceptions import ValidationError
 from rest_framework import viewsets, mixins
 from waffle import switch_is_active
+from datetime import datetime
+from django.utils.timezone import make_aware
 
 from api.pagination import PageAndSizePagination
 from api.models.facility.facility_index import FacilityIndex
@@ -66,8 +68,10 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
         total_records = queryset.count()
 
+        initial_release_date = make_aware(datetime(2025, 6, 28))
+
         facility_download_limit = FacilityDownloadLimit \
-            .get_or_create_user_download_limit(request.user)
+            .get_or_create_user_download_limit(request.user, initial_release_date)
 
         current_page = int(request.query_params.get("page", 1))
 
@@ -88,15 +92,10 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
             total_records <= FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT
         )
 
-        total_download_records = (
-            facility_download_limit.free_download_records +
-            facility_download_limit.paid_download_records
-        )
-
         if (not is_large_download_allowed):
             raise ValidationError(
                 ('Downloads are supported only for searches resulting in '
-                 f'{total_download_records} '
+                 f'{facility_download_limit.free_download_records + facility_download_limit.paid_download_records} '
                  'facilities or less.'))
 
         page_queryset = self.paginate_queryset(queryset)
