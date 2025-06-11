@@ -93,6 +93,7 @@ def moderation_event_update_handler_for_opensearch(
         )
         signal_error_notifier(error_log_message, response)
 
+
 @receiver(post_save, sender=FacilityListItem)
 def set_origin_source_on_create(instance, created, **kwargs):
     if created and instance.origin_source is None:
