@@ -9,13 +9,13 @@ helper = MigrationHelper(connection)
 
 def drop_triggers(apps, schema_editor):
     print("→ starting to drop table triggers…")
-    helper.run_sql_files(['table_triggers/drop_table_triggers.sql'])
+    helper.run_sql_files(['0170_drop_table_triggers.sql'])
     print("✓ table triggers dropped successfully")
 
 
 def create_triggers(apps, schema_editor):
     print("→ starting to create table triggers…")
-    helper.run_sql_files(['table_triggers/create_table_triggers.sql'])
+    helper.run_sql_files(['0170_create_table_triggers.sql'])
     print("✓ table triggers created successfully")
 
 
@@ -70,6 +70,18 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the contributor.',
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                ALTER TABLE api_contributor
+                    ALTER COLUMN uuid
+                    SET DEFAULT gen_random_uuid();
+            """,
+            reverse_sql="""
+                ALTER TABLE api_contributor
+                    ALTER COLUMN uuid
+                    DROP DEFAULT;
+            """,
+        ),
         # Adds a UUID field to the ExtendedField model.
         migrations.AddField(
             model_name='extendedfield',
@@ -108,6 +120,18 @@ class Migration(migrations.Migration):
                 editable=False,
                 help_text='Unique identifier for the extended field.',
             ),
+        ),
+        migrations.RunSQL(
+            sql="""
+                ALTER TABLE api_extendedfield
+                    ALTER COLUMN uuid
+                    SET DEFAULT gen_random_uuid();
+            """,
+            reverse_sql="""
+                ALTER TABLE api_extendedfield
+                    ALTER COLUMN uuid
+                    DROP DEFAULT;
+            """,
         ),
         # Adds a UUID field to the Facility model.
         migrations.AddField(
@@ -148,6 +172,18 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the facility.',
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                ALTER TABLE api_facility
+                    ALTER COLUMN uuid
+                    SET DEFAULT gen_random_uuid();
+            """,
+            reverse_sql="""
+                ALTER TABLE api_facility
+                    ALTER COLUMN uuid
+                    DROP DEFAULT;
+            """,
+        ),
         # Adds a UUID field to the FacilityActivityReport model.
         migrations.AddField(
             model_name='facilityactivityreport',
@@ -186,6 +222,18 @@ class Migration(migrations.Migration):
                 editable=False,
                 help_text='Unique identifier for the facility activity report.',
             ),
+        ),
+        migrations.RunSQL(
+            sql="""
+                ALTER TABLE api_facilityactivityreport
+                    ALTER COLUMN uuid
+                    SET DEFAULT gen_random_uuid();
+            """,
+            reverse_sql="""
+                ALTER TABLE api_facilityactivityreport
+                    ALTER COLUMN uuid
+                    DROP DEFAULT;
+            """,
         ),
         # Adds a UUID field to the FacilityAlias model.
         migrations.AddField(
@@ -226,6 +274,18 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the facility alias.',
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                ALTER TABLE api_facilityalias
+                    ALTER COLUMN uuid
+                    SET DEFAULT gen_random_uuid();
+            """,
+            reverse_sql="""
+                ALTER TABLE api_facilityalias
+                    ALTER COLUMN uuid
+                    DROP DEFAULT;
+            """,
+        ),
         # Adds a UUID field to the FacilityClaim model.
         migrations.AddField(
             model_name='facilityclaim',
@@ -265,6 +325,18 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the facility claim.',
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                ALTER TABLE api_facilityclaim
+                    ALTER COLUMN uuid
+                    SET DEFAULT gen_random_uuid();
+            """,
+            reverse_sql="""
+                ALTER TABLE api_facilityclaim
+                    ALTER COLUMN uuid
+                    DROP DEFAULT;
+            """,
+        ),
         # Adds a UUID field to the FacilityIndex model.
         migrations.AddField(
             model_name='facilityindex',
@@ -302,7 +374,19 @@ class Migration(migrations.Migration):
                 unique=True,
                 editable=False,
                 help_text='Unique identifier for the facility index.',
-            ),          
+            ),  
+        ),
+        migrations.RunSQL(
+            sql="""
+                ALTER TABLE api_facilityindex
+                    ALTER COLUMN uuid
+                    SET DEFAULT gen_random_uuid();
+            """,
+            reverse_sql="""
+                ALTER TABLE api_facilityindex
+                    ALTER COLUMN uuid
+                    DROP DEFAULT;
+            """,
         ),
         # Adds a UUID field to the FacilityList model.
         migrations.AddField(
@@ -343,6 +427,18 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the facility list.',
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                ALTER TABLE api_facilitylist
+                    ALTER COLUMN uuid
+                    SET DEFAULT gen_random_uuid();
+            """,
+            reverse_sql="""
+                ALTER TABLE api_facilitylist
+                    ALTER COLUMN uuid   
+                    DROP DEFAULT;
+            """,
+        ),
         # Adds a UUID field to the FacilityListItem model.
         migrations.AddField(
             model_name='facilitylistitem',
@@ -381,6 +477,18 @@ class Migration(migrations.Migration):
                 editable=False,
                 help_text='Unique identifier for the facility list item.',
             ),
+        ),
+        migrations.RunSQL(
+            sql="""
+                ALTER TABLE api_facilitylistitem
+                    ALTER COLUMN uuid
+                    SET DEFAULT gen_random_uuid();
+            """,    
+            reverse_sql="""
+                ALTER TABLE api_facilitylistitem
+                    ALTER COLUMN uuid
+                    DROP DEFAULT;
+            """,
         ),
         # Adds a UUID field to the FacilityLocation model.
         migrations.AddField(
@@ -421,6 +529,18 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the facility location change.',
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                ALTER TABLE api_facilitylocation
+                    ALTER COLUMN uuid
+                    SET DEFAULT gen_random_uuid();
+            """,
+            reverse_sql="""
+                ALTER TABLE api_facilitylocation
+                    ALTER COLUMN uuid
+                    DROP DEFAULT;
+            """,
+        ),
         # Adds a UUID field to the FacilityMatch model.
         migrations.AddField(
             model_name='facilitymatch',
@@ -460,6 +580,18 @@ class Migration(migrations.Migration):
                 help_text='Unique identifier for the facility match.',
             ),
         ),
+        migrations.RunSQL(
+            sql="""
+                ALTER TABLE api_facilitymatch
+                    ALTER COLUMN uuid
+                    SET DEFAULT gen_random_uuid();
+            """,
+            reverse_sql="""
+                ALTER TABLE api_facilitymatch
+                    ALTER COLUMN uuid
+                    DROP DEFAULT;
+            """,
+        ),
         # Adds a UUID field to the Source model.
         migrations.AddField(
             model_name='source',
@@ -498,6 +630,18 @@ class Migration(migrations.Migration):
                 editable=False,
                 help_text='Unique identifier for the source.',
             ),
+        ),
+        migrations.RunSQL(
+            sql="""
+                ALTER TABLE api_source
+                    ALTER COLUMN uuid
+                    SET DEFAULT gen_random_uuid();
+            """,
+            reverse_sql="""
+                ALTER TABLE api_source
+                    ALTER COLUMN uuid
+                    DROP DEFAULT;
+            """,
         ),
         # Add a UUID field to the User model.
         migrations.AddField(
@@ -540,38 +684,14 @@ class Migration(migrations.Migration):
         ),
         migrations.RunSQL(
             sql="""
-                ALTER TABLE api_facility
-                  ALTER COLUMN uuid
-                  SET DEFAULT gen_random_uuid();
+                ALTER TABLE api_user
+                    ALTER COLUMN uuid
+                    SET DEFAULT gen_random_uuid();
             """,
             reverse_sql="""
-                ALTER TABLE api_facility
-                  ALTER COLUMN uuid
-                  DROP DEFAULT;
-            """,
-        ),
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE api_facilityindex
-                  ALTER COLUMN uuid
-                  SET DEFAULT gen_random_uuid();
-            """,
-            reverse_sql="""
-                ALTER TABLE api_facilityindex
-                  ALTER COLUMN uuid
-                  DROP DEFAULT;
-            """,
-        ),
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE api_facilitymatch
-                  ALTER COLUMN uuid
-                  SET DEFAULT gen_random_uuid();
-            """,
-            reverse_sql="""
-                ALTER TABLE api_facilitymatch
-                  ALTER COLUMN uuid
-                  DROP DEFAULT;
+                ALTER TABLE api_user
+                    ALTER COLUMN uuid
+                    DROP DEFAULT;
             """,
         ),
         # Recreate table triggers.
