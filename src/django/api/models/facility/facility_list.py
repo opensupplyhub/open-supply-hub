@@ -9,6 +9,13 @@ class FacilityList(models.Model):
     """
     Metadata for an uploaded list of facilities.
     """
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the facility list.'
+    )
     name = models.CharField(
         max_length=200,
         null=False,
@@ -91,13 +98,6 @@ class FacilityList(models.Model):
         blank=True,
         help_text=('List-level and internal errors logged during background '
                    'parsing of the list.')
-    )
-    uuid = models.UUIDField(
-        null=False,
-        default=uuid.uuid4,
-        unique=True,
-        editable=False,
-        help_text='Unique identifier for the facility list.'
     )
 
     def __str__(self):
