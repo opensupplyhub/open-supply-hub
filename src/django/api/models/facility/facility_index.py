@@ -19,6 +19,13 @@ class FacilityIndex(models.Model):
         editable=False,
         db_index=True,
         help_text='The OS ID of a facility.')
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        help_text='Unique identifier for the facility index.'
+    )
     name = models.CharField(
         max_length=200,
         null=False,
@@ -201,13 +208,6 @@ class FacilityIndex(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
-    uuid = models.UUIDField(
-        null=False,
-        default=uuid.uuid4,
-        editable=False,
-        unique=True,
-        help_text='Unique identifier for the facility index.'
-    )
 
     objects = FacilityIndexNewManager()
 
