@@ -51,6 +51,13 @@ class Contributor(models.Model):
         (3, 'Embed Deluxe / Custom Embed'),
     )
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the contributor.'
+    )
     admin = models.OneToOneField(
         'User',
         on_delete=models.PROTECT,
@@ -115,13 +122,6 @@ class Contributor(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    uuid = models.UUIDField(
-        null=False,
-        default=uuid.uuid4,
-        unique=True,
-        editable=False,
-        help_text='Unique identifier for the contributor.'
-    )
 
     objects = ContributorManager.as_manager()
     history = HistoricalRecords(
