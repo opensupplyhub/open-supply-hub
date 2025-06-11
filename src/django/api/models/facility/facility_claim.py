@@ -120,6 +120,13 @@ class FacilityClaim(models.Model):
         ]
     ]
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the facility claim.'
+    )
     contributor = models.ForeignKey(
         'Contributor',
         null=False,
@@ -395,13 +402,6 @@ class FacilityClaim(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    uuid = models.UUIDField(
-        null=False,
-        default=uuid.uuid4,
-        unique=True,
-        editable=False,
-        help_text='Unique identifier for the facility claim.'
-    )
 
     history = HistoricalRecords(
         excluded_fields=['uuid']
