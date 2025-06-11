@@ -68,6 +68,13 @@ class FacilityListItem(models.Model):
                          name='api_fli_match_fields_idx')
         ]
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the facility list item.'
+    )
     source = models.ForeignKey(
         'Source',
         null=False,
@@ -163,13 +170,6 @@ class FacilityListItem(models.Model):
         help_text='The cleaned address of the facility.')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    uuid = models.UUIDField(
-        null=False,
-        default=uuid.uuid4,
-        unique=True,
-        editable=False,
-        help_text='Unique identifier for the facility list item.'
-    )
 
     @property
     def has_active_complete_match(self):
