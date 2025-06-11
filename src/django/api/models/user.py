@@ -71,6 +71,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     objects = EmailAsUsernameUserManager()
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the user.'
+    )
     is_staff = models.BooleanField(
         ('staff status'),
         default=False,
@@ -139,13 +146,6 @@ class User(AbstractBaseUser, PermissionsMixin):
             "Maximum allowed facility upload rate for this user. "
             "This applies to only API Facility uploads."
         )
-    )
-    uuid = models.UUIDField(
-        null=False,
-        default=uuid.uuid4,
-        unique=True,
-        editable=False,
-        help_text='Unique identifier for the user.'
     )
 
     def save(self, *args, **kwargs):
