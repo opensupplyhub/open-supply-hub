@@ -356,7 +356,6 @@ function FilterSidebarFacilitiesTab({
                                 disabled={
                                     facilitiesCount >
                                     user.allowed_records_number
-                                    //     &&
                                     // user.is_free_limit_active
                                 }
                                 setLoginRequiredDialogIsOpen={

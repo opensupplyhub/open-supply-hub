@@ -7,10 +7,10 @@ from unittest.mock import patch
 from api.models.user import User
 from api.constants import FeatureGroups
 from api.models.facility_download_limit import FacilityDownloadLimit
+from django.utils import timezone
 
 # Override constants different from production value for easier testing
 FACILITIES_DOWNLOAD_LIMIT = 3
-# DEFAULT_ALLOWED_DOWNLOADS = 1
 
 
 class FacilitiesDownloadViewSetTest(APITestCase):
@@ -457,7 +457,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         self.login_user(user)
         FacilityDownloadLimit.objects.create(
             user=user,
-            free_download_records=FACILITIES_DOWNLOAD_LIMIT
+            free_download_records=FACILITIES_DOWNLOAD_LIMIT,
+            paid_download_records=1
         )
         response = self.get_facility_downloads()
 
@@ -465,43 +466,35 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         self.assertEqual(
             response.json(),
             [('Downloads are supported only for searches '
-              'resulting in 3 facilities or less.')]
+              'resulting in 4 facilities or less.')]
         )
 
-    # @patch(
-    #     'api.constants.FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS',
-    #     DEFAULT_ALLOWED_DOWNLOADS
-    # )
-    # def test_user_cannot_download_over_allowed_downloads(self):
-    #     user = self.create_user()
-    #     self.login_user(user)
-    #     FacilityDownloadLimit.objects.create(
-    #         user=user,
-    #         allowed_downloads=DEFAULT_ALLOWED_DOWNLOADS
-    #     )
+    def test_new_user_has_current_date_in_updated_at(self):
+        user = self.create_user()
+        self.login_user(user)
 
-    #     first_response = self.get_facility_downloads()
-    #     self.assertEqual(first_response.status_code, status.HTTP_200_OK)
-    #     self.assertEqual(
-    #         len(first_response.data.get("results", {}).get("rows", [])),
-    #         18
-    #     )
+        limits = FacilityDownloadLimit.objects.create(
+            user=user
+        )
+        current_date = timezone.now()
 
-    #     second_response = self.get_facility_downloads()
-    #     self.assertEqual(
-    #         second_response.status_code,
-    #         status.HTTP_400_BAD_REQUEST
-    #     )
-    #     self.assertEqual(
-    #         second_response.json(),
-    #         [
-    #             (
-    #                 'You have reached the maximum number of facility'
-    #                 ' downloads allowed this month. Please wait until'
-    #                 ' next month to download more data.'
-    #             )
-    #         ]
-    #     )
+        self.assertEqual(limits, current_date)
+
+        # second_response = self.get_facility_downloads()
+        # self.assertEqual(
+        #     second_response.status_code,
+        #     status.HTTP_400_BAD_REQUEST
+        # )
+        # self.assertEqual(
+        #     second_response.json(),
+        #     [
+        #         (
+        #             'You have reached the maximum number of facility'
+        #             ' downloads allowed this month. Please wait until'
+        #             ' next month to download more data.'
+        #         )
+        #     ]
+        # )
 
     @patch(
         'api.constants.FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT',
@@ -518,15 +511,11 @@ class FacilitiesDownloadViewSetTest(APITestCase):
             FACILITIES_DOWNLOAD_LIMIT
         )
 
-    # @patch(
-    #     "api.constants.FacilitiesDownloadSettings.DEFAULT_ALLOWED_DOWNLOADS",
-    #     DEFAULT_ALLOWED_DOWNLOADS,
-    # )
-    # def test_api_user_not_limited_by_download_count(self):
-    #     user = self.create_user(is_api_user=True)
-    #     self.login_user(user)
+    def test_api_user_not_limited_by_download_count(self):
+        user = self.create_user(is_api_user=True)
+        self.login_user(user)
 
-    # # Make multiple downloads that would exceed the limit for regular users
-    #     for _ in range(DEFAULT_ALLOWED_DOWNLOADS + 1):
-    #         response = self.get_facility_downloads()
-    #         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Make multiple downloads that would exceed the limit for regular users
+        for _ in range(5):
+            response = self.get_facility_downloads()
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
