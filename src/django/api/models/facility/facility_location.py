@@ -5,7 +5,16 @@ from django.db import models
 
 class FacilityLocation(models.Model):
     """
+    A record of a facility's location change, including the new lat/lng point
+    and any notes regarding the change process.
     """
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the facility location change.'
+    )
     facility = models.ForeignKey(
         'Facility',
         null=False,
@@ -34,10 +43,3 @@ class FacilityLocation(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    uuid = models.UUIDField(
-        null=False,
-        default=uuid.uuid4,
-        unique=True,
-        editable=False,
-        help_text='Unique identifier for the facility location change.'
-    )
