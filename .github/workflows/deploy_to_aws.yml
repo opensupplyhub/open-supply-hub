@@ -56,7 +56,6 @@ jobs:
           path: 'terraform-config'
           token: ${{ secrets.PAT }}
           ref: 'refs/pull/39/head'
-          
 
       - name: Copy tfvars for ${{ vars.ENV_NAME }}
         run: |
