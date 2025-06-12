@@ -33,11 +33,6 @@ BEFORE INSERT ON api_facilitylist
 FOR EACH ROW
 EXECUTE FUNCTION set_origin_source();
 
-CREATE TRIGGER trg_set_origin_source_facilitylistitem
-BEFORE INSERT ON api_facilitylistitem
-FOR EACH ROW
-EXECUTE FUNCTION set_origin_source();
-
 CREATE TRIGGER trg_set_origin_source_facilitymatch
 BEFORE INSERT ON api_facilitymatch
 FOR EACH ROW

@@ -12,4 +12,5 @@ models = [FacilityMatch, Facility, ExtendedField]
 for model in models:
     @event.listens_for(model, 'before_insert')
     def set_origin_source(mapper, connection, target):
-        target.origin_source = settings.instance_source or 'os_hub'
+        if not target.origin_source:
+            target.origin_source = settings.instance_source or 'os_hub'

@@ -12,8 +12,6 @@ DROP TRIGGER IF EXISTS trg_set_origin_source_facilityclaim ON api_facilityclaim;
 
 DROP TRIGGER IF EXISTS trg_set_origin_source_facilitylist ON api_facilitylist;
 
-DROP TRIGGER IF EXISTS trg_set_origin_source_facilitylistitem ON api_facilitylistitem;
-
 DROP TRIGGER IF EXISTS trg_set_origin_source_facilitymatch ON api_facilitymatch;
 
 DROP TRIGGER IF EXISTS trg_set_origin_source_source ON api_source;
