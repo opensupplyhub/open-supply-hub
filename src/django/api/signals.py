@@ -75,7 +75,7 @@ def moderation_event_update_handler_for_opensearch(
             "[Moderation Event Updating] "
             "Lost connection to OpenSearch cluster."
         )
-        return
+        raise
     except NotFoundError:
         log.error(
             "[Moderation Event Updating] "
