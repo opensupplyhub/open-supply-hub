@@ -406,7 +406,8 @@ data "template_file" "direct_data_load_job_definition" {
     google_service_account_creds_base64 = var.google_service_account_creds_base64
     google_drive_shared_directory_id    = var.google_drive_shared_directory_id
     sheet_id                            = var.direct_data_load_sheet_id
-    contributor_id                      = var.direct_data_load_contributor_id
+    contributor_name                    = var.direct_data_load_contributor_name
+    contributor_email                   = var.direct_data_load_contributor_email
     user_id                             = var.direct_data_load_user_id
     sheet_name                          = var.direct_data_load_sheet_name
     tab_id                              = var.direct_data_load_tab_id

@@ -807,9 +807,14 @@ variable "direct_data_load_sheet_id" {
   description = "Google Sheet ID for direct data load"
 }
 
-variable "direct_data_load_contributor_id" {
-  type        = number
-  description = "Contributor ID for direct data load"
+variable "direct_data_load_contributor_name" {
+  type        = string
+  description = "Contributor name for direct data load"
+}
+
+variable "direct_data_load_contributor_email" {
+  type        = string
+  description = "Contributor email for direct data load"
 }
 
 variable "direct_data_load_user_id" {
