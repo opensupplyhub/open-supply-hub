@@ -9,13 +9,66 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: Jun 28, 2025
 
-### Architecture/Environment changes
+### Database changes
+* *Describe high-level database changes.*
 
+#### Migrations:
+* 0170_added_origin_source_field.py - A new `origin_source` field was added to the following tables:
+    * `api_contributor`
+    * `api_extendedfield`
+    * `api_facility`
+    * `api_facilityactivityreport`
+    * `api_facilityalias`
+    * `api_facilityclaim`
+    * `api_facilityindex`
+    * `api_facilitylist`
+    * `api_facilitylistitem`
+    * `api_facilitylocation`
+    * `api_facilitymatch`
+    * `api_source`
+    * `api_user`
+
+    Existing records were automatically populated with the default value `os_hub`.
+    New records will have the origin_source field set via the `INSTANCE_SOURCE` environment variable using triggers.
+
+mazursasha1990 marked this conversation as resolved.
+#### Schema changes
+* [OSDEV-2019](https://opensupplyhub.atlassian.net/browse/OSDEV-2019) - A new `origin_source` column was added to the following tables:
+    * `api_contributor`
+    * `api_extendedfield`
+    * `api_facility`
+    * `api_facilityactivityreport`
+    * `api_facilityalias`
+    * `api_facilityclaim`
+    * `api_facilityindex`
+    * `api_facilitylist`
+    * `api_facilitylistitem`
+    * `api_facilitylocation`
+    * `api_facilitymatch`
+    * `api_source`
+    * `api_user`
+
+    The `origin_source` column was made nullable and populated with string values using both Django and SQLAlchemy models, as well as at the database level.
+    SQL `BEFORE INSERT` triggers were introduced for the relevant tables.
+    A new SQL function, `set_origin_source`, was added to support the triggers and handle updates to the `origin_source` column.
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
+
 
 ## Release 2.6.0
 
