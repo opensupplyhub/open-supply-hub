@@ -422,6 +422,8 @@ resource "aws_batch_job_definition" "direct_data_load" {
   type           = "container"
   propagate_tags = true
 
+  platform_capabilities = ["FARGATE", "EC2"]
+
   container_properties = data.template_file.direct_data_load_job_definition.rendered
 
   retry_strategy {
