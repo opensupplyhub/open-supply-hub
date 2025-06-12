@@ -15,6 +15,8 @@ from app.config import settings
 
 from app.matching.facilities_matcher import matcher
 
+import app.database.signals.origin_source
+
 # Fast API instance
 app = FastAPI()
 
