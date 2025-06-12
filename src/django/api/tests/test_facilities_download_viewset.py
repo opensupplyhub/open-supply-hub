@@ -8,6 +8,7 @@ from api.models.user import User
 from api.constants import FeatureGroups
 from api.models.facility_download_limit import FacilityDownloadLimit
 from django.utils import timezone
+from django.utils.timezone import make_aware, datetime
 
 # Override constants different from production value for easier testing
 FACILITIES_DOWNLOAD_LIMIT = 3
@@ -473,28 +474,30 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         user = self.create_user()
         self.login_user(user)
 
-        limits = FacilityDownloadLimit.objects.create(
+        limit = FacilityDownloadLimit.objects.create(
             user=user
         )
         current_date = timezone.now()
 
-        self.assertEqual(limits, current_date)
+        self.assertEqual(limit.updated_at.date(), current_date.date())
 
-        # second_response = self.get_facility_downloads()
-        # self.assertEqual(
-        #     second_response.status_code,
-        #     status.HTTP_400_BAD_REQUEST
-        # )
-        # self.assertEqual(
-        #     second_response.json(),
-        #     [
-        #         (
-        #             'You have reached the maximum number of facility'
-        #             ' downloads allowed this month. Please wait until'
-        #             ' next month to download more data.'
-        #         )
-        #     ]
-        # )
+
+    def test_old_user_has_release_date_in_updated_at(self):
+        #  the record has been added to FacilityDownloadLimit
+        user = self.create_user()
+        #  simulation old user
+        FacilityDownloadLimit.objects.filter(user=user).delete()
+        self.login_user(user)
+        release_date = make_aware(datetime(2025, 6, 28))
+
+        limit = FacilityDownloadLimit \
+            .get_or_create_user_download_limit(
+                user,
+                release_date
+            )
+
+        self.assertEqual(limit.updated_at.date(), release_date.date())
+
 
     @patch(
         'api.constants.FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT',
