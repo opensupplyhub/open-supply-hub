@@ -3,6 +3,9 @@ from app.config import settings
 from app.database.models.facility_match import FacilityMatch
 from app.database.models.facility import Facility
 from app.database.models.extended_field import ExtendedField
+from sqlalchemy.orm import configure_mappers
+
+configure_mappers()
 
 models = [FacilityMatch, Facility, ExtendedField]
 
