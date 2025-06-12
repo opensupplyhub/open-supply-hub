@@ -3,7 +3,8 @@ import json
 
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
-from opensearchpy.exceptions import ConnectionError, NotFoundError, AuthorizationException
+from opensearchpy.exceptions import \
+    ConnectionError, NotFoundError, AuthorizationException
 
 from api.models.facility.facility import Facility
 from api.models.moderation_event import ModerationEvent
