@@ -178,6 +178,7 @@ class FacilityDownloadLimitAdmin(admin.ModelAdmin):
                     'free_download_records',
                     'paid_download_records',
                     'updated_at',
+                    'purchase_date',
                     )
     search_fields = ('user__username',)
     autocomplete_fields = ('user', )

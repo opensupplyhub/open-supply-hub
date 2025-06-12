@@ -48,6 +48,12 @@ class FacilityDownloadLimit(models.Model):
         default=timezone.now,
         help_text='The date when the free limit was set or updated.'
     )
+    purchase_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='The date when additional download facility records were purchased.'
+    )
+
 
     def is_free_limit_active(self):
         # check expiration 12 month after initial date
