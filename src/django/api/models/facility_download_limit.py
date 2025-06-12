@@ -4,8 +4,11 @@ from django.utils import timezone
 from django.db import transaction
 from django.db.models import BigAutoField
 from api.constants import FacilitiesDownloadSettings
-from datetime import timedelta, datetime
+from datetime import  datetime
+from dateutil.relativedelta import relativedelta
 from django.utils.timezone import make_aware
+
+from api.models.facility_download_limit_manager import FacilityDownloadLimitManager
 
 
 def release_initial_date():
@@ -54,10 +57,12 @@ class FacilityDownloadLimit(models.Model):
         help_text='The date when additional download facility records were purchased.'
     )
 
+    objects = FacilityDownloadLimitManager()
+
 
     def is_free_limit_active(self):
         # check expiration 12 month after initial date
-        return timezone.now() < self.updated_at + timedelta(days=365)
+        return timezone.now() < self.updated_at + relativedelta(years=1)
 
     def register_download(self, records_to_subtract):
         with transaction.atomic():
@@ -86,8 +91,4 @@ class FacilityDownloadLimit(models.Model):
         facility_download_limit, _ = FacilityDownloadLimit \
             .objects.get_or_create(user=user, defaults=defaults)
 
-        if (not facility_download_limit.is_free_limit_active()):
-            facility_download_limit.free_download_records = FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT  # noqa: E501
-            facility_download_limit.updated_at = timezone.now()
-            facility_download_limit.save()
         return facility_download_limit
