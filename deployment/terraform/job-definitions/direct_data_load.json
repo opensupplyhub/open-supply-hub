@@ -33,7 +33,11 @@
       { "name": "OAR_CLIENT_KEY", "value": "${oar_client_key}" },
       { "name": "EXTERNAL_DOMAIN", "value": "${external_domain}" },
       { "name": "GOOGLE_SERVICE_ACCOUNT_CREDS_BASE64", "value": "${google_service_account_creds_base64}" },
-      { "name": "GOOGLE_DRIVE_SHARED_DIRECTORY_ID", "value": "${google_drive_shared_directory_id}" }
+      { "name": "GOOGLE_DRIVE_SHARED_DIRECTORY_ID", "value": "${google_drive_shared_directory_id}" },
+      { "name": "OPENSEARCH_HOST", "value": "${opensearch_host}" },
+      { "name": "OPENSEARCH_PORT", "value": "${opensearch_port}" },
+      { "name": "OPENSEARCH_SSL", "value": "${opensearch_ssl}" },
+      { "name": "OPENSEARCH_SSL_CERT_VERIFICATION", "value": "${opensearch_ssl_cert_verification}" }
   ],
   "logConfiguration": {
       "logDriver": "awslogs",

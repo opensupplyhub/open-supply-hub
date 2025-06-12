@@ -410,6 +410,10 @@ data "template_file" "direct_data_load_job_definition" {
     user_id                             = var.direct_data_load_user_id
     sheet_name                          = var.direct_data_load_sheet_name
     tab_id                              = var.direct_data_load_tab_id
+    opensearch_host                     = aws_opensearch_domain.opensearch.endpoint
+    opensearch_port                     = var.opensearch_port
+    opensearch_ssl                      = var.opensearch_ssl
+    opensearch_ssl_cert_verification    = var.opensearch_ssl_cert_verification
   }
 }
 
