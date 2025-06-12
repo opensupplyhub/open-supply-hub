@@ -4,11 +4,12 @@ from django.utils import timezone
 from django.db import transaction
 from django.db.models import BigAutoField
 from api.constants import FacilitiesDownloadSettings
-from datetime import  datetime
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from django.utils.timezone import make_aware
 
-from api.models.facility_download_limit_manager import FacilityDownloadLimitManager
+from api.models.facility_download_limit_manager \
+import FacilityDownloadLimitManager
 
 
 def release_initial_date():
@@ -54,7 +55,7 @@ class FacilityDownloadLimit(models.Model):
     purchase_date = models.DateTimeField(
         null=True,
         blank=True,
-        help_text='The date when additional download facility records were purchased.'
+        help_text='The date when paid facility records were purchased.'
     )
 
     objects = FacilityDownloadLimitManager()
@@ -62,15 +63,15 @@ class FacilityDownloadLimit(models.Model):
 
     def is_free_limit_active(self):
         # check expiration 12 month after initial date
-        return timezone.now() < self.updated_at + relativedelta(years=1)
+        return timezone.now() < self.updated_at + relativedelta(years=1) # noqa: E501
 
     def register_download(self, records_to_subtract):
         with transaction.atomic():
             self.refresh_from_db()
             if self.free_download_records >= records_to_subtract:
-                self.free_download_records = self.free_download_records - records_to_subtract  # noqa: E501
+                self.free_download_records = self.free_download_records - records_to_subtract # noqa: E501
             else:
-                remaining_records = records_to_subtract - self.free_download_records  # noqa: E501
+                remaining_records = records_to_subtract - self.free_download_records # noqa: E501
                 self.free_download_records = 0
                 self.paid_download_records -= remaining_records
             self.save()
@@ -86,7 +87,7 @@ class FacilityDownloadLimit(models.Model):
             # if user is an API user we don't want to impose limits
             return None
 
-        defaults = {'updated_at': custom_date } if custom_date else {}
+        defaults = { 'updated_at': custom_date } if custom_date else {}
 
         facility_download_limit, _ = FacilityDownloadLimit \
             .objects.get_or_create(user=user, defaults=defaults)

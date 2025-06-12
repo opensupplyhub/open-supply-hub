@@ -71,14 +71,17 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         initial_release_date = make_aware(datetime(2025, 6, 28))
 
         facility_download_limit = FacilityDownloadLimit \
-            .get_or_create_user_download_limit(request.user, initial_release_date)
+            .get_or_create_user_download_limit(
+                request.user,
+                initial_release_date
+            )
 
         current_page = int(request.query_params.get("page", 1))
 
         if (
             current_page == 1 and
             facility_download_limit
-            and (facility_download_limit.free_download_records + facility_download_limit.paid_download_records) == 0  # noqa: E501
+            and (facility_download_limit.free_download_records + facility_download_limit.paid_download_records) == 0 # noqa: E501
         ):
             raise ValidationError('You have reached the maximum number of '
                                   'facility downloads permitted for this year'
@@ -95,7 +98,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         if (not is_large_download_allowed):
             raise ValidationError(
                 ('Downloads are supported only for searches resulting in '
-                 f'{facility_download_limit.free_download_records + facility_download_limit.paid_download_records} '
+                 f'{facility_download_limit.free_download_records + facility_download_limit.paid_download_records} ' # noqa: E501
                  'facilities or less.'))
 
         page_queryset = self.paginate_queryset(queryset)

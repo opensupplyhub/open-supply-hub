@@ -481,7 +481,6 @@ class FacilitiesDownloadViewSetTest(APITestCase):
 
         self.assertEqual(limit.updated_at.date(), current_date.date())
 
-
     def test_old_user_has_release_date_in_updated_at(self):
         #  the record has been added to FacilityDownloadLimit
         user = self.create_user()
@@ -497,7 +496,6 @@ class FacilitiesDownloadViewSetTest(APITestCase):
             )
 
         self.assertEqual(limit.updated_at.date(), release_date.date())
-
 
     @patch(
         'api.constants.FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT',

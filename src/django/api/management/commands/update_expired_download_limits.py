@@ -5,6 +5,7 @@ from api.models.facility_download_limit import FacilityDownloadLimit
 
 logger = logging.getLogger(__name__)
 
+
 class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         FacilityDownloadLimit.objects.update_expired_limits()
