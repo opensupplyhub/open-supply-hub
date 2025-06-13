@@ -31,7 +31,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     Existing records were automatically populated with the default value `os_hub`.
     New records will have the origin_source field set via the `INSTANCE_SOURCE` environment variable using triggers.
 
-mazursasha1990 marked this conversation as resolved.
 #### Schema changes
 * [OSDEV-2019](https://opensupplyhub.atlassian.net/browse/OSDEV-2019) - A new `origin_source` column was added to the following tables:
     * `api_contributor`
