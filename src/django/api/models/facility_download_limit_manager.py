@@ -15,8 +15,7 @@ class FacilityDownloadLimitManager(models.Manager):
             updated_at__lt=one_year_ago_with_leap
         )
         expired_free_limits.update(
-            free_download_records=FacilitiesDownloadSettings
-              .FACILITIES_DOWNLOAD_LIMIT,
+            free_download_records=FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT,  # noqa: E501
             updated_at=now,
         )
 

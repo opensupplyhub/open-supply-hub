@@ -1,5 +1,4 @@
 from django.test import TestCase
-from django.utils import timezone
 from api.models import User, FacilityDownloadLimit
 
 
@@ -20,7 +19,7 @@ class FacilityDownloadLimitModelTest(TestCase):
 
         limit = FacilityDownloadLimit.objects.create(
           user=self.user,
-          paid_download_records = 1000,
+          paid_download_records=1000
         )
         self.assertEqual(
             limit.free_download_records,

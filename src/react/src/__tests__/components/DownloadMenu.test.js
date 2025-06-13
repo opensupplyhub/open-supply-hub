@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { render, fireEvent, screen } from '@testing-library/react';
 import DownloadMenu from '../../components/DownloadMenu';
 
@@ -18,6 +19,11 @@ jest.mock('@material-ui/core/Menu', () => {
         </button>
       </div>
     );
+  };
+
+  MyComponent.defaultProps = {
+    children: null,
+    anchorEl: null,
   };
 
   MockMenu.propTypes = {
@@ -43,7 +49,7 @@ jest.mock('@material-ui/core/MenuItem', () => {
     );
 
   MockMenuItem.propTypes = {
-      onClick: PropTypes.func,
+      onClick: PropTypes.func.isRequired,
   };
 
    return MockMenuItem;
