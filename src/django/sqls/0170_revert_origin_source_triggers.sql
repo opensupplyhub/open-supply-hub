@@ -1,7 +1,5 @@
 DROP TRIGGER IF EXISTS trg_set_origin_source_contributor ON api_contributor;
 
-DROP TRIGGER IF EXISTS trg_set_origin_source_extendedfield ON api_extendedfield;
-
 DROP TRIGGER IF EXISTS trg_set_origin_source_facility ON api_facility;
 
 DROP TRIGGER IF EXISTS trg_set_origin_source_facilityactivityreport ON api_facilityactivityreport;

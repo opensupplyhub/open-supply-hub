@@ -8,6 +8,7 @@ from opensearchpy.exceptions import ConnectionError, NotFoundError
 
 from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
+from api.models.extended_field import ExtendedField
 from api.models.moderation_event import ModerationEvent
 from api.services.opensearch.opensearch import OpenSearchServiceConnection
 from oar.rollbar import report_error_to_rollbar
@@ -94,8 +95,11 @@ def moderation_event_update_handler_for_opensearch(
         signal_error_notifier(error_log_message, response)
 
 
-@receiver(post_save, sender=FacilityListItem)
 def set_origin_source_on_create(instance, created, **kwargs):
     if created and instance.origin_source is None:
         instance.origin_source = settings.INSTANCE_SOURCE
         instance.save(update_fields=['origin_source'])
+
+# Register for multiple models
+for model in [FacilityListItem, ExtendedField]:
+    post_save.connect(set_origin_source_on_create, sender=model)
