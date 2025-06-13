@@ -53,6 +53,10 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         echo "Waiting 60 seconds for matching to finish..."
         sleep 60
 
+        # Launch seeding default value for origin_source fields.
+        echo "Launching seeding default value for origin_source fields..."
+        ./scripts/manage default_origin_source
+
         # Launch the rest of the services.
         echo "Launching the rest of the services..."
         docker compose up -d

@@ -1,6 +1,7 @@
 from simple_history.models import HistoricalRecords
 
 from django.db import models
+from ...constants import OriginSource
 
 
 class FacilityMatch(models.Model):
@@ -64,10 +65,17 @@ class FacilityMatch(models.Model):
                    'not been removed; when a list item is removed, this '
                    'field will be set to False.')
     )
+    origin_source = models.CharField(
+        choices=OriginSource.CHOICES,
+        blank=True,
+        null=True,
+        max_length=200,
+        help_text="The environment value where instance running"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(excluded_fields=['origin_source'])
 
     @property
     def source(self):

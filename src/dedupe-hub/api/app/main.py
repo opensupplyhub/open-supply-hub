@@ -14,6 +14,8 @@ from app.matching.matcher.gazeteer.gazetteer_cache import GazetteerCache
 from app.config import settings
 
 from app.matching.facilities_matcher import matcher
+# Import to register origin_source listeners (triggers SQLAlchemy events)
+import app.database.signals.origin_source
 
 # Fast API instance
 app = FastAPI()
