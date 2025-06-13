@@ -155,10 +155,9 @@ def create_geojson_diff_for_location_change(entry):
 
 
 def safe_serialize(value):
-    if hasattr(value, 'pk'):
-        return value.pk
-    if hasattr(value, 'id'):
-        return value.id
+    for attr in ('pk', 'id'):
+        if hasattr(value, attr):
+            return getattr(value, attr)
     return str(value)
 
 
