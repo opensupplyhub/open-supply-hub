@@ -100,6 +100,6 @@ def set_origin_source_on_create(instance, created, **kwargs):
         instance.origin_source = settings.INSTANCE_SOURCE
         instance.save(update_fields=['origin_source'])
 
-# Register for multiple models
+
 for model in [FacilityListItem, ExtendedField]:
     post_save.connect(set_origin_source_on_create, sender=model)
