@@ -173,54 +173,40 @@ def get_change_diff_for_history_entry(entry):
     if entry.prev_record is None:
         return {}
 
-    try:
-        delta = entry.diff_against(entry.prev_record)
-    except KeyError as e:
-        if str(e) == "'origin_source'":
-            changes = {}
-            for field in entry._meta.fields:
-                name = field.name
+    def build_change_dict(old_obj, new_obj, fields):
+        changes = {}
+        for field in fields:
+            if field in SIMPLE_HISTORY_IGNORE_FIELDS:
+                continue
 
-                if name in SIMPLE_HISTORY_IGNORE_FIELDS:
-                    continue
-
-                old_val = getattr(entry.prev_record, name, None)
-                new_val = getattr(entry, name, None)
-
-                old_repr = safe_serialize(old_val)
-                new_repr = safe_serialize(new_val)
-
-                if (
-                    old_repr != new_repr
-                    and is_json_serializable(old_repr)
-                    and is_json_serializable(new_repr)
-                ):
-                    changes[name] = {
-                        'old': old_repr,
-                        'new': new_repr,
-                    }
-
-            return changes
-
-        raise
-
-    changes = {}
-    for change in delta.changes:
-        if change.field not in SIMPLE_HISTORY_IGNORE_FIELDS:
-            old_val = safe_serialize(change.old)
-            new_val = safe_serialize(change.new)
+            old_val = safe_serialize(getattr(old_obj, field, None))
+            new_val = safe_serialize(getattr(new_obj, field, None))
 
             if (
                 old_val != new_val
                 and is_json_serializable(old_val)
                 and is_json_serializable(new_val)
             ):
-                changes[change.field] = {
-                    'old': old_val,
-                    'new': new_val,
-                }
+                changes[field] = {'old': old_val, 'new': new_val}
+        return changes
 
-    return changes
+    try:
+        delta = entry.diff_against(entry.prev_record)
+        changed_fields = {
+            change.field: {'old': safe_serialize(change.old), 'new': safe_serialize(change.new)}
+            for change in delta.changes
+            if change.field not in SIMPLE_HISTORY_IGNORE_FIELDS
+            and safe_serialize(change.old) != safe_serialize(change.new)
+            and is_json_serializable(safe_serialize(change.old))
+            and is_json_serializable(safe_serialize(change.new))
+        }
+        return changed_fields
+
+    except KeyError as e:
+        if str(e) == "'origin_source'":
+            fields = [f.name for f in entry._meta.fields]
+            return build_change_dict(entry.prev_record, entry, fields)
+        raise
 
 
 def create_facility_history_dictionary(entry):
