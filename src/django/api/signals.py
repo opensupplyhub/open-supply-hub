@@ -9,6 +9,10 @@ from opensearchpy.exceptions import ConnectionError, NotFoundError
 from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.extended_field import ExtendedField
+from api.models.facility.facility_claim import FacilityClaim
+from api.models.facility.facility_activity_report import FacilityActivityReport
+from api.models.facility.facility_location import FacilityLocation
+from api.models.facility.facility_alias import FacilityAlias
 from api.models.moderation_event import ModerationEvent
 from api.services.opensearch.opensearch import OpenSearchServiceConnection
 from oar.rollbar import report_error_to_rollbar
@@ -101,5 +105,12 @@ def set_origin_source_on_create(instance, created, **kwargs):
         instance.save(update_fields=['origin_source'])
 
 
-for model in [FacilityListItem, ExtendedField]:
+for model in [
+    FacilityListItem,
+    ExtendedField,
+    FacilityClaim,
+    FacilityAlias,
+    FacilityActivityReport,
+    FacilityLocation
+]:
     post_save.connect(set_origin_source_on_create, sender=model)
