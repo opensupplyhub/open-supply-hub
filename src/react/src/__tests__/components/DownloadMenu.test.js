@@ -21,7 +21,7 @@ jest.mock('@material-ui/core/Menu', () => {
     );
   };
 
-  MyComponent.defaultProps = {
+  MockMenu.defaultProps = {
     children: null,
     anchorEl: null,
   };
