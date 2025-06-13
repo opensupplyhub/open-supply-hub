@@ -1,3 +1,4 @@
+import uuid
 from simple_history.models import HistoricalRecords
 from django.db import models
 
@@ -50,6 +51,13 @@ class Contributor(models.Model):
         (3, 'Embed Deluxe / Custom Embed'),
     )
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the contributor.'
+    )
     admin = models.OneToOneField(
         'User',
         on_delete=models.PROTECT,
@@ -112,12 +120,13 @@ class Contributor(models.Model):
         max_length=12,
         help_text="Who is responsible for moderating this contributor's data"
     )
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     objects = ContributorManager.as_manager()
-    history = HistoricalRecords()
+    history = HistoricalRecords(
+        excluded_fields=['uuid']
+    )
 
     def __str__(self):
         return '{name} ({id})'.format(**self.__dict__)

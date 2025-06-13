@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 
 
@@ -10,6 +11,13 @@ class Source(models.Model):
         (SINGLE, SINGLE),
     )
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the source.'
+    )
     contributor = models.ForeignKey(
         'Contributor',
         null=True,

@@ -1,3 +1,4 @@
+import uuid
 from collections import defaultdict
 
 from simple_history.models import HistoricalRecords
@@ -119,6 +120,13 @@ class FacilityClaim(models.Model):
         ]
     ]
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the facility claim.'
+    )
     contributor = models.ForeignKey(
         'Contributor',
         null=False,
@@ -395,7 +403,9 @@ class FacilityClaim(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(
+        excluded_fields=['uuid']
+    )
 
     default_change_includes = (
         'facility_name_english',

@@ -1,0 +1,31 @@
+DROP TRIGGER IF EXISTS contributor_post_delete_indexing_trigger ON
+api_contributor;
+DROP TRIGGER IF EXISTS contributor_post_insert_update_indexing_trigger ON
+api_contributor;
+DROP TRIGGER IF EXISTS extended_field_post_delete_indexing_trigger ON
+api_extendedfield;
+DROP TRIGGER IF EXISTS extended_field_post_update_insert_indexing_trigger ON
+api_extendedfield;
+DROP TRIGGER IF EXISTS facility_post_delete_indexing_trigger ON
+api_facility;
+DROP TRIGGER IF EXISTS facility_post_update_insert_indexing_trigger ON
+api_facility;
+DROP TRIGGER IF EXISTS facility_claim_post_delete_indexing_trigger ON
+api_facilityclaim;
+DROP TRIGGER IF EXISTS facility_claim_post_update_insert_indexing_trigger ON
+api_facilityclaim;
+DROP TRIGGER IF EXISTS manual_list_reject_revert_trigger ON
+api_facilitylist;
+DROP TRIGGER IF EXISTS delete_fli ON api_facilitylistitem;
+DROP TRIGGER IF EXISTS facility_list_item_post_delete_indexing_trigger ON
+api_facilitylistitem;
+DROP TRIGGER IF EXISTS update_fli_1 ON api_facilitylistitem;
+DROP TRIGGER IF EXISTS update_fli_2 ON api_facilitylistitem;
+DROP TRIGGER IF EXISTS facility_match_post_delete_indexing_trigger ON
+api_facilitymatch;
+DROP TRIGGER IF EXISTS facility_match_post_update_insert_indexing_trigger ON
+api_facilitymatch;
+DROP TRIGGER IF EXISTS source_post_delete_indexing_trigger ON
+api_source;
+DROP TRIGGER IF EXISTS source_post_update_insert_indexing_trigger ON
+api_source;
