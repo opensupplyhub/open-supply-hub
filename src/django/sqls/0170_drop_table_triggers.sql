@@ -1,4 +1,4 @@
-DROP TRIGGER IF EXISTS  contributor_post_delete_indexing_trigger ON
+DROP TRIGGER IF EXISTS contributor_post_delete_indexing_trigger ON
 api_contributor;
 DROP TRIGGER IF EXISTS contributor_post_insert_update_indexing_trigger ON
 api_contributor;
