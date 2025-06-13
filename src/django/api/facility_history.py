@@ -193,7 +193,10 @@ def get_change_diff_for_history_entry(entry):
     try:
         delta = entry.diff_against(entry.prev_record)
         changed_fields = {
-            change.field: {'old': safe_serialize(change.old), 'new': safe_serialize(change.new)}
+            change.field: {
+                'old': safe_serialize(change.old),
+                'new': safe_serialize(change.new)
+            }
             for change in delta.changes
             if change.field not in SIMPLE_HISTORY_IGNORE_FIELDS
             and safe_serialize(change.old) != safe_serialize(change.new)
