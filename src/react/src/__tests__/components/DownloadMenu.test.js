@@ -2,28 +2,52 @@ import React from 'react';
 import { render, fireEvent, screen } from '@testing-library/react';
 import DownloadMenu from '../../components/DownloadMenu';
 
-jest.mock('@material-ui/core/Menu', () =>  ({ children, open, anchorEl, onClose, ...rest }) => {
+jest.mock('@material-ui/core/Menu', () => {
+  const MockMenu = ({ children, open, anchorEl, onClose, ...rest }) => {
     if (!open) return null;
+
     return (
       <div role="menu" data-testid="mock-menu" {...rest}>
         {children}
-        <button type="button" onClick={onClose} data-testid="menu-close-button">Close Menu</button>
+        <button
+          type="button"
+          onClick={onClose}
+          data-testid="menu-close-button"
+        >
+          Close Menu
+        </button>
       </div>
     );
-  }
-);
+  };
 
-jest.mock('@material-ui/core/MenuItem', () => ({ onClick, ...props }) => (
-    <button
-     type="button"
-      role="menuitem"
-      onClick={onClick}
-      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick?.(e)}
-      tabIndex={0}
-      {...props}
-    />
-  )
-);
+  MockMenu.propTypes = {
+    children: PropTypes.node,
+    open: PropTypes.bool.isRequired,
+    anchorEl: PropTypes.any,
+    onClose: PropTypes.func.isRequired,
+  };
+
+  return MockMenu;
+});
+
+jest.mock('@material-ui/core/MenuItem', () => {
+  const MockMenuItem = ({ onClick, ...props }) => (
+      <button
+      type="button"
+        role="menuitem"
+        onClick={onClick}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick?.(e)}
+        tabIndex={0}
+        {...props}
+      />
+    );
+
+  MockMenuItem.propTypes = {
+      onClick: PropTypes.func,
+  };
+
+   return MockMenuItem;
+});
 
 describe('DownloadMenu component', () => {
   const onClose = jest.fn();
