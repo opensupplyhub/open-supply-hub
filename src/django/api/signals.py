@@ -3,7 +3,8 @@ import json
 
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
-from opensearchpy.exceptions import ConnectionError, NotFoundError
+from opensearchpy.exceptions import \
+    ConnectionError, NotFoundError, AuthorizationException
 
 from api.models.facility.facility import Facility
 from api.models.moderation_event import ModerationEvent
@@ -80,6 +81,12 @@ def moderation_event_update_handler_for_opensearch(
         log.error(
             "[Moderation Event Updating] "
             "ModerationEvent not found in OpenSearch."
+        )
+        return
+    except AuthorizationException:
+        log.error(
+            "[Moderation Event Updating] "
+            "Authorization error when accessing OpenSearch."
         )
         return
 
