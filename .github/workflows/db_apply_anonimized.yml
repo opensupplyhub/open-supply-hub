@@ -4,12 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       deploy-env:
-        description: 'Environment to apply anonymized db'
+        description: "Environment to apply anonymized db"
         required: true
         type: choice
         options:
-        - Test
-        - Pre-prod
+          - Test
+          - Pre-prod
+          - RBA
         default: Test
 
 jobs:
