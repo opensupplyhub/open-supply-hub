@@ -1,5 +1,5 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+import { bool, any, func, bool, node } from 'prop-types';
 import { render, fireEvent, screen } from '@testing-library/react';
 import DownloadMenu from '../../components/DownloadMenu';
 
@@ -27,10 +27,10 @@ jest.mock('@material-ui/core/Menu', () => {
   };
 
   MockMenu.propTypes = {
-    children: PropTypes.node,
-    open: PropTypes.bool.isRequired,
-    anchorEl: PropTypes.any,
-    onClose: PropTypes.func.isRequired,
+    children: node,
+    open: bool.isRequired,
+    anchorEl: any,
+    onClose: func.isRequired,
   };
 
   return MockMenu;
@@ -49,7 +49,7 @@ jest.mock('@material-ui/core/MenuItem', () => {
     );
 
   MockMenuItem.propTypes = {
-      onClick: PropTypes.func.isRequired,
+      onClick: func.isRequired,
   };
 
    return MockMenuItem;
