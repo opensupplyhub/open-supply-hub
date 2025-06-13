@@ -15,9 +15,9 @@ class FacilityDownloadLimitManager(models.Manager):
             updated_at__lt=one_year_ago_with_leap
         )
         expired_free_limits.update(
-            free_download_records=FacilitiesDownloadSettings\
+            free_download_records=FacilitiesDownloadSettings
               .FACILITIES_DOWNLOAD_LIMIT,
-            updated_at=now
+            updated_at=now,
         )
 
         # Update paid limits in bulk
