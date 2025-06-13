@@ -60,11 +60,6 @@ class FacilityDownloadLimit(models.Model):
 
     objects = FacilityDownloadLimitManager()
 
-
-    def is_free_limit_active(self):
-        # check expiration 12 month after initial date
-        return timezone.now() < self.updated_at + relativedelta(years=1) # noqa: E501
-
     def register_download(self, records_to_subtract):
         with transaction.atomic():
             self.refresh_from_db()
