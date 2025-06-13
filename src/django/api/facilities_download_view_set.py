@@ -1,14 +1,14 @@
-from typing import Union
 import logging
 
-from django.contrib.auth.models import AnonymousUser
 from rest_framework.exceptions import ValidationError
 from rest_framework import viewsets, mixins
 from waffle import switch_is_active
+from datetime import datetime
+from django.utils.timezone import make_aware
 
 from api.pagination import PageAndSizePagination
 from api.models.facility.facility_index import FacilityIndex
-from api.models.user import User
+from api.models.facility_download_limit import FacilityDownloadLimit
 from api.serializers.facility.facility_query_params_serializer import (
     FacilityQueryParamsSerializer)
 from api.serializers.facility.facility_download_serializer \
@@ -16,9 +16,8 @@ from api.serializers.facility.facility_download_serializer \
 from api.serializers.facility.facility_download_serializer_embed_mode \
     import FacilityDownloadSerializerEmbedMode
 from api.serializers.utils import get_embed_contributor_id_from_query_params
-from api.constants import FacilitiesDownloadSettings
 from api.exceptions import ServiceUnavailableException
-from api.constants import APIErrorMessages
+from api.constants import APIErrorMessages, FacilitiesDownloadSettings
 
 logger = logging.getLogger(__name__)
 
@@ -67,13 +66,39 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
             .filter_by_query_params(request.query_params) \
             .order_by('name', 'address', 'id')
 
-        is_large_download_allowed = self.__can_user_download_over_limit(
-            queryset.count(), request.user
+        total_records = queryset.count()
+
+        initial_release_date = make_aware(datetime(2025, 6, 28))
+
+        facility_download_limit = FacilityDownloadLimit \
+            .get_or_create_user_download_limit(
+                request.user,
+                initial_release_date
+            )
+
+        current_page = int(request.query_params.get("page", 1))
+
+        if (
+            current_page == 1 and
+            facility_download_limit
+            and (facility_download_limit.free_download_records + facility_download_limit.paid_download_records) == 0  # noqa: E501
+        ):
+            raise ValidationError('You have reached the maximum number of '
+                                  'facility downloads permitted for this year'
+                                  ', both free and paid. Please wait until '
+                                  'the start of the next calendar year to '
+                                  'access additional data or to order new '
+                                  'records for download.')
+
+        is_large_download_allowed = (
+            not facility_download_limit or
+            total_records <= FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT  # noqa: E501
         )
+
         if (not is_large_download_allowed):
             raise ValidationError(
                 ('Downloads are supported only for searches resulting in '
-                 f'{FacilitiesDownloadSettings.DEFAULT_LIMIT} '
+                 f'{facility_download_limit.free_download_records + facility_download_limit.paid_download_records} '  # noqa: E501
                  'facilities or less.'))
 
         page_queryset = self.paginate_queryset(queryset)
@@ -86,16 +111,10 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         headers = list_serializer.child.get_headers()
         data = {'rows': rows, 'headers': headers}
         response = self.get_paginated_response(data)
+
+        records_to_subtract = len(data['rows'])
+
+        if facility_download_limit:
+            facility_download_limit.register_download(records_to_subtract)
+
         return response
-
-    @staticmethod
-    def __can_user_download_over_limit(
-            number: int,
-            user: Union[AnonymousUser, User]) -> bool:
-        is_over_limit = number > FacilitiesDownloadSettings.DEFAULT_LIMIT
-        is_api_user = not user.is_anonymous and user.has_groups
-
-        if not is_api_user and is_over_limit:
-            return False
-
-        return True
