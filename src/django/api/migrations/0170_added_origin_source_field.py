@@ -3,8 +3,11 @@
 from django.db import connection, migrations, models
 from django.db.migrations import RunPython
 from api.migrations._migration_helper import MigrationHelper
+from api.constants import OriginSource
 
 helper = MigrationHelper(connection)
+
+HELP_TEXT = "The environment value where instance running"
 
 
 def update_indexing_functions(apps, schema_editor):
@@ -62,11 +65,11 @@ class Migration(migrations.Migration):
             model_name='contributor',
             name='origin_source',
             field=models.CharField(
-                choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
+                choices=OriginSource.CHOICES,
                 blank=True,
                 null=True,
                 max_length=200,
-                help_text="The environment value where instance running"
+                help_text=HELP_TEXT
             ),
         ),
         migrations.RunSQL(
@@ -82,11 +85,11 @@ class Migration(migrations.Migration):
             model_name='extendedfield',
             name='origin_source',
             field=models.CharField(
-                choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
+                choices=OriginSource.CHOICES,
                 blank=True,
                 null=True,
                 max_length=200,
-                help_text="The environment value where instance running"
+                help_text=HELP_TEXT
             ),
         ),
         migrations.RunSQL(
@@ -102,11 +105,11 @@ class Migration(migrations.Migration):
             model_name='facility',
             name='origin_source',
             field=models.CharField(
-                choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
+                choices=OriginSource.CHOICES,
                 blank=True,
                 null=True,
                 max_length=200,
-                help_text="The environment value where instance running"
+                help_text=HELP_TEXT
             ),
         ),
         migrations.RunSQL(
@@ -122,11 +125,11 @@ class Migration(migrations.Migration):
             model_name='facilityactivityreport',
             name='origin_source',
             field=models.CharField(
-                choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
+                choices=OriginSource.CHOICES,
                 blank=True,
                 null=True,
                 max_length=200,
-                help_text="The environment value where instance running"
+                help_text=HELP_TEXT
             ),
         ),
         migrations.RunSQL(
@@ -142,11 +145,11 @@ class Migration(migrations.Migration):
             model_name='facilityalias',
             name='origin_source',
             field=models.CharField(
-                choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
+                choices=OriginSource.CHOICES,
                 blank=True,
                 null=True,
                 max_length=200,
-                help_text="The environment value where instance running"
+                help_text=HELP_TEXT
             ),
         ),
         migrations.RunSQL(
@@ -162,11 +165,11 @@ class Migration(migrations.Migration):
             model_name='facilityclaim',
             name='origin_source',
             field=models.CharField(
-                choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
+                choices=OriginSource.CHOICES,
                 blank=True,
                 null=True,
                 max_length=200,
-                help_text="The environment value where instance running"
+                help_text=HELP_TEXT
             ),
         ),
         migrations.RunSQL(
@@ -182,11 +185,11 @@ class Migration(migrations.Migration):
             model_name='facilitylist',
             name='origin_source',
             field=models.CharField(
-                choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
+                choices=OriginSource.CHOICES,
                 blank=True,
                 null=True,
                 max_length=200,
-                help_text="The environment value where instance running"
+                help_text=HELP_TEXT
             ),
         ),
         migrations.RunSQL(
@@ -202,11 +205,11 @@ class Migration(migrations.Migration):
             model_name='facilitylistitem',
             name='origin_source',
             field=models.CharField(
-                choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
+                choices=OriginSource.CHOICES,
                 blank=True,
                 null=True,
                 max_length=200,
-                help_text="The environment value where instance running"
+                help_text=HELP_TEXT
             ),
         ),
         migrations.RunSQL(
@@ -222,11 +225,11 @@ class Migration(migrations.Migration):
             model_name='facilitymatch',
             name='origin_source',
             field=models.CharField(
-                choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
+                choices=OriginSource.CHOICES,
                 blank=True,
                 null=True,
                 max_length=200,
-                help_text="The environment value where instance running"
+                help_text=HELP_TEXT
             ),
         ),
         migrations.RunSQL(
@@ -242,11 +245,11 @@ class Migration(migrations.Migration):
             model_name='source',
             name='origin_source',
             field=models.CharField(
-                choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
+                choices=OriginSource.CHOICES,
                 blank=True,
                 null=True,
                 max_length=200,
-                help_text="The environment value where instance running"
+                help_text=HELP_TEXT
             ),
         ),
         migrations.RunSQL(
@@ -262,11 +265,11 @@ class Migration(migrations.Migration):
             model_name='facilityindex',
             name='origin_source',
             field=models.CharField(
-                choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
+                choices=OriginSource.CHOICES,
                 blank=True,
                 null=True,
                 max_length=200,
-                help_text="The environment value where instance running"
+                help_text=HELP_TEXT
             ),
         ),
         migrations.RunSQL(
@@ -282,11 +285,11 @@ class Migration(migrations.Migration):
             model_name='facilitylocation',
             name='origin_source',
             field=models.CharField(
-                choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
+                choices=OriginSource.CHOICES,
                 blank=True,
                 null=True,
                 max_length=200,
-                help_text="The environment value where instance running"
+                help_text=HELP_TEXT
             ),
         ),
         migrations.RunSQL(
@@ -302,11 +305,11 @@ class Migration(migrations.Migration):
             model_name='user',
             name='origin_source',
             field=models.CharField(
-                choices=[('os_hub', 'OS Hub'), ('rba', 'RBA')],
+                choices=OriginSource.CHOICES,
                 blank=True,
                 null=True,
                 max_length=200,
-                help_text="The environment value where instance running"
+                help_text=HELP_TEXT
             ),
         ),
         migrations.RunSQL(
