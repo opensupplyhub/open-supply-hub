@@ -49,8 +49,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     Existing records were automatically populated with the default value `os_hub`.
     New records will have the origin_source field set via the `INSTANCE_SOURCE` environment variable using triggers.
 
-
-
 #### Schema changes
 * [OSDEV-2018](https://opensupplyhub.atlassian.net/browse/OSDEV-2018) - A new `uuid` column (type UUID) was added to the following tables:
     * `api_contributor`
