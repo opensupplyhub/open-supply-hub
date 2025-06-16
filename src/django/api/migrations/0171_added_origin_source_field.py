@@ -18,8 +18,8 @@ def update_indexing_functions(apps, schema_editor):
     '''
 
     helper.run_sql_files([
-        '0170_index_facilities.sql',
-        '0170_index_facilities_by.sql'
+        '0171_index_facilities.sql',
+        '0171_index_facilities_by.sql'
         ])
 
 
@@ -38,11 +38,11 @@ def introduce_sql_triggers(apps, schema_editor):
     """
     Introduce SQL triggers for origin_source field.
     """
-    helper.run_sql_files(['0170_create_origin_source_triggers.sql'])
+    helper.run_sql_files(['0171_create_origin_source_triggers.sql'])
 
 
 def revert_sql_triggers(apps, schema_editor):
-    helper.run_sql_files(['0170_revert_origin_source_triggers.sql'])
+    helper.run_sql_files(['0171_revert_origin_source_triggers.sql'])
 
 
 def create_origin_source_function(apps, schema_editor):
@@ -51,13 +51,13 @@ def create_origin_source_function(apps, schema_editor):
     to used by the triggers.
     '''
 
-    helper.run_sql_files(['0170_set_origin_source.sql'])
+    helper.run_sql_files(['0171_set_origin_source.sql'])
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0169_introduce_show_additional_identifiers_switch'),
+        ('api', '0170_add_uuid_to_relevant_tables'),
     ]
 
     operations = [
