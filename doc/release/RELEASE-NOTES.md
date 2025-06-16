@@ -7,7 +7,28 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: Jun 28, 2025
+* Release date: June 28, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* *Describe migrations here.*
+
+#### Schema changes
+* *Describe schema changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* [OSDEV-2033](https://opensupplyhub.atlassian.net/browse/OSDEV-2033) - Added support for the `slop` parameter in `multi_match` queries when using strings longer than 50 symbols or 12 tokens in GET `v1/production-locations?query=` endpoint.
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
 
 ### Database changes
 * *Describe high-level database changes.*
@@ -66,11 +87,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `migrate`
     * `reindex_database`
 
+
 ## Release 2.6.0
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: Jun 14, 2025
+* Release date: June 14, 2025
 
 ### Architecture/Environment changes
 * [OSDEV-1925](https://opensupplyhub.atlassian.net/browse/OSDEV-1925) - This PR disables the automatic execution of the `Deploy to AWS` pipeline on `releases/*` branch creation via the `[Release] Init` pipeline, while retaining automatic execution on push events to the same branch.
