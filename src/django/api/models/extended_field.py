@@ -1,6 +1,7 @@
+import uuid
 from simple_history.models import HistoricalRecords
 from django.db import models
-from ..constants import OriginSource
+from api.constants import OriginSource
 
 
 class ExtendedField(models.Model):
@@ -37,6 +38,13 @@ class ExtendedField(models.Model):
         (RBA_ID, RBA_ID),
     )
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the extended field.'
+    )
     contributor = models.ForeignKey(
         'Contributor',
         null=False,
@@ -91,7 +99,10 @@ class ExtendedField(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    history = HistoricalRecords(excluded_fields=['origin_source'])
+
+    history = HistoricalRecords(
+        excluded_fields=['uuid', 'origin_source']
+    )
 
     def __str__(self):
         return (

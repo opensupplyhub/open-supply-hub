@@ -1,9 +1,10 @@
+import uuid
 from countries.lib.countries import COUNTRY_CHOICES
 
 from django.contrib.gis.db import models as gis_models
 from django.contrib.postgres import fields as postgres
 from django.db import models
-from ...constants import OriginSource
+from api.constants import OriginSource
 
 
 class FacilityListItem(models.Model):
@@ -68,6 +69,13 @@ class FacilityListItem(models.Model):
                          name='api_fli_match_fields_idx')
         ]
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the facility list item.'
+    )
     source = models.ForeignKey(
         'Source',
         null=False,

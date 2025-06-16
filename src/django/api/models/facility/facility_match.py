@@ -1,7 +1,8 @@
+import uuid
 from simple_history.models import HistoricalRecords
 
 from django.db import models
-from ...constants import OriginSource
+from api.constants import OriginSource
 
 
 class FacilityMatch(models.Model):
@@ -27,6 +28,13 @@ class FacilityMatch(models.Model):
         (MERGED, MERGED),
     )
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the facility match.'
+    )
     facility_list_item = models.ForeignKey(
         'FacilityListItem',
         on_delete=models.PROTECT,
@@ -75,7 +83,9 @@ class FacilityMatch(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    history = HistoricalRecords(excluded_fields=['origin_source'])
+    history = HistoricalRecords(
+        excluded_fields=['uuid', 'origin_source']
+    )
 
     @property
     def source(self):

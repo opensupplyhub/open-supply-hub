@@ -42,7 +42,7 @@ from django.utils.text import slugify
 from drf_yasg.openapi import Schema, TYPE_OBJECT
 from drf_yasg.utils import no_body, swagger_auto_schema
 
-from ...models import (
+from api.models import (
     Contributor,
     Facility,
     FacilityActivityReport,
@@ -56,7 +56,7 @@ from ...models import (
     ExtendedField,
     Version
 )
-from ...constants import (
+from api.constants import (
     FeatureGroups,
     FacilityCreateQueryParams,
     FacilityMergeQueryParams,
@@ -65,18 +65,18 @@ from ...constants import (
     FacilityClaimStatuses,
     APIErrorMessages,
 )
-from ...exceptions import BadRequestException
-from ...facility_history import (
+from api.exceptions import BadRequestException
+from api.facility_history import (
     create_dissociate_match_change_reason,
     create_facility_history_list,
 )
-from ...mail import send_claim_facility_confirmation_email
+from api.mail import send_claim_facility_confirmation_email
 
-from ...pagination import FacilitiesGeoJSONPagination
-from ...permissions import IsRegisteredAndConfirmed, IsSuperuser
-from ...sector_cache import SectorCache
-from ...os_id_lookup import OSIDLookup
-from ...serializers import (
+from api.pagination import FacilitiesGeoJSONPagination
+from api.permissions import IsRegisteredAndConfirmed, IsSuperuser
+from api.sector_cache import SectorCache
+from api.os_id_lookup import OSIDLookup
+from api.serializers import (
     FacilityIndexSerializer,
     FacilityIndexDetailsSerializer,
     FacilityActivityReportSerializer,
@@ -89,11 +89,11 @@ from ...serializers import (
 )
 from api.serializers.facility.facility_list_page_parameter_serializer \
     import FacilityListPageParameterSerializer
-from ...throttles import DataUploadThrottle
+from api.throttles import DataUploadThrottle
 
-from ..disabled_pagination_inspector import DisabledPaginationInspector
+from api.views.disabled_pagination_inspector import DisabledPaginationInspector
 
-from .facility_parameters import (
+from api.views.facility.facility_parameters import (
     facility_parameters,
     facilities_list_parameters,
     facilities_create_parameters,

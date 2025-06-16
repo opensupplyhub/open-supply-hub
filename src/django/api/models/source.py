@@ -1,5 +1,6 @@
+import uuid
 from django.db import models
-from ..constants import OriginSource
+from api.constants import OriginSource
 
 
 class Source(models.Model):
@@ -11,6 +12,13 @@ class Source(models.Model):
         (SINGLE, SINGLE),
     )
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the source.'
+    )
     contributor = models.ForeignKey(
         'Contributor',
         null=True,

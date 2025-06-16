@@ -1,3 +1,4 @@
+import uuid
 from collections import defaultdict
 
 from simple_history.models import HistoricalRecords
@@ -8,10 +9,11 @@ from django.db import models
 from countries.lib.countries import COUNTRY_CHOICES
 from api.constants import (
     FacilityClaimStatuses,
-    OriginSource
+    OriginSource,
+    Affiliations,
+    Certifications
 )
-from ...constants import Affiliations, Certifications
-from ...facility_type_processing_type import ALL_FACILITY_TYPE_CHOICES
+from api.facility_type_processing_type import ALL_FACILITY_TYPE_CHOICES
 
 
 class FacilityClaim(models.Model):
@@ -122,6 +124,13 @@ class FacilityClaim(models.Model):
         ]
     ]
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the facility claim.'
+    )
     contributor = models.ForeignKey(
         'Contributor',
         null=False,
@@ -405,7 +414,9 @@ class FacilityClaim(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    history = HistoricalRecords(excluded_fields=['origin_source'])
+    history = HistoricalRecords(
+        excluded_fields=['uuid', 'origin_source']
+    )
 
     default_change_includes = (
         'facility_name_english',

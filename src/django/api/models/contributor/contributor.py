@@ -1,7 +1,8 @@
+import uuid
 from simple_history.models import HistoricalRecords
 from django.db import models
 
-from ...constants import (
+from api.constants import (
     MatchResponsibility,
     OriginSource
 )
@@ -53,6 +54,13 @@ class Contributor(models.Model):
         (3, 'Embed Deluxe / Custom Embed'),
     )
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the contributor.'
+    )
     admin = models.OneToOneField(
         'User',
         on_delete=models.PROTECT,
@@ -127,7 +135,9 @@ class Contributor(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     objects = ContributorManager.as_manager()
-    history = HistoricalRecords(excluded_fields=['origin_source'])
+    history = HistoricalRecords(
+        excluded_fields=['uuid', 'origin_source']
+    )
 
     def __str__(self):
         return '{name} ({id})'.format(**self.__dict__)

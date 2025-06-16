@@ -1,3 +1,4 @@
+import uuid
 from itertools import groupby
 
 from api.constants import (
@@ -28,6 +29,13 @@ class Facility(models.Model):
         editable=False,
         db_index=True,
         help_text='The OS ID of a facility.')
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the facility.'
+    )
     name = models.CharField(
         max_length=200,
         null=False,
@@ -90,7 +98,9 @@ class Facility(models.Model):
             .contributors
         )
 
-    history = HistoricalRecords(excluded_fields=['origin_source'])
+    history = HistoricalRecords(
+        excluded_fields=['uuid', 'origin_source']
+    )
     objects = FacilityManager()
 
     def __str__(self):

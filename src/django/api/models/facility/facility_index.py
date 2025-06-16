@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.gis.db import models as gis_models
 from django.contrib.postgres import fields as postgres
 from django.contrib.postgres.indexes import GinIndex
@@ -6,7 +7,7 @@ from django.db import models
 from countries.lib.countries import COUNTRY_CHOICES
 from ..contributor.contributor import Contributor
 from .facility_manager_index_new import FacilityIndexNewManager
-from ...constants import OriginSource
+from api.constants import OriginSource
 
 
 class FacilityIndex(models.Model):
@@ -19,6 +20,13 @@ class FacilityIndex(models.Model):
         editable=False,
         db_index=True,
         help_text='The OS ID of a facility.')
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        help_text='Unique identifier for the facility index.'
+    )
     name = models.CharField(
         max_length=200,
         null=False,

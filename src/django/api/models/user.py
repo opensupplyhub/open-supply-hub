@@ -1,3 +1,4 @@
+import uuid
 from allauth.account.models import EmailAddress
 
 from django.conf import settings
@@ -10,7 +11,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 
 from api.constants import FeatureGroups
-from ..constants import OriginSource
+from api.constants import OriginSource
 
 
 def get_default_rate(rate):
@@ -71,6 +72,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     objects = EmailAsUsernameUserManager()
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the user.'
+    )
     is_staff = models.BooleanField(
         ('staff status'),
         default=False,
