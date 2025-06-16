@@ -1,3 +1,4 @@
+import uuid
 from allauth.account.models import EmailAddress
 
 from django.conf import settings
@@ -70,6 +71,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     objects = EmailAsUsernameUserManager()
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the user.'
+    )
     is_staff = models.BooleanField(
         ('staff status'),
         default=False,

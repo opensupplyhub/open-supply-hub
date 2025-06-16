@@ -1,3 +1,4 @@
+import uuid
 from simple_history.models import HistoricalRecords
 from django.db import models
 
@@ -17,6 +18,13 @@ class FacilityAlias(models.Model):
         (DELETE, DELETE),
     )
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the facility alias.'
+    )
     os_id = models.CharField(
         max_length=32,
         primary_key=True,
@@ -38,7 +46,9 @@ class FacilityAlias(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(
+        excluded_fields=['uuid']
+    )
 
     def __str__(self):
         return f'{self.os_id} -> {self.facility}'

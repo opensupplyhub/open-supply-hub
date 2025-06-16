@@ -1,3 +1,4 @@
+import uuid
 from simple_history.models import HistoricalRecords
 from django.db import models
 
@@ -36,6 +37,13 @@ class ExtendedField(models.Model):
         (RBA_ID, RBA_ID),
     )
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the extended field.'
+    )
     contributor = models.ForeignKey(
         'Contributor',
         null=False,
@@ -83,7 +91,10 @@ class ExtendedField(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    history = HistoricalRecords()
+
+    history = HistoricalRecords(
+        excluded_fields=['uuid']
+    )
 
     def __str__(self):
         return (
