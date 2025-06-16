@@ -68,7 +68,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     The `uuid` column was set as non-nullable and populated with default UUID values using both Django model defaults and database-level defaults.
 
 * [OSDEV-2019](https://opensupplyhub.atlassian.net/browse/OSDEV-2019) - A new `origin_source` column was added to the following tables:
-* `api_contributor`
+    * `api_contributor`
     * `api_extendedfield`
     * `api_facility`
     * `api_facilityactivityreport`
