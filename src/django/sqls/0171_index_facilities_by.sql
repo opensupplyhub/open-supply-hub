@@ -13,7 +13,19 @@ WHERE
         WHERE af.id = ANY(ids)
     );
 
-INSERT INTO api_facilityindex
+INSERT INTO api_facilityindex (
+    id, name, address, country_code, location,
+    contributors_count, contributors_id, approved_claim_ids,
+    is_closed, new_os_id, has_inexact_coordinates,
+    contrib_types, contributors, sector, lists, custom_text,
+    number_of_workers, facility_type, processing_type, product_type,
+    parent_company_name, native_language_name, parent_company_id,
+    facility_names, facility_list_items, facility_locations,
+    approved_claim, facility_addresses, claim_info,
+    custom_field_info, extended_fields, created_from_info,
+    activity_reports_info, item_sectors, claim_sectors,
+    created_at, updated_at, custom_text_search, origin_source
+)
 SELECT 
 af.id, -- id
 af.name, -- name
