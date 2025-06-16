@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.gis.db import models as gis_models
 from django.contrib.postgres import fields as postgres
 from django.contrib.postgres.indexes import GinIndex
@@ -18,6 +19,13 @@ class FacilityIndex(models.Model):
         editable=False,
         db_index=True,
         help_text='The OS ID of a facility.')
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        help_text='Unique identifier for the facility index.'
+    )
     name = models.CharField(
         max_length=200,
         null=False,
