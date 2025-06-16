@@ -153,6 +153,12 @@ resource "aws_iam_role_policy" "ses_send_email_from_batch" {
   policy = data.aws_iam_policy_document.ses_send_email.json
 }
 
+resource "aws_iam_role_policy" "open_search_access" {
+  name   = "OpenSearch${local.short}AccessPolicy"
+  role   = aws_iam_role.container_instance_ec2.name
+  policy = data.aws_iam_policy_document.opensearch.json
+}
+
 data "aws_iam_policy_document" "batch_s3_read_policy" {
   statement {
     effect = "Allow"
