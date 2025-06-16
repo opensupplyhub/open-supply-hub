@@ -48,9 +48,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `api_facilitymatch`
     * `api_source`
     * `api_user`
-    
+
     The field was automatically populated for existing records with default UUIDs.
     UUID defaults were defined at both the Django level (via default=uuid4) and at the database level to ensure consistency between ORM and direct DB operations.
+* 0171_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
 
 #### Schema changes
 * [OSDEV-2018](https://opensupplyhub.atlassian.net/browse/OSDEV-2018) - A new `uuid` column (type UUID) was added to the following tables:
@@ -70,6 +71,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
     The `uuid` column was set as non-nullable and populated with default UUID values using both Django model defaults and database-level defaults.
 
+* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - The `FacilityDownloadLimit` model has been created. This model includes such fields: id, user_id, updated_at, free_download_records, paid_download_records, purchase_date.
+
 ### Code/API changes
 * *Describe code/API changes here.*
 
@@ -80,7 +83,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe bugfix here.*
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 5000 facility records for download annually have been added for a registered free user.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
