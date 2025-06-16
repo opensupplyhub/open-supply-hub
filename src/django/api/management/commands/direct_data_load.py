@@ -19,7 +19,9 @@ from api.moderation_event_actions.approval.add_production_location \
     import AddProductionLocation
 from api.moderation_event_actions.approval.update_production_location \
     import UpdateProductionLocation
+from django.db import transaction
 import string
+import secrets
 
 
 class AddProductionLocationWithOsID(AddProductionLocation):
@@ -50,10 +52,21 @@ class Command(BaseCommand):
             required=True,
         )
         parser.add_argument(
-            "--contributor_id",
-            type=int,
-            help="The ID of the contributor performing the data load.",
+            "--contributor_email",
+            type=str,
+            help="The email of the contributor that uploads the data.",
             required=True,
+        )
+        parser.add_argument(
+            "--contributor_type",
+            type=str,
+            help="The type of contributor.",
+            default="Auditor / Certification Scheme / Service Provider",
+        )
+        parser.add_argument(
+            "--contributor_name",
+            type=str,
+            help="The name of the contributor.",
         )
         parser.add_argument(
             "--sheet_id",
@@ -115,15 +128,33 @@ class Command(BaseCommand):
         except User.DoesNotExist:
             raise ValueError(f"User with ID '{user_id}' does not exist.")
 
-        contributor_id = options["contributor_id"]
+        contributor_email = options["contributor_email"]
 
         try:
-            contributor = Contributor.objects.get(id=contributor_id)
-        except Contributor.DoesNotExist:
-            raise ValueError(
-                f"Contributor with ID '{contributor_id}' does not exist."
+            cont_user = User.objects.get(
+                email=options["contributor_email"])
+        except User.DoesNotExist:
+            logger.info(
+                f"Contributor '{contributor_email}' does not exist."
+            )
+            cont_user = self.__create_user(
+                contributor_email,
+                options.get("contributor_name"),
+                options.get("contributor_type"),
             )
 
+        if not cont_user:
+            raise ValueError(
+                f"User '{contributor_email}' does not exist" +
+                "or could not be created."
+            )
+
+        if not cont_user.has_contributor:
+            raise ValueError(
+                f"User '{contributor_email}' has no contributor profile."
+            )
+
+        contributor = cont_user.contributor
         columns = []
 
         for col in options["columns"].split(","):
@@ -376,6 +407,43 @@ class Command(BaseCommand):
                     f"Error processing row '{row_idx}': '{str(error)}'"
                 )
                 raise
+
+    def __create_user(self, email, name, contrib_type):
+        if not name:
+            raise ValueError(
+                "Contributor name is required when creating a new user."
+            )
+
+        if not contrib_type:
+            raise ValueError(
+                "Contributor type is required when creating a new user."
+            )
+
+        logger.info(
+            f"Creating new user with email: '{email}', name: '{name}', " +
+            f"contributor type: '{contrib_type}'."
+        )
+
+        with transaction.atomic():
+            user = User.objects._create_user(
+                email=email,
+                password=secrets.token_urlsafe(16),
+                is_superuser=False,
+                is_staff=False,
+                is_active=True,
+                should_receive_newsletter=False,
+                has_agreed_to_terms_of_service=True,
+            )
+            contributor = Contributor(
+                name=name,
+                description="Created automatically",
+                contrib_type=contrib_type,
+                admin=user,
+            )
+            contributor.save()
+            return user
+
+        return None
 
 
 def _mark_row(

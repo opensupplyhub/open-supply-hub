@@ -428,11 +428,6 @@ variable "batch_export_csv_ce_max_vcpus" {
   default = 4
 }
 
-variable "batch_direct_data_load_ce_max_vcpus" {
-  type    = number
-  default = 4
-}
-
 variable "batch_notifications_ce_instance_types" {
   type = list(string)
 
@@ -811,9 +806,14 @@ variable "direct_data_load_sheet_id" {
   description = "Google Sheet ID for direct data load"
 }
 
-variable "direct_data_load_contributor_id" {
-  type        = number
-  description = "Contributor ID for direct data load"
+variable "direct_data_load_contributor_name" {
+  type        = string
+  description = "Contributor name for direct data load"
+}
+
+variable "direct_data_load_contributor_email" {
+  type        = string
+  description = "Contributor email for direct data load"
 }
 
 variable "direct_data_load_user_id" {

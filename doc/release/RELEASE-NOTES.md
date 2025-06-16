@@ -23,9 +23,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * *Describe architecture/environment changes here.*
+* [OSDEV-1951](https://opensupplyhub.atlassian.net/browse/OSDEV-1951) - Added support for specifying a contributor email in the `direct_data_load` command. This allows users to provide an email address for the contributor when loading data, and automatically creates the contributor if it does not exist. The separate compute environment for this command has been removed, it now needs to run in the default environment.
 
 ### Bugfix
 * [OSDEV-2033](https://opensupplyhub.atlassian.net/browse/OSDEV-2033) - Added support for the `slop` parameter in `multi_match` queries when using strings longer than 50 symbols or 12 tokens in GET `v1/production-locations?query=` endpoint.
+* [OSDEV-1951](https://opensupplyhub.atlassian.net/browse/OSDEV-1951) - Fixed an issue where the `direct_data_load` command was not able to reach the OpenSearch cluster.
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
