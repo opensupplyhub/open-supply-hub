@@ -1,5 +1,5 @@
 import React from 'react';
-import { bool, any, func, bool, node } from 'prop-types';
+import { bool, any, func, node } from 'prop-types';
 import { render, fireEvent, screen } from '@testing-library/react';
 import DownloadMenu from '../../components/DownloadMenu';
 

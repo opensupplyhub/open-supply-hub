@@ -456,6 +456,10 @@ variable "check_api_limits_schedule_expression" {
   default = "rate(1 hour)"
 }
 
+variable "update_expired_download_limits_schedule_expression" {
+  default = "cron(0 0 * * ? *)"
+}
+
 variable "ec2_service_role_policy_arn" {
   default = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
 }
