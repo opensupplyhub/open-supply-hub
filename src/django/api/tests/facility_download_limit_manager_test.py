@@ -5,6 +5,7 @@ from dateutil.relativedelta import relativedelta
 from api.models import FacilityDownloadLimit, User
 from api.constants import FacilitiesDownloadSettings
 
+
 class FacilityDownloadLimitManagerTest(TestCase):
     def setUp(self):
         self.manager = FacilityDownloadLimit.objects
@@ -23,50 +24,60 @@ class FacilityDownloadLimitManagerTest(TestCase):
         now = timezone.now()
         one_year_ago = now - relativedelta(years=1)
 
-        # Create a record expired for free limits (updated_at older than 1 year)
-        expired_free = FacilityDownloadLimit.objects.create(
-            user = self.user_one,
-            free_download_records=100,
-            paid_download_records=10,
-            updated_at=one_year_ago - timedelta(days=1),
-            purchase_date=now,
-        )
+        # Create a record expired for free limits
+        # (updated_at older than 1 year)
+        expired_free = FacilityDownloadLimit\
+            .objects.create(
+                user=self.user_one,
+                free_download_records=100,
+                paid_download_records=10,
+                updated_at=one_year_ago-timedelta(days=1),
+                purchase_date=now,
+            )
 
-        # Create a record NOT expired for free limits (updated_at recent)
+        # Create a record NOT expired for free limits
+        # (updated_at recent)
         fresh_free = FacilityDownloadLimit.objects.create(
-            user = self.user_two,
+            user=self.user_two,
             free_download_records=100,
             paid_download_records=10,
             updated_at=now,
             purchase_date=now,
         )
 
-        # Create a record expired for paid limits (purchase_date older than 1 year and paid_download_records != 0)
+        # Create a record expired for paid limits
+        # (purchase_date older than 1 year and
+        # paid_download_records != 0)
         expired_paid = FacilityDownloadLimit.objects.create(
-            user = self.user_three,
+            user=self.user_three,
             free_download_records=100,
             paid_download_records=10,
             updated_at=now,
-            purchase_date=one_year_ago - timedelta(days=1),
+            purchase_date=one_year_ago-timedelta(days=1),
         )
 
-        # Create a record NOT expired for paid limits (purchase_date recent)
-        fresh_paid = FacilityDownloadLimit.objects.create(
-            user = self.user_four,
-            free_download_records=100,
-            paid_download_records=10,
-            updated_at=now,
-            purchase_date=now,
-        )
+        # Create a record NOT expired for paid limits
+        # (purchase_date recent)
+        fresh_paid = FacilityDownloadLimit\
+            .objects.create(
+                user=self.user_four,
+                free_download_records=100,
+                paid_download_records=10,
+                updated_at=now,
+                purchase_date=now,
+            )
 
-        # Create a record with purchase_date old but paid_download_records=0 (should NOT be updated)
-        expired_paid_zero = FacilityDownloadLimit.objects.create(
-            user = self.user_five,
-            free_download_records=100,
-            paid_download_records=0,
-            updated_at=now,
-            purchase_date=one_year_ago - timedelta(days=1),
-        )
+        # Create a record with purchase_date old
+        # but paid_download_records=0
+        # (should NOT be updated)
+        expired_paid_zero = FacilityDownloadLimit\
+            .objects.create(
+                user=self.user_five,
+                free_download_records=100,
+                paid_download_records=0,
+                updated_at=now,
+                purchase_date=one_year_ago-timedelta(days=1),
+            )
 
         self.manager.update_expired_limits()
 

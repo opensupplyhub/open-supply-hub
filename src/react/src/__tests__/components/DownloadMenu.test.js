@@ -1,9 +1,9 @@
 import React from 'react';
-import { bool, any, func, node } from 'prop-types';
 import { render, fireEvent, screen } from '@testing-library/react';
 import DownloadMenu from '../../components/DownloadMenu';
 
 jest.mock('@material-ui/core/Menu', () => {
+  const { bool, any, func, node } = require('prop-types');
   const MockMenu = ({ children, open, anchorEl, onClose, ...rest }) => {
     if (!open) return null;
 
@@ -37,6 +37,7 @@ jest.mock('@material-ui/core/Menu', () => {
 });
 
 jest.mock('@material-ui/core/MenuItem', () => {
+  const { func } = require('prop-types');
   const MockMenuItem = ({ onClick, ...props }) => (
       <button
       type="button"
