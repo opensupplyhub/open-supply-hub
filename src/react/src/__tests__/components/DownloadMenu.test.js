@@ -3,6 +3,7 @@ import { render, fireEvent, screen } from '@testing-library/react';
 import DownloadMenu from '../../components/DownloadMenu';
 
 jest.mock('@material-ui/core/Menu', () => {
+  // eslint-disable-next-line global-require
   const { bool, any, func, node } = require('prop-types');
   const MockMenu = ({ children, open, anchorEl, onClose, ...rest }) => {
     if (!open) return null;
@@ -37,6 +38,7 @@ jest.mock('@material-ui/core/Menu', () => {
 });
 
 jest.mock('@material-ui/core/MenuItem', () => {
+  // eslint-disable-next-line global-require
   const { func } = require('prop-types');
   const MockMenuItem = ({ onClick, ...props }) => (
       <button
