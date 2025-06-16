@@ -3,6 +3,108 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.7.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: June 28, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* *Describe migrations here.*
+
+#### Schema changes
+* *Describe schema changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* [OSDEV-2033](https://opensupplyhub.atlassian.net/browse/OSDEV-2033) - Added support for the `slop` parameter in `multi_match` queries when using strings longer than 50 symbols or 12 tokens in GET `v1/production-locations?query=` endpoint.
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* 0170_add_uuid_to_relevant_tables.py - A new `uuid` field was added to the following tables:
+    * `api_contributor`
+    * `api_extendedfield`
+    * `api_facility`
+    * `api_facilityactivityreport`
+    * `api_facilityalias`
+    * `api_facilityclaim`
+    * `api_facilityindex`
+    * `api_facilitylist`
+    * `api_facilitylistitem`
+    * `api_facilitylocation`
+    * `api_facilitymatch`
+    * `api_source`
+    * `api_user`
+    
+    The field was automatically populated for existing records with default UUIDs.
+    UUID defaults were defined at both the Django level (via default=uuid4) and at the database level to ensure consistency between ORM and direct DB operations.
+
+#### Schema changes
+* [OSDEV-2018](https://opensupplyhub.atlassian.net/browse/OSDEV-2018) - A new `uuid` column (type UUID) was added to the following tables:
+    * `api_contributor`
+    * `api_extendedfield`
+    * `api_facility`
+    * `api_facilityactivityreport`
+    * `api_facilityalias`
+    * `api_facilityclaim`
+    * `api_facilityindex`
+    * `api_facilitylist`
+    * `api_facilitylistitem`
+    * `api_facilitylocation`
+    * `api_facilitymatch`
+    * `api_source`
+    * `api_user`
+
+    The `uuid` column was set as non-nullable and populated with default UUID values using both Django model defaults and database-level defaults.
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
+## Release 2.6.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: June 14, 2025
+
+### Architecture/Environment changes
+* [OSDEV-1925](https://opensupplyhub.atlassian.net/browse/OSDEV-1925) - This PR disables the automatic execution of the `Deploy to AWS` pipeline on `releases/*` branch creation via the `[Release] Init` pipeline, while retaining automatic execution on push events to the same branch.
+* [OSDEV-2035](https://opensupplyhub.atlassian.net/browse/OSDEV-2035) - Added IPv6 rules for ip whitelist and denylist.
+* [OSDEV-1951](https://opensupplyhub.atlassian.net/browse/OSDEV-1951) - Added a new `direct_data_load` command and related infrastructure to support loading data directly from a Google Sheet into the platform.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.5.0
 
 ## Introduction

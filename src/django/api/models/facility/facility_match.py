@@ -1,3 +1,4 @@
+import uuid
 from simple_history.models import HistoricalRecords
 
 from django.db import models
@@ -26,6 +27,13 @@ class FacilityMatch(models.Model):
         (MERGED, MERGED),
     )
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the facility match.'
+    )
     facility_list_item = models.ForeignKey(
         'FacilityListItem',
         on_delete=models.PROTECT,
@@ -67,7 +75,9 @@ class FacilityMatch(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(
+        excluded_fields=['uuid']
+    )
 
     @property
     def source(self):
