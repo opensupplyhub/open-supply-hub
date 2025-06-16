@@ -428,11 +428,6 @@ variable "batch_export_csv_ce_max_vcpus" {
   default = 4
 }
 
-variable "batch_direct_data_load_ce_max_vcpus" {
-  type    = number
-  default = 4
-}
-
 variable "batch_notifications_ce_instance_types" {
   type = list(string)
 
