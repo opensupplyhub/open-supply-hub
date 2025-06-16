@@ -21,7 +21,7 @@ from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_match import FacilityMatch
 from api.models.source import Source
-from api..permissions import IsRegisteredAndConfirmed
+from api.permissions import IsRegisteredAndConfirmed
 from api.serializers import (
     FacilityListItemSerializer,
     FacilityMatchSerializer,
