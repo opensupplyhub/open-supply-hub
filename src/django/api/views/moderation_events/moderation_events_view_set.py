@@ -8,12 +8,19 @@ from rest_framework.exceptions import (
 from drf_yasg.utils import swagger_auto_schema
 from waffle import flag_is_active
 
-from ...permissions import IsRegisteredAndConfirmed
-from ...constants import FeatureGroups
-from ...serializers import MergeQueryParamsSerializer
-from .moderation_event_params import merge_params
-from .merge_events import build_query_string
-from .merge_events import retrieve_merge_events, fetch_all
+from api.permissions import IsRegisteredAndConfirmed
+from api.constants import FeatureGroups
+from api.serializers import MergeQueryParamsSerializer
+from api.views.moderation_events.moderation_event_params import (
+    merge_params
+)
+from api.views.moderation_events.merge_events import (
+    build_query_string
+)
+from api.views.moderation_events.merge_events import (
+    retrieve_merge_events,
+    fetch_all
+)
 
 
 class ModerationEventsViewSet(ViewSet):

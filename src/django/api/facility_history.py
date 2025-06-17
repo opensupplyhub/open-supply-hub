@@ -1,3 +1,5 @@
+import json
+
 from api.constants import (
     FacilityHistoryActions,
     ProcessingAction,
@@ -12,6 +14,17 @@ from api.models import (
 )
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import F
+from django.core.serializers.json import DjangoJSONEncoder
+
+SIMPLE_HISTORY_IGNORE_FIELDS = {
+    'history_id',
+    'history_date',
+    'history_type',
+    'history_user',
+    'origin_source',
+    'created_at',
+    'updated_at',
+}
 
 
 def anonymous_source_name(source):
@@ -141,21 +154,62 @@ def create_geojson_diff_for_location_change(entry):
     }
 
 
+def safe_serialize(value):
+    for attr in ('pk', 'id'):
+        if hasattr(value, attr):
+            return getattr(value, attr)
+    return str(value)
+
+
+def is_json_serializable(value):
+    try:
+        json.dumps(value, cls=DjangoJSONEncoder)
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
 def get_change_diff_for_history_entry(entry):
     if entry.prev_record is None:
         return {}
 
-    delta = entry.diff_against(entry.prev_record)
-    changes = {}
+    def build_change_dict(old_obj, new_obj, fields):
+        changes = {}
+        for field in fields:
+            if field in SIMPLE_HISTORY_IGNORE_FIELDS:
+                continue
 
-    for change in delta.changes:
-        if change.field not in ['created_at', 'updated_at']:
-            changes[change.field] = {
-                'old': change.old,
-                'new': change.new,
+            old_val = safe_serialize(getattr(old_obj, field, None))
+            new_val = safe_serialize(getattr(new_obj, field, None))
+
+            if (
+                old_val != new_val
+                and is_json_serializable(old_val)
+                and is_json_serializable(new_val)
+            ):
+                changes[field] = {'old': old_val, 'new': new_val}
+        return changes
+
+    try:
+        delta = entry.diff_against(entry.prev_record)
+        changed_fields = {
+            change.field: {
+                'old': safe_serialize(change.old),
+                'new': safe_serialize(change.new)
             }
+            for change in delta.changes
+            if change.field not in SIMPLE_HISTORY_IGNORE_FIELDS
+            and safe_serialize(change.old) != safe_serialize(change.new)
+            and is_json_serializable(safe_serialize(change.old))
+            and is_json_serializable(safe_serialize(change.new))
+        }
+        return changed_fields
 
-    return changes
+    except KeyError as e:
+        if str(e) == "'origin_source'":
+            fields = [f.name for f in entry._meta.fields]
+            return build_change_dict(entry.prev_record, entry, fields)
+        raise
 
 
 def create_facility_history_dictionary(entry):

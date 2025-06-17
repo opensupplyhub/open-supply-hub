@@ -4,6 +4,7 @@ from countries.lib.countries import COUNTRY_CHOICES
 from django.contrib.gis.db import models as gis_models
 from django.contrib.postgres import fields as postgres
 from django.db import models
+from api.constants import OriginSource
 
 
 class FacilityListItem(models.Model):
@@ -168,6 +169,13 @@ class FacilityListItem(models.Model):
         blank=False,
         default='',
         help_text='The cleaned address of the facility.')
+    origin_source = models.CharField(
+        choices=OriginSource.CHOICES,
+        blank=True,
+        null=True,
+        max_length=200,
+        help_text="The environment value where instance running"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

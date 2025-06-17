@@ -36,6 +36,7 @@ services:
       - POSTGRES_DB=opensupplyhub
       - CACHE_HOST=memcached
       - CACHE_PORT=11211
+      - INSTANCE_SOURCE=os_hub
       - DJANGO_ENV=Local
       - DJANGO_SECRET_KEY=secret
       - DJANGO_LOG_LEVEL=INFO
@@ -172,6 +173,7 @@ services:
       - CONSUMER_CLIENT_ID=dedupe.hub
       - TOPIC_DEDUPE_BASIC_NAME=dedupe.hub.topic
       - ENV="Local"
+      - INSTANCE_SOURCE=os_hub
       - ROLLBAR_SERVER_SIDE_ACCESS_TOKEN=""
       - POSTGRES_HOST=database
       - POSTGRES_PORT=5432
