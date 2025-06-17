@@ -7,6 +7,7 @@ from django.db import models
 from countries.lib.countries import COUNTRY_CHOICES
 from ..contributor.contributor import Contributor
 from .facility_manager_index_new import FacilityIndexNewManager
+from api.constants import OriginSource
 
 
 class FacilityIndex(models.Model):
@@ -205,6 +206,13 @@ class FacilityIndex(models.Model):
         help_text="Claims' sectors information for given facility."),
         default=list
         )
+    origin_source = models.CharField(
+        choices=OriginSource.CHOICES,
+        blank=True,
+        null=True,
+        max_length=200,
+        help_text="The environment value where instance running"
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)

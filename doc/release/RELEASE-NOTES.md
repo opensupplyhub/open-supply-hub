@@ -13,29 +13,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe high-level database changes.*
 
 #### Migrations:
-* *Describe migrations here.*
-
-#### Schema changes
-* *Describe schema changes here.*
-
-### Code/API changes
-* *Describe code/API changes here.*
-
-### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
-* [OSDEV-1951](https://opensupplyhub.atlassian.net/browse/OSDEV-1951) - Added support for specifying a contributor email in the `direct_data_load` command. This allows users to provide an email address for the contributor when loading data, and automatically creates the contributor if it does not exist. The separate compute environment for this command has been removed, it now needs to run in the default environment.
-
-### Bugfix
-* [OSDEV-2033](https://opensupplyhub.atlassian.net/browse/OSDEV-2033) - Added support for the `slop` parameter in `multi_match` queries when using strings longer than 50 symbols or 12 tokens in GET `v1/production-locations?query=` endpoint.
-* [OSDEV-1951](https://opensupplyhub.atlassian.net/browse/OSDEV-1951) - Fixed an issue where the `direct_data_load` command was not able to reach the OpenSearch cluster.
-
-### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
-
-### Database changes
-* *Describe high-level database changes.*
-
-#### Migrations:
 * 0170_add_uuid_to_relevant_tables.py - A new `uuid` field was added to the following tables:
     * `api_contributor`
     * `api_extendedfield`
@@ -53,7 +30,26 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
     The field was automatically populated for existing records with default UUIDs.
     UUID defaults were defined at both the Django level (via default=uuid4) and at the database level to ensure consistency between ORM and direct DB operations.
-* 0171_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
+
+* 0171_added_origin_source_field.py - A new `origin_source` field was added to the following tables:
+    * `api_contributor`
+    * `api_extendedfield`
+    * `api_facility`
+    * `api_facilityactivityreport`
+    * `api_facilityalias`
+    * `api_facilityclaim`
+    * `api_facilityindex`
+    * `api_facilitylist`
+    * `api_facilitylistitem`
+    * `api_facilitylocation`
+    * `api_facilitymatch`
+    * `api_source`
+    * `api_user`
+
+    Existing records were automatically populated with the default value `os_hub`.
+    New records will have the origin_source field set via the `INSTANCE_SOURCE` environment variable using triggers.
+
+* 0172_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
 
 #### Schema changes
 * [OSDEV-2018](https://opensupplyhub.atlassian.net/browse/OSDEV-2018) - A new `uuid` column (type UUID) was added to the following tables:
@@ -73,16 +69,36 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
     The `uuid` column was set as non-nullable and populated with default UUID values using both Django model defaults and database-level defaults.
 
+* [OSDEV-2019](https://opensupplyhub.atlassian.net/browse/OSDEV-2019) - A new `origin_source` column was added to the following tables:
+    * `api_contributor`
+    * `api_extendedfield`
+    * `api_facility`
+    * `api_facilityactivityreport`
+    * `api_facilityalias`
+    * `api_facilityclaim`
+    * `api_facilityindex`
+    * `api_facilitylist`
+    * `api_facilitylistitem`
+    * `api_facilitylocation`
+    * `api_facilitymatch`
+    * `api_source`
+    * `api_user`
+
+    The `origin_source` column was made nullable and populated with string values using both Django and SQLAlchemy models, as well as at the database level.
+    SQL `BEFORE INSERT` triggers were introduced for the relevant tables.
+    A new SQL function, `set_origin_source`, was added to support the triggers and handle updates to the `origin_source` column.
+
 * [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - The `FacilityDownloadLimit` model has been created. This model includes such fields: id, user_id, updated_at, free_download_records, paid_download_records, purchase_date.
 
 ### Code/API changes
 * *Describe code/API changes here.*
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* [OSDEV-1951](https://opensupplyhub.atlassian.net/browse/OSDEV-1951) - Added support for specifying a contributor email in the `direct_data_load` command. This allows users to provide an email address for the contributor when loading data, and automatically creates the contributor if it does not exist. The separate compute environment for this command has been removed, it now needs to run in the default environment.
 
 ### Bugfix
-* *Describe bugfix here.*
+* [OSDEV-2033](https://opensupplyhub.atlassian.net/browse/OSDEV-2033) - Added support for the `slop` parameter in `multi_match` queries when using strings longer than 50 symbols or 12 tokens in GET `v1/production-locations?query=` endpoint.
+* [OSDEV-1951](https://opensupplyhub.atlassian.net/browse/OSDEV-1951) - Fixed an issue where the `direct_data_load` command was not able to reach the OpenSearch cluster.
 
 ### What's new
 * [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 5000 facility records for download annually have been added for a registered free user.
