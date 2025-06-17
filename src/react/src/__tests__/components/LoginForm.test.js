@@ -71,7 +71,7 @@ describe('LoginForm component', () => {
             'data_upload_rate': '30/minute',
             'groups': [],
             'user_permissions': [],
-            'allowed_records_number': 10000,
+            'allowed_records_number': 5000,
         }
         reduxStore.dispatch(
             completeSubmitLoginForm(validCompleteSubmitLoginFormPayload)

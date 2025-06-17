@@ -20,7 +20,8 @@ class FacilityDownloadLimit(models.Model):
     """
     Stores the number of facility records allowed for free download per
     calendar year, the number of paid facility records for non-API
-    users, and date of last update of free facilities records.
+    users, the date of last update of free facilities records, and the
+    date when paid facility records were purchased.
     """
     id = BigAutoField(
         auto_created=True,
