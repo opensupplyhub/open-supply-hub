@@ -457,7 +457,7 @@ variable "check_api_limits_schedule_expression" {
 }
 
 variable "update_expired_download_limits_schedule_expression" {
-  default = "rate(5 minutes)"
+  default = "cron(0 0 * * ? *)" # once per day at 00:00 UTC
 }
 
 variable "ec2_service_role_policy_arn" {

@@ -96,9 +96,13 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         )
 
         if (not is_large_download_allowed):
+            records_sum = (
+                facility_download_limit.free_download_records +
+                facility_download_limit.paid_download_records
+            )
             raise ValidationError(
                 ('Downloads are supported only for searches resulting in '
-                 f'{facility_download_limit.free_download_records + facility_download_limit.paid_download_records} '  # noqa: E501
+                 f'{records_sum} '
                  'facilities or less.'))
 
         page_queryset = self.paginate_queryset(queryset)

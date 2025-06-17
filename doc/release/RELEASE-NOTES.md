@@ -30,7 +30,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
     The field was automatically populated for existing records with default UUIDs.
     UUID defaults were defined at both the Django level (via default=uuid4) and at the database level to ensure consistency between ORM and direct DB operations.
-* 0171_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
 
 * 0171_added_origin_source_field.py - A new `origin_source` field was added to the following tables:
     * `api_contributor`
@@ -49,6 +48,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
     Existing records were automatically populated with the default value `os_hub`.
     New records will have the origin_source field set via the `INSTANCE_SOURCE` environment variable using triggers.
+
+* 0172_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
 
 #### Schema changes
 * [OSDEV-2018](https://opensupplyhub.atlassian.net/browse/OSDEV-2018) - A new `uuid` column (type UUID) was added to the following tables:

@@ -9,7 +9,7 @@ import django.utils.timezone
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0170_add_uuid_to_relevant_tables'),
+        ('api', '0171_added_origin_source_field'),
     ]
 
     operations = [
