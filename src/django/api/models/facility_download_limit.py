@@ -89,3 +89,15 @@ class FacilityDownloadLimit(models.Model):
             .objects.get_or_create(user=user, defaults=defaults)
 
         return facility_download_limit
+    
+    @staticmethod
+    def upgrade_user_download_limit(
+        download_limit: "FacilityDownloadLimit",
+        upgrade_number: int
+    ) -> Optional["FacilityDownloadLimit"]:
+
+        download_limit.paid_download_records += upgrade_number
+        download_limit.purchase_date = timezone.now()
+        download_limit.save(update_fields=["paid_download_records", "purchase_date"])
+
+        return download_limit
