@@ -68,7 +68,14 @@ const DownloadFacilitiesButton = ({
             dispatch(hideLogDownloadError());
         }
     }, [logDownloadError]);
-    const handleClick = event => setAnchorEl(event.currentTarget);
+    const handleUpgrade = () => {};
+    const handleClick = event => {
+        if (disabled) {
+            handleUpgrade();
+        } else {
+            setAnchorEl(event.currentTarget);
+        }
+    };
     const handleClose = () => setAnchorEl(null);
     const handleDownload = format => {
         dispatch(downloadFacilities(format, { isEmbedded }));
@@ -96,7 +103,7 @@ const DownloadFacilitiesButton = ({
         <Tooltip title={tooltipTitle} placement="left">
             <div>
                 <Button
-                    disabled={disabled}
+                    // disabled={disabled}
                     variant="outlined"
                     className={classes.listHeaderButtonStyles}
                     aria-owns={anchorEl ? 'download-menu' : undefined}
@@ -104,21 +111,15 @@ const DownloadFacilitiesButton = ({
                     onClick={handleClick}
                 >
                     <div className={classes.buttonContent}>
-                        <DownloadIcon
-                            color={
-                                disabled
-                                    ? 'rgba(0, 0, 0, 0.26)'
-                                    : actionContrastText
-                            }
-                        />
-                        <span className={classes.buttonText}>Download</span>
-                        <ArrowDropDownIcon
-                            color={
-                                disabled
-                                    ? 'rgba(0, 0, 0, 0.26)'
-                                    : actionContrastText
-                            }
-                        />
+                        <DownloadIcon color={actionContrastText} />
+                        <span className={classes.buttonText}>
+                            {disabled ? 'Upgrade to Download' : 'Download'}
+                        </span>
+                        {disabled ? (
+                            ''
+                        ) : (
+                            <ArrowDropDownIcon color={actionContrastText} />
+                        )}
                     </div>
                 </Button>
                 <DownloadMenu

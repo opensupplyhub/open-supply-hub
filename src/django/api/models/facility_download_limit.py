@@ -75,7 +75,7 @@ class FacilityDownloadLimit(models.Model):
     @staticmethod
     def get_or_create_user_download_limit(
         user,
-        custom_date
+        custom_date = None
     ) -> Optional["FacilityDownloadLimit"]:
         is_api_user = not user.is_anonymous and user.has_groups
 
