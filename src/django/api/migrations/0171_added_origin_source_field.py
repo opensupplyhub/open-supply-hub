@@ -54,6 +54,14 @@ def create_origin_source_function(apps, schema_editor):
     helper.run_sql_files(['0171_set_origin_source.sql'])
 
 
+def drop_triggers(apps, schema_editor):
+    helper.run_sql_files(['0170_drop_table_triggers.sql'])
+
+
+def create_triggers(apps, schema_editor):
+    helper.run_sql_files(['0170_create_table_triggers.sql'])
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -61,6 +69,13 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # Drops triggers.
+        migrations.RunPython(
+            code=drop_triggers,
+            reverse_code=create_triggers,
+        ),
+
+        # Adds origin_source fields to relevant models.
         migrations.AddField(
             model_name='contributor',
             name='origin_source',
@@ -321,9 +336,20 @@ class Migration(migrations.Migration):
             reverse_sql=migrations.RunSQL.noop,
         ),
 
+        # Recreate table triggers.
+        migrations.RunPython(
+            code=create_triggers,
+            reverse_code=drop_triggers,
+        ),
+
+        # Update index_facilities sqls
         RunPython(update_indexing_functions,
                   revert_updating_indexing_functions),
+
+        # Create origin_source update function
         RunPython(create_origin_source_function),
+
+        # Create new triggers to update origin_source
         RunPython(introduce_sql_triggers,
                   revert_sql_triggers)
     ]
