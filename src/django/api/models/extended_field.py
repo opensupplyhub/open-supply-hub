@@ -1,6 +1,7 @@
 import uuid
 from simple_history.models import HistoricalRecords
 from django.db import models
+from api.constants import OriginSource
 
 
 class ExtendedField(models.Model):
@@ -88,12 +89,19 @@ class ExtendedField(models.Model):
                    'Numeric fields are stored as {"min": 1, "max": 2}.'
                    'If there is a single numeric value, set both min '
                    'and max to it.'))
+    origin_source = models.CharField(
+        choices=OriginSource.CHOICES,
+        blank=True,
+        null=True,
+        max_length=200,
+        help_text="The environment value where instance running"
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     history = HistoricalRecords(
-        excluded_fields=['uuid']
+        excluded_fields=['uuid', 'origin_source']
     )
 
     def __str__(self):

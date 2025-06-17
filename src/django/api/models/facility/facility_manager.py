@@ -4,12 +4,12 @@ from django.contrib.gis.geos import GEOSGeometry
 from django.db import models
 from django.db.models import Q
 
-from ...facility_type_processing_type import get_facility_and_processing_type
-from ...constants import FacilitiesQueryParams
-from ...helpers.helpers import (
+from api.facility_type_processing_type import get_facility_and_processing_type
+from api.constants import FacilitiesQueryParams
+from api.helpers.helpers import (
     clean,
     format_custom_text,)
-from ...os_id import string_matches_os_id_format
+from api.os_id import string_matches_os_id_format
 
 
 class FacilityManager(models.Manager):

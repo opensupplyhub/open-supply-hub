@@ -1,7 +1,10 @@
 import uuid
 from itertools import groupby
 
-from api.constants import FacilityClaimStatuses
+from api.constants import (
+    FacilityClaimStatuses,
+    OriginSource
+)
 from api.models.facility.facility_manager import FacilityManager
 from simple_history.models import HistoricalRecords
 
@@ -75,6 +78,13 @@ class Facility(models.Model):
         help_text=('Whether this facility has manually adjusted coordinates '
                    'known to be inexact.')
     )
+    origin_source = models.CharField(
+        choices=OriginSource.CHOICES,
+        blank=True,
+        null=True,
+        max_length=200,
+        help_text="The environment value where instance running"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
 
@@ -89,7 +99,7 @@ class Facility(models.Model):
         )
 
     history = HistoricalRecords(
-        excluded_fields=['uuid']
+        excluded_fields=['uuid', 'origin_source']
     )
     objects = FacilityManager()
 
