@@ -54,6 +54,10 @@ def create_origin_source_function(apps, schema_editor):
     helper.run_sql_files(['0171_set_origin_source.sql'])
 
 
+def revert_origin_source_function(apps, schema_editor):
+    helper.run_sql_files(['0171_revert_origin_source_func.sql'])
+
+
 def drop_triggers(apps, schema_editor):
     helper.run_sql_files(['0170_drop_table_triggers.sql'])
 
@@ -342,14 +346,15 @@ class Migration(migrations.Migration):
             reverse_code=drop_triggers,
         ),
 
-        # Update index_facilities sqls
+        # Update index_facilities sqls.
         RunPython(update_indexing_functions,
                   revert_updating_indexing_functions),
 
-        # Create origin_source update function
-        RunPython(create_origin_source_function),
+        # Create origin_source update function.
+        RunPython(create_origin_source_function,
+                  revert_origin_source_function),
 
-        # Create new triggers to update origin_source
+        # Create new triggers to update origin_source.
         RunPython(introduce_sql_triggers,
                   revert_sql_triggers)
     ]
