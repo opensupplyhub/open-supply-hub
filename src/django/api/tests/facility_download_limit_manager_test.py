@@ -44,6 +44,7 @@ class FacilityDownloadLimitManagerTest(TestCase):
             updated_at=now,
             purchase_date=now,
         )
+        original_updated_at = fresh_free.updated_at
 
         # Create a record expired for paid limits
         # (purchase_date older than 1 year and
@@ -94,10 +95,10 @@ class FacilityDownloadLimitManagerTest(TestCase):
             FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT,
         )
         self.assertTrue(expired_free.updated_at > one_year_ago)
-
+        
         # Assert fresh free limits unchanged
         self.assertEqual(fresh_free.free_download_records, 100)
-        self.assertEqual(fresh_free.updated_at, fresh_free.updated_at)
+        self.assertEqual(fresh_free.updated_at, original_updated_at)
 
         # Assert expired paid limits reset to 0
         self.assertEqual(expired_paid.paid_download_records, 0)
