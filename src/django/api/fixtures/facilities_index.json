@@ -8,7 +8,11 @@
             "country_code": "US",
             "location": "POINT (0.0 0.0)",
             "contributors_count": 3,
-            "contributors_id": [1, 2, 3],
+            "contributors_id": [
+                1,
+                2,
+                3
+            ],
             "approved_claim_ids": [],
             "is_closed": false,
             "has_inexact_coordinates": false,
@@ -40,21 +44,37 @@
                     "should_display_associations": true
                 }
             ],
-            "sector": ["Test sector"],
+            "sector": [
+                "Test sector"
+            ],
             "lists": [],
             "custom_text": [],
-            "number_of_workers": ["Less than 1000"],
-            "facility_type": ["First Facility Type"],
-            "processing_type": ["Processing Type"],
-            "product_type": ["Product Type"],
-            "parent_company_name": ["Parent Company Name"],
+            "number_of_workers": [
+                "Less than 1000"
+            ],
+            "facility_type": [
+                "First Facility Type"
+            ],
+            "processing_type": [
+                "Processing Type"
+            ],
+            "product_type": [
+                "Product Type"
+            ],
+            "parent_company_name": [
+                "Parent Company Name"
+            ],
             "native_language_name": [],
             "parent_company_id": [],
-            "facility_names": ["Test Facility"],
+            "facility_names": [
+                "Test Facility"
+            ],
             "facility_list_items": [],
             "facility_locations": [],
             "approved_claim": null,
-            "facility_addresses": ["First Facility Address"],
+            "facility_addresses": [
+                "First Facility Address"
+            ],
             "claim_info": [],
             "custom_field_info": [
                 {
@@ -68,7 +88,9 @@
                 {
                     "id": 101,
                     "value": {
-                        "raw_values": ["Product Type Service Provider A"]
+                        "raw_values": [
+                            "Product Type Service Provider A"
+                        ]
                     },
                     "field_name": "product_type",
                     "contributor": {
@@ -128,7 +150,10 @@
                 },
                 {
                     "id": 104,
-                    "value": { "max": 1, "min": 1 },
+                    "value": {
+                        "max": 1,
+                        "min": 1
+                    },
                     "field_name": "number_of_workers",
                     "contributor": {
                         "id": 1,
@@ -149,7 +174,11 @@
                 },
                 {
                     "id": 106,
-                    "value": { "raw_values": ["Product Type Factory A"] },
+                    "value": {
+                        "raw_values": [
+                            "Product Type Factory A"
+                        ]
+                    },
                     "field_name": "product_type",
                     "contributor": {
                         "id": 2,
@@ -196,7 +225,10 @@
                 },
                 {
                     "id": 109,
-                    "value": { "max": 500, "min": 101 },
+                    "value": {
+                        "max": 500,
+                        "min": 101
+                    },
                     "field_name": "number_of_workers",
                     "contributor": {
                         "id": 2,
@@ -217,7 +249,6 @@
                 }
             ],
             "created_from_info": {
-                
                 "created_at": "2022-05-18T07:45:25+00:00"
             },
             "activity_reports_info": [],
@@ -225,7 +256,8 @@
             "claim_sectors": [],
             "created_at": "2023-07-25T11:23:57.019Z",
             "updated_at": "2023-11-04T16:07:57.887Z",
-            "custom_text_search": ""
+            "custom_text_search": "",
+            "origin_source": "os_hub"
         }
     },
     {
@@ -237,8 +269,14 @@
             "country_code": "IN",
             "location": "POINT (0.0 0.0)",
             "contributors_count": 2,
-            "contributors_id": [1, 2, 3],
-            "approved_claim_ids": [11],
+            "contributors_id": [
+                1,
+                2,
+                3
+            ],
+            "approved_claim_ids": [
+                11
+            ],
             "is_closed": false,
             "has_inexact_coordinates": false,
             "contrib_types": [
@@ -269,34 +307,54 @@
                     "should_display_associations": true
                 }
             ],
-            "sector": ["Test sector"],
+            "sector": [
+                "Test sector"
+            ],
             "lists": [],
             "custom_text": [],
-            "number_of_workers": ["Less than 1000"],
-            "facility_type": ["Second Facility Type"],
-            "processing_type": ["Processing Type"],
-            "product_type": ["Product Type"],
-            "parent_company_name": ["Parent Company Name"],
+            "number_of_workers": [
+                "Less than 1000"
+            ],
+            "facility_type": [
+                "Second Facility Type"
+            ],
+            "processing_type": [
+                "Processing Type"
+            ],
+            "product_type": [
+                "Product Type"
+            ],
+            "parent_company_name": [
+                "Parent Company Name"
+            ],
             "native_language_name": [],
             "parent_company_id": [],
-            "facility_names": ["Test Facility"],
+            "facility_names": [
+                "Test Facility"
+            ],
             "facility_list_items": [],
             "facility_locations": [],
             "approved_claim": {
                 "id": 11,
                 "contributor_id": 2,
-                "contributor": { "name": "Factory A" },
+                "contributor": {
+                    "name": "Factory A"
+                },
                 "facility_name_english": "Second Facility Name English",
                 "facility_id": "2"
             },
-            "facility_addresses": ["Second Facility Address"],
+            "facility_addresses": [
+                "Second Facility Address"
+            ],
             "claim_info": [],
             "custom_field_info": [],
             "extended_fields": [
                 {
                     "id": 111,
                     "value": {
-                        "raw_values": ["Product Type Service Provider A"]
+                        "raw_values": [
+                            "Product Type Service Provider A"
+                        ]
                     },
                     "field_name": "product_type",
                     "contributor": {
@@ -356,7 +414,10 @@
                 },
                 {
                     "id": 114,
-                    "value": { "max": 1, "min": 1 },
+                    "value": {
+                        "max": 1,
+                        "min": 1
+                    },
                     "field_name": "number_of_workers",
                     "contributor": {
                         "id": 1,
@@ -377,7 +438,11 @@
                 },
                 {
                     "id": 116,
-                    "value": { "raw_values": ["Product Type Factory A"] },
+                    "value": {
+                        "raw_values": [
+                            "Product Type Factory A"
+                        ]
+                    },
                     "field_name": "product_type",
                     "contributor": {
                         "id": 2,
@@ -424,7 +489,10 @@
                 },
                 {
                     "id": 119,
-                    "value": { "max": 500, "min": 101 },
+                    "value": {
+                        "max": 500,
+                        "min": 101
+                    },
                     "field_name": "number_of_workers",
                     "contributor": {
                         "id": 2,
@@ -452,7 +520,8 @@
             "claim_sectors": [],
             "created_at": "2023-07-25T11:23:57.019Z",
             "updated_at": "2023-11-04T16:07:57.887Z",
-            "custom_text_search": ""
+            "custom_text_search": "",
+            "origin_source": "os_hub"
         }
     },
     {
@@ -464,11 +533,19 @@
             "country_code": "CN",
             "location": "POINT (0.0 0.0)",
             "contributors_count": 2,
-            "contributors_id": [1, 2],
-            "approved_claim_ids": [12],
+            "contributors_id": [
+                1,
+                2
+            ],
+            "approved_claim_ids": [
+                12
+            ],
             "is_closed": false,
             "has_inexact_coordinates": false,
-            "contrib_types": ["Service Provider", "Factory / Facility"],
+            "contrib_types": [
+                "Service Provider",
+                "Factory / Facility"
+            ],
             "contributors": [
                 {
                     "id": 1,
@@ -485,34 +562,54 @@
                     "should_display_associations": false
                 }
             ],
-            "sector": ["Test sector"],
+            "sector": [
+                "Test sector"
+            ],
             "lists": [],
             "custom_text": [],
-            "number_of_workers": ["Less than 1000"],
-            "facility_type": ["Third Facility Type"],
-            "processing_type": ["Processing Type"],
-            "product_type": ["Product Type"],
-            "parent_company_name": ["Parent Company Name"],
+            "number_of_workers": [
+                "Less than 1000"
+            ],
+            "facility_type": [
+                "Third Facility Type"
+            ],
+            "processing_type": [
+                "Processing Type"
+            ],
+            "product_type": [
+                "Product Type"
+            ],
+            "parent_company_name": [
+                "Parent Company Name"
+            ],
             "native_language_name": [],
             "parent_company_id": [],
-            "facility_names": ["Third Facility"],
+            "facility_names": [
+                "Third Facility"
+            ],
             "facility_list_items": [],
             "facility_locations": [],
             "approved_claim": {
                 "id": 12,
                 "contributor_id": 2,
-                "contributor": { "name": "Factory A" },
+                "contributor": {
+                    "name": "Factory A"
+                },
                 "facility_name_english": null,
                 "facility_id": "2"
             },
-            "facility_addresses": ["Third Facility Address"],
+            "facility_addresses": [
+                "Third Facility Address"
+            ],
             "claim_info": [],
             "custom_field_info": [],
             "extended_fields": [
                 {
                     "id": 121,
                     "value": {
-                        "raw_values": ["Product Type Service Provider A"]
+                        "raw_values": [
+                            "Product Type Service Provider A"
+                        ]
                     },
                     "field_name": "product_type",
                     "contributor": {
@@ -572,7 +669,10 @@
                 },
                 {
                     "id": 124,
-                    "value": { "max": 1, "min": 1 },
+                    "value": {
+                        "max": 1,
+                        "min": 1
+                    },
                     "field_name": "number_of_workers",
                     "contributor": {
                         "id": 1,
@@ -600,7 +700,8 @@
             "claim_sectors": [],
             "created_at": "2023-07-25T11:23:57.019Z",
             "updated_at": "2023-11-04T16:07:57.887Z",
-            "custom_text_search": ""
+            "custom_text_search": "",
+            "origin_source": "os_hub"
         }
     },
     {
@@ -641,7 +742,8 @@
             "claim_sectors": [],
             "created_at": "2023-07-25T11:23:57.019Z",
             "updated_at": "2023-11-04T16:07:57.887Z",
-            "custom_text_search": ""
+            "custom_text_search": "",
+            "origin_source": "os_hub"
         }
     },
     {
@@ -682,7 +784,8 @@
             "claim_sectors": [],
             "created_at": "2023-07-25T11:23:57.019Z",
             "updated_at": "2023-11-04T16:07:57.887Z",
-            "custom_text_search": ""
+            "custom_text_search": "",
+            "origin_source": "os_hub"
         }
     },
     {
@@ -723,7 +826,8 @@
             "claim_sectors": [],
             "created_at": "2023-07-25T11:23:57.019Z",
             "updated_at": "2023-11-04T16:07:57.887Z",
-            "custom_text_search": ""
+            "custom_text_search": "",
+            "origin_source": "os_hub"
         }
     },
     {
@@ -764,7 +868,8 @@
             "claim_sectors": [],
             "created_at": "2023-07-25T11:23:57.019Z",
             "updated_at": "2023-11-04T16:07:57.887Z",
-            "custom_text_search": ""
+            "custom_text_search": "",
+            "origin_source": "os_hub"
         }
     },
     {
@@ -805,7 +910,8 @@
             "claim_sectors": [],
             "created_at": "2023-07-25T11:23:57.019Z",
             "updated_at": "2023-11-04T16:07:57.887Z",
-            "custom_text_search": ""
+            "custom_text_search": "",
+            "origin_source": "os_hub"
         }
     },
     {
@@ -846,7 +952,8 @@
             "claim_sectors": [],
             "created_at": "2023-07-25T11:23:57.019Z",
             "updated_at": "2023-11-04T16:07:57.887Z",
-            "custom_text_search": ""
+            "custom_text_search": "",
+            "origin_source": "os_hub"
         }
     },
     {
@@ -887,7 +994,8 @@
             "claim_sectors": [],
             "created_at": "2023-07-25T11:23:57.019Z",
             "updated_at": "2023-11-04T16:07:57.887Z",
-            "custom_text_search": ""
+            "custom_text_search": "",
+            "origin_source": "os_hub"
         }
     },
     {
@@ -928,7 +1036,8 @@
             "claim_sectors": [],
             "created_at": "2023-07-25T11:23:57.019Z",
             "updated_at": "2023-11-04T16:07:57.887Z",
-            "custom_text_search": ""
+            "custom_text_search": "",
+            "origin_source": "os_hub"
         }
     },
     {
@@ -969,7 +1078,8 @@
             "claim_sectors": [],
             "created_at": "2023-07-25T11:23:57.019Z",
             "updated_at": "2023-11-04T16:07:57.887Z",
-            "custom_text_search": ""
+            "custom_text_search": "",
+            "origin_source": "os_hub"
         }
     },
     {
@@ -1010,7 +1120,8 @@
             "claim_sectors": [],
             "created_at": "2023-07-25T11:23:57.019Z",
             "updated_at": "2023-11-04T16:07:57.887Z",
-            "custom_text_search": ""
+            "custom_text_search": "",
+            "origin_source": "os_hub"
         }
     },
     {
@@ -1051,7 +1162,8 @@
             "claim_sectors": [],
             "created_at": "2023-07-25T11:23:57.019Z",
             "updated_at": "2023-11-04T16:07:57.887Z",
-            "custom_text_search": ""
+            "custom_text_search": "",
+            "origin_source": "os_hub"
         }
     },
     {
@@ -1092,7 +1204,8 @@
             "claim_sectors": [],
             "created_at": "2023-07-25T11:23:57.019Z",
             "updated_at": "2023-11-04T16:07:57.887Z",
-            "custom_text_search": ""
+            "custom_text_search": "",
+            "origin_source": "os_hub"
         }
     },
     {
@@ -1133,7 +1246,8 @@
             "claim_sectors": [],
             "created_at": "2023-07-25T11:23:57.019Z",
             "updated_at": "2023-11-04T16:07:57.887Z",
-            "custom_text_search": ""
+            "custom_text_search": "",
+            "origin_source": "os_hub"
         }
     },
     {
@@ -1174,7 +1288,8 @@
             "claim_sectors": [],
             "created_at": "2023-07-25T11:23:57.019Z",
             "updated_at": "2023-11-04T16:07:57.887Z",
-            "custom_text_search": ""
+            "custom_text_search": "",
+            "origin_source": "os_hub"
         }
     },
     {
@@ -1215,7 +1330,8 @@
             "claim_sectors": [],
             "created_at": "2023-07-25T11:23:57.019Z",
             "updated_at": "2023-11-04T16:07:57.887Z",
-            "custom_text_search": ""
+            "custom_text_search": "",
+            "origin_source": "os_hub"
         }
     }
 ]
