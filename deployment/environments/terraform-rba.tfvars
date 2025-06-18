@@ -69,3 +69,5 @@ app_logstash_fargate_memory = 2048
 
 export_csv_enabled = false
 
+instance_source= "rba"
+
