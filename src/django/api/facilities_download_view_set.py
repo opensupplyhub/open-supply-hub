@@ -85,8 +85,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
                 facility_download_limit.free_download_records +
                 facility_download_limit.paid_download_records
             ) == 0
-        ):
-            
+        ):  
             raise ValidationError('You have reached the maximum number of '
                                   'facility downloads permitted for this year'
                                   ', both free and paid. Please wait until '
