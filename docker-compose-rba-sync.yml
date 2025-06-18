@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  rba_db:
+    build:
+      context: ./src/database
+      dockerfile: Dockerfile.local
+    container_name: rba_db
+    environment:
+      POSTGRES_DB: rba
+      POSTGRES_USER: opensupplyhub
+      POSTGRES_PASSWORD: opensupplyhub
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "opensupplyhub"]
+      interval: 3s
+      timeout: 3s
+      retries: 3
+    volumes:
+      - rba_data:/var/lib/postgresql/data
+      - ./dumps:/dumps
+    ports:
+      - "5434:5432"
+    networks:
+      - rba_sync_net
+
+volumes:
+  rba_data:
+
+networks:
+  rba_sync_net:
+    name: proxynet

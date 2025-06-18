@@ -10,6 +10,7 @@
 9. If there will be a table to store sync status, we need to apply respected UI (probably, in Django admin panel).
 10. Shall it be bulc sync impicitly or it is better to check specific tables to be updated? For this, we need to apply specific pattern.
 11. How to test this locally? Shall we use docker with local DB that will emulate RBA DB?
+12. Need apapter class to communicate with RBA DB from OSHub Django OR listern to RBA DB events (like trigger, etc).
 '''
 
 
