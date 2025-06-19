@@ -8,6 +8,7 @@ import { withStyles, withTheme } from '@material-ui/core/styles';
 import { toast } from 'react-toastify';
 
 import downloadFacilities from '../actions/downloadFacilities';
+import downloadLimitPaymentUrl from '../actions/downloadLimit';
 import DownloadIcon from './DownloadIcon';
 import ArrowDropDownIcon from './ArrowDropDownIcon';
 import { hideLogDownloadError } from '../actions/logDownload';
@@ -68,7 +69,9 @@ const DownloadFacilitiesButton = ({
             dispatch(hideLogDownloadError());
         }
     }, [logDownloadError]);
-    const handleUpgrade = () => {};
+    const handleUpgrade = () => {
+        downloadLimitPaymentUrl();
+    };
     const handleClick = event => {
         if (disabled) {
             handleUpgrade();
