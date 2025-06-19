@@ -17,12 +17,12 @@ export function downloadLimitPaymentUrl() {
     return dispatch => {
         dispatch(startFetchDownloadLimitPaymentUrl());
 
-        dispatch(failFetchDownloadLimitPaymentUrl('Something goes wrong'));
+        // dispatch(failFetchDownloadLimitPaymentUrl('Something goes wrong'));
 
-        // dispatch(
-        //     completeFetchDownloadLimitPaymentUrl(
-        //         'http://localhost:6543/facilities/?success=true',
-        //     ),
-        // );
+        dispatch(
+            completeFetchDownloadLimitPaymentUrl(
+                'http://localhost:6543/facilities/?success=true',
+            ),
+        );
     };
 }
