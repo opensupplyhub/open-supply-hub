@@ -102,4 +102,54 @@ class OpenSearchTest(OpenSearchIntegrationTestCase):
             index=self.production_locations_index_name,
             body=query
         )
-        self.assertGreater(response['hits']['total']['value'], 0)
+        self.assertEqual(
+            response['hits']['hits'][0]['_source']['address'],
+            "Land plot number 115, map sheet number 03, Cadastral map of Son Ha commune, Son Ha commune, Nho Quan district, Ninh Binh province, Vietnam"
+        )
+
+    def test_search_document_with_long_query(self):
+        doc = {
+            "sector": ["Apparel"],
+            "address": "Mount Isa Mines Limited Copper Refineries",
+            "name": "Copper Refineries Pty Ltd Mount Isa Mines Limited CRL",
+            "country": {"alpha_2": "AU"},
+            "os_id": "AU2025093077Q64",
+            "coordinates": {"lat": -16.940004, "lon": 145.7628965},
+            "description": "Mount Isa Mines Limited Copper Refineries Pty Ltd CRL",
+            "local_name": "Mount Isa Mines Limited Copper Refineries Pty Ltd CRL"
+        }
+        self.client.index(
+            index=self.production_locations_index_name,
+            body=doc,
+            id=self.client.count()
+        )
+        self.client.indices.refresh(index=self.production_locations_index_name)
+
+        query_text = "Mount Isa Mines Limited Copper Refineries Pty Ltd CRL"
+        query = {
+            'query': {
+                'bool': {
+                    'must': [
+                        {
+                            'multi_match': {
+                                'query': query_text,
+                                'fields': ['name^3', 'address^2', 'description^2', 'local_name^2'],
+                                'type': 'phrase',
+                                'slop': 2
+                            }
+                        }
+                    ],
+                    'filter': [
+                        {'term': {'country.alpha_2': 'AU'}}
+                    ]
+                }
+            }
+        }
+        response = self.client.search(
+            index=self.production_locations_index_name,
+            body=query
+        )
+        self.assertEqual(
+            response['hits']['hits'][0]['_source']['address'],
+            "Mount Isa Mines Limited Copper Refineries"
+        )

@@ -30,6 +30,9 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'secret')
 # Set environment
 ENVIRONMENT = os.getenv('DJANGO_ENV', 'Local')
 
+# Set environment instance source
+INSTANCE_SOURCE = os.getenv('INSTANCE_SOURCE', 'os_hub')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = (ENVIRONMENT == 'Local')
 
@@ -213,6 +216,7 @@ MIDDLEWARE = [
     'waffle.middleware.WaffleMiddleware',
     'api.middleware.RequestLogMiddleware',
     'api.middleware.RequestMeterMiddleware',
+    'api.middleware.OriginSourceMiddleware',
 ]
 
 ROOT_URLCONF = 'oar.urls'

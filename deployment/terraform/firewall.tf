@@ -211,11 +211,11 @@ resource "aws_security_group_rule" "app_https_egress" {
 }
 
 resource "aws_security_group_rule" "app_https_egress_local" {
-  type             = "egress"
-  from_port        = 0
-  to_port          = 65535
-  protocol         = "tcp"
-  cidr_blocks      = [module.vpc.cidr_block]
+  type        = "egress"
+  from_port   = 0
+  to_port     = 65535
+  protocol    = "tcp"
+  cidr_blocks = [module.vpc.cidr_block]
 
   security_group_id = aws_security_group.app.id
 }
@@ -243,11 +243,11 @@ resource "aws_security_group_rule" "app_cc_http_egress" {
 }
 
 resource "aws_security_group_rule" "app_cc_http_egress_local" {
-  type             = "egress"
-  from_port        = 0
-  to_port          = 65535
-  protocol         = "tcp"
-  cidr_blocks      = [module.vpc.cidr_block]
+  type        = "egress"
+  from_port   = 0
+  to_port     = 65535
+  protocol    = "tcp"
+  cidr_blocks = [module.vpc.cidr_block]
 
   security_group_id = aws_security_group.app_cc.id
 }
@@ -269,6 +269,16 @@ resource "aws_security_group_rule" "app_opensearch_egress" {
   protocol  = "tcp"
 
   security_group_id        = aws_security_group.app.id
+  source_security_group_id = aws_security_group.opensearch.id
+}
+
+resource "aws_security_group_rule" "batch_opensearch_egress" {
+  type      = "egress"
+  from_port = var.opensearch_port
+  to_port   = var.opensearch_port
+  protocol  = "tcp"
+
+  security_group_id        = aws_security_group.batch.id
   source_security_group_id = aws_security_group.opensearch.id
 }
 
@@ -364,10 +374,10 @@ resource "aws_security_group_rule" "app_logstash_https_egress" {
 }
 
 resource "aws_security_group_rule" "app_logstash_efs_egress" {
-  type             = "egress"
-  from_port        = 2049
-  to_port          = 2049
-  protocol         = "tcp"
+  type      = "egress"
+  from_port = 2049
+  to_port   = 2049
+  protocol  = "tcp"
 
   security_group_id        = aws_security_group.app_logstash.id
   source_security_group_id = aws_security_group.efs_app_logstash.id
@@ -447,6 +457,16 @@ resource "aws_security_group_rule" "app_opensearch_ingress" {
 }
 
 
+resource "aws_security_group_rule" "batch_opensearch_ingress" {
+  type      = "ingress"
+  from_port = var.opensearch_port
+  to_port   = var.opensearch_port
+  protocol  = "tcp"
+
+  security_group_id        = aws_security_group.opensearch.id
+  source_security_group_id = aws_security_group.batch.id
+}
+
 resource "aws_security_group_rule" "bastion_opensearch_ingress" {
   type      = "ingress"
   from_port = var.opensearch_port
@@ -458,10 +478,10 @@ resource "aws_security_group_rule" "bastion_opensearch_ingress" {
 }
 
 resource "aws_security_group_rule" "bastion_efs_ingress" {
-  type             = "ingress"
-  from_port        = 2049
-  to_port          = 2049
-  protocol         = "tcp"
+  type      = "ingress"
+  from_port = 2049
+  to_port   = 2049
+  protocol  = "tcp"
 
   security_group_id        = aws_security_group.efs_app_logstash.id
   source_security_group_id = module.vpc.bastion_security_group_id

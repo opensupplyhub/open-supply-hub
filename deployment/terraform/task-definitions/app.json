@@ -46,7 +46,8 @@
         { "name": "OPENSEARCH_HOST", "value": "${opensearch_host}" },
         { "name": "OPENSEARCH_PORT", "value": "${opensearch_port}" },
         { "name": "OPENSEARCH_SSL", "value": "${opensearch_ssl}" },
-        { "name": "OPENSEARCH_SSL_CERT_VERIFICATION", "value": "${opensearch_ssl_cert_verification}" }
+        { "name": "OPENSEARCH_SSL_CERT_VERIFICATION", "value": "${opensearch_ssl_cert_verification}" },
+        { "name": "INSTANCE_SOURCE", "value": "${instance_source}" }
     ],
     "portMappings": [
       {

@@ -353,36 +353,6 @@ resource "aws_cloudwatch_log_group" "batch" {
   retention_in_days = 0
 }
 
-resource "aws_batch_compute_environment" "direct_data_load" {
-  depends_on                      = [aws_iam_role_policy_attachment.batch_policy]
-  compute_environment_name_prefix = "batch${local.short}DDLoadComputeEnvironment"
-  type                            = "MANAGED"
-  state                           = "ENABLED"
-  service_role                    = aws_iam_role.container_instance_batch.arn
-
-  lifecycle {
-    create_before_destroy = true
-  }
-
-  compute_resources {
-    type      = "FARGATE"
-    max_vcpus = var.batch_direct_data_load_ce_max_vcpus
-    subnets   = module.vpc.private_subnet_ids
-
-    security_group_ids = [
-      aws_security_group.batch.id,
-    ]
-  }
-}
-
-resource "aws_batch_job_queue" "direct_data_load" {
-  name                 = "queue${local.short}DirectDataLoad"
-  priority             = 1
-  state                = "ENABLED"
-  compute_environments = [aws_batch_compute_environment.direct_data_load.arn]
-}
-
-
 data "template_file" "direct_data_load_job_definition" {
   template = file("job-definitions/direct_data_load.json")
 
@@ -406,10 +376,15 @@ data "template_file" "direct_data_load_job_definition" {
     google_service_account_creds_base64 = var.google_service_account_creds_base64
     google_drive_shared_directory_id    = var.google_drive_shared_directory_id
     sheet_id                            = var.direct_data_load_sheet_id
-    contributor_id                      = var.direct_data_load_contributor_id
+    contributor_name                    = var.direct_data_load_contributor_name
+    contributor_email                   = var.direct_data_load_contributor_email
     user_id                             = var.direct_data_load_user_id
     sheet_name                          = var.direct_data_load_sheet_name
     tab_id                              = var.direct_data_load_tab_id
+    opensearch_host                     = aws_opensearch_domain.opensearch.endpoint
+    opensearch_port                     = var.opensearch_port
+    opensearch_ssl                      = var.opensearch_ssl
+    opensearch_ssl_cert_verification    = var.opensearch_ssl_cert_verification
   }
 }
 
@@ -417,6 +392,8 @@ resource "aws_batch_job_definition" "direct_data_load" {
   name           = "job${local.short}DirectDataLoad"
   type           = "container"
   propagate_tags = true
+
+  platform_capabilities = ["EC2"]
 
   container_properties = data.template_file.direct_data_load_job_definition.rendered
 
