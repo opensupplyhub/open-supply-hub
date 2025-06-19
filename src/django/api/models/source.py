@@ -1,4 +1,6 @@
+import uuid
 from django.db import models
+from api.constants import OriginSource
 
 
 class Source(models.Model):
@@ -10,6 +12,13 @@ class Source(models.Model):
         (SINGLE, SINGLE),
     )
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the source.'
+    )
     contributor = models.ForeignKey(
         'Contributor',
         null=True,
@@ -45,6 +54,13 @@ class Source(models.Model):
         default=True,
         help_text=('Should a facility or facility match be created from the '
                    'facility data')
+    )
+    origin_source = models.CharField(
+        choices=OriginSource.CHOICES,
+        blank=True,
+        null=True,
+        max_length=200,
+        help_text="The environment value where instance running"
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

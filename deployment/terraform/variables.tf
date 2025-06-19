@@ -766,30 +766,65 @@ variable "app_ecs_cooldown_scale_down" {
 }
 
 variable "vanta_assumed_role_external_ids" {
-  type      = list
+  type      = list(any)
   default   = []
   sensitive = true
 }
 
 variable "vanta_assumed_role_principals" {
-  type      = list
+  type      = list(any)
   default   = []
   sensitive = true
 }
 
 variable "ip_whitelist" {
-  type    = list(string)
-  default = []
+  type        = list(string)
+  default     = []
   description = "List of IP addresses to allow through the AWS WAF"
 }
 
 variable "ip_denylist" {
-  type    = list(string)
-  default = []
+  type        = list(string)
+  default     = []
   description = "List of IP addresses to block through the AWS WAF"
 }
 
 variable "waf_enabled" {
-  type        = bool
-  default     = false
+  type    = bool
+  default = false
 }
+
+
+### DIRECT DATA LOAD VARIABLES - START ###
+
+variable "direct_data_load_sheet_id" {
+  type        = string
+  description = "Google Sheet ID for direct data load"
+}
+
+variable "direct_data_load_contributor_name" {
+  type        = string
+  description = "Contributor name for direct data load"
+}
+
+variable "direct_data_load_contributor_email" {
+  type        = string
+  description = "Contributor email for direct data load"
+}
+
+variable "direct_data_load_user_id" {
+  type        = number
+  description = "User ID for direct data load"
+}
+
+variable "direct_data_load_sheet_name" {
+  type        = string
+  description = "Name of the Google Sheet for direct data load"
+}
+
+variable "direct_data_load_tab_id" {
+  type        = number
+  description = "Tab ID of the Google Sheet for direct data load"
+}
+
+### DIRECT DATA LOAD VARIABLES - END ###

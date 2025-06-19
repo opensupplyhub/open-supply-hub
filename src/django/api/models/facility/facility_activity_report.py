@@ -1,5 +1,7 @@
+import uuid
 from simple_history.models import HistoricalRecords
 from django.db import models
+from api.constants import OriginSource
 
 
 class FacilityActivityReport(models.Model):
@@ -18,6 +20,13 @@ class FacilityActivityReport(models.Model):
         (CONFIRMED, CONFIRMED),
         (REJECTED, REJECTED))
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the facility activity report.'
+    )
     facility = models.ForeignKey(
         'Facility',
         null=False,
@@ -81,10 +90,19 @@ class FacilityActivityReport(models.Model):
         blank=True,
         verbose_name='status change date',
     )
+    origin_source = models.CharField(
+        choices=OriginSource.CHOICES,
+        blank=True,
+        null=True,
+        max_length=200,
+        help_text="The environment value where instance running"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(
+        excluded_fields=['uuid', 'origin_source']
+    )
 
     def __str__(self):
         return ('FacilityActivityReport {id} - Facility {facility_id}, '

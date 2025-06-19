@@ -3,8 +3,8 @@ from rest_framework.serializers import (
     ChoiceField,
     Serializer,
 )
-from ...constants import MatchResponsibility
-from ...models import FacilityList
+from api.constants import MatchResponsibility
+from api.models import FacilityList
 
 
 class FacilityListQueryParamsSerializer(Serializer):

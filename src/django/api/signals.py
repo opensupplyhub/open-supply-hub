@@ -1,11 +1,19 @@
 import logging
 import json
 
+from django.conf import settings
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
-from opensearchpy.exceptions import ConnectionError
+from opensearchpy.exceptions import \
+    ConnectionError, NotFoundError, AuthorizationException
 
 from api.models.facility.facility import Facility
+from api.models.facility.facility_list_item import FacilityListItem
+from api.models.extended_field import ExtendedField
+from api.models.facility.facility_claim import FacilityClaim
+from api.models.facility.facility_activity_report import FacilityActivityReport
+from api.models.facility.facility_location import FacilityLocation
+from api.models.facility.facility_alias import FacilityAlias
 from api.models.moderation_event import ModerationEvent
 from api.services.opensearch.opensearch import OpenSearchServiceConnection
 from oar.rollbar import report_error_to_rollbar
@@ -76,6 +84,18 @@ def moderation_event_update_handler_for_opensearch(
             "Lost connection to OpenSearch cluster."
         )
         raise
+    except NotFoundError:
+        log.error(
+            "[Moderation Event Updating] "
+            "ModerationEvent not found in OpenSearch."
+        )
+        return
+    except AuthorizationException:
+        log.error(
+            "[Moderation Event Updating] "
+            "Authorization error when accessing OpenSearch."
+        )
+        return
 
     if response and response.get('result') == 'not_found':
         error_log_message = (
@@ -84,3 +104,20 @@ def moderation_event_update_handler_for_opensearch(
             "indicating data inconsistency."
         )
         signal_error_notifier(error_log_message, response)
+
+
+def set_origin_source_on_create(instance, created, **kwargs):
+    if created and instance.origin_source is None:
+        instance.origin_source = settings.INSTANCE_SOURCE
+        instance.save(update_fields=['origin_source'])
+
+
+for model in [
+    FacilityListItem,
+    ExtendedField,
+    FacilityClaim,
+    FacilityAlias,
+    FacilityActivityReport,
+    FacilityLocation
+]:
+    post_save.connect(set_origin_source_on_create, sender=model)

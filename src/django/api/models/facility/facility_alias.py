@@ -1,5 +1,7 @@
+import uuid
 from simple_history.models import HistoricalRecords
 from django.db import models
+from api.constants import OriginSource
 
 
 class FacilityAlias(models.Model):
@@ -17,6 +19,13 @@ class FacilityAlias(models.Model):
         (DELETE, DELETE),
     )
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the facility alias.'
+    )
     os_id = models.CharField(
         max_length=32,
         primary_key=True,
@@ -35,10 +44,19 @@ class FacilityAlias(models.Model):
         choices=REASON_CHOICES,
         help_text='The reason why this alias was created'
     )
+    origin_source = models.CharField(
+        choices=OriginSource.CHOICES,
+        blank=True,
+        null=True,
+        max_length=200,
+        help_text="The environment value where instance running"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(
+        excluded_fields=['uuid', 'origin_source']
+    )
 
     def __str__(self):
         return f'{self.os_id} -> {self.facility}'

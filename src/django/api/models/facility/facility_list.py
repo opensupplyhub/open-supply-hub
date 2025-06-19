@@ -1,13 +1,24 @@
+import uuid
 from django.db import models
 from django.db.models import JSONField
 
-from api.constants import MatchResponsibility
+from api.constants import (
+    MatchResponsibility,
+    OriginSource
+)
 
 
 class FacilityList(models.Model):
     """
     Metadata for an uploaded list of facilities.
     """
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the facility list.'
+    )
     name = models.CharField(
         max_length=200,
         null=False,
@@ -90,6 +101,13 @@ class FacilityList(models.Model):
         blank=True,
         help_text=('List-level and internal errors logged during background '
                    'parsing of the list.')
+    )
+    origin_source = models.CharField(
+        choices=OriginSource.CHOICES,
+        blank=True,
+        null=True,
+        max_length=200,
+        help_text="The environment value where instance running"
     )
 
     def __str__(self):

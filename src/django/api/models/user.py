@@ -1,3 +1,4 @@
+import uuid
 from allauth.account.models import EmailAddress
 
 from django.conf import settings
@@ -10,6 +11,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 
 from api.constants import FeatureGroups
+from api.constants import OriginSource
 
 
 def get_default_rate(rate):
@@ -70,6 +72,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     objects = EmailAsUsernameUserManager()
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the user.'
+    )
     is_staff = models.BooleanField(
         ('staff status'),
         default=False,
@@ -138,6 +147,13 @@ class User(AbstractBaseUser, PermissionsMixin):
             "Maximum allowed facility upload rate for this user. "
             "This applies to only API Facility uploads."
         )
+    )
+    origin_source = models.CharField(
+        choices=OriginSource.CHOICES,
+        blank=True,
+        null=True,
+        max_length=200,
+        help_text="The environment value where instance running"
     )
 
     def save(self, *args, **kwargs):
