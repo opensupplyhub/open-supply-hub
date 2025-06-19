@@ -29,7 +29,8 @@
         { "name": "SECURITY_PROTOCOL", "value": "${security_protocol}" },
         { "name": "DEDUPE_HUB_LIVE", "value": "${dedupe_hub_live}" },
         { "name": "DEDUPE_HUB_NAME", "value": "${dedupe_hub_name}" },
-        { "name": "DEDUPE_HUB_VERSION", "value": "${dedupe_hub_version}" }
+        { "name": "DEDUPE_HUB_VERSION", "value": "${dedupe_hub_version}" },
+        { "name": "INSTANCE_SOURCE", "value": "${instance_source}" }
     ],
     "logConfiguration": {
         "logDriver": "awslogs",
