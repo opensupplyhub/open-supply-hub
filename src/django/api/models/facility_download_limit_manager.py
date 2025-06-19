@@ -14,11 +14,11 @@ class FacilityDownloadLimitManager(models.Manager):
         expired_free_limits = self.filter(
             updated_at__lt=one_year_ago_with_leap
         )
+        limit = FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT
         expired_free_limits.update(
-            free_download_records=FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT,  # noqa: E501
+            free_download_records=limit,
             updated_at=now,
         )
-
         # Update paid limits in bulk
         expired_paid_limits = self.filter(
             purchase_date__lt=one_year_ago_with_leap
