@@ -24,6 +24,15 @@ class DownloadLocationsCheckoutWebhookView(View):
         # Handle the event
         if event["type"] == "checkout.session.completed":
             session = event["data"]["object"]
-            print("Checkout session completed >>>", session)
+
+            payment = DownloadLocationSuccessPayment(
+                user_id=session["metadata"]["user_id"],
+                stripe_session_id=session["id"],
+                payment_id=session["payment_intent"],
+                amount_subtotal=session["amount_subtotal"],
+                amount_total=session["amount_total"],
+                promotion_code=session.get("promotion_code", None),
+            )
+            payment.save()
 
         return HttpResponse(status=200)
