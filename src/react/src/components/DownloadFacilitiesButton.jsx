@@ -8,7 +8,10 @@ import { withStyles, withTheme } from '@material-ui/core/styles';
 import { toast } from 'react-toastify';
 
 import downloadFacilities from '../actions/downloadFacilities';
-import downloadLimitPaymentUrl from '../actions/downloadLimit';
+import {
+    hideDownloadLimitPaymentUrlError,
+    downloadLimitPaymentUrl,
+} from '../actions/downloadLimit';
 import DownloadIcon from './DownloadIcon';
 import ArrowDropDownIcon from './ArrowDropDownIcon';
 import { hideLogDownloadError } from '../actions/logDownload';
@@ -51,6 +54,7 @@ const DownloadFacilitiesButton = ({
     logDownloadError,
     user,
     url,
+    urlError,
     /* from props */
     allowLargeDownloads,
     disabled,
@@ -74,7 +78,11 @@ const DownloadFacilitiesButton = ({
         if (url) {
             window.location.href = url;
         }
-    }, [url]);
+        if (urlError) {
+            toast(urlError);
+            dispatch(hideDownloadLimitPaymentUrlError());
+        }
+    }, [url, urlError]);
     const handleUpgrade = () => {
         dispatch(downloadLimitPaymentUrl());
     };
@@ -166,7 +174,7 @@ function mapStateToProps({
     logDownload: { error: logDownloadError },
     embeddedMap: { embed: isEmbedded },
     downloadLimit: {
-        payment: { url },
+        payment: { url, error: urlError },
     },
 }) {
     return {
@@ -174,6 +182,7 @@ function mapStateToProps({
         logDownloadError,
         isEmbedded,
         url,
+        urlError,
     };
 }
 

@@ -4,6 +4,7 @@ import update from 'immutability-helper';
 import {
     startFetchDownloadLimitPaymentUrl,
     failFetchDownloadLimitPaymentUrl,
+    hideDownloadLimitPaymentUrlError,
     completeFetchDownloadLimitPaymentUrl,
 } from '../actions/downloadLimit';
 
@@ -30,6 +31,12 @@ export default createReducer(
                 payment: {
                     fetching: { $set: false },
                     error: { $set: payload },
+                },
+            }),
+        [hideDownloadLimitPaymentUrlError]: state =>
+            update(state, {
+                payment: {
+                    error: { $set: initialState.error },
                 },
             }),
         [completeFetchDownloadLimitPaymentUrl]: (state, payload) =>

@@ -6,16 +6,23 @@ export const startFetchDownloadLimitPaymentUrl = createAction(
 export const failFetchDownloadLimitPaymentUrl = createAction(
     'FAIL_FETCH_DOWNLOAD_LIMIT_PAYMENT_URL',
 );
+export const hideDownloadLimitPaymentUrlError = createAction(
+    'HIDE_DOWNLOAD_LIMIT_PAYMENT_URL_ERROR',
+);
 export const completeFetchDownloadLimitPaymentUrl = createAction(
     'COMPLETE_FETCH_DOWNLOAD_LIMIT_PAYMENT_URL',
 );
 
-export default function downloadLimitPaymentUrl() {
+export function downloadLimitPaymentUrl() {
     return dispatch => {
         dispatch(startFetchDownloadLimitPaymentUrl());
 
-        const testUrl = 'http://localhost:6543/facilities/?success=true';
+        dispatch(failFetchDownloadLimitPaymentUrl('Something goes wrong'));
 
-        dispatch(completeFetchDownloadLimitPaymentUrl(testUrl));
+        // dispatch(
+        //     completeFetchDownloadLimitPaymentUrl(
+        //         'http://localhost:6543/facilities/?success=true',
+        //     ),
+        // );
     };
 }
