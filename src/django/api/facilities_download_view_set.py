@@ -128,6 +128,22 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
     
     @action(
         detail=False,
+        methods=['get'],
+        url_path='limit',
+        permission_classes=[IsAuthenticated]
+    )
+    def get_download_limit(self, request):
+        try:
+            download_limit = FacilityDownloadLimit.objects.get(user=request.user)
+        except FacilityDownloadLimit.DoesNotExist:
+            raise ValidationError(f"FacilityDownloadLimit with ID {request.user.id} does not exist.")
+
+        return Response({
+            "allowed_records_number": download_limit.free_download_records + download_limit.paid_download_records
+        })
+
+    @action(
+        detail=False,
         methods=['post'],
         url_path='upgrade',
         permission_classes=[IsAuthenticated]
