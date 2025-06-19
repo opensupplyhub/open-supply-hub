@@ -1,34 +1,36 @@
 import stripe
-from rest_framework.views import APIView
-from rest_framework.response import Response
+
 from django.conf import settings
+
 from rest_framework import status
 from rest_framework.decorators import permission_classes
-from django.shortcuts import redirect
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from api.permissions import IsRegisteredAndConfirmed
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 # SITE_URL = settings.SITE_URL if settings.SITE_URL else 'http://localhost:6543'
-SITE_URL = 'http://localhost:6543' # Need to define the SITE_URL variable for the different environments
+# PRICE_ID = settings.STRIPE_PRICE_ID if settings.STRIPE_PRICE_ID else 'price_1RaadLR1cBat6fnjJqy1dlJM'
+SITE_URL = 'http://localhost:6543'  # Need to define the SITE_URL variable for the different environments
+STRIPE_PRICE_ID = 'price_1RaadLR1cBat6fnjJqy1dlJM'  # Example price ID, replace with actual one if needed
 
 
 @permission_classes([IsRegisteredAndConfirmed])
 class DownloadLocationsCheckoutSessionView(APIView):
     """
-    View to create a Stripe Checkout session.
+    View to create a Stripe Checkout session for purchasing additional records
+    for downloading production locations data.
     """
+
     swagger_schema = None
 
     def post(self, request, *args, **kwargs):
-        """
-        Create a Stripe Checkout session.
-        """
-        # print("request.data >>>", request.data)
         try:
             checkout_session = stripe.checkout.Session.create(
                 line_items=[
                     {
-                        'price': 'price_1RaadLR1cBat6fnjJqy1dlJM',
+                        'price': STRIPE_PRICE_ID,
                         'quantity': 1,
                         'adjustable_quantity': {
                             'enabled': True,
@@ -43,13 +45,15 @@ class DownloadLocationsCheckoutSessionView(APIView):
                     'user_id': request.user.id,
                 },
                 allow_promotion_codes=True,
-                success_url=SITE_URL + '?success=true&session_id={CHECKOUT_SESSION_ID}',
+                success_url=SITE_URL + '?success=true',
                 cancel_url=SITE_URL + '?canceled=true',
             )
 
-            # return redirect(checkout_session.url)
-            return Response({'url': checkout_session.url}, status=status.HTTP_200_OK)
-            # return Response(checkout_session, status=status.HTTP_200_OK)
+            return Response(
+                {'url': checkout_session.url}, status=status.HTTP_200_OK
+            )
 
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'error': str(e)}, status=status.HTTP_400_BAD_REQUEST
+            )
