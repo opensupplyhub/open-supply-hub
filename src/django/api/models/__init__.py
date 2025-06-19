@@ -76,3 +76,4 @@ from .user import (
 )
 from .version import Version
 from .moderation_event import ModerationEvent
+from .download_location_success_payment import DownloadLocationSuccessPayment
