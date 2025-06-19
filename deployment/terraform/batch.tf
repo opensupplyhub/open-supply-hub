@@ -81,6 +81,7 @@ data "template_file" "default_job_definition" {
     opensearch_port                  = var.opensearch_port
     opensearch_ssl                   = var.opensearch_ssl
     opensearch_ssl_cert_verification = var.opensearch_ssl_cert_verification
+    instance_source                  = var.instance_source
   }
 }
 
@@ -178,6 +179,7 @@ data "template_file" "notifications_job_definition" {
     opensearch_port                  = var.opensearch_port
     opensearch_ssl                   = var.opensearch_ssl
     opensearch_ssl_cert_verification = var.opensearch_ssl_cert_verification
+    instance_source                  = var.instance_source
   }
 }
 
@@ -265,6 +267,7 @@ data "template_file" "export_csv_job_definition" {
     log_group_name                      = "log${local.short}Batch"
     google_service_account_creds_base64 = var.google_service_account_creds_base64
     google_drive_shared_directory_id    = var.google_drive_shared_directory_id
+    instance_source                     = var.instance_source
   }
 }
 
@@ -385,6 +388,7 @@ data "template_file" "direct_data_load_job_definition" {
     opensearch_port                     = var.opensearch_port
     opensearch_ssl                      = var.opensearch_ssl
     opensearch_ssl_cert_verification    = var.opensearch_ssl_cert_verification
+    instance_source                     = var.instance_source
   }
 }
 
