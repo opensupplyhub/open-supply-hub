@@ -8,6 +8,12 @@ from api.models import DownloadLocationSuccessPayment
 
 
 class DownloadLocationsCheckoutWebhookView(View):
+    """
+    View to handle Stripe Checkout webhook events for
+    successful payments of additional records for downloading production
+    locations data.
+    """
+
     def post(self, request, *args, **kwargs):
         payload = request.body
         sig_header = request.META.get("HTTP_STRIPE_SIGNATURE", "")
