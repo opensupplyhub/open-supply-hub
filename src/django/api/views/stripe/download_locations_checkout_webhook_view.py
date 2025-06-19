@@ -1,7 +1,10 @@
 import stripe
+
 from django.conf import settings
-from django.views import View
 from django.http import HttpResponse, HttpResponseBadRequest
+from django.views import View
+
+from api.models import DownloadLocationSuccessPayment
 
 
 class DownloadLocationsCheckoutWebhookView(View):
@@ -15,13 +18,14 @@ class DownloadLocationsCheckoutWebhookView(View):
                 payload, sig_header, endpoint_secret
             )
         except ValueError as e:
-            # Invalid payload
-            return HttpResponseBadRequest(f"Invalid payload: {str(e)}", status=400)
+            return HttpResponseBadRequest(
+                f"Invalid payload: {str(e)}", status=400
+            )
         except stripe.error.SignatureVerificationError as e:
-            # Invalid signature
-            return HttpResponseBadRequest(f"Invalid signature: {str(e)}", status=400)
-        
-        # Handle the event
+            return HttpResponseBadRequest(
+                f"Invalid signature: {str(e)}", status=400
+            )
+
         if event["type"] == "checkout.session.completed":
             session = event["data"]["object"]
 
