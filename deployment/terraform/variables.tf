@@ -564,6 +564,9 @@ variable "dedupe_hub_name" {
 }
 variable "dedupe_hub_version" {
 }
+variable "instance_source" {
+  default = "os_hub"
+}
 
 variable "opensearch_instance_type" {
   type    = string
