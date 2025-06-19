@@ -48,6 +48,5 @@ class DownloadLocationSuccessPayment(models.Model):
         db_index=True,
     )
 
-
-def __str__(self):
-    return f"Payment {self.payment_id} by {self.user}"
+    def __str__(self):
+        return f"Payment {self.payment_id} by {self.user}"
