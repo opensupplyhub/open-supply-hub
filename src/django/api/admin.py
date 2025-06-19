@@ -187,7 +187,6 @@ class FacilityDownloadLimitAdmin(admin.ModelAdmin):
         return ('user',)
 
 
-
 class ExtendedFieldAdmin(admin.ModelAdmin):
     readonly_fields = ('contributor', 'facility', 'facility_list_item',
                        'facility_claim')

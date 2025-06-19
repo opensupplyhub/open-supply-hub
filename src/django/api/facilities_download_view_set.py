@@ -81,7 +81,10 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         if (
             current_page == 1 and
             facility_download_limit
-            and (facility_download_limit.free_download_records + facility_download_limit.paid_download_records) == 0  # noqa: E501
+            and (
+                facility_download_limit.free_download_records +
+                facility_download_limit.paid_download_records
+            ) == 0
         ):
             raise ValidationError('You have reached the maximum number of '
                                   'facility downloads permitted for this year'
@@ -91,8 +94,10 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
                                   'records for download.')
 
         is_large_download_allowed = (
-            not facility_download_limit or
-            total_records <= FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT  # noqa: E501
+            not facility_download_limit
+            or total_records <= (
+                FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT
+            )
         )
 
         if (not is_large_download_allowed):
