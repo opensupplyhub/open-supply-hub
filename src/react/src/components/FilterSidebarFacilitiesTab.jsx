@@ -42,6 +42,8 @@ import {
     fetchFacilityToMerge,
 } from '../actions/mergeFacilities';
 
+import { sessionLogin } from '../actions/auth';
+
 import { facilityCollectionPropType, userPropType } from '../util/propTypes';
 
 import {
@@ -203,6 +205,7 @@ function FilterSidebarFacilitiesTab({
     fetchToMergeFacility,
     updateTargetOSID,
     fetchTargetFacility,
+    checkDownloadLimits,
     classes,
 }) {
     const [loginRequiredDialogIsOpen, setLoginRequiredDialogIsOpen] = useState(
@@ -259,8 +262,10 @@ function FilterSidebarFacilitiesTab({
 
     useEffect(() => {
         const queryParams = new URLSearchParams(location.search);
+        const isCorrectPath = location.pathname === '/facilities/';
         const isSuccess = queryParams.get('success') === 'true';
-        if (isSuccess) {
+        if (isCorrectPath && isSuccess) {
+            checkDownloadLimits();
         }
     }, [location.search]);
 
@@ -668,6 +673,7 @@ FilterSidebarFacilitiesTab.propTypes = {
     fetchToMergeFacility: func.isRequired,
     updateTargetOSID: func.isRequired,
     fetchTargetFacility: func.isRequired,
+    checkDownloadLimits: func.isRequired,
 };
 
 function mapStateToProps({
@@ -719,6 +725,7 @@ function mapDispatchToProps(dispatch) {
         fetchToMergeFacility: () => dispatch(fetchFacilityToMerge()),
         updateToMergeOSID: osID => dispatch(updateFacilityToMergeOSID(osID)),
         fetchTargetFacility: () => dispatch(fetchMergeTargetFacility()),
+        checkDownloadLimits: () => dispatch(sessionLogin()),
     };
 }
 
