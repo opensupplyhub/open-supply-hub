@@ -4,9 +4,8 @@ from django.db import models
 class DownloadLocationSuccessPayment(models.Model):
     """
     Model to store information about successful payments made
-    for downloading production locations.
-    This model is used to track payments made through Stripe
-    for downloading production locations data.
+    for purchasing of additional records for downloading production
+    locations data.
     """
     user = models.ForeignKey(
         'User',
