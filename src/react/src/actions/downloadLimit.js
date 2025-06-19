@@ -19,7 +19,5 @@ export default function downloadLimitPaymentUrl() {
         window.location.href = testUrl;
 
         dispatch(completeFetchDownloadLimitPaymentUrl(testUrl));
-
-        return;
     };
 }
