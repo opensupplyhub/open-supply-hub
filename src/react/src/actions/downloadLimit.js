@@ -11,7 +11,7 @@ export const completeFetchDownloadLimitPaymentUrl = createAction(
 );
 
 export default function downloadLimitPaymentUrl() {
-    return (dispatch, getState) => {
+    return dispatch => {
         dispatch(startFetchDownloadLimitPaymentUrl());
 
         const testUrl = 'http://localhost:6543/facilities/?success=true';
