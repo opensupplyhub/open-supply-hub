@@ -347,6 +347,10 @@ RAW_MATERIAL_PROCESSING_TYPES = {
     YARN_SPINNING: 'Yarn spinning',
 }
 
+RECRUITMENT_AGENCY_TYPES = {
+
+}
+
 RAW_MATERIAL_PROCESSING_TYPES_ALIAS = {
     'raw material processing': RAW_MATERIAL_PROCESSING_OR_PRODUCTION,
     'raw material production': RAW_MATERIAL_PROCESSING_OR_PRODUCTION,
@@ -362,6 +366,7 @@ PRINTING_PROCESSING = 'printing product dyeing and laundering'
 ASSEMBLY_PROCESSING = 'final product assembly'
 WAREHOUSING_PROCESSING = 'warehousing distribution'
 OFFICE_PROCESSING = 'office hq'
+RECRUITMENT_AGENCY = 'recruitment agency'
 
 ALL_FACILITY_TYPES = {
     RAW_MATERIAL_PROCESSING: 'Raw Material Processing or Production',
@@ -369,7 +374,8 @@ ALL_FACILITY_TYPES = {
     PRINTING_PROCESSING: 'Printing, Product Dyeing and Laundering',
     ASSEMBLY_PROCESSING: 'Final Product Assembly',
     WAREHOUSING_PROCESSING: 'Warehousing / Distribution',
-    OFFICE_PROCESSING: 'Office / HQ'
+    OFFICE_PROCESSING: 'Office / HQ',
+    RECRUITMENT_AGENCY: 'Recruitment Agency'
 }
 
 ALL_FACILITY_TYPE_CHOICES = [(k, v) for k, v in
@@ -382,6 +388,7 @@ FACILITY_PROCESSING_TYPES = {
     ASSEMBLY_PROCESSING: ASSEMBLY_PROCESSING_TYPES,
     WAREHOUSING_PROCESSING: WAREHOUSING_PROCESSING_TYPES,
     OFFICE_PROCESSING: OFFICE_PROCESSING_TYPES,
+    RECRUITMENT_AGENCY: RECRUITMENT_AGENCY_TYPES,
 }
 
 # Create a look-up of processing type -> facility type for
@@ -410,6 +417,7 @@ ALL_PROCESSING_TYPES = {
     **PRINTING_PROCESSING_TYPES,
     **TEXTILE_PROCESSING_TYPES,
     **RAW_MATERIAL_PROCESSING_TYPES,
+    **RECRUITMENT_AGENCY_TYPES,
 }
 
 ALL_PROCESSING_TYPE_CHOICES = [(k, v) for k, v in
