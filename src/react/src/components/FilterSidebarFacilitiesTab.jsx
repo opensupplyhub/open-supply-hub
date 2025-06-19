@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { arrayOf, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Dialog from '@material-ui/core/Dialog';
@@ -254,6 +254,15 @@ function FilterSidebarFacilitiesTab({
         fetchTargetFacility,
         openMergeModal,
     });
+
+    const location = useLocation();
+
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const isSuccess = queryParams.get('success') === 'true';
+        if (isSuccess) {
+        }
+    }, [location.search]);
 
     if (fetching) {
         return (
