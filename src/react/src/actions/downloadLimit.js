@@ -16,8 +16,6 @@ export default function downloadLimitPaymentUrl() {
 
         const testUrl = 'http://localhost:6543/facilities/?success=true';
 
-        window.location.href = testUrl;
-
         dispatch(completeFetchDownloadLimitPaymentUrl(testUrl));
     };
 }

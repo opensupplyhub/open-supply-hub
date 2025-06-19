@@ -50,6 +50,7 @@ const DownloadFacilitiesButton = ({
     isEmbedded,
     logDownloadError,
     user,
+    url,
     /* from props */
     allowLargeDownloads,
     disabled,
@@ -69,8 +70,13 @@ const DownloadFacilitiesButton = ({
             dispatch(hideLogDownloadError());
         }
     }, [logDownloadError]);
+    useEffect(() => {
+        if (url) {
+            window.location.href = url;
+        }
+    }, [url]);
     const handleUpgrade = () => {
-        downloadLimitPaymentUrl();
+        dispatch(downloadLimitPaymentUrl());
     };
     const handleClick = event => {
         if (disabled) {
@@ -139,6 +145,7 @@ DownloadFacilitiesButton.defaultProps = {
     allowLargeDownloads: false,
     disabled: false,
     logDownloadError: null,
+    url: null,
 };
 
 DownloadFacilitiesButton.propTypes = {
@@ -149,6 +156,7 @@ DownloadFacilitiesButton.propTypes = {
         allowed_records_number: number.isRequired,
         isAnon: bool.isRequired,
     }).isRequired,
+    url: string,
 };
 
 function mapStateToProps({
@@ -157,11 +165,15 @@ function mapStateToProps({
     },
     logDownload: { error: logDownloadError },
     embeddedMap: { embed: isEmbedded },
+    downloadLimit: {
+        payment: { url },
+    },
 }) {
     return {
         user,
         logDownloadError,
         isEmbedded,
+        url,
     };
 }
 
