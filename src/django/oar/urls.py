@@ -21,6 +21,10 @@ from api.views.v1.production_locations \
      import ProductionLocations
 from api.views.v1.moderation_events \
      import ModerationEvents
+from api.views.stripe.download_locations_checkout_session_view \
+     import DownloadLocationsCheckoutSessionView
+from api.views.stripe.download_locations_checkout_webhook_view \
+     import DownloadLocationsCheckoutWebhookView
 from api.admin import admin_site
 from api.facilities_download_view_set import FacilitiesDownloadViewSet
 from web.views import environment
