@@ -56,7 +56,6 @@ class Migration(migrations.Migration):
                         blank=True,
                         help_text='The promotion code applied to the payment, if any.',
                         max_length=255,
-                        null=True,
                     ),
                 ),
                 (

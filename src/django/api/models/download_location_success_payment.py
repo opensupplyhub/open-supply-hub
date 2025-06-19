@@ -39,7 +39,6 @@ class DownloadLocationSuccessPayment(models.Model):
     )
     promotion_code = models.CharField(
         max_length=255,
-        null=True,
         blank=True,
         help_text='The promotion code applied to the payment, if any.'
     )
