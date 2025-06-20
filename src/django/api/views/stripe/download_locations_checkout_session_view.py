@@ -17,6 +17,7 @@ class DownloadLocationsCheckoutSessionView(APIView):
     View to create a Stripe Checkout session for purchasing additional records
     for downloading production locations data.
     """
+
     permission_classes = [IsRegisteredAndConfirmed]
     swagger_schema = None
 
