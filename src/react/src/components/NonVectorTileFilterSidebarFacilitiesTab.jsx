@@ -28,11 +28,10 @@ import {
     updateSidebarFacilitiesTabTextFilter,
 } from '../actions/ui';
 
-import { facilityCollectionPropType } from '../util/propTypes';
+import { facilityCollectionPropType, userPropType } from '../util/propTypes';
 
 import {
     ALLOW_LARGE_DOWNLOADS,
-    FACILITIES_DOWNLOAD_DEFAULT_LIMIT,
     authLoginFormRoute,
     authRegisterFormRoute,
 } from '../util/constants';
@@ -109,6 +108,7 @@ function NonVectorTileFilterSidebarFacilitiesTab({
     filterText,
     updateFilterText,
     classes,
+    user,
 }) {
     const [loginRequiredDialogIsOpen, setLoginRequiredDialogIsOpen] = useState(
         false,
@@ -228,8 +228,8 @@ function NonVectorTileFilterSidebarFacilitiesTab({
                         alternative={
                             <DownloadFacilitiesButton
                                 disabled={
-                                    facilitiesCount >=
-                                    FACILITIES_DOWNLOAD_DEFAULT_LIMIT
+                                    facilitiesCount >
+                                    user.allowed_records_number
                                 }
                                 setLoginRequiredDialogIsOpen={
                                     setLoginRequiredDialogIsOpen
@@ -363,6 +363,7 @@ function NonVectorTileFilterSidebarFacilitiesTab({
 NonVectorTileFilterSidebarFacilitiesTab.defaultProps = {
     data: null,
     error: null,
+    user: null,
 };
 
 NonVectorTileFilterSidebarFacilitiesTab.propTypes = {
@@ -373,6 +374,7 @@ NonVectorTileFilterSidebarFacilitiesTab.propTypes = {
     returnToSearchTab: func.isRequired,
     filterText: string.isRequired,
     updateFilterText: func.isRequired,
+    user: userPropType,
 };
 
 function mapStateToProps({
@@ -383,8 +385,12 @@ function mapStateToProps({
         facilitiesSidebarTabSearch: { filterText },
         window: { innerHeight: windowHeight },
     },
+    auth: {
+        user: { user },
+    },
 }) {
     return {
+        user,
         data,
         error,
         fetching,

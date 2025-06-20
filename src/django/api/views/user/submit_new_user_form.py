@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_204_NO_CONTENT
 from django.db import transaction
 
-from ...models import Contributor, User
+from ...models import Contributor, User, FacilityDownloadLimit
 from ...serializers import UserSerializer
 from .add_user_to_mailing_list import add_user_to_mailing_list
 
@@ -55,6 +55,8 @@ class SubmitNewUserForm(CreateAPIView):
                 contrib_type=contrib_type,
                 other_contrib_type=other_contrib_type,
             )
+
+            FacilityDownloadLimit.get_or_create_user_download_limit(user)
 
             if user.should_receive_newsletter:
                 add_user_to_mailing_list(user.email, name, contrib_type)

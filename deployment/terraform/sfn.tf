@@ -47,3 +47,25 @@ resource "aws_cloudwatch_event_rule" "check_api_limits" {
   schedule_expression = var.check_api_limits_schedule_expression
 }
 
+resource "aws_cloudwatch_event_target" "update_expired_download_limits" {
+  target_id = "eventTarget${local.short}UpdateExpiredDownloadLimits"
+  rule      = aws_cloudwatch_event_rule.update_expired_download_limits.name
+  arn       = aws_sfn_state_machine.app_cli.id
+  role_arn  = aws_iam_role.cloudwatch_events_service_role.arn
+
+  input = <<EOF
+{
+  "commands": [
+    "update_expired_download_limits"
+  ]
+}
+EOF
+
+}
+
+resource "aws_cloudwatch_event_rule" "update_expired_download_limits" {
+  name                = "eventRule${local.short}UpdateExpiredDownloadLimits"
+  description         = "Run update_expired_download_limits management command once a day at midnight UTC."
+  schedule_expression = var.update_expired_download_limits_schedule_expression
+}
+
