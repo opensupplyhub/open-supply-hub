@@ -4,7 +4,7 @@ from django.conf import settings
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views import View
 
-from api.models import DownloadLocationSuccessPayment
+from api.models import DownloadLocationPayment
 
 
 class DownloadLocationsCheckoutWebhookView(View):
@@ -35,7 +35,7 @@ class DownloadLocationsCheckoutWebhookView(View):
         if event["type"] == "checkout.session.completed":
             session = event["data"]["object"]
 
-            payment = DownloadLocationSuccessPayment(
+            payment = DownloadLocationPayment(
                 user_id=session["metadata"]["user_id"],
                 stripe_session_id=session["id"],
                 payment_id=session["payment_intent"],
