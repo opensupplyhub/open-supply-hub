@@ -3,27 +3,24 @@ import stripe
 from django.conf import settings
 
 from rest_framework import status
-from rest_framework.decorators import permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.permissions import IsRegisteredAndConfirmed
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
-# SITE_URL = settings.SITE_URL if settings.SITE_URL else 'http://localhost:6543'
-# PRICE_ID = settings.STRIPE_PRICE_ID if settings.STRIPE_PRICE_ID else 'price_1RaadLR1cBat6fnjJqy1dlJM'
-SITE_URL = 'http://localhost:6543'  # Need to define the SITE_URL variable for the different environments
-STRIPE_PRICE_ID = 'price_1RaadLR1cBat6fnjJqy1dlJM'  # Example price ID, replace with actual one if needed
+
+SITE_URL = settings.SITE_URL
+STRIPE_PRICE_ID = settings.STRIPE_PRICE_ID
 
 
-@permission_classes([IsRegisteredAndConfirmed])
 class DownloadLocationsCheckoutSessionView(APIView):
     """
     View to create a Stripe Checkout session for purchasing additional records
     for downloading production locations data.
     """
-    permission_classes = [IsRegisteredAndConfirmed]
     swagger_schema = None
+    permission_classes = [IsRegisteredAndConfirmed]
 
     def post(self, request, *args, **kwargs):
         try:
