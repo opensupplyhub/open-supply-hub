@@ -28,21 +28,21 @@ class FacilityDeleteTest(APITestCase):
         )
 
         self.user_email = "test@example.com"
-        self.user_password = "example123"
+        self.user_pass = "example123"
         self.user = User.objects.create(email=self.user_email)
-        self.user.set_password(self.user_password)
+        self.user.set_password(self.user_pass)
         self.user.save()
 
         self.other_user_email = "other@example.com"
-        self.other_user_password = "other123"
+        self.other_user_pass = "other123"
         self.other_user = User.objects.create(email=self.other_user_email)
-        self.other_user.set_password(self.other_user_password)
+        self.other_user.set_password(self.other_user_pass)
         self.other_user.save()
 
         self.superuser_email = "super@example.com"
-        self.superuser_password = "example123"
+        self.superuser_pass = "example123"
         self.superuser = User.objects.create_superuser(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
 
         self.contributor = Contributor.objects.create(
@@ -103,19 +103,19 @@ class FacilityDeleteTest(APITestCase):
         self.assertEqual(401, response.status_code)
 
     def test_requires_superuser(self):
-        self.client.login(email=self.user_email, password=self.user_password)
+        self.client.login(email=self.user_email, password=self.user_pass)
         response = self.client.delete(self.facility_url)
         self.assertEqual(403, response.status_code)
 
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         response = self.client.delete(self.facility_url)
         self.assertEqual(204, response.status_code)
 
     def test_delete(self):
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         response = self.client.delete(self.facility_url)
         self.assertEqual(204, response.status_code)
@@ -146,7 +146,7 @@ class FacilityDeleteTest(APITestCase):
             status=FacilityClaimStatuses.APPROVED,
         )
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         response = self.client.delete(self.facility_url)
         self.assertEqual(400, response.status_code)
@@ -159,7 +159,7 @@ class FacilityDeleteTest(APITestCase):
             status=FacilityClaimStatuses.PENDING,
         )
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         response = self.client.delete(self.facility_url)
         self.assertEqual(204, response.status_code)
@@ -238,7 +238,7 @@ class FacilityDeleteTest(APITestCase):
         )
 
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         response = self.client.delete(self.facility_url)
         self.assertEqual(204, response.status_code)
@@ -340,7 +340,7 @@ class FacilityDeleteTest(APITestCase):
         )
 
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         response = self.client.delete(self.facility_url)
         self.assertEqual(204, response.status_code)
@@ -414,7 +414,7 @@ class FacilityDeleteTest(APITestCase):
         )
 
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         response = self.client.delete(self.facility_url)
         self.assertEqual(204, response.status_code)
@@ -473,7 +473,7 @@ class FacilityDeleteTest(APITestCase):
         )
 
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         response = self.client.delete(self.facility_url)
         self.assertEqual(204, response.status_code)
@@ -522,7 +522,7 @@ class FacilityDeleteTest(APITestCase):
         )
 
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         response = self.client.delete(self.facility_url)
         self.assertEqual(204, response.status_code)
@@ -566,7 +566,7 @@ class FacilityDeleteTest(APITestCase):
         )
 
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         response = self.client.delete(self.facility_url)
         self.assertEqual(204, response.status_code)
@@ -588,7 +588,7 @@ class FacilityDeleteTest(APITestCase):
             facility=self.facility, os_id="US1234567ABCDEF"
         )
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         response = self.client.delete(self.facility_url)
         self.assertEqual(204, response.status_code)
@@ -598,7 +598,7 @@ class FacilityDeleteTest(APITestCase):
         self.facility_match.save()
 
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         response = self.client.delete(self.facility_url)
         self.assertEqual(204, response.status_code)
@@ -620,7 +620,7 @@ class FacilityDeleteTest(APITestCase):
         )
 
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         response = self.client.delete(self.facility_url)
         self.assertEqual(204, response.status_code)
@@ -648,7 +648,7 @@ class FacilityDeleteTest(APITestCase):
 
         self.client.login(
             email=self.superuser_email,
-            password=self.superuser_password
+            password=self.superuser_pass
         )
         response = self.client.delete(self.facility_url)
         self.assertEqual(204, response.status_code)

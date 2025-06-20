@@ -32,21 +32,21 @@ class FacilityMergeTest(APITestCase):
         )
 
         self.user_email = "test@example.com"
-        self.user_password = "example123"
+        self.user_pass = "example123"
         self.user = User.objects.create(email=self.user_email)
-        self.user.set_password(self.user_password)
+        self.user.set_password(self.user_pass)
         self.user.save()
 
         self.superuser_email = "super@example.com"
-        self.superuser_password = "example123"
+        self.superuser_pass = "example123"
         self.superuser = User.objects.create_superuser(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
 
         self.api_user_email = "api@example.com"
-        self.api_user_password = "example123"
+        self.api_user_pass = "example123"
         self.api_user = User.objects.create(email=self.api_user_email)
-        self.api_user.set_password(self.api_user_password)
+        self.api_user.set_password(self.api_user_pass)
         self.api_user.save()
 
         self.contributor_1 = Contributor.objects.create(
@@ -224,7 +224,7 @@ class FacilityMergeTest(APITestCase):
         self.assertEqual(401, response.status_code)
 
     def test_requires_superuser(self):
-        self.client.login(email=self.user_email, password=self.user_password)
+        self.client.login(email=self.user_email, password=self.user_pass)
         response = self.client.post(self.merge_url)
         self.assertEqual(403, response.status_code)
 
@@ -234,7 +234,7 @@ class FacilityMergeTest(APITestCase):
         original_facility_count = Facility.objects.all().count()
         original_alias_count = FacilityAlias.objects.all().count()
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         response = self.client.post(self.merge_url)
         self.assertNotEqual(self.old_updated_at, self.facility_1.updated_at)
@@ -290,7 +290,7 @@ class FacilityMergeTest(APITestCase):
 
     def test_merge_with_extended_fields(self):
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         response = self.client.post(self.merge_url)
         self.assertEqual(200, response.status_code)
@@ -311,7 +311,7 @@ class FacilityMergeTest(APITestCase):
 
     def test_updates_facility_index(self):
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         response = self.client.post(self.merge_url)
         self.assertEqual(200, response.status_code)
@@ -332,7 +332,7 @@ class FacilityMergeTest(APITestCase):
 
         just_before_change = timezone.now()
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         response = self.client.post(self.merge_url)
         self.assertEqual(200, response.status_code)
@@ -358,7 +358,7 @@ class FacilityMergeTest(APITestCase):
 
     def test_required_params(self):
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         response = self.client.post(self.merge_endpoint)
         self.assertEqual(400, response.status_code)
@@ -368,7 +368,7 @@ class FacilityMergeTest(APITestCase):
 
     def test_params_reference_existing_objects(self):
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         url = "{}?target={}&merge={}".format(self.merge_endpoint, "foo", "bar")
         response = self.client.post(url)
@@ -378,12 +378,12 @@ class FacilityMergeTest(APITestCase):
         self.assertIn("merge", data)
 
     def test_requires_distinct_params(self):
-        self.client.login(email=self.user_email, password=self.user_password)
+        self.client.login(email=self.user_email, password=self.user_pass)
         response = self.client.post(self.merge_url)
         self.assertEqual(403, response.status_code)
 
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         url = "{}?target={}&merge={}".format(
             self.merge_endpoint, self.facility_1.id, self.facility_1.id
@@ -433,7 +433,7 @@ class FacilityMergeTest(APITestCase):
         )
 
         self.client.login(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
         response = self.client.post(self.merge_url)
         self.assertEqual(200, response.status_code)

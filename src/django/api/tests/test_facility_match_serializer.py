@@ -17,9 +17,9 @@ from api.serializers.facility.facility_match_serializer \
 class FacilityMatchSerializerTest(TestCase):
     def setUp(self):
         self.user_email = "test@example.com"
-        self.user_password = "example123"
+        self.user_pass = "example123"
         self.user = User.objects.create(email=self.user_email)
-        self.user.set_password(self.user_password)
+        self.user.set_password(self.user_pass)
         self.user.save()
 
         self.contributor = Contributor.objects.create(

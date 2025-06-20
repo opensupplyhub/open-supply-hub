@@ -11,9 +11,9 @@ class NonstandardFieldsApiTest(APITestCase):
     def setUp(self):
         self.url = reverse("nonstandard-fields-list")
         self.user_email = "test@example.com"
-        self.user_password = "example123"
+        self.user_pass = "example123"
         self.user = User.objects.create(email=self.user_email)
-        self.user.set_password(self.user_password)
+        self.user.set_password(self.user_pass)
         self.user.save()
 
         self.contributor = Contributor.objects.create(
@@ -29,7 +29,7 @@ class NonstandardFieldsApiTest(APITestCase):
         NonstandardField.objects.create(
             column_name="extra_2", contributor=self.contributor
         )
-        self.client.login(email=self.user_email, password=self.user_password)
+        self.client.login(email=self.user_email, password=self.user_pass)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         content = json.loads(response.content)
@@ -39,7 +39,7 @@ class NonstandardFieldsApiTest(APITestCase):
         self.assertIn("parent_company", content)
 
     def test_without_nonstandard_fields(self):
-        self.client.login(email=self.user_email, password=self.user_password)
+        self.client.login(email=self.user_email, password=self.user_pass)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         content = json.loads(response.content)

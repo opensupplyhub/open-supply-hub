@@ -17,15 +17,15 @@ from django.contrib.gis.geos import Point
 class FacilityAPITestCaseBase(APITestCase):
     def setUp(self):
         self.user_email = "test@example.com"
-        self.user_password = "example123"
+        self.user_pass = "example123"
         self.user = User.objects.create(email=self.user_email)
-        self.user.set_password(self.user_password)
+        self.user.set_password(self.user_pass)
         self.user.save()
 
         self.superuser_email = "super@example.com"
-        self.superuser_password = "example123"
+        self.superuser_pass = "example123"
         self.superuser = User.objects.create_superuser(
-            email=self.superuser_email, password=self.superuser_password
+            email=self.superuser_email, password=self.superuser_pass
         )
 
         self.contributor = Contributor.objects.create(
@@ -83,4 +83,4 @@ class FacilityAPITestCaseBase(APITestCase):
         )
         self.user.groups.set([group.id])
         self.user.save()
-        self.client.login(email=self.user_email, password=self.user_password)
+        self.client.login(email=self.user_email, password=self.user_pass)
