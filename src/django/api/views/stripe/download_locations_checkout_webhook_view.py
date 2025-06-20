@@ -35,14 +35,26 @@ class DownloadLocationsCheckoutWebhookView(View):
         if event["type"] == "checkout.session.completed":
             session = event["data"]["object"]
 
-            payment = DownloadLocationPayment(
-                user_id=session["metadata"]["user_id"],
-                stripe_session_id=session["id"],
-                payment_id=session["payment_intent"],
-                amount_subtotal=session["amount_subtotal"],
-                amount_total=session["amount_total"],
-                promotion_code=session.get("promotion_code", None),
-            )
-            payment.save()
+            try:
+                user_id = session["metadata"]["user_id"]
+                stripe_session_id = session["id"]
+                payment_id = session["payment_intent"]
+                amount_subtotal = session["amount_subtotal"]
+                amount_total = session["amount_total"]
+                promotion_code = session.get("promotion_code", '')
+
+                payment = DownloadLocationPayment(
+                    user_id=user_id,
+                    stripe_session_id=stripe_session_id,
+                    payment_id=payment_id,
+                    amount_subtotal=amount_subtotal,
+                    amount_total=amount_total,
+                    promotion_code=promotion_code,
+                )
+                payment.save()
+            except KeyError as e:
+                return HttpResponseBadRequest(f"Missing expected field: {e}")
+            except Exception as e:
+                return HttpResponse(f"Unexpected error: {str(e)}", status=500)
 
         return HttpResponse(status=200)
