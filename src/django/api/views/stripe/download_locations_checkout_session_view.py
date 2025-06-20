@@ -10,7 +10,6 @@ from api.permissions import IsRegisteredAndConfirmed
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
-SITE_URL = settings.SITE_URL
 STRIPE_PRICE_ID = settings.STRIPE_PRICE_ID
 
 
@@ -23,6 +22,8 @@ class DownloadLocationsCheckoutSessionView(APIView):
     permission_classes = [IsRegisteredAndConfirmed]
 
     def post(self, request, *args, **kwargs):
+        site_url = request.build_absolute_uri('/')
+
         try:
             checkout_session = stripe.checkout.Session.create(
                 line_items=[
@@ -38,12 +39,11 @@ class DownloadLocationsCheckoutSessionView(APIView):
                 payment_method_types=['card'],
                 mode='payment',
                 metadata={
-                    'user_email': request.user.email,
                     'user_id': request.user.id,
                 },
                 allow_promotion_codes=True,
-                success_url=SITE_URL + '?success=true',
-                cancel_url=SITE_URL + '?canceled=true',
+                success_url=site_url + 'facilities?success=true',
+                cancel_url=site_url + 'facilities?canceled=true',
             )
 
             return Response(
