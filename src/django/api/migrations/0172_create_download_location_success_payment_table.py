@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='DownloadLocationSuccessPayment',
+            name='DownloadLocationPayment',
             fields=[
                 (
                     'id',
@@ -65,11 +65,12 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.AddField(
-            model_name='downloadlocationsuccesspayment',
+            model_name='downloadlocationpayment',
             name='user',
             field=models.ForeignKey(
                 help_text='The user who made the payment.',
                 on_delete=django.db.models.deletion.CASCADE,
+                related_name='download_location_payments',
                 to=settings.AUTH_USER_MODEL,
             ),
         ),

@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class DownloadLocationSuccessPayment(models.Model):
+class DownloadLocationPayment(models.Model):
     """
     Model to store information about successful payments made
     for purchasing of additional records for downloading production
