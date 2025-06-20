@@ -40,6 +40,7 @@ class DownloadLocationPayment(models.Model):
     promotion_code = models.CharField(
         max_length=255,
         blank=True,
+        default='',
         help_text='The promotion code applied to the payment, if any.'
     )
     created_at = models.DateTimeField(
