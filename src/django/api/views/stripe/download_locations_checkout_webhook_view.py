@@ -52,6 +52,7 @@ class DownloadLocationsCheckoutWebhookView(View):
                     promotion_code=promotion_code,
                 )
                 payment.save()
+
             except KeyError as e:
                 return HttpResponseBadRequest(f"Missing expected field: {e}")
             except Exception as e:
