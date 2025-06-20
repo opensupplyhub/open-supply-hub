@@ -10,7 +10,7 @@ from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_match import FacilityMatch
 from api.models.facility.facility_match_temp import FacilityMatchTemp
 from api.models.source import Source
-from api.tests.base_moderation_events_production_location_test import (
+from api.tests.test_base_moderation_events_production_location import (
     BaseModerationEventsProductionLocationTest,
 )
 

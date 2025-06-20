@@ -7,7 +7,7 @@ from api.processing import (
     ItemRemovedException,
     geocode_facility_list_item,
 )
-from api.tests.processing_test_case import ProcessingTestCase
+from api.tests.test_processing_case import ProcessingTestCase
 from api.tests.test_data import listitem_geocode_data
 
 from django.contrib.gis.geos import Point

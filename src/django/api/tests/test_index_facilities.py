@@ -3,7 +3,7 @@ from api.constants import FacilityClaimStatuses
 from api.models import FacilityClaim
 from api.models.facility.facility_index import FacilityIndex
 from api.extended_fields import create_extendedfields_for_claim
-from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
+from api.tests.test_facility_api_case_base import FacilityAPITestCaseBase
 from waffle.testutils import override_switch
 
 from django.urls import reverse

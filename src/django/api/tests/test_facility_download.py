@@ -16,7 +16,7 @@ from api.models import (
     User,
 )
 from django.core.files.uploadedfile import SimpleUploadedFile
-from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
+from api.tests.test_facility_api_case_base import FacilityAPITestCaseBase
 from api.tests.test_data import geocoding_data
 from rest_framework import status
 from waffle.testutils import override_flag, override_switch

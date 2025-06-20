@@ -3,7 +3,7 @@ import csv
 from unittest.mock import patch
 
 from api.models import FacilityList, Source
-from api.tests.base_facility_list_test import BaseFacilityListTest
+from api.tests.test_base_facility_list import BaseFacilityListTest
 
 from django.core import mail
 from django.test import override_settings

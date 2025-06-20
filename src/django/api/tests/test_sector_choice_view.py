@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 from api.constants import FeatureGroups
 from api.models import Contributor, Source, User
 from api.models.facility.facility_index import FacilityIndex
-from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
+from api.tests.test_facility_api_case_base import FacilityAPITestCaseBase
 from api.tests.test_data import geocoding_data
 
 from django.contrib import auth

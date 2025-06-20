@@ -3,7 +3,7 @@ from api.models import (
     FacilityList,
     Source,
 )
-from api.tests.base_facility_list_test import BaseFacilityListTest
+from api.tests.test_base_facility_list import BaseFacilityListTest
 
 
 class UserProfileViewTest(BaseFacilityListTest):

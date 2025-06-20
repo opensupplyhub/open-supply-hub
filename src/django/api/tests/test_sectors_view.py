@@ -13,7 +13,7 @@ from api.models.sector import Sector
 from api.models.sector_group import SectorGroup
 from api.models.source import Source
 from api.models.user import User
-from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
+from api.tests.test_facility_api_case_base import FacilityAPITestCaseBase
 
 
 class SectorsViewTest(FacilityAPITestCaseBase):

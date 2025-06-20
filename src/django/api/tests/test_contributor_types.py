@@ -1,7 +1,7 @@
 import json
 
 from api.models import Contributor, FacilityListItem
-from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
+from api.tests.test_facility_api_case_base import FacilityAPITestCaseBase
 
 from django.urls import reverse
 

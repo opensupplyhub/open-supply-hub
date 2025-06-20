@@ -2,7 +2,7 @@ import json
 from unittest.mock import Mock, patch
 
 from api.models import ExtendedField
-from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
+from api.tests.test_facility_api_case_base import FacilityAPITestCaseBase
 from api.tests.test_data import geocoding_data
 
 from django.urls import reverse
