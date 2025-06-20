@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { arrayOf, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router';
+import { toast } from 'react-toastify';
 import { Link, useLocation } from 'react-router-dom';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import LinearProgress from '@material-ui/core/LinearProgress';
@@ -51,6 +52,7 @@ import {
     authLoginFormRoute,
     authRegisterFormRoute,
     ALLOW_LARGE_DOWNLOADS,
+    PAYMENT_CANCELED_MSG,
 } from '../util/constants';
 
 import { makeFacilityDetailLink } from '../util/util';
@@ -264,8 +266,12 @@ function FilterSidebarFacilitiesTab({
         const queryParams = new URLSearchParams(location.search);
         const isCorrectPath = location.pathname === '/facilities/';
         const isSuccess = queryParams.get('success') === 'true';
+        const isCanceled = queryParams.get('canceled') === 'true';
         if (isCorrectPath && isSuccess) {
             checkDownloadLimits();
+        }
+        if (isCorrectPath && isCanceled) {
+            toast(PAYMENT_CANCELED_MSG);
         }
     }, [location.search]);
 

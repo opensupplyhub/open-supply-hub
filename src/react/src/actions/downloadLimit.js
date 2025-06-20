@@ -17,7 +17,7 @@ export function downloadLimitPaymentUrl() {
     return dispatch => {
         dispatch(startFetchDownloadLimitPaymentUrl());
 
-        // dispatch(failFetchDownloadLimitPaymentUrl('Something goes wrong'));
+        // dispatch(failFetchDownloadLimitPaymentUrl('Something goes wrong. Try again.'));
 
         dispatch(
             completeFetchDownloadLimitPaymentUrl(
