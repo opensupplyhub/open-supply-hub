@@ -86,12 +86,11 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
                 facility_download_limit.paid_download_records
             ) == 0
         ):
-            raise ValidationError('You have reached the maximum number of '
-                                  'facility downloads permitted for this year'
-                                  ', both free and paid. Please wait until '
-                                  'the start of the next calendar year to '
-                                  'access additional data or to order new '
-                                  'records for download.')
+            raise ValidationError('You have reached your annual limit '
+                                  'for facility record downloads, including'
+                                  ' both free and paid. Additional downloads'
+                                  ' will be available at the start of the next'
+                                  ' calendar year.')
 
         is_large_download_allowed = (
             not facility_download_limit
