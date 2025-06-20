@@ -71,13 +71,15 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
         total_records = queryset.count()
 
-        initial_release_date = make_aware(datetime(2025, 6, 28))
+        initial_release_date = make_aware(datetime(2025, 6, 20))
+        facility_download_limit = None
 
-        facility_download_limit = FacilityDownloadLimit \
-            .get_or_create_user_download_limit(
-                request.user,
-                initial_release_date
-            )
+        if not switch_is_active('allow_large_downloads'):
+            facility_download_limit = FacilityDownloadLimit \
+                .get_or_create_user_download_limit(
+                    request.user,
+                    initial_release_date
+                )
 
         current_page = int(request.query_params.get("page", 1))
 
