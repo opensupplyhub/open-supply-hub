@@ -120,7 +120,6 @@ const DownloadFacilitiesButton = ({
         <Tooltip title={tooltipTitle} placement="left">
             <div>
                 <Button
-                    // disabled={disabled}
                     variant="outlined"
                     className={classes.listHeaderButtonStyles}
                     aria-owns={anchorEl ? 'download-menu' : undefined}
