@@ -45,6 +45,9 @@ services:
       - NOTIFICATION_EMAIL_TO=notification@example.com
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - KAFKA_TOPIC_DEDUPE_BASIC_NAME=dedupe.hub.topic
+      # RBA database connection for sync operations
+      - RBA_DB_HOST=localhost
+      - RBA_DB_PORT=5434
       # NOTE the AWS_S3* variables are only used for testing s3 in development.
       # The deployed application uses a policy attached to the ECS task instead
       # of using keys.

@@ -1,5 +1,9 @@
 version: '3.8'
 
+networks:
+  proxynet:
+    external: true  # Important to reuse the existing network
+
 services:
   rba_db:
     build:
@@ -21,11 +25,7 @@ services:
     ports:
       - "5434:5432"
     networks:
-      - rba_sync_net
+      - proxynet
 
 volumes:
   rba_data:
-
-networks:
-  rba_sync_net:
-    name: proxynet
