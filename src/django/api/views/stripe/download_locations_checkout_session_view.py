@@ -9,7 +9,6 @@ from rest_framework.views import APIView
 from api.permissions import IsRegisteredAndConfirmed
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
-
 STRIPE_PRICE_ID = settings.STRIPE_PRICE_ID
 
 
@@ -18,8 +17,8 @@ class DownloadLocationsCheckoutSessionView(APIView):
     View to create a Stripe Checkout session for purchasing additional records
     for downloading production locations data.
     """
-    swagger_schema = None
     permission_classes = [IsRegisteredAndConfirmed]
+    swagger_schema = None
 
     def post(self, request, *args, **kwargs):
         site_url = request.build_absolute_uri('/')
