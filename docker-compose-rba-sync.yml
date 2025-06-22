@@ -2,6 +2,7 @@ version: '3.8'
 
 networks:
   proxynet:
+    name: os-hub-development
     external: true  # Important to reuse the existing network
 
 services:
