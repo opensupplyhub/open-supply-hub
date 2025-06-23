@@ -27,7 +27,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `user`: `ForeignKey` - references the user who made the payment
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-1919](https://opensupplyhub.atlassian.net/browse/OSDEV-1919) - Added the following endpoints to support Stripe payments for downloading additional production location records:
+    * `POST api/v1/download-locations-checkout-session/` - Creates a Stripe Checkout session for purchasing additional download records.
+    * `POST api/v1/download-locations-checkout-webhook/`- Handles Stripe webhook events for successful payments.
 
 ### Architecture/Environment changes
 * *Describe architecture/environment changes here.*
