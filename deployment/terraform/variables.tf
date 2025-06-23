@@ -831,3 +831,20 @@ variable "direct_data_load_tab_id" {
 }
 
 ### DIRECT DATA LOAD VARIABLES - END ###
+
+variable "stripe_secret_key" {
+  type        = string
+  sensitive   = true
+  description = "Stripe secret key for payment processing"
+}
+
+variable "stripe_webhook_secret" {
+  type        = string
+  sensitive   = true
+  description = "Stripe webhook secret for payment processing"
+}
+
+variable "stripe_price_id" {
+  type        = string
+  description = "Stripe price ID for subscription plans"
+}
