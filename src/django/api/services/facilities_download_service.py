@@ -15,7 +15,6 @@ from api.constants import APIErrorMessages, FacilitiesDownloadSettings
 logger = logging.getLogger(__name__)
 
 
-
 class FacilitiesDownloadService:
     def _check_if_downloads_are_blocked(self):
         if switch_is_active('block_location_downloads'):
@@ -30,7 +29,9 @@ class FacilitiesDownloadService:
             raise ValidationError(params.errors)
 
     def _log_request(self, request):
-        logger.info(f'Facility downloads request for User ID: {request.user.id}')
+        logger.info(
+            f'Facility downloads request for User ID: {request.user.id}'
+        )
 
     def _get_filtered_queryset(self, request):
         return FacilityIndex.objects.filter_by_query_params(
@@ -58,24 +59,27 @@ class FacilitiesDownloadService:
 
         if has_exhausted_limit:
             raise ValidationError(
-                'You have reached your annual limit for facility record downloads, '
-                'including both free and paid. Additional downloads will be available '
-                'at the start of the next calendar year.'
+                'You have reached your annual limit for facility record '
+                'downloads, including both free and paid. Additional '
+                'downloads will be available at the start of the next '
+                'calendar year.'
             )
 
         has_download_limit = limit is not None
-        max_allowed = FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT
+        max_allowed = FacilitiesDownloadSettings\
+            .FACILITIES_DOWNLOAD_LIMIT
 
-        is_large_download_blocked = has_download_limit and total_records > max_allowed
+        is_blocked = has_download_limit and total_records > max_allowed
 
-        if is_large_download_blocked:
+        if is_blocked:
             records_used = (
                 limit.free_download_records +
                 limit.paid_download_records
             )
             raise ValidationError(
-                f'Downloads are only allowed for results containing {records_used} facilities or fewer.'
-            )
+                    f'Downloads are only allowed for results containing '
+                    '{records_used} facilities or fewer.'
+                )
 
     def _check_pagination(self, page_queryset):
         if page_queryset is None:

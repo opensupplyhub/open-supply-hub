@@ -16,6 +16,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
     """
     queryset = FacilityIndex.objects.all()
     pagination_class = PageAndSizePagination
+
     def get_serializer(self, page_queryset):
         if self.request.query_params.get('embed') == '1':
             contributor_id = get_embed_contributor_id_from_query_params(
@@ -41,7 +42,10 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         total_records = queryset.count()
 
         facility_download_limit = service._get_download_limit(request)
-        service._enforce_limits(request, total_records, facility_download_limit)
+        service._enforce_limits(request,
+                                total_records,
+                                facility_download_limit
+                                )
 
         page_queryset = service\
             ._check_pagination(self.paginate_queryset(queryset))

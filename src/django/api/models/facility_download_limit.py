@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Optional
 from django.db import models
 from django.utils import timezone
@@ -80,11 +81,10 @@ class FacilityDownloadLimit(models.Model):
     def get_or_create_user_download_limit(
         user,
         custom_date=None
-    ) -> Optional["FacilityDownloadLimit"]:
+    ) -> Optional[FacilityDownloadLimit]:
         is_api_user = not user.is_anonymous and user.has_groups
-
+        # If user is an API user we don't want to impose limits.
         if is_api_user or user.is_anonymous:
-            # if user is an API user we don't want to impose limits
             return None
 
         defaults = {'updated_at': custom_date} if custom_date else {}

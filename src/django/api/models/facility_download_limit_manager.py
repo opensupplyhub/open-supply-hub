@@ -10,7 +10,7 @@ class FacilityDownloadLimitManager(models.Manager):
         now = timezone.now()
         one_year_ago_with_leap = now - relativedelta(years=1)
 
-        # Update free limits in bulk
+        # Update free limits in bulk.
         expired_free_limits = self.filter(
             updated_at__lt=one_year_ago_with_leap
         )
@@ -19,7 +19,7 @@ class FacilityDownloadLimitManager(models.Manager):
             free_download_records=limit,
             updated_at=now,
         )
-        # Update paid limits in bulk
+        # Update paid limits in bulk.
         expired_paid_limits = self.filter(
             purchase_date__lt=one_year_ago_with_leap
         ).exclude(paid_download_records=0)
