@@ -12,6 +12,14 @@ def delete_private_instance_switch(apps, schema_editor):
     Switch = apps.get_model('waffle', 'Switch')
     Switch.objects.get(name='private_instance').delete()
 
+def delete_allow_large_downloads_switch(apps, schema_editor):
+    Switch = apps.get_model('waffle', 'Switch')
+    Switch.objects.get(name='allow_large_downloads').delete()
+
+def create_allow_large_downloads_switch(apps, schema_editor):
+    Switch = apps.get_model('waffle', 'Switch')
+    Switch.objects.create(name='allow_large_downloads', active=False)
+
 
 class Migration(migrations.Migration):
 
@@ -22,5 +30,9 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(
             create_private_instance_switch,
-            delete_private_instance_switch,)
+            delete_private_instance_switch),
+        
+        migrations.RunPython(
+            delete_allow_large_downloads_switch,
+            create_allow_large_downloads_switch)
     ]
