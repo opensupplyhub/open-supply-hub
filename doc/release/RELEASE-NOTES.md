@@ -3,6 +3,47 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.8.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: July 12, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* 0173_create_download_location_success_payment_table.py - This migration introduces a new `DownloadLocationPayment` model in the `api` app. This model stores information about successful payments made for purchasing of additional records for downloading production locations data.
+
+#### Schema changes
+* [OSDEV-1919](https://opensupplyhub.atlassian.net/browse/OSDEV-1919) - Added a new `api_downloadlocationpayment` table with the following fields:
+    * `id`: Auto-incrementing primary key
+    * `stripe_session_id`: `CharField`, unique - stores Stripe checkout session ID
+    * `payment_id`: `CharField`, unique - stores Stripe payment identifier
+    * `amount_subtotal`: `IntegerField` - stores subtotal amount in cents
+    * `amount_total`: `IntegerField` - stores total amount in cents
+    * `promotion_code`: `CharField` - optional, stores any applied promotion code
+    * `created_at`: `DateTimeField` - indexed timestamp of when the record was created
+    * `user`: `ForeignKey` - references the user who made the payment
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.7.0
 
 ## Introduction
