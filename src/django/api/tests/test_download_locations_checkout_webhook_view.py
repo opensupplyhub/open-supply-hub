@@ -1,14 +1,11 @@
 import stripe
 
-from types import SimpleNamespace
-from django.test import TestCase
 from unittest.mock import patch
+
+from django.test import TestCase
 from django.urls import reverse
-from api.models import User
-from api.views.stripe.download_locations_checkout_webhook_view import (
-    DownloadLocationsCheckoutWebhookView,
-)
-from api.models import DownloadLocationPayment
+
+from api.models import DownloadLocationPayment, User
 
 
 class DownloadLocationsCheckoutWebhookViewTest(TestCase):
