@@ -5,8 +5,6 @@ from django.db import models
 from django.utils import timezone
 from django.db import transaction
 from api.constants import FacilitiesDownloadSettings
-from datetime import datetime
-from django.utils.timezone import make_aware
 
 from api.models.facility_download_limit_manager import (
     FacilityDownloadLimitManager
