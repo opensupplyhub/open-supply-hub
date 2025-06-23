@@ -1,9 +1,9 @@
 from __future__ import annotations
+import uuid
 from typing import Optional
 from django.db import models
 from django.utils import timezone
 from django.db import transaction
-from django.db.models import BigAutoField
 from api.constants import FacilitiesDownloadSettings
 from datetime import datetime
 from django.utils.timezone import make_aware
@@ -13,10 +13,6 @@ from api.models.facility_download_limit_manager import (
 )
 
 
-def release_initial_date():
-    return make_aware(datetime(2025, 6, 28))
-
-
 class FacilityDownloadLimit(models.Model):
     """
     Stores the number of facility records allowed for free download per
@@ -24,10 +20,12 @@ class FacilityDownloadLimit(models.Model):
     users, the date of last update of free facilities records, and the
     date when paid facility records were purchased.
     """
-    id = BigAutoField(
-        auto_created=True,
-        primary_key=True,
-        serialize=False
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the facility download limit record.'
     )
     user = models.OneToOneField(
         'User',

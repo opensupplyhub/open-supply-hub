@@ -77,9 +77,9 @@ class FacilitiesDownloadService:
                 limit.paid_download_records
             )
             raise ValidationError(
-                    f'Downloads are only allowed for results containing '
-                    '{records_used} facilities or fewer.'
-                )
+                f'Downloads are only allowed for results containing '
+                f'{records_used} facilities or fewer.'
+            )
 
     def _check_pagination(self, page_queryset):
         if page_queryset is None:
