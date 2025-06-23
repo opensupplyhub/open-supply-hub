@@ -53,11 +53,13 @@ const DownloadFacilitiesButton = ({
     isEmbedded,
     logDownloadError,
     user,
+    userAllowedRecords,
     url,
     urlError,
     /* from props */
     allowLargeDownloads,
     disabled,
+    upgrade,
     setLoginRequiredDialogIsOpen,
     classes,
     theme,
@@ -87,7 +89,7 @@ const DownloadFacilitiesButton = ({
         dispatch(downloadLimitPaymentUrl());
     };
     const handleClick = event => {
-        if (disabled) {
+        if (upgrade) {
             handleUpgrade();
         } else {
             setAnchorEl(event.currentTarget);
@@ -111,7 +113,7 @@ const DownloadFacilitiesButton = ({
     ) : (
         <p className={classes.downloadTooltip}>
             Downloads are supported for searches resulting in{' '}
-            {user.allowed_records_number} production locations or less.
+            {userAllowedRecords} production locations or less.
             {user.isAnon && ' Log in to download this dataset.'}
         </p>
     );
@@ -120,6 +122,7 @@ const DownloadFacilitiesButton = ({
         <Tooltip title={tooltipTitle} placement="left">
             <div>
                 <Button
+                    disabled={disabled}
                     variant="outlined"
                     className={classes.listHeaderButtonStyles}
                     aria-owns={anchorEl ? 'download-menu' : undefined}
@@ -127,14 +130,26 @@ const DownloadFacilitiesButton = ({
                     onClick={handleClick}
                 >
                     <div className={classes.buttonContent}>
-                        <DownloadIcon color={actionContrastText} />
+                        <DownloadIcon
+                            color={
+                                disabled
+                                    ? 'rgba(0, 0, 0, 0.26)'
+                                    : actionContrastText
+                            }
+                        />
                         <span className={classes.buttonText}>
-                            {disabled ? 'Upgrade to Download' : 'Download'}
+                            {upgrade ? 'Upgrade to Download' : 'Download'}
                         </span>
-                        {disabled ? (
+                        {upgrade ? (
                             ''
                         ) : (
-                            <ArrowDropDownIcon color={actionContrastText} />
+                            <ArrowDropDownIcon
+                                color={
+                                    disabled
+                                        ? 'rgba(0, 0, 0, 0.26)'
+                                        : actionContrastText
+                                }
+                            />
                         )}
                     </div>
                 </Button>
@@ -151,6 +166,8 @@ const DownloadFacilitiesButton = ({
 DownloadFacilitiesButton.defaultProps = {
     allowLargeDownloads: false,
     disabled: false,
+    upgrade: false,
+    userAllowedRecords: 5000,
     logDownloadError: null,
     url: null,
 };
@@ -158,9 +175,10 @@ DownloadFacilitiesButton.defaultProps = {
 DownloadFacilitiesButton.propTypes = {
     allowLargeDownloads: bool,
     disabled: bool,
+    upgrade: bool,
+    userAllowedRecords: number,
     logDownloadError: arrayOf(string),
     user: shape({
-        allowed_records_number: number.isRequired,
         isAnon: bool.isRequired,
     }).isRequired,
     url: string,

@@ -53,6 +53,8 @@ import {
     authRegisterFormRoute,
     ALLOW_LARGE_DOWNLOADS,
     PAYMENT_CANCELED_MSG,
+    PRIVATE_INSTANCE,
+    FACILITIES_DOWNLOAD_LIMIT,
 } from '../util/constants';
 
 import { makeFacilityDetailLink } from '../util/util';
@@ -370,25 +372,55 @@ function FilterSidebarFacilitiesTab({
                     </div>
                 ) : (
                     <FeatureFlag
-                        flag={ALLOW_LARGE_DOWNLOADS}
+                        flag={PRIVATE_INSTANCE}
                         alternative={
-                            <DownloadFacilitiesButton
-                                disabled={
-                                    facilitiesCount >
-                                    user.allowed_records_number
+                            <FeatureFlag
+                                flag={ALLOW_LARGE_DOWNLOADS}
+                                alternative={
+                                    <DownloadFacilitiesButton
+                                        upgrade={
+                                            facilitiesCount >
+                                            user.allowed_records_number
+                                        }
+                                        userAllowedRecords={
+                                            user.allowed_records_number
+                                        }
+                                        setLoginRequiredDialogIsOpen={
+                                            setLoginRequiredDialogIsOpen
+                                        }
+                                    />
                                 }
+                            >
+                                <DownloadFacilitiesButton
+                                    allowLargeDownloads
+                                    setLoginRequiredDialogIsOpen={
+                                        setLoginRequiredDialogIsOpen
+                                    }
+                                />
+                            </FeatureFlag>
+                        }
+                    >
+                        <FeatureFlag
+                            flag={ALLOW_LARGE_DOWNLOADS}
+                            alternative={
+                                <DownloadFacilitiesButton
+                                    disabled={
+                                        facilitiesCount >
+                                        FACILITIES_DOWNLOAD_LIMIT
+                                    }
+                                    setLoginRequiredDialogIsOpen={
+                                        setLoginRequiredDialogIsOpen
+                                    }
+                                />
+                            }
+                        >
+                            <DownloadFacilitiesButton
+                                allowLargeDownloads
                                 setLoginRequiredDialogIsOpen={
                                     setLoginRequiredDialogIsOpen
                                 }
                             />
-                        }
-                    >
-                        <DownloadFacilitiesButton
-                            allowLargeDownloads
-                            setLoginRequiredDialogIsOpen={
-                                setLoginRequiredDialogIsOpen
-                            }
-                        />
+                        </FeatureFlag>
                     </FeatureFlag>
                 )}
                 <CopySearch>
