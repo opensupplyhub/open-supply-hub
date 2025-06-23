@@ -42,10 +42,11 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
         facility_download_limit = FacilitiesDownloadService \
             .get_download_limit(request)
-        FacilitiesDownloadService.enforce_limits(request,
-                                total_records,
-                                facility_download_limit
-                                )
+        FacilitiesDownloadService.enforce_limits(
+            request,
+            total_records,
+            facility_download_limit
+        )
 
         page_queryset = FacilitiesDownloadService \
             .check_pagination(self.paginate_queryset(queryset))
