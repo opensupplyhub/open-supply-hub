@@ -16,36 +16,42 @@ logger = logging.getLogger(__name__)
 
 
 class FacilitiesDownloadService:
-    def _check_if_downloads_are_blocked(self):
+    @staticmethod
+    def check_if_downloads_are_blocked():
         if switch_is_active('block_location_downloads'):
             raise ServiceUnavailableException(
                     APIErrorMessages.TEMPORARILY_UNAVAILABLE
                 )
 
-    def _validate_query_params(self, request):
+    @staticmethod
+    def validate_query_params(request):
         params = FacilityQueryParamsSerializer(data=request.query_params)
 
         if not params.is_valid():
             raise ValidationError(params.errors)
 
-    def _log_request(self, request):
+    @staticmethod
+    def log_request(request):
         logger.info(
             f'Facility downloads request for User ID: {request.user.id}'
         )
 
-    def _get_filtered_queryset(self, request):
+    @staticmethod
+    def get_filtered_queryset(request):
         return FacilityIndex.objects.filter_by_query_params(
             request.query_params
         ).order_by('name', 'address', 'id')
 
-    def _get_download_limit(self, request):
+    @staticmethod
+    def get_download_limit(request):
         initial_release_date = make_aware(datetime(2025, 7, 12))
 
         return FacilityDownloadLimit.get_or_create_user_download_limit(
             request.user, initial_release_date
         )
 
-    def _enforce_limits(self, request, total_records, limit):
+    @staticmethod
+    def enforce_limits(request, total_records, limit):
         current_page = int(request.query_params.get("page", 1))
 
         has_exhausted_limit = (
@@ -81,11 +87,13 @@ class FacilitiesDownloadService:
                 f'{records_used} facilities or fewer.'
             )
 
-    def _check_pagination(self, page_queryset):
+    @staticmethod
+    def check_pagination(page_queryset):
         if page_queryset is None:
             raise ValidationError("Invalid pageSize parameter")
         return page_queryset
 
-    def _register_download_if_needed(self, limit, record_count):
+    @staticmethod
+    def register_download_if_needed(limit, record_count):
         if limit:
             limit.register_download(record_count)

@@ -33,22 +33,22 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         Returns a list of facilities in array format for a given query.
         (Maximum of 250 facilities per page.)
         """
-        service = FacilitiesDownloadService()
-        service._check_if_downloads_are_blocked()
-        service._validate_query_params(request)
-        service._log_request(request)
+        FacilitiesDownloadService.check_if_downloads_are_blocked()
+        FacilitiesDownloadService.validate_query_params(request)
+        FacilitiesDownloadService.log_request(request)
 
-        queryset = service._get_filtered_queryset(request)
+        queryset = FacilitiesDownloadService.get_filtered_queryset(request)
         total_records = queryset.count()
 
-        facility_download_limit = service._get_download_limit(request)
-        service._enforce_limits(request,
+        facility_download_limit = FacilitiesDownloadService \
+            .get_download_limit(request)
+        FacilitiesDownloadService.enforce_limits(request,
                                 total_records,
                                 facility_download_limit
                                 )
 
-        page_queryset = service\
-            ._check_pagination(self.paginate_queryset(queryset))
+        page_queryset = FacilitiesDownloadService \
+            .check_pagination(self.paginate_queryset(queryset))
         list_serializer = self.get_serializer(page_queryset)
 
         rows = [f['row'] for f in list_serializer.data]
@@ -58,7 +58,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         response = self.get_paginated_response(data)
 
         records_to_subtract = len(data['rows'])
-        service._register_download_if_needed(
+        FacilitiesDownloadService.register_download_if_needed(
             facility_download_limit,
             records_to_subtract
         )

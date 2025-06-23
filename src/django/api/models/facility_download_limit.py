@@ -19,34 +19,28 @@ class FacilityDownloadLimit(models.Model):
     date when paid facility records were purchased.
     """
     uuid = models.UUIDField(
-        null=False,
         default=uuid.uuid4,
         unique=True,
         editable=False,
+        db_index=True,
+        primary_key=True,
         help_text='Unique identifier for the facility download limit record.'
     )
     user = models.OneToOneField(
         'User',
-        null=False,
         on_delete=models.CASCADE,
         help_text='The user to whom the download limit applies.'
     )
     free_download_records = models.PositiveIntegerField(
-        null=False,
-        blank=False,
         default=FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT,
         help_text=('The number of facilities the user '
                    'can download per calendar year for free.')
     )
     paid_download_records = models.PositiveIntegerField(
-        null=False,
-        blank=False,
         default=0,
         help_text=('The number of paid facilities that the user can download.')
     )
     updated_at = models.DateTimeField(
-        null=False,
-        blank=False,
         default=timezone.now,
         help_text='The date when the free limit was set or updated.'
     )
