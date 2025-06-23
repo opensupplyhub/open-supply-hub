@@ -58,7 +58,7 @@ class SubmitNewUserForm(CreateAPIView):
                 other_contrib_type=other_contrib_type,
             )
 
-            if not switch_is_active('allow_large_downloads'):
+            if not switch_is_active('private_instance'):
                 FacilityDownloadLimit.get_or_create_user_download_limit(user)
 
             if user.should_receive_newsletter:

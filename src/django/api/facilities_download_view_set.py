@@ -74,7 +74,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         initial_release_date = make_aware(datetime(2025, 6, 20))
         facility_download_limit = None
 
-        if not switch_is_active('allow_large_downloads'):
+        if not switch_is_active('private_instance'):
             facility_download_limit = FacilityDownloadLimit \
                 .get_or_create_user_download_limit(
                     request.user,
