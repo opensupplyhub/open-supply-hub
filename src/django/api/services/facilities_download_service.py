@@ -39,7 +39,7 @@ class FacilitiesDownloadService:
         ).order_by('name', 'address', 'id')
 
     def _get_download_limit(self, request):
-        initial_release_date = make_aware(datetime(2025, 6, 28))
+        initial_release_date = make_aware(datetime(2025, 7, 12))
 
         return FacilityDownloadLimit.get_or_create_user_download_limit(
             request.user, initial_release_date

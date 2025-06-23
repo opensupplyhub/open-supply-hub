@@ -487,7 +487,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         # Simulation old user.
         FacilityDownloadLimit.objects.filter(user=user).delete()
         self.login_user(user)
-        release_date = make_aware(datetime(2025, 6, 28))
+        release_date = make_aware(datetime(2025, 7, 12))
 
         limit = FacilityDownloadLimit \
             .get_or_create_user_download_limit(
