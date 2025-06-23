@@ -4,21 +4,21 @@ from django.db import migrations
 
 
 def create_private_instance_switch(apps, schema_editor):
-    Switch = apps.get_model('waffle', 'Switch')
-    Switch.objects.create(name='private_instance', active=False)
+    switch = apps.get_model('waffle', 'Switch')
+    switch.objects.create(name='private_instance', active=False)
 
 
 def delete_private_instance_switch(apps, schema_editor):
-    Switch = apps.get_model('waffle', 'Switch')
-    Switch.objects.get(name='private_instance').delete()
+    switch = apps.get_model('waffle', 'Switch')
+    switch.objects.get(name='private_instance').delete()
 
 def delete_allow_large_downloads_switch(apps, schema_editor):
-    Switch = apps.get_model('waffle', 'Switch')
-    Switch.objects.get(name='allow_large_downloads').delete()
+    switch = apps.get_model('waffle', 'Switch')
+    switch.objects.get(name='allow_large_downloads').delete()
 
 def create_allow_large_downloads_switch(apps, schema_editor):
-    Switch = apps.get_model('waffle', 'Switch')
-    Switch.objects.create(name='allow_large_downloads', active=False)
+    switch = apps.get_model('waffle', 'Switch')
+    switch.objects.create(name='allow_large_downloads', active=False)
 
 
 class Migration(migrations.Migration):

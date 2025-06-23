@@ -553,7 +553,6 @@ export const userApiInfoTooltipTitles = Object.freeze({
 });
 
 export const IS_NOT_SET = 'Is not set';
-export const ALLOW_LARGE_DOWNLOADS = 'allow_large_downloads';
 export const CLAIM_A_FACILITY = 'claim_a_facility';
 export const VECTOR_TILE = 'vector_tile';
 export const REPORT_A_FACILITY = 'report_a_facility';
