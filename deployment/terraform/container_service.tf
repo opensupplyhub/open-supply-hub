@@ -305,6 +305,9 @@ data "template_file" "app_cli" {
     opensearch_ssl                   = var.opensearch_ssl
     opensearch_ssl_cert_verification = var.opensearch_ssl_cert_verification
     instance_source                  = var.instance_source
+    stripe_secret_key                = var.stripe_secret_key
+    stripe_price_id                  = var.stripe_price_id
+    stripe_webhook_secret            = var.stripe_webhook_secret
   }
 }
 
