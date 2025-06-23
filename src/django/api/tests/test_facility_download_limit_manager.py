@@ -25,7 +25,7 @@ class FacilityDownloadLimitManagerTest(TestCase):
         one_year_ago = now - relativedelta(years=1)
 
         # Create a record expired for free limits
-        # (updated_at older than 1 year)
+        # (updated_at older than 1 year).
         expired_free = FacilityDownloadLimit\
             .objects.create(
                 user=self.user_one,
@@ -36,7 +36,7 @@ class FacilityDownloadLimitManagerTest(TestCase):
             )
 
         # Create a record NOT expired for free limits
-        # (updated_at recent)
+        # (updated_at recent).
         fresh_free = FacilityDownloadLimit.objects.create(
             user=self.user_two,
             free_download_records=100,
@@ -48,7 +48,7 @@ class FacilityDownloadLimitManagerTest(TestCase):
 
         # Create a record expired for paid limits
         # (purchase_date older than 1 year and
-        # paid_download_records != 0)
+        # paid_download_records != 0).
         expired_paid = FacilityDownloadLimit.objects.create(
             user=self.user_three,
             free_download_records=100,
@@ -58,7 +58,7 @@ class FacilityDownloadLimitManagerTest(TestCase):
         )
 
         # Create a record NOT expired for paid limits
-        # (purchase_date recent)
+        # (purchase_date recent).
         fresh_paid = FacilityDownloadLimit\
             .objects.create(
                 user=self.user_four,
@@ -70,7 +70,7 @@ class FacilityDownloadLimitManagerTest(TestCase):
 
         # Create a record with purchase_date old
         # but paid_download_records=0
-        # (should NOT be updated)
+        # (should NOT be updated).
         expired_paid_zero = FacilityDownloadLimit\
             .objects.create(
                 user=self.user_five,
@@ -82,28 +82,28 @@ class FacilityDownloadLimitManagerTest(TestCase):
 
         self.manager.update_expired_limits()
 
-        # Refresh from DB
+        # Refresh from DB.
         expired_free.refresh_from_db()
         fresh_free.refresh_from_db()
         expired_paid.refresh_from_db()
         fresh_paid.refresh_from_db()
         expired_paid_zero.refresh_from_db()
 
-        # Assert expired free limits updated
+        # Assert expired free limits updated.
         self.assertEqual(
             expired_free.free_download_records,
             FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT,
         )
         self.assertTrue(expired_free.updated_at > one_year_ago)
-        # Assert fresh free limits unchanged
+        # Assert fresh free limits unchanged.
         self.assertEqual(fresh_free.free_download_records, 100)
         self.assertEqual(fresh_free.updated_at, original_updated_at)
 
-        # Assert expired paid limits reset to 0
+        # Assert expired paid limits reset to 0.
         self.assertEqual(expired_paid.paid_download_records, 0)
 
-        # Assert fresh paid limits unchanged
+        # Assert fresh paid limits unchanged.
         self.assertEqual(fresh_paid.paid_download_records, 10)
 
-        # Assert expired paid limit with zero records remains zero
+        # Assert expired paid limit with zero records remains zero.
         self.assertEqual(expired_paid_zero.paid_download_records, 0)
