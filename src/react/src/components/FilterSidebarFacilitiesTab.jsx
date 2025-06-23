@@ -51,7 +51,6 @@ import {
     REPORT_A_FACILITY,
     authLoginFormRoute,
     authRegisterFormRoute,
-    ALLOW_LARGE_DOWNLOADS,
     PAYMENT_CANCELED_MSG,
     PRIVATE_INSTANCE,
     FACILITIES_DOWNLOAD_LIMIT,
@@ -374,53 +373,26 @@ function FilterSidebarFacilitiesTab({
                     <FeatureFlag
                         flag={PRIVATE_INSTANCE}
                         alternative={
-                            <FeatureFlag
-                                flag={ALLOW_LARGE_DOWNLOADS}
-                                alternative={
-                                    <DownloadFacilitiesButton
-                                        upgrade={
-                                            facilitiesCount >
-                                            user.allowed_records_number
-                                        }
-                                        userAllowedRecords={
-                                            user.allowed_records_number
-                                        }
-                                        setLoginRequiredDialogIsOpen={
-                                            setLoginRequiredDialogIsOpen
-                                        }
-                                    />
-                                }
-                            >
-                                <DownloadFacilitiesButton
-                                    allowLargeDownloads
-                                    setLoginRequiredDialogIsOpen={
-                                        setLoginRequiredDialogIsOpen
-                                    }
-                                />
-                            </FeatureFlag>
-                        }
-                    >
-                        <FeatureFlag
-                            flag={ALLOW_LARGE_DOWNLOADS}
-                            alternative={
-                                <DownloadFacilitiesButton
-                                    disabled={
-                                        facilitiesCount >
-                                        FACILITIES_DOWNLOAD_LIMIT
-                                    }
-                                    setLoginRequiredDialogIsOpen={
-                                        setLoginRequiredDialogIsOpen
-                                    }
-                                />
-                            }
-                        >
                             <DownloadFacilitiesButton
-                                allowLargeDownloads
+                                upgrade={
+                                    facilitiesCount >
+                                    user.allowed_records_number
+                                }
+                                userAllowedRecords={user.allowed_records_number}
                                 setLoginRequiredDialogIsOpen={
                                     setLoginRequiredDialogIsOpen
                                 }
                             />
-                        </FeatureFlag>
+                        }
+                    >
+                        <DownloadFacilitiesButton
+                            disabled={
+                                facilitiesCount > FACILITIES_DOWNLOAD_LIMIT
+                            }
+                            setLoginRequiredDialogIsOpen={
+                                setLoginRequiredDialogIsOpen
+                            }
+                        />
                     </FeatureFlag>
                 )}
                 <CopySearch>

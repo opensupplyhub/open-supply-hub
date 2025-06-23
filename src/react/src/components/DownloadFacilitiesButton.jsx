@@ -57,7 +57,6 @@ const DownloadFacilitiesButton = ({
     url,
     urlError,
     /* from props */
-    allowLargeDownloads,
     disabled,
     upgrade,
     setLoginRequiredDialogIsOpen,
@@ -108,9 +107,7 @@ const DownloadFacilitiesButton = ({
         handleClose();
     };
 
-    const tooltipTitle = allowLargeDownloads ? (
-        ''
-    ) : (
+    const tooltipTitle = (
         <p className={classes.downloadTooltip}>
             Downloads are supported for searches resulting in{' '}
             {userAllowedRecords} production locations or less.
@@ -164,7 +161,6 @@ const DownloadFacilitiesButton = ({
 };
 
 DownloadFacilitiesButton.defaultProps = {
-    allowLargeDownloads: false,
     disabled: false,
     upgrade: false,
     userAllowedRecords: 5000,
@@ -173,7 +169,6 @@ DownloadFacilitiesButton.defaultProps = {
 };
 
 DownloadFacilitiesButton.propTypes = {
-    allowLargeDownloads: bool,
     disabled: bool,
     upgrade: bool,
     userAllowedRecords: number,
