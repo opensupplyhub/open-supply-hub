@@ -6,7 +6,7 @@ import COLOURS from './COLOURS';
 export const DEFAULT_SORT_OPTION_INDEX = 2;
 export const OTHER = 'Other';
 export const FACILITIES_REQUEST_PAGE_SIZE = 50;
-export const FACILITIES_DOWNLOAD_DEFAULT_LIMIT = 10000;
+export const FACILITIES_DOWNLOAD_LIMIT = 5000;
 export const FACILITIES_DOWNLOAD_REQUEST_PAGE_SIZE = 100;
 
 export const WEB_HEADER_HEIGHT = '160px';
@@ -1301,6 +1301,7 @@ export const USER_DEFAULT_STATE = Object.freeze({
     is_superuser: false,
     is_staff: false,
     is_moderation_mode: false,
+    allowed_records_number: FACILITIES_DOWNLOAD_LIMIT,
 });
 
 export const facilityClaimStepsNames = Object.freeze({
