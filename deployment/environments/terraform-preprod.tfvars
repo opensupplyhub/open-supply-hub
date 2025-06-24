@@ -69,3 +69,5 @@ opensearch_instance_type = "m6g.large.search"
 app_logstash_fargate_cpu = 256
 app_logstash_fargate_memory = 2048
 
+instance_source= "os_hub"
+
