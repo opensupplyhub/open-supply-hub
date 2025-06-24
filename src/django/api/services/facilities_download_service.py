@@ -83,8 +83,8 @@ class FacilitiesDownloadService:
                 limit.paid_download_records
             )
             raise ValidationError(
-                f'Downloads are only allowed for results containing '
-                f'{records_used} facilities or fewer.'
+                f'Downloads are supported only for searches '
+                f'resulting in {records_used} facilities or less.'
             )
 
     @staticmethod
