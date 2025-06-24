@@ -6,7 +6,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0171_added_origin_source_field'),
+        ('api', '0172_add_facility_download_limit'),
     ]
 
     operations = [
