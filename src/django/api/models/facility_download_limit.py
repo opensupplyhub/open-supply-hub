@@ -1,19 +1,14 @@
+from __future__ import annotations
+import uuid
 from typing import Optional
 from django.db import models
 from django.utils import timezone
 from django.db import transaction
-from django.db.models import BigAutoField
 from api.constants import FacilitiesDownloadSettings
-from datetime import datetime
-from django.utils.timezone import make_aware
 
 from api.models.facility_download_limit_manager import (
     FacilityDownloadLimitManager
 )
-
-
-def release_initial_date():
-    return make_aware(datetime(2025, 6, 28))
 
 
 class FacilityDownloadLimit(models.Model):
@@ -23,33 +18,29 @@ class FacilityDownloadLimit(models.Model):
     users, the date of last update of free facilities records, and the
     date when paid facility records were purchased.
     """
-    id = BigAutoField(
-        auto_created=True,
+    uuid = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        db_index=True,
         primary_key=True,
-        serialize=False
+        help_text='Unique identifier for the facility download limit record.'
     )
     user = models.OneToOneField(
         'User',
-        null=False,
         on_delete=models.CASCADE,
         help_text='The user to whom the download limit applies.'
     )
     free_download_records = models.PositiveIntegerField(
-        null=False,
-        blank=False,
         default=FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT,
         help_text=('The number of facilities the user '
                    'can download per calendar year for free.')
     )
     paid_download_records = models.PositiveIntegerField(
-        null=False,
-        blank=False,
         default=0,
         help_text=('The number of paid facilities that the user can download.')
     )
     updated_at = models.DateTimeField(
-        null=False,
-        blank=False,
         default=timezone.now,
         help_text='The date when the free limit was set or updated.'
     )
@@ -61,26 +52,29 @@ class FacilityDownloadLimit(models.Model):
 
     objects = FacilityDownloadLimitManager()
 
+    @transaction.atomic
     def register_download(self, records_to_subtract):
-        with transaction.atomic():
-            self.refresh_from_db()
-            if self.free_download_records >= records_to_subtract:
-                self.free_download_records = self.free_download_records - records_to_subtract  # noqa: E501
-            else:
-                remaining_records = records_to_subtract - self.free_download_records  # noqa: E501
-                self.free_download_records = 0
-                self.paid_download_records -= remaining_records
-            self.save()
+        self.refresh_from_db()
+
+        if self.free_download_records >= records_to_subtract:
+            self.free_download_records -= records_to_subtract
+        else:
+            remaining_records = (
+                records_to_subtract - self.free_download_records
+            )
+            self.free_download_records = 0
+            self.paid_download_records -= remaining_records
+
+        self.save()
 
     @staticmethod
     def get_or_create_user_download_limit(
         user,
         custom_date=None
-    ) -> Optional["FacilityDownloadLimit"]:
+    ) -> Optional[FacilityDownloadLimit]:
         is_api_user = not user.is_anonymous and user.has_groups
-
+        # If user is an API user we don't want to impose limits.
         if is_api_user or user.is_anonymous:
-            # if user is an API user we don't want to impose limits
             return None
 
         defaults = {'updated_at': custom_date} if custom_date else {}
@@ -90,14 +84,14 @@ class FacilityDownloadLimit(models.Model):
 
         return facility_download_limit
     
-    @staticmethod
-    def upgrade_user_download_limit(
-        download_limit: "FacilityDownloadLimit",
-        upgrade_number: int
-    ) -> Optional["FacilityDownloadLimit"]:
+    # @staticmethod
+    # def upgrade_user_download_limit(
+    #     download_limit: "FacilityDownloadLimit",
+    #     upgrade_number: int
+    # ) -> Optional["FacilityDownloadLimit"]:
 
-        download_limit.paid_download_records += upgrade_number
-        download_limit.purchase_date = timezone.now()
-        download_limit.save(update_fields=["paid_download_records", "purchase_date"])
+    #     download_limit.paid_download_records += upgrade_number
+    #     download_limit.purchase_date = timezone.now()
+    #     download_limit.save(update_fields=["paid_download_records", "purchase_date"])
 
-        return download_limit
+    #     return download_limit

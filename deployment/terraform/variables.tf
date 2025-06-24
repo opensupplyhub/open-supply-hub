@@ -457,7 +457,7 @@ variable "check_api_limits_schedule_expression" {
 }
 
 variable "update_expired_download_limits_schedule_expression" {
-  default = "cron(0 0 * * ? *)" # once per day at 00:00 UTC
+  default = "cron(0 0 * * ? *)" # Once per day at 00:00 UTC.
 }
 
 variable "ec2_service_role_policy_arn" {
@@ -567,6 +567,9 @@ variable "dedupe_hub_live" {
 variable "dedupe_hub_name" {
 }
 variable "dedupe_hub_version" {
+}
+variable "instance_source" {
+  default = "os_hub"
 }
 
 variable "opensearch_instance_type" {

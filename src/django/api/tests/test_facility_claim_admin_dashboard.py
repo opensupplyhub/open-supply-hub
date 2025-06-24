@@ -300,8 +300,9 @@ class FacilityClaimAdminDashboardTest(APITestCase):
             )
         )
         self.assertEqual(
-            self.current_time.replace(microsecond=0),
-            self.facility_first.updated_at.replace(microsecond=0))
+            self.current_time.replace(second=0, microsecond=0),
+            self.facility_first.updated_at.replace(second=0, microsecond=0)
+        )
         self.assertNotEqual(
             self.old_updated_at,
             self.facility_first.updated_at

@@ -3,6 +3,39 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.8.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: July 12, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations:
+* 0172_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
+
+#### Schema changes
+* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - The `FacilityDownloadLimit` model has been created. This model includes such fields: id, user_id, updated_at, free_download_records, paid_download_records, purchase_date.
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 5000 facility records for download annually have been added for a registered free user.
+
+### Release instructions:
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.7.0
 
 ## Introduction
@@ -95,6 +128,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [OSDEV-1951](https://opensupplyhub.atlassian.net/browse/OSDEV-1951) - Added support for specifying a contributor email in the `direct_data_load` command. This allows users to provide an email address for the contributor when loading data, and automatically creates the contributor if it does not exist. The separate compute environment for this command has been removed, it now needs to run in the default environment.
+* The RDS instance type for the Test environment has been upgraded to `db.t3.2xlarge` to handle search requests across over 1.2 million production locations now present in the database.
 
 ### Bugfix
 * [OSDEV-2033](https://opensupplyhub.atlassian.net/browse/OSDEV-2033) - Added support for the `slop` parameter in `multi_match` queries when using strings longer than 50 symbols or 12 tokens in GET `v1/production-locations?query=` endpoint.

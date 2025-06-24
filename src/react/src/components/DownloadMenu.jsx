@@ -1,5 +1,5 @@
 import React from 'react';
-import { func, oneOfType, Element, instanceOf, oneOf } from 'prop-types';
+import PropTypes from 'prop-types';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 
@@ -20,12 +20,14 @@ DownloadMenu.defaultProps = {
 };
 
 DownloadMenu.propTypes = {
-    anchorEl: oneOfType([
-        instanceOf(typeof Element !== 'undefined' ? Element : Object),
-        oneOf([null]),
+    anchorEl: PropTypes.oneOfType([
+        typeof HTMLElement !== 'undefined'
+            ? PropTypes.instanceOf(HTMLElement)
+            : PropTypes.any,
+        PropTypes.oneOf([null]),
     ]),
-    onClose: func.isRequired,
-    onSelectFormat: func.isRequired,
+    onClose: PropTypes.func.isRequired,
+    onSelectFormat: PropTypes.func.isRequired,
 };
 
 export default DownloadMenu;
