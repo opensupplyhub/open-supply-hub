@@ -5,7 +5,8 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 
 from api.models import User
-import api.views.stripe.download_locations_checkout_session_view as checkout_session
+import api.views.stripe.download_locations_checkout_session_view \
+    as checkout_session
 
 
 class DownloadLocationsCheckoutSessionViewTest(APITestCase):
