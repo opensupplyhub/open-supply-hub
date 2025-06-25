@@ -1,19 +1,3 @@
-'''
-1. What if creting updating production location takes time on OS Hub, and we need to wait for it to be created / updated before we can sync it to RBA?
-2. Shall this script always run in a separate AWS job?
-3. Shall we block RBA database from being updated while this script is running?
-4. What if pipeline crashed while running this script?
-5. How to monitor the status of this script and diffs between OS Hub and RBA?
-6. Shall we have an ability to stop this script?
-7. Is it possible to revert this script to the previous revision?
-8. It looks like we need a separate database table to store the status of the sync process (and related information).
-9. If there will be a table to store sync status, we need to apply respected UI (probably, in Django admin panel).
-10. Shall it be bulc sync impicitly or it is better to check specific tables to be updated? For this, we need to apply specific pattern.
-11. How to test this locally? Shall we use docker with local DB that will emulate RBA DB?
-12. Need apapter class to communicate with RBA DB from OSHub Django OR listern to RBA DB events (like trigger, etc).
-13. Need to Yes/No prompt to confirm sync if confict found. Highlight confilcted fields.
-14. Add tests for this script.
-'''
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction, connection
 from django.apps import apps
