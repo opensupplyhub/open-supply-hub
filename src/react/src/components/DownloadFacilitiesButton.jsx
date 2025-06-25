@@ -166,6 +166,7 @@ DownloadFacilitiesButton.defaultProps = {
     userAllowedRecords: 5000,
     logDownloadError: null,
     url: null,
+    urlError: null,
 };
 
 DownloadFacilitiesButton.propTypes = {
