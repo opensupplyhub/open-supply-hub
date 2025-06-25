@@ -12,6 +12,7 @@
 11. How to test this locally? Shall we use docker with local DB that will emulate RBA DB?
 12. Need apapter class to communicate with RBA DB from OSHub Django OR listern to RBA DB events (like trigger, etc).
 13. Need to Yes/No prompt to confirm sync if confict found. Highlight confilcted fields.
+14. Add tests for this script.
 '''
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction, connection
