@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { arrayOf, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router';
-import { toast } from 'react-toastify';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Dialog from '@material-ui/core/Dialog';
@@ -43,15 +42,12 @@ import {
     fetchFacilityToMerge,
 } from '../actions/mergeFacilities';
 
-import { sessionLogin } from '../actions/auth';
-
 import { facilityCollectionPropType, userPropType } from '../util/propTypes';
 
 import {
     REPORT_A_FACILITY,
     authLoginFormRoute,
     authRegisterFormRoute,
-    PAYMENT_CANCELED_MSG,
     PRIVATE_INSTANCE,
     FACILITIES_DOWNLOAD_LIMIT,
 } from '../util/constants';
@@ -208,7 +204,6 @@ function FilterSidebarFacilitiesTab({
     fetchToMergeFacility,
     updateTargetOSID,
     fetchTargetFacility,
-    checkDownloadLimits,
     classes,
 }) {
     const [loginRequiredDialogIsOpen, setLoginRequiredDialogIsOpen] = useState(
@@ -260,21 +255,6 @@ function FilterSidebarFacilitiesTab({
         fetchTargetFacility,
         openMergeModal,
     });
-
-    const location = useLocation();
-
-    useEffect(() => {
-        const queryParams = new URLSearchParams(location.search);
-        const isCorrectPath = location.pathname === '/facilities/';
-        const isSuccess = queryParams.get('success') === 'true';
-        const isCanceled = queryParams.get('canceled') === 'true';
-        if (isCorrectPath && isSuccess) {
-            checkDownloadLimits();
-        }
-        if (isCorrectPath && isCanceled) {
-            toast(PAYMENT_CANCELED_MSG);
-        }
-    }, [location.search]);
 
     if (fetching) {
         return (
@@ -683,7 +663,7 @@ FilterSidebarFacilitiesTab.propTypes = {
     fetchToMergeFacility: func.isRequired,
     updateTargetOSID: func.isRequired,
     fetchTargetFacility: func.isRequired,
-    checkDownloadLimits: func.isRequired,
+    // checkDownloadLimits: func.isRequired,
 };
 
 function mapStateToProps({
@@ -735,7 +715,6 @@ function mapDispatchToProps(dispatch) {
         fetchToMergeFacility: () => dispatch(fetchFacilityToMerge()),
         updateToMergeOSID: osID => dispatch(updateFacilityToMergeOSID(osID)),
         fetchTargetFacility: () => dispatch(fetchMergeTargetFacility()),
-        checkDownloadLimits: () => dispatch(sessionLogin()),
     };
 }
 
