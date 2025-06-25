@@ -178,12 +178,6 @@ DownloadFacilitiesButton.propTypes = {
     }).isRequired,
     url: string,
     urlError: string,
-    classes: PropTypes.shape({
-        listHeaderButtonStyles: object,
-        buttonText: object,
-        downloadTooltip: object,
-        buttonContent: object,
-    }).isRequired,
 };
 
 function mapStateToProps({
