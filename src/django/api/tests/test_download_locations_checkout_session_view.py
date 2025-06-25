@@ -5,8 +5,7 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 
 from api.models import User
-import api.views.stripe.download_locations_checkout_session_view \
-    as checkout_session
+import api.views.stripe.download_locations_checkout_session_view as checkout_session
 
 
 class DownloadLocationsCheckoutSessionViewTest(APITestCase):
@@ -50,8 +49,8 @@ class DownloadLocationsCheckoutSessionViewTest(APITestCase):
             mode='payment',
             metadata={'user_id': self.user.id},
             allow_promotion_codes=True,
-            success_url='http://testserver/facilities?success=true',
-            cancel_url='http://testserver/facilities?canceled=true',
+            success_url='http://testserver/facilities',
+            cancel_url='http://testserver/facilities',
         )
 
     @patch('stripe.checkout.Session.create')
