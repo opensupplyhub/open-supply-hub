@@ -42,8 +42,8 @@ class DownloadLocationsCheckoutSessionView(APIView):
                     'user_id': request.user.id,
                 },
                 allow_promotion_codes=True,
-                success_url=site_url + 'facilities?success=true',
-                cancel_url=site_url + 'facilities?canceled=true',
+                success_url=site_url + 'facilities',
+                cancel_url=site_url + 'facilities',
             )
 
             return Response(
