@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { arrayOf, string, bool, shape, number } from 'prop-types';
+import { arrayOf, string, bool, shape, number, object } from 'prop-types';
 import { connect } from 'react-redux';
 import Button from '@material-ui/core/Button';
 import Tooltip from '@material-ui/core/Tooltip';
@@ -177,6 +177,13 @@ DownloadFacilitiesButton.propTypes = {
         isAnon: bool.isRequired,
     }).isRequired,
     url: string,
+    urlError: string,
+    classes: PropTypes.shape({
+        listHeaderButtonStyles: object,
+        buttonText: object,
+        downloadTooltip: object,
+        buttonContent: object,
+    }).isRequired,
 };
 
 function mapStateToProps({
