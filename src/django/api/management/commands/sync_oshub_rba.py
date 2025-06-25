@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction, connection
 from django.apps import apps
+from django.conf import settings
 
 class Command(BaseCommand):
     help = "Sync data from OS Hub (default) to RBA (rba DB) by UUID"
@@ -71,7 +72,6 @@ class Command(BaseCommand):
         self.stdout.write(f"Syncing table {table} from OS Hub (default) → RBA. Dry run: {dry_run}")
 
         # Debug: Show RBA database connection info
-        from django.conf import settings
         rba_db_config = settings.DATABASES['rba']
         self.stdout.write(f"RBA DB Config: {rba_db_config}")
 
