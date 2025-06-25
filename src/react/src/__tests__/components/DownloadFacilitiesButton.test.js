@@ -24,14 +24,15 @@ jest.mock('@material-ui/core/Portal', () => ({ children }) => children);
 
 describe('DownloadFacilitiesButton component', () => {
   const expectedTooltipText =
-  'Downloads are supported for searches resulting in 1000 production locations or less.';
+  'Downloads are supported for searches resulting in 5000 production locations or less.';
   const handleDownload = jest.fn();
   const defaultProps = {
     disabled: false,
+    upgrade: false,
     setLoginRequiredDialogIsOpen: false,
-    allowLargeDownloads: false,
     isEmbedded: true,
     handleDownload,
+    userAllowedRecords: 5000,
   };
 
   const createMockStore = (customState = {}) => {
@@ -39,13 +40,15 @@ describe('DownloadFacilitiesButton component', () => {
       auth: {
         user: {
           user: {
-            allowed_records_number: 1000,
             isAnon: false,
           },
         },
       },
       logDownload: { error: null },
       embeddedMap: { embed: true },
+      downloadLimit: {
+        payment: { url: "test", error: null },
+      },
       ...customState,
     };
     return createStore(() => initialState);
@@ -99,8 +102,8 @@ describe('DownloadFacilitiesButton component', () => {
     expect(await getByTestId("mock-download-menu")).toBeInTheDocument();
   });
 
-  test('should show tooltip if allowLargeDownloads is false', async () => {
-    const { getByRole } = renderComponent({ allowLargeDownloads: false });
+  test('should show tooltip', async () => {
+    const { getByRole } = renderComponent();
     const button = getByRole('button', { name: 'Download' });
 
     expect(button).toBeEnabled();
@@ -112,21 +115,8 @@ describe('DownloadFacilitiesButton component', () => {
     );
   });
 
-  test('should not show tooltip if allowLargeDownloads is true', async () => {
-    const { getByRole } = renderComponent({ allowLargeDownloads: true });
-    const button = getByRole('button', { name: 'Download' });
-
-    expect(button).toBeEnabled();
-
-    fireEvent.mouseOver(button);
-
-    await waitFor(() =>
-      expect(screen.queryByText(expectedTooltipText)).not.toBeInTheDocument()
-    );
-  });
-
-  test('should show default allowed_records_number in the tooltip when button is disabled', async () => {
-    const { getByRole } = renderComponent({ allowLargeDownloads: false, disabled: true});
+  test('should show default userAllowedRecords in the tooltip when button is disabled', async () => {
+    const { getByRole } = renderComponent({ disabled: true});
 
     const button = getByRole('button', { name: 'Download' });
     expect(button).toBeDisabled();
@@ -138,16 +128,15 @@ describe('DownloadFacilitiesButton component', () => {
     );
   });
 
-  test('should show correct text with custom allowed_records_number in the tooltip', async () => {
+  test('should show correct text with custom userAllowedRecords in the tooltip', async () => {
     const props = {
-      allowLargeDownloads: false,
-      disabled: true ,
+      disabled: true,
+      userAllowedRecords: 1000,
     };
     const customState = {
       auth: {
         user: {
           user: {
-            allowed_records_number: 555,
             isAnon: true,
           },
         },
@@ -155,7 +144,7 @@ describe('DownloadFacilitiesButton component', () => {
     };
     const { getByRole } = renderComponent(props, customState);
     const expectedText =
-    'Downloads are supported for searches resulting in 555 production locations or less. Log in to download this dataset.';
+    'Downloads are supported for searches resulting in 1000 production locations or less. Log in to download this dataset.';
 
     const button = getByRole('button', { name: 'Download' });
     expect(button).toBeDisabled();
