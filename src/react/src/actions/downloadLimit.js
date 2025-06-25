@@ -17,8 +17,6 @@ export function downloadLimitPaymentUrl() {
     return dispatch => {
         dispatch(startFetchDownloadLimitPaymentUrl());
 
-        // dispatch(failFetchDownloadLimitPaymentUrl('Something goes wrong. Try again.'));
-
         dispatch(
             completeFetchDownloadLimitPaymentUrl(
                 'http://localhost:6543/facilities/?success=true',

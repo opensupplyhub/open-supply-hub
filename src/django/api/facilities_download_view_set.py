@@ -68,34 +68,3 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         )
 
         return response
-
-    # @action(
-    #     detail=False,
-    #     methods=['post'],
-    #     url_path='upgrade',
-    #     permission_classes=[IsAuthenticated]
-    # )
-    # def upgrade_download_limit(self, request):
-    #     upgrade_number = request.data.get('upgrade_number')
-
-    #     if upgrade_number is None:
-    #         raise ValidationError("'upgrade_number' is required.")
-
-    #     try:
-    #         upgrade_number = int(upgrade_number)
-    #     except ValueError:
-    #         raise ValidationError("'upgrade_number' must be an integer.")
-        
-    #     try:
-    #         download_limit = FacilityDownloadLimit.objects.get(user=request.user)
-    #     except FacilityDownloadLimit.DoesNotExist:
-    #         raise ValidationError(f"FacilityDownloadLimit with ID {request.user.id} does not exist.")
-
-    #     download_limit = FacilityDownloadLimit.upgrade_user_download_limit(
-    #         download_limit,
-    #         upgrade_number
-    #     )
-
-    #     return Response({
-    #         "allowed_records_number": download_limit.free_download_records + download_limit.paid_download_records
-    #     })
