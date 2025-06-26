@@ -1,4 +1,5 @@
 import logging
+import time
 from django.apps import apps
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -8,6 +9,11 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = "Sync data from OS Hub (default) to RBA (rba DB) by UUID"
+
+    def __init__(self):
+        super().__init__()
+        self.sync_stats = {}  # Track sync statistics for each model
+        self.start_time = None
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -78,7 +84,8 @@ class Command(BaseCommand):
 
     def __sync_single_model(self, model, dry_run=False):
         """Sync a single model from OS Hub to RBA"""
-        logger.info(f"Syncing model {model._meta.app_label}.{model._meta.model_name}")
+        model_key = f"{model._meta.app_label}.{model._meta.model_name}"
+        logger.info(f"Syncing model {model_key}")
 
         # Get UUIDs from both databases in batches to avoid memory issues
         batch_size = 10000
@@ -93,7 +100,7 @@ class Command(BaseCommand):
         
         logger.info(
             f"Found {len(rba_uuids)} existing UUIDs in RBA for "
-            f"{model._meta.app_label}.{model._meta.model_name}."
+            f"{model_key}."
         )
 
         # Get UUIDs from OS Hub (source database) and find missing ones
@@ -106,13 +113,20 @@ class Command(BaseCommand):
         
         logger.info(
             f"Found {len(missing_uuids)} missing UUIDs to sync for "
-            f"{model._meta.app_label}.{model._meta.model_name}."
+            f"{model_key}."
         )
+
+        # Store statistics
+        self.sync_stats[model_key] = {
+            'total_source': source_qs.count(),
+            'total_target': len(rba_uuids),
+            'to_sync': len(missing_uuids)
+        }
 
         if dry_run:
             logger.warning(
                 f"[DRY-RUN] Would insert {len(missing_uuids)} records into RBA for "
-                f"{model._meta.app_label}.{model._meta.model_name}."
+                f"{model_key}."
             )
             return
 
@@ -122,7 +136,7 @@ class Command(BaseCommand):
         else:
             logger.info(
                 f"No new records to sync for "
-                f"{model._meta.app_label}.{model._meta.model_name}."
+                f"{model_key}."
             )
 
     def __sync_missing_records(self, model, missing_uuids, batch_size=1000):
@@ -191,12 +205,68 @@ class Command(BaseCommand):
         except:
             return False
 
+    def __print_summary_table(self, dry_run=False):
+        """Print a summary table of sync statistics"""
+        if not self.sync_stats:
+            logger.info("No models were processed.")
+            return
+
+        # Calculate totals
+        total_models = len(self.sync_stats)
+        total_source_records = sum(stats['total_source'] for stats in self.sync_stats.values())
+        total_target_records = sum(stats['total_target'] for stats in self.sync_stats.values())
+        total_to_sync = sum(stats['to_sync'] for stats in self.sync_stats.values())
+        
+        # Calculate execution time
+        execution_time = time.time() - self.start_time
+        
+        logger.info("\n" + "="*80)
+        logger.info("SYNC SUMMARY REPORT")
+        logger.info("="*80)
+        
+        # Print table header
+        logger.info(f"{'Table':<40} {'Source':<10} {'Target':<10} {'To Sync':<10}")
+        logger.info("-" * 80)
+        
+        # Print each model's stats
+        for model_key, stats in sorted(self.sync_stats.items()):
+            if stats['to_sync'] > 0:  # Only show tables with records to sync
+                logger.info(
+                    f"{model_key:<40} {stats['total_source']:<10} "
+                    f"{stats['total_target']:<10} {stats['to_sync']:<10}"
+                )
+        
+        # Print totals
+        logger.info("-" * 80)
+        logger.info(
+            f"{'TOTALS':<40} {total_source_records:<10} "
+            f"{total_target_records:<10} {total_to_sync:<10}"
+        )
+        
+        # Print summary info
+        logger.info("\nSUMMARY:")
+        logger.info(f"  • Models processed: {total_models}")
+        logger.info(f"  • Models with records to sync: {len([s for s in self.sync_stats.values() if s['to_sync'] > 0])}")
+        logger.info(f"  • Total execution time: {execution_time:.2f} seconds")
+        
+        if dry_run:
+            logger.info(f"  • Mode: DRY RUN (no changes applied)")
+        else:
+            logger.info(f"  • Mode: LIVE SYNC")
+        
+        logger.info("="*80)
+
     @transaction.atomic(using='rba')
     def handle(self, *args, **options):
+        self.start_time = time.time()
         table = options['table']
         dry_run = options['dry_run']
 
         logger.info(f"Starting sync from OS Hub (default) → RBA. Dry run: {dry_run}")
+
+        # Debug: Show RBA database connection info
+        rba_db_config = settings.DATABASES['rba']
+        logger.info(f"RBA DB Config: {rba_db_config}")
 
         if table:
             # Sync single table
@@ -234,4 +304,6 @@ class Command(BaseCommand):
                     continue
             
             logger.info("Full synchronization completed.")
+
+        self.__print_summary_table(dry_run)
 
