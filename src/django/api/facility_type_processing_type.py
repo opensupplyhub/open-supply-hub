@@ -347,8 +347,21 @@ RAW_MATERIAL_PROCESSING_TYPES = {
     YARN_SPINNING: 'Yarn spinning',
 }
 
-RECRUITMENT_AGENCY_TYPES = {
+RECRUITMENT_AGENCY = 'recruitment agency'
+EMPLOYMENT_AGENCY = 'employment agency'
+STAFFING_AGENCY = 'staffing agency'
+STAFFING_FIRM = 'staffing firm'
+TALENT_AGENCY = 'talent agency'
+LABOUR_AGENCY = 'labour agency'
+MANPOWER_AGENCY = 'manpower agency'
+TEMP_AGENCY = 'temp agency'
+TEMPORARY_STAFFING = 'temporary staffing'
+RECRUITMENT_FIRM = 'recruitment firm'
+JOB_PLACEMENT_AGENCY = 'job placement agency'
+EMPLOYMENT_SERVICE = 'employment service'
 
+RECRUITMENT_PROCESSING_TYPES = {
+    RECRUITMENT_AGENCY: 'Recruitment Agency',
 }
 
 RAW_MATERIAL_PROCESSING_TYPES_ALIAS = {
@@ -360,13 +373,28 @@ RAW_MATERIAL_PROCESSING_TYPES_ALIAS = {
     'texturizing facility': TWISTING_TEXTURIZING_FACILITY,
 }
 
+RECRUITMENT_PROCESSING_TYPES_ALIAS = {
+    'recruitment agency': RECRUITMENT_AGENCY,
+    'employment agency': EMPLOYMENT_AGENCY,
+    'staffing agency': STAFFING_AGENCY,
+    'staffing firm': STAFFING_FIRM,
+    'talent agency': TALENT_AGENCY,
+    'labour agency': LABOUR_AGENCY,
+    'manpower agency': MANPOWER_AGENCY,
+    'temp agency': TEMP_AGENCY,
+    'temporary staffing': TEMPORARY_STAFFING,
+    'recruitment firm': RECRUITMENT_FIRM,
+    'job placement agency': JOB_PLACEMENT_AGENCY,
+    'employment service': EMPLOYMENT_SERVICE,
+}
+
 RAW_MATERIAL_PROCESSING = 'raw material processing or production'
 TEXTILE_PROCESSING = 'textile or material production'
 PRINTING_PROCESSING = 'printing product dyeing and laundering'
 ASSEMBLY_PROCESSING = 'final product assembly'
 WAREHOUSING_PROCESSING = 'warehousing distribution'
 OFFICE_PROCESSING = 'office hq'
-RECRUITMENT_AGENCY = 'recruitment agency'
+RECRUITMENT_PROCESSING = 'recruitment agency'
 
 ALL_FACILITY_TYPES = {
     RAW_MATERIAL_PROCESSING: 'Raw Material Processing or Production',
@@ -375,7 +403,7 @@ ALL_FACILITY_TYPES = {
     ASSEMBLY_PROCESSING: 'Final Product Assembly',
     WAREHOUSING_PROCESSING: 'Warehousing / Distribution',
     OFFICE_PROCESSING: 'Office / HQ',
-    RECRUITMENT_AGENCY: 'Recruitment Agency'
+    RECRUITMENT_PROCESSING: 'Recruitment Agency'
 }
 
 ALL_FACILITY_TYPE_CHOICES = [(k, v) for k, v in
@@ -388,7 +416,7 @@ FACILITY_PROCESSING_TYPES = {
     ASSEMBLY_PROCESSING: ASSEMBLY_PROCESSING_TYPES,
     WAREHOUSING_PROCESSING: WAREHOUSING_PROCESSING_TYPES,
     OFFICE_PROCESSING: OFFICE_PROCESSING_TYPES,
-    RECRUITMENT_AGENCY: RECRUITMENT_AGENCY_TYPES,
+    RECRUITMENT_PROCESSING: RECRUITMENT_PROCESSING_TYPES,
 }
 
 # Create a look-up of processing type -> facility type for
@@ -417,7 +445,7 @@ ALL_PROCESSING_TYPES = {
     **PRINTING_PROCESSING_TYPES,
     **TEXTILE_PROCESSING_TYPES,
     **RAW_MATERIAL_PROCESSING_TYPES,
-    **RECRUITMENT_AGENCY_TYPES,
+    **RECRUITMENT_PROCESSING_TYPES,
 }
 
 ALL_PROCESSING_TYPE_CHOICES = [(k, v) for k, v in
@@ -430,6 +458,7 @@ ALL_PROCESSING_TYPES_ALIAS = {
     **PRINTING_PROCESSING_TYPES_ALIAS,
     **TEXTILE_PROCESSING_TYPES_ALIAS,
     **RAW_MATERIAL_PROCESSING_TYPES_ALIAS,
+    **RECRUITMENT_PROCESSING_TYPES_ALIAS,
 }
 
 
@@ -459,6 +488,7 @@ def get_facility_and_processing_type(facility_or_processing_type, sector=None):
     """Attempts to match the input value to a facility or processing
     type via various methods.
     """
+    print('!!! SECTOR', sector)
     # Clean up input value
     cleaned_input = clean(facility_or_processing_type)
     # Assign a default value to field_type
@@ -476,12 +506,15 @@ def get_facility_and_processing_type(facility_or_processing_type, sector=None):
     processing_type = ALL_PROCESSING_TYPES.get(cleaned_input)
     facility_type = ALL_FACILITY_TYPES.get(cleaned_input)
     match_type = EXACT_MATCH
-
+    print('!!!processing_type - ', processing_type)
+    print('!!!facility_type - ', facility_type)
+    print('!!!match_type - ', match_type)
     # Try for alias match
     if not processing_type:
+        print('!!!cleaned_input ', cleaned_input)
         matched_value = ALL_PROCESSING_TYPES_ALIAS.get(cleaned_input)
         match_type = ALIAS_MATCH
-
+        print('!!!RETURN - ', matched_value, match_type)
         # Try for fuzzy match
         if not matched_value or matched_value is None:
             matched_value = process.extractOne(
