@@ -24,7 +24,7 @@ def create_allow_large_downloads_switch(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0172_add_facility_download_limit'),
+        ('api', '0173_create_download_location_success_payment_table'),
     ]
 
     operations = [

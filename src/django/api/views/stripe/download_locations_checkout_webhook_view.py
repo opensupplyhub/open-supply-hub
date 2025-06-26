@@ -3,8 +3,9 @@ import stripe
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views import View
+from django.utils import timezone
 
-from api.models import DownloadLocationPayment
+from api.models import DownloadLocationPayment, FacilityDownloadLimit
 
 
 class DownloadLocationsCheckoutWebhookView(View):
@@ -52,6 +53,14 @@ class DownloadLocationsCheckoutWebhookView(View):
                     promotion_code=promotion_code,
                 )
                 payment.save()
+
+                download_limit = FacilityDownloadLimit.objects.get(user_id=user_id)
+
+                download_limit.paid_download_records += (amount_subtotal / 50000) * 5000
+                download_limit.purchase_date = timezone.now()
+                download_limit.save(update_fields=["paid_download_records", "purchase_date"])
+
+
 
             except KeyError as e:
                 return HttpResponseBadRequest(f"Missing expected field: {e}")
