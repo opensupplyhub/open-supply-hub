@@ -348,17 +348,6 @@ RAW_MATERIAL_PROCESSING_TYPES = {
 }
 
 RECRUITMENT_AGENCY = 'recruitment agency'
-EMPLOYMENT_AGENCY = 'employment agency'
-STAFFING_AGENCY = 'staffing agency'
-STAFFING_FIRM = 'staffing firm'
-TALENT_AGENCY = 'talent agency'
-LABOUR_AGENCY = 'labour agency'
-MANPOWER_AGENCY = 'manpower agency'
-TEMP_AGENCY = 'temp agency'
-TEMPORARY_STAFFING = 'temporary staffing'
-RECRUITMENT_FIRM = 'recruitment firm'
-JOB_PLACEMENT_AGENCY = 'job placement agency'
-EMPLOYMENT_SERVICE = 'employment service'
 
 RECRUITMENT_PROCESSING_TYPES = {
     RECRUITMENT_AGENCY: 'Recruitment Agency',
@@ -375,17 +364,17 @@ RAW_MATERIAL_PROCESSING_TYPES_ALIAS = {
 
 RECRUITMENT_PROCESSING_TYPES_ALIAS = {
     'recruitment agency': RECRUITMENT_AGENCY,
-    'employment agency': EMPLOYMENT_AGENCY,
-    'staffing agency': STAFFING_AGENCY,
-    'staffing firm': STAFFING_FIRM,
-    'talent agency': TALENT_AGENCY,
-    'labour agency': LABOUR_AGENCY,
-    'manpower agency': MANPOWER_AGENCY,
-    'temp agency': TEMP_AGENCY,
-    'temporary staffing': TEMPORARY_STAFFING,
-    'recruitment firm': RECRUITMENT_FIRM,
-    'job placement agency': JOB_PLACEMENT_AGENCY,
-    'employment service': EMPLOYMENT_SERVICE,
+    'employment agency': RECRUITMENT_AGENCY,
+    'staffing agency': RECRUITMENT_AGENCY,
+    'staffing firm': RECRUITMENT_AGENCY,
+    'talent agency': RECRUITMENT_AGENCY,
+    'labour agency': RECRUITMENT_AGENCY,
+    'manpower agency': RECRUITMENT_AGENCY,
+    'temp agency': RECRUITMENT_AGENCY,
+    'temporary staffing': RECRUITMENT_AGENCY,
+    'recruitment firm': RECRUITMENT_AGENCY,
+    'job placement agency': RECRUITMENT_AGENCY,
+    'employment service': RECRUITMENT_AGENCY,
 }
 
 RAW_MATERIAL_PROCESSING = 'raw material processing or production'
