@@ -191,3 +191,22 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
         )
         data = json.loads(response.content)
         self.assertEqual(data["count"], 0)
+
+    def test_recruitment_agency_present_in_facility_processing_types(self):
+        response = self.client.get(
+            '/api/facility-processing-types/',
+            HTTP_ACCEPT='application/json'
+        )
+        expected_data = {
+            'facilityType': 'Recruitment Agency',
+            'processingTypes': ['Recruitment Agency']
+        }
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        recruitment_agency = next(
+            (item for item in data
+             if item['facilityType'].lower() == 'recruitment agency'.lower()),
+            None
+        )
+        self.assertEqual(recruitment_agency, expected_data)
