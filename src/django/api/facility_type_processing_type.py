@@ -403,7 +403,7 @@ ALL_FACILITY_TYPES = {
     ASSEMBLY_PROCESSING: 'Final Product Assembly',
     WAREHOUSING_PROCESSING: 'Warehousing / Distribution',
     OFFICE_PROCESSING: 'Office / HQ',
-    RECRUITMENT_PROCESSING: 'Recruitment Agency'
+    RECRUITMENT_PROCESSING: 'Recruitment Agency',
 }
 
 ALL_FACILITY_TYPE_CHOICES = [(k, v) for k, v in
@@ -488,7 +488,6 @@ def get_facility_and_processing_type(facility_or_processing_type, sector=None):
     """Attempts to match the input value to a facility or processing
     type via various methods.
     """
-    print('!!! SECTOR', sector)
     # Clean up input value
     cleaned_input = clean(facility_or_processing_type)
     # Assign a default value to field_type
@@ -506,15 +505,12 @@ def get_facility_and_processing_type(facility_or_processing_type, sector=None):
     processing_type = ALL_PROCESSING_TYPES.get(cleaned_input)
     facility_type = ALL_FACILITY_TYPES.get(cleaned_input)
     match_type = EXACT_MATCH
-    print('!!!processing_type - ', processing_type)
-    print('!!!facility_type - ', facility_type)
-    print('!!!match_type - ', match_type)
+
     # Try for alias match
     if not processing_type:
-        print('!!!cleaned_input ', cleaned_input)
         matched_value = ALL_PROCESSING_TYPES_ALIAS.get(cleaned_input)
         match_type = ALIAS_MATCH
-        print('!!!RETURN - ', matched_value, match_type)
+
         # Try for fuzzy match
         if not matched_value or matched_value is None:
             matched_value = process.extractOne(
