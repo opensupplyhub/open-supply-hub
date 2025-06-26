@@ -46,7 +46,9 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
             "payment_intent": "pi_789",
             "amount_subtotal": 5000,
             "amount_total": 2500,
-            "promotion_code": "PROMO50",
+            "discounts": [
+                {"coupon": "COUPON123", "promotion_code": "PROMO50"},
+            ],
         }
         mock_construct.return_value = {
             "type": "checkout.session.completed",
@@ -64,7 +66,12 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
         self.assertEqual(payment.payment_id, "pi_789")
         self.assertEqual(payment.amount_subtotal, 5000)
         self.assertEqual(payment.amount_total, 2500)
-        self.assertEqual(payment.promotion_code, "PROMO50")
+        self.assertEqual(
+            payment.discounts,
+            [
+                {"coupon": "COUPON123", "promotion_code": "PROMO50"},
+            ],
+        )
 
     @patch("stripe.Webhook.construct_event")
     def test_missing_field_returns_400(self, mock_construct):
@@ -98,7 +105,9 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
             "payment_intent": "pi_789",
             "amount_subtotal": 5000,
             "amount_total": 2500,
-            "promotion_code": "PROMO50",
+            "discounts": [
+                {"coupon": "COUPON123", "promotion_code": "PROMO50"},
+            ],
         }
         mock_construct.return_value = {
             "type": "checkout.session.completed",

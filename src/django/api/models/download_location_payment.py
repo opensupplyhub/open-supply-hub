@@ -1,4 +1,3 @@
-from django.contrib.postgres import fields as postgres
 from django.db import models
 
 
@@ -40,16 +39,13 @@ class DownloadLocationPayment(models.Model):
         blank=False,
         help_text='The total amount of the payment, stored in cents.',
     )
-    promotion_codes = postgres.ArrayField(
-        models.CharField(
-            max_length=50,
-            null=False,
-            blank=False,
-            help_text='The promotion code applied to the payment.',
-        ),
-        blank=True,
+    discounts = models.JSONField(
         default=list,
-        help_text='List of promotion codes applied to the payment.',
+        blank=True,
+        help_text=(
+            'List of discount objects applied to the payment, '
+            'each containing coupon and promotion_code.'
+        ),
     )
     created_at = models.DateTimeField(
         auto_now_add=True,

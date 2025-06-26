@@ -24,7 +24,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `payment_id`: `CharField`, unique - stores Stripe payment identifier
     * `amount_subtotal`: `IntegerField` - stores subtotal amount in cents
     * `amount_total`: `IntegerField` - stores total amount in cents
-    * `promotion_codes`: `ArrayField` of `CharField` - optional, stores list of promotion codes applied to the payment
+    * `discounts`: `JSONField` - optional, stores list of discount objects (with `coupon` and `promotion_code`)
     * `created_at`: `DateTimeField` - indexed timestamp of when the record was created
     * `user`: `ForeignKey` to `User` model - references the user who made the payment
 

@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.contrib.postgres import fields as postgres
 from django.db import migrations, models
 
 
@@ -51,15 +50,11 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    'promotion_codes',
-                    postgres.ArrayField(
-                        base_field=models.CharField(
-                            help_text='The promotion code applied to the payment.',
-                            max_length=50,
-                        ),
+                    'discounts',
+                    models.JSONField(
                         blank=True,
                         default=list,
-                        help_text='List of promotion codes applied to the payment.',
+                        help_text='List of discount objects applied to the payment, each containing coupon and promotion_code.',
                     ),
                 ),
                 (

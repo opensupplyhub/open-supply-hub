@@ -43,19 +43,13 @@ class DownloadLocationsCheckoutWebhookView(View):
                 amount_total = session["amount_total"]
                 discounts = session["discounts"]
 
-                promotion_codes = [
-                    discount.get("promotion_code")
-                    for discount in discounts
-                    if "promotion_code" in discount
-                ]
-
                 payment = DownloadLocationPayment(
                     user_id=user_id,
                     stripe_session_id=stripe_session_id,
                     payment_id=payment_id,
                     amount_subtotal=amount_subtotal,
                     amount_total=amount_total,
-                    promotion_codes=promotion_codes,
+                    discounts=discounts,
                 )
                 payment.save()
 
