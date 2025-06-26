@@ -93,11 +93,11 @@ class Command(BaseCommand):
         # Get all UUIDs from RBA (target database)
         rba_uuids = set()
         rba_qs = model.objects.using('rba').values_list('uuid', flat=True)
-        
+
         for batch_start in range(0, rba_qs.count(), batch_size):
             batch_uuids = list(rba_qs[batch_start:batch_start + batch_size])
             rba_uuids.update(batch_uuids)
-        
+
         logger.info(
             f"Found {len(rba_uuids)} existing UUIDs in RBA for "
             f"{model_key}."
@@ -106,17 +106,16 @@ class Command(BaseCommand):
         # Get UUIDs from OS Hub (source database) and find missing ones
         missing_uuids = set()
         source_qs = model.objects.using('default').values_list('uuid', flat=True)
-        
+
         for batch_start in range(0, source_qs.count(), batch_size):
             batch_uuids = list(source_qs[batch_start:batch_start + batch_size])
             missing_uuids.update(uuid for uuid in batch_uuids if uuid not in rba_uuids)
-        
+
         logger.info(
             f"Found {len(missing_uuids)} missing UUIDs to sync for "
             f"{model_key}."
         )
 
-        # Store statistics
         self.sync_stats[model_key] = {
             'total_source': source_qs.count(),
             'total_target': len(rba_uuids),
@@ -130,9 +129,11 @@ class Command(BaseCommand):
             )
             return
 
-        # Process missing records in batches
+        # Process missing records in batches within a transaction for this model only
         if missing_uuids:
-            self.__sync_missing_records(model, missing_uuids, batch_size)
+            with transaction.atomic(using='rba'):
+                self.__sync_missing_records(model, missing_uuids, batch_size)
+                logger.info(f"Successfully committed changes for {model_key}")
         else:
             logger.info(
                 f"No new records to sync for "
@@ -160,7 +161,7 @@ class Command(BaseCommand):
             self.__sync_objects_to_rba(model, prepared_objs)
 
             total_synced += len(prepared_objs)
-            
+
             logger.info(
                 f"Synced batch {i//batch_size + 1}: {len(prepared_objs)} records "
                 f"({total_synced}/{len(missing_uuids)} total)"
@@ -250,7 +251,6 @@ class Command(BaseCommand):
 
         logger.info("="*80)
 
-    @transaction.atomic(using='rba')
     def handle(self, *args, **options):
         self.start_time = time.time()
         table = options['table']
@@ -264,7 +264,7 @@ class Command(BaseCommand):
                 model = apps.get_model(app_label, model_name)
             except (ValueError, LookupError):
                 raise CommandError("Invalid table format. Use app_label.ModelName")
-            
+
             # Validate that the model has a UUID field
             if not self.__validate_model_has_uuid(model):
                 raise CommandError(
@@ -280,15 +280,29 @@ class Command(BaseCommand):
             logger.info(
                 f"Found {len(all_models)} models with UUID fields for synchronization."
             )
+
+            successful_syncs = 0
+            failed_syncs = 0
+
             for model in all_models:
                 try:
                     self.__sync_single_model(model, dry_run)
+                    successful_syncs += 1
                 except Exception as e:
+                    failed_syncs += 1
                     logger.error(
                         f"Failed to sync {model._meta.app_label}.{model._meta.model_name}: {e}"
                     )
+                    logger.info(
+                        f"Previous successful syncs ({successful_syncs} tables) are preserved. "
+                        f"Continuing with remaining tables..."
+                    )
                     continue
-            logger.info("Full synchronization completed.")
+
+            logger.info(
+                f"Full synchronization completed. "
+                f"Successful: {successful_syncs}, Failed: {failed_syncs}"
+            )
 
         self.__print_summary_table(dry_run)
 
