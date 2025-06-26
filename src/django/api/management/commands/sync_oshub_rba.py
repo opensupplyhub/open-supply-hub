@@ -12,7 +12,7 @@ class Command(BaseCommand):
 
     def __init__(self):
         super().__init__()
-        self.sync_stats = {}  # Track sync statistics for each model
+        self.sync_stats = {}
         self.start_time = None
 
     def add_arguments(self, parser):
@@ -32,13 +32,13 @@ class Command(BaseCommand):
         try:
             # Get the table name
             table_name = model._meta.db_table
-            
+
             # Get the primary key field name
             pk_field = model._meta.pk.name
-            
+
             # Construct sequence name (PostgreSQL convention)
             sequence_name = f"{table_name}_{pk_field}_seq"
-            
+
             # Update the sequence to the maximum ID value
             with connection.cursor() as cursor:
                 cursor.execute(f"""
@@ -55,7 +55,7 @@ class Command(BaseCommand):
     def __prepare_objects_for_sync(self, objects, model):
         """Prepare objects for sync by removing ID to avoid conflicts"""
         prepared_objects = []
-        
+
         for obj in objects:
             # Create a new instance without the ID to let the target DB generate a new one
             obj_data = {}
@@ -89,7 +89,7 @@ class Command(BaseCommand):
 
         # Get UUIDs from both databases in batches to avoid memory issues
         batch_size = 10000
-        
+
         # Get all UUIDs from RBA (target database)
         rba_uuids = set()
         rba_qs = model.objects.using('rba').values_list('uuid', flat=True)
@@ -142,30 +142,30 @@ class Command(BaseCommand):
     def __sync_missing_records(self, model, missing_uuids, batch_size=1000):
         """Sync missing records in batches to avoid memory issues"""
         total_synced = 0
-        
+
         # Process UUIDs in batches
         uuids_list = list(missing_uuids)
         for i in range(0, len(uuids_list), batch_size):
             batch_uuids = uuids_list[i:i + batch_size]
-            
-            # Fetch only the records we need from OS Hub
+
+            # Fetch only the records we need
             batch_objects = list(
                 model.objects.using('default').filter(uuid__in=batch_uuids)
             )
-            
+
             # Prepare objects for sync (remove IDs to avoid conflicts)
             prepared_objs = self.__prepare_objects_for_sync(batch_objects, model)
-            
+
             # Write batch to RBA
             self.__sync_objects_to_rba(model, prepared_objs)
-            
+
             total_synced += len(prepared_objs)
             
             logger.info(
                 f"Synced batch {i//batch_size + 1}: {len(prepared_objs)} records "
                 f"({total_synced}/{len(missing_uuids)} total)"
             )
-        
+
         logger.info(
             f"Successfully inserted {total_synced} new records into RBA for "
             f"{model._meta.app_label}.{model._meta.model_name}."
@@ -174,7 +174,7 @@ class Command(BaseCommand):
     def __get_all_models(self):
         """Get all models that have a UUID field and exist in both databases"""
         all_models = []
-        
+
         for app_config in apps.get_app_configs():
             for model in app_config.get_models():
                 # Check if model has UUID field
@@ -194,7 +194,7 @@ class Command(BaseCommand):
                 except:
                     # Model doesn't have a UUID field, skip it
                     continue
-        
+
         return all_models
 
     def __validate_model_has_uuid(self, model):
@@ -211,49 +211,43 @@ class Command(BaseCommand):
             logger.info("No models were processed.")
             return
 
-        # Calculate totals
         total_models = len(self.sync_stats)
         total_source_records = sum(stats['total_source'] for stats in self.sync_stats.values())
         total_target_records = sum(stats['total_target'] for stats in self.sync_stats.values())
         total_to_sync = sum(stats['to_sync'] for stats in self.sync_stats.values())
-        
-        # Calculate execution time
+
         execution_time = time.time() - self.start_time
-        
+
         logger.info("\n" + "="*80)
         logger.info("SYNC SUMMARY REPORT")
         logger.info("="*80)
-        
-        # Print table header
+
         logger.info(f"{'Table':<40} {'Source':<10} {'Target':<10} {'To Sync':<10}")
         logger.info("-" * 80)
-        
-        # Print each model's stats
+
         for model_key, stats in sorted(self.sync_stats.items()):
-            if stats['to_sync'] > 0:  # Only show tables with records to sync
+            if stats['to_sync'] > 0:
                 logger.info(
                     f"{model_key:<40} {stats['total_source']:<10} "
                     f"{stats['total_target']:<10} {stats['to_sync']:<10}"
                 )
-        
-        # Print totals
+
         logger.info("-" * 80)
         logger.info(
             f"{'TOTALS':<40} {total_source_records:<10} "
             f"{total_target_records:<10} {total_to_sync:<10}"
         )
-        
-        # Print summary info
+
         logger.info("\nSUMMARY:")
         logger.info(f"  • Models processed: {total_models}")
         logger.info(f"  • Models with records to sync: {len([s for s in self.sync_stats.values() if s['to_sync'] > 0])}")
-        logger.info(f"  • Total execution time: {execution_time:.2f} seconds")
-        
+        logger.info(f"  • Total execution time: {execution_time:.2f} seconds ({execution_time/60:.2f} minutes)")
+
         if dry_run:
             logger.info(f"  • Mode: DRY RUN (no changes applied)")
         else:
             logger.info(f"  • Mode: LIVE SYNC")
-        
+
         logger.info("="*80)
 
     @transaction.atomic(using='rba')
@@ -264,12 +258,7 @@ class Command(BaseCommand):
 
         logger.info(f"Starting sync from OS Hub (default) → RBA. Dry run: {dry_run}")
 
-        # Debug: Show RBA database connection info
-        rba_db_config = settings.DATABASES['rba']
-        logger.info(f"RBA DB Config: {rba_db_config}")
-
         if table:
-            # Sync single table
             try:
                 app_label, model_name = table.split('.')
                 model = apps.get_model(app_label, model_name)
@@ -284,16 +273,13 @@ class Command(BaseCommand):
 
             self.__sync_single_model(model, dry_run)
         else:
-            # Full synchronization
             logger.info(
                 "No table specified. Performing full synchronization of all models with UUID fields."
             )
-            
             all_models = self.__get_all_models()
             logger.info(
                 f"Found {len(all_models)} models with UUID fields for synchronization."
             )
-            
             for model in all_models:
                 try:
                     self.__sync_single_model(model, dry_run)
@@ -302,7 +288,6 @@ class Command(BaseCommand):
                         f"Failed to sync {model._meta.app_label}.{model._meta.model_name}: {e}"
                     )
                     continue
-            
             logger.info("Full synchronization completed.")
 
         self.__print_summary_table(dry_run)
