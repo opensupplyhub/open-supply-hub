@@ -14,12 +14,24 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Migrations:
 * 0172_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
+* 0173_create_download_location_success_payment_table.py - This migration introduces a new `DownloadLocationPayment` model in the `api` app. This model stores information about successful payments made for purchasing of additional records for downloading production locations data.
 
 #### Schema changes
 * [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - The `FacilityDownloadLimit` model has been created. This model includes such fields: id, user_id, updated_at, free_download_records, paid_download_records, purchase_date.
+* [OSDEV-1919](https://opensupplyhub.atlassian.net/browse/OSDEV-1919) - Added a new `api_downloadlocationpayment` table with the following fields:
+    * `id`: Auto-incrementing primary key
+    * `stripe_session_id`: `CharField`, unique - stores Stripe checkout session ID
+    * `payment_id`: `CharField`, unique - stores Stripe payment identifier
+    * `amount_subtotal`: `IntegerField` - stores subtotal amount in cents
+    * `amount_total`: `IntegerField` - stores total amount in cents
+    * `promotion_code`: `CharField` - optional, stores any applied promotion code
+    * `created_at`: `DateTimeField` - indexed timestamp of when the record was created
+    * `user`: `ForeignKey` - references the user who made the payment
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-1919](https://opensupplyhub.atlassian.net/browse/OSDEV-1919) - Added the following endpoints to support Stripe payments for downloading additional production location records:
+    * `POST api/v1/download-locations-checkout-session/` - Creates a Stripe Checkout session for purchasing additional download records.
+    * `POST api/v1/download-locations-checkout-webhook/`- Handles Stripe webhook events for successful payments.
 
 ### Architecture/Environment changes
 * *Describe architecture/environment changes here.*
