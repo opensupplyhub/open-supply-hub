@@ -60,8 +60,6 @@ class DownloadLocationsCheckoutWebhookView(View):
                 download_limit.purchase_date = timezone.now()
                 download_limit.save(update_fields=["paid_download_records", "purchase_date"])
 
-
-
             except KeyError as e:
                 return HttpResponseBadRequest(f"Missing expected field: {e}")
             except Exception as e:
