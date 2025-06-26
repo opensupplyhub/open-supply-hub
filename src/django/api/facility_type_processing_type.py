@@ -394,7 +394,7 @@ PRINTING_PROCESSING = 'printing product dyeing and laundering'
 ASSEMBLY_PROCESSING = 'final product assembly'
 WAREHOUSING_PROCESSING = 'warehousing distribution'
 OFFICE_PROCESSING = 'office hq'
-RECRUITMENT_PROCESSING = 'recruitment agency'
+RECRUITMENT_PROCESSING = RECRUITMENT_AGENCY
 
 ALL_FACILITY_TYPES = {
     RAW_MATERIAL_PROCESSING: 'Raw Material Processing or Production',
