@@ -10,8 +10,16 @@ class Command(BaseCommand):
     help = "Sync data from OS Hub (default) to RBA (rba DB) by UUID"
 
     def add_arguments(self, parser):
-        parser.add_argument('--table', required=True, help='Model name to sync (app_label.ModelName)')
-        parser.add_argument('--dry-run', action='store_true', help='Only show changes, do not apply them')
+        parser.add_argument(
+            '--table',
+            required=False,
+            help='Model name to sync (app_label.ModelName). If not provided, syncs all models.'
+        )
+        parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            help='Only show changes, do not apply them'
+        )
 
     def __update_sequence(self, model, using='rba'):
         """Update the sequence for a model's primary key to prevent ID conflicts"""
@@ -32,9 +40,9 @@ class Command(BaseCommand):
                         COALESCE((SELECT MAX({pk_field}) FROM {table_name}), 1)
                     );
                 """)
-                
+
             logger.info(f"Updated sequence {sequence_name} for {table_name}")
-            
+
         except Exception as e:
             logger.warning(f"Failed to update sequence for {model._meta.db_table}: {e}")
 
@@ -45,76 +53,156 @@ class Command(BaseCommand):
         for obj in objects:
             # Create a new instance without the ID to let the target DB generate a new one
             obj_data = {}
-            
+
             # Copy all fields except the primary key
             for field in model._meta.fields:
                 if field.primary_key:
                     continue  # Skip the primary key field
-                
+
                 value = getattr(obj, field.name)
                 obj_data[field.name] = value
-            
+
             # Create a new model instance with the copied data
             new_obj = model(**obj_data)
             prepared_objects.append(new_obj)
-        
+
         return prepared_objects
 
     def __sync_objects_to_rba(self, model, prepared_objs):
         """Sync prepared objects to RBA database"""
         model.objects.using('rba').bulk_create(prepared_objs, batch_size=500)
-        
+
         # Update the sequence after bulk insert to prevent ID conflicts
         if prepared_objs:
             self.__update_sequence(model, using='rba')
 
-    @transaction.atomic(using='rba')
-    def handle(self, *args, **options):
-        table = options['table']
-        dry_run = options['dry_run']
-
-        try:
-            app_label, model_name = table.split('.')
-            model = apps.get_model(app_label, model_name)
-        except (ValueError, LookupError):
-            raise CommandError("Invalid table format. Use app_label.ModelName")
-
-        logger.info(f"Syncing table {table} from OS Hub (default) → RBA. Dry run: {dry_run}")
-
-        # Debug: Show RBA database connection info
-        rba_db_config = settings.DATABASES['rba']
-        logger.info(f"RBA DB Config: {rba_db_config}")
+    def __sync_single_model(self, model, dry_run=False):
+        """Sync a single model from OS Hub to RBA"""
+        logger.info(f"Syncing model {model._meta.app_label}.{model._meta.model_name}")
 
         # Fetch all records from OSHub (default DB)
         source_qs = model.objects.using('default').all()
-        table_msg = ''
-        if table:
-            table_msg = f"table {table}"
-        logger.info(f"Fetched {source_qs.count()} records from OS Hub {table_msg}.")
+        logger.info(
+            f"Fetched {source_qs.count()} records from OS Hub for "
+            f"{model._meta.app_label}.{model._meta.model_name}."
+        )
 
         # Get UUIDs from RBA
         existing_uuids = set(
             model.objects.using('rba').values_list('uuid', flat=True)
         )
-        logger.info(f"Found {len(existing_uuids)} existing UUIDs in RBA.")
+        logger.info(
+            f"Found {len(existing_uuids)} existing UUIDs in RBA for "
+            f"{model._meta.app_label}.{model._meta.model_name}."
+        )
 
         # Filter only new records by UUID
         new_objs = [
             obj for obj in source_qs
             if getattr(obj, 'uuid', None) not in existing_uuids
         ]
-        logger.info(f"{len(new_objs)} new records to insert into RBA.")
+        logger.info(
+            f"{len(new_objs)} new records to insert into RBA for "
+            f"{model._meta.app_label}.{model._meta.model_name}."
+        )
 
         if dry_run:
-            logger.warning(f"[DRY-RUN] Would insert {len(new_objs)} records into RBA.")
+            logger.warning(
+                f"[DRY-RUN] Would insert {len(new_objs)} records into RBA for "
+                f"{model._meta.app_label}.{model._meta.model_name}."
+            )
             return
 
         # Prepare objects for sync (remove IDs to avoid conflicts)
         prepared_objs = self.__prepare_objects_for_sync(new_objs, model)
-        logger.info(f"Prepared {len(prepared_objs)} objects for sync (IDs will be generated by RBA)")
+        logger.info(
+            f"Prepared {len(prepared_objs)} objects for sync "
+            f"(IDs will be generated by RBA)"
+        )
 
         # Write to RBA
         self.__sync_objects_to_rba(model, prepared_objs)
 
-        logger.info(f"Successfully inserted {len(prepared_objs)} new records into RBA.")
+        logger.info(
+            f"Successfully inserted {len(prepared_objs)} new records into RBA for "
+            f"{model._meta.app_label}.{model._meta.model_name}."
+        )
+
+    def __get_all_models(self):
+        """Get all models that have a UUID field and exist in both databases"""
+        all_models = []
+        
+        for app_config in apps.get_app_configs():
+            for model in app_config.get_models():
+                # Check if model has UUID field
+                try:
+                    model._meta.get_field('uuid')
+                    # Check if model exists in both databases
+                    try:
+                        # Test if model exists in default DB
+                        model.objects.using('default').count()
+                        # Test if model exists in RBA DB
+                        model.objects.using('rba').count()
+                        all_models.append(model)
+                    except Exception as e:
+                        logger.debug(
+                            f"Skipping {model._meta.app_label}.{model._meta.model_name}: {e}"
+                        )
+                except:
+                    # Model doesn't have a UUID field, skip it
+                    continue
+        
+        return all_models
+
+    def __validate_model_has_uuid(self, model):
+        """Validate that a model has a UUID field"""
+        try:
+            model._meta.get_field('uuid')
+            return True
+        except:
+            return False
+
+    @transaction.atomic(using='rba')
+    def handle(self, *args, **options):
+        table = options['table']
+        dry_run = options['dry_run']
+
+        logger.info(f"Starting sync from OS Hub (default) → RBA. Dry run: {dry_run}")
+
+        if table:
+            # Sync single table
+            try:
+                app_label, model_name = table.split('.')
+                model = apps.get_model(app_label, model_name)
+            except (ValueError, LookupError):
+                raise CommandError("Invalid table format. Use app_label.ModelName")
+            
+            # Validate that the model has a UUID field
+            if not self.__validate_model_has_uuid(model):
+                raise CommandError(
+                    f"Model {table} does not have a UUID field. Only models with UUID fields can be synced."
+                )
+
+            self.__sync_single_model(model, dry_run)
+        else:
+            # Full synchronization
+            logger.info(
+                "No table specified. Performing full synchronization of all models with UUID fields."
+            )
+            
+            all_models = self.__get_all_models()
+            logger.info(
+                f"Found {len(all_models)} models with UUID fields for synchronization."
+            )
+            
+            for model in all_models:
+                try:
+                    self.__sync_single_model(model, dry_run)
+                except Exception as e:
+                    logger.error(
+                        f"Failed to sync {model._meta.app_label}.{model._meta.model_name}: {e}"
+                    )
+                    continue
+            
+            logger.info("Full synchronization completed.")
 
