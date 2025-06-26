@@ -1,6 +1,6 @@
 from django.conf import settings
+from django.contrib.postgres import fields as postgres
 from django.db import migrations, models
-import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
@@ -51,12 +51,15 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    'promotion_code',
-                    models.CharField(
+                    'promotion_codes',
+                    postgres.ArrayField(
+                        base_field=models.CharField(
+                            help_text='The promotion code applied to the payment.',
+                            max_length=50,
+                        ),
                         blank=True,
-                        help_text='The promotion code applied to the payment, if any.',
-                        max_length=255,
-                        default='',
+                        default=list,
+                        help_text='List of promotion codes applied to the payment.',
                     ),
                 ),
                 (
@@ -70,7 +73,7 @@ class Migration(migrations.Migration):
             name='user',
             field=models.ForeignKey(
                 help_text='The user who made the payment.',
-                on_delete=django.db.models.deletion.CASCADE,
+                on_delete=models.deletion.CASCADE,
                 related_name='download_location_payments',
                 to=settings.AUTH_USER_MODEL,
             ),

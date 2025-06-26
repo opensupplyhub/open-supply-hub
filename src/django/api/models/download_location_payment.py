@@ -1,3 +1,4 @@
+from django.contrib.postgres import fields as postgres
 from django.db import models
 
 
@@ -7,25 +8,27 @@ class DownloadLocationPayment(models.Model):
     for purchasing of additional records for downloading production
     locations data.
     """
+
     user = models.ForeignKey(
         'User',
         null=False,
         on_delete=models.CASCADE,
-        help_text='The user who made the payment.'
+        related_name='download_location_payments',
+        help_text='The user who made the payment.',
     )
     stripe_session_id = models.CharField(
         max_length=255,
         null=False,
         blank=False,
         unique=True,
-        help_text='The unique identifier for the Stripe checkout session.'
+        help_text='The unique identifier for the Stripe checkout session.',
     )
     payment_id = models.CharField(
         max_length=255,
         null=False,
         blank=False,
         unique=True,
-        help_text='The unique identifier for the payment, if available.'
+        help_text='The unique identifier for the payment, if available.',
     )
     amount_subtotal = models.IntegerField(
         null=False,
@@ -37,11 +40,16 @@ class DownloadLocationPayment(models.Model):
         blank=False,
         help_text='The total amount of the payment, stored in cents.',
     )
-    promotion_code = models.CharField(
-        max_length=255,
+    promotion_codes = postgres.ArrayField(
+        models.CharField(
+            max_length=50,
+            null=False,
+            blank=False,
+            help_text='The promotion code applied to the payment.',
+        ),
         blank=True,
-        default='',
-        help_text='The promotion code applied to the payment, if any.'
+        default=list,
+        help_text='List of promotion codes applied to the payment.',
     )
     created_at = models.DateTimeField(
         auto_now_add=True,
