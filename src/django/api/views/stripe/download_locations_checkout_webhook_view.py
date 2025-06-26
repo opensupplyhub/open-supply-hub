@@ -54,11 +54,19 @@ class DownloadLocationsCheckoutWebhookView(View):
                 )
                 payment.save()
 
-                download_limit = FacilityDownloadLimit.objects.get(user_id=user_id)
+                download_limit = FacilityDownloadLimit.objects.get(
+                    user_id=user_id
+                )
 
-                download_limit.paid_download_records += (amount_subtotal / 50000) * 5000
+                paid_records = (amount_subtotal / 50000) * 5000
+                download_limit.paid_download_records += paid_records
                 download_limit.purchase_date = timezone.now()
-                download_limit.save(update_fields=["paid_download_records", "purchase_date"])
+                download_limit.save(
+                    update_fields=[
+                        "paid_download_records",
+                        "purchase_date"
+                    ]
+                )
 
             except KeyError as e:
                 return HttpResponseBadRequest(f"Missing expected field: {e}")
