@@ -27,5 +27,5 @@ Use the format below to document information about the new release.
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
 
-### Release instructions:
+### Release instructions
 * *Provide release instructions here.*
