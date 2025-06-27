@@ -1,5 +1,10 @@
 import { createAction } from 'redux-act';
 
+import {
+    logErrorAndDispatchFailure,
+    makeGetDownloadLocationsCheckoutSessionURL,
+} from '../util/util';
+
 export const startFetchDownloadLimitPaymentUrl = createAction(
     'START_FETCH_DOWNLOAD_LIMIT_PAYMENT_URL',
 );
@@ -17,10 +22,19 @@ export function downloadLimitPaymentUrl() {
     return dispatch => {
         dispatch(startFetchDownloadLimitPaymentUrl());
 
-        dispatch(
-            completeFetchDownloadLimitPaymentUrl(
-                'http://localhost:6543/facilities/?success=true',
-            ),
-        );
+        return apiRequest
+            .post(makeGetDownloadLocationsCheckoutSessionURL())
+            .then(({ data }) => {
+                dispatch(completeFetchDownloadLimitPaymentUrl(data.url));
+            })
+            .catch(err => {
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented fetching facilities',
+                        failFetchDownloadLimitPaymentUrl,
+                    ),
+                );
+            });
     };
 }

@@ -229,6 +229,7 @@ export const makeGetFacilitiesURLWithQueryString = (qs, pageSize) =>
     `/api/facilities/?${qs}&number_of_public_contributors=true&pageSize=${pageSize}`;
 export const makeGetFacilitiesDownloadURLWithQueryString = (qs, pageSize) =>
     `/api/facilities-downloads/?${qs}&pageSize=${pageSize}`;
+export const makeGetDownloadLocationsCheckoutSessionURL = () => '/api/download-locations-checkout-session/';
 export const makeClaimFacilityAPIURL = osId => `/api/facilities/${osId}/claim/`;
 export const makeSplitFacilityAPIURL = osID => `/api/facilities/${osID}/split/`;
 export const makeTransferFacilityAPIURL = osID =>
