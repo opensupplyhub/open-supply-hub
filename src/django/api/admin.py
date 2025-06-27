@@ -10,7 +10,6 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from api.models.sector_group import SectorGroup
-from allauth.account.models import EmailAddress
 from simple_history.admin import SimpleHistoryAdmin
 from waffle.models import Flag, Sample, Switch
 from waffle.admin import FlagAdmin, SampleAdmin, SwitchAdmin
@@ -226,12 +225,6 @@ class SectorGroupAdmin(admin.ModelAdmin):
         return ['name']
 
 
-class EmailAddressAdmin(admin.ModelAdmin):
-    list_display = ('email', 'user', 'primary', 'verified')
-    search_fields = ('email', 'user__email')
-    list_filter = ('verified', 'primary')
-
-
 admin_site.register(models.Version)
 admin_site.register(models.User, OarUserAdmin)
 admin_site.register(models.Contributor, ContributorAdmin)
@@ -253,4 +246,3 @@ admin_site.register(models.RequestLog, RequestLogAdmin)
 admin_site.register(models.ApiLimit, ApiLimitAdmin)
 admin_site.register(models.Sector, SectorAdmin)
 admin_site.register(SectorGroup, SectorGroupAdmin)
-admin_site.register(EmailAddress, EmailAddressAdmin)
