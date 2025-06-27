@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.db import migrations, models
-import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
@@ -51,12 +50,11 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    'promotion_code',
-                    models.CharField(
+                    'discounts',
+                    models.JSONField(
                         blank=True,
-                        help_text='The promotion code applied to the payment, if any.',
-                        max_length=255,
-                        default='',
+                        default=list,
+                        help_text='List of discount objects applied to the payment, each containing coupon and promotion_code.',
                     ),
                 ),
                 (
@@ -70,7 +68,7 @@ class Migration(migrations.Migration):
             name='user',
             field=models.ForeignKey(
                 help_text='The user who made the payment.',
-                on_delete=django.db.models.deletion.CASCADE,
+                on_delete=models.deletion.CASCADE,
                 related_name='download_location_payments',
                 to=settings.AUTH_USER_MODEL,
             ),

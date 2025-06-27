@@ -24,9 +24,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `payment_id`: `CharField`, unique - stores Stripe payment identifier
     * `amount_subtotal`: `IntegerField` - stores subtotal amount in cents
     * `amount_total`: `IntegerField` - stores total amount in cents
-    * `promotion_code`: `CharField` - optional, stores any applied promotion code
+    * `discounts`: `JSONField` - optional, stores list of discount objects (with `coupon` and `promotion_code`)
     * `created_at`: `DateTimeField` - indexed timestamp of when the record was created
-    * `user`: `ForeignKey` - references the user who made the payment
+    * `user`: `ForeignKey` to `User` model - references the user who made the payment
 
 ### Code/API changes
 * [OSDEV-1919](https://opensupplyhub.atlassian.net/browse/OSDEV-1919) - Added the following endpoints to support Stripe payments for downloading additional production location records:
