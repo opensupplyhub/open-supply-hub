@@ -41,8 +41,8 @@ test 'processing_type filter with only nil matched values' do
     {
       'processing_type_value' => {
         'matched_values' => [
-          ['a', 'b', nil],
-          ['c', 'd', nil]
+          ['a', 'b', 'c', nil],
+          ['d', 'e', 'f', nil]
         ]
       }
     }
