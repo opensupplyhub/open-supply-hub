@@ -4,8 +4,13 @@ from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
-from api.models import DownloadLocationPayment, User
+from api.models import (
+    DownloadLocationPayment,
+    FacilityDownloadLimit,
+    User
+)
 
 
 class DownloadLocationsCheckoutWebhookViewTest(TestCase):
@@ -15,6 +20,13 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
         self.user = User.objects.create(email=self.email)
         self.user.set_password(self.password)
         self.user.save()
+
+        self.download_limit = FacilityDownloadLimit.objects.create(
+            user=self.user,
+            free_download_records=100,
+            paid_download_records=0,
+            updated_at=timezone.now(),
+        )
 
         self.url = reverse('download-locations-checkout-webhook')
 
