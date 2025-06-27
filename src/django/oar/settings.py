@@ -251,6 +251,14 @@ DATABASES = {
         'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
         'HOST': os.getenv('POSTGRES_HOST'),
         'PORT': os.getenv('POSTGRES_PORT')
+    },
+    'rba': {  # RBA database for sync operations
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'rba', # name of the database in the rba container
+        'USER': os.getenv('POSTGRES_USER'), # user of the database in the rba container
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD'), # password of the database in the rba container
+        'HOST': os.getenv('RBA_DB_HOST', 'rba_db'),  # Use environment variable or default to rba_db
+        'PORT': os.getenv('RBA_DB_PORT', '5432'),    # Use environment variable or default to 5432
     }
 }
 
