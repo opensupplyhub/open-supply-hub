@@ -39,11 +39,11 @@ if [ "$1" = "dump" ]; then
     password=$(echo $db_info | cut -d: -f5)
     
     # Create dump directory
-    mkdir -p ./db_dumps
+    mkdir -p ./dumps
     
     # Set password and create dump
     export PGPASSWORD=$password
-    dump_file="./db_dumps/${dump_name}_$(date +%Y%m%d_%H%M%S).dump"
+    dump_file="./dumps/${dump_name}_$(date +%Y%m%d_%H%M%S).dump"
     
     pg_dump -h $host -p $port -U $user -d $dbname \
         --format=custom \
@@ -109,10 +109,14 @@ elif [ "$1" = "restore" ]; then
 # List dumps
 elif [ "$1" = "list" ]; then
     echo "Available dumps:"
-    if [ -d "./db_dumps" ]; then
-        ls -lh ./db_dumps/*.dump 2>/dev/null || echo "No dump files found"
+    if [ -d "./dumps" ]; then
+        if [ "$(ls -A ./dumps/*.dump 2>/dev/null)" ]; then
+            ls -lh ./dumps/*.dump
+        else
+            echo "No dump files found in ./dumps directory"
+        fi
     else
-        echo "No dump directory found"
+        echo "No dumps directory found. Create one by running a dump command."
     fi
 
 # Show help

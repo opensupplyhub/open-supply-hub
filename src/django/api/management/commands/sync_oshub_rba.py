@@ -32,13 +32,13 @@ class Command(BaseCommand):
         try:
             # Get the table name
             table_name = model._meta.db_table
-
+            
             # Get the primary key field name
             pk_field = model._meta.pk.name
-
+            
             # Construct sequence name (PostgreSQL convention)
             sequence_name = f"{table_name}_{pk_field}_seq"
-
+            
             # Update the sequence to the maximum ID value
             with connection.cursor() as cursor:
                 cursor.execute(f"""
@@ -46,11 +46,12 @@ class Command(BaseCommand):
                         COALESCE((SELECT MAX({pk_field}) FROM {table_name}), 1)
                     );
                 """)
-
+                
             logger.info(f"Updated sequence {sequence_name} for {table_name}")
-
+            
         except Exception as e:
             logger.warning(f"Failed to update sequence for {model._meta.db_table}: {e}")
+            # Continue without updating sequence - this is not critical
 
     def __prepare_objects_for_sync(self, objects, model):
         """Prepare objects for sync by removing ID to avoid conflicts"""
@@ -76,16 +77,181 @@ class Command(BaseCommand):
 
     def __sync_objects_to_rba(self, model, prepared_objs):
         """Sync prepared objects to RBA database"""
-        model.objects.using('rba').bulk_create(prepared_objs, batch_size=500)
+        try:
+            # Try bulk_create first (faster)
+            model.objects.using('rba').bulk_create(prepared_objs, batch_size=500)
+            logger.info(f"Successfully bulk created {len(prepared_objs)} objects for {model._meta.app_label}.{model._meta.model_name}")
+            
+            # Update the sequence after bulk insert to prevent ID conflicts
+            if prepared_objs:
+                self.__update_sequence(model, using='rba')
+                
+        except Exception as e:
+            if "Adapter" in str(e) or "DatabaseOperations" in str(e):
+                logger.warning(f"Bulk create failed due to database adapter issue, falling back to individual inserts: {e}")
+                self.__sync_objects_individually(model, prepared_objs)
+            else:
+                logger.error(f"Failed to sync objects for {model._meta.app_label}.{model._meta.model_name}: {e}")
+                raise
 
-        # Update the sequence after bulk insert to prevent ID conflicts
-        if prepared_objs:
+    def __sync_objects_individually(self, model, prepared_objs):
+        """Fallback method: sync objects individually when bulk_create fails"""
+        logger.info(f"Syncing {len(prepared_objs)} objects individually for {model._meta.app_label}.{model._meta.model_name}")
+        
+        successful_inserts = 0
+        failed_inserts = 0
+        
+        for i, obj in enumerate(prepared_objs):
+            try:
+                obj.save(using='rba')
+                successful_inserts += 1
+                
+                # Log progress every 100 objects
+                if (i + 1) % 100 == 0:
+                    logger.info(f"Individual sync progress: {i + 1}/{len(prepared_objs)} objects processed")
+                    
+            except Exception as e:
+                failed_inserts += 1
+                logger.warning(f"Failed to insert object {i + 1} for {model._meta.app_label}.{model._meta.model_name}: {e}")
+                continue
+        
+        logger.info(f"Individual sync completed: {successful_inserts} successful, {failed_inserts} failed")
+        
+        # Update the sequence after individual inserts
+        if successful_inserts > 0:
             self.__update_sequence(model, using='rba')
+
+    def __get_model_foreign_key_dependencies(self, model):
+        """Dynamically detect foreign key dependencies for a model"""
+        dependencies = []
+        
+        for field in model._meta.fields:
+            if hasattr(field, 'related_model') and field.related_model:
+                # This is a foreign key field
+                related_model = field.related_model
+                try:
+                    related_model._meta.get_field('uuid')
+                    # Only include models that have UUID fields (syncable models)
+                    dependency_key = f"{related_model._meta.app_label}.{related_model._meta.model_name}"
+                    if dependency_key not in dependencies:
+                        dependencies.append(dependency_key)
+                except:
+                    # Model doesn't have a UUID field, skip it
+                    continue
+        
+        return dependencies
+
+    def __get_models_to_sync(self, target_model=None):
+        """Get all models that need to be synced, including dependencies"""
+        if target_model:
+            # Single table sync - get the model and all its dependencies
+            models_to_sync = self.__get_dependency_chain(target_model)
+            logger.info(f"Single table sync requested for {target_model._meta.app_label}.{target_model._meta.model_name}")
+            logger.info(f"Will sync dependency chain: {[f'{m._meta.app_label}.{m._meta.model_name}' for m in models_to_sync]}")
+        else:
+            # Full sync - get all models with dependency resolution
+            all_models = self.__get_all_models()
+            models_to_sync = self.__build_full_dependency_chain(all_models)
+            logger.info(f"Full sync requested for {len(models_to_sync)} models")
+        
+        return models_to_sync
+
+    def __get_dependency_chain(self, target_model):
+        """Get the complete dependency chain for a single model"""
+        model_key = f"{target_model._meta.app_label}.{target_model._meta.model_name}"
+        dependency_chain = []
+        processed = set()
+        
+        def add_model_with_dependencies(model):
+            model_key = f"{model._meta.app_label}.{model._meta.model_name}"
+            if model_key in processed:
+                return
+            processed.add(model_key)
+            # Get dependencies for this model
+            dependencies = self.__get_model_foreign_key_dependencies(model)
+            # Recursively add dependencies first
+            for dep_key in dependencies:
+                try:
+                    app_label, model_name = dep_key.split('.')
+                    dep_model = apps.get_model(app_label, model_name)
+                    if self.__validate_model_has_uuid(dep_model):
+                        add_model_with_dependencies(dep_model)
+                except (ValueError, LookupError):
+                    logger.warning(f"Could not resolve dependency {dep_key} for {model_key}")
+            # Add this model after its dependencies
+            if model not in dependency_chain:
+                dependency_chain.append(model)
+        
+        add_model_with_dependencies(target_model)
+        
+        # Always ensure User model is synced first if it's in the dependency chain
+        return self.__prioritize_user_model(dependency_chain)
+
+    def __prioritize_user_model(self, models_list):
+        """Ensure User model is always synced first if present in the list"""
+        try:
+            # Try to get the User model
+            user_model = apps.get_model('auth', 'User')
+            
+            # Check if User model is in the list and has UUID field
+            if user_model in models_list and self.__validate_model_has_uuid(user_model):
+                # Remove User model from its current position
+                models_list = [m for m in models_list if m != user_model]
+                # Add User model at the beginning
+                models_list.insert(0, user_model)
+                logger.info("User model prioritized to sync first")
+        except (ValueError, LookupError):
+            # User model not found or doesn't have UUID field, continue as normal
+            pass
+        
+        return models_list
+
+    def __validate_foreign_key_constraints(self, model, dry_run=False):
+        """Validate that all foreign key references exist in target database"""
+        if dry_run:
+            # In dry-run mode, just check if foreign key constraints would be violated
+            missing_refs = []
+            
+            for field in model._meta.fields:
+                if hasattr(field, 'related_model') and field.related_model:
+                    related_model = field.related_model
+                    try:
+                        related_model._meta.get_field('uuid')
+                        # Check if this foreign key field has any references to non-existent records
+                        source_uuids = set(model.objects.using('default').values_list(field.name, flat=True).distinct())
+                        target_uuids = set(related_model.objects.using('rba').values_list('uuid', flat=True))
+                        
+                        missing_uuids = source_uuids - target_uuids
+                        if missing_uuids:
+                            missing_refs.append({
+                                'field': field.name,
+                                'related_model': f"{related_model._meta.app_label}.{related_model._meta.model_name}",
+                                'missing_count': len(missing_uuids)
+                            })
+                    except:
+                        # Model doesn't have a UUID field, skip it
+                        continue
+            
+            if missing_refs:
+                logger.error(f"Foreign key constraint violations detected for {model._meta.app_label}.{model._meta.model_name}:")
+                for ref in missing_refs:
+                    logger.error(f"  • {ref['field']} → {ref['related_model']}: {ref['missing_count']} missing references")
+                return False
+            
+            return True
+        else:
+            # In real sync mode, let the database handle the constraints
+            # The sync will fail naturally if constraints are violated
+            return True
 
     def __sync_single_model(self, model, dry_run=False):
         """Sync a single model from OS Hub to RBA"""
         model_key = f"{model._meta.app_label}.{model._meta.model_name}"
         logger.info(f"Syncing model {model_key}")
+
+        # Validate foreign key constraints in dry-run mode
+        if dry_run and not self.__validate_foreign_key_constraints(model, dry_run=True):
+            raise CommandError(f"Foreign key constraint violations detected for {model_key}. Cannot proceed.")
 
         # Get UUIDs from both databases in batches to avoid memory issues
         batch_size = 10000
@@ -93,11 +259,11 @@ class Command(BaseCommand):
         # Get all UUIDs from RBA (target database)
         rba_uuids = set()
         rba_qs = model.objects.using('rba').values_list('uuid', flat=True)
-
+        
         for batch_start in range(0, rba_qs.count(), batch_size):
-            batch_uuids = list(rba_qs[batch_start:batch_start + batch_size])
+            batch_uuids = set(rba_qs[batch_start:batch_start + batch_size])
             rba_uuids.update(batch_uuids)
-
+        
         logger.info(
             f"Found {len(rba_uuids)} existing UUIDs in RBA for "
             f"{model_key}."
@@ -106,11 +272,13 @@ class Command(BaseCommand):
         # Get UUIDs from OS Hub (source database) and find missing ones
         missing_uuids = set()
         source_qs = model.objects.using('default').values_list('uuid', flat=True)
-
+        
         for batch_start in range(0, source_qs.count(), batch_size):
-            batch_uuids = list(source_qs[batch_start:batch_start + batch_size])
-            missing_uuids.update(uuid for uuid in batch_uuids if uuid not in rba_uuids)
-
+            batch_uuids = set(source_qs[batch_start:batch_start + batch_size])
+            missing_uuids.update(batch_uuids)
+        
+        missing_uuids.difference_update(rba_uuids)
+        
         logger.info(
             f"Found {len(missing_uuids)} missing UUIDs to sync for "
             f"{model_key}."
@@ -147,12 +315,30 @@ class Command(BaseCommand):
         # Process UUIDs in batches
         uuids_list = list(missing_uuids)
         for i in range(0, len(uuids_list), batch_size):
-            batch_uuids = uuids_list[i:i + batch_size]
+            batch_uuids = set(uuids_list[i:i + batch_size])
 
             # Fetch only the records we need
             batch_objects = list(
                 model.objects.using('default').filter(uuid__in=batch_uuids)
             )
+
+            # Double-check that these UUIDs don't already exist in RBA
+            existing_uuids = set(
+                model.objects.using('rba').filter(uuid__in=batch_uuids).values_list('uuid', flat=True)
+            )
+            new_uuids = batch_uuids - existing_uuids
+            
+            if new_uuids != batch_uuids:
+                logger.warning(
+                    f"Some UUIDs already exist in RBA, skipping duplicates: "
+                    f"{len(batch_uuids - new_uuids)} duplicates found"
+                )
+                # Filter out objects that already exist
+                batch_objects = [obj for obj in batch_objects if obj.uuid in new_uuids]
+
+            if not batch_objects:
+                logger.info(f"Batch {i//batch_size + 1}: No new records to sync (all were duplicates)")
+                continue
 
             # Prepare objects for sync (remove IDs to avoid conflicts)
             prepared_objs = self.__prepare_objects_for_sync(batch_objects, model)
@@ -161,7 +347,7 @@ class Command(BaseCommand):
             self.__sync_objects_to_rba(model, prepared_objs)
 
             total_synced += len(prepared_objs)
-
+            
             logger.info(
                 f"Synced batch {i//batch_size + 1}: {len(prepared_objs)} records "
                 f"({total_synced}/{len(missing_uuids)} total)"
@@ -196,7 +382,8 @@ class Command(BaseCommand):
                     # Model doesn't have a UUID field, skip it
                     continue
 
-        return all_models
+        # Always prioritize User model if it exists and has UUID field
+        return self.__prioritize_user_model(all_models)
 
     def __validate_model_has_uuid(self, model):
         """Validate that a model has a UUID field"""
@@ -259,32 +446,62 @@ class Command(BaseCommand):
         logger.info(f"Starting sync from OS Hub (default) → RBA. Dry run: {dry_run}")
 
         if table:
+            # Single table sync with automatic dependency resolution
             try:
                 app_label, model_name = table.split('.')
-                model = apps.get_model(app_label, model_name)
+                target_model = apps.get_model(app_label, model_name)
             except (ValueError, LookupError):
                 raise CommandError("Invalid table format. Use app_label.ModelName")
 
             # Validate that the model has a UUID field
-            if not self.__validate_model_has_uuid(model):
+            if not self.__validate_model_has_uuid(target_model):
                 raise CommandError(
                     f"Model {table} does not have a UUID field. Only models with UUID fields can be synced."
                 )
 
-            self.__sync_single_model(model, dry_run)
+            # Get all models that need to be synced (including dependencies)
+            models_to_sync = self.__get_models_to_sync(target_model)
+            
+            successful_syncs = 0
+            failed_syncs = 0
+            
+            for model in models_to_sync:
+                try:
+                    self.__sync_single_model(model, dry_run)
+                    successful_syncs += 1
+                except Exception as e:
+                    failed_syncs += 1
+                    logger.error(f"Failed to sync {model._meta.app_label}.{model._meta.model_name}: {e}")
+                    
+                    if dry_run:
+                        # In dry-run mode, terminate on first error
+                        logger.error("Dry-run terminated due to foreign key constraint violations.")
+                        raise CommandError(f"Sync cannot proceed due to dependency issues: {e}")
+                    else:
+                        # In real sync mode, continue but log the issue
+                        logger.info(
+                            f"Previous successful syncs ({successful_syncs} tables) are preserved. "
+                            f"Continuing with remaining tables..."
+                        )
+                        continue
+            
+            logger.info(
+                f"Single table sync completed. "
+                f"Successful: {successful_syncs}, Failed: {failed_syncs}"
+            )
         else:
+            # Full synchronization
             logger.info(
                 "No table specified. Performing full synchronization of all models with UUID fields."
             )
-            all_models = self.__get_all_models()
-            logger.info(
-                f"Found {len(all_models)} models with UUID fields for synchronization."
-            )
-
+            
+            # Get all models that need to be synced
+            models_to_sync = self.__get_models_to_sync()
+            
             successful_syncs = 0
             failed_syncs = 0
-
-            for model in all_models:
+            
+            for model in models_to_sync:
                 try:
                     self.__sync_single_model(model, dry_run)
                     successful_syncs += 1
@@ -293,16 +510,58 @@ class Command(BaseCommand):
                     logger.error(
                         f"Failed to sync {model._meta.app_label}.{model._meta.model_name}: {e}"
                     )
-                    logger.info(
-                        f"Previous successful syncs ({successful_syncs} tables) are preserved. "
-                        f"Continuing with remaining tables..."
-                    )
-                    continue
-
+                    
+                    if dry_run:
+                        # In dry-run mode, terminate on first error
+                        logger.error("Dry-run terminated due to foreign key constraint violations.")
+                        raise CommandError(f"Sync cannot proceed due to dependency issues: {e}")
+                    else:
+                        # In real sync mode, continue but log the issue
+                        logger.info(
+                            f"Previous successful syncs ({successful_syncs} tables) are preserved. "
+                            f"Continuing with remaining tables..."
+                        )
+                        continue
+            
             logger.info(
                 f"Full synchronization completed. "
                 f"Successful: {successful_syncs}, Failed: {failed_syncs}"
             )
 
         self.__print_summary_table(dry_run)
+
+    def __build_full_dependency_chain(self, all_models):
+        """Build a complete dependency chain for all models in full sync mode"""
+        dependency_chain = []
+        processed = set()
+        
+        def add_model_with_dependencies(model):
+            model_key = f"{model._meta.app_label}.{model._meta.model_name}"
+            if model_key in processed:
+                return
+            processed.add(model_key)
+            
+            # Get dependencies for this model
+            dependencies = self.__get_model_foreign_key_dependencies(model)
+            
+            # Recursively add dependencies first
+            for dep_key in dependencies:
+                try:
+                    app_label, model_name = dep_key.split('.')
+                    dep_model = apps.get_model(app_label, model_name)
+                    if self.__validate_model_has_uuid(dep_model) and dep_model in all_models:
+                        add_model_with_dependencies(dep_model)
+                except (ValueError, LookupError):
+                    logger.warning(f"Could not resolve dependency {dep_key} for {model_key}")
+            
+            # Add this model after its dependencies
+            if model not in dependency_chain:
+                dependency_chain.append(model)
+        
+        # Process all models to build the complete dependency chain
+        for model in all_models:
+            add_model_with_dependencies(model)
+        
+        # Always ensure User model is synced first if it's in the dependency chain
+        return self.__prioritize_user_model(dependency_chain)
 
