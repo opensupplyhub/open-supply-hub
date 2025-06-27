@@ -1,5 +1,5 @@
 import { createAction } from 'redux-act';
-
+import apiRequest from '../util/apiRequest';
 import {
     logErrorAndDispatchFailure,
     makeGetDownloadLocationsCheckoutSessionURL,
@@ -23,7 +23,7 @@ export function downloadLimitPaymentUrl() {
         dispatch(startFetchDownloadLimitPaymentUrl());
 
         return apiRequest
-            .post(makeGetDownloadLocationsCheckoutSessionURL())
+            .post(makeGetDownloadLocationsCheckoutSessionURL(), {})
             .then(({ data }) => {
                 dispatch(completeFetchDownloadLimitPaymentUrl(data.url));
             })
