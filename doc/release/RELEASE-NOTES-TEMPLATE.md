@@ -9,7 +9,7 @@ Use the format below to document information about the new release.
 ### Database changes
 * *Describe high-level database changes.*
 
-#### Migrations:
+#### Migrations
 * *Describe migrations here.*
 
 #### Schema changes

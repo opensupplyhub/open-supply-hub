@@ -12,7 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 * *Describe high-level database changes.*
 
-#### Migrations:
+#### Migrations
 * *Describe migrations here.*
 
 #### Schema changes
