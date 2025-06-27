@@ -1,3 +1,4 @@
+from waffle import switch_is_active
 from rest_framework import viewsets, mixins
 from api.pagination import PageAndSizePagination
 from api.models.facility.facility_index import FacilityIndex
@@ -39,9 +40,11 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
         queryset = FacilitiesDownloadService.get_filtered_queryset(request)
         total_records = queryset.count()
+        facility_download_limit = None
 
-        facility_download_limit = FacilitiesDownloadService \
-            .get_download_limit(request)
+        if not switch_is_active('private_instance'):
+            facility_download_limit = FacilitiesDownloadService \
+                .get_download_limit(request)
         FacilitiesDownloadService.enforce_limits(
             request,
             total_records,

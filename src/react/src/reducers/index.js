@@ -29,6 +29,7 @@ import MergeFacilitiesReducer from './MergeFacilitiesReducer';
 import AdjustFacilityMatchesReducer from './AdjustFacilityMatchesReducer';
 import LogDownloadReducer from './LogDownloadReducer';
 import FacilitiesDownloadReducer from './FacilitiesDownloadReducer';
+import DownloadLimitReducer from './DownloadLimitReducer';
 import VectorTileLayer from './VectorTileLayer';
 import UpdateFacilityLocationReducer from './UpdateFacilityLocationReducer';
 import EmbeddedMapReducer from './EmbeddedMapReducer';
@@ -61,6 +62,7 @@ export default combineReducers({
     adjustFacilityMatches: AdjustFacilityMatchesReducer,
     logDownload: LogDownloadReducer,
     facilitiesDownload: FacilitiesDownloadReducer,
+    downloadLimit: DownloadLimitReducer,
     vectorTileLayer: VectorTileLayer,
     updateFacilityLocation: UpdateFacilityLocationReducer,
     embeddedMap: EmbeddedMapReducer,
