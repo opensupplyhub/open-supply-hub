@@ -3,6 +3,37 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.8.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: July 12, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations
+* *Describe migrations here.*
+
+#### Schema changes
+* *Describe schema changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* [OSDEV-2023](https://opensupplyhub.atlassian.net/browse/OSDEV-2023) - The `Recruitment Agency` has been added to facility type and processing type. So a user can filter production locations on the `/facilities` page, can add this type on the `/contribute/single-location/info/` and `/claimed/:id/` pages.
+
+### Release instructions
+* *Provide release instructions here.*
+
+
 ## Release 2.7.0
 
 ## Introduction
