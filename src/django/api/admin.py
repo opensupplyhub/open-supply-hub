@@ -11,6 +11,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from api.models.sector_group import SectorGroup
 from api.models.partner_field import PartnerField
+from allauth.account.models import EmailAddress
 from simple_history.admin import SimpleHistoryAdmin
 from waffle.models import Flag, Sample, Switch
 from waffle.admin import FlagAdmin, SampleAdmin, SwitchAdmin
@@ -245,6 +246,10 @@ class PartnerFieldAdmin(admin.ModelAdmin):
     list_display = ('name', 'type', 'label', 'unit', 'created_at')
     search_fields = ('name', 'type', 'label', 'unit')
     readonly_fields = ('uuid', 'created_at', 'updated_at')
+class EmailAddressAdmin(admin.ModelAdmin):
+    list_display = ('email', 'user', 'primary', 'verified')
+    search_fields = ('email', 'user__email')
+    list_filter = ('verified', 'primary')
 
 
 admin_site.register(models.Version)
@@ -270,3 +275,4 @@ admin_site.register(models.Sector, SectorAdmin)
 admin_site.register(SectorGroup, SectorGroupAdmin)
 admin_site.register(models.FacilityDownloadLimit, FacilityDownloadLimitAdmin)
 admin_site.register(PartnerField, PartnerFieldAdmin)
+admin_site.register(EmailAddress, EmailAddressAdmin)
