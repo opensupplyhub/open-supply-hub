@@ -19,6 +19,31 @@ services:
     networks:
       - proxynet
 
+  # RBA database service - only needed when USE_RBA_DB=true
+  rba_db:
+    build:
+      context: ./src/database
+      dockerfile: Dockerfile.local
+    container_name: rba_db
+    environment:
+      POSTGRES_DB: rba
+      POSTGRES_USER: opensupplyhub
+      POSTGRES_PASSWORD: opensupplyhub
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "opensupplyhub"]
+      interval: 3s
+      timeout: 3s
+      retries: 3
+    volumes:
+      - rba_data:/var/lib/postgresql/data
+      - ./dumps:/dumps
+    ports:
+      - "5434:5432"
+    networks:
+      - proxynet
+    profiles:
+      - rba  # Only start when explicitly requested
+
   memcached:
     image: memcached:1.6-alpine
     command: -v -I 8m -m 256
@@ -29,14 +54,15 @@ services:
     image: opensupplyhub
     env_file: .env
     environment:
-      - POSTGRES_HOST=database
+      # Database connection - can be overridden by environment variables
+      - POSTGRES_HOST=${POSTGRES_HOST:-database}
       - POSTGRES_PORT=5432
       - POSTGRES_USER=opensupplyhub
       - POSTGRES_PASSWORD=opensupplyhub
-      - POSTGRES_DB=opensupplyhub
+      - POSTGRES_DB=${POSTGRES_DB:-opensupplyhub}
       - CACHE_HOST=memcached
       - CACHE_PORT=11211
-      - INSTANCE_SOURCE=os_hub
+      - INSTANCE_SOURCE=${INSTANCE_SOURCE:-os_hub}
       - DJANGO_ENV=Local
       - DJANGO_SECRET_KEY=secret
       - DJANGO_LOG_LEVEL=INFO
@@ -45,7 +71,7 @@ services:
       - NOTIFICATION_EMAIL_TO=notification@example.com
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - KAFKA_TOPIC_DEDUPE_BASIC_NAME=dedupe.hub.topic
-      # RBA database connection for sync operations
+      # RBA database connection for sync operations (always available)
       - RBA_DB_HOST=rba_db
       - RBA_DB_PORT=5432
       # NOTE the AWS_S3* variables are only used for testing s3 in development.

@@ -451,98 +451,6 @@ class Command(BaseCommand):
 
         logger.info("="*80)
 
-    def handle(self, *args, **options):
-        self.start_time = time.time()
-        table = options['table']
-        dry_run = options['dry_run']
-
-        logger.info(f"Starting sync from OS Hub (default) → RBA. Dry run: {dry_run}")
-
-        if table:
-            # Single table sync with automatic dependency resolution
-            try:
-                app_label, model_name = table.split('.')
-                target_model = apps.get_model(app_label, model_name)
-            except (ValueError, LookupError):
-                raise CommandError("Invalid table format. Use app_label.ModelName")
-
-            # Validate that the model has a UUID field
-            if not self.__validate_model_has_uuid(target_model):
-                raise CommandError(
-                    f"Model {table} does not have a UUID field. Only models with UUID fields can be synced."
-                )
-
-            # Get all models that need to be synced (including dependencies)
-            models_to_sync = self.__get_models_to_sync(target_model)
-
-            successful_syncs = 0
-            failed_syncs = 0
-
-            for model in models_to_sync:
-                try:
-                    self.__sync_single_model(model, dry_run)
-                    successful_syncs += 1
-                except Exception as e:
-                    failed_syncs += 1
-                    logger.error(f"Failed to sync {model._meta.app_label}.{model._meta.model_name}: {e}")
-                    
-                    if dry_run:
-                        # In dry-run mode, terminate on first error
-                        logger.error("Dry-run terminated due to foreign key constraint violations.")
-                        raise CommandError(f"Sync cannot proceed due to dependency issues: {e}")
-                    else:
-                        # In real sync mode, continue but log the issue
-                        logger.info(
-                            f"Previous successful syncs ({successful_syncs} tables) are preserved. "
-                            f"Continuing with remaining tables..."
-                        )
-                        continue
-
-            logger.info(
-                f"Single table sync completed. "
-                f"Successful: {successful_syncs}, Failed: {failed_syncs}"
-            )
-        else:
-            # Full synchronization
-            logger.info(
-                "No table specified. Performing full synchronization of all models with UUID fields."
-            )
-
-            # Get all models that need to be synced
-            models_to_sync = self.__get_models_to_sync()
-
-            successful_syncs = 0
-            failed_syncs = 0
-
-            for model in models_to_sync:
-                try:
-                    self.__sync_single_model(model, dry_run)
-                    successful_syncs += 1
-                except Exception as e:
-                    failed_syncs += 1
-                    logger.error(
-                        f"Failed to sync {model._meta.app_label}.{model._meta.model_name}: {e}"
-                    )
-
-                    if dry_run:
-                        # In dry-run mode, terminate on first error
-                        logger.error("Dry-run terminated due to foreign key constraint violations.")
-                        raise CommandError(f"Sync cannot proceed due to dependency issues: {e}")
-                    else:
-                        # In real sync mode, continue but log the issue
-                        logger.info(
-                            f"Previous successful syncs ({successful_syncs} tables) are preserved. "
-                            f"Continuing with remaining tables..."
-                        )
-                        continue
-
-            logger.info(
-                f"Full synchronization completed. "
-                f"Successful: {successful_syncs}, Failed: {failed_syncs}"
-            )
-
-        self.__print_summary_table(dry_run)
-
     def __build_full_dependency_chain(self, all_models):
         """Build a complete dependency chain for all models in full sync mode"""
         dependency_chain = []
@@ -696,3 +604,94 @@ class Command(BaseCommand):
 
         return missing_refs
 
+    def handle(self, *args, **options):
+        self.start_time = time.time()
+        table = options['table']
+        dry_run = options['dry_run']
+
+        logger.info(f"Starting sync from OS Hub (default) → RBA. Dry run: {dry_run}")
+
+        if table:
+            # Single table sync with automatic dependency resolution
+            try:
+                app_label, model_name = table.split('.')
+                target_model = apps.get_model(app_label, model_name)
+            except (ValueError, LookupError):
+                raise CommandError("Invalid table format. Use app_label.ModelName")
+
+            # Validate that the model has a UUID field
+            if not self.__validate_model_has_uuid(target_model):
+                raise CommandError(
+                    f"Model {table} does not have a UUID field. Only models with UUID fields can be synced."
+                )
+
+            # Get all models that need to be synced (including dependencies)
+            models_to_sync = self.__get_models_to_sync(target_model)
+
+            successful_syncs = 0
+            failed_syncs = 0
+
+            for model in models_to_sync:
+                try:
+                    self.__sync_single_model(model, dry_run)
+                    successful_syncs += 1
+                except Exception as e:
+                    failed_syncs += 1
+                    logger.error(f"Failed to sync {model._meta.app_label}.{model._meta.model_name}: {e}")
+                    
+                    if dry_run:
+                        # In dry-run mode, terminate on first error
+                        logger.error("Dry-run terminated due to foreign key constraint violations.")
+                        raise CommandError(f"Sync cannot proceed due to dependency issues: {e}")
+                    else:
+                        # In real sync mode, continue but log the issue
+                        logger.info(
+                            f"Previous successful syncs ({successful_syncs} tables) are preserved. "
+                            f"Continuing with remaining tables..."
+                        )
+                        continue
+
+            logger.info(
+                f"Single table sync completed. "
+                f"Successful: {successful_syncs}, Failed: {failed_syncs}"
+            )
+        else:
+            # Full synchronization
+            logger.info(
+                "No table specified. Performing full synchronization of all models with UUID fields."
+            )
+
+            # Get all models that need to be synced
+            models_to_sync = self.__get_models_to_sync()
+
+            successful_syncs = 0
+            failed_syncs = 0
+
+            for model in models_to_sync:
+                try:
+                    self.__sync_single_model(model, dry_run)
+                    successful_syncs += 1
+                except Exception as e:
+                    failed_syncs += 1
+                    logger.error(
+                        f"Failed to sync {model._meta.app_label}.{model._meta.model_name}: {e}"
+                    )
+
+                    if dry_run:
+                        # In dry-run mode, terminate on first error
+                        logger.error("Dry-run terminated due to foreign key constraint violations.")
+                        raise CommandError(f"Sync cannot proceed due to dependency issues: {e}")
+                    else:
+                        # In real sync mode, continue but log the issue
+                        logger.info(
+                            f"Previous successful syncs ({successful_syncs} tables) are preserved. "
+                            f"Continuing with remaining tables..."
+                        )
+                        continue
+
+            logger.info(
+                f"Full synchronization completed. "
+                f"Successful: {successful_syncs}, Failed: {failed_syncs}"
+            )
+
+        self.__print_summary_table(dry_run)
