@@ -6,6 +6,7 @@ from django.views import View
 from django.utils import timezone
 
 from api.models import DownloadLocationPayment, FacilityDownloadLimit
+from api.constants import SINGLE_PAID_DOWNLOAD_RECORDS
 
 
 class DownloadLocationsCheckoutWebhookView(View):
@@ -58,7 +59,13 @@ class DownloadLocationsCheckoutWebhookView(View):
                     user_id=user_id
                 )
 
-                paid_records = (amount_subtotal / 50000) * 5000
+                full_session = stripe.checkout.Session.retrieve(
+                    session["id"], expand=["line_items"]
+                )
+                line_item = full_session.line_items.data[0]
+                quantity = line_item.quantity
+
+                paid_records = quantity * SINGLE_PAID_DOWNLOAD_RECORDS
                 download_limit.paid_download_records += paid_records
                 download_limit.purchase_date = timezone.now()
                 download_limit.save(

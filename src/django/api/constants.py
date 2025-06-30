@@ -282,3 +282,5 @@ class APIV1MatchTypes:
 LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX = (
     '[API V1 Location Contribution Approval]'
 )
+
+SINGLE_PAID_DOWNLOAD_RECORDS = 5000
