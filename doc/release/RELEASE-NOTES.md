@@ -12,7 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 * *Describe high-level database changes.*
 
-#### Migrations:
+#### Migrations
 * 0172_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
 * 0173_create_download_location_success_payment_table.py - This migration introduces a new `DownloadLocationPayment` model in the `api` app. This model stores information about successful payments made for purchasing of additional records for downloading production locations data.
 
@@ -37,10 +37,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe architecture/environment changes here.*
 
 ### Bugfix
-* *Describe bugfix here.*
+* Removed the unnecessary duplicate assignment of the `origin_source` field for `Contributor`, `ExtendedField`, `Facility`, `FacilityActivityReport`, `FacilityAlias`, `FacilityClaim`, `FacilityList`, `FacilityListItem`, `FacilityMatch`, `Source`, `FacilityLocation`, and `User` via the custom `default_origin_source` Django management command — and removed the command itself. The `origin_source` field will be set by Django fixtures when deploying the local environment via the `start_local_dev` script and during test runs, which include executing the `start_code_quality_dev` bash script. For models like `FacilityListItem`, `ExtendedField`, and others, it will also be set during list processing triggered by the `reset_database` custom Django management command in the `start_local_dev` and `start_code_quality_dev` bash scripts.
 
 ### What's new
 * [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 5000 facility records for download annually have been added for a registered free user.
+* [OSDEV-2023](https://opensupplyhub.atlassian.net/browse/OSDEV-2023) - The `Recruitment Agency` has been added to facility type and processing type. So a user can filter production locations on the `/facilities` page, can add this type on the `/contribute/single-location/info/` and `/claimed/:id/` pages.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
