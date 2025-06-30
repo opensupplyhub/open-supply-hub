@@ -1,6 +1,6 @@
 import stripe
 
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from django.test import TestCase
 from django.urls import reverse
@@ -50,8 +50,9 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("Invalid signature", response.content.decode())
 
+    @patch("stripe.checkout.Session.retrieve")
     @patch("stripe.Webhook.construct_event")
-    def test_successful_payment_creates_payment_record(self, mock_construct):
+    def test_successful_payment_creates_payment_record(self, mock_construct, mock_retrieve):
         session = {
             "metadata": {"user_id": self.user.id},
             "id": "session_123",
@@ -66,6 +67,14 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
             "type": "checkout.session.completed",
             "data": {"object": session},
         }
+
+        mock_line_item = MagicMock()
+        mock_line_item.quantity = 2
+        mock_line_items = MagicMock()
+        mock_line_items.data = [mock_line_item]
+        mock_session = MagicMock()
+        mock_session.line_items = mock_line_items
+        mock_retrieve.return_value = mock_session
 
         response = self.client.post(
             self.url, data={}, content_type='application/json'
