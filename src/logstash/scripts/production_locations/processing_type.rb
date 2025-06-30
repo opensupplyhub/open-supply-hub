@@ -8,7 +8,7 @@ def filter(event)
   end
 
   # Extract processing types and remove null values.
-  values = processing_type_value['matched_values'].map { |value| value[3] if value[3] != nil }.compact
+  values = processing_type_value['matched_values'].map { |value| value[3] if value[3] != nil }.compact.uniq
 
   # Set the processing_type field only if there are non-null values.
   event.set('processing_type', values) if values.any?
