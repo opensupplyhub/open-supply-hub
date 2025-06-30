@@ -42,6 +42,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### What's new
 * [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 5000 facility records for download annually have been added for a registered free user.
 * [OSDEV-2023](https://opensupplyhub.atlassian.net/browse/OSDEV-2023) - The `Recruitment Agency` has been added to facility type and processing type. So a user can filter production locations on the `/facilities` page, can add this type on the `/contribute/single-location/info/` and `/claimed/:id/` pages.
+* [OSDEV-1868](https://opensupplyhub.atlassian.net/browse/OSDEV-1868) - The tooltip for the limit data download buttons has been updated.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
