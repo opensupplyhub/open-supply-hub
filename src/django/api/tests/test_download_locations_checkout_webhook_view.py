@@ -52,7 +52,11 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
 
     @patch("stripe.checkout.Session.retrieve")
     @patch("stripe.Webhook.construct_event")
-    def test_successful_payment_creates_payment_record(self, mock_construct, mock_retrieve):
+    def test_successful_payment_creates_payment_record(
+        self,
+        mock_construct,
+        mock_retrieve
+    ):
         session = {
             "metadata": {"user_id": self.user.id},
             "id": "session_123",
