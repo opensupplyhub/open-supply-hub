@@ -1554,5 +1554,3 @@ export const API_V1_ERROR_REQUEST_SOURCE_ENUM = {
     CLIENT: 'CLIENT',
     SERVER: 'SERVER',
 };
-
-export const PAYMENT_CANCELED_MSG = 'The payment was canceled. Try again.';
