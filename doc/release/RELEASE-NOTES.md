@@ -15,6 +15,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Migrations:
 * 0172_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
 * 0173_create_download_location_success_payment_table.py - This migration introduces a new `DownloadLocationPayment` model in the `api` app. This model stores information about successful payments made for purchasing of additional records for downloading production locations data.
+* 0174_create_private_instance_switch.py - This migration introduces a new `PRIVATE_INSTANCE` feature flag that allowed to downloads unlimited amount of records but only 5000 records or less per action.
 
 #### Schema changes
 * [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - The `FacilityDownloadLimit` model has been created. This model includes such fields: id, user_id, updated_at, free_download_records, paid_download_records, purchase_date.
@@ -41,6 +42,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 5000 facility records for download annually have been added for a registered free user.
+* [OSDEV-1879](https://opensupplyhub.atlassian.net/browse/OSDEV-1879) - Added Stripe-powered upgrade workflow allowing registered users to purchase additional 5,000 record download packages.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
