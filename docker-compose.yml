@@ -2,6 +2,9 @@ networks:
   proxynet:
     name: os-hub-development
 
+volumes:
+  rba_data:
+
 services:
   database:
     build:
@@ -71,9 +74,9 @@ services:
       - NOTIFICATION_EMAIL_TO=notification@example.com
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - KAFKA_TOPIC_DEDUPE_BASIC_NAME=dedupe.hub.topic
-      # RBA database connection for sync operations (always available)
-      - RBA_DB_HOST=rba_db
-      - RBA_DB_PORT=5432
+      # RBA database connection for sync operations (only when rba_db service is running)
+      - RBA_DB_HOST=${RBA_DB_HOST:-}
+      - RBA_DB_PORT=${RBA_DB_PORT:-}
       # NOTE the AWS_S3* variables are only used for testing s3 in development.
       # The deployed application uses a policy attached to the ECS task instead
       # of using keys.
