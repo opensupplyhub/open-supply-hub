@@ -16,6 +16,7 @@ import DownloadIcon from './DownloadIcon';
 import ArrowDropDownIcon from './ArrowDropDownIcon';
 import { hideLogDownloadError } from '../actions/logDownload';
 import DownloadMenu from '../components/DownloadMenu';
+import { FACILITIES_DOWNLOAD_LIMIT } from '../util/constants';
 
 const downloadFacilitiesStyles = theme =>
     Object.freeze({
@@ -163,7 +164,7 @@ const DownloadFacilitiesButton = ({
 DownloadFacilitiesButton.defaultProps = {
     disabled: false,
     upgrade: false,
-    userAllowedRecords: 5000,
+    userAllowedRecords: FACILITIES_DOWNLOAD_LIMIT,
     logDownloadError: null,
     checkoutUrl: null,
     checkoutUrlError: null,
