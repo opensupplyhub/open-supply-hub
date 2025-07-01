@@ -553,7 +553,6 @@ export const userApiInfoTooltipTitles = Object.freeze({
 });
 
 export const IS_NOT_SET = 'Is not set';
-export const ALLOW_LARGE_DOWNLOADS = 'allow_large_downloads';
 export const CLAIM_A_FACILITY = 'claim_a_facility';
 export const VECTOR_TILE = 'vector_tile';
 export const REPORT_A_FACILITY = 'report_a_facility';
@@ -562,6 +561,7 @@ export const EXTENDED_PROFILE_FLAG = 'extended_profile';
 export const DEFAULT_SEARCH_TEXT = 'Facility Name or OS ID';
 export const DISABLE_LIST_UPLOADING = 'disable_list_uploading';
 export const SHOW_ADDITIONAL_IDENTIFIERS = 'show_additional_identifiers';
+export const PRIVATE_INSTANCE = 'private_instance';
 
 export const DEFAULT_COUNTRY_CODE = 'IE';
 

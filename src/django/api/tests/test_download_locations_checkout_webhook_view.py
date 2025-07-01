@@ -1,11 +1,16 @@
 import stripe
 
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
-from api.models import DownloadLocationPayment, User
+from api.models import (
+    DownloadLocationPayment,
+    FacilityDownloadLimit,
+    User
+)
 
 
 class DownloadLocationsCheckoutWebhookViewTest(TestCase):
@@ -15,6 +20,13 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
         self.user = User.objects.create(email=self.email)
         self.user.set_password(self.password)
         self.user.save()
+
+        self.download_limit = FacilityDownloadLimit.objects.create(
+            user=self.user,
+            free_download_records=100,
+            paid_download_records=0,
+            updated_at=timezone.now(),
+        )
 
         self.url = reverse('download-locations-checkout-webhook')
 
@@ -38,8 +50,13 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("Invalid signature", response.content.decode())
 
+    @patch("stripe.checkout.Session.retrieve")
     @patch("stripe.Webhook.construct_event")
-    def test_successful_payment_creates_payment_record(self, mock_construct):
+    def test_successful_payment_creates_payment_record(
+        self,
+        mock_construct,
+        mock_retrieve
+    ):
         session = {
             "metadata": {"user_id": self.user.id},
             "id": "session_123",
@@ -54,6 +71,14 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
             "type": "checkout.session.completed",
             "data": {"object": session},
         }
+
+        mock_line_item = MagicMock()
+        mock_line_item.quantity = 2
+        mock_line_items = MagicMock()
+        mock_line_items.data = [mock_line_item]
+        mock_session = MagicMock()
+        mock_session.line_items = mock_line_items
+        mock_retrieve.return_value = mock_session
 
         response = self.client.post(
             self.url, data={}, content_type='application/json'

@@ -31,9 +31,10 @@ import {
 import { facilityCollectionPropType, userPropType } from '../util/propTypes';
 
 import {
-    ALLOW_LARGE_DOWNLOADS,
     authLoginFormRoute,
     authRegisterFormRoute,
+    PRIVATE_INSTANCE,
+    FACILITIES_DOWNLOAD_LIMIT,
 } from '../util/constants';
 
 import { makeFacilityDetailLink, getValueFromEvent } from '../util/util';
@@ -224,13 +225,14 @@ function NonVectorTileFilterSidebarFacilitiesTab({
                 <div className={classes.titleRowStyles}>
                     {headerDisplayString}
                     <FeatureFlag
-                        flag={ALLOW_LARGE_DOWNLOADS}
+                        flag={PRIVATE_INSTANCE}
                         alternative={
                             <DownloadFacilitiesButton
-                                disabled={
+                                upgrade={
                                     facilitiesCount >
                                     user.allowed_records_number
                                 }
+                                userAllowedRecords={user.allowed_records_number}
                                 setLoginRequiredDialogIsOpen={
                                     setLoginRequiredDialogIsOpen
                                 }
@@ -238,7 +240,9 @@ function NonVectorTileFilterSidebarFacilitiesTab({
                         }
                     >
                         <DownloadFacilitiesButton
-                            allowLargeDownloads
+                            disabled={
+                                facilitiesCount > FACILITIES_DOWNLOAD_LIMIT
+                            }
                             setLoginRequiredDialogIsOpen={
                                 setLoginRequiredDialogIsOpen
                             }

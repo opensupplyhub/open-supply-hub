@@ -8,10 +8,15 @@ import { withStyles, withTheme } from '@material-ui/core/styles';
 import { toast } from 'react-toastify';
 
 import downloadFacilities from '../actions/downloadFacilities';
+import {
+    hideDownloadLimitCheckoutUrlError,
+    downloadLimitCheckoutUrl,
+} from '../actions/downloadLimit';
 import DownloadIcon from './DownloadIcon';
 import ArrowDropDownIcon from './ArrowDropDownIcon';
 import { hideLogDownloadError } from '../actions/logDownload';
 import DownloadMenu from '../components/DownloadMenu';
+import { FACILITIES_DOWNLOAD_LIMIT } from '../util/constants';
 
 const downloadFacilitiesStyles = theme =>
     Object.freeze({
@@ -49,9 +54,12 @@ const DownloadFacilitiesButton = ({
     isEmbedded,
     logDownloadError,
     user,
+    userAllowedRecords,
+    checkoutUrl,
+    checkoutUrlError,
     /* from props */
-    allowLargeDownloads,
     disabled,
+    upgrade,
     setLoginRequiredDialogIsOpen,
     classes,
     theme,
@@ -68,7 +76,25 @@ const DownloadFacilitiesButton = ({
             dispatch(hideLogDownloadError());
         }
     }, [logDownloadError]);
-    const handleClick = event => setAnchorEl(event.currentTarget);
+    useEffect(() => {
+        if (checkoutUrl) {
+            window.location.href = checkoutUrl;
+        }
+        if (checkoutUrlError) {
+            toast(checkoutUrlError);
+            dispatch(hideDownloadLimitCheckoutUrlError());
+        }
+    }, [checkoutUrl, checkoutUrlError]);
+    const handleUpgrade = () => {
+        dispatch(downloadLimitCheckoutUrl());
+    };
+    const handleClick = event => {
+        if (upgrade) {
+            handleUpgrade();
+        } else {
+            setAnchorEl(event.currentTarget);
+        }
+    };
     const handleClose = () => setAnchorEl(null);
     const handleDownload = format => {
         dispatch(downloadFacilities(format, { isEmbedded }));
@@ -82,12 +108,10 @@ const DownloadFacilitiesButton = ({
         handleClose();
     };
 
-    const tooltipTitle = allowLargeDownloads ? (
-        ''
-    ) : (
+    const tooltipTitle = (
         <p className={classes.downloadTooltip}>
             Downloads are supported for searches resulting in{' '}
-            {user.allowed_records_number} production locations or less.
+            {userAllowedRecords} production locations or less.
             {user.isAnon && ' Log in to download this dataset.'}
         </p>
     );
@@ -111,14 +135,20 @@ const DownloadFacilitiesButton = ({
                                     : actionContrastText
                             }
                         />
-                        <span className={classes.buttonText}>Download</span>
-                        <ArrowDropDownIcon
-                            color={
-                                disabled
-                                    ? 'rgba(0, 0, 0, 0.26)'
-                                    : actionContrastText
-                            }
-                        />
+                        <span className={classes.buttonText}>
+                            {upgrade ? 'Upgrade to Download' : 'Download'}
+                        </span>
+                        {upgrade ? (
+                            ''
+                        ) : (
+                            <ArrowDropDownIcon
+                                color={
+                                    disabled
+                                        ? 'rgba(0, 0, 0, 0.26)'
+                                        : actionContrastText
+                                }
+                            />
+                        )}
                     </div>
                 </Button>
                 <DownloadMenu
@@ -132,19 +162,24 @@ const DownloadFacilitiesButton = ({
 };
 
 DownloadFacilitiesButton.defaultProps = {
-    allowLargeDownloads: false,
     disabled: false,
+    upgrade: false,
+    userAllowedRecords: FACILITIES_DOWNLOAD_LIMIT,
     logDownloadError: null,
+    checkoutUrl: null,
+    checkoutUrlError: null,
 };
 
 DownloadFacilitiesButton.propTypes = {
-    allowLargeDownloads: bool,
     disabled: bool,
+    upgrade: bool,
+    userAllowedRecords: number,
     logDownloadError: arrayOf(string),
     user: shape({
-        allowed_records_number: number.isRequired,
         isAnon: bool.isRequired,
     }).isRequired,
+    checkoutUrl: string,
+    checkoutUrlError: string,
 };
 
 function mapStateToProps({
@@ -153,11 +188,16 @@ function mapStateToProps({
     },
     logDownload: { error: logDownloadError },
     embeddedMap: { embed: isEmbedded },
+    downloadLimit: {
+        checkout: { checkoutUrl, error: checkoutUrlError },
+    },
 }) {
     return {
         user,
         logDownloadError,
         isEmbedded,
+        checkoutUrl,
+        checkoutUrlError,
     };
 }
 

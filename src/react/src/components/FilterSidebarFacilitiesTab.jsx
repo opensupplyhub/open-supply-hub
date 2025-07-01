@@ -48,7 +48,8 @@ import {
     REPORT_A_FACILITY,
     authLoginFormRoute,
     authRegisterFormRoute,
-    ALLOW_LARGE_DOWNLOADS,
+    PRIVATE_INSTANCE,
+    FACILITIES_DOWNLOAD_LIMIT,
 } from '../util/constants';
 
 import { makeFacilityDetailLink } from '../util/util';
@@ -350,13 +351,14 @@ function FilterSidebarFacilitiesTab({
                     </div>
                 ) : (
                     <FeatureFlag
-                        flag={ALLOW_LARGE_DOWNLOADS}
+                        flag={PRIVATE_INSTANCE}
                         alternative={
                             <DownloadFacilitiesButton
-                                disabled={
+                                upgrade={
                                     facilitiesCount >
                                     user.allowed_records_number
                                 }
+                                userAllowedRecords={user.allowed_records_number}
                                 setLoginRequiredDialogIsOpen={
                                     setLoginRequiredDialogIsOpen
                                 }
@@ -364,7 +366,9 @@ function FilterSidebarFacilitiesTab({
                         }
                     >
                         <DownloadFacilitiesButton
-                            allowLargeDownloads
+                            disabled={
+                                facilitiesCount > FACILITIES_DOWNLOAD_LIMIT
+                            }
                             setLoginRequiredDialogIsOpen={
                                 setLoginRequiredDialogIsOpen
                             }
