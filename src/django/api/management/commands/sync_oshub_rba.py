@@ -203,23 +203,38 @@ class IndividualSyncStrategy(DataSyncStrategy):
         failed_inserts = 0
         
         for i, obj in enumerate(objects):
-            try:
-                # Handle missing foreign key references
-                missing_refs = self.foreign_key_handler.get_missing_references(obj, model)
-                for field_name, missing_ids in missing_refs.items():
-                    if missing_ids:
-                        self.foreign_key_handler.sync_missing_references(model, field_name, missing_ids, dry_run)
-                
-                obj.save(using='rba')
-                successful_inserts += 1
-                
-                if (i + 1) % PROGRESS_LOG_INTERVAL == 0:
-                    logger.info(f"Individual sync progress: {i + 1}/{len(objects)} objects processed")
+            max_retries = 3
+            retry_count = 0
+            
+            while retry_count < max_retries:
+                try:
+                    # Handle missing foreign key references
+                    missing_refs = self.foreign_key_handler.get_missing_references(obj, model)
+                    for field_name, missing_ids in missing_refs.items():
+                        if missing_ids:
+                            self.foreign_key_handler.sync_missing_references(model, field_name, missing_ids, dry_run)
                     
-            except Exception as e:
-                failed_inserts += 1
-                logger.warning(f"Failed to insert object {i + 1} for {model._meta.app_label}.{model._meta.model_name}: {e}")
-                continue
+                    obj.save(using='rba')
+                    successful_inserts += 1
+                    break  # Success, exit retry loop
+                    
+                except Exception as e:
+                    error_message = str(e)
+                    
+                    # Check if it's a foreign key constraint error
+                    if "foreign key" in error_message.lower() or "constraint" in error_message.lower():
+                        if self.foreign_key_handler.handle_foreign_key_constraint_error(e, model, dry_run):
+                            retry_count += 1
+                            logger.info(f"Retrying insert after handling foreign key constraint (attempt {retry_count}/{max_retries})")
+                            continue
+                    
+                    # If not a foreign key error or max retries reached, log and continue
+                    failed_inserts += 1
+                    logger.warning(f"Failed to insert object {i + 1} for {model._meta.app_label}.{model._meta.model_name}: {e}")
+                    break
+            
+            if (i + 1) % PROGRESS_LOG_INTERVAL == 0:
+                logger.info(f"Individual sync progress: {i + 1}/{len(objects)} objects processed")
         
         logger.info(f"Individual sync completed: {successful_inserts} successful, {failed_inserts} failed")
         
@@ -320,80 +335,133 @@ class ForeignKeyHandler:
         self.model_repository = model_repository
         self.syncing_models: Set[str] = set()
     
-    def get_missing_references(self, obj: Model, model: Model) -> Dict[str, Set[int]]:
-        """Get missing foreign key references for a single object"""
+    def get_missing_references(self, obj: Model, model: Model) -> Dict[str, List[str]]:
+        """Get missing foreign key references for an object"""
         missing_refs = {}
         
         for field in model._meta.fields:
             if hasattr(field, 'related_model') and field.related_model:
-                related_model = field.related_model
-                fk_id_field = f"{field.name}_id"
-                fk_value = getattr(obj, fk_id_field, None)
-                
-                if fk_value is not None:
-                    exists = related_model.objects.using('rba').filter(id=fk_value).exists()
-                    if not exists:
-                        if field.name not in missing_refs:
-                            missing_refs[field.name] = set()
-                        missing_refs[field.name].add(fk_value)
+                field_value = getattr(obj, field.name)
+                if field_value is not None:
+                    # Check if the referenced record exists in RBA
+                    try:
+                        related_model = field.related_model
+                        if hasattr(related_model, 'objects'):
+                            # Try to find by UUID first, then by ID
+                            try:
+                                related_model._meta.get_field('uuid')
+                                exists = related_model.objects.using('rba').filter(uuid=field_value).exists()
+                            except (AttributeError, ValueError, LookupError, FieldDoesNotExist):
+                                exists = related_model.objects.using('rba').filter(id=field_value).exists()
+                            
+                            if not exists:
+                                if field.name not in missing_refs:
+                                    missing_refs[field.name] = []
+                                missing_refs[field.name].append(str(field_value))
+                    except Exception as e:
+                        logger.warning(f"Error checking foreign key reference {field.name}: {e}")
         
         return missing_refs
     
-    def sync_missing_references(self, model: Model, field_name: str, missing_ids: Set[int], dry_run: bool = False) -> None:
-        """Sync missing foreign key references"""
-        if not missing_ids:
-            return
-            
+    def parse_foreign_key_error(self, error_message: str) -> Optional[Tuple[str, str, str]]:
+        """
+        Parse foreign key constraint error message to extract table, column, and missing value.
+        Returns (table_name, column_name, missing_value) or None if not a foreign key error.
+        """
+        import re
+        
+        # Pattern for PostgreSQL foreign key constraint errors
+        # Example: "insert or update on table "api_facilitylistitem" violates foreign key constraint "api_facilitylistitem_facility_id_7c94a3a3_fk_api_facility_id"
+        # DETAIL:  Key (facility_id)=(IT2025182QXF5D6) is not present in table "api_facility"."
+        
+        fk_pattern = r'insert or update on table "([^"]+)" violates foreign key constraint[^"]*"([^"]+)"[^"]*DETAIL:\s*Key \(([^)]+)\)=\(([^)]+)\) is not present in table "([^"]+)"'
+        match = re.search(fk_pattern, error_message, re.IGNORECASE | re.DOTALL)
+        
+        if match:
+            table_name = match.group(1)
+            constraint_name = match.group(2)
+            column_name = match.group(3)
+            missing_value = match.group(4)
+            referenced_table = match.group(5)
+            return (referenced_table, column_name, missing_value)
+        
+        return None
+    
+    def handle_foreign_key_constraint_error(self, error: Exception, model: Model, dry_run: bool = False) -> bool:
+        """Handle foreign key constraint error by attempting to sync missing references"""
         if dry_run:
-            return
+            return False
         
-        related_model = model._meta.get_field(field_name).related_model
-        if not related_model:
-            return
+        error_message = str(error)
         
-        model_key = f"{related_model._meta.app_label}.{related_model._meta.model_name}"
+        # Parse the foreign key error to get table, column, and missing value
+        parsed_error = self.parse_foreign_key_error(error_message)
+        if not parsed_error:
+            return False
         
-        if model_key in self.syncing_models:
-            logger.warning(f"Circular dependency detected for {model_key}, skipping recursive sync")
-            return
+        table_name, column_name, missing_value = parsed_error
         
-        logger.info(f"Syncing missing foreign key references: {len(missing_ids)} {model_key} records")
+        logger.info(f"Attempting to resolve foreign key constraint: table={table_name}, column={column_name}, missing_value={missing_value}")
         
         try:
-            self.syncing_models.add(model_key)
+            # Find the field that corresponds to this foreign key
+            field = None
+            for f in model._meta.fields:
+                if hasattr(f, 'related_model') and f.related_model:
+                    related_table = f.related_model._meta.db_table
+                    if related_table == table_name and f.column == column_name:
+                        field = f
+                        break
             
-            missing_objects = list(related_model.objects.using('default').filter(id__in=missing_ids))
-            
-            if not missing_objects:
-                logger.warning(f"No objects found in source DB for {len(missing_ids)} missing IDs")
-                return
-            
-            existing_ids = set(related_model.objects.using('rba').filter(id__in=missing_ids).values_list('id', flat=True))
-            actually_missing_ids = missing_ids - existing_ids
-            
-            if not actually_missing_ids:
-                logger.info(f"All {len(missing_ids)} references already exist in target DB")
-                return
-            
-            actually_missing_objects = [obj for obj in missing_objects if obj.id in actually_missing_ids]
-            prepared_objs = self.__prepare_objects_for_sync(actually_missing_objects, related_model)
-            
-            # Use individual sync for nested dependencies
-            individual_strategy = IndividualSyncStrategy(
-                PostgreSQLSequenceUpdater(), 
-                self
-            )
-            individual_strategy.sync_objects(related_model, prepared_objs, dry_run)
-            
-            logger.info(f"Successfully synced {len(actually_missing_objects)} missing {model_key} references")
-            
+            if field:
+                # Sync the missing reference
+                self.sync_missing_references_in_transaction(model, field.name, [missing_value], dry_run)
+                return True
+            else:
+                logger.warning(f"Could not find field for foreign key constraint: {table_name}.{column_name}")
+                return False
+                
         except Exception as e:
-            logger.error(f"Failed to sync missing {model_key} references: {e}")
-            raise
-        finally:
-            self.syncing_models.discard(model_key)
+            logger.warning(f"Failed to handle foreign key constraint error: {e}")
+            return False
     
-    def __prepare_objects_for_sync(self, objects: List[Model], model: Model) -> List[Model]:
+    def sync_missing_references_in_transaction(self, model: Model, field_name: str, missing_ids: List[str], dry_run: bool = False) -> None:
+        """Sync missing foreign key references within a transaction"""
+        if dry_run:
+            logger.info(f"[DRY-RUN] Would sync {len(missing_ids)} missing references for {field_name}")
+            return
+        
+        # Get the related model
+        field = model._meta.get_field(field_name)
+        if not hasattr(field, 'related_model') or not field.related_model:
+            return
+        
+        related_model = field.related_model
+        
+        # Try to sync each missing reference
+        for missing_id in missing_ids:
+            try:
+                # Try to find the record in the source database
+                if hasattr(related_model, 'objects'):
+                    try:
+                        # Try by UUID first
+                        related_model._meta.get_field('uuid')
+                        source_obj = related_model.objects.using('default').filter(uuid=missing_id).first()
+                    except (AttributeError, ValueError, LookupError, FieldDoesNotExist):
+                        # Try by ID
+                        source_obj = related_model.objects.using('default').filter(id=missing_id).first()
+                    
+                    if source_obj:
+                        # Prepare and insert the missing reference
+                        prepared_obj = self.prepare_objects_for_sync([source_obj], related_model)[0]
+                        prepared_obj.save(using='rba')
+                        logger.info(f"Successfully synced missing reference {missing_id} for {field_name}")
+                    else:
+                        logger.warning(f"Could not find missing reference {missing_id} in source database for {field_name}")
+            except Exception as e:
+                logger.warning(f"Failed to sync missing reference {missing_id} for {field_name}: {e}")
+    
+    def prepare_objects_for_sync(self, objects: List[Model], model: Model) -> List[Model]:
         """Prepare objects for sync by removing ID to avoid conflicts"""
         prepared_objects = []
         for obj in objects:
@@ -444,18 +512,17 @@ class SyncService:
             logger.warning(f"[DRY-RUN] Would insert {len(missing_uuids)} records into RBA for {model_key}")
             return self.sync_stats[model_key]
         
-        # Sync missing records
+        # Sync missing records without transaction wrapper
         if missing_uuids:
-            with transaction.atomic(using='rba'):
-                self.__sync_missing_records(model, missing_uuids, dry_run)
-                logger.info(f"Successfully committed changes for {model_key}")
+            self.__sync_missing_records_without_transaction(model, missing_uuids, dry_run)
+            logger.info(f"Successfully completed sync for {model_key}")
         else:
             logger.info(f"No new records to sync for {model_key}")
         
         return self.sync_stats[model_key]
     
-    def __sync_missing_records(self, model: Model, missing_uuids: Set[str], dry_run: bool = False) -> None:
-        """Sync missing records in batches"""
+    def __sync_missing_records_without_transaction(self, model: Model, missing_uuids: Set[str], dry_run: bool = False) -> None:
+        """Sync missing records without transaction wrapper to handle foreign key constraints better"""
         batch_size = 1000
         total_synced = 0
         
@@ -477,28 +544,83 @@ class SyncService:
                 continue
             
             # Prepare objects for sync
-            prepared_objs = self.foreign_key_handler.__prepare_objects_for_sync(batch_objects, model)
+            prepared_objs = self.foreign_key_handler.prepare_objects_for_sync(batch_objects, model)
             
             # Try bulk sync first, fallback to individual sync
             try:
                 bulk_strategy = BulkSyncStrategy(PostgreSQLSequenceUpdater())
                 bulk_strategy.sync_objects(model, prepared_objs, dry_run)
                 total_synced += len(prepared_objs)
+                logger.info(f"Successfully bulk synced {len(prepared_objs)} records")
             except Exception as e:
                 if "foreign key" in str(e).lower() or "constraint" in str(e).lower():
                     logger.warning(f"Foreign key constraint violation during bulk sync, falling back to individual sync: {e}")
-                    individual_strategy = IndividualSyncStrategy(
-                        PostgreSQLSequenceUpdater(), 
-                        self.foreign_key_handler
-                    )
-                    individual_strategy.sync_objects(model, prepared_objs, dry_run)
-                    total_synced += len(prepared_objs)
+                    # Sync each object individually with its own transaction
+                    individual_synced = self.__sync_objects_individually_with_transactions(model, prepared_objs, dry_run)
+                    total_synced += individual_synced
                 else:
                     raise
             
             logger.info(f"Synced batch {i//batch_size + 1}: {len(prepared_objs)} records ({total_synced}/{len(missing_uuids)} total)")
         
         logger.info(f"Successfully inserted {total_synced} new records into RBA for {model._meta.app_label}.{model._meta.model_name}")
+    
+    def __sync_objects_individually_with_transactions(self, model: Model, objects: List[Model], dry_run: bool = False) -> int:
+        """Sync objects individually, each in its own transaction"""
+        if dry_run:
+            logger.info(f"[DRY-RUN] Would sync {len(objects)} objects individually for {model._meta.app_label}.{model._meta.model_name}")
+            return len(objects)
+        
+        logger.info(f"Syncing {len(objects)} objects individually for {model._meta.app_label}.{model._meta.model_name}")
+        
+        successful_inserts = 0
+        failed_inserts = 0
+        
+        for i, obj in enumerate(objects):
+            try:
+                # Each object gets its own transaction
+                with transaction.atomic(using='rba'):
+                    # Handle missing foreign key references before inserting
+                    missing_refs = self.foreign_key_handler.get_missing_references(obj, model)
+                    for field_name, missing_ids in missing_refs.items():
+                        if missing_ids:
+                            self.foreign_key_handler.sync_missing_references_in_transaction(model, field_name, missing_ids, dry_run)
+                    
+                    # Try to insert the object
+                    obj.save(using='rba')
+                    successful_inserts += 1
+                    
+            except Exception as e:
+                failed_inserts += 1
+                error_message = str(e)
+                
+                # Check if it's a foreign key constraint error
+                if "foreign key" in error_message.lower() or "constraint" in error_message.lower():
+                    logger.warning(f"Foreign key constraint error for object {i + 1}: {e}")
+                    # Try to resolve the foreign key constraint
+                    if self.foreign_key_handler.handle_foreign_key_constraint_error(e, model, dry_run):
+                        # Retry the insert in a new transaction
+                        try:
+                            with transaction.atomic(using='rba'):
+                                obj.save(using='rba')
+                                successful_inserts += 1
+                                failed_inserts -= 1  # Adjust the count
+                                logger.info(f"Successfully inserted object {i + 1} after resolving foreign key constraint")
+                        except Exception as retry_error:
+                            logger.warning(f"Failed to insert object {i + 1} even after resolving foreign key constraint: {retry_error}")
+                else:
+                    logger.warning(f"Failed to insert object {i + 1} for {model._meta.app_label}.{model._meta.model_name}: {e}")
+            
+            if (i + 1) % PROGRESS_LOG_INTERVAL == 0:
+                logger.info(f"Individual sync progress: {i + 1}/{len(objects)} objects processed")
+        
+        logger.info(f"Individual sync completed: {successful_inserts} successful, {failed_inserts} failed")
+        
+        if successful_inserts > 0:
+            sequence_updater = PostgreSQLSequenceUpdater()
+            sequence_updater.update_sequence(model, using='rba')
+        
+        return successful_inserts
     
     def get_models_to_sync(self, target_model: Optional[Model] = None) -> List[Model]:
         """Get models that need to be synced, including dependencies"""
