@@ -246,6 +246,8 @@ data "template_file" "app" {
     opensearch_ssl                   = var.opensearch_ssl
     opensearch_ssl_cert_verification = var.opensearch_ssl_cert_verification
     instance_source                  = var.instance_source
+    dark_visitors_project_key        = var.dark_visitors_project_key
+    dark_visitors_token              = var.dark_visitors_token
   }
 }
 
