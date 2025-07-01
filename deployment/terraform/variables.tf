@@ -831,3 +831,14 @@ variable "direct_data_load_tab_id" {
 }
 
 ### DIRECT DATA LOAD VARIABLES - END ###
+
+variable "dark_visitors_project_key" {
+  type        = string
+  description = "Dark Visitors project key"
+}
+
+variable "dark_visitors_token" {
+  type        = string
+  description = "Dark Visitors token"
+  sensitive   = true
+}
