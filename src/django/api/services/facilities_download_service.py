@@ -54,13 +54,17 @@ class FacilitiesDownloadService:
     def enforce_limits(request, total_records, limit):
         current_page = int(request.query_params.get("page", 1))
 
+        if limit is None:
+            return
+        
+        allowed_records = (
+            limit.free_download_records +
+            limit.paid_download_records
+        )
+
         has_exhausted_limit = (
             current_page == 1 and
-            limit is not None and
-            (
-                limit.free_download_records +
-                limit.paid_download_records
-            ) == 0
+            allowed_records == 0
         )
 
         if has_exhausted_limit:
@@ -71,20 +75,15 @@ class FacilitiesDownloadService:
                 'calendar year.'
             )
 
-        has_download_limit = limit is not None
-        max_allowed = FacilitiesDownloadSettings\
-            .FACILITIES_DOWNLOAD_LIMIT
-
-        is_blocked = has_download_limit and total_records > max_allowed
+        is_blocked = (
+            current_page == 1
+            and total_records > allowed_records
+        )
 
         if is_blocked:
-            records_used = (
-                limit.free_download_records +
-                limit.paid_download_records
-            )
             raise ValidationError(
                 f'Downloads are supported only for searches '
-                f'resulting in {records_used} facilities or less.'
+                f'resulting in {allowed_records} facilities or less.'
             )
 
     @staticmethod
