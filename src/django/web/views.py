@@ -26,6 +26,8 @@ def environment(request):
 
     environment['TILE_CACHE_KEY'] = Facility.current_tile_cache_key()
 
+    environment['DARK_VISITORS_PROJECT_KEY'] = settings.DARK_VISITORS_PROJECT_KEY
+
     context = {'environment': environment}
 
     return render(request, 'web/environment.js', context,
