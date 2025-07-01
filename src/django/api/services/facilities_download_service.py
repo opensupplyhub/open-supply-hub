@@ -10,7 +10,7 @@ from api.models.facility_download_limit import FacilityDownloadLimit
 from api.serializers.facility.facility_query_params_serializer import (
     FacilityQueryParamsSerializer)
 from api.exceptions import ServiceUnavailableException
-from api.constants import APIErrorMessages, FacilitiesDownloadSettings
+from api.constants import APIErrorMessages
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ class FacilitiesDownloadService:
 
         if limit is None:
             return
-        
+
         allowed_records = (
             limit.free_download_records +
             limit.paid_download_records
