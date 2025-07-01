@@ -9,8 +9,8 @@ import { toast } from 'react-toastify';
 
 import downloadFacilities from '../actions/downloadFacilities';
 import {
-    hideDownloadLimitPaymentUrlError,
-    downloadLimitPaymentUrl,
+    hideDownloadLimitCheckoutUrlError,
+    downloadLimitCheckoutUrl,
 } from '../actions/downloadLimit';
 import DownloadIcon from './DownloadIcon';
 import ArrowDropDownIcon from './ArrowDropDownIcon';
@@ -54,8 +54,8 @@ const DownloadFacilitiesButton = ({
     logDownloadError,
     user,
     userAllowedRecords,
-    url,
-    urlError,
+    checkoutUrl,
+    checkoutUrlError,
     /* from props */
     disabled,
     upgrade,
@@ -76,16 +76,16 @@ const DownloadFacilitiesButton = ({
         }
     }, [logDownloadError]);
     useEffect(() => {
-        if (url) {
-            window.location.href = url;
+        if (checkoutUrl) {
+            window.location.href = checkoutUrl;
         }
-        if (urlError) {
-            toast(urlError);
-            dispatch(hideDownloadLimitPaymentUrlError());
+        if (checkoutUrlError) {
+            toast(checkoutUrlError);
+            dispatch(hideDownloadLimitCheckoutUrlError());
         }
-    }, [url, urlError]);
+    }, [checkoutUrl, checkoutUrlError]);
     const handleUpgrade = () => {
-        dispatch(downloadLimitPaymentUrl());
+        dispatch(downloadLimitCheckoutUrl());
     };
     const handleClick = event => {
         if (upgrade) {
@@ -165,8 +165,8 @@ DownloadFacilitiesButton.defaultProps = {
     upgrade: false,
     userAllowedRecords: 5000,
     logDownloadError: null,
-    url: null,
-    urlError: null,
+    checkoutUrl: null,
+    checkoutUrlError: null,
 };
 
 DownloadFacilitiesButton.propTypes = {
@@ -177,8 +177,8 @@ DownloadFacilitiesButton.propTypes = {
     user: shape({
         isAnon: bool.isRequired,
     }).isRequired,
-    url: string,
-    urlError: string,
+    checkoutUrl: string,
+    checkoutUrlError: string,
 };
 
 function mapStateToProps({
@@ -188,15 +188,15 @@ function mapStateToProps({
     logDownload: { error: logDownloadError },
     embeddedMap: { embed: isEmbedded },
     downloadLimit: {
-        payment: { url, error: urlError },
+        checkout: { checkoutUrl, error: checkoutUrlError },
     },
 }) {
     return {
         user,
         logDownloadError,
         isEmbedded,
-        url,
-        urlError,
+        checkoutUrl,
+        checkoutUrlError,
     };
 }
 

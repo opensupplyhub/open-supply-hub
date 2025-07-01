@@ -63,9 +63,9 @@ class DownloadLocationsCheckoutWebhookView(View):
                     session["id"], expand=["line_items"]
                 )
                 line_item = full_session.line_items.data[0]
-                quantity = line_item.quantity
+                item_quantity = line_item.quantity
 
-                paid_records = quantity * SINGLE_PAID_DOWNLOAD_RECORDS
+                paid_records = item_quantity * SINGLE_PAID_DOWNLOAD_RECORDS
                 download_limit.paid_download_records += paid_records
                 download_limit.purchase_date = timezone.now()
                 download_limit.save(

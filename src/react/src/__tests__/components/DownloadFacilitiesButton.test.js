@@ -47,7 +47,7 @@ describe('DownloadFacilitiesButton component', () => {
       logDownload: { error: null },
       embeddedMap: { embed: true },
       downloadLimit: {
-        payment: { url: "test", error: null },
+        checkout: { checkoutUrl: "test", error: null },
       },
       ...customState,
     };

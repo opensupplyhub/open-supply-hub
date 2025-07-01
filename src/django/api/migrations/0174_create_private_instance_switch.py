@@ -12,9 +12,11 @@ def delete_private_instance_switch(apps, schema_editor):
     switch = apps.get_model('waffle', 'Switch')
     switch.objects.get(name='private_instance').delete()
 
+
 def delete_allow_large_downloads_switch(apps, schema_editor):
     switch = apps.get_model('waffle', 'Switch')
     switch.objects.get(name='allow_large_downloads').delete()
+
 
 def create_allow_large_downloads_switch(apps, schema_editor):
     switch = apps.get_model('waffle', 'Switch')
