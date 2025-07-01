@@ -17,14 +17,17 @@ This document outlines the SDLC pillars of the opensupplyhub monorepo, as well a
 - [Development and release of the new release version](#development-and-release-of-the-new-release-version)
   - [Duration of the development of the new release version](#duration-of-the-development-of-the-new-release-version)
   - [Introductory actions after starting the development cycle of the new release version](#introductory-actions-after-starting-the-development-cycle-of-the-new-release-version)
-  - [Code Freeze](#code-freeze)
+  - [Code freeze](#code-freeze)
   - [QA process](#qa-process)
+    - [Preparation for release testing](#preparation-for-release-testing)
+    - [Smoke testing on release day](#smoke-testing-on-release-day)
   - [Release to production and sandbox](#release-to-production-and-sandbox)
+  - [Deployment to external collaboration environments](#deployment-to-external-collaboration-environments)
   - [Hotfixes](#hotfixes)
   - [Shut down the pre-prod environment](#shut-down-the-pre-prod-environment)
   - [Post Release Notes](#post-release-notes)
   - [Reloading the DedupeHub](#reloading-the-dedupehub)
-  - [Block loading of new production locations](#block-loading-production-locations)
+  - [Block loading of new production locations](#block-loading-of-new-production-locations)
 
 
 ## Release Schedule
@@ -96,6 +99,8 @@ Key Results:
 
 ### Environments
 
+#### Core environments
+
 The following list of environments could support [Requirements and key results](#requirements-and-key-results):
 
 1. Feature Environment:
@@ -108,6 +113,12 @@ The following list of environments could support [Requirements and key results](
     - The environment intended for use during the preparation for deploying to production and sandbox. All features and bug fixes should be verified here, as well as regression testing. It is supposed to be run only during the release process, five working days before the release. This environment uses maximum AWS resources to mirror the production environment.
 
 Read more about the existing environments in the [ENVIRONMENTS.md](./ENVIRONMENTS.md) file.
+
+#### External collaboration environments
+
+Environments deployed specifically for partners or third-party collaborators. These environments mirror the production setup and are used to support integration or joint initiatives without affecting the core OS Hub platform.
+
+1. RBA
 
 
 ### Versioning
@@ -133,7 +144,7 @@ Each new feature should reside in its own branch, which can be pushed to the cen
 Once `main` has acquired enough features for a release (or a predetermined release date is approaching), you run the `[Release] Init` GitHub workflow that creates a new release branch with a version number for the release. The release version number for release branches includes only the major and minor versions.
 
 When the release branch is ready for release, the `[Release] Deploy` workflow should be run for each environment, such as sandbox and production. This workflow will create two Git tags, each with a version number.
-This workflow will also initiate the Deploy to AWS workflow and pass it the necessary parameters. If you need to clear the custom OpenSearch indexes and tenplates during deployment, you need to select the `Clear the custom OpenSearch indexes and templates` checkbox.
+This workflow will also initiate the Deploy to AWS workflow and pass it the necessary parameters. If you need to clear the custom OpenSearch indexes and templates during deployment, you need to select the `Clear the custom OpenSearch indexes and templates` checkbox.
 
 #### Hotfix branches
 
@@ -142,7 +153,7 @@ This workflow will also initiate the Deploy to AWS workflow and pass it the nece
 
 #### Quick-fix branches
 
-Quick-fix branches are utilized to quickly patch the release candidate that is being tested, avoiding the need for future hotfixes. They resemble hotfix branches, except they shouldn’t be released as tags with increased patch versions. This branch should fork directly from a release branch. Once the quick fix is complete, it should be merged into the release branch and, if the quick fix is clean, into the main branch as well. Quick fixes will be released along with other features in the release tags for sandbox and production.
+Quick-fix branches are utilized to quickly patch the release candidate that is being tested, avoiding the need for future hotfixes. They resemble hotfix branches, except they shouldn’t be released as tags with increased patch versions. This branch should fork directly from a release branch. Once the quick fix is complete, it should be merged into the release branch and, if the quick fix is clean, into the `main` branch as well. Quick fixes will be released along with other features in the release tags for sandbox and production.
 
 ## Development and release of the new release version
 
@@ -160,14 +171,14 @@ Make sure that:
 4. Verify that the release schedule in the RELEASE-PROTOCOL.md file is correctly filled.
 
 
-### Code Freeze
+### Code freeze
 
 1. The default day for the code freeze is Friday, the last working day of the two-week development. However, the actual date of the code freeze is flexible and may be set earlier. The main objective is to prevent untested changes from being included in the release. To enhance communication within the team, all stakeholders must be notified about the code freeze in the `#data_x_product` Slack channel at least one working day in advance by the person responsible for the release.
 2. Before initiating the code freeze process, the responsible person must ensure that all commands required for deployment (e.g., `migrate`, `reindex_database`, `index_facilities_new`) are included in the `post_deployment` command, and that the `RELEASE-NOTES.md` file does not contain any sections with template text.
-3. On the day of the code freeze, the responsible person must run the `[Release] Init` workflow from the main branch, specifying the major and minor versions of the release. This action creates the `releases/v.X.Y` branch. This operation does not trigger an automatic deployment to the Pre-prod environment.
+3. On the day of the code freeze, the responsible person must run the `[Release] Init` workflow from the `main` branch, specifying the major and minor versions of the release. This action creates the `releases/v.X.Y` branch. This operation does not trigger an automatic deployment to the Pre-prod environment.
 4. On Tuesday, following the code freeze, the responsible person must run the `Deploy to AWS` workflow for the Pre-prod environment from the release branch.
 5. After a successful deployment, the responsible person must copy the ARN of the `terraform` user from the AWS IAM console. To do this, navigate to the AWS console's search input, type "IAM", and open the IAM console. In the IAM console, access the "Users" tab, locate the `terraform` user, click on it, and copy the ARN provided on that page. Then, navigate to the AWS OpenSearch console using the same method. Open the list of available domains, locate the domain for the Pre-prod environment, and open it. Navigate to the security configuration section and click "Edit". Find the section titled "Fine-grained access control", locate the "IAM ARN" input field, paste the copied ARN into the field, and save the changes. It may take several minutes for the changes to apply. The responsible person must ensure that the "Configuration change status" field displays a green status after the update.
-6. Next, the responsible person must run the `DB - Save Anonymized DB` workflow (if it has not already run on the same day or the previous day). Once the anonymized database is successfully saved, the `DB - Apply Anonymized DB` workflow must be executed to ensure that testing is conducted with up-to-date data. Before running this workflow, the responsible person must select the `Pre-prod` environment and the `releases/v.X.Y` branch. During the `post_deploy` job of the `DB - Apply Anonymized DB` workflow, it is necessary to review the appropriate BetterStack monitor to confirm that no downtime has occurred. If any downtime is detected, the responsible person must notify the stakeholders in the `#data_x_product` Slack channel about the potential downtime in the Production environment during the release.
+6. Next, the responsible person must run the `DB - Save Anonymized DB` workflow (if it has not already run on the same day or the previous day). Once the anonymized database is successfully saved, the `DB - Apply Anonymized DB` workflow must be executed to ensure that testing is conducted with up-to-date data. Before running this workflow, the responsible person must select the `Pre-prod` environment and the `releases/v.X.Y` branch. During the `post_deploy` job of the `DB - Apply Anonymized DB` workflow, it is necessary to review the appropriate BetterStack monitor to confirm that no downtime has occurred. If any downtime is detected, the responsible person must notify the stakeholders in the `#data_x_product` Slack channel about the potential downtime in the production environment during the release.
 7. In case there is a need to run a command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Django+container+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only-------How-can-we-manually-execute-commands-within-the-Django-container-for-our-environments%3F--Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
 
 ### QA process
@@ -176,7 +187,7 @@ The Test environment can be updated manually by running the `Deploy to AWS` work
 
 To identify the tasks that need testing, QA engineers should refer to the Jira release page for the developing version, which lists all feature and bug-fix tickets intended for the release.
 
-**Preparation for Release Testing**
+#### Preparation for release testing
 1. Creating a Test Run Cycle:
     - A Day before the Code Freeze (Five working days before the release scheduled for Saturday), the QA engineer creates a new test run cycle in QAlity.
     [See Instructions how to create Test Cycles in QAlity](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/657358851/QAlity+instruction+how+to+create+Regression+and+Smoke+test+Cycles)
@@ -188,7 +199,7 @@ To identify the tasks that need testing, QA engineers should refer to the Jira r
     - After the bug is fixed and the fix is deployed to the pre-production environment:
         * `Re-create the Test Run Cycle` and verify all test items from the beginning before the release.
 
-**Smoke Testing on Release Day**
+#### Smoke testing on release day
 
 On Saturday (release day), the QA team should create two additional test cycles for conducting Smoke Testing [See Instructions here](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/657358851/QAlity+instruction+how+to+create+Regression+and+Smoke+test+Cycles):
 
@@ -212,6 +223,8 @@ In case there is a need to run additional command in the terminal of the Django 
 10. Notify the QA Engineer that the new version has been released, and they can commence smoke testing.
 11. The QA Engineer must notify stakeholders in the `#data_x_product` Slack channel when testing is complete in the sandbox and in the production, as well as issues, if any encountered during testing.
 12. Upon completing the release, the responsible person must notify stakeholders in the `#data_x_product` Slack channel that the releases to sandbox and production have concluded. Additionally, update the *Unreleased* version's status in Jira.
+
+### Deployment to external collaboration environments
 
 ### Hotfixes
 
