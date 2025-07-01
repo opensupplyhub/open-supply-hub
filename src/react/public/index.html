@@ -98,10 +98,21 @@
       }
     </script>
     <!-- 
-     Dark Visitors
-     https://darkvisitors.com/docs/analytics
+      Dark Visitors
+      https://darkvisitors.com/docs/analytics
     -->
-    <script src="https://darkvisitors.com/tracker.js?project_key=ed20a0c4-1e30-4ff9-ad19-c15ad45470b7"></script>
+    <script>
+      if (
+        window.ENVIRONMENT &&
+        window.ENVIRONMENT.DARK_VISITORS_PROJECT_KEY &&
+        window.ENVIRONMENT.ENVIRONMENT !== 'local'
+      ) {
+        const script = document.createElement('script');
+        script.src = 'https://darkvisitors.com/tracker.js?project_key=' + window.ENVIRONMENT.DARK_VISITORS_PROJECT_KEY;
+        script.defer = true;
+        document.head.appendChild(script);
+      }
+    </script>
     <!-- Dark Visitors configuration end -->
   </head>
   <body>
