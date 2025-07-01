@@ -61,10 +61,11 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
         response = self.get_paginated_response(data)
 
-        records_to_subtract = len(data['rows'])
-        FacilitiesDownloadService.register_download_if_needed(
-            facility_download_limit,
-            records_to_subtract
-        )
+        paginator = self.paginator
+        if paginator.page.number == paginator.page.paginator.num_pages:
+            FacilitiesDownloadService.register_download_if_needed(
+                facility_download_limit,
+                total_records
+            )
 
         return response

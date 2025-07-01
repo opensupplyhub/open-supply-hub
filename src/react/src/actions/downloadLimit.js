@@ -5,34 +5,34 @@ import {
     makeGetDownloadLocationsCheckoutSessionURL,
 } from '../util/util';
 
-export const startFetchDownloadLimitPaymentUrl = createAction(
-    'START_FETCH_DOWNLOAD_LIMIT_PAYMENT_URL',
+export const startFetchDownloadLimitCheckoutUrl = createAction(
+    'START_FETCH_DOWNLOAD_LIMIT_CHECKOUT_URL',
 );
-export const failFetchDownloadLimitPaymentUrl = createAction(
-    'FAIL_FETCH_DOWNLOAD_LIMIT_PAYMENT_URL',
+export const failFetchDownloadLimitCheckoutUrl = createAction(
+    'FAIL_FETCH_DOWNLOAD_LIMIT_CHECKOUT_URL',
 );
-export const hideDownloadLimitPaymentUrlError = createAction(
-    'HIDE_DOWNLOAD_LIMIT_PAYMENT_URL_ERROR',
+export const hideDownloadLimitCheckoutUrlError = createAction(
+    'HIDE_DOWNLOAD_LIMIT_CHECKOUT_URL_ERROR',
 );
-export const completeFetchDownloadLimitPaymentUrl = createAction(
-    'COMPLETE_FETCH_DOWNLOAD_LIMIT_PAYMENT_URL',
+export const completeFetchDownloadLimitCheckoutUrl = createAction(
+    'COMPLETE_FETCH_DOWNLOAD_LIMIT_CHECKOUT_URL',
 );
 
-export function downloadLimitPaymentUrl() {
+export function downloadLimitCheckoutUrl() {
     return dispatch => {
-        dispatch(startFetchDownloadLimitPaymentUrl());
+        dispatch(startFetchDownloadLimitCheckoutUrl());
 
         return apiRequest
             .post(makeGetDownloadLocationsCheckoutSessionURL(), {})
             .then(({ data }) => {
-                dispatch(completeFetchDownloadLimitPaymentUrl(data.url));
+                dispatch(completeFetchDownloadLimitCheckoutUrl(data.url));
             })
             .catch(err => {
                 dispatch(
                     logErrorAndDispatchFailure(
                         err,
-                        'An error prevented fetching facilities',
-                        failFetchDownloadLimitPaymentUrl,
+                        'An error prevented fetching checkout url',
+                        failFetchDownloadLimitCheckoutUrl,
                     ),
                 );
             });

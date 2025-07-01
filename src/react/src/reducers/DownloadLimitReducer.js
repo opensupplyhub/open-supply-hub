@@ -2,49 +2,49 @@ import { createReducer } from 'redux-act';
 import update from 'immutability-helper';
 
 import {
-    startFetchDownloadLimitPaymentUrl,
-    failFetchDownloadLimitPaymentUrl,
-    hideDownloadLimitPaymentUrlError,
-    completeFetchDownloadLimitPaymentUrl,
+    startFetchDownloadLimitCheckoutUrl,
+    failFetchDownloadLimitCheckoutUrl,
+    hideDownloadLimitCheckoutUrlError,
+    completeFetchDownloadLimitCheckoutUrl,
 } from '../actions/downloadLimit';
 
 const initialState = Object.freeze({
-    payment: Object.freeze({
+    checkout: Object.freeze({
         fetching: false,
         error: null,
-        url: null,
+        checkoutUrl: null,
     }),
 });
 
 export default createReducer(
     {
-        [startFetchDownloadLimitPaymentUrl]: state =>
+        [startFetchDownloadLimitCheckoutUrl]: state =>
             update(state, {
-                payment: {
+                checkout: {
                     fetching: { $set: true },
                     error: { $set: null },
-                    url: { $set: null },
+                    checkoutUrl: { $set: null },
                 },
             }),
-        [failFetchDownloadLimitPaymentUrl]: (state, payload) =>
+        [failFetchDownloadLimitCheckoutUrl]: (state, payload) =>
             update(state, {
-                payment: {
+                checkout: {
                     fetching: { $set: false },
                     error: { $set: payload },
                 },
             }),
-        [hideDownloadLimitPaymentUrlError]: state =>
+        [hideDownloadLimitCheckoutUrlError]: state =>
             update(state, {
-                payment: {
+                checkout: {
                     error: { $set: initialState.error },
                 },
             }),
-        [completeFetchDownloadLimitPaymentUrl]: (state, payload) =>
+        [completeFetchDownloadLimitCheckoutUrl]: (state, payload) =>
             update(state, {
-                payment: {
+                checkout: {
                     fetching: { $set: false },
                     error: { $set: null },
-                    url: {
+                    checkoutUrl: {
                         $set: payload,
                     },
                 },
