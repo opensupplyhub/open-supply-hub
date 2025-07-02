@@ -632,24 +632,25 @@ class ForeignKeyHandler:
             logger.info("[DRY-RUN] Would sync problematic facilities")
             return
         
-        # Get the specific problematic facility UUIDs
-        problematic_uuids = [
-            'c886d76e-d695-4e05-a608-648b56fdfac3',
-            '0fb00791-3115-4c2d-b42d-a1dca5220737',
-            '4559fee9-3859-4613-accf-7921347cefa4',
-            'f3092a0e-b208-497b-b865-7ecb47bf381e',
-            'a29e09cf-2c98-4914-90ca-913023c0754f',
-            '7ef25cca-35d2-4ace-af8e-4fc5faeef588'
-        ]
-        
         from django.apps import apps
         facility_model = apps.get_model('api', 'Facility')
         facility_list_item_model = apps.get_model('api', 'FacilityListItem')
         
-        logger.info(f"Attempting to sync {len(problematic_uuids)} problematic facilities...")
+        # Get all facilities that exist in OS Hub but not in RBA
+        os_uuids = set(facility_model.objects.using('default').values_list('uuid', flat=True))
+        rba_uuids = set(facility_model.objects.using('rba').values_list('uuid', flat=True))
+        missing_uuids = os_uuids - rba_uuids
+        
+        if not missing_uuids:
+            logger.info("No problematic facilities found to sync")
+            return
+        
+        logger.info(f"Found {len(missing_uuids)} facilities missing in RBA, attempting special sync...")
         
         successful_syncs = 0
-        for uuid in problematic_uuids:
+        failed_syncs = 0
+        
+        for uuid in missing_uuids:
             try:
                 # Get the facility from source database
                 facility = facility_model.objects.using('default').get(uuid=uuid)
@@ -673,6 +674,7 @@ class ForeignKeyHandler:
                             logger.info(f"Successfully mapped created_from: OS Hub ID {value.id} -> RBA ID {rba_facility_list_item.id}")
                         except facility_list_item_model.DoesNotExist:
                             logger.error(f"Could not find FacilityListItem with UUID {value.uuid} in RBA database")
+                            failed_syncs += 1
                             continue
                     
                     facility_data[field.name] = value
@@ -684,14 +686,19 @@ class ForeignKeyHandler:
                 logger.info(f"Successfully synced problematic facility {uuid}")
                 
             except Exception as e:
+                failed_syncs += 1
                 logger.error(f"Failed to sync problematic facility {uuid}: {e}")
         
-        logger.info(f"Successfully synced {successful_syncs}/{len(problematic_uuids)} problematic facilities")
+        logger.info(f"Problematic facilities sync completed: {successful_syncs} successful, {failed_syncs} failed")
         
         if successful_syncs > 0:
             # Update sequence
             sequence_updater = PostgreSQLSequenceUpdater()
             sequence_updater.update_sequence(facility_model, using='rba')
+
+    def sync_problematic_extended_fields(self, dry_run: bool = False) -> None:
+        """Special method to sync ExtendedField records with problematic foreign key references"""
+        self.foreign_key_handler.sync_problematic_extended_fields(dry_run)
 
 
 class SyncService:
@@ -1030,6 +1037,10 @@ class SyncService:
         """Sync problematic facilities with special handling"""
         self.foreign_key_handler.sync_problematic_facilities(dry_run)
     
+    def sync_problematic_extended_fields(self, dry_run: bool = False) -> None:
+        """Special method to sync ExtendedField records with problematic foreign key references"""
+        self.foreign_key_handler.sync_problematic_extended_fields(dry_run)
+
     def final_cleanup_sync(self, dry_run: bool = False) -> None:
         """Final cleanup: try to sync any remaining missing records"""
         if dry_run:
@@ -1178,34 +1189,44 @@ class Command(BaseCommand):
                     logger.info(f"Previous successful syncs ({successful_syncs} tables) are preserved. Continuing with remaining tables...")
                     continue
         
-        # Update circular references after all models are synced
-        try:
-            logger.info("Updating circular references after sync...")
-            sync_service.update_circular_references(dry_run)
-            logger.info("Circular reference update completed")
-        except Exception as e:
-            logger.error(f"Failed to update circular references: {e}")
-            if dry_run:
-                raise CommandError(f"Circular reference update failed: {e}")
-        
-        # Final cleanup: try to sync any remaining missing records
-        try:
-            logger.info("Performing final cleanup sync...")
-            sync_service.final_cleanup_sync(dry_run)
-            logger.info("Final cleanup sync completed")
-        except Exception as e:
-            logger.error(f"Failed to perform final cleanup sync: {e}")
-            if dry_run:
-                raise CommandError(f"Final cleanup sync failed: {e}")
-        
-        # Special handling for problematic facilities
-        try:
-            logger.info("Performing special sync for problematic facilities...")
-            sync_service.sync_problematic_facilities(dry_run)
-            logger.info("Problematic facilities sync completed")
-        except Exception as e:
-            logger.error(f"Failed to sync problematic facilities: {e}")
-            if dry_run:
-                raise CommandError(f"Problematic facilities sync failed: {e}")
-        
-        logger.info(f"{sync_type} synchronization completed. Successful: {successful_syncs}, Failed: {failed_syncs}")
+            # Update circular references after all models are synced
+            try:
+                logger.info("Updating circular references after sync...")
+                sync_service.update_circular_references(dry_run)
+                logger.info("Circular reference update completed")
+            except Exception as e:
+                logger.error(f"Failed to update circular references: {e}")
+                if dry_run:
+                    raise CommandError(f"Circular reference update failed: {e}")
+            
+            # Final cleanup: try to sync any remaining missing records
+            try:
+                logger.info("Performing final cleanup sync...")
+                sync_service.final_cleanup_sync(dry_run)
+                logger.info("Final cleanup sync completed")
+            except Exception as e:
+                logger.error(f"Failed to perform final cleanup sync: {e}")
+                if dry_run:
+                    raise CommandError(f"Final cleanup sync failed: {e}")
+            
+            # Special handling for problematic facilities
+            try:
+                logger.info("Performing special sync for problematic facilities...")
+                sync_service.sync_problematic_facilities(dry_run)
+                logger.info("Problematic facilities sync completed")
+            except Exception as e:
+                logger.error(f"Failed to sync problematic facilities: {e}")
+                if dry_run:
+                    raise CommandError(f"Problematic facilities sync failed: {e}")
+            
+            # Special handling for problematic ExtendedField records
+            try:
+                logger.info("Performing special sync for problematic ExtendedField records...")
+                sync_service.sync_problematic_extended_fields(dry_run)
+                logger.info("Problematic ExtendedField records sync completed")
+            except Exception as e:
+                logger.error(f"Failed to sync problematic ExtendedField records: {e}")
+                if dry_run:
+                    raise CommandError(f"Problematic ExtendedField records sync failed: {e}")
+            
+            logger.info(f"{sync_type} synchronization completed. Successful: {successful_syncs}, Failed: {failed_syncs}")
