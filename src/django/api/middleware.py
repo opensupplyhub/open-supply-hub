@@ -1,5 +1,8 @@
 import datetime
 import json
+import threading
+
+import requests
 
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
@@ -131,4 +134,35 @@ class OriginSourceMiddleware:
             )
 
         response = self.get_response(request)
+        return response
+
+
+class DarkVisitorsMiddleware:
+
+    API_URL = 'https://api.darkvisitors.com/visits'
+    TOKEN = getattr(settings, 'DARK_VISITORS_API_KEY', None)
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        if self.TOKEN:
+            payload = {
+                'request_path': request.path,
+                'request_method': request.method,
+            }
+            headers = {
+                'Authorization': f'Bearer {self.TOKEN}',
+                'Content-Type': 'application/json',
+            }
+
+            threading.Thread(
+                target=requests.post,
+                args=(self.API_URL,),
+                kwargs={'json': payload, 'headers': headers},
+                daemon=True,
+            ).start()
+
         return response

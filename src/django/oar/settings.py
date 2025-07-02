@@ -217,6 +217,7 @@ MIDDLEWARE = [
     'api.middleware.RequestLogMiddleware',
     'api.middleware.RequestMeterMiddleware',
     'api.middleware.OriginSourceMiddleware',
+    'api.middleware.DarkVisitorsMiddleware',
 ]
 
 ROOT_URLCONF = 'oar.urls'
