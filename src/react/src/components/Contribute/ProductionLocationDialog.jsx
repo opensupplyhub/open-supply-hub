@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { number, object, string } from 'prop-types';
 import { withStyles, withTheme } from '@material-ui/core/styles';
 import { useHistory } from 'react-router-dom';
-import { assign, isArray, isEmpty, pickBy, round, size } from 'lodash';
+import { isArray, isEmpty, pickBy, round, size } from 'lodash';
 import Button from '@material-ui/core/Button';
 import Chip from '@material-ui/core/Chip';
 import Typography from '@material-ui/core/Typography';
@@ -135,12 +135,9 @@ const ProductionLocationDialog = ({
         raw_json: {
             name: productionLocationName = '',
             address = '',
-            sector = '',
+            ...additionalInformationFields
         } = {},
-        fields,
     } = data;
-
-    const additionalInformationFields = assign({}, fields, { sector });
 
     const isValidValue = value => {
         if (isArray(value)) return value.length > 0;
