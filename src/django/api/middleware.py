@@ -152,6 +152,10 @@ class DarkVisitorsMiddleware:
             payload = {
                 'request_path': request.path,
                 'request_method': request.method,
+                "request_headers": {
+                    key: value for key, value in request.headers.items()
+                    if key.lower() in ("user-agent", "referer", "host")
+                },
             }
             headers = {
                 'Authorization': f'Bearer {self.TOKEN}',
