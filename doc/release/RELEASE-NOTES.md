@@ -45,6 +45,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 5000 facility records for download annually have been added for a registered free user.
+* [OSDEV-2023](https://opensupplyhub.atlassian.net/browse/OSDEV-2023) - The `Recruitment Agency` has been added to facility type and processing type. So a user can filter production locations on the `/facilities` page, can add this type on the `/contribute/single-location/info/` and `/claimed/:id/` pages.
+* [OSDEV-1868](https://opensupplyhub.atlassian.net/browse/OSDEV-1868) - The tooltip for the limit data download buttons has been updated.
 * [OSDEV-1879](https://opensupplyhub.atlassian.net/browse/OSDEV-1879) - Added Stripe-powered upgrade workflow allowing registered users to purchase additional 5,000 record download packages.
 * [OSDEV-2023](https://opensupplyhub.atlassian.net/browse/OSDEV-2023) - The `Recruitment Agency` has been added to facility type and processing type. So a user can filter production locations on the `/facilities` page, can add this type on the `/contribute/single-location/info/` and `/claimed/:id/` pages.
 
@@ -101,6 +103,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     Existing records were automatically populated with the default value `os_hub`.
     New records will have the origin_source field set via the `INSTANCE_SOURCE` environment variable using triggers.
 
+* 0172_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
+
 #### Schema changes
 * [OSDEV-2018](https://opensupplyhub.atlassian.net/browse/OSDEV-2018) - A new `uuid` column (type UUID) was added to the following tables:
     * `api_contributor`
@@ -138,6 +142,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     SQL `BEFORE INSERT` triggers were introduced for the relevant tables.
     A new SQL function, `set_origin_source`, was added to support the triggers and handle updates to the `origin_source` column.
 
+* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - The `FacilityDownloadLimit` model has been created. This model includes such fields: id, user_id, updated_at, free_download_records, paid_download_records, purchase_date.
+
 ### Code/API changes
 * *Describe code/API changes here.*
 
@@ -150,7 +156,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1951](https://opensupplyhub.atlassian.net/browse/OSDEV-1951) - Fixed an issue where the `direct_data_load` command was not able to reach the OpenSearch cluster.
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 5000 facility records for download annually have been added for a registered free user.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:

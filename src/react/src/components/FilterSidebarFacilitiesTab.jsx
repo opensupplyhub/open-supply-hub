@@ -663,6 +663,7 @@ FilterSidebarFacilitiesTab.propTypes = {
     fetchToMergeFacility: func.isRequired,
     updateTargetOSID: func.isRequired,
     fetchTargetFacility: func.isRequired,
+    // checkDownloadLimits: func.isRequired,
 };
 
 function mapStateToProps({

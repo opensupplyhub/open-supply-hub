@@ -107,12 +107,16 @@ const DownloadFacilitiesButton = ({
         }
         handleClose();
     };
+    const allowText = `Registered users can download up to 5,000 records annually for free.
+            Additional downloads are available for purchase. This account has
+            ${userAllowedRecords} records available to download.`;
+    const reachedText =
+        "You've reached your annual download limit. Upgrade for immediate access to additional downloads.";
 
     const tooltipTitle = (
         <p className={classes.downloadTooltip}>
-            Downloads are supported for searches resulting in{' '}
-            {userAllowedRecords} production locations or less.
-            {user.isAnon && ' Log in to download this dataset.'}
+            {upgrade ? reachedText : allowText}
+            {/* {user.isAnon && ' Log in to download this dataset.'} */}
         </p>
     );
 
