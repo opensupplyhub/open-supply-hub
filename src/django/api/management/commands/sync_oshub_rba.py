@@ -112,7 +112,7 @@ class ForeignKeyDependencyResolver(DependencyResolver):
                 dependency_chain.append(target_model)
         
         add_model_with_dependencies(model)
-        return self.__prioritize_user_model(dependency_chain)
+        return dependency_chain
     
     def get_model_foreign_key_dependencies(self, model: Model) -> List[str]:
         """Get foreign key dependencies for a model"""
@@ -136,18 +136,6 @@ class ForeignKeyDependencyResolver(DependencyResolver):
             return True
         except (AttributeError, ValueError, LookupError):
             return False
-    
-    def __prioritize_user_model(self, models_list: List[Model]) -> List[Model]:
-        """Ensure User model is always synced first if present"""
-        try:
-            user_model = apps.get_model('auth', 'User')
-            if user_model in models_list and self.__validate_model_has_uuid(user_model):
-                models_list = [m for m in models_list if m != user_model]
-                models_list.insert(0, user_model)
-                logger.info("User model prioritized to sync first")
-        except (ValueError, LookupError):
-            pass
-        return models_list
 
 
 class BulkSyncStrategy(DataSyncStrategy):
@@ -462,15 +450,25 @@ class ForeignKeyHandler:
                 logger.warning(f"Failed to sync missing reference {missing_id} for {field_name}: {e}")
     
     def prepare_objects_for_sync(self, objects: List[Model], model: Model) -> List[Model]:
-        """Prepare objects for sync by removing ID to avoid conflicts"""
+        """Prepare objects for sync by removing ID to avoid conflicts and handling circular dependencies"""
         prepared_objects = []
         for obj in objects:
             obj_data = {}
             for field in model._meta.fields:
                 if field.primary_key:
                     continue
+                
                 value = getattr(obj, field.name)
+                
+                # Handle circular dependency: temporarily nullify created_from for facilities
+                if (model._meta.model_name == 'Facility' and 
+                    field.name == 'created_from' and 
+                    value is not None):
+                    logger.info(f"Temporarily nullifying created_from ({value}) for facility {obj.id} to break circular dependency")
+                    value = None
+                
                 obj_data[field.name] = value
+            
             new_obj = model(**obj_data)
             prepared_objects.append(new_obj)
         return prepared_objects
@@ -573,10 +571,13 @@ class SyncService:
         
         logger.info(f"Syncing {len(objects)} objects individually for {model._meta.app_label}.{model._meta.model_name}")
         
+        # Always use prepared objects (with circular dependencies handled)
+        prepared_objects = self.foreign_key_handler.prepare_objects_for_sync(objects, model)
+        
         successful_inserts = 0
         failed_inserts = 0
         
-        for i, obj in enumerate(objects):
+        for i, obj in enumerate(prepared_objects):
             try:
                 # Each object gets its own transaction
                 with transaction.atomic(using='rba'):
@@ -612,7 +613,7 @@ class SyncService:
                     logger.warning(f"Failed to insert object {i + 1} for {model._meta.app_label}.{model._meta.model_name}: {e}")
             
             if (i + 1) % PROGRESS_LOG_INTERVAL == 0:
-                logger.info(f"Individual sync progress: {i + 1}/{len(objects)} objects processed")
+                logger.info(f"Individual sync progress: {i + 1}/{len(prepared_objects)} objects processed")
         
         logger.info(f"Individual sync completed: {successful_inserts} successful, {failed_inserts} failed")
         
@@ -663,10 +664,11 @@ class SyncService:
         for model in all_models:
             add_model_with_dependencies(model)
         
-        return self.__prioritize_user_model(dependency_chain)
+        return self.__prioritize_critical_models(dependency_chain)
     
-    def __prioritize_user_model(self, models_list: List[Model]) -> List[Model]:
-        """Ensure User model is always synced first if present"""
+    def __prioritize_critical_models(self, models_list: List[Model]) -> List[Model]:
+        """Ensure critical models (User, Facility) are synced early in the dependency chain"""
+        # Prioritize User model first
         try:
             user_model = apps.get_model('auth', 'User')
             if user_model in models_list and self.validator.validate(user_model):
@@ -675,6 +677,19 @@ class SyncService:
                 logger.info("User model prioritized to sync first")
         except (ValueError, LookupError):
             pass
+        
+        # Prioritize Facility model second (after User)
+        try:
+            facility_model = apps.get_model('api', 'Facility')
+            if facility_model in models_list and self.validator.validate(facility_model):
+                models_list = [m for m in models_list if m != facility_model]
+                # Insert after User model (at index 1) if User exists, otherwise at index 0
+                insert_index = 1 if any(m._meta.model_name == 'User' for m in models_list) else 0
+                models_list.insert(insert_index, facility_model)
+                logger.info("Facility model prioritized to sync early in dependency chain")
+        except (ValueError, LookupError):
+            pass
+        
         return models_list
     
     def print_summary_table(self, dry_run: bool = False) -> None:
