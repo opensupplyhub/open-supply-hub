@@ -140,7 +140,7 @@ class OriginSourceMiddleware:
 class DarkVisitorsMiddleware:
 
     API_URL = 'https://api.darkvisitors.com/visits'
-    TOKEN = getattr(settings, 'DARK_VISITORS_API_KEY', None)
+    TOKEN = getattr(settings, 'DARK_VISITORS_TOKEN', None)
 
     def __init__(self, get_response):
         self.get_response = get_response
