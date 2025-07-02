@@ -13,7 +13,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe high-level database changes.*
 
 #### Migrations
-* *Describe migrations here.*
+* 0172_increase_path_max_length - The migration increases `max_length` for the `path` field in the `DownloadLog` model.
 
 #### Schema changes
 * *Describe schema changes here.*
@@ -28,7 +28,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Removed the unnecessary duplicate assignment of the `origin_source` field for `Contributor`, `ExtendedField`, `Facility`, `FacilityActivityReport`, `FacilityAlias`, `FacilityClaim`, `FacilityList`, `FacilityListItem`, `FacilityMatch`, `Source`, `FacilityLocation`, and `User` via the custom `default_origin_source` Django management command — and removed the command itself. The `origin_source` field will be set by Django fixtures when deploying the local environment via the `start_local_dev` script and during test runs, which include executing the `start_code_quality_dev` bash script. For models like `FacilityListItem`, `ExtendedField`, and others, it will also be set during list processing triggered by the `reset_database` custom Django management command in the `start_local_dev` and `start_code_quality_dev` bash scripts.
 * [OSDEV-2032](https://opensupplyhub.atlassian.net/browse/OSDEV-2032) - The following bugs have been fixed as part of this ticket:
     * Fixed the incorrect indexing of the location type in the production locations OpenSearch index. Previously, it was incorrectly taking the processing type value as the location type — using the fourth item in the `matched_values` array instead of the third, which contains the location type. Also, updated the Logstash filters for both processing type and location type to return only unique values and write them to the production locations OpenSearch index.
-    * Adjusted the post-submit popup. Instead of displaying the cleaned and transformed data from ContriCleaner, we now show only the raw input submitted by the usered
+    * Adjusted the post-submit popup. Instead of displaying the cleaned and transformed data from ContriCleaner, we now show only the raw input submitted by the user.
+* [OSDEV-1913](https://opensupplyhub.atlassian.net/browse/OSDEV-1913) - The `max_length` for the `path` field in the `DownloadLog` model has been increased from 2083 to 4096 to fix the too long value error.
 
 ### What's new
 * [OSDEV-2023](https://opensupplyhub.atlassian.net/browse/OSDEV-2023) - The `Recruitment Agency` has been added to facility type and processing type. So a user can filter production locations on the `/facilities` page, can add this type on the `/contribute/single-location/info/` and `/claimed/:id/` pages.
@@ -49,8 +50,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 * *Describe high-level database changes.*
 
-#### Migrations:
-* 0170_add_uuid_to_relevant_tables.py - A new `uuid` field was added to the following tables:
+#### Migrations
+* 0170_add_uuid_to_relevant_tables - A new `uuid` field was added to the following tables:
     * `api_contributor`
     * `api_extendedfield`
     * `api_facility`

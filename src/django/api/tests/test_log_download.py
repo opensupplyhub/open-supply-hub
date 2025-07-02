@@ -1,5 +1,7 @@
 import json
 
+from django.forms import ValidationError
+
 from api.constants import LogDownloadQueryParams
 from api.models import DownloadLog, User
 from rest_framework.test import APITestCase
@@ -62,3 +64,35 @@ class LogDownloadTest(APITestCase):
         log = DownloadLog.objects.first()
         self.assertEqual(expected_path, log.path)
         self.assertEqual(expected_record_count, log.record_count)
+
+    def test_path_max_length(self):
+        DownloadLog.objects.all().delete()
+        self.client.login(email=self.email, password=self.password)
+        max_length = DownloadLog._meta.get_field('path').max_length
+        expected_record_count = 42
+        # Create a path exactly at max length.
+        path = "a" * max_length
+        url = "{}?{}={}&{}={}".format(
+            self.path,
+            LogDownloadQueryParams.PATH,
+            path,
+            LogDownloadQueryParams.RECORD_COUNT,
+            expected_record_count,
+        )
+        response = self.client.post(url)
+        self.assertEqual(204, response.status_code)
+
+        # Test that path exceeding max_length raises error on full_clean.
+        expected_error = "Path length must not exceed 4096 characters."
+        too_long_path = "a" * (max_length + 1)
+        url = "{}?{}={}&{}={}".format(
+            self.path,
+            LogDownloadQueryParams.PATH,
+            too_long_path,
+            LogDownloadQueryParams.RECORD_COUNT,
+            expected_record_count,
+        )
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('path', response.data)
+        self.assertEqual(response.data['path'][0], expected_error)
