@@ -8,6 +8,8 @@ This document outlines the SDLC pillars of the opensupplyhub monorepo, as well a
 - [General Information](#general-information)
   - [Requirements and key results](#requirements-and-key-results)
   - [Environments](#environments)
+    - [Core environments](#core-environments)
+    - [External collaboration environments](#external-collaboration-environments)
   - [Versioning](#versioning)
   - [Git branches and tags](#git-branches-and-tags)
     - [Feature branches](#feature-branches)
@@ -21,10 +23,10 @@ This document outlines the SDLC pillars of the opensupplyhub monorepo, as well a
   - [QA process](#qa-process)
     - [Preparation for release testing](#preparation-for-release-testing)
     - [Smoke testing on release day](#smoke-testing-on-release-day)
-  - [Release to production and sandbox](#release-to-production-and-sandbox)
+  - [Release to Production and Sandbox](#release-to-production-and-sandbox)
   - [Deployment to external collaboration environments](#deployment-to-external-collaboration-environments)
   - [Hotfixes](#hotfixes)
-  - [Shut down the pre-prod environment](#shut-down-the-pre-prod-environment)
+  - [Shut down the Pre-prod environment](#shut-down-the-pre-prod-environment)
   - [Post Release Notes](#post-release-notes)
   - [Reloading the DedupeHub](#reloading-the-dedupehub)
   - [Block loading of new production locations](#block-loading-of-new-production-locations)
@@ -82,9 +84,9 @@ This document outlines the SDLC pillars of the opensupplyhub monorepo, as well a
 
 The Software Development Life Cycle (SDLC) aims to enhance the development and release process. Here are the key aspects:
 - SDLC should streamline and optimize the development process for faster delivery.
-- SDLC should prevent bugs from appearing in production and sandbox environments by executing all possible checks in the CI pipeline.
+- SDLC should prevent bugs from appearing in Production and Sandbox environments by executing all possible checks in the CI pipeline.
 - SDLC should facilitate testing of features on real datasets no later than 2 days after implementation.
-- SDLC should allow for an environment with real datasets, frozen code, and resources close to production for the regression testing cycle before deploying to production and sandbox.
+- SDLC should allow for an environment with real datasets, frozen code, and resources close to Production for the regression testing cycle before deploying to Production and Sandbox.
 - SDLC should promote collaboration and communication among team members involved in the development and testing processes.
 
 Key Results:
@@ -94,7 +96,7 @@ Key Results:
 - Complete the regression testing cycle within a specified timeframe.
 - Validate the stability of features on real datasets immediately after implementation.
 - Ensure testing on real dataset is conducted within the 2-day timeframe.
-- Establish a robust environment for regression testing before deploying to production.
+- Establish a robust environment for regression testing before deploying to Production.
 
 
 ### Environments
@@ -110,15 +112,17 @@ The following list of environments could support [Requirements and key results](
 3. [Test Environment](http://test.os-hub.net):
     - The environment designed for testing new features and fixed bugs by QA and software engineers on real datasets. This environment utilizes average AWS resources and is manually deployed by QA Engineer as needed.
 4. [Pre-Prod Environment](https://preprod.os-hub.net/):
-    - The environment intended for use during the preparation for deploying to production and sandbox. All features and bug fixes should be verified here, as well as regression testing. It is supposed to be run only during the release process, five working days before the release. This environment uses maximum AWS resources to mirror the production environment.
+    - The environment intended for use during the preparation for deploying to Production and Sandbox. All features and bug fixes should be verified here, as well as regression testing. It is supposed to be run only during the release process, five working days before the release. This environment uses maximum AWS resources to mirror the Production environment.
 
 Read more about the existing environments in the [ENVIRONMENTS.md](./ENVIRONMENTS.md) file.
 
 #### External collaboration environments
 
-Environments deployed specifically for partners or third-party collaborators. These environments mirror the production setup and are used to support integration or joint initiatives without affecting the core OS Hub platform.
+Environments deployed specifically for partners or third-party collaborators. These environments mirror the Production setup and are used to support integration or joint initiatives without affecting the core OS Hub platform.
 
 1. RBA
+
+Read more about the deployment process to these environments in the [Deployment to external collaboration environments](#deployment-to-external-collaboration-environments) section.
 
 
 ### Versioning
@@ -143,17 +147,17 @@ Each new feature should reside in its own branch, which can be pushed to the cen
 
 Once `main` has acquired enough features for a release (or a predetermined release date is approaching), you run the `[Release] Init` GitHub workflow that creates a new release branch with a version number for the release. The release version number for release branches includes only the major and minor versions.
 
-When the release branch is ready for release, the `[Release] Deploy` workflow should be run for each environment, such as sandbox and production. This workflow will create two Git tags, each with a version number.
+When the release branch is ready for release, the `[Release] Deploy` workflow should be run for each environment, such as Sandbox and Production. This workflow will create two Git tags, each with a version number.
 This workflow will also initiate the Deploy to AWS workflow and pass it the necessary parameters. If you need to clear the custom OpenSearch indexes and templates during deployment, you need to select the `Clear the custom OpenSearch indexes and templates` checkbox.
 
 #### Hotfix branches
 
-Hotfix branches are utilized to quickly patch production and sandbox releases. They resemble release branches and feature branches, except they are based on a release branch instead of `main`. This is the branch that should fork directly from a release branch. As soon as the fix is complete, it should be merged into the release branch and, if the fix isn't dirty, into `main` as well. After manually running the `[Release] Deploy` workflow, two new tags with increased patch versions will be created, and the new version will be shipped to sandbox and production environments.
+Hotfix branches are utilized to quickly patch Production and Sandbox releases. They resemble release branches and feature branches, except they are based on a release branch instead of `main`. This is the branch that should fork directly from a release branch. As soon as the fix is complete, it should be merged into the release branch and, if the fix isn't dirty, into `main` as well. After manually running the `[Release] Deploy` workflow, two new tags with increased patch versions will be created, and the new version will be shipped to Sandbox and Production environments.
 This workflow will also initiate the Deploy to AWS workflow and pass it the necessary parameters. If you need to clear the custom OpenSearch indexes and templates during deployment, you need to select the `Clear the custom OpenSearch indexes and templates` checkbox.
 
 #### Quick-fix branches
 
-Quick-fix branches are utilized to quickly patch the release candidate that is being tested, avoiding the need for future hotfixes. They resemble hotfix branches, except they shouldn’t be released as tags with increased patch versions. This branch should fork directly from a release branch. Once the quick fix is complete, it should be merged into the release branch and, if the quick fix is clean, into the `main` branch as well. Quick fixes will be released along with other features in the release tags for sandbox and production.
+Quick-fix branches are utilized to quickly patch the release candidate that is being tested, avoiding the need for future hotfixes. They resemble hotfix branches, except they shouldn’t be released as tags with increased patch versions. This branch should fork directly from a release branch. Once the quick fix is complete, it should be merged into the release branch and, if the quick fix is clean, into the `main` branch as well. Quick fixes will be released along with other features in the release tags for Sandbox and Production.
 
 ## Development and release of the new release version
 
@@ -178,7 +182,7 @@ Make sure that:
 3. On the day of the code freeze, the responsible person must run the `[Release] Init` workflow from the `main` branch, specifying the major and minor versions of the release. This action creates the `releases/v.X.Y` branch. This operation does not trigger an automatic deployment to the Pre-prod environment.
 4. On Tuesday, following the code freeze, the responsible person must run the `Deploy to AWS` workflow for the Pre-prod environment from the release branch.
 5. After a successful deployment, the responsible person must copy the ARN of the `terraform` user from the AWS IAM console. To do this, navigate to the AWS console's search input, type "IAM", and open the IAM console. In the IAM console, access the "Users" tab, locate the `terraform` user, click on it, and copy the ARN provided on that page. Then, navigate to the AWS OpenSearch console using the same method. Open the list of available domains, locate the domain for the Pre-prod environment, and open it. Navigate to the security configuration section and click "Edit". Find the section titled "Fine-grained access control", locate the "IAM ARN" input field, paste the copied ARN into the field, and save the changes. It may take several minutes for the changes to apply. The responsible person must ensure that the "Configuration change status" field displays a green status after the update.
-6. Next, the responsible person must run the `DB - Save Anonymized DB` workflow (if it has not already run on the same day or the previous day). Once the anonymized database is successfully saved, the `DB - Apply Anonymized DB` workflow must be executed to ensure that testing is conducted with up-to-date data. Before running this workflow, the responsible person must select the `Pre-prod` environment and the `releases/v.X.Y` branch. During the `post_deploy` job of the `DB - Apply Anonymized DB` workflow, it is necessary to review the appropriate BetterStack monitor to confirm that no downtime has occurred. If any downtime is detected, the responsible person must notify the stakeholders in the `#data_x_product` Slack channel about the potential downtime in the production environment during the release.
+6. Next, the responsible person must run the `DB - Save Anonymized DB` workflow (if it has not already run on the same day or the previous day). Once the anonymized database is successfully saved, the `DB - Apply Anonymized DB` workflow must be executed to ensure that testing is conducted with up-to-date data. Before running this workflow, the responsible person must select the `pre-prod` environment and the `releases/v.X.Y` branch. During the `post_deploy` job of the `DB - Apply Anonymized DB` workflow, it is necessary to review the appropriate BetterStack monitor to confirm that no downtime has occurred. If any downtime is detected, the responsible person must notify the stakeholders in the `#data_x_product` Slack channel about the potential downtime in the Production environment during the release.
 7. In case there is a need to run a command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Django+container+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only-------How-can-we-manually-execute-commands-within-the-Django-container-for-our-environments%3F--Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
 
 ### QA process
@@ -196,48 +200,60 @@ To identify the tasks that need testing, QA engineers should refer to the Jira r
     - The QA engineer tests all items in the test run.
     - If a regression bug is found, it must be immediately documented as a Jira bug ticket and rated according to severity (P1, P2, or P3):
         * `P1 bugs:` Notify the entire team immediately. Assign the bug ticket to the software development team for prompt resolution.
-    - After the bug is fixed and the fix is deployed to the pre-production environment:
+    - After the bug is fixed and the fix is deployed to the Pre-prod environment:
         * `Re-create the Test Run Cycle` and verify all test items from the beginning before the release.
 
 #### Smoke testing on release day
 
 On Saturday (release day), the QA team should create two additional test cycles for conducting Smoke Testing [See Instructions here](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/657358851/QAlity+instruction+how+to+create+Regression+and+Smoke+test+Cycles):
 
-1. `Staging Environment:` Verify the release changes before deployment to production.
+1. `Staging Environment:` Verify the release changes before deployment to Production.
 2. `Production Environment:` Ensure the release is successfully deployed and functions as expected in the live environment.
 
-### Release to production and sandbox
+### Release to Production and Sandbox
 
 1. To enhance communication within the team, the responsible person for the release must notify all stakeholders about the release two working days before its scheduled date and in 1-2 hours to prevent any actions on the environment on which the deployment is carried out.
 2. On the designated time and day, before triggering the workflow on the Production environment, the responsible person must manually activate the `disable_list_uploading` switch, as mentioned in [Block loading of new production locations](#block-loading-production-locations).
 3. The responsible person have to take db snapshot manually via Amazon RDS in the `Snapshots` tab with name `env-db-MM-DD-YYYY` (examples: `stg-db-05-18-2025` and `prd-db-05-18-2025`).
-4. Then the responsible person runs the `[Release] Deploy` workflow for the sandbox and production environments from the release branch. They need to fill in the full release tag version (`X.Y.Z`) and choose the environment. If the responsible person need to clear the custom OpenSearch indexes and templates during deployment, they must select the `Clear the custom OpenSearch indexes and templates` checkbox.
-ℹ️ Note, that `Deploy to AWS` workflow will be triggered <strong>automatically</strong> for the sandbox and production environments respectively.
+4. Then the responsible person runs the `[Release] Deploy` workflow for the Sandbox and Production environments from the release branch. They need to fill in the full release tag version (`X.Y.Z`) and choose the environment. If the responsible person need to clear the custom OpenSearch indexes and templates during deployment, they must select the `Clear the custom OpenSearch indexes and templates` checkbox.
+ℹ️ Note, that `Deploy to AWS` workflow will be triggered <strong>automatically</strong> for the Sandbox and Production environments respectively.
 5. After completing the triggered workflows, the responsible person must open the AWS console and verify that all tasks of the `OpenSupplyHubStagingAppDD`, `OpenSupplyHubStagingApp`, `OpenSupplyHubStagingAppLogstash`, `OpenSupplyHubProductionAppDD`, `OpenSupplyHubProductionApp` and `OpenSupplyHubProductionAppLogstash` services in the `ecsOpenSupplyHubStagingCluster` and `ecsOpenSupplyHubProductionCluster` Amazon ECS clusters, respectively, have been restarted.
 6. Additionally, it is necessary to check the OpenSearch domains and their statuses, such as Domain Processing Status, Configuration Change Status, and Cluster Health, to ensure they are green (which indicates that everything is fine). Use the Amazon OpenSearch Service console to check this.
 7. The responsible person also needs to check that DedupeHub is up and running. To do this, they should open CloudWatch via the AWS console, navigate to the Log groups section in the menu, open logOpenSupplyHubProductionAppDD and logOpenSupplyHubStagingAppDD, then open the latest log stream of each log group. Ensure that there is a recent message: `INFO: Application startup complete.`
 If there is no such message and DedupeHub hangs, you need to reload it (perhaps several times), as mentioned in [Reloading the DedupeHub](#reloading-the-dedupehub).
 8. Once the aforementioned steps are successfully completed, the person responsible for the release should also verify that all actions included in the post_deployment command have been successfully executed. Here is the [instructions](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/280788993/Checking+successful+application+of+post-deployment+actions+in+the+test+environment).
 In case there is a need to run additional command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Django+container+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only-------How-can-we-manually-execute-commands-within-the-Django-container-for-our-environments%3F--Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
-9. Make inactive the `disable_list_uploading` switch (on Production).
+9. Make inactive the `disable_list_uploading` switch (in the Production environment).
 10. Notify the QA Engineer that the new version has been released, and they can commence smoke testing.
-11. The QA Engineer must notify stakeholders in the `#data_x_product` Slack channel when testing is complete in the sandbox and in the production, as well as issues, if any encountered during testing.
-12. Upon completing the release, the responsible person must notify stakeholders in the `#data_x_product` Slack channel that the releases to sandbox and production have concluded. Additionally, update the *Unreleased* version's status in Jira.
+11. The QA Engineer must notify stakeholders in the `#data_x_product` Slack channel when testing is complete in the Sandbox and in the Production, as well as issues, if any encountered during testing.
+12. Upon completing the release, the responsible person must notify stakeholders in the `#data_x_product` Slack channel that the releases to Sandbox and Production have concluded. Additionally, update the *Unreleased* version's status in Jira.
 
 ### Deployment to external collaboration environments
 
+In addition to the Production environment, there may be external collaboration environments such as the RBA environment, which is a replica of Production and used in partnership with third-party organizations. These environments follow the same release cycle and tag-based deployment process as the Production environment.
+
+General guidelines for deploying to external collaboration environments:
+1. Git Tagging Strategy: Use the same Git tagging strategy as for Production. The only difference is that each tag should include a prefix specific to the external environment. See the [Git branches and tags](#git-branches-and-tags) section for more details.
+2. Release Process: The release process should follow the same steps as outlined for Production in the [Release to Production and Sandbox](#release-to-production-and-sandbox) section. The release day follows the defined [release schedule](#release-schedule).
+3. Hotfixes: Hotfixes should be deployed to external environments using the same process as for the Production environment. See the [Hotfixes](#hotfixes) section for more information.
+4. Smoke Testing: Smoke testing should be conducted in the same manner as on the Production environment to ensure stability and feature integrity. Refer to the [Smoke testing on release day](#smoke-testing-on-release-day) section for details.
+5. Reloading DedupeHub: Reloading DedupeHub in external environments can be performed by following the same steps described in the [Reloading the DedupeHub](#reloading-the-dedupehub) section, using the appropriate infrastructure resources of the respective external environment.
+
+Notes:
+- Similar environments for future collaborations can be integrated using the same Git tagging strategy and release process as existing external environments.
+
 ### Hotfixes
 
-- To deploy a hotfix to pre-prod, you should fork from the latest release branch, and after preparing the fix, merge it back. Merging will trigger the `Deploy to AWS` workflow that will deploy the hotfix to the **running** pre-prod environment.
-- To release a hotfix to production and staging, you should fork from the latest release branch, and after preparing the fix, merge it back. For production you have to make active the `disable_list_uploading` switch. The last step is to execute the `[Release] Deploy` workflow for each environment separately, which will deploy the fix to these two environments. If you need to clear the custom OpenSearch indexes and templates during deployment, you must select the `Clear the custom OpenSearch indexes and templates` checkbox. At the end for production make inactive the `disable_list_uploading` switch.
+- To deploy a hotfix to Pre-prod, you should fork from the latest release branch, and after preparing the fix, merge it back. Merging will trigger the `Deploy to AWS` workflow that will deploy the hotfix to the **running** Pre-prod environment.
+- To release a hotfix to Production and Staging, you should fork from the latest release branch, and after preparing the fix, merge it back. For Production you have to make active the `disable_list_uploading` switch. The last step is to execute the `[Release] Deploy` workflow for each environment separately, which will deploy the fix to these two environments. If you need to clear the custom OpenSearch indexes and templates during deployment, you must select the `Clear the custom OpenSearch indexes and templates` checkbox. At the end for Production make inactive the `disable_list_uploading` switch.
 
 ### Quick-fixes
 
-- To deploy a quick-fix to pre-prod, you should fork from the latest release branch, and after preparing the fix, merge it back. Merging will trigger the `Deploy to AWS` workflow that will deploy the quick-fix to the **running** pre-prod environment. If it is a stable fix, merge it into the `main` branch as well.
+- To deploy a quick-fix to Pre-prod, you should fork from the latest release branch, and after preparing the fix, merge it back. Merging will trigger the `Deploy to AWS` workflow that will deploy the quick-fix to the **running** Pre-prod environment. If it is a stable fix, merge it into the `main` branch as well.
 
-### Shut down the pre-prod environment
+### Shut down the Pre-prod environment
 
-1. Shutting down the pre-prod environment starts after passing all QA checklist items for the pre-prod.
+1. Shutting down the Pre-prod environment starts after passing all QA checklist items for the Pre-prod.
 2. To shut down the Pre-prod the responsible person have to select `Destroy Environment` in the Actions menu. Press run workflow with `main` branch and select `Pre-prod` env.
 
 ### Post Release Notes
