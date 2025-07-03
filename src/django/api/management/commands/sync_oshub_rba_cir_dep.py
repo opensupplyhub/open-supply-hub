@@ -21,6 +21,16 @@ DEFAULT_UUID_BATCH_SIZE = 10000
 DEFAULT_BULK_BATCH_SIZE = 500
 PROGRESS_LOG_INTERVAL = 100
 
+# FacilityListItem circular dependency related models
+FACILITY_LIST_ITEM_RELATED_MODELS = [
+    'api.Facility',              # FacilityListItem depends on Facility
+    'api.Source',                # FacilityListItem depends on Source
+    'api.FacilityListItem',      # Main model with circular dependencies
+    'api.FacilityMatch',         # Depends on FacilityListItem
+    'api.FacilityListItemField', # Depends on FacilityListItem
+    'api.ExtendedField',         # Depends on FacilityListItem
+]
+
 
 # ============================================================================
 # ABSTRACT BASE CLASSES (Strategy Pattern)
@@ -128,6 +138,157 @@ class ForeignKeyDependencyResolver(DependencyResolver):
                 except (AttributeError, ValueError, LookupError, FieldDoesNotExist):
                     continue
         return dependencies
+    
+    def __validate_model_has_uuid(self, model: Model) -> bool:
+        """Validate that a model has a UUID field"""
+        try:
+            model._meta.get_field('uuid')
+            return True
+        except (AttributeError, ValueError, LookupError):
+            return False
+
+
+class FacilityListItemDependencyResolver(DependencyResolver):
+    """Resolves dependencies specifically for FacilityListItem and its circular dependencies"""
+    
+    def __init__(self):
+        self.processed: Set[str] = set()
+    
+    def resolve_dependencies(self, model: Model) -> List[Model]:
+        """Resolve dependencies for FacilityListItem and related models only"""
+        dependency_chain = []
+        self.processed.clear()
+        
+        # Get all related models that are allowed
+        allowed_models = self._get_allowed_models()
+        
+        def add_model_with_dependencies(target_model: Model) -> None:
+            model_key = f"{target_model._meta.app_label}.{target_model._meta.model_name}"
+            if model_key in self.processed:
+                return
+            self.processed.add(model_key)
+            
+            # Get dependencies for this model (only from allowed models)
+            dependencies = self.get_model_foreign_key_dependencies(target_model, allowed_models)
+            
+            # Recursively add dependencies first
+            for dep_key in dependencies:
+                try:
+                    app_label, model_name = dep_key.split('.')
+                    dep_model = apps.get_model(app_label, model_name)
+                    if self.__validate_model_has_uuid(dep_model) and dep_model in allowed_models:
+                        add_model_with_dependencies(dep_model)
+                except (ValueError, LookupError) as e:
+                    logger.warning(f"Could not resolve dependency {dep_key} for {model_key}: {e}")
+            
+            # Add this model after its dependencies
+            if target_model not in dependency_chain:
+                dependency_chain.append(target_model)
+        
+        # Start with FacilityListItem model
+        facility_list_item_model = apps.get_model('api', 'FacilityListItem')
+        add_model_with_dependencies(facility_list_item_model)
+        
+        return self._prioritize_facility_list_item_models(dependency_chain)
+    
+    def get_model_foreign_key_dependencies(self, model: Model, allowed_models: List[Model]) -> List[str]:
+        """Get foreign key dependencies for a model (only from allowed models)"""
+        dependencies = []
+        for field in model._meta.fields:
+            if hasattr(field, 'related_model') and field.related_model:
+                related_model = field.related_model
+                try:
+                    related_model._meta.get_field('uuid')
+                    dependency_key = f"{related_model._meta.app_label}.{related_model._meta.model_name}"
+                    
+                    # Only include dependencies that are in our allowed models list
+                    if related_model in allowed_models and dependency_key not in dependencies:
+                        dependencies.append(dependency_key)
+                except (AttributeError, ValueError, LookupError, FieldDoesNotExist):
+                    continue
+        return dependencies
+    
+    def _get_allowed_models(self) -> List[Model]:
+        """Get list of models that are allowed for FacilityListItem sync"""
+        allowed_models = []
+        for model_key in FACILITY_LIST_ITEM_RELATED_MODELS:
+            try:
+                app_label, model_name = model_key.split('.')
+                model = apps.get_model(app_label, model_name)
+                if self.__validate_model_has_uuid(model):
+                    allowed_models.append(model)
+            except (ValueError, LookupError) as e:
+                logger.warning(f"Could not load model {model_key}: {e}")
+        return allowed_models
+    
+    def _prioritize_facility_list_item_models(self, models_list: List[Model]) -> List[Model]:
+        """Prioritize models in the correct order for FacilityListItem sync"""
+        prioritized_models = []
+        
+        # 1. Facility first (source table that others depend on)
+        try:
+            facility_model = apps.get_model('api', 'Facility')
+            if facility_model in models_list:
+                prioritized_models.append(facility_model)
+                models_list = [m for m in models_list if m != facility_model]
+                logger.info("Facility model prioritized to sync FIRST")
+        except (ValueError, LookupError):
+            pass
+        
+        # 2. Source model (FacilityListItem depends on it)
+        try:
+            source_model = apps.get_model('api', 'Source')
+            if source_model in models_list:
+                prioritized_models.append(source_model)
+                models_list = [m for m in models_list if m != source_model]
+                logger.info("Source model prioritized to sync second")
+        except (ValueError, LookupError):
+            pass
+        
+        # 3. FacilityListItem (main model with circular dependencies)
+        try:
+            facility_list_item_model = apps.get_model('api', 'FacilityListItem')
+            if facility_list_item_model in models_list:
+                prioritized_models.append(facility_list_item_model)
+                models_list = [m for m in models_list if m != facility_list_item_model]
+                logger.info("FacilityListItem model prioritized to sync third")
+        except (ValueError, LookupError):
+            pass
+        
+        # 4. FacilityMatch (depends on FacilityListItem)
+        try:
+            facility_match_model = apps.get_model('api', 'FacilityMatch')
+            if facility_match_model in models_list:
+                prioritized_models.append(facility_match_model)
+                models_list = [m for m in models_list if m != facility_match_model]
+                logger.info("FacilityMatch model prioritized to sync fourth")
+        except (ValueError, LookupError):
+            pass
+        
+        # 5. FacilityListItemField (depends on FacilityListItem)
+        try:
+            facility_list_item_field_model = apps.get_model('api', 'FacilityListItemField')
+            if facility_list_item_field_model in models_list:
+                prioritized_models.append(facility_list_item_field_model)
+                models_list = [m for m in models_list if m != facility_list_item_field_model]
+                logger.info("FacilityListItemField model prioritized to sync fifth")
+        except (ValueError, LookupError):
+            pass
+        
+        # 6. ExtendedField (depends on FacilityListItem)
+        try:
+            extended_field_model = apps.get_model('api', 'ExtendedField')
+            if extended_field_model in models_list:
+                prioritized_models.append(extended_field_model)
+                models_list = [m for m in models_list if m != extended_field_model]
+                logger.info("ExtendedField model prioritized to sync last")
+        except (ValueError, LookupError):
+            pass
+        
+        # Add any remaining models
+        prioritized_models.extend(models_list)
+        
+        return prioritized_models
     
     def __validate_model_has_uuid(self, model: Model) -> bool:
         """Validate that a model has a UUID field"""
@@ -346,16 +507,14 @@ class ForeignKeyHandler:
                         # Check if the referenced object exists in the target database
                         related_model = field.related_model
                         try:
-                            # Try to find by UUID first
+                            # Always use UUID for foreign key lookups since we sync by UUID
+                            # and IDs are different between databases
                             related_model.objects.using('rba').get(uuid=value.uuid)
                         except (AttributeError, related_model.DoesNotExist):
-                            try:
-                                # Try to find by ID if UUID doesn't exist
-                                related_model.objects.using('rba').get(id=value.id)
-                            except related_model.DoesNotExist:
-                                if field.name not in missing_refs:
-                                    missing_refs[field.name] = []
-                                missing_refs[field.name].append(str(value.id))
+                            # If we can't find by UUID, mark as missing reference
+                            if field.name not in missing_refs:
+                                missing_refs[field.name] = []
+                            missing_refs[field.name].append(str(value.id))
                 except Exception as e:
                     logger.debug(f"Error checking reference {field.name}: {e}")
                     continue
@@ -481,7 +640,35 @@ class ForeignKeyHandler:
                     logger.info(f"Added circular reference to track: Facility {obj.uuid} -> FacilityListItem {value.id}")
                     value = None
                 
-                obj_data[field.name] = value
+                # Handle foreign key ID mapping from OS Hub to RBA
+                elif (hasattr(field, 'related_model') and field.related_model and 
+                      value is not None and 
+                      field.name not in ['created_from']):  # Don't map created_from here
+                    try:
+                        related_model = field.related_model
+                        # Try to find the related object in RBA by UUID
+                        try:
+                            rba_obj = related_model.objects.using('rba').get(uuid=value.uuid)
+                            # Map the ID from OS Hub to RBA
+                            if hasattr(value, 'id') and hasattr(rba_obj, 'id'):
+                                if value.id != rba_obj.id:
+                                    logger.info(f"Mapping {field.name}: OS Hub ID {value.id} -> RBA ID {rba_obj.id}")
+                                    # Always set the *_id field for foreign keys
+                                    id_field_name = f"{field.name}_id"
+                                    obj_data[id_field_name] = rba_obj.id
+                                    # Do not set the object field itself
+                                    value = None
+                        except (AttributeError, related_model.DoesNotExist):
+                            # If we can't find by UUID, try to sync the missing reference
+                            logger.warning(f"Could not find {field.name} with UUID {value.uuid} in RBA, will try to sync missing reference")
+                            # Don't nullify here, let the sync process handle it
+                    except Exception as e:
+                        logger.debug(f"Error mapping foreign key {field.name}: {e}")
+                        # If mapping fails, keep the original value
+                
+                # Only add the field to obj_data if it's not None and it's not a foreign key object (we always set *_id instead)
+                if value is not None and not (hasattr(field, 'related_model') and field.related_model and field.name not in ['created_from']):
+                    obj_data[field.name] = value
             
             new_obj = model(**obj_data)
             prepared_objects.append(new_obj)
@@ -585,7 +772,9 @@ class ForeignKeyHandler:
                         # If we can't check, nullify to be safe
                         value = None
                 
-                obj_data[field.name] = value
+                # Only add the field to obj_data if it's not None and it's not a foreign key object (we always set *_id instead)
+                if value is not None and not (hasattr(field, 'related_model') and field.related_model and field.name not in ['created_from']):
+                    obj_data[field.name] = value
             
             new_obj = model(**obj_data)
             prepared_objects.append(new_obj)
@@ -867,6 +1056,204 @@ class ForeignKeyHandler:
             sequence_updater = PostgreSQLSequenceUpdater()
             sequence_updater.update_sequence(facility_list_item_model, using='rba')
 
+    def sync_problematic_facility_matches(self, dry_run: bool = False) -> None:
+        """Special method to sync FacilityMatch records with problematic foreign key references"""
+        if dry_run:
+            logger.info("[DRY-RUN] Would sync problematic facility matches")
+            return
+        
+        from django.apps import apps
+        facility_match_model = apps.get_model('api', 'FacilityMatch')
+        facility_model = apps.get_model('api', 'Facility')
+        facility_list_item_model = apps.get_model('api', 'FacilityListItem')
+        
+        # Get all facility matches that exist in OS Hub but not in RBA
+        os_uuids = set(facility_match_model.objects.using('default').values_list('uuid', flat=True))
+        rba_uuids = set(facility_match_model.objects.using('rba').values_list('uuid', flat=True))
+        missing_uuids = os_uuids - rba_uuids
+        
+        if not missing_uuids:
+            logger.info("No problematic facility matches found to sync")
+            return
+        
+        logger.info(f"Found {len(missing_uuids)} facility matches missing in RBA, attempting special sync...")
+        
+        successful_syncs = 0
+        failed_syncs = 0
+        
+        for uuid in missing_uuids:
+            try:
+                # Get the facility match from source database
+                facility_match = facility_match_model.objects.using('default').get(uuid=uuid)
+                
+                # Create a copy with mapped foreign key IDs
+                facility_match_data = {}
+                for field in facility_match_model._meta.fields:
+                    if field.primary_key:
+                        continue
+                    
+                    value = getattr(facility_match, field.name)
+                    
+                    # Map facility_id from OS Hub UUID to RBA UUID (same UUID, different ID)
+                    if field.name == 'facility_id' and value is not None:
+                        try:
+                            # Find the facility in RBA by UUID
+                            rba_facility = facility_model.objects.using('rba').get(uuid=value)
+                            value = rba_facility.id
+                            logger.info(f"Mapped facility_id: OS Hub UUID {value} -> RBA ID {rba_facility.id}")
+                        except facility_model.DoesNotExist:
+                            logger.warning(f"Could not find facility with UUID {value} in RBA database, nullifying")
+                            value = None
+                    
+                    # Map facility_list_item_id from OS Hub ID to RBA ID
+                    elif field.name == 'facility_list_item_id' and value is not None:
+                        try:
+                            # Get the facility list item from OS Hub to get its UUID
+                            os_facility_list_item = facility_list_item_model.objects.using('default').get(id=value)
+                            # Find the corresponding item in RBA by UUID
+                            rba_facility_list_item = facility_list_item_model.objects.using('rba').get(uuid=os_facility_list_item.uuid)
+                            value = rba_facility_list_item.id
+                            logger.info(f"Mapped facility_list_item_id: OS Hub ID {value} -> RBA ID {rba_facility_list_item.id}")
+                        except (facility_list_item_model.DoesNotExist, AttributeError) as e:
+                            logger.warning(f"Could not map facility_list_item_id {value}: {e}, nullifying")
+                            value = None
+                    
+                    facility_match_data[field.name] = value
+                
+                # Create and save the facility match
+                new_facility_match = facility_match_model(**facility_match_data)
+                new_facility_match.save(using='rba')
+                successful_syncs += 1
+                logger.info(f"Successfully synced problematic facility match {uuid}")
+                
+            except Exception as e:
+                failed_syncs += 1
+                logger.error(f"Failed to sync problematic facility match {uuid}: {e}")
+        
+        logger.info(f"Problematic facility matches sync completed: {successful_syncs} successful, {failed_syncs} failed")
+        
+        if successful_syncs > 0:
+            # Update sequence
+            sequence_updater = PostgreSQLSequenceUpdater()
+            sequence_updater.update_sequence(facility_match_model, using='rba')
+
+    def sync_problematic_facility_list_item_fields(self, dry_run: bool = False) -> None:
+        """Special method to sync FacilityListItemField records with problematic foreign key references"""
+        if dry_run:
+            logger.info("[DRY-RUN] Would sync problematic facility list item fields")
+            return
+        
+        from django.apps import apps
+        facility_list_item_field_model = apps.get_model('api', 'FacilityListItemField')
+        facility_model = apps.get_model('api', 'Facility')
+        source_model = apps.get_model('api', 'Source')
+        
+        # Get all facility list item fields that exist in OS Hub but not in RBA
+        os_uuids = set(facility_list_item_field_model.objects.using('default').values_list('uuid', flat=True))
+        rba_uuids = set(facility_list_item_field_model.objects.using('rba').values_list('uuid', flat=True))
+        missing_uuids = os_uuids - rba_uuids
+        
+        if not missing_uuids:
+            logger.info("No problematic facility list item fields found to sync")
+            return
+        
+        logger.info(f"Found {len(missing_uuids)} facility list item fields missing in RBA, attempting special sync...")
+        
+        successful_syncs = 0
+        failed_syncs = 0
+        
+        for uuid in missing_uuids:
+            try:
+                # Get the facility list item field from source database
+                facility_list_item_field = facility_list_item_field_model.objects.using('default').get(uuid=uuid)
+                
+                # Create a copy with mapped foreign key IDs
+                facility_list_item_field_data = {}
+                for field in facility_list_item_field_model._meta.fields:
+                    if field.primary_key:
+                        continue
+                    
+                    value = getattr(facility_list_item_field, field.name)
+                    
+                    # Map facility_id from OS Hub UUID to RBA UUID (same UUID, different ID)
+                    if field.name == 'facility_id' and value is not None:
+                        try:
+                            # Find the facility in RBA by UUID
+                            rba_facility = facility_model.objects.using('rba').get(uuid=value)
+                            value = rba_facility.id
+                            logger.info(f"Mapped facility_id: OS Hub UUID {value} -> RBA ID {rba_facility.id}")
+                        except facility_model.DoesNotExist:
+                            logger.warning(f"Could not find facility with UUID {value} in RBA database, nullifying")
+                            value = None
+                    
+                    # Map source_id from OS Hub ID to RBA ID
+                    elif field.name == 'source_id' and value is not None:
+                        try:
+                            # Get the source from OS Hub to get its UUID
+                            os_source = source_model.objects.using('default').get(id=value)
+                            # Find the corresponding source in RBA by UUID
+                            rba_source = source_model.objects.using('rba').get(uuid=os_source.uuid)
+                            value = rba_source.id
+                            logger.info(f"Mapped source_id: OS Hub ID {value} -> RBA ID {rba_source.id}")
+                        except (source_model.DoesNotExist, AttributeError) as e:
+                            logger.warning(f"Could not map source_id {value}: {e}, nullifying")
+                            value = None
+                    
+                    facility_list_item_field_data[field.name] = value
+                
+                # Create and save the facility list item field
+                new_facility_list_item_field = facility_list_item_field_model(**facility_list_item_field_data)
+                new_facility_list_item_field.save(using='rba')
+                successful_syncs += 1
+                logger.info(f"Successfully synced problematic facility list item field {uuid}")
+                
+            except Exception as e:
+                failed_syncs += 1
+                logger.error(f"Failed to sync problematic facility list item field {uuid}: {e}")
+        
+        logger.info(f"Problematic facility list item fields sync completed: {successful_syncs} successful, {failed_syncs} failed")
+        
+        if successful_syncs > 0:
+            # Update sequence
+            sequence_updater = PostgreSQLSequenceUpdater()
+            sequence_updater.update_sequence(facility_list_item_field_model, using='rba')
+
+    def handle_facility_list_item_constraints(self, dry_run: bool = False) -> None:
+        """Handle all constraint issues for FacilityListItem and related tables"""
+        if dry_run:
+            logger.info("[DRY-RUN] Would handle FacilityListItem constraint issues")
+            return
+        
+        logger.info("Handling FacilityListItem and related tables constraint issues...")
+        
+        # Handle each type of constraint issue
+        try:
+            self.sync_problematic_facilities(dry_run)
+        except Exception as e:
+            logger.error(f"Failed to handle facility constraints: {e}")
+        
+        try:
+            self.sync_problematic_facility_list_items(dry_run)
+        except Exception as e:
+            logger.error(f"Failed to handle facility list item constraints: {e}")
+        
+        try:
+            self.sync_problematic_facility_matches(dry_run)
+        except Exception as e:
+            logger.error(f"Failed to handle facility match constraints: {e}")
+        
+        try:
+            self.sync_problematic_facility_list_item_fields(dry_run)
+        except Exception as e:
+            logger.error(f"Failed to handle facility list item field constraints: {e}")
+        
+        try:
+            self.sync_problematic_extended_fields(dry_run)
+        except Exception as e:
+            logger.error(f"Failed to handle extended field constraints: {e}")
+        
+        logger.info("FacilityListItem constraint handling completed")
+
 
 class SyncService:
     """Main service for orchestrating synchronization operations"""
@@ -1071,87 +1458,19 @@ class SyncService:
         
         return successful_inserts, failed_uuids
     
-    def get_models_to_sync(self, target_model: Optional[Model] = None) -> List[Model]:
-        """Get models that need to be synced, including dependencies"""
-        if target_model:
-            models_to_sync = self.dependency_resolver.resolve_dependencies(target_model)
-            logger.info(f"Single table sync requested for {target_model._meta.app_label}.{target_model._meta.model_name}")
-            logger.info(f"Will sync dependency chain: {[f'{m._meta.app_label}.{m._meta.model_name}' for m in models_to_sync]}")
-        else:
-            all_models = self.model_repository.get_all_models_with_uuid()
-            models_to_sync = self.__build_full_dependency_chain(all_models)
-            logger.info(f"Full sync requested for {len(models_to_sync)} models")
-        
-        return models_to_sync
-    
-    def __build_full_dependency_chain(self, all_models: List[Model]) -> List[Model]:
-        """Build complete dependency chain for all models in full sync mode"""
-        dependency_chain = []
-        processed = set()
-        
-        def add_model_with_dependencies(model: Model):
-            model_key = f"{model._meta.app_label}.{model._meta.model_name}"
-            if model_key in processed:
-                return
-            processed.add(model_key)
-            
-            dependencies = self.dependency_resolver.get_model_foreign_key_dependencies(model)
-            
-            for dep_key in dependencies:
-                try:
-                    app_label, model_name = dep_key.split('.')
-                    dep_model = apps.get_model(app_label, model_name)
-                    if self.validator.validate(dep_model) and dep_model in all_models:
-                        add_model_with_dependencies(dep_model)
-                except (ValueError, LookupError):
-                    logger.warning(f"Could not resolve dependency {dep_key} for {model_key}")
-            
-            if model not in dependency_chain:
-                dependency_chain.append(model)
-        
-        for model in all_models:
-            add_model_with_dependencies(model)
-        
-        return self.__prioritize_critical_models(dependency_chain)
-    
-    def __prioritize_critical_models(self, models_list: List[Model]) -> List[Model]:
-        """Ensure critical models are synced in the correct dependency order"""
-        # Prioritize Facility model FIRST (source table that others depend on)
-        try:
-            facility_model = apps.get_model('api', 'Facility')
-            if facility_model in models_list and self.validator.validate(facility_model):
-                models_list = [m for m in models_list if m != facility_model]
-                models_list.insert(0, facility_model)
-                logger.info("Facility model prioritized to sync FIRST (source table)")
-        except (ValueError, LookupError):
-            pass
-        
-        # Prioritize FacilityListItem model second (depends on Facility)
+    def get_facility_list_item_models_to_sync(self) -> List[Model]:
+        """Get models specifically for FacilityListItem circular dependency sync"""
         try:
             facility_list_item_model = apps.get_model('api', 'FacilityListItem')
-            if facility_list_item_model in models_list and self.validator.validate(facility_list_item_model):
-                models_list = [m for m in models_list if m != facility_list_item_model]
-                # Insert after Facility model (at index 1) if Facility exists, otherwise at index 0
-                insert_index = 1 if any(m._meta.model_name == 'Facility' for m in models_list) else 0
-                models_list.insert(insert_index, facility_list_item_model)
-                logger.info("FacilityListItem model prioritized to sync second (depends on Facility)")
-        except (ValueError, LookupError):
-            pass
-        
-        # Prioritize User model third (after Facility and FacilityListItem)
-        try:
-            user_model = apps.get_model('auth', 'User')
-            if user_model in models_list and self.validator.validate(user_model):
-                models_list = [m for m in models_list if m != user_model]
-                # Insert after Facility and FacilityListItem models
-                insert_index = 2 if any(m._meta.model_name == 'Facility' for m in models_list) and any(m._meta.model_name == 'FacilityListItem' for m in models_list) else 1
-                models_list.insert(insert_index, user_model)
-                logger.info("User model prioritized to sync third")
-        except (ValueError, LookupError):
-            pass
-        
-        return models_list
-    
+            facility_list_item_resolver = FacilityListItemDependencyResolver()
+            models_to_sync = facility_list_item_resolver.resolve_dependencies(facility_list_item_model)
+            logger.info(f"FacilityListItem circular dependency sync requested")
+            logger.info(f"Will sync models: {[f'{m._meta.app_label}.{m._meta.model_name}' for m in models_to_sync]}")
+            return models_to_sync
+        except (ValueError, LookupError) as e:
+            logger.error(f"Could not resolve FacilityListItem dependencies: {e}")
+            return []
+
     def print_summary_table(self, dry_run: bool = False) -> None:
         """Print summary table of sync statistics"""
         if not self.sync_stats:
@@ -1170,7 +1489,7 @@ class SyncService:
         total_to_sync = sum(stats['to_sync'] for stats in self.sync_stats.values())
         
         logger.info("\n" + "="*80)
-        logger.info("SYNC SUMMARY REPORT")
+        logger.info("FACILITYLISTITEM SYNC SUMMARY REPORT")
         logger.info("="*80)
         
         logger.info(f"{'Table':<40} {'Source':<10} {'Target':<10} {'To Sync':<10}")
@@ -1204,40 +1523,6 @@ class SyncService:
         """Sync problematic facilities with special handling"""
         self.foreign_key_handler.sync_problematic_facilities(dry_run)
     
-    def sync_source_tables_first(self, dry_run: bool = False) -> None:
-        """Sync source tables first to establish proper foreign key relationships"""
-        if dry_run:
-            logger.info("[DRY-RUN] Would sync source tables first")
-            return
-        
-        logger.info("Syncing source tables first to establish proper foreign key relationships...")
-        
-        # Sync Facility first (the main source table)
-        try:
-            facility_model = apps.get_model('api', 'Facility')
-            if self.validator.validate(facility_model):
-                logger.info("Syncing Facility table first...")
-                self.sync_model(facility_model, dry_run)
-                logger.info("Facility table sync completed")
-        except Exception as e:
-            logger.error(f"Failed to sync Facility table first: {e}")
-            if dry_run:
-                raise CommandError(f"Facility table sync failed: {e}")
-        
-        # Sync FacilityListItem second (depends on Facility)
-        try:
-            facility_list_item_model = apps.get_model('api', 'FacilityListItem')
-            if self.validator.validate(facility_list_item_model):
-                logger.info("Syncing FacilityListItem table second...")
-                self.sync_model(facility_list_item_model, dry_run)
-                logger.info("FacilityListItem table sync completed")
-        except Exception as e:
-            logger.error(f"Failed to sync FacilityListItem table: {e}")
-            if dry_run:
-                raise CommandError(f"FacilityListItem table sync failed: {e}")
-        
-        logger.info("Source tables sync completed")
-
     def sync_problematic_facility_list_items(self, dry_run: bool = False) -> None:
         """Special method to sync FacilityListItem records with problematic foreign key references"""
         self.foreign_key_handler.sync_problematic_facility_list_items(dry_run)
@@ -1245,6 +1530,18 @@ class SyncService:
     def sync_problematic_extended_fields(self, dry_run: bool = False) -> None:
         """Special method to sync ExtendedField records with problematic foreign key references"""
         self.foreign_key_handler.sync_problematic_extended_fields(dry_run)
+
+    def sync_problematic_facility_matches(self, dry_run: bool = False) -> None:
+        """Special method to sync FacilityMatch records with problematic foreign key references"""
+        self.foreign_key_handler.sync_problematic_facility_matches(dry_run)
+
+    def sync_problematic_facility_list_item_fields(self, dry_run: bool = False) -> None:
+        """Special method to sync FacilityListItemField records with problematic foreign key references"""
+        self.foreign_key_handler.sync_problematic_facility_list_item_fields(dry_run)
+
+    def handle_facility_list_item_constraints(self, dry_run: bool = False) -> None:
+        """Handle all constraint issues for FacilityListItem and related tables"""
+        self.foreign_key_handler.handle_facility_list_item_constraints(dry_run)
 
     def final_cleanup_sync(self, dry_run: bool = False) -> None:
         """Final cleanup: try to sync any remaining missing records"""
@@ -1313,11 +1610,11 @@ class SyncServiceFactory:
     """Factory for creating sync services with proper dependencies"""
     
     @staticmethod
-    def create_sync_service() -> SyncService:
-        """Create a sync service with all required dependencies"""
+    def create_facility_list_item_sync_service() -> SyncService:
+        """Create a sync service specifically for FacilityListItem circular dependencies"""
         model_repository = ModelRepository()
         validator = UUIDModelValidator()
-        dependency_resolver = ForeignKeyDependencyResolver()
+        dependency_resolver = FacilityListItemDependencyResolver()
         foreign_key_handler = ForeignKeyHandler(model_repository)
         
         return SyncService(model_repository, validator, dependency_resolver, foreign_key_handler)
@@ -1328,14 +1625,22 @@ class SyncServiceFactory:
 # ============================================================================
 
 class Command(BaseCommand):
-    help = "Sync data from OS Hub (default) to RBA (rba DB) by UUID"
+    help = """Sync FacilityListItem and related tables from OS Hub (default) to RBA (rba DB) by UUID.
+    
+    This script is dedicated to syncing ONLY FacilityListItem and its related tables with circular dependencies.
+    
+    The sync includes:
+    - Facility (source table that FacilityListItem depends on)
+    - Source (FacilityListItem dependency)
+    - FacilityListItem (main model with circular dependencies)
+    - FacilityMatch (depends on FacilityListItem)
+    - FacilityListItemField (depends on FacilityListItem)
+    - ExtendedField (depends on FacilityListItem)
+    
+    The command includes comprehensive constraint handling for all related tables.
+    """
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            '--table',
-            required=False,
-            help='Model name to sync (app_label.ModelName). If not provided, syncs all models.'
-        )
         parser.add_argument(
             '--dry-run',
             action='store_true',
@@ -1343,115 +1648,122 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        # Create sync service using factory
-        sync_service = SyncServiceFactory.create_sync_service()
-        sync_service.start_time = time.time()
-        
-        table = options['table']
         dry_run = options['dry_run']
         
-        logger.info(f"Starting sync from OS Hub (default) → RBA. Dry run: {dry_run}")
+        logger.info(f"Starting FacilityListItem sync from OS Hub (default) → RBA. Dry run: {dry_run}")
         
         try:
-            if table:
-                # Single table sync
-                app_label, model_name = table.split('.')
-                target_model = apps.get_model(app_label, model_name)
-                
-                if not sync_service.validator.validate(target_model):
-                    raise CommandError(f"Model {table} does not have a UUID field. Only models with UUID fields can be synced.")
-                
-                models_to_sync = sync_service.get_models_to_sync(target_model)
-                self.__sync_models(sync_service, models_to_sync, dry_run, "Single table")
-            else:
-                # Full synchronization
-                logger.info("No table specified. Performing full synchronization of all models with UUID fields.")
-                models_to_sync = sync_service.get_models_to_sync()
-                self.__sync_models(sync_service, models_to_sync, dry_run, "Full")
+            # FacilityListItem circular dependency sync
+            logger.info("FacilityListItem circular dependency sync mode enabled")
+            sync_service = SyncServiceFactory.create_facility_list_item_sync_service()
+            sync_service.start_time = time.time()
             
+            models_to_sync = sync_service.get_facility_list_item_models_to_sync()
+            if not models_to_sync:
+                raise CommandError("No models found for FacilityListItem circular dependency sync")
+            
+            self.__sync_facility_list_item_models(sync_service, models_to_sync, dry_run)
             sync_service.print_summary_table(dry_run)
             
         except (ValueError, LookupError) as e:
             raise CommandError(f"Invalid table format or model not found: {e}")
     
-    def __sync_models(self, sync_service: SyncService, models_to_sync: List[Model], dry_run: bool, sync_type: str) -> None:
-        """Sync a list of models with error handling"""
+    def __sync_facility_list_item_models(self, sync_service: SyncService, models_to_sync: List[Model], dry_run: bool) -> None:
+        """Sync FacilityListItem and related models with circular dependencies"""
         successful_syncs = 0
         failed_syncs = 0
         
-        # First, sync source tables to establish proper foreign key relationships
-        try:
-            logger.info("Starting source tables sync first...")
-            sync_service.sync_source_tables_first(dry_run)
-            logger.info("Source tables sync completed")
-        except Exception as e:
-            logger.error(f"Failed to sync source tables first: {e}")
-            if dry_run:
-                raise CommandError(f"Source tables sync failed: {e}")
+        logger.info(f"Starting FacilityListItem circular dependency sync for {len(models_to_sync)} models")
+        logger.info(f"Models to sync: {[f'{m._meta.app_label}.{m._meta.model_name}' for m in models_to_sync]}")
+        
+        # Note: We skip the source tables sync since we're only focusing on FacilityListItem circular dependencies
+        # The models are already prioritized in the correct order by the FacilityListItemDependencyResolver
         
         for model in models_to_sync:
             try:
+                logger.info(f"Syncing {model._meta.app_label}.{model._meta.model_name}...")
                 sync_service.sync_model(model, dry_run)
                 successful_syncs += 1
+                logger.info(f"Successfully synced {model._meta.app_label}.{model._meta.model_name}")
             except Exception as e:
                 failed_syncs += 1
                 logger.error(f"Failed to sync {model._meta.app_label}.{model._meta.model_name}: {e}")
                 
                 if dry_run:
                     logger.error("Dry-run terminated due to errors.")
-                    raise CommandError(f"Sync cannot proceed due to errors: {e}")
+                    raise CommandError(f"FacilityListItem sync cannot proceed due to errors: {e}")
                 else:
                     logger.info(f"Previous successful syncs ({successful_syncs} tables) are preserved. Continuing with remaining tables...")
                     continue
         
-            # Update circular references after all models are synced
-            try:
-                logger.info("Updating circular references after sync...")
-                sync_service.update_circular_references(dry_run)
-                logger.info("Circular reference update completed")
-            except Exception as e:
-                logger.error(f"Failed to update circular references: {e}")
-                if dry_run:
-                    raise CommandError(f"Circular reference update failed: {e}")
-            
-            # Final cleanup: try to sync any remaining missing records
-            try:
-                logger.info("Performing final cleanup sync...")
-                sync_service.final_cleanup_sync(dry_run)
-                logger.info("Final cleanup sync completed")
-            except Exception as e:
-                logger.error(f"Failed to perform final cleanup sync: {e}")
-                if dry_run:
-                    raise CommandError(f"Final cleanup sync failed: {e}")
-            
-            # Special handling for problematic facilities
-            try:
-                logger.info("Performing special sync for problematic facilities...")
-                sync_service.sync_problematic_facilities(dry_run)
-                logger.info("Problematic facilities sync completed")
-            except Exception as e:
-                logger.error(f"Failed to sync problematic facilities: {e}")
-                if dry_run:
-                    raise CommandError(f"Problematic facilities sync failed: {e}")
-            
-            # Special handling for problematic facility list items
-            try:
-                logger.info("Performing special sync for problematic facility list items...")
-                sync_service.sync_problematic_facility_list_items(dry_run)
-                logger.info("Problematic facility list items sync completed")
-            except Exception as e:
-                logger.error(f"Failed to sync problematic facility list items: {e}")
-                if dry_run:
-                    raise CommandError(f"Problematic facility list items sync failed: {e}")
-            
-            # Special handling for problematic ExtendedField records
-            try:
-                logger.info("Performing special sync for problematic ExtendedField records...")
-                sync_service.sync_problematic_extended_fields(dry_run)
-                logger.info("Problematic ExtendedField records sync completed")
-            except Exception as e:
-                logger.error(f"Failed to sync problematic ExtendedField records: {e}")
-                if dry_run:
-                    raise CommandError(f"Problematic ExtendedField records sync failed: {e}")
-            
-            logger.info(f"{sync_type} synchronization completed. Successful: {successful_syncs}, Failed: {failed_syncs}")
+        # Update circular references after all models are synced
+        try:
+            logger.info("Updating circular references after FacilityListItem sync...")
+            sync_service.update_circular_references(dry_run)
+            logger.info("Circular reference update completed")
+        except Exception as e:
+            logger.error(f"Failed to update circular references: {e}")
+            if dry_run:
+                raise CommandError(f"Circular reference update failed: {e}")
+        
+        # Comprehensive constraint handling for all related tables
+        try:
+            logger.info("Performing comprehensive constraint handling for FacilityListItem and related tables...")
+            sync_service.handle_facility_list_item_constraints(dry_run)
+            logger.info("Comprehensive constraint handling completed")
+        except Exception as e:
+            logger.error(f"Failed to handle constraints: {e}")
+            if dry_run:
+                raise CommandError(f"Constraint handling failed: {e}")
+        
+        # Special handling for problematic facilities
+        try:
+            logger.info("Performing special sync for problematic facilities...")
+            sync_service.sync_problematic_facilities(dry_run)
+            logger.info("Problematic facilities sync completed")
+        except Exception as e:
+            logger.error(f"Failed to sync problematic facilities: {e}")
+            if dry_run:
+                raise CommandError(f"Problematic facilities sync failed: {e}")
+        
+        # Special handling for problematic facility list items
+        try:
+            logger.info("Performing special sync for problematic facility list items...")
+            sync_service.sync_problematic_facility_list_items(dry_run)
+            logger.info("Problematic facility list items sync completed")
+        except Exception as e:
+            logger.error(f"Failed to sync problematic facility list items: {e}")
+            if dry_run:
+                raise CommandError(f"Problematic facility list items sync failed: {e}")
+        
+        # Special handling for problematic facility matches
+        try:
+            logger.info("Performing special sync for problematic facility matches...")
+            sync_service.sync_problematic_facility_matches(dry_run)
+            logger.info("Problematic facility matches sync completed")
+        except Exception as e:
+            logger.error(f"Failed to sync problematic facility matches: {e}")
+            if dry_run:
+                raise CommandError(f"Problematic facility matches sync failed: {e}")
+        
+        # Special handling for problematic facility list item fields
+        try:
+            logger.info("Performing special sync for problematic facility list item fields...")
+            sync_service.sync_problematic_facility_list_item_fields(dry_run)
+            logger.info("Problematic facility list item fields sync completed")
+        except Exception as e:
+            logger.error(f"Failed to sync problematic facility list item fields: {e}")
+            if dry_run:
+                raise CommandError(f"Problematic facility list item fields sync failed: {e}")
+        
+        # Special handling for problematic ExtendedField records
+        try:
+            logger.info("Performing special sync for problematic ExtendedField records...")
+            sync_service.sync_problematic_extended_fields(dry_run)
+            logger.info("Problematic ExtendedField records sync completed")
+        except Exception as e:
+            logger.error(f"Failed to sync problematic ExtendedField records: {e}")
+            if dry_run:
+                raise CommandError(f"Problematic ExtendedField records sync failed: {e}")
+        
+        logger.info(f"FacilityListItem circular dependency sync completed. Successful: {successful_syncs}, Failed: {failed_syncs}")
