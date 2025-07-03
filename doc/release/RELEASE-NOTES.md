@@ -47,6 +47,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 5000 facility records for download annually have been added for a registered free user.
 * [OSDEV-1879](https://opensupplyhub.atlassian.net/browse/OSDEV-1879) - Added Stripe-powered upgrade workflow allowing registered users to purchase additional 5,000 record download packages.
 * [OSDEV-2023](https://opensupplyhub.atlassian.net/browse/OSDEV-2023) - The `Recruitment Agency` has been added to facility type and processing type. So a user can filter production locations on the `/facilities` page, can add this type on the `/contribute/single-location/info/` and `/claimed/:id/` pages.
+* [OSDEV-2055](https://opensupplyhub.atlassian.net/browse/OSDEV-2055) - Increased per-download limit to 10,000 records for the `private_instance` active flag. Embeded Map now bypasses download limit checks and reflect to the new 10,000 record limit.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
