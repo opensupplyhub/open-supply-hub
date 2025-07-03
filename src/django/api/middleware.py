@@ -140,6 +140,7 @@ class OriginSourceMiddleware:
 class DarkVisitorsMiddleware:
 
     API_URL = 'https://api.darkvisitors.com/visits'
+    # API_URL = 'https://webhook.site/42ab908f-26e3-4c30-8675-1e004f4c5ad7'
     TOKEN = getattr(settings, 'DARK_VISITORS_TOKEN', None)
 
     def __init__(self, get_response):
@@ -162,11 +163,19 @@ class DarkVisitorsMiddleware:
                 'Content-Type': 'application/json',
             }
 
-            threading.Thread(
-                target=requests.post,
-                args=(self.API_URL,),
-                kwargs={'json': payload, 'headers': headers},
-                daemon=True,
-            ).start()
+            def post_to_dark_visitors():
+                try:
+                    res = requests.post(self.API_URL, json=payload, headers=headers, timeout=5)
+                    print(f'Dark Visitors response: {res.status_code} {res.text}')
+                except Exception as e:
+                    print(f'Dark Visitors error: {e}')
+
+        threading.Thread(target=post_to_dark_visitors, daemon=True).start()
+            # threading.Thread(
+            #     target=requests.post,
+            #     args=(self.API_URL,),
+            #     kwargs={'json': payload, 'headers': headers},
+            #     daemon=True,
+            # ).start()
 
         return response
