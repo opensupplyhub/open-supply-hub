@@ -19,7 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe schema changes here.*
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-2036](https://opensupplyhub.atlassian.net/browse/OSDEV-2036) - Connected DarkVisitors trackers to Open Supply Hub site. It was enabled both "client analytics" (for JavaScript-capable sessions, including browser-based AI agents) and "server analytics" (for bots that don’t execute JS).
 
 ### Architecture/Environment changes
 * *Describe architecture/environment changes here.*
