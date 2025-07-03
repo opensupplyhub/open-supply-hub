@@ -47,6 +47,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: June 28, 2025
 
+### Database changes
+
 #### Migrations
 * 0170_add_uuid_to_relevant_tables.py - A new `uuid` field was added to the following tables:
     * `api_contributor`
@@ -226,6 +228,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: May 3, 2025
 
+### Database changes
+
 #### Migrations
 * 0169_introduce_show_additional_identifiers_switch.py - This migration introduces a new switch called `show_additional_identifiers`, which will be used on the production location profile page to show or hide additional identifiers of the production location.
 
@@ -263,6 +267,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: April 25, 2025
+
+### Database changes
 
 #### Migrations
 * 0168_introduce_a_switch_to_block_location_downloads.py - This migration introduces a new switch called `block_location_downloads`, which will be used to block the usage of the `api/facilities-downloads/` GET endpoint when necessary.
@@ -338,6 +344,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: March 22, 2025
+
+### Database changes
 
 #### Migrations
 * 0167_add_moderationevent_action_reason_text_fields.py - This migration adds new fields `action_reason_text_cleaned` and  `action_reason_text_raw` to the existing table `api_moderationevent`.
@@ -650,6 +658,8 @@ The page also features `Go Back` and `Submit` buttons for navigation and form su
 * Product name: Open Supply Hub
 * Release date: December 14, 2024
 
+### Database changes
+
 #### Migrations
 * 0162_update_moderationevent_table_fields.py - This migration updates the ModerationEvent table and its constraints.
 
@@ -726,6 +736,8 @@ This issue has been fixed by adding additional requests to delete the appropriat
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: November 30, 2024
+
+### Database changes
 
 #### Migrations
 * 0159_alter_status_of_moderation_events_table.py - This migration alters status of api_moderationevent table.
@@ -811,6 +823,8 @@ to modify moderation event `status`.
 * Product name: Open Supply Hub
 * Release date: November 02, 2024
 
+### Database changes
+
 #### Migrations
 * 0158_create_moderation_events_table.py - This migration creates api_moderationevent table for Moderation Queue.
 
@@ -835,6 +849,8 @@ to modify moderation event `status`.
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: October 19, 2024
+
+### Database changes
 
 #### Migrations
 * 0156_introduce_list_level_parsing_errors.py - This migration introduces the parsing_errors field for the FacilityList model to collect list-level and internal errors logged during the background parsing of the list.
@@ -926,6 +942,8 @@ Note: This instruction updates item 3 of the ['Release to Production and Sandbox
 * Product name: Open Supply Hub
 * Release date: September 7, 2024
 
+### Database changes
+
 #### Migrations
 * 0155_remove_verification_method_column_from_facility_claim.py - This migration replaces the old `index_approved_claim` function with a new one that does not index the `verification_method` and `phone_number` fields. Additionally, it removes the `verification_method` and `phone_number` fields from the FacilityClaim model and the respective history table.
 
@@ -1010,6 +1028,8 @@ Note: This instruction updates item 3 of the ['Release to Production and Sandbox
 * Product name: Open Supply Hub
 * Release date: August 10, 2024
 
+### Database changes
+
 #### Migrations
 * 0152_delete_tilecache_and_dynamicsetting.py - removed unused `api_tilecache` and `api_dynamicsetting` tables.
 * 0153_add_sector_group_table.py - creates the `SectorGroup` model and populates it with the sector groups names.
@@ -1052,6 +1072,8 @@ Note: This instruction updates item 3 of the ['Release to Production and Sandbox
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: July 27, 2024
+
+### Database changes
 
 #### Migrations
 * 0151_replace_index_number_of_workers.py - replace function `index_number_of_workers` to use one source of truth for both`number_of_workers` & `extended_fields`.
@@ -1105,6 +1127,8 @@ Note: This instruction updates item 3 of the ['Release to Production and Sandbox
 * Product name: Open Supply Hub
 * Release date: June 29, 2024
 
+### Database changes
+
 #### Migrations
 * 0150_introduce_function_formatting_number_to_percent.py - adds add_percent_to_number to DB and drop
 drop_calc_column_func.
@@ -1149,6 +1173,8 @@ drop_calc_column_func.
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: June 15, 2024
+
+### Database changes
 
 #### Migrations
 * 0146_add_facility_workers_count_new_field_to_facilityclaim.py - adds the facility_workers_count_new field to the FacilityClaim model.
@@ -1202,6 +1228,8 @@ drop_calc_column_func.
 * Product name: Open Supply Hub
 * Release date: June 01, 2024
 
+### Database changes
+
 #### Migrations
 * 0145_new_functions_for_clean_facilitylistitems_command.py - introduced new sql functions for `clean_facilitylistitems` command:
     - drop_table_triggers
@@ -1249,6 +1277,8 @@ and receives information about merges that have occurred for the contributors wi
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: May 18, 2024
+
+### Database changes
 
 #### Migrations
 * 0143_create_facility_claim_attachment_table.py - create api_facilityclaimattachments table to store claimant attachments per facility claim
@@ -1361,6 +1391,8 @@ database:
 * Product name: Open Supply Hub
 * Release date: March 23, 2024
 
+### Database changes
+
 #### Migrations
 * 0141_delete_contributor_webhooks.py - deletes `ContributorWebhook` model
 * 0142_introduce_temporary_endpoint_switcher_for_list_uploads.py - This migration introduces a temporary API endpoint switcher for list uploads.
@@ -1411,6 +1443,8 @@ Move `countries` to a separate module so that it becomes possible to use both `d
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: February 24, 2024
+
+### Database changes
 
 #### Migrations
 * 0135_disable_duplicates_and_lowercase_all_emails.py - implementing all emails to lowercase and disables duplicates
@@ -1476,6 +1510,7 @@ Updated existing users api_apilimit records renewal_period value.
 
 ### What's new
 * [OSDEV-241](https://opensupplyhub.atlassian.net/browse/OSDEV-241) - Searches with accented characters return results for accented and non accented characters.
+### Database changes
 
 #### Migrations
 * 0134_remove_sources_without_contributor.py -  Remove records from the Source table where the contributor is null and remove all data related to these records
@@ -1523,6 +1558,8 @@ Updated existing users api_apilimit records renewal_period value.
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: December 19, 2023
+
+### Database changes
 
 #### Migrations
 * 0130_introduce_separate_data_gathering_functions_for_the_index_table_columns.py - This migration:
@@ -1580,6 +1617,8 @@ Fix issue with exceeding API requests. [OSDEV-557](https://opensupplyhub.atlassi
 * Product name: Open Supply Hub
 * Release date: November 8, 2023
 
+### Database changes
+
 #### Migrations
 - 0130_facility_index_gin_index.py - implement indexes for fields on "api_facilityindexnew" table related to tile generation
 
@@ -1605,6 +1644,8 @@ Fix issue with exceeding API requests. [OSDEV-557](https://opensupplyhub.atlassi
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: November 4, 2023
+
+### Database changes
 
 #### Migrations
 - 0126_add_tables_a_b_test.py - add tables api_facilitylistitemtemp & api_facilitymatchtemp for A/B Test purpose
