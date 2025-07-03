@@ -16,7 +16,10 @@ import DownloadIcon from './DownloadIcon';
 import ArrowDropDownIcon from './ArrowDropDownIcon';
 import { hideLogDownloadError } from '../actions/logDownload';
 import DownloadMenu from '../components/DownloadMenu';
-import { FACILITIES_DOWNLOAD_LIMIT } from '../util/constants';
+import {
+    FREE_FACILITIES_DOWNLOAD_LIMIT,
+    FACILITIES_DOWNLOAD_LIMIT,
+} from '../util/constants';
 
 const downloadFacilitiesStyles = theme =>
     Object.freeze({
@@ -111,7 +114,8 @@ const DownloadFacilitiesButton = ({
     const tooltipTitle = (
         <p className={classes.downloadTooltip}>
             Downloads are supported for searches resulting in{' '}
-            {userAllowedRecords} production locations or less.
+            {isEmbedded ? FACILITIES_DOWNLOAD_LIMIT : userAllowedRecords}{' '}
+            production locations or less.
             {user.isAnon && ' Log in to download this dataset.'}
         </p>
     );
@@ -164,7 +168,7 @@ const DownloadFacilitiesButton = ({
 DownloadFacilitiesButton.defaultProps = {
     disabled: false,
     upgrade: false,
-    userAllowedRecords: FACILITIES_DOWNLOAD_LIMIT,
+    userAllowedRecords: FREE_FACILITIES_DOWNLOAD_LIMIT,
     logDownloadError: null,
     checkoutUrl: null,
     checkoutUrlError: null,

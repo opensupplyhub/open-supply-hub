@@ -369,6 +369,7 @@ function FilterSidebarFacilitiesTab({
                             disabled={
                                 facilitiesCount > FACILITIES_DOWNLOAD_LIMIT
                             }
+                            userAllowedRecords={FACILITIES_DOWNLOAD_LIMIT}
                             setLoginRequiredDialogIsOpen={
                                 setLoginRequiredDialogIsOpen
                             }
