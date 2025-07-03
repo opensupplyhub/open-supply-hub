@@ -356,34 +356,12 @@ RAW_MATERIAL_PROCESSING_TYPES_ALIAS = {
     'texturizing facility': TWISTING_TEXTURIZING_FACILITY,
 }
 
-RECRUITMENT_AGENCY = 'recruitment agency'
-
-RECRUITMENT_PROCESSING_TYPES = {
-    RECRUITMENT_AGENCY: 'Recruitment Agency',
-}
-
-RECRUITMENT_PROCESSING_TYPES_ALIAS = {
-    'recruitment agency': RECRUITMENT_AGENCY,
-    'employment agency': RECRUITMENT_AGENCY,
-    'staffing agency': RECRUITMENT_AGENCY,
-    'staffing firm': RECRUITMENT_AGENCY,
-    'talent agency': RECRUITMENT_AGENCY,
-    'labour agency': RECRUITMENT_AGENCY,
-    'manpower agency': RECRUITMENT_AGENCY,
-    'temp agency': RECRUITMENT_AGENCY,
-    'temporary staffing': RECRUITMENT_AGENCY,
-    'recruitment firm': RECRUITMENT_AGENCY,
-    'job placement agency': RECRUITMENT_AGENCY,
-    'employment service': RECRUITMENT_AGENCY,
-}
-
 RAW_MATERIAL_PROCESSING = 'raw material processing or production'
 TEXTILE_PROCESSING = 'textile or material production'
 PRINTING_PROCESSING = 'printing product dyeing and laundering'
 ASSEMBLY_PROCESSING = 'final product assembly'
 WAREHOUSING_PROCESSING = 'warehousing distribution'
 OFFICE_PROCESSING = 'office hq'
-RECRUITMENT_PROCESSING = RECRUITMENT_AGENCY
 
 ALL_FACILITY_TYPES = {
     RAW_MATERIAL_PROCESSING: 'Raw Material Processing or Production',
@@ -391,8 +369,7 @@ ALL_FACILITY_TYPES = {
     PRINTING_PROCESSING: 'Printing, Product Dyeing and Laundering',
     ASSEMBLY_PROCESSING: 'Final Product Assembly',
     WAREHOUSING_PROCESSING: 'Warehousing / Distribution',
-    OFFICE_PROCESSING: 'Office / HQ',
-    RECRUITMENT_PROCESSING: 'Recruitment Agency',
+    OFFICE_PROCESSING: 'Office / HQ'
 }
 
 ALL_FACILITY_TYPE_CHOICES = [(k, v) for k, v in
@@ -405,7 +382,6 @@ FACILITY_PROCESSING_TYPES = {
     ASSEMBLY_PROCESSING: ASSEMBLY_PROCESSING_TYPES,
     WAREHOUSING_PROCESSING: WAREHOUSING_PROCESSING_TYPES,
     OFFICE_PROCESSING: OFFICE_PROCESSING_TYPES,
-    RECRUITMENT_PROCESSING: RECRUITMENT_PROCESSING_TYPES,
 }
 
 # Create a look-up of processing type -> facility type for
@@ -434,7 +410,6 @@ ALL_PROCESSING_TYPES = {
     **PRINTING_PROCESSING_TYPES,
     **TEXTILE_PROCESSING_TYPES,
     **RAW_MATERIAL_PROCESSING_TYPES,
-    **RECRUITMENT_PROCESSING_TYPES,
 }
 
 ALL_PROCESSING_TYPE_CHOICES = [(k, v) for k, v in
@@ -447,7 +422,6 @@ ALL_PROCESSING_TYPES_ALIAS = {
     **PRINTING_PROCESSING_TYPES_ALIAS,
     **TEXTILE_PROCESSING_TYPES_ALIAS,
     **RAW_MATERIAL_PROCESSING_TYPES_ALIAS,
-    **RECRUITMENT_PROCESSING_TYPES_ALIAS,
 }
 
 

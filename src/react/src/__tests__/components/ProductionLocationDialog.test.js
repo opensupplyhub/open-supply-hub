@@ -52,22 +52,39 @@ describe('ProductionLocationDialog', () => {
             raw_json: {
                 name: 'Production Location Name',
                 address: '1234 Production Location St, City, State, 12345',
+            },
+            fields: {
                 product_type: [
                     "Shirts",
                     "Pants"
                 ],
-                facility_type: [
-                    "Printing, Product Dyeing and Laundering"
-                ],
-                processing_type: [
-                    "Assembly",
-                    "Printing"
-                ],
+                facility_type: {
+                    raw_values: [
+                        "Printing, Product Dyeing and Laundering"
+                    ],
+                    processed_values: [
+                        "Product Dyeing and Laundering",
+                        "Printing"
+                    ]
+                },
+                processing_type: {
+                    raw_values: [
+                        "Assembly",
+                        "Printing"
+                    ],
+                    processed_values: [
+                        "Assembly",
+                        "Printing"
+                    ]
+                },
                 number_of_workers: {
                     min: 35,
                     max: 60
                 },
-                parent_company: "ParentCompany1, ParentCompany2",
+                parent_company: [
+                    "ParentCompany1",
+                    "ParentCompany2"
+                ],
                 country: "BD"
             }
         }
@@ -238,6 +255,8 @@ describe('ProductionLocationDialog tooltip messages for PENDING, CLAIMED and UNC
             raw_json: {
                 name: 'Production Location Name',
                 address: '1234 Production Location St, City, State, 12345',
+            },
+            fields: {
                 country: "BD"
             }
         }

@@ -27,6 +27,8 @@ const ProductionLocationDialogFields = ({
         'min' in value && Object.keys(value).length === 1;
     const hasMinMax = value =>
         value?.min !== undefined && value?.max !== undefined;
+    const hasProcessedValues = value =>
+        isArray(value.processed_values) && value.processed_values.length > 0;
 
     const renderArray = value => {
         if (!value || value.length === 0) return null;
@@ -42,6 +44,9 @@ const ProductionLocationDialogFields = ({
         }
         if (hasMinMax(value)) {
             return `${value.min.toLocaleString()} - ${value.max.toLocaleString()}`;
+        }
+        if (hasProcessedValues(value)) {
+            return renderArray(value.processed_values);
         }
         return JSON.stringify(value, (_, v) =>
             typeof v === 'string' ? v.replace(/</g, '&lt;') : v,
