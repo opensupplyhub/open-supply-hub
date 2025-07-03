@@ -142,7 +142,7 @@ const DownloadFacilitiesButton = ({
                             }
                         />
                         <span className={classes.buttonText}>
-                            {upgrade ? 'Upgrade to Download' : 'Download'}
+                            {upgrade ? 'Purchase More Downloads' : 'Download'}
                         </span>
                         {upgrade ? (
                             ''
