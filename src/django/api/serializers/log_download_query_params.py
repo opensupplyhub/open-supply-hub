@@ -1,9 +1,11 @@
-from django.forms import ValidationError
+from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import (
     CharField,
     IntegerField,
     Serializer,
 )
+
+from api.models.download_log import DownloadLog
 
 
 class LogDownloadQueryParamsSerializer(Serializer):
@@ -11,7 +13,7 @@ class LogDownloadQueryParamsSerializer(Serializer):
     record_count = IntegerField(required=True)
 
     def validate_path(self, value):
-        max_length = 4096
+        max_length = DownloadLog._meta.get_field('path').max_length
         if len(value) > max_length:
             raise ValidationError(
                 f"Path length must not exceed "

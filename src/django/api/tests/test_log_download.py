@@ -1,7 +1,5 @@
 import json
 
-from django.forms import ValidationError
-
 from api.constants import LogDownloadQueryParams
 from api.models import DownloadLog, User
 from rest_framework.test import APITestCase
