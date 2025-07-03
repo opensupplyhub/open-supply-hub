@@ -1,6 +1,7 @@
 import datetime
 import json
-import threading
+
+from concurrent.futures import ThreadPoolExecutor
 
 import requests
 
@@ -138,10 +139,16 @@ class OriginSourceMiddleware:
 
 
 class DarkVisitorsMiddleware:
+    """
+    Middleware to log visits to the Dark Visitors API.
+    It sends a POST request with the request path, method, and headers.
+    This is done in a separate thread to avoid blocking the response to the
+    original request.
+    """
 
     API_URL = 'https://api.darkvisitors.com/visits'
-    # API_URL = 'https://webhook.site/42ab908f-26e3-4c30-8675-1e004f4c5ad7'
     TOKEN = getattr(settings, 'DARK_VISITORS_TOKEN', None)
+    executor = ThreadPoolExecutor(max_workers=5)
 
     def __init__(self, get_response):
         self.get_response = get_response
@@ -150,12 +157,14 @@ class DarkVisitorsMiddleware:
         response = self.get_response(request)
 
         if self.TOKEN:
+            allowed_headers = ['user-agent', 'referer', 'host']
             payload = {
                 'request_path': request.path,
                 'request_method': request.method,
                 "request_headers": {
-                    key: value for key, value in request.headers.items()
-                    if key.lower() in ("user-agent", "referer", "host")
+                    key: value
+                    for key, value in request.headers.items()
+                    if key.lower() in allowed_headers
                 },
             }
             headers = {
@@ -163,19 +172,10 @@ class DarkVisitorsMiddleware:
                 'Content-Type': 'application/json',
             }
 
-            def post_to_dark_visitors():
-                try:
-                    res = requests.post(self.API_URL, json=payload, headers=headers, timeout=5)
-                    print(f'Dark Visitors response: {res.status_code} {res.text}')
-                except Exception as e:
-                    print(f'Dark Visitors error: {e}')
-
-        threading.Thread(target=post_to_dark_visitors, daemon=True).start()
-            # threading.Thread(
-            #     target=requests.post,
-            #     args=(self.API_URL,),
-            #     kwargs={'json': payload, 'headers': headers},
-            #     daemon=True,
-            # ).start()
+            # Use ThreadPoolExecutor to send the request in a separate thread
+            # This avoids blocking the response to the original request
+            self.executor.submit(
+                requests.post, self.API_URL, json=payload, headers=headers
+            )
 
         return response
