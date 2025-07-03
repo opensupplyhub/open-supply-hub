@@ -19,7 +19,7 @@ class DarkVisitorsMiddlewareTest(TestCase):
         request = self.factory.get(
             '/test-url',
             HTTP_USER_AGENT='TestAgent',
-            HTTP_REFERER='http://example.com',
+            HTTP_REFERER='https://example.com',
             HTTP_HOST='testserver',
             HTTP_AUTHORIZATION='Bearer should-be-filtered',
             HTTP_X_CUSTOM='nope',
@@ -34,7 +34,7 @@ class DarkVisitorsMiddlewareTest(TestCase):
             'request_method': 'GET',
             'request_headers': {
                 'User-Agent': 'TestAgent',
-                'Referer': 'http://example.com',
+                'Referer': 'https://example.com',
                 'Host': 'testserver',
             },
         }
