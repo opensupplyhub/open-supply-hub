@@ -354,9 +354,14 @@ function FilterSidebarFacilitiesTab({
                         flag={PRIVATE_INSTANCE}
                         alternative={
                             <DownloadFacilitiesButton
+                                disabled={
+                                    embed &&
+                                    facilitiesCount > FACILITIES_DOWNLOAD_LIMIT
+                                }
                                 upgrade={
+                                    !embed &&
                                     facilitiesCount >
-                                    user.allowed_records_number
+                                        user.allowed_records_number
                                 }
                                 userAllowedRecords={user.allowed_records_number}
                                 setLoginRequiredDialogIsOpen={

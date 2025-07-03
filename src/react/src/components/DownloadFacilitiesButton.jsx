@@ -116,7 +116,9 @@ const DownloadFacilitiesButton = ({
             Downloads are supported for searches resulting in{' '}
             {isEmbedded ? FACILITIES_DOWNLOAD_LIMIT : userAllowedRecords}{' '}
             production locations or less.
-            {user.isAnon && ' Log in to download this dataset.'}
+            {user.isAnon && !isEmbedded
+                ? ' Log in to download this dataset.'
+                : ''}
         </p>
     );
 

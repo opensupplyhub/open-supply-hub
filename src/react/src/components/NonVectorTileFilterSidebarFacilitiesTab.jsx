@@ -105,6 +105,7 @@ function NonVectorTileFilterSidebarFacilitiesTab({
     data,
     error,
     windowHeight,
+    embed,
     returnToSearchTab,
     filterText,
     updateFilterText,
@@ -228,9 +229,14 @@ function NonVectorTileFilterSidebarFacilitiesTab({
                         flag={PRIVATE_INSTANCE}
                         alternative={
                             <DownloadFacilitiesButton
+                                disabled={
+                                    embed &&
+                                    facilitiesCount > FACILITIES_DOWNLOAD_LIMIT
+                                }
                                 upgrade={
+                                    !embed &&
                                     facilitiesCount >
-                                    user.allowed_records_number
+                                        user.allowed_records_number
                                 }
                                 userAllowedRecords={user.allowed_records_number}
                                 setLoginRequiredDialogIsOpen={
@@ -379,6 +385,7 @@ NonVectorTileFilterSidebarFacilitiesTab.propTypes = {
     returnToSearchTab: func.isRequired,
     filterText: string.isRequired,
     updateFilterText: func.isRequired,
+    embed: bool.isRequired,
     user: userPropType,
 };
 
@@ -393,6 +400,7 @@ function mapStateToProps({
     auth: {
         user: { user },
     },
+    embeddedMap: { embed },
 }) {
     return {
         user,
@@ -401,6 +409,7 @@ function mapStateToProps({
         fetching,
         filterText,
         windowHeight,
+        embed: !!embed,
     };
 }
 
