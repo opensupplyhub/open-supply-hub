@@ -213,7 +213,7 @@ class APIErrorMessages:
 
 
 class FacilitiesDownloadSettings:
-    FACILITIES_DOWNLOAD_LIMIT = 5000
+    FREE_FACILITIES_DOWNLOAD_LIMIT = 5000
 
 
 class FacilitiesListSettings:
