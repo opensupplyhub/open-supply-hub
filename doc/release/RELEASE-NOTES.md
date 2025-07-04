@@ -43,7 +43,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### What's new
 * [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 5000 facility records for download annually have been added for a registered free user.
 * [OSDEV-1879](https://opensupplyhub.atlassian.net/browse/OSDEV-1879) - Added Stripe-powered upgrade workflow allowing registered users to purchase additional 5,000 record download packages.
-* [OSDEV-2055](https://opensupplyhub.atlassian.net/browse/OSDEV-2055) - Increased per-download limit to 10,000 records for the `private_instance` active flag. Embeded Map now bypasses download limit checks and reflect to the new 10,000 record limit.
+* [OSDEV-2055](https://opensupplyhub.atlassian.net/browse/OSDEV-2055) - Added the following:
+    * Updated implementation for private_instance flag to allow 10k records instead of 5k records per download.
+    * Added logic to skip download limit check for Embeded Map requests.
+    * Updated the UI part of Embeded Map to properly allow and show 10k records limitation per download.
+    * Update button text from Upgrade to Download to Purchase More Downloads.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:
