@@ -32,7 +32,7 @@ class FacilityDownloadLimit(models.Model):
         help_text='The user to whom the download limit applies.'
     )
     free_download_records = models.PositiveIntegerField(
-        default=FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT,
+        default=FacilitiesDownloadSettings.FREE_FACILITIES_DOWNLOAD_LIMIT,
         help_text=('The number of facilities the user '
                    'can download per calendar year for free.')
     )

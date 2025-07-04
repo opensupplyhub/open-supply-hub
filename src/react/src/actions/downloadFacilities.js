@@ -1,5 +1,6 @@
 import noop from 'lodash/noop';
 import { createAction } from 'redux-act';
+import includes from 'lodash/includes';
 
 import { logDownload, startLogDownload, failLogDownload } from './logDownload';
 
@@ -8,12 +9,15 @@ import {
     logErrorAndDispatchFailure,
     makeGetFacilitiesDownloadURLWithQueryString,
     createQueryStringFromSearchFilters,
+    convertFeatureFlagsObjectToListOfActiveFlags,
 } from '../util/util';
 import { completeSubmitLoginForm } from '../actions/auth';
 
 import {
     FACILITIES_DOWNLOAD_REQUEST_PAGE_SIZE,
+    FREE_FACILITIES_DOWNLOAD_LIMIT,
     FACILITIES_DOWNLOAD_LIMIT,
+    PRIVATE_INSTANCE,
 } from '../util/constants';
 
 export const startFetchDownloadFacilities = createAction(
@@ -82,14 +86,25 @@ export default function downloadFacilities(format, { isEmbedded }) {
             auth: {
                 user: { user },
             },
+            featureFlags: {
+                flags: { flags },
+            },
         } = getState();
+
+        const activeFlags = convertFeatureFlagsObjectToListOfActiveFlags(flags);
+        const isPrivateInstance = includes(activeFlags, PRIVATE_INSTANCE);
 
         const qs = createQueryStringFromSearchFilters(filters, embed, detail);
         const calcRecordsNumberLeft = (total, downloaded) => total - downloaded;
-        const getRecordsLimit = () =>
-            user.allowed_records_number === 0
-                ? FACILITIES_DOWNLOAD_LIMIT
+        const getRecordsLimit = () => {
+            if (isPrivateInstance) {
+                return FACILITIES_DOWNLOAD_LIMIT;
+            }
+
+            return user.allowed_records_number === 0
+                ? FREE_FACILITIES_DOWNLOAD_LIMIT
                 : user.allowed_records_number;
+        };
 
         return apiRequest
             .get(makeGetFacilitiesDownloadURLWithQueryString(qs, pageSize))
