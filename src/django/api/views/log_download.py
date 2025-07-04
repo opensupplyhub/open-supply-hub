@@ -24,9 +24,11 @@ def log_download(request):
         raise ValidationError(params.errors)
 
     path = request.query_params.get(LogDownloadQueryParams.PATH)
+
     record_count = request.query_params.get(
         LogDownloadQueryParams.RECORD_COUNT
     )
+
     DownloadLog.objects.create(
         user=request.user,
         path=path,
