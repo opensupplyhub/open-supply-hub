@@ -6,8 +6,6 @@ from rest_framework.serializers import (
 )
 from api.models.download_log import DownloadLog
 
-from api.models.download_log import DownloadLog
-
 
 class LogDownloadQueryParamsSerializer(Serializer):
     path = CharField(required=True)
