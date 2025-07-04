@@ -4,6 +4,7 @@ from rest_framework.serializers import (
     IntegerField,
     Serializer,
 )
+from api.models.download_log import DownloadLog
 
 from api.models.download_log import DownloadLog
 
