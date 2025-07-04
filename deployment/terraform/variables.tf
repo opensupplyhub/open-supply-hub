@@ -834,11 +834,11 @@ variable "direct_data_load_tab_id" {
 
 variable "dark_visitors_project_key" {
   type        = string
-  description = "Dark Visitors project key"
+  description = "Dark Visitors project key. This variable is not sensitive as it is exposed to the browser."
 }
 
 variable "dark_visitors_token" {
   type        = string
-  description = "Dark Visitors token"
+  description = "Dark Visitors token."
   sensitive   = true
 }
