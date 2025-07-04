@@ -450,8 +450,9 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         )
 
     @patch(
-        'api.constants.FacilitiesDownloadSettings.FREE_FACILITIES_DOWNLOAD_LIMIT',
-        FREE_FACILITIES_DOWNLOAD_LIMIT
+        'api.constants.FacilitiesDownloadSettings.'
+        'FREE_FACILITIES_DOWNLOAD_LIMIT',
+        FREE_FACILITIES_DOWNLOAD_LIMIT,
     )
     def test_user_cannot_download_over_records_limit(self):
         user = self.create_user()
@@ -498,8 +499,9 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         self.assertEqual(limit.updated_at.date(), release_date.date())
 
     @patch(
-        'api.constants.FacilitiesDownloadSettings.FREE_FACILITIES_DOWNLOAD_LIMIT',
-        FREE_FACILITIES_DOWNLOAD_LIMIT
+        'api.constants.FacilitiesDownloadSettings.'
+        'FREE_FACILITIES_DOWNLOAD_LIMIT',
+        FREE_FACILITIES_DOWNLOAD_LIMIT,
     )
     def test_api_user_can_download_over_limit(self):
         user = self.create_user(is_api_user=True)
