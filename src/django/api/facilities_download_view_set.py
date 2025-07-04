@@ -28,7 +28,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
             )
 
         return FacilityDownloadSerializer(page_queryset, many=True)
-    
+
     def __is_embed_mode(self):
         return self.request.query_params.get('embed') == '1'
 
