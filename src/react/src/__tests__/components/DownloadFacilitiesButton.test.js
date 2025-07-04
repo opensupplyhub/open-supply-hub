@@ -28,7 +28,6 @@ describe('DownloadFacilitiesButton component', () => {
     disabled: false,
     upgrade: false,
     setLoginRequiredDialogIsOpen: false,
-    isEmbedded: true,
     handleDownload,
     userAllowedRecords: 5000,
   };
@@ -103,7 +102,10 @@ describe('DownloadFacilitiesButton component', () => {
   test('should show tooltip', async () => {
     const expectedTooltipText =
     'Downloads are supported for searches resulting in 10000 production locations or less.';
-    const { getByRole } = renderComponent();
+    const customState = {
+      embeddedMap: { embed: true },
+    };
+    const { getByRole } = renderComponent(customState);
     const button = getByRole('button', { name: 'Download' });
 
     expect(button).toBeEnabled();
@@ -120,9 +122,11 @@ describe('DownloadFacilitiesButton component', () => {
     'Downloads are supported for searches resulting in 5000 production locations or less.';
     const props = {
       disabled: true,
-      isEmbedded: false,
     };
-    const { getByRole } = renderComponent(props);
+    const customState = {
+      embeddedMap: { embed: false },
+    };
+    const { getByRole } = renderComponent(props, customState);
 
     const button = getByRole('button', { name: 'Download' });
     expect(button).toBeDisabled();
@@ -139,17 +143,17 @@ describe('DownloadFacilitiesButton component', () => {
     'Downloads are supported for searches resulting in 1000 production locations or less.';
     const props = {
       disabled: true,
-      isEmbedded: false,
       userAllowedRecords: 1000,
     };
     const customState = {
       auth: {
         user: {
           user: {
-            isAnon: true,
+            isAnon: false,
           },
         },
       },
+      embeddedMap: { embed: false },
     };
     const { getByRole } = renderComponent(props, customState);
 
