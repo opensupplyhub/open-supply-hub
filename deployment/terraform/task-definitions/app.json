@@ -47,7 +47,9 @@
         { "name": "OPENSEARCH_PORT", "value": "${opensearch_port}" },
         { "name": "OPENSEARCH_SSL", "value": "${opensearch_ssl}" },
         { "name": "OPENSEARCH_SSL_CERT_VERIFICATION", "value": "${opensearch_ssl_cert_verification}" },
-        { "name": "INSTANCE_SOURCE", "value": "${instance_source}" }
+        { "name": "INSTANCE_SOURCE", "value": "${instance_source}" },
+        { "name": "DARK_VISITORS_PROJECT_KEY", "value": "${dark_visitors_project_key}" },
+        { "name": "DARK_VISITORS_TOKEN", "value": "${dark_visitors_token}" }
     ],
     "portMappings": [
       {

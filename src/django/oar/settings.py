@@ -217,6 +217,7 @@ MIDDLEWARE = [
     'api.middleware.RequestLogMiddleware',
     'api.middleware.RequestMeterMiddleware',
     'api.middleware.OriginSourceMiddleware',
+    'api.middleware.DarkVisitorsMiddleware',
 ]
 
 ROOT_URLCONF = 'oar.urls'
@@ -608,3 +609,7 @@ BLEACH_ALLOWED_ATTRIBUTES = {
 BLEACH_STRIP_TAGS = True
 
 BLEACH_STRIP_COMMENTS = True
+
+# Dark Visitors settings
+DARK_VISITORS_PROJECT_KEY = os.getenv('DARK_VISITORS_PROJECT_KEY', '')
+DARK_VISITORS_TOKEN = os.getenv('DARK_VISITORS_TOKEN', '')
