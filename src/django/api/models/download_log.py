@@ -12,7 +12,7 @@ class DownloadLog(models.Model):
         help_text='The User account that made the request'
     )
     path = models.CharField(
-        max_length=2083,
+        max_length=4096,
         null=False,
         help_text='The requested resource path'
     )
