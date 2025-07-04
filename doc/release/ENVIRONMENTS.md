@@ -1,8 +1,8 @@
 # OS Hub environments
 | ### | Feature | Dev | Test | Pre-prod (staging) | Staging (sandbox) | Production |
 | --- | --- | --- | --- | --- | --- | --- |
-| Trigger | Push to feature branch | Merging to main | Schedule | Merging to releases/vX.Y | Manual | Manual |
-| Branch | OSHUB-\* | main | main | releases/vX.Y | releases/vX.Y | releases/vX.Y |
+| Trigger | Push to feature branch | Merging to main | Manual | Manual | Manual | Manual |
+| Branch | OSDEV-\* | main | main | releases/vX.Y | releases/vX.Y | releases/vX.Y |
 | Database | Seeded | Seeded | \- Anonymized copy from production | \- Anonymized copy from production | \- staging-db | \- production-db |
 | DB Backup | \- None | \- None | \- None | \- None | \- Create | \- Create |
 | DB Migration | \- Reset DB | \- Migrate to the latest(preferable)<br>\- Reset DB | \- Migrate to the latest | \- Migrate to the latest | \- Migrate to the latest | \- Migrate to latest |
@@ -11,4 +11,4 @@
 | Deploy | \- None | \- Deploy | \- Deploy | \- Deploy | \- Deploy<br>\- Tag-sandbox | \- Deploy<br>\- Tag-production |
 | Post-deploy check | \- None | \- Smoke tests on seeded data<br>\- UI tests | \- Smoke tests<br>\- UI tests<br>\- Performance tests (optionally)<br> | \- Smoke tests<br>\- Regression tests<br>\- UI tests<br>\- Performance Tests | \- Smoke tests<br>\- UI tests<br>\- Performance tests (Questionable) | \- Smoke tests<br>\- UI tests<br>\- Performance tests (Questionable) |
 | Post-deploy error strategy | \- None | \- Raise | \- Raise | \- Raise | \- Raise | \- Raise |
-| Comments: | This is just for running tests for every change in the GitHub pull request during development. | For developers to quickly test stuff after a merge on a stable and predictable database, etc. | Continuous QA and feature verification on an environment close to production in terms of the amount of data, etc. |
+| Comments: | This is only used to run code quality checks for each change made in a GitHub pull request during development. | It’s intended for developers to quickly test changes after a merge on a stable and predictable database, among other things. | Continuous QA and feature verification on an environment that closely resembles production in terms of data volume and other characteristics. | An environment used for regression testing and release preparation. It replicates the production setup in terms of resources and data, offering a realistic context to validate stability, performance, and functionality prior to release. |
