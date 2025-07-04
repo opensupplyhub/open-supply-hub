@@ -172,8 +172,6 @@ class DarkVisitorsMiddleware:
                 'Content-Type': 'application/json',
             }
 
-            # Use ThreadPoolExecutor to send the request in a separate thread
-            # This avoids blocking the response to the original request
             self.executor.submit(
                 requests.post, self.API_URL, json=payload, headers=headers
             )
