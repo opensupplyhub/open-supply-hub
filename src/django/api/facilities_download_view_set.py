@@ -19,7 +19,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
     pagination_class = PageAndSizePagination
 
     def get_serializer(self, page_queryset):
-        if self.request.query_params.get('embed') == '1':
+        if self.__is_embed_mode():
             contributor_id = get_embed_contributor_id_from_query_params(
                 self.request.query_params
             )
@@ -28,6 +28,9 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
             )
 
         return FacilityDownloadSerializer(page_queryset, many=True)
+
+    def __is_embed_mode(self):
+        return self.request.query_params.get('embed') == '1'
 
     def list(self, request):
         """
@@ -42,7 +45,10 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         total_records = queryset.count()
         facility_download_limit = None
 
-        if not switch_is_active('private_instance'):
+        if (
+            not switch_is_active('private_instance')
+            and not self.__is_embed_mode()
+        ):
             facility_download_limit = FacilitiesDownloadService \
                 .get_download_limit(request)
         FacilitiesDownloadService.enforce_limits(

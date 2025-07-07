@@ -23,13 +23,11 @@ jest.mock('@material-ui/core/Portal', () => ({ children }) => children);
 
 
 describe('DownloadFacilitiesButton component', () => {
-  const expectedTooltipText ="Registered users can download up to 5000 production locations annually for free. This account has 5000 production locations available to download. Additional downloads are available for purchase.";
   const handleDownload = jest.fn();
   const defaultProps = {
     disabled: false,
     upgrade: false,
     setLoginRequiredDialogIsOpen: false,
-    isEmbedded: true,
     handleDownload,
     userAllowedRecords: 5000,
   };
@@ -44,7 +42,7 @@ describe('DownloadFacilitiesButton component', () => {
         },
       },
       logDownload: { error: null },
-      embeddedMap: { embed: true },
+      embeddedMap: { embed: false },
       downloadLimit: {
         checkout: { checkoutUrl: "test", error: null },
       },
@@ -101,12 +99,26 @@ describe('DownloadFacilitiesButton component', () => {
     expect(await getByTestId("mock-download-menu")).toBeInTheDocument();
   });
 
-  test('should show tooltip', async () => {
-    const { getByRole } = renderComponent();
+  test('should show tooltip when embed mode is enabled', async () => {
+    const expectedTooltipText = "Registered users can download up to 10000 production locations annually for free. This account has 5000 production locations available to download. Additional downloads are available for purchase.";
+    const props = {
+      disabled: false,
+      userAllowedRecords: 5000,
+    };
+    const customState = {
+      auth: {
+        user: {
+          user: {
+            isAnon: false,
+          },
+        },
+      },
+      embeddedMap: { embed: true },
+    };
+    const { getByRole } = renderComponent(props,customState);
     const button = getByRole('button', { name: 'Download' });
 
     expect(button).toBeEnabled();
-
     fireEvent.mouseOver(button);
 
     await waitFor(() =>
@@ -124,10 +136,10 @@ describe('DownloadFacilitiesButton component', () => {
         user: {
           user: {
             isAnon: false,
-            allowed_records_number: 1000,
           },
         },
       },
+      embeddedMap: { embed: false },
     };
     const { getByRole } = renderComponent(props, customState);
     const expectedText = "Registered users can download up to 5000 production locations annually for free. This account has 1000 production locations available to download. Additional downloads are available for purchase.";
@@ -157,6 +169,7 @@ describe('DownloadFacilitiesButton component', () => {
           },
         },
       },
+      embeddedMap: { embed: false },
     };
     const { getByRole } = renderComponent(props, customState);
     const expectedText = "You've reached your annual download limit. Purchase additional downloads for immediate access.";
@@ -168,11 +181,13 @@ describe('DownloadFacilitiesButton component', () => {
       expect(screen.getByText(expectedText)).toBeInTheDocument()
     );
   });
-  test('should show correct tooltip in case user’s account has not met it’s limit but the result searches yield more records than available', async () => {
+
+  test('show correct tooltip when user is within limit but search results exceed available records', async () => {
     const props = {
       disabled: true,
       userAllowedRecords: 1000,
       upgrade: true,
+      isEmbedded: false,
     };
     const customState = {
       auth: {
@@ -183,6 +198,7 @@ describe('DownloadFacilitiesButton component', () => {
           },
         },
       },
+      embeddedMap: { embed: false },
     };
     const { getByRole } = renderComponent(props, customState);
     const expectedText = "Registered users can download up to 5000 production locations annually for free. This account has 1000 production locations available to download. Purchase additional downloads for immediate access.";

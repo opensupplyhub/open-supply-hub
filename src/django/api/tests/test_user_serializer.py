@@ -23,7 +23,7 @@ class UserSerializerTest(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response.json()["allowed_records_number"],
-            FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT
+            FacilitiesDownloadSettings.FREE_FACILITIES_DOWNLOAD_LIMIT
         )
 
     def test_get_free_records_number(self):
@@ -39,5 +39,5 @@ class UserSerializerTest(APITestCase):
 
         self.assertEqual(
             number_from_db,
-            FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT
+            FacilitiesDownloadSettings.FREE_FACILITIES_DOWNLOAD_LIMIT
         )

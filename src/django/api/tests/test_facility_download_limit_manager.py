@@ -92,7 +92,7 @@ class FacilityDownloadLimitManagerTest(TestCase):
         # Assert expired free limits updated.
         self.assertEqual(
             expired_free.free_download_records,
-            FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT,
+            FacilitiesDownloadSettings.FREE_FACILITIES_DOWNLOAD_LIMIT,
         )
         self.assertTrue(expired_free.updated_at > one_year_ago)
         # Assert fresh free limits unchanged.

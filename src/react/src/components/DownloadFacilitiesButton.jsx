@@ -16,7 +16,10 @@ import DownloadIcon from './DownloadIcon';
 import ArrowDropDownIcon from './ArrowDropDownIcon';
 import { hideLogDownloadError } from '../actions/logDownload';
 import DownloadMenu from '../components/DownloadMenu';
-import { FACILITIES_DOWNLOAD_LIMIT } from '../util/constants';
+import {
+    FREE_FACILITIES_DOWNLOAD_LIMIT,
+    FACILITIES_DOWNLOAD_LIMIT,
+} from '../util/constants';
 
 const downloadFacilitiesStyles = theme =>
     Object.freeze({
@@ -86,7 +89,8 @@ const DownloadFacilitiesButton = ({
         }
     }, [checkoutUrl, checkoutUrlError]);
     const handleUpgrade = () => {
-        dispatch(downloadLimitCheckoutUrl());
+        const redirectPath = window.location.pathname + window.location.search;
+        dispatch(downloadLimitCheckoutUrl(redirectPath));
     };
     const handleClick = event => {
         if (upgrade) {
@@ -107,13 +111,22 @@ const DownloadFacilitiesButton = ({
         }
         handleClose();
     };
+
     const tooltipTexts = {
-        availableDownloads: `Registered users can download up to ${FACILITIES_DOWNLOAD_LIMIT} production
+        availableDownloads: `Registered users can download up to ${
+            isEmbedded
+                ? FACILITIES_DOWNLOAD_LIMIT
+                : FREE_FACILITIES_DOWNLOAD_LIMIT
+        } production
             locations annually for free. This account has ${userAllowedRecords} production locations
             available to download. Additional downloads are available for purchase.`,
         outOfDownloads:
             "You've reached your annual download limit. Purchase additional downloads for immediate access.",
-        limitExceededByResults: `Registered users can download up to ${FACILITIES_DOWNLOAD_LIMIT}
+        limitExceededByResults: `Registered users can download up to ${
+            isEmbedded
+                ? FACILITIES_DOWNLOAD_LIMIT
+                : FREE_FACILITIES_DOWNLOAD_LIMIT
+        }
             production locations annually for free. This account has ${userAllowedRecords} production
             locations available to download. Purchase additional downloads for immediate access.`,
     };
@@ -131,6 +144,7 @@ const DownloadFacilitiesButton = ({
     const tooltipTitle = (
         <p className={classes.downloadTooltip}>{tooltipText}</p>
     );
+    console.log('!!!', upgrade, user.allowed_records_number);
 
     return (
         <Tooltip title={tooltipTitle} placement="left">
@@ -180,7 +194,7 @@ const DownloadFacilitiesButton = ({
 DownloadFacilitiesButton.defaultProps = {
     disabled: false,
     upgrade: false,
-    userAllowedRecords: FACILITIES_DOWNLOAD_LIMIT,
+    userAllowedRecords: FREE_FACILITIES_DOWNLOAD_LIMIT,
     logDownloadError: null,
     checkoutUrl: null,
     checkoutUrlError: null,
