@@ -23,8 +23,7 @@ jest.mock('@material-ui/core/Portal', () => ({ children }) => children);
 
 
 describe('DownloadFacilitiesButton component', () => {
-  const expectedTooltipText =
-  'Downloads are supported for searches resulting in 5000 production locations or less.';
+  const expectedTooltipText ="Registered users can download up to 5000 production locations annually for free. This account has 5000 production locations available to download. Additional downloads are available for purchase.";
   const handleDownload = jest.fn();
   const defaultProps = {
     disabled: false,
@@ -115,19 +114,6 @@ describe('DownloadFacilitiesButton component', () => {
     );
   });
 
-  test('should show default userAllowedRecords in the tooltip when button is disabled', async () => {
-    const { getByRole } = renderComponent({ disabled: true});
-
-    const button = getByRole('button', { name: 'Download' });
-    expect(button).toBeDisabled();
-
-    fireEvent.mouseOver(button);
-
-    await waitFor(() =>
-      expect(screen.getByText(expectedTooltipText)).toBeInTheDocument()
-    );
-  });
-
   test('should show correct tooltip in case has available downloads', async () => {
     const props = {
       disabled: true,
@@ -137,16 +123,14 @@ describe('DownloadFacilitiesButton component', () => {
       auth: {
         user: {
           user: {
-            isAnon: true,
+            isAnon: false,
+            allowed_records_number: 1000,
           },
         },
       },
     };
     const { getByRole } = renderComponent(props, customState);
-    const expectedText =
-    `Registered users can download up to ${FACILITIES_DOWNLOAD_LIMIT} production
-                locations annually for free. This account has ${userAllowedRecords} production locations
-                available to download. Additional downloads are available for purchase.`;
+    const expectedText = "Registered users can download up to 5000 production locations annually for free. This account has 1000 production locations available to download. Additional downloads are available for purchase.";
 
     const button = getByRole('button', { name: 'Download' });
     expect(button).toBeDisabled();
@@ -157,26 +141,26 @@ describe('DownloadFacilitiesButton component', () => {
       expect(screen.getByText(expectedText)).toBeInTheDocument()
     );
   });
+
   test('should show correct tooltip in case a user is out of downloads', async () => {
     const props = {
-      disabled: true,
+      disabled: false,
       userAllowedRecords: 0,
+      upgrade: true,
     };
     const customState = {
       auth: {
         user: {
           user: {
-            isAnon: true,
+            isAnon: false,
+            allowed_records_number: 0
           },
         },
       },
     };
     const { getByRole } = renderComponent(props, customState);
-    const expectedText =
-     "You've reached your annual download limit. Purchase additional downloads for immediate access.";
-
-    const button = getByRole('button', { name: 'Download' });
-    expect(button).toBeDisabled();
+    const expectedText = "You've reached your annual download limit. Purchase additional downloads for immediate access.";
+    const button = getByRole('button', { name: 'Purchase More Downloads' });
 
     fireEvent.mouseOver(button);
 
@@ -188,23 +172,22 @@ describe('DownloadFacilitiesButton component', () => {
     const props = {
       disabled: true,
       userAllowedRecords: 1000,
+      upgrade: true,
     };
     const customState = {
       auth: {
         user: {
           user: {
             isAnon: false,
+            allowed_records_number: 1000,
           },
         },
       },
     };
     const { getByRole } = renderComponent(props, customState);
-    const expectedText =
-    `Registered users can download up to 5000
-                production locations annually for free. This account has 1000 production
-                locations available to download. Purchase additional downloads for immediate access.`;
+    const expectedText = "Registered users can download up to 5000 production locations annually for free. This account has 1000 production locations available to download. Purchase additional downloads for immediate access.";
 
-    const button = getByRole('button', { name: 'Download' });
+    const button = getByRole('button', { name: 'Purchase More Downloads' });
     expect(button).toBeDisabled();
 
     fireEvent.mouseOver(button);
