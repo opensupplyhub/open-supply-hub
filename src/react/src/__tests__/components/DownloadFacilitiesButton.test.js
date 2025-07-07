@@ -99,7 +99,7 @@ describe('DownloadFacilitiesButton component', () => {
     expect(await getByTestId("mock-download-menu")).toBeInTheDocument();
   });
 
-  test('should show tooltip', async () => {
+  test('should show tooltip when embed mode is enabled', async () => {
     const expectedTooltipText =
     'Downloads are supported for searches resulting in 10000 production locations or less.';
     const customState = {
