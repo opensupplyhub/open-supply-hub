@@ -27,7 +27,10 @@ class DownloadLocationsCheckoutSessionViewTest(APITestCase):
         fake_url = 'https://checkout.stripe.com/session_id'
         mock_create.return_value = SimpleNamespace(url=fake_url)
 
-        response = self.client.post(self.url, data={})
+        response = self.client.post(
+            self.url,
+            data={'redirect_path': '/facilities'}
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertIn('url', response.data)
@@ -58,7 +61,10 @@ class DownloadLocationsCheckoutSessionViewTest(APITestCase):
     def test_checkout_session_creation_error(self, mock_create):
         mock_create.side_effect = Exception("Stripe error")
 
-        response = self.client.post(self.url, data={})
+        response = self.client.post(
+            self.url,
+            data={'redirect_path': '/facilities'}
+        )
 
         self.assertEqual(response.status_code, 400)
         self.assertIn('error', response.data)

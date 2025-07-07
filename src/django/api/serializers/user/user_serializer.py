@@ -146,4 +146,4 @@ class UserSerializer(ModelSerializer):
             limit = FacilityDownloadLimit.objects.get(user=user)
             return limit.free_download_records + limit.paid_download_records
         except FacilityDownloadLimit.DoesNotExist:
-            return FacilitiesDownloadSettings.FACILITIES_DOWNLOAD_LIMIT
+            return FacilitiesDownloadSettings.FREE_FACILITIES_DOWNLOAD_LIMIT
