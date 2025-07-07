@@ -8,47 +8,35 @@ class Command(BaseCommand):
     help = "Debug sync issues"
 
     def handle(self, *args, **options):
-        Source = apps.get_model('api', 'Source')
-        Contributor = apps.get_model('api', 'Contributor')
+        Facility = apps.get_model('api', 'Facility')
         
-        logger.info("=== DEBUGGING SYNC ISSUE ===")
+        logger.info("=== CHECKING PROBLEMATIC FACILITIES ===")
         
-        # Get the missing source
-        source_uuids_os = set(Source.objects.using('default').values_list('uuid', flat=True))
-        source_uuids_rba = set(Source.objects.using('rba').values_list('uuid', flat=True))
-        missing_sources = source_uuids_os - source_uuids_rba
+        # The 6 facilities that had null created_from_id
+        problematic_facility_ids = [
+            'CN202518210SB6G', 'UA2025182Y2NDKZ', 'IN2025182ETWEDA', 
+            'CN2025182W0CZJY', 'IT2025182QXF5D6', 'FR20251828HP6PQ'
+        ]
         
-        if missing_sources:
-            missing_source_uuid = list(missing_sources)[0]
-            logger.info(f"Missing source UUID: {missing_source_uuid}")
-            
-            # Get source details from OS Hub
-            source_os = Source.objects.using('default').get(uuid=missing_source_uuid)
-            logger.info(f"Source in OS Hub: ID={source_os.id}, contributor_id={source_os.contributor_id}")
-            
-            # Check if contributor exists in OS Hub
-            contributor_os = Contributor.objects.using('default').filter(id=source_os.contributor_id)
-            logger.info(f"Contributor {source_os.contributor_id} exists in OS Hub: {contributor_os.exists()}")
-            
-            if contributor_os.exists():
-                contributor_os = contributor_os.first()
-                logger.info(f"Contributor in OS Hub: ID={contributor_os.id}, UUID={contributor_os.uuid}")
+        null_count = 0
+        for facility_id in problematic_facility_ids:
+            try:
+                facility = Facility.objects.using('rba').get(id=facility_id)
+                logger.info(f"Facility {facility_id}: created_from_id = {facility.created_from_id}")
                 
-                # Check if contributor exists in RBA
-                contributor_rba = Contributor.objects.using('rba').filter(uuid=contributor_os.uuid)
-                logger.info(f"Contributor exists in RBA: {contributor_rba.exists()}")
-                
-                if contributor_rba.exists():
-                    contributor_rba = contributor_rba.first()
-                    logger.info(f"Contributor in RBA: ID={contributor_rba.id}, UUID={contributor_rba.uuid}")
-                    
-                    # Check if contributor is in synced_models
-                    logger.info("=== SYNC LOGIC DEBUG ===")
-                    logger.info("The issue might be in the sync logic - contributor exists in both DBs")
-                    logger.info("but sync_model for Source still fails to find it")
+                if facility.created_from_id is None:
+                    null_count += 1
+                    logger.error(f"  ❌ STILL NULL!")
                 else:
-                    logger.info("Contributor missing in RBA - this explains the sync failure")
-            else:
-                logger.info("Contributor missing in OS Hub - this is the root cause")
+                    logger.info(f"  ✅ FIXED!")
+                        
+            except Facility.DoesNotExist:
+                logger.error(f"Facility {facility_id} NOT FOUND in RBA")
+        
+        logger.info(f"\n=== SUMMARY ===")
+        logger.info(f"Facilities with null created_from_id: {null_count}/{len(problematic_facility_ids)}")
+        
+        if null_count == 0:
+            logger.info("🎉 ALL PROBLEMATIC FACILITIES FIXED!")
         else:
-            logger.info("No missing sources found") 
+            logger.error(f"❌ {null_count} facilities still have null created_from_id") 

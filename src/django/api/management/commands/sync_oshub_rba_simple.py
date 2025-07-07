@@ -26,6 +26,10 @@ MODEL_CASE_MAPPING = {
 
 class SimpleSync:
     def __init__(self):
+        self.reset()
+    
+    def reset(self):
+        """Reset the sync state for a fresh run"""
         self.synced_models = set()
         self.circular_references = []  # [(facility_uuid, facilitylistitem_id), ...]
     
@@ -211,6 +215,13 @@ class SimpleSync:
         try:
             table_name = model._meta.db_table
             pk_field = model._meta.pk.name
+            pk_field_type = model._meta.pk.get_internal_type()
+            
+            # Skip sequence update for text primary keys (like Facility.id)
+            if pk_field_type in ['CharField', 'TextField']:
+                logger.info(f"Skipping sequence update for text primary key: {pk_field}")
+                return
+                
             sequence_name = f"{table_name}_{pk_field}_seq"
             
             with connection.cursor() as cursor:
@@ -233,14 +244,28 @@ class Command(BaseCommand):
             action='store_true',
             help='Show what would be synced without making changes'
         )
+        parser.add_argument(
+            '--reset-state',
+            action='store_true',
+            help='Reset sync state (this happens automatically on each run)'
+        )
     
     def handle(self, *args, **options):
         dry_run = options['dry_run']
+        reset_state = options['reset_state']
+        
+        logger.info("=== STARTING SYNC FROM OS HUB TO RBA ===")
         
         if dry_run:
             logger.info("DRY RUN MODE - no changes will be made")
         
         sync = SimpleSync()
+        
+        if reset_state:
+            sync.reset()
+            logger.info("Sync state manually reset")
+        else:
+            logger.info("Sync state initialized and reset (automatic)")
         
         # First pass: sync all models in dependency order
         for model_name in MODELS_TO_SYNC:
